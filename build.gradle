@@ -1,0 +1,41 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'application'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+version = '0.1'
+buildDir = 'build'
+
+mainClassName = "com.flightstats.datahub.app.DataHubMain"
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+repositories {
+    repositories {
+        maven {
+            url 'http://artifactory.dev.pdx.prod/artifactory/plugins-release'
+        }
+    }
+}
+
+dependencies {
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.2.3'
+    compile group: 'org.hectorclient', name: 'hector-core', version: '1.+'
+    compile group: 'com.google.guava', name: 'guava', version: '13.0'
+    compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.9.5'
+    compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.9.5'
+    compile group: 'org.codehaus.jackson', name: 'jackson-jaxrs', version: '1.9.5'
+    compile group: 'org.codehaus.jackson', name: 'jackson-xc', version: '1.9.5'
+
+    compile group: 'junit', name: 'junit', version: '4.+'
+    compile group: "org.mockito", name: "mockito-all", version: "1.9.5"
+
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+    testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
+}
