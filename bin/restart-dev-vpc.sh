@@ -26,3 +26,26 @@ for INSTANCE in ${INSTANCE_IDS[@]}; do
 		echo 
 	fi
 done
+
+echo '-------------------------------------------------------------------'
+echo Waiting for all instances to be alive...
+for INSTANCE in ${INSTANCE_IDS[@]}; do
+	HOSTNAME=`echo ${INSTANCE} | sed -e "s/\..*//"`.cloud-east.dev
+	while :
+	do
+		ping -q -c 1 -t 2 ${HOSTNAME} > /dev/null
+		if [ "$?" == "0" ]; then
+			echo ${HOSTNAME} is alive.
+			break
+		else
+			echo -n ...zzz...
+			sleep 1
+			echo -n -e "\b\b\b\b\b\b\b\b\b"
+		fi
+	done
+done
+
+echo '     _  _'
+echo '    ( `   )_    All done.'
+echo '   (    )    `)   Enjoy the cloud.'
+echo ' (_   (_ .  _) _)'
