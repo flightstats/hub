@@ -44,12 +44,16 @@ CASSANDRA_TGZ_URL=http://apache.osuosl.org/cassandra/1.2.1/apache-cassandra-1.2.
 CASSANDRA_TGZ=`basename ${CASSANDRA_TGZ_URL}`
 LOCAL_CASSANDRA_TGZ=/tmp/${CASSANDRA_TGZ}
 CASSANDRA_DIR=`basename ${CASSANDRA_TGZ} '-bin.tar.gz'`
-CONF_DIR=`dirname ${0}`/../conf
+BIN_DIR=`dirname ${0}`
+CONF_DIR=${BIN_DIR}/../conf
 
 echo
 echo Got it.  I like your style.
 echo Ok, let\'s set up a ${MODE} cassandra node on ${HOST}
 echo
+
+echo Cassandra requires Java...let\'s make sure we have a version we like...
+${BIN_DIR}/install_java.sh ${HOST}
 
 echo Checking to see if remote already has a cassandra install...
 ssh ${USER}@${HOST} ls -d /home/${USER}/${CASSANDRA_DIR}
