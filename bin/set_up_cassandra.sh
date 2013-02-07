@@ -83,6 +83,8 @@ rsync -a /tmp/cassandra.yaml ${USER}@${HOST}:~/${CASSANDRA_DIR}/conf/
 echo Uploading log4j properties...
 rsync -a ${CONF_DIR}/log4j-server.properties ${USER}@${HOST}:~/${CASSANDRA_DIR}/conf/
 
+echo Uploading cassandra logging configuration...
+rsync -a ${CONF_DIR}/log4j-server.properties ${USER}@${HOST}:~/${CASSANDRA_DIR}/conf/
 
 # Kinda bold and presumptious to be doing this here...but hmmmmph.
 echo Installing JNA so that native code will run from Java...
@@ -90,8 +92,13 @@ ssh ${USER}@${HOST} 'sudo apt-get install libjna-java'
 echo Symlinking jna.jar into cassandra/lib directory
 ssh ${USER}@${HOST} "ln -s /usr/share/java/jna.jar /home/${USER}/${CASSANDRA_DIR}/lib/jna.jar"
 
+echo Installing init/startup scripts...
+rsync -a ${BIN_DIR}/cassandra-init.sh ${USER}@${HOST}:/tmp/
+ssh ${USER}@${HOST} 'sudo cp /tmp/cassandra-init.sh /etc/init.d/'
+ssh ${USER}@${HOST} 'sudo ln -s /etc/init.d/cassandra-init.sh /etc/init.d/cassandra'
+ssh ${USER}@${HOST} 'sudo ln -s /etc/init.d/cassandra /etc/rc2.d/S99cassandra'
+
 echo Starting up cassandra on ${HOST}
-ssh ${USER}@${HOST} "source ~/.profile; ~/${CASSANDRA_DIR}/bin/cassandra"
+ssh ${USER}@${HOST} "sudo /etc/init.d/cassandra start"
 
 # TODO: Initial tokens in cassandra.yaml ?
-# TODO: Logging configuration?
