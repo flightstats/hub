@@ -76,6 +76,9 @@ cat ${CONF_DIR}/cassandra.template.yaml | \
 
 echo Uploading cassandra configuration file...
 rsync -a /tmp/cassandra.yaml ${USER}@${HOST}:~/${CASSANDRA_DIR}/conf/
+echo Uploading log4j properties...
+rsync -a ${CONF_DIR}/log4j-server.properties ${USER}@${HOST}:~/${CASSANDRA_DIR}/conf/
+
 
 # Kinda bold and presumptious to be doing this here...but hmmmmph.
 echo Installing JNA so that native code will run from Java...

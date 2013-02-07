@@ -9,6 +9,9 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import javax.servlet.DispatcherType;
 import java.util.EnumSet;
 
+/**
+ * Main entry point for the data hub.  This is the main runnable class.
+ */
 public class DataHubMain {
 
     public static void main(String[] args) throws Exception {
