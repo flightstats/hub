@@ -1,7 +1,10 @@
 package com.flightstats.datahub.app.config;
 
+import com.flightstats.datahub.dao.CassandraChannelDao;
+import com.flightstats.datahub.dao.ChannelDao;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Singleton;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
@@ -28,7 +31,7 @@ public class GuiceConfig extends GuiceServletContextListener {
             @Override
             protected void configureServlets() {
                 //                bind(UsersResource.class);
-                //                bind(UsersDao.class).to(FakeDao.class).in(Singleton.class);
+                bind(ChannelDao.class).to(CassandraChannelDao.class).in(Singleton.class);
                 serve("/*").with(GuiceContainer.class, JERSEY_PROPERTIES);
             }
         };

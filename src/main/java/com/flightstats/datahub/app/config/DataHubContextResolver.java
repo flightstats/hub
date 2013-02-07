@@ -1,5 +1,9 @@
 package com.flightstats.datahub.app.config;
 
+import com.flightstats.datahub.model.ChannelCreationRequest;
+import com.flightstats.datahub.model.ChannelCreationResponse;
+import com.flightstats.datahub.model.serialize.ChannelCreationRequestMixIn;
+import com.flightstats.datahub.model.serialize.ChannelCreationResponseMixIn;
 import org.codehaus.jackson.Version;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
@@ -19,9 +23,10 @@ public class DataHubContextResolver implements ContextResolver<ObjectMapper> {
         //        module.addSerializer(HalLinks.class, new HalLinksSerializer());
         objectMapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
         objectMapper.registerModule(module);
+        objectMapper.getDeserializationConfig().addMixInAnnotations(ChannelCreationRequest.class, ChannelCreationRequestMixIn.class);
+        objectMapper.getSerializationConfig().addMixInAnnotations(ChannelCreationResponse.class, ChannelCreationResponseMixIn.class);
         //        objectMapper.getSerializationConfig().addMixInAnnotations(Linked.class, LinkedMixIn.class);
         //        objectMapper.getSerializationConfig().addMixInAnnotations(UsernamePasswordCredentials.class, UsernamePasswordCredentialsMixIn.class);
-        //        objectMapper.getDeserializationConfig().addMixInAnnotations(CreateUserRequest.class, CreateUserRequestMixIn.class);
     }
 
     @Override
