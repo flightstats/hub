@@ -6,14 +6,11 @@ import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.HColumn;
-import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 
 import java.util.Date;
-
-import static me.prettyprint.hector.api.factory.HFactory.createColumnQuery;
 
 public class CassandraChannelsCollection {
 
@@ -22,11 +19,13 @@ public class CassandraChannelsCollection {
 
     private final CassandraConnector connector;
     private final Serializer<ChannelConfiguration> channelConfigSerializer;
+    private final HectorFactoryWrapper hector;
 
     @Inject
-    public CassandraChannelsCollection(CassandraConnector connector, Serializer<ChannelConfiguration> channelConfigSerializer) {
+    public CassandraChannelsCollection(CassandraConnector connector, Serializer<ChannelConfiguration> channelConfigSerializer, HectorFactoryWrapper hector) {
         this.connector = connector;
         this.channelConfigSerializer = channelConfigSerializer;
+        this.hector = hector;
     }
 
     public ChannelConfiguration createChannel(String name, String description) {
@@ -41,7 +40,7 @@ public class CassandraChannelsCollection {
         StringSerializer keySerializer = StringSerializer.get();
         Mutator<String> mutator = connector.buildMutator(keySerializer);
         //TODO: Guard with mutex?  Mutator is not a thread-safe class....
-        HColumn<String, ChannelConfiguration> column = HFactory.createColumn(channelConfig.getName(), channelConfig, StringSerializer.get(),
+        HColumn<String, ChannelConfiguration> column = hector.createColumn(channelConfig.getName(), channelConfig, StringSerializer.get(),
                 channelConfigSerializer);
         mutator.insert(CHANNELS_ROW_KEY, CHANNEL_COLUMN_FAMILY_NAME, column);
     }
@@ -63,9 +62,11 @@ public class CassandraChannelsCollection {
 
         connector.createColumnFamily(CHANNEL_COLUMN_FAMILY_NAME);
 
-        ColumnQuery<String, String, ChannelConfiguration> columnQuery = createColumnQuery(keyspace, StringSerializer.get(),
-                StringSerializer.get(), channelConfigSerializer).setName(channelName).setKey(CHANNELS_ROW_KEY).setColumnFamily(
-                CHANNEL_COLUMN_FAMILY_NAME);
+        ColumnQuery<String, String, ChannelConfiguration> columnQuery = hector.createColumnQuery(keyspace, StringSerializer.get(),
+                StringSerializer.get(), channelConfigSerializer)
+                                                                              .setName(channelName)
+                                                                              .setKey(CHANNELS_ROW_KEY)
+                                                                              .setColumnFamily(CHANNEL_COLUMN_FAMILY_NAME);
         QueryResult<HColumn<String, ChannelConfiguration>> result = columnQuery.execute();
         HColumn<String, ChannelConfiguration> column = result.get();
         return column == null ? null : column.getValue();

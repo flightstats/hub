@@ -5,7 +5,6 @@ import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
-import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 
 import java.util.List;
@@ -18,14 +17,16 @@ public class CassandraConnector {
 
     private final Cluster cluster;
     private final Keyspace keyspace;
+    private final HectorFactoryWrapper hector;
 
-    CassandraConnector(Cluster cluster, Keyspace keyspace) {
+    CassandraConnector(Cluster cluster, Keyspace keyspace, HectorFactoryWrapper hector) {
         this.cluster = cluster;
         this.keyspace = keyspace;
+        this.hector = hector;
     }
 
     public <K> Mutator<K> buildMutator(Serializer<K> keySerializer) {
-        return HFactory.createMutator(keyspace, keySerializer);
+        return hector.createMutator(keyspace, keySerializer);
     }
 
     public boolean createColumnFamily(final String columnFamilyName) {
@@ -34,7 +35,7 @@ public class CassandraConnector {
         if (columnFamilyExists(columnFamilyName)) {
             return false;
         }
-        ColumnFamilyDefinition columnFamilyDefinition = HFactory.createColumnFamilyDefinition(KEYSPACE_NAME, columnFamilyName);
+        ColumnFamilyDefinition columnFamilyDefinition = hector.createColumnFamilyDefinition(KEYSPACE_NAME, columnFamilyName);
         cluster.addColumnFamily(columnFamilyDefinition, true);
         return true;
     }
