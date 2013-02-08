@@ -29,7 +29,7 @@ public class JacksonHectorSerializer<T> extends AbstractSerializer<T> {
             objectMapper.writeValue(out, obj);
             return ByteBuffer.wrap(out.toByteArray());
         } catch (IOException e) {
-            throw new RuntimeException("Cannot seem to serialize an AirQualityEgg.", e);
+            throw new RuntimeException("Error serializing object.", e);
         }
     }
 
@@ -41,7 +41,7 @@ public class JacksonHectorSerializer<T> extends AbstractSerializer<T> {
             correctedBuffer.get(buffer);
             return objectMapper.readValue(buffer, clazz);
         } catch (IOException e) {
-            throw new RuntimeException("Error serializing to AirQualityEgg.", e);
+            throw new RuntimeException("Error deserializing object.", e);
         }
     }
 }

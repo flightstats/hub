@@ -8,6 +8,7 @@ targetCompatibility = 1.7
 version = '0.1'
 buildDir = 'build'
 
+
 mainClassName = "com.flightstats.datahub.app.DataHubMain"
 
 buildscript {
@@ -55,4 +56,8 @@ dependencies {
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
+}
+
+jar {
+    from "conf/datahub.properties"
 }

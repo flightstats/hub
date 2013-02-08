@@ -1,6 +1,8 @@
 package com.flightstats.datahub.app.config;
 
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
+import com.flightstats.datahub.model.serialize.ChannelConfigurationMixIn;
 import com.flightstats.datahub.model.serialize.ChannelCreationRequestMixIn;
 import com.flightstats.rest.*;
 import org.codehaus.jackson.Version;
@@ -24,6 +26,7 @@ public class DataHubObjectMapperFactory {
         objectMapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
         objectMapper.registerModule(module);
         objectMapper.getDeserializationConfig().addMixInAnnotations(ChannelCreationRequest.class, ChannelCreationRequestMixIn.class);
+        objectMapper.getDeserializationConfig().addMixInAnnotations(ChannelConfiguration.class, ChannelConfigurationMixIn.class);
         objectMapper.getSerializationConfig().addMixInAnnotations(Linked.class, LinkedMixIn.class);
 
         return objectMapper;

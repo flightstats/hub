@@ -37,7 +37,6 @@ public class CassandraChannelsCollection {
     }
 
     private void addMetaDataForNewChannel(ChannelConfiguration channelConfig) {
-        //TODO: What happens when it exists?
         connector.createColumnFamily(CHANNEL_COLUMN_FAMILY_NAME);
         StringSerializer keySerializer = StringSerializer.get();
         Mutator<String> mutator = connector.buildMutator(keySerializer);
@@ -55,7 +54,6 @@ public class CassandraChannelsCollection {
     }
 
     public boolean channelExists(String channelName) {
-        Keyspace keyspace = connector.getKeyspace();
         ChannelConfiguration channelConfiguration = getChannelConfiguration(channelName);
         return channelConfiguration != null;
     }
