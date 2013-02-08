@@ -354,7 +354,7 @@ rpc_keepalive: true
 # sync/hsha performance is about the same, with hsha of course using less memory.
 #
 # Alternatively,  can provide your own RPC server by providing the fully-qualified class name
-# of an o.a.c.t.TServerFactory that can create an instance of it.
+# of an o.a.c.t.TServerFactory that can create an object of it.
 #rpc_server_type: sync
 rpc_server_type: hsha 
 
