@@ -2,10 +2,7 @@ package com.flightstats.datahub.app.config;
 
 import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.datahub.model.serialize.ChannelCreationRequestMixIn;
-import com.flightstats.rest.HalLinks;
-import com.flightstats.rest.HalLinksSerializer;
-import com.flightstats.rest.Linked;
-import com.flightstats.rest.LinkedMixIn;
+import com.flightstats.rest.*;
 import org.codehaus.jackson.Version;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
@@ -14,6 +11,7 @@ import org.codehaus.jackson.map.module.SimpleModule;
 
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
+import java.util.Date;
 
 @Provider
 public class DataHubContextResolver implements ContextResolver<ObjectMapper> {
@@ -23,6 +21,7 @@ public class DataHubContextResolver implements ContextResolver<ObjectMapper> {
     public DataHubContextResolver() {
         SimpleModule module = new SimpleModule("users", new Version(1, 0, 0, null));
         module.addSerializer(HalLinks.class, new HalLinksSerializer());
+        module.addSerializer(Date.class, new Rfc3339DateSerializer());
 
         objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
         objectMapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);

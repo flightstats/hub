@@ -39,6 +39,7 @@ public class ChannelsResource {
         if (channelDao.channelExists(channelCreationRequest.getName())) {
             throw new AlreadyExistsException();
         }
+
         ChannelConfiguration channelConfiguration = channelDao.createChannel(channelCreationRequest.getName(),
                 channelCreationRequest.getDescription());
 
