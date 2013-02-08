@@ -58,7 +58,7 @@ public class Linked<T> {
                 '}';
     }
 
-    public static <T> Builder<T> linked(T object){
+    public static <T> Builder<T> linked(T object) {
         return new Builder<T>(object);
     }
 
@@ -75,13 +75,12 @@ public class Linked<T> {
             return this;
         }
 
-
         public Builder<T> withLink(String name, String uri) {
             links.add(new HalLink(name, URI.create(uri)));
             return this;
         }
 
-        public Linked<T> build(){
+        public Linked<T> build() {
             return new Linked<>(new HalLinks(links), object);
         }
     }

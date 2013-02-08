@@ -11,5 +11,6 @@ public abstract class ChannelCreationRequestMixIn {
     private String description;
 
     public ChannelCreationRequestMixIn(@JsonProperty("name") String name, @JsonProperty("description") String description) {
+        throw new IllegalStateException("Do not instantiate mix-in configuration classes.");
     }
 }

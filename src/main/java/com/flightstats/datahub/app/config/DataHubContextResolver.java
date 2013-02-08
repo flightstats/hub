@@ -9,6 +9,7 @@ import com.flightstats.rest.LinkedMixIn;
 import org.codehaus.jackson.Version;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.module.SimpleModule;
 
 import javax.ws.rs.ext.ContextResolver;
@@ -21,13 +22,13 @@ public class DataHubContextResolver implements ContextResolver<ObjectMapper> {
 
     public DataHubContextResolver() {
         SimpleModule module = new SimpleModule("users", new Version(1, 0, 0, null));
-        //        module.addSerializer(Optional.class, new OptionalSerializer());
         module.addSerializer(HalLinks.class, new HalLinksSerializer());
+
+        objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
         objectMapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
         objectMapper.registerModule(module);
         objectMapper.getDeserializationConfig().addMixInAnnotations(ChannelCreationRequest.class, ChannelCreationRequestMixIn.class);
         objectMapper.getSerializationConfig().addMixInAnnotations(Linked.class, LinkedMixIn.class);
-        //        objectMapper.getSerializationConfig().addMixInAnnotations(UsernamePasswordCredentials.class, UsernamePasswordCredentialsMixIn.class);
     }
 
     @Override
