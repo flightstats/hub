@@ -1,6 +1,6 @@
 package com.flightstats.rest;
 
-import com.flightstats.datahub.app.config.DataHubContextResolver;
+import com.flightstats.datahub.app.config.DataHubObjectMapperFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
@@ -15,7 +15,7 @@ public class LinkedMixInTest {
 
     @Test
     public void testSerialize() throws Exception {
-        ObjectMapper mapper = new DataHubContextResolver().getContext(LinkedMixIn.class);
+        ObjectMapper mapper = new DataHubObjectMapperFactory().build();
         URI link1 = URI.create("http://path/to/previous");
         URI link2 = URI.create("http://path/to/next");
         Map<String, String> map = new HashMap<>();
