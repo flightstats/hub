@@ -29,7 +29,7 @@ public class CassandraConnector {
         return hector.createMutator(keyspace, keySerializer);
     }
 
-    public boolean createColumnFamily(final String columnFamilyName) {
+    public boolean createColumnFamilyIfNeeded(final String columnFamilyName) {
         //Note: This is check-then-set and is technically incorrect.  Hector doesn't provide an atomic create-if-not-exists approach, so we
         //should eventually use a locking scheme here or let hector explode and catch the exception.
         if (columnFamilyExists(columnFamilyName)) {
@@ -57,5 +57,37 @@ public class CassandraConnector {
 
     public Keyspace getKeyspace() {
         return keyspace;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        CassandraConnector that = (CassandraConnector) o;
+
+        if (cluster != null ? !cluster.equals(that.cluster) : that.cluster != null) {
+            return false;
+        }
+        if (hector != null ? !hector.equals(that.hector) : that.hector != null) {
+            return false;
+        }
+        if (keyspace != null ? !keyspace.equals(that.keyspace) : that.keyspace != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = cluster != null ? cluster.hashCode() : 0;
+        result = 31 * result + (keyspace != null ? keyspace.hashCode() : 0);
+        result = 31 * result + (hector != null ? hector.hashCode() : 0);
+        return result;
     }
 }

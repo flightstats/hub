@@ -1,5 +1,6 @@
 package com.flightstats.datahub.dao;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import me.prettyprint.cassandra.service.CassandraHostConfigurator;
@@ -34,10 +35,15 @@ public class CassandraConnectorFactory {
     @Provides
     public CassandraConnector build() {
         CassandraHostConfigurator hostConfigurator = new CassandraHostConfigurator(hostPort);
-        Cluster cluster = new ThriftCluster(clusterName, hostConfigurator);
+        Cluster cluster = getCluster(hostConfigurator);
         addKeyspaceIfMissing(replicationFactor, cluster);
         Keyspace keyspace = hector.createKeyspace(KEYSPACE_NAME, cluster);
         return new CassandraConnector(cluster, keyspace, hector);
+    }
+
+    @VisibleForTesting
+    Cluster getCluster(CassandraHostConfigurator hostConfigurator) {
+        return new ThriftCluster(clusterName, hostConfigurator);
     }
 
     private void addKeyspaceIfMissing(int replicationFactor, Cluster cluster) {

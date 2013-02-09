@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -14,8 +15,8 @@ import java.util.Date;
 
 public class CassandraChannelsCollection {
 
-    private static final String CHANNELS_ROW_KEY = "DATA_HUB_CHANNELS";
-    private static final String CHANNEL_COLUMN_FAMILY_NAME = "channelMetadata";
+    static final String CHANNELS_ROW_KEY = "DATA_HUB_CHANNELS";
+    static final String CHANNELS_COLUMN_FAMILY_NAME = "channelMetadata";
 
     private final CassandraConnector connector;
     private final Serializer<ChannelConfiguration> channelConfigSerializer;
@@ -29,27 +30,25 @@ public class CassandraChannelsCollection {
     }
 
     public ChannelConfiguration createChannel(String name, String description) {
-        ChannelConfiguration channelConfig = new ChannelConfiguration(name, description, new Date());
-        createColumnSpaceForChannel(channelConfig);
+        ChannelConfiguration channelConfig = new ChannelConfiguration(name, description, getDate());
+        createColumnFamilyForChannel(channelConfig);
         addMetaDataForNewChannel(channelConfig);
         return channelConfig;
     }
 
     private void addMetaDataForNewChannel(ChannelConfiguration channelConfig) {
-        connector.createColumnFamily(CHANNEL_COLUMN_FAMILY_NAME);
+        connector.createColumnFamilyIfNeeded(CHANNELS_COLUMN_FAMILY_NAME);
         StringSerializer keySerializer = StringSerializer.get();
         Mutator<String> mutator = connector.buildMutator(keySerializer);
         //TODO: Guard with mutex?  Mutator is not a thread-safe class....
         HColumn<String, ChannelConfiguration> column = hector.createColumn(channelConfig.getName(), channelConfig, StringSerializer.get(),
                 channelConfigSerializer);
-        mutator.insert(CHANNELS_ROW_KEY, CHANNEL_COLUMN_FAMILY_NAME, column);
+        mutator.insert(CHANNELS_ROW_KEY, CHANNELS_COLUMN_FAMILY_NAME, column);
     }
 
-    private void createColumnSpaceForChannel(ChannelConfiguration channelConfig) {
-        // Note: For now, these are intentionally the same thing, but we may wish to reevaluate this later.
-        String key = channelConfig.getName();
+    private void createColumnFamilyForChannel(ChannelConfiguration channelConfig) {
         String columnSpaceName = channelConfig.getName();
-        connector.createColumnFamily(columnSpaceName);
+        connector.createColumnFamilyIfNeeded(columnSpaceName);
     }
 
     public boolean channelExists(String channelName) {
@@ -57,18 +56,21 @@ public class CassandraChannelsCollection {
         return channelConfiguration != null;
     }
 
-    public ChannelConfiguration getChannelConfiguration(String channelName) {
+    private ChannelConfiguration getChannelConfiguration(String channelName) {
+        connector.createColumnFamilyIfNeeded(CHANNELS_COLUMN_FAMILY_NAME);
         Keyspace keyspace = connector.getKeyspace();
-
-        connector.createColumnFamily(CHANNEL_COLUMN_FAMILY_NAME);
-
-        ColumnQuery<String, String, ChannelConfiguration> columnQuery = hector.createColumnQuery(keyspace, StringSerializer.get(),
-                StringSerializer.get(), channelConfigSerializer)
-                                                                              .setName(channelName)
-                                                                              .setKey(CHANNELS_ROW_KEY)
-                                                                              .setColumnFamily(CHANNEL_COLUMN_FAMILY_NAME);
+        ColumnQuery<String, String, ChannelConfiguration> rawQuery = hector.createColumnQuery(keyspace, StringSerializer.get(),
+                StringSerializer.get(), channelConfigSerializer);
+        ColumnQuery<String, String, ChannelConfiguration> columnQuery = rawQuery.setName(channelName)
+                                                                                .setKey(CHANNELS_ROW_KEY)
+                                                                                .setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME);
         QueryResult<HColumn<String, ChannelConfiguration>> result = columnQuery.execute();
         HColumn<String, ChannelConfiguration> column = result.get();
         return column == null ? null : column.getValue();
+    }
+
+    @VisibleForTesting
+    Date getDate() {
+        return new Date();
     }
 }
