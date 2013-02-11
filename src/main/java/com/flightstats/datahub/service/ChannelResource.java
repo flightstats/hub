@@ -40,10 +40,8 @@ public class ChannelResource {
 
         URI requestUri = uriInfo.getRequestUri();
         URI channelUri = URI.create(requestUri + "/" + channelCreationRequest.getName());
-        URI latestUri = URI.create(requestUri + "/" + channelCreationRequest.getName() + "/latest");
         return linked(channelConfiguration)
                 .withLink("self", channelUri)
-                .withLink("latest", latestUri)
                 .build();
     }
 }
