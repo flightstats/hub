@@ -8,7 +8,6 @@ targetCompatibility = 1.7
 version = '0.1'
 buildDir = 'build'
 
-
 mainClassName = "com.flightstats.datahub.app.DataHubMain"
 
 buildscript {
@@ -24,6 +23,12 @@ repositories {
         }
     }
 }
+
+configurations {
+    codeCoverage
+    codeCoverageAnt
+}
+
 
 dependencies {
     compile group: 'org.hectorclient', name: 'hector-core', version: '1.+'
@@ -56,4 +61,45 @@ dependencies {
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
+
+    codeCoverage 'org.jacoco:org.jacoco.agent:0.5.10.201208310627:runtime@jar'
+    codeCoverageAnt 'org.jacoco:org.jacoco.ant:0.5.10.201208310627'
+}
+
+test {
+    systemProperties = System.properties
+    jvmArgs "-javaagent:${configurations.codeCoverage.asPath}=destfile=${project.buildDir.path}/coverage-results/jacoco.exec,sessionid=HSServ,append=false",
+            '-Djacoco=true',
+            '-Xms128m',
+            '-Xmx512m',
+            '-XX:MaxPermSize=128m'
+}
+
+// From: http://www.zorched.net/2012/09/13/java-7-code-coverage-with-gradle-and-jacoco/
+task generateCoverageReport << {
+    ant {
+        taskdef(name: 'jacocoreport', classname: 'org.jacoco.ant.ReportTask', classpath: configurations.codeCoverageAnt.asPath)
+
+        mkdir dir: "build/reports/coverage"
+
+        jacocoreport {
+            executiondata {
+                fileset(dir: "build/coverage-results") {
+                    include name: 'jacoco.exec'
+                }
+            }
+            structure(name: project.name) {
+                classfiles {
+                    fileset(dir: "build/classes/main") {
+                    }
+                }
+                sourcefiles(encoding: 'UTF-8') {
+                    fileset dir: "src/main/java"
+                }
+            }
+
+            xml destfile: "build/reports/coverage/jacoco.xml"
+            html destdir: "build/reports/coverage"
+        }
+    }
 }
