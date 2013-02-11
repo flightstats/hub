@@ -36,8 +36,7 @@ public class ChannelResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Linked<ChannelConfiguration> createChannel(ChannelCreationRequest channelCreationRequest) {
 
-        ChannelConfiguration channelConfiguration = channelDao.createChannel(channelCreationRequest.getName(),
-                channelCreationRequest.getDescription());
+        ChannelConfiguration channelConfiguration = channelDao.createChannel(channelCreationRequest.getName());
 
         URI requestUri = uriInfo.getRequestUri();
         URI channelUri = URI.create(requestUri + "/" + channelCreationRequest.getName());

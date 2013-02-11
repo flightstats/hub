@@ -21,8 +21,8 @@ public class CassandraChannelDao implements ChannelDao {
     }
 
     @Override
-    public ChannelConfiguration createChannel(String name, String description) {
+    public ChannelConfiguration createChannel(String name) {
         logger.info("Creating channel name = " + name);
-        return channelsCollection.createChannel(name, description);
+        return channelsCollection.createChannel(name);
     }
 }

@@ -3,19 +3,13 @@ package com.flightstats.datahub.model;
 public class ChannelCreationRequest {
 
     private final String name;
-    private final String description;
 
-    public ChannelCreationRequest(String name, String description) {
+    public ChannelCreationRequest(String name) {
         this.name = name;
-        this.description = description;
     }
 
     public String getName() {
         return name;
-    }
-
-    public String getDescription() {
-        return description;
     }
 
     @Override
@@ -29,9 +23,6 @@ public class ChannelCreationRequest {
 
         ChannelCreationRequest that = (ChannelCreationRequest) o;
 
-        if (description != null ? !description.equals(that.description) : that.description != null) {
-            return false;
-        }
         if (name != null ? !name.equals(that.name) : that.name != null) {
             return false;
         }
@@ -41,16 +32,13 @@ public class ChannelCreationRequest {
 
     @Override
     public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (description != null ? description.hashCode() : 0);
-        return result;
+        return name != null ? name.hashCode() : 0;
     }
 
     @Override
     public String toString() {
         return "ChannelCreationRequest{" +
                 "name='" + name + '\'' +
-                ", description='" + description + '\'' +
                 '}';
     }
 }

@@ -17,22 +17,11 @@ public class ChannelCreationRequestMixInTest {
         objectMapper = new DataHubObjectMapperFactory().build();
     }
 
-
     @Test
     public void testDeserialize() throws Exception {
-        String json = "{ \"name\": \"foo\", \"description\": \"bar\"}";
-        ChannelCreationRequest result = objectMapper.readValue(json, ChannelCreationRequest.class);
-        ChannelCreationRequest expected = new ChannelCreationRequest("foo", "bar");
-        assertEquals(expected, result);
-    }
-
-    @Test
-    public void testDescriptionIsOptional() throws Exception {
         String json = "{ \"name\": \"foo\" }";
         ChannelCreationRequest result = objectMapper.readValue(json, ChannelCreationRequest.class);
-        ChannelCreationRequest expected = new ChannelCreationRequest("foo", null);
+        ChannelCreationRequest expected = new ChannelCreationRequest("foo");
         assertEquals(expected, result);
     }
-
-
 }

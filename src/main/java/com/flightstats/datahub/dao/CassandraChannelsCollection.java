@@ -29,8 +29,8 @@ public class CassandraChannelsCollection {
         this.hector = hector;
     }
 
-    public ChannelConfiguration createChannel(String name, String description) {
-        ChannelConfiguration channelConfig = new ChannelConfiguration(name, description, getDate());
+    public ChannelConfiguration createChannel(String name) {
+        ChannelConfiguration channelConfig = new ChannelConfiguration(name, getDate());
         createColumnFamilyForChannel(channelConfig);
         addMetaDataForNewChannel(channelConfig);
         return channelConfig;

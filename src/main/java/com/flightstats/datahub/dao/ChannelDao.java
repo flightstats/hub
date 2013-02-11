@@ -6,5 +6,5 @@ public interface ChannelDao {
 
     boolean channelExists(String channelName);
 
-    ChannelConfiguration createChannel(String name, String description);
+    ChannelConfiguration createChannel(String name);
 }

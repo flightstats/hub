@@ -1,7 +1,6 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.rest.Linked;
@@ -19,11 +18,10 @@ public class ChannelResourceTest {
     @Test
     public void testChannelCreation() throws Exception {
         String channelName = "UHF";
-        String description = "We've got it all.";
 
-        ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName, description);
+        ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName);
         Date date = new Date();
-        ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, description, date);
+        ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, date);
         Linked<ChannelConfiguration> expected = Linked.linked(channelConfiguration)
                                                       .withLink("self", "http://path/to/UHF")
                                                       .withLink("latest", "http://path/to/UHF/latest")
@@ -33,29 +31,14 @@ public class ChannelResourceTest {
 
         when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
         when(dao.channelExists(channelName)).thenReturn(false);
-        when(dao.createChannel(channelName, description)).thenReturn(channelConfiguration);
+        when(dao.createChannel(channelName)).thenReturn(channelConfiguration);
 
         ChannelResource testClass = new ChannelResource(uriInfo, dao);
 
         Linked<ChannelConfiguration> result = testClass.createChannel(channelCreationRequest);
 
-        verify(dao).createChannel(channelName, description);
+        verify(dao).createChannel(channelName);
 
         assertEquals(expected, result);
     }
-
-    @Test(expected = AlreadyExistsException.class)
-    public void testCreate_channelAlreadyExists() throws Exception {
-        String channelName = "UHF";
-        String description = "We've got it all";
-        ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName, description);
-
-        ChannelDao dao = mock(ChannelDao.class);
-
-        when(dao.channelExists(channelName)).thenReturn(true);
-
-        ChannelResource testClass = new ChannelResource(null, dao);
-        testClass.createChannel(channelCreationRequest);
-    }
-
 }

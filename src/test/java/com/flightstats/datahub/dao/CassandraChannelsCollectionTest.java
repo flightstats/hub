@@ -25,7 +25,7 @@ public class CassandraChannelsCollectionTest {
     public void testCreateChannel() throws Exception {
         String channelName = "arturo";
         final Date creationDate = new Date(99999);
-        ChannelConfiguration expected = new ChannelConfiguration(channelName, "desc", creationDate);
+        ChannelConfiguration expected = new ChannelConfiguration(channelName, creationDate);
         HColumn<String, ChannelConfiguration> column = new HColumnImpl<String, ChannelConfiguration>(StringSerializer.get(), mock(Serializer.class));
 
         CassandraConnector connector = mock(CassandraConnector.class);
@@ -43,7 +43,7 @@ public class CassandraChannelsCollectionTest {
             }
         };
 
-        ChannelConfiguration result = testClass.createChannel(channelName, "desc");
+        ChannelConfiguration result = testClass.createChannel(channelName);
 
         assertEquals(expected, result);
         verify(connector).createColumnFamilyIfNeeded(CHANNELS_COLUMN_FAMILY_NAME);
@@ -55,7 +55,7 @@ public class CassandraChannelsCollectionTest {
     public void testChannelExists() throws Exception {
 
         String channelName = "foo";
-        ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, "", null);
+        ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, null);
 
         CassandraConnector connector = mock(CassandraConnector.class);
         Keyspace keyspace = mock(Keyspace.class);
