@@ -10,6 +10,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -43,5 +45,14 @@ public class ChannelResource {
         return linked(channelConfiguration)
                 .withLink("self", channelUri)
                 .build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{channelName: .*}")
+    public Map<String, String> getChannelMetadata(@PathParam("channelName") String channelName) {
+        Map<String, String> map = new HashMap<>();
+        map.put("name", channelName);
+        return map;
     }
 }
