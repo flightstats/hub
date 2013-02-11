@@ -103,3 +103,12 @@ task generateCoverageReport << {
         }
     }
 }
+
+task integrationTests << {
+    def testdir = "src/test/integration"
+    def proc = "jasmine-node ${testdir}".execute()
+
+    proc.in.eachLine {line -> println line}
+    proc.err.eachLine {line -> println 'ERROR: ' + line}
+    proc.waitFor()
+}
