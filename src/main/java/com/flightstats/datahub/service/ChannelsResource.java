@@ -14,7 +14,7 @@ import java.net.URI;
 
 import static com.flightstats.rest.Linked.linked;
 
-@Path("/channels")
+@Path("/channel")
 public class ChannelsResource {
 
     private final ChannelDao channelDao;
