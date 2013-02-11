@@ -8,14 +8,13 @@ import com.flightstats.rest.Linked;
 import org.junit.Test;
 
 import javax.ws.rs.core.UriInfo;
-
 import java.net.URI;
 import java.util.Date;
 
 import static junit.framework.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
-public class ChannelsResourceTest {
+public class ChannelResourceTest {
 
     @Test
     public void testChannelCreation() throws Exception {
@@ -23,7 +22,7 @@ public class ChannelsResourceTest {
         String description = "We've got it all.";
 
         ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName, description);
-        Date date = new Date() ;
+        Date date = new Date();
         ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, description, date);
         Linked<ChannelConfiguration> expected = Linked.linked(channelConfiguration)
                                                       .withLink("self", "http://path/to/UHF")
@@ -34,9 +33,9 @@ public class ChannelsResourceTest {
 
         when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
         when(dao.channelExists(channelName)).thenReturn(false);
-        when(dao.createChannel(channelName,  description)).thenReturn(channelConfiguration);
+        when(dao.createChannel(channelName, description)).thenReturn(channelConfiguration);
 
-        ChannelsResource testClass = new ChannelsResource(uriInfo, dao);
+        ChannelResource testClass = new ChannelResource(uriInfo, dao);
 
         Linked<ChannelConfiguration> result = testClass.createChannel(channelCreationRequest);
 
@@ -55,7 +54,7 @@ public class ChannelsResourceTest {
 
         when(dao.channelExists(channelName)).thenReturn(true);
 
-        ChannelsResource testClass = new ChannelsResource(null, dao);
+        ChannelResource testClass = new ChannelResource(null, dao);
         testClass.createChannel(channelCreationRequest);
     }
 

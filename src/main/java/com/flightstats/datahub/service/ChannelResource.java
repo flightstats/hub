@@ -15,13 +15,13 @@ import java.net.URI;
 import static com.flightstats.rest.Linked.linked;
 
 @Path("/channel")
-public class ChannelsResource {
+public class ChannelResource {
 
     private final ChannelDao channelDao;
     private final UriInfo uriInfo;
 
     @Inject
-    public ChannelsResource(UriInfo uriInfo, ChannelDao channelDao) {
+    public ChannelResource(UriInfo uriInfo, ChannelDao channelDao) {
         this.channelDao = channelDao;
         this.uriInfo = uriInfo;
     }
