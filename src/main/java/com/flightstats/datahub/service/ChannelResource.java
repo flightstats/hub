@@ -1,7 +1,6 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.rest.Linked;
@@ -36,9 +35,6 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Linked<ChannelConfiguration> createChannel(ChannelCreationRequest channelCreationRequest) {
-        if (channelDao.channelExists(channelCreationRequest.getName())) {
-            throw new AlreadyExistsException();
-        }
 
         ChannelConfiguration channelConfiguration = channelDao.createChannel(channelCreationRequest.getName(),
                 channelCreationRequest.getDescription());
