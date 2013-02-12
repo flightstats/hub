@@ -8,7 +8,7 @@ require('./integration_config.js');
 var frisby = require('frisby');
 
 var jsonBody = JSON.stringify({ "name": "testcase"});
-var channelResource = "http://localhost:8080/channel/testcase"
+var channelResource = channelUrl + "/testcase";
 
 console.info("Making sure channel resource does not yet exist.");
 frisby.create('Making sure channel resource does not yet exist.')
@@ -19,7 +19,7 @@ frisby.create('Making sure channel resource does not yet exist.')
 console.info("Testing basic channel creation response.")
 
 frisby.create('Test basic channel creation')
-	.post(channelsUrl, null, { body: jsonBody})
+	.post(channelUrl, null, { body: jsonBody})
 	.addHeader("Content-Type", "application/json")
 	.expectStatus(200)
 	.expectHeader('content-type', 'application/json')
@@ -35,7 +35,7 @@ frisby.create('Test basic channel creation')
 	.afterJSON(function(result){
 		console.info("Fetching channel resource to ensure that it exists...");
 		frisby.create('Making sure channel resource exists.')
-			.get(channelResource)
+			.get(result['_links']['self']['href'])
 			.expectStatus(200)
 		.toss();
 	})
