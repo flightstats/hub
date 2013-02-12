@@ -1,9 +1,3 @@
-
-process.argv.forEach(function (val, index, array) {
-  console.log(index + ': ' + val);
-});
-
-
 require('./integration_config.js');
 var frisby = require('frisby');
 

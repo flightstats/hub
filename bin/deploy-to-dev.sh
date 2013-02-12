@@ -17,7 +17,7 @@ if [ "$HOST" == "" ] ; then
 fi
 
 echo Shutting down any running datahub instances on ${HOST}...
-#exit 1 # FIXME
+echo ssh ${USER}@${HOST} "sudo /etc/init.d/datahub stop"
 
 echo Deploying ${ZIPFILE} to ${HOST}
 rsync -avv --progress ${BUILD_DIR}/distributions/${ZIPFILE} ${USER}@${HOST}:/home/${USER}/
