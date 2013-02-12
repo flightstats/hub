@@ -24,7 +24,7 @@ public class DataHubMain {
         ServerConnector serverConnector = new ServerConnector(server, connectionFactory);
 
         //TODO: Don't hard code these here.
-        serverConnector.setHost("localhost");
+        serverConnector.setHost("0.0.0.0");
         serverConnector.setPort(8080);
         serverConnector.setIdleTimeout(30000);
 

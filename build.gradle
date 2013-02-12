@@ -5,7 +5,7 @@ apply plugin: 'application'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
-version = '0.1'
+version = '0.1.0'
 buildDir = 'build'
 
 mainClassName = "com.flightstats.datahub.app.DataHubMain"
@@ -104,11 +104,21 @@ task generateCoverageReport << {
     }
 }
 
+def runExternal(commandline) {
+    def proc = commandline.execute()
+    proc.in.eachLine { line -> println line }
+    proc.err.eachLine { line -> println 'ERROR: ' + line }
+    proc.waitFor()
+    if (proc.exitValue()) {
+        System.exit(proc.exitValue())
+    }
+}
+
+task deployDev << {
+    runExternal("bin/deploy-to-dev.sh datahub-01.cloud-east.dev")
+}
+
 task integrationTests << {
     def testdir = "src/test/integration"
-    def proc = "jasmine-node ${testdir}".execute()
-
-    proc.in.eachLine {line -> println line}
-    proc.err.eachLine {line -> println 'ERROR: ' + line}
-    proc.waitFor()
+    runExternal("jasmine-node ${testdir}")
 }
