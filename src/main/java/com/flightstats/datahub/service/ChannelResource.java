@@ -8,6 +8,7 @@ import com.google.inject.Inject;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.HashMap;
@@ -51,6 +52,9 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{channelName: .*}")
     public Map<String, String> getChannelMetadata(@PathParam("channelName") String channelName) {
+        if (!channelDao.channelExists(channelName)) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
         Map<String, String> map = new HashMap<>();
         map.put("name", channelName);
         return map;
