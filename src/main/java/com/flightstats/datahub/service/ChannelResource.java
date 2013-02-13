@@ -59,4 +59,11 @@ public class ChannelResource {
         map.put("name", channelName);
         return map;
     }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{channelName: .*}")
+    public void insert(@PathParam("channelName") String channelName) {
+        throw new RuntimeException("Inserting into " + channelName + " is not yet built.");
+    }
 }
