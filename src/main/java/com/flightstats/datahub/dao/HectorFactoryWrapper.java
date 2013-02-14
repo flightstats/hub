@@ -1,5 +1,6 @@
 package com.flightstats.datahub.dao;
 
+import me.prettyprint.cassandra.utils.TimeUUIDUtils;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
@@ -11,6 +12,7 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Let's hide the fact that HFactory is all static methods.  :/
@@ -39,5 +41,13 @@ public class HectorFactoryWrapper {
 
     public Keyspace createKeyspace(String keyspaceName, Cluster cluster) {
         return HFactory.createKeyspace(keyspaceName, cluster);
+    }
+
+    public UUID getUniqueTimeUUIDinMillis() {
+        return TimeUUIDUtils.getUniqueTimeUUIDinMillis();
+    }
+
+    public long getTimeFromUUID(UUID uuid) {
+        return TimeUUIDUtils.getTimeFromUUID(uuid);
     }
 }

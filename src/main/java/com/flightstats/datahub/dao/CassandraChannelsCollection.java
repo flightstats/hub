@@ -1,7 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.google.common.annotations.VisibleForTesting;
+import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -11,8 +11,9 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 
-import java.util.Date;
-
+/**
+ * Encapsulates the channel creation, existence checks, and associated metadata.
+ */
 public class CassandraChannelsCollection {
 
     static final String CHANNELS_ROW_KEY = "DATA_HUB_CHANNELS";
@@ -21,16 +22,18 @@ public class CassandraChannelsCollection {
     private final CassandraConnector connector;
     private final Serializer<ChannelConfiguration> channelConfigSerializer;
     private final HectorFactoryWrapper hector;
+    private final TimeProvider timeProvider;
 
     @Inject
-    public CassandraChannelsCollection(CassandraConnector connector, Serializer<ChannelConfiguration> channelConfigSerializer, HectorFactoryWrapper hector) {
+    public CassandraChannelsCollection(CassandraConnector connector, Serializer<ChannelConfiguration> channelConfigSerializer, HectorFactoryWrapper hector, TimeProvider timeProvider) {
         this.connector = connector;
         this.channelConfigSerializer = channelConfigSerializer;
         this.hector = hector;
+        this.timeProvider = timeProvider;
     }
 
     public ChannelConfiguration createChannel(String name) {
-        ChannelConfiguration channelConfig = new ChannelConfiguration(name, getDate());
+        ChannelConfiguration channelConfig = new ChannelConfiguration(name, timeProvider.getDate());
         createColumnFamilyForChannel(channelConfig);
         addMetaDataForNewChannel(channelConfig);
         return channelConfig;
@@ -40,7 +43,6 @@ public class CassandraChannelsCollection {
         connector.createColumnFamilyIfNeeded(CHANNELS_COLUMN_FAMILY_NAME);
         StringSerializer keySerializer = StringSerializer.get();
         Mutator<String> mutator = connector.buildMutator(keySerializer);
-        //TODO: Guard with mutex?  Mutator is not a thread-safe class....
         HColumn<String, ChannelConfiguration> column = hector.createColumn(channelConfig.getName(), channelConfig, StringSerializer.get(),
                 channelConfigSerializer);
         mutator.insert(CHANNELS_ROW_KEY, CHANNELS_COLUMN_FAMILY_NAME, column);
@@ -67,10 +69,5 @@ public class CassandraChannelsCollection {
         QueryResult<HColumn<String, ChannelConfiguration>> result = columnQuery.execute();
         HColumn<String, ChannelConfiguration> column = result.get();
         return column == null ? null : column.getValue();
-    }
-
-    @VisibleForTesting
-    Date getDate() {
-        return new Date();
     }
 }

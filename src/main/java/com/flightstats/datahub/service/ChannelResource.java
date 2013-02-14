@@ -3,6 +3,7 @@ package com.flightstats.datahub.service;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
+import com.flightstats.datahub.model.ValueInsertedResponse;
 import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
 
@@ -13,6 +14,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -38,9 +40,7 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Linked<ChannelConfiguration> createChannel(ChannelCreationRequest channelCreationRequest) {
-
         ChannelConfiguration channelConfiguration = channelDao.createChannel(channelCreationRequest.getName());
-
         URI requestUri = uriInfo.getRequestUri();
         URI channelUri = URI.create(requestUri + "/" + channelCreationRequest.getName());
         return linked(channelConfiguration)
@@ -60,10 +60,25 @@ public class ChannelResource {
         return map;
     }
 
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{channelName: .*}/{stuff}")
+    public String getStuff(@PathParam("channelName") String channelName, @PathParam("stuff") String stuff) {
+        return stuff;
+    }
+
+
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{channelName: .*}")
-    public void insert(@PathParam("channelName") String channelName) {
-        throw new RuntimeException("Inserting into " + channelName + " is not yet built.");
+    public Linked<ValueInsertedResponse> insert(@PathParam("channelName") String channelName, byte[] data) {
+        UUID uid = channelDao.insert(channelName, data);
+        URI channelUri = uriInfo.getRequestUri();
+        URI payloadUri = URI.create(channelUri.toString() + "/" + uid.toString());
+        return linked(new ValueInsertedResponse(uid))
+                .withLink("channel", channelUri)
+                .withLink("self", payloadUri)
+                .build();
     }
 }
