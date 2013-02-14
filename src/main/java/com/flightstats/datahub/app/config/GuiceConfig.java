@@ -71,6 +71,7 @@ public class GuiceConfig extends GuiceServletContextListener {
 
         @Inject
         @Provides
+        @Singleton
         public CassandraConnector buildCassandraConnector(CassandraConnectorFactory factory) {
             return factory.build();
         }
