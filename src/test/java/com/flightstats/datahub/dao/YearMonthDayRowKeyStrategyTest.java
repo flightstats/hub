@@ -19,7 +19,7 @@ public class YearMonthDayRowKeyStrategyTest {
         when(hector.getTimeFromUUID(uid)).thenReturn(12345678910L);
 
         YearMonthDayRowKeyStrategy testClass = new YearMonthDayRowKeyStrategy(hector);
-        String result = testClass.buildKey(null, uid, null);
+        String result = testClass.buildKey(null, uid);
         assertEquals("19700523", result);
     }
 }

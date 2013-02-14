@@ -61,18 +61,10 @@ public class ChannelResource {
     }
 
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{channelName: .*}/{stuff}")
-    public String getStuff(@PathParam("channelName") String channelName, @PathParam("stuff") String stuff) {
-        return stuff;
-    }
-
-
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{channelName: .*}")
-    public Linked<ValueInsertedResponse> insert(@PathParam("channelName") String channelName, byte[] data) {
+    public Linked<ValueInsertedResponse> insertValue(@PathParam("channelName") String channelName, byte[] data) {
         UUID uid = channelDao.insert(channelName, data);
         URI channelUri = uriInfo.getRequestUri();
         URI payloadUri = URI.create(channelUri.toString() + "/" + uid.toString());
@@ -80,5 +72,16 @@ public class ChannelResource {
                 .withLink("channel", channelUri)
                 .withLink("self", payloadUri)
                 .build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Path("/{channelName: .*}/{id}")
+    public byte[] getValue(@PathParam("channelName") String channelName, @PathParam("id") UUID id) {
+        byte[] result = channelDao.getValue(channelName, id);
+        if (result == null) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+        return result;
     }
 }

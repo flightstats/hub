@@ -7,12 +7,15 @@ import com.flightstats.rest.Linked;
 import org.junit.Test;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.fail;
 import static org.mockito.Mockito.*;
 
 public class ChannelResourceTest {
@@ -57,7 +60,7 @@ public class ChannelResourceTest {
 
     }
 
-    @Test(expected = WebApplicationException.class)
+    @Test
     public void testGetChannelMetadataForUnknownChannel() throws Exception {
         String channelName = "UHF";
 
@@ -65,7 +68,49 @@ public class ChannelResourceTest {
         when(dao.channelExists(anyString())).thenReturn(false);
 
         ChannelResource testClass = new ChannelResource(null, dao);
-        Map<String, String> result = testClass.getChannelMetadata(channelName);
-        assertEquals(channelName, result.get("name"));
+        try {
+            testClass.getChannelMetadata(channelName);
+            fail("Should have thrown a 404");
+        } catch (WebApplicationException e) {
+            Response response = e.getResponse();
+            assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+        }
+    }
+
+    @Test
+    public void testGetValue() throws Exception {
+
+        String channelName = "canal4";
+        UUID uid = UUID.randomUUID();
+        byte[] expected = new byte[]{55, 66, 77, 88};
+
+        ChannelDao dao = mock(ChannelDao.class);
+
+        when(dao.getValue(channelName, uid)).thenReturn(expected);
+
+        ChannelResource testClass = new ChannelResource(null, dao);
+        byte[] result = testClass.getValue(channelName, uid);
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void testGetValueNotFound() throws Exception {
+
+        String channelName = "canal4";
+        UUID uid = UUID.randomUUID();
+
+        ChannelDao dao = mock(ChannelDao.class);
+
+        when(dao.getValue(channelName, uid)).thenReturn(null);
+
+        ChannelResource testClass = new ChannelResource(null, dao);
+        try {
+            testClass.getValue(channelName, uid);
+            fail("Should have thrown exception.");
+        } catch (WebApplicationException e) {
+            assertEquals(Response.Status.NOT_FOUND.getStatusCode(), e.getResponse().getStatus());
+        }
+
     }
 }

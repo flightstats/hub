@@ -11,4 +11,6 @@ public interface ChannelDao {
     ChannelConfiguration createChannel(String name);
 
     UUID insert(String channelName, byte[] data);
+
+    byte[] getValue(String channelName, UUID id);
 }

@@ -12,7 +12,7 @@ import java.util.UUID;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
-public class CassandraInserterTest {
+public class CassandraValueWriterTest {
 
     @Test
     public void testInsert() throws Exception {
@@ -30,10 +30,10 @@ public class CassandraInserterTest {
         when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
         when(hector.getUniqueTimeUUIDinMillis()).thenReturn(uuid);
         when(hector.createColumn(uuid, data, UUIDSerializer.get(), BytesArraySerializer.get())).thenReturn(column);
-        when(rowStrategy.buildKey(channelName, uuid, data)).thenReturn(key);
+        when(rowStrategy.buildKey(channelName, uuid)).thenReturn(key);
 
-        CassandraInserter testClass = new CassandraInserter(connector, hector, rowStrategy);
-        UUID result = testClass.insert(channelName, data);
+        CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy);
+        UUID result = testClass.write(channelName, data);
 
         assertEquals(uuid, result);
         verify(mutator).insert(key, channelName, column);
