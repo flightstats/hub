@@ -8,14 +8,14 @@ import com.google.inject.Inject;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.flightstats.rest.Linked.linked;
 
+/**
+ * This resource represents the collection of all channels in the DataHub.
+ */
 @Path("/channel")
 public class ChannelResource {
 
@@ -38,25 +38,11 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Linked<ChannelConfiguration> createChannel(ChannelCreationRequest channelCreationRequest) {
-
         ChannelConfiguration channelConfiguration = channelDao.createChannel(channelCreationRequest.getName());
-
         URI requestUri = uriInfo.getRequestUri();
         URI channelUri = URI.create(requestUri + "/" + channelCreationRequest.getName());
         return linked(channelConfiguration)
                 .withLink("self", channelUri)
                 .build();
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{channelName: .*}")
-    public Map<String, String> getChannelMetadata(@PathParam("channelName") String channelName) {
-        if (!channelDao.channelExists(channelName)) {
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-        Map<String, String> map = new HashMap<>();
-        map.put("name", channelName);
-        return map;
     }
 }

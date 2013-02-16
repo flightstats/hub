@@ -6,11 +6,9 @@ import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.rest.Linked;
 import org.junit.Test;
 
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
-import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
 import static org.mockito.Mockito.*;
@@ -41,31 +39,5 @@ public class ChannelResourceTest {
         verify(dao).createChannel(channelName);
 
         assertEquals(expected, result);
-    }
-
-    @Test
-    public void testGetChannelMetadataForKnownChannel() throws Exception {
-        String channelName = "UHF";
-
-        ChannelDao dao = mock(ChannelDao.class);
-        when(dao.channelExists(anyString())).thenReturn(true);
-
-        ChannelResource testClass = new ChannelResource(null, dao);
-
-        Map<String, String> result = testClass.getChannelMetadata(channelName);
-        assertEquals(channelName, result.get("name"));
-
-    }
-
-    @Test(expected = WebApplicationException.class)
-    public void testGetChannelMetadataForUnknownChannel() throws Exception {
-        String channelName = "UHF";
-
-        ChannelDao dao = mock(ChannelDao.class);
-        when(dao.channelExists(anyString())).thenReturn(false);
-
-        ChannelResource testClass = new ChannelResource(null, dao);
-        Map<String, String> result = testClass.getChannelMetadata(channelName);
-        assertEquals(channelName, result.get("name"));
     }
 }

@@ -4,3 +4,4 @@
  make this better over time.
  */
 channelUrl = 'http://datahub-01.cloud-east.dev:8080/channel';
+//channelUrl = 'http://localhost:8080/channel';
