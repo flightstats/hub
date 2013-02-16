@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.util.TimeProvider;
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -32,16 +33,13 @@ public class CassandraChannelsCollectionTest {
         HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
         Mutator<String> mutator = mock(Mutator.class);
         Serializer<ChannelConfiguration> valueSerializer = mock(Serializer.class);
+        TimeProvider timeProvider = mock(TimeProvider.class);
 
         when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
         when(hector.createColumn(channelName, expected, StringSerializer.get(), valueSerializer)).thenReturn(column);
+        when(timeProvider.getDate()).thenReturn(creationDate);
 
-        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector) {
-            @Override
-            Date getDate() {
-                return creationDate;
-            }
-        };
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider);
 
         ChannelConfiguration result = testClass.createChannel(channelName);
 
@@ -75,7 +73,7 @@ public class CassandraChannelsCollectionTest {
         when(column.getValue()).thenReturn(channelConfiguration);
 
 
-        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, channelConfigSerializer, hector);
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, channelConfigSerializer, hector, null);
         boolean result = testClass.channelExists(channelName);
         assertTrue(result);
     }

@@ -1,9 +1,6 @@
 package com.flightstats.datahub.app.config;
 
-import com.flightstats.datahub.dao.CassandraChannelDao;
-import com.flightstats.datahub.dao.CassandraConnector;
-import com.flightstats.datahub.dao.CassandraConnectorFactory;
-import com.flightstats.datahub.dao.ChannelDao;
+import com.flightstats.datahub.dao.*;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.rest.JacksonHectorSerializer;
 import com.google.inject.*;
@@ -22,6 +19,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 public class GuiceConfig extends GuiceServletContextListener {
 
@@ -54,6 +52,8 @@ public class GuiceConfig extends GuiceServletContextListener {
             bind(CassandraConnectorFactory.class).in(Singleton.class);
             bind(new TypeLiteral<Serializer<ChannelConfiguration>>() {
             }).toInstance(jacksonHectorSerializer);
+            bind(new TypeLiteral<RowKeyStrategy<String, UUID, byte[]>>() {
+            }).to(YearMonthDayRowKeyStrategy.class);
             bind(ChannelDao.class).to(CassandraChannelDao.class).in(Singleton.class);
             serve("/*").with(GuiceContainer.class, JERSEY_PROPERTIES);
         }
@@ -71,6 +71,7 @@ public class GuiceConfig extends GuiceServletContextListener {
 
         @Inject
         @Provides
+        @Singleton
         public CassandraConnector buildCassandraConnector(CassandraConnectorFactory factory) {
             return factory.build();
         }
