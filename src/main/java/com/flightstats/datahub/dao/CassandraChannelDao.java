@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -34,13 +35,14 @@ public class CassandraChannelDao implements ChannelDao {
     }
 
     @Override
-    public ValueInsertionResult insert(String channelName, byte[] data) {
-        logger.info("Inserting " + data.length + " bytes into channel " + channelName);
-        return cassandraValueWriter.write(channelName, data);
+    public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
+        logger.info("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
+        DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
+        return cassandraValueWriter.write(channelName, value);
     }
 
     @Override
-    public byte[] getValue(String channelName, UUID id) {
+    public DataHubCompositeValue getValue(String channelName, UUID id) {
         logger.info("Fetching " + id.toString() + " from channel " + channelName);
         return cassandraValueReader.read(channelName, id);
     }
