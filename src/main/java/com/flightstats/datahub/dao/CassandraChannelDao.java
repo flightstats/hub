@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,7 @@ public class CassandraChannelDao implements ChannelDao {
     }
 
     @Override
-    public UUID insert(String channelName, byte[] data) {
+    public ValueInsertionResult insert(String channelName, byte[] data) {
         logger.info("Inserting " + data.length + " bytes into channel " + channelName);
         return cassandraValueWriter.write(channelName, data);
     }
