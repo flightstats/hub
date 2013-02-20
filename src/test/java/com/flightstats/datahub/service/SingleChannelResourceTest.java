@@ -1,7 +1,7 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.model.ValueInsertedResponse;
+import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
 import org.junit.Test;
@@ -10,6 +10,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
@@ -62,19 +63,23 @@ public class SingleChannelResourceTest {
         URI requestUri = URI.create("http://testification.com/channel/spoon");
         HalLink selfLink = new HalLink("self", URI.create(channelUri.toString() + "/" + uid));
         HalLink channelLink = new HalLink("channel", channelUri);
+        Date date = new Date(123456L);
+        ValueInsertionResult expectedResponse = new ValueInsertionResult(uid, date);
 
         ChannelDao dao = mock(ChannelDao.class);
         UriInfo urlInfo = mock(UriInfo.class);
 
         when(dao.channelExists(anyString())).thenReturn(true);
-        when(dao.insert(channelName, data)).thenReturn(uid);
+        when(dao.insert(channelName, data)).thenReturn(new ValueInsertionResult(uid, date));
         when(urlInfo.getRequestUri()).thenReturn(requestUri);
 
         SingleChannelResource testClass = new SingleChannelResource(dao, urlInfo);
-        Linked<ValueInsertedResponse> response = testClass.insertValue(channelName, data);
+        Linked<ValueInsertionResult> response = testClass.insertValue(channelName, data);
 
         assertThat(response.getLinks().getLinks(), hasItems(selfLink, channelLink));
-        assertEquals(uid, response.getObject().getId());
+        ValueInsertionResult insertionResult = response.getObject();
+
+        assertEquals(expectedResponse, insertionResult);
     }
 
     @Test

@@ -28,16 +28,9 @@ frisby.create('Inserting a value into a channel.')
         id: function (value) {
             expect(value).toMatch(/^[a-f,0-9]{8}-[a-f,0-9]{4}-[a-f,0-9]{4}-[a-f,0-9]{4}-[a-f,0-9]{12}$/);
         },
-    })
-    .afterJSON(function (result) {
-        var valueUrl = result['_links']['self']['href'];
-        console.log('Now attempting to fetch back my data from ' + valueUrl);
-        frisby.create('Fetching value to ensure that it was inserted.')
-            .get(valueUrl)
-            .expectStatus(200)
-            .expectHeader('content-type', 'application/octet-stream')
-            .expectBodyContains(messageText)
-            .toss();
+        timestamp: function (value) {
+            expect(value).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\d-\d\d:\d\d$/);
+        }
     })
     .inspectJSON()
     .toss();
