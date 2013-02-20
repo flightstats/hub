@@ -1,12 +1,13 @@
 package com.flightstats.datahub.dao;
 
+import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.google.inject.Inject;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
-public class YearMonthDayRowKeyStrategy implements RowKeyStrategy<String, UUID, byte[]> {
+public class YearMonthDayRowKeyStrategy implements RowKeyStrategy<String, UUID, DataHubCompositeValue> {
 
     private final HectorFactoryWrapper hector;
 

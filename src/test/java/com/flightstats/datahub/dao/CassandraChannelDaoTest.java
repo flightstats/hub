@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import org.junit.Test;
 
@@ -41,14 +42,16 @@ public class CassandraChannelDaoTest {
         String channelName = "foo";
         byte[] data = "bar".getBytes();
         Date date = new Date(2345678910L);
+        String contentType = "text/plain";
+        DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
         ValueInsertionResult expected = new ValueInsertionResult(uid, date);
 
         CassandraValueWriter inserter = mock(CassandraValueWriter.class);
 
-        when(inserter.write(channelName, data)).thenReturn(new ValueInsertionResult(uid, date));
+        when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(uid, date));
         CassandraChannelDao testClass = new CassandraChannelDao(null, inserter, null);
 
-        ValueInsertionResult result = testClass.insert(channelName, data);
+        ValueInsertionResult result = testClass.insert(channelName, contentType, data);
 
         assertEquals(expected, result);
     }
@@ -57,7 +60,8 @@ public class CassandraChannelDaoTest {
     public void testGetValue() throws Exception {
         String channelName = "cccccc";
         UUID uid = UUID.randomUUID();
-        byte[] expected = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
+        byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
+        DataHubCompositeValue expected = new DataHubCompositeValue("text/plain", data);
 
         CassandraValueReader reader = mock(CassandraValueReader.class);
 
@@ -65,7 +69,7 @@ public class CassandraChannelDaoTest {
 
         CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader);
 
-        byte[] result = testClass.getValue(channelName, uid);
+        DataHubCompositeValue result = testClass.getValue(channelName, uid);
         assertEquals(expected, result);
     }
 }

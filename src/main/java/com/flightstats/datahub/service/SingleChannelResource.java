@@ -44,11 +44,12 @@ public class SingleChannelResource {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public Linked<ValueInsertionResult> insertValue(@PathParam("channelName") String channelName, byte[] data) {
+    public Linked<ValueInsertionResult> insertValue(@HeaderParam("Content-Type") String contentType, @PathParam(
+            "channelName") String channelName, byte[] data) {
         if (!channelDao.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        ValueInsertionResult insertionResult = channelDao.insert(channelName, data);
+        ValueInsertionResult insertionResult = channelDao.insert(channelName, contentType, data);
         URI channelUri = uriInfo.getRequestUri();
         URI payloadUri = URI.create(channelUri.toString() + "/" + insertionResult.getId().toString());
         return linked(insertionResult)

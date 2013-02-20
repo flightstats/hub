@@ -21,20 +21,20 @@ frisby.create('Inserting a value into a channel.')
     .expectJSON({
         _links: {
             channel: {
-                href: thisChannelResource 
+                href: thisChannelResource
             }
-			//TOOD: Validate the value "self" url
+            //TOOD: Validate the value "self" url
         },
         //TODO: validate the id
     })
     .afterJSON(function (result) {
-		var valueUrl = result['_links']['self']['href'];
-		console.log('Now attempting to fetch back my data from ' + valueUrl);
+        var valueUrl = result['_links']['self']['href'];
+        console.log('Now attempting to fetch back my data from ' + valueUrl);
         frisby.create('Fetching value to ensure that it was inserted.')
             .get(result['_links']['self']['href'])
             .expectStatus(200)
-			.expectHeader('content-type', 'application/octet-stream')
-			.expectHeader('content-length', "0")
+            .expectHeader('content-type', 'text/plain')
+            .expectHeader('content-length', "0")
             .toss();
     })
     .inspectJSON()
