@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.ValueInsertionResult;
 import org.junit.Test;
 
 import java.util.Date;
@@ -39,15 +40,17 @@ public class CassandraChannelDaoTest {
         UUID uid = UUID.randomUUID();
         String channelName = "foo";
         byte[] data = "bar".getBytes();
+        Date date = new Date(2345678910L);
+        ValueInsertionResult expected = new ValueInsertionResult(uid, date);
 
         CassandraValueWriter inserter = mock(CassandraValueWriter.class);
 
-        when(inserter.write(channelName, data)).thenReturn(uid);
+        when(inserter.write(channelName, data)).thenReturn(new ValueInsertionResult(uid, date));
         CassandraChannelDao testClass = new CassandraChannelDao(null, inserter, null);
 
-        UUID result = testClass.insert(channelName, data);
+        ValueInsertionResult result = testClass.insert(channelName, data);
 
-        assertEquals(uid, result);
+        assertEquals(expected, result);
     }
 
     @Test

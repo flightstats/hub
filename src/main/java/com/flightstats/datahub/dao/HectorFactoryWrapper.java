@@ -11,6 +11,7 @@ import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,5 +50,9 @@ public class HectorFactoryWrapper {
 
     public long getTimeFromUUID(UUID uuid) {
         return TimeUUIDUtils.getTimeFromUUID(uuid);
+    }
+
+    public Date getDateFromUUID(UUID uuid) {
+        return new Date(getTimeFromUUID(uuid));
     }
 }

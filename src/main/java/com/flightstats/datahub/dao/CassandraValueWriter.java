@@ -1,5 +1,6 @@
 package com.flightstats.datahub.dao;
 
+import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
@@ -7,6 +8,7 @@ import me.prettyprint.cassandra.serializers.UUIDSerializer;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 
+import java.util.Date;
 import java.util.UUID;
 
 public class CassandraValueWriter {
@@ -22,7 +24,7 @@ public class CassandraValueWriter {
         this.rowKeyStrategy = rowKeyStrategy;
     }
 
-    public UUID write(String channelName, byte[] data) {
+    public ValueInsertionResult write(String channelName, byte[] data) {
         Mutator<String> mutator = connector.buildMutator(StringSerializer.get());
 
         UUID columnName = hector.getUniqueTimeUUIDinMillis();
@@ -31,6 +33,7 @@ public class CassandraValueWriter {
         String rowKey = rowKeyStrategy.buildKey(channelName, columnName);
 
         mutator.insert(rowKey, channelName, column);
-        return columnName;
+        Date date = hector.getDateFromUUID(columnName);
+        return new ValueInsertionResult(columnName, date);
     }
 }
