@@ -107,8 +107,6 @@ task generateCoverageReport << {
 
 startScripts {
     ext.jvmOpts = "-Xmx256m"
-//    inputs.property("jvmOpts", { ext.jvmOpts }) // for incremental build to work properly
-
     doLast {
         unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"$ext.jvmOpts\"")
     }
