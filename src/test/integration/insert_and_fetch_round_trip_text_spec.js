@@ -35,7 +35,7 @@ frisby.create('Inserting a value into a channel.')
         frisby.create('Fetching value to ensure that it was inserted.')
             .get(valueUrl)
             .expectStatus(200)
-            .expectHeader('content-type', 'application/octet-stream')
+            .expectHeader('content-type', 'text/plain')
             .expectBodyContains(messageText)
             .toss();
     })
