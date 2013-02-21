@@ -20,7 +20,7 @@ public class DataHubKeyGeneratorTest {
     @Test
     public void testNewKeySimple() throws Exception {
         Date date = new Date(12345678910L);
-        DataHubKey expected = new DataHubKey(date, 0);
+        DataHubKey expected = new DataHubKey(date, (short) 0);
 
         TimeProvider timeProvider = mock(TimeProvider.class);
 
@@ -37,9 +37,9 @@ public class DataHubKeyGeneratorTest {
         Date date0 = new Date(12345678910L);
         Date date1 = new Date(12345678911L);
         Date date2 = new Date(12345678912L);
-        DataHubKey expected0 = new DataHubKey(date0, 0);
-        DataHubKey expected1 = new DataHubKey(date1, 0);
-        DataHubKey expected2 = new DataHubKey(date2, 0);
+        DataHubKey expected0 = new DataHubKey(date0, (short) 0);
+        DataHubKey expected1 = new DataHubKey(date1, (short) 0);
+        DataHubKey expected2 = new DataHubKey(date2, (short) 0);
 
         TimeProvider timeProvider = mock(TimeProvider.class);
 
@@ -55,9 +55,9 @@ public class DataHubKeyGeneratorTest {
     @Test
     public void testNewKey_sequentialInSameMilliseconds() throws Exception {
         Date date = new Date(12345678910L);
-        DataHubKey expected0 = new DataHubKey(date, 0);
-        DataHubKey expected1 = new DataHubKey(date, 1);
-        DataHubKey expected2 = new DataHubKey(date, 2);
+        DataHubKey expected0 = new DataHubKey(date, (short) 0);
+        DataHubKey expected1 = new DataHubKey(date, (short) 1);
+        DataHubKey expected2 = new DataHubKey(date, (short) 2);
 
         TimeProvider timeProvider = mock(TimeProvider.class);
 
@@ -78,11 +78,11 @@ public class DataHubKeyGeneratorTest {
         Date date3 = new Date(12345678912L); //forwards (back at starting point actually)
         Date date4 = new Date(12345678913L); //forwards (just after starting point)
 
-        DataHubKey expected0 = new DataHubKey(date0, 0);
-        DataHubKey expected1 = new DataHubKey(date0, 1);
-        DataHubKey expected2 = new DataHubKey(date0, 2);
-        DataHubKey expected3 = new DataHubKey(date0, 3);
-        DataHubKey expected4 = new DataHubKey(date4, 0);
+        DataHubKey expected0 = new DataHubKey(date0, (short) 0);
+        DataHubKey expected1 = new DataHubKey(date0, (short) 1);
+        DataHubKey expected2 = new DataHubKey(date0, (short) 2);
+        DataHubKey expected3 = new DataHubKey(date0, (short) 3);
+        DataHubKey expected4 = new DataHubKey(date4, (short) 0);
 
         TimeProvider timeProvider = mock(TimeProvider.class);
 

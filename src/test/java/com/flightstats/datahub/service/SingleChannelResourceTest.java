@@ -69,7 +69,7 @@ public class SingleChannelResourceTest {
         String channelName = "whizbang";
         byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
         String contentType = "text/plain";
-        DataHubKey key = new DataHubKey(new Date(66), 5);
+        DataHubKey key = new DataHubKey(new Date(66), (short) 5);
         URI channelUri = URI.create("http://testification.com/channel/spoon");
         URI requestUri = URI.create("http://testification.com/channel/spoon");
         HalLink selfLink = new HalLink("self", URI.create(channelUri.toString() + "/" + key.asSortableString()));

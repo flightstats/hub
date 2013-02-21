@@ -10,7 +10,7 @@ public class DataHubKeyGenerator {
     private final Object mutex = new Object();
 
     private Date lastDate = new Date(Long.MIN_VALUE);
-    private int sequence;
+    private short sequence;
 
     public DataHubKeyGenerator(TimeProvider timeProvider) {
         this.timeProvider = timeProvider;

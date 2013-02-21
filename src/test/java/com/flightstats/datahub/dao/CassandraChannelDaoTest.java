@@ -40,7 +40,7 @@ public class CassandraChannelDaoTest {
     @Test
     public void testInsert() throws Exception {
         Date date = new Date(2345678910L);
-        DataHubKey key = new DataHubKey(date, 3);
+        DataHubKey key = new DataHubKey(date, (short) 3);
         String channelName = "foo";
         byte[] data = "bar".getBytes();
         String contentType = "text/plain";

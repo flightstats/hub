@@ -10,9 +10,9 @@ import java.util.Date;
 public class DataHubKey {
 
     private final Date date;
-    private final int sequence;
+    private final short sequence;
 
-    public DataHubKey(Date date, int sequence) {
+    public DataHubKey(Date date, short sequence) {
         this.date = date;
         this.sequence = sequence;
     }
@@ -21,7 +21,7 @@ public class DataHubKey {
         return date;
     }
 
-    public int getSequence() {
+    public short getSequence() {
         return sequence;
     }
 
@@ -37,10 +37,6 @@ public class DataHubKey {
         }
 
         return result + "." + String.format("%06d", sequence);
-    }
-
-    public static DataHubKey fromSortableString() {
-        return null;
     }
 
     @Override
