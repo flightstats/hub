@@ -23,7 +23,7 @@ public class ValueInsertionResultMixInTest {
         objectMapper.writeValue(out, valueInsertionResult);
         String result = out.toString();
         assertEquals("{\n" +
-                "  \"id\" : \"00000000-0000-002a-0000-00000000002b\",\n" +
+                "  \"id\" : \"000021CJ7HU0K011\",\n" +
                 "  \"timestamp\" : \"2005-08-07T16:17:58.922-07:00\"\n" +
                 "}", result);
     }

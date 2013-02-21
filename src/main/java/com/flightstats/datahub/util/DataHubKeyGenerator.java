@@ -1,6 +1,7 @@
 package com.flightstats.datahub.util;
 
 import com.flightstats.datahub.model.DataHubKey;
+import com.google.inject.Inject;
 
 import java.util.Date;
 
@@ -12,6 +13,7 @@ public class DataHubKeyGenerator {
     private Date lastDate = new Date(Long.MIN_VALUE);
     private short sequence;
 
+    @Inject
     public DataHubKeyGenerator(TimeProvider timeProvider) {
         this.timeProvider = timeProvider;
     }

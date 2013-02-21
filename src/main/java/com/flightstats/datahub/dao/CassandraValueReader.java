@@ -2,54 +2,58 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
+import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.serializers.UUIDSerializer;
 import me.prettyprint.cassandra.service.ColumnSliceIterator;
-import me.prettyprint.cassandra.utils.TimeUUIDUtils;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
+import org.joda.time.DurationFieldType;
+import org.joda.time.LocalDate;
 
 import java.util.Date;
-import java.util.UUID;
 
 public class CassandraValueReader {
 
     private final CassandraConnector connector;
     private final HectorFactoryWrapper hector;
-    private final RowKeyStrategy<String, UUID, DataHubCompositeValue> rowKeyStrategy;
+    private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
     private final CassandraChannelsCollection channelsCollection;
+    private final DataHubKeyRenderer keyRenderer;
 
     @Inject
-    public CassandraValueReader(CassandraConnector connector, HectorFactoryWrapper hector, RowKeyStrategy<String, UUID, DataHubCompositeValue> rowKeyStrategy, CassandraChannelsCollection channelsCollection) {
+    public CassandraValueReader(CassandraConnector connector, HectorFactoryWrapper hector, RowKeyStrategy<String, DataHubKey,
+            DataHubCompositeValue> rowKeyStrategy, CassandraChannelsCollection channelsCollection, DataHubKeyRenderer keyRenderer) {
         this.connector = connector;
         this.hector = hector;
         this.rowKeyStrategy = rowKeyStrategy;
         this.channelsCollection = channelsCollection;
+        this.keyRenderer = keyRenderer;
     }
 
-    public DataHubCompositeValue read(String channelName, UUID id) {
+    public DataHubCompositeValue read(String channelName, DataHubKey key) {
         Keyspace keyspace = connector.getKeyspace();
-        ColumnQuery<String, UUID, DataHubCompositeValue> query = hector.createColumnQuery(keyspace, StringSerializer.get(), UUIDSerializer.get(),
+        ColumnQuery<String, String, DataHubCompositeValue> query = hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(),
                 DataHubCompositeValueSerializer.get());
-        String key = rowKeyStrategy.buildKey(channelName, id);
-        QueryResult<HColumn<UUID, DataHubCompositeValue>> queryResult = query.setColumnFamily(channelName)
-                                                                             .setKey(key)
-                                                                             .setName(id)
-                                                                             .execute();
-        HColumn<UUID, DataHubCompositeValue> column = queryResult.get();
+        String rowKey = rowKeyStrategy.buildKey(channelName, key);
+        QueryResult<HColumn<String, DataHubCompositeValue>> queryResult = query.setColumnFamily(channelName)
+                                                                               .setKey(rowKey)
+                                                                               .setName(keyRenderer.keyToString(key))
+                                                                               .execute();
+        HColumn<String, DataHubCompositeValue> column = queryResult.get();
         return column == null ? null : column.getValue();
     }
 
-    public Optional<UUID> findLatestId(String channelName) {
+    public Optional<DataHubKey> findLatestId(String channelName) {
 
         Keyspace keyspace = connector.getKeyspace();
-        SliceQuery<String, UUID, DataHubCompositeValue> rawSliceQuery = hector.createSliceQuery(keyspace, StringSerializer.get(),
-                UUIDSerializer.get(),
+        SliceQuery<String, String, DataHubCompositeValue> rawSliceQuery = hector.createSliceQuery(keyspace, StringSerializer.get(),
+                StringSerializer.get(),
                 DataHubCompositeValueSerializer.get());
 
         ChannelConfiguration config = channelsCollection.getChannelConfiguration(channelName);
@@ -57,20 +61,33 @@ public class CassandraValueReader {
         if (lastUpdateDate == null) {
             return Optional.absent();
         }
-        UUID uidForLastUpdateTime = TimeUUIDUtils.getTimeUUID(lastUpdateDate.getTime());
-        String key = rowKeyStrategy.buildKey(channelName, uidForLastUpdateTime);
 
-        UUID minUUID = new UUID(0x0000000000000000L, 0x0000000000000000L);
-        UUID maxUUID = new UUID(0xFFFFFFFFFFFFFFFFL, 0xFFFFFFFFFFFFFFFFL);
-        SliceQuery<String, UUID, DataHubCompositeValue> sliceQuery = rawSliceQuery.setColumnFamily(channelName)
-                                                                                  .setKey(key);
-        ColumnSliceIterator<String, UUID, DataHubCompositeValue> iterator = new ColumnSliceIterator<>(sliceQuery, maxUUID, minUUID, true, 1);
+        LocalDate localDate = new LocalDate(lastUpdateDate.getTime());
+        Date beginningOfDay = localDate.toDateTimeAtStartOfDay().toDate();      //TODO: This knowledge shouldn't be in here.
+        Date endOfDay = localDate.withFieldAdded(DurationFieldType.days(), 1)
+                                 .toDateTimeAtStartOfDay()
+                                 .toDate();      //TODO: This knowledge shouldn't be in here.
+
+        DataHubKey minKeyForDay = new DataHubKey(beginningOfDay, (short) 0);
+        DataHubKey maxKeyForDay = new DataHubKey(endOfDay, (short) 0);
+
+        String maxColumnValue = keyRenderer.keyToString(maxKeyForDay);
+        String minColumnValue = keyRenderer.keyToString(minKeyForDay);
+
+        String rowKey = rowKeyStrategy.buildKey(channelName, new DataHubKey(lastUpdateDate, (short) 0));
+
+        SliceQuery<String, String, DataHubCompositeValue> sliceQuery = rawSliceQuery.setColumnFamily(channelName).setKey(rowKey);
+
+        ColumnSliceIterator<String, String, DataHubCompositeValue> iterator = new ColumnSliceIterator<>(sliceQuery, maxColumnValue, minColumnValue,
+                true, 1);
 
         if (!iterator.hasNext()) {
             return null;
         }
-        HColumn<UUID, DataHubCompositeValue> column = iterator.next();
-        return Optional.of(column.getName());
+        HColumn<String, DataHubCompositeValue> column = iterator.next();
+        String columnName = column.getName();
+
+        return Optional.of(keyRenderer.fromString(columnName));
     }
 
 }

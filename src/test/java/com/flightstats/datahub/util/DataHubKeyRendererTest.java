@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.util.Date;
 
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertEquals;
 
 public class DataHubKeyRendererTest {
@@ -25,5 +26,21 @@ public class DataHubKeyRendererTest {
         assertEquals(expected, result);
     }
 
+    @Test
+    public void testSequencesAreOrderedWithinSameMillis() throws Exception {
+        Date date = new Date(55555L);
+        DataHubKey key1 = new DataHubKey(date, (short) 1);
+        DataHubKey key2 = new DataHubKey(date, (short) 2);
+        DataHubKey key3 = new DataHubKey(date, (short) 3);
+
+        DataHubKeyRenderer testClass = new DataHubKeyRenderer();
+
+        String string1 = testClass.keyToString(key1);
+        String string2 = testClass.keyToString(key2);
+        String string3 = testClass.keyToString(key3);
+
+        assertTrue(string1.compareTo(string2) < 0);
+        assertTrue(string2.compareTo(string3) < 0);
+    }
 
 }

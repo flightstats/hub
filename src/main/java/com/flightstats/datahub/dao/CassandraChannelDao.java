@@ -2,13 +2,12 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
+import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.UUID;
 
 public class CassandraChannelDao implements ChannelDao {
 
@@ -45,9 +44,9 @@ public class CassandraChannelDao implements ChannelDao {
     }
 
     @Override
-    public DataHubCompositeValue getValue(String channelName, UUID id) {
-        logger.info("Fetching " + id.toString() + " from channel " + channelName);
-        return cassandraValueReader.read(channelName, id);
+    public DataHubCompositeValue getValue(String channelName, DataHubKey key) {
+        logger.info("Fetching " + key.toString() + " from channel " + channelName);
+        return cassandraValueReader.read(channelName, key);
     }
 
     @Override
@@ -57,7 +56,7 @@ public class CassandraChannelDao implements ChannelDao {
     }
 
     @Override
-    public Optional<UUID> findLatestId(String channelName) {
+    public Optional<DataHubKey> findLatestId(String channelName) {
         return cassandraValueReader.findLatestId(channelName);
     }
 }
