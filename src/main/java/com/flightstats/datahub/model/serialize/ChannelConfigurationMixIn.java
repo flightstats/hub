@@ -6,7 +6,8 @@ import java.util.Date;
 
 public abstract class ChannelConfigurationMixIn {
 
-    public ChannelConfigurationMixIn(@JsonProperty("name") String name, @JsonProperty("creationDate") Date creationDate) {
+    public ChannelConfigurationMixIn(@JsonProperty("name") String name, @JsonProperty("creationDate") Date creationDate, @JsonProperty(
+            "lastUpdateDate") Date lastUpdateDate) {
         throw new IllegalStateException("Do not instantiate mix-in configuration classes.");
     }
 

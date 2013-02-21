@@ -26,7 +26,7 @@ public class CassandraChannelsCollectionTest {
     public void testCreateChannel() throws Exception {
         String channelName = "arturo";
         final Date creationDate = new Date(99999);
-        ChannelConfiguration expected = new ChannelConfiguration(channelName, creationDate);
+        ChannelConfiguration expected = new ChannelConfiguration(channelName, creationDate, null);
         HColumn<String, ChannelConfiguration> column = new HColumnImpl<String, ChannelConfiguration>(StringSerializer.get(), mock(Serializer.class));
 
         CassandraConnector connector = mock(CassandraConnector.class);
@@ -53,7 +53,7 @@ public class CassandraChannelsCollectionTest {
     public void testChannelExists() throws Exception {
 
         String channelName = "foo";
-        ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, null);
+        ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, new Date(), null);
 
         CassandraConnector connector = mock(CassandraConnector.class);
         Keyspace keyspace = mock(Keyspace.class);
@@ -76,5 +76,33 @@ public class CassandraChannelsCollectionTest {
         CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, channelConfigSerializer, hector, null);
         boolean result = testClass.channelExists(channelName);
         assertTrue(result);
+    }
+
+    @Test
+    public void testGetChannelConfiguration() throws Exception {
+        ChannelConfiguration expected = new ChannelConfiguration("thechan", new Date(), null);
+
+        CassandraConnector connector = mock(CassandraConnector.class);
+        Keyspace keyspace = mock(Keyspace.class);
+        HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
+        Serializer<ChannelConfiguration> channelConfigSerializer = mock(Serializer.class);
+        ColumnQuery<String, String, ChannelConfiguration> columnQuery = mock(ColumnQuery.class);
+        QueryResult<HColumn<String, ChannelConfiguration>> queryResult = mock(QueryResult.class);
+        HColumn<String, ChannelConfiguration> column = mock(HColumn.class);
+
+        when(columnQuery.setName(anyString())).thenReturn(columnQuery);
+        when(columnQuery.setKey(anyString())).thenReturn(columnQuery);
+        when(columnQuery.setColumnFamily(anyString())).thenReturn(columnQuery);
+        when(connector.getKeyspace()).thenReturn(keyspace);
+        when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), channelConfigSerializer)).thenReturn(columnQuery);
+        when(columnQuery.execute()).thenReturn(queryResult);
+        when(queryResult.get()).thenReturn(column);
+        when(column.getValue()).thenReturn(expected);
+
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, channelConfigSerializer, hector, null);
+
+        ChannelConfiguration result = testClass.getChannelConfiguration("thechan");
+
+        assertEquals(expected, result);
     }
 }

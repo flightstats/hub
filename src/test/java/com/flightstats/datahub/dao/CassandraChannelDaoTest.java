@@ -2,6 +2,7 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
+import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import org.junit.Test;
 
@@ -28,7 +29,7 @@ public class CassandraChannelDaoTest {
 
     @Test
     public void testCreateChannel() throws Exception {
-        ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999));
+        ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999), null);
         CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
         when(collection.createChannel("foo")).thenReturn(expected);
         CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null);
@@ -38,18 +39,19 @@ public class CassandraChannelDaoTest {
 
     @Test
     public void testInsert() throws Exception {
-        UUID uid = UUID.randomUUID();
+        Date date = new Date(2345678910L);
+        DataHubKey key = new DataHubKey(date, 3);
         String channelName = "foo";
         byte[] data = "bar".getBytes();
-        Date date = new Date(2345678910L);
         String contentType = "text/plain";
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
-        ValueInsertionResult expected = new ValueInsertionResult(uid, date);
+        ValueInsertionResult expected = new ValueInsertionResult(key);
 
+        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
         CassandraValueWriter inserter = mock(CassandraValueWriter.class);
 
-        when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(uid, date));
-        CassandraChannelDao testClass = new CassandraChannelDao(null, inserter, null);
+        when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(key));
+        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, null);
 
         ValueInsertionResult result = testClass.insert(channelName, contentType, data);
 
