@@ -30,6 +30,7 @@ public class ChannelContentResource {
     public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") UUID id) {
         DataHubCompositeValue columnValue = channelDao.getValue(channelName, id);
         if (columnValue == null) {
+            //TODO: dont throw here???
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         Response.ResponseBuilder builder = Response.status(Response.Status.OK);

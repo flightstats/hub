@@ -21,7 +21,7 @@ public class ChannelResourceTest {
 
         ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName);
         Date date = new Date();
-        ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, date);
+        ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, date, null);
         Linked<ChannelConfiguration> expected = Linked.linked(channelConfiguration)
                                                       .withLink("self", "http://path/to/UHF")
                                                       .build();

@@ -3,6 +3,7 @@ package com.flightstats.datahub.dao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.ValueInsertionResult;
+import com.google.common.base.Optional;
 
 import java.util.UUID;
 
@@ -15,4 +16,8 @@ public interface ChannelDao {
     ValueInsertionResult insert(String channelName, String contentType, byte[] data);
 
     DataHubCompositeValue getValue(String channelName, UUID id);
+
+    ChannelConfiguration getChannelConfiguration(String channelName);
+
+    Optional<UUID> findLatestId(String channelName);
 }

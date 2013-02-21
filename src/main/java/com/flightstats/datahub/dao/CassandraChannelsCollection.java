@@ -11,6 +11,8 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 
+import java.util.Date;
+
 /**
  * Encapsulates the channel creation, existence checks, and associated metadata.
  */
@@ -33,13 +35,13 @@ public class CassandraChannelsCollection {
     }
 
     public ChannelConfiguration createChannel(String name) {
-        ChannelConfiguration channelConfig = new ChannelConfiguration(name, timeProvider.getDate());
+        ChannelConfiguration channelConfig = new ChannelConfiguration(name, timeProvider.getDate(), null);
         createColumnFamilyForChannel(channelConfig);
-        addMetaDataForNewChannel(channelConfig);
+        insertChannelMetadata(channelConfig);
         return channelConfig;
     }
 
-    private void addMetaDataForNewChannel(ChannelConfiguration channelConfig) {
+    private void insertChannelMetadata(ChannelConfiguration channelConfig) {
         connector.createColumnFamilyIfNeeded(CHANNELS_COLUMN_FAMILY_NAME);
         StringSerializer keySerializer = StringSerializer.get();
         Mutator<String> mutator = connector.buildMutator(keySerializer);
@@ -58,7 +60,7 @@ public class CassandraChannelsCollection {
         return channelConfiguration != null;
     }
 
-    private ChannelConfiguration getChannelConfiguration(String channelName) {
+    public ChannelConfiguration getChannelConfiguration(String channelName) {
         connector.createColumnFamilyIfNeeded(CHANNELS_COLUMN_FAMILY_NAME);
         Keyspace keyspace = connector.getKeyspace();
         ColumnQuery<String, String, ChannelConfiguration> rawQuery = hector.createColumnQuery(keyspace, StringSerializer.get(),
@@ -69,5 +71,12 @@ public class CassandraChannelsCollection {
         QueryResult<HColumn<String, ChannelConfiguration>> result = columnQuery.execute();
         HColumn<String, ChannelConfiguration> column = result.get();
         return column == null ? null : column.getValue();
+    }
+
+    public void updateLastUpdateTime(String channelName) {
+        ChannelConfiguration config = getChannelConfiguration(channelName);
+        Date now = timeProvider.getDate();
+        ChannelConfiguration updatedConfig = config.updateLastUpdateDate(now);
+        insertChannelMetadata(updatedConfig);
     }
 }

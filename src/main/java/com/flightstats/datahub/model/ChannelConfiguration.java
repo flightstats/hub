@@ -6,10 +6,12 @@ public class ChannelConfiguration {
 
     private final String name;
     private final Date creationDate;
+    private final Date lastUpdateDate;
 
-    public ChannelConfiguration(String name, Date creationDate) {
+    public ChannelConfiguration(String name, Date creationDate, Date lastUpdateDate) {
         this.creationDate = creationDate;
         this.name = name;
+        this.lastUpdateDate = lastUpdateDate;
     }
 
     public String getName() {
@@ -18,6 +20,14 @@ public class ChannelConfiguration {
 
     public Date getCreationDate() {
         return creationDate;
+    }
+
+    public Date getLastUpdateDate() {
+        return lastUpdateDate;
+    }
+
+    public ChannelConfiguration updateLastUpdateDate(Date date) {
+        return new ChannelConfiguration(name, creationDate, date);
     }
 
     @Override
@@ -31,10 +41,13 @@ public class ChannelConfiguration {
 
         ChannelConfiguration that = (ChannelConfiguration) o;
 
-        if (creationDate != null ? !creationDate.equals(that.creationDate) : that.creationDate != null) {
+        if (!creationDate.equals(that.creationDate)) {
             return false;
         }
-        if (name != null ? !name.equals(that.name) : that.name != null) {
+        if (lastUpdateDate != null ? !lastUpdateDate.equals(that.lastUpdateDate) : that.lastUpdateDate != null) {
+            return false;
+        }
+        if (!name.equals(that.name)) {
             return false;
         }
 
@@ -43,8 +56,9 @@ public class ChannelConfiguration {
 
     @Override
     public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (creationDate != null ? creationDate.hashCode() : 0);
+        int result = name.hashCode();
+        result = 31 * result + creationDate.hashCode();
+        result = 31 * result + (lastUpdateDate != null ? lastUpdateDate.hashCode() : 0);
         return result;
     }
 
@@ -53,6 +67,7 @@ public class ChannelConfiguration {
         return "ChannelConfiguration{" +
                 "name='" + name + '\'' +
                 ", creationDate=" + creationDate +
+                ", lastUpdateDate=" + lastUpdateDate +
                 '}';
     }
 }

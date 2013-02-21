@@ -1,25 +1,21 @@
 package com.flightstats.datahub.model;
 
 import java.util.Date;
-import java.util.UUID;
 
 public class ValueInsertionResult {
 
-    private final UUID id;
+    private final DataHubKey key;
 
-    private final Date date;
-
-    public ValueInsertionResult(UUID id, Date date) {
-        this.id = id;
-        this.date = date;
+    public ValueInsertionResult(DataHubKey key) {
+        this.key = key;
     }
 
-    public UUID getId() {
-        return id;
+    public DataHubKey getKey() {
+        return key;
     }
 
     public Date getDate() {
-        return date;
+        return key.getDate();
 
     }
 
@@ -34,10 +30,7 @@ public class ValueInsertionResult {
 
         ValueInsertionResult that = (ValueInsertionResult) o;
 
-        if (date != null ? !date.equals(that.date) : that.date != null) {
-            return false;
-        }
-        if (id != null ? !id.equals(that.id) : that.id != null) {
+        if (!key.equals(that.key)) {
             return false;
         }
 
@@ -46,8 +39,6 @@ public class ValueInsertionResult {
 
     @Override
     public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (date != null ? date.hashCode() : 0);
-        return result;
+        return key.hashCode();
     }
 }

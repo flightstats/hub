@@ -1,5 +1,8 @@
 package com.flightstats.datahub.dao;
 
+import com.flightstats.datahub.model.DataHubCompositeValue;
+import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.cassandra.serializers.UUIDSerializer;
 import me.prettyprint.cassandra.utils.TimeUUIDUtils;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
@@ -10,6 +13,7 @@ import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
+import me.prettyprint.hector.api.query.SliceQuery;
 
 import java.util.Date;
 import java.util.List;
@@ -54,5 +58,9 @@ public class HectorFactoryWrapper {
 
     public Date getDateFromUUID(UUID uuid) {
         return new Date(getTimeFromUUID(uuid));
+    }
+
+    SliceQuery<String, UUID, DataHubCompositeValue> createSliceQuery(Keyspace keyspace, StringSerializer keySerializer, UUIDSerializer columnNameSerializer, Serializer<DataHubCompositeValue> valueSerializer) {
+        return HFactory.createSliceQuery(keyspace, keySerializer, columnNameSerializer, valueSerializer);
     }
 }

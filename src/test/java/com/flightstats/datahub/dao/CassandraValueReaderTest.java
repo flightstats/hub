@@ -46,7 +46,7 @@ public class CassandraValueReaderTest {
         when(queryResult.get()).thenReturn(column);
         when(column.getValue()).thenReturn(expected);
 
-        CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy);
+        CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, null);
 
         DataHubCompositeValue result = testClass.read(channelName, uid);
         assertEquals(expected, result);
@@ -75,7 +75,7 @@ public class CassandraValueReaderTest {
         when(query.execute()).thenReturn(queryResult);
         when(queryResult.get()).thenReturn(null);
 
-        CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy);
+        CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, null);
 
         DataHubCompositeValue result = testClass.read(channelName, uid);
         assertNull(result);
