@@ -21,7 +21,7 @@ public class CassandraValueWriterTest {
         String channelName = "foo";
         byte[] data = "bar".getBytes();
         Date date = new Date(2345678910L);
-        DataHubKey key = new DataHubKey(date, 33);
+        DataHubKey key = new DataHubKey(date, (short) 33);
         String rowKey = "a super key for this row";
         String contentType = "text/plain";
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
