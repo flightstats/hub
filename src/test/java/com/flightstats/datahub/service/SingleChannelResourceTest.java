@@ -58,6 +58,7 @@ public class SingleChannelResourceTest {
     public void testInsertValue() throws Exception {
         String channelName = "whizbang";
         byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
+        String contentType = "text/plain";
         UUID uid = UUID.randomUUID();
         URI channelUri = URI.create("http://testification.com/channel/spoon");
         URI requestUri = URI.create("http://testification.com/channel/spoon");
@@ -70,11 +71,11 @@ public class SingleChannelResourceTest {
         UriInfo urlInfo = mock(UriInfo.class);
 
         when(dao.channelExists(anyString())).thenReturn(true);
-        when(dao.insert(channelName, data)).thenReturn(new ValueInsertionResult(uid, date));
+        when(dao.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(uid, date));
         when(urlInfo.getRequestUri()).thenReturn(requestUri);
 
         SingleChannelResource testClass = new SingleChannelResource(dao, urlInfo);
-        Linked<ValueInsertionResult> response = testClass.insertValue(channelName, data);
+        Linked<ValueInsertionResult> response = testClass.insertValue(contentType, channelName, data);
 
         assertThat(response.getLinks().getLinks(), hasItems(selfLink, channelLink));
         ValueInsertionResult insertionResult = response.getObject();
@@ -86,6 +87,7 @@ public class SingleChannelResourceTest {
     public void testInsertValue_unknownChannel() throws Exception {
         String channelName = "whizbang";
         byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
+        String contentType = "text/plain";
 
         ChannelDao dao = mock(ChannelDao.class);
         UriInfo urlInfo = mock(UriInfo.class);
@@ -94,7 +96,7 @@ public class SingleChannelResourceTest {
 
         SingleChannelResource testClass = new SingleChannelResource(dao, urlInfo);
         try {
-            testClass.insertValue(channelName, data);
+            testClass.insertValue(contentType, channelName, data);
             fail("Should have thrown an exception.");
         } catch (WebApplicationException e) {
             assertEquals(Response.Status.NOT_FOUND.getStatusCode(), e.getResponse().getStatus());

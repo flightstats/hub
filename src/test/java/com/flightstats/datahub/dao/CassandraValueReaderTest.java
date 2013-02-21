@@ -1,6 +1,6 @@
 package com.flightstats.datahub.dao;
 
-import me.prettyprint.cassandra.serializers.BytesArraySerializer;
+import com.flightstats.datahub.model.DataHubCompositeValue;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.serializers.UUIDSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -25,29 +25,31 @@ public class CassandraValueReaderTest {
         UUID uid = UUID.randomUUID();
         byte[] data = new byte[]{'t', 'e', 's', 't', 'i', 'n'};
         String key = "the_____key___";
+        DataHubCompositeValue expected = new DataHubCompositeValue("text/plain", data);
 
         CassandraConnector connector = mock(CassandraConnector.class);
         HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
-        RowKeyStrategy<String, UUID, byte[]> rowKeyStrategy = mock(RowKeyStrategy.class);
+        RowKeyStrategy<String, UUID, DataHubCompositeValue> rowKeyStrategy = mock(RowKeyStrategy.class);
         Keyspace keyspace = mock(Keyspace.class);
-        ColumnQuery<String, UUID, byte[]> query = mock(ColumnQuery.class);
-        QueryResult<HColumn<UUID, byte[]>> queryResult = mock(QueryResult.class);
-        HColumn<UUID, byte[]> column = mock(HColumn.class);
+        ColumnQuery<String, UUID, DataHubCompositeValue> query = mock(ColumnQuery.class);
+        QueryResult<HColumn<UUID, DataHubCompositeValue>> queryResult = mock(QueryResult.class);
+        HColumn<UUID, DataHubCompositeValue> column = mock(HColumn.class);
 
         when(connector.getKeyspace()).thenReturn(keyspace);
-        when(hector.createColumnQuery(keyspace, StringSerializer.get(), UUIDSerializer.get(), BytesArraySerializer.get())).thenReturn(query);
+        when(hector.createColumnQuery(keyspace, StringSerializer.get(), UUIDSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(
+                query);
         when(rowKeyStrategy.buildKey(channelName, uid)).thenReturn(key);
         when(query.setKey(key)).thenReturn(query);
         when(query.setColumnFamily(channelName)).thenReturn(query);
         when(query.setName(uid)).thenReturn(query);
         when(query.execute()).thenReturn(queryResult);
         when(queryResult.get()).thenReturn(column);
-        when(column.getValue()).thenReturn(data);
+        when(column.getValue()).thenReturn(expected);
 
         CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy);
 
-        byte[] result = testClass.read(channelName, uid);
-        assertEquals(data, result);
+        DataHubCompositeValue result = testClass.read(channelName, uid);
+        assertEquals(expected, result);
     }
 
     @Test
@@ -58,13 +60,14 @@ public class CassandraValueReaderTest {
 
         CassandraConnector connector = mock(CassandraConnector.class);
         HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
-        RowKeyStrategy<String, UUID, byte[]> rowKeyStrategy = mock(RowKeyStrategy.class);
+        RowKeyStrategy<String, UUID, DataHubCompositeValue> rowKeyStrategy = mock(RowKeyStrategy.class);
         Keyspace keyspace = mock(Keyspace.class);
-        ColumnQuery<String, UUID, byte[]> query = mock(ColumnQuery.class);
-        QueryResult<HColumn<UUID, byte[]>> queryResult = mock(QueryResult.class);
+        ColumnQuery<String, UUID, DataHubCompositeValue> query = mock(ColumnQuery.class);
+        QueryResult<HColumn<UUID, DataHubCompositeValue>> queryResult = mock(QueryResult.class);
 
         when(connector.getKeyspace()).thenReturn(keyspace);
-        when(hector.createColumnQuery(keyspace, StringSerializer.get(), UUIDSerializer.get(), BytesArraySerializer.get())).thenReturn(query);
+        when(hector.createColumnQuery(keyspace, StringSerializer.get(), UUIDSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(
+                query);
         when(rowKeyStrategy.buildKey(channelName, uid)).thenReturn(key);
         when(query.setKey(key)).thenReturn(query);
         when(query.setColumnFamily(channelName)).thenReturn(query);
@@ -74,7 +77,7 @@ public class CassandraValueReaderTest {
 
         CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy);
 
-        byte[] result = testClass.read(channelName, uid);
+        DataHubCompositeValue result = testClass.read(channelName, uid);
         assertNull(result);
     }
 }

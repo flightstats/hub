@@ -2,7 +2,8 @@ package com.flightstats.datahub.app.config;
 
 import com.flightstats.datahub.dao.*;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.rest.JacksonHectorSerializer;
+import com.flightstats.datahub.model.DataHubCompositeValue;
+import com.flightstats.datahub.model.serialize.JacksonHectorSerializer;
 import com.google.inject.*;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
@@ -52,7 +53,7 @@ public class GuiceConfig extends GuiceServletContextListener {
             bind(CassandraConnectorFactory.class).in(Singleton.class);
             bind(new TypeLiteral<Serializer<ChannelConfiguration>>() {
             }).toInstance(jacksonHectorSerializer);
-            bind(new TypeLiteral<RowKeyStrategy<String, UUID, byte[]>>() {
+            bind(new TypeLiteral<RowKeyStrategy<String, UUID, DataHubCompositeValue>>() {
             }).to(YearMonthDayRowKeyStrategy.class);
             bind(ChannelDao.class).to(CassandraChannelDao.class).in(Singleton.class);
             serve("/*").with(GuiceContainer.class, JERSEY_PROPERTIES);
