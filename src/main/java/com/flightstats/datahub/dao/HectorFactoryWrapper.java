@@ -2,7 +2,6 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.serializers.UUIDSerializer;
 import me.prettyprint.cassandra.utils.TimeUUIDUtils;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
@@ -60,7 +59,7 @@ public class HectorFactoryWrapper {
         return new Date(getTimeFromUUID(uuid));
     }
 
-    SliceQuery<String, UUID, DataHubCompositeValue> createSliceQuery(Keyspace keyspace, StringSerializer keySerializer, UUIDSerializer columnNameSerializer, Serializer<DataHubCompositeValue> valueSerializer) {
+    SliceQuery<String, String, DataHubCompositeValue> createSliceQuery(Keyspace keyspace, StringSerializer keySerializer, StringSerializer columnNameSerializer, Serializer<DataHubCompositeValue> valueSerializer) {
         return HFactory.createSliceQuery(keyspace, keySerializer, columnNameSerializer, valueSerializer);
     }
 }

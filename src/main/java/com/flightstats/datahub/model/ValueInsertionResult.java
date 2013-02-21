@@ -16,7 +16,6 @@ public class ValueInsertionResult {
 
     public Date getDate() {
         return key.getDate();
-
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
 import org.junit.Test;
@@ -37,7 +38,7 @@ public class SingleChannelResourceTest {
         URI channelUri = URI.create("http://fubar.com/channel/gomez");
         when(uriInfo.getRequestUri()).thenReturn(channelUri);
 
-        SingleChannelResource testClass = new SingleChannelResource(dao, uriInfo);
+        SingleChannelResource testClass = new SingleChannelResource(dao, uriInfo, new DataHubKeyRenderer());
 
         Linked<ChannelConfiguration> result = testClass.getChannelMetadata(channelName);
         assertEquals(expectedConfig, result.getObject());
@@ -54,7 +55,7 @@ public class SingleChannelResourceTest {
         ChannelDao dao = mock(ChannelDao.class);
         when(dao.channelExists(anyString())).thenReturn(false);
 
-        SingleChannelResource testClass = new SingleChannelResource(dao, null);
+        SingleChannelResource testClass = new SingleChannelResource(dao, null, new DataHubKeyRenderer());
         try {
             testClass.getChannelMetadata(channelName);
             fail("Should have thrown a 404");
@@ -69,12 +70,12 @@ public class SingleChannelResourceTest {
         String channelName = "whizbang";
         byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
         String contentType = "text/plain";
-        DataHubKey key = new DataHubKey(new Date(66), (short) 5);
+        Date date = new Date(123456L);
+        DataHubKey key = new DataHubKey(date, (short) 5);
         URI channelUri = URI.create("http://testification.com/channel/spoon");
         URI requestUri = URI.create("http://testification.com/channel/spoon");
-        HalLink selfLink = new HalLink("self", URI.create(channelUri.toString() + "/" + key.asSortableString()));
+        HalLink selfLink = new HalLink("self", URI.create(channelUri.toString() + "/0000000007H40005"));
         HalLink channelLink = new HalLink("channel", channelUri);
-        Date date = new Date(123456L);
         ValueInsertionResult expectedResponse = new ValueInsertionResult(key);
 
         ChannelDao dao = mock(ChannelDao.class);
@@ -84,7 +85,7 @@ public class SingleChannelResourceTest {
         when(dao.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(key));
         when(urlInfo.getRequestUri()).thenReturn(requestUri);
 
-        SingleChannelResource testClass = new SingleChannelResource(dao, urlInfo);
+        SingleChannelResource testClass = new SingleChannelResource(dao, urlInfo, new DataHubKeyRenderer());
         Linked<ValueInsertionResult> response = testClass.insertValue(contentType, channelName, data);
 
         assertThat(response.getLinks().getLinks(), hasItems(selfLink, channelLink));
@@ -104,7 +105,7 @@ public class SingleChannelResourceTest {
 
         when(dao.channelExists(anyString())).thenReturn(false);
 
-        SingleChannelResource testClass = new SingleChannelResource(dao, urlInfo);
+        SingleChannelResource testClass = new SingleChannelResource(dao, urlInfo, new DataHubKeyRenderer());
         try {
             testClass.insertValue(contentType, channelName, data);
             fail("Should have thrown an exception.");

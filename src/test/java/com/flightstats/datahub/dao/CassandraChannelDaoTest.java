@@ -7,7 +7,6 @@ import com.flightstats.datahub.model.ValueInsertionResult;
 import org.junit.Test;
 
 import java.util.Date;
-import java.util.UUID;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
@@ -61,17 +60,17 @@ public class CassandraChannelDaoTest {
     @Test
     public void testGetValue() throws Exception {
         String channelName = "cccccc";
-        UUID uid = UUID.randomUUID();
+        DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
         byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
         DataHubCompositeValue expected = new DataHubCompositeValue("text/plain", data);
 
         CassandraValueReader reader = mock(CassandraValueReader.class);
 
-        when(reader.read(channelName, uid)).thenReturn(expected);
+        when(reader.read(channelName, key)).thenReturn(expected);
 
         CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader);
 
-        DataHubCompositeValue result = testClass.getValue(channelName, uid);
+        DataHubCompositeValue result = testClass.getValue(channelName, key);
         assertEquals(expected, result);
     }
 }
