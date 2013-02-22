@@ -105,6 +105,13 @@ task generateCoverageReport << {
     }
 }
 
+startScripts {
+    ext.jvmOpts = "-Xmx256m"
+    doLast {
+        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"$ext.jvmOpts\"")
+    }
+}
+
 def runExternal(commandline) {
     def proc = commandline.execute()
     proc.in.eachLine { line -> println line }
