@@ -1,7 +1,7 @@
 var utils = require('./utils.js');
 var frisby = require('frisby');
 
-var channelName = "integrationtests";
+var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 
