@@ -13,7 +13,6 @@ public abstract class ChannelConfigurationMixIn {
         throw new IllegalStateException("Do not instantiate mix-in configuration classes.");
     }
 
-
     @JsonIgnore
     public Date getLastUpdateDate() {
         throw new UnsupportedOperationException();
