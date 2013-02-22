@@ -7,5 +7,4 @@ public interface RowKeyStrategy<K, T, V> {
 
     K buildKey(String channelName, T columnName);
 
-    T buildMinimumValueForRow(String channelName, T columnName);
 }
