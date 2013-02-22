@@ -2,16 +2,18 @@ var chai = require('chai');
 var expect = chai.expect;
 var assert = require('chai').assert;
 var superagent = require('superagent');
+var crypto = require('crypto');
 var request = require('request');
 var testRandom = require('./js_testing_utils/randomUtils.js');
+var moment = require('moment');
 var async = require('async');
 var fs = require('fs');
 var http = require('http');
 
 var URL_ROOT = 'http://datahub-01.cloud-east.dev:8080';
-var CAT_TOILET_PIC = '/Users/gnewcomb/Pictures/cattoilet.jpg';
-var MY_2MB_FILE = '/Users/gnewcomb/Documents/myjs/testing.txt';
-var MY_2KB_FILE = '/Users/gnewcomb/Documents/myjs/Iam200kb.txt';
+var CAT_TOILET_PIC = './artifacts/cattoilet.jpg';
+var MY_2MB_FILE = './artifacts/Iam2_5Mb.txt';
+var MY_2KB_FILE = './artifacts/Iam200kb.txt';
 
 // Test variables that are regularly overwritten
 var agent
@@ -73,7 +75,7 @@ beforeEach(function(){
 })
 
 // Helpers
-var getValidation = function (myUri, myPayload, myDone)
+var getValidationString = function (myUri, myPayload, myDone)
 {
     var myData = '';
     http.get(myUri, function(res) {
@@ -87,6 +89,27 @@ var getValidation = function (myUri, myPayload, myDone)
             console.log("Got error: " + e.message);
             myDone();
         });
+};
+
+
+var getValidationChecksum = function (myUri, expChecksum, myDone)
+{
+    var md5sum = crypto.createHash('md5');
+    var actChecksum;
+
+    http.get(myUri, function(res) {
+        res.on('data', function (chunk) {
+            md5sum.update(chunk);
+        }).on('end', function(){
+                actChecksum = md5sum.digest('hex');
+                expect(actChecksum).to.equal(expChecksum);
+                myDone();
+            });
+        }).on('error', function(e) {
+            console.log("Got error: " + e.message);
+            myDone();
+        });
+
 };
 
 
@@ -176,7 +199,7 @@ describe('POST data to channel', function(){
                 expect(res.status).to.equal(200);
                 uri = res.body._links.self.href;
 
-                getValidation(uri, payload, done);
+                getValidationString(uri, payload, done);
 
              });
 
@@ -220,7 +243,7 @@ describe('POST data to channel', function(){
                         expect(res2.status).to.equal(200);
                         uri = res.body._links.self.href
 
-                        getValidation(uri, payload, done);
+                        getValidationString(uri, payload, done);
                     });
             });
     });
@@ -241,7 +264,7 @@ describe('POST data to channel', function(){
                     expect(res.status).to.equal(200);
                     var actualUri = res.body._links.self.href;
 
-                    getValidation(actualUri, payload, function() {
+                    getValidationString(actualUri, payload, function() {
 
                         uri = URL_ROOT +'/channel/'+ otherChannelName;
                         var agent2 = superagent.agent();
@@ -253,7 +276,7 @@ describe('POST data to channel', function(){
                                 expect(res2.status).to.equal(200);
                                 actualUri = res2.body._links.self.href;
 
-                                getValidation(actualUri, payload, done)
+                                getValidationString(actualUri, payload, done)
                             });
 
                     });
@@ -274,7 +297,7 @@ describe('POST data to channel', function(){
                 expect(res.status).to.equal(200);
                 uri = res.body._links.self.href;
 
-                getValidation(uri, payload, done);
+                getValidationString(uri, payload, done);
 
             });
     });
@@ -289,7 +312,7 @@ describe('POST data to channel', function(){
                 expect(res.status).to.equal(200);
                 uri = res.body._links.self.href;
 
-                getValidation(uri, payload, done);
+                getValidationString(uri, payload, done);
             });
     });
 
@@ -304,13 +327,12 @@ describe('POST data to channel', function(){
                 expect(res.status).to.equal(200);
                 uri = res.body._links.self.href;
 
-                getValidation(uri, payload, done);
+                getValidationString(uri, payload, done);
             });
     });
 
-    //  Can't make this work right yet.
-    // TODO: POST binary data
-    it.only('POST image file to channel and recover', function(done) {
+    // Confirms via md5 checksum
+    it('POST image file to channel and recover', function(done) {
         uri = URL_ROOT +'/channel/'+ channelName;
 
         fileAsAStream = fs.createReadStream(CAT_TOILET_PIC);
@@ -322,17 +344,23 @@ describe('POST data to channel', function(){
                 }
                 expect(res.statusCode).to.equal(200);
                 uri = JSON.parse(body)._links.self.href;
-                console.log(uri);
+                //console.log(uri);
 
-                //getValidation(uri, payload, done);
+                var md5sum = crypto.createHash('md5');
+                var s = fs.ReadStream(CAT_TOILET_PIC);
 
-                done();
+                s.on('data', function(d) {
+                    md5sum.update(d);
+                }).on('end', function() {
+                    var expCheckSum = md5sum.digest('hex');
+
+                    getValidationChecksum(uri, expCheckSum, done);
+                });
+
             })
         );
 
     });
-
-
 
 
     describe.skip('Load tests - POST data', function(){
@@ -385,7 +413,7 @@ describe('POST data to channel', function(){
                     async.eachSeries(loadChannelKeys, function(cn, callback) {
                         uri = loadChannels[cn].uri;
                         payload = loadChannels[cn].data;
-                        getValidation(uri, payload, function(){
+                        getValidationString(uri, payload, function(){
                             console.log('Confirmed data retrieval from channel: '+ cn);
                             callback();
                         });
@@ -404,13 +432,96 @@ describe('POST data to channel', function(){
         });
     });
 
-    // TODO: POSTing data should return a creation timestamp
+    describe('POST - Creation timestamps returned', function() {
 
-    // TODO: multiple POSTings of data to a channel should return increasing creation timestamps
+        // TODO: POSTing data should return a creation timestamp
+        it('Creation timestamp returned on data storage', function(done){
 
-    // TODO: POST data from different timezone and confirm timestamp is correct?
+            var timestamp = '';
+
+            payload = testRandom.randomString(Math.round(Math.random() * 50));
+            uri = URL_ROOT +'/channel/'+ channelName;
+
+            agent.post(uri)
+                .send(payload)
+                .end(function(err, res) {
+                    if (err) throw err;
+                    expect(res.status).to.equal(200);
+                    timestamp = res.body.timestamp;
+                    expect(moment(timestamp).isValid()).to.equal(true);
+
+                   done();
+                });
+
+        });
+
+        /*
+        // TODO: multiple POSTings of data to a channel should return increasing creation timestamps
+        it.skip('Multiple POSTings of data to a channel should return ever-increasing creation timestamps.', function(done) {
+            var respMoment;
+
+            // will be set to the diff between now and initial response time plus five minutes, just to ensure there
+            //      aren't any egregious shenanigans afoot. In milliseconds.
+            var serverTimeDiff;
+
+            async.waterfall([
+                function(callback){
+                    payload = testRandom.randomString(testRandom.randomNum(51));
+                    uri = URL_ROOT +'/channel/'+ channelName;
+
+                    agent.post(uri)
+                        .send(payload)
+                        .end(function(err, res) {
+                            if (err) throw err;
+                            expect(res.status).to.equal(200);
+                            expect(moment(respMoment).isValid()).to.equal(true);
+
+                            respMoment = res.body.timestamp;
+                            serverTimeDiff = moment().diff(respMoment) + 300000;
+
+                            callback(respMoment);
+                        });
+                }
+                ,function(lastResp, callback){
+                    payload = testRandom.randomString(testRandom.randomNum(51));
+
+                    agent.post(uri)
+                        .send(payload)
+                        .end(function(err, res) {
+                            if (err) throw err;
+                            expect(res.status).to.equal(200);
+                            expect(moment(respMoment).isValid()).to.equal(true);
+                            respMoment = res.body.timestamp;
+
+                            expect(respMoment.isAfter(lastResp)).to.isEqual(true);
+                            expect(moment().diff(respMoment)).to.bel
+
+                            callback(respMoment);
+                        });
+                })
+                ,function(callback){
+
+            })
+
+            ]
+             ,function(err, results) {
+                    if (err) throw err;
+                    done();
+             });
+        });
+        */
+        
+        // TODO: POST data from different timezone and confirm timestamp is correct?
+
+
+
+
+    });
+
 
 });
+
+
 
 
 
@@ -445,7 +556,7 @@ describe.skip('Known failing cases that may not be legitimate', function() {
 
                 console.log('URI:'+ uri);
 
-                getValidation(uri, payload, done);
+                getValidationString(uri, payload, done);
             });
     });
 });
