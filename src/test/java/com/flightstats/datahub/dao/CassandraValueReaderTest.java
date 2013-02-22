@@ -1,8 +1,10 @@
 package com.flightstats.datahub.dao;
 
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.google.common.base.Optional;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -84,5 +86,37 @@ public class CassandraValueReaderTest {
 
         DataHubCompositeValue result = testClass.read(channelName, key);
         assertNull(result);
+    }
+
+    @Test
+    public void testFindLatestId() throws Exception {
+        DataHubKey expected = new DataHubKey(new Date(999999999), (short) 6);
+        String channelName = "myChan";
+        ChannelConfiguration config = new ChannelConfiguration(channelName, null, expected);
+
+        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+
+        when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(config);
+
+        CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
+
+        Optional<DataHubKey> result = testClass.findLatestId(channelName);
+        assertEquals(expected, result.get());
+    }
+
+    @Test
+    public void testFindLatestId_notFound() throws Exception {
+        String channelName = "myChan";
+        ChannelConfiguration config = new ChannelConfiguration(channelName, null, null);
+
+        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+
+        when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(config);
+
+        CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
+        Optional<DataHubKey> result = testClass.findLatestId(channelName);
+
+        assertEquals(Optional.absent(), result);
+
     }
 }
