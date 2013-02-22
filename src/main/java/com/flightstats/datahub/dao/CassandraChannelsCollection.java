@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
@@ -10,8 +11,6 @@ import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
-
-import java.util.Date;
 
 /**
  * Encapsulates the channel creation, existence checks, and associated metadata.
@@ -73,10 +72,9 @@ public class CassandraChannelsCollection {
         return column == null ? null : column.getValue();
     }
 
-    public void updateLastUpdateTime(String channelName) {
+    public void updateLastUpdatedKey(String channelName, DataHubKey key) {
         ChannelConfiguration config = getChannelConfiguration(channelName);
-        Date now = timeProvider.getDate();
-        ChannelConfiguration updatedConfig = config.updateLastUpdateDate(now);
+        ChannelConfiguration updatedConfig = config.updateLastUpdateKey(key);
         insertChannelMetadata(updatedConfig);
     }
 }
