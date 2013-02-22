@@ -3,7 +3,6 @@ var frisby = require('frisby');
 var utils = require('utils');
 
 var channelName = utils.randomChannelName();
-var jsonBody = JSON.stringify({ "name": channelName});
 var badValueUrl = channelUrl + "/" + channelName + "/foooo" + Math.random().toString();
 
 utils.runInTestChannel(channelName, function () {
