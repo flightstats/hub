@@ -12,4 +12,9 @@ public class YearMonthDayRowKeyStrategy implements RowKeyStrategy<String, DataHu
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
         return format.format(dataHubKey.getDate());
     }
+
+    @Override
+    public DataHubKey buildMinimumValueForRow(String channelName, DataHubKey columnName) {
+        return null;
+    }
 }

@@ -6,12 +6,12 @@ public class ChannelConfiguration {
 
     private final String name;
     private final Date creationDate;
-    private final Date lastUpdateDate;
+    private final DataHubKey lastUpdateKey;
 
-    public ChannelConfiguration(String name, Date creationDate, Date lastUpdateDate) {
+    public ChannelConfiguration(String name, Date creationDate, DataHubKey lastUpdateKey) {
         this.creationDate = creationDate;
         this.name = name;
-        this.lastUpdateDate = lastUpdateDate;
+        this.lastUpdateKey = lastUpdateKey;
     }
 
     public String getName() {
@@ -22,12 +22,16 @@ public class ChannelConfiguration {
         return creationDate;
     }
 
-    public Date getLastUpdateDate() {
-        return lastUpdateDate;
+    public DataHubKey getLastUpdateKey() {
+        return lastUpdateKey;
     }
 
-    public ChannelConfiguration updateLastUpdateDate(Date date) {
-        return new ChannelConfiguration(name, creationDate, date);
+    public Date getLastUpdateDate() {
+        return lastUpdateKey.getDate();
+    }
+
+    public ChannelConfiguration updateLastUpdateKey(DataHubKey latestKey) {
+        return new ChannelConfiguration(name, creationDate, latestKey);
     }
 
     @Override
@@ -41,13 +45,13 @@ public class ChannelConfiguration {
 
         ChannelConfiguration that = (ChannelConfiguration) o;
 
-        if (!creationDate.equals(that.creationDate)) {
+        if (creationDate != null ? !creationDate.equals(that.creationDate) : that.creationDate != null) {
             return false;
         }
-        if (lastUpdateDate != null ? !lastUpdateDate.equals(that.lastUpdateDate) : that.lastUpdateDate != null) {
+        if (lastUpdateKey != null ? !lastUpdateKey.equals(that.lastUpdateKey) : that.lastUpdateKey != null) {
             return false;
         }
-        if (!name.equals(that.name)) {
+        if (name != null ? !name.equals(that.name) : that.name != null) {
             return false;
         }
 
@@ -56,9 +60,9 @@ public class ChannelConfiguration {
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + creationDate.hashCode();
-        result = 31 * result + (lastUpdateDate != null ? lastUpdateDate.hashCode() : 0);
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (creationDate != null ? creationDate.hashCode() : 0);
+        result = 31 * result + (lastUpdateKey != null ? lastUpdateKey.hashCode() : 0);
         return result;
     }
 
@@ -67,7 +71,7 @@ public class ChannelConfiguration {
         return "ChannelConfiguration{" +
                 "name='" + name + '\'' +
                 ", creationDate=" + creationDate +
-                ", lastUpdateDate=" + lastUpdateDate +
+                ", lastUpdateKey=" + lastUpdateKey +
                 '}';
     }
 }

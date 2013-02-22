@@ -51,11 +51,6 @@ public class CassandraValueReader {
 
     public Optional<DataHubKey> findLatestId(String channelName) {
 
-        Keyspace keyspace = connector.getKeyspace();
-        SliceQuery<String, String, DataHubCompositeValue> rawSliceQuery = hector.createSliceQuery(keyspace, StringSerializer.get(),
-                StringSerializer.get(),
-                DataHubCompositeValueSerializer.get());
-
         ChannelConfiguration config = channelsCollection.getChannelConfiguration(channelName);
         Date lastUpdateDate = config.getLastUpdateDate();
         if (lastUpdateDate == null) {
@@ -74,8 +69,11 @@ public class CassandraValueReader {
         String maxColumnValue = keyRenderer.keyToString(maxKeyForDay);
         String minColumnValue = keyRenderer.keyToString(minKeyForDay);
 
+        Keyspace keyspace = connector.getKeyspace();
+        SliceQuery<String, String, DataHubCompositeValue> rawSliceQuery = hector.createSliceQuery(keyspace, StringSerializer.get(),
+                StringSerializer.get(),
+                DataHubCompositeValueSerializer.get());
         String rowKey = rowKeyStrategy.buildKey(channelName, new DataHubKey(lastUpdateDate, (short) 0));
-
         SliceQuery<String, String, DataHubCompositeValue> sliceQuery = rawSliceQuery.setColumnFamily(channelName).setKey(rowKey);
 
         ColumnSliceIterator<String, String, DataHubCompositeValue> iterator = new ColumnSliceIterator<>(sliceQuery, maxColumnValue, minColumnValue,

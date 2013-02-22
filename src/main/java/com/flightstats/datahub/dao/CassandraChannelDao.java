@@ -39,7 +39,7 @@ public class CassandraChannelDao implements ChannelDao {
         logger.info("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
         ValueInsertionResult result = cassandraValueWriter.write(channelName, value);
-        channelsCollection.updateLastUpdateTime(channelName);
+        channelsCollection.updateLastUpdatedKey(channelName, result.getKey());
         return result;
     }
 

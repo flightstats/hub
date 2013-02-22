@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.TimeProvider;
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.StringSerializer;
@@ -110,8 +111,9 @@ public class CassandraChannelsCollectionTest {
         String channelName = "myChan";
         Date newDate = new Date(123456789L);
         Date creationDate = new Date();
+        DataHubKey latestKey = new DataHubKey(newDate, (short) 0);
         ChannelConfiguration channelConfig = new ChannelConfiguration(channelName, creationDate, null);
-        ChannelConfiguration expectedChannelConfig = new ChannelConfiguration(channelName, creationDate, newDate);
+        ChannelConfiguration expectedChannelConfig = new ChannelConfiguration(channelName, creationDate, latestKey);
 
         TimeProvider timeProvider = mock(TimeProvider.class);
         CassandraConnector connector = mock(CassandraConnector.class);
@@ -137,7 +139,8 @@ public class CassandraChannelsCollectionTest {
         when(hector.createColumn(channelName, expectedChannelConfig, StringSerializer.get(), configSerializer)).thenReturn(newColumn);
 
         CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider);
-        testClass.updateLastUpdateTime(channelName);
+        DataHubKey key = new DataHubKey(newDate, (short) 0);
+        testClass.updateLastUpdatedKey(channelName, key);
 
         verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_COLUMN_FAMILY_NAME, newColumn);
     }
