@@ -128,5 +128,7 @@ task deployDev << {
 
 task integrationTests << {
     def testdir = "src/test/integration"
-    runExternal("jasmine-node ${testdir}")
+    def reportsdir = "build/reports/integration/"
+    new File(reportsdir).mkdirs()
+    runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
 }
