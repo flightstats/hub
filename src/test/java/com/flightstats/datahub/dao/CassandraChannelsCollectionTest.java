@@ -51,7 +51,6 @@ public class CassandraChannelsCollectionTest {
 
     @Test
     public void testChannelExists() throws Exception {
-
         String channelName = "foo";
         ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, new Date(), null);
 
@@ -104,5 +103,42 @@ public class CassandraChannelsCollectionTest {
         ChannelConfiguration result = testClass.getChannelConfiguration("thechan");
 
         assertEquals(expected, result);
+    }
+
+    @Test
+    public void testUpdateLastUpdateTime() throws Exception {
+        String channelName = "myChan";
+        Date newDate = new Date(123456789L);
+        Date creationDate = new Date();
+        ChannelConfiguration channelConfig = new ChannelConfiguration(channelName, creationDate, null);
+        ChannelConfiguration expectedChannelConfig = new ChannelConfiguration(channelName, creationDate, newDate);
+
+        TimeProvider timeProvider = mock(TimeProvider.class);
+        CassandraConnector connector = mock(CassandraConnector.class);
+        Keyspace keyspace = mock(Keyspace.class);
+        HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
+        ColumnQuery<String, String, ChannelConfiguration> query = mock(ColumnQuery.class);
+        Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
+        QueryResult<HColumn<String, ChannelConfiguration>> queryResult = mock(QueryResult.class);
+        HColumn<String, ChannelConfiguration> existingColumn = mock(HColumn.class);
+        HColumn<String, ChannelConfiguration> newColumn = mock(HColumn.class);
+        Mutator<String> mutator = mock(Mutator.class);
+
+        when(timeProvider.getDate()).thenReturn(newDate);
+        when(connector.getKeyspace()).thenReturn(keyspace);
+        when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), configSerializer)).thenReturn(query);
+        when(query.setName(anyString())).thenReturn(query);
+        when(query.setKey(anyString())).thenReturn(query);
+        when(query.setColumnFamily(anyString())).thenReturn(query);
+        when(query.execute()).thenReturn(queryResult);
+        when(queryResult.get()).thenReturn(existingColumn);
+        when(existingColumn.getValue()).thenReturn(channelConfig);
+        when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
+        when(hector.createColumn(channelName, expectedChannelConfig, StringSerializer.get(), configSerializer)).thenReturn(newColumn);
+
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider);
+        testClass.updateLastUpdateTime(channelName);
+
+        verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_COLUMN_FAMILY_NAME, newColumn);
     }
 }
