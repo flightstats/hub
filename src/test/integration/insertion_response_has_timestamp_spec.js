@@ -20,13 +20,13 @@ frisby.create('Inserting a value into a channel.')
     })
     .expectJSON('_links.self', {
         href: function (value) {
-            var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/[a-f,0-9]{8}-[a-f,0-9]{4}-[a-f,0-9]{4}-[a-f,0-9]{4}-[a-f,0-9]{12}$");
+            var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/[A-Z,0-9]{16}$");
             expect(value).toMatch(regex);
         }
     })
     .expectJSON({
         id: function (value) {
-            expect(value).toMatch(/^[a-f,0-9]{8}-[a-f,0-9]{4}-[a-f,0-9]{4}-[a-f,0-9]{4}-[a-f,0-9]{12}$/);
+            expect(value).toMatch(/^[A-Z,0-9]{16}$/);
         },
         timestamp: function (value) {
             expect(value).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\d-\d\d:\d\d$/);
