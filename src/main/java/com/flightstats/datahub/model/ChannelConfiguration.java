@@ -27,7 +27,7 @@ public class ChannelConfiguration {
     }
 
     public Date getLastUpdateDate() {
-        return lastUpdateKey.getDate();
+        return lastUpdateKey == null ? null : lastUpdateKey.getDate();
     }
 
     public ChannelConfiguration updateLastUpdateKey(DataHubKey latestKey) {
