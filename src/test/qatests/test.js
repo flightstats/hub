@@ -510,7 +510,7 @@ describe('POST data to channel', function(){
              });
         });
         */
-        
+
         // TODO: POST data from different timezone and confirm timestamp is correct?
 
 
@@ -525,9 +525,9 @@ describe('POST data to channel', function(){
 
 
 
-describe.skip('Known failing cases that may not be legitimate', function() {
+describe('Known failing cases that may not be legitimate', function() {
 
-    it('Should be able to create a channel name of 50 characters', function(done){
+    it.only('Should be able to create a channel name of 50 characters', function(done){
         //console.log('Channel Name: '+ longChannelName);
         payload = '{"name":"'+ longChannelName +'"}';
 
@@ -543,7 +543,7 @@ describe.skip('Known failing cases that may not be legitimate', function() {
 
 
     // !!!! this is stopping / hosing the server...do not run w/o checking with devs first
-    it('POST large file (2.5 MB) to channel', function(done) {
+    it.skip('POST large file (2.5 MB) to channel', function(done) {
         uri = URL_ROOT +'/channel/'+ channelName;
 
         payload = fs.readFileSync(MY_2MB_FILE);
