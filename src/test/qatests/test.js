@@ -447,17 +447,18 @@ describe('POST data to channel', function(){
                 .end(function(err, res) {
                     if (err) throw err;
                     expect(res.status).to.equal(200);
-                    timestamp = res.body.timestamp;
-                    expect(moment(timestamp).isValid()).to.equal(true);
+                    timestamp = moment(res.body.timestamp);
+
+                    //console.log('timestamp: '+ timestamp);
+                    expect(moment(timestamp).isValid()).to.be.true;
 
                    done();
                 });
 
         });
 
-        /*
         // TODO: multiple POSTings of data to a channel should return increasing creation timestamps
-        it.skip('Multiple POSTings of data to a channel should return ever-increasing creation timestamps.', function(done) {
+        it('Multiple POSTings of data to a channel should return ever-increasing creation timestamps.', function(done) {
             var respMoment;
 
             // will be set to the diff between now and initial response time plus five minutes, just to ensure there
@@ -466,50 +467,79 @@ describe('POST data to channel', function(){
 
             async.waterfall([
                 function(callback){
-                    payload = testRandom.randomString(testRandom.randomNum(51));
-                    uri = URL_ROOT +'/channel/'+ channelName;
+                    setTimeout(function(){
+                        payload = testRandom.randomString(testRandom.randomNum(51));
+                        uri = URL_ROOT +'/channel/'+ channelName;
 
-                    agent.post(uri)
-                        .send(payload)
-                        .end(function(err, res) {
-                            if (err) throw err;
-                            expect(res.status).to.equal(200);
-                            expect(moment(respMoment).isValid()).to.equal(true);
+                        agent.post(uri)
+                            .send(payload)
+                            .end(function(err, res) {
+                                if (err) throw err;
+                                expect(res.status).to.equal(200);
+                                respMoment = moment(res.body.timestamp);
 
-                            respMoment = res.body.timestamp;
-                            serverTimeDiff = moment().diff(respMoment) + 300000;
+                                console.log('Creation time was: '+ respMoment.format('X'));
 
-                            callback(respMoment);
-                        });
+                                expect(respMoment.isValid()).to.be.true;
+                                serverTimeDiff = moment().diff(respMoment) + 300000;
+
+                                callback(null, respMoment);
+                            });
+                    }, 1000);
                 }
                 ,function(lastResp, callback){
-                    payload = testRandom.randomString(testRandom.randomNum(51));
+                    setTimeout(function(){
+                        payload = testRandom.randomString(testRandom.randomNum(51));
 
-                    agent.post(uri)
-                        .send(payload)
-                        .end(function(err, res) {
-                            if (err) throw err;
-                            expect(res.status).to.equal(200);
-                            expect(moment(respMoment).isValid()).to.equal(true);
-                            respMoment = res.body.timestamp;
+                        agent.post(uri)
+                            .send(payload)
+                            .end(function(err, res) {
+                                if (err) throw err;
+                                expect(res.status).to.equal(200);
+                                respMoment = moment(res.body.timestamp);
 
-                            expect(respMoment.isAfter(lastResp)).to.isEqual(true);
-                            expect(moment().diff(respMoment)).to.bel
+                                console.log('Creation time was: '+ respMoment.format('X'));
 
-                            callback(respMoment);
-                        });
-                })
-                ,function(callback){
+                                expect(respMoment.isValid()).to.be.true;
+                                expect(respMoment.isAfter(lastResp)).to.be.true;
+                                expect(moment().diff(respMoment)).to.be.at.most(serverTimeDiff);
 
-            })
+                                callback(null, respMoment);
+                            });
+                    }, 1000);
+
+                }
+                ,function(lastResp, callback){
+                    setTimeout(function(){
+
+                        payload = testRandom.randomString(testRandom.randomNum(51));
+
+                        agent.post(uri)
+                            .send(payload)
+                            .end(function(err, res) {
+                                if (err) throw err;
+                                expect(res.status).to.equal(200);
+                                respMoment = moment(res.body.timestamp);
+
+                                console.log('Creation time was: '+ respMoment.format('X'));
+
+                                expect(respMoment.isValid()).to.be.true;
+                                expect(respMoment.isAfter(lastResp)).to.be.true;
+                                expect(moment().diff(respMoment)).to.be.at.most(serverTimeDiff);
+
+                                callback(null);
+                            });
+                    }, 1000);
+
+                }
 
             ]
-             ,function(err, results) {
+             ,function(err) {
                     if (err) throw err;
                     done();
              });
         });
-        */
+
 
         // TODO: POST data from different timezone and confirm timestamp is correct?
 
