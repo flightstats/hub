@@ -4,16 +4,28 @@ var assert = require('chai').assert;
 var superagent = require('superagent');
 var crypto = require('crypto');
 var request = require('request');
-var testRandom = require('./js_testing_utils/randomUtils.js');
 var moment = require('moment');
 var async = require('async');
 var fs = require('fs');
 var http = require('http');
 
+
+var testRandom = require('./js_testing_utils/randomUtils.js');
+
+
+// DH Content Types
+var appContentTypes = require('./js_testing_utils/contentTypes.js').applicationTypes;
+var imageContentTypes = require('./js_testing_utils/contentTypes.js').imageTypes;
+var messageContentTypes = require('./js_testing_utils/contentTypes.js').messageTypes;
+var textContentTypes = require('./js_testing_utils/contentTypes.js').textTypes;
+
+
 var URL_ROOT = 'http://datahub-01.cloud-east.dev:8080';
 var CAT_TOILET_PIC = './artifacts/cattoilet.jpg';
 var MY_2MB_FILE = './artifacts/Iam2_5Mb.txt';
 var MY_2KB_FILE = './artifacts/Iam200kb.txt';
+
+
 
 // Test variables that are regularly overwritten
 var agent
@@ -22,41 +34,14 @@ var agent
     , fileAsAStream
     , req
     , uri
-    , verAgent;
+    , verAgent
+    , contentType;
 
 var channelName = testRandom.randomString(Math.round(Math.random() * 48), testRandom.limitedRandomChar);
-var longChannelName = testRandom.randomString(50, testRandom.limitedRandomChar);
 
 
 
-// for tracking test dependencies
 
-
-/*
-
-// For INTERACTIVE testing at the (node) command line
-
-
-exports.testMe = function () {
-
- //var happyAgent = superagent.agent();
-
-    console.log('Sending payload:' + payload);
-
-
-    agent.post(URL_ROOT +'/channel')
-        .set('Content-Type', 'application/json')
-        .send(payload)
-        .end(function(res){
-            if (res.error) {
-                alert('Suck!'+ res.error.message);
-            }
-            else {
-                console.log("Good times! HTTP 200");
-            }
-        });
-};
-*/
 
 before(function(myCallback){
     agent = superagent.agent();
@@ -71,7 +56,7 @@ before(function(myCallback){
 
 beforeEach(function(){
     agent = superagent.agent();
-    payload = uri = req = '';
+    payload = uri = req = contentType = '';
 })
 
 // Helpers
@@ -115,10 +100,6 @@ var getValidationChecksum = function (myUri, expChecksum, myDone)
 
 var makeChannel = function(myChannelName, myCallback) {
 
-   if (myChannelName.length == 0) {
-       throw new Error('Empty channel name not allowed');
-   }
-
     var myPayload = '{"name":"'+ myChannelName +'"}';
 
     //console.log('POSTING to '+ URL_ROOT +'/channel');
@@ -135,6 +116,31 @@ var makeChannel = function(myChannelName, myCallback) {
         });
 }
 
+// Returns GET response in callback
+var postDataAndConfirmContentType = function(myChannelName, myContentType, myCallback) {
+
+    payload = testRandom.randomString(Math.round(Math.random() * 50));
+    uri = URL_ROOT +'/channel/'+ myChannelName;
+    var getAgent = superagent.agent();
+
+    agent.post(uri)
+        .set('Content-Type', myContentType)
+        .send(payload)
+        .end(function(err, res) {
+            if (err) throw err;
+            expect(res.status).to.equal(200);
+            uri = res.body._links.self.href;
+
+            getAgent.get(uri)
+                .end(function(err2, res2) {
+                    if (err2) throw err2;
+                    expect(res2.type.toLowerCase()).to.equal(myContentType.toLowerCase());
+                    myCallback(res2);
+                });
+
+
+        });
+};
 
 
 describe('Create Channel', function(){
@@ -149,19 +155,15 @@ describe('Create Channel', function(){
             });
     });
 
-    /*  -- Commented out as the creation is now in the before() function.
-    it('should return a 200 for channel creation', function(done){
-        //console.log('Channel Name: '+ channelName);
-        payload = '{"name":"'+ channelName +'"}';
 
-        makeChannel(channelName, function(res) {
-            expect(res.status).to.equal(200);
-            expect(res.body._links.self.href).to.equal(URL_ROOT +'/channel/'+ channelName);
+    it('Cannot create channel with blank name: 500 repsonse', function(done){
+       makeChannel('', function(res) {
+            expect(res.status).to.equal(500);
             done();
         });
 
     });
-    */
+
 
     it('should return a 200 trying to GET channel after creation', function(done){
 
@@ -173,6 +175,9 @@ describe('Create Channel', function(){
             });
 
     });
+
+    // TODO: sequence:  create channel, post data to it, confirm data is there, create channel with same name again,
+    //      see if data is still available.
 
 });
 
@@ -186,7 +191,7 @@ describe('Create Channel', function(){
 describe('POST data to channel', function(){
 
 
-    it('should return a 200 for POSTing data', function(done){
+    it('Acceptance - should return a 200 for POSTing data', function(done){
 
         payload = testRandom.randomString(Math.round(Math.random() * 50));
         uri = URL_ROOT +'/channel/'+ channelName;
@@ -432,9 +437,12 @@ describe('POST data to channel', function(){
         });
     });
 
+
+    // For story:  Provide the client with a creation-timestamp in the response from a data storage request.k
+    // https://www.pivotaltracker.com/story/show/43221779
+
     describe('POST - Creation timestamps returned', function() {
 
-        // TODO: POSTing data should return a creation timestamp
         it('Creation timestamp returned on data storage', function(done){
 
             var timestamp = '';
@@ -457,7 +465,6 @@ describe('POST data to channel', function(){
 
         });
 
-        // TODO: multiple POSTings of data to a channel should return increasing creation timestamps
         it('Multiple POSTings of data to a channel should return ever-increasing creation timestamps.', function(done) {
             var respMoment;
 
@@ -477,8 +484,7 @@ describe('POST data to channel', function(){
                                 if (err) throw err;
                                 expect(res.status).to.equal(200);
                                 respMoment = moment(res.body.timestamp);
-
-                                console.log('Creation time was: '+ respMoment.format('X'));
+                                //console.log('Creation time was: '+ respMoment.format('X'));
 
                                 expect(respMoment.isValid()).to.be.true;
                                 serverTimeDiff = moment().diff(respMoment) + 300000;
@@ -497,8 +503,7 @@ describe('POST data to channel', function(){
                                 if (err) throw err;
                                 expect(res.status).to.equal(200);
                                 respMoment = moment(res.body.timestamp);
-
-                                console.log('Creation time was: '+ respMoment.format('X'));
+                                //console.log('Creation time was: '+ respMoment.format('X'));
 
                                 expect(respMoment.isValid()).to.be.true;
                                 expect(respMoment.isAfter(lastResp)).to.be.true;
@@ -520,8 +525,7 @@ describe('POST data to channel', function(){
                                 if (err) throw err;
                                 expect(res.status).to.equal(200);
                                 respMoment = moment(res.body.timestamp);
-
-                                console.log('Creation time was: '+ respMoment.format('X'));
+                                //console.log('Creation time was: '+ respMoment.format('X'));
 
                                 expect(respMoment.isValid()).to.be.true;
                                 expect(respMoment.isAfter(lastResp)).to.be.true;
@@ -552,12 +556,89 @@ describe('POST data to channel', function(){
 });
 
 
+// Provide a client with the content type when retrieving a value. https://www.pivotaltracker.com/story/show/43221431
+describe('GET data -- content type is returned in response', function() {
+    // (acceptance)  Submit a request to save some data with a specified content type (image/jpeg, for example).
+    //          Verify that the same content type is returned when retrieving the data.
+    // Test where specified content type doesn't match actual content type (shouldn't matter, the DH should return specified content type).
+    // Test with a range of content types.
 
+    it('Acceptance - Content Type that was specified when POSTing data is returned on GET', function(done){
+
+        postDataAndConfirmContentType(channelName, 'text/plain', function(res) {
+            done();
+        });
+
+    });
+
+    // application Content-Types
+    it('Content-Type for application/*', function(done){
+        async.each(appContentTypes, function(ct, nullCallback) {
+            //console.log('CT: '+ ct);
+            postDataAndConfirmContentType(channelName, ct, function(res) {
+                nullCallback();
+            });
+        }, function(err) {
+                if (err) {
+                    throw err;
+                };
+                done();
+        });
+    });
+
+    // image Content-Types
+    it('Content-Type for image/*', function(done){
+        async.each(imageContentTypes, function(ct, nullCallback) {
+            //console.log('CT: '+ ct);
+            postDataAndConfirmContentType(channelName, ct, function(res) {
+                nullCallback();
+            });
+        }, function(err) {
+            if (err) {
+                throw err;
+            };
+            done();
+        });
+    });
+
+    // message Content-Types
+    it('Content-Type for message/*', function(done){
+        async.each(messageContentTypes, function(ct, nullCallback) {
+            //console.log('CT: '+ ct);
+            postDataAndConfirmContentType(channelName, ct, function(res) {
+                nullCallback();
+            });
+        }, function(err) {
+            if (err) {
+                throw err;
+            };
+            done();
+        });
+    });
+
+    // text Content-Types
+    it('Content-Type for textContentTypes/*', function(done){
+        async.each(textContentTypes, function(ct, nullCallback) {
+            //console.log('CT: '+ ct);
+            postDataAndConfirmContentType(channelName, ct, function(res) {
+                nullCallback();
+            });
+        }, function(err) {
+            if (err) {
+                throw err;
+            };
+            done();
+        });
+    });
+
+});
 
 
 describe.skip('Known failing cases that may not be legitimate', function() {
 
     it('Should be able to create a channel name of 50 characters', function(done){
+        var longChannelName = testRandom.randomString(50, testRandom.limitedRandomChar);
+
         //console.log('Channel Name: '+ longChannelName);
         payload = '{"name":"'+ longChannelName +'"}';
 
