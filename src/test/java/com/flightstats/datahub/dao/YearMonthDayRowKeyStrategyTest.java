@@ -1,25 +1,22 @@
 package com.flightstats.datahub.dao;
 
+import com.flightstats.datahub.model.DataHubKey;
 import org.junit.Test;
 
-import java.util.UUID;
+import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class YearMonthDayRowKeyStrategyTest {
 
     @Test
     public void testBuildKey() throws Exception {
-        UUID uid = UUID.randomUUID();
+        DataHubKey key = new DataHubKey(new Date(12345678910L), (short) 1);
 
-        HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
+        YearMonthDayRowKeyStrategy testClass = new YearMonthDayRowKeyStrategy();
 
-        when(hector.getTimeFromUUID(uid)).thenReturn(12345678910L);
+        String result = testClass.buildKey(null, key);
 
-        YearMonthDayRowKeyStrategy testClass = new YearMonthDayRowKeyStrategy(hector);
-        String result = testClass.buildKey(null, uid);
         assertEquals("19700523", result);
     }
 }
