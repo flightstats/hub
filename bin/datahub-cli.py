@@ -123,10 +123,10 @@ class DataHub(object):
 			conn = httplib.HTTPConnection(self._server)
 			conn.request("GET", location, None, dict())
 			response = conn.getresponse()
-			print(response.status, response.reason)
 			if(filename):
 				self._save_response_to_file(response, filename)
 			else:
+				print(response.status, response.reason)
 				self._show_response_if_text(response)
 	def _show_response_if_text(self, response):
 			content_type = self._find_header(response, 'content-type')
