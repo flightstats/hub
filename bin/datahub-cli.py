@@ -29,6 +29,7 @@ class DataHub(object):
 		print("Here are some common commands:")
 		print("  mkchan <chan>   : Create a new channel")
 		print("  channel <chan>  : Set/show the current channel")
+		print("  meta            : Show current channel metadata")
 		print("  post <text>     : Post text to the current channel")
 		print("  postfile <file> : Post text to the current channel")
 		print("  get <id>        : Fetch item from channel by id")
@@ -48,6 +49,8 @@ class DataHub(object):
 				self._channel = parts[1]
 			print("The current channel is '%s'" %(self._channel))
 			return
+		elif(line.startswith("meta")):
+			return self._show_metadata()
 		elif(line.startswith("get")):
 			id = re.sub(r'^get\s*', '', line)
 			self._do_get(id)
@@ -119,6 +122,12 @@ class DataHub(object):
 		conn.request("POST", "/channel", content, headers)
 		response = conn.getresponse()
 		self._channel = channel_name
+		print(response.status, response.reason)
+		print(response.read())
+	def _show_metadata(self):
+		conn = httplib.HTTPConnection(self._server)
+		conn.request("GET", "/channel/%s" %(self._channel), None, dict())
+		response = conn.getresponse()
 		print(response.status, response.reason)
 		print(response.read())
 	def _read_multiline(self):
