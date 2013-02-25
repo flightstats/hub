@@ -52,7 +52,7 @@ class DataHub(object):
 			channel_name = re.sub(r'^mkchan\s*', '', line)
 			return self._create_channel(channel_name)
 		elif(line.startswith("late")):
-			self._get_latest()
+			return self._get_latest()
 		print("Command not understood -- try 'help'")
 	def _do_post(self, line):
 		line = re.sub(r'^post\s*', '', line)
@@ -64,13 +64,28 @@ class DataHub(object):
 		self._send_to_channel(content)
 	def _do_get(self, id):
 		conn = httplib.HTTPConnection(self._server)
-		print("DEBUG: /channel/%s/%s" %(self._channel, id))
+		#print("DEBUG: /channel/%s/%s" %(self._channel, id))
 		conn.request("GET", "/channel/%s/%s" %(self._channel, id), None, dict())
 		response = conn.getresponse()
 		print(response.status, response.reason)
 		print(response.read())
 	def _get_latest(self):
-		pass
+		conn = httplib.HTTPConnection(self._server)
+		conn.request("GET", "/channel/%s/latest" %(self._channel), None, dict())
+		response = conn.getresponse()
+		print(response.status, response.reason)
+		location = self._find_header(response, 'location')
+		print("Fetching latest: %s" %(location))
+
+		conn = httplib.HTTPConnection(self._server)
+		#print("DEBUG: /channel/%s/%s" %(self._channel, id))
+		conn.request("GET", location, None, dict())
+		response = conn.getresponse()
+		print(response.status, response.reason)
+		print(response.read())
+		
+	def _find_header(self, response, header_name):
+		return filter(lambda x: x[0] == header_name, response.getheaders())[0][1]
 	def _send_to_channel(self, content):
 		conn = httplib.HTTPConnection(self._server)
 		headers = {'Content-type': 'text/plain', 'Accept': 'application/json'}
