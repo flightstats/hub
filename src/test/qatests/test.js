@@ -59,7 +59,10 @@ beforeEach(function(){
     payload = uri = req = contentType = '';
 })
 
-// Helpers
+/*****************************************************************************************
+******************** HELPERS *************************************************************
+*****************************************************************************************/
+
 var getValidationString = function (myUri, myPayload, myDone)
 {
     var myData = '';
@@ -102,10 +105,7 @@ var makeChannel = function(myChannelName, myCallback) {
 
     var myPayload = '{"name":"'+ myChannelName +'"}';
 
-    //console.log('POSTING to '+ URL_ROOT +'/channel');
-    //console.log('With payload:'+ myPayload);
-
-    agent.post(URL_ROOT +'/channel')
+    superagent.agent().post(URL_ROOT +'/channel')
         .set('Content-Type', 'application/json')
         .send(myPayload)
         .end(function(err, res) {
@@ -116,12 +116,35 @@ var makeChannel = function(myChannelName, myCallback) {
         });
 }
 
+var getChannel = function(myChannelName, myCallback) {
+    superagent.agent().get(URL_ROOT +'/channel/'+ myChannelName)
+        .end(function(err, res) {
+            if (err) {throw err};
+            myCallback(res);
+        });
+};
+
+// Posts data and returns (response, URI)
+var postData = function(myChannelName, myData, myCallback) {
+    uri = URL_ROOT +'/channel/'+ myChannelName;
+
+    superagent.agent().post(uri)
+        .send(myData)
+        .end(function(err, res) {
+            if (err) throw err;
+            uri =  (200 == res.status) ? res.body._links.self.href : null;
+
+            myCallback(res, uri);
+        });
+};
+
 // Returns GET response in callback
 var postDataAndConfirmContentType = function(myChannelName, myContentType, myCallback) {
 
     payload = testRandom.randomString(Math.round(Math.random() * 50));
     uri = URL_ROOT +'/channel/'+ myChannelName;
     var getAgent = superagent.agent();
+    agent = superagent.agent();
 
     agent.post(uri)
         .set('Content-Type', myContentType)
@@ -138,25 +161,53 @@ var postDataAndConfirmContentType = function(myChannelName, myContentType, myCal
                     myCallback(res2);
                 });
 
-
         });
 };
 
+// Returns the response code and URI for the latest data set
+var getLatestFromChannel = function(myChannelName, myCallback) {
+    var getUri = URL_ROOT +'/channel/'+ myChannelName +'/latest';
+
+    superagent.agent().get(getUri)
+        .end(function(err, res) {
+            if (err) throw err;
+            uri = res.body._links.self.href;
+
+            myCallback(res.status, uri);
+        });
+};
+
+var postDataAndReturnUri = function(myChannelName, myPayload, myCallback) {
+    uri = URL_ROOT +'/channel/'+ myChannelName;
+
+    superagent.agent().post(uri)
+        .send(myPayload)
+        .end(function(err, res) {
+            if (err) throw err;
+            expect(res.status).to.equal(200);
+            uri = res.body._links.self.href;
+
+            myCallback(uri);
+        });
+};
+
+/*****************************************************************************************
+ ******************** TESTS *************************************************************
+ *****************************************************************************************/
 
 describe('Create Channel', function(){
 
    // 404 trying to GET channel before it exists
     it('should return a 404 trying to GET channel before it exists', function(done){
-        agent.get(URL_ROOT +'/channel/'+ testRandom.randomString(Math.round(Math.random() * 48), testRandom.limitedRandomChar))
-            .set('Content-Type', 'application/json')
-            .end(function(err, res) {
-                expect(res.status).to.equal(404);
-                done();
-            });
+        var myChannel = testRandom.randomString(Math.round(Math.random() * 48), testRandom.limitedRandomChar);
+        getChannel(myChannel, function(res) {
+            expect(res.status).to.equal(404)
+            done();
+        });
     });
 
 
-    it('Cannot create channel with blank name: 500 repsonse', function(done){
+    it('Cannot create channel with blank name: 500 response', function(done){
        makeChannel('', function(res) {
             expect(res.status).to.equal(500);
             done();
@@ -164,16 +215,22 @@ describe('Create Channel', function(){
 
     });
 
-
-    it('should return a 200 trying to GET channel after creation', function(done){
-
-        agent.get(URL_ROOT +'/channel/'+ channelName)
+    it('Cannot create channel with no/empty payload: 500 response', function(done) {
+        agent.post(URL_ROOT +'/channel')
             .set('Content-Type', 'application/json')
+            .send('')
             .end(function(err, res) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(500);
                 done();
             });
+    });
 
+
+    it('should return a 200 trying to GET channel after creation', function(done){
+        getChannel(channelName, function(res) {
+            expect(res.status).to.equal(200);
+            done();
+        });
     });
 
     // TODO: sequence:  create channel, post data to it, confirm data is there, create channel with same name again,
@@ -194,63 +251,40 @@ describe('POST data to channel', function(){
     it('Acceptance - should return a 200 for POSTing data', function(done){
 
         payload = testRandom.randomString(Math.round(Math.random() * 50));
-        uri = URL_ROOT +'/channel/'+ channelName;
 
-        agent.post(uri)
-            //.set('Content-Type', 'text/plain')
-            .send(payload)
-            .end(function(err, res) {
-                if (err) throw err;
-                expect(res.status).to.equal(200);
-                uri = res.body._links.self.href;
+        postData(channelName, payload, function(res, uri) {
+            expect(res.status).to.equal(200);
 
-                getValidationString(uri, payload, done);
-
-             });
+            getValidationString(uri, payload, done);
+        });
 
     });
 
 
     it('POST should return a 404 trying to save to nonexistent channel', function(done){
+        var myChannel = testRandom.randomString(Math.round(Math.random() * 30), testRandom.limitedRandomChar);
         payload = testRandom.randomString(Math.round(Math.random() * 50));
-        uri = URL_ROOT +'/channel/'+ testRandom.randomString(Math.round(Math.random() * 30), testRandom.limitedRandomChar);
-        agent = superagent.agent();
 
-        agent.post(uri)
-            .set('Content-Type', 'application/json')
-            .send(payload)
-            .end(function(err, res) {
-                if (err) throw err;
-                expect(res.status).to.equal(404);
-
-                done();
-            });
+        postData(myChannel, payload, function(res, uri) {
+            expect(res.status).to.equal(404);
+            done();
+        });
 
     });
 
 
     it('POST same set of data twice to channel', function(done){
         payload = testRandom.randomString(Math.round(Math.random() * 50));
-        uri = URL_ROOT +'/channel/'+ channelName;
-        agent.post(uri)
-            .send(payload)
-            .end(function(err, res) {
-                if (err) throw err;
-                expect(res.status).to.equal(200);
 
+        postData(channelName, payload, function(res, uri) {
+            expect(res.status).to.equal(200);
 
+            postData(channelName, payload, function(res2, uri2) {
+                expect(res2.status).to.equal(200);
 
-                var myAgent = superagent.agent();
-                myAgent.post(uri)
-                    .send(payload)
-                    .end(function(err2, res2){
-                        if (err2) throw err2;
-                        expect(res2.status).to.equal(200);
-                        uri = res.body._links.self.href
-
-                        getValidationString(uri, payload, done);
-                    });
+                getValidationString(uri, payload, done);
             });
+        });
     });
 
     it('POST same set of data to two different channels', function(done) {
@@ -261,79 +295,55 @@ describe('POST data to channel', function(){
             expect(res.body._links.self.href).to.equal(URL_ROOT +'/channel/'+ otherChannelName);
 
             payload = testRandom.randomString(Math.round(Math.random() * 50));
-            uri = URL_ROOT +'/channel/'+ channelName;
-            agent.post(uri)
-                .send(payload)
-                .end(function(err, res) {
-                    if (err) throw err;
-                    expect(res.status).to.equal(200);
-                    var actualUri = res.body._links.self.href;
 
-                    getValidationString(actualUri, payload, function() {
+            postData(channelName, payload, function(res, uri) {
+                expect(res.status).to.equal(200);
+                var actualUri = res.body._links.self.href;
 
-                        uri = URL_ROOT +'/channel/'+ otherChannelName;
-                        var agent2 = superagent.agent();
-                        agent2.post(uri)
-                            .send(payload)
-                            .end(function(err2, res2) {
-                                if (err2) throw err2;
+                getValidationString(actualUri, payload, function() {
 
-                                expect(res2.status).to.equal(200);
-                                actualUri = res2.body._links.self.href;
+                    postData(otherChannelName, payload, function(res2, uri2) {
+                        expect(res2.status).to.equal(200);
 
-                                getValidationString(actualUri, payload, done)
-                            });
-
+                        getValidationString(uri2, payload, done)
                     });
+
                 });
+            });
+
         });
-
-
     });
 
 
     it('POST empty data set to channel', function(done){
         payload = '';
-        uri = URL_ROOT +'/channel/'+ channelName;
-        agent.post(uri)
-            .send(payload)
-            .end(function(err, res) {
-                if (err) throw err;
-                expect(res.status).to.equal(200);
-                uri = res.body._links.self.href;
 
-                getValidationString(uri, payload, done);
+        postData(channelName, payload, function(res, uri) {
+            expect(res.status).to.equal(200);
 
-            });
+            getValidationString(uri, payload, done);
+        });
+
     });
 
     it('POST 200kb file to channel', function(done) {
-        uri = URL_ROOT +'/channel/'+ channelName;
-
         payload = fs.readFileSync(MY_2KB_FILE, "utf8");
-        agent.post(uri)
-            .send(payload)
-            .end(function(err, res) {
-                expect(res.status).to.equal(200);
-                uri = res.body._links.self.href;
 
-                getValidationString(uri, payload, done);
-            });
+        postData(channelName, payload, function(res, uri) {
+            expect(res.status).to.equal(200);
+
+            getValidationString(uri, payload, done);
+        });
     });
 
     it('POST 1,000 characters to channel', function(done) {
-        uri = URL_ROOT +'/channel/'+ channelName;
-
         payload = testRandom.randomString(1000, testRandom.simulatedTextChar);
 
-        agent.post(uri)
-            .send(payload)
-            .end(function(err, res) {
-                expect(res.status).to.equal(200);
-                uri = res.body._links.self.href;
+        postData(channelName, payload, function(res, uri) {
+            expect(res.status).to.equal(200);
 
-                getValidationString(uri, payload, done);
-            });
+            getValidationString(uri, payload, done);
+        });
     });
 
     // Confirms via md5 checksum
@@ -402,14 +412,12 @@ describe('POST data to channel', function(){
                 };
 
                 async.each(loadChannelKeys, function(cn, callback) {
-                    agent = superagent.agent();
-                    agent.post(URL_ROOT +'/channel/'+ cn)
-                        .send(loadChannels[cn].data)
-                        .end(function(err, res) {
-                            expect(res.status).to.equal(200);
-                            loadChannels[cn].uri = res.body._links.self.href;
-                            callback();
-                        });
+
+                    postData(cn,loadChannels[cn].data, function(res, uri) {
+                        loadChannels[cn].uri = uri;
+                        callback();
+                    });
+
                 }, function(err) {
                     if (err) {
                         throw err;
@@ -418,6 +426,7 @@ describe('POST data to channel', function(){
                     async.eachSeries(loadChannelKeys, function(cn, callback) {
                         uri = loadChannels[cn].uri;
                         payload = loadChannels[cn].data;
+
                         getValidationString(uri, payload, function(){
                             console.log('Confirmed data retrieval from channel: '+ cn);
                             callback();
@@ -450,19 +459,13 @@ describe('POST data to channel', function(){
             payload = testRandom.randomString(Math.round(Math.random() * 50));
             uri = URL_ROOT +'/channel/'+ channelName;
 
-            agent.post(uri)
-                .send(payload)
-                .end(function(err, res) {
-                    if (err) throw err;
-                    expect(res.status).to.equal(200);
-                    timestamp = moment(res.body.timestamp);
+            postData(channelName, payload, function(res, uri) {
+                expect(res.status).to.equal(200);
+                timestamp = moment(res.body.timestamp);
 
-                    //console.log('timestamp: '+ timestamp);
-                    expect(moment(timestamp).isValid()).to.be.true;
-
-                   done();
-                });
-
+                expect(moment(timestamp).isValid()).to.be.true;
+                done();
+            });
         });
 
         it('Multiple POSTings of data to a channel should return ever-increasing creation timestamps.', function(done) {
@@ -478,39 +481,33 @@ describe('POST data to channel', function(){
                         payload = testRandom.randomString(testRandom.randomNum(51));
                         uri = URL_ROOT +'/channel/'+ channelName;
 
-                        agent.post(uri)
-                            .send(payload)
-                            .end(function(err, res) {
-                                if (err) throw err;
-                                expect(res.status).to.equal(200);
-                                respMoment = moment(res.body.timestamp);
-                                //console.log('Creation time was: '+ respMoment.format('X'));
+                        postData(channelName, payload, function(res, uri) {
+                            expect(res.status).to.equal(200);
+                            respMoment = moment(res.body.timestamp);
+                            //console.log('Creation time was: '+ respMoment.format('X'));
 
-                                expect(respMoment.isValid()).to.be.true;
-                                serverTimeDiff = moment().diff(respMoment) + 300000;
+                            expect(respMoment.isValid()).to.be.true;
+                            serverTimeDiff = moment().diff(respMoment) + 300000;
 
-                                callback(null, respMoment);
-                            });
+                            callback(null, respMoment);
+                        });
                     }, 1000);
                 }
                 ,function(lastResp, callback){
                     setTimeout(function(){
                         payload = testRandom.randomString(testRandom.randomNum(51));
 
-                        agent.post(uri)
-                            .send(payload)
-                            .end(function(err, res) {
-                                if (err) throw err;
-                                expect(res.status).to.equal(200);
-                                respMoment = moment(res.body.timestamp);
-                                //console.log('Creation time was: '+ respMoment.format('X'));
+                        postData(channelName, payload, function(res, uri) {
+                            expect(res.status).to.equal(200);
+                            respMoment = moment(res.body.timestamp);
+                            //console.log('Creation time was: '+ respMoment.format('X'));
 
-                                expect(respMoment.isValid()).to.be.true;
-                                expect(respMoment.isAfter(lastResp)).to.be.true;
-                                expect(moment().diff(respMoment)).to.be.at.most(serverTimeDiff);
+                            expect(respMoment.isValid()).to.be.true;
+                            expect(respMoment.isAfter(lastResp)).to.be.true;
+                            expect(moment().diff(respMoment)).to.be.at.most(serverTimeDiff);
 
-                                callback(null, respMoment);
-                            });
+                            callback(null, respMoment);
+                        });
                     }, 1000);
 
                 }
@@ -519,24 +516,19 @@ describe('POST data to channel', function(){
 
                         payload = testRandom.randomString(testRandom.randomNum(51));
 
-                        agent.post(uri)
-                            .send(payload)
-                            .end(function(err, res) {
-                                if (err) throw err;
-                                expect(res.status).to.equal(200);
-                                respMoment = moment(res.body.timestamp);
-                                //console.log('Creation time was: '+ respMoment.format('X'));
+                        postData(channelName, payload, function(res, uri) {
+                            expect(res.status).to.equal(200);
+                            respMoment = moment(res.body.timestamp);
+                            //console.log('Creation time was: '+ respMoment.format('X'));
 
-                                expect(respMoment.isValid()).to.be.true;
-                                expect(respMoment.isAfter(lastResp)).to.be.true;
-                                expect(moment().diff(respMoment)).to.be.at.most(serverTimeDiff);
+                            expect(respMoment.isValid()).to.be.true;
+                            expect(respMoment.isAfter(lastResp)).to.be.true;
+                            expect(moment().diff(respMoment)).to.be.at.most(serverTimeDiff);
 
-                                callback(null);
-                            });
+                            callback(null);
+                        });
                     }, 1000);
-
                 }
-
             ]
              ,function(err) {
                     if (err) throw err;
@@ -572,7 +564,7 @@ describe('GET data -- content type is returned in response', function() {
     });
 
     // application Content-Types
-    it('Content-Type for application/*', function(done){
+    it('Content-Type for application/* (19 types)', function(done){
         async.each(appContentTypes, function(ct, nullCallback) {
             //console.log('CT: '+ ct);
             postDataAndConfirmContentType(channelName, ct, function(res) {
@@ -587,7 +579,7 @@ describe('GET data -- content type is returned in response', function() {
     });
 
     // image Content-Types
-    it('Content-Type for image/*', function(done){
+    it('Content-Type for image/* (7 types)', function(done){
         async.each(imageContentTypes, function(ct, nullCallback) {
             //console.log('CT: '+ ct);
             postDataAndConfirmContentType(channelName, ct, function(res) {
@@ -602,7 +594,7 @@ describe('GET data -- content type is returned in response', function() {
     });
 
     // message Content-Types
-    it('Content-Type for message/*', function(done){
+    it('Content-Type for message/* (4 types)', function(done){
         async.each(messageContentTypes, function(ct, nullCallback) {
             //console.log('CT: '+ ct);
             postDataAndConfirmContentType(channelName, ct, function(res) {
@@ -617,7 +609,7 @@ describe('GET data -- content type is returned in response', function() {
     });
 
     // text Content-Types
-    it('Content-Type for textContentTypes/*', function(done){
+    it('Content-Type for textContentTypes/* (8 types)', function(done){
         async.each(textContentTypes, function(ct, nullCallback) {
             //console.log('CT: '+ ct);
             postDataAndConfirmContentType(channelName, ct, function(res) {
@@ -631,6 +623,38 @@ describe('GET data -- content type is returned in response', function() {
         });
     });
 
+    // TODO ? multi-part type testing?
+
+});
+
+// Allow a client to access the most recently saved item in a channel.
+// https://www.pivotaltracker.com/story/show/43222579
+describe.skip('Access most recently saved item in channel', function() {
+    // Future tests
+    /* (Future tests): if a data set expires, the 'get latest' call should respect that and reset to:
+     the previous data set in the channel if one exists, or
+     return a 404 if there were no other data sets
+     */
+
+    // TODO: (Acceptance) Save a sequence of data to a channel.
+    //    Verify at each step that the "most recent" URI returns what was most recently saved.
+    //    Response to a channel creation *or* to a GET on the channel will include the URI to the latest resource in that channel.
+    //    NOTE: response is 303 ("see other") – it's a redirect to the latest set of data stored in the channel.
+
+    // TODO:  Return 404 if channel has no data.
+    it('Return 404 on Get Latest if channel has no data', function(done) {
+        var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+
+        getLatestFromChannel(thisChannel, function(resStatus, uri) {
+            expect(resStatus).to.equal(404);
+        });
+    });
+
+    // TODO: If latest data is an empty set, we still point to that.
+
+    // TODO:  Save two sets of data with the same creation timestamp.
+    //  Note: the client can't control which is the 'latest', but once the server has made that determination, it should stick.
+    //  So repeated calls to this method will always return the same data set.
 });
 
 
