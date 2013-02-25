@@ -75,4 +75,21 @@ public class ChannelContentResourceTest {
             assertEquals(Response.Status.NOT_FOUND.getStatusCode(), e.getResponse().getStatus());
         }
     }
+
+    @Test
+    public void testCreationDateHeaderInResponse() throws Exception {
+        String channelName = "woo";
+        DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 0);
+        DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
+
+        ChannelDao dao = mock(ChannelDao.class);
+
+        when(dao.getValue(channelName, key)).thenReturn(new DataHubCompositeValue(null, "found it!".getBytes()));
+
+        ChannelContentResource testClass = new ChannelContentResource(dao, dataHubKeyRenderer);
+        Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key));
+
+        String creationDateString = (String) result.getMetadata().getFirst(CustomHttpHeaders.CREATION_DATE_HEADER.getHeaderName());
+        assertEquals("2005-08-07T23:17:58.922Z", creationDateString);
+    }
 }

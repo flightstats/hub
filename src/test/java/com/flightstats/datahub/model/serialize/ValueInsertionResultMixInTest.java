@@ -24,7 +24,7 @@ public class ValueInsertionResultMixInTest {
         String result = out.toString();
         assertEquals("{\n" +
                 "  \"id\" : \"000021CJ7HU0K011\",\n" +
-                "  \"timestamp\" : \"2005-08-07T16:17:58.922-07:00\"\n" +
+                "  \"timestamp\" : \"2005-08-07T23:17:58.922Z\"\n" +
                 "}", result);
     }
 }
