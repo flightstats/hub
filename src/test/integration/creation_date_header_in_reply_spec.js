@@ -4,7 +4,7 @@ var frisby = require('frisby');
 
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
-var messageText = "";
+var messageText = "there's a snake in my boot!";
 
 utils.runInTestChannel(channelName, function () {
 
@@ -13,24 +13,13 @@ utils.runInTestChannel(channelName, function () {
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "text/plain")
         .expectStatus(200)
-        .expectHeader('content-type', 'application/json')
-        .expectJSON({
-            _links: {
-                channel: {
-                    href: thisChannelResource
-                }
-                //TOOD: Validate the value "self" url
-            },
-            //TODO: validate the id
-        })
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
-            console.log('Now attempting to fetch back my data from ' + valueUrl);
-            frisby.create('Fetching value to ensure that it was inserted.')
+            frisby.create('Fetching value in order to check creation date.')
                 .get(valueUrl)
                 .expectStatus(200)
-                .expectHeader('content-type', 'text/plain')
-                .expectHeader('content-length', "0")
+                // Wishing frisby allowed callbacks for header validation too...but it doesn't yet.
+                .expectHeaderContains('creation-date', 'T')
                 .toss();
         })
         .inspectJSON()

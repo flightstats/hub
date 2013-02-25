@@ -5,6 +5,9 @@ import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -12,6 +15,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import static com.flightstats.datahub.service.CustomHttpHeaders.CREATION_DATE_HEADER;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 /**
@@ -22,6 +26,7 @@ public class ChannelContentResource {
 
     private final ChannelDao channelDao;
     private final DataHubKeyRenderer dataHubKeyRenderer;
+    private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
     @Inject
     public ChannelContentResource(ChannelDao channelDao, DataHubKeyRenderer dataHubKeyRenderer) {
@@ -46,6 +51,8 @@ public class ChannelContentResource {
             builder.type(contentType);
         }
         builder.entity(columnValue.getData());
+
+        builder.header(CREATION_DATE_HEADER.getHeaderName(), dateTimeFormatter.print(new DateTime(key.getDate())));
         return builder.build();
     }
 
