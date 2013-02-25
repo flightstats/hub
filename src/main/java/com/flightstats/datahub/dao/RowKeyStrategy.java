@@ -6,4 +6,5 @@ package com.flightstats.datahub.dao;
 public interface RowKeyStrategy<K, T, V> {
 
     K buildKey(String channelName, T columnName);
+
 }
