@@ -27,16 +27,19 @@ class DataHub(object):
 			self.process_line(line)
 	def help(self):
 		print("Here are some common commands:")
-		print("  mkchan <chan>   : Create a new channel")
-		print("  channel <chan>  : Set/show the current channel")
-		print("  meta            : Show current channel metadata")
-		print("  post <text>     : Post text to the current channel")
-		print("  postfile <file> : Post text to the current channel")
-		print("  get <id>        : Fetch item from channel by id")
-		print("  latest          : Fetch the latest item from the current channel")
-		print("  ? or help       : Show this screen")
-		print("  quit            : Quit or exit")
+		print("  mkchan <chan>       : Create a new channel")
+		print("  channel <chan>      : Set/show the current channel")
+		print("  meta                : Show current channel metadata")
+		print("  post <text>         : Post text to the current channel")
+		print("  postfile <file>     : Post text to the current channel")
+		print("  get <id>            : Fetch item from channel by id")
+		print("  getfile <id> <file> : Save id item into a file")
+		print("  latest              : Fetch the latest item from the current channel")
+		print("  latestfile <file>   : Save the latest item into a file")
+		print("  ? or help           : Show this screen")
+		print("  quit                : Quit or exit")
 	def process_line(self, line):
+		line = re.sub(r'^\s*', '', line)
 		if(line == "exit" or line == "quit"):
 			print("Let's hub again real soon!")
 			self._done = True
@@ -51,6 +54,9 @@ class DataHub(object):
 			return
 		elif(line.startswith("meta")):
 			return self._show_metadata()
+		elif(line.startswith("getfile")):
+			(cmd, id, filename) = re.split("\s*", line)
+			return self._get_file(id, filename)
 		elif(line.startswith("get")):
 			id = re.sub(r'^get\s*', '', line)
 			self._do_get(id)
@@ -86,11 +92,21 @@ class DataHub(object):
 			
 	def _do_get(self, id):
 		conn = httplib.HTTPConnection(self._server)
-		#print("DEBUG: /channel/%s/%s" %(self._channel, id))
 		conn.request("GET", "/channel/%s/%s" %(self._channel, id), None, dict())
 		response = conn.getresponse()
 		print(response.status, response.reason)
 		self._show_response_if_text(response)
+	def _get_file(self, id, filename):
+		conn = httplib.HTTPConnection(self._server)
+		conn.request("GET", "/channel/%s/%s" %(self._channel, id), None, dict())
+		response = conn.getresponse()
+		self._save_response_to_file(response, filename)
+	def _save_response_to_file(self, response, filename):
+		print(response.status, response.reason)
+		f = open(filename, 'w')
+		f.write(response.read())
+		f.close()
+		print("Saved %s bytes into file %s"%(self._find_header(response, 'content-length'), filename))
 	def _get_latest(self):
 		conn = httplib.HTTPConnection(self._server)
 		conn.request("GET", "/channel/%s/latest" %(self._channel), None, dict())
