@@ -24,11 +24,9 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 @Path("/channel/{channelName: .*}/{id}")
 public class ChannelContentResource {
 
-
     private final ChannelDao channelDao;
     private final DataHubKeyRenderer dataHubKeyRenderer;
-    private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime();
-
+    private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
     @Inject
     public ChannelContentResource(ChannelDao channelDao, DataHubKeyRenderer dataHubKeyRenderer) {
