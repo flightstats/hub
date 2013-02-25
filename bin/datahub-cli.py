@@ -55,8 +55,6 @@ class DataHub(object):
 			id = re.sub(r'^get\s*', '', line)
 			self._do_get(id)
 			return
-		elif(line.startswith("post")):
-			return self._do_post(line)
 		elif(line.startswith("mkchan")):
 			channel_name = re.sub(r'^mkchan\s*', '', line)
 			return self._create_channel(channel_name)
@@ -65,6 +63,8 @@ class DataHub(object):
 		elif(line.startswith("postfile")):
 			filename = re.sub(r'^postfile\s*', '', line)
 			return self._postfile(filename)
+		elif(line.startswith("post")):
+			return self._do_post(line)
 		print("Command not understood -- try 'help'")
 	def _do_post(self, line):
 		line = re.sub(r'^post\s*', '', line)
@@ -90,7 +90,7 @@ class DataHub(object):
 		conn.request("GET", "/channel/%s/%s" %(self._channel, id), None, dict())
 		response = conn.getresponse()
 		print(response.status, response.reason)
-		print(response.read())
+		self._show_response_if_text(response)
 	def _get_latest(self):
 		conn = httplib.HTTPConnection(self._server)
 		conn.request("GET", "/channel/%s/latest" %(self._channel), None, dict())
@@ -105,9 +105,20 @@ class DataHub(object):
 			conn.request("GET", location, None, dict())
 			response = conn.getresponse()
 			print(response.status, response.reason)
-			print(response.read())
+			self._show_response_if_text(response)
+	def _show_response_if_text(self, response):
+			content_type = self._find_header(response, 'content-type')
+			if(self._can_render_content_type(content_type)):
+				print(response.read())
+			else:
+				print("Non-text content type: %s" %(content_type))
+				print("Refusing to show content (try getfile)")
 	def _find_header(self, response, header_name):
 		return filter(lambda x: x[0] == header_name, response.getheaders())[0][1]
+	def _can_render_content_type(self, content_type):
+		return content_type.startswith("text/") or \
+			content_type in ("application/json", "application/xml", "application/html", "application/javascript")
+			# others tbd
 	def _send_to_channel(self, content, mime_type):
 		conn = httplib.HTTPConnection(self._server)
 		headers = {'Content-type': mime_type, 'Accept': 'application/json'}
