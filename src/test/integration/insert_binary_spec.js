@@ -15,15 +15,14 @@ utils.runInTestChannel(channelName, function () {
 
         console.info("Inserting an image (" + imagedata.length + " bytes).");
 
-        buf = new Buffer(imagedata, 'binary');
-        //console.info("I made a buffer of length: " + buf.length);
-        //console.info("Original bytelength = " + Buffer.byteLength(imagedata));
-        //request.post({url: thisChannelResource, headers: {"Content-Type": "image/jpeg"}, body: buf}, function (error, response, body) {
-        request.post({url: thisChannelResource, body: buf}, function (error, response, body) {
-            expect(error).toBeNull();
-            console.info(body);
-            resultObj = JSON.parse(body);
-            expect(resultObj['_links']['channel']['href']).toBe(thisChannelResource);
+    buf = new Buffer(imagedata, 'binary');
+    //console.info("I made a buffer of length: " + buf.length);
+    //console.info("Original bytelength = " + Buffer.byteLength(imagedata));
+    //request.post({url: thisChannelResource, headers: {"Content-Type": "image/jpeg"}, body: buf}, function (error, response, body) {
+    request.post({url: thisChannelResource, headers: {"Content-Type": "image/jpeg"}, body: buf}, function (error, response, body) {
+        expect(error).toBeNull();
+        resultObj = JSON.parse(body);
+        expect(resultObj['_links']['channel']['href']).toBe(thisChannelResource);
 
             var valueUrl = resultObj['_links']['self']['href'];
             console.info("Now to retrieve and compare cats: " + valueUrl);

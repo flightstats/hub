@@ -6,11 +6,10 @@ var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 
 utils.runInTestChannel(channelName, function () {
-
     console.info('Inserting a value...');
-    frisby.create('Inserting a value into a channel.')
+    frisby.create('Checking that the content-type is returned.')
         .post(thisChannelResource, null, { body: messageText})
-        .addHeader("Content-Type", "text/plain")
+        .addHeader("Content-Type", "application/fractals")
         .expectStatus(200)
         .expectHeader('content-type', 'application/json')
         .expectJSON('_links', {
@@ -18,20 +17,17 @@ utils.runInTestChannel(channelName, function () {
                 href: thisChannelResource
             }
         })
-        .expectJSON('_links.self', {
-            href: function (value) {
-                var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/[A-Z,0-9]{16}$");
-                expect(value).toMatch(regex);
-            }
-        })
-        .expectJSON({
-            id: function (value) {
-                expect(value).toMatch(/^[A-Z,0-9]{16}$/);
-            },
-            timestamp: function (value) {
-                expect(value).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\d-\d\d:\d\d$/);
-            }
+        .afterJSON(function (result) {
+            var valueUrl = result['_links']['self']['href'];
+            console.log('Now attempting to fetch back my data from ' + valueUrl);
+            frisby.create('Fetching data and checking content-type header.')
+                .get(valueUrl)
+                .expectStatus(200)
+                .expectHeader('content-type', 'application/fractals')
+                .expectBodyContains(messageText)
+                .toss();
         })
         .inspectJSON()
         .toss();
 });
+
