@@ -36,7 +36,7 @@ public class CassandraChannelDao implements ChannelDao {
 
     @Override
     public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
-        logger.info("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
+        logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
         ValueInsertionResult result = cassandraValueWriter.write(channelName, value);
         channelsCollection.updateLastUpdatedKey(channelName, result.getKey());
@@ -45,7 +45,7 @@ public class CassandraChannelDao implements ChannelDao {
 
     @Override
     public DataHubCompositeValue getValue(String channelName, DataHubKey key) {
-        logger.info("Fetching " + key.toString() + " from channel " + channelName);
+        logger.debug("Fetching " + key.toString() + " from channel " + channelName);
         return cassandraValueReader.read(channelName, key);
     }
 
