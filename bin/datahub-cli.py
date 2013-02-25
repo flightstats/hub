@@ -7,6 +7,7 @@ import getopt
 import readline
 import re
 import httplib, urllib
+import mimetypes
 
 def usage():
 	print("Usage: datahub-cli.py --server <host[:port]>")
@@ -28,7 +29,7 @@ class DataHub(object):
 		print("Here are some common commands:")
 		print("  mkchan <chan>  : Create a new channel")
 		print("  channel <chan> : Set/show the current channel")
-		print("  post <text>    : Post text to the channel")
+		print("  post <text>    : Post text to the current channel")
 		print("  get <id>       : Fetch item from channel by id")
 		print("  latest         : Fetch the latest item from the current channel")
 		print("  ? or help      : Show this screen")
@@ -57,6 +58,9 @@ class DataHub(object):
 			return self._create_channel(channel_name)
 		elif(line.startswith("late")):
 			return self._get_latest()
+		elif(line.startswith("postfile")):
+			filename = re.sub(r'^postfile\s*', '', line)
+			return self._postfile(filename)
 		print("Command not understood -- try 'help'")
 	def _do_post(self, line):
 		line = re.sub(r'^post\s*', '', line)
@@ -65,7 +69,17 @@ class DataHub(object):
 		else:
 			print("Go wild and use EOF to end it.")
 			content = self._read_multiline()
-		self._send_to_channel(content)
+		self._send_to_channel(content, 'text/plain')
+	def _postfile(self, filename):
+		try:
+			f = open(filename, 'rb')
+			contents = f.read()
+			f.close()
+			mime_type = mimetypes.guess_type(filename)[0]
+			self._send_to_channel(contents, mime_type)
+		except IOError as e:
+			print("Unable to open/read file: %s", e)
+			
 	def _do_get(self, id):
 		conn = httplib.HTTPConnection(self._server)
 		#print("DEBUG: /channel/%s/%s" %(self._channel, id))
@@ -90,9 +104,9 @@ class DataHub(object):
 			print(response.read())
 	def _find_header(self, response, header_name):
 		return filter(lambda x: x[0] == header_name, response.getheaders())[0][1]
-	def _send_to_channel(self, content):
+	def _send_to_channel(self, content, mime_type):
 		conn = httplib.HTTPConnection(self._server)
-		headers = {'Content-type': 'text/plain', 'Accept': 'application/json'}
+		headers = {'Content-type': mime_type, 'Accept': 'application/json'}
 		conn.request("POST", "/channel/%s" %(self._channel), content, headers)
 		response = conn.getresponse()
 		print(response.status, response.reason)
