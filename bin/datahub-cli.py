@@ -22,11 +22,12 @@ class DataHub(object):
 			self.process_line(line)
 	def help(self):
 		print("Here are some common commands:")
-		print("  mkchan <chan>  : Create a new channel.")
-		print("  channel <chan> : Set/show the current channel.")
-		print("  post <text>    : Post text to the channel.")
+		print("  mkchan <chan>  : Create a new channel")
+		print("  channel <chan> : Set/show the current channel")
+		print("  post <text>    : Post text to the channel")
 		print("  get <id>       : Fetch item from channel by id")
-		print("  help           : Show this screen")
+		print("  latest         : Fetch the latest item from the current channel")
+		print("  ? or help      : Show this screen")
 		print("  quit           : Quit or exit")
 	def process_line(self, line):
 		if(line == "exit" or line == "quit"):
@@ -47,6 +48,11 @@ class DataHub(object):
 			return
 		elif(line.startswith("post")):
 			return self._do_post(line)
+		elif(line.startswith("mkchan")):
+			channel_name = re.sub(r'^mkchan\s*', '', line)
+			return self._create_channel(channel_name)
+		elif(line.startswith("late")):
+			self._get_latest()
 		print("Command not understood -- try 'help'")
 	def _do_post(self, line):
 		line = re.sub(r'^post\s*', '', line)
@@ -63,12 +69,22 @@ class DataHub(object):
 		response = conn.getresponse()
 		print(response.status, response.reason)
 		print(response.read())
-	def _send_to_channel(self, content):
+	def _get_latest(self):
 		pass
+	def _send_to_channel(self, content):
 		conn = httplib.HTTPConnection(self._server)
 		headers = {'Content-type': 'text/plain', 'Accept': 'application/json'}
 		conn.request("POST", "/channel/%s" %(self._channel), content, headers)
 		response = conn.getresponse()
+		print(response.status, response.reason)
+		print(response.read())
+	def _create_channel(self, channel_name):
+		conn = httplib.HTTPConnection(self._server)
+		content = '{"name": "%s"}' %(channel_name);
+		headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+		conn.request("POST", "/channel", content, headers)
+		response = conn.getresponse()
+		self._channel = channel_name
 		print(response.status, response.reason)
 		print(response.read())
 	def _read_multiline(self):
