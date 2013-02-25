@@ -18,7 +18,11 @@ class DataHub(object):
 		self._channel = None
 	def run(self):
 		while(not self._done):
-			line = raw_input('DataHub@%s> ' %(self._server))
+			try:
+				line = raw_input('DataHub@%s> ' %(self._server))
+			except EOFError:
+				print("\nSee ya!")
+				break
 			self.process_line(line)
 	def help(self):
 		print("Here are some common commands:")
@@ -74,16 +78,16 @@ class DataHub(object):
 		conn.request("GET", "/channel/%s/latest" %(self._channel), None, dict())
 		response = conn.getresponse()
 		print(response.status, response.reason)
-		location = self._find_header(response, 'location')
-		print("Fetching latest: %s" %(location))
-
-		conn = httplib.HTTPConnection(self._server)
-		#print("DEBUG: /channel/%s/%s" %(self._channel, id))
-		conn.request("GET", location, None, dict())
-		response = conn.getresponse()
-		print(response.status, response.reason)
-		print(response.read())
-		
+		if(response.status == 404):
+			print("Not found (channel is empty or nonexistent)")
+		elif(response.status == 303):
+			location = self._find_header(response, 'location')
+			print("Fetching latest: %s" %(location))
+			conn = httplib.HTTPConnection(self._server)
+			conn.request("GET", location, None, dict())
+			response = conn.getresponse()
+			print(response.status, response.reason)
+			print(response.read())
 	def _find_header(self, response, header_name):
 		return filter(lambda x: x[0] == header_name, response.getheaders())[0][1]
 	def _send_to_channel(self, content):
