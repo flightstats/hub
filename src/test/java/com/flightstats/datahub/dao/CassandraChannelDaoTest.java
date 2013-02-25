@@ -2,11 +2,11 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
+import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import org.junit.Test;
 
 import java.util.Date;
-import java.util.UUID;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
@@ -28,7 +28,7 @@ public class CassandraChannelDaoTest {
 
     @Test
     public void testCreateChannel() throws Exception {
-        ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999));
+        ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999), null);
         CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
         when(collection.createChannel("foo")).thenReturn(expected);
         CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null);
@@ -38,18 +38,19 @@ public class CassandraChannelDaoTest {
 
     @Test
     public void testInsert() throws Exception {
-        UUID uid = UUID.randomUUID();
+        Date date = new Date(2345678910L);
+        DataHubKey key = new DataHubKey(date, (short) 3);
         String channelName = "foo";
         byte[] data = "bar".getBytes();
-        Date date = new Date(2345678910L);
         String contentType = "text/plain";
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
-        ValueInsertionResult expected = new ValueInsertionResult(uid, date);
+        ValueInsertionResult expected = new ValueInsertionResult(key);
 
+        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
         CassandraValueWriter inserter = mock(CassandraValueWriter.class);
 
-        when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(uid, date));
-        CassandraChannelDao testClass = new CassandraChannelDao(null, inserter, null);
+        when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(key));
+        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, null);
 
         ValueInsertionResult result = testClass.insert(channelName, contentType, data);
 
@@ -59,17 +60,17 @@ public class CassandraChannelDaoTest {
     @Test
     public void testGetValue() throws Exception {
         String channelName = "cccccc";
-        UUID uid = UUID.randomUUID();
+        DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
         byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
         DataHubCompositeValue expected = new DataHubCompositeValue("text/plain", data);
 
         CassandraValueReader reader = mock(CassandraValueReader.class);
 
-        when(reader.read(channelName, uid)).thenReturn(expected);
+        when(reader.read(channelName, key)).thenReturn(expected);
 
         CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader);
 
-        DataHubCompositeValue result = testClass.getValue(channelName, uid);
+        DataHubCompositeValue result = testClass.getValue(channelName, key);
         assertEquals(expected, result);
     }
 }
