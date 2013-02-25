@@ -64,6 +64,9 @@ class DataHub(object):
 		elif(line.startswith("mkchan")):
 			channel_name = re.sub(r'^mkchan\s*', '', line)
 			return self._create_channel(channel_name)
+		elif(line.startswith("latefile")):
+			filename = re.sub(r'^latefile\s*', '', line)
+			return self._get_latest(filename)
 		elif(line.startswith("late")):
 			return self._get_latest()
 		elif(line.startswith("postfile")):
@@ -107,7 +110,7 @@ class DataHub(object):
 		f.write(response.read())
 		f.close()
 		print("Saved %s bytes into file %s"%(self._find_header(response, 'content-length'), filename))
-	def _get_latest(self):
+	def _get_latest(self, filename = None):
 		conn = httplib.HTTPConnection(self._server)
 		conn.request("GET", "/channel/%s/latest" %(self._channel), None, dict())
 		response = conn.getresponse()
@@ -121,7 +124,10 @@ class DataHub(object):
 			conn.request("GET", location, None, dict())
 			response = conn.getresponse()
 			print(response.status, response.reason)
-			self._show_response_if_text(response)
+			if(filename):
+				self._save_response_to_file(response, filename)
+			else:
+				self._show_response_if_text(response)
 	def _show_response_if_text(self, response):
 			content_type = self._find_header(response, 'content-type')
 			if(self._can_render_content_type(content_type)):
