@@ -27,13 +27,14 @@ class DataHub(object):
 			self.process_line(line)
 	def help(self):
 		print("Here are some common commands:")
-		print("  mkchan <chan>  : Create a new channel")
-		print("  channel <chan> : Set/show the current channel")
-		print("  post <text>    : Post text to the current channel")
-		print("  get <id>       : Fetch item from channel by id")
-		print("  latest         : Fetch the latest item from the current channel")
-		print("  ? or help      : Show this screen")
-		print("  quit           : Quit or exit")
+		print("  mkchan <chan>   : Create a new channel")
+		print("  channel <chan>  : Set/show the current channel")
+		print("  post <text>     : Post text to the current channel")
+		print("  postfile <file> : Post text to the current channel")
+		print("  get <id>        : Fetch item from channel by id")
+		print("  latest          : Fetch the latest item from the current channel")
+		print("  ? or help       : Show this screen")
+		print("  quit            : Quit or exit")
 	def process_line(self, line):
 		if(line == "exit" or line == "quit"):
 			print("Let's hub again real soon!")
