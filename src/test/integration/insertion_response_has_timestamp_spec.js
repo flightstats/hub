@@ -29,7 +29,7 @@ utils.runInTestChannel(channelName, function () {
                 expect(value).toMatch(/^[A-Z,0-9]{16}$/);
             },
             timestamp: function (value) {
-                expect(value).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\d-\d\d:\d\d$/);
+                expect(value).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ$/);
             }
         })
         .inspectJSON()

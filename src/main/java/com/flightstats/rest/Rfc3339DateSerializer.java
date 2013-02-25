@@ -12,7 +12,7 @@ import java.util.Date;
 
 public class Rfc3339DateSerializer extends JsonSerializer<Date> {
 
-    private final DateTimeFormatter formatter = ISODateTimeFormat.dateTime();
+    private final DateTimeFormatter formatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
     @Override
     public void serialize(Date value, JsonGenerator jgen, SerializerProvider provider) throws IOException {

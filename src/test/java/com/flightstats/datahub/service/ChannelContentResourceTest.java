@@ -90,6 +90,6 @@ public class ChannelContentResourceTest {
         Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key));
 
         String creationDateString = (String) result.getMetadata().getFirst(CustomHttpHeaders.CREATION_DATE_HEADER.getHeaderName());
-        assertEquals("2005-08-07T16:17:58.922-07:00", creationDateString);
+        assertEquals("2005-08-07T23:17:58.922Z", creationDateString);
     }
 }
