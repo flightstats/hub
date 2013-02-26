@@ -6,9 +6,6 @@ var channelName = utils.randomChannelName();
 var jsonBody = JSON.stringify({ "name": channelName});
 var channelResource = channelUrl + "/" + channelName;
 
-console.info("Testing basic channel creation response.")
-
-console.info("Making sure channel resource does not yet exist.");
 frisby.create('Making sure channel resource does not yet exist.')
     .get(channelResource)
     .expectStatus(404)
@@ -28,13 +25,11 @@ frisby.create('Making sure channel resource does not yet exist.')
                 //TODO: Date validation
             })
             .afterJSON(function (result) {
-                console.info("Fetching channel resource to ensure that it exists...");
                 frisby.create('Making sure channel resource exists.')
                     .get(result['_links']['self']['href'])
                     .expectStatus(200)
                     .toss();
             })
-            .inspectJSON()
             .toss();
 
     })

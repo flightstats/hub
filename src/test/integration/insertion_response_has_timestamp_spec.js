@@ -6,8 +6,6 @@ var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 
 utils.runInTestChannel(channelName, function () {
-
-    console.info('Inserting a value...');
     frisby.create('Inserting a value into a channel.')
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "text/plain")
@@ -32,6 +30,5 @@ utils.runInTestChannel(channelName, function () {
                 expect(value).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ$/);
             }
         })
-        .inspectJSON()
         .toss();
 });

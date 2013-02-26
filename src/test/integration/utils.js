@@ -4,7 +4,6 @@ var http = require('http');
 var fs = require('fs');
 
 function runInTestChannel(channelName, functionToExecute) {
-    console.info('Ensuring that test channel has been created...');
     frisby.create('Ensuring that the test channel exists.')
         .post(channelUrl, null, { body: JSON.stringify({ "name": channelName})})
         .addHeader("Content-Type", "application/json")
