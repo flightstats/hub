@@ -21,6 +21,9 @@ var textContentTypes = require('./js_testing_utils/contentTypes.js').textTypes;
 
 
 var URL_ROOT = 'http://datahub-01.cloud-east.dev:8080';
+
+var GET_LATEST_SUCCESS_RESPONSE = 303;
+
 var CAT_TOILET_PIC = './artifacts/cattoilet.jpg';
 var MY_2MB_FILE = './artifacts/Iam2_5Mb.txt';
 var MY_2KB_FILE = './artifacts/Iam200kb.txt';
@@ -100,7 +103,7 @@ var getValidationChecksum = function (myUri, expChecksum, myDone)
 
 };
 
-
+// returns the POST response
 var makeChannel = function(myChannelName, myCallback) {
 
     var myPayload = '{"name":"'+ myChannelName +'"}';
@@ -164,17 +167,44 @@ var postDataAndConfirmContentType = function(myChannelName, myContentType, myCal
         });
 };
 
-// Returns the response code and URI for the latest data set
+// Returns data
 var getLatestFromChannel = function(myChannelName, myCallback) {
     var getUri = URL_ROOT +'/channel/'+ myChannelName +'/latest';
 
-    superagent.agent().get(getUri)
-        .end(function(err, res) {
-            if (err) throw err;
-            uri = res.body._links.self.href;
+    async.waterfall([
+        function(callback){
+            superagent.agent().get(getUri)
+                .redirects(0)
+                .end(function(err, res) {
+                    expect(res.status).to.equal(GET_LATEST_SUCCESS_RESPONSE);
+                    expect(res.headers['location']).not.to.be.null;
 
-            myCallback(res.status, uri);
-        });
+                    callback(null, res.headers['location']);
+                });
+        },
+        function(newUri, callback){
+            var myData = '';
+
+            http.get(newUri, function(res) {
+                res.on('data', function (chunk) {
+                    myData += chunk;
+                }).on('end', function(){
+                        callback(null, myData);
+                    });
+            }).on('error', function(e) {
+                    callback(e, null);
+                });
+        }
+    ], function (err, finalData) {
+        if (err) throw err;
+        myCallback(finalData);
+    });
+
+};
+
+// This is in the response from a Channel creation (POST) or a GET on a Channel
+var getLatestUriFromResponse = function(response) {
+    return response.body._links.latest;
 };
 
 var postDataAndReturnUri = function(myChannelName, myPayload, myCallback) {
@@ -235,6 +265,15 @@ describe('Create Channel', function(){
 
     // TODO: sequence:  create channel, post data to it, confirm data is there, create channel with same name again,
     //      see if data is still available.
+
+    // https://www.pivotaltracker.com/story/show/44113267
+    // Attempting to create a channel with a name already in use will return an error. NOT IMPLEMENTED YET.
+    it.skip('HTTP 500 if attempting to create channel with a name already in use', function(done) {
+        makeChannel(channelName, function(res) {
+            expect(res.status).to.equal(500);
+            done();
+        });
+    });
 
 });
 
@@ -623,34 +662,199 @@ describe('GET data -- content type is returned in response', function() {
         });
     });
 
+
+    it('Made-up legal Content-Type should be accepted and returned', function(done) {
+        // Note that the DH accepts illegal Content-Types, but does require a slash between two strings, so that's
+        //  the standard I'm going with.
+        var myContentType = testRandom.randomString(testRandom.randomNum(10), testRandom.limitedRandomChar);
+        myContentType += '/'+ testRandom.randomString(testRandom.randomNum(10), testRandom.limitedRandomChar);
+
+        var getAgent = superagent.agent();
+
+        payload = testRandom.randomString(Math.round(Math.random() * 50));
+        uri = URL_ROOT +'/channel/'+ channelName;
+
+        agent.post(uri)
+            .set('Content-Type', myContentType)
+            .send(payload)
+            .end(function(err, res) {
+                if (err) throw err;
+                expect(res.status).to.equal(200);
+                uri = res.body._links.self.href;
+
+                getAgent.get(uri)
+                    .end(function(err2, res2) {
+                        if (err2) throw err2;
+                        expect(res2.status).to.equal(200);
+                        expect(res2.type.toLowerCase()).to.equal(myContentType.toLowerCase());
+                        done();
+                    });
+
+            });
+
+    });
+
     // TODO ? multi-part type testing?
 
 });
 
 // Allow a client to access the most recently saved item in a channel.
 // https://www.pivotaltracker.com/story/show/43222579
-describe.skip('Access most recently saved item in channel', function() {
+describe('Access most recently saved item in channel', function() {
     // Future tests
     /* (Future tests): if a data set expires, the 'get latest' call should respect that and reset to:
      the previous data set in the channel if one exists, or
      return a 404 if there were no other data sets
      */
 
-    // TODO: (Acceptance) Save a sequence of data to a channel.
+    //    *Complex case*: this covers both retrieving the URI for latest data and ensuring that it yields the latest data.
     //    Verify at each step that the "most recent" URI returns what was most recently saved.
     //    Response to a channel creation *or* to a GET on the channel will include the URI to the latest resource in that channel.
     //    NOTE: response is 303 ("see other") – it's a redirect to the latest set of data stored in the channel.
-
-    // TODO:  Return 404 if channel has no data.
-    it('Return 404 on Get Latest if channel has no data', function(done) {
+    it('(Acceptance) Save sequence of data to channel, confirm that latest actually returns latest', function(done) {
         var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+        var latestUri, myData;
 
-        getLatestFromChannel(thisChannel, function(resStatus, uri) {
-            expect(resStatus).to.equal(404);
+        var payload1 = testRandom.randomString(testRandom.randomNum(51));
+        var payload2 = testRandom.randomString(testRandom.randomNum(51));
+        var payload3 = testRandom.randomString(testRandom.randomNum(51));
+
+        //console.log('Payload1:'+ payload1);
+        //console.log('Payload2:'+ payload2);
+        //console.log('Payload3:'+ payload3);
+
+        async.waterfall([
+            function(callback){
+                makeChannel(thisChannel, function(res) {
+                        expect(res.status).to.equal(200);
+                        latestUri = getLatestUriFromResponse(res);
+
+                        callback(null);
+                });
+            },
+            function(callback){
+                postData(thisChannel, payload1, function(myRes, myUri) {
+                    expect(myRes.status).to.equal(200);
+
+                    getLatestFromChannel(thisChannel, function(myData) {
+                        //console.log('payload1:'+ payload1);
+                        //console.log('data returned:'+ myData);
+
+                        expect(myData).to.equal(payload1);
+
+                        callback(null);
+                    });
+                });
+            },
+            function(callback){
+                postData(thisChannel, payload2, function(myRes, myUri) {
+                    expect(myRes.status).to.equal(200);
+
+                    getLatestFromChannel(thisChannel, function(myData) {
+                        //console.log('payload2:'+ payload2);
+                        //console.log('data returned:'+ myData);
+
+                        expect(myData).to.equal(payload2);
+
+                        callback(null);
+                    });
+                });
+            },
+            function(callback){
+                postData(thisChannel, payload3, function(myRes, myUri) {
+                    expect(myRes.status).to.equal(200);
+
+                    getLatestFromChannel(thisChannel, function(myData) {
+                        //console.log('payload3:'+ payload3);
+                        //console.log('data returned:'+ myData);
+
+                        expect(myData).to.equal(payload3);
+
+                        callback(null);
+                    });
+                });
+            }
+        ], function (err) {
+            done();
         });
     });
 
-    // TODO: If latest data is an empty set, we still point to that.
+    it('Return 404 on Get Latest if channel has no data', function(done) {
+        var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+
+        makeChannel(thisChannel, function(res) {
+            expect(res.status).to.equal(200);
+
+            uri = URL_ROOT +'/channel/'+ thisChannel +'/latest';
+
+            agent.get(uri)
+                .end(function(err, res) {
+                    expect(res.status).to.equal(404);
+                    done();
+                });
+        });
+    });
+
+    it('Channel creation returns link to latest data set', function(done) {
+        var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+
+        makeChannel(thisChannel, function(res) {
+            expect(res.status).to.equal(200);
+            expect(res.body._links.latest.href).to.not.be.null;
+
+            done();
+        });
+
+    });
+
+    it('GET on Channel returns link to latest data set', function(done) {
+        getChannel(channelName, function(res) {
+            expect(res.status).to.equal(200);
+            expect(res.body._links.latest.href).to.not.be.null;
+
+            done();
+        });
+    });
+
+    it('Get latest works when latest data set is an empty set, following a previous non-empty set', function(done) {
+        var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+        var latestUri, myData;
+
+        payload = testRandom.randomString(testRandom.randomNum(51));
+
+        async.waterfall([
+            function(callback){
+                makeChannel(thisChannel, function(res) {
+                    expect(res.status).to.equal(200);
+                    latestUri = getLatestUriFromResponse(res);
+
+                    callback(null);
+                });
+            },
+            function(callback){
+                postData(thisChannel, payload, function(myRes, myUri) {
+                    expect(myRes.status).to.equal(200);
+
+                    getLatestFromChannel(thisChannel, function(myData) {
+                        expect(myData).to.equal(payload);
+                        callback(null);
+                    });
+                });
+            },
+            function(callback){
+                postData(thisChannel, '', function(myRes, myUri) {
+                    expect(myRes.status).to.equal(200);
+
+                    getLatestFromChannel(thisChannel, function(myData) {
+                        expect(myData).to.equal('');
+                        callback(null);
+                    });
+                });
+            }
+        ], function (err) {
+            done();
+        });
+    });
 
     // TODO:  Save two sets of data with the same creation timestamp.
     //  Note: the client can't control which is the 'latest', but once the server has made that determination, it should stick.
