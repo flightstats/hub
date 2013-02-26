@@ -4,6 +4,8 @@ import java.util.Date;
 
 public class DataHubKey {
 
+    public final static DataHubKey MIN_KEY = new DataHubKey(new Date(0), (short) 0);
+
     private final Date date;
     private final short sequence;
 

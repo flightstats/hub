@@ -1,9 +1,6 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubCompositeValue;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.*;
 import org.junit.Test;
 
 import java.util.Date;
@@ -21,7 +18,7 @@ public class CassandraChannelDaoTest {
         CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
         when(collection.channelExists("thechan")).thenReturn(true);
         when(collection.channelExists("nope")).thenReturn(false);
-        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null);
+        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null);
         assertTrue(testClass.channelExists("thechan"));
         assertFalse(testClass.channelExists("nope"));
     }
@@ -31,7 +28,7 @@ public class CassandraChannelDaoTest {
         ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999), null);
         CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
         when(collection.createChannel("foo")).thenReturn(expected);
-        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null);
+        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null);
         ChannelConfiguration result = testClass.createChannel("foo");
         assertEquals(expected, result);
     }
@@ -50,7 +47,7 @@ public class CassandraChannelDaoTest {
         CassandraValueWriter inserter = mock(CassandraValueWriter.class);
 
         when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(key));
-        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, null);
+        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, null, null);
 
         ValueInsertionResult result = testClass.insert(channelName, contentType, data);
 
@@ -68,9 +65,9 @@ public class CassandraChannelDaoTest {
 
         when(reader.read(channelName, key)).thenReturn(expected);
 
-        CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader);
+        CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader, null);
 
-        DataHubCompositeValue result = testClass.getValue(channelName, key);
-        assertEquals(expected, result);
+        LinkedDataHubCompositeValue result = testClass.getValue(channelName, key);
+        assertEquals(expected, result); ///FIXME FIXME
     }
 }

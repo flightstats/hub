@@ -1,9 +1,10 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
@@ -14,6 +15,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 
 import static com.flightstats.datahub.service.CustomHttpHeaders.CREATION_DATE_HEADER;
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -24,20 +27,23 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 @Path("/channel/{channelName: .*}/{id}")
 public class ChannelContentResource {
 
+    private final UriInfo uriInfo;
     private final ChannelDao channelDao;
-    private final DataHubKeyRenderer dataHubKeyRenderer;
+    private final DataHubKeyRenderer keyRenderer;
     private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
     @Inject
-    public ChannelContentResource(ChannelDao channelDao, DataHubKeyRenderer dataHubKeyRenderer) {
+    public ChannelContentResource(UriInfo uriInfo, ChannelDao channelDao, DataHubKeyRenderer keyRenderer) {
+        this.uriInfo = uriInfo;
         this.channelDao = channelDao;
-        this.dataHubKeyRenderer = dataHubKeyRenderer;
+        this.keyRenderer = keyRenderer;
     }
 
     @GET
     public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id) {
-        DataHubKey key = dataHubKeyRenderer.fromString(id);
-        DataHubCompositeValue columnValue = channelDao.getValue(channelName, key);
+        DataHubKey key = keyRenderer.fromString(id);
+        LinkedDataHubCompositeValue columnValue = channelDao.getValue(channelName, key);
+
         if (columnValue == null) {
             //TODO: dont throw here???
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -53,6 +59,11 @@ public class ChannelContentResource {
         builder.entity(columnValue.getData());
 
         builder.header(CREATION_DATE_HEADER.getHeaderName(), dateTimeFormatter.print(new DateTime(key.getDate())));
+        Optional<DataHubKey> previous = columnValue.getPrevious();
+        if (previous.isPresent()) {
+            URI previousUrl = URI.create(uriInfo.getRequestUri().resolve(".") + keyRenderer.keyToString(previous.get()));
+            builder.header("Link", "<" + previousUrl + ">;rel=\"previous\"");
+        }
         return builder.build();
     }
 

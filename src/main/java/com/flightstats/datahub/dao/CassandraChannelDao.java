@@ -1,9 +1,6 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubCompositeValue;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.*;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -15,12 +12,14 @@ public class CassandraChannelDao implements ChannelDao {
     private final CassandraChannelsCollection channelsCollection;
     private final CassandraValueWriter cassandraValueWriter;
     private final CassandraValueReader cassandraValueReader;
+    private final CassandraLinkagesFinder linkagesFinder;
 
     @Inject
-    public CassandraChannelDao(CassandraChannelsCollection channelsCollection, CassandraValueWriter cassandraValueWriter, CassandraValueReader cassandraValueReader) {
+    public CassandraChannelDao(CassandraChannelsCollection channelsCollection, CassandraValueWriter cassandraValueWriter, CassandraValueReader cassandraValueReader, CassandraLinkagesFinder linkagesFinder) {
         this.channelsCollection = channelsCollection;
         this.cassandraValueWriter = cassandraValueWriter;
         this.cassandraValueReader = cassandraValueReader;
+        this.linkagesFinder = linkagesFinder;
     }
 
     @Override
@@ -44,9 +43,11 @@ public class CassandraChannelDao implements ChannelDao {
     }
 
     @Override
-    public DataHubCompositeValue getValue(String channelName, DataHubKey key) {
+    public LinkedDataHubCompositeValue getValue(String channelName, DataHubKey key) {
         logger.debug("Fetching " + key.toString() + " from channel " + channelName);
-        return cassandraValueReader.read(channelName, key);
+        DataHubCompositeValue value = cassandraValueReader.read(channelName, key);
+        Optional<DataHubKey> previous = linkagesFinder.findPrevious(channelName, key);
+        return new LinkedDataHubCompositeValue(value, previous);
     }
 
     @Override
