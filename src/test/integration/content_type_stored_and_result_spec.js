@@ -1,38 +1,33 @@
 var utils = require('./utils.js');
-require('./integration_config.js');
 var frisby = require('frisby');
 
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
-var messageText = "";
+var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 
 utils.runInTestChannel(channelName, function () {
-
     console.info('Inserting a value...');
-    frisby.create('Inserting a value into a channel.')
+    frisby.create('Checking that the content-type is returned.')
         .post(thisChannelResource, null, { body: messageText})
-        .addHeader("Content-Type", "text/plain")
+        .addHeader("Content-Type", "application/fractals")
         .expectStatus(200)
         .expectHeader('content-type', 'application/json')
-        .expectJSON({
-            _links: {
-                channel: {
-                    href: thisChannelResource
-                }
-                //TOOD: Validate the value "self" url
-            },
-            //TODO: validate the id
+        .expectJSON('_links', {
+            channel: {
+                href: thisChannelResource
+            }
         })
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
             console.log('Now attempting to fetch back my data from ' + valueUrl);
-            frisby.create('Fetching value to ensure that it was inserted.')
+            frisby.create('Fetching data and checking content-type header.')
                 .get(valueUrl)
                 .expectStatus(200)
-                .expectHeader('content-type', 'text/plain')
-                .expectHeader('content-length', "0")
+                .expectHeader('content-type', 'application/fractals')
+                .expectBodyContains(messageText)
                 .toss();
         })
         .inspectJSON()
         .toss();
 });
+

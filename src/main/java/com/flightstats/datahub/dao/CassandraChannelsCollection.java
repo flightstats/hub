@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
@@ -33,13 +34,13 @@ public class CassandraChannelsCollection {
     }
 
     public ChannelConfiguration createChannel(String name) {
-        ChannelConfiguration channelConfig = new ChannelConfiguration(name, timeProvider.getDate());
+        ChannelConfiguration channelConfig = new ChannelConfiguration(name, timeProvider.getDate(), null);
         createColumnFamilyForChannel(channelConfig);
-        addMetaDataForNewChannel(channelConfig);
+        insertChannelMetadata(channelConfig);
         return channelConfig;
     }
 
-    private void addMetaDataForNewChannel(ChannelConfiguration channelConfig) {
+    private void insertChannelMetadata(ChannelConfiguration channelConfig) {
         connector.createColumnFamilyIfNeeded(CHANNELS_COLUMN_FAMILY_NAME);
         StringSerializer keySerializer = StringSerializer.get();
         Mutator<String> mutator = connector.buildMutator(keySerializer);
@@ -58,7 +59,7 @@ public class CassandraChannelsCollection {
         return channelConfiguration != null;
     }
 
-    private ChannelConfiguration getChannelConfiguration(String channelName) {
+    public ChannelConfiguration getChannelConfiguration(String channelName) {
         connector.createColumnFamilyIfNeeded(CHANNELS_COLUMN_FAMILY_NAME);
         Keyspace keyspace = connector.getKeyspace();
         ColumnQuery<String, String, ChannelConfiguration> rawQuery = hector.createColumnQuery(keyspace, StringSerializer.get(),
@@ -69,5 +70,11 @@ public class CassandraChannelsCollection {
         QueryResult<HColumn<String, ChannelConfiguration>> result = columnQuery.execute();
         HColumn<String, ChannelConfiguration> column = result.get();
         return column == null ? null : column.getValue();
+    }
+
+    public void updateLastUpdatedKey(String channelName, DataHubKey key) {
+        ChannelConfiguration config = getChannelConfiguration(channelName);
+        ChannelConfiguration updatedConfig = config.updateLastUpdateKey(key);
+        insertChannelMetadata(updatedConfig);
     }
 }

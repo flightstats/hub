@@ -7,6 +7,7 @@ import getopt
 import readline
 import re
 import httplib, urllib
+import mimetypes
 
 def usage():
 	print("Usage: datahub-cli.py --server <host[:port]>")
@@ -18,17 +19,27 @@ class DataHub(object):
 		self._channel = None
 	def run(self):
 		while(not self._done):
-			line = raw_input('DataHub@%s> ' %(self._server))
+			try:
+				line = raw_input('DataHub@%s> ' %(self._server))
+			except EOFError:
+				print("\nSee ya!")
+				break
 			self.process_line(line)
 	def help(self):
 		print("Here are some common commands:")
-		print("  mkchan <chan>  : Create a new channel.")
-		print("  channel <chan> : Set/show the current channel.")
-		print("  post <text>    : Post text to the channel.")
-		print("  get <id>       : Fetch item from channel by id")
-		print("  help           : Show this screen")
-		print("  quit           : Quit or exit")
+		print("  mkchan <chan>       : Create a new channel")
+		print("  channel <chan>      : Set/show the current channel")
+		print("  meta                : Show current channel metadata")
+		print("  post <text>         : Post text to the current channel")
+		print("  postfile <file>     : Post text to the current channel")
+		print("  get <id>            : Fetch item from channel by id")
+		print("  getfile <id> <file> : Save id item into a file")
+		print("  latest              : Fetch the latest item from the current channel")
+		print("  latestfile <file>   : Save the latest item into a file")
+		print("  ? or help           : Show this screen")
+		print("  quit                : Quit or exit")
 	def process_line(self, line):
+		line = re.sub(r'^\s*', '', line)
 		if(line == "exit" or line == "quit"):
 			print("Let's hub again real soon!")
 			self._done = True
@@ -41,10 +52,26 @@ class DataHub(object):
 				self._channel = parts[1]
 			print("The current channel is '%s'" %(self._channel))
 			return
+		elif(line.startswith("meta")):
+			return self._show_metadata()
+		elif(line.startswith("getfile")):
+			(cmd, id, filename) = re.split("\s*", line)
+			return self._get_file(id, filename)
 		elif(line.startswith("get")):
 			id = re.sub(r'^get\s*', '', line)
 			self._do_get(id)
 			return
+		elif(line.startswith("mkchan")):
+			channel_name = re.sub(r'^mkchan\s*', '', line)
+			return self._create_channel(channel_name)
+		elif(line.startswith("latefile")):
+			filename = re.sub(r'^latefile\s*', '', line)
+			return self._get_latest(filename)
+		elif(line.startswith("late")):
+			return self._get_latest()
+		elif(line.startswith("postfile")):
+			filename = re.sub(r'^postfile\s*', '', line)
+			return self._postfile(filename)
 		elif(line.startswith("post")):
 			return self._do_post(line)
 		print("Command not understood -- try 'help'")
@@ -55,19 +82,84 @@ class DataHub(object):
 		else:
 			print("Go wild and use EOF to end it.")
 			content = self._read_multiline()
-		self._send_to_channel(content)
+		self._send_to_channel(content, 'text/plain')
+	def _postfile(self, filename):
+		try:
+			f = open(filename, 'rb')
+			contents = f.read()
+			f.close()
+			mime_type = mimetypes.guess_type(filename)[0]
+			self._send_to_channel(contents, mime_type)
+		except IOError as e:
+			print("Unable to open/read file: %s", e)
+			
 	def _do_get(self, id):
 		conn = httplib.HTTPConnection(self._server)
-		print("DEBUG: /channel/%s/%s" %(self._channel, id))
 		conn.request("GET", "/channel/%s/%s" %(self._channel, id), None, dict())
 		response = conn.getresponse()
 		print(response.status, response.reason)
-		print(response.read())
-	def _send_to_channel(self, content):
-		pass
+		self._show_response_if_text(response)
+	def _get_file(self, id, filename):
 		conn = httplib.HTTPConnection(self._server)
-		headers = {'Content-type': 'text/plain', 'Accept': 'application/json'}
+		conn.request("GET", "/channel/%s/%s" %(self._channel, id), None, dict())
+		response = conn.getresponse()
+		self._save_response_to_file(response, filename)
+	def _save_response_to_file(self, response, filename):
+		print(response.status, response.reason)
+		f = open(filename, 'w')
+		f.write(response.read())
+		f.close()
+		print("Saved %s bytes into file %s"%(self._find_header(response, 'content-length'), filename))
+	def _get_latest(self, filename = None):
+		conn = httplib.HTTPConnection(self._server)
+		conn.request("GET", "/channel/%s/latest" %(self._channel), None, dict())
+		response = conn.getresponse()
+		print(response.status, response.reason)
+		if(response.status == 404):
+			print("Not found (channel is empty or nonexistent)")
+		elif(response.status == 303):
+			location = self._find_header(response, 'location')
+			print("Fetching latest: %s" %(location))
+			conn = httplib.HTTPConnection(self._server)
+			conn.request("GET", location, None, dict())
+			response = conn.getresponse()
+			if(filename):
+				self._save_response_to_file(response, filename)
+			else:
+				print(response.status, response.reason)
+				self._show_response_if_text(response)
+	def _show_response_if_text(self, response):
+			content_type = self._find_header(response, 'content-type')
+			if(self._can_render_content_type(content_type)):
+				print(response.read())
+			else:
+				print("Non-text content type: %s" %(content_type))
+				print("Refusing to show content (try getfile)")
+	def _find_header(self, response, header_name):
+		return filter(lambda x: x[0] == header_name, response.getheaders())[0][1]
+	def _can_render_content_type(self, content_type):
+		return content_type.startswith("text/") or \
+			content_type in ("application/json", "application/xml", "application/html", "application/javascript")
+			# others tbd
+	def _send_to_channel(self, content, mime_type):
+		conn = httplib.HTTPConnection(self._server)
+		headers = {'Content-type': mime_type, 'Accept': 'application/json'}
 		conn.request("POST", "/channel/%s" %(self._channel), content, headers)
+		response = conn.getresponse()
+		print(response.status, response.reason)
+		print(response.read())
+	def _create_channel(self, channel_name):
+		conn = httplib.HTTPConnection(self._server)
+		content = '{"name": "%s"}' %(channel_name);
+		headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+		conn.request("POST", "/channel", content, headers)
+		response = conn.getresponse()
+		self._channel = channel_name
+		print(response.status, response.reason)
+		print(response.read())
+	def _show_metadata(self):
+		conn = httplib.HTTPConnection(self._server)
+		conn.request("GET", "/channel/%s" %(self._channel), None, dict())
 		response = conn.getresponse()
 		print(response.status, response.reason)
 		print(response.read())
