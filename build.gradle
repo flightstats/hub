@@ -51,6 +51,7 @@ dependencies {
     compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.0.1'
     compile group: 'javax.ws.rs', name: 'jsr311-api', version: '1.1.1'
     compile group: 'asm', name: 'asm', version: '3.1'
+    compile group: 'commons-codec', name: 'commons-codec', version: '1.7'
     compile group: 'org.glassfish', name: 'javax.servlet', version: '3.0'
     compile group: 'com.google.inject', name: 'guice', version: '3.0'
     compile group: 'com.google.inject.extensions', name: 'guice-servlet', version: '3.0'
@@ -128,5 +129,7 @@ task deployDev << {
 
 task integrationTests << {
     def testdir = "src/test/integration"
-    runExternal("jasmine-node ${testdir}")
+    def reportsdir = "build/reports/integration/"
+    new File(reportsdir).mkdirs()
+    runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
 }

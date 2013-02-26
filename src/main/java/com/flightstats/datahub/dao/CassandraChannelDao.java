@@ -2,12 +2,12 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
+import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.UUID;
 
 public class CassandraChannelDao implements ChannelDao {
 
@@ -36,14 +36,27 @@ public class CassandraChannelDao implements ChannelDao {
 
     @Override
     public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
-        logger.info("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
+        logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
-        return cassandraValueWriter.write(channelName, value);
+        ValueInsertionResult result = cassandraValueWriter.write(channelName, value);
+        channelsCollection.updateLastUpdatedKey(channelName, result.getKey());
+        return result;
     }
 
     @Override
-    public DataHubCompositeValue getValue(String channelName, UUID id) {
-        logger.info("Fetching " + id.toString() + " from channel " + channelName);
-        return cassandraValueReader.read(channelName, id);
+    public DataHubCompositeValue getValue(String channelName, DataHubKey key) {
+        logger.debug("Fetching " + key.toString() + " from channel " + channelName);
+        return cassandraValueReader.read(channelName, key);
+    }
+
+    @Override
+    public ChannelConfiguration getChannelConfiguration(String channelName) {
+        return channelsCollection.getChannelConfiguration(channelName);
+
+    }
+
+    @Override
+    public Optional<DataHubKey> findLatestId(String channelName) {
+        return cassandraValueReader.findLatestId(channelName);
     }
 }

@@ -1,7 +1,7 @@
 var utils = require('./utils.js');
 var frisby = require('frisby');
 
-var channelName = "integrationtests";
+var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 
@@ -20,16 +20,16 @@ utils.runInTestChannel(channelName, function () {
         })
         .expectJSON('_links.self', {
             href: function (value) {
-                var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/[a-f,0-9]{8}-[a-f,0-9]{4}-[a-f,0-9]{4}-[a-f,0-9]{4}-[a-f,0-9]{12}$");
+                var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/[A-Z,0-9]{16}$");
                 expect(value).toMatch(regex);
             }
         })
         .expectJSON({
             id: function (value) {
-                expect(value).toMatch(/^[a-f,0-9]{8}-[a-f,0-9]{4}-[a-f,0-9]{4}-[a-f,0-9]{4}-[a-f,0-9]{12}$/);
+                expect(value).toMatch(/^[A-Z,0-9]{16}$/);
             },
             timestamp: function (value) {
-                expect(value).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\d-\d\d:\d\d$/);
+                expect(value).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ$/);
             }
         })
         .inspectJSON()
