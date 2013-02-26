@@ -285,6 +285,7 @@ var postDataAndReturnUri = function(myChannelName, myPayload, myCallback) {
         });
 };
 
+
 /*****************************************************************************************
  ******************** TESTS *************************************************************
  *****************************************************************************************/
@@ -653,118 +654,199 @@ describe('POST data to channel:', function(){
 
 });
 
+describe('GET data:', function() {
 
-// Provide a client with the content type when retrieving a value. https://www.pivotaltracker.com/story/show/43221431
-describe('GET data -- content type is returned in response:', function() {
-    // (acceptance)  Submit a request to save some data with a specified content type (image/jpeg, for example).
-    //          Verify that the same content type is returned when retrieving the data.
-    // Test where specified content type doesn't match actual content type (shouldn't matter, the DH should return specified content type).
-    // Test with a range of content types.
+    describe('returns Creation time:', function() {
 
-    it('Acceptance - Content Type that was specified when POSTing data is returned on GET', function(done){
+        it('(Acceptance) Creation time returned in header', function(done) {
+            payload = testRandom.randomString(Math.round(Math.random() * 50));
 
-        postDataAndConfirmContentType(channelName, 'text/plain', function(res) {
-            done();
+            postData(channelName, payload, function(res, packetUri) {
+                expect(res.status).to.equal(200);
+
+                var pMetadata = new packetMetadata(res.body)
+                var timestamp = moment(pMetadata.getTimestamp());
+
+                agent.get(packetUri)
+                    .end(function(err, res){
+                        expect(res.status).to.equal(200);
+                        expect(res.header['creation-date']).to.not.be.null;
+                        var returnedTimestamp = moment(res.header['creation-date']);
+                        expect(returnedTimestamp.isSame(timestamp)).to.be.true;
+
+                        done();
+                    });
+            });
         });
 
+        it('Save two sets of data to one channel, and ensure correct creation timestamps on GETs', function(done) {
+            var pMetadata, timestamp;
+
+            async.series([
+                function(callback){
+                    postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, packetUri) {
+                        pMetadata = new packetMetadata(res.body);
+                        timestamp = moment(pMetadata.getTimestamp());
+
+                        callback(null, {"uri":packetUri, "timestamp": timestamp});
+                    });
+                },
+                function(callback){
+                    postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, packetUri) {
+                        pMetadata = new packetMetadata(res.body);
+                        timestamp = moment(pMetadata.getTimestamp());
+
+                        callback(null, {"uri":packetUri, "timestamp": timestamp});
+                    });
+                }
+            ],
+                function(err, rArray){
+                    agent.get(rArray[0].uri)
+                        .end(function(err1, res1){
+                            timestamp = rArray[0].timestamp;
+                            expect(res1.status).to.equal(200);
+                            expect(res1.header['creation-date']).to.not.be.null;
+                            var returnedTimestamp = moment(res1.header['creation-date']);
+                            expect(returnedTimestamp.isSame(timestamp)).to.be.true;
+
+                            //console.log(returnedTimestamp);
+
+                            superagent.agent().get(rArray[1].uri)
+                                .end(function(err2, res2) {
+                                    timestamp = rArray[1].timestamp;
+                                    expect(res2.status).to.equal(200);
+                                    expect(res2.header['creation-date']).to.not.be.null;
+                                    returnedTimestamp = moment(res2.header['creation-date']);
+                                    expect(returnedTimestamp.isSame(timestamp)).to.be.true;
+
+                                    //console.log(returnedTimestamp);
+
+                                    done();
+                                });
+                        });
+                });
+
+        });
+
+        // TODO: Save data to two different channels – ensure the correct creation timestamp is returned on a GET for each.
+        // TODO: Ensure that a call to 'latest' for a channel returns the correct creation timestamp.
     });
 
-    // application Content-Types
-    it('Content-Type for application/* (19 types)', function(done){
-        async.each(appContentTypes, function(ct, nullCallback) {
-            //console.log('CT: '+ ct);
-            postDataAndConfirmContentType(channelName, ct, function(res) {
-                nullCallback();
+    // Provide a client with the content type when retrieving a value. https://www.pivotaltracker.com/story/show/43221431
+    describe('GET data -- content type is returned in response:', function() {
+        // (acceptance)  Submit a request to save some data with a specified content type (image/jpeg, for example).
+        //          Verify that the same content type is returned when retrieving the data.
+        // Test where specified content type doesn't match actual content type (shouldn't matter, the DH should return specified content type).
+        // Test with a range of content types.
+
+        it('Acceptance - Content Type that was specified when POSTing data is returned on GET', function(done){
+
+            postDataAndConfirmContentType(channelName, 'text/plain', function(res) {
+                done();
             });
-        }, function(err) {
+
+        });
+
+        // application Content-Types
+        it('Content-Type for application/* (19 types)', function(done){
+            async.each(appContentTypes, function(ct, nullCallback) {
+                //console.log('CT: '+ ct);
+                postDataAndConfirmContentType(channelName, ct, function(res) {
+                    nullCallback();
+                });
+            }, function(err) {
                 if (err) {
                     throw err;
                 };
                 done();
-        });
-    });
-
-    // image Content-Types
-    it('Content-Type for image/* (7 types)', function(done){
-        async.each(imageContentTypes, function(ct, nullCallback) {
-            //console.log('CT: '+ ct);
-            postDataAndConfirmContentType(channelName, ct, function(res) {
-                nullCallback();
             });
-        }, function(err) {
-            if (err) {
-                throw err;
-            };
-            done();
         });
-    });
 
-    // message Content-Types
-    it('Content-Type for message/* (4 types)', function(done){
-        async.each(messageContentTypes, function(ct, nullCallback) {
-            //console.log('CT: '+ ct);
-            postDataAndConfirmContentType(channelName, ct, function(res) {
-                nullCallback();
+        // image Content-Types
+        it('Content-Type for image/* (7 types)', function(done){
+            async.each(imageContentTypes, function(ct, nullCallback) {
+                //console.log('CT: '+ ct);
+                postDataAndConfirmContentType(channelName, ct, function(res) {
+                    nullCallback();
+                });
+            }, function(err) {
+                if (err) {
+                    throw err;
+                };
+                done();
             });
-        }, function(err) {
-            if (err) {
-                throw err;
-            };
-            done();
         });
-    });
 
-    // text Content-Types
-    it('Content-Type for textContentTypes/* (8 types)', function(done){
-        async.each(textContentTypes, function(ct, nullCallback) {
-            //console.log('CT: '+ ct);
-            postDataAndConfirmContentType(channelName, ct, function(res) {
-                nullCallback();
+        // message Content-Types
+        it('Content-Type for message/* (4 types)', function(done){
+            async.each(messageContentTypes, function(ct, nullCallback) {
+                //console.log('CT: '+ ct);
+                postDataAndConfirmContentType(channelName, ct, function(res) {
+                    nullCallback();
+                });
+            }, function(err) {
+                if (err) {
+                    throw err;
+                };
+                done();
             });
-        }, function(err) {
-            if (err) {
-                throw err;
-            };
-            done();
         });
-    });
 
-
-    it('Made-up legal Content-Type should be accepted and returned', function(done) {
-        // Note that the DH accepts illegal Content-Types, but does require a slash between two strings, so that's
-        //  the standard I'm going with.
-        var myContentType = testRandom.randomString(testRandom.randomNum(10), testRandom.limitedRandomChar);
-        myContentType += '/'+ testRandom.randomString(testRandom.randomNum(10), testRandom.limitedRandomChar);
-
-        var getAgent = superagent.agent();
-
-        payload = testRandom.randomString(Math.round(Math.random() * 50));
-        uri = URL_ROOT +'/channel/'+ channelName;
-
-        agent.post(uri)
-            .set('Content-Type', myContentType)
-            .send(payload)
-            .end(function(err, res) {
-                if (err) throw err;
-                expect(res.status).to.equal(200);
-                var cnMetadata = new channelMetadata(res.body);
-                uri = cnMetadata.getChannelUri();
-
-                getAgent.get(uri)
-                    .end(function(err2, res2) {
-                        if (err2) throw err2;
-                        expect(res2.status).to.equal(200);
-                        expect(res2.type.toLowerCase()).to.equal(myContentType.toLowerCase());
-                        done();
-                    });
-
+        // text Content-Types
+        it('Content-Type for textContentTypes/* (8 types)', function(done){
+            async.each(textContentTypes, function(ct, nullCallback) {
+                //console.log('CT: '+ ct);
+                postDataAndConfirmContentType(channelName, ct, function(res) {
+                    nullCallback();
+                });
+            }, function(err) {
+                if (err) {
+                    throw err;
+                };
+                done();
             });
+        });
+
+
+        it('Made-up legal Content-Type should be accepted and returned', function(done) {
+            // Note that the DH accepts illegal Content-Types, but does require a slash between two strings, so that's
+            //  the standard I'm going with.
+            var myContentType = testRandom.randomString(testRandom.randomNum(10), testRandom.limitedRandomChar);
+            myContentType += '/'+ testRandom.randomString(testRandom.randomNum(10), testRandom.limitedRandomChar);
+
+            var getAgent = superagent.agent();
+
+            payload = testRandom.randomString(Math.round(Math.random() * 50));
+            uri = URL_ROOT +'/channel/'+ channelName;
+
+            agent.post(uri)
+                .set('Content-Type', myContentType)
+                .send(payload)
+                .end(function(err, res) {
+                    if (err) throw err;
+                    expect(res.status).to.equal(200);
+                    var cnMetadata = new channelMetadata(res.body);
+                    uri = cnMetadata.getChannelUri();
+
+                    getAgent.get(uri)
+                        .end(function(err2, res2) {
+                            if (err2) throw err2;
+                            expect(res2.status).to.equal(200);
+                            expect(res2.type.toLowerCase()).to.equal(myContentType.toLowerCase());
+                            done();
+                        });
+
+                });
+
+        });
+
+        // TODO ? multi-part type testing?
 
     });
-
-    // TODO ? multi-part type testing?
-
 });
+
+
+
 
 // Allow a client to access the most recently saved item in a channel.
 // https://www.pivotaltracker.com/story/show/43222579
