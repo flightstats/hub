@@ -42,10 +42,6 @@ var agent
 
 var channelName = testRandom.randomString(Math.round(Math.random() * 48), testRandom.limitedRandomChar);
 
-
-
-
-
 before(function(myCallback){
     agent = superagent.agent();
     makeChannel(channelName, function(res){
@@ -119,6 +115,36 @@ var makeChannel = function(myChannelName, myCallback) {
         });
 }
 
+//     Current metadata structure for GET on a channel:
+/*
+ {  _links:
+        {   self:
+                {   href: 'http://datahub-01.cloud-east.dev:8080/channel/philcollinssucks' },
+            latest:
+                {   href: 'http://datahub-01.cloud-east.dev:8080/channel/philcollinssucks/latest' }
+        },
+    name: 'philcollinssucks',
+    creationDate: '2013-02-25T23:57:49.477Z'
+ }
+ */
+function channelMetadata(responseBody) {
+    this.getChannelUri = function() {
+        return responseBody._links.self.href;
+    }
+
+    this.getLatestUri = function() {
+        return responseBody._links.latest.href;
+    }
+
+    this.getName = function() {
+        return responseBody.name;
+    }
+
+    this.getCreationDate = function() {
+        return responseBody.creationDate;
+    }
+}
+
 var getChannel = function(myChannelName, myCallback) {
     superagent.agent().get(URL_ROOT +'/channel/'+ myChannelName)
         .end(function(err, res) {
@@ -127,17 +153,59 @@ var getChannel = function(myChannelName, myCallback) {
         });
 };
 
+// Current metadata structure for POSTing data:
+/*
+ {
+    "_links": {
+                "channel": {
+                            "href": "http://datahub-01.cloud-east.dev:8080/channel/philcollinssucks"
+                            },
+                "self": {
+                            "href": "http://datahub-01.cloud-east.dev:8080/channel/philcollinssucks/00002F8NRMFQK000"
+                            }
+                },
+    "id": "00002F8NRMFQK000",
+    "timestamp": "2013-02-26T18:57:13.130Z"
+ }
+ */
+function packetMetadata(responseBody) {
+
+    this.getChannelUri = function() {
+        return responseBody._links.channel.href;
+    }
+
+    this.getPacketUri = function() {
+        return responseBody._links.self.href;
+    }
+
+    this.getId = function() {
+        return responseBody.id;
+    }
+
+    this.getTimestamp = function() {
+        return responseBody.timestamp;
+    }
+}
+
 // Posts data and returns (response, URI)
 var postData = function(myChannelName, myData, myCallback) {
     uri = URL_ROOT +'/channel/'+ myChannelName;
+    var dataUri;
 
     superagent.agent().post(uri)
         .send(myData)
         .end(function(err, res) {
             if (err) throw err;
-            uri =  (200 == res.status) ? res.body._links.self.href : null;
 
-            myCallback(res, uri);
+            if (200 != res.status) {
+                dataUri = null;
+            }
+            else {
+                var pMetadata = new packetMetadata(res.body);
+                dataUri = pMetadata.getPacketUri();
+            }
+
+            myCallback(res, dataUri);
         });
 };
 
@@ -202,11 +270,6 @@ var getLatestFromChannel = function(myChannelName, myCallback) {
 
 };
 
-// This is in the response from a Channel creation (POST) or a GET on a Channel
-var getLatestUriFromResponse = function(response) {
-    return response.body._links.latest;
-};
-
 var postDataAndReturnUri = function(myChannelName, myPayload, myCallback) {
     uri = URL_ROOT +'/channel/'+ myChannelName;
 
@@ -215,7 +278,8 @@ var postDataAndReturnUri = function(myChannelName, myPayload, myCallback) {
         .end(function(err, res) {
             if (err) throw err;
             expect(res.status).to.equal(200);
-            uri = res.body._links.self.href;
+            var cnMetadata = new channelMetadata(res.body);
+            uri = cnMetadata.getChannelUri();
 
             myCallback(uri);
         });
@@ -225,7 +289,7 @@ var postDataAndReturnUri = function(myChannelName, myPayload, myCallback) {
  ******************** TESTS *************************************************************
  *****************************************************************************************/
 
-describe('Create Channel', function(){
+describe('Create Channel:', function(){
 
    // 404 trying to GET channel before it exists
     it('should return a 404 trying to GET channel before it exists', function(done){
@@ -263,9 +327,6 @@ describe('Create Channel', function(){
         });
     });
 
-    // TODO: sequence:  create channel, post data to it, confirm data is there, create channel with same name again,
-    //      see if data is still available.
-
     // https://www.pivotaltracker.com/story/show/44113267
     // Attempting to create a channel with a name already in use will return an error. NOT IMPLEMENTED YET.
     it.skip('HTTP 500 if attempting to create channel with a name already in use', function(done) {
@@ -284,7 +345,7 @@ describe('Create Channel', function(){
 //  https://www.pivotaltracker.com/story/show/43221623
 
 
-describe('POST data to channel', function(){
+describe('POST data to channel:', function(){
 
 
     it('Acceptance - should return a 200 for POSTing data', function(done){
@@ -328,16 +389,19 @@ describe('POST data to channel', function(){
 
     it('POST same set of data to two different channels', function(done) {
         var otherChannelName = testRandom.randomString(Math.round(Math.random() * 30), testRandom.limitedRandomChar);
+        var cnMetadata, pMetadata;
 
         makeChannel(otherChannelName, function(res) {
             expect(res.status).to.equal(200);
-            expect(res.body._links.self.href).to.equal(URL_ROOT +'/channel/'+ otherChannelName);
+            cnMetadata = new channelMetadata(res.body);
+            expect(cnMetadata.getChannelUri()).to.equal(URL_ROOT +'/channel/'+ otherChannelName);
 
             payload = testRandom.randomString(Math.round(Math.random() * 50));
 
             postData(channelName, payload, function(res, uri) {
                 expect(res.status).to.equal(200);
-                var actualUri = res.body._links.self.href;
+                pMetadata = new packetMetadata(res.body);
+                var actualUri = pMetadata.getPacketUri();
 
                 getValidationString(actualUri, payload, function() {
 
@@ -397,8 +461,8 @@ describe('POST data to channel', function(){
                     throw err;
                 }
                 expect(res.statusCode).to.equal(200);
-                uri = JSON.parse(body)._links.self.href;
-                //console.log(uri);
+                var cnMetadata = new channelMetadata(JSON.parse(body));
+                uri = cnMetadata.getChannelUri();
 
                 var md5sum = crypto.createHash('md5');
                 var s = fs.ReadStream(CAT_TOILET_PIC);
@@ -417,14 +481,16 @@ describe('POST data to channel', function(){
     });
 
 
-    describe.skip('Load tests - POST data', function(){
+    describe.skip('Load tests - POST data:', function(){
 
         var loadChannels = {};
         var loadChannelKeys = [];  // channel.uri (to fetch data) and channel.data, e.g. { con {uri: x, data: y}}
 
         // To ignore the Loadtest cases:  mocha -R nyan --timeout 4000 --grep Load --invert
-        it('Loadtest - POST rapidly to five different channels, then confirm data retrieved via GET is correct', function(done){
-            for (var i = 1; i <= 20; i++)
+        it('Loadtest - POST rapidly to ten different channels, then confirm data retrieved via GET is correct', function(done){
+            var cnMetadata;
+
+            for (var i = 1; i <= 10; i++)
             {
                 var thisName = testRandom.randomString(Math.round(Math.random() * 48), testRandom.limitedRandomChar);
                 var thisPayload = testRandom.randomString(Math.round(Math.random() * 50));
@@ -441,7 +507,8 @@ describe('POST data to channel', function(){
             async.each(loadChannelKeys, function(cn, callback) {
                 makeChannel(cn, function(res) {
                     expect(res.status).to.equal(200);
-                    expect(res.body._links.self.href).to.equal(URL_ROOT +'/channel/'+ cn);
+                    cnMetadata = new channelMetadata(res.body);
+                    expect(cnMetadata.getChannelUri()).to.equal(URL_ROOT +'/channel/'+ cn);
                     callback();
                 });
 
@@ -467,7 +534,7 @@ describe('POST data to channel', function(){
                         payload = loadChannels[cn].data;
 
                         getValidationString(uri, payload, function(){
-                            console.log('Confirmed data retrieval from channel: '+ cn);
+                            //console.log('Confirmed data retrieval from channel: '+ cn);
                             callback();
                         });
                     }, function(err) {
@@ -489,7 +556,7 @@ describe('POST data to channel', function(){
     // For story:  Provide the client with a creation-timestamp in the response from a data storage request.k
     // https://www.pivotaltracker.com/story/show/43221779
 
-    describe('POST - Creation timestamps returned', function() {
+    describe('POST - Creation timestamps returned:', function() {
 
         it('Creation timestamp returned on data storage', function(done){
 
@@ -588,7 +655,7 @@ describe('POST data to channel', function(){
 
 
 // Provide a client with the content type when retrieving a value. https://www.pivotaltracker.com/story/show/43221431
-describe('GET data -- content type is returned in response', function() {
+describe('GET data -- content type is returned in response:', function() {
     // (acceptance)  Submit a request to save some data with a specified content type (image/jpeg, for example).
     //          Verify that the same content type is returned when retrieving the data.
     // Test where specified content type doesn't match actual content type (shouldn't matter, the DH should return specified content type).
@@ -680,7 +747,8 @@ describe('GET data -- content type is returned in response', function() {
             .end(function(err, res) {
                 if (err) throw err;
                 expect(res.status).to.equal(200);
-                uri = res.body._links.self.href;
+                var cnMetadata = new channelMetadata(res.body);
+                uri = cnMetadata.getChannelUri();
 
                 getAgent.get(uri)
                     .end(function(err2, res2) {
@@ -700,7 +768,7 @@ describe('GET data -- content type is returned in response', function() {
 
 // Allow a client to access the most recently saved item in a channel.
 // https://www.pivotaltracker.com/story/show/43222579
-describe('Access most recently saved item in channel', function() {
+describe('Access most recently saved item in channel:', function() {
     // Future tests
     /* (Future tests): if a data set expires, the 'get latest' call should respect that and reset to:
      the previous data set in the channel if one exists, or
@@ -727,7 +795,8 @@ describe('Access most recently saved item in channel', function() {
             function(callback){
                 makeChannel(thisChannel, function(res) {
                         expect(res.status).to.equal(200);
-                        latestUri = getLatestUriFromResponse(res);
+                        var cnMetadata = new channelMetadata(res.body);
+                        latestUri = cnMetadata.getLatestUri();
 
                         callback(null);
                 });
@@ -800,7 +869,8 @@ describe('Access most recently saved item in channel', function() {
 
         makeChannel(thisChannel, function(res) {
             expect(res.status).to.equal(200);
-            expect(res.body._links.latest.href).to.not.be.null;
+            var cnMetadata = new channelMetadata(res.body);
+            expect(cnMetadata.getChannelUri()).to.not.be.null;
 
             done();
         });
@@ -810,13 +880,15 @@ describe('Access most recently saved item in channel', function() {
     it('GET on Channel returns link to latest data set', function(done) {
         getChannel(channelName, function(res) {
             expect(res.status).to.equal(200);
-            expect(res.body._links.latest.href).to.not.be.null;
+            var cnMetadata = new channelMetadata(res.body);
+            expect(cnMetadata.getChannelUri()).to.not.be.null;
 
             done();
         });
     });
 
-    it('Get latest works when latest data set is an empty set, following a previous non-empty set', function(done) {
+
+    it(' Get latest works when latest data set is an empty set, following a previous non-empty set', function(done) {
         var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
         var latestUri, myData;
 
@@ -826,7 +898,9 @@ describe('Access most recently saved item in channel', function() {
             function(callback){
                 makeChannel(thisChannel, function(res) {
                     expect(res.status).to.equal(200);
-                    latestUri = getLatestUriFromResponse(res);
+
+                    var cnMetadata = new channelMetadata(res.body);
+                    latestUri = cnMetadata.getLatestUri();
 
                     callback(null);
                 });
@@ -856,13 +930,55 @@ describe('Access most recently saved item in channel', function() {
         });
     });
 
+    // As of 2/26, cannot be done (you cannot set the creation timestamp, and despite having the two POST calls done
+    //  in parallel, the times aren't quite the same :(
     // TODO:  Save two sets of data with the same creation timestamp.
     //  Note: the client can't control which is the 'latest', but once the server has made that determination, it should stick.
     //  So repeated calls to this method will always return the same data set.
+    it.skip('(*Not yet possible*) Internal sequence of data with same timestamp is preserved', function(done) {
+        var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+        var payload1 = testRandom.randomString(testRandom.randomNum(51));
+        var payload2 = testRandom.randomString(testRandom.randomNum(51));
+        var timestamp1, timestamp2;
+
+        makeChannel(thisChannel, function(res) {
+            expect(res.status).to.equal(200);
+
+
+            async.parallel([
+                    function(callback){
+                        postData(thisChannel, payload1, function(myRes, uri) {
+                            expect(myRes.status).to.equal(200);
+                            timestamp1 = moment(myRes.body.timestamp);
+                            expect(moment(timestamp1).isValid()).to.be.true;
+                            //console.log('time1 '+ timestamp1.valueOf());
+                            console.log(myRes.body.timestamp);
+
+                            callback(null);
+                        });
+                    },
+                    function(callback){
+                        postData(thisChannel, payload2, function(myRes, uri) {
+                            expect(myRes.status).to.equal(200);
+                            timestamp2 = moment(myRes.body.timestamp);
+                            expect(moment(timestamp2).isValid()).to.be.true;
+                            //console.log('time2 '+ timestamp2.valueOf());
+                            console.log(myRes.body.timestamp);
+
+                            callback(null);
+                        });
+                    }
+                ],
+                function(err, results){
+                   done();
+                }
+            );
+        });
+    });
 });
 
 
-describe.skip('Known failing cases that may not be legitimate', function() {
+describe.skip('Known failing cases that may not be legitimate:', function() {
 
     it('Should be able to create a channel name of 50 characters', function(done){
         var longChannelName = testRandom.randomString(50, testRandom.limitedRandomChar);
@@ -875,7 +991,8 @@ describe.skip('Known failing cases that may not be legitimate', function() {
             .send(payload)
             .end(function(err, res) {
                 expect(res.status).to.equal(200);
-                expect(res.body._links.self.href).to.equal(URL_ROOT +'/channel/'+ channelName);
+                var cnMetadata = new channelMetadata(res.body);
+                expect(cnMetadata.getChannelUri()).to.equal(URL_ROOT +'/channel/'+ channelName);
                 done();
             });
     });
@@ -891,7 +1008,8 @@ describe.skip('Known failing cases that may not be legitimate', function() {
             .send(payload)
             .end(function(err, res) {
                 expect(res.status).to.equal(200);
-                uri = res.body._links.self.href;
+                var cnMetadata = new channelMetadata(res.body);
+                uri = cnMetadata.getChannelUri();
 
                 console.log('URI:'+ uri);
 
