@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.*;
+import com.google.common.base.Optional;
 import org.junit.Test;
 
 import java.util.Date;
@@ -58,16 +59,21 @@ public class CassandraChannelDaoTest {
     public void testGetValue() throws Exception {
         String channelName = "cccccc";
         DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
+        DataHubKey previousKey = new DataHubKey(new Date(9998888777665L), (short) 0);
         byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
-        DataHubCompositeValue expected = new DataHubCompositeValue("text/plain", data);
+        DataHubCompositeValue compositeValue = new DataHubCompositeValue("text/plain", data);
+        Optional<DataHubKey> previous = Optional.of(previousKey);
+        LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(compositeValue, previous);
 
         CassandraValueReader reader = mock(CassandraValueReader.class);
+        CassandraLinkagesFinder linkagesFinder = mock(CassandraLinkagesFinder.class);
 
-        when(reader.read(channelName, key)).thenReturn(expected);
+        when(reader.read(channelName, key)).thenReturn(compositeValue);
+        when(linkagesFinder.findPrevious(channelName, key)).thenReturn(previous);
 
-        CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader, null);
+        CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader, linkagesFinder);
 
-        LinkedDataHubCompositeValue result = testClass.getValue(channelName, key);
-        assertEquals(expected, result); ///FIXME FIXME
+        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
+        assertEquals(expected, result.get());
     }
 }

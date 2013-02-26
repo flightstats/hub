@@ -42,12 +42,12 @@ public class ChannelContentResource {
     @GET
     public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id) {
         DataHubKey key = keyRenderer.fromString(id);
-        LinkedDataHubCompositeValue columnValue = channelDao.getValue(channelName, key);
+        Optional<LinkedDataHubCompositeValue> optionalResult = channelDao.getValue(channelName, key);
 
-        if (columnValue == null) {
-            //TODO: dont throw here???
+        if (!optionalResult.isPresent()) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
+        LinkedDataHubCompositeValue columnValue = optionalResult.get();
         Response.ResponseBuilder builder = Response.status(Response.Status.OK);
 
         String contentType = columnValue.getContentType();
@@ -59,12 +59,16 @@ public class ChannelContentResource {
         builder.entity(columnValue.getData());
 
         builder.header(CREATION_DATE_HEADER.getHeaderName(), dateTimeFormatter.print(new DateTime(key.getDate())));
+        addPreviousLink(columnValue, builder);
+        return builder.build();
+    }
+
+    private void addPreviousLink(LinkedDataHubCompositeValue columnValue, Response.ResponseBuilder builder) {
         Optional<DataHubKey> previous = columnValue.getPrevious();
         if (previous.isPresent()) {
             URI previousUrl = URI.create(uriInfo.getRequestUri().resolve(".") + keyRenderer.keyToString(previous.get()));
             builder.header("Link", "<" + previousUrl + ">;rel=\"previous\"");
         }
-        return builder.build();
     }
 
 

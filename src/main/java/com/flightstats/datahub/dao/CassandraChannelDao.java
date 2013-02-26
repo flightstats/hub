@@ -43,11 +43,14 @@ public class CassandraChannelDao implements ChannelDao {
     }
 
     @Override
-    public LinkedDataHubCompositeValue getValue(String channelName, DataHubKey key) {
+    public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
         logger.debug("Fetching " + key.toString() + " from channel " + channelName);
         DataHubCompositeValue value = cassandraValueReader.read(channelName, key);
+        if (value == null) {
+            return Optional.absent();
+        }
         Optional<DataHubKey> previous = linkagesFinder.findPrevious(channelName, key);
-        return new LinkedDataHubCompositeValue(value, previous);
+        return Optional.of(new LinkedDataHubCompositeValue(value, previous));
     }
 
     @Override

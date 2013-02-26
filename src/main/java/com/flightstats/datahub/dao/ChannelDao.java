@@ -14,7 +14,7 @@ public interface ChannelDao {
 
     ValueInsertionResult insert(String channelName, String contentType, byte[] data);
 
-    LinkedDataHubCompositeValue getValue(String channelName, DataHubKey key);
+    Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key);
 
     ChannelConfiguration getChannelConfiguration(String channelName);
 
