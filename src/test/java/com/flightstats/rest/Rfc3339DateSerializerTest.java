@@ -16,6 +16,6 @@ public class Rfc3339DateSerializerTest {
         Date date = new Date(493959282725L);
         JsonGenerator jgen = mock(JsonGenerator.class);
         testClass.serialize(date, jgen, null);
-        verify(jgen).writeString("1985-08-27T02:54:42.725");
+        verify(jgen).writeString("1985-08-27T02:54:42.725Z");
     }
 }
