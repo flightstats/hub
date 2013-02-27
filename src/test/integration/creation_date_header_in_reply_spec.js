@@ -7,8 +7,6 @@ var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "there's a snake in my boot!";
 
 utils.runInTestChannel(channelName, function () {
-
-    console.info('Inserting a value...');
     frisby.create('Inserting a value into a channel.')
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "text/plain")
@@ -22,6 +20,5 @@ utils.runInTestChannel(channelName, function () {
                 .expectHeaderContains('creation-date', 'T')
                 .toss();
         })
-        .inspectJSON()
         .toss();
 });
