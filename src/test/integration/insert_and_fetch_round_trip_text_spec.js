@@ -6,8 +6,6 @@ var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 
 utils.runInTestChannel(channelName, function () {
-
-    console.info('Inserting a value...');
     frisby.create('Inserting a value into a channel.')
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "text/plain")
@@ -31,7 +29,6 @@ utils.runInTestChannel(channelName, function () {
         })
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
-            console.log('Now attempting to fetch back my data from ' + valueUrl);
             frisby.create('Fetching value to ensure that it was inserted.')
                 .get(valueUrl)
                 .expectStatus(200)
@@ -39,6 +36,5 @@ utils.runInTestChannel(channelName, function () {
                 .expectBodyContains(messageText)
                 .toss();
         })
-        .inspectJSON()
         .toss();
 });

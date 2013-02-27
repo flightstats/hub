@@ -6,7 +6,6 @@ var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 
 utils.runInTestChannel(channelName, function () {
-    console.info('Inserting a value...');
     frisby.create('Checking that the content-type is returned.')
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "application/fractals")
@@ -19,7 +18,6 @@ utils.runInTestChannel(channelName, function () {
         })
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
-            console.log('Now attempting to fetch back my data from ' + valueUrl);
             frisby.create('Fetching data and checking content-type header.')
                 .get(valueUrl)
                 .expectStatus(200)
@@ -27,7 +25,6 @@ utils.runInTestChannel(channelName, function () {
                 .expectBodyContains(messageText)
                 .toss();
         })
-        .inspectJSON()
         .toss();
 });
 
