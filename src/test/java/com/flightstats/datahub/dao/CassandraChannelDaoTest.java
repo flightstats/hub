@@ -60,10 +60,12 @@ public class CassandraChannelDaoTest {
         String channelName = "cccccc";
         DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
         DataHubKey previousKey = new DataHubKey(new Date(9998888777665L), (short) 0);
+        DataHubKey nextKey = new DataHubKey(new Date(9998888777667L), (short) 0);
         byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
         DataHubCompositeValue compositeValue = new DataHubCompositeValue("text/plain", data);
         Optional<DataHubKey> previous = Optional.of(previousKey);
-        LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(compositeValue, previous);
+        Optional<DataHubKey> next = Optional.of(nextKey);
+        LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(compositeValue, previous, next);
 
         CassandraValueReader reader = mock(CassandraValueReader.class);
         CassandraLinkagesFinder linkagesFinder = mock(CassandraLinkagesFinder.class);
@@ -75,5 +77,20 @@ public class CassandraChannelDaoTest {
 
         Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
         assertEquals(expected, result.get());
+    }
+
+    @Test
+    public void testGetValue_notFound() throws Exception {
+        String channelName = "cccccc";
+        DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
+
+        CassandraValueReader reader = mock(CassandraValueReader.class);
+
+        when(reader.read(channelName, key)).thenReturn(null);
+
+        CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader, null);
+
+        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
+        assertEquals(Optional.<LinkedDataHubCompositeValue>absent(), result);
     }
 }
