@@ -5,6 +5,6 @@
 BINDIR=`dirname "$0"`
 
 ${BINDIR}/reset_cassandra_data.sh \
-    datahub-01.cloud-east.dev \
-    datahub-02.cloud-east.dev \
-    datahub-03.cloud-east.dev \
+    cassandra-01.cloud-east.dev \
+    cassandra-02.cloud-east.dev \
+    cassandra-03.cloud-east.dev \
