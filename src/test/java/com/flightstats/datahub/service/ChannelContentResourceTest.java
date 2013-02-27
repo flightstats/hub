@@ -30,7 +30,8 @@ public class ChannelContentResourceTest {
         DataHubKey key = new DataHubKey(new Date(11), (short) 0);
         DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, expected);
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent());
+        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
+                Optional.<DataHubKey>absent());
 
         ChannelDao dao = mock(ChannelDao.class);
 
@@ -55,7 +56,7 @@ public class ChannelContentResourceTest {
 
         ChannelDao dao = mock(ChannelDao.class);
 
-        when(dao.getValue(channelName, key)).thenReturn(Optional.of(new LinkedDataHubCompositeValue(value, previous)));
+        when(dao.getValue(channelName, key)).thenReturn(Optional.of(new LinkedDataHubCompositeValue(value, previous, Optional.<DataHubKey>absent())));
 
         ChannelContentResource testClass = new ChannelContentResource(null, dao, dataHubKeyRenderer);
         Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key));
@@ -90,7 +91,8 @@ public class ChannelContentResourceTest {
         DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 0);
         DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
         DataHubCompositeValue value = new DataHubCompositeValue(null, "found it!".getBytes());
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent());
+        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
+                Optional.<DataHubKey>absent());
 
         ChannelDao dao = mock(ChannelDao.class);
 
@@ -111,7 +113,7 @@ public class ChannelContentResourceTest {
         DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
         DataHubCompositeValue value = new DataHubCompositeValue(null, "found it!".getBytes());
         Optional<DataHubKey> previous = Optional.of(previousKey);
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, previous);
+        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, previous, Optional.<DataHubKey>absent());
 
         ChannelDao dao = mock(ChannelDao.class);
         UriInfo uriInfo = mock(UriInfo.class);
@@ -133,7 +135,28 @@ public class ChannelContentResourceTest {
         DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
         DataHubCompositeValue value = new DataHubCompositeValue(null, "found it!".getBytes());
         Optional<DataHubKey> previous = Optional.absent();
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, previous);
+        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, previous, Optional.<DataHubKey>absent());
+
+        ChannelDao dao = mock(ChannelDao.class);
+
+        when(dao.getValue(channelName, key)).thenReturn(Optional.of(linkedValue));
+
+        ChannelContentResource testClass = new ChannelContentResource(null, dao, dataHubKeyRenderer);
+        Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key));
+
+        String link = (String) result.getMetadata().getFirst("Link");
+        assertNull(link);
+    }
+
+    @Test
+    public void testNextLink() throws Exception {
+        String channelName = "nerxt";
+        DataHubKey nextKey = new DataHubKey(new Date(1123456678923L), (short) 0);
+        DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 0);
+        DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
+        DataHubCompositeValue value = new DataHubCompositeValue(null, "found it!".getBytes());
+        Optional<DataHubKey> next = Optional.of(nextKey);
+        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(), next);
 
         ChannelDao dao = mock(ChannelDao.class);
         UriInfo uriInfo = mock(UriInfo.class);
@@ -142,6 +165,26 @@ public class ChannelContentResourceTest {
         when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to/thisitem123"));
 
         ChannelContentResource testClass = new ChannelContentResource(uriInfo, dao, dataHubKeyRenderer);
+        Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key));
+
+        String link = (String) result.getMetadata().getFirst("Link");
+        assertEquals("<http://path/to/000021CJ7HU0M000>;rel=\"next\"", link);
+    }
+
+    @Test
+    public void testNextLinkNone() throws Exception {
+        String channelName = "nerxt";
+        DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 0);
+        DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
+        DataHubCompositeValue value = new DataHubCompositeValue(null, "found it!".getBytes());
+        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
+                Optional.<DataHubKey>absent());
+
+        ChannelDao dao = mock(ChannelDao.class);
+
+        when(dao.getValue(channelName, key)).thenReturn(Optional.of(linkedValue));
+
+        ChannelContentResource testClass = new ChannelContentResource(null, dao, dataHubKeyRenderer);
         Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key));
 
         String link = (String) result.getMetadata().getFirst("Link");

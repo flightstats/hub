@@ -60,14 +60,22 @@ public class ChannelContentResource {
 
         builder.header(CREATION_DATE_HEADER.getHeaderName(), dateTimeFormatter.print(new DateTime(key.getDate())));
         addPreviousLink(columnValue, builder);
+        addNextLink(columnValue, builder);
         return builder.build();
     }
 
     private void addPreviousLink(LinkedDataHubCompositeValue columnValue, Response.ResponseBuilder builder) {
-        Optional<DataHubKey> previous = columnValue.getPrevious();
-        if (previous.isPresent()) {
-            URI previousUrl = URI.create(uriInfo.getRequestUri().resolve(".") + keyRenderer.keyToString(previous.get()));
-            builder.header("Link", "<" + previousUrl + ">;rel=\"previous\"");
+        addLink(builder, "previous", columnValue.getPrevious());
+    }
+
+    private void addNextLink(LinkedDataHubCompositeValue columnValue, Response.ResponseBuilder builder) {
+        addLink(builder, "next", columnValue.getNext());
+    }
+
+    private void addLink(Response.ResponseBuilder builder, String type, Optional<DataHubKey> key) {
+        if (key.isPresent()) {
+            URI previousUrl = URI.create(uriInfo.getRequestUri().resolve(".") + keyRenderer.keyToString(key.get()));
+            builder.header("Link", "<" + previousUrl + ">;rel=\"" + type + "\"");
         }
     }
 
