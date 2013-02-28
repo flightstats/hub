@@ -40,9 +40,10 @@ var agent
     , verAgent
     , contentType;
 
-var channelName = testRandom.randomString(Math.round(Math.random() * 48), testRandom.limitedRandomChar);
+var channelName;
 
 before(function(myCallback){
+    channelName = makeRandomChannelName();
     agent = superagent.agent();
     makeChannel(channelName, function(res){
         if ((res.error) || (res.status != 200)) {
@@ -58,9 +59,8 @@ beforeEach(function(){
     payload = uri = req = contentType = '';
 })
 
-/*****************************************************************************************
-******************** HELPERS *************************************************************
-*****************************************************************************************/
+
+//<editor-fold desc="*** Helpers ***">
 
 var getValidationString = function (myUri, myPayload, myDone)
 {
@@ -113,6 +113,10 @@ var makeChannel = function(myChannelName, myCallback) {
         }).on('error', function(e) {
             myCallback(e);
         });
+}
+
+var makeRandomChannelName = function() {
+    return testRandom.randomString(testRandom.randomNum(31), testRandom.limitedRandomChar);
 }
 
 //     Current metadata structure for GET on a channel:
@@ -187,6 +191,29 @@ function packetMetadata(responseBody) {
     }
 }
 
+// NOTE: this will need to be updated once the implementation is finalized. Right now we're looking at two header
+//      entries with the same name, which breaks things in Superagent and Http modules.
+// Headers in a response to GET on a packet of data
+function packetHeader(responseHeader){
+
+    /*
+    this.getNext = function() {
+        return (responseHeader.hasOwnProperty("next")) ? responseHeader["next"] : null;
+    }
+    */
+
+    // returns null if no 'previous' header found
+    this.getPrevious = function() {
+        if (responseHeader.hasOwnProperty("link")) {
+            var m = /<(.+)>;rel=\"previous\"/.exec(responseHeader["link"]);
+            return m[1];   // will return null if no match
+        }
+        else {
+            return null;
+        }
+    }
+}
+
 // Posts data and returns (response, URI)
 var postData = function(myChannelName, myData, myCallback) {
     uri = URL_ROOT +'/channel/'+ myChannelName;
@@ -212,7 +239,7 @@ var postData = function(myChannelName, myData, myCallback) {
 // Returns GET response in callback
 var postDataAndConfirmContentType = function(myChannelName, myContentType, myCallback) {
 
-    payload = testRandom.randomString(Math.round(Math.random() * 50));
+    payload = testRandom.randomString(testRandom.randomNum(51));
     uri = URL_ROOT +'/channel/'+ myChannelName;
     var getAgent = superagent.agent();
     agent = superagent.agent();
@@ -270,6 +297,8 @@ var getLatestFromChannel = function(myChannelName, myCallback) {
 
 };
 
+/* DEPRECATED by postData() above
+
 var postDataAndReturnUri = function(myChannelName, myPayload, myCallback) {
     uri = URL_ROOT +'/channel/'+ myChannelName;
 
@@ -284,17 +313,18 @@ var postDataAndReturnUri = function(myChannelName, myPayload, myCallback) {
             myCallback(uri);
         });
 };
+*/
+
+//</editor-fold>
 
 
-/*****************************************************************************************
- ******************** TESTS *************************************************************
- *****************************************************************************************/
 
+//<editor-fold desc="*** Tests ***">
 describe('Create Channel:', function(){
 
    // 404 trying to GET channel before it exists
     it('should return a 404 trying to GET channel before it exists', function(done){
-        var myChannel = testRandom.randomString(Math.round(Math.random() * 48), testRandom.limitedRandomChar);
+        var myChannel = makeRandomChannelName();
         getChannel(myChannel, function(res) {
             expect(res.status).to.equal(404)
             done();
@@ -363,7 +393,7 @@ describe('POST data to channel:', function(){
 
 
     it('POST should return a 404 trying to save to nonexistent channel', function(done){
-        var myChannel = testRandom.randomString(Math.round(Math.random() * 30), testRandom.limitedRandomChar);
+        var myChannel = makeRandomChannelName();
         payload = testRandom.randomString(Math.round(Math.random() * 50));
 
         postData(myChannel, payload, function(res, uri) {
@@ -389,7 +419,7 @@ describe('POST data to channel:', function(){
     });
 
     it('POST same set of data to two different channels', function(done) {
-        var otherChannelName = testRandom.randomString(Math.round(Math.random() * 30), testRandom.limitedRandomChar);
+        var otherChannelName = makeRandomChannelName();
         var cnMetadata, pMetadata;
 
         makeChannel(otherChannelName, function(res) {
@@ -493,7 +523,7 @@ describe('POST data to channel:', function(){
 
             for (var i = 1; i <= 10; i++)
             {
-                var thisName = testRandom.randomString(Math.round(Math.random() * 48), testRandom.limitedRandomChar);
+                var thisName = makeRandomChannelName();
                 var thisPayload = testRandom.randomString(Math.round(Math.random() * 50));
                 loadChannels[thisName] = {"uri":'', "data":thisPayload};
 
@@ -728,12 +758,109 @@ describe('GET data:', function() {
 
         });
 
-        // TODO: Save data to two different channels – ensure the correct creation timestamp is returned on a GET for each.
-        // TODO: Ensure that a call to 'latest' for a channel returns the correct creation timestamp.
+        it('Save data to two different channels, and ensure correct creation timestamps on GETs', function(done) {
+            var pMetadata, timestamp;
+            var channelA = {"name":null, "dataUri":null, "dataTimestamp":null};
+            var channelB = {"name":null, "dataUri":null, "dataTimestamp":null};
+
+            channelA.name = makeRandomChannelName();
+            channelB.name = makeRandomChannelName();
+
+            async.series([
+                function(callback){
+                    makeChannel(channelA.name, function(res) {
+                       expect(res.status).to.equal(200);
+
+                        makeChannel(channelB.name, function(res2) {
+                            expect(res2.status).to.equal(200);
+                            callback(null, null);
+                        });
+                    });
+                },
+                function(callback){
+                    postData(channelA.name, testRandom.randomString(testRandom.randomNum(51)), function(res, packetUri) {
+                        pMetadata = new packetMetadata(res.body);
+                        timestamp = moment(pMetadata.getTimestamp());
+                        channelA.dataUri = packetUri;
+                        channelA.dataTimestamp = timestamp;
+
+                        callback(null, null);
+                    });
+                },
+                function(callback){
+                    postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, packetUri) {
+                        pMetadata = new packetMetadata(res.body);
+                        timestamp = moment(pMetadata.getTimestamp());
+                        channelB.dataUri = packetUri;
+                        channelB.dataTimestamp = timestamp;
+
+                        callback(null, null);
+                    });
+                }
+            ],
+                function(err, rArray){
+                    agent.get(channelA.dataUri)
+                        .end(function(err1, res1){
+                            timestamp = channelA.dataTimestamp;
+                            expect(res1.status).to.equal(200);
+                            expect(res1.header['creation-date']).to.not.be.null;
+                            var returnedTimestamp = moment(res1.header['creation-date']);
+                            expect(returnedTimestamp.isSame(timestamp)).to.be.true;
+
+                            //console.log(returnedTimestamp);
+
+                            superagent.agent().get(channelB.dataUri)
+                                .end(function(err2, res2) {
+                                    timestamp = channelB.dataTimestamp;
+                                    expect(res2.status).to.equal(200);
+                                    expect(res2.header['creation-date']).to.not.be.null;
+                                    returnedTimestamp = moment(res2.header['creation-date']);
+                                    expect(returnedTimestamp.isSame(timestamp)).to.be.true;
+
+                                    //console.log(returnedTimestamp);
+
+                                    done();
+                                });
+                        });
+                });
+
+        });
+
+        it('Get latest returns creation timestamp', function(done) {
+            var thisChannel = makeRandomChannelName();
+
+            payload = testRandom.randomString(testRandom.randomNum(51));
+
+            async.waterfall([
+                function(callback){
+                    makeChannel(thisChannel, function(res) {
+                        expect(res.status).to.equal(200);
+
+                        callback(null);
+                    });
+                },
+                function(callback){
+                    postData(thisChannel, payload, function(myRes, myUri) {
+                        expect(myRes.status).to.equal(200);
+                        uri = URL_ROOT +'/channel/'+ thisChannel +'/latest';
+
+                        agent.get(uri)
+                            .end(function(err, res) {
+                                expect(res.status).to.equal(200);
+                                expect(res.header['creation-date']).to.not.be.null;
+
+                                callback(null);
+                            });
+                    });
+                }
+            ], function (err) {
+                done();
+            });
+        });
     });
 
     // Provide a client with the content type when retrieving a value. https://www.pivotaltracker.com/story/show/43221431
-    describe('GET data -- content type is returned in response:', function() {
+    describe('Content type is returned in response:', function() {
         // (acceptance)  Submit a request to save some data with a specified content type (image/jpeg, for example).
         //          Verify that the same content type is returned when retrieving the data.
         // Test where specified content type doesn't match actual content type (shouldn't matter, the DH should return specified content type).
@@ -843,9 +970,127 @@ describe('GET data:', function() {
         // TODO ? multi-part type testing?
 
     });
+
+    describe('Get previous item link:', function() {
+
+        it('(Acceptance) No Prev link with only one value set; Prev link does show on second value set.', function(done) {
+            var myChannel = makeRandomChannelName();
+            var firstValueUri;  // Uri for the first value set
+            var pHeader;
+
+            async.series([
+                function(callback){
+                    makeChannel(myChannel, function(res) {
+                        expect(res.status).to.equal(200);
+
+                        callback(null, null);
+                    });
+                },
+                function(callback){
+                    postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(200);
+                        firstValueUri = myUri;
+
+                        superagent.agent().get(myUri)
+                            .end(function(err, res) {
+                                pHeader = new packetHeader(res.headers);
+                                expect(pHeader.getPrevious()).to.be.null;
+
+                                callback(null, null);
+                            });
+                    });
+                },
+                function(callback){
+                    postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(200);
+
+                        superagent.agent().get(myUri)
+                            .end(function(err, res) {
+                                pHeader = new packetHeader(res.headers);
+                                expect(pHeader.getPrevious()).to.equal(firstValueUri);
+
+                                callback(null, null);
+                            });
+                    });
+                }
+            ],
+                function(err, results){
+                    done();
+                });
+        });
+
+        // Create a new channel with three values in it. Starting with the latest value, confirm each prev points to the
+        //  correct value and doesn't skip to the oldest.
+        it('Three values in a sequence in a channel show proper Previous link behavior', function(done) {
+            var myChannel = makeRandomChannelName();
+            var firstValueUri, secondValueUri;
+            var pHeader;
+
+            async.series([
+                function(callback){
+                    makeChannel(myChannel, function(res) {
+                        expect(res.status).to.equal(200);
+
+                        callback(null, null);
+                    });
+                },
+                function(callback){
+                    postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(200);
+                        firstValueUri = myUri;
+
+                        superagent.agent().get(myUri)
+                            .end(function(err, res) {
+                                pHeader = new packetHeader(res.headers);
+                                expect(pHeader.getPrevious()).to.be.null;
+
+                                callback(null, null);
+                            });
+                    });
+                },
+                function(callback){
+                    postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(200);
+                        secondValueUri = myUri;
+
+                        superagent.agent().get(myUri)
+                            .end(function(err, res) {
+                                pHeader = new packetHeader(res.headers);
+                                expect(pHeader.getPrevious()).to.equal(firstValueUri);
+
+                                callback(null, null);
+                            });
+                    });
+                },
+                function(callback){
+                    postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(200);
+
+                        superagent.agent().get(myUri)
+                            .end(function(err, res) {
+                                pHeader = new packetHeader(res.headers);
+                                expect(pHeader.getPrevious()).to.equal(secondValueUri);
+
+                                callback(null, null);
+                            });
+                    });
+                }
+            ],
+                function(err, results){
+                    done();
+                });
+        });
+
+        // TODO: Future: if the first value in a channel expires, the value after it in the channel should no longer show a 'prev' link.
+
+        // TODO: Future: if the first value in a channel is deleted, the value after it in the channel should no longer show a 'prev' link.
+
+        // TODO: Future: if a value that is not the first value in a channel expires, the value after it in the channel should
+        //          accurately point its 'prev' link to the value before the just-expired value.
+        // TODO: Future: if a value that is not the first value in a channel is deleted, the value after it in the channel should
+        //          accurately point its 'prev' link to the value before the just-expired value.
+    });
 });
-
-
 
 
 // Allow a client to access the most recently saved item in a channel.
@@ -862,7 +1107,7 @@ describe('Access most recently saved item in channel:', function() {
     //    Response to a channel creation *or* to a GET on the channel will include the URI to the latest resource in that channel.
     //    NOTE: response is 303 ("see other") – it's a redirect to the latest set of data stored in the channel.
     it('(Acceptance) Save sequence of data to channel, confirm that latest actually returns latest', function(done) {
-        var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+        var thisChannel = makeRandomChannelName();
         var latestUri, myData;
 
         var payload1 = testRandom.randomString(testRandom.randomNum(51));
@@ -947,7 +1192,7 @@ describe('Access most recently saved item in channel:', function() {
     });
 
     it('Channel creation returns link to latest data set', function(done) {
-        var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+        var thisChannel = makeRandomChannelName();
 
         makeChannel(thisChannel, function(res) {
             expect(res.status).to.equal(200);
@@ -970,8 +1215,8 @@ describe('Access most recently saved item in channel:', function() {
     });
 
 
-    it(' Get latest works when latest data set is an empty set, following a previous non-empty set', function(done) {
-        var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+    it('Get latest works when latest data set is an empty set, following a previous non-empty set', function(done) {
+        var thisChannel = makeRandomChannelName();
         var latestUri, myData;
 
         payload = testRandom.randomString(testRandom.randomNum(51));
@@ -1018,7 +1263,7 @@ describe('Access most recently saved item in channel:', function() {
     //  Note: the client can't control which is the 'latest', but once the server has made that determination, it should stick.
     //  So repeated calls to this method will always return the same data set.
     it.skip('(*Not yet possible*) Internal sequence of data with same timestamp is preserved', function(done) {
-        var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+        var thisChannel = makeRandomChannelName();
         var payload1 = testRandom.randomString(testRandom.randomNum(51));
         var payload2 = testRandom.randomString(testRandom.randomNum(51));
         var timestamp1, timestamp2;
@@ -1060,6 +1305,8 @@ describe('Access most recently saved item in channel:', function() {
 });
 
 
+
+
 describe.skip('Known failing cases that may not be legitimate:', function() {
 
     it('Should be able to create a channel name of 50 characters', function(done){
@@ -1099,6 +1346,7 @@ describe.skip('Known failing cases that may not be legitimate:', function() {
             });
     });
 });
+//</editor-fold>
 
 
 
