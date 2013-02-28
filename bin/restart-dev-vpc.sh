@@ -8,10 +8,10 @@ URL="http://deploy.util.hq.prod:8082/"
 OWNER='jason.plumb@flightstats.com'
 
 INSTANCE_IDS=( \
-	datahub-01.i-b4572ac4.ec2 \
 	cassandra-01.i-9e3a5ded.ec2 \
     cassandra-02.i-c0395eb3.ec2 \ 
     cassandra-03.i-9c395eef.ec2 \
+	datahub-01.i-b4572ac4.ec2 \
 ) 
 
 for INSTANCE in ${INSTANCE_IDS[@]}; do
