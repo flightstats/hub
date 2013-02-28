@@ -10,6 +10,7 @@ import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
+import me.prettyprint.hector.api.query.CountQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 import org.junit.Test;
 
@@ -143,5 +144,26 @@ public class CassandraChannelsCollectionTest {
         testClass.updateLastUpdatedKey(channelName, key);
 
         verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_COLUMN_FAMILY_NAME, newColumn);
+    }
+
+    @Test
+    public void testCountChannels() throws Exception {
+        HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
+        Keyspace keyspace = mock(Keyspace.class);
+        CassandraConnector connector = mock(CassandraConnector.class);
+        CountQuery<String, String> countQuery = mock(CountQuery.class);
+        QueryResult<Integer> queryResult = mock(QueryResult.class);
+
+        when(connector.getKeyspace()).thenReturn(keyspace);
+        when(hector.createCountQuery(keyspace, StringSerializer.get(), StringSerializer.get())).thenReturn(countQuery);
+        when(countQuery.setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME)).thenReturn(countQuery);
+        when(countQuery.setKey(CHANNELS_ROW_KEY)).thenReturn(countQuery);
+        when(countQuery.setRange(null, null, Integer.MAX_VALUE)).thenReturn(countQuery);
+        when(countQuery.execute()).thenReturn(queryResult);
+        when(queryResult.get()).thenReturn(5);
+
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, null, hector, null);
+        int result = testClass.countChannels();
+        assertEquals(5, result);
     }
 }
