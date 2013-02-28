@@ -19,4 +19,6 @@ public interface ChannelDao {
     ChannelConfiguration getChannelConfiguration(String channelName);
 
     Optional<DataHubKey> findLatestId(String channelName);
+
+    int countChannels();
 }
