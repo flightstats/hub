@@ -10,7 +10,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class ChannelResourceTest {

@@ -6,10 +6,12 @@ public class LinkedDataHubCompositeValue {
 
     private final DataHubCompositeValue value;
     private final Optional<DataHubKey> previous;
+    private final Optional<DataHubKey> next;
 
-    public LinkedDataHubCompositeValue(DataHubCompositeValue value, Optional<DataHubKey> previous) {
+    public LinkedDataHubCompositeValue(DataHubCompositeValue value, Optional<DataHubKey> previous, Optional<DataHubKey> next) {
         this.value = value;
         this.previous = previous;
+        this.next = next;
     }
 
     public String getContentType() {
@@ -32,8 +34,16 @@ public class LinkedDataHubCompositeValue {
         return previous.isPresent();
     }
 
+    public boolean hasNext() {
+        return next.isPresent();
+    }
+
     public Optional<DataHubKey> getPrevious() {
         return previous;
+    }
+
+    public Optional<DataHubKey> getNext() {
+        return next;
     }
 
     @Override
