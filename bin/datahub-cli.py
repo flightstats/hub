@@ -17,6 +17,8 @@ class DataHub(object):
 		self._server = server
 		self._done = False
 		self._channel = None
+		self._prev = None
+		self._next = None
 	def run(self):
 		while(not self._done):
 			try:
@@ -36,6 +38,8 @@ class DataHub(object):
 		print("  getfile <id> <file> : Save id item into a file")
 		print("  latest              : Fetch the latest item from the current channel")
 		print("  latestfile <file>   : Save the latest item into a file")
+		print("  previous            : Fetch the previous item")
+		print("  next                : Fetch the next item")
 		print("  ? or help           : Show this screen")
 		print("  quit                : Quit or exit")
 	def process_line(self, line):
@@ -50,6 +54,8 @@ class DataHub(object):
 			parts = re.split("\s+", line)
 			if(len(parts) > 1):
 				self._channel = parts[1]
+				self._prev = None
+				self._next = None
 			print("The current channel is '%s'" %(self._channel))
 			return
 		elif(line.startswith("meta")):
@@ -69,6 +75,10 @@ class DataHub(object):
 			return self._get_latest(filename)
 		elif(line.startswith("late")):
 			return self._get_latest()
+		elif(line.startswith("pr")):
+			return self._get_previous()
+		elif(line.startswith("ne")):
+			return self._get_next()
 		elif(line.startswith("postfile")):
 			filename = re.sub(r'^postfile\s*', '', line)
 			return self._postfile(filename)
@@ -110,6 +120,31 @@ class DataHub(object):
 		f.write(response.read())
 		f.close()
 		print("Saved %s bytes into file %s"%(self._find_header(response, 'content-length'), filename))
+	def _get_previous(self):
+		if(not self._prev):
+			print("No previous available.")
+			return
+		print("Fetching previous item: %s" % self._prev)
+		conn = httplib.HTTPConnection(self._server)
+		conn.request("GET", self._prev, None, dict())
+		response = conn.getresponse()
+		self._prev = self._extract_link(self._find_prev_link(response))
+		self._next = self._extract_link(self._find_next_link(response))
+		print(response.status, response.reason)
+		self._show_response_if_text(response)
+	def _get_next(self):
+		if(not self._next):
+			print("No next available.")
+			return
+		print("Fetching next item: %s" % self._next)
+		conn = httplib.HTTPConnection(self._server)
+		conn.request("GET", self._next, None, dict())
+		response = conn.getresponse()
+		self._prev = self._extract_link(self._find_prev_link(response))
+		self._next = self._extract_link(self._find_next_link(response))
+		print(response.status, response.reason)
+		self._show_response_if_text(response)
+		
 	def _get_latest(self, filename = None):
 		conn = httplib.HTTPConnection(self._server)
 		conn.request("GET", "/channel/%s/latest" %(self._channel), None, dict())
@@ -123,6 +158,8 @@ class DataHub(object):
 			conn = httplib.HTTPConnection(self._server)
 			conn.request("GET", location, None, dict())
 			response = conn.getresponse()
+			self._prev = self._extract_link(self._find_prev_link(response))
+			self._next = self._extract_link(self._find_next_link(response))
 			if(filename):
 				self._save_response_to_file(response, filename)
 			else:
@@ -135,8 +172,29 @@ class DataHub(object):
 			else:
 				print("Non-text content type: %s" %(content_type))
 				print("Refusing to show content (try getfile)")
+	def _find_next_link(self, response):
+		link_headers = self._find_headers(response, "link")
+		if(link_headers):
+			candidates = link_headers[0][1].split(', ')
+			next_link = filter(lambda x: "next" in x, candidates)
+			if(len(next_link)):
+				return next_link[0]
+		return None
+	def _find_prev_link(self, response):
+		link_headers = self._find_headers(response, "link")
+		if(link_headers):
+			candidates = link_headers[0][1].split(', ')
+			prev_link = filter(lambda x: "previous" in x, candidates)
+			if(len(prev_link)):
+				return prev_link[0]
+		return None
 	def _find_header(self, response, header_name):
-		return filter(lambda x: x[0] == header_name, response.getheaders())[0][1]
+		return self._find_headers(response, header_name)[0][1]
+	def _find_headers(self, response, header_name):
+		return filter(lambda x: x[0] == header_name, response.getheaders())
+	def _extract_link(self, value):
+		if(value):
+			return re.sub(r'.*<(.*)>.*', r'\1', value)
 	def _can_render_content_type(self, content_type):
 		return content_type.startswith("text/") or \
 			content_type in ("application/json", "application/xml", "application/html", "application/javascript")
@@ -155,6 +213,8 @@ class DataHub(object):
 		conn.request("POST", "/channel", content, headers)
 		response = conn.getresponse()
 		self._channel = channel_name
+		self._prev = None
+		self._next = None
 		print(response.status, response.reason)
 		print(response.read())
 	def _show_metadata(self):

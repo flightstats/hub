@@ -50,7 +50,8 @@ public class CassandraChannelDao implements ChannelDao {
             return Optional.absent();
         }
         Optional<DataHubKey> previous = linkagesFinder.findPrevious(channelName, key);
-        return Optional.of(new LinkedDataHubCompositeValue(value, previous));
+        Optional<DataHubKey> next = linkagesFinder.findNext(channelName, key);
+        return Optional.of(new LinkedDataHubCompositeValue(value, previous, next));
     }
 
     @Override

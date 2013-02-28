@@ -26,10 +26,32 @@ public class CassandraLinkagesFinder {
         this.keyRenderer = keyRenderer;
     }
 
+    public Optional<DataHubKey> findNext(String channelName, DataHubKey key) {
+        return queryAndFindResult(channelName, key, DataHubKey.MAX_KEY, false);
+    }
+
     public Optional<DataHubKey> findPrevious(String channelName, DataHubKey key) {
-        String inputKeyString = keyRenderer.keyToString(key);
-        QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult = queryForPrevious(channelName, inputKeyString);
+        return queryAndFindResult(channelName, key, DataHubKey.MIN_KEY, true);
+    }
+
+    private Optional<DataHubKey> queryAndFindResult(String channelName, DataHubKey key, DataHubKey maxKey, boolean reversed) {
+        QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult = queryRange(channelName, key, maxKey, reversed);
+        return findFirstDifferentResult(key, queryResult);
+    }
+
+    private QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryRange(String channelName, DataHubKey key, DataHubKey maxKey, boolean reversed) {
+        String start = keyRenderer.keyToString(key);
+        String end = keyRenderer.keyToString(maxKey);
+        Keyspace keyspace = connector.getKeyspace();
+        return hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
+                     .setColumnFamily(channelName)
+                     .setRange(start, end, reversed, 2)
+                     .execute();
+    }
+
+    private Optional<DataHubKey> findFirstDifferentResult(DataHubKey inputKey, QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult) {
         OrderedRows<String, String, DataHubCompositeValue> rows = queryResult.get();
+        String inputKeyString = keyRenderer.keyToString(inputKey);
         for (Row<String, String, DataHubCompositeValue> row : rows) {
             ColumnSlice<String, DataHubCompositeValue> columnSlice = row.getColumnSlice();
             Optional<DataHubKey> rowResult = findItemInRow(inputKeyString, columnSlice);
@@ -38,15 +60,6 @@ public class CassandraLinkagesFinder {
             }
         }
         return Optional.absent();
-    }
-
-    private QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryForPrevious(String channelName, String maxKey) {
-        Keyspace keyspace = connector.getKeyspace();
-        String minKey = keyRenderer.keyToString(DataHubKey.MIN_KEY);
-        return hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
-                     .setColumnFamily(channelName)
-                     .setRange(maxKey, minKey, true, 2)
-                     .execute();
     }
 
     /**
