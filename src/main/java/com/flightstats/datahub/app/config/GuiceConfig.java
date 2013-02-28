@@ -52,6 +52,7 @@ public class GuiceConfig extends GuiceServletContextListener {
         protected void configureServlets() {
             Properties properties = loadProperties();
             Names.bindProperties(binder(), properties);
+            bind(CassandraChannelDao.class).asEagerSingleton();
             bind(CassandraConnectorFactory.class).in(Singleton.class);
             bind(DataHubKeyRenderer.class).in(Singleton.class);
             bind(DataHubKeyGenerator.class).in(Singleton.class);
