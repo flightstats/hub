@@ -185,7 +185,8 @@ class DataHub(object):
 		if(link_headers):
 			candidates = link_headers[0][1].split(', ')
 			prev_link = filter(lambda x: "previous" in x, candidates)
-			return prev_link[0]
+			if(len(prev_link)):
+				return prev_link[0]
 		return None
 	def _find_header(self, response, header_name):
 		return self._find_headers(response, header_name)[0][1]
