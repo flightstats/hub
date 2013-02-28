@@ -11,7 +11,7 @@ import org.junit.Test;
 import java.util.Collections;
 
 import static com.flightstats.datahub.dao.CassandraConnector.KEYSPACE_NAME;
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 

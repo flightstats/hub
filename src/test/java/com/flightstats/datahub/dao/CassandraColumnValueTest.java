@@ -3,7 +3,7 @@ package com.flightstats.datahub.dao;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import org.junit.Test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class CassandraColumnValueTest {
 

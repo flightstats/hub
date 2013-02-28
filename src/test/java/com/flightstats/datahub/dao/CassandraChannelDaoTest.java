@@ -6,9 +6,9 @@ import org.junit.Test;
 
 import java.util.Date;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -91,6 +91,6 @@ public class CassandraChannelDaoTest {
         CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader, null);
 
         Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
-        assertEquals(Optional.<LinkedDataHubCompositeValue>absent(), result);
+        assertFalse(result.isPresent());
     }
 }
