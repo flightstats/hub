@@ -15,7 +15,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

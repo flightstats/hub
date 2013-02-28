@@ -17,8 +17,8 @@ import java.util.Date;
 
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.CHANNELS_COLUMN_FAMILY_NAME;
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.CHANNELS_ROW_KEY;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class CassandraChannelsCollectionTest {
