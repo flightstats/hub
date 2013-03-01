@@ -59,8 +59,8 @@ public class SingleChannelResourceTest {
 
         Linked<ChannelConfiguration> result = testClass.getChannelMetadata(channelName);
         assertEquals(expectedConfig, result.getObject());
-        HalLink selfLink = result.getLinks().getLinks().get(0);
-        HalLink latestLink = result.getLinks().getLinks().get(1);
+        HalLink selfLink = result.getHalLinks().getLinks().get(0);
+        HalLink latestLink = result.getHalLinks().getLinks().get(1);
         assertEquals(new HalLink("self", channelUri), selfLink);
         assertEquals(new HalLink("latest", URI.create(channelUri.toString() + "/latest")), latestLink);
     }
@@ -95,7 +95,7 @@ public class SingleChannelResourceTest {
         Response response = testClass.insertValue(contentType, channelName, data);
         Linked<ValueInsertionResult> result = (Linked<ValueInsertionResult>) response.getEntity();
 
-        assertThat(result.getLinks().getLinks(), hasItems(selfLink, channelLink));
+        assertThat(result.getHalLinks().getLinks(), hasItems(selfLink, channelLink));
         ValueInsertionResult insertionResult = result.getObject();
 
         assertEquals(expectedResponse, insertionResult);
