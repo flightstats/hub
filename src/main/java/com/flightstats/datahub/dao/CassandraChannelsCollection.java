@@ -40,6 +40,15 @@ public class CassandraChannelsCollection {
         return channelConfig;
     }
 
+    public int countChannels() {
+        QueryResult<Integer> result = hector.createCountQuery(connector.getKeyspace(), StringSerializer.get(), StringSerializer.get())
+                                            .setKey(CHANNELS_ROW_KEY)
+                                            .setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME)
+                                            .setRange(null, null, Integer.MAX_VALUE)
+                                            .execute();
+        return result.get();
+    }
+
     private void insertChannelMetadata(ChannelConfiguration channelConfig) {
         connector.createColumnFamilyIfNeeded(CHANNELS_COLUMN_FAMILY_NAME);
         StringSerializer keySerializer = StringSerializer.get();

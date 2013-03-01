@@ -64,4 +64,9 @@ public class CassandraChannelDao implements ChannelDao {
     public Optional<DataHubKey> findLatestId(String channelName) {
         return cassandraValueReader.findLatestId(channelName);
     }
+
+    @Override
+    public int countChannels() {
+        return channelsCollection.countChannels();
+    }
 }

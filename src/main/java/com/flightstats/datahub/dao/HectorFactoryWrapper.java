@@ -9,6 +9,7 @@ import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
+import me.prettyprint.hector.api.query.CountQuery;
 import me.prettyprint.hector.api.query.RangeSlicesQuery;
 
 import java.util.List;
@@ -45,4 +46,9 @@ public class HectorFactoryWrapper {
     public <K, N, V> RangeSlicesQuery<K, N, V> createRangeSlicesQuery(Keyspace keyspace, Serializer<K> keySerializer, Serializer<N> nameSerializer, Serializer<V> valueSerializer) {
         return HFactory.createRangeSlicesQuery(keyspace, keySerializer, nameSerializer, valueSerializer);
     }
+
+    public <K, N> CountQuery<K, N> createCountQuery(Keyspace keyspace, Serializer<K> keySerializer, Serializer<N> nameSerializer) {
+        return HFactory.createCountQuery(keyspace, keySerializer, nameSerializer);
+    }
+
 }
