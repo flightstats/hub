@@ -14,8 +14,8 @@ var async = require('async');
 var fs = require('fs');
 
 
-var dhh = require('.././DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('.././js_testing_utils/randomUtils.js');
+var dhh = require('../DH_test_helpers/DHtesthelpers.js');
+var testRandom = require('../js_testing_utils/randomUtils.js');
 
 
 var URL_ROOT = dhh.URL_ROOT;
