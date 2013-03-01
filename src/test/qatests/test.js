@@ -191,22 +191,31 @@ function packetMetadata(responseBody) {
     }
 }
 
-// NOTE: this will need to be updated once the implementation is finalized. Right now we're looking at two header
-//      entries with the same name, which breaks things in Superagent and Http modules.
 // Headers in a response to GET on a packet of data
 function packetHeader(responseHeader){
 
-    /*
+    // returns null if no 'previous' header found
     this.getNext = function() {
-        return (responseHeader.hasOwnProperty("next")) ? responseHeader["next"] : null;
+        //console.log("Called getNext() with responseHeader: ");
+        //console.dir(responseHeader);
+
+        if (responseHeader.hasOwnProperty("link")) {
+            var m = /<([^<]+)>;rel=\"next\"/.exec(responseHeader["link"]);
+            return (null == m) ? null : m[1];
+        }
+        else {
+            return null;
+        }
     }
-    */
 
     // returns null if no 'previous' header found
     this.getPrevious = function() {
+        //console.log("Called getPrevious() with responseHeader: ");
+        //console.dir(responseHeader);
+
         if (responseHeader.hasOwnProperty("link")) {
-            var m = /<(.+)>;rel=\"previous\"/.exec(responseHeader["link"]);
-            return m[1];   // will return null if no match
+            var m = /<([^<]+)>;rel=\"previous\"/.exec(responseHeader["link"]);
+            return (null == m) ? null : m[1];
         }
         else {
             return null;
@@ -1039,7 +1048,7 @@ describe('GET data:', function() {
                         expect(res.status).to.equal(200);
                         firstValueUri = myUri;
 
-                        superagent.agent().get(myUri)
+                      superagent.agent().get(myUri)
                             .end(function(err, res) {
                                 pHeader = new packetHeader(res.headers);
                                 expect(pHeader.getPrevious()).to.be.null;
@@ -1089,6 +1098,132 @@ describe('GET data:', function() {
         //          accurately point its 'prev' link to the value before the just-expired value.
         // TODO: Future: if a value that is not the first value in a channel is deleted, the value after it in the channel should
         //          accurately point its 'prev' link to the value before the just-expired value.
+    });
+
+    describe('Get next item link:', function() {
+
+        it('(Acceptance) No Next link with only one value set; Next link does show after following value set.', function(done) {
+            var myChannel = makeRandomChannelName();
+            var firstValueUri;
+            var pHeader;
+
+            async.series([
+                function(callback){
+                    makeChannel(myChannel, function(res) {
+                        expect(res.status).to.equal(200);
+
+                        callback(null, null);
+                    });
+                },
+                function(callback){
+                    postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(200);
+                        firstValueUri = myUri;
+
+                        superagent.agent().get(myUri)
+                            .end(function(err, res) {
+                                pHeader = new packetHeader(res.headers);
+                                expect(pHeader.getNext()).to.be.null;
+
+                                callback(null, null);
+                            });
+                    });
+                },
+                function(callback){
+                    postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(200);
+
+                        superagent.agent().get(firstValueUri)
+                            .end(function(err, res) {
+                                pHeader = new packetHeader(res.headers);
+                                expect(pHeader.getNext()).to.equal(myUri);
+
+                                callback(null, null);
+                            });
+                    });
+                }
+            ],
+                function(err, results){
+                    done();
+                });
+        });
+
+        it('Check Next behavior and a value with both Next and Prev links', function(done) {
+            var myChannel = makeRandomChannelName();
+            var firstValueUri, secondValueUri, thirdValueUri;
+            var pHeader;
+
+            async.series([
+                function(callback){
+                    makeChannel(myChannel, function(res) {
+                        expect(res.status).to.equal(200);
+
+                        callback(null, null);
+                    });
+                },
+                function(callback){
+                    postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(200);
+                        firstValueUri = myUri;
+                        callback(null,null);
+                    });
+                },
+                function(callback){
+                    postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(200);
+                        secondValueUri = myUri;
+                        callback(null,null);
+                    });
+                },
+                function(callback){
+                    postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(200);
+                        thirdValueUri = myUri;
+
+                        superagent.agent().get(myUri)
+                            .end(function(err, res) {
+                                pHeader = new packetHeader(res.headers);
+                                expect(pHeader.getPrevious()).to.equal(secondValueUri);
+                                expect(pHeader.getNext()).to.be.null;
+
+                                callback(null,null);
+                            });
+                    });
+                },
+                function(callback){
+                    superagent.agent().get(secondValueUri)
+                        .end(function(err, res) {
+                            pHeader = new packetHeader(res.headers);
+                            expect(pHeader.getPrevious()).to.equal(firstValueUri);
+                            expect(pHeader.getNext()).to.equal(thirdValueUri);
+
+                            callback(null,null);
+                        });
+                },
+                function(callback){
+                    superagent.agent().get(firstValueUri)
+                        .end(function(err, res) {
+                            pHeader = new packetHeader(res.headers);
+                            expect(pHeader.getPrevious()).to.be.null;
+                            expect(pHeader.getNext()).to.equal(secondValueUri);
+
+                            callback(null,null);
+                        });
+                }
+            ],
+                function(err, results){
+                    done();
+                });
+        });
+
+        // TODO: Future: if the last value in a channel expires, the value before it in the channel should no longer show a 'next' link.
+
+        // TODO: Future: if the last value in a channel is deleted, the value before it in the channel should no longer show a 'next' link.
+
+        // TODO: Future: if a value that is not the last value in a channel expires, the value before it in the channel should
+        //          accurately point its 'next' link to the value after the just-expired value.
+        // TODO: Future: if a value that is not the last value in a channel is deleted, the value before it in the channel should
+        //          accurately point its 'next' link to the value after the just-deleted value.
     });
 });
 
