@@ -378,7 +378,34 @@ describe('Create Channel:', function(){
 
 });
 
+describe('GET Channel metadata:', function() {
 
+    it('Contains expected metadata', function(done) {
+        var cnMetadata;
+        var thisChannel = makeRandomChannelName();
+
+        makeChannel(thisChannel, function(makeRes) {
+            expect(makeRes.status).to.equal(200);
+
+            postData(thisChannel, testRandom.randomString(testRandom.randomNum(51)), function(postRes, uri) {
+                expect(postRes.status).to.equal(200);
+
+                getChannel(thisChannel, function(cnRes) {
+                    expect(cnRes.status).to.equal(200);
+
+                    cnMetadata = new channelMetadata(cnRes.body);
+                    expect(cnMetadata.getChannelUri()).to.not.be.null;
+                    expect(moment(cnMetadata.getCreationDate()).isValid()).to.be.true;
+                    expect(cnMetadata.getLatestUri()).to.not.be.null;
+                    expect(cnMetadata.getName()).to.equal(thisChannel);
+
+                    done();
+                })
+            });
+        });
+
+    });
+});
 
 // Tests for this story:
 //  Allow a client to save an arbitrary value to a channel.
