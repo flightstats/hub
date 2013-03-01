@@ -7,6 +7,7 @@ import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.WebApplicationException;
@@ -23,13 +24,31 @@ import static org.mockito.Mockito.when;
 
 public class SingleChannelResourceTest {
 
+    private String channelName;
+    private String contentType;
+    private URI channelUri;
+    private URI requestUri;
+    private UriInfo urlInfo;
+    private ChannelDao dao;
+
+    @Before
+    public void setup() {
+        channelName = "UHF";
+        contentType = "text/plain";
+        channelUri = URI.create("http://testification.com/channel/spoon");
+        requestUri = URI.create("http://testification.com/channel/spoon");
+        urlInfo = mock(UriInfo.class);
+        dao = mock(ChannelDao.class);
+
+        when(urlInfo.getRequestUri()).thenReturn(requestUri);
+        when(dao.channelExists(channelName)).thenReturn(true);
+    }
+
     @Test
     public void testGetChannelMetadataForKnownChannel() throws Exception {
-        String channelName = "UHF";
         Date creationDate = new Date(12345L);
         ChannelConfiguration expectedConfig = new ChannelConfiguration(channelName, creationDate, null);
 
-        ChannelDao dao = mock(ChannelDao.class);
         UriInfo uriInfo = mock(UriInfo.class);
         when(dao.channelExists(anyString())).thenReturn(true);
         when(dao.getChannelConfiguration(channelName)).thenReturn(expectedConfig);
@@ -40,22 +59,19 @@ public class SingleChannelResourceTest {
 
         Linked<ChannelConfiguration> result = testClass.getChannelMetadata(channelName);
         assertEquals(expectedConfig, result.getObject());
-        HalLink selfLink = result.getLinks().getLinks().get(0);
-        HalLink latestLink = result.getLinks().getLinks().get(1);
+        HalLink selfLink = result.getHalLinks().getLinks().get(0);
+        HalLink latestLink = result.getHalLinks().getLinks().get(1);
         assertEquals(new HalLink("self", channelUri), selfLink);
         assertEquals(new HalLink("latest", URI.create(channelUri.toString() + "/latest")), latestLink);
     }
 
     @Test
     public void testGetChannelMetadataForUnknownChannel() throws Exception {
-        String channelName = "UHF";
-
-        ChannelDao dao = mock(ChannelDao.class);
-        when(dao.channelExists(anyString())).thenReturn(false);
+        when(dao.channelExists("unknownChannel")).thenReturn(false);
 
         SingleChannelResource testClass = new SingleChannelResource(dao, null, new DataHubKeyRenderer());
         try {
-            testClass.getChannelMetadata(channelName);
+            testClass.getChannelMetadata("unknownChannel");
             fail("Should have thrown a 404");
         } catch (WebApplicationException e) {
             Response response = e.getResponse();
@@ -65,41 +81,32 @@ public class SingleChannelResourceTest {
 
     @Test
     public void testInsertValue() throws Exception {
-        String channelName = "whizbang";
         byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
-        String contentType = "text/plain";
         Date date = new Date(123456L);
         DataHubKey key = new DataHubKey(date, (short) 5);
-        URI channelUri = URI.create("http://testification.com/channel/spoon");
-        URI requestUri = URI.create("http://testification.com/channel/spoon");
+
         HalLink selfLink = new HalLink("self", URI.create(channelUri.toString() + "/0000000007H40005"));
         HalLink channelLink = new HalLink("channel", channelUri);
         ValueInsertionResult expectedResponse = new ValueInsertionResult(key);
 
-        ChannelDao dao = mock(ChannelDao.class);
-        UriInfo urlInfo = mock(UriInfo.class);
-
-        when(dao.channelExists(anyString())).thenReturn(true);
         when(dao.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(key));
-        when(urlInfo.getRequestUri()).thenReturn(requestUri);
 
         SingleChannelResource testClass = new SingleChannelResource(dao, urlInfo, new DataHubKeyRenderer());
-        Linked<ValueInsertionResult> response = testClass.insertValue(contentType, channelName, data);
+        Response response = testClass.insertValue(contentType, channelName, data);
+        Linked<ValueInsertionResult> result = (Linked<ValueInsertionResult>) response.getEntity();
 
-        assertThat(response.getLinks().getLinks(), hasItems(selfLink, channelLink));
-        ValueInsertionResult insertionResult = response.getObject();
+        assertThat(result.getHalLinks().getLinks(), hasItems(selfLink, channelLink));
+        ValueInsertionResult insertionResult = result.getObject();
 
         assertEquals(expectedResponse, insertionResult);
+        assertEquals(URI.create("http://testification.com/channel/spoon/0000000007H40005"), response.getMetadata().getFirst("Location"));
     }
 
     @Test
     public void testInsertValue_unknownChannel() throws Exception {
-        String channelName = "whizbang";
         byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
-        String contentType = "text/plain";
 
         ChannelDao dao = mock(ChannelDao.class);
-        UriInfo urlInfo = mock(UriInfo.class);
 
         when(dao.channelExists(anyString())).thenReturn(false);
 
