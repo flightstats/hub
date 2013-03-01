@@ -14,7 +14,7 @@ public class Linked<T> {
         this.object = object;
     }
 
-    public HalLinks getLinks() {
+    public HalLinks getHalLinks() {
         return links;
     }
 

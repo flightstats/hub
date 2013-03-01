@@ -22,7 +22,7 @@ public class LinkedTest {
                                            .withLink("foo", "http://hotmail.com")
                                            .build();
 
-        List<HalLink> linksList = buildResult.getLinks().getLinks();
+        List<HalLink> linksList = buildResult.getHalLinks().getLinks();
         assertEquals(linksList, expectedLinks);
     }
 }
