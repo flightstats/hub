@@ -122,6 +122,18 @@ var getChannel = function(myChannelName, myCallback) {
 };
 exports.getChannel = getChannel;
 
+/* Basic health check.
+    Returns the get response or throws an error.
+ */
+var getHealth = function(myCallback) {
+    superagent.agent().get(URL_ROOT + '/health')
+        .end(function(err,res) {
+            if (err) {throw err};
+            myCallback(res);
+        });
+};
+exports.getHealth = getHealth;
+
 
 function packetMetadata(responseBody) {
 
