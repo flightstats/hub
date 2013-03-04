@@ -6,12 +6,12 @@ import org.codehaus.jackson.annotate.JsonUnwrapped;
 public abstract class LinkedMixIn<T> {
 
     @JsonProperty("_links")
-    private final HalLinks links;
+    private final HalLinks halLinks;
 
     @JsonProperty @JsonUnwrapped
     private final T object;
 
-    public LinkedMixIn(@JsonProperty("_links") HalLinks links, @JsonUnwrapped T object) {
+    public LinkedMixIn(@JsonProperty("_links") HalLinks halLinks, @JsonUnwrapped T object) {
         throw new RuntimeException("Do not instantiate");
     }
 }

@@ -6,16 +6,16 @@ import java.util.List;
 
 public class Linked<T> {
 
-    private final HalLinks links;
+    private final HalLinks halLinks;
     private final T object;
 
-    private Linked(HalLinks links, T object) {
-        this.links = links;
+    private Linked(HalLinks halLinks, T object) {
+        this.halLinks = halLinks;
         this.object = object;
     }
 
-    public HalLinks getLinks() {
-        return links;
+    public HalLinks getHalLinks() {
+        return halLinks;
     }
 
     public T getObject() {
@@ -33,7 +33,7 @@ public class Linked<T> {
 
         Linked linked = (Linked) o;
 
-        if (links != null ? !links.equals(linked.links) : linked.links != null) {
+        if (halLinks != null ? !halLinks.equals(linked.halLinks) : linked.halLinks != null) {
             return false;
         }
         if (object != null ? !object.equals(linked.object) : linked.object != null) {
@@ -45,7 +45,7 @@ public class Linked<T> {
 
     @Override
     public int hashCode() {
-        int result = links != null ? links.hashCode() : 0;
+        int result = halLinks != null ? halLinks.hashCode() : 0;
         result = 31 * result + (object != null ? object.hashCode() : 0);
         return result;
     }
@@ -53,7 +53,7 @@ public class Linked<T> {
     @Override
     public String toString() {
         return "Linked{" +
-                "links=" + links +
+                "halLinks=" + halLinks +
                 ", object=" + object +
                 '}';
     }

@@ -50,7 +50,7 @@ public class SingleChannelResource {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public Linked<ValueInsertionResult> insertValue(@HeaderParam("Content-Type") String contentType, @PathParam(
+    public Response insertValue(@HeaderParam("Content-Type") String contentType, @PathParam(
             "channelName") String channelName, byte[] data) {
         if (!channelDao.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -59,10 +59,16 @@ public class SingleChannelResource {
         URI channelUri = uriInfo.getRequestUri();
         String keyId = keyRenderer.keyToString(insertionResult.getKey());
         URI payloadUri = URI.create(channelUri.toString() + "/" + keyId);
-        return linked(insertionResult)
+
+        Linked<ValueInsertionResult> linkedResult = linked(insertionResult)
                 .withLink("channel", channelUri)
                 .withLink("self", payloadUri)
                 .build();
+
+        Response.ResponseBuilder builder = Response.status(Response.Status.OK);
+        builder.entity(linkedResult);
+        builder.location(payloadUri);
+        return builder.build();
     }
 
 }
