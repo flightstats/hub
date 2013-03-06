@@ -19,11 +19,7 @@ var URL_ROOT = dhh.URL_ROOT;
 var CAT_TOILET_PIC = './artifacts/cattoilet.jpg';
 var MY_2MB_FILE = './artifacts/Iam2_5Mb.txt';
 var MY_2KB_FILE = './artifacts/Iam200kb.txt';
-var MY_4MB_FILE = './artifacts/Iam4Mb.txt';
-var MY_8MB_FILE = './artifacts/Iam8Mb.txt';
-var MY_16MB_FILE = './artifacts/Iam16Mb.txt';
-var MY_32MB_FILE = './artifacts/Iam32Mb.txt';
-var MY_64MB_FILE = './artifacts/Iam64Mb.txt';
+
 
 // Test variables that are regularly overwritten
 var agent
@@ -157,8 +153,6 @@ describe('POST data to channel:', function(){
     });
 
 
-
-
     it('POST 1,000 characters to channel', function(done) {
         payload = testRandom.randomString(1000, testRandom.simulatedTextChar);
 
@@ -199,8 +193,6 @@ describe('POST data to channel:', function(){
         );
 
     });
-
-
 
 
     // For story:  Provide the client with a creation-timestamp in the response from a data storage request.k
@@ -300,74 +292,5 @@ describe('POST data to channel:', function(){
 
     });
 
-    describe('Post big files:', function() {
-        it('POST 2 MB file to channel', function(done) {
-            payload = fs.readFileSync(MY_2MB_FILE, "utf8");
 
-            dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
-
-                dhh.getValidationString(uri, payload, done);
-            });
-        });
-
-        it('POST 4 MB file to channel', function(done) {
-            this.timeout(60000);
-            payload = fs.readFileSync(MY_4MB_FILE, "utf8");
-
-            dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
-
-                dhh.getValidationString(uri, payload, done);
-            });
-        });
-
-        it('POST 8 MB file to channel', function(done) {
-            this.timeout(120000);
-            payload = fs.readFileSync(MY_8MB_FILE, "utf8");
-
-            dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
-
-                dhh.getValidationString(uri, payload, done);
-            });
-        });
-
-        it('POST 16 MB file to channel', function(done) {
-            this.timeout(240000);
-            payload = fs.readFileSync(MY_16MB_FILE, "utf8");
-
-            dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
-
-                dhh.getValidationString(uri, payload, done);
-            });
-        });
-    });
-
-    describe.skip('Unsupported scenarios (tests ignored):', function() {
-        // as of 3/5/2012, DH cannot handle files this big
-        it.skip('POST and retrieve 32 MB file to channel', function(done) {
-            this.timeout(480000);
-            payload = fs.readFileSync(MY_32MB_FILE, "utf8");
-
-            dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
-
-                dhh.getValidationString(uri, payload, done);
-            });
-        });
-
-        // as of 3/5/2012, DH cannot handle files this big
-        it.skip('POST and retrieve 64 MB file to channel', function(done) {
-            this.timeout(960000);
-            payload = fs.readFileSync(MY_64MB_FILE, "utf8");
-
-            dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
-
-                dhh.getValidationString(uri, payload, done);
-            });
-        });
-    });
 });
