@@ -733,6 +733,9 @@ describe('GET data:', function() {
             var myChannel = dhh.makeRandomChannelName();
             var firstValueUri, secondValueUri, thirdValueUri;
             var pHeader;
+            var debugThis = false;
+
+            if (debugThis) {console.log('Channel name:'+ myChannel);}
 
             async.series([
                 function(callback){
@@ -746,6 +749,7 @@ describe('GET data:', function() {
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
                         expect(res.status).to.equal(200);
                         firstValueUri = myUri;
+                        if (debugThis) {console.log('First value at: '+ firstValueUri);}
                         callback(null,null);
                     });
                 },
@@ -753,6 +757,7 @@ describe('GET data:', function() {
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
                         expect(res.status).to.equal(200);
                         secondValueUri = myUri;
+                        if (debugThis) {console.log('Second value at: '+ secondValueUri);}
                         callback(null,null);
                     });
                 },
@@ -760,9 +765,11 @@ describe('GET data:', function() {
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
                         expect(res.status).to.equal(200);
                         thirdValueUri = myUri;
+                        if (debugThis) {console.log('Third value at: '+ thirdValueUri);}
 
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
+                                if (debugThis) {console.log('Getting third value.'+ myUri);}
                                 pHeader = new dhh.packetHeader(res.headers);
                                 expect(pHeader.getPrevious()).to.equal(secondValueUri);
                                 expect(pHeader.getNext()).to.be.null;
@@ -774,6 +781,7 @@ describe('GET data:', function() {
                 function(callback){
                     superagent.agent().get(secondValueUri)
                         .end(function(err, res) {
+                            if (debugThis) {console.log('Getting second value.'+ secondValueUri);}
                             pHeader = new dhh.packetHeader(res.headers);
                             expect(pHeader.getPrevious()).to.equal(firstValueUri);
                             expect(pHeader.getNext()).to.equal(thirdValueUri);
@@ -784,6 +792,7 @@ describe('GET data:', function() {
                 function(callback){
                     superagent.agent().get(firstValueUri)
                         .end(function(err, res) {
+                            if (debugThis) {console.log('Getting first value.'+ firstValueUri);}
                             pHeader = new dhh.packetHeader(res.headers);
                             expect(pHeader.getPrevious()).to.be.null;
                             expect(pHeader.getNext()).to.equal(secondValueUri);

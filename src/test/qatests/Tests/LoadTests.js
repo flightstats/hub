@@ -51,16 +51,18 @@ beforeEach(function(){
 })
 
 
-describe.skip('Load tests - POST data:', function(){
-
+describe('Load tests - POST data:', function(){
     var loadChannels = {};
     var loadChannelKeys = [];  // channel.uri (to fetch data) and channel.data, e.g. { con {uri: x, data: y}}
 
     // To ignore the Loadtest cases:  mocha -R nyan --timeout 4000 --grep Load --invert
     it('Loadtest - POST rapidly to ten different channels, then confirm data retrieved via GET is correct', function(done){
+        //this.timeout(100000);
         var cnMetadata;
+        var numIterations = 20;
 
-        for (var i = 1; i <= 10; i++)
+        this.timeout(5000 * numIterations);
+        for (var i = 1; i <= numIterations; i++)
         {
             var thisName = dhh.makeRandomChannelName();
             var thisPayload = testRandom.randomString(Math.round(Math.random() * 50));
