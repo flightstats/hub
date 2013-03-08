@@ -39,6 +39,8 @@ dependencies {
     compile group: 'org.eclipse.jetty', name: 'jetty-http', version: '9.0.0.M4'
     compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.0.0.M4'
     compile group: 'org.eclipse.jetty', name: 'jetty-security', version: '9.0.0.M4'
+    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-server', version: '9.0.0.RC2'
+    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-common', version: '9.0.0.RC2'
     compile group: 'com.sun.jersey', name: 'jersey-core', version: '1.17'
     compile group: 'com.sun.jersey', name: 'jersey-json', version: '1.17'
     compile group: 'com.sun.jersey', name: 'jersey-servlet', version: '1.17'
