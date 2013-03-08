@@ -4,6 +4,7 @@ import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -14,7 +15,6 @@ import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.query.QueryResult;
 
 import java.util.List;
-import java.util.ListIterator;
 
 public class CassandraLinkagesFinder {
 
@@ -57,11 +57,11 @@ public class CassandraLinkagesFinder {
 		OrderedRows<String, String, DataHubCompositeValue> rows = queryResult.get();
 
 		List<Row<String, String, DataHubCompositeValue>> rowsList = rows.getList();
-		ListIterator<Row<String, String, DataHubCompositeValue>> rowIterator = rowsList.listIterator(reversed ? rowsList.size() : 0);
+		if (reversed) {
+			rowsList = Lists.reverse(rowsList);
+		}
 		String inputKeyString = keyRenderer.keyToString(inputKey);
-
-		while (canIterate(reversed, rowIterator)) {
-			Row<String, String, DataHubCompositeValue> row = getRow(reversed, rowIterator);
+		for (Row<String, String, DataHubCompositeValue> row : rowsList) {
 			ColumnSlice<String, DataHubCompositeValue> columnSlice = row.getColumnSlice();
 			Optional<DataHubKey> rowResult = findItemInRow(inputKeyString, columnSlice);
 			if (rowResult.isPresent()) {
@@ -69,14 +69,6 @@ public class CassandraLinkagesFinder {
 			}
 		}
 		return Optional.absent();
-	}
-
-	private boolean canIterate(boolean reversed, ListIterator<Row<String, String, DataHubCompositeValue>> rowIterator) {
-		return (reversed & rowIterator.hasPrevious()) || (!reversed & rowIterator.hasNext());
-	}
-
-	private Row<String, String, DataHubCompositeValue> getRow(boolean reversed, ListIterator<Row<String, String, DataHubCompositeValue>> rowIterator) {
-		return reversed ? rowIterator.previous() : rowIterator.next();
 	}
 
 	/**
