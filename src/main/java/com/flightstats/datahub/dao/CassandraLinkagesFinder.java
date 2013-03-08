@@ -13,65 +13,82 @@ import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.query.QueryResult;
 
+import java.util.List;
+import java.util.ListIterator;
+
 public class CassandraLinkagesFinder {
 
-    private final CassandraConnector connector;
-    private final HectorFactoryWrapper hector;
-    private final DataHubKeyRenderer keyRenderer;
+	private final CassandraConnector connector;
+	private final HectorFactoryWrapper hector;
+	private final DataHubKeyRenderer keyRenderer;
 
-    @Inject
-    public CassandraLinkagesFinder(CassandraConnector connector, HectorFactoryWrapper hector, DataHubKeyRenderer keyRenderer) {
-        this.connector = connector;
-        this.hector = hector;
-        this.keyRenderer = keyRenderer;
-    }
+	@Inject
+	public CassandraLinkagesFinder(CassandraConnector connector, HectorFactoryWrapper hector, DataHubKeyRenderer keyRenderer) {
+		this.connector = connector;
+		this.hector = hector;
+		this.keyRenderer = keyRenderer;
+	}
 
-    public Optional<DataHubKey> findNext(String channelName, DataHubKey key) {
-        return queryAndFindResult(channelName, key, DataHubKey.MAX_KEY, false);
-    }
+	public Optional<DataHubKey> findNext(String channelName, DataHubKey key) {
+		return queryAndFindResult(channelName, key, DataHubKey.MAX_KEY, false);
+	}
 
-    public Optional<DataHubKey> findPrevious(String channelName, DataHubKey key) {
-        return queryAndFindResult(channelName, key, DataHubKey.MIN_KEY, true);
-    }
+	public Optional<DataHubKey> findPrevious(String channelName, DataHubKey key) {
+		return queryAndFindResult(channelName, key, DataHubKey.MIN_KEY, true);
+	}
 
-    private Optional<DataHubKey> queryAndFindResult(String channelName, DataHubKey key, DataHubKey maxKey, boolean reversed) {
-        QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult = queryRange(channelName, key, maxKey, reversed);
-        return findFirstDifferentResult(key, queryResult);
-    }
+	private Optional<DataHubKey> queryAndFindResult(String channelName, DataHubKey key, DataHubKey maxKey, boolean reversed) {
+		QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult = queryRange(channelName, key, maxKey, reversed);
+		return findFirstDifferentResult(key, queryResult, reversed);
+	}
 
-    private QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryRange(String channelName, DataHubKey key, DataHubKey maxKey, boolean reversed) {
-        String start = keyRenderer.keyToString(key);
-        String end = keyRenderer.keyToString(maxKey);
-        Keyspace keyspace = connector.getKeyspace();
-        return hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
-                     .setColumnFamily(channelName)
-                     .setRange(start, end, reversed, 2)
-                     .execute();
-    }
+	private QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryRange(String channelName, DataHubKey key, DataHubKey maxKey, boolean reversed) {
+		String start = keyRenderer.keyToString(key);
+		String end = keyRenderer.keyToString(maxKey);
+		Keyspace keyspace = connector.getKeyspace();
 
-    private Optional<DataHubKey> findFirstDifferentResult(DataHubKey inputKey, QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult) {
-        OrderedRows<String, String, DataHubCompositeValue> rows = queryResult.get();
-        String inputKeyString = keyRenderer.keyToString(inputKey);
-        for (Row<String, String, DataHubCompositeValue> row : rows) {
-            ColumnSlice<String, DataHubCompositeValue> columnSlice = row.getColumnSlice();
-            Optional<DataHubKey> rowResult = findItemInRow(inputKeyString, columnSlice);
-            if (rowResult.isPresent()) {
-                return rowResult;
-            }
-        }
-        return Optional.absent();
-    }
+		return hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
+					 .setColumnFamily(channelName)
+					 .setRange(start, end, reversed, 2)
+					 .execute();
+	}
 
-    /**
-     * Attempts to find the first column in the row that doesn't have the input column name;
-     */
-    private Optional<DataHubKey> findItemInRow(String inputKeyString, ColumnSlice<String, DataHubCompositeValue> columnSlice) {
-        for (HColumn<String, DataHubCompositeValue> column : columnSlice.getColumns()) {
-            String columnName = column.getName();
-            if (!columnName.equals(inputKeyString)) {
-                return Optional.of(keyRenderer.fromString(columnName));
-            }
-        }
-        return Optional.absent();
-    }
+	private Optional<DataHubKey> findFirstDifferentResult(DataHubKey inputKey, QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult, boolean reversed) {
+		OrderedRows<String, String, DataHubCompositeValue> rows = queryResult.get();
+
+		List<Row<String, String, DataHubCompositeValue>> rowsList = rows.getList();
+		ListIterator<Row<String, String, DataHubCompositeValue>> rowIterator = rowsList.listIterator(reversed ? rowsList.size() : 0);
+		String inputKeyString = keyRenderer.keyToString(inputKey);
+
+		while (canIterate(reversed, rowIterator)) {
+			Row<String, String, DataHubCompositeValue> row = getRow(reversed, rowIterator);
+			ColumnSlice<String, DataHubCompositeValue> columnSlice = row.getColumnSlice();
+			Optional<DataHubKey> rowResult = findItemInRow(inputKeyString, columnSlice);
+			if (rowResult.isPresent()) {
+				return rowResult;
+			}
+		}
+		return Optional.absent();
+	}
+
+	private boolean canIterate(boolean reversed, ListIterator<Row<String, String, DataHubCompositeValue>> rowIterator) {
+		return (reversed & rowIterator.hasPrevious()) || (!reversed & rowIterator.hasNext());
+	}
+
+	private Row<String, String, DataHubCompositeValue> getRow(boolean reversed, ListIterator<Row<String, String, DataHubCompositeValue>> rowIterator) {
+		return reversed ? rowIterator.previous() : rowIterator.next();
+	}
+
+	/**
+	 * Attempts to find the first column in the row that doesn't have the input column name;
+	 */
+	private Optional<DataHubKey> findItemInRow(String inputKeyString, ColumnSlice<String, DataHubCompositeValue> columnSlice) {
+		for (HColumn<String, DataHubCompositeValue> column : columnSlice.getColumns()) {
+			String columnName = column.getName();
+			if (!columnName.equals(inputKeyString)) {
+				return Optional.of(keyRenderer.fromString(columnName));
+			}
+		}
+		return Optional.absent();
+	}
 }
