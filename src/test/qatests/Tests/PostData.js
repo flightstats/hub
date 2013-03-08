@@ -32,6 +32,8 @@ var agent
 var channelName;
 
 before(function(myCallback){
+
+    // Update file paths if test is run in its own directory.
     var cwd = process.cwd();
     var dirRegex = /\/([^/]+)$/;
     var parent = cwd.match(dirRegex)[1];
