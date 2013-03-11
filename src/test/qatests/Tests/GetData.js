@@ -1,10 +1,3 @@
-/**
- * Created with JetBrains WebStorm.
- * User: gnewcomb
- * Date: 3/1/13
- * Time: 9:47 AM
- * To change this template use File | Settings | File Templates.
- */
 
 /**
  * Created with JetBrains WebStorm.

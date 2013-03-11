@@ -194,6 +194,7 @@ function packetGETHeader(responseHeader){
 }
 exports.packetGETHeader = packetGETHeader;
 
+
 // Headers in response to POSTing a packet of data
 function packetPOSTHeader(responseHeader){
     this.getLocation = function() {
