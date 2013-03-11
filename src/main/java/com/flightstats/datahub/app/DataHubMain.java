@@ -5,7 +5,6 @@ import com.flightstats.datahub.app.config.GuiceConfig;
 import com.google.inject.servlet.GuiceFilter;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 
 import javax.servlet.DispatcherType;
 import java.util.EnumSet;
@@ -34,9 +33,10 @@ public class DataHubMain {
 
 		ServletContextHandler rootContextHandler = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
 
-		JettyWebSocketServlet jettyWebSocketServlet = new JettyWebSocketServlet();
-		ServletHolder jettyWsHolder = new ServletHolder(jettyWebSocketServlet);
-		rootContextHandler.addServlet(jettyWsHolder, "/jettyws");
+		//		JettyWebSocketServlet jettyWebSocketServlet = new JettyWebSocketServlet();
+		//		ServletHolder jettyWsHolder = new ServletHolder(jettyWebSocketServlet);
+		////		rootContextHandler.addServlet(jettyWsHolder, "/channel/*/ws");
+		//		rootContextHandler.addServlet(jettyWsHolder, "/ws");
 
 		rootContextHandler.addEventListener(new GuiceConfig());
 		rootContextHandler.addFilter(GuiceFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
