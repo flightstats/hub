@@ -49,7 +49,7 @@ before(function(myCallback){
     channelName = dhh.makeRandomChannelName();
     agent = superagent.agent();
     dhh.makeChannel(channelName, function(res){
-        if ((res.error) || (res.status != 200)) {
+        if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
             myCallback(res.error);
         };
         console.log('Main test channel:'+ channelName);
@@ -70,7 +70,7 @@ describe('GET data:', function() {
             payload = testRandom.randomString(Math.round(Math.random() * 50));
 
             dhh.postData(channelName, payload, function(res, packetUri) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                 var pMetadata = new dhh.packetMetadata(res.body)
                 var timestamp = moment(pMetadata.getTimestamp());
@@ -147,10 +147,10 @@ describe('GET data:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(channelA.name, function(res) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
 
                         dhh.makeChannel(channelB.name, function(res2) {
-                            expect(res2.status).to.equal(200);
+                            expect(res2.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
                             callback(null, null);
                         });
                     });
@@ -212,14 +212,14 @@ describe('GET data:', function() {
             async.waterfall([
                 function(callback){
                     dhh.makeChannel(thisChannel, function(res) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
 
                         callback(null);
                     });
                 },
                 function(callback){
                     dhh.postData(thisChannel, payload, function(myRes, myUri) {
-                        expect(myRes.status).to.equal(200);
+                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
                         uri = URL_ROOT +'/channel/'+ thisChannel +'/latest';
 
                         agent.get(uri)
@@ -265,7 +265,7 @@ describe('GET data:', function() {
             async.waterfall([
                 function(callback){
                     dhh.makeChannel(thisChannel, function(res) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
                         var cnMetadata = new dhh.channelMetadata(res.body);
                         latestUri = cnMetadata.getLatestUri();
 
@@ -274,7 +274,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(thisChannel, payload1, function(myRes, myUri) {
-                        expect(myRes.status).to.equal(200);
+                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                         dhh.getLatestFromChannel(thisChannel, function(myData) {
                             //console.log('payload1:'+ payload1);
@@ -288,7 +288,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(thisChannel, payload2, function(myRes, myUri) {
-                        expect(myRes.status).to.equal(200);
+                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                         dhh.getLatestFromChannel(thisChannel, function(myData) {
                             //console.log('payload2:'+ payload2);
@@ -302,7 +302,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(thisChannel, payload3, function(myRes, myUri) {
-                        expect(myRes.status).to.equal(200);
+                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                         dhh.getLatestFromChannel(thisChannel, function(myData) {
                             //console.log('payload3:'+ payload3);
@@ -323,7 +323,7 @@ describe('GET data:', function() {
             var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
 
             dhh.makeChannel(thisChannel, function(res) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
 
                 uri = URL_ROOT +'/channel/'+ thisChannel +'/latest';
 
@@ -339,7 +339,7 @@ describe('GET data:', function() {
             var thisChannel = dhh.makeRandomChannelName();
 
             dhh.makeChannel(thisChannel, function(res) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
                 var cnMetadata = new dhh.channelMetadata(res.body);
                 expect(cnMetadata.getChannelUri()).to.not.be.null;
 
@@ -368,7 +368,7 @@ describe('GET data:', function() {
             async.waterfall([
                 function(callback){
                     dhh.makeChannel(thisChannel, function(res) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
 
                         var cnMetadata = new dhh.channelMetadata(res.body);
                         latestUri = cnMetadata.getLatestUri();
@@ -378,7 +378,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(thisChannel, payload, function(myRes, myUri) {
-                        expect(myRes.status).to.equal(200);
+                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                         dhh.getLatestFromChannel(thisChannel, function(myData) {
                             expect(myData).to.equal(payload);
@@ -388,7 +388,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(thisChannel, '', function(myRes, myUri) {
-                        expect(myRes.status).to.equal(200);
+                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                         dhh.getLatestFromChannel(thisChannel, function(myData) {
                             expect(myData).to.equal('');
@@ -413,13 +413,13 @@ describe('GET data:', function() {
             var timestamp1, timestamp2;
 
             dhh.makeChannel(thisChannel, function(res) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
 
 
                 async.parallel([
                     function(callback){
                         dhh.postData(thisChannel, payload1, function(myRes, uri) {
-                            expect(myRes.status).to.equal(200);
+                            expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
                             timestamp1 = moment(myRes.body.timestamp);
                             expect(moment(timestamp1).isValid()).to.be.true;
                             //console.log('time1 '+ timestamp1.valueOf());
@@ -430,7 +430,7 @@ describe('GET data:', function() {
                     },
                     function(callback){
                         dhh.postData(thisChannel, payload2, function(myRes, uri) {
-                            expect(myRes.status).to.equal(200);
+                            expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
                             timestamp2 = moment(myRes.body.timestamp);
                             expect(moment(timestamp2).isValid()).to.be.true;
                             //console.log('time2 '+ timestamp2.valueOf());
@@ -541,7 +541,7 @@ describe('GET data:', function() {
                 .send(payload)
                 .end(function(err, res) {
                     if (err) throw err;
-                    expect(res.status).to.equal(200);
+                    expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                     var cnMetadata = new dhh.channelMetadata(res.body);
                     uri = cnMetadata.getChannelUri();
 
@@ -571,19 +571,19 @@ describe('GET data:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(myChannel, function(res) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
 
                         callback(null, null);
                     });
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                         firstValueUri = myUri;
 
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
-                                pHeader = new dhh.packetHeader(res.headers);
+                                pHeader = new dhh.packetGETHeader(res.headers);
                                 expect(pHeader.getPrevious()).to.be.null;
 
                                 callback(null, null);
@@ -592,11 +592,11 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
-                                pHeader = new dhh.packetHeader(res.headers);
+                                pHeader = new dhh.packetGETHeader(res.headers);
                                 expect(pHeader.getPrevious()).to.equal(firstValueUri);
 
                                 callback(null, null);
@@ -619,19 +619,19 @@ describe('GET data:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(myChannel, function(res) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
 
                         callback(null, null);
                     });
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                         firstValueUri = myUri;
 
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
-                                pHeader = new dhh.packetHeader(res.headers);
+                                pHeader = new dhh.packetGETHeader(res.headers);
                                 expect(pHeader.getPrevious()).to.be.null;
 
                                 callback(null, null);
@@ -640,12 +640,12 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                         secondValueUri = myUri;
 
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
-                                pHeader = new dhh.packetHeader(res.headers);
+                                pHeader = new dhh.packetGETHeader(res.headers);
                                 expect(pHeader.getPrevious()).to.equal(firstValueUri);
 
                                 callback(null, null);
@@ -654,11 +654,11 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
-                                pHeader = new dhh.packetHeader(res.headers);
+                                pHeader = new dhh.packetGETHeader(res.headers);
                                 expect(pHeader.getPrevious()).to.equal(secondValueUri);
 
                                 callback(null, null);
@@ -691,19 +691,19 @@ describe('GET data:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(myChannel, function(res) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
 
                         callback(null, null);
                     });
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                         firstValueUri = myUri;
 
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
-                                pHeader = new dhh.packetHeader(res.headers);
+                                pHeader = new dhh.packetGETHeader(res.headers);
                                 expect(pHeader.getNext()).to.be.null;
 
                                 callback(null, null);
@@ -712,11 +712,11 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                         superagent.agent().get(firstValueUri)
                             .end(function(err, res) {
-                                pHeader = new dhh.packetHeader(res.headers);
+                                pHeader = new dhh.packetGETHeader(res.headers);
                                 expect(pHeader.getNext()).to.equal(myUri);
 
                                 callback(null, null);
@@ -740,14 +740,14 @@ describe('GET data:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(myChannel, function(res) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
 
                         callback(null, null);
                     });
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                         firstValueUri = myUri;
                         if (debugThis) {console.log('First value at: '+ firstValueUri);}
                         callback(null,null);
@@ -755,7 +755,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                         secondValueUri = myUri;
                         if (debugThis) {console.log('Second value at: '+ secondValueUri);}
                         callback(null,null);
@@ -763,14 +763,14 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(200);
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                         thirdValueUri = myUri;
                         if (debugThis) {console.log('Third value at: '+ thirdValueUri);}
 
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
                                 if (debugThis) {console.log('Getting third value.'+ myUri);}
-                                pHeader = new dhh.packetHeader(res.headers);
+                                pHeader = new dhh.packetGETHeader(res.headers);
                                 expect(pHeader.getPrevious()).to.equal(secondValueUri);
                                 expect(pHeader.getNext()).to.be.null;
 
@@ -782,7 +782,7 @@ describe('GET data:', function() {
                     superagent.agent().get(secondValueUri)
                         .end(function(err, res) {
                             if (debugThis) {console.log('Getting second value.'+ secondValueUri);}
-                            pHeader = new dhh.packetHeader(res.headers);
+                            pHeader = new dhh.packetGETHeader(res.headers);
                             expect(pHeader.getPrevious()).to.equal(firstValueUri);
                             expect(pHeader.getNext()).to.equal(thirdValueUri);
 
@@ -793,7 +793,7 @@ describe('GET data:', function() {
                     superagent.agent().get(firstValueUri)
                         .end(function(err, res) {
                             if (debugThis) {console.log('Getting first value.'+ firstValueUri);}
-                            pHeader = new dhh.packetHeader(res.headers);
+                            pHeader = new dhh.packetGETHeader(res.headers);
                             expect(pHeader.getPrevious()).to.be.null;
                             expect(pHeader.getNext()).to.equal(secondValueUri);
 

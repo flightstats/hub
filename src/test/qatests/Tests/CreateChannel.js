@@ -37,7 +37,7 @@ before(function(myCallback){
     channelName = dhh.makeRandomChannelName();
     agent = superagent.agent();
     dhh.makeChannel(channelName, function(res){
-        if ((res.error) || (res.status != 200)) {
+        if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
             myCallback(res.error);
         };
         console.log('Main test channel:'+ channelName);

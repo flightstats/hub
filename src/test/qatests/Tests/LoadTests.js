@@ -42,7 +42,7 @@ before(function(myCallback){
     channelName = dhh.makeRandomChannelName();
     agent = superagent.agent();
     dhh.makeChannel(channelName, function(res){
-        if ((res.error) || (res.status != 200)) {
+        if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
             myCallback(res.error);
         };
         console.log('Main test channel:'+ channelName);
@@ -84,7 +84,7 @@ describe.skip('Load tests - POST data:', function(){
 
             async.each(loadChannelKeys, function(cn, callback) {
                 dhh.makeChannel(cn, function(res) {
-                    expect(res.status).to.equal(200);
+                    expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
                     cnMetadata = new dhh.channelMetadata(res.body);
                     expect(cnMetadata.getChannelUri()).to.equal(URL_ROOT +'/channel/'+ cn);
                     callback();
@@ -135,7 +135,7 @@ describe.skip('Load tests - POST data:', function(){
             payload = fs.readFileSync(MY_2MB_FILE, "utf8");
 
             dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                 dhh.getValidationString(uri, payload, done);
             });
@@ -146,7 +146,7 @@ describe.skip('Load tests - POST data:', function(){
             payload = fs.readFileSync(MY_4MB_FILE, "utf8");
 
             dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                 dhh.getValidationString(uri, payload, done);
             });
@@ -157,7 +157,7 @@ describe.skip('Load tests - POST data:', function(){
             payload = fs.readFileSync(MY_8MB_FILE, "utf8");
 
             dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                 dhh.getValidationString(uri, payload, done);
             });
@@ -168,7 +168,7 @@ describe.skip('Load tests - POST data:', function(){
             payload = fs.readFileSync(MY_16MB_FILE, "utf8");
 
             dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                 dhh.getValidationString(uri, payload, done);
             });
@@ -182,7 +182,7 @@ describe.skip('Load tests - POST data:', function(){
             payload = fs.readFileSync(MY_32MB_FILE, "utf8");
 
             dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                 dhh.getValidationString(uri, payload, done);
             });
@@ -194,7 +194,7 @@ describe.skip('Load tests - POST data:', function(){
             payload = fs.readFileSync(MY_64MB_FILE, "utf8");
 
             dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                 dhh.getValidationString(uri, payload, done);
             });
