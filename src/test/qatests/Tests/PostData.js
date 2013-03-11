@@ -46,7 +46,7 @@ before(function(myCallback){
     channelName = dhh.makeRandomChannelName();
     agent = superagent.agent();
     dhh.makeChannel(channelName, function(res){
-        if ((res.error) || (res.status != 200)) {
+        if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
             myCallback(res.error);
         };
         console.log('Main test channel:'+ channelName);
@@ -63,12 +63,12 @@ beforeEach(function(){
 describe('POST data to channel:', function(){
 
 
-    it('Acceptance - should return a 200 for POSTing data', function(done){
+    it('Acceptance - should return a (DATA_POST_SUCCESS) for POSTing data', function(done){
 
         payload = testRandom.randomString(Math.round(Math.random() * 50));
 
         dhh.postData(channelName, payload, function(res, uri) {
-            expect(res.status).to.equal(200);
+            expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
             dhh.getValidationString(uri, payload, done);
         });
@@ -92,10 +92,10 @@ describe('POST data to channel:', function(){
         payload = testRandom.randomString(Math.round(Math.random() * 50));
 
         dhh.postData(channelName, payload, function(res, uri) {
-            expect(res.status).to.equal(200);
+            expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
             dhh.postData(channelName, payload, function(res2, uri2) {
-                expect(res2.status).to.equal(200);
+                expect(res2.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                 dhh.getValidationString(uri, payload, done);
             });
@@ -107,21 +107,21 @@ describe('POST data to channel:', function(){
         var cnMetadata, pMetadata;
 
         dhh.makeChannel(otherChannelName, function(res) {
-            expect(res.status).to.equal(200);
+            expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
             cnMetadata = new dhh.channelMetadata(res.body);
             expect(cnMetadata.getChannelUri()).to.equal(URL_ROOT +'/channel/'+ otherChannelName);
 
             payload = testRandom.randomString(Math.round(Math.random() * 50));
 
             dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                 pMetadata = new dhh.packetMetadata(res.body);
                 var actualUri = pMetadata.getPacketUri();
 
                 dhh.getValidationString(actualUri, payload, function() {
 
                     dhh.postData(otherChannelName, payload, function(res2, uri2) {
-                        expect(res2.status).to.equal(200);
+                        expect(res2.status).to.equal(dhh.DATA_POST_SUCCESS);
 
                         dhh.getValidationString(uri2, payload, done)
                     });
@@ -137,7 +137,7 @@ describe('POST data to channel:', function(){
         payload = '';
 
         dhh.postData(channelName, payload, function(res, uri) {
-            expect(res.status).to.equal(200);
+            expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
             dhh.getValidationString(uri, payload, done);
         });
@@ -148,7 +148,7 @@ describe('POST data to channel:', function(){
         payload = fs.readFileSync(MY_2KB_FILE, "utf8");
 
         dhh.postData(channelName, payload, function(res, uri) {
-            expect(res.status).to.equal(200);
+            expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
             dhh.getValidationString(uri, payload, done);
         });
@@ -159,7 +159,7 @@ describe('POST data to channel:', function(){
         payload = testRandom.randomString(1000, testRandom.simulatedTextChar);
 
         dhh.postData(channelName, payload, function(res, uri) {
-            expect(res.status).to.equal(200);
+            expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
 
             dhh.getValidationString(uri, payload, done);
         });
@@ -176,7 +176,7 @@ describe('POST data to channel:', function(){
                 if (err) {
                     throw err;
                 }
-                expect(res.statusCode).to.equal(200);
+                expect(res.statusCode).to.equal(dhh.DATA_POST_SUCCESS);
                 var cnMetadata = new dhh.channelMetadata(JSON.parse(body));
                 uri = cnMetadata.getChannelUri();
 
@@ -210,7 +210,7 @@ describe('POST data to channel:', function(){
             uri = URL_ROOT +'/channel/'+ channelName;
 
             dhh.postData(channelName, payload, function(res, uri) {
-                expect(res.status).to.equal(200);
+                expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                 timestamp = moment(res.body.timestamp);
 
                 expect(moment(timestamp).isValid()).to.be.true;
@@ -232,7 +232,7 @@ describe('POST data to channel:', function(){
                         uri = URL_ROOT +'/channel/'+ channelName;
 
                         dhh.postData(channelName, payload, function(res, uri) {
-                            expect(res.status).to.equal(200);
+                            expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                             respMoment = moment(res.body.timestamp);
                             //console.log('Creation time was: '+ respMoment.format('X'));
 
@@ -248,7 +248,7 @@ describe('POST data to channel:', function(){
                         payload = testRandom.randomString(testRandom.randomNum(51));
 
                         dhh.postData(channelName, payload, function(res, uri) {
-                            expect(res.status).to.equal(200);
+                            expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                             respMoment = moment(res.body.timestamp);
                             //console.log('Creation time was: '+ respMoment.format('X'));
 
@@ -267,7 +267,7 @@ describe('POST data to channel:', function(){
                         payload = testRandom.randomString(testRandom.randomNum(51));
 
                         dhh.postData(channelName, payload, function(res, uri) {
-                            expect(res.status).to.equal(200);
+                            expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
                             respMoment = moment(res.body.timestamp);
                             //console.log('Creation time was: '+ respMoment.format('X'));
 
@@ -294,5 +294,34 @@ describe('POST data to channel:', function(){
 
     });
 
+    // For story: Provide "self" URI in the Location Header upon storing data  https://www.pivotaltracker.com/story/show/44845167
+    describe('POST, Location header in response:', function() {
+        it('Acceptance - location header exists and is correct', function(done) {
+            payload = testRandom.randomString(Math.round(Math.random() * 50));
+
+            dhh.postData(channelName, payload, function(res, uri) {
+                expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                var myHeader = new dhh.packetPOSTHeader(res.headers);
+                var location = myHeader.getLocation();
+                expect(location).to.equal(uri);
+
+                done();
+            });
+        });
+
+        it('Negative - failed attempt has no location header:', function(done) {
+            var myChannel = dhh.makeRandomChannelName();
+            payload = testRandom.randomString(Math.round(Math.random() * 50));
+
+            dhh.postData(myChannel, payload, function(res, uri) {
+                expect(res.status).to.equal(404);
+                var myHeader = new dhh.packetPOSTHeader(res.headers);
+                var location = myHeader.getLocation();
+                expect(location).to.be.null;
+
+                done();
+            });
+        });
+    });
 
 });

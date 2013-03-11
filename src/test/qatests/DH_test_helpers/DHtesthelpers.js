@@ -18,6 +18,12 @@ var http = require('http');
 var testRandom = require('.././js_testing_utils/randomUtils.js');
 
 var GET_LATEST_SUCCESS_RESPONSE = 303;
+var CHANNEL_CREATION_SUCCESS_RESPONSE = 200;
+var DATA_POST_SUCCESS_RESPONSE = 200;
+exports.CHANNEL_CREATION_SUCCESS = CHANNEL_CREATION_SUCCESS_RESPONSE;
+exports.DATA_POST_SUCCESS = DATA_POST_SUCCESS_RESPONSE;
+exports.GET_LATEST_SUCCESS = GET_LATEST_SUCCESS_RESPONSE;
+
 
 var URL_ROOT = 'http://datahub-01.cloud-east.dev:8080';
 exports.URL_ROOT = URL_ROOT;
@@ -156,7 +162,7 @@ function packetMetadata(responseBody) {
 exports.packetMetadata = packetMetadata;
 
 // Headers in a response to GET on a packet of data
-function packetHeader(responseHeader){
+function packetGETHeader(responseHeader){
 
     // returns null if no 'previous' header found
     this.getNext = function() {
@@ -186,7 +192,20 @@ function packetHeader(responseHeader){
         }
     }
 }
-exports.packetHeader = packetHeader;
+exports.packetGETHeader = packetGETHeader;
+
+// Headers in response to POSTing a packet of data
+function packetPOSTHeader(responseHeader){
+    this.getLocation = function() {
+        if (responseHeader.hasOwnProperty("location")) {
+            return responseHeader["location"];
+        }
+        else {
+            return null;
+        }
+    }
+}
+exports.packetPOSTHeader = packetPOSTHeader;
 
 // Posts data and returns (response, URI)
 var postData = function(myChannelName, myData, myCallback) {
@@ -198,7 +217,7 @@ var postData = function(myChannelName, myData, myCallback) {
         .end(function(err, res) {
             if (err) throw err;
 
-            if (200 != res.status) {
+            if (DATA_POST_SUCCESS_RESPONSE != res.status) {
                 dataUri = null;
             }
             else {
@@ -224,7 +243,7 @@ var postDataAndConfirmContentType = function(myChannelName, myContentType, myCal
         .send(payload)
         .end(function(err, res) {
             if (err) throw err;
-            expect(res.status).to.equal(200);
+            expect(res.status).to.equal(DATA_POST_SUCCESS_RESPONSE);
             uri = res.body._links.self.href;
 
             getAgent.get(uri)
