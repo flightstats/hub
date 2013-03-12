@@ -6,6 +6,7 @@ import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.serialize.JacksonHectorSerializer;
 import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
+import com.flightstats.datahub.service.eventing.SubscriptionDispatcher;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.*;
@@ -54,6 +55,7 @@ public class GuiceConfig extends GuiceServletContextListener {
 			Properties properties = loadProperties();
 			Names.bindProperties(binder(), properties);
 			bind(CassandraChannelDao.class).asEagerSingleton();
+			bind(SubscriptionDispatcher.class).in(Singleton.class);
 			bind(JettyWebSocketServlet.class).in(Singleton.class);
 			bind(CassandraConnectorFactory.class).in(Singleton.class);
 			bind(DataHubKeyRenderer.class).in(Singleton.class);
