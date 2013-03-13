@@ -27,57 +27,57 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 @Path("/channel/{channelName: .*}/{id}")
 public class ChannelContentResource {
 
-    private final UriInfo uriInfo;
-    private final ChannelDao channelDao;
-    private final DataHubKeyRenderer keyRenderer;
-    private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
+	private final UriInfo uriInfo;
+	private final ChannelDao channelDao;
+	private final DataHubKeyRenderer keyRenderer;
+	private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
-    @Inject
-    public ChannelContentResource(UriInfo uriInfo, ChannelDao channelDao, DataHubKeyRenderer keyRenderer) {
-        this.uriInfo = uriInfo;
-        this.channelDao = channelDao;
-        this.keyRenderer = keyRenderer;
-    }
+	@Inject
+	public ChannelContentResource(UriInfo uriInfo, ChannelDao channelDao, DataHubKeyRenderer keyRenderer) {
+		this.uriInfo = uriInfo;
+		this.channelDao = channelDao;
+		this.keyRenderer = keyRenderer;
+	}
 
-    @GET
-    public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id) {
-        DataHubKey key = keyRenderer.fromString(id);
-        Optional<LinkedDataHubCompositeValue> optionalResult = channelDao.getValue(channelName, key);
+	@GET
+	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id) {
+		DataHubKey key = keyRenderer.fromString(id);
+		Optional<LinkedDataHubCompositeValue> optionalResult = channelDao.getValue(channelName, key);
 
-        if (!optionalResult.isPresent()) {
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-        LinkedDataHubCompositeValue columnValue = optionalResult.get();
-        Response.ResponseBuilder builder = Response.status(Response.Status.OK);
+		if (!optionalResult.isPresent()) {
+			throw new WebApplicationException(Response.Status.NOT_FOUND);
+		}
+		LinkedDataHubCompositeValue columnValue = optionalResult.get();
+		Response.ResponseBuilder builder = Response.status(Response.Status.OK);
 
-        String contentType = columnValue.getContentType();
-        // Only if we had a content type stored with the data do we specify one here.
-        // If unspecified, the framework will default to application/octet-stream
-        if (!isNullOrEmpty(contentType)) {
-            builder.type(contentType);
-        }
-        builder.entity(columnValue.getData());
+		String contentType = columnValue.getContentType();
+		// Only if we had a content type stored with the data do we specify one here.
+		// If unspecified, the framework will default to application/octet-stream
+		if (!isNullOrEmpty(contentType)) {
+			builder.type(contentType);
+		}
+		builder.entity(columnValue.getData());
 
-        builder.header(CREATION_DATE_HEADER.getHeaderName(), dateTimeFormatter.print(new DateTime(key.getDate())));
-        addPreviousLink(columnValue, builder);
-        addNextLink(columnValue, builder);
-        return builder.build();
-    }
+		builder.header(CREATION_DATE_HEADER.getHeaderName(), dateTimeFormatter.print(new DateTime(key.getDate())));
+		addPreviousLink(columnValue, builder);
+		addNextLink(columnValue, builder);
+		return builder.build();
+	}
 
-    private void addPreviousLink(LinkedDataHubCompositeValue columnValue, Response.ResponseBuilder builder) {
-        addLink(builder, "previous", columnValue.getPrevious());
-    }
+	private void addPreviousLink(LinkedDataHubCompositeValue columnValue, Response.ResponseBuilder builder) {
+		addLink(builder, "previous", columnValue.getPrevious());
+	}
 
-    private void addNextLink(LinkedDataHubCompositeValue columnValue, Response.ResponseBuilder builder) {
-        addLink(builder, "next", columnValue.getNext());
-    }
+	private void addNextLink(LinkedDataHubCompositeValue columnValue, Response.ResponseBuilder builder) {
+		addLink(builder, "next", columnValue.getNext());
+	}
 
-    private void addLink(Response.ResponseBuilder builder, String type, Optional<DataHubKey> key) {
-        if (key.isPresent()) {
-            URI previousUrl = URI.create(uriInfo.getRequestUri().resolve(".") + keyRenderer.keyToString(key.get()));
-            builder.header("Link", "<" + previousUrl + ">;rel=\"" + type + "\"");
-        }
-    }
+	private void addLink(Response.ResponseBuilder builder, String type, Optional<DataHubKey> key) {
+		if (key.isPresent()) {
+			URI linkUrl = URI.create(uriInfo.getRequestUri().resolve(".") + keyRenderer.keyToString(key.get()));
+			builder.header("Link", "<" + linkUrl + ">;rel=\"" + type + "\"");
+		}
+	}
 
 
 }
