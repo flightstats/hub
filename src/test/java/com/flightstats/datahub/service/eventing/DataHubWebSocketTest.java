@@ -53,7 +53,8 @@ public class DataHubWebSocketTest {
 
 		DataHubWebSocket testClass = new DataHubWebSocket(dispatcher);
 
-		testClass.onDisconnect(session, 99, "spoon");
+		testClass.onConnect(session);    //Required because the websocket is stateful
+		testClass.onDisconnect(99, "spoon");
 
 		verify(dispatcher).unsubscribe(CHANNEL_NAME, expectedSink);
 	}

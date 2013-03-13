@@ -41,6 +41,7 @@ public class SingleChannelResource {
 		return linked(config)
 				.withLink("self", linkBuilder.buildChannelUri(config))
 				.withLink("latest", linkBuilder.buildLatestUri(config))
+				.withLink("ws", linkBuilder.buildWsLinkFor(config))
 				.build();
 	}
 
