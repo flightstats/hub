@@ -38,27 +38,30 @@ var agent
 
 var channelName;
 
-before(function(myCallback){
-    channelName = dhh.makeRandomChannelName();
-    agent = superagent.agent();
-    dhh.makeChannel(channelName, function(res){
-        if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
-            myCallback(res.error);
-        };
-        console.log('Main test channel:'+ channelName);
-        myCallback();
-    });
-});
 
-beforeEach(function(){
-    agent = superagent.agent();
-    payload = uri = req = contentType = '';
-})
 
 
 describe.skip('Load tests - POST data:', function(){
+
     var loadChannels = {};
     var loadChannelKeys = [];  // channel.uri (to fetch data) and channel.data, e.g. { con {uri: x, data: y}}
+
+    before(function(myCallback){
+        channelName = dhh.makeRandomChannelName();
+        agent = superagent.agent();
+        dhh.makeChannel(channelName, function(res){
+            if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
+                myCallback(res.error);
+            };
+            console.log('Main test channel:'+ channelName);
+            myCallback();
+        });
+    });
+
+    beforeEach(function(){
+        agent = superagent.agent();
+        payload = uri = req = contentType = '';
+    })
 
     describe('Rapid data posting:', function() {
         // To ignore the Loadtest cases:  mocha -R nyan --timeout 4000 --grep Load --invert

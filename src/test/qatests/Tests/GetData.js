@@ -38,24 +38,26 @@ var agent
 
 var channelName;
 
-before(function(myCallback){
-    channelName = dhh.makeRandomChannelName();
-    agent = superagent.agent();
-    dhh.makeChannel(channelName, function(res){
-        if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
-            myCallback(res.error);
-        };
-        console.log('Main test channel:'+ channelName);
-        myCallback();
-    });
-});
 
-beforeEach(function(){
-    agent = superagent.agent();
-    payload = uri = req = contentType = '';
-})
 
 describe('GET data:', function() {
+
+    before(function(myCallback){
+        channelName = dhh.makeRandomChannelName();
+        agent = superagent.agent();
+        dhh.makeChannel(channelName, function(res){
+            if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
+                myCallback(res.error);
+            };
+            console.log('Main test channel:'+ channelName);
+            myCallback();
+        });
+    });
+
+    beforeEach(function(){
+        agent = superagent.agent();
+        payload = uri = req = contentType = '';
+    })
 
     describe('returns Creation time:', function() {
 
