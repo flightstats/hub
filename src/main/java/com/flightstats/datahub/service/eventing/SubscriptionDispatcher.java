@@ -21,6 +21,7 @@ public class SubscriptionDispatcher {
 
 	public void subscribe(String channelName, EventSink<URI> sink) {
 		subscriptions.subscribe(channelName, sink);
+
 	}
 
 	public void unsubscribe(String channelName, EventSink<URI> sink) {
