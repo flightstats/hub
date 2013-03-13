@@ -44,4 +44,14 @@ public class ChannelHypermediaLinkBuilderTest {
 		URI result = testClass.buildLatestUri(channelConfig);
 		assertEquals(expected, result);
 	}
+
+	@Test
+	public void testBuildWsLink() throws Exception {
+		UriInfo uriInfo = mock(UriInfo.class);
+		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL));
+		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder(uriInfo, null);
+		URI result = testClass.buildWsLinkFor(channelConfig);
+		assertEquals(URI.create("ws://path.to/channel" + "/" +
+				channelConfig.getName() + "/ws"), result);
+	}
 }

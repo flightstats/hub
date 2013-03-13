@@ -38,4 +38,10 @@ public class ChannelHypermediaLinkBuilder {
 		String keyId = keyRenderer.keyToString(key);
 		return URI.create(channelUri.toString() + "/" + keyId);
 	}
+
+	public URI buildWsLinkFor(ChannelConfiguration channelConfiguration) {
+		String requestUri = uriInfo.getRequestUri().toString();
+		requestUri = requestUri.replaceFirst("^http", "ws");
+		return URI.create(requestUri + "/" + channelConfiguration.getName() + "/ws");
+	}
 }

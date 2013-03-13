@@ -24,9 +24,11 @@ public class ChannelResourceTest {
 		ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, date, null);
 		String channelUri = "http://path/to/UHF";
 		String latestUri = "http://path/to/UHF/latest";
+		String wsUri = "ws://path/to/UHF/ws";
 		Linked<ChannelConfiguration> expected = Linked.linked(channelConfiguration)
 													  .withLink("self", channelUri)
 													  .withLink("latest", latestUri)
+													  .withLink("ws", wsUri)
 													  .build();
 		UriInfo uriInfo = mock(UriInfo.class);
 		ChannelDao dao = mock(ChannelDao.class);
@@ -37,6 +39,7 @@ public class ChannelResourceTest {
 		when(dao.createChannel(channelName)).thenReturn(channelConfiguration);
 		when(linkBuilder.buildChannelUri(channelConfiguration)).thenReturn(URI.create(channelUri));
 		when(linkBuilder.buildLatestUri(channelConfiguration)).thenReturn(URI.create(latestUri));
+		when(linkBuilder.buildWsLinkFor(channelConfiguration)).thenReturn(URI.create(wsUri));
 
 		ChannelResource testClass = new ChannelResource(dao, linkBuilder);
 

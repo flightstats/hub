@@ -40,6 +40,7 @@ public class ChannelResource {
 		return linked(channelConfiguration)
 				.withLink("self", linkBuilder.buildChannelUri(channelConfiguration))
 				.withLink("latest", linkBuilder.buildLatestUri(channelConfiguration))
+				.withLink("ws", linkBuilder.buildWsLinkFor(channelConfiguration))
 				.build();
 	}
 
