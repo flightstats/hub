@@ -15,6 +15,9 @@ public class DataHubWebSocket {
 
 	private final static Logger logger = LoggerFactory.getLogger(DataHubWebSocket.class);
 	private final SubscriptionDispatcher subscriptionDispatcher;
+	private String remoteAddress;
+	private String channelName;
+	private JettyWebsocketEndpointSender endpointSender;
 
 	@Inject
 	public DataHubWebSocket(SubscriptionDispatcher subscriptionDispatcher) {
@@ -23,17 +26,20 @@ public class DataHubWebSocket {
 
 	@OnWebSocketConnect
 	public void onConnect(final Session session) {
+		remoteAddress = session.getRemoteAddress().toString();
+		channelName = extractChanelName(session);
+
 		URI requestUri = session.getUpgradeRequest().getRequestURI();
-		String channelName = extractChanelName(session);
-		logger.info("New client connection: " + session.getRemoteAddress() + " for " + requestUri);
-		subscriptionDispatcher.subscribe(channelName, new JettyWebsocketEndpointSender(session.getRemoteAddress().toString(), session.getRemote()));
+		logger.info("New client connection: " + remoteAddress + " for " + requestUri);
+
+		endpointSender = new JettyWebsocketEndpointSender(remoteAddress, session.getRemote());
+		subscriptionDispatcher.subscribe(channelName, endpointSender);
 	}
 
 	@OnWebSocketClose
-	public void onDisconnect(final Session session, int statusCode, String reason) {
-		logger.info("Client disconnect: " + session.getRemoteAddress() + " (" + reason + ")");
-		String channelName = extractChanelName(session);
-		subscriptionDispatcher.unsubscribe(channelName, new JettyWebsocketEndpointSender(session.getRemoteAddress().toString(), session.getRemote()));
+	public void onDisconnect(int statusCode, String reason) {
+		logger.info("Client disconnect: " + remoteAddress + " (status = " + statusCode + ", reason = " + reason + ")");
+		subscriptionDispatcher.unsubscribe(channelName, endpointSender);
 	}
 
 	private String extractChanelName(Session session) {
