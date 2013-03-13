@@ -12,7 +12,7 @@ if (process.argv.length != 3) {
     process.exit()
 }
 
-var channelName = process.argv[2]
+var channelName = process.argv[2];
 var url = 'ws://localhost:8080/channel/' + channelName + '/ws';
 
 console.log("Connecting to " + url);
