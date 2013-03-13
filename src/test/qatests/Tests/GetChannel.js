@@ -30,25 +30,25 @@ var agent
 
 var channelName;
 
-before(function(myCallback){
-    channelName = dhh.makeRandomChannelName();
-    agent = superagent.agent();
-    dhh.makeChannel(channelName, function(res){
-        if ((res.error) || (res.status != 200)) {
-            myCallback(res.error);
-        };
-        console.log('Main test channel:'+ channelName);
-        myCallback();
-    });
-});
-
-beforeEach(function(){
-    agent = superagent.agent();
-    payload = uri = req = contentType = '';
-})
-
 
 describe('GET Channel metadata:', function() {
+
+    before(function(myCallback){
+        channelName = dhh.makeRandomChannelName();
+        agent = superagent.agent();
+        dhh.makeChannel(channelName, function(res){
+            if ((res.error) || (res.status != 200)) {
+                myCallback(res.error);
+            };
+            console.log('Main test channel:'+ channelName);
+            myCallback();
+        });
+    });
+
+    beforeEach(function(){
+        agent = superagent.agent();
+        payload = uri = req = contentType = '';
+    })
 
     it('Contains expected metadata', function(done) {
         var cnMetadata;

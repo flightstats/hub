@@ -31,37 +31,38 @@ var agent
 
 var channelName;
 
-before(function(myCallback){
 
-    // Update file paths if test is run in its own directory.
-    var cwd = process.cwd();
-    var dirRegex = /\/([^/]+)$/;
-    var parent = cwd.match(dirRegex)[1];
-    if ('postdata'.toLowerCase() == parent.toLowerCase()) {
-        CAT_TOILET_PIC = '../'+ CAT_TOILET_PIC;
-        MY_2KB_FILE = '../'+ MY_2KB_FILE;
-        MY_2MB_FILE = '../'+ MY_2MB_FILE;
-    };
-
-    channelName = dhh.makeRandomChannelName();
-    agent = superagent.agent();
-    dhh.makeChannel(channelName, function(res){
-        if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
-            myCallback(res.error);
-        };
-        console.log('Main test channel:'+ channelName);
-        myCallback();
-    });
-});
-
-beforeEach(function(){
-    agent = superagent.agent();
-    payload = uri = req = contentType = '';
-})
 
 
 describe('POST data to channel:', function(){
 
+    before(function(myCallback){
+
+        // Update file paths if test is run in its own directory.
+        var cwd = process.cwd();
+        var dirRegex = /\/([^/]+)$/;
+        var parent = cwd.match(dirRegex)[1];
+        if ('postdata'.toLowerCase() == parent.toLowerCase()) {
+            CAT_TOILET_PIC = '../'+ CAT_TOILET_PIC;
+            MY_2KB_FILE = '../'+ MY_2KB_FILE;
+            MY_2MB_FILE = '../'+ MY_2MB_FILE;
+        };
+
+        channelName = dhh.makeRandomChannelName();
+        agent = superagent.agent();
+        dhh.makeChannel(channelName, function(res){
+            if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
+                myCallback(res.error);
+            };
+            console.log('Main test channel:'+ channelName);
+            myCallback();
+        });
+    });
+
+    beforeEach(function(){
+        agent = superagent.agent();
+        payload = uri = req = contentType = '';
+    })
 
     it('Acceptance - should return a (DATA_POST_SUCCESS) for POSTing data', function(done){
 

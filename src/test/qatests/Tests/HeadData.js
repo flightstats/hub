@@ -24,58 +24,61 @@ var channelName;
 // used for a few tests that require a series of items in a channel -- (only in one test so far :P )
 var firstValueUri, secondValueUri, thirdValueUri;
 
-before(function(myCallback){
-    channelName = dhh.makeRandomChannelName();
-    agent = superagent.agent();
-    dhh.makeChannel(channelName, function(res){
-        if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
-            myCallback(res.error);
-        };
-        console.log('Main test channel:'+ channelName);
 
-        async.series([
-            function(callback){
-                dhh.makeChannel(channelName, function(res) {
-                    expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
-
-                    callback(null, null);
-                });
-            },
-            function(callback){
-                dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                    expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
-                    firstValueUri = myUri;
-                    callback(null,null);
-                });
-            },
-            function(callback){
-                dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                    expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
-                    secondValueUri = myUri;
-                    callback(null,null);
-                });
-            },
-            function(callback){
-                dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                    expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
-                    thirdValueUri = myUri;
-
-                    callback(null, null);
-                });
-            }
-        ],
-            function(err, results){
-                myCallback();
-            });
-    });
-});
-
-beforeEach(function(){
-    agent = superagent.agent();
-    payload = uri = req = contentType = '';
-});
 
 describe('HEAD on data tests:', function() {
+
+    before(function(myCallback){
+        channelName = dhh.makeRandomChannelName();
+        agent = superagent.agent();
+        dhh.makeChannel(channelName, function(res){
+            if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
+                myCallback(res.error);
+            };
+            console.log('Main test channel:'+ channelName);
+
+            async.series([
+                function(callback){
+                    dhh.makeChannel(channelName, function(res) {
+                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+
+                        callback(null, null);
+                    });
+                },
+                function(callback){
+                    dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        firstValueUri = myUri;
+                        callback(null,null);
+                    });
+                },
+                function(callback){
+                    dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        secondValueUri = myUri;
+                        callback(null,null);
+                    });
+                },
+                function(callback){
+                    dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        thirdValueUri = myUri;
+
+                        callback(null, null);
+                    });
+                }
+            ],
+                function(err, results){
+                    myCallback();
+                });
+        });
+    });
+
+    beforeEach(function(){
+        agent = superagent.agent();
+        payload = uri = req = contentType = '';
+    });
+
     it('Acceptance: HEAD returns all expected headers for item with siblings in a channel', function(done) {
         var getHeaders, headHeaders;
 
@@ -105,7 +108,7 @@ describe('HEAD on data tests:', function() {
     it('HEAD on a fake item URI returns 404', function(done) {
         var iSlash = secondValueUri.lastIndexOf('/');
         uri = secondValueUri.substring(0,iSlash) + '/0'+ secondValueUri.substring(iSlash + 1);
-        
+
         superagent.agent().head(uri)
             .end(function(err, res) {
                 expect(res.status).to.equal(404);
