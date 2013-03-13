@@ -9,16 +9,15 @@ import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 
 public class JettyWebSocketServlet extends WebSocketServlet {
 
-	private final SubscriptionDispatcher subscriptionDispatcher;
+	private final WebSocketCreator creator;
 
 	@Inject
 	public JettyWebSocketServlet(SubscriptionDispatcher subscriptionDispatcher) {
-		this.subscriptionDispatcher = subscriptionDispatcher;
+		this.creator = new CustomWebSocketCreator(subscriptionDispatcher);
 	}
 
 	@Override
 	public void configure(WebSocketServletFactory factory) {
-		WebSocketCreator creator = new CustomWebSocketCreator(subscriptionDispatcher);
 		//		factory.register(DataHubWebSocket.class);	//to let jetty create our instances for us
 		factory.setCreator(creator);
 	}
