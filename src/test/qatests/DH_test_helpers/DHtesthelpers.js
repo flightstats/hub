@@ -13,6 +13,7 @@ var superagent = require('superagent');
 var crypto = require('crypto');
 var async = require('async');
 var http = require('http');
+var ws = require('ws');
 
 
 var testRandom = require('.././js_testing_utils/randomUtils.js');
@@ -66,6 +67,14 @@ var getValidationChecksum = function (myUri, expChecksum, myDone)
 
 };
 exports.getValidationChecksum = getValidationChecksum;
+
+// Given a channelname, this returns a websocket on that channel
+var createWebSocket = function(channelName) {
+    var myWs = new ws(URL_ROOT +'/'+ channelName +'/ws');
+
+    return myWs;
+}
+exports.createWebSocket = createWebSocket;
 
 // returns the POST response
 var makeChannel = function(myChannelName, myCallback) {

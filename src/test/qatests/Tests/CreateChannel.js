@@ -33,24 +33,26 @@ var agent
 
 var channelName;
 
-before(function(myCallback){
-    channelName = dhh.makeRandomChannelName();
-    agent = superagent.agent();
-    dhh.makeChannel(channelName, function(res){
-        if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
-            myCallback(res.error);
-        };
-        console.log('Main test channel:'+ channelName);
-        myCallback();
-    });
-});
 
-beforeEach(function(){
-    agent = superagent.agent();
-    payload = uri = req = contentType = '';
-})
 
 describe('Create Channel:', function(){
+
+    before(function(myCallback){
+        channelName = dhh.makeRandomChannelName();
+        agent = superagent.agent();
+        dhh.makeChannel(channelName, function(res){
+            if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
+                myCallback(res.error);
+            };
+            console.log('Main test channel:'+ channelName);
+            myCallback();
+        });
+    });
+
+    beforeEach(function(){
+        agent = superagent.agent();
+        payload = uri = req = contentType = '';
+    })
 
     // 404 trying to GET channel before it exists
     it('should return a 404 trying to GET channel before it exists', function(done){
