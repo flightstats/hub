@@ -6,6 +6,7 @@
  * To change this template use File | Settings | File Templates.
  */
 
+// REPL MAGIC:  var dhh = require('/users/gnewcomb/datahub/src/test/qatests/DH_test_helpers/DHtesthelpers.js');
 
 var chai = require('chai');
 var expect = chai.expect;
@@ -26,6 +27,7 @@ exports.DATA_POST_SUCCESS = DATA_POST_SUCCESS_RESPONSE;
 exports.GET_LATEST_SUCCESS = GET_LATEST_SUCCESS_RESPONSE;
 
 
+//var URL_ROOT = 'http://10.250.220.197:8080';
 var URL_ROOT = 'http://datahub-01.cloud-east.dev:8080';
 exports.URL_ROOT = URL_ROOT;
 
@@ -68,9 +70,17 @@ var getValidationChecksum = function (myUri, expChecksum, myDone)
 };
 exports.getValidationChecksum = getValidationChecksum;
 
-// Given a channelname, this returns a websocket on that channel
-var createWebSocket = function(channelName) {
-    var myWs = new ws(URL_ROOT +'/'+ channelName +'/ws');
+// Given a domain (and :port) and channel name, this returns a websocket on that channel
+var createWebSocket = function(domain, channelName) {
+    var wsUri = 'ws://'+ domain +'/channel/'+ channelName +'/ws';
+
+    console.log('Trying uri: '+ wsUri);
+
+    var myWs = new ws(wsUri);
+
+    myWs.on('error', function(e) {
+        console.log(e);
+    });
 
     return myWs;
 }
@@ -128,6 +138,7 @@ function channelMetadata(responseBody) {
 }
 exports.channelMetadata = channelMetadata;
 
+// Calls back with GET response
 var getChannel = function(myChannelName, myCallback) {
     superagent.agent().get(URL_ROOT +'/channel/'+ myChannelName)
         .end(function(err, res) {
@@ -240,6 +251,14 @@ var postData = function(myChannelName, myData, myCallback) {
 };
 exports.postData = postData;
 
+// to support multiple repeated calls in an async.times() call with time in between.
+var postDataAndWait = function(myChannelName, myData, msWait, myCallback) {
+    setTimeout(function () {
+        postData(myChannelName, myData, myCallback);
+    }, msWait);
+}
+exports.postDataAndWait = postDataAndWait;
+
 // Returns GET response in callback
 var postDataAndConfirmContentType = function(myChannelName, myContentType, myCallback) {
 
@@ -267,8 +286,25 @@ var postDataAndConfirmContentType = function(myChannelName, myContentType, myCal
 };
 exports.postDataAndConfirmContentType = postDataAndConfirmContentType;
 
-// Returns data
-var getLatestFromChannel = function(myChannelName, myCallback) {
+// Calls back with data
+var getLatestDataFromChannel = function(myChannelName, myCallback) {
+
+    var myData = '';
+
+    getLatestUriFromChannel(myChannelName, function(uri) {
+        http.get(uri, function(res) {
+            res.on('data', function (chunk) {
+                myData += chunk;
+            }).on('end', function(){
+                    myCallback(myData);
+                });
+        }).on('error', function(e) {
+                myCallback(e);
+            });
+    });
+
+    // The old version...delete once tests pass.
+    /*
     var getUri = URL_ROOT +'/channel/'+ myChannelName +'/latest';
 
     async.waterfall([
@@ -299,6 +335,62 @@ var getLatestFromChannel = function(myChannelName, myCallback) {
         if (err) throw err;
         myCallback(finalData);
     });
+    */
 
 };
-exports.getLatestFromChannel = getLatestFromChannel;
+exports.getLatestDataFromChannel = getLatestDataFromChannel;
+
+// Calls back with the Uri for the latest set of data
+var getLatestUriFromChannel = function(myChannelName, myCallback) {
+    var getUri = URL_ROOT +'/channel/'+ myChannelName +'/latest';
+    superagent.agent().get(getUri)
+        .redirects(0)
+        .end(function(err, res) {
+            expect(res.status).to.equal(GET_LATEST_SUCCESS_RESPONSE);
+            expect(res.headers['location']).not.to.be.null;
+
+            myCallback(res.headers['location']);
+        });
+};
+exports.getLatestUriFromChannel = getLatestUriFromChannel;
+
+// Returns the last <reqLength> URIs from a channel as an array,
+//      starting with oldest (up to reqLength) and ending with latest.
+// Returns a minimum of 2 (otherwise call getLatestUriFromChannel()).
+var getListOfLatestUrisFromChannel = function(reqLength, myChannelName, myCallback){
+    var allUris = [];
+
+    if (reqLength < 2) {
+        reqLength = 2;
+    }
+
+    getLatestUriFromChannel(myChannelName, function(latest){
+        var previous = null;
+
+        allUris.unshift(latest);
+        //console.log('Added uri:'+ latest);
+
+        async.doWhilst(
+            function (callback) {
+               superagent.agent().get(allUris[0])
+                    .end(function(err, res) {
+                        var pGetHeader = new packetGETHeader(res.headers) ;
+                        previous = pGetHeader.getPrevious();
+
+                        if (null != previous) {
+                            allUris.unshift(previous);
+                            //console.log('Added uri:'+ previous);
+                        }
+                        callback();
+                    });
+            },
+            function() {
+                return (allUris.length < reqLength) && (null != previous);
+            }
+            , function(err) {
+                myCallback(allUris);
+            }
+        );
+    });
+};
+exports.getListOfLatestUrisFromChannel = getListOfLatestUrisFromChannel;
