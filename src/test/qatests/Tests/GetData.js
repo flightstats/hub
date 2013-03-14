@@ -271,7 +271,7 @@ describe('GET data:', function() {
                     dhh.postData(thisChannel, payload1, function(myRes, myUri) {
                         expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
 
-                        dhh.getLatestFromChannel(thisChannel, function(myData) {
+                        dhh.getLatestDataFromChannel(thisChannel, function(myData) {
                             //console.log('payload1:'+ payload1);
                             //console.log('data returned:'+ myData);
 
@@ -285,7 +285,7 @@ describe('GET data:', function() {
                     dhh.postData(thisChannel, payload2, function(myRes, myUri) {
                         expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
 
-                        dhh.getLatestFromChannel(thisChannel, function(myData) {
+                        dhh.getLatestDataFromChannel(thisChannel, function(myData) {
                             //console.log('payload2:'+ payload2);
                             //console.log('data returned:'+ myData);
 
@@ -299,7 +299,7 @@ describe('GET data:', function() {
                     dhh.postData(thisChannel, payload3, function(myRes, myUri) {
                         expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
 
-                        dhh.getLatestFromChannel(thisChannel, function(myData) {
+                        dhh.getLatestDataFromChannel(thisChannel, function(myData) {
                             //console.log('payload3:'+ payload3);
                             //console.log('data returned:'+ myData);
 
@@ -375,7 +375,7 @@ describe('GET data:', function() {
                     dhh.postData(thisChannel, payload, function(myRes, myUri) {
                         expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
 
-                        dhh.getLatestFromChannel(thisChannel, function(myData) {
+                        dhh.getLatestDataFromChannel(thisChannel, function(myData) {
                             expect(myData).to.equal(payload);
                             callback(null);
                         });
@@ -385,7 +385,7 @@ describe('GET data:', function() {
                     dhh.postData(thisChannel, '', function(myRes, myUri) {
                         expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
 
-                        dhh.getLatestFromChannel(thisChannel, function(myData) {
+                        dhh.getLatestDataFromChannel(thisChannel, function(myData) {
                             expect(myData).to.equal('');
                             callback(null);
                         });
