@@ -17,13 +17,13 @@ public class SubscriptionDispatcherTest {
 
 	private String channelName;
 	private SubscriptionRoster roster;
-	private EventSink<URI> sink;
+	private Consumer<URI> sink;
 
 	@Before
 	public void setup() {
 		channelName = "pseudo";
 		roster = mock(SubscriptionRoster.class);
-		sink = mock(EventSink.class);
+		sink = mock(Consumer.class);
 	}
 
 	@Test
@@ -48,9 +48,9 @@ public class SubscriptionDispatcherTest {
 		SubscriptionDispatcher dispatcher = new SubscriptionDispatcher(new SubscriptionRoster());
 		final AtomicReference<URI> sunkUri = new AtomicReference<>();
 		final CountDownLatch latch = new CountDownLatch(1);
-		EventSink<URI> latchSink = new EventSink<URI>() {
+		Consumer<URI> latchSink = new Consumer<URI>() {
 			@Override
-			public void sink(URI uri) {
+			public void apply(URI uri) {
 				sunkUri.set(uri);
 				latch.countDown();
 			}

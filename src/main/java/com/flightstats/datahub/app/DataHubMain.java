@@ -14,6 +14,10 @@ import java.util.EnumSet;
  */
 public class DataHubMain {
 
+	private static final String DEFAULT_HOST = "0.0.0.0";
+	private static final int DEFAULT_PORT = 8080;
+	private static final int DEFAULT_IDLE_TIMEOUT = 30000;
+
 	public static void main(String[] args) throws Exception {
 		Server server = new Server();
 
@@ -24,19 +28,13 @@ public class DataHubMain {
 		ServerConnector serverConnector = new ServerConnector(server, connectionFactory);
 
 		//TODO: Don't hard code these here.
-		serverConnector.setHost("0.0.0.0");
-		serverConnector.setPort(8080);
-		serverConnector.setIdleTimeout(30000);
+		serverConnector.setHost(DEFAULT_HOST);
+		serverConnector.setPort(DEFAULT_PORT);
+		serverConnector.setIdleTimeout(DEFAULT_IDLE_TIMEOUT);
 
 		server.setConnectors(new Connector[]{serverConnector});
 
-
 		ServletContextHandler rootContextHandler = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
-
-		//		JettyWebSocketServlet jettyWebSocketServlet = new JettyWebSocketServlet();
-		//		ServletHolder jettyWsHolder = new ServletHolder(jettyWebSocketServlet);
-		////		rootContextHandler.addServlet(jettyWsHolder, "/channel/*/ws");
-		//		rootContextHandler.addServlet(jettyWsHolder, "/ws");
 
 		rootContextHandler.addEventListener(new GuiceConfig());
 		rootContextHandler.addFilter(GuiceFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
