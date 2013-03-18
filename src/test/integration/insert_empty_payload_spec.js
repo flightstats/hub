@@ -6,6 +6,8 @@ var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "";
 
+utils.configureFrisby();
+
 utils.runInTestChannel(channelName, function () {
     frisby.create('Inserting a value into a channel.')
         .post(thisChannelResource, null, { body: messageText})

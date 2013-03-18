@@ -1,3 +1,4 @@
+require('./integration_config.js');
 var utils = require('./utils.js');
 var frisby = require('frisby');
 var request = require('request');
@@ -5,6 +6,8 @@ var request = require('request');
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
+
+utils.configureFrisby();
 
 utils.runInTestChannel(channelName, function () {
     // Note: We have to use request directly here, because Frisby insists on having a content-type specified.

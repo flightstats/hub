@@ -4,6 +4,8 @@ var utils = require('./utils.js');
 
 var channelName = utils.randomChannelName();
 
+utils.configureFrisby();
+
 utils.runInTestChannel(channelName, function (channelResponse) {
     var channelResource = channelResponse['_links']['self']['href'];
     frisby.create('Inserting a first item')
