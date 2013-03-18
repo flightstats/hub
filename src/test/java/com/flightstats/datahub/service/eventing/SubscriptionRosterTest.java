@@ -1,6 +1,5 @@
 package com.flightstats.datahub.service.eventing;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URI;
@@ -10,19 +9,14 @@ import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class SubscriptionRosterTest {
-
-	private Consumer<URI> sink;
-
-	@Before
-	public void setup() {
-		sink = new NoOpConsumer(42);
-	}
 
 	@Test
 	public void testSubscribe() throws Exception {
 		SubscriptionRoster testClass = new SubscriptionRoster();
+		Consumer<URI> sink = mock(Consumer.class);
 		testClass.subscribe("mychan", sink);
 		assertThat(testClass.getSubscribers("mychan"), hasItem(sink));
 	}
@@ -30,6 +24,7 @@ public class SubscriptionRosterTest {
 	@Test
 	public void testUnsubscribe() throws Exception {
 		SubscriptionRoster testClass = new SubscriptionRoster();
+		Consumer<URI> sink = mock(Consumer.class);
 		testClass.subscribe("mychan", sink);
 		testClass.unsubscribe("mychan", sink);
 		assertTrue(testClass.getSubscribers("mychan").isEmpty());
@@ -39,9 +34,9 @@ public class SubscriptionRosterTest {
 	public void testGetSubscribers() throws Exception {
 		String channel1 = "mychan";
 		String channel2 = "chan2";
-		Consumer<URI> sink1 = new NoOpConsumer(1);
-		Consumer<URI> sink2 = new NoOpConsumer(2);
-		Consumer<URI> sink3 = new NoOpConsumer(3);
+		Consumer<URI> sink1 = mock(Consumer.class);
+		Consumer<URI> sink2 = mock(Consumer.class);
+		Consumer<URI> sink3 = mock(Consumer.class);
 
 		SubscriptionRoster testClass = new SubscriptionRoster();
 
@@ -56,39 +51,4 @@ public class SubscriptionRosterTest {
 
 	}
 
-	private static class NoOpConsumer implements Consumer<URI> {
-		private final int id;
-
-		public NoOpConsumer(int id) {
-			this.id = id;
-		}
-
-		@Override
-		public void apply(URI uri) {
-			//nop
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) {
-				return true;
-			}
-			if (o == null || getClass() != o.getClass()) {
-				return false;
-			}
-
-			NoOpConsumer that = (NoOpConsumer) o;
-
-			if (id != that.id) {
-				return false;
-			}
-
-			return true;
-		}
-
-		@Override
-		public int hashCode() {
-			return id;
-		}
-	}
 }
