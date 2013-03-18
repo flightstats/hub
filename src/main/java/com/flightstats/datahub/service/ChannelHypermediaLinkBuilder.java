@@ -10,12 +10,12 @@ import java.net.URI;
 
 public class ChannelHypermediaLinkBuilder {
 
-	private final URI requestUri;
+	private final UriInfo uriInfo;
 	private final DataHubKeyRenderer keyRenderer;
 
 	@Inject
 	public ChannelHypermediaLinkBuilder(UriInfo uriInfo, DataHubKeyRenderer keyRenderer) {
-		this.requestUri = uriInfo.getRequestUri();
+		this.uriInfo = uriInfo;
 		this.keyRenderer = keyRenderer;
 	}
 
@@ -24,20 +24,20 @@ public class ChannelHypermediaLinkBuilder {
 	}
 
 	URI buildChannelUri(String channelName) {
-		return URI.create(requestUri + "/" + channelName);
+		return URI.create(uriInfo.getBaseUri() + "channel/" + channelName);
 	}
 
 	URI buildLatestUri(ChannelConfiguration channelConfiguration) {
-		return URI.create(requestUri + "/" + channelConfiguration.getName() + "/latest");
+		return URI.create(uriInfo.getRequestUri() + "/" + channelConfiguration.getName() + "/latest");
 	}
 
 	public URI buildItemUri(DataHubKey key) {
 		String keyId = keyRenderer.keyToString(key);
-		return URI.create(requestUri.toString() + "/" + keyId);
+		return URI.create(uriInfo.getRequestUri().toString() + "/" + keyId);
 	}
 
 	public URI buildWsLinkFor(ChannelConfiguration channelConfiguration) {
-		String requestUri = this.requestUri.toString().replaceFirst("^http", "ws");
+		String requestUri = uriInfo.getRequestUri().toString().replaceFirst("^http", "ws");
 		return URI.create(requestUri + "/" + channelConfiguration.getName() + "/ws");
 	}
 }
