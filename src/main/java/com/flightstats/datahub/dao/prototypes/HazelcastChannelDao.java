@@ -16,12 +16,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class HazelcastChannelDao implements ChannelDao {
 
     public static final HazelcastInstance HAZELCAST_INSTANCE = Hazelcast.newHazelcastInstance();
-    static {
-        HAZELCAST_INSTANCE.getConfig().addMapConfig(new MapConfig());
-    }
 
     private final Map<String, ChannelConfiguration> channelConfigurations = HAZELCAST_INSTANCE.getMap("channelConfigurations");
-    private final Map<String, Lock> writeLocks = HAZELCAST_INSTANCE.getMap("writeLocks");
     private final Map<String, DataHubKey> latestPerChannel = HAZELCAST_INSTANCE.getMap("latestPerChannel");
     private final Map<DataHubKey, LinkedDataHubCompositeValue> channelValues = HAZELCAST_INSTANCE.getMap("channelValues");
 
@@ -34,7 +30,6 @@ public class HazelcastChannelDao implements ChannelDao {
     public ChannelConfiguration createChannel(String name) {
         Date creationDate = new Date();
         ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate, null);
-        writeLocks.put(name, new ReentrantLock());
         channelConfigurations.put(name, channelConfiguration);
         return channelConfiguration;
     }
@@ -52,7 +47,7 @@ public class HazelcastChannelDao implements ChannelDao {
 
     @Override
     public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
-        Lock lock = writeLocks.get(channelName);
+        Lock lock = HAZELCAST_INSTANCE.getLock(channelName + "-writeLock");
         lock.lock();
         try {
             DataHubKey oldLastKey = latestPerChannel.get(channelName);
