@@ -7,6 +7,8 @@ var request = require('request');
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 
+utils.configureFrisby();
+
 utils.runInTestChannel(channelName, function () {
 
     catUrl = 'http://www.lolcats.com/images/u/08/32/lolcatsdotcombkf8azsotkiwu8z2.jpg';
