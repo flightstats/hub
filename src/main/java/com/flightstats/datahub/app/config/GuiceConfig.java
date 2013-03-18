@@ -1,11 +1,9 @@
 package com.flightstats.datahub.app.config;
 
 import com.flightstats.datahub.dao.*;
-import com.flightstats.datahub.dao.memory.InMemoryChannelDao;
-import com.flightstats.datahub.dao.memory.MapDBChannelDao;
+import com.flightstats.datahub.dao.prototypes.HazelcastChannelDao;
+import com.flightstats.datahub.dao.prototypes.MapDBChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubCompositeValue;
-import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.serialize.JacksonHectorSerializer;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
@@ -17,7 +15,6 @@ import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
-import me.prettyprint.hector.api.Serializer;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
@@ -63,7 +60,7 @@ public class GuiceConfig extends GuiceServletContextListener {
 //            bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
 //            }).to(YearMonthDayRowKeyStrategy.class);
 //            bind(ChannelDao.class).to(CassandraChannelDao.class).in(Singleton.class);
-            bind(ChannelDao.class).to(MapDBChannelDao.class).in(Singleton.class);
+            bind(ChannelDao.class).to(HazelcastChannelDao.class).in(Singleton.class);
             serve("/*").with(GuiceContainer.class, JERSEY_PROPERTIES);
         }
 

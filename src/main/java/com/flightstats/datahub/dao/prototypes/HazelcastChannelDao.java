@@ -1,23 +1,29 @@
-package com.flightstats.datahub.dao.memory;
+package com.flightstats.datahub.dao.prototypes;
 
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.*;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
-import org.mapdb.DBMaker;
+import com.hazelcast.config.MapConfig;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-//sample DAO using MapDB as the backing store.
-public class MapDBChannelDao implements ChannelDao {
+public class HazelcastChannelDao implements ChannelDao {
 
-    private final Map<String, ChannelConfiguration> channelConfigurations = DBMaker.newTempHashMap();
-    private final Map<String, Lock> writeLocks = Maps.newConcurrentMap();
-    private final Map<String, DataHubKey> latestPerChannel = DBMaker.newTempHashMap();
-    private final Map<DataHubKey, LinkedDataHubCompositeValue> channelValues = DBMaker.newTempHashMap();
+    public static final HazelcastInstance HAZELCAST_INSTANCE = Hazelcast.newHazelcastInstance();
+    static {
+        HAZELCAST_INSTANCE.getConfig().addMapConfig(new MapConfig());
+    }
+
+    private final Map<String, ChannelConfiguration> channelConfigurations = HAZELCAST_INSTANCE.getMap("channelConfigurations");
+    private final Map<String, Lock> writeLocks = HAZELCAST_INSTANCE.getMap("writeLocks");
+    private final Map<String, DataHubKey> latestPerChannel = HAZELCAST_INSTANCE.getMap("latestPerChannel");
+    private final Map<DataHubKey, LinkedDataHubCompositeValue> channelValues = HAZELCAST_INSTANCE.getMap("channelValues");
 
     @Override
     public boolean channelExists(String channelName) {
@@ -65,8 +71,7 @@ public class MapDBChannelDao implements ChannelDao {
             //finally, make it the latest
             latestPerChannel.put(channelName, newKey);
             return new ValueInsertionResult(newKey);
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
     }

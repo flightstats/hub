@@ -1,26 +1,23 @@
-package com.flightstats.datahub.dao.memory;
+package com.flightstats.datahub.dao.prototypes;
 
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.*;
 import com.google.common.base.Optional;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Maps;
+import org.mapdb.DBMaker;
 
 import java.util.Date;
-import java.util.Deque;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.collect.Maps.newHashMap;
+//sample DAO using MapDB as the backing store.
+public class MapDBChannelDao implements ChannelDao {
 
-public class InMemoryChannelDao implements ChannelDao {
-
-    private final Map<String, ChannelConfiguration> channelConfigurations = Maps.newConcurrentMap();
+    private final Map<String, ChannelConfiguration> channelConfigurations = DBMaker.newTempHashMap();
     private final Map<String, Lock> writeLocks = Maps.newConcurrentMap();
-    private final Map<String, DataHubKey> latestPerChannel = Maps.newConcurrentMap();
-    private final Map<DataHubKey, LinkedDataHubCompositeValue> channelValues = Maps.newConcurrentMap();
+    private final Map<String, DataHubKey> latestPerChannel = DBMaker.newTempHashMap();
+    private final Map<DataHubKey, LinkedDataHubCompositeValue> channelValues = DBMaker.newTempHashMap();
 
     @Override
     public boolean channelExists(String channelName) {
@@ -68,7 +65,8 @@ public class InMemoryChannelDao implements ChannelDao {
             //finally, make it the latest
             latestPerChannel.put(channelName, newKey);
             return new ValueInsertionResult(newKey);
-        } finally {
+        }
+        finally {
             lock.unlock();
         }
     }
