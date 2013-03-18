@@ -19,12 +19,12 @@ public class SubscriptionDispatcher {
 		this.subscriptions = subscriptions;
 	}
 
-	public void subscribe(String channelName, EventSink<URI> sink) {
+	public void subscribe(String channelName, Consumer<URI> sink) {
 		subscriptions.subscribe(channelName, sink);
 
 	}
 
-	public void unsubscribe(String channelName, EventSink<URI> sink) {
+	public void unsubscribe(String channelName, Consumer<URI> sink) {
 		subscriptions.unsubscribe(channelName, sink);
 	}
 
@@ -36,27 +36,27 @@ public class SubscriptionDispatcher {
 	}
 
 	private Collection<Runnable> buildNotifyJobs(final URI uri, String channelName) {
-		Collection<EventSink<URI>> channelSubscribers = subscriptions.getSubscribers(channelName);
-		return Collections2.transform(channelSubscribers, new Function<EventSink<URI>, Runnable>() {
+		Collection<Consumer<URI>> channelSubscribers = subscriptions.getSubscribers(channelName);
+		return Collections2.transform(channelSubscribers, new Function<Consumer<URI>, Runnable>() {
 			@Override
-			public Runnable apply(final EventSink<URI> input) {
-				return new SinkRunnable(input, uri);
+			public Runnable apply(final Consumer<URI> input) {
+				return new RunnableConsumer(input, uri);
 			}
 		});
 	}
 
-	private static class SinkRunnable implements Runnable {
-		private final EventSink<URI> input;
+	private static class RunnableConsumer implements Runnable {
+		private final Consumer<URI> input;
 		private final URI uri;
 
-		public SinkRunnable(EventSink<URI> input, URI uri) {
+		public RunnableConsumer(Consumer<URI> input, URI uri) {
 			this.input = input;
 			this.uri = uri;
 		}
 
 		@Override
 		public void run() {
-			input.sink(uri);
+			input.apply(uri);
 		}
 	}
 }

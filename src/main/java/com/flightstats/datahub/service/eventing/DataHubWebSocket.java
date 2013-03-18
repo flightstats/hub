@@ -27,7 +27,7 @@ public class DataHubWebSocket {
 	@OnWebSocketConnect
 	public void onConnect(final Session session) {
 		remoteAddress = session.getRemoteAddress().toString();
-		channelName = extractChanelName(session);
+		channelName = extractChannelName(session);
 
 		URI requestUri = session.getUpgradeRequest().getRequestURI();
 		logger.info("New client connection: " + remoteAddress + " for " + requestUri);
@@ -42,7 +42,7 @@ public class DataHubWebSocket {
 		subscriptionDispatcher.unsubscribe(channelName, endpointSender);
 	}
 
-	private String extractChanelName(Session session) {
+	private String extractChannelName(Session session) {
 		URI requestURI = session.getUpgradeRequest().getRequestURI();
 		String path = requestURI.getPath();
 		return path.replaceFirst("^/channel/(.*)/ws$", "$1");

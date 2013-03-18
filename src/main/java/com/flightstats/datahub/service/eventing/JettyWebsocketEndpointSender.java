@@ -5,7 +5,7 @@ import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import java.io.IOException;
 import java.net.URI;
 
-class JettyWebsocketEndpointSender implements EventSink<URI> {
+class JettyWebsocketEndpointSender implements Consumer<URI> {
 
 	private final RemoteEndpoint remoteEndpoint;
 	private final String remoteAddress;
@@ -16,7 +16,7 @@ class JettyWebsocketEndpointSender implements EventSink<URI> {
 	}
 
 	@Override
-	public void sink(URI uri) {
+	public void apply(URI uri) {
 		try {
 			remoteEndpoint.sendString(uri.toString());
 		} catch (IOException e) {

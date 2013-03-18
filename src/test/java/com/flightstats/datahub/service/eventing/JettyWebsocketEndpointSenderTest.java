@@ -18,7 +18,7 @@ public class JettyWebsocketEndpointSenderTest {
 		RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
 
 		JettyWebsocketEndpointSender testClass = new JettyWebsocketEndpointSender(address, remoteEndpoint);
-		testClass.sink(uri);
+		testClass.apply(uri);
 
 		verify(remoteEndpoint).sendString(uri.toString());
 	}
@@ -32,7 +32,7 @@ public class JettyWebsocketEndpointSenderTest {
 		doThrow(new IOException("Error!  Error!")).when(remoteEndpoint).sendString(anyString());
 		JettyWebsocketEndpointSender testClass = new JettyWebsocketEndpointSender(address, remoteEndpoint);
 
-		testClass.sink(uri);
+		testClass.apply(uri);
 	}
 
 }

@@ -9,24 +9,24 @@ import java.util.*;
 
 public class SubscriptionRoster {
 
-	Multimap<String, EventSink<URI>> subscribers =
+	Multimap<String, Consumer<URI>> subscribers =
 			Multimaps.synchronizedSetMultimap(
-					Multimaps.newSetMultimap(new HashMap<String, Collection<EventSink<URI>>>(), new Supplier<Set<EventSink<URI>>>() {
+					Multimaps.newSetMultimap(new HashMap<String, Collection<Consumer<URI>>>(), new Supplier<Set<Consumer<URI>>>() {
 						@Override
-						public Set<EventSink<URI>> get() {
+						public Set<Consumer<URI>> get() {
 							return new HashSet<>();
 						}
 					}));
 
-	public void subscribe(String channelName, EventSink<URI> sink) {
+	public void subscribe(String channelName, Consumer<URI> sink) {
 		subscribers.put(channelName, sink);
 	}
 
-	public void unsubscribe(String channelName, EventSink<URI> sink) {
+	public void unsubscribe(String channelName, Consumer<URI> sink) {
 		subscribers.remove(channelName, sink);
 	}
 
-	public Collection<EventSink<URI>> getSubscribers(String channelName) {
+	public Collection<Consumer<URI>> getSubscribers(String channelName) {
 		return Collections.unmodifiableCollection(subscribers.get(channelName));
 	}
 }

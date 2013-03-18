@@ -36,7 +36,7 @@ public class DataHubWebSocketTest {
 
 	@Test
 	public void testOnConnect() throws Exception {
-		EventSink<URI> expectedSink = new JettyWebsocketEndpointSender(remoteAddress.toString(), remoteEndpoint);
+		Consumer<URI> expectedSink = new JettyWebsocketEndpointSender(remoteAddress.toString(), remoteEndpoint);
 		SubscriptionDispatcher dispatcher = mock(SubscriptionDispatcher.class);
 
 		DataHubWebSocket testClass = new DataHubWebSocket(dispatcher);
@@ -48,7 +48,7 @@ public class DataHubWebSocketTest {
 
 	@Test
 	public void testOnDisconnect() throws Exception {
-		EventSink<URI> expectedSink = new JettyWebsocketEndpointSender(remoteAddress.toString(), remoteEndpoint);
+		Consumer<URI> expectedSink = new JettyWebsocketEndpointSender(remoteAddress.toString(), remoteEndpoint);
 		SubscriptionDispatcher dispatcher = mock(SubscriptionDispatcher.class);
 
 		DataHubWebSocket testClass = new DataHubWebSocket(dispatcher);

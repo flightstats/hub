@@ -13,11 +13,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class SubscriptionRosterTest {
 
-	private EventSink<URI> sink;
+	private Consumer<URI> sink;
 
 	@Before
 	public void setup() {
-		sink = new NoOpEventSink(42);
+		sink = new NoOpConsumer(42);
 	}
 
 	@Test
@@ -39,9 +39,9 @@ public class SubscriptionRosterTest {
 	public void testGetSubscribers() throws Exception {
 		String channel1 = "mychan";
 		String channel2 = "chan2";
-		EventSink<URI> sink1 = new NoOpEventSink(1);
-		EventSink<URI> sink2 = new NoOpEventSink(2);
-		EventSink<URI> sink3 = new NoOpEventSink(3);
+		Consumer<URI> sink1 = new NoOpConsumer(1);
+		Consumer<URI> sink2 = new NoOpConsumer(2);
+		Consumer<URI> sink3 = new NoOpConsumer(3);
 
 		SubscriptionRoster testClass = new SubscriptionRoster();
 
@@ -56,15 +56,15 @@ public class SubscriptionRosterTest {
 
 	}
 
-	private static class NoOpEventSink implements EventSink<URI> {
+	private static class NoOpConsumer implements Consumer<URI> {
 		private final int id;
 
-		public NoOpEventSink(int id) {
+		public NoOpConsumer(int id) {
 			this.id = id;
 		}
 
 		@Override
-		public void sink(URI uri) {
+		public void apply(URI uri) {
 			//nop
 		}
 
@@ -77,7 +77,7 @@ public class SubscriptionRosterTest {
 				return false;
 			}
 
-			NoOpEventSink that = (NoOpEventSink) o;
+			NoOpConsumer that = (NoOpConsumer) o;
 
 			if (id != that.id) {
 				return false;
