@@ -6,6 +6,8 @@ var channelName = utils.randomChannelName();
 var jsonBody = JSON.stringify({ "name": channelName});
 var channelResource = channelUrl + "/" + channelName;
 
+utils.configureFrisby();
+
 frisby.create('Making sure channel resource does not yet exist.')
     .get(channelResource)
     .expectStatus(404)
