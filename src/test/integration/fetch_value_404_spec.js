@@ -5,7 +5,7 @@ var utils = require('./utils.js');
 var channelName = utils.randomChannelName();
 var badValueUrl = channelUrl + "/" + channelName + "/foooo" + Math.random().toString();
 
-utisl.configureFrisby();
+utils.configureFrisby();
 
 utils.runInTestChannel(channelName, function () {
     frisby.create('Fetching a nonexistent value.')
