@@ -2,7 +2,10 @@ package com.flightstats.datahub.model;
 
 import com.google.common.base.Optional;
 
-public class LinkedDataHubCompositeValue {
+import java.io.Serializable;
+
+public class LinkedDataHubCompositeValue implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private final DataHubCompositeValue value;
     private final Optional<DataHubKey> previous;
@@ -24,6 +27,10 @@ public class LinkedDataHubCompositeValue {
 
     public int getContentTypeLength() {
         return value.getContentTypeLength();
+    }
+
+    public DataHubCompositeValue getValue() {
+        return value;
     }
 
     public byte[] getData() {

@@ -1,6 +1,8 @@
 package com.flightstats.datahub.app.config;
 
 import com.flightstats.datahub.dao.*;
+import com.flightstats.datahub.dao.memory.InMemoryChannelDao;
+import com.flightstats.datahub.dao.memory.MapDBChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
@@ -52,15 +54,16 @@ public class GuiceConfig extends GuiceServletContextListener {
         protected void configureServlets() {
             Properties properties = loadProperties();
             Names.bindProperties(binder(), properties);
-            bind(CassandraChannelDao.class).asEagerSingleton();
-            bind(CassandraConnectorFactory.class).in(Singleton.class);
+//            bind(CassandraChannelDao.class).asEagerSingleton();
+//            bind(CassandraConnectorFactory.class).in(Singleton.class);
             bind(DataHubKeyRenderer.class).in(Singleton.class);
             bind(DataHubKeyGenerator.class).in(Singleton.class);
-            bind(new TypeLiteral<Serializer<ChannelConfiguration>>() {
-            }).toInstance(jacksonHectorSerializer);
-            bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
-            }).to(YearMonthDayRowKeyStrategy.class);
-            bind(ChannelDao.class).to(CassandraChannelDao.class).in(Singleton.class);
+//            bind(new TypeLiteral<Serializer<ChannelConfiguration>>() {
+//            }).toInstance(jacksonHectorSerializer);
+//            bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
+//            }).to(YearMonthDayRowKeyStrategy.class);
+//            bind(ChannelDao.class).to(CassandraChannelDao.class).in(Singleton.class);
+            bind(ChannelDao.class).to(MapDBChannelDao.class).in(Singleton.class);
             serve("/*").with(GuiceContainer.class, JERSEY_PROPERTIES);
         }
 
