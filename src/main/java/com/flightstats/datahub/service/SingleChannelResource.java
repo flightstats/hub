@@ -3,14 +3,13 @@ package com.flightstats.datahub.service;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ValueInsertionResult;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.service.eventing.SubscriptionDispatcher;
 import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
 import static com.flightstats.rest.Linked.linked;
@@ -21,54 +20,53 @@ import static com.flightstats.rest.Linked.linked;
 @Path("/channel/{channelName}")
 public class SingleChannelResource {
 
-    private final ChannelDao channelDao;
-    private final UriInfo uriInfo;
-    private final DataHubKeyRenderer keyRenderer;
+	private final ChannelDao channelDao;
+	private final SubscriptionDispatcher subscriptionDispatcher;
+	private final ChannelHypermediaLinkBuilder linkBuilder;
 
-    @Inject
-    public SingleChannelResource(ChannelDao channelDao, UriInfo uriInfo, DataHubKeyRenderer keyRenderer) {
-        this.channelDao = channelDao;
-        this.uriInfo = uriInfo;
-        this.keyRenderer = keyRenderer;
-    }
+	@Inject
+	public SingleChannelResource(ChannelDao channelDao, SubscriptionDispatcher subscriptionDispatcher, ChannelHypermediaLinkBuilder linkBuilder) {
+		this.channelDao = channelDao;
+		this.linkBuilder = linkBuilder;
+		this.subscriptionDispatcher = subscriptionDispatcher;
+	}
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Linked<ChannelConfiguration> getChannelMetadata(@PathParam("channelName") String channelName) {
-        if (!channelDao.channelExists(channelName)) {
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-        ChannelConfiguration config = channelDao.getChannelConfiguration(channelName);
-        URI selfUri = uriInfo.getRequestUri();
-        URI latestUri = URI.create(selfUri + "/latest");
-        return linked(config)
-                .withLink("self", selfUri)
-                .withLink("latest", latestUri)
-                .build();
-    }
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Linked<ChannelConfiguration> getChannelMetadata(@PathParam("channelName") String channelName) {
+		if (!channelDao.channelExists(channelName)) {
+			throw new WebApplicationException(Response.Status.NOT_FOUND);
+		}
+		ChannelConfiguration config = channelDao.getChannelConfiguration(channelName);
+		return linked(config)
+				.withLink("self", linkBuilder.buildChannelUri(config))
+				.withLink("latest", linkBuilder.buildLatestUri(config))
+				.withLink("ws", linkBuilder.buildWsLinkFor(config))
+				.build();
+	}
 
 
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response insertValue(@HeaderParam("Content-Type") String contentType, @PathParam(
-            "channelName") String channelName, byte[] data) {
-        if (!channelDao.channelExists(channelName)) {
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-        ValueInsertionResult insertionResult = channelDao.insert(channelName, contentType, data);
-        URI channelUri = uriInfo.getRequestUri();
-        String keyId = keyRenderer.keyToString(insertionResult.getKey());
-        URI payloadUri = URI.create(channelUri.toString() + "/" + keyId);
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response insertValue(@HeaderParam("Content-Type") String contentType, @PathParam(
+			"channelName") String channelName, byte[] data) {
+		if (!channelDao.channelExists(channelName)) {
+			throw new WebApplicationException(Response.Status.NOT_FOUND);
+		}
+		ValueInsertionResult insertionResult = channelDao.insert(channelName, contentType, data);
 
-        Linked<ValueInsertionResult> linkedResult = linked(insertionResult)
-                .withLink("channel", channelUri)
-                .withLink("self", payloadUri)
-                .build();
+		URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey());
+		subscriptionDispatcher.dispatch(channelName, payloadUri);
 
-        Response.ResponseBuilder builder = Response.status(Response.Status.OK);
-        builder.entity(linkedResult);
-        builder.location(payloadUri);
-        return builder.build();
-    }
+		Linked<ValueInsertionResult> linkedResult = linked(insertionResult)
+				.withLink("channel", linkBuilder.buildChannelUri(channelName))
+				.withLink("self", payloadUri)
+				.build();
+
+		Response.ResponseBuilder builder = Response.status(Response.Status.OK);
+		builder.entity(linkedResult);
+		builder.location(payloadUri);
+		return builder.build();
+	}
 
 }

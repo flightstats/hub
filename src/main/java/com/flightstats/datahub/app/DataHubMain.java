@@ -14,30 +14,34 @@ import java.util.EnumSet;
  */
 public class DataHubMain {
 
-    public static void main(String[] args) throws Exception {
-        Server server = new Server();
+	private static final String DEFAULT_HOST = "0.0.0.0";
+	private static final int DEFAULT_PORT = 8080;
+	private static final int DEFAULT_IDLE_TIMEOUT = 30000;
 
-        HttpConfiguration httpConfig = new HttpConfiguration();
+	public static void main(String[] args) throws Exception {
+		Server server = new Server();
 
-        ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
+		HttpConfiguration httpConfig = new HttpConfiguration();
 
-        ServerConnector serverConnector = new ServerConnector(server, connectionFactory);
+		ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
 
-        //TODO: Don't hard code these here.
-        serverConnector.setHost("0.0.0.0");
-        serverConnector.setPort(8080);
-        serverConnector.setIdleTimeout(30000);
+		ServerConnector serverConnector = new ServerConnector(server, connectionFactory);
 
-        server.setConnectors(new Connector[]{serverConnector});
+		//TODO: Don't hard code these here.
+		serverConnector.setHost(DEFAULT_HOST);
+		serverConnector.setPort(DEFAULT_PORT);
+		serverConnector.setIdleTimeout(DEFAULT_IDLE_TIMEOUT);
 
-        ServletContextHandler rootContextHandler = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
-        rootContextHandler.addEventListener(new GuiceConfig());
-        rootContextHandler.addFilter(GuiceFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
-        rootContextHandler.addServlet(EmptyServlet.class, "/*");
-        //        rootContextHandler.setErrorHandler(xxx);
+		server.setConnectors(new Connector[]{serverConnector});
 
-        server.start();
-        server.join();
-    }
+		ServletContextHandler rootContextHandler = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
+
+		rootContextHandler.addEventListener(new GuiceConfig());
+		rootContextHandler.addFilter(GuiceFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+		rootContextHandler.addServlet(EmptyServlet.class, "/*");
+
+		server.start();
+		server.join();
+	}
 
 }
