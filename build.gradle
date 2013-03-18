@@ -21,6 +21,9 @@ repositories {
         maven {
             url 'http://artifactory.dev.pdx.prod/artifactory/plugins-release'
         }
+        maven {
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
+        }
     }
 }
 
@@ -61,6 +64,7 @@ dependencies {
     compile group: 'junit', name: 'junit', version: '4.+'
     compile group: "org.mockito", name: "mockito-all", version: "1.9.5"
     compile group: "org.slf4j", name: "slf4j-log4j12", version: "1.7.2"
+    compile group: "org.mapdb", name: "mapdb", version: "0.9-SNAPSHOT"
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"

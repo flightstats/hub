@@ -1,8 +1,10 @@
 package com.flightstats.datahub.model;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class DataHubCompositeValue {
+public class DataHubCompositeValue implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private final String contentType;
     private final byte[] data;
