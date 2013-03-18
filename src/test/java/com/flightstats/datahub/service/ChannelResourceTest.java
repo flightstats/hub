@@ -15,30 +15,38 @@ import static org.mockito.Mockito.*;
 
 public class ChannelResourceTest {
 
-    @Test
-    public void testChannelCreation() throws Exception {
-        String channelName = "UHF";
+	@Test
+	public void testChannelCreation() throws Exception {
+		String channelName = "UHF";
 
-        ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName);
-        Date date = new Date();
-        ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, date, null);
-        Linked<ChannelConfiguration> expected = Linked.linked(channelConfiguration)
-                                                      .withLink("self", "http://path/to/UHF")
-                                                      .withLink("latest", "http://path/to/UHF/latest")
-                                                      .build();
-        UriInfo uriInfo = mock(UriInfo.class);
-        ChannelDao dao = mock(ChannelDao.class);
+		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName);
+		Date date = new Date();
+		ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, date, null);
+		String channelUri = "http://path/to/UHF";
+		String latestUri = "http://path/to/UHF/latest";
+		String wsUri = "ws://path/to/UHF/ws";
+		Linked<ChannelConfiguration> expected = Linked.linked(channelConfiguration)
+													  .withLink("self", channelUri)
+													  .withLink("latest", latestUri)
+													  .withLink("ws", wsUri)
+													  .build();
+		UriInfo uriInfo = mock(UriInfo.class);
+		ChannelDao dao = mock(ChannelDao.class);
+		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 
-        when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
-        when(dao.channelExists(channelName)).thenReturn(false);
-        when(dao.createChannel(channelName)).thenReturn(channelConfiguration);
+		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
+		when(dao.channelExists(channelName)).thenReturn(false);
+		when(dao.createChannel(channelName)).thenReturn(channelConfiguration);
+		when(linkBuilder.buildChannelUri(channelConfiguration)).thenReturn(URI.create(channelUri));
+		when(linkBuilder.buildLatestUri(channelConfiguration)).thenReturn(URI.create(latestUri));
+		when(linkBuilder.buildWsLinkFor(channelConfiguration)).thenReturn(URI.create(wsUri));
 
-        ChannelResource testClass = new ChannelResource(uriInfo, dao);
+		ChannelResource testClass = new ChannelResource(dao, linkBuilder);
 
-        Linked<ChannelConfiguration> result = testClass.createChannel(channelCreationRequest);
+		Linked<ChannelConfiguration> result = testClass.createChannel(channelCreationRequest);
 
-        verify(dao).createChannel(channelName);
+		verify(dao).createChannel(channelName);
 
-        assertEquals(expected, result);
-    }
+		assertEquals(expected, result);
+	}
 }
