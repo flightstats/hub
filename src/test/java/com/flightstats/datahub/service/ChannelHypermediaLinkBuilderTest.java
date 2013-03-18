@@ -13,7 +13,8 @@ import static org.mockito.Mockito.when;
 
 public class ChannelHypermediaLinkBuilderTest {
 
-	public static final String CHANNEL_URL = "http://path.to/channel";
+	private static final String BASE_URL = "http://path.to:8080/";
+	private static final String CHANNEL_URL = BASE_URL + "channel";
 	private ChannelConfiguration channelConfig;
 
 	@Before
@@ -27,6 +28,7 @@ public class ChannelHypermediaLinkBuilderTest {
 		UriInfo uriInfo = mock(UriInfo.class);
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL));
+		when(uriInfo.getBaseUri()).thenReturn(URI.create(BASE_URL));
 
 		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder(uriInfo, null);
 		URI result = testClass.buildChannelUri(channelConfig);
@@ -51,7 +53,7 @@ public class ChannelHypermediaLinkBuilderTest {
 		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL));
 		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder(uriInfo, null);
 		URI result = testClass.buildWsLinkFor(channelConfig);
-		assertEquals(URI.create("ws://path.to/channel" + "/" +
+		assertEquals(URI.create("ws://path.to:8080/channel" + "/" +
 				channelConfig.getName() + "/ws"), result);
 	}
 }
