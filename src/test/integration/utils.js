@@ -31,6 +31,13 @@ function download(url, completionHandler) {
     });
 }
 
+function configureFrisby() {
+    frisby.globalSetup({
+        timeout: 15000
+    });
+}
+
 exports.runInTestChannel = runInTestChannel;
 exports.download = download;
 exports.randomChannelName = randomChannelName;
+exports.configureFrisby = configureFrisby;
