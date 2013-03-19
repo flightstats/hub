@@ -7,6 +7,8 @@ import com.google.common.collect.Multimaps;
 import java.net.URI;
 import java.util.*;
 
+import static com.google.common.collect.Lists.newArrayList;
+
 public class SubscriptionRoster {
 
 	Multimap<String, Consumer<URI>> subscribers =
@@ -27,6 +29,7 @@ public class SubscriptionRoster {
 	}
 
 	public Collection<Consumer<URI>> getSubscribers(String channelName) {
-		return Collections.unmodifiableCollection(subscribers.get(channelName));
+		List<Consumer<URI>> subscribersCopy = newArrayList(subscribers.get(channelName));
+		return Collections.unmodifiableCollection(subscribersCopy);
 	}
 }
