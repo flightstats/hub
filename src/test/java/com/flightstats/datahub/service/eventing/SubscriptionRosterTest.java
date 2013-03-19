@@ -3,6 +3,7 @@ package com.flightstats.datahub.service.eventing;
 import org.junit.Test;
 
 import java.net.URI;
+import java.util.Collection;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.TestCase.assertTrue;
@@ -48,7 +49,22 @@ public class SubscriptionRosterTest {
 		assertEquals(1, testClass.getSubscribers(channel2).size());
 		assertThat(testClass.getSubscribers(channel1), hasItems(sink1, sink3));
 		assertThat(testClass.getSubscribers(channel2), hasItem(sink2));
+	}
 
+	@Test
+	public void testConcurrentModification() throws Exception {
+		SubscriptionRoster testClass = new SubscriptionRoster();
+		testClass.subscribe("chan", mock(Consumer.class));
+		testClass.subscribe("chan", mock(Consumer.class));
+		testClass.subscribe("chan", mock(Consumer.class));
+		Collection<Consumer<URI>> subscribers = testClass.getSubscribers("chan");
+		int iterationCount = 0;
+		for (Consumer<URI> subscriber : subscribers) {
+			testClass.subscribe("chan", mock(Consumer.class));    //For each subscriber, add a new one as we iterate.
+			iterationCount++;
+		}
+		assertEquals(3, iterationCount);
+		assertEquals(6, testClass.getSubscribers("chan").size());
 	}
 
 }
