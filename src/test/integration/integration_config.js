@@ -6,3 +6,4 @@
 dataHubUrlBase = 'http://datahub-01.cloud-east.dev:8080';
 //dataHubUrlBase = 'http://localhost:8080';
 channelUrl = dataHubUrlBase + '/channel';
+
