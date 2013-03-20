@@ -3,15 +3,12 @@ package com.flightstats.datahub.dao.prototypes;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.*;
 import com.google.common.base.Optional;
-import com.google.common.collect.Maps;
-import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class HazelcastChannelDao implements ChannelDao {
 
