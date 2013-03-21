@@ -22,7 +22,7 @@ public class ChannelLockExecutor {
 	 * This constructor only exists for testing and should not be used by production code.
 	 */
 	@VisibleForTesting
-	ChannelLockExecutor(ConcurrentHashMap<String, Lock> channelLocks) {
+	ChannelLockExecutor(ConcurrentMap<String, Lock> channelLocks) {
 		this.channelLocks = channelLocks;
 	}
 
