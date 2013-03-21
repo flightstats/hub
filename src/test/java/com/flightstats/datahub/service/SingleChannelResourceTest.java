@@ -19,8 +19,7 @@ import java.util.Date;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class SingleChannelResourceTest {
 
@@ -114,6 +113,19 @@ public class SingleChannelResourceTest {
 
 		assertEquals(expectedResponse, insertionResult);
 		assertEquals(itemUri, response.getMetadata().getFirst("Location"));
+	}
+
+	@Test
+	public void testInsertPerformsDispatch() throws Exception {
+		byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
+
+		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor();
+
+		when(dao.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(dataHubKey));
+
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher);
+		testClass.insertValue(contentType, channelName, data);
+		verify(subscriptionDispatcher).dispatch(channelName, itemUri);
 	}
 
 	@Test
