@@ -57,7 +57,7 @@ public class CassandraLinkagesFinder {
 	private Optional<DataHubKey> findFirstDifferentResult(DataHubKey inputKey, QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult, final boolean reversed) {
 		OrderedRows<String, String, DataHubCompositeValue> rows = queryResult.get();
 
-		List<Row<String, String, DataHubCompositeValue>> sortedRows = getSortedRows(rows, reversed);
+		List<Row<String, String, DataHubCompositeValue>> sortedRows = getSortedRows(reversed, rows.getList());
 
 		String inputKeyString = keyRenderer.keyToString(inputKey);
 		for (Row<String, String, DataHubCompositeValue> row : sortedRows) {
@@ -70,8 +70,7 @@ public class CassandraLinkagesFinder {
 		return Optional.absent();
 	}
 
-	private List<Row<String, String, DataHubCompositeValue>> getSortedRows(OrderedRows<String, String, DataHubCompositeValue> rows, final boolean reversed) {
-		List<Row<String, String, DataHubCompositeValue>> rowsList = rows.getList();
+	private List<Row<String, String, DataHubCompositeValue>> getSortedRows(final boolean reversed, List<Row<String, String, DataHubCompositeValue>> rowsList) {
 
 		return Ordering.from(new Comparator<Row<String, String, DataHubCompositeValue>>() {
 			@Override
