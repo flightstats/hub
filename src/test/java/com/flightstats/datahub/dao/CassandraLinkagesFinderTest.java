@@ -80,6 +80,8 @@ public class CassandraLinkagesFinderTest {
 		when(rangeQuery.setColumnFamily(channelName)).thenReturn(rangeQuery);
 		when(rangeQuery.execute()).thenReturn(queryResult);
 
+		when(row1.getKey()).thenReturn("20130401");
+		when(row2.getKey()).thenReturn("20130402");
 		when(row.getColumnSlice()).thenReturn(columnSlice);
 		when(row1.getColumnSlice()).thenReturn(columnSlice1);
 		when(row2.getColumnSlice()).thenReturn(columnSlice2);
