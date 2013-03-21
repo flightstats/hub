@@ -22,28 +22,22 @@ var testRandom = require('.././js_testing_utils/randomUtils.js');
 
 
 var URL_ROOT = dhh.URL_ROOT;
+var DEBUG = dhh.DEBUG;
 
 // Test variables that are regularly overwritten
-var agent
-    , payload
-    , fileAsAStream
-    , req
-    , uri
-    , contentType;
-
-var channelName;
+var agent, payload, req, uri, contentType, channelName;
 
 
-
-describe('Create Channel:', function(){
+describe('Create Channel: ', function(){
 
     before(function(myCallback){
         channelName = dhh.makeRandomChannelName();
         agent = superagent.agent();
         dhh.makeChannel(channelName, function(res){
-            if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
-                myCallback(res.error);
-            };
+            if ((res.error) || (!dhh.isHTTPSuccess(res.status))) {
+                //console.log('bad things');
+                throw new Error(res.error);
+            }
             console.log('Main test channel:'+ channelName);
             myCallback();
         });
@@ -52,49 +46,39 @@ describe('Create Channel:', function(){
     beforeEach(function(){
         agent = superagent.agent();
         payload = uri = req = contentType = '';
-    })
-
-    // 404 trying to GET channel before it exists
-    it('should return a 404 trying to GET channel before it exists', function(done){
-        var myChannel = dhh.makeRandomChannelName();
-        dhh.getChannel(myChannel, function(res) {
-            expect(res.status).to.equal(404)
-            done();
-        });
     });
 
-
-    it('Cannot create channel with blank name: 500 response', function(done){
+    it('blank name not allowed', function(done){
         dhh.makeChannel('', function(res) {
-            expect(res.status).to.equal(500);
+            expect(dhh.isHTTPError(res.status)).to.equal(true);
             done();
         });
 
     });
 
-    it('Cannot create channel with no/empty payload: 500 response', function(done) {
+    it('no / empty payload not allowed', function(done) {
         agent.post(URL_ROOT +'/channel')
             .set('Content-Type', 'application/json')
             .send('')
             .end(function(err, res) {
-                expect(res.status).to.equal(500);
+                expect(dhh.isHTTPError(res.status)).to.equal(true);
                 done();
             });
     });
 
 
-    it('should return a 200 trying to GET channel after creation', function(done){
+    it('(Acceptance) channel created', function(done){
         dhh.getChannel(channelName, function(res) {
-            expect(res.status).to.equal(200);
+            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
             done();
         });
     });
 
     // https://www.pivotaltracker.com/story/show/44113267
     // Attempting to create a channel with a name already in use will return an error. NOT IMPLEMENTED YET.
-    it.skip('HTTP 500 if attempting to create channel with a name already in use', function(done) {
+    it.skip('Error if attempting to create channel with a name already in use', function(done) {
         dhh.makeChannel(channelName, function(res) {
-            expect(res.status).to.equal(500);
+            expect(dhh.isHTTPError(res.status)).to.equal(true);
             done();
         });
     });
