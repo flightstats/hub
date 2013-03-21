@@ -2,8 +2,6 @@ package com.flightstats.datahub.service.eventing;
 
 import java.util.concurrent.BlockingQueue;
 
-import static com.flightstats.datahub.service.eventing.WebsocketEvent.SHUTDOWN;
-
 class SubscriptionDispatchWorker implements Runnable {
 
 	private final WebSocketEventSubscription subscriber;
@@ -18,7 +16,7 @@ class SubscriptionDispatchWorker implements Runnable {
 		while (true) {
 			try {
 				WebsocketEvent event = queue.take();
-				if (SHUTDOWN.equals(event)) {
+				if (event.isShutdown()) {
 					break;
 				}
 				subscriber.consume(event.getUri());
