@@ -64,12 +64,12 @@ public class ChannelContentResource {
 		return builder.build();
 	}
 
-	private void addPreviousLink(LinkedDataHubCompositeValue columnValue, Response.ResponseBuilder builder) {
-		addLink(builder, "previous", columnValue.getPrevious());
+	private void addPreviousLink(LinkedDataHubCompositeValue compositeValue, Response.ResponseBuilder builder) {
+		addLink(builder, "previous", compositeValue.getPrevious());
 	}
 
-	private void addNextLink(LinkedDataHubCompositeValue columnValue, Response.ResponseBuilder builder) {
-		addLink(builder, "next", columnValue.getNext());
+	private void addNextLink(LinkedDataHubCompositeValue compositeValue, Response.ResponseBuilder builder) {
+		addLink(builder, "next", compositeValue.getNext());
 	}
 
 	private void addLink(Response.ResponseBuilder builder, String type, Optional<DataHubKey> key) {
