@@ -34,6 +34,7 @@ public class SingleChannelResourceTest {
 	private ChannelConfiguration channelConfig;
 	private DataHubKey dataHubKey;
 	private URI itemUri;
+	private ChannelLockExecutor channelLockExecutor;
 
 	@Before
 	public void setup() {
@@ -50,6 +51,7 @@ public class SingleChannelResourceTest {
 		dao = mock(ChannelDao.class);
 		subscriptionDispatcher = mock(SubscriptionDispatcher.class);
 		linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
+		channelLockExecutor = mock(ChannelLockExecutor.class);
 
 		when(urlInfo.getRequestUri()).thenReturn(requestUri);
 		when(dao.channelExists(channelName)).thenReturn(true);
@@ -67,7 +69,7 @@ public class SingleChannelResourceTest {
 		when(dao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
 		when(uriInfo.getRequestUri()).thenReturn(channelUri);
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, subscriptionDispatcher, linkBuilder);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, subscriptionDispatcher);
 
 		Linked<ChannelConfiguration> result = testClass.getChannelMetadata(channelName);
 		assertEquals(channelConfig, result.getObject());
@@ -81,7 +83,7 @@ public class SingleChannelResourceTest {
 	public void testGetChannelMetadataForUnknownChannel() throws Exception {
 		when(dao.channelExists("unknownChannel")).thenReturn(false);
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, subscriptionDispatcher, linkBuilder);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, subscriptionDispatcher);
 		try {
 			testClass.getChannelMetadata("unknownChannel");
 			fail("Should have thrown a 404");
@@ -99,9 +101,11 @@ public class SingleChannelResourceTest {
 		HalLink channelLink = new HalLink("channel", channelUri);
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey);
 
+		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor();
+
 		when(dao.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(dataHubKey));
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, subscriptionDispatcher, linkBuilder);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher);
 		Response response = testClass.insertValue(contentType, channelName, data);
 		Linked<ValueInsertionResult> result = (Linked<ValueInsertionResult>) response.getEntity();
 
@@ -120,7 +124,7 @@ public class SingleChannelResourceTest {
 
 		when(dao.channelExists(anyString())).thenReturn(false);
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, subscriptionDispatcher, linkBuilder);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, subscriptionDispatcher);
 		try {
 			testClass.insertValue(contentType, channelName, data);
 			fail("Should have thrown an exception.");

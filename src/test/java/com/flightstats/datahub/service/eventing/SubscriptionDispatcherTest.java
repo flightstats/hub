@@ -1,65 +1,42 @@
 package com.flightstats.datahub.service.eventing;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URI;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Arrays;
+import java.util.concurrent.BlockingQueue;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class SubscriptionDispatcherTest {
-
-	private String channelName;
-	private SubscriptionRoster roster;
-	private Consumer<URI> sink;
-
-	@Before
-	public void setup() {
-		channelName = "pseudo";
-		roster = mock(SubscriptionRoster.class);
-		sink = mock(Consumer.class);
-	}
-
-	@Test
-	public void testSubscribe() throws Exception {
-		SubscriptionDispatcher dispatcher = new SubscriptionDispatcher(roster);
-
-		dispatcher.subscribe(channelName, sink);
-		verify(roster).subscribe(channelName, sink);
-	}
-
-	@Test
-	public void testUnsubscribe() throws Exception {
-		SubscriptionDispatcher dispatcher = new SubscriptionDispatcher(roster);
-
-		dispatcher.unsubscribe(channelName, sink);
-		verify(roster).unsubscribe(channelName, sink);
-	}
 
 	@Test
 	public void testDispatch() throws Exception {
 		URI uri = URI.create("http://spoon.com");
-		SubscriptionDispatcher dispatcher = new SubscriptionDispatcher(new SubscriptionRoster());
-		final AtomicReference<URI> sunkUri = new AtomicReference<>();
-		final CountDownLatch latch = new CountDownLatch(1);
-		Consumer<URI> latchSink = new Consumer<URI>() {
-			@Override
-			public void apply(URI uri) {
-				sunkUri.set(uri);
-				latch.countDown();
-			}
-		};
-		dispatcher.subscribe(channelName, latchSink);
-		dispatcher.dispatch(channelName, uri);
+		WebsocketEvent event = new WebsocketEvent(uri);
 
-		boolean result = latch.await(5, TimeUnit.SECONDS);
-		assertTrue(result);
-		assertEquals(uri, sunkUri.get());
+		SubscriptionRoster roster = mock(SubscriptionRoster.class);
+		WebSocketEventSubscription sub1 = mock(WebSocketEventSubscription.class);
+		WebSocketEventSubscription sub2 = mock(WebSocketEventSubscription.class);
+		WebSocketEventSubscription sub3 = mock(WebSocketEventSubscription.class);
+
+		BlockingQueue<WebsocketEvent> queue1 = mock(BlockingQueue.class);
+		BlockingQueue<WebsocketEvent> queue2 = mock(BlockingQueue.class);
+		BlockingQueue<WebsocketEvent> queue3 = mock(BlockingQueue.class);
+
+		when(sub1.getQueue()).thenReturn(queue1);
+		when(sub2.getQueue()).thenReturn(queue2);
+		when(sub3.getQueue()).thenReturn(queue3);
+
+		when(roster.getSubscribers("chan1")).thenReturn(Arrays.asList(sub1, sub2, sub3));
+
+		SubscriptionDispatcher testClass = new SubscriptionDispatcher(roster);
+
+		testClass.dispatch("chan1", uri);
+
+		verify(queue1).add(event);
+		verify(queue2).add(event);
+		verify(queue3).add(event);
+
 	}
 }

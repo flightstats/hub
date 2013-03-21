@@ -12,8 +12,8 @@ public class JettyWebSocketServlet extends WebSocketServlet {
 	private final WebSocketCreator creator;
 
 	@Inject
-	public JettyWebSocketServlet(SubscriptionDispatcher subscriptionDispatcher) {
-		this.creator = new CustomWebSocketCreator(subscriptionDispatcher);
+	public JettyWebSocketServlet(SubscriptionRoster subscriptions) {
+		this.creator = new CustomWebSocketCreator(subscriptions);
 	}
 
 	@Override
@@ -23,15 +23,15 @@ public class JettyWebSocketServlet extends WebSocketServlet {
 	}
 
 	public static class CustomWebSocketCreator implements WebSocketCreator {
-		private final SubscriptionDispatcher subscriptionDispatcher;
+		private final SubscriptionRoster subscriptions;
 
-		public CustomWebSocketCreator(SubscriptionDispatcher subscriptionDispatcher) {
-			this.subscriptionDispatcher = subscriptionDispatcher;
+		public CustomWebSocketCreator(SubscriptionRoster subscriptions) {
+			this.subscriptions = subscriptions;
 		}
 
 		@Override
 		public Object createWebSocket(UpgradeRequest req, UpgradeResponse resp) {
-			return new DataHubWebSocket(subscriptionDispatcher);
+			return new DataHubWebSocket(subscriptions);
 		}
 	}
 }
