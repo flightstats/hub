@@ -4,16 +4,26 @@ import java.net.URI;
 
 public class WebsocketEvent {
 
-	public final static WebsocketEvent SHUTDOWN = new WebsocketEvent(URI.create("http://flightstats.com/shutdown"));
+	public final static WebsocketEvent SHUTDOWN = new WebsocketEvent(null, true);
 
 	private final URI uri;
+	private final boolean shutdown;
 
 	public WebsocketEvent(URI uri) {
+		this(uri, false);
+	}
+
+	private WebsocketEvent(URI uri, boolean shutdown) {
 		this.uri = uri;
+		this.shutdown = shutdown;
 	}
 
 	public URI getUri() {
 		return uri;
+	}
+
+	public boolean isShutdown() {
+		return shutdown;
 	}
 
 	@Override
@@ -27,6 +37,9 @@ public class WebsocketEvent {
 
 		WebsocketEvent that = (WebsocketEvent) o;
 
+		if (shutdown != that.shutdown) {
+			return false;
+		}
 		if (uri != null ? !uri.equals(that.uri) : that.uri != null) {
 			return false;
 		}
@@ -36,6 +49,8 @@ public class WebsocketEvent {
 
 	@Override
 	public int hashCode() {
-		return uri != null ? uri.hashCode() : 0;
+		int result = uri != null ? uri.hashCode() : 0;
+		result = 31 * result + (shutdown ? 1 : 0);
+		return result;
 	}
 }
