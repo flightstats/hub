@@ -46,11 +46,12 @@ describe('GET data:', function() {
         channelName = dhh.makeRandomChannelName();
         agent = superagent.agent();
         dhh.makeChannel(channelName, function(res){
-            if ((res.error) || (res.status != dhh.CHANNEL_CREATION_SUCCESS)) {
-                myCallback(res.error);
-            };
-            console.log('Main test channel:'+ channelName);
-            myCallback();
+            dhh.getChannel(channelName, function(res){
+                expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+
+                console.log('Main test channel:'+ channelName);
+                myCallback();
+            });
         });
     });
 
@@ -65,14 +66,15 @@ describe('GET data:', function() {
             payload = testRandom.randomString(Math.round(Math.random() * 50));
 
             dhh.postData(channelName, payload, function(res, packetUri) {
-                expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
-                var pMetadata = new dhh.packetMetadata(res.body)
+                var pMetadata = new dhh.packetMetadata(res.body);
                 var timestamp = moment(pMetadata.getTimestamp());
 
+                //console.log('packetUri: '+ packetUri);
                 agent.get(packetUri)
                     .end(function(err, res){
-                        expect(res.status).to.equal(200);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                         expect(res.header['creation-date']).to.not.be.null;
                         var returnedTimestamp = moment(res.header['creation-date']);
                         expect(returnedTimestamp.isSame(timestamp)).to.be.true;
@@ -107,7 +109,7 @@ describe('GET data:', function() {
                     agent.get(rArray[0].uri)
                         .end(function(err1, res1){
                             timestamp = rArray[0].timestamp;
-                            expect(res1.status).to.equal(200);
+                            expect(dhh.isHTTPSuccess(res1.status)).to.equal(true);
                             expect(res1.header['creation-date']).to.not.be.null;
                             var returnedTimestamp = moment(res1.header['creation-date']);
                             expect(returnedTimestamp.isSame(timestamp)).to.be.true;
@@ -117,7 +119,7 @@ describe('GET data:', function() {
                             superagent.agent().get(rArray[1].uri)
                                 .end(function(err2, res2) {
                                     timestamp = rArray[1].timestamp;
-                                    expect(res2.status).to.equal(200);
+                                    expect(dhh.isHTTPSuccess(res2.status)).to.equal(true);
                                     expect(res2.header['creation-date']).to.not.be.null;
                                     returnedTimestamp = moment(res2.header['creation-date']);
                                     expect(returnedTimestamp.isSame(timestamp)).to.be.true;
@@ -142,10 +144,10 @@ describe('GET data:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(channelA.name, function(res) {
-                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
                         dhh.makeChannel(channelB.name, function(res2) {
-                            expect(res2.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+                            expect(dhh.isHTTPSuccess(res2.status)).to.equal(true);
                             callback(null, null);
                         });
                     });
@@ -175,7 +177,7 @@ describe('GET data:', function() {
                     agent.get(channelA.dataUri)
                         .end(function(err1, res1){
                             timestamp = channelA.dataTimestamp;
-                            expect(res1.status).to.equal(200);
+                            expect(dhh.isHTTPSuccess(res1.status)).to.equal(true);
                             expect(res1.header['creation-date']).to.not.be.null;
                             var returnedTimestamp = moment(res1.header['creation-date']);
                             expect(returnedTimestamp.isSame(timestamp)).to.be.true;
@@ -185,7 +187,7 @@ describe('GET data:', function() {
                             superagent.agent().get(channelB.dataUri)
                                 .end(function(err2, res2) {
                                     timestamp = channelB.dataTimestamp;
-                                    expect(res2.status).to.equal(200);
+                                    expect(dhh.isHTTPSuccess(res2.status)).to.equal(true);
                                     expect(res2.header['creation-date']).to.not.be.null;
                                     returnedTimestamp = moment(res2.header['creation-date']);
                                     expect(returnedTimestamp.isSame(timestamp)).to.be.true;
@@ -207,19 +209,19 @@ describe('GET data:', function() {
             async.waterfall([
                 function(callback){
                     dhh.makeChannel(thisChannel, function(res) {
-                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
                         callback(null);
                     });
                 },
                 function(callback){
                     dhh.postData(thisChannel, payload, function(myRes, myUri) {
-                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(myRes.status)).to.equal(true);
                         uri = URL_ROOT +'/channel/'+ thisChannel +'/latest';
 
                         agent.get(uri)
                             .end(function(err, res) {
-                                expect(res.status).to.equal(200);
+                                expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                                 expect(res.header['creation-date']).to.not.be.null;
 
                                 callback(null);
@@ -260,7 +262,7 @@ describe('GET data:', function() {
             async.waterfall([
                 function(callback){
                     dhh.makeChannel(thisChannel, function(res) {
-                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                         var cnMetadata = new dhh.channelMetadata(res.body);
                         latestUri = cnMetadata.getLatestUri();
 
@@ -269,12 +271,9 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(thisChannel, payload1, function(myRes, myUri) {
-                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(thisChannel, function(myData) {
-                            //console.log('payload1:'+ payload1);
-                            //console.log('data returned:'+ myData);
-
                             expect(myData).to.equal(payload1);
 
                             callback(null);
@@ -283,12 +282,9 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(thisChannel, payload2, function(myRes, myUri) {
-                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(thisChannel, function(myData) {
-                            //console.log('payload2:'+ payload2);
-                            //console.log('data returned:'+ myData);
-
                             expect(myData).to.equal(payload2);
 
                             callback(null);
@@ -297,12 +293,9 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(thisChannel, payload3, function(myRes, myUri) {
-                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(thisChannel, function(myData) {
-                            //console.log('payload3:'+ payload3);
-                            //console.log('data returned:'+ myData);
-
                             expect(myData).to.equal(payload3);
 
                             callback(null);
@@ -318,7 +311,7 @@ describe('GET data:', function() {
             var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
 
             dhh.makeChannel(thisChannel, function(res) {
-                expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+                expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
                 uri = URL_ROOT +'/channel/'+ thisChannel +'/latest';
 
@@ -334,7 +327,7 @@ describe('GET data:', function() {
             var thisChannel = dhh.makeRandomChannelName();
 
             dhh.makeChannel(thisChannel, function(res) {
-                expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+                expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                 var cnMetadata = new dhh.channelMetadata(res.body);
                 expect(cnMetadata.getChannelUri()).to.not.be.null;
 
@@ -345,7 +338,7 @@ describe('GET data:', function() {
 
         it('GET on Channel returns link to latest data set', function(done) {
             dhh.getChannel(channelName, function(res) {
-                expect(res.status).to.equal(200);
+                expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                 var cnMetadata = new dhh.channelMetadata(res.body);
                 expect(cnMetadata.getChannelUri()).to.not.be.null;
 
@@ -363,7 +356,7 @@ describe('GET data:', function() {
             async.waterfall([
                 function(callback){
                     dhh.makeChannel(thisChannel, function(res) {
-                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
                         var cnMetadata = new dhh.channelMetadata(res.body);
                         latestUri = cnMetadata.getLatestUri();
@@ -373,7 +366,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(thisChannel, payload, function(myRes, myUri) {
-                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(thisChannel, function(myData) {
                             expect(myData).to.equal(payload);
@@ -383,7 +376,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(thisChannel, '', function(myRes, myUri) {
-                        expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(thisChannel, function(myData) {
                             expect(myData).to.equal('');
@@ -414,7 +407,7 @@ describe('GET data:', function() {
                 async.parallel([
                     function(callback){
                         dhh.postData(thisChannel, payload1, function(myRes, uri) {
-                            expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
+                            expect(dhh.isHTTPSuccess(myRes.status)).to.equal(true);
                             timestamp1 = moment(myRes.body.timestamp);
                             expect(moment(timestamp1).isValid()).to.be.true;
                             //console.log('time1 '+ timestamp1.valueOf());
@@ -425,7 +418,7 @@ describe('GET data:', function() {
                     },
                     function(callback){
                         dhh.postData(thisChannel, payload2, function(myRes, uri) {
-                            expect(myRes.status).to.equal(dhh.DATA_POST_SUCCESS);
+                            expect(dhh.isHTTPSuccess(myRes.status)).to.equal(true);
                             timestamp2 = moment(myRes.body.timestamp);
                             expect(moment(timestamp2).isValid()).to.be.true;
                             //console.log('time2 '+ timestamp2.valueOf());
@@ -536,14 +529,14 @@ describe('GET data:', function() {
                 .send(payload)
                 .end(function(err, res) {
                     if (err) throw err;
-                    expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                    expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                     var cnMetadata = new dhh.channelMetadata(res.body);
                     uri = cnMetadata.getChannelUri();
 
                     getAgent.get(uri)
                         .end(function(err2, res2) {
                             if (err2) throw err2;
-                            expect(res2.status).to.equal(200);
+                            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                             expect(res2.type.toLowerCase()).to.equal(myContentType.toLowerCase());
                             done();
                         });
@@ -566,14 +559,14 @@ describe('GET data:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(myChannel, function(res) {
-                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
                         callback(null, null);
                     });
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
                         superagent.agent().get(myUri)
@@ -587,7 +580,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
@@ -614,14 +607,14 @@ describe('GET data:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(myChannel, function(res) {
-                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
                         callback(null, null);
                     });
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
                         superagent.agent().get(myUri)
@@ -635,7 +628,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
 
                         superagent.agent().get(myUri)
@@ -649,7 +642,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
@@ -686,14 +679,14 @@ describe('GET data:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(myChannel, function(res) {
-                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
                         callback(null, null);
                     });
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
                         superagent.agent().get(myUri)
@@ -707,7 +700,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(firstValueUri)
                             .end(function(err, res) {
@@ -735,14 +728,14 @@ describe('GET data:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(myChannel, function(res) {
-                        expect(res.status).to.equal(dhh.CHANNEL_CREATION_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
 
                         callback(null, null);
                     });
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
                         if (debugThis) {console.log('First value at: '+ firstValueUri);}
                         callback(null,null);
@@ -750,7 +743,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
                         if (debugThis) {console.log('Second value at: '+ secondValueUri);}
                         callback(null,null);
@@ -758,7 +751,7 @@ describe('GET data:', function() {
                 },
                 function(callback){
                     dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(res.status).to.equal(dhh.DATA_POST_SUCCESS);
+                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
                         thirdValueUri = myUri;
                         if (debugThis) {console.log('Third value at: '+ thirdValueUri);}
 
