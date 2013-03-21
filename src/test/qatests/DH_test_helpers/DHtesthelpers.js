@@ -8,6 +8,8 @@
 
 // REPL MAGIC:  var dhh = require('/users/gnewcomb/datahub/src/test/qatests/DH_test_helpers/DHtesthelpers.js');
 
+"use strict";
+
 var chai = require('chai');
 var expect = chai.expect;
 var superagent = require('superagent');
@@ -48,7 +50,6 @@ var getValidationString = function (myUri, myPayload, myDone)
 };
 exports.getValidationString = getValidationString;
 
-
 var getValidationChecksum = function (myUri, expChecksum, myDone)
 {
     var md5sum = crypto.createHash('md5');
@@ -70,17 +71,17 @@ var getValidationChecksum = function (myUri, expChecksum, myDone)
 };
 exports.getValidationChecksum = getValidationChecksum;
 
-// Given a domain (and :port) and channel name, this returns a websocket on that channel
-var createWebSocket = function(domain, channelName) {
+// Given a domain (and :port) and channel name, this will instantiate a websocket on that channel
+var createWebSocket = function(domain, channelName, onOpen) {
     var wsUri = 'ws://'+ domain +'/channel/'+ channelName +'/ws';
+    var myWs;
 
     console.log('Trying uri: '+ wsUri);
 
-    var myWs = new ws(wsUri);
+    myWs = new ws(wsUri);
 
-    myWs.on('error', function(e) {
-        console.log(e);
-    });
+    myWs.on('open', onOpen);
+    myWs.on('error', function(e) {console.log(e); });
 
     return myWs;
 }
@@ -165,19 +166,19 @@ function packetMetadata(responseBody) {
 
     this.getChannelUri = function() {
         return responseBody._links.channel.href;
-    }
+    } ;
 
     this.getPacketUri = function() {
         return responseBody._links.self.href;
-    }
+    };
 
     this.getId = function() {
         return responseBody.id;
-    }
+    };
 
     this.getTimestamp = function() {
         return responseBody.timestamp;
-    }
+    } ;
 }
 exports.packetMetadata = packetMetadata;
 
@@ -224,7 +225,7 @@ function packetPOSTHeader(responseHeader){
         else {
             return null;
         }
-    }
+    };
 }
 exports.packetPOSTHeader = packetPOSTHeader;
 
@@ -236,9 +237,11 @@ var postData = function(myChannelName, myData, myCallback) {
     superagent.agent().post(uri)
         .send(myData)
         .end(function(err, res) {
-            if (err) throw err;
+            if (err) {
+                throw err;
+            }
 
-            if (DATA_POST_SUCCESS_RESPONSE != res.status) {
+            if (DATA_POST_SUCCESS_RESPONSE !== res.status) {
                 dataUri = null;
             }
             else {
@@ -250,14 +253,6 @@ var postData = function(myChannelName, myData, myCallback) {
         });
 };
 exports.postData = postData;
-
-// to support multiple repeated calls in an async.times() call with time in between.
-var postDataAndWait = function(myChannelName, myData, msWait, myCallback) {
-    setTimeout(function () {
-        postData(myChannelName, myData, myCallback);
-    }, msWait);
-}
-exports.postDataAndWait = postDataAndWait;
 
 // Returns GET response in callback
 var postDataAndConfirmContentType = function(myChannelName, myContentType, myCallback) {
@@ -360,6 +355,10 @@ exports.getLatestUriFromChannel = getLatestUriFromChannel;
 var getListOfLatestUrisFromChannel = function(reqLength, myChannelName, myCallback){
     var allUris = [];
 
+    console.log('In getListofLatestUrisFromChannel...');
+    console.log('reqLength: '+ reqLength);
+    console.log('myChannelName: '+ myChannelName);
+
     if (reqLength < 2) {
         reqLength = 2;
     }
@@ -394,3 +393,11 @@ var getListOfLatestUrisFromChannel = function(reqLength, myChannelName, myCallba
     });
 };
 exports.getListOfLatestUrisFromChannel = getListOfLatestUrisFromChannel;
+
+// writes to console log if doDebug is true *or* if only one param (msg) is provided
+var debugLog = function(msg, doDebug) {
+    if ((arguments.length < 2) || (true === doDebug))  {
+        console.log(msg);
+    }
+};
+exports.debugLog = debugLog;
