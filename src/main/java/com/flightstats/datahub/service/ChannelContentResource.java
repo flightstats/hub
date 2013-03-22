@@ -47,29 +47,29 @@ public class ChannelContentResource {
 		if (!optionalResult.isPresent()) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
-		LinkedDataHubCompositeValue columnValue = optionalResult.get();
+		LinkedDataHubCompositeValue compositeValue = optionalResult.get();
 		Response.ResponseBuilder builder = Response.status(Response.Status.OK);
 
-		String contentType = columnValue.getContentType();
+		String contentType = compositeValue.getContentType();
 		// Only if we had a content type stored with the data do we specify one here.
 		// If unspecified, the framework will default to application/octet-stream
 		if (!isNullOrEmpty(contentType)) {
 			builder.type(contentType);
 		}
-		builder.entity(columnValue.getData());
+		builder.entity(compositeValue.getData());
 
 		builder.header(CREATION_DATE_HEADER.getHeaderName(), dateTimeFormatter.print(new DateTime(key.getDate())));
-		addPreviousLink(columnValue, builder);
-		addNextLink(columnValue, builder);
+		addPreviousLink(compositeValue, builder);
+		addNextLink(compositeValue, builder);
 		return builder.build();
 	}
 
-	private void addPreviousLink(LinkedDataHubCompositeValue columnValue, Response.ResponseBuilder builder) {
-		addLink(builder, "previous", columnValue.getPrevious());
+	private void addPreviousLink(LinkedDataHubCompositeValue compositeValue, Response.ResponseBuilder builder) {
+		addLink(builder, "previous", compositeValue.getPrevious());
 	}
 
-	private void addNextLink(LinkedDataHubCompositeValue columnValue, Response.ResponseBuilder builder) {
-		addLink(builder, "next", columnValue.getNext());
+	private void addNextLink(LinkedDataHubCompositeValue compositeValue, Response.ResponseBuilder builder) {
+		addLink(builder, "next", compositeValue.getNext());
 	}
 
 	private void addLink(Response.ResponseBuilder builder, String type, Optional<DataHubKey> key) {
