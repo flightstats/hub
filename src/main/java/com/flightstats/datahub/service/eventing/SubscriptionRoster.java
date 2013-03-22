@@ -7,8 +7,6 @@ import com.google.common.collect.Multimaps;
 
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import static com.google.common.collect.Lists.newArrayList;
 
@@ -25,8 +23,7 @@ public class SubscriptionRoster {
 							}));
 
 	public WebSocketEventSubscription subscribe(String channelName, Consumer<URI> consumer) {
-		BlockingQueue<WebsocketEvent> queue = new LinkedBlockingQueue<>();
-		WebSocketEventSubscription subscription = new WebSocketEventSubscription(consumer, queue);
+		WebSocketEventSubscription subscription = new WebSocketEventSubscription(consumer);
 		channelSubscribers.put(channelName, subscription);
 		return subscription;
 	}

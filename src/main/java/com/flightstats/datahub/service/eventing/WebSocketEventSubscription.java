@@ -1,12 +1,20 @@
 package com.flightstats.datahub.service.eventing;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.net.URI;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 class WebSocketEventSubscription {
 	private final Consumer<URI> consumer;
 	private final BlockingQueue<WebsocketEvent> queue;
 
+	WebSocketEventSubscription(Consumer<URI> consumer) {
+		this(consumer, new LinkedBlockingQueue<WebsocketEvent>());
+	}
+
+	@VisibleForTesting
 	WebSocketEventSubscription(Consumer<URI> consumer, BlockingQueue<WebsocketEvent> queue) {
 		this.consumer = consumer;
 		this.queue = queue;
