@@ -9,9 +9,9 @@ import org.junit.Test;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.concurrent.BlockingQueue;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class DataHubWebSocketTest {
@@ -51,12 +51,22 @@ public class DataHubWebSocketTest {
 
 	@Test
 	public void testOnDisconnect() throws Exception {
-		SubscriptionRoster subscriptions = new SubscriptionRoster();
+		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
+
 		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions);
 		testClass.onConnect(session);
-		assertEquals(1, subscriptions.getSubscribers(CHANNEL_NAME).size());
+		BlockingQueue<WebsocketEvent> queue = mock(BlockingQueue.class);
+		WebSocketEventSubscription subscriber = new WebSocketEventSubscription(null, queue);
+
+		when(subscriptions.getSubscribers(CHANNEL_NAME)).thenReturn(Arrays.asList(subscriber));
+		when(subscriptions.findSubscriptionForConsumer(eq(CHANNEL_NAME), any(Consumer.class))).thenReturn(Optional.of(subscriber));
+
+		WebSocketEventSubscription subscription = subscriptions.getSubscribers(CHANNEL_NAME).iterator().next();
+
 		testClass.onDisconnect(99, "spoon");
-		assertTrue(subscriptions.getSubscribers(CHANNEL_NAME).isEmpty());
+
+		verify(subscriptions).unsubscribe(CHANNEL_NAME, subscription);
+		verify(queue).add(WebsocketEvent.SHUTDOWN);
 	}
 
 	@Test
