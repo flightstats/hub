@@ -18,13 +18,13 @@ var async = require('async');
 var fs = require('fs');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('.././js_testing_utils/randomUtils.js');
+var testRandom = require('../../../../../.././myjslib/randomUtils.js');
 
 // DH Content Types
-var appContentTypes = require('.././js_testing_utils/contentTypes.js').applicationTypes;
-var imageContentTypes = require('.././js_testing_utils/contentTypes.js').imageTypes;
-var messageContentTypes = require('.././js_testing_utils/contentTypes.js').messageTypes;
-var textContentTypes = require('.././js_testing_utils/contentTypes.js').textTypes;
+var appContentTypes = require('../../../../../.././myjslib/contentTypes.js').applicationTypes;
+var imageContentTypes = require('../../../../../.././myjslib/contentTypes.js').imageTypes;
+var messageContentTypes = require('../../../../../.././myjslib/contentTypes.js').messageTypes;
+var textContentTypes = require('../../../../../.././myjslib/contentTypes.js').textTypes;
 
 var URL_ROOT = dhh.URL_ROOT;
 
