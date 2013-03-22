@@ -12,10 +12,10 @@ public class JettyWebSocketServletTest {
 	@Test
 	public void testConfigure() throws Exception {
 		// This test is admittedly a tad goofy, but just checking in on the jetty APIs
-		SubscriptionDispatcher dispatcher = mock(SubscriptionDispatcher.class);
+		SubscriptionRoster subscriptions = new SubscriptionRoster();
 		WebSocketServletFactory factory = mock(WebSocketServletFactory.class);
 
-		JettyWebSocketServlet testClass = new JettyWebSocketServlet(dispatcher);
+		JettyWebSocketServlet testClass = new JettyWebSocketServlet(subscriptions);
 
 		testClass.configure(factory);
 

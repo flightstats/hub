@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
+import com.google.common.base.Optional;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
@@ -8,6 +9,8 @@ import org.junit.Test;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.concurrent.BlockingQueue;
 
 import static org.mockito.Mockito.*;
 
@@ -36,27 +39,44 @@ public class DataHubWebSocketTest {
 
 	@Test
 	public void testOnConnect() throws Exception {
-		Consumer<URI> expectedSink = new JettyWebsocketEndpointSender(remoteAddress.toString(), remoteEndpoint);
-		SubscriptionDispatcher dispatcher = mock(SubscriptionDispatcher.class);
+		Consumer<URI> expectedConsumer = new JettyWebsocketEndpointSender(remoteAddress.toString(), remoteEndpoint);
+		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
 
-		DataHubWebSocket testClass = new DataHubWebSocket(dispatcher);
+		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions);
 
 		testClass.onConnect(session);
 
-		verify(dispatcher).subscribe(CHANNEL_NAME, expectedSink);
+		verify(subscriptions).subscribe(CHANNEL_NAME, expectedConsumer);
 	}
 
 	@Test
 	public void testOnDisconnect() throws Exception {
-		Consumer<URI> expectedSink = new JettyWebsocketEndpointSender(remoteAddress.toString(), remoteEndpoint);
-		SubscriptionDispatcher dispatcher = mock(SubscriptionDispatcher.class);
+		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
 
-		DataHubWebSocket testClass = new DataHubWebSocket(dispatcher);
+		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions);
+		testClass.onConnect(session);
+		BlockingQueue<WebsocketEvent> queue = mock(BlockingQueue.class);
+		WebSocketEventSubscription subscriber = new WebSocketEventSubscription(null, queue);
 
-		testClass.onConnect(session);    //Required because the websocket is stateful
+		when(subscriptions.getSubscribers(CHANNEL_NAME)).thenReturn(Arrays.asList(subscriber));
+		when(subscriptions.findSubscriptionForConsumer(eq(CHANNEL_NAME), any(Consumer.class))).thenReturn(Optional.of(subscriber));
+
+		WebSocketEventSubscription subscription = subscriptions.getSubscribers(CHANNEL_NAME).iterator().next();
+
 		testClass.onDisconnect(99, "spoon");
 
-		verify(dispatcher).unsubscribe(CHANNEL_NAME, expectedSink);
+		verify(subscriptions).unsubscribe(CHANNEL_NAME, subscription);
+		verify(queue).add(WebsocketEvent.SHUTDOWN);
+	}
+
+	@Test
+	public void testOnDisconnectCantFindSubscription() throws Exception {
+		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
+		when(subscriptions.findSubscriptionForConsumer(anyString(), any(Consumer.class))).thenReturn(Optional.<WebSocketEventSubscription>absent());
+		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions);
+		testClass.onDisconnect(99, "spoon");
+		verify(subscriptions, never()).unsubscribe(anyString(), any(WebSocketEventSubscription.class));
+
 	}
 
 }

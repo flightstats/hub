@@ -11,6 +11,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -21,13 +23,15 @@ import static com.flightstats.rest.Linked.linked;
 public class SingleChannelResource {
 
 	private final ChannelDao channelDao;
-	private final SubscriptionDispatcher subscriptionDispatcher;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
+	private final ChannelLockExecutor channelLockExecutor;
+	private final SubscriptionDispatcher subscriptionDispatcher;
 
 	@Inject
-	public SingleChannelResource(ChannelDao channelDao, SubscriptionDispatcher subscriptionDispatcher, ChannelHypermediaLinkBuilder linkBuilder) {
+	public SingleChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, ChannelLockExecutor channelLockExecutor, SubscriptionDispatcher subscriptionDispatcher) {
 		this.channelDao = channelDao;
 		this.linkBuilder = linkBuilder;
+		this.channelLockExecutor = channelLockExecutor;
 		this.subscriptionDispatcher = subscriptionDispatcher;
 	}
 
@@ -48,15 +52,16 @@ public class SingleChannelResource {
 
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response insertValue(@HeaderParam("Content-Type") String contentType, @PathParam(
-			"channelName") String channelName, byte[] data) {
+	public Response insertValue(@HeaderParam("Content-Type") final String contentType, @PathParam(
+			"channelName") final String channelName, final byte[] data) throws ExecutionException, InterruptedException {
 		if (!channelDao.channelExists(channelName)) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
-		ValueInsertionResult insertionResult = channelDao.insert(channelName, contentType, data);
+
+		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelName, contentType, data);
+		ValueInsertionResult insertionResult = channelLockExecutor.execute(channelName, task);
 
 		URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey());
-		subscriptionDispatcher.dispatch(channelName, payloadUri);
 
 		Linked<ValueInsertionResult> linkedResult = linked(insertionResult)
 				.withLink("channel", linkBuilder.buildChannelUri(channelName))
@@ -69,4 +74,23 @@ public class SingleChannelResource {
 		return builder.build();
 	}
 
+	private class WriteAndDispatch implements Callable<ValueInsertionResult> {
+		private final String channelName;
+		private final String contentType;
+		private final byte[] data;
+
+		public WriteAndDispatch(String channelName, String contentType, byte[] data) {
+			this.channelName = channelName;
+			this.contentType = contentType;
+			this.data = data;
+		}
+
+		@Override
+		public ValueInsertionResult call() throws Exception {
+			ValueInsertionResult result = channelDao.insert(channelName, contentType, data);
+			URI payloadUri = linkBuilder.buildItemUri(result.getKey());
+			subscriptionDispatcher.dispatch(channelName, payloadUri);
+			return result;
+		}
+	}
 }
