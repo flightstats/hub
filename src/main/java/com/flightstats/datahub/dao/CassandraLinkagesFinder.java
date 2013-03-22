@@ -4,7 +4,7 @@ import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -14,6 +14,7 @@ import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.query.QueryResult;
 
+import java.util.Comparator;
 import java.util.List;
 
 public class CassandraLinkagesFinder {
@@ -53,15 +54,13 @@ public class CassandraLinkagesFinder {
 					 .execute();
 	}
 
-	private Optional<DataHubKey> findFirstDifferentResult(DataHubKey inputKey, QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult, boolean reversed) {
+	private Optional<DataHubKey> findFirstDifferentResult(DataHubKey inputKey, QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult, final boolean reversed) {
 		OrderedRows<String, String, DataHubCompositeValue> rows = queryResult.get();
 
-		List<Row<String, String, DataHubCompositeValue>> rowsList = rows.getList();
-		if (reversed) {
-			rowsList = Lists.reverse(rowsList);
-		}
+		List<Row<String, String, DataHubCompositeValue>> sortedRows = getSortedRows(reversed, rows.getList());
+
 		String inputKeyString = keyRenderer.keyToString(inputKey);
-		for (Row<String, String, DataHubCompositeValue> row : rowsList) {
+		for (Row<String, String, DataHubCompositeValue> row : sortedRows) {
 			ColumnSlice<String, DataHubCompositeValue> columnSlice = row.getColumnSlice();
 			Optional<DataHubKey> rowResult = findItemInRow(inputKeyString, columnSlice);
 			if (rowResult.isPresent()) {
@@ -69,6 +68,18 @@ public class CassandraLinkagesFinder {
 			}
 		}
 		return Optional.absent();
+	}
+
+	private List<Row<String, String, DataHubCompositeValue>> getSortedRows(final boolean reversed, List<Row<String, String, DataHubCompositeValue>> rowsList) {
+
+		return Ordering.from(new Comparator<Row<String, String, DataHubCompositeValue>>() {
+			@Override
+			public int compare(Row<String, String, DataHubCompositeValue> o1, Row<String, String, DataHubCompositeValue> o2) {
+				String key1 = o1.getKey();
+				String key2 = o2.getKey();
+				return reversed ? key2.compareTo(key1) : key1.compareTo(key2);
+			}
+		}).sortedCopy(rowsList);
 	}
 
 	/**
