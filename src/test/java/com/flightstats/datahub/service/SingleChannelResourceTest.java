@@ -19,8 +19,7 @@ import java.util.Date;
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class SingleChannelResourceTest {
 
@@ -34,6 +33,7 @@ public class SingleChannelResourceTest {
 	private ChannelConfiguration channelConfig;
 	private DataHubKey dataHubKey;
 	private URI itemUri;
+	private ChannelLockExecutor channelLockExecutor;
 
 	@Before
 	public void setup() {
@@ -50,6 +50,7 @@ public class SingleChannelResourceTest {
 		dao = mock(ChannelDao.class);
 		subscriptionDispatcher = mock(SubscriptionDispatcher.class);
 		linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
+		channelLockExecutor = mock(ChannelLockExecutor.class);
 
 		when(urlInfo.getRequestUri()).thenReturn(requestUri);
 		when(dao.channelExists(channelName)).thenReturn(true);
@@ -67,7 +68,7 @@ public class SingleChannelResourceTest {
 		when(dao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
 		when(uriInfo.getRequestUri()).thenReturn(channelUri);
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, subscriptionDispatcher, linkBuilder);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, subscriptionDispatcher);
 
 		Linked<ChannelConfiguration> result = testClass.getChannelMetadata(channelName);
 		assertEquals(channelConfig, result.getObject());
@@ -81,7 +82,7 @@ public class SingleChannelResourceTest {
 	public void testGetChannelMetadataForUnknownChannel() throws Exception {
 		when(dao.channelExists("unknownChannel")).thenReturn(false);
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, subscriptionDispatcher, linkBuilder);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, subscriptionDispatcher);
 		try {
 			testClass.getChannelMetadata("unknownChannel");
 			fail("Should have thrown a 404");
@@ -99,9 +100,11 @@ public class SingleChannelResourceTest {
 		HalLink channelLink = new HalLink("channel", channelUri);
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey);
 
+		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor();
+
 		when(dao.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(dataHubKey));
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, subscriptionDispatcher, linkBuilder);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher);
 		Response response = testClass.insertValue(contentType, channelName, data);
 		Linked<ValueInsertionResult> result = (Linked<ValueInsertionResult>) response.getEntity();
 
@@ -113,6 +116,19 @@ public class SingleChannelResourceTest {
 	}
 
 	@Test
+	public void testInsertPerformsDispatch() throws Exception {
+		byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
+
+		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor();
+
+		when(dao.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(dataHubKey));
+
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher);
+		testClass.insertValue(contentType, channelName, data);
+		verify(subscriptionDispatcher).dispatch(channelName, itemUri);
+	}
+
+	@Test
 	public void testInsertValue_unknownChannel() throws Exception {
 		byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
 
@@ -120,7 +136,7 @@ public class SingleChannelResourceTest {
 
 		when(dao.channelExists(anyString())).thenReturn(false);
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, subscriptionDispatcher, linkBuilder);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, subscriptionDispatcher);
 		try {
 			testClass.insertValue(contentType, channelName, data);
 			fail("Should have thrown an exception.");
