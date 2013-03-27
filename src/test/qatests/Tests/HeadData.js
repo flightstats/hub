@@ -7,8 +7,8 @@ var async = require('async');
 var _ = require('lodash');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('../../../../../.././myjslib/randomUtils.js');
-var genUtils = require('../../../../../.././myjslib/genericUtils.js');
+var testRandom = require('../randomUtils.js');
+var genUtils = require('../genericUtils.js');
 
 var URL_ROOT = dhh.URL_ROOT;
 
