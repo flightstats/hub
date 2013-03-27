@@ -11,7 +11,7 @@ var WebSocket = require('ws');
 
 
 var dhh = require('../DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('../../../../../.././myjslib/randomUtils.js');
+var testRandom = require('../randomUtils.js');
 var WAIT_FOR_CHANNEL_RESPONSE_MS = 3000;
 
 var URL_ROOT = dhh.URL_ROOT;

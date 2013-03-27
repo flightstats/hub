@@ -19,7 +19,7 @@ var http = require('http');
 var ws = require('ws');
 
 
-var testRandom = require('../../../../../.././myjslib/randomUtils.js');
+var testRandom = require('../randomUtils.js');
 
 // replacing these with the HTTPresponses object below
 /*
