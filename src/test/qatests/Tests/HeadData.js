@@ -32,7 +32,7 @@ describe('HEAD on data tests:', function() {
         channelName = dhh.makeRandomChannelName();
         agent = superagent.agent();
         dhh.makeChannel(channelName, function(res){
-            if ((res.error) || (!dhh.isHTTPSuccess(res.status))) {
+            if ((res.error) || (!genUtils.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             };
             console.log('Main test channel:'+ channelName);
@@ -40,27 +40,27 @@ describe('HEAD on data tests:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(channelName, function(res) {
-                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                        expect(genUtils.isHTTPSuccess(res.status)).to.equal(true);
                         callback(null, null);
                     });
                 },
                 function(callback){
                     dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                        expect(genUtils.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
                         callback(null,null);
                     });
                 },
                 function(callback){
                     dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                        expect(genUtils.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
                         callback(null,null);
                     });
                 },
                 function(callback){
                     dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                        expect(genUtils.isHTTPSuccess(res.status)).to.equal(true);
                         thirdValueUri = myUri;
 
                         callback(null, null);
@@ -110,7 +110,7 @@ describe('HEAD on data tests:', function() {
 
         superagent.agent().head(uri)
             .end(function(err, res) {
-                expect(dhh.isHTTPError(res.status)).to.equal(true);
+                expect(genUtils.isHTTPError(res.status)).to.equal(true);
                 done();
             });
     });

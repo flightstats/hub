@@ -12,6 +12,8 @@ var WebSocket = require('ws');
 
 var dhh = require('../DH_test_helpers/DHtesthelpers.js');
 var testRandom = require('../randomUtils.js');
+var gu = require('../genericUtils.js');
+
 var WAIT_FOR_CHANNEL_RESPONSE_MS = 3000;
 
 var URL_ROOT = dhh.URL_ROOT;
@@ -40,7 +42,7 @@ describe('Channel Subscription:', function() {
         channelName = dhh.makeRandomChannelName();
 
         dhh.makeChannel(channelName, function(res){
-            if ((res.error) || (!dhh.isHTTPSuccess(res.status))) {
+            if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             }
             myCallback();
@@ -56,7 +58,7 @@ describe('Channel Subscription:', function() {
             async.parallel([
                 function(callback){
                     dhh.postData(channelName, testRandom.randomString(50), function(res, uri) {
-                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         dhh.debugLog('Posted first value ', DEBUG);
                         uri1 = uri;
                         callback(null, null);
@@ -64,7 +66,7 @@ describe('Channel Subscription:', function() {
                 },
                 function(callback){
                     dhh.postData(channelName, testRandom.randomString(50), function(res, uri) {
-                        expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         dhh.debugLog('Posted second value ', DEBUG);
                         uri2 = uri;
                         callback(null, null);
