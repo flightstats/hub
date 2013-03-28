@@ -19,7 +19,7 @@ buildscript {
 repositories {
     repositories {
         maven {
-            url 'http://artifactory.dev.pdx.prod/artifactory/plugins-release'
+            url 'http://artifactory.office/artifactory/plugins-release'
         }
     }
 }
