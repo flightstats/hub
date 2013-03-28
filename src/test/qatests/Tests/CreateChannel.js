@@ -18,7 +18,7 @@ var async = require('async');
 var fs = require('fs');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('../../../../../.././myjslib/randomUtils.js');
+var gu = require('../genericUtils.js');
 
 
 var URL_ROOT = dhh.URL_ROOT;
@@ -34,7 +34,7 @@ describe('Create Channel: ', function(){
         channelName = dhh.makeRandomChannelName();
         agent = superagent.agent();
         dhh.makeChannel(channelName, function(res){
-            if ((res.error) || (!dhh.isHTTPSuccess(res.status))) {
+            if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 //console.log('bad things');
                 throw new Error(res.error);
             }
@@ -50,7 +50,7 @@ describe('Create Channel: ', function(){
 
     it('blank name not allowed', function(done){
         dhh.makeChannel('', function(res) {
-            expect(dhh.isHTTPError(res.status)).to.equal(true);
+            expect(gu.isHTTPError(res.status)).to.equal(true);
             done();
         });
 
@@ -61,7 +61,7 @@ describe('Create Channel: ', function(){
             .set('Content-Type', 'application/json')
             .send('')
             .end(function(err, res) {
-                expect(dhh.isHTTPError(res.status)).to.equal(true);
+                expect(gu.isHTTPError(res.status)).to.equal(true);
                 done();
             });
     });
@@ -69,7 +69,7 @@ describe('Create Channel: ', function(){
 
     it('(Acceptance) channel created', function(done){
         dhh.getChannel(channelName, function(res) {
-            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
             done();
         });
     });
@@ -78,7 +78,7 @@ describe('Create Channel: ', function(){
     // Attempting to create a channel with a name already in use will return an error. NOT IMPLEMENTED YET.
     it.skip('Error if attempting to create channel with a name already in use', function(done) {
         dhh.makeChannel(channelName, function(res) {
-            expect(dhh.isHTTPError(res.status)).to.equal(true);
+            expect(gu.isHTTPError(res.status)).to.equal(true);
             done();
         });
     });
