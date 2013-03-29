@@ -42,7 +42,7 @@ var channelName;
 
 
 
-describe.skip('Load tests - POST data:', function(){
+describe('Load tests - POST data:', function(){
 
     var loadChannels = {};
     var loadChannelKeys = [];  // channel.uri (to fetch data) and channel.data, e.g. { con {uri: x, data: y}}
@@ -66,6 +66,7 @@ describe.skip('Load tests - POST data:', function(){
 
     describe('Rapid data posting:', function() {
         // To ignore the Loadtest cases:  mocha -R nyan --timeout 4000 --grep Load --invert
+
         it('Loadtest - POST rapidly to ten different channels, then confirm data retrieved via GET is correct', function(done){
             //this.timeout(100000);
             var cnMetadata;
@@ -134,7 +135,7 @@ describe.skip('Load tests - POST data:', function(){
         });
     });
 
-    describe('Post big files:', function() {
+    describe.skip('Post big files:', function() {
         it('POST 2 MB file to channel', function(done) {
             payload = fs.readFileSync(MY_2MB_FILE, "utf8");
 
@@ -181,7 +182,7 @@ describe.skip('Load tests - POST data:', function(){
 
     describe.skip('Unsupported scenarios (tests ignored):', function() {
         // as of 3/5/2012, DH cannot handle files this big
-        it.skip('POST and retrieve 32 MB file to channel', function(done) {
+        it.skip('<UNSUPPORTED> POST and retrieve 32 MB file to channel', function(done) {
             this.timeout(480000);
             payload = fs.readFileSync(MY_32MB_FILE, "utf8");
 
@@ -193,7 +194,7 @@ describe.skip('Load tests - POST data:', function(){
         });
 
         // as of 3/5/2012, DH cannot handle files this big
-        it.skip('POST and retrieve 64 MB file to channel', function(done) {
+        it.skip('<UNSUPPORTED> POST and retrieve 64 MB file to channel', function(done) {
             this.timeout(960000);
             payload = fs.readFileSync(MY_64MB_FILE, "utf8");
 

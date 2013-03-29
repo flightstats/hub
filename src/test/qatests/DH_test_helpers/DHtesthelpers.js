@@ -18,7 +18,6 @@ var async = require('async');
 var http = require('http');
 var ws = require('ws');
 
-
 var testRandom = require('../randomUtils.js');
 var gu = require('../genericUtils.js');
 
@@ -26,7 +25,7 @@ var gu = require('../genericUtils.js');
 var URL_ROOT = 'http://datahub-01.cloud-east.dev:8080';
 exports.URL_ROOT = URL_ROOT;
 
-var DEBUG = true;
+var DEBUG = false;
 exports.DEBUG = DEBUG;
 
 var getValidationString = function (myUri, myPayload, myDone)
@@ -72,7 +71,7 @@ var createWebSocket = function(domain, channelName, onOpen) {
     var wsUri = 'ws://'+ domain +'/channel/'+ channelName +'/ws';
     var myWs;
 
-    console.log('Trying uri: '+ wsUri);
+    debugLog('Trying uri: '+ wsUri, DEBUG);
 
     myWs = new ws(wsUri);
 
@@ -82,6 +81,45 @@ var createWebSocket = function(domain, channelName, onOpen) {
     return myWs;
 }
 exports.createWebSocket = createWebSocket;
+
+// Wrapper for websocket to more easily support tests with multiple sockets.
+//      Yes, I know it's too-tightly coupled with the test code.
+//
+// domain = domain:port for the datahub, e.g., datahub-01.cloud-east.dev:8080
+// channel = name of channel in the datahub
+// socketName = arbitrary name to help identify the socket
+// onOpenCB = callback to call when the 'open' event is called on this socket
+// responseQueue = where the message is stuffed when the 'message' event is called on this socket
+
+function WSWrapper(domain, channel, socketName, onOpenCB) {
+    this.name = socketName;
+    this.responseQueue = [];
+    this.ws = null;
+    this.channel = channel;
+    this.domain = domain;
+    var _self = this;
+
+    this.onMessage = function(data, flags) {
+        debugLog('MESSAGE EVENT at '+ Date.now(), DEBUG);
+        debugLog('Readystate is '+ _self.ws.readyState, DEBUG);
+         _self.responseQueue.push(data);
+    };
+
+    this.onOpen = function() {
+        debugLog('OPEN EVENT at '+ Date.now(), DEBUG);
+        debugLog('readystate: '+ _self.ws.readyState, DEBUG);
+        onOpenCB();
+    };
+
+    this.createSocket = function() {
+        if (DEBUG) {
+            console.dir(this);
+        }
+        this.ws = createWebSocket(this.domain, this.channel, this.onOpen);
+        this.ws.on('message', this.onMessage);
+    };
+};
+exports.WSWrapper = WSWrapper;
 
 // returns the POST response
 var makeChannel = function(myChannelName, myCallback) {
@@ -355,9 +393,9 @@ exports.getLatestUriFromChannel = getLatestUriFromChannel;
 var getListOfLatestUrisFromChannel = function(reqLength, myChannelName, myCallback){
     var allUris = [];
 
-    console.log('In getListofLatestUrisFromChannel...');
-    console.log('reqLength: '+ reqLength);
-    console.log('myChannelName: '+ myChannelName);
+    debugLog('In getListofLatestUrisFromChannel...', DEBUG);
+    debugLog('reqLength: '+ reqLength, DEBUG);
+    debugLog('myChannelName: '+ myChannelName, DEBUG);
 
     if (reqLength < 2) {
         reqLength = 2;

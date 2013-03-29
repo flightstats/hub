@@ -76,7 +76,7 @@ describe('Create Channel: ', function(){
 
     // https://www.pivotaltracker.com/story/show/44113267
     // Attempting to create a channel with a name already in use will return an error. NOT IMPLEMENTED YET.
-    it.skip('Error if attempting to create channel with a name already in use', function(done) {
+    it.skip('<CODE NOT IMPLEMENTED> Error if attempting to create channel with a name already in use', function(done) {
         dhh.makeChannel(channelName, function(res) {
             expect(gu.isHTTPError(res.status)).to.equal(true);
             done();
