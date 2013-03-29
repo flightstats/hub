@@ -19,7 +19,7 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 3000;
 var URL_ROOT = dhh.URL_ROOT;
 //var DOMAIN = '10.250.220.197:8080';
 var DOMAIN = 'datahub-01.cloud-east.dev:8080';
-var DEBUG = true;
+var DEBUG = dhh.DEBUG;
 
 // Test variables that are regularly overwritten
 var agent, payload, req, uri;
@@ -49,8 +49,11 @@ describe('Channel Subscription:', function() {
         });
     });
 
-    it('Acceptance: subscription works and updates are sent in order', function(done) {
-        var responseQueue = [], ws;
+
+
+
+    it('(alt) Acceptance: subscription works and updates are sent in order', function(done) {
+        var responseQueue = [], socket;
         var uri1, uri2; // remember, the numbers do NOT necessarily reflect the order of creation
 
         var mainTest = function() {
@@ -84,37 +87,26 @@ describe('Channel Subscription:', function() {
                         // Wait for some period of time for both values
                         var endWait = Date.now() + (2 * WAIT_FOR_CHANNEL_RESPONSE_MS);
 
-                        while((responseQueue.length < 2) && (Date.now() < endWait)) {
+                        while((socket.responseQueue.length < 2) && (Date.now() < endWait)) {
                             setTimeout(function () {
                                 // pass
                             }, 100)
                         };
 
-                        expect(responseQueue.length).to.equal(2);
-                        expect(responseQueue[0]).to.equal(firstUri);
-                        expect(responseQueue[1]).to.equal(latestUri);
+                        expect(socket.responseQueue.length).to.equal(2);
+                        expect(socket.responseQueue[0]).to.equal(firstUri);
+                        expect(socket.responseQueue[1]).to.equal(latestUri);
 
-                        console.log('final socket state is '+ ws.readyState);
+                        dhh.debugLog('final socket state is '+ socket.ws.readyState, DEBUG);
 
-                        ws.close();
+                        socket.ws.close();
                         done();
                     });
                 });
         };
 
-        var onOpen = function() {
-            console.log('OPEN EVENT at '+ Date.now());
-            console.log('readystate: '+ ws.readyState)   ;
-            mainTest();
-        };
-
-        ws = dhh.createWebSocket(DOMAIN, channelName, onOpen);
-
-        ws.on('message', function(data, flags) {
-            console.log('MESSAGE EVENT at '+ Date.now());
-            dhh.debugLog('Readystate is '+ ws.readyState, DEBUG);
-            responseQueue.push(data);
-        });
+        socket =  new dhh.WSWrapper(DOMAIN, channelName, 'ws_01', mainTest);
+        socket.createSocket();
     });
 
     // Note, this test also ensures that all updates are correctly saved in the DH *and* that their
@@ -192,19 +184,182 @@ describe('Channel Subscription:', function() {
         //process.nextTick();
     });
 
-    it.skip('Multiple agents on a channel can be supported.', function(done) {
+    it('Multiple agents on a channel can be supported.', function(done) {
+        // Channel created
+        // create twelve agents that subscribe to the channel
+        // channel pumps out three bits of data
+        // each channel receives data in correct order
+        var sockets = [],
+            numAgents = 12,
+            numReadySockets = 0,
+            uri1,   // remember, the numbers do NOT necessarily reflect the order of creation
+            uri2;
+
+        var mainTest = function() {
+            // post values to channel
+            async.parallel([
+                function(callback){
+                    dhh.postData(channelName, testRandom.randomString(50), function(res, uri) {
+                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                        dhh.debugLog('Posted first value ', DEBUG);
+                        uri1 = uri;
+                        callback(null, null);
+                    });
+                },
+                function(callback){
+                    dhh.postData(channelName, testRandom.randomString(50), function(res, uri) {
+                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                        dhh.debugLog('Posted second value ', DEBUG);
+                        uri2 = uri;
+                        callback(null, null);
+                    });
+                }
+            ],
+                function(e, r){
+                    dhh.debugLog('In final part of async ', DEBUG);
+                    dhh.getLatestUriFromChannel(channelName, function(latestUri) {
+                        var firstUri = (latestUri == uri1) ? uri2 : uri1;
+
+                        //console.log('First uri: '+ firstUri);
+                        //console.log('Second uri: '+ latestUri);
+
+                        // Wait for some period of time for both values
+                        var endWait = Date.now() + (2 * WAIT_FOR_CHANNEL_RESPONSE_MS);
+
+                        while((numFullSockets() < numAgents) && (Date.now() < endWait)) {
+                            setTimeout(function () {
+                                // pass
+                            }, 100)
+                        };
+
+                        expect(numFullSockets()).to.equal(numAgents);
+
+                        for (var i = 0; i < sockets.length; i += 1) {
+                            var thisSocket = sockets[i];
+
+                            expect(thisSocket.responseQueue.length).to.equal(2);
+                            expect(thisSocket.responseQueue[0]).to.equal(firstUri);
+                            expect(thisSocket.responseQueue[1]).to.equal(latestUri);
+
+                            dhh.debugLog('Final socket state for socket '+ thisSocket.name +' is '+ socket.ws.readyState, DEBUG);
+
+                            thisSocket.ws.close();
+                        }
+
+                        done();
+                    });
+                });
+        };
+
+        // Called when each socket is ready.
+        var newSocketIsReady = function() {
+            numReadySockets += 1;
+            if (numAgents === numReadySockets) {
+                mainTest();
+            }
+        };
+
+        // Returns the number of sockets that received the expected number of messages
+        var numFullSockets = function() {
+            var full = 0;
+
+            for (var i = 0; i < sockets.length; i += 1) {
+                if (2 === sockets[i].responseQueue.length) {
+                    full += 1;
+                }
+            }
+
+            return full;
+        }
+
+        for (var i = 0; i < numAgents; i += 1) {
+            var socket =  new dhh.WSWrapper(DOMAIN, channelName, 'ws_'+ i, newSocketIsReady);
+            socket.createSocket();
+            sockets[i] = socket;
+        }
+    });
+
+    it.skip('<NOT WRITTEN> Server recognizes when agent disconnects (in what time frame?)', function(done) {
         done();
     });
 
-    it.skip('Server recognizes when agent disconnects (in what time frame?)', function(done) {
+    it.skip('<NOT WRITTEN> Disconnect and reconnect is supported.', function(done) {
         done();
     });
 
-    it.skip('Disconnect and reconnect is supported.', function(done) {
+    it.skip('<NOT WRITTEN> Multiple agents on multiple channels is handled appropriately.', function(done) {
         done();
     });
 
-    it.skip('Multiple agents on multiple channels is handled appropriately.', function(done) {
-        done();
+    // ***********  DEPRECATED TESTS **************** //
+    /*
+    it('Acceptance: subscription works and updates are sent in order', function(done) {
+        var responseQueue = [], ws;
+        var uri1, uri2; // remember, the numbers do NOT necessarily reflect the order of creation
+
+        var mainTest = function() {
+            // post values to channel
+            async.parallel([
+                function(callback){
+                    dhh.postData(channelName, testRandom.randomString(50), function(res, uri) {
+                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                        dhh.debugLog('Posted first value ', DEBUG);
+                        uri1 = uri;
+                        callback(null, null);
+                    });
+                },
+                function(callback){
+                    dhh.postData(channelName, testRandom.randomString(50), function(res, uri) {
+                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                        dhh.debugLog('Posted second value ', DEBUG);
+                        uri2 = uri;
+                        callback(null, null);
+                    });
+                }
+            ],
+                function(e, r){
+                    dhh.debugLog('In final part of async ', DEBUG);
+                    dhh.getLatestUriFromChannel(channelName, function(latestUri) {
+                        var firstUri = (latestUri == uri1) ? uri2 : uri1;
+
+                        //console.log('First uri: '+ firstUri);
+                        //console.log('Second uri: '+ latestUri);
+
+                        // Wait for some period of time for both values
+                        var endWait = Date.now() + (2 * WAIT_FOR_CHANNEL_RESPONSE_MS);
+
+                        while((responseQueue.length < 2) && (Date.now() < endWait)) {
+                            setTimeout(function () {
+                                // pass
+                            }, 100)
+                        };
+
+                        expect(responseQueue.length).to.equal(2);
+                        expect(responseQueue[0]).to.equal(firstUri);
+                        expect(responseQueue[1]).to.equal(latestUri);
+
+                        console.log('final socket state is '+ ws.readyState);
+
+                        ws.close();
+                        done();
+                    });
+                });
+        };
+
+        var onOpen = function() {
+            console.log('OPEN EVENT at '+ Date.now());
+            console.log('readystate: '+ ws.readyState)   ;
+            mainTest();
+        };
+
+        ws = dhh.createWebSocket(DOMAIN, channelName, onOpen);
+
+        ws.on('message', function(data, flags) {
+            console.log('MESSAGE EVENT at '+ Date.now());
+            dhh.debugLog('Readystate is '+ ws.readyState, DEBUG);
+            responseQueue.push(data);
+        });
     });
+    */
+
 });
