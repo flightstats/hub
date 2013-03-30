@@ -25,7 +25,7 @@ var gu = require('../genericUtils.js');
 var URL_ROOT = 'http://datahub-01.cloud-east.dev:8080';
 exports.URL_ROOT = URL_ROOT;
 
-var DEBUG = false;
+var DEBUG = true;
 exports.DEBUG = DEBUG;
 
 var getValidationString = function (myUri, myPayload, myDone)
