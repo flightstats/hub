@@ -105,7 +105,21 @@ public class CassandraValueReaderTest {
     }
 
     @Test
-    public void testFindLatestId_notFound() throws Exception {
+    public void testFindLatestId_channelNotFound() throws Exception {
+        String channelName = "myChan";
+
+        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+
+        when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(null);
+
+        CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
+        Optional<DataHubKey> result = testClass.findLatestId(channelName);
+
+        assertEquals(Optional.absent(), result);
+    }
+
+    @Test
+    public void testFindLatestId_lastUpdateNotFound() throws Exception {
         String channelName = "myChan";
         ChannelConfiguration config = new ChannelConfiguration(channelName, null, null);
 
@@ -117,6 +131,5 @@ public class CassandraValueReaderTest {
         Optional<DataHubKey> result = testClass.findLatestId(channelName);
 
         assertEquals(Optional.absent(), result);
-
     }
 }
