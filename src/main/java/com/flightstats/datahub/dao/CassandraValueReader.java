@@ -45,15 +45,10 @@ public class CassandraValueReader {
 
     public Optional<DataHubKey> findLatestId(String channelName) {
         ChannelConfiguration config = channelsCollection.getChannelConfiguration(channelName);
-		if ( config == null )
-		{
+		if ( config == null || config.getLastUpdateKey() == null ) {
 			return Optional.absent();
 		}
-        DataHubKey lastUpdateKey = config.getLastUpdateKey();
-        if (lastUpdateKey == null) {
-            return Optional.absent();
-        }
-        return Optional.of(lastUpdateKey);
+        return Optional.of( config.getLastUpdateKey() );
     }
 
 }
