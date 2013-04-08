@@ -325,7 +325,7 @@ describe('GET data:', function() {
         });
 
         // regression for https://www.pivotaltracker.com/story/show/47150133
-        it.only('Return 404 on Get Latest if channel does not exist', function(done) {
+        it('Return 404 on Get Latest if channel does not exist', function(done) {
             var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
 
             uri = URL_ROOT +'/channel/'+ thisChannel +'/latest';
