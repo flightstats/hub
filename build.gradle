@@ -127,6 +127,7 @@ def runExternal(commandline) {
 }
 
 task deployDev << {
+    runExternal("${projectDir}/bin/restart-dev-vpc.sh")
     runExternal("bin/deploy-to-dev.sh datahub-01.cloud-east.dev")
 }
 
