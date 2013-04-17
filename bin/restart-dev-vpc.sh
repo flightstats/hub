@@ -7,30 +7,33 @@
 URL="http://deploy.util.hq.prod:8082/"
 OWNER='jason.plumb@flightstats.com'
 
-INSTANCE_IDS=( \
-	cassandra-01.i-9e3a5ded.ec2 \
-    cassandra-02.i-c0395eb3.ec2 \ 
-    cassandra-03.i-9c395eef.ec2 \
-	datahub-01.i-b4572ac4.ec2 \
+INSTANCES=( \
+	cassandra-01.i-9e3a5ded \
+    cassandra-02.i-c0395eb3 \
+    cassandra-03.i-9c395eef \
+	datahub-01.i-b4572ac4 \
 ) 
 
-for INSTANCE in ${INSTANCE_IDS[@]}; do
+for INSTANCE in ${INSTANCES[@]}; do
 	echo '-------------------------------------------------------------------'
 	HOSTNAME=`echo ${INSTANCE} | sed -e "s/\..*//"`.cloud-east.dev
+
 	echo "Checking to see if ${HOSTNAME} is alive..."
 	ping -q -c 1 -t 2 ${HOSTNAME} > /dev/null
 	if [ "$?" == "0" ]; then
 		echo ${HOSTNAME} is already running!
 	else
-		echo Resurrecting "${HOSTNAME} (instance = ${INSTANCE})"
-		curl ${URL} -d OWNER=${OWNER} -d INSTANCE_FILE=${INSTANCE}
+		INSTANCE_ID=`echo ${INSTANCE} | sed -e "s/^.*\.//"`
+		RESTART_URL="http://deploy.util.hq.prod:6543/vpc/${INSTANCE_ID}/restart"
+		echo Resurrecting "${HOSTNAME} (instance = ${INSTANCE_ID})"
+		curl -s ${RESTART_URL} &
 		echo 
 	fi
 done
 
 echo '-------------------------------------------------------------------'
 echo Waiting for all instances to be alive...
-for INSTANCE in ${INSTANCE_IDS[@]}; do
+for INSTANCE in ${INSTANCES[@]}; do
 	HOSTNAME=`echo ${INSTANCE} | sed -e "s/\..*//"`.cloud-east.dev
 	while :
 	do
