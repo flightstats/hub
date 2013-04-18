@@ -33,7 +33,7 @@ function download(url, completionHandler) {
 
 function configureFrisby() {
     frisby.globalSetup({
-        timeout: 5000
+        timeout: 10000
     });
 }
 
