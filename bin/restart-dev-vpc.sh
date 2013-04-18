@@ -6,6 +6,7 @@
 
 URL="http://deploy.util.hq.prod:8082/"
 OWNER='jason.plumb@flightstats.com'
+OS=`uname`
 
 INSTANCES=( \
 	cassandra-01.i-9e3a5ded \
@@ -14,12 +15,21 @@ INSTANCES=( \
 	datahub-01.i-b4572ac4 \
 ) 
 
+function ping_host {
+    HOSTNAME=$1
+	if [ "$OS" == "Darwin" ] ; then
+	    ping -q -c 1 -t 2 ${HOSTNAME} > /dev/null
+	else
+	    ping -q -c 1 -W 2 ${HOSTNAME} > /dev/null
+	fi
+}
+
 for INSTANCE in ${INSTANCES[@]}; do
 	echo '-------------------------------------------------------------------'
 	HOSTNAME=`echo ${INSTANCE} | sed -e "s/\..*//"`.cloud-east.dev
 
 	echo "Checking to see if ${HOSTNAME} is alive..."
-	ping -q -c 1 -t 2 ${HOSTNAME} > /dev/null
+	ping_host ${HOSTNAME}
 	if [ "$?" == "0" ]; then
 		echo ${HOSTNAME} is already running!
 	else
@@ -37,7 +47,7 @@ for INSTANCE in ${INSTANCES[@]}; do
 	HOSTNAME=`echo ${INSTANCE} | sed -e "s/\..*//"`.cloud-east.dev
 	while :
 	do
-		ping -q -c 1 -t 2 ${HOSTNAME} > /dev/null
+	    ping_host ${HOSTNAME}
 		if [ "$?" == "0" ]; then
 			echo ${HOSTNAME} is alive.
 			break
