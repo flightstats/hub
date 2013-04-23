@@ -40,7 +40,6 @@ public class CassandraChannelsCollection {
 	public ChannelConfiguration createChannel(String name) {
 		ChannelConfiguration channelConfig = new ChannelConfiguration(name, timeProvider.getDate());
 		createColumnFamilyForChannel(channelConfig);
-		//		createColumnFamilyForLastUpdateKey(channelConfig);
 		insertChannelMetadata(channelConfig);
 		return channelConfig;
 	}
