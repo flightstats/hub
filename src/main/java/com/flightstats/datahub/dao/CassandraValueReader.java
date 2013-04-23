@@ -44,10 +44,7 @@ public class CassandraValueReader {
 
 	public Optional<DataHubKey> findLatestId(String channelName) {
 		DataHubKey lastUpdatedKey = channelsCollection.getLastUpdatedKey(channelName);
-		if (lastUpdatedKey == null) {
-			return Optional.absent();
-		}
-		return Optional.of(lastUpdatedKey);
+		return Optional.fromNullable(lastUpdatedKey);
 	}
 
 }
