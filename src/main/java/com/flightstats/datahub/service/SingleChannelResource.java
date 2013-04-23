@@ -2,15 +2,18 @@ package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.service.eventing.SubscriptionDispatcher;
 import com.flightstats.rest.Linked;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.Date;
 import java.util.concurrent.Callable;
 
 import static com.flightstats.rest.Linked.linked;
@@ -36,16 +39,27 @@ public class SingleChannelResource {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Linked<ChannelConfiguration> getChannelMetadata(@PathParam("channelName") String channelName) {
+	public Linked<MetadataResponse> getChannelMetadata(@PathParam("channelName") String channelName) {
 		if (!channelDao.channelExists(channelName)) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
+
 		ChannelConfiguration config = channelDao.getChannelConfiguration(channelName);
-		return linked(config)
+		Date lastUpdateDate = getLastUpdateDate(channelName);
+		MetadataResponse response = new MetadataResponse(config, lastUpdateDate);
+		return linked(response)
 				.withLink("self", linkBuilder.buildChannelUri(config))
-				.withLink("latest", linkBuilder.buildLatestUri(config))
-				.withLink("ws", linkBuilder.buildWsLinkFor(config))
+				.withLink("latest", linkBuilder.buildLatestUri())
+				.withLink("ws", linkBuilder.buildWsLinkFor())
 				.build();
+	}
+
+	private Date getLastUpdateDate(String channelName) {
+		Optional<DataHubKey> latestId = channelDao.findLatestId(channelName);
+		if (!latestId.isPresent()) {
+			return null;
+		}
+		return latestId.get().getDate();
 	}
 
 
