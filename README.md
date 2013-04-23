@@ -85,7 +85,39 @@ On success: `HTTP/200 OK`
 }
 ```
 
+Here's how you can do this with curl:
+
+`curl http://datahub:8080/channel/stumptown`
+
 ## insert content into channel
+
+To post data to a channel, issue a POST on the channel's `self` URI and specify the appropriate
+content-type header (all content types should be supported):
+
+```
+POST http://localhost:8080/channel/stumptown
+Content-type: text/plain`
+Accept: application/json`
+___body_contains_arbitrary_content
+```
+
+On success: `HTTP/200 OK`
+`Location: http://localhost:8080/channel/stumptown/00002FHOK8JMK000`
+
+```json
+{
+  "_links" : {
+    "channel" : {
+      "href" : "http://localhost:8080/channel/stumptown"
+    },
+    "self" : {
+      "href" : "http://localhost:8080/channel/stumptown/00002FHOK8JMK000"
+    }
+  },
+  "id" : "00002FHOK8JMK000",
+  "timestamp" : "2013-04-23T20:42:31.146Z"
+}
+```
 
 ## fetch content from channel
 
