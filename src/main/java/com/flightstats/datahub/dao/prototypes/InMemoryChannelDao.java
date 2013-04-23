@@ -64,21 +64,28 @@ public class InMemoryChannelDao implements ChannelDao {
 
             DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, data);
             LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, Optional.fromNullable(oldLastKey), Optional.<DataHubKey>absent());
+
+            //note: the order of operations here is actually fairly significant, to avoid races, so I'm calling it out explicitly with comments.
             //first put the actual value in.
             channelValues.put(newKey, newLinkedValue);
             //then link the old previous to the new value
-            if (oldLastKey != null) {
-                LinkedDataHubCompositeValue previousLinkedValue = channelValues.getIfPresent(oldLastKey);
-                //in case the value has expired.
-                if (previousLinkedValue != null) {
-                    channelValues.put(oldLastKey, new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(), Optional.of(newKey)));
-                }
-            }
+            linkOldPreviousToNew(oldLastKey, newKey);
             //finally, make it the latest
             latestPerChannel.put(channelName, newKey);
+
             return new ValueInsertionResult(newKey);
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void linkOldPreviousToNew(DataHubKey oldLastKey, DataHubKey newKey) {
+        if (oldLastKey != null) {
+            LinkedDataHubCompositeValue previousLinkedValue = channelValues.getIfPresent(oldLastKey);
+            //in case the value has expired.
+            if (previousLinkedValue != null) {
+                channelValues.put(oldLastKey, new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(), Optional.of(newKey)));
+            }
         }
     }
 
