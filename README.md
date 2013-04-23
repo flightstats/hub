@@ -31,7 +31,7 @@ In development, it is actually at: http://datahub-01.cloud-east.dev:8080
 }
 ```
 
-On success:  `HTTP/200 OK`
+On success:  `HTTP/1.1 200 OK`
 
 ```json
 {
@@ -64,7 +64,7 @@ To fetch metadata about a channel, do a GET on its `self` link:
 
 `GET http://datahub:8080/channel/stumptown`
 
-On success: `HTTP/200 OK`
+On success: `HTTP/1.1 200 OK`
 
 ```json
 {
@@ -95,23 +95,23 @@ To post data to a channel, issue a POST on the channel's `self` URI and specify 
 content-type header (all content types should be supported):
 
 ```
-POST http://localhost:8080/channel/stumptown
-Content-type: text/plain`
-Accept: application/json`
+POST http://datahub:8080/channel/stumptown
+Content-type: text/plain
+Accept: application/json
 ___body_contains_arbitrary_content
 ```
 
-On success: `HTTP/200 OK`
-`Location: http://localhost:8080/channel/stumptown/00002FHOK8JMK000`
+On success: `HTTP/1.1 200 OK`
+`Location: http://datahub:8080/channel/stumptown/00002FHOK8JMK000`
 
 ```json
 {
   "_links" : {
     "channel" : {
-      "href" : "http://localhost:8080/channel/stumptown"
+      "href" : "http://datahub:8080/channel/stumptown"
     },
     "self" : {
-      "href" : "http://localhost:8080/channel/stumptown/00002FHOK8JMK000"
+      "href" : "http://datahub:8080/channel/stumptown/00002FHOK8JMK000"
     }
   },
   "id" : "00002FHOK8JMK000",
@@ -119,7 +119,19 @@ On success: `HTTP/200 OK`
 }
 ```
 
+Here's how you could do this with curl:
+
+
+
 ## fetch content from channel
+
+To fetch content that was stored into a datahub channel, do a `GET` on the `self` link in the above response:
+
+`GET http://datahub:8080/channel/stumptown/00002FHOK8JMK000`
+
+On success: `HTTP/1.1 200 OK`
+`Content-type: whatever-you/put-in`
+`payload body is what you put in`
 
 ## fetch latest channel item
 
