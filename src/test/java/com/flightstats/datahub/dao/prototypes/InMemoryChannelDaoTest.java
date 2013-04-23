@@ -15,156 +15,165 @@ import static org.mockito.Mockito.when;
 
 public class InMemoryChannelDaoTest {
 
-    @Test
-    public void testChannelExists() throws Exception {
-        InMemoryChannelDao testClass = new InMemoryChannelDao(mock(TimeProvider.class));
-        testClass.createChannel("thechan");
-        assertTrue(testClass.channelExists("thechan"));
-        assertFalse(testClass.channelExists("nope"));
-    }
+	@Test
+	public void testChannelExists() throws Exception {
+		InMemoryChannelDao testClass = new InMemoryChannelDao(mock(TimeProvider.class));
+		testClass.createChannel("thechan");
+		assertTrue(testClass.channelExists("thechan"));
+		assertFalse(testClass.channelExists("nope"));
+	}
 
-    @Test
-    public void testCreateChannel() throws Exception {
-        Date creationDate = new Date(9999);
-        ChannelConfiguration expected = new ChannelConfiguration("foo", creationDate, null);
-        TimeProvider timeProvider = mock(TimeProvider.class);
-        when(timeProvider.getDate()).thenReturn(creationDate);
+	@Test
+	public void testCreateChannel() throws Exception {
+		Date creationDate = new Date(9999);
+		ChannelConfiguration expected = new ChannelConfiguration("foo", creationDate);
+		TimeProvider timeProvider = mock(TimeProvider.class);
+		when(timeProvider.getDate()).thenReturn(creationDate);
 
-        InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-        ChannelConfiguration result = testClass.createChannel("foo");
-        assertEquals(expected, result);
-    }
+		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
+		ChannelConfiguration result = testClass.createChannel("foo");
+		assertEquals(expected, result);
+	}
 
-    @Test
-    public void testGetChannelConfiguration() throws Exception {
-        Date creationDate = new Date(9999);
-        ChannelConfiguration expected = new ChannelConfiguration("foo", creationDate, null);
-        TimeProvider timeProvider = mock(TimeProvider.class);
-        when(timeProvider.getDate()).thenReturn(creationDate);
+	@Test
+	public void testGetChannelConfiguration() throws Exception {
+		Date creationDate = new Date(9999);
+		ChannelConfiguration expected = new ChannelConfiguration("foo", creationDate);
+		TimeProvider timeProvider = mock(TimeProvider.class);
+		when(timeProvider.getDate()).thenReturn(creationDate);
 
-        InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-        testClass.createChannel("foo");
-        assertEquals(expected, testClass.getChannelConfiguration("foo"));
-    }
+		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
+		testClass.createChannel("foo");
+		assertEquals(expected, testClass.getChannelConfiguration("foo"));
+	}
 
-    @Test
-    public void testCountChannels() throws Exception {
-        TimeProvider timeProvider = mock(TimeProvider.class);
+	@Test
+	public void testCountChannels() throws Exception {
+		TimeProvider timeProvider = mock(TimeProvider.class);
 
-        InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-        testClass.createChannel("one");
-        assertEquals(1, testClass.countChannels());
-        testClass.createChannel("two");
-        assertEquals(2, testClass.countChannels());
-    }
+		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
+		testClass.createChannel("one");
+		assertEquals(1, testClass.countChannels());
+		testClass.createChannel("two");
+		assertEquals(2, testClass.countChannels());
+	}
 
 
-    @Test
-    public void testInsert() throws Exception {
-        Date date = new Date(2345678910L);
-        DataHubKey key = new DataHubKey(date, (short) 0);
-        String channelName = "foo";
-        byte[] data = "bar".getBytes();
-        String contentType = "text/plain";
-        ValueInsertionResult expected = new ValueInsertionResult(key);
+	@Test
+	public void testFindLatestId() throws Exception {
+		InMemoryChannelDao testClass = new InMemoryChannelDao(mock(TimeProvider.class));
+		testClass.createChannel("channelName");
+		assertFalse(testClass.findLatestId("channelName").isPresent());
+		ValueInsertionResult insertionResult = testClass.insert("channelName", "text/plain", "Hello".getBytes());
+		assertEquals(insertionResult.getKey(), testClass.findLatestId("channelName").get());
+	}
 
-        TimeProvider timeProvider = mock(TimeProvider.class);
-        when(timeProvider.getDate()).thenReturn(date);
+	@Test
+	public void testInsert() throws Exception {
+		Date date = new Date(2345678910L);
+		DataHubKey key = new DataHubKey(date, (short) 0);
+		String channelName = "foo";
+		byte[] data = "bar".getBytes();
+		String contentType = "text/plain";
+		ValueInsertionResult expected = new ValueInsertionResult(key);
 
-        InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-        testClass.createChannel(channelName);
+		TimeProvider timeProvider = mock(TimeProvider.class);
+		when(timeProvider.getDate()).thenReturn(date);
 
-        ValueInsertionResult result = testClass.insert(channelName, contentType, data);
+		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
+		testClass.createChannel(channelName);
 
-        assertEquals(expected, result);
-    }
+		ValueInsertionResult result = testClass.insert(channelName, contentType, data);
 
-    @Test
-    public void testGetValue_previousAndNext() throws Exception {
-        String channelName = "cccccc";
-        Date channelCreationDate = new Date();
-        Date previousDate = new Date(9998888777665L);
-        Date date = new Date(9998888777666L);
-        Date nextDate = new Date(9998888777667L);
+		assertEquals(expected, result);
+	}
 
-        DataHubKey previousKey = new DataHubKey(previousDate, (short) 0);
-        DataHubKey key = new DataHubKey(date, (short) 1);
-        DataHubKey nextKey = new DataHubKey(nextDate, (short) 2);
-        byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
+	@Test
+	public void testGetValue_previousAndNext() throws Exception {
+		String channelName = "cccccc";
+		Date channelCreationDate = new Date();
+		Date previousDate = new Date(9998888777665L);
+		Date date = new Date(9998888777666L);
+		Date nextDate = new Date(9998888777667L);
 
-        Optional<DataHubKey> previous = Optional.of(previousKey);
-        Optional<DataHubKey> next = Optional.of(nextKey);
-        LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(new DataHubCompositeValue("text/plain", data), previous, next);
+		DataHubKey previousKey = new DataHubKey(previousDate, (short) 0);
+		DataHubKey key = new DataHubKey(date, (short) 1);
+		DataHubKey nextKey = new DataHubKey(nextDate, (short) 2);
+		byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
 
-        TimeProvider timeProvider = mock(TimeProvider.class);
-        when(timeProvider.getDate()).thenReturn(channelCreationDate, previousDate, date, nextDate);
+		Optional<DataHubKey> previous = Optional.of(previousKey);
+		Optional<DataHubKey> next = Optional.of(nextKey);
+		LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(new DataHubCompositeValue("text/plain", data), previous, next);
 
-        InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-        testClass.createChannel(channelName);
-        testClass.insert(channelName, "text/plain", "foo".getBytes());
-        testClass.insert(channelName, "text/plain", data);
-        testClass.insert(channelName, "text/plain", "bar".getBytes());
+		TimeProvider timeProvider = mock(TimeProvider.class);
+		when(timeProvider.getDate()).thenReturn(channelCreationDate, previousDate, date, nextDate);
 
-        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
-        assertEquals(expected, result.get());
-    }
+		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
+		testClass.createChannel(channelName);
+		testClass.insert(channelName, "text/plain", "foo".getBytes());
+		testClass.insert(channelName, "text/plain", data);
+		testClass.insert(channelName, "text/plain", "bar".getBytes());
 
-    @Test
-    public void testGetValue_previous() throws Exception {
-        String channelName = "cccccc";
-        Date channelCreationDate = new Date();
-        Date previousDate = new Date(9998888777665L);
-        Date date = new Date(9998888777666L);
+		Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
+		assertEquals(expected, result.get());
+	}
 
-        DataHubKey previousKey = new DataHubKey(previousDate, (short) 0);
-        DataHubKey key = new DataHubKey(date, (short) 1);
-        byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
+	@Test
+	public void testGetValue_previous() throws Exception {
+		String channelName = "cccccc";
+		Date channelCreationDate = new Date();
+		Date previousDate = new Date(9998888777665L);
+		Date date = new Date(9998888777666L);
 
-        Optional<DataHubKey> previous = Optional.of(previousKey);
-        LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(new DataHubCompositeValue("text/plain", data), previous, Optional.<DataHubKey>absent());
+		DataHubKey previousKey = new DataHubKey(previousDate, (short) 0);
+		DataHubKey key = new DataHubKey(date, (short) 1);
+		byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
 
-        TimeProvider timeProvider = mock(TimeProvider.class);
-        when(timeProvider.getDate()).thenReturn(channelCreationDate, previousDate, date);
+		Optional<DataHubKey> previous = Optional.of(previousKey);
+		LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(new DataHubCompositeValue("text/plain", data), previous, Optional.<DataHubKey>absent());
 
-        InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-        testClass.createChannel(channelName);
-        testClass.insert(channelName, "text/plain", "foo".getBytes());
-        testClass.insert(channelName, "text/plain", data);
+		TimeProvider timeProvider = mock(TimeProvider.class);
+		when(timeProvider.getDate()).thenReturn(channelCreationDate, previousDate, date);
 
-        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
-        assertEquals(expected, result.get());
-    }
+		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
+		testClass.createChannel(channelName);
+		testClass.insert(channelName, "text/plain", "foo".getBytes());
+		testClass.insert(channelName, "text/plain", data);
 
-    @Test
-    public void testGetValue() throws Exception {
-        String channelName = "cccccc";
-        Date channelCreationDate = new Date();
-        Date date = new Date(9998888777666L);
+		Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
+		assertEquals(expected, result.get());
+	}
 
-        byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
+	@Test
+	public void testGetValue() throws Exception {
+		String channelName = "cccccc";
+		Date channelCreationDate = new Date();
+		Date date = new Date(9998888777666L);
 
-        LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(new DataHubCompositeValue("text/plain", data), Optional.<DataHubKey>absent(), Optional.<DataHubKey>absent());
+		byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
 
-        TimeProvider timeProvider = mock(TimeProvider.class);
-        when(timeProvider.getDate()).thenReturn(channelCreationDate, date);
+		LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(new DataHubCompositeValue("text/plain", data), Optional.<DataHubKey>absent(), Optional.<DataHubKey>absent());
 
-        InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-        testClass.createChannel(channelName);
-        ValueInsertionResult valueInsertionResult = testClass.insert(channelName, "text/plain", data);
+		TimeProvider timeProvider = mock(TimeProvider.class);
+		when(timeProvider.getDate()).thenReturn(channelCreationDate, date);
 
-        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, valueInsertionResult.getKey());
-        assertEquals(expected, result.get());
-    }
+		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
+		testClass.createChannel(channelName);
+		ValueInsertionResult valueInsertionResult = testClass.insert(channelName, "text/plain", data);
 
-    @Test
-    public void testGetValue_notFound() throws Exception {
-        String channelName = "cccccc";
-        DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
+		Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, valueInsertionResult.getKey());
+		assertEquals(expected, result.get());
+	}
 
-        InMemoryChannelDao testClass = new InMemoryChannelDao(mock(TimeProvider.class));
+	@Test
+	public void testGetValue_notFound() throws Exception {
+		String channelName = "cccccc";
+		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
 
-        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
-        assertFalse(result.isPresent());
-    }
+		InMemoryChannelDao testClass = new InMemoryChannelDao(mock(TimeProvider.class));
+
+		Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
+		assertFalse(result.isPresent());
+	}
 
 }
