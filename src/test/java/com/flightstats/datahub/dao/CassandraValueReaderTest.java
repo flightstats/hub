@@ -21,115 +21,114 @@ import static org.mockito.Mockito.when;
 
 public class CassandraValueReaderTest {
 
-    @Test
-    public void testRead() throws Exception {
+	@Test
+	public void testRead() throws Exception {
 
-        String channelName = "spoon";
-        DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
-        byte[] data = new byte[]{'t', 'e', 's', 't', 'i', 'n'};
-        String rowKey = "the_____key___";
-        DataHubCompositeValue expected = new DataHubCompositeValue("text/plain", data);
-        DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
-        String columnName = keyRenderer.keyToString(key);
+		String channelName = "spoon";
+		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
+		byte[] data = new byte[]{'t', 'e', 's', 't', 'i', 'n'};
+		String rowKey = "the_____key___";
+		DataHubCompositeValue expected = new DataHubCompositeValue("text/plain", data);
+		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
+		String columnName = keyRenderer.keyToString(key);
 
-        CassandraConnector connector = mock(CassandraConnector.class);
-        HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
-        RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy = mock(RowKeyStrategy.class);
-        Keyspace keyspace = mock(Keyspace.class);
-        ColumnQuery<String, String, DataHubCompositeValue> query = mock(ColumnQuery.class);
-        QueryResult<HColumn<String, DataHubCompositeValue>> queryResult = mock(QueryResult.class);
-        HColumn<String, DataHubCompositeValue> column = mock(HColumn.class);
+		CassandraConnector connector = mock(CassandraConnector.class);
+		HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
+		RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy = mock(RowKeyStrategy.class);
+		Keyspace keyspace = mock(Keyspace.class);
+		ColumnQuery<String, String, DataHubCompositeValue> query = mock(ColumnQuery.class);
+		QueryResult<HColumn<String, DataHubCompositeValue>> queryResult = mock(QueryResult.class);
+		HColumn<String, DataHubCompositeValue> column = mock(HColumn.class);
 
-        when(connector.getKeyspace()).thenReturn(keyspace);
-        when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(
-                query);
-        when(rowKeyStrategy.buildKey(channelName, key)).thenReturn(rowKey);
-        when(query.setKey(rowKey)).thenReturn(query);
-        when(query.setColumnFamily(channelName)).thenReturn(query);
-        when(query.setName(columnName)).thenReturn(query);
-        when(query.execute()).thenReturn(queryResult);
-        when(queryResult.get()).thenReturn(column);
-        when(column.getValue()).thenReturn(expected);
+		when(connector.getKeyspace()).thenReturn(keyspace);
+		when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(
+				query);
+		when(rowKeyStrategy.buildKey(channelName, key)).thenReturn(rowKey);
+		when(query.setKey(rowKey)).thenReturn(query);
+		when(query.setColumnFamily(channelName)).thenReturn(query);
+		when(query.setName(columnName)).thenReturn(query);
+		when(query.execute()).thenReturn(queryResult);
+		when(queryResult.get()).thenReturn(column);
+		when(column.getValue()).thenReturn(expected);
 
-        CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, null, keyRenderer);
+		CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, null, keyRenderer);
 
-        DataHubCompositeValue result = testClass.read(channelName, key);
-        assertEquals(expected, result);
-    }
+		DataHubCompositeValue result = testClass.read(channelName, key);
+		assertEquals(expected, result);
+	}
 
-    @Test
-    public void testReadNotFound() throws Exception {
-        String channelName = "spoon";
-        DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
-        String rowKey = "the_____key___";
-        DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
-        String columnName = keyRenderer.keyToString(key);
+	@Test
+	public void testReadNotFound() throws Exception {
+		String channelName = "spoon";
+		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
+		String rowKey = "the_____key___";
+		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
+		String columnName = keyRenderer.keyToString(key);
 
-        CassandraConnector connector = mock(CassandraConnector.class);
-        HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
-        RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy = mock(RowKeyStrategy.class);
-        Keyspace keyspace = mock(Keyspace.class);
-        ColumnQuery<String, String, DataHubCompositeValue> query = mock(ColumnQuery.class);
-        QueryResult<HColumn<String, DataHubCompositeValue>> queryResult = mock(QueryResult.class);
+		CassandraConnector connector = mock(CassandraConnector.class);
+		HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
+		RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy = mock(RowKeyStrategy.class);
+		Keyspace keyspace = mock(Keyspace.class);
+		ColumnQuery<String, String, DataHubCompositeValue> query = mock(ColumnQuery.class);
+		QueryResult<HColumn<String, DataHubCompositeValue>> queryResult = mock(QueryResult.class);
 
-        when(connector.getKeyspace()).thenReturn(keyspace);
-        when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(
-                query);
-        when(rowKeyStrategy.buildKey(channelName, key)).thenReturn(rowKey);
-        when(query.setKey(rowKey)).thenReturn(query);
-        when(query.setColumnFamily(channelName)).thenReturn(query);
-        when(query.setName(columnName)).thenReturn(query);
-        when(query.execute()).thenReturn(queryResult);
-        when(queryResult.get()).thenReturn(null);
+		when(connector.getKeyspace()).thenReturn(keyspace);
+		when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(
+				query);
+		when(rowKeyStrategy.buildKey(channelName, key)).thenReturn(rowKey);
+		when(query.setKey(rowKey)).thenReturn(query);
+		when(query.setColumnFamily(channelName)).thenReturn(query);
+		when(query.setName(columnName)).thenReturn(query);
+		when(query.execute()).thenReturn(queryResult);
+		when(queryResult.get()).thenReturn(null);
 
-        CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, null, keyRenderer);
+		CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, null, keyRenderer);
 
-        DataHubCompositeValue result = testClass.read(channelName, key);
-        assertNull(result);
-    }
+		DataHubCompositeValue result = testClass.read(channelName, key);
+		assertNull(result);
+	}
 
-    @Test
-    public void testFindLatestId() throws Exception {
-        DataHubKey expected = new DataHubKey(new Date(999999999), (short) 6);
-        String channelName = "myChan";
-        ChannelConfiguration config = new ChannelConfiguration(channelName, null, expected);
+	@Test
+	public void testFindLatestId() throws Exception {
+		DataHubKey expected = new DataHubKey(new Date(999999999), (short) 6);
+		String channelName = "myChan";
 
-        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
 
-        when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(config);
+		when(channelsCollection.getLastUpdatedKey(channelName)).thenReturn(expected);
 
-        CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
+		CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
 
-        Optional<DataHubKey> result = testClass.findLatestId(channelName);
-        assertEquals(expected, result.get());
-    }
+		Optional<DataHubKey> result = testClass.findLatestId(channelName);
+		assertEquals(expected, result.get());
+	}
 
-    @Test
-    public void testFindLatestId_channelNotFound() throws Exception {
-        String channelName = "myChan";
+	@Test
+	public void testFindLatestId_channelNotFound() throws Exception {
+		String channelName = "myChan";
 
-        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
 
-        when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(null);
+		when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(null);
 
-        CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
-        Optional<DataHubKey> result = testClass.findLatestId(channelName);
+		CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
+		Optional<DataHubKey> result = testClass.findLatestId(channelName);
 
-        assertEquals(Optional.absent(), result);
-    }
+		assertEquals(Optional.absent(), result);
+	}
 
-    @Test
-    public void testFindLatestId_lastUpdateNotFound() throws Exception {
-        String channelName = "myChan";
-        ChannelConfiguration config = new ChannelConfiguration(channelName, null, null);
+	@Test
+	public void testFindLatestId_lastUpdateNotFound() throws Exception {
+		String channelName = "myChan";
+		ChannelConfiguration config = new ChannelConfiguration(channelName, null);
 
-        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
 
-        when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(config);
+		when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(config);
 
-        CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
-        Optional<DataHubKey> result = testClass.findLatestId(channelName);
+		CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
+		Optional<DataHubKey> result = testClass.findLatestId(channelName);
 
-        assertEquals(Optional.absent(), result);
-    }
+		assertEquals(Optional.absent(), result);
+	}
 }
