@@ -36,11 +36,12 @@ public class ChannelResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Linked<ChannelConfiguration> createChannel(ChannelCreationRequest channelCreationRequest) {
-		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelCreationRequest.getName());
+		String channelName = channelCreationRequest.getName();
+		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName);
 		return linked(channelConfiguration)
 				.withLink("self", linkBuilder.buildChannelUri(channelConfiguration))
-				.withLink("latest", linkBuilder.buildLatestUri(channelConfiguration))
-				.withLink("ws", linkBuilder.buildWsLinkFor(channelConfiguration))
+				.withLink("latest", linkBuilder.buildLatestUri(channelName))
+				.withLink("ws", linkBuilder.buildWsLinkFor(channelName))
 				.build();
 	}
 
