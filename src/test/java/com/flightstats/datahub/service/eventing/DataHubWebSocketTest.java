@@ -39,8 +39,19 @@ public class DataHubWebSocketTest {
 
 	@Test
 	public void testOnConnect() throws Exception {
-		Consumer<URI> expectedConsumer = new JettyWebsocketEndpointSender(remoteAddress.toString(), remoteEndpoint);
+
+		BlockingQueue<WebsocketEvent> queue = mock(BlockingQueue.class);
+		WebSocketEventSubscription subscriber = mock(WebSocketEventSubscription.class);
+		WebsocketEvent event = mock(WebsocketEvent.class);
 		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
+
+		when(queue.take()).thenReturn(event);
+		when(subscriber.getQueue()).thenReturn(queue);
+		when(event.isShutdown()).thenReturn(true);
+		when(subscriptions.subscribe(eq(CHANNEL_NAME), any(Consumer.class))).thenReturn(subscriber);
+		when(subscriptions.getSubscribers(CHANNEL_NAME)).thenReturn(Arrays.asList(subscriber));
+
+		Consumer<URI> expectedConsumer = new JettyWebsocketEndpointSender(remoteAddress.toString(), remoteEndpoint);
 
 		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions);
 
@@ -51,15 +62,22 @@ public class DataHubWebSocketTest {
 
 	@Test
 	public void testOnDisconnect() throws Exception {
+
 		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
+		WebSocketEventSubscription websocketEventSubscription = mock(WebSocketEventSubscription.class);
+		BlockingQueue<WebsocketEvent> queue = mock(BlockingQueue.class);
+		WebSocketEventSubscription subscriber = new WebSocketEventSubscription(null, queue);
+		WebsocketEvent event = mock(WebsocketEvent.class);
+
+		when(queue.take()).thenReturn(event);
+		when(event.isShutdown()).thenReturn(true);
+		when(subscriptions.subscribe(eq(CHANNEL_NAME), any(Consumer.class))).thenReturn(websocketEventSubscription);
+		when(websocketEventSubscription.getQueue()).thenReturn(queue);
+		when(subscriptions.getSubscribers(CHANNEL_NAME)).thenReturn(Arrays.asList(subscriber));
+		when(subscriptions.findSubscriptionForConsumer(eq(CHANNEL_NAME), any(Consumer.class))).thenReturn(Optional.of(subscriber));
 
 		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions);
 		testClass.onConnect(session);
-		BlockingQueue<WebsocketEvent> queue = mock(BlockingQueue.class);
-		WebSocketEventSubscription subscriber = new WebSocketEventSubscription(null, queue);
-
-		when(subscriptions.getSubscribers(CHANNEL_NAME)).thenReturn(Arrays.asList(subscriber));
-		when(subscriptions.findSubscriptionForConsumer(eq(CHANNEL_NAME), any(Consumer.class))).thenReturn(Optional.of(subscriber));
 
 		WebSocketEventSubscription subscription = subscriptions.getSubscribers(CHANNEL_NAME).iterator().next();
 

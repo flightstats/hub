@@ -32,4 +32,4 @@ for HOST in $@ ; do
     ssh ${USER}@${HOST} "sudo /etc/init.d/cassandra start"
 done
 
-echo Al done.
+echo All done.
