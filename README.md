@@ -27,7 +27,7 @@ In development, it is actually at: http://datahub-01.cloud-east.dev:8080
 
 ```json
 {  
-   "name": "your-channel-name"
+   "name": "stumptown"
 }
 ```
 
@@ -54,11 +54,36 @@ On success:  `HTTP/200 OK`
 Here's how you can do this with curl:
 ```bash
 curl -i -X POST --header "Content-type: application/json" \
-    --data '{"name": "your-channel-name"}'  \
+    --data '{"name": "stumptown"}'  \
     http://datahub:8080/channel
 ```
 
 ## fetch channel metadata
+
+To fetch metadata about a channel, do a GET on its `self` link:
+
+`GET http://datahub:8080/channel/stumptown`
+
+On success: `HTTP/200 OK`
+
+```json
+{
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:8080/channel/stumptown"
+    },
+    "latest" : {
+      "href" : "http://localhost:8080/channel/stumptown/latest"
+    },
+    "ws" : {
+      "href" : "ws://localhost:8080/channel/stumptown/ws"
+    }
+  },
+  "lastUpdateDate" : "2013-04-23T20:36:35.310Z",
+  "name" : "stumptown",
+  "creationDate" : "2013-04-23T20:36:17.885Z"
+}
+```
 
 ## insert content into channel
 
