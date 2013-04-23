@@ -7,11 +7,11 @@ import java.util.Date;
 public class MetadataResponse {
 
 	private final ChannelConfiguration config;
-	private final Date latestUpdateDate;
+	private final Date lastUpdateDate;
 
-	public MetadataResponse(ChannelConfiguration config, Date latestUpdateDate) {
+	public MetadataResponse(ChannelConfiguration config, Date lastUpdateDate) {
 		this.config = config;
-		this.latestUpdateDate = latestUpdateDate;
+		this.lastUpdateDate = lastUpdateDate;
 	}
 
 	public String getName() {
@@ -23,7 +23,7 @@ public class MetadataResponse {
 	}
 
 	public Date getLastUpdateDate() {
-		return latestUpdateDate;
+		return lastUpdateDate;
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class MetadataResponse {
 		if (!config.equals(that.config)) {
 			return false;
 		}
-		if (latestUpdateDate != null ? !latestUpdateDate.equals(that.latestUpdateDate) : that.latestUpdateDate != null) {
+		if (lastUpdateDate != null ? !lastUpdateDate.equals(that.lastUpdateDate) : that.lastUpdateDate != null) {
 			return false;
 		}
 
@@ -50,7 +50,7 @@ public class MetadataResponse {
 	@Override
 	public int hashCode() {
 		int result = config.hashCode();
-		result = 31 * result + (latestUpdateDate != null ? latestUpdateDate.hashCode() : 0);
+		result = 31 * result + (lastUpdateDate != null ? lastUpdateDate.hashCode() : 0);
 		return result;
 	}
 
@@ -58,7 +58,7 @@ public class MetadataResponse {
 	public String toString() {
 		return "MetadataResponse{" +
 				"config=" + config +
-				", latestUpdateDate=" + latestUpdateDate +
+				", lastUpdateDate=" + lastUpdateDate +
 				'}';
 	}
 }
