@@ -4,73 +4,86 @@ import com.google.common.base.Optional;
 
 public class LinkedDataHubCompositeValue {
 
-    private final DataHubCompositeValue value;
-    private final Optional<DataHubKey> previous;
-    private final Optional<DataHubKey> next;
+	private final DataHubCompositeValue value;
+	private final Optional<DataHubKey> previous;
+	private final Optional<DataHubKey> next;
 
-    public LinkedDataHubCompositeValue(DataHubCompositeValue value, Optional<DataHubKey> previous, Optional<DataHubKey> next) {
-        this.value = value;
-        this.previous = previous;
-        this.next = next;
-    }
+	public LinkedDataHubCompositeValue(DataHubCompositeValue value, Optional<DataHubKey> previous, Optional<DataHubKey> next) {
+		this.value = value;
+		this.previous = previous;
+		this.next = next;
+	}
 
-    public String getContentType() {
-        return value.getContentType();
-    }
+	public String getContentType() {
+		return value.getContentType();
+	}
 
-    public int getDataLength() {
-        return value.getDataLength();
-    }
+	public int getDataLength() {
+		return value.getDataLength();
+	}
 
-    public int getContentTypeLength() {
-        return value.getContentTypeLength();
-    }
+	public int getContentTypeLength() {
+		return value.getContentTypeLength();
+	}
 
-    public byte[] getData() {
-        return value.getData();
-    }
+	public byte[] getData() {
+		return value.getData();
+	}
 
-    public boolean hasPrevious() {
-        return previous.isPresent();
-    }
+	public boolean hasPrevious() {
+		return previous.isPresent();
+	}
 
-    public boolean hasNext() {
-        return next.isPresent();
-    }
+	public boolean hasNext() {
+		return next.isPresent();
+	}
 
-    public Optional<DataHubKey> getPrevious() {
-        return previous;
-    }
+	public Optional<DataHubKey> getPrevious() {
+		return previous;
+	}
 
-    public Optional<DataHubKey> getNext() {
-        return next;
-    }
+	public Optional<DataHubKey> getNext() {
+		return next;
+	}
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
 
-        LinkedDataHubCompositeValue that = (LinkedDataHubCompositeValue) o;
+		LinkedDataHubCompositeValue that = (LinkedDataHubCompositeValue) o;
 
-        if (previous != null ? !previous.equals(that.previous) : that.previous != null) {
-            return false;
-        }
-        if (value != null ? !value.equals(that.value) : that.value != null) {
-            return false;
-        }
+		if (!next.equals(that.next)) {
+			return false;
+		}
+		if (!previous.equals(that.previous)) {
+			return false;
+		}
+		if (!value.equals(that.value)) {
+			return false;
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    @Override
-    public int hashCode() {
-        int result = value != null ? value.hashCode() : 0;
-        result = 31 * result + (previous != null ? previous.hashCode() : 0);
-        return result;
-    }
+	@Override
+	public int hashCode() {
+		int result = value.hashCode();
+		result = 31 * result + previous.hashCode();
+		result = 31 * result + next.hashCode();
+		return result;
+	}
+
+	@Override
+	public String toString() {
+		return "LinkedDataHubCompositeValue{" +
+				"value=" + value +
+				", previous=" + previous +
+				", next=" + next +
+				'}';
+	}
 }
