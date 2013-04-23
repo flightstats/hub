@@ -12,7 +12,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -53,10 +52,7 @@ public class SingleChannelResource {
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response insertValue(@HeaderParam("Content-Type") final String contentType, @PathParam(
-			"channelName") final String channelName, final byte[] data) throws ExecutionException, InterruptedException {
-		if (!channelDao.channelExists(channelName)) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
+			"channelName") final String channelName, final byte[] data) throws Exception {
 
 		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelName, contentType, data);
 		ValueInsertionResult insertionResult = channelLockExecutor.execute(channelName, task);

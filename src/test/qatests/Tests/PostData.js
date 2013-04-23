@@ -10,7 +10,8 @@ var crypto = require('crypto');
 var fs = require('fs');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('.././js_testing_utils/randomUtils.js');
+var testRandom = require('../randomUtils.js');
+var gu = require('../genericUtils.js');
 
 var URL_ROOT = dhh.URL_ROOT;
 
@@ -51,7 +52,7 @@ describe('POST data to channel:', function(){
         channelName = dhh.makeRandomChannelName();
         agent = superagent.agent();
         dhh.makeChannel(channelName, function(res){
-            if ((res.error) || (!dhh.isHTTPSuccess(res.status))) {
+            if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             };
             console.log('Main test channel:'+ channelName);
@@ -69,7 +70,7 @@ describe('POST data to channel:', function(){
         payload = testRandom.randomString(Math.round(Math.random() * 50));
 
         dhh.postData(channelName, payload, function(res, uri) {
-            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
             dhh.getValidationString(uri, payload, done);
         });
@@ -83,7 +84,7 @@ describe('POST data to channel:', function(){
 
         dhh.postData(myChannel, payload, function(res, uri) {
             expect(res.status).to.equal(404);
-            expect(dhh.isHTTPError(res.status)).to.equal(true);
+            expect(gu.isHTTPError(res.status)).to.equal(true);
             done();
         });
 
@@ -94,10 +95,10 @@ describe('POST data to channel:', function(){
         payload = testRandom.randomString(Math.round(Math.random() * 50));
 
         dhh.postData(channelName, payload, function(res, uri) {
-            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
             dhh.postData(channelName, payload, function(res2, uri2) {
-                expect(dhh.isHTTPSuccess(res2.status)).to.equal(true);
+                expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
 
                 dhh.getValidationString(uri, payload, done);
             });
@@ -109,21 +110,21 @@ describe('POST data to channel:', function(){
         var cnMetadata, pMetadata;
 
         dhh.makeChannel(otherChannelName, function(res) {
-            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
             cnMetadata = new dhh.channelMetadata(res.body);
             expect(cnMetadata.getChannelUri()).to.equal(URL_ROOT +'/channel/'+ otherChannelName);
 
             payload = testRandom.randomString(Math.round(Math.random() * 50));
 
             dhh.postData(channelName, payload, function(res, uri) {
-                expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 pMetadata = new dhh.packetMetadata(res.body);
                 var actualUri = pMetadata.getPacketUri();
 
                 dhh.getValidationString(actualUri, payload, function() {
 
                     dhh.postData(otherChannelName, payload, function(res2, uri2) {
-                        expect(dhh.isHTTPSuccess(res2.status)).to.equal(true);
+                        expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
 
                         dhh.getValidationString(uri2, payload, done);
                     });
@@ -139,7 +140,7 @@ describe('POST data to channel:', function(){
         payload = '';
 
         dhh.postData(channelName, payload, function(res, uri) {
-            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
             dhh.getValidationString(uri, payload, done);
         });
@@ -150,7 +151,7 @@ describe('POST data to channel:', function(){
         payload = fs.readFileSync(MY_2KB_FILE, "utf8");
 
         dhh.postData(channelName, payload, function(res, uri) {
-            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
             dhh.getValidationString(uri, payload, done);
         });
@@ -161,7 +162,7 @@ describe('POST data to channel:', function(){
         payload = testRandom.randomString(1000, testRandom.simulatedTextChar);
 
         dhh.postData(channelName, payload, function(res, uri) {
-            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
             dhh.getValidationString(uri, payload, done);
         });
@@ -178,7 +179,7 @@ describe('POST data to channel:', function(){
                 if (err) {
                     throw err;
                 }
-                expect(dhh.isHTTPSuccess(res.statusCode)).to.equal(true);
+                expect(gu.isHTTPSuccess(res.statusCode)).to.equal(true);
                 var cnMetadata = new dhh.channelMetadata(JSON.parse(body));
                 uri = cnMetadata.getChannelUri();
 
@@ -212,7 +213,7 @@ describe('POST data to channel:', function(){
             uri = URL_ROOT +'/channel/'+ channelName;
 
             dhh.postData(channelName, payload, function(res, uri) {
-                expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 timestamp = moment(res.body.timestamp);
 
                 expect(moment(timestamp).isValid()).to.be.true;
@@ -234,7 +235,7 @@ describe('POST data to channel:', function(){
                         uri = URL_ROOT +'/channel/'+ channelName;
 
                         dhh.postData(channelName, payload, function(res, uri) {
-                            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
                             //console.log('Creation time was: '+ respMoment.format('X'));
 
@@ -250,7 +251,7 @@ describe('POST data to channel:', function(){
                         payload = testRandom.randomString(testRandom.randomNum(51));
 
                         dhh.postData(channelName, payload, function(res, uri) {
-                            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
                             //console.log('Creation time was: '+ respMoment.format('X'));
 
@@ -269,7 +270,7 @@ describe('POST data to channel:', function(){
                         payload = testRandom.randomString(testRandom.randomNum(51));
 
                         dhh.postData(channelName, payload, function(res, uri) {
-                            expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
                             //console.log('Creation time was: '+ respMoment.format('X'));
 
@@ -302,7 +303,7 @@ describe('POST data to channel:', function(){
             payload = testRandom.randomString(Math.round(Math.random() * 50));
 
             dhh.postData(channelName, payload, function(res, uri) {
-                expect(dhh.isHTTPSuccess(res.status)).to.equal(true);
+                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 var myHeader = new dhh.packetPOSTHeader(res.headers);
                 var location = myHeader.getLocation();
                 expect(location).to.equal(uri);
@@ -316,7 +317,7 @@ describe('POST data to channel:', function(){
             payload = testRandom.randomString(Math.round(Math.random() * 50));
 
             dhh.postData(myChannel, payload, function(res, uri) {
-                expect(dhh.isHTTPError(res.status)).to.equal(true);
+                expect(gu.isHTTPError(res.status)).to.equal(true);
                 var myHeader = new dhh.packetPOSTHeader(res.headers);
                 var location = myHeader.getLocation();
                 expect(location).to.be.null;

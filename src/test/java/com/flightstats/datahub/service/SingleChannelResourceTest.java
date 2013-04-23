@@ -4,6 +4,7 @@ import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.service.eventing.SubscriptionDispatcher;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
@@ -15,6 +16,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
+import java.util.concurrent.Callable;
 
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
 import static org.junit.Assert.*;
@@ -118,7 +120,6 @@ public class SingleChannelResourceTest {
 	@Test
 	public void testInsertPerformsDispatch() throws Exception {
 		byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
-
 		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor();
 
 		when(dao.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(dataHubKey));
@@ -128,20 +129,17 @@ public class SingleChannelResourceTest {
 		verify(subscriptionDispatcher).dispatch(channelName, itemUri);
 	}
 
-	@Test
+	@Test(expected = NoSuchChannelException.class)
 	public void testInsertValue_unknownChannel() throws Exception {
 		byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
 
 		ChannelDao dao = mock(ChannelDao.class);
 
 		when(dao.channelExists(anyString())).thenReturn(false);
+		when(channelLockExecutor.execute(eq(channelName), any(Callable.class))).thenThrow(
+				new NoSuchChannelException("No such channel: " + channelName, new RuntimeException()));
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, subscriptionDispatcher);
-		try {
-			testClass.insertValue(contentType, channelName, data);
-			fail("Should have thrown an exception.");
-		} catch (WebApplicationException e) {
-			assertEquals(Response.Status.NOT_FOUND.getStatusCode(), e.getResponse().getStatus());
-		}
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher);
+		testClass.insertValue(contentType, channelName, data);
 	}
 }

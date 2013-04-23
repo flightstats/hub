@@ -8,6 +8,7 @@ import readline
 import re
 import httplib, urllib
 import mimetypes
+import time
 
 def usage():
 	print("Usage: datahub-cli.py --server <host[:port]>")
@@ -210,11 +211,13 @@ class DataHub(object):
 		conn = httplib.HTTPConnection(self._server)
 		content = '{"name": "%s"}' %(channel_name);
 		headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+		start = time.time()
 		conn.request("POST", "/channel", content, headers)
 		response = conn.getresponse()
 		self._channel = channel_name
 		self._prev = None
 		self._next = None
+		print("Channel creation took %0.2f seconds" % (time.time() - start))
 		print(response.status, response.reason)
 		print(response.read())
 	def _show_metadata(self):

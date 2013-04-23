@@ -15,7 +15,8 @@ var fs = require('fs');
 
 
 var dhh = require('../DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('../js_testing_utils/randomUtils.js');
+var testRandom = require('../randomUtils.js');
+var gu = require('../genericUtils.js');
 
 
 var URL_ROOT = dhh.URL_ROOT;
@@ -37,7 +38,7 @@ describe('GET Channel metadata:', function() {
         channelName = dhh.makeRandomChannelName();
         agent = superagent.agent();
         dhh.makeChannel(channelName, function(res){
-            if ((res.error) || (!dhh.isHTTPSuccess(res.status))) {
+            if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             };
             console.log('Main test channel:'+ channelName);
@@ -55,13 +56,13 @@ describe('GET Channel metadata:', function() {
         var thisChannel = dhh.makeRandomChannelName();
 
         dhh.makeChannel(thisChannel, function(makeRes) {
-            expect(dhh.isHTTPSuccess(makeRes.status)).to.equal(true);
+            expect(gu.isHTTPSuccess(makeRes.status)).to.equal(true);
 
             dhh.postData(thisChannel, testRandom.randomString(testRandom.randomNum(51)), function(postRes, myUri) {
-                expect(dhh.isHTTPSuccess(postRes.status)).to.equal(true);
+                expect(gu.isHTTPSuccess(postRes.status)).to.equal(true);
 
                 dhh.getChannel(thisChannel, function(cnRes) {
-                    expect(dhh.isHTTPSuccess(cnRes.status)).to.equal(true);
+                    expect(gu.isHTTPSuccess(cnRes.status)).to.equal(true);
 
                     cnMetadata = new dhh.channelMetadata(cnRes.body);
                     expect(cnMetadata.getChannelUri()).to.not.be.null;
@@ -80,7 +81,7 @@ describe('GET Channel metadata:', function() {
     it('should return a 404 trying to GET channel before it exists', function(done){
         var myChannel = dhh.makeRandomChannelName();
         dhh.getChannel(myChannel, function(res) {
-            expect(dhh.isHTTPError(res.status)).to.equal(true);
+            expect(gu.isHTTPError(res.status)).to.equal(true);
             done();
         });
     });

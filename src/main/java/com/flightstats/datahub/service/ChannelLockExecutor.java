@@ -26,13 +26,11 @@ public class ChannelLockExecutor {
 		this.channelLocks = channelLocks;
 	}
 
-	public <T> T execute(String channelName, Callable<T> callable) {
+	public <T> T execute(String channelName, Callable<T> callable) throws Exception {
 		Lock lock = getLock(channelName);
 		lock.lock();
 		try {
 			return callable.call();
-		} catch (Exception e) {
-			throw new RuntimeException("Error executing callable in channel lock for channel " + channelName, e);
 		} finally {
 			lock.unlock();
 		}
