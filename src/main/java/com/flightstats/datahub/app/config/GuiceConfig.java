@@ -1,8 +1,6 @@
 package com.flightstats.datahub.app.config;
 
 import com.flightstats.datahub.dao.*;
-import com.flightstats.datahub.dao.prototypes.HazelcastChannelDao;
-import com.flightstats.datahub.dao.prototypes.MapDBChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
