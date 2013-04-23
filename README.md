@@ -21,7 +21,7 @@ In development, it is actually at: http://datahub-01.cloud-east.dev:8080
 
 ## Create a channel
 
-POST http://datahub:8080/channel
+`POST http://datahub:8080/channel`
 
 * Content-type: application/json
 
@@ -31,7 +31,7 @@ POST http://datahub:8080/channel
 }
 ```
 
-On success:
+On success:  `HTTP/200 OK`
 
 ```json
 {
