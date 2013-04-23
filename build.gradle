@@ -19,7 +19,7 @@ buildscript {
 repositories {
     repositories {
         maven {
-            url 'http://artifactory.dev.pdx.prod/artifactory/plugins-release'
+            url 'http://artifactory.office/artifactory/plugins-release'
         }
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'
@@ -132,6 +132,7 @@ def runExternal(commandline) {
 }
 
 task deployDev << {
+    runExternal("${projectDir}/bin/restart-dev-vpc.sh")
     runExternal("bin/deploy-to-dev.sh datahub-01.cloud-east.dev")
 }
 

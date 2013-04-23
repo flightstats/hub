@@ -8,7 +8,7 @@ USER=ubuntu
 HOST=$1
 WANTED_VERSION=1.7.0_11
 WANTED_VERSION_STRING="java version \"${WANTED_VERSION}\""
-JRE_URL=http://artifactory.dev.pdx.prod/artifactory/services-dev/jre-7u11-linux-x64.tgz
+JRE_URL=http://artifactory.office/artifactory/services-dev/jre-7u11-linux-x64.tgz
 JRE_TGZ=`basename ${JRE_URL}`
 
 if [ "$HOST" == "" ]; then

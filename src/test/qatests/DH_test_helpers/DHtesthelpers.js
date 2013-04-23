@@ -18,22 +18,8 @@ var async = require('async');
 var http = require('http');
 var ws = require('ws');
 
-
-var testRandom = require('.././js_testing_utils/randomUtils.js');
-
-// replacing these with the HTTPresponses object below
-/*
-var GET_LATEST_SUCCESS_RESPONSE = 303;
-exports.GET_LATEST_SUCCESS = GET_LATEST_SUCCESS_RESPONSE;
-
-var CHANNEL_CREATION_SUCCESS_RESPONSE = 200;
-exports.CHANNEL_CREATION_SUCCESS = CHANNEL_CREATION_SUCCESS_RESPONSE;
-
-var DATA_POST_SUCCESS_RESPONSE = 200;
-exports.DATA_POST_SUCCESS = DATA_POST_SUCCESS_RESPONSE;
-*/
-
-
+var testRandom = require('../randomUtils.js');
+var gu = require('../genericUtils.js');
 
 //var URL_ROOT = 'http://10.250.220.197:8080';
 var URL_ROOT = 'http://datahub-01.cloud-east.dev:8080';
@@ -41,73 +27,6 @@ exports.URL_ROOT = URL_ROOT;
 
 var DEBUG = true;
 exports.DEBUG = DEBUG;
-
-var HTTPresponses = {
-    "Continue":100
-    ,"Switching_Protocols":101
-    ,"Processing":102
-    ,"OK":200
-    ,"Created":201
-    ,"Accepted":202
-    ,"Non-Authoritative_Information":203
-    ,"No_Content":204
-    ,"Reset_Content":205
-    ,"Partial_Content":206
-    ,"Multi-Status":207
-    ,"Already_Reported":208
-    ,"Low_on_Storage_Space":250
-    ,"IM_Used":226
-    ,"Multiple_Choices":300
-    ,"Moved_Permanently":301
-    ,"Found":302
-    ,"See_Other":303
-    ,"Not_Modified":304
-    ,"Use_Proxy":305
-    ,"Switch-Proxy":306
-    ,"Temporary_Redirect":307
-    ,"Permanent_Redirect":308
-    ,"Bad_Request":400
-    ,"Unauthorized":401
-    ,"Payment_Required":402
-    ,"Forbidden":403
-    ,"Not_Found":404
-    ,"Method_Not_Allowed":405
-    ,"Not_Acceptable":406
-    ,"Proxy_Authentication_Required":407
-    ,"Request_Timeout":408
-    ,"Conflict":409
-    ,"Gone":410
-    ,"Length_Required":411
-    ,"Precondition_Failed":412
-    ,"Request_Entity_Too_Large":413
-    ,"Request-URI_Too_Long":414
-    ,"Unsupported_Media_Type":415
-    ,"Requested_Range_Not_Satisfiable":416
-    ,"Expectation_Failed":417
-    ,"I'm_a_teapot":418
-    ,"Enhance_Your_Calm":420
-    ,"Upgrade_Required":426
-    ,"Precondition_Required":428
-    ,"Too_Many_Requests":429
-    ,"Request_Header_Fields_Too_Large":431
-    ,"Internal_Server_Error":500
-};
-exports.HTTPresponses = HTTPresponses;
-
-var isHTTPError = function(code) {
-    return (code >= 400);
-};
-exports.isHTTPError = isHTTPError;
-
-var isHTTPSuccess = function(code) {
-    return ((code >= 200) && (code < 300));
-};
-exports.isHTTPSuccess = isHTTPSuccess;
-
-var isHTTPRedirect = function(code) {
-    return ((code >= 300) && (code < 400));
-};
-exports.isHTTPRedirect = isHTTPRedirect;
 
 var getValidationString = function (myUri, myPayload, myDone)
 {
@@ -152,7 +71,7 @@ var createWebSocket = function(domain, channelName, onOpen) {
     var wsUri = 'ws://'+ domain +'/channel/'+ channelName +'/ws';
     var myWs;
 
-    console.log('Trying uri: '+ wsUri);
+    debugLog('Trying uri: '+ wsUri, DEBUG);
 
     myWs = new ws(wsUri);
 
@@ -162,6 +81,45 @@ var createWebSocket = function(domain, channelName, onOpen) {
     return myWs;
 }
 exports.createWebSocket = createWebSocket;
+
+// Wrapper for websocket to more easily support tests with multiple sockets.
+//      Yes, I know it's too-tightly coupled with the test code.
+//
+// domain = domain:port for the datahub, e.g., datahub-01.cloud-east.dev:8080
+// channel = name of channel in the datahub
+// socketName = arbitrary name to help identify the socket
+// onOpenCB = callback to call when the 'open' event is called on this socket
+// responseQueue = where the message is stuffed when the 'message' event is called on this socket
+
+function WSWrapper(domain, channel, socketName, onOpenCB) {
+    this.name = socketName;
+    this.responseQueue = [];
+    this.ws = null;
+    this.channel = channel;
+    this.domain = domain;
+    var _self = this;
+
+    this.onMessage = function(data, flags) {
+        debugLog('MESSAGE EVENT at '+ Date.now(), DEBUG);
+        debugLog('Readystate is '+ _self.ws.readyState, DEBUG);
+         _self.responseQueue.push(data);
+    };
+
+    this.onOpen = function() {
+        debugLog('OPEN EVENT at '+ Date.now(), DEBUG);
+        debugLog('readystate: '+ _self.ws.readyState, DEBUG);
+        onOpenCB();
+    };
+
+    this.createSocket = function() {
+        if (DEBUG) {
+            console.dir(this);
+        }
+        this.ws = createWebSocket(this.domain, this.channel, this.onOpen);
+        this.ws.on('message', this.onMessage);
+    };
+};
+exports.WSWrapper = WSWrapper;
 
 // returns the POST response
 var makeChannel = function(myChannelName, myCallback) {
@@ -321,7 +279,7 @@ var postData = function(myChannelName, myData, myCallback) {
                 throw err;
             }
 
-            if (!isHTTPSuccess(res.status)) {
+            if (!gu.isHTTPSuccess(res.status)) {
                 dataUri = null;
             }
             else {
@@ -347,7 +305,7 @@ var postDataAndConfirmContentType = function(myChannelName, myContentType, myCal
         .send(payload)
         .end(function(err, res) {
             if (err) throw err;
-            expect(isHTTPSuccess(res.status)).to.equal(true);
+            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
             uri = res.body._links.self.href;
 
             getAgent.get(uri)
@@ -421,7 +379,7 @@ var getLatestUriFromChannel = function(myChannelName, myCallback) {
     superagent.agent().get(getUri)
         .redirects(0)
         .end(function(err, res) {
-            expect(res.status).to.equal(HTTPresponses.See_Other);
+            expect(res.status).to.equal(gu.HTTPresponses.See_Other);
             expect(res.headers['location']).not.to.be.null;
 
             myCallback(res.headers['location']);
@@ -435,9 +393,9 @@ exports.getLatestUriFromChannel = getLatestUriFromChannel;
 var getListOfLatestUrisFromChannel = function(reqLength, myChannelName, myCallback){
     var allUris = [];
 
-    console.log('In getListofLatestUrisFromChannel...');
-    console.log('reqLength: '+ reqLength);
-    console.log('myChannelName: '+ myChannelName);
+    debugLog('In getListofLatestUrisFromChannel...', DEBUG);
+    debugLog('reqLength: '+ reqLength, DEBUG);
+    debugLog('myChannelName: '+ myChannelName, DEBUG);
 
     if (reqLength < 2) {
         reqLength = 2;

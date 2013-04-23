@@ -98,4 +98,20 @@ public class ChannelLockExecutorTest {
 		testClass.execute(CHANNEL_NAME, callable);
 		verify(lock).unlock();
 	}
+
+	@Test(expected = EsotericException.class)
+	public void testCallableThrows() throws Exception {
+		ChannelLockExecutor testClass = new ChannelLockExecutor(locks);
+		Callable<String> callable = new Callable<String>() {
+			@Override
+			public String call() throws Exception {
+				throw new EsotericException();
+			}
+		};
+		testClass.execute(CHANNEL_NAME, callable);
+	}
+
+	static class EsotericException extends Exception {
+
+	}
 }
