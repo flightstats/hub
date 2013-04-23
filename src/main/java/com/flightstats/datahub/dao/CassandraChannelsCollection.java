@@ -67,15 +67,6 @@ public class CassandraChannelsCollection {
 		connector.createColumnFamily(columnSpaceName);
 	}
 
-	//	private void createColumnFamilyForLastUpdateKey(ChannelConfiguration channelConfig) {
-	//		String columnSpaceName = buildColumnFamilyNameForLatest(channelConfig.getName());
-	//		connector.createColumnFamily(columnSpaceName);
-	//	}
-
-	private String buildColumnFamilyNameForLatest(String channelName) {
-		return channelName;
-	}
-
 	public boolean channelExists(String channelName) {
 		ChannelConfiguration channelConfiguration = getChannelConfiguration(channelName);
 		return channelConfiguration != null;

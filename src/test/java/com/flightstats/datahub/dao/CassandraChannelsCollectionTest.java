@@ -151,4 +151,32 @@ public class CassandraChannelsCollectionTest {
 		int result = testClass.countChannels();
 		assertEquals(5, result);
 	}
+
+	@Test
+	public void testGetLastUpdatedKey() throws Exception {
+		//GIVEN
+		String channelName = "chunder";
+		DataHubKey expected = new DataHubKey(new Date(98348974554397L), (short) 0);
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, null, hector, null, keyRenderer);
+
+		ColumnQuery<String, String, String> columnQuery = mock(ColumnQuery.class);
+		QueryResult<HColumn<String, String>> queryResult = mock(QueryResult.class);
+		HColumn<String, String> column = mock(HColumn.class);
+
+		when(connector.getKeyspace()).thenReturn(keyspace);
+		when(columnQuery.setName(channelName)).thenReturn(columnQuery);
+		when(columnQuery.setKey(CassandraChannelsCollection.CHANNELS_LATEST_ROW_KEY)).thenReturn(columnQuery);
+		when(columnQuery.setColumnFamily(channelName)).thenReturn(columnQuery);
+		when(columnQuery.execute()).thenReturn(queryResult);
+		when(queryResult.get()).thenReturn(column);
+		when(column.getValue()).thenReturn(keyRenderer.keyToString(expected));
+
+		when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), StringSerializer.get())).thenReturn(columnQuery);
+
+		//WHEN
+		DataHubKey result = testClass.getLastUpdatedKey(channelName);
+
+		//THEN
+		assertEquals(expected, result);
+	}
 }
