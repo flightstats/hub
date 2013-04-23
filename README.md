@@ -19,7 +19,7 @@ For the purposes of this document, the datahub is at http://datahub:8080.
 
 In development, it is actually at: http://datahub-01.cloud-east.dev:8080
 
-## Create a channel
+## create a channel
 
 `POST http://datahub:8080/channel`
 
@@ -51,7 +51,12 @@ On success:  `HTTP/200 OK`
 }
 ```
 
-## create a channel
+Here's how you can do this with curl:
+```bash
+curl -i -X POST --header "Content-type: application/json" \
+    --data '{"name": "your-channel-name"}'  \
+    http://datahub:8080/channel
+```
 
 ## fetch channel metadata
 
