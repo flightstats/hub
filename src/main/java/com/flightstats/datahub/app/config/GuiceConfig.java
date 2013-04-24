@@ -22,7 +22,7 @@ public class GuiceConfig extends GuiceServletContextListener {
 
 	private BaseDataHubModule createModule() {
 		Properties properties = loadProperties();
-		String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, CASSANDRA_BACKING_STORE_TAG);
+		String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, MEMORY_BACKING_STORY_TAG);
 		switch (backingStoreName) {
 			case CASSANDRA_BACKING_STORE_TAG:
 				return new CassandraBackedDataHubModule(properties);

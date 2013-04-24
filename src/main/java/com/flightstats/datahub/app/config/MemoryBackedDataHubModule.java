@@ -7,9 +7,8 @@ import com.google.inject.Singleton;
 class MemoryBackedDataHubModule extends BaseDataHubModule {
 
 	@Override
-	protected void configureServlets() {
+	protected void bindDataStoreBeans() {
 		bind(ChannelDao.class).to(InMemoryChannelDao.class).in(Singleton.class);
-		super.configureBaseServlets();
 	}
 
 }
