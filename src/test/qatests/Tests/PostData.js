@@ -30,12 +30,13 @@ var agent
     , uri
     , contentType;
 
-var channelName;
+var channelName,
+    DEBUG = true;
 
 
 
 
-describe('POST data to channel:', function(){
+describe.only('POST data to channel:', function(){
 
     before(function(myCallback){
 
@@ -70,6 +71,7 @@ describe('POST data to channel:', function(){
         payload = testRandom.randomString(Math.round(Math.random() * 50));
 
         dhh.postData(channelName, payload, function(res, uri) {
+            gu.debugLog('Response from POST attempt: '+ res.status, DEBUG);
             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
             dhh.getValidationString(uri, payload, done);
@@ -79,7 +81,7 @@ describe('POST data to channel:', function(){
 
 
     it('POST should return a 404 trying to save to nonexistent channel', function(done){
-        var myChannel =dhh.makeRandomChannelName();
+        var myChannel = dhh.makeRandomChannelName();
         payload = testRandom.randomString(Math.round(Math.random() * 50));
 
         dhh.postData(myChannel, payload, function(res, uri) {

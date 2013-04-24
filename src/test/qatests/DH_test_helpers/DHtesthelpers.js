@@ -28,6 +28,7 @@ exports.URL_ROOT = URL_ROOT;
 var DEBUG = true;
 exports.DEBUG = DEBUG;
 
+// Confirms that the data located at 'myUri' matches the expected payload ('myPayload')
 var getValidationString = function (myUri, myPayload, myDone)
 {
     var myData = '';
@@ -269,8 +270,11 @@ exports.packetPOSTHeader = packetPOSTHeader;
 
 // Posts data and returns (response, URI)
 var postData = function(myChannelName, myData, myCallback) {
-    var uri = URL_ROOT +'/channel/'+ myChannelName;
-    var dataUri;
+    var uri = URL_ROOT +'/channel/'+ myChannelName,
+        dataUri = null,
+        VERBOSE = false;
+
+    gu.debugLog('Channel Uri: '+ uri, VERBOSE);
 
     superagent.agent().post(uri)
         .send(myData)
@@ -280,9 +284,11 @@ var postData = function(myChannelName, myData, myCallback) {
             }
 
             if (!gu.isHTTPSuccess(res.status)) {
+                gu.debugLog('POST of data did not return success: '+ res.status, VERBOSE);
                 dataUri = null;
             }
             else {
+                gu.debugLog('POST of data succeeded.', VERBOSE);
                 var pMetadata = new packetMetadata(res.body);
                 dataUri = pMetadata.getPacketUri();
             }
