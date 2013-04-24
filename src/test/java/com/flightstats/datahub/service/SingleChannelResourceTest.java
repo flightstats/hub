@@ -19,7 +19,7 @@ import java.net.URI;
 import java.util.Date;
 import java.util.concurrent.Callable;
 
-import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.core.IsCollectionContaining.hasItems;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;

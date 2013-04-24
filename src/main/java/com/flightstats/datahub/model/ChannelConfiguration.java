@@ -1,8 +1,10 @@
 package com.flightstats.datahub.model;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class ChannelConfiguration {
+public class ChannelConfiguration implements Serializable {
+    private static final long serialVersionUID = 1L;
 
 	private final String name;
 	private final Date creationDate;
