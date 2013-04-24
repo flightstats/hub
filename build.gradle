@@ -1,10 +1,12 @@
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'artifactory'
 apply plugin: 'application'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
+group = 'com.flightstats'
 version = '0.1.0'
 buildDir = 'build'
 
@@ -13,6 +15,11 @@ mainClassName = "com.flightstats.datahub.app.DataHubMain"
 buildscript {
     repositories {
         mavenCentral()
+        maven { url 'http://repo.jfrog.org/artifactory/gradle-plugins' }
+    }
+
+    dependencies {  //Required to pick up the artifactory plugin
+        classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.16')
     }
 }
 
@@ -24,14 +31,43 @@ repositories {
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'
         }
+
     }
 }
 
 configurations {
+    publish
     codeCoverage
     codeCoverageAnt
 }
 
+artifacts {
+    publish jar
+    publish distZip
+}
+
+artifactory {
+    contextUrl = 'http://artifactory.office/artifactory'   //The base Artifactory URL if not overridden by the publisher/resolver
+    publish {
+        contextUrl = 'http://artifactory.office/artifactory'   //The base Artifactory URL for the publisher
+        repository {
+            repoKey = 'services-release'//The Artifactory repository key to publish to
+            username = 'build'          //The publisher user name
+            password = 'P4ssw0rd'       //The publisher password
+            ivy {
+                ivyLayout = '[organization]/[module]/[revision]/ivy-[revision].xml'
+                artifactLayout = '[organization]/[module]/[revision]/[artifact]-[revision](-[suffix]).[ext]'
+                mavenCompatible = false //Convert any dots in an [organization] layout value to path separators, similar to Maven's groupId-to-path conversion. True if not specified
+            }
+        }
+        defaults {
+            publishConfigs('publish')
+            publishBuildInfo = true
+            publishArtifacts = true
+            publishPom = false
+        }
+    }
+}
 
 dependencies {
     compile group: 'org.hectorclient', name: 'hector-core', version: '1.+'
