@@ -21,7 +21,7 @@ import com.sun.jersey.spi.container.servlet.ServletContainer;
 import java.util.HashMap;
 import java.util.Map;
 
-abstract class BaseDataHubModule extends JerseyServletModule {
+class DataHubCommonModule extends JerseyServletModule {
 	private final static Map<String, String> JERSEY_PROPERTIES = new HashMap<>();
 
 	static {
@@ -33,17 +33,13 @@ abstract class BaseDataHubModule extends JerseyServletModule {
 	@Override
 	protected void configureServlets() {
 		bindCommonBeans();
-		bindDataStoreBeans();
 		startUpServlets();
 	}
-
-	protected abstract void bindDataStoreBeans();
 
 	private void bindCommonBeans() {
 		bind(ChannelLockExecutor.class).in(Singleton.class);
 		bind(SubscriptionDispatcher.class).in(Singleton.class);
 		bind(SubscriptionRoster.class).in(Singleton.class);
-		bind(JettyWebSocketServlet.class).in(Singleton.class);
 		bind(DataHubKeyRenderer.class).in(Singleton.class);
 		bind(DataHubKeyGenerator.class).in(Singleton.class);
 		bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
@@ -51,6 +47,7 @@ abstract class BaseDataHubModule extends JerseyServletModule {
 	}
 
 	private void startUpServlets() {
+		bind(JettyWebSocketServlet.class).in(Singleton.class);
 		serveRegex("/channel/\\w+/ws").with(JettyWebSocketServlet.class);
 		serve("/*").with(GuiceContainer.class, JERSEY_PROPERTIES);
 	}
