@@ -27,8 +27,7 @@ class CassandraBackedDataHubModule extends BaseDataHubModule {
 	}
 
 	@Override
-	protected void configureServlets() {
-		super.configureBaseServlets();
+	protected void bindDataStoreBeans() {
 		Names.bindProperties(binder(), properties);
 		bind(CassandraChannelDao.class).asEagerSingleton();
 		bind(CassandraConnectorFactory.class).in(Singleton.class);
