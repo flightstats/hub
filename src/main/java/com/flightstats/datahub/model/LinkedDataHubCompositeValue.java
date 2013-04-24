@@ -14,6 +14,10 @@ public class LinkedDataHubCompositeValue {
 		this.next = next;
 	}
 
+	public DataHubCompositeValue getValue() {
+		return value;
+	}
+
 	public String getContentType() {
 		return value.getContentType();
 	}
