@@ -83,6 +83,14 @@ rsync -a /tmp/cassandra.yaml ${USER}@${HOST}:~/${CASSANDRA_DIR}/conf/
 echo Uploading log4j properties...
 rsync -a ${CONF_DIR}/log4j-server.properties ${USER}@${HOST}:~/${CASSANDRA_DIR}/conf/
 
+echo Making cassandra data directory
+ssh ${USER}@${HOST} "sudo mkdir -p /mnt/cassandra/data"
+ssh ${USER}@${HOST} "sudo chown ${USER}:${USER} /mnt/cassandra/data"
+
+echo Making cassandra commitlog directory
+ssh ${USER}@${HOST} "sudo mkdir -p /mnt/cassandra/commitlog"
+ssh ${USER}@${HOST} "sudo chown ${USER}:${USER} /mnt/cassandra/commitlog"
+
 echo Uploading cassandra logging configuration...
 rsync -a ${CONF_DIR}/log4j-server.properties ${USER}@${HOST}:~/${CASSANDRA_DIR}/conf/
 
