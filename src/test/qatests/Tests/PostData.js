@@ -36,7 +36,7 @@ var channelName,
 
 
 
-describe.only('POST data to channel:', function(){
+describe('POST data to channel:', function(){
 
     before(function(myCallback){
 
