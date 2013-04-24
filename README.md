@@ -91,7 +91,7 @@ Here's how you can do this with curl:
 
 ## insert content into channel
 
-To post data to a channel, issue a POST on the channel's `self` URI and specify the appropriate
+To insert data to a channel, issue a POST on the channel's `self` URI and specify the appropriate
 content-type header (all content types should be supported):
 
 ```
@@ -102,6 +102,7 @@ ___body_contains_arbitrary_content
 ```
 
 On success: `HTTP/1.1 200 OK`
+
 `Location: http://datahub:8080/channel/stumptown/00002FHOK8JMK000`
 
 ```json
@@ -121,7 +122,11 @@ On success: `HTTP/1.1 200 OK`
 
 Here's how you could do this with curl:
 
-
+```bash
+curl -i -X POST --header "Content-type: text/plain" 
+    --data "your content here" \
+    http://datahub:8080/channel/stumptown
+```
 
 ## fetch content from channel
 
@@ -130,10 +135,30 @@ To fetch content that was stored into a datahub channel, do a `GET` on the `self
 `GET http://datahub:8080/channel/stumptown/00002FHOK8JMK000`
 
 On success: `HTTP/1.1 200 OK`
-`Content-type: whatever-you/put-in`
-`payload body is what you put in`
+```
+Content-Type: text/plain
+Creation-Date: 2013-04-23T00:21:30.662Z
+Link: <http://datahub-01.cloud-east.dev:8080/channel/lolcats/00002FHK7LV40000>;rel="previous"
+Link: <http://datahub-01.cloud-east.dev:8080/channel/lolcats/00002FHSQESAS000>;rel="next"
+Content-Length: 4
+Server: Jetty(9.0.0.v20130308)
+
+your content here
+```
+
+Note: The `Content-Type` will match the Content-Type used when inserting the data.  
+Also note that there are two `Link` headers that provide links to the previous and next items in the channel.
+If you are fetching the latest item, there will be no next link.
+Similarly, if you are fetching the first item, there will be no previous link.
+The `Creation-Date` header will correspond to when the data was inserted into the channel.
+
+Here's how you can do this with curl:
+
+`curl -i http://datahub:8080/channel/stumptown/00002FHOK8JMK000`
 
 ## fetch latest channel item
+
+To retreive the latest 
 
 ## subscribe to events
 ## Websockets:
