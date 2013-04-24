@@ -21,8 +21,8 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js');
 var gu = require('../genericUtils.js');
 
 
-var URL_ROOT = dhh.URL_ROOT;
-var DEBUG = dhh.DEBUG;
+var URL_ROOT = dhh.URL_ROOT,
+    DEBUG = true;
 
 // Test variables that are regularly overwritten
 var agent, payload, req, uri, contentType, channelName;
@@ -64,6 +64,7 @@ describe('Create Channel: ', function(){
     it('blank name not allowed', function(done){
         dhh.makeChannel('', function(res) {
             expect(gu.isHTTPError(res.status)).to.equal(true);
+            gu.debugLog('Response status: '+ res.status, DEBUG);
             done();
         });
 
@@ -75,6 +76,7 @@ describe('Create Channel: ', function(){
             .send('')
             .end(function(err, res) {
                 expect(gu.isHTTPError(res.status)).to.equal(true);
+                gu.debugLog('Response status: '+ res.status, DEBUG);
                 done();
             });
     });

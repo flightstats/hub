@@ -61,6 +61,46 @@ describe('GET data:', function() {
         payload = uri = req = contentType = '';
     })
 
+    describe('GET data error cases: ', function() {
+        var realDataId,     // Need a valid id for some content
+            fakeDataId;
+
+        // post data and save location
+        before(function(done) {
+            payload = testRandom.randomString(Math.round(Math.random() * 50));
+
+            dhh.postData(channelName, payload, function(res, packetUri) {
+                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+
+                var pMetadata = new dhh.packetMetadata(res.body);
+                realDataId = pMetadata.getId();
+                fakeDataId = realDataId.substring(0, realDataId.length - 7) + '8675309';    // Jenny, I got your number.
+
+                done();
+            });
+        })
+
+        it.skip('FIX NOT IMPLEMENTED: https://www.pivotaltracker.com/story/show/48696133: getting from a nonexistent channel yields 404 response', function(done) {
+            uri = [URL_ROOT, 'channel', testRandom.randomString(30, testRandom.limitedRandomChar), realDataId].join('/');
+
+            agent.get(uri)
+                .end(function(err, res) {
+                    expect(res.status).to.equal(404);
+                    done();
+                });
+        })
+
+        it('getting from real channel but fake location yields 404 response', function(done) {
+            uri = [URL_ROOT, 'channel', channelName, fakeDataId].join('/');
+
+            agent.get(uri)
+                .end(function(err, res) {
+                    expect(res.status).to.equal(404);
+                    done();
+                });
+        })
+    })
+
     describe('returns Creation time:', function() {
 
         it('(Acceptance) Creation time returned in header', function(done) {
