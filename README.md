@@ -165,6 +165,10 @@ metadata.  The datahub will issue a 303 redirect.
 On success:  `HTTP/1.1 303 See Other`
 `Location: http://datahub:8080/channel/lolcats/00002FHSQESAS000`
 
+Here is how you can do this with curl:
+
+`curl -I http://datahub:8080/channel/stumptown/latest`
+
 ## subscribe to events
 
 While a common approach to consuming data from the datahub involves traversing next/previous links, clients may 
