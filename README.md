@@ -163,7 +163,21 @@ metadata.  The datahub will issue a 303 redirect.
 `HEAD http://datahub:8080/channel/stumptown/latest`
 
 On success:  `HTTP/1.1 303 See Other`
-`Location: http://datahub-01.cloud-east.dev:8080/channel/lolcats/00002FHSQESAS000`
+`Location: http://datahub:8080/channel/lolcats/00002FHSQESAS000`
 
 ## subscribe to events
-## Websockets:
+
+While a common approach to consuming data from the datahub involves traversing next/previous links, clients may 
+"subscribe" to single channel events by listening on a channel's websocket.  
+In the channel metadata there is a `ws` link, and a websocket aware client may connect to this URL.
+
+Once connected, the line-oriented protocol is simple:  
+Each time data is inserted into the channel, the datahub will send a line to the client with the
+URL for that content.
+
+```
+http://datahub:8080/channel/stumptown/00002FHSTSRHC000
+http://datahub:8080/channel/stumptown/00002FHSTVFQE000
+http://datahub:8080/channel/stumptown/00002FHSU7R3S000
+...etc...
+```
