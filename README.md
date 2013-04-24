@@ -157,13 +157,13 @@ Here's how you can do this with curl:
 
 ## fetch latest channel item
 
-To retreive the latest item inserted into a channel, issue a HEAD request on the `latest` link retuned from the channel
+To retrieve the latest item inserted into a channel, issue a HEAD request on the `latest` link returned from the channel
 metadata.  The datahub will issue a 303 redirect.
 
 `HEAD http://datahub:8080/channel/stumptown/latest`
 
 On success:  `HTTP/1.1 303 See Other`
-`Location: http://datahub:8080/channel/lolcats/00002FHSQESAS000`
+`Location: http://datahub:8080/channel/stumptown/00002FHSQESAS000`
 
 Here is how you can do this with curl:
 
