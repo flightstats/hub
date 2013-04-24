@@ -70,13 +70,13 @@ On success: `HTTP/1.1 200 OK`
 {
   "_links" : {
     "self" : {
-      "href" : "http://localhost:8080/channel/stumptown"
+      "href" : "http://datahub:8080/channel/stumptown"
     },
     "latest" : {
-      "href" : "http://localhost:8080/channel/stumptown/latest"
+      "href" : "http://datahub:8080/channel/stumptown/latest"
     },
     "ws" : {
-      "href" : "ws://localhost:8080/channel/stumptown/ws"
+      "href" : "ws://datahub:8080/channel/stumptown/ws"
     }
   },
   "lastUpdateDate" : "2013-04-23T20:36:35.310Z",
@@ -138,10 +138,9 @@ On success: `HTTP/1.1 200 OK`
 ```
 Content-Type: text/plain
 Creation-Date: 2013-04-23T00:21:30.662Z
-Link: <http://datahub-01.cloud-east.dev:8080/channel/lolcats/00002FHK7LV40000>;rel="previous"
-Link: <http://datahub-01.cloud-east.dev:8080/channel/lolcats/00002FHSQESAS000>;rel="next"
-Content-Length: 4
-Server: Jetty(9.0.0.v20130308)
+Link: <http://datahub:8080/channel/stumptown/00002FHK7LV40000>;rel="previous"
+Link: <http://datahub:8080/channel/stumptown/00002FHSQESAS000>;rel="next"
+...other.headers...
 
 your content here
 ```
@@ -158,7 +157,13 @@ Here's how you can do this with curl:
 
 ## fetch latest channel item
 
-To retreive the latest 
+To retreive the latest item inserted into a channel, issue a HEAD request on the `latest` link retuned from the channel
+metadata.  The datahub will issue a 303 redirect.
+
+`HEAD http://datahub:8080/channel/stumptown/latest`
+
+On success:  `HTTP/1.1 303 See Other`
+`Location: http://datahub-01.cloud-east.dev:8080/channel/lolcats/00002FHSQESAS000`
 
 ## subscribe to events
 ## Websockets:
