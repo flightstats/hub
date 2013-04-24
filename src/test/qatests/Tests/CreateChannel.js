@@ -48,6 +48,19 @@ describe('Create Channel: ', function(){
         payload = uri = req = contentType = '';
     });
 
+    it.skip('Create channel with name reserved by Cassandra', function(done) {
+        channelName = 'channelMetadata';
+        agent = superagent.agent();
+        dhh.makeChannel(channelName, function(res){
+            if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
+                //console.log('bad things');
+                throw new Error(res.error);
+            }
+            console.log('Main test channel:'+ channelName);
+            done();
+        });
+    })
+
     it('blank name not allowed', function(done){
         dhh.makeChannel('', function(res) {
             expect(gu.isHTTPError(res.status)).to.equal(true);

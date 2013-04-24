@@ -68,7 +68,8 @@ describe('Load tests - POST data:', function(){
         // To ignore the Loadtest cases:  mocha -R nyan --timeout 4000 --grep Load --invert
 
         it('Loadtest - POST rapidly to ten different channels, then confirm data retrieved via GET is correct', function(done){
-            //this.timeout(100000);
+            var VERBOSE = true;
+
             var cnMetadata;
             var numIterations = 20;
 
