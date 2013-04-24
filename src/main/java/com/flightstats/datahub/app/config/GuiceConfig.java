@@ -2,6 +2,7 @@ package com.flightstats.datahub.app.config;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.servlet.GuiceServletContextListener;
 
 import java.io.IOException;
@@ -17,17 +18,17 @@ public class GuiceConfig extends GuiceServletContextListener {
 
 	@Override
 	protected Injector getInjector() {
-		return Guice.createInjector(createModule());
+		return Guice.createInjector(createDataStoreModule(), new DataHubCommonModule());
 	}
 
-	private BaseDataHubModule createModule() {
+	private Module createDataStoreModule() {
 		Properties properties = loadProperties();
 		String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, MEMORY_BACKING_STORY_TAG);
 		switch (backingStoreName) {
 			case CASSANDRA_BACKING_STORE_TAG:
-				return new CassandraBackedDataHubModule(properties);
+				return new CassandraDataStoreModule(properties);
 			case MEMORY_BACKING_STORY_TAG:
-				return new MemoryBackedDataHubModule();
+				return new MemoryBackedDataStoreModule();
 			default:
 				throw new IllegalStateException(String.format("Unknown backing store specified: %s", backingStoreName));
 		}
