@@ -14,7 +14,11 @@ group = 'com.flightstats'
 version = '0.1.0'       //TODO: Read from file
 
 if (!project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)) {
-    version = version + "-SNAPSHOT"
+    def buildNumber = "dev";
+    if (System.env.BUILD_NUMBER != null) {
+        buildNumber = System.env.BUILD_NUMBER
+    }
+    version = version + "-SNAPSHOT-" + buildNumber
 }
 println "Builing version: ${version}"
 
