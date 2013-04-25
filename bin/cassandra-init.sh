@@ -10,6 +10,17 @@ USER=ubuntu
 
 case "$1" in
 	start)
+
+	    if [ ! -d /mnt/cassandra ] ; then
+            mkdir /mnt/cassandra
+            mkdir /mnt/cassandra/commitlog
+            mkdir /mnt/cassandra/data
+
+            chown ubuntu:ubuntu /mnt/cassandra
+            chown ubuntu:ubuntu /mnt/cassandra/commitlog
+            chown ubuntu:ubuntu /mnt/cassandra/data
+        fi
+
 		touch ${PIDFILE}
 		chown ubuntu:ubuntu ${PIDFILE}
 
