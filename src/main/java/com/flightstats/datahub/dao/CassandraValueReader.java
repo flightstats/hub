@@ -8,8 +8,11 @@ import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.HColumn;
+import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
+
+import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
 
 public class CassandraValueReader {
 
@@ -34,6 +37,15 @@ public class CassandraValueReader {
 		ColumnQuery<String, String, DataHubCompositeValue> query = hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(),
 				DataHubCompositeValueSerializer.get());
 		String rowKey = rowKeyStrategy.buildKey(channelName, key);
+		try {
+			return executeQuery(channelName, key, query, rowKey);
+
+		} catch (HInvalidRequestException e) {
+			throw maybePromoteToNoSuchChannel(e, channelName);
+		}
+	}
+
+	private DataHubCompositeValue executeQuery(String channelName, DataHubKey key, ColumnQuery<String, String, DataHubCompositeValue> query, String rowKey) {
 		QueryResult<HColumn<String, DataHubCompositeValue>> queryResult = query.setColumnFamily(channelName)
 																			   .setKey(rowKey)
 																			   .setName(keyRenderer.keyToString(key))
@@ -43,8 +55,12 @@ public class CassandraValueReader {
 	}
 
 	public Optional<DataHubKey> findLatestId(String channelName) {
-		DataHubKey lastUpdatedKey = channelsCollection.getLastUpdatedKey(channelName);
-		return Optional.fromNullable(lastUpdatedKey);
+		try {
+			DataHubKey lastUpdatedKey = channelsCollection.getLastUpdatedKey(channelName);
+			return Optional.fromNullable(lastUpdatedKey);
+		} catch (HInvalidRequestException e) {
+			throw maybePromoteToNoSuchChannel(e, channelName);
+		}
 	}
 
 }

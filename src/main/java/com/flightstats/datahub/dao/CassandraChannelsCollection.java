@@ -54,6 +54,7 @@ public class CassandraChannelsCollection {
 	}
 
 	private void insertChannelMetadata(ChannelConfiguration channelConfig) {
+		connector.createColumnFamily(CHANNELS_COLUMN_FAMILY_NAME);
 		StringSerializer keySerializer = StringSerializer.get();
 		Mutator<String> mutator = connector.buildMutator(keySerializer);
 		HColumn<String, ChannelConfiguration> column = hector.createColumn(channelConfig.getName(), channelConfig, StringSerializer.get(),
