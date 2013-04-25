@@ -123,7 +123,7 @@ On success: `HTTP/1.1 200 OK`
 Here's how you could do this with curl:
 
 ```bash
-curl -i -X POST --header "Content-type: text/plain" 
+curl -i -X POST --header "Content-type: text/plain" \
     --data "your content here" \
     http://datahub:8080/channel/stumptown
 ```
