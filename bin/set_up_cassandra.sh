@@ -86,7 +86,7 @@ rsync -a ${CONF_DIR}/log4j-server.properties ${USER}@${HOST}:~/${CASSANDRA_DIR}/
 echo Uploading cassandra logging configuration...
 rsync -a ${CONF_DIR}/log4j-server.properties ${USER}@${HOST}:~/${CASSANDRA_DIR}/conf/
 
-# Kinda bold and presumptious to be doing this here...but hmmmmph.
+# Kinda bold and presumptuous to be doing this here...but hmmmmph.
 echo Installing JNA so that native code will run from Java...
 ssh ${USER}@${HOST} 'sudo apt-get install libjna-java'
 echo Symlinking jna.jar into cassandra/lib directory
