@@ -3,7 +3,6 @@ package com.flightstats.datahub.dao;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
-import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
@@ -11,6 +10,8 @@ import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import me.prettyprint.hector.api.mutation.Mutator;
+
+import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
 
 public class CassandraValueWriter {
 
@@ -43,10 +44,7 @@ public class CassandraValueWriter {
 		try {
 			mutator.insert(rowKey, channelName, column);
 		} catch (HInvalidRequestException e) {
-			if (e.getMessage().contains("unconfigured columnfamily")) {
-				throw new NoSuchChannelException("Channel does not exist: " + channelName, e);
-			}
-			throw e;
+			throw maybePromoteToNoSuchChannel(e, channelName);
 		}
 		return new ValueInsertionResult(key);
 	}

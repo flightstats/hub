@@ -3,11 +3,13 @@ package com.flightstats.datahub.dao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.HColumn;
+import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 import org.junit.Test;
@@ -88,6 +90,33 @@ public class CassandraValueReaderTest {
 		assertNull(result);
 	}
 
+	@Test(expected = NoSuchChannelException.class)
+	public void testRead_invalidChannel() throws Exception {
+		String channelName = "myChan";
+		String rowKey = "1234";
+		DataHubKey key = new DataHubKey(new Date(1235555), (short) 0);
+		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
+
+		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+		HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
+		CassandraConnector connector = mock(CassandraConnector.class);
+		Keyspace keyspace = mock(Keyspace.class);
+		ColumnQuery<String, String, DataHubCompositeValue> query = mock(ColumnQuery.class);
+		RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy = mock(RowKeyStrategy.class);
+
+		when(connector.getKeyspace()).thenReturn(keyspace);
+		when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(
+				query);
+		when(query.setColumnFamily(channelName)).thenReturn(query);
+		when(rowKeyStrategy.buildKey(channelName, key)).thenReturn(rowKey);
+		when(query.setKey(rowKey)).thenReturn(query);
+		when(query.setName(keyRenderer.keyToString(key))).thenReturn(query);
+		when(query.execute()).thenThrow(new HInvalidRequestException("unconfigured columnfamily"));
+
+		CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, channelsCollection, keyRenderer);
+		testClass.read(channelName, key);
+	}
+
 	@Test
 	public void testFindLatestId() throws Exception {
 		DataHubKey expected = new DataHubKey(new Date(999999999), (short) 6);
@@ -103,18 +132,15 @@ public class CassandraValueReaderTest {
 		assertEquals(expected, result.get());
 	}
 
-	@Test
+	@Test(expected = NoSuchChannelException.class)
 	public void testFindLatestId_channelNotFound() throws Exception {
 		String channelName = "myChan";
-
 		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
 
-		when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(null);
+		when(channelsCollection.getLastUpdatedKey(channelName)).thenThrow(new HInvalidRequestException("unconfigured columnfamily"));
 
 		CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
-		Optional<DataHubKey> result = testClass.findLatestId(channelName);
-
-		assertEquals(Optional.absent(), result);
+		testClass.findLatestId(channelName);
 	}
 
 	@Test
