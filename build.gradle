@@ -168,12 +168,12 @@ def runExternal(commandline) {
 
 task deployDev << {
     runExternal("${projectDir}/bin/restart-dev-vpc.sh")
-    runExternal("bin/deploy-to-dev.sh datahub-01.cloud-east.dev")
+    runExternal("${projectDir}/bin/deploy-to-dev.sh datahub-01.cloud-east.dev")
 }
 
 task integrationTests << {
-    def testdir = "src/test/integration"
-    def reportsdir = "build/reports/integration/"
+    def testdir = "${projectDir}/src/test/integration"
+    def reportsdir = "${projectDir}/build/reports/integration/"
     new File(reportsdir).mkdirs()
     runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
 }
