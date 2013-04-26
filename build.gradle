@@ -13,7 +13,11 @@ group = 'com.flightstats'
 
 version = '0.1.0'       //TODO: Read from file
 
-if (!project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)) {
+def isDevBuild() {
+    return !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
+}
+
+if (isDevBuild()) {
     def buildNumber = "dev";
     if (System.env.BUILD_NUMBER != null) {
         buildNumber = System.env.BUILD_NUMBER
@@ -61,12 +65,17 @@ configurations {
     codeCoverage
     codeCoverageAnt
     publish
+    publishDev
+    integration
 }
 
 artifacts {
+    publishDev jar
+    publishDev distTar
+    publishDev integrationTar
+
     publish jar
     publish distTar
-    publish integrationTar
 }
 
 distTar {
@@ -88,7 +97,7 @@ artifactory {
             }
         }
         defaults {
-            publishConfigs('publish')
+            publishConfigs('publishDev')
             publishBuildInfo = true
             publishArtifacts = true
             publishPom = false
