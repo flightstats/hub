@@ -26,6 +26,15 @@ buildDir = 'build'
 
 mainClassName = "com.flightstats.datahub.app.DataHubMain"
 
+task integrationTar(type: Tar, dependsOn: 'distTar') {
+    baseName = "datahub-integration"
+    compression = Compression.GZIP
+    from "${projectDir}"
+    include "bin/*.*"
+    include "src/test/integration/*.*"
+    include "*.gradle"
+}
+
 buildscript {
     repositories {
         mavenCentral()
@@ -45,7 +54,6 @@ repositories {
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'
         }
-
     }
 }
 
@@ -53,12 +61,12 @@ configurations {
     codeCoverage
     codeCoverageAnt
     publish
-
 }
 
 artifacts {
     publish jar
     publish distTar
+    publish integrationTar
 }
 
 distTar {
@@ -186,6 +194,7 @@ def runExternal(commandline) {
 }
 
 task deployDev << {
+    description = "Deploys the distribution to the development environment"
     runExternal("${projectDir}/bin/restart-dev-vpc.sh")
     runExternal("${projectDir}/bin/deploy-to-dev.sh datahub-01.cloud-east.dev")
 }
