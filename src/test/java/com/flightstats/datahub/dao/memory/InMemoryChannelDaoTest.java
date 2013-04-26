@@ -1,4 +1,4 @@
-package com.flightstats.datahub.dao.prototypes;
+package com.flightstats.datahub.dao.memory;
 
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.TimeProvider;
