@@ -13,11 +13,9 @@ group = 'com.flightstats'
 
 version = '0.1.0'       //TODO: Read from file
 
-def isDevBuild() {
-    return !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
-}
+project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
 
-if (isDevBuild()) {
+if (project.ext.isDevBuild) {
     def buildNumber = "dev";
     if (System.env.BUILD_NUMBER != null) {
         buildNumber = System.env.BUILD_NUMBER
@@ -87,7 +85,10 @@ artifactory {
     publish {
         contextUrl = 'http://artifactory.office/artifactory'   //The base Artifactory URL for the publisher
         repository {
-            repoKey = 'services-dev'//The Artifactory repository key to publish to
+            repoKey = 'services-release'//The Artifactory repository key to publish to
+            if (project.ext.isDevBuild) {
+                repoKey = 'services-dev'
+            }
             username = 'build'          //The publisher user name
             password = 'P4ssw0rd'       //The publisher password
             ivy {
@@ -97,7 +98,11 @@ artifactory {
             }
         }
         defaults {
-            publishConfigs('publishDev')
+            def cc = 'publish'
+            if (project.ext.isDevBuild) {
+                cc = 'publishDev'
+            }
+            publishConfigs(cc)
             publishBuildInfo = true
             publishArtifacts = true
             publishPom = false
