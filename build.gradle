@@ -12,6 +12,7 @@ project.ext.jenkinsJobName = "$System.env.JOB_NAME"
 group = 'com.flightstats'
 
 version = '0.1.0'       //TODO: Read from file
+def snapshotVersion = version + "-SNAPSHOT"
 
 project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
 
@@ -20,7 +21,7 @@ if (project.ext.isDevBuild) {
     if (System.env.BUILD_NUMBER != null) {
         buildNumber = System.env.BUILD_NUMBER
     }
-    version = version + "-SNAPSHOT-" + buildNumber
+    version = snapshotVersion + "-" + buildNumber
 }
 println "Builing version: ${version}"
 
@@ -110,6 +111,15 @@ artifactory {
     }
 }
 
+task integration(dependsOn: configurations.integration) << {
+
+    configurations.compile.each { File file -> println file.name }
+    def testdir = "${projectDir}/src/test/integration"
+    def reportsdir = "${projectDir}/build/reports/integration/"
+    new File(reportsdir).mkdirs()
+    runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
+}
+
 dependencies {
     compile group: 'org.hectorclient', name: 'hector-core', version: '1.+'
     compile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.0.0.v20130308'
@@ -150,6 +160,8 @@ dependencies {
 
     codeCoverage 'org.jacoco:org.jacoco.agent:0.5.10.201208310627:runtime@jar'
     codeCoverageAnt 'org.jacoco:org.jacoco.ant:0.5.10.201208310627'
+
+    integration group: 'com.flightstats', 'name': 'datahub', version: snapshotVersion, transitive: false
 }
 
 test {
@@ -211,11 +223,4 @@ task deployDev << {
     description = "Deploys the distribution to the development environment"
     runExternal("${projectDir}/bin/restart-dev-vpc.sh")
     runExternal("${projectDir}/bin/deploy-to-dev.sh datahub-01.cloud-east.dev")
-}
-
-task integrationTests << {
-    def testdir = "${projectDir}/src/test/integration"
-    def reportsdir = "${projectDir}/build/reports/integration/"
-    new File(reportsdir).mkdirs()
-    runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
 }
