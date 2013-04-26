@@ -1,4 +1,4 @@
-package com.flightstats.datahub.dao.prototypes;
+package com.flightstats.datahub.dao.memory;
 
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.*;
@@ -58,7 +58,7 @@ public class InMemoryChannelDao implements ChannelDao {
 		lock.lock();
 		try {
 			DataHubChannelValueKey oldLastKey = latestPerChannel.get(channelName);
-			short newSequence = (oldLastKey == null) ? ((short) 0) : (short) (oldLastKey.sequence + 1);
+			short newSequence = (oldLastKey == null) ? ((short) 0) : (short) (oldLastKey.getSequence() + 1);
 			DataHubKey newKey = new DataHubKey(timeProvider.getDate(), newSequence);
 			DataHubChannelValueKey newDataHubChannelValueKey = new DataHubChannelValueKey(newKey, channelName);
 			DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, data);
@@ -80,7 +80,7 @@ public class InMemoryChannelDao implements ChannelDao {
 
 	private Optional<DataHubKey> optionalFromCompositeKey(DataHubChannelValueKey key) {
 		if (key != null) {
-			return Optional.of(new DataHubKey(key.date, key.sequence));
+			return Optional.of(key.asDataHubKey());
 		}
 		return Optional.absent();
 	}
@@ -90,7 +90,7 @@ public class InMemoryChannelDao implements ChannelDao {
 			LinkedDataHubCompositeValue previousLinkedValue = channelValues.getIfPresent(oldLastKey);
 			//in case the value has expired.
 			if (previousLinkedValue != null) {
-				channelValues.put(oldLastKey, new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(), Optional.of(new DataHubKey(newKey.date, newKey.sequence))));
+				channelValues.put(oldLastKey, new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(), Optional.of(newKey.asDataHubKey())));
 			}
 		}
 	}
@@ -104,49 +104,6 @@ public class InMemoryChannelDao implements ChannelDao {
 	public Optional<DataHubKey> findLatestId(String channelName) {
 		DataHubChannelValueKey key = latestPerChannel.get(channelName);
 		return optionalFromCompositeKey(key);
-	}
-
-	private static class DataHubChannelValueKey {
-		private final Date date;
-		private final short sequence;
-		private final String channelName;
-
-		private DataHubChannelValueKey(DataHubKey dataHubKey, String channelName) {
-			this.date = dataHubKey.getDate();
-			this.sequence = dataHubKey.getSequence();
-			this.channelName = channelName;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-
-			DataHubChannelValueKey that = (DataHubChannelValueKey) o;
-
-			if (sequence != that.sequence) return false;
-			if (!channelName.equals(that.channelName)) return false;
-			if (!date.equals(that.date)) return false;
-
-			return true;
-		}
-
-		@Override
-		public int hashCode() {
-			int result = date.hashCode();
-			result = 31 * result + sequence;
-			result = 31 * result + channelName.hashCode();
-			return result;
-		}
-
-		@Override
-		public String toString() {
-			return "DataHubChannelValueKey{" +
-					"date=" + date +
-					", sequence=" + sequence +
-					", channelName='" + channelName + '\'' +
-					'}';
-		}
 	}
 
 }
