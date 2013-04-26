@@ -20,8 +20,8 @@ public class InMemoryChannelDao implements ChannelDao {
 
 	private final Map<String, ChannelConfiguration> channelConfigurations = Maps.newConcurrentMap();
 	private final Map<String, Lock> writeLocks = Maps.newConcurrentMap();
-	private final Map<String, DataHubKey> latestPerChannel = Maps.newConcurrentMap();
-	private final Cache<DataHubKey, LinkedDataHubCompositeValue> channelValues = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).build();
+	private final Map<String, DataHubChannelValueKey> latestPerChannel = Maps.newConcurrentMap();
+	private final Cache<DataHubChannelValueKey, LinkedDataHubCompositeValue> channelValues = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).build();
 
 	@Inject
 	public InMemoryChannelDao(TimeProvider timeProvider) {
@@ -57,20 +57,20 @@ public class InMemoryChannelDao implements ChannelDao {
 		Lock lock = writeLocks.get(channelName);
 		lock.lock();
 		try {
-			DataHubKey oldLastKey = latestPerChannel.get(channelName);
-			short newSequence = (oldLastKey == null) ? ((short) 0) : (short) (oldLastKey.getSequence() + 1);
+			DataHubChannelValueKey oldLastKey = latestPerChannel.get(channelName);
+			short newSequence = (oldLastKey == null) ? ((short) 0) : (short) (oldLastKey.sequence + 1);
 			DataHubKey newKey = new DataHubKey(timeProvider.getDate(), newSequence);
-
+			DataHubChannelValueKey newDataHubChannelValueKey = new DataHubChannelValueKey(newKey, channelName);
 			DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, data);
-			LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, Optional.fromNullable(oldLastKey), Optional.<DataHubKey>absent());
+			LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, optionalFromCompositeKey(oldLastKey), Optional.<DataHubKey>absent());
 
 			//note: the order of operations here is actually fairly significant, to avoid races, so I'm calling it out explicitly with comments.
 			//first put the actual value in.
-			channelValues.put(newKey, newLinkedValue);
+			channelValues.put(newDataHubChannelValueKey, newLinkedValue);
 			//then link the old previous to the new value
-			linkOldPreviousToNew(oldLastKey, newKey);
+			linkOldPreviousToNew(oldLastKey, newDataHubChannelValueKey);
 			//finally, make it the latest
-			latestPerChannel.put(channelName, newKey);
+			latestPerChannel.put(channelName, newDataHubChannelValueKey);
 
 			return new ValueInsertionResult(newKey);
 		} finally {
@@ -78,24 +78,75 @@ public class InMemoryChannelDao implements ChannelDao {
 		}
 	}
 
-	private void linkOldPreviousToNew(DataHubKey oldLastKey, DataHubKey newKey) {
+	private Optional<DataHubKey> optionalFromCompositeKey(DataHubChannelValueKey key) {
+		if (key != null) {
+			return Optional.of(new DataHubKey(key.date, key.sequence));
+		}
+		return Optional.absent();
+	}
+
+	private void linkOldPreviousToNew(DataHubChannelValueKey oldLastKey, DataHubChannelValueKey newKey) {
 		if (oldLastKey != null) {
 			LinkedDataHubCompositeValue previousLinkedValue = channelValues.getIfPresent(oldLastKey);
 			//in case the value has expired.
 			if (previousLinkedValue != null) {
-				channelValues.put(oldLastKey, new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(), Optional.of(newKey)));
+				channelValues.put(oldLastKey, new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(), Optional.of(new DataHubKey(newKey.date, newKey.sequence))));
 			}
 		}
 	}
 
 	@Override
 	public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
-		return Optional.fromNullable(channelValues.getIfPresent(key));
+		return Optional.fromNullable(channelValues.getIfPresent(new DataHubChannelValueKey(key, channelName)));
 	}
 
 	@Override
 	public Optional<DataHubKey> findLatestId(String channelName) {
-		DataHubKey key = latestPerChannel.get(channelName);
-		return Optional.fromNullable(key);
+		DataHubChannelValueKey key = latestPerChannel.get(channelName);
+		return optionalFromCompositeKey(key);
 	}
+
+	private static class DataHubChannelValueKey {
+		private final Date date;
+		private final short sequence;
+		private final String channelName;
+
+		private DataHubChannelValueKey(DataHubKey dataHubKey, String channelName) {
+			this.date = dataHubKey.getDate();
+			this.sequence = dataHubKey.getSequence();
+			this.channelName = channelName;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+
+			DataHubChannelValueKey that = (DataHubChannelValueKey) o;
+
+			if (sequence != that.sequence) return false;
+			if (!channelName.equals(that.channelName)) return false;
+			if (!date.equals(that.date)) return false;
+
+			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			int result = date.hashCode();
+			result = 31 * result + sequence;
+			result = 31 * result + channelName.hashCode();
+			return result;
+		}
+
+		@Override
+		public String toString() {
+			return "DataHubChannelValueKey{" +
+					"date=" + date +
+					", sequence=" + sequence +
+					", channelName='" + channelName + '\'' +
+					'}';
+		}
+	}
+
 }
