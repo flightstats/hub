@@ -86,10 +86,6 @@ artifacts {
     publish distTar
 }
 
-distTar {
-    compression = Compression.GZIP
-}
-
 artifactory {
     contextUrl = 'http://artifactory.office/artifactory'   //The base Artifactory URL if not overridden by the publisher/resolver
     publish {
@@ -120,15 +116,42 @@ artifactory {
     }
 }
 
+def runExternal(commandline) {
+    def proc = commandline.execute()
+    proc.in.eachLine { line -> println line }
+    proc.err.eachLine { line -> println 'ERROR: ' + line }
+    proc.waitFor()
+    if (proc.exitValue()) {
+        System.exit(proc.exitValue())
+    }
+}
+
+task deployDev << {
+    description = "Deploys the distribution to the development environment"
+    runExternal("${projectDir}/bin/restart-dev-vpc.sh")
+    runExternal("${projectDir}/bin/deploy-to-dev.sh datahub-01.cloud-east.dev")
+}
+
 task setupIntegration << {
     println "Setting up the integration environment"
     def integrationTarball = configurations.integrationTests.files.find {
         it.name.startsWith('datahub-integration')
     }
+
     println "Extracting " + integrationTarball.name
     copy {
         from tarTree(resources.gzip(integrationTarball))
         into projectDir
+    }
+
+    def distributionsDir = new File("${buildDir}/distributions")
+    distributionsDir.mkdirs()
+    def snapshotTarball = configurations.integrationTests.files.find {
+        !it.name.startsWith('datahub-integration') && it.name.endsWith('tgz')
+    }
+    copy {
+        from snapshotTarball
+        into distributionsDir
     }
 }
 
@@ -137,6 +160,7 @@ task integrationTests(dependsOn: setupIntegration) << {
     def reportsdir = "${projectDir}/build/reports/integration/"
     println "Making " + reportsdir
     new File(reportsdir).mkdirs()
+    tasks.deployDev.execute()
     runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
 }
 
@@ -220,25 +244,13 @@ task generateCoverageReport << {
     }
 }
 
+distTar {
+    compression = Compression.GZIP
+}
+
 startScripts {
     ext.jvmOpts = "-Xmx256m"
     doLast {
         unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"$ext.jvmOpts\"")
     }
-}
-
-def runExternal(commandline) {
-    def proc = commandline.execute()
-    proc.in.eachLine { line -> println line }
-    proc.err.eachLine { line -> println 'ERROR: ' + line }
-    proc.waitFor()
-    if (proc.exitValue()) {
-        System.exit(proc.exitValue())
-    }
-}
-
-task deployDev << {
-    description = "Deploys the distribution to the development environment"
-    runExternal("${projectDir}/bin/restart-dev-vpc.sh")
-    runExternal("${projectDir}/bin/deploy-to-dev.sh datahub-01.cloud-east.dev")
 }
