@@ -6,8 +6,25 @@ apply plugin: 'application'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
+project.ext.jenkinsBuildNumber = "$System.env.BUILD_NUMBER"
+project.ext.jenkinsJobName = "$System.env.JOB_NAME"
+
 group = 'com.flightstats'
-version = '0.1.0'
+
+version = '0.1.0'       //TODO: Read from file
+def snapshotVersion = version + "-SNAPSHOT"
+
+project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
+
+if (project.ext.isDevBuild) {
+    def buildNumber = "dev";
+    if (System.env.BUILD_NUMBER != null) {
+        buildNumber = System.env.BUILD_NUMBER
+    }
+    version = snapshotVersion + "-" + buildNumber
+}
+println "Builing version: ${version}"
+
 buildDir = 'build'
 
 mainClassName = "com.flightstats.datahub.app.DataHubMain"
@@ -26,32 +43,57 @@ buildscript {
 repositories {
     repositories {
         maven {
+            url 'http://artifactory.office/artifactory/plugins-dev'
+        }
+        maven {
             url 'http://artifactory.office/artifactory/plugins-release'
         }
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'
         }
-
+        ivy {
+            url "http://artifactory.office/artifactory/simple/services-dev"
+            layout "pattern", {
+                artifact "[organization]/[module]/[revision]/[artifact]-[revision](-[suffix]).[ext]"
+            }
+        }
     }
 }
 
 configurations {
-    publish
     codeCoverage
     codeCoverageAnt
+    publish
+    publishDev
+    integrationTests
+}
+
+task integrationTar(type: Tar, dependsOn: 'distTar') {
+    baseName = "datahub-integration"
+    compression = Compression.GZIP
+    from "${projectDir}"
+    include "bin/*.*"
+    include "src/test/integration/*.*"
+    include "settings.gradle"
 }
 
 artifacts {
+    publishDev jar
+    publishDev distTar
+    publishDev integrationTar
+
     publish jar
-    publish distZip
+    publish distTar
 }
 
 artifactory {
-    contextUrl = 'http://artifactory.office/artifactory'   //The base Artifactory URL if not overridden by the publisher/resolver
     publish {
         contextUrl = 'http://artifactory.office/artifactory'   //The base Artifactory URL for the publisher
         repository {
             repoKey = 'services-release'//The Artifactory repository key to publish to
+            if (project.ext.isDevBuild) {
+                repoKey = 'services-dev'
+            }
             username = 'build'          //The publisher user name
             password = 'P4ssw0rd'       //The publisher password
             ivy {
@@ -61,12 +103,48 @@ artifactory {
             }
         }
         defaults {
-            publishConfigs('publish')
+            def cc = 'publish'
+            if (project.ext.isDevBuild) {
+                cc = 'publishDev'
+            }
+            publishConfigs(cc)
             publishBuildInfo = true
             publishArtifacts = true
             publishPom = false
         }
     }
+}
+
+task setupIntegration << {
+    println "Setting up the integration environment"
+    def integrationTarball = configurations.integrationTests.files.find {
+        it.name.startsWith('datahub-integration')
+    }
+
+    println "Extracting " + integrationTarball.name
+    copy {
+        from tarTree(resources.gzip(integrationTarball))
+        into projectDir
+    }
+
+    def distributionsDir = new File("${buildDir}/distributions")
+    distributionsDir.mkdirs()
+    def snapshotTarball = configurations.integrationTests.files.find {
+        !it.name.startsWith('datahub-integration') && it.name.endsWith('tgz')
+    }
+    copy {
+        from snapshotTarball
+        into distributionsDir
+    }
+}
+
+task integrationTests(dependsOn: setupIntegration) << {
+    def testdir = "${projectDir}/src/test/integration"
+    def reportsdir = "${projectDir}/build/reports/integration/"
+    println "Making " + reportsdir
+    new File(reportsdir).mkdirs()
+    tasks.deployDev.execute()
+    runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
 }
 
 dependencies {
@@ -99,8 +177,6 @@ dependencies {
     compile group: 'com.google.guava', name: 'guava', version: '13.0'
     compile group: 'joda-time', name: 'joda-time', version: '2.1'
     compile group: "org.hamcrest", name: "hamcrest-core", version: "1.3"
-    compile group: 'junit', name: 'junit', version: '4.+'
-    compile group: "org.mockito", name: "mockito-all", version: "1.9.5"
     compile group: "org.slf4j", name: "slf4j-log4j12", version: "1.7.2"
     compile group: "com.hazelcast", name: "hazelcast", version: "2.5"
 
@@ -109,6 +185,8 @@ dependencies {
 
     codeCoverage 'org.jacoco:org.jacoco.agent:0.5.10.201208310627:runtime@jar'
     codeCoverageAnt 'org.jacoco:org.jacoco.ant:0.5.10.201208310627'
+
+    integrationTests group: 'com.flightstats', name: 'datahub', version: snapshotVersion + '+', transitive: false, configuration: 'publishDev'
 }
 
 test {
@@ -149,11 +227,8 @@ task generateCoverageReport << {
     }
 }
 
-startScripts {
-    ext.jvmOpts = "-Xmx256m"
-    doLast {
-        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"$ext.jvmOpts\"")
-    }
+distTar {
+    compression = Compression.GZIP
 }
 
 def runExternal(commandline) {
@@ -167,13 +242,14 @@ def runExternal(commandline) {
 }
 
 task deployDev << {
+    description = "Deploys the distribution to the development environment"
     runExternal("${projectDir}/bin/restart-dev-vpc.sh")
     runExternal("${projectDir}/bin/deploy-to-dev.sh datahub-01.cloud-east.dev")
 }
 
-task integrationTests << {
-    def testdir = "${projectDir}/src/test/integration"
-    def reportsdir = "${projectDir}/build/reports/integration/"
-    new File(reportsdir).mkdirs()
-    runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
+startScripts {
+    ext.jvmOpts = "-Xmx256m"
+    doLast {
+        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"$ext.jvmOpts\"")
+    }
 }
