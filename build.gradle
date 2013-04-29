@@ -35,7 +35,7 @@ task integrationTar(type: Tar, dependsOn: 'distTar') {
     from "${projectDir}"
     include "bin/*.*"
     include "src/test/integration/*.*"
-    include "*.gradle"
+    include "settings.gradle"
 }
 
 buildscript {
@@ -52,10 +52,19 @@ buildscript {
 repositories {
     repositories {
         maven {
+            url 'http://artifactory.office/artifactory/plugins-dev'
+        }
+        maven {
             url 'http://artifactory.office/artifactory/plugins-release'
         }
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'
+        }
+        ivy {
+            url "http://artifactory.office/artifactory/simple/services-dev"
+            layout "pattern", {
+                artifact "[organization]/[module]/[revision]/[artifact]-[revision](-[suffix]).[ext]"
+            }
         }
     }
 }
@@ -65,7 +74,7 @@ configurations {
     codeCoverageAnt
     publish
     publishDev
-    integration
+    integrationTests
 }
 
 artifacts {
@@ -111,11 +120,22 @@ artifactory {
     }
 }
 
-task integration(dependsOn: configurations.integration) << {
+task setupIntegration << {
+    println "Setting up the integration environment"
+    def integrationTarball = configurations.integrationTests.files.find {
+        it.name.startsWith('datahub-integration')
+    }
+    println "Extracting " + integrationTarball.name
+    copy {
+        from tarTree(resources.gzip(integrationTarball))
+        into projectDir
+    }
+}
 
-    configurations.compile.each { File file -> println file.name }
+task integrationTests(dependsOn: setupIntegration) << {
     def testdir = "${projectDir}/src/test/integration"
     def reportsdir = "${projectDir}/build/reports/integration/"
+    println "Making " + reportsdir
     new File(reportsdir).mkdirs()
     runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
 }
@@ -150,8 +170,6 @@ dependencies {
     compile group: 'com.google.guava', name: 'guava', version: '13.0'
     compile group: 'joda-time', name: 'joda-time', version: '2.1'
     compile group: "org.hamcrest", name: "hamcrest-core", version: "1.3"
-    compile group: 'junit', name: 'junit', version: '4.+'
-    compile group: "org.mockito", name: "mockito-all", version: "1.9.5"
     compile group: "org.slf4j", name: "slf4j-log4j12", version: "1.7.2"
     compile group: "com.hazelcast", name: "hazelcast", version: "2.5"
 
@@ -161,7 +179,7 @@ dependencies {
     codeCoverage 'org.jacoco:org.jacoco.agent:0.5.10.201208310627:runtime@jar'
     codeCoverageAnt 'org.jacoco:org.jacoco.ant:0.5.10.201208310627'
 
-    integration group: 'com.flightstats', 'name': 'datahub', version: snapshotVersion, transitive: false
+    integrationTests group: 'com.flightstats', name: 'datahub', version: snapshotVersion + '+', transitive: false, configuration: 'publishDev'
 }
 
 test {
