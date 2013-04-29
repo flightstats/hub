@@ -29,15 +29,6 @@ buildDir = 'build'
 
 mainClassName = "com.flightstats.datahub.app.DataHubMain"
 
-task integrationTar(type: Tar, dependsOn: 'distTar') {
-    baseName = "datahub-integration"
-    compression = Compression.GZIP
-    from "${projectDir}"
-    include "bin/*.*"
-    include "src/test/integration/*.*"
-    include "settings.gradle"
-}
-
 buildscript {
     repositories {
         mavenCentral()
@@ -77,6 +68,15 @@ configurations {
     integrationTests
 }
 
+task integrationTar(type: Tar, dependsOn: 'distTar') {
+    baseName = "datahub-integration"
+    compression = Compression.GZIP
+    from "${projectDir}"
+    include "bin/*.*"
+    include "src/test/integration/*.*"
+    include "settings.gradle"
+}
+
 artifacts {
     publishDev jar
     publishDev distTar
@@ -87,7 +87,6 @@ artifacts {
 }
 
 artifactory {
-    contextUrl = 'http://artifactory.office/artifactory'   //The base Artifactory URL if not overridden by the publisher/resolver
     publish {
         contextUrl = 'http://artifactory.office/artifactory'   //The base Artifactory URL for the publisher
         repository {
