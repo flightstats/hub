@@ -12,14 +12,11 @@ import com.google.inject.Inject;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class InMemoryChannelDao implements ChannelDao {
 	private final TimeProvider timeProvider;
 
 	private final Map<String, ChannelConfiguration> channelConfigurations = Maps.newConcurrentMap();
-	private final Map<String, Lock> writeLocks = Maps.newConcurrentMap();
 	private final Map<String, DataHubChannelValueKey> latestPerChannel = Maps.newConcurrentMap();
 	private final Cache<DataHubChannelValueKey, LinkedDataHubCompositeValue> channelValues = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).build();
 
@@ -37,7 +34,6 @@ public class InMemoryChannelDao implements ChannelDao {
 	public ChannelConfiguration createChannel(String name) {
 		Date creationDate = timeProvider.getDate();
 		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate);
-		writeLocks.put(name, new ReentrantLock());
 		channelConfigurations.put(name, channelConfiguration);
 		return channelConfiguration;
 	}
@@ -54,28 +50,22 @@ public class InMemoryChannelDao implements ChannelDao {
 
 	@Override
 	public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
-		Lock lock = writeLocks.get(channelName);
-		lock.lock();
-		try {
-			DataHubChannelValueKey oldLastKey = latestPerChannel.get(channelName);
-			short newSequence = (oldLastKey == null) ? ((short) 0) : (short) (oldLastKey.getSequence() + 1);
-			DataHubKey newKey = new DataHubKey(timeProvider.getDate(), newSequence);
-			DataHubChannelValueKey newDataHubChannelValueKey = new DataHubChannelValueKey(newKey, channelName);
-			DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, data);
-			LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, optionalFromCompositeKey(oldLastKey), Optional.<DataHubKey>absent());
+		DataHubChannelValueKey oldLastKey = latestPerChannel.get(channelName);
+		short newSequence = (oldLastKey == null) ? ((short) 0) : (short) (oldLastKey.getSequence() + 1);
+		DataHubKey newKey = new DataHubKey(timeProvider.getDate(), newSequence);
+		DataHubChannelValueKey newDataHubChannelValueKey = new DataHubChannelValueKey(newKey, channelName);
+		DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, data);
+		LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, optionalFromCompositeKey(oldLastKey), Optional.<DataHubKey>absent());
 
-			//note: the order of operations here is actually fairly significant, to avoid races, so I'm calling it out explicitly with comments.
-			//first put the actual value in.
-			channelValues.put(newDataHubChannelValueKey, newLinkedValue);
-			//then link the old previous to the new value
-			linkOldPreviousToNew(oldLastKey, newDataHubChannelValueKey);
-			//finally, make it the latest
-			latestPerChannel.put(channelName, newDataHubChannelValueKey);
+		//note: the order of operations here is actually fairly significant, to avoid races, so I'm calling it out explicitly with comments.
+		//first put the actual value in.
+		channelValues.put(newDataHubChannelValueKey, newLinkedValue);
+		//then link the old previous to the new value
+		linkOldPreviousToNew(oldLastKey, newDataHubChannelValueKey);
+		//finally, make it the latest
+		latestPerChannel.put(channelName, newDataHubChannelValueKey);
 
-			return new ValueInsertionResult(newKey);
-		} finally {
-			lock.unlock();
-		}
+		return new ValueInsertionResult(newKey);
 	}
 
 	private Optional<DataHubKey> optionalFromCompositeKey(DataHubChannelValueKey key) {
