@@ -1,4 +1,4 @@
-package com.flightstats.datahub.dao.prototypes;
+package com.flightstats.datahub.dao.memory;
 
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.TimeProvider;
@@ -61,7 +61,7 @@ public class InMemoryChannelDaoTest {
 
 	@Test
 	public void testFindLatestId() throws Exception {
-		InMemoryChannelDao testClass = new InMemoryChannelDao(mock(TimeProvider.class));
+		InMemoryChannelDao testClass = new InMemoryChannelDao(new TimeProvider());
 		testClass.createChannel("channelName");
 		assertFalse(testClass.findLatestId("channelName").isPresent());
 		ValueInsertionResult insertionResult = testClass.insert("channelName", "text/plain", "Hello".getBytes());
@@ -163,6 +163,25 @@ public class InMemoryChannelDaoTest {
 
 		Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, valueInsertionResult.getKey());
 		assertEquals(expected, result.get());
+	}
+
+	@Test
+	public void testGetValue_crossChannel() throws Exception {
+		String channelName = "cccccc";
+		Date channelCreationDate = new Date();
+		Date date = new Date(9998888777666L);
+
+		byte[] data = "hello".getBytes();
+
+		TimeProvider timeProvider = mock(TimeProvider.class);
+		when(timeProvider.getDate()).thenReturn(channelCreationDate, date);
+
+		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
+		testClass.createChannel(channelName);
+		ValueInsertionResult valueInsertionResult = testClass.insert(channelName, "text/plain", data);
+
+		Optional<LinkedDataHubCompositeValue> result = testClass.getValue("otherChannel", valueInsertionResult.getKey());
+		assertFalse(result.isPresent());
 	}
 
 	@Test
