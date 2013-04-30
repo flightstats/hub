@@ -1,7 +1,7 @@
 package com.flightstats.datahub.app.config;
 
 import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.dao.prototypes.InMemoryChannelDao;
+import com.flightstats.datahub.dao.memory.InMemoryChannelDao;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 
