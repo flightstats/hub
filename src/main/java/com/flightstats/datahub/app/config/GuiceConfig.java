@@ -5,16 +5,18 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.servlet.GuiceServletContextListener;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 
 public class GuiceConfig extends GuiceServletContextListener {
 
-	public static final String DATAHUB_PROPERTIES_FILENAME = "datahub.properties";
 	public static final String BACKING_STORE_PROPERTY = "backing.store";
 	public static final String CASSANDRA_BACKING_STORE_TAG = "cassandra";
 	public static final String MEMORY_BACKING_STORY_TAG = "memory";
+	private final Properties properties;
+
+	public GuiceConfig(Properties properties) {
+		this.properties = properties;
+	}
 
 	@Override
 	protected Injector getInjector() {
@@ -22,7 +24,6 @@ public class GuiceConfig extends GuiceServletContextListener {
 	}
 
 	private Module createDataStoreModule() {
-		Properties properties = loadProperties();
 		String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, MEMORY_BACKING_STORY_TAG);
 		switch (backingStoreName) {
 			case CASSANDRA_BACKING_STORE_TAG:
@@ -33,16 +34,4 @@ public class GuiceConfig extends GuiceServletContextListener {
 				throw new IllegalStateException(String.format("Unknown backing store specified: %s", backingStoreName));
 		}
 	}
-
-	private Properties loadProperties() {
-		InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(DATAHUB_PROPERTIES_FILENAME);
-		Properties properties = new Properties();
-		try {
-			properties.load(in);
-		} catch (IOException e) {
-			throw new RuntimeException("Error loading properties.", e);
-		}
-		return properties;
-	}
-
 }
