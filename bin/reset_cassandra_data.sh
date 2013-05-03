@@ -19,7 +19,7 @@ fi
 
 for HOST in $@ ; do
     echo Stopping cassandra on ${HOST}...
-    ssh ${USER}@${HOST} "sudo /etc/init.d/cassandra stop"
+    ssh ${USER}@${HOST} "sudo stop cassandra"
 done
 
 for HOST in $@ ; do
@@ -29,7 +29,7 @@ done
 
 for HOST in $@ ; do
     echo Starting cassandra on ${HOST}...
-    ssh ${USER}@${HOST} "sudo /etc/init.d/cassandra start"
+    ssh ${USER}@${HOST} "sudo start cassandra"
 done
 
 echo All done.
