@@ -33,7 +33,7 @@ echo Installing properties file
 if [[ "$HOST" == *dev* ]] ; then
 	rsync -avv --progress ${CONF_DIR}/dev/datahub.properties ${USER}@${HOST}:/home/${USER}/datahub/
 elif [[ "$HOST" == *staging* ]] ; then
-	rsync -avv --progress ${CONF_DIR}/dev/datahub.properties ${USER}@${HOST}:/home/${USER}/datahub/
+	rsync -avv --progress ${CONF_DIR}/staging/datahub.properties ${USER}@${HOST}:/home/${USER}/datahub/
 fi
 
 echo Installing init script
