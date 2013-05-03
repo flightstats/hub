@@ -18,7 +18,7 @@ if [ "$HOST" == "" ] ; then
 fi
 
 echo Shutting down any running datahub instances on ${HOST}...
-ssh ${USER}@${HOST} "sudo /etc/init.d/datahub stop"
+ssh ${USER}@${HOST} "sudo stop datahub"
 
 echo Deploying ${TARFILE} to ${HOST}
 rsync -avv --progress ${BUILD_DIR}/distributions/${TARFILE} ${USER}@${HOST}:/home/${USER}/
@@ -36,14 +36,12 @@ elif [[ "$HOST" == *staging* ]] ; then
 	rsync -avv --progress ${CONF_DIR}/staging/datahub.properties ${USER}@${HOST}:/home/${USER}/datahub/
 fi
 
-echo Installing init script
-rsync -avv --progress ${BIN_DIR}/datahub-init.sh ${USER}@${HOST}:/tmp
-ssh ${USER}@${HOST} "sudo mv /tmp/datahub-init.sh /etc/init.d/"
-ssh ${USER}@${HOST} "sudo ln -s /etc/init.d/datahub-init.sh /etc/init.d/datahub"
-ssh ${USER}@${HOST} "sudo ln -s /etc/init.d/datahub /etc/rc2.d/S99datahub"
+echo Installing upstart script
+rsync -avv --progress ${CONF_DIR}/upstart/datahub.conf ${USER}@${HOST}:/tmp
+ssh ${USER}@${HOST} "sudo mv /tmp/datahub.conf /etc/init/"
 
 echo Starting up datahub...
-ssh ${USER}@${HOST} "sudo /etc/init.d/datahub start"
+ssh ${USER}@${HOST} "sudo start datahub"
 
 echo Waiting for service to be active...
 for i in `seq 1 60` ; do
