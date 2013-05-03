@@ -92,13 +92,11 @@ ssh ${USER}@${HOST} 'sudo apt-get install libjna-java'
 echo Symlinking jna.jar into cassandra/lib directory
 ssh ${USER}@${HOST} "ln -s /usr/share/java/jna.jar /home/${USER}/${CASSANDRA_DIR}/lib/jna.jar"
 
-echo Installing init/startup scripts...
-rsync -a ${BIN_DIR}/cassandra-init.sh ${USER}@${HOST}:/tmp/
-ssh ${USER}@${HOST} 'sudo cp /tmp/cassandra-init.sh /etc/init.d/'
-ssh ${USER}@${HOST} 'sudo ln -s /etc/init.d/cassandra-init.sh /etc/init.d/cassandra'
-ssh ${USER}@${HOST} 'sudo ln -s /etc/init.d/cassandra /etc/rc2.d/S99cassandra'
+echo Installing upstart scripts...
+rsync -a ${CONF_DIR}/upstart/cassandra.conf ${USER}@${HOST}:/tmp/
+ssh ${USER}@${HOST} 'sudo mv /tmp/cassandra.conf /etc/init/'
 
 echo Starting up cassandra on ${HOST}
-ssh ${USER}@${HOST} "sudo /etc/init.d/cassandra start"
+ssh ${USER}@${HOST} "sudo start cassandra"
 
 # TODO: Initial tokens in cassandra.yaml ?
