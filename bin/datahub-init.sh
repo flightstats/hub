@@ -23,6 +23,10 @@ case "$1" in
 		touch ${PIDFILE}
 		chown ubuntu:ubuntu ${PIDFILE}
 
+		if [ -e ${DATAHUB_DIR}/datahub.properties ] ; then
+		    DATAHUB_PROPS=${DATAHUB_DIR}/datahub.properties
+		fi
+
 		start-stop-daemon --start \
 			--chuid ${USER}:${USER} \
 			--chdir ${DATAHUB_DIR} \
@@ -30,7 +34,7 @@ case "$1" in
 			--make-pidfile \
 			--background \
 			--exec /bin/bash \
-			-- --login -c "${DATAHUB_DIR}/bin/datahub"
+			-- --login -c "${DATAHUB_DIR}/bin/datahub \"${DATAHUB_PROPS}\""
 		;;
 	stop)
 		echo Stopping datahub instance

@@ -6,6 +6,7 @@
 HOST="$1"
 USER=ubuntu
 BIN_DIR=`dirname $0`
+CONF_DIR=${BIN_DIR}/../conf
 BUILD_DIR=${BIN_DIR}/../build
 TARFILE=`ls ${BUILD_DIR}/distributions/datahub-*.tgz`
 TARFILE=`basename ${TARFILE}`
@@ -21,10 +22,20 @@ ssh ${USER}@${HOST} "sudo /etc/init.d/datahub stop"
 
 echo Deploying ${TARFILE} to ${HOST}
 rsync -avv --progress ${BUILD_DIR}/distributions/${TARFILE} ${USER}@${HOST}:/home/${USER}/
+
 echo Exploding tarball...
 ssh ${USER}@${HOST} "tar -xzf /home/${USER}/${TARFILE}"
+
 echo Creating symlink
 ssh ${USER}@${HOST} "rm /home/${USER}/datahub; ln -s /home/${USER}/${DISTDIR} /home/${USER}/datahub"
+
+echo Installing properties file
+if [[ "$HOST" == *dev* ]] ; then
+	rsync -avv --progress ${CONF_DIR}/dev/datahub.properties ${USER}@${HOST}:/home/${USER}/datahub/
+elif [[ "$HOST" == *staging* ]] ; then
+	rsync -avv --progress ${CONF_DIR}/staging/datahub.properties ${USER}@${HOST}:/home/${USER}/datahub/
+fi
+
 echo Installing init script
 rsync -avv --progress ${BIN_DIR}/datahub-init.sh ${USER}@${HOST}:/tmp
 ssh ${USER}@${HOST} "sudo mv /tmp/datahub-init.sh /etc/init.d/"
