@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.CHANNELS_LATEST_ROW_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
@@ -44,6 +45,7 @@ public class CassandraLinkagesFinderTest {
 	private Row row;
 	private Row row1;
 	private Row row2;
+	private Row latestItemRow;
 	private ColumnSlice columnSlice;
 	private ColumnSlice columnSlice1;
 	private ColumnSlice columnSlice2;
@@ -66,6 +68,7 @@ public class CassandraLinkagesFinderTest {
 		previousColumn = mock(HColumn.class);
 		nextColumn = mock(HColumn.class);
 		row = mock(Row.class);
+		latestItemRow = mock(Row.class);
 
 		row1 = mock(Row.class);
 		row2 = mock(Row.class);
@@ -83,6 +86,7 @@ public class CassandraLinkagesFinderTest {
 		when(row1.getKey()).thenReturn("20130401");
 		when(row2.getKey()).thenReturn("20130402");
 		when(row.getColumnSlice()).thenReturn(columnSlice);
+		when(latestItemRow.getKey()).thenReturn(CHANNELS_LATEST_ROW_KEY);
 		when(row1.getColumnSlice()).thenReturn(columnSlice1);
 		when(row2.getColumnSlice()).thenReturn(columnSlice2);
 	}
@@ -90,6 +94,23 @@ public class CassandraLinkagesFinderTest {
 	@Test
 	public void testFindPrevious_simple() throws Exception {
 		List<Row> rows = Arrays.asList(row);
+
+		when(rangeQuery.setRange(keyRenderer.keyToString(targetKey), keyRenderer.keyToString(DataHubKey.MIN_KEY), true, 2)).thenReturn(rangeQuery);
+		when(queryResult.get()).thenReturn(orderedRows);
+		when(orderedRows.getList()).thenReturn(rows);
+		when(columnSlice.getColumns()).thenReturn(Arrays.asList(column, previousColumn));
+		when(column.getName()).thenReturn(keyRenderer.keyToString(targetKey));
+		when(previousColumn.getName()).thenReturn(keyRenderer.keyToString(expectedPrevious));
+
+		CassandraLinkagesFinder testClass = new CassandraLinkagesFinder(connector, hector, keyRenderer);
+		Optional<DataHubKey> result = testClass.findPrevious(channelName, targetKey);
+
+		assertEquals(expectedPrevious, result.get());
+	}
+
+	@Test
+	public void testFindNext_includeLatestItemRow() throws Exception {
+		List<Row> rows = Arrays.asList(latestItemRow, row);
 
 		when(rangeQuery.setRange(keyRenderer.keyToString(targetKey), keyRenderer.keyToString(DataHubKey.MIN_KEY), true, 2)).thenReturn(rangeQuery);
 		when(queryResult.get()).thenReturn(orderedRows);
