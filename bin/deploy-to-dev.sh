@@ -40,9 +40,9 @@ echo Using properties file: $PROPERTIES_FILENAME
 
 echo Installing properties file
 if [[ "$HOST" == *dev* ]] ; then
-	rsync -avv --progress ${CONF_DIR}/dev/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/
+	rsync -avv --progress ${CONF_DIR}/dev/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/datahub.properties
 elif [[ "$HOST" == *staging* ]] ; then
-	rsync -avv --progress ${CONF_DIR}/staging/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/
+	rsync -avv --progress ${CONF_DIR}/staging/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/datahub.properties
 fi
 
 echo Installing upstart script
