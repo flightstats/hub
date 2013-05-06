@@ -14,8 +14,8 @@ var dhh = require('../DH_test_helpers/DHtesthelpers.js');
 var testRandom = require('../randomUtils.js');
 var gu = require('../genericUtils.js');
 
-var WAIT_FOR_CHANNEL_RESPONSE_MS = 10000;
-var WAIT_FOR_SOCKET_CLOSURE_MS = 10000;
+var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000;
+var WAIT_FOR_SOCKET_CLOSURE_MS = 10 * 1000;
 
 var URL_ROOT = dhh.URL_ROOT;
 //var DOMAIN = '10.250.220.197:8080';
@@ -306,7 +306,7 @@ describe('Channel Subscription:', function() {
                     while((0 === socket1.responseQueue.length) && (Date.now() < endWait)) {
                         setTimeout(function () {
                             // pass
-                        }, 100)
+                        }, 1000)
                     };
 
                     expect(socket1.responseQueue.length).to.equal(1);
@@ -356,7 +356,7 @@ describe('Channel Subscription:', function() {
                     while((0 === socket2.responseQueue.length) && (Date.now() < endWait)) {
                         setTimeout(function () {
                             // pass
-                        }, 100)
+                        }, 1000)
                     };
 
                     expect(socket2.responseQueue.length).to.equal(1);

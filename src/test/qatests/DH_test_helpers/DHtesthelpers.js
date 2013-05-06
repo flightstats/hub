@@ -28,28 +28,34 @@ exports.URL_ROOT = URL_ROOT;
 var DEBUG = true;
 exports.DEBUG = DEBUG;
 
+
+var getRandomPayload = function() {
+    return testRandom.randomString(testRandom.randomNum(50));
+}
+exports.getRandomPayload = getRandomPayload;
+
 // Confirms that the data located at 'myUri' matches the expected payload ('myPayload')
-var getValidationString = function (myUri, myPayload, myDone)
-{
+var getValidationString = function (myUri, myPayload, callback) {
     var myData = '';
+
     http.get(myUri, function(res) {
         res.on('data', function (chunk) {
             myData += chunk;
         }).on('end', function(){
                 expect(myData).to.equal(myPayload);
-                myDone();
+                callback();
             });
     }).on('error', function(e) {
-            console.log("Got error: " + e.message);
-            myDone();
+            gu.debugLog("Got error: " + e.message);
+            callback();
         });
 };
 exports.getValidationString = getValidationString;
 
 var getValidationChecksum = function (myUri, expChecksum, myDone)
 {
-    var md5sum = crypto.createHash('md5');
-    var actChecksum;
+    var md5sum = crypto.createHash('md5'),
+        actChecksum;
 
     http.get(myUri, function(res) {
         res.on('data', function (chunk) {
@@ -69,8 +75,8 @@ exports.getValidationChecksum = getValidationChecksum;
 
 // Given a domain (and :port) and channel name, this will instantiate a websocket on that channel
 var createWebSocket = function(domain, channelName, onOpen) {
-    var wsUri = 'ws://'+ domain +'/channel/'+ channelName +'/ws';
-    var myWs;
+    var wsUri = 'ws://'+ domain +'/channel/'+ channelName +'/ws',
+        myWs;
 
     debugLog('Trying uri: '+ wsUri, DEBUG);
 
@@ -124,8 +130,8 @@ exports.WSWrapper = WSWrapper;
 
 // returns the POST response
 var makeChannel = function(myChannelName, myCallback) {
-    var myPayload = '{"name":"'+ myChannelName +'"}';
-    var uri = URL_ROOT +'/channel';
+    var myPayload = '{"name":"'+ myChannelName +'"}',
+        uri = URL_ROOT +'/channel';
 
     debugLog('makeChannel.uri: '+ uri, DEBUG);
     debugLog('makeChannel.payload: '+ myPayload, DEBUG);
@@ -272,9 +278,10 @@ exports.packetPOSTHeader = packetPOSTHeader;
 var postData = function(myChannelName, myData, myCallback) {
     var uri = URL_ROOT +'/channel/'+ myChannelName,
         dataUri = null,
-        VERBOSE = false;
+        VERBOSE = true;
 
     gu.debugLog('Channel Uri: '+ uri, VERBOSE);
+    gu.debugLog('Data: '+ myData, VERBOSE);
 
     superagent.agent().post(uri)
         .send(myData)
@@ -301,12 +308,10 @@ exports.postData = postData;
 // Returns GET response in callback
 var postDataAndConfirmContentType = function(myChannelName, myContentType, myCallback) {
 
-    var payload = testRandom.randomString(testRandom.randomNum(51));
-    var uri = URL_ROOT +'/channel/'+ myChannelName;
-    var getAgent = superagent.agent();
-    var agent = superagent.agent();
+    var payload = getRandomPayload(),
+        uri = URL_ROOT +'/channel/'+ myChannelName;
 
-    agent.post(uri)
+    superagent.agent().post(uri)
         .set('Content-Type', myContentType)
         .send(payload)
         .end(function(err, res) {
@@ -314,13 +319,13 @@ var postDataAndConfirmContentType = function(myChannelName, myContentType, myCal
             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
             uri = res.body._links.self.href;
 
-            getAgent.get(uri)
+            superagent.agent().get(uri)
                 .end(function(err2, res2) {
                     if (err2) throw err2;
                     expect(res2.type.toLowerCase()).to.equal(myContentType.toLowerCase());
+
                     myCallback(res2);
                 });
-
         });
 };
 exports.postDataAndConfirmContentType = postDataAndConfirmContentType;
@@ -341,41 +346,6 @@ var getLatestDataFromChannel = function(myChannelName, myCallback) {
                 myCallback(e);
             });
     });
-
-    // The old version...delete once tests pass.
-    /*
-    var getUri = URL_ROOT +'/channel/'+ myChannelName +'/latest';
-
-    async.waterfall([
-        function(callback){
-            superagent.agent().get(getUri)
-                .redirects(0)
-                .end(function(err, res) {
-                    expect(res.status).to.equal(GET_LATEST_SUCCESS_RESPONSE);
-                    expect(res.headers['location']).not.to.be.null;
-
-                    callback(null, res.headers['location']);
-                });
-        },
-        function(newUri, callback){
-            var myData = '';
-
-            http.get(newUri, function(res) {
-                res.on('data', function (chunk) {
-                    myData += chunk;
-                }).on('end', function(){
-                        callback(null, myData);
-                    });
-            }).on('error', function(e) {
-                    callback(e, null);
-                });
-        }
-    ], function (err, finalData) {
-        if (err) throw err;
-        myCallback(finalData);
-    });
-    */
-
 };
 exports.getLatestDataFromChannel = getLatestDataFromChannel;
 
