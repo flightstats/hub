@@ -31,12 +31,18 @@ public class CassandraConnector {
 	}
 
 	public boolean createColumnFamily(final String columnFamilyName) {
+		return createColumnFamily(columnFamilyName, true);
+	}
+
+	public boolean createColumnFamily(final String columnFamilyName, boolean verbose) {
 		ColumnFamilyDefinition columnFamilyDefinition = hector.createColumnFamilyDefinition(KEYSPACE_NAME, columnFamilyName);
 		try {
 			cluster.addColumnFamily(columnFamilyDefinition, true);
 			return true;
 		} catch (HInvalidRequestException e) {
-			logger.warn("Error creating channel: " + e.getMessage(), e);
+			if (verbose) {
+				logger.warn("Error creating channel: " + e.getMessage(), verbose ? e : null);
+			}
 			return false;
 		}
 	}
