@@ -61,6 +61,7 @@ public class CassandraLinkagesFinder {
 	private Optional<DataHubKey> findFirstDifferentResult(DataHubKey inputKey, QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult, final boolean reversed) {
 		OrderedRows<String, String, DataHubCompositeValue> rows = queryResult.get();
 
+		// Because the row containing the latest channel item exists in the same column family with the same column name, we need to exclude it here.
 		Iterable<Row<String, String, DataHubCompositeValue>> nonLatestRows = excludeLatestChannelItemRow(rows.getList());
 		List<Row<String, String, DataHubCompositeValue>> sortedRows = getSortedRows(reversed, nonLatestRows);
 
