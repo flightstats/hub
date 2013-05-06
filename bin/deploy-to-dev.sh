@@ -4,6 +4,8 @@
 #
 
 HOST="$1"
+#this magical command makes BACKEND default to "cassandra", if $2 isn't provided.
+BACKEND="${2-cassandra}"
 USER=ubuntu
 BIN_DIR=`dirname $0`
 CONF_DIR=${BIN_DIR}/../conf
@@ -12,8 +14,8 @@ TARFILE=`ls ${BUILD_DIR}/distributions/datahub-*.tgz`
 TARFILE=`basename ${TARFILE}`
 DISTDIR=`basename ${TARFILE} .tgz`
 
-if [ "$HOST" == "" ] ; then
-	echo "Usage: $0 <host>"
+if [[ "$HOST" == "" || ("$BACKEND" != "cassandra" && "$BACKEND" != "memory") ]] ; then
+	echo "Usage: $0 <host> [cassandra|memory]"
 	exit 1
 fi
 
@@ -29,11 +31,18 @@ ssh ${USER}@${HOST} "tar -xzf /home/${USER}/${TARFILE}"
 echo Creating symlink
 ssh ${USER}@${HOST} "rm /home/${USER}/datahub; ln -s /home/${USER}/${DISTDIR} /home/${USER}/datahub"
 
+PROPERTIES_FILENAME="datahub.properties"
+if [ "$BACKEND" == "memory" ] ; then
+  PROPERTIES_FILENAME="datahub-memory.properties"
+fi
+
+echo Using properties file: $PROPERTIES_FILENAME
+
 echo Installing properties file
 if [[ "$HOST" == *dev* ]] ; then
-	rsync -avv --progress ${CONF_DIR}/dev/datahub.properties ${USER}@${HOST}:/home/${USER}/datahub/
+	rsync -avv --progress ${CONF_DIR}/dev/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/datahub.properties
 elif [[ "$HOST" == *staging* ]] ; then
-	rsync -avv --progress ${CONF_DIR}/staging/datahub.properties ${USER}@${HOST}:/home/${USER}/datahub/
+	rsync -avv --progress ${CONF_DIR}/staging/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/datahub.properties
 fi
 
 echo Installing upstart script
