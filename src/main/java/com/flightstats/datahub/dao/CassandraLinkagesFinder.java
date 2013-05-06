@@ -4,6 +4,8 @@ import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
@@ -16,6 +18,8 @@ import me.prettyprint.hector.api.query.QueryResult;
 
 import java.util.Comparator;
 import java.util.List;
+
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.CHANNELS_LATEST_ROW_KEY;
 
 public class CassandraLinkagesFinder {
 
@@ -57,7 +61,8 @@ public class CassandraLinkagesFinder {
 	private Optional<DataHubKey> findFirstDifferentResult(DataHubKey inputKey, QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult, final boolean reversed) {
 		OrderedRows<String, String, DataHubCompositeValue> rows = queryResult.get();
 
-		List<Row<String, String, DataHubCompositeValue>> sortedRows = getSortedRows(reversed, rows.getList());
+		Iterable<Row<String, String, DataHubCompositeValue>> nonLatestRows = excludeLatestChannelItemRow(rows.getList());
+		List<Row<String, String, DataHubCompositeValue>> sortedRows = getSortedRows(reversed, nonLatestRows);
 
 		String inputKeyString = keyRenderer.keyToString(inputKey);
 		for (Row<String, String, DataHubCompositeValue> row : sortedRows) {
@@ -70,8 +75,17 @@ public class CassandraLinkagesFinder {
 		return Optional.absent();
 	}
 
-	private List<Row<String, String, DataHubCompositeValue>> getSortedRows(final boolean reversed, List<Row<String, String, DataHubCompositeValue>> rowsList) {
+	private Iterable<Row<String, String, DataHubCompositeValue>> excludeLatestChannelItemRow(List<Row<String, String, DataHubCompositeValue>> rows) {
+		return Iterables.filter(rows,
+				new Predicate<Row<String, String, DataHubCompositeValue>>() {
+					@Override
+					public boolean apply(Row<String, String, DataHubCompositeValue> input) {
+						return !CHANNELS_LATEST_ROW_KEY.equals(input.getKey());
+					}
+				});
+	}
 
+	private List<Row<String, String, DataHubCompositeValue>> getSortedRows(final boolean reversed, Iterable<Row<String, String, DataHubCompositeValue>> rowsList) {
 		return Ordering.from(new Comparator<Row<String, String, DataHubCompositeValue>>() {
 			@Override
 			public int compare(Row<String, String, DataHubCompositeValue> o1, Row<String, String, DataHubCompositeValue> o2) {
