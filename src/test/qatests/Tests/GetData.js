@@ -42,6 +42,7 @@ var channelName;
 
 
 describe('GET data:', function() {
+    var randomPayload = null;
 
     before(function(myCallback){
         channelName = dhh.makeRandomChannelName();
@@ -59,6 +60,8 @@ describe('GET data:', function() {
     beforeEach(function(){
         agent = superagent.agent();
         payload = uri = req = contentType = '';
+        randomPayload = dhh.getRandomPayload();
+
     })
 
     describe('GET data error cases: ', function() {
@@ -67,9 +70,7 @@ describe('GET data:', function() {
 
         // post data and save location
         before(function(done) {
-            payload = testRandom.randomString(Math.round(Math.random() * 50));
-
-            dhh.postData(channelName, payload, function(res, packetUri) {
+            dhh.postData(channelName, randomPayload, function(res, packetUri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 var pMetadata = new dhh.packetMetadata(res.body);
@@ -80,7 +81,8 @@ describe('GET data:', function() {
             });
         })
 
-        it.skip('FIX NOT IMPLEMENTED: https://www.pivotaltracker.com/story/show/48696133: getting from a nonexistent channel yields 404 response', function(done) {
+        // https://www.pivotaltracker.com/story/show/48696133
+        it('getting from a nonexistent channel yields 404 response', function(done) {
             uri = [URL_ROOT, 'channel', testRandom.randomString(30, testRandom.limitedRandomChar), realDataId].join('/');
 
             agent.get(uri)
@@ -104,9 +106,8 @@ describe('GET data:', function() {
     describe('returns Creation time:', function() {
 
         it('(Acceptance) Creation time returned in header', function(done) {
-            payload = testRandom.randomString(Math.round(Math.random() * 50));
 
-            dhh.postData(channelName, payload, function(res, packetUri) {
+            dhh.postData(channelName, randomPayload, function(res, packetUri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 var pMetadata = new dhh.packetMetadata(res.body);
@@ -130,7 +131,7 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, packetUri) {
+                    dhh.postData(channelName, randomPayload, function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
 
@@ -138,7 +139,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, packetUri) {
+                    dhh.postData(channelName, dhh.getRandomPayload(), function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
 
@@ -194,7 +195,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelA.name, testRandom.randomString(testRandom.randomNum(51)), function(res, packetUri) {
+                    dhh.postData(channelA.name, dhh.getRandomPayload(), function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
                         channelA.dataUri = packetUri;
@@ -204,7 +205,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, packetUri) {
+                    dhh.postData(channelName, dhh.getRandomPayload(), function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
                         channelB.dataUri = packetUri;
@@ -245,8 +246,6 @@ describe('GET data:', function() {
         it('Get latest returns creation timestamp', function(done) {
             var thisChannel = dhh.makeRandomChannelName();
 
-            dhh.payload = testRandom.randomString(testRandom.randomNum(51));
-
             async.waterfall([
                 function(callback){
                     dhh.makeChannel(thisChannel, function(res) {
@@ -256,7 +255,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(thisChannel, payload, function(myRes, myUri) {
+                    dhh.postData(thisChannel, dhh.getRandomPayload(), function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
                         uri = URL_ROOT +'/channel/'+ thisChannel +'/latest';
 
@@ -292,9 +291,9 @@ describe('GET data:', function() {
             var thisChannel = dhh.makeRandomChannelName();
             var latestUri, myData;
 
-            var payload1 = testRandom.randomString(testRandom.randomNum(51));
-            var payload2 = testRandom.randomString(testRandom.randomNum(51));
-            var payload3 = testRandom.randomString(testRandom.randomNum(51));
+            var payload1 = dhh.getRandomPayload();
+            var payload2 = dhh.getRandomPayload();
+            var payload3 = dhh.getRandomPayload();
 
             //console.log('Payload1:'+ payload1);
             //console.log('Payload2:'+ payload2);
@@ -406,7 +405,7 @@ describe('GET data:', function() {
             var thisChannel = dhh.makeRandomChannelName();
             var latestUri, myData;
 
-            payload = testRandom.randomString(testRandom.randomNum(51));
+            payload = dhh.getRandomPayload();
 
             async.waterfall([
                 function(callback){
@@ -576,7 +575,7 @@ describe('GET data:', function() {
 
             var getAgent = superagent.agent();
 
-            payload = testRandom.randomString(Math.round(Math.random() * 50));
+            payload = dhh.getRandomPayload();
             uri = URL_ROOT +'/channel/'+ channelName;
 
             agent.post(uri)
@@ -620,7 +619,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                    dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
@@ -634,7 +633,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                    dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(myUri)
@@ -668,7 +667,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                    dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
@@ -682,7 +681,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                    dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
 
@@ -696,7 +695,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                    dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(myUri)
@@ -740,7 +739,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                    dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
@@ -754,7 +753,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                    dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(firstValueUri)
@@ -789,7 +788,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                    dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
                         if (debugThis) {console.log('First value at: '+ firstValueUri);}
@@ -797,7 +796,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                    dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
                         if (debugThis) {console.log('Second value at: '+ secondValueUri);}
@@ -805,7 +804,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(myChannel, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
+                    dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         thirdValueUri = myUri;
                         if (debugThis) {console.log('Third value at: '+ thirdValueUri);}

@@ -7,8 +7,8 @@ var async = require('async');
 var _ = require('lodash');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('../randomUtils.js');
-var genUtils = require('../genericUtils.js');
+var ranU = require('../randomUtils.js');
+var gu = require('../genericUtils.js');
 
 var URL_ROOT = dhh.URL_ROOT;
 
@@ -32,7 +32,10 @@ describe('HEAD on data tests:', function() {
         channelName = dhh.makeRandomChannelName();
         agent = superagent.agent();
         dhh.makeChannel(channelName, function(res){
-            if ((res.error) || (!genUtils.isHTTPSuccess(res.status))) {
+            if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
+                gu.debugLog('\nDump!');
+                console.dir(res);
+
                 myCallback(res.error);
             };
             console.log('Main test channel:'+ channelName);
@@ -40,27 +43,27 @@ describe('HEAD on data tests:', function() {
             async.series([
                 function(callback){
                     dhh.makeChannel(channelName, function(res) {
-                        expect(genUtils.isHTTPSuccess(res.status)).to.equal(true);
+                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         callback(null, null);
                     });
                 },
                 function(callback){
-                    dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(genUtils.isHTTPSuccess(res.status)).to.equal(true);
+                    dhh.postData(channelName, ranU.randomString(ranU.randomNum(51)), function(res, myUri) {
+                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
                         callback(null,null);
                     });
                 },
                 function(callback){
-                    dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(genUtils.isHTTPSuccess(res.status)).to.equal(true);
+                    dhh.postData(channelName, ranU.randomString(ranU.randomNum(51)), function(res, myUri) {
+                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
                         callback(null,null);
                     });
                 },
                 function(callback){
-                    dhh.postData(channelName, testRandom.randomString(testRandom.randomNum(51)), function(res, myUri) {
-                        expect(genUtils.isHTTPSuccess(res.status)).to.equal(true);
+                    dhh.postData(channelName, ranU.randomString(ranU.randomNum(51)), function(res, myUri) {
+                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         thirdValueUri = myUri;
 
                         callback(null, null);
@@ -89,7 +92,7 @@ describe('HEAD on data tests:', function() {
                     .end(function(err2, res2) {
                         headHeaders = res2.headers;
 
-                        expect(genUtils.dictCompare(getHeaders, headHeaders)).to.be.true;
+                        expect(gu.dictCompare(getHeaders, headHeaders)).to.be.true;
 
                         done();
                     });
@@ -110,7 +113,7 @@ describe('HEAD on data tests:', function() {
 
         superagent.agent().head(uri)
             .end(function(err, res) {
-                expect(genUtils.isHTTPError(res.status)).to.equal(true);
+                expect(gu.isHTTPError(res.status)).to.equal(true);
                 done();
             });
     });

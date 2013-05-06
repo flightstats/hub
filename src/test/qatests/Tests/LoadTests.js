@@ -42,7 +42,7 @@ var channelName;
 
 
 
-describe('Load tests - POST data:', function(){
+describe.skip('Load tests - POST data:', function(){
 
     var loadChannels = {};
     var loadChannelKeys = [];  // channel.uri (to fetch data) and channel.data, e.g. { con {uri: x, data: y}}
