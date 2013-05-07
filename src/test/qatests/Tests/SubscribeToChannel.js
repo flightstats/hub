@@ -287,8 +287,18 @@ describe('Channel Subscription:', function() {
     it('Disconnecting and then adding a new agent on same channel works.', function(done) {
         var socket1, socket2, uri1, uri2;
 
-        var socket1Main = function() {
+        var socket1OnOpen = function() {
             // broadcast message; confirm socket 1 received
+            gu.debugLog('...entering socket1 Open function', DEBUG);
+
+            dhh.postData(channelName, testRandom.randomString(50), function(res, uri) {
+                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                dhh.debugLog('Posted first value ', DEBUG);
+                uri1 = uri;
+            });
+
+            /*
+
             dhh.debugLog('Starting Socket1 main section', DEBUG);
 
             async.series([
@@ -333,48 +343,135 @@ describe('Channel Subscription:', function() {
                     callback(null,null);
                 }
             ]);
+            */
         };
 
-        var socket2Main = function() {
-            dhh.debugLog('Starting socket2 main section', DEBUG);
-            async.series([
-                function(callback){
-                    expect(socket2.responseQueue.length).to.equal(0);
+        var socket2OnOpen = function() {
+            dhh.debugLog('...entering socket2 Open function', DEBUG);
 
-                    dhh.postData(channelName, testRandom.randomString(50), function(res, uri) {
-                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-                        dhh.debugLog('Posted second value ', DEBUG);
-                        uri2 = uri;
-                        callback(null, null);
-                    });
-                },
-                function(callback){
-                    var endWait = Date.now() + WAIT_FOR_CHANNEL_RESPONSE_MS;
+            expect(socket2.responseQueue.length).to.equal(0);
 
-                    dhh.debugLog('Starting wait for second socket to receive msg', DEBUG);
+            dhh.postData(channelName, testRandom.randomString(50), function(res, uri) {
+                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                dhh.debugLog('Posted second value ', DEBUG);
+                uri2 = uri;
+            });
 
-                    while((0 === socket2.responseQueue.length) && (Date.now() < endWait)) {
-                        setTimeout(function () {
-                            // pass
-                        }, 1000)
-                    };
+            /*
+             async.series([
+             function(callback){
+             expect(socket2.responseQueue.length).to.equal(0);
 
-                    expect(socket2.responseQueue.length).to.equal(1);
-                    expect(uri2).to.equal(socket2.responseQueue[0]);
-                    dhh.debugLog('Confirmed second socket received msg', DEBUG);
+             dhh.postData(channelName, testRandom.randomString(50), function(res, uri) {
+             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+             dhh.debugLog('Posted second value ', DEBUG);
+             uri2 = uri;
+             callback(null, null);
+             });
+             },
+             function(callback){
+             var endWait = Date.now() + WAIT_FOR_CHANNEL_RESPONSE_MS;
 
-                    callback(null, null);
-                },
-                function(callback){
-                    socket2.ws.close();
+             dhh.debugLog('Starting wait for second socket to receive msg', DEBUG);
 
-                    callback(null,null);
-                }
-            ]);
+             while((0 === socket2.responseQueue.length) && (Date.now() < endWait)) {
+             setTimeout(function () {
+             // pass
+             }, 1000)
+             };
+
+             expect(socket2.responseQueue.length).to.equal(1);
+             expect(uri2).to.equal(socket2.responseQueue[0]);
+             dhh.debugLog('Confirmed second socket received msg', DEBUG);
+
+             callback(null, null);
+             },
+             function(callback){
+             socket2.ws.close();
+
+             callback(null,null);
+             }
+             ]);
+             */
         };
 
-        socket1 = new dhh.WSWrapper(DOMAIN, channelName, 'ws_1', socket1Main);
-        socket2 = new dhh.WSWrapper(DOMAIN, channelName, 'ws_2', socket2Main);
+        // Called at end of onMessage event for socket 1
+        var socket1Msg = function() {
+            gu.debugLog('...entering socket1 Message');
+
+            if (undefined == uri1) {
+                setTimeout(function() {
+                    finishSocket1();
+                }, 3000)
+            }
+            else {
+                finishSocket1()
+            }
+        }
+
+        // Called at the end of the onMessage event for socket 2
+        var socket2Msg = function() {
+            gu.debugLog('...entering socket2Msg()');
+
+            if (undefined == uri2) {
+                setTimeout(function() {
+                    finishSocket2();
+                }, 3000)
+            }
+            else {
+                finishSocket2();
+            }
+        }
+
+        var finishSocket1 = function() {
+            gu.debugLog('... entering finishSocket1');
+
+            expect(socket1.responseQueue.length).to.equal(1);
+            expect(uri1).to.equal(socket1.responseQueue[0]);
+            dhh.debugLog('Confirmed first socket received msg', DEBUG);
+
+            expect(socket2.responseQueue.length).to.equal(0);   // socket2 not connected yet
+            dhh.debugLog('Confirmed second socket queue is empty', DEBUG);
+
+            dhh.debugLog('Calling socket1.close()', DEBUG);
+            socket1.ws.close();
+            dhh.debugLog('About to create second socket', DEBUG);
+            socket2.createSocket();
+
+            socket2.ws.on('close', function(code, message) {
+                dhh.debugLog('Socket2 closed', DEBUG);
+                done();
+            });
+
+        }
+
+        var finishSocket2 = function() {
+            gu.debugLog('...entering finishSocket2()');
+
+            expect(socket2.responseQueue.length).to.equal(1);
+            expect(uri2).to.equal(socket2.responseQueue[0]);
+            dhh.debugLog('Confirmed second socket received msg', DEBUG);
+
+            socket2.ws.close();
+        }
+
+        //socket1 = new dhh.WSWrapper(DOMAIN, channelName, 'ws_1', socket1Main);
+        //socket2 = new dhh.WSWrapper(DOMAIN, channelName, 'ws_2', socket2Main);
+        socket1 = new dhh.altWSWrapper({
+            'domain': DOMAIN,
+            'channel': channelName,
+            'socketName': 'ws_1',
+            'onOpenCB': socket1OnOpen,
+            'onMessageCB': socket1Msg
+        });
+
+        socket2 = new dhh.altWSWrapper({
+            'domain': DOMAIN,
+            'channel': channelName,
+            'socketName': 'ws_2',
+            'onOpenCB': socket2OnOpen,
+            'onMessageCB': socket2Msg
+        });
 
         socket1.createSocket();
 

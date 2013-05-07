@@ -10,15 +10,16 @@
 
 "use strict";
 
-var chai = require('chai');
-var expect = chai.expect;
-var superagent = require('superagent');
-var crypto = require('crypto');
-var async = require('async');
-var http = require('http');
-var ws = require('ws');
+var chai = require('chai'),
+    expect = chai.expect,
+    superagent = require('superagent'),
+    crypto = require('crypto'),
+    async = require('async'),
+    http = require('http'),
+    ws = require('ws'),
+    lodash = require('lodash');
 
-var testRandom = require('../randomUtils.js');
+var ranU = require('../randomUtils.js');
 var gu = require('../genericUtils.js');
 
 //var URL_ROOT = 'http://10.250.220.197:8080';
@@ -30,7 +31,7 @@ exports.DEBUG = DEBUG;
 
 
 var getRandomPayload = function() {
-    return testRandom.randomString(testRandom.randomNum(50));
+    return ranU.randomString(ranU.randomNum(50));
 }
 exports.getRandomPayload = getRandomPayload;
 
@@ -128,6 +129,51 @@ function WSWrapper(domain, channel, socketName, onOpenCB) {
 };
 exports.WSWrapper = WSWrapper;
 
+// OPTIONAL:  'onMessageCB' callback to call at end of onMessage event
+function altWSWrapper(params) {
+    var requiredParams = ['domain', 'channel', 'socketName', 'onOpenCB'];
+
+    lodash.forEach(requiredParams, function(p) {
+        if (!params.hasOwnProperty(p)) {
+            gu.debugLog('\nERROR in altWSWrapper(). Missing required param: '+ p);
+        }
+    })
+
+    this.name = params.socketName;
+    this.responseQueue = [];
+    this.ws = null;
+    this.channel = params.channel;
+    this.domain = params.domain;
+    var _self = this,
+        onOpenCB = params.onOpenCB,
+        onMessageCB = (params.hasOwnProperty('onMessageCB')) ? params.onMessageCB : null;
+
+    this.onMessage = function(data, flags) {
+        debugLog('MESSAGE EVENT at '+ Date.now(), DEBUG);
+        debugLog('Readystate is '+ _self.ws.readyState, DEBUG);
+        _self.responseQueue.push(data);
+
+        if (null != onMessageCB) {
+            onMessageCB();
+        }
+    };
+
+    this.onOpen = function() {
+        debugLog('OPEN EVENT at '+ Date.now(), DEBUG);
+        debugLog('readystate: '+ _self.ws.readyState, DEBUG);
+        onOpenCB();
+    };
+
+    this.createSocket = function() {
+        if (DEBUG) {
+            console.dir(this);
+        }
+        this.ws = createWebSocket(this.domain, this.channel, this.onOpen);
+        this.ws.on('message', this.onMessage);
+    };
+}
+exports.altWSWrapper = altWSWrapper;
+
 // returns the POST response
 var makeChannel = function(myChannelName, myCallback) {
     var myPayload = '{"name":"'+ myChannelName +'"}',
@@ -149,7 +195,7 @@ var makeChannel = function(myChannelName, myCallback) {
 exports.makeChannel = makeChannel;
 
 var makeRandomChannelName = function() {
-    return testRandom.randomString(testRandom.randomNum(31), testRandom.limitedRandomChar);
+    return ranU.randomString(ranU.randomNum(31), ranU.limitedRandomChar);
 }
 exports.makeRandomChannelName = makeRandomChannelName;
 
