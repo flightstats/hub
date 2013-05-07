@@ -33,6 +33,24 @@ function port_check {
     $NC -z -w 1 ${HOST} ${PORT}
 }
 
+function wait_for_host {
+    HOSTNAME=$1
+    PORT=$2
+    echo Waiting for ${HOSTNAME}:${PORT} to be up...
+    while :
+    do
+        port_check ${HOSTNAME} ${PORT}
+        if [ "$?" == "0" ]; then
+            echo ${HOSTNAME} is alive.
+            break
+        else
+            echo -n ...zzz...
+            sleep 1
+            echo -n -e "\b\b\b\b\b\b\b\b\b"
+        fi
+    done
+}
+
 for INSTANCE in ${INSTANCES[@]}; do
 	echo '-------------------------------------------------------------------'
 	HOSTNAME=`echo ${INSTANCE} | sed -e "s/\..*//"`.cloud-east.dev
@@ -47,29 +65,13 @@ for INSTANCE in ${INSTANCES[@]}; do
 		RESTART_URL="http://deploy.util.hq.prod:6543/vpc/${INSTANCE_ID}/restart"
 		echo Resurrecting "${HOSTNAME} (instance = ${INSTANCE_ID})"
 		curl -s ${RESTART_URL} &
-		echo 
+		echo
+		wait_for_host ${HOSTNAME} ${PORT}
 	fi
 done
 
+echo
 echo '-------------------------------------------------------------------'
-echo Waiting for all instances to be alive...
-for INSTANCE in ${INSTANCES[@]}; do
-	HOSTNAME=`echo ${INSTANCE} | sed -e "s/\..*//"`.cloud-east.dev
-	PORT=`echo ${INSTANCE} | sed -e "s/^.*://"`
-	while :
-	do
-	    port_check ${HOSTNAME} ${PORT}
-		if [ "$?" == "0" ]; then
-			echo ${HOSTNAME} is alive.
-			break
-		else
-			echo -n ...zzz...
-			sleep 1
-			echo -n -e "\b\b\b\b\b\b\b\b\b"
-		fi
-	done
-done
-
 echo '     _  _'
 echo '    ( `   )_    All done.'
 echo '   (    )    `)   Enjoy the cloud.'
