@@ -54,12 +54,15 @@ public class CassandraChannelsCollection {
 	}
 
 	private void insertChannelMetadata(ChannelConfiguration channelConfig) {
-		connector.createColumnFamily(CHANNELS_COLUMN_FAMILY_NAME);
 		StringSerializer keySerializer = StringSerializer.get();
 		Mutator<String> mutator = connector.buildMutator(keySerializer);
 		HColumn<String, ChannelConfiguration> column = hector.createColumn(channelConfig.getName(), channelConfig, StringSerializer.get(),
 				channelConfigSerializer);
 		mutator.insert(CHANNELS_ROW_KEY, CHANNELS_COLUMN_FAMILY_NAME, column);
+	}
+
+	public void initializeMetadata() {
+		connector.createColumnFamily(CHANNELS_COLUMN_FAMILY_NAME, false);
 	}
 
 	private void createColumnFamilyForChannel(ChannelConfiguration channelConfig) {
