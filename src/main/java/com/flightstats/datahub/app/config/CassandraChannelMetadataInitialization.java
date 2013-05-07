@@ -9,6 +9,13 @@ import com.google.inject.spi.InjectionListener;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
 
+/**
+ * This is a guice binding via TypeListener.  It provides a means for the
+ * CassandraChannelsCollection to initialize (bootstrap) the channels metadata
+ * column family.  Ideally, this only ever happens once and is forgotten...but realistically....
+ * in the event that we spin up a new datahub this will help facilitate bootstrapping.
+ * Also dev + ephemeral storage will like this.
+ */
 class CassandraChannelMetadataInitialization implements TypeListener {
 
 	private final ApplyOnce<CassandraChannelsCollection, Void> initOnce = new ApplyOnce<>(
@@ -22,7 +29,6 @@ class CassandraChannelMetadataInitialization implements TypeListener {
 
 	@Override
 	public <I> void hear(TypeLiteral<I> type, TypeEncounter<I> encounter) {
-		System.out.println(type);
 		encounter.register(new InjectionListener<I>() {
 			@Override
 			public void afterInjection(Object instance) {
