@@ -92,6 +92,11 @@ ssh ${USER}@${HOST} 'sudo apt-get install libjna-java'
 echo Symlinking jna.jar into cassandra/lib directory
 ssh ${USER}@${HOST} "ln -s /usr/share/java/jna.jar /home/${USER}/${CASSANDRA_DIR}/lib/jna.jar"
 
+echo Installing startup script...
+rsync -a ${BIN_DIR}/run-cassandra.sh ${USER}@${HOST}:/home/${USER}
+echo Setting permissions on startup script...
+ssh ${USER}@${HOST} chmod 755 /home/${USER}/run-cassandra.sh
+
 echo Installing upstart scripts...
 rsync -a ${CONF_DIR}/upstart/cassandra.conf ${USER}@${HOST}:/tmp/
 ssh ${USER}@${HOST} 'sudo mv /tmp/cassandra.conf /etc/init/'
