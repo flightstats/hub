@@ -6,7 +6,7 @@ import com.google.common.base.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * A function that will only execute a delegate function only one time.
+ * A function that will only execute a delegate function once.
  * On execution, the resulting optional's isPresent() will return true.
  * All subsequent executions will return an optional that is isPresent()
  * will return false;

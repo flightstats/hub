@@ -60,7 +60,6 @@ public class CassandraChannelsCollectionTest {
 		ChannelConfiguration result = testClass.createChannel(channelName);
 
 		assertEquals(expected, result);
-		verify(connector).createColumnFamily(CHANNELS_COLUMN_FAMILY_NAME);
 		verify(connector).createColumnFamily(channelName);
 		verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_COLUMN_FAMILY_NAME, column);
 	}
