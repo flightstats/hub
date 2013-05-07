@@ -16,7 +16,8 @@ import java.util.Properties;
 class CassandraDataStoreModule extends AbstractModule {
 
 	private final ObjectMapper objectMapper = new DataHubObjectMapperFactory().build();
-	private final JacksonHectorSerializer<ChannelConfiguration> jacksonHectorSerializer = new JacksonHectorSerializer<>(objectMapper, ChannelConfiguration.class);
+	private final JacksonHectorSerializer<ChannelConfiguration> jacksonHectorSerializer = new JacksonHectorSerializer<>(objectMapper,
+			ChannelConfiguration.class);
 	private final Properties properties;
 
 	public CassandraDataStoreModule(Properties properties) {
@@ -30,6 +31,7 @@ class CassandraDataStoreModule extends AbstractModule {
 		bind(CassandraConnectorFactory.class).in(Singleton.class);
 		bind(new TypeLiteral<Serializer<ChannelConfiguration>>() {
 		}).toInstance(jacksonHectorSerializer);
+		bindListener(CassandraChannelMetadataInitialization.buildTypeMatcher(), new CassandraChannelMetadataInitialization());
 		bind(ChannelDao.class).to(CassandraChannelDao.class).in(Singleton.class);
 	}
 
@@ -39,5 +41,4 @@ class CassandraDataStoreModule extends AbstractModule {
 	public CassandraConnector buildCassandraConnector(CassandraConnectorFactory factory) {
 		return factory.build();
 	}
-
 }
