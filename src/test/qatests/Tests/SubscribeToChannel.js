@@ -20,7 +20,7 @@ var WAIT_FOR_SOCKET_CLOSURE_MS = 10 * 1000;
 var URL_ROOT = dhh.URL_ROOT;
 //var DOMAIN = '10.250.220.197:8080';
 var DOMAIN = 'datahub-01.cloud-east.dev:8080';
-var DEBUG = dhh.DEBUG;
+var DEBUG = false;
 
 // Test variables that are regularly overwritten
 var agent, payload, req, uri;
@@ -124,6 +124,8 @@ describe('Channel Subscription:', function() {
                     next(null, uri);
                 });
             }, function(err, uris) {
+                // pass
+                /*
                 dhh.debugLog('Number of entries in actual response queue: '+ actualResponseQueue.length, DEBUG);
 
                 // Repeatedly wait and check response queue from socket until we give up or reach expected number
@@ -165,8 +167,31 @@ describe('Channel Subscription:', function() {
                     ws.close();
                     done();
                 });
+                */
             });
         };
+
+        var confirmOrderOfResponses = function() {
+            gu.debugLog('...entering confirmOrderOfResponses()');
+
+            dhh.getListOfLatestUrisFromChannel(numUpdates, channelName, function(allUris) {
+                expectedResponseQueue = allUris;
+                dhh.debugLog('Expected response queue length: '+ expectedResponseQueue.length, DEBUG);
+
+                expect(actualResponseQueue.length).to.equal(numUpdates);
+                expect(expectedResponseQueue.length).to.equal(numUpdates);
+
+                dhh.debugLog('Expected and Actual queues are full. Comparing queues...', DEBUG);
+
+                for (i = 0; i < numUpdates; i += 1) {
+                    expect(actualResponseQueue[i]).to.equal(expectedResponseQueue[i]);
+                    dhh.debugLog('Matched queue number '+ i, DEBUG);
+                }
+
+                ws.close();
+                done();
+            });
+        }
 
         var onOpen = function() {
             dhh.debugLog('Open event fired!', DEBUG);
@@ -176,10 +201,14 @@ describe('Channel Subscription:', function() {
 
         var ws = dhh.createWebSocket(DOMAIN, channelName, onOpen);
 
-        ws.on('message', function(data, flags) {
+         ws.on('message', function(data, flags) {
             actualResponseQueue.push(data);
             dhh.debugLog('Received message: '+ data, DEBUG);
             dhh.debugLog('Response queue length: '+ actualResponseQueue.length, DEBUG);
+
+             if (actualResponseQueue.length == numUpdates) {
+                 confirmOrderOfResponses();
+             }
         });
 
         //process.nextTick();
@@ -196,6 +225,7 @@ describe('Channel Subscription:', function() {
             uri1,   // remember, the numbers do NOT necessarily reflect the order of creation
             uri2;
 
+        // Called from newSocketIsReady() if all sockets are ready
         var mainTest = function() {
             // post values to channel
             async.parallel([
@@ -217,6 +247,9 @@ describe('Channel Subscription:', function() {
                 }
             ],
                 function(e, r){
+
+                    // pass  (rewrote the stuff below and moved it out into testAllSockets() )
+                    /*
                     dhh.debugLog('In final part of async ', DEBUG);
                     dhh.getLatestUriFromChannel(channelName, function(latestUri) {
                         var firstUri = (latestUri == uri1) ? uri2 : uri1;
@@ -249,8 +282,33 @@ describe('Channel Subscription:', function() {
 
                         done();
                     });
+                    */
                 });
         };
+
+        // Called from afterOnMessage() if all sockets have received messages
+        var testAllSockets = function() {
+            dhh.debugLog('In final part of async ', DEBUG);
+            dhh.getLatestUriFromChannel(channelName, function(latestUri) {
+                var firstUri = (latestUri == uri1) ? uri2 : uri1;
+
+                expect(numFullSockets()).to.equal(numAgents);
+
+                for (var i = 0; i < sockets.length; i += 1) {
+                    var thisSocket = sockets[i];
+
+                    expect(thisSocket.responseQueue.length).to.equal(2);
+                    expect(thisSocket.responseQueue[0]).to.equal(firstUri);
+                    expect(thisSocket.responseQueue[1]).to.equal(latestUri);
+
+                    dhh.debugLog('Final socket state for socket '+ thisSocket.name +' is '+ socket.ws.readyState, DEBUG);
+
+                    thisSocket.ws.close();
+                }
+
+                done();
+            });
+        }
 
         // Called when each socket is ready.
         var newSocketIsReady = function() {
@@ -273,8 +331,24 @@ describe('Channel Subscription:', function() {
             return full;
         }
 
+        // called when a socket's onMessage() is done
+        var afterOnMessage = function() {
+            if (numFullSockets() == numAgents) {
+                testAllSockets();
+            }
+        }
+
+        // Create yon sockets
         for (var i = 0; i < numAgents; i += 1) {
-            var socket =  new dhh.WSWrapper(DOMAIN, channelName, 'ws_'+ i, newSocketIsReady);
+            //var socket =  new dhh.WSWrapper(DOMAIN, channelName, 'ws_'+ i, newSocketIsReady);
+            var socket = new dhh.altWSWrapper({
+                'domain': DOMAIN,
+                'channel': channelName,
+                'socketName': 'ws_'+ i,
+                'onOpenCB': newSocketIsReady,
+                'onMessageCB': afterOnMessage
+            });
+
             socket.createSocket();
             sockets[i] = socket;
         }
