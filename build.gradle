@@ -57,6 +57,12 @@ repositories {
                 artifact "[organization]/[module]/[revision]/[artifact]-[revision](-[suffix]).[ext]"
             }
         }
+        ivy {
+            url "http://artifactory.office/artifactory/simple/services-release"
+            layout "pattern", {
+                artifact "[organization]/[module]/[revision]/[artifact]-[revision](-[suffix]).[ext]"
+            }
+        }
     }
 }
 
@@ -66,6 +72,7 @@ configurations {
     publish
     publishDev
     integrationTests
+    deployStaging
 }
 
 task integrationTar(type: Tar, dependsOn: 'distTar') {
@@ -188,6 +195,7 @@ dependencies {
     codeCoverageAnt 'org.jacoco:org.jacoco.ant:0.5.10.201208310627'
 
     integrationTests group: 'com.flightstats', name: 'datahub', version: snapshotVersion + '+', transitive: false, configuration: 'publishDev'
+    deployStaging group: 'com.flightstats', name: 'datahub', version: version, transitive: false, configuration: 'publish'
 }
 
 test {
@@ -245,7 +253,25 @@ def runExternal(commandline) {
 task deployDev << {
     description = "Deploys the distribution to the development environment"
     runExternal("${projectDir}/bin/restart-dev-vpc.sh")
-    runExternal("${projectDir}/bin/deploy-to-dev.sh datahub-01.cloud-east.dev")
+    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.dev")
+}
+
+task setupStagingDeploy << {
+    def distributionsDir = new File("${buildDir}/distributions")
+    distributionsDir.mkdirs()
+    def deployTarball = configurations.deployStaging.files.find {
+        it.name.endsWith('tgz')
+    }
+    copy {
+        from deployTarball
+        into distributionsDir
+    }
+}
+
+task deployStaging(dependsOn: setupStagingDeploy) << {
+    description = "Deploys the distribution to the staging environment"
+    print "We wait with bated breath for staging..."
+//    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.staging")
 }
 
 startScripts {
