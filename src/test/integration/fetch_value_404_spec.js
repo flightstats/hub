@@ -10,6 +10,6 @@ utils.configureFrisby();
 utils.runInTestChannel(channelName, function () {
     frisby.create('Fetching a nonexistent value.')
         .get(badValueUrl)
-        .expectStatus(404)
+        .expectStatus(666)
         .toss();
 });
