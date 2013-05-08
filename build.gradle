@@ -73,7 +73,7 @@ task integrationTar(type: Tar, dependsOn: 'distTar') {
     compression = Compression.GZIP
     from "${projectDir}"
     include "bin/*.*"
-    include "conf/*.*"
+    include "conf/**"
     include "src/test/integration/*.*"
     include "settings.gradle"
 }
