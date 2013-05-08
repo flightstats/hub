@@ -27,7 +27,7 @@ var URL_ROOT = 'http://datahub-01.cloud-east.dev:8080';
 exports.URL_ROOT = URL_ROOT;
 
 var DEBUG = true;
-exports.DEBUG = DEBUG;
+exports.DEBUG = false;
 
 
 var getRandomPayload = function() {

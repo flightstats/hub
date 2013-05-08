@@ -20,7 +20,7 @@ var WAIT_FOR_SOCKET_CLOSURE_MS = 10 * 1000;
 var URL_ROOT = dhh.URL_ROOT;
 //var DOMAIN = '10.250.220.197:8080';
 var DOMAIN = 'datahub-01.cloud-east.dev:8080';
-var DEBUG = dhh.DEBUG;
+var DEBUG = false;
 
 // Test variables that are regularly overwritten
 var agent, payload, req, uri;
@@ -124,6 +124,8 @@ describe('Channel Subscription:', function() {
                     next(null, uri);
                 });
             }, function(err, uris) {
+                // pass
+                /*
                 dhh.debugLog('Number of entries in actual response queue: '+ actualResponseQueue.length, DEBUG);
 
                 // Repeatedly wait and check response queue from socket until we give up or reach expected number
@@ -165,8 +167,31 @@ describe('Channel Subscription:', function() {
                     ws.close();
                     done();
                 });
+                */
             });
         };
+
+        var confirmOrderOfResponses = function() {
+            gu.debugLog('...entering confirmOrderOfResponses()');
+
+            dhh.getListOfLatestUrisFromChannel(numUpdates, channelName, function(allUris) {
+                expectedResponseQueue = allUris;
+                dhh.debugLog('Expected response queue length: '+ expectedResponseQueue.length, DEBUG);
+
+                expect(actualResponseQueue.length).to.equal(numUpdates);
+                expect(expectedResponseQueue.length).to.equal(numUpdates);
+
+                dhh.debugLog('Expected and Actual queues are full. Comparing queues...', DEBUG);
+
+                for (i = 0; i < numUpdates; i += 1) {
+                    expect(actualResponseQueue[i]).to.equal(expectedResponseQueue[i]);
+                    dhh.debugLog('Matched queue number '+ i, DEBUG);
+                }
+
+                ws.close();
+                done();
+            });
+        }
 
         var onOpen = function() {
             dhh.debugLog('Open event fired!', DEBUG);
@@ -176,10 +201,14 @@ describe('Channel Subscription:', function() {
 
         var ws = dhh.createWebSocket(DOMAIN, channelName, onOpen);
 
-        ws.on('message', function(data, flags) {
+         ws.on('message', function(data, flags) {
             actualResponseQueue.push(data);
             dhh.debugLog('Received message: '+ data, DEBUG);
             dhh.debugLog('Response queue length: '+ actualResponseQueue.length, DEBUG);
+
+             if (actualResponseQueue.length == numUpdates) {
+                 confirmOrderOfResponses();
+             }
         });
 
         //process.nextTick();
