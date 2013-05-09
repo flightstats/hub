@@ -6,7 +6,7 @@
 # 3) start cassandra
 
 USER=ubuntu
-DATA_DIR=/home/ubuntu/cassandra/data
+DATA_DIR=/mnt/cassandra/data
 
 function usage {
     echo "Usage: ${0} <host> ... <host>"
