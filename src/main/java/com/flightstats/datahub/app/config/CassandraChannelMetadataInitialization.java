@@ -8,6 +8,8 @@ import com.google.inject.matcher.AbstractMatcher;
 import com.google.inject.spi.InjectionListener;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a guice binding via TypeListener.  It provides a means for the
@@ -18,10 +20,13 @@ import com.google.inject.spi.TypeListener;
  */
 class CassandraChannelMetadataInitialization implements TypeListener {
 
+	private final static Logger logger = LoggerFactory.getLogger(CassandraChannelMetadataInitialization.class);
+
 	private final ApplyOnce<CassandraChannelsCollection, Void> initOnce = new ApplyOnce<>(
 			new Function<CassandraChannelsCollection, Void>() {
 				@Override
 				public Void apply(CassandraChannelsCollection channelsCollection) {
+					logger.info("Bootstrapping channel metadata...");
 					channelsCollection.initializeMetadata();
 					return null;
 				}
