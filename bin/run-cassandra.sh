@@ -2,12 +2,12 @@
 
 # This is a unix start script for cassandra.
 
-CASSANDRA_DIR=/home/ubuntu/apache-cassandra-1.2.1
+CASSANDRA_DIR=/home/ubuntu/apache-cassandra-1.2.4
 USER=ubuntu
 PIDFILE=${CASSANDRA_DIR}/cassandra.pid
 
 touch ${PIDFILE}
-chmod ${USER}:${USER} ${PIDFILE}
+chown ${USER}:${USER} ${PIDFILE}
 
 start-stop-daemon --start \
     --chuid ${USER}:${USER} \
