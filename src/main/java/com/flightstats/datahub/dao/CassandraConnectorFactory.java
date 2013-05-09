@@ -60,7 +60,7 @@ public class CassandraConnectorFactory {
 	}
 
 	private void logErrorAndWait(HectorException e) {
-		logger.error("Error creating CassandraConnector: " + e.getMessage());
+		logger.error("Error creating CassandraConnector: " + e.getMessage(), e);
 		logger.info("Sleeping before retrying...");
 		sleepUninterruptibly(TIME_BETWEEN_CONNECTION_RETRIES, TimeUnit.SECONDS);
 		logger.info("Retrying cassandra connection");
@@ -72,9 +72,12 @@ public class CassandraConnectorFactory {
 	}
 
 	private void addKeyspaceIfMissing(int replicationFactor, Cluster cluster) {
+		logger.info("Checking to see if the datahub keyspace already exists...");
 		if (keyspaceExists(cluster)) {
+			logger.info("Keyspace already exists, skipping creation.");
 			return;
 		}
+		logger.info("Keyspace does not exist, creating.");
 		KeyspaceDefinition newKeyspaceDefinition = hector.createKeyspaceDefinition(KEYSPACE_NAME, ThriftKsDef.DEF_STRATEGY_CLASS,
 				replicationFactor, Collections.<ColumnFamilyDefinition>emptyList());
 		cluster.addKeyspace(newKeyspaceDefinition, true);

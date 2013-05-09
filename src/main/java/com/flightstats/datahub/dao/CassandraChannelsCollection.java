@@ -12,11 +12,15 @@ import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Encapsulates the channel creation, existence checks, and associated metadata.
  */
 public class CassandraChannelsCollection {
+
+	private final static Logger logger = LoggerFactory.getLogger(CassandraChannelsCollection.class);
 
 	static final String CHANNELS_ROW_KEY = "DATA_HUB_CHANNELS";
 	static final String CHANNELS_LATEST_ROW_KEY = "DATA_HUB_CHANNELS_LATEST";
@@ -62,6 +66,7 @@ public class CassandraChannelsCollection {
 	}
 
 	public void initializeMetadata() {
+		logger.info("Initializing channel metadata column family " + CHANNELS_COLUMN_FAMILY_NAME);
 		connector.createColumnFamily(CHANNELS_COLUMN_FAMILY_NAME, false);
 	}
 
