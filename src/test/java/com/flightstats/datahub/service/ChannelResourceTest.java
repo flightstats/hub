@@ -6,6 +6,7 @@ import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.rest.Linked;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
@@ -26,10 +27,10 @@ public class ChannelResourceTest {
 		String latestUri = "http://path/to/UHF/latest";
 		String wsUri = "ws://path/to/UHF/ws";
 		Linked<ChannelConfiguration> expected = Linked.linked(channelConfiguration)
-													  .withLink("self", channelUri)
-													  .withLink("latest", latestUri)
-													  .withLink("ws", wsUri)
-													  .build();
+				.withLink("self", channelUri)
+				.withLink("latest", latestUri)
+				.withLink("ws", wsUri)
+				.build();
 		UriInfo uriInfo = mock(UriInfo.class);
 		ChannelDao dao = mock(ChannelDao.class);
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
@@ -43,10 +44,31 @@ public class ChannelResourceTest {
 
 		ChannelResource testClass = new ChannelResource(dao, linkBuilder);
 
-		Linked<ChannelConfiguration> result = testClass.createChannel(channelCreationRequest);
+		Response response = testClass.createChannel(channelCreationRequest);
 
 		verify(dao).createChannel(channelName);
 
-		assertEquals(expected, result);
+		assertEquals(200, response.getStatus());
+		assertEquals(expected, response.getEntity());
+	}
+
+	@Test
+	public void testChannelCreation_emptyChannelName() throws Exception {
+		String channelName = "  ";
+
+		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName);
+		UriInfo uriInfo = mock(UriInfo.class);
+		ChannelDao dao = mock(ChannelDao.class);
+		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
+
+		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
+
+		ChannelResource testClass = new ChannelResource(dao, linkBuilder);
+
+		Response response = testClass.createChannel(channelCreationRequest);
+
+		verify(dao, never()).createChannel(channelName);
+
+		assertEquals(400, response.getStatus());
 	}
 }
