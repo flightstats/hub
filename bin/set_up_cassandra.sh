@@ -40,7 +40,7 @@ if [ "$HOST" == "" ] || [ "$SEED_HOST" == "" ] || [ "$#" == "0" ]; then
 fi
 
 USER=ubuntu
-CASSANDRA_TGZ_URL=http://apache.osuosl.org/cassandra/1.2.1/apache-cassandra-1.2.1-bin.tar.gz
+CASSANDRA_TGZ_URL=http://apache.osuosl.org/cassandra/1.2.4/apache-cassandra-1.2.4-bin.tar.gz
 CASSANDRA_TGZ=`basename ${CASSANDRA_TGZ_URL}`
 LOCAL_CASSANDRA_TGZ=/tmp/${CASSANDRA_TGZ}
 CASSANDRA_DIR=`basename ${CASSANDRA_TGZ} '-bin.tar.gz'`
@@ -51,6 +51,9 @@ echo
 echo Got it.  I like your style.
 echo Ok, let\'s set up a ${MODE} cassandra node on ${HOST}
 echo
+
+echo Attempting to shut down any existing cassandra instance...
+ssh ${USER}@${HOST} sudo stop cassandra
 
 echo Cassandra requires Java...let\'s make sure we have a version we like...
 ${BIN_DIR}/install_java.sh ${HOST}
