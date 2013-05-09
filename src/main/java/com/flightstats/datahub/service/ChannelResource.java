@@ -40,7 +40,7 @@ public class ChannelResource {
 	public Response createChannel(ChannelCreationRequest channelCreationRequest) {
 		String channelName = channelCreationRequest.getName();
 		if (channelName == null || Strings.isNullOrEmpty(channelName.trim())) {
-			return Response.status(Response.Status.BAD_REQUEST).entity("{'error':'Channel name cannot be blank'}").build();
+			return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\":\"Channel name cannot be blank\"}").build();
 		}
 
 		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName);
