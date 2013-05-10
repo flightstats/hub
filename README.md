@@ -46,7 +46,7 @@ On success:  `HTTP/1.1 200 OK`
             "href": "ws://datahub:8080/channel/stumptown/ws"
         }
     },
-    "name": "your-channel-name",
+    "name": "stumptown",
     "creationDate": "2013-04-23T20:25:33.434Z"
 }
 ```
