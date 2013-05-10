@@ -6,6 +6,7 @@ import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.rest.Linked;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
@@ -43,10 +44,28 @@ public class ChannelResourceTest {
 
 		ChannelResource testClass = new ChannelResource(dao, linkBuilder);
 
-		Linked<ChannelConfiguration> result = testClass.createChannel(channelCreationRequest);
+		Response response = testClass.createChannel(channelCreationRequest);
 
 		verify(dao).createChannel(channelName);
 
-		assertEquals(expected, result);
+		assertEquals(200, response.getStatus());
+		assertEquals(expected, response.getEntity());
+	}
+
+	@Test
+	public void testChannelCreation_emptyChannelName() throws Exception {
+		String channelName = "  ";
+
+		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName);
+		ChannelDao dao = mock(ChannelDao.class);
+		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
+
+		ChannelResource testClass = new ChannelResource(dao, linkBuilder);
+
+		Response response = testClass.createChannel(channelCreationRequest);
+
+		verify(dao, never()).createChannel(channelName);
+
+		assertEquals(400, response.getStatus());
 	}
 }
