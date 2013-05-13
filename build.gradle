@@ -73,6 +73,7 @@ configurations {
     publishDev
     integrationTests
     deployStaging
+    deployProduction
 }
 
 task integrationTar(type: Tar, dependsOn: 'distTar') {
@@ -196,6 +197,7 @@ dependencies {
 
     integrationTests group: 'com.flightstats', name: 'datahub', version: snapshotVersion + '+', transitive: false, configuration: 'publishDev'
     deployStaging group: 'com.flightstats', name: 'datahub', version: version, transitive: false, configuration: 'publish'
+    deployProduction group: 'com.flightstats', name: 'datahub', version: version, transitive: false, configuration: 'publish'
 }
 
 test {
@@ -257,10 +259,11 @@ task deployDev << {
     runExternal("${projectDir}/bin/deploy-to-host.sh datahub-02.cloud-east.dev memory")
 }
 
-task setupStagingDeploy << {
+//task setupDeploy << {
+def copyTarballToDistributions(configuration) {
     def distributionsDir = new File("${buildDir}/distributions")
     distributionsDir.mkdirs()
-    def deployTarball = configurations.deployStaging.files.find {
+    def deployTarball = configuration.files.find {
         it.name.endsWith('tgz')
     }
     copy {
@@ -269,10 +272,16 @@ task setupStagingDeploy << {
     }
 }
 
-task deployStaging(dependsOn: setupStagingDeploy) << {
+task deployStaging << {
     description = "Deploys the distribution to the staging environment"
-    print "We wait with bated breath for staging..."
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.staging")
+    copyTarballToDistributions(configurations.deployStaging)
+//    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.staging")
+}
+
+task deployProduction << {
+    description = "Deploys the distribution to the production environment"
+    copyTarballToDistributions(configurations.deployProduction)
+//    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.prod")
 }
 
 startScripts {
