@@ -3,6 +3,9 @@
 # Simple deploy script
 #
 
+# Fail on any error
+set -e
+
 HOST="$1"
 #this magical command makes BACKEND default to "cassandra", if $2 isn't provided.
 BACKEND="${2-cassandra}"
