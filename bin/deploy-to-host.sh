@@ -23,7 +23,8 @@ if [[ "$HOST" == "" || ("$BACKEND" != "cassandra" && "$BACKEND" != "memory") ]] 
 	exit 1
 fi
 
-if [ -f ${UPSTART_CONF} ] ; then
+ssh ${USER}@${HOST} "ls ${UPSTART_CONF}"
+if [ "$?" == "0" ] ; then
     echo Shutting down any running datahub instances on ${HOST}...
     ssh ${USER}@${HOST} "sudo stop datahub"
 else
@@ -57,7 +58,7 @@ fi
 
 echo Installing upstart script
 rsync -avv --progress ${CONF_DIR}/upstart/datahub.conf ${USER}@${HOST}:/tmp
-ssh ${USER}@${HOST} "sudo mv /tmp/datahub.conf /etc/init/"
+ssh ${USER}@${HOST} "sudo mv /tmp/datahub.conf ${UPSTART_CONF}"
 
 echo Starting up datahub...
 ssh ${USER}@${HOST} "sudo start datahub"
