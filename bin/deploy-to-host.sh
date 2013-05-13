@@ -16,14 +16,19 @@ BUILD_DIR=${BIN_DIR}/../build
 TARFILE=`ls ${BUILD_DIR}/distributions/datahub-*.tgz`
 TARFILE=`basename ${TARFILE}`
 DISTDIR=`basename ${TARFILE} .tgz`
+UPSTART_CONF=/etc/init/datahub.conf
 
 if [[ "$HOST" == "" || ("$BACKEND" != "cassandra" && "$BACKEND" != "memory") ]] ; then
 	echo "Usage: $0 <host> [cassandra|memory]"
 	exit 1
 fi
 
-echo Shutting down any running datahub instances on ${HOST}...
-ssh ${USER}@${HOST} "sudo stop datahub"
+if [ -f ${UPSTART_CONF} ] ; then
+    echo Shutting down any running datahub instances on ${HOST}...
+    ssh ${USER}@${HOST} "sudo stop datahub"
+else
+    echo No upstart config found, skipping shutdown of any existing datahub...
+fi
 
 echo Deploying ${TARFILE} to ${HOST}
 rsync -avv --progress ${BUILD_DIR}/distributions/${TARFILE} ${USER}@${HOST}:/home/${USER}/
@@ -46,6 +51,8 @@ if [[ "$HOST" == *dev* ]] ; then
 	rsync -avv --progress ${CONF_DIR}/dev/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/datahub.properties
 elif [[ "$HOST" == *staging* ]] ; then
 	rsync -avv --progress ${CONF_DIR}/staging/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/datahub.properties
+elif [[ "$HOST" == *prod* ]] ; then
+    rsync -avv --progress ${CONF_DIR}/prod/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/datahub.properties
 fi
 
 echo Installing upstart script
