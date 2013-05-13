@@ -11,7 +11,8 @@ project.ext.jenkinsJobName = "$System.env.JOB_NAME"
 
 group = 'com.flightstats'
 
-version = '0.1.0'       //TODO: Read from file
+version = new File("${projectDir}/version.txt").text
+
 def snapshotVersion = version + "-SNAPSHOT"
 
 project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
@@ -259,7 +260,6 @@ task deployDev << {
     runExternal("${projectDir}/bin/deploy-to-host.sh datahub-02.cloud-east.dev memory")
 }
 
-//task setupDeploy << {
 def copyTarballToDistributions(configuration) {
     def distributionsDir = new File("${buildDir}/distributions")
     distributionsDir.mkdirs()
