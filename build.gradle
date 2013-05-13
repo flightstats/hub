@@ -245,6 +245,10 @@ distTar {
 
 def runExternal(commandline) {
     def proc = commandline.execute()
+    showExternalOutput(proc)
+}
+
+def showExternalOutput(proc) {
     proc.in.eachLine { line -> println line }
     proc.err.eachLine { line -> println 'ERROR: ' + line }
     proc.waitFor()
@@ -275,13 +279,33 @@ def copyTarballToDistributions(configuration) {
 task deployStaging << {
     description = "Deploys the distribution to the staging environment"
     copyTarballToDistributions(configurations.deployStaging)
-//    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.staging")
+    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.staging")
+}
+
+def incrementVersionFile() {
+    def currentVersion = version
+    def major = currentVersion.replaceFirst(/(\d+\.\d+)\.\d+/, '$1')
+    def minor = currentVersion.replaceFirst(/\d+\.\d+\.(\d+)/, '$1').toInteger()
+    minor++
+    def newVersion = major + '.' + minor
+    new File("${projectDir}/version.txt").write(newVersion)
+    println "New version updated to: ${newVersion}."
+}
+
+def commitVersionFileAndPush() {
+    println "Adding new version file (version.txt) to git..."
+    runExternal "git add version.txt"
+    def commandParts = ["git", "commit", "-m", "Increment build after production deployment.", "version.txt"]
+    showExternalOutput(commandParts.execute())
+    runExternal "git push origin master"
 }
 
 task deployProduction << {
     description = "Deploys the distribution to the production environment"
     copyTarballToDistributions(configurations.deployProduction)
-//    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.prod")
+    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.prod")
+    incrementVersionFile()
+    commitVersionFileAndPush()
 }
 
 startScripts {
