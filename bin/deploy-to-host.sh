@@ -56,6 +56,7 @@ echo Starting up datahub...
 ssh ${USER}@${HOST} "sudo start datahub"
 
 echo Waiting for service to be active...
+set +e
 for i in `seq 1 60` ; do
 	curl --silent http://${HOST}:8080 > /dev/null
 	if [ "$?" == "0" ] ; then
