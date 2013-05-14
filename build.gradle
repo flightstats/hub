@@ -44,8 +44,6 @@ buildscript {
 }
 
 configurations {
-    codeCoverage
-    codeCoverageAnt
     publish
     publishDev
     integrationTests
@@ -156,41 +154,10 @@ task deployDev << {
     runExternal("${projectDir}/bin/deploy-to-host.sh datahub-02.cloud-east.dev memory")
 }
 
-def copyTarballToDistributions(configuration) {
-    def distributionsDir = new File("${buildDir}/distributions")
-    distributionsDir.mkdirs()
-    def deployTarball = configuration.files.find {
-        it.name.endsWith('tgz')
-    }
-    copy {
-        from deployTarball
-        into distributionsDir
-    }
-}
-
 task deployStaging << {
     description = "Deploys the distribution to the staging environment"
     copyTarballToDistributions(configurations.deployStaging)
     runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.staging")
-}
-
-def incrementVersionFile() {
-    def currentVersion = version
-    def major = currentVersion.replaceFirst(/(\d+\.\d+)\.\d+/, '$1')
-    def minor = currentVersion.replaceFirst(/\d+\.\d+\.(\d+)/, '$1').toInteger()
-    minor++
-    def newVersion = major + '.' + minor
-    new File("${projectDir}/version.txt").write(newVersion)
-    println "New version updated to: ${newVersion}."
-}
-
-def commitVersionFileAndPush() {
-    println "Adding new version file (version.txt) to git..."
-    runExternal "git checkout master"
-    runExternal "git add version.txt"
-    def commandParts = ["git", "commit", "-m", "Increment build after production deployment.", "version.txt"]
-    showExternalOutput(commandParts.execute())
-    runExternal "git push origin master"
 }
 
 task deployProduction << {

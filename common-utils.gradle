@@ -29,4 +29,40 @@ class CommonUtilitiesConvention {
             System.exit(proc.exitValue())
         }
     }
+
+    def incrementVersionFile() {
+        def currentVersion = version
+        def major = currentVersion.replaceFirst(/(\d+\.\d+)\.\d+/, '$1')
+        def minor = currentVersion.replaceFirst(/\d+\.\d+\.(\d+)/, '$1').toInteger()
+        minor++
+        def newVersion = major + '.' + minor
+        new File("${projectDir}/version.txt").write(newVersion)
+        println "New version updated to: ${newVersion}."
+    }
+
+    /**
+     * Finds the first .tgz file from the given configuration's dependency files
+     * and copies it into the build/distributions directory.
+     * @param configuration
+     */
+    def copyTarballToDistributions(configuration) {
+        def distributionsDir = new File("${buildDir}/distributions")
+        distributionsDir.mkdirs()
+        def deployTarball = configuration.files.find {
+            it.name.endsWith('tgz')
+        }
+        copy {
+            from deployTarball
+            into distributionsDir
+        }
+    }
+
+    def commitVersionFileAndPush() {
+        println "Adding new version file (version.txt) to git..."
+        runExternal "git checkout master"
+        runExternal "git add version.txt"
+        def commandParts = ["git", "commit", "-m", "Increment build after production deployment.", "version.txt"]
+        showExternalOutput(commandParts.execute())
+        runExternal "git push origin master"
+    }
 }
