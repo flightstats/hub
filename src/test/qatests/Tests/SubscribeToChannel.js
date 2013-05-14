@@ -30,7 +30,7 @@ var channelName,
     wsUri;
 
 
-describe.only('Channel Subscription:', function() {
+describe('Channel Subscription:', function() {
 
     before(function(){
         gu.debugLog('\nURL_ROOT: '+ URL_ROOT);
@@ -67,7 +67,7 @@ describe.only('Channel Subscription:', function() {
         var afterOpen = function() {
             async.parallel([
                 function(callback){
-                    dhh.postData(channelName, ranU.randomString(50), function(res, uri) {
+                    dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         gu.debugLog('Posted first value ', DEBUG);
                         uriA = uri;
@@ -75,7 +75,7 @@ describe.only('Channel Subscription:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelName, ranU.randomString(50), function(res, uri) {
+                    dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         gu.debugLog('Posted second value ', DEBUG);
                         uriB = uri;
@@ -125,7 +125,7 @@ describe.only('Channel Subscription:', function() {
 
         var mainTest = function() {
             async.times(numUpdates, function(n, next) {
-                dhh.postData(channelName, ranU.randomString(50), function(res, uri) {
+                dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
                     gu.debugLog('Posted data #'+ n, DEBUG);
                     next(null, uri);
                 });
@@ -236,7 +236,7 @@ describe.only('Channel Subscription:', function() {
             // post values to channel
             async.parallel([
                 function(callback){
-                    dhh.postData(channelName, ranU.randomString(50), function(res, uri) {
+                    dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         gu.debugLog('Posted first value ', DEBUG);
                         uri1 = uri;
@@ -244,7 +244,7 @@ describe.only('Channel Subscription:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelName, ranU.randomString(50), function(res, uri) {
+                    dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         gu.debugLog('Posted second value ', DEBUG);
                         uri2 = uri;
@@ -369,7 +369,7 @@ describe.only('Channel Subscription:', function() {
             // broadcast message; confirm socket 1 received
             gu.debugLog('...entering socket1 Open function', DEBUG);
 
-            dhh.postData(channelName, ranU.randomString(50), function(res, uri) {
+            dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 gu.debugLog('Posted first value ', DEBUG);
                 uri1 = uri;
@@ -429,7 +429,7 @@ describe.only('Channel Subscription:', function() {
 
             expect(socket2.responseQueue.length).to.equal(0);
 
-            dhh.postData(channelName, ranU.randomString(50), function(res, uri) {
+            dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 gu.debugLog('Posted second value ', DEBUG);
                 uri2 = uri;

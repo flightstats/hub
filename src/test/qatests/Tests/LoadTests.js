@@ -37,24 +37,25 @@ var agent
     , uri
     , contentType;
 
-var channelName;
-
-
-
+var channelName,
+    channelUri;
 
 describe.skip('Load tests - POST data:', function(){
 
-    var loadChannels = {};
-    var loadChannelKeys = [];  // channel.uri (to fetch data) and channel.data, e.g. { con {uri: x, data: y}}
+    var loadChannels = {},
+        loadChannelKeys = [];  // channel.uri (to fetch data) and channel.data, e.g. { con {uri: x, data: y}}
 
     before(function(myCallback){
         channelName = dhh.makeRandomChannelName();
         agent = superagent.agent();
-        dhh.makeChannel(channelName, function(res){
+        dhh.makeChannel(channelName, function(res, cnUri){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             };
+
+            channelUri = cnUri;
             gu.debugLog('Main test channel:'+ channelName);
+
             myCallback();
         });
     });
@@ -68,17 +69,17 @@ describe.skip('Load tests - POST data:', function(){
         // To ignore the Loadtest cases:  mocha -R nyan --timeout 4000 --grep Load --invert
 
         it('Loadtest - POST rapidly to ten different channels, then confirm data retrieved via GET is correct', function(done){
-            var VERBOSE = true;
-
-            var cnMetadata;
-            var numIterations = 20;
+            var VERBOSE = true,
+                cnMetadata,
+                numIterations = 20;
 
             this.timeout(5000 * numIterations);
             for (var i = 1; i <= numIterations; i++)
             {
-                var thisName = dhh.makeRandomChannelName();
-                var thisPayload = ranU.randomString(Math.round(Math.random() * 50));
-                loadChannels[thisName] = {"uri":'', "data":thisPayload};
+                var thisName = dhh.makeRandomChannelName(),
+                    thisChannelUrl,
+                    thisPayload = ranU.randomString(Math.round(Math.random() * 50));
+                loadChannels[thisName] = {"channelUri": null, "uri":'', "data":thisPayload};
 
             }
 
@@ -89,7 +90,8 @@ describe.skip('Load tests - POST data:', function(){
             }
 
             async.each(loadChannelKeys, function(cn, callback) {
-                dhh.makeChannel(cn, function(res) {
+                dhh.makeChannel(cn, function(res, cnUri) {
+                    loadChannels[cn]['channelUri'] = cnUri;
                     expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                     cnMetadata = new dhh.channelMetadata(res.body);
                     expect(cnMetadata.getChannelUri()).to.equal(URL_ROOT +'/channel/'+ cn);
@@ -103,7 +105,7 @@ describe.skip('Load tests - POST data:', function(){
 
                 async.each(loadChannelKeys, function(cn, callback) {
 
-                    dhh.postData(cn,loadChannels[cn].data, function(res, uri) {
+                    dhh.postData(loadChannels.channelUri,loadChannels[cn].data, function(res, uri) {
                         loadChannels[cn].uri = uri;
                         callback();
                     });
@@ -140,7 +142,7 @@ describe.skip('Load tests - POST data:', function(){
         it('POST 2 MB file to channel', function(done) {
             payload = fs.readFileSync(MY_2MB_FILE, "utf8");
 
-            dhh.postData(channelName, payload, function(res, uri) {
+            dhh.postData(channelUri, payload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 dhh.getValidationString(uri, payload, done);
@@ -151,7 +153,7 @@ describe.skip('Load tests - POST data:', function(){
             this.timeout(60000);
             payload = fs.readFileSync(MY_4MB_FILE, "utf8");
 
-            dhh.postData(channelName, payload, function(res, uri) {
+            dhh.postData(channelUri, payload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 dhh.getValidationString(uri, payload, done);
@@ -162,7 +164,7 @@ describe.skip('Load tests - POST data:', function(){
             this.timeout(120000);
             payload = fs.readFileSync(MY_8MB_FILE, "utf8");
 
-            dhh.postData(channelName, payload, function(res, uri) {
+            dhh.postData(channelUri, payload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 dhh.getValidationString(uri, payload, done);
@@ -173,7 +175,7 @@ describe.skip('Load tests - POST data:', function(){
             this.timeout(240000);
             payload = fs.readFileSync(MY_16MB_FILE, "utf8");
 
-            dhh.postData(channelName, payload, function(res, uri) {
+            dhh.postData(channelUri, payload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 dhh.getValidationString(uri, payload, done);
@@ -187,7 +189,7 @@ describe.skip('Load tests - POST data:', function(){
             this.timeout(480000);
             payload = fs.readFileSync(MY_32MB_FILE, "utf8");
 
-            dhh.postData(channelName, payload, function(res, uri) {
+            dhh.postData(channelUri, payload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 dhh.getValidationString(uri, payload, done);
@@ -199,7 +201,7 @@ describe.skip('Load tests - POST data:', function(){
             this.timeout(960000);
             payload = fs.readFileSync(MY_64MB_FILE, "utf8");
 
-            dhh.postData(channelName, payload, function(res, uri) {
+            dhh.postData(channelUri, payload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 dhh.getValidationString(uri, payload, done);

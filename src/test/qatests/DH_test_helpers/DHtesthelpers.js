@@ -19,11 +19,11 @@ var chai = require('chai'),
     ws = require('ws'),
     lodash = require('lodash');
 
-var ranU = require('../randomUtils.js');
-var gu = require('../genericUtils.js');
+var ranU = require('../randomUtils.js'),
+    gu = require('../genericUtils.js');
 
 //var URL_ROOT = 'http://10.250.220.197:8080';
-var DOMAIN = 'datahub-02.cloud-east.dev:8080';
+var DOMAIN = 'datahub-01.cloud-east.dev:8080';
 exports.DOMAIN = DOMAIN;
 
 var URL_ROOT = 'http://'+ DOMAIN;
@@ -148,7 +148,7 @@ function WSWrapper(params) {
 }
 exports.WSWrapper = WSWrapper;
 
-// returns the POST response from channel creation attempt
+// returns the response, link to new channel
 var makeChannel = function(myChannelName, myCallback) {
     var myPayload = '{"name":"'+ myChannelName +'"}',
         uri = URL_ROOT +'/channel';
@@ -160,7 +160,14 @@ var makeChannel = function(myChannelName, myCallback) {
         .set('Content-Type', 'application/json')
         .send(myPayload)
         .end(function(err, res) {
-            myCallback(res);
+            if (gu.isHTTPError(res.status)) {
+                myCallback(res, null);
+            }
+            else {
+                var cnMetadata = new channelMetadata(res.body),
+                    location = cnMetadata.getChannelUri();
+                myCallback(res, location);
+            }
         }).on('error', function(e) {
             gu.debugLog('...in makeChannel.post.error()');
             myCallback(e);
@@ -306,32 +313,22 @@ exports.packetGETHeader = packetGETHeader;
 // Headers in response to POSTing a packet of data
 function packetPOSTHeader(responseHeader){
     this.getLocation = function() {
-        if (responseHeader.hasOwnProperty("location")) {
-            return responseHeader["location"];
-        }
-        else {
-            return null;
-        }
+        return (responseHeader.hasOwnProperty('location')) ? responseHeader.location : null;
     };
 }
 exports.packetPOSTHeader = packetPOSTHeader;
 
 // Posts data and returns (response, URI)
-var postData = function(myChannelName, myData, myCallback) {
-    var uri = URL_ROOT +'/channel/'+ myChannelName,
-        dataUri = null,
+var postData = function(channelUri, myData, myCallback) {
+    var dataUri = null,
         VERBOSE = true;
 
-    gu.debugLog('Channel Uri: '+ uri, VERBOSE);
+    gu.debugLog('Channel Uri: '+ channelUri, VERBOSE);
     gu.debugLog('Data: '+ myData, VERBOSE);
 
-    superagent.agent().post(uri)
+    superagent.agent().post(channelUri)
         .send(myData)
         .end(function(err, res) {
-            if (err) {
-                throw err;
-            }
-
             if (!gu.isHTTPSuccess(res.status)) {
                 gu.debugLog('POST of data did not return success: '+ res.status, VERBOSE);
                 dataUri = null;
@@ -348,18 +345,17 @@ var postData = function(myChannelName, myData, myCallback) {
 exports.postData = postData;
 
 // Returns GET response in callback
-var postDataAndConfirmContentType = function(myChannelName, myContentType, myCallback) {
+var postDataAndConfirmContentType = function(channelUri, myContentType, myCallback) {
 
-    var payload = getRandomPayload(),
-        uri = URL_ROOT +'/channel/'+ myChannelName;
+    var payload = getRandomPayload();
 
-    superagent.agent().post(uri)
+    superagent.agent().post(channelUri)
         .set('Content-Type', myContentType)
         .send(payload)
         .end(function(err, res) {
             if (err) throw err;
             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-            uri = res.body._links.self.href;
+            var uri = res.body._links.self.href;
 
             superagent.agent().get(uri)
                 .end(function(err2, res2) {
@@ -376,6 +372,8 @@ exports.postDataAndConfirmContentType = postDataAndConfirmContentType;
 var getLatestDataFromChannel = function(channelUri, callback) {
 
     var myData = '';
+
+    gu.debugLog('Channel uri in getLatestDataFromChannel: '+ channelUri);
 
     getLatestUri(channelUri, function(uri) {
         http.get(uri, function(res) {
@@ -444,6 +442,8 @@ var getLatestUri = function(channelUri, callback) {
 
         var cnMetadata = new channelMetadata(getCnBody),
             latestUri = cnMetadata.getLatestUri();
+
+        gu.debugLog('latestUri in getLatestUri(): '+ latestUri);
 
         superagent.agent().head(latestUri)
             .redirects(0)

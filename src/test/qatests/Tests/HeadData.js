@@ -19,50 +19,45 @@ var agent
     , uri
     , contentType;
 
-var channelName;
+var channelName,
+    channelUri;
 
 // used for a few tests that require a series of items in a channel -- (only in one test so far :P )
 var firstValueUri, secondValueUri, thirdValueUri;
-
-
 
 describe('HEAD on data tests:', function() {
 
     before(function(myCallback){
         channelName = dhh.makeRandomChannelName();
         agent = superagent.agent();
-        dhh.makeChannel(channelName, function(res){
+        dhh.makeChannel(channelName, function(res, cnUri){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 gu.debugLog('\nDump!');
                 console.dir(res);
 
                 myCallback(res.error);
             };
+
+            channelUri = cnUri;
             console.log('Main test channel:'+ channelName);
 
             async.series([
                 function(callback){
-                    dhh.makeChannel(channelName, function(res) {
-                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-                        callback(null, null);
-                    });
-                },
-                function(callback){
-                    dhh.postData(channelName, ranU.randomString(ranU.randomNum(51)), function(res, myUri) {
+                    dhh.postData(channelUri, ranU.randomString(ranU.randomNum(51)), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
                         callback(null,null);
                     });
                 },
                 function(callback){
-                    dhh.postData(channelName, ranU.randomString(ranU.randomNum(51)), function(res, myUri) {
+                    dhh.postData(channelUri, ranU.randomString(ranU.randomNum(51)), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
                         callback(null,null);
                     });
                 },
                 function(callback){
-                    dhh.postData(channelName, ranU.randomString(ranU.randomNum(51)), function(res, myUri) {
+                    dhh.postData(channelUri, ranU.randomString(ranU.randomNum(51)), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         thirdValueUri = myUri;
 
@@ -82,7 +77,8 @@ describe('HEAD on data tests:', function() {
     });
 
     it('Acceptance: HEAD returns all expected headers for item with siblings in a channel', function(done) {
-        var getHeaders, headHeaders;
+        var getHeaders,
+            headHeaders;
 
         superagent.agent().get(secondValueUri)
             .end(function(err, res) {
