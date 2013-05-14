@@ -1,6 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'application'
+apply from: 'common-utils.gradle'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -146,20 +147,6 @@ dependencies {
 
 distTar {
     compression = Compression.GZIP
-}
-
-def runExternal(commandline) {
-    def proc = commandline.execute()
-    showExternalOutput(proc)
-}
-
-def showExternalOutput(proc) {
-    proc.in.eachLine { line -> println line }
-    proc.err.eachLine { line -> println 'ERROR: ' + line }
-    proc.waitFor()
-    if (proc.exitValue()) {
-        System.exit(proc.exitValue())
-    }
 }
 
 task deployDev << {
