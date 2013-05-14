@@ -23,12 +23,17 @@ if [[ "$HOST" == "" || ("$BACKEND" != "cassandra" && "$BACKEND" != "memory") ]] 
 	exit 1
 fi
 
-ssh ${USER}@${HOST} "[ -f ${UPSTART_CONF} ]"
-if [ "$?" == "0" ] ; then
-    echo Shutting down any running datahub instances on ${HOST}...
-    ssh ${USER}@${HOST} "sudo stop datahub"
-else
+set +e
+echo Checking to see if upstart configuration exists on remote...
+UPSTART_EXISTS=`ssh ${USER}@${HOST} "ls ${UPSTART_CONF}"`
+set -e
+
+if [ "$UPSTART_EXISTS" == "" ] ; then
     echo No upstart config found, skipping shutdown of any existing datahub...
+else
+    echo Upstart config is in place.
+    echo Shutting down any running datahub instances on ${HOST}...
+    ssh ${USER}@${HOST} "sudo stop datahub" || true
 fi
 
 echo Deploying ${TARFILE} to ${HOST}
