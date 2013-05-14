@@ -1,0 +1,32 @@
+apply plugin: CommonUtilities
+
+// This provides a set of common / reusable methods
+
+class CommonUtilities implements Plugin<Project> {
+    def void apply(Project project) {
+        project.convention.plugins.utilities = new CommonUtilitiesConvention(project)
+    }
+}
+
+class CommonUtilitiesConvention {
+    private Project project
+
+    public CommonUtilitiesConvention(Project project) {
+        this.project = project
+    }
+
+    // These public methods can be used anywhere if this plugin is used
+    def runExternal(commandline) {
+        def proc = commandline.execute()
+        showExternalOutput(proc)
+    }
+
+    def showExternalOutput(proc) {
+        proc.in.eachLine { line -> println line }
+        proc.err.eachLine { line -> println 'ERROR: ' + line }
+        proc.waitFor()
+        if (proc.exitValue()) {
+            System.exit(proc.exitValue())
+        }
+    }
+}
