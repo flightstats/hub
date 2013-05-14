@@ -9,17 +9,17 @@ var async = require('async');
 var crypto = require('crypto');
 var fs = require('fs');
 
-var dhh = require('.././DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('../randomUtils.js');
-var gu = require('../genericUtils.js');
+var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
+    ranU = require('../randomUtils.js'),
+    gu = require('../genericUtils.js');
 
 var URL_ROOT = dhh.URL_ROOT;
 
 // The following paths assume this is being run from a parent directory. The before() method will adjust this if
 //  the test is being run in this file's directory
-var CAT_TOILET_PIC = './artifacts/cattoilet.jpg';
-var MY_2MB_FILE = './artifacts/Iam2_5Mb.txt';
-var MY_2KB_FILE = './artifacts/Iam200kb.txt';
+var CAT_TOILET_PIC = './artifacts/cattoilet.jpg',
+    MY_2MB_FILE = './artifacts/Iam2_5Mb.txt',
+    MY_2KB_FILE = './artifacts/Iam200kb.txt';
 
 
 // Test variables that are regularly overwritten
@@ -56,7 +56,7 @@ describe('POST data to channel:', function(){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             };
-            console.log('Main test channel:'+ channelName);
+            gu.debugLog('Main test channel:'+ channelName);
             myCallback();
         });
     });
@@ -68,7 +68,7 @@ describe('POST data to channel:', function(){
 
     it('Acceptance - should return a (DATA_POST_SUCCESS) for POSTing data', function(done){
 
-        payload = testRandom.randomString(Math.round(Math.random() * 50));
+        payload = ranU.randomString(Math.round(Math.random() * 50));
 
         dhh.postData(channelName, payload, function(res, uri) {
             gu.debugLog('Response from POST attempt: '+ res.status, DEBUG);
@@ -82,7 +82,7 @@ describe('POST data to channel:', function(){
 
     it('POST should return a 404 trying to save to nonexistent channel', function(done){
         var myChannel = dhh.makeRandomChannelName();
-        payload = testRandom.randomString(Math.round(Math.random() * 50));
+        payload = ranU.randomString(Math.round(Math.random() * 50));
 
         dhh.postData(myChannel, payload, function(res, uri) {
             expect(res.status).to.equal(404);
@@ -94,7 +94,7 @@ describe('POST data to channel:', function(){
 
 
     it('POST same set of data twice to channel', function(done){
-        payload = testRandom.randomString(Math.round(Math.random() * 50));
+        payload = ranU.randomString(Math.round(Math.random() * 50));
 
         dhh.postData(channelName, payload, function(res, uri) {
             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
@@ -116,7 +116,7 @@ describe('POST data to channel:', function(){
             cnMetadata = new dhh.channelMetadata(res.body);
             expect(cnMetadata.getChannelUri()).to.equal(URL_ROOT +'/channel/'+ otherChannelName);
 
-            payload = testRandom.randomString(Math.round(Math.random() * 50));
+            payload = ranU.randomString(Math.round(Math.random() * 50));
 
             dhh.postData(channelName, payload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
@@ -161,7 +161,7 @@ describe('POST data to channel:', function(){
 
 
     it('POST 1,000 characters to channel', function(done) {
-        payload = testRandom.randomString(1000, testRandom.simulatedTextChar);
+        payload = ranU.randomString(1000, ranU.simulatedTextChar);
 
         dhh.postData(channelName, payload, function(res, uri) {
             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
@@ -211,7 +211,7 @@ describe('POST data to channel:', function(){
 
             var timestamp = '';
 
-            payload = testRandom.randomString(Math.round(Math.random() * 50));
+            payload = ranU.randomString(Math.round(Math.random() * 50));
             uri = URL_ROOT +'/channel/'+ channelName;
 
             dhh.postData(channelName, payload, function(res, uri) {
@@ -233,13 +233,13 @@ describe('POST data to channel:', function(){
             async.waterfall([
                 function(callback){
                     setTimeout(function(){
-                        payload = testRandom.randomString(testRandom.randomNum(51));
+                        payload = ranU.randomString(ranU.randomNum(51));
                         uri = URL_ROOT +'/channel/'+ channelName;
 
                         dhh.postData(channelName, payload, function(res, uri) {
                             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
-                            //console.log('Creation time was: '+ respMoment.format('X'));
+                            //gu.debugLog('Creation time was: '+ respMoment.format('X'));
 
                             expect(respMoment.isValid()).to.be.true;
                             serverTimeDiff = moment().diff(respMoment) + 300000;
@@ -250,12 +250,12 @@ describe('POST data to channel:', function(){
                 }
                 ,function(lastResp, callback){
                     setTimeout(function(){
-                        payload = testRandom.randomString(testRandom.randomNum(51));
+                        payload = ranU.randomString(ranU.randomNum(51));
 
                         dhh.postData(channelName, payload, function(res, uri) {
                             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
-                            //console.log('Creation time was: '+ respMoment.format('X'));
+                            //gu.debugLog('Creation time was: '+ respMoment.format('X'));
 
                             expect(respMoment.isValid()).to.be.true;
                             expect(respMoment.isAfter(lastResp)).to.be.true;
@@ -269,12 +269,12 @@ describe('POST data to channel:', function(){
                 ,function(lastResp, callback){
                     setTimeout(function(){
 
-                        payload = testRandom.randomString(testRandom.randomNum(51));
+                        payload = ranU.randomString(ranU.randomNum(51));
 
                         dhh.postData(channelName, payload, function(res, uri) {
                             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
-                            //console.log('Creation time was: '+ respMoment.format('X'));
+                            //gu.debugLog('Creation time was: '+ respMoment.format('X'));
 
                             expect(respMoment.isValid()).to.be.true;
                             expect(respMoment.isAfter(lastResp)).to.be.true;
@@ -302,12 +302,12 @@ describe('POST data to channel:', function(){
     // For story: Provide "self" URI in the Location Header upon storing data  https://www.pivotaltracker.com/story/show/44845167
     describe('POST, Location header in response:', function() {
         it('Acceptance - location header exists and is correct', function(done) {
-            payload = testRandom.randomString(Math.round(Math.random() * 50));
+            payload = ranU.randomString(Math.round(Math.random() * 50));
 
             dhh.postData(channelName, payload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-                var myHeader = new dhh.packetPOSTHeader(res.headers);
-                var location = myHeader.getLocation();
+                var myHeader = new dhh.packetPOSTHeader(res.headers),
+                    location = myHeader.getLocation();
                 expect(location).to.equal(uri);
 
                 done();
@@ -316,12 +316,12 @@ describe('POST data to channel:', function(){
 
         it('Negative - failed attempt has no location header:', function(done) {
             var myChannel = dhh.makeRandomChannelName();
-            payload = testRandom.randomString(Math.round(Math.random() * 50));
+            payload = ranU.randomString(Math.round(Math.random() * 50));
 
             dhh.postData(myChannel, payload, function(res, uri) {
                 expect(gu.isHTTPError(res.status)).to.equal(true);
-                var myHeader = new dhh.packetPOSTHeader(res.headers);
-                var location = myHeader.getLocation();
+                var myHeader = new dhh.packetPOSTHeader(res.headers),
+                    location = myHeader.getLocation();
                 expect(location).to.be.null;
 
                 done();

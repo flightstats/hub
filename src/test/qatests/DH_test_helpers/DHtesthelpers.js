@@ -23,7 +23,10 @@ var ranU = require('../randomUtils.js');
 var gu = require('../genericUtils.js');
 
 //var URL_ROOT = 'http://10.250.220.197:8080';
-var URL_ROOT = 'http://datahub-01.cloud-east.dev:8080';
+var DOMAIN = 'datahub-02.cloud-east.dev:8080';
+exports.DOMAIN = DOMAIN;
+
+var URL_ROOT = 'http://'+ DOMAIN;
 exports.URL_ROOT = URL_ROOT;
 
 var DEBUG = true;
@@ -74,64 +77,34 @@ var getValidationChecksum = function (myUri, expChecksum, myDone)
 };
 exports.getValidationChecksum = getValidationChecksum;
 
-// Given a domain (and :port) and channel name, this will instantiate a websocket on that channel
-var createWebSocket = function(domain, channelName, onOpen) {
-    var wsUri = 'ws://'+ domain +'/channel/'+ channelName +'/ws',
-        myWs;
+// Given a websocket URI, this will instantiate a websocket on that channel
+var createWebSocket = function(wsUri, onOpen) {
+    var myWs;
 
-    debugLog('Trying uri: '+ wsUri, DEBUG);
+    gu.debugLog('Trying uri: '+ wsUri, DEBUG);
 
     myWs = new ws(wsUri);
 
     myWs.on('open', onOpen);
-    myWs.on('error', function(e) {console.log(e); });
+    myWs.on('error', function(e) {gu.debugLog(e); });
 
     return myWs;
 }
 exports.createWebSocket = createWebSocket;
 
+
 // Wrapper for websocket to more easily support tests with multiple sockets.
 //      Yes, I know it's too-tightly coupled with the test code.
 //
-// domain = domain:port for the datahub, e.g., datahub-01.cloud-east.dev:8080
-// channel = name of channel in the datahub
-// socketName = arbitrary name to help identify the socket
-// onOpenCB = callback to call when the 'open' event is called on this socket
-// responseQueue = where the message is stuffed when the 'message' event is called on this socket
-
-function WSWrapper(domain, channel, socketName, onOpenCB) {
-    this.name = socketName;
-    this.responseQueue = [];
-    this.ws = null;
-    this.channel = channel;
-    this.domain = domain;
-    var _self = this;
-
-    this.onMessage = function(data, flags) {
-        debugLog('MESSAGE EVENT at '+ Date.now(), DEBUG);
-        debugLog('Readystate is '+ _self.ws.readyState, DEBUG);
-         _self.responseQueue.push(data);
-    };
-
-    this.onOpen = function() {
-        debugLog('OPEN EVENT at '+ Date.now(), DEBUG);
-        debugLog('readystate: '+ _self.ws.readyState, DEBUG);
-        onOpenCB();
-    };
-
-    this.createSocket = function() {
-        if (DEBUG) {
-            console.dir(this);
-        }
-        this.ws = createWebSocket(this.domain, this.channel, this.onOpen);
-        this.ws.on('message', this.onMessage);
-    };
-};
-exports.WSWrapper = WSWrapper;
-
-// OPTIONAL:  'onMessageCB' callback to call at end of onMessage event
-function altWSWrapper(params) {
-    var requiredParams = ['domain', 'channel', 'socketName', 'onOpenCB'];
+// domain: domain:port for the datahub, e.g., datahub-01.cloud-east.dev:8080
+// channel: name of channel in the datahub
+// socketName: arbitrary name to help identify the socket
+// onOpenCB: callback to call at end of Open event
+// responseQueue: where the message is stuffed when the Message event is called on this socket
+// onMessageCB: (optional) callback to call at end of Message event
+// debug: (optional) logs way more from within the function
+function WSWrapper(params) {
+    var requiredParams = ['domain', 'uri', 'socketName', 'onOpenCB'];
 
     lodash.forEach(requiredParams, function(p) {
         if (!params.hasOwnProperty(p)) {
@@ -142,15 +115,16 @@ function altWSWrapper(params) {
     this.name = params.socketName;
     this.responseQueue = [];
     this.ws = null;
-    this.channel = params.channel;
+    this.uri = params.uri;
     this.domain = params.domain;
     var _self = this,
         onOpenCB = params.onOpenCB,
-        onMessageCB = (params.hasOwnProperty('onMessageCB')) ? params.onMessageCB : null;
+        onMessageCB = (params.hasOwnProperty('onMessageCB')) ? params.onMessageCB : null,
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : DEBUG;
 
     this.onMessage = function(data, flags) {
-        debugLog('MESSAGE EVENT at '+ Date.now(), DEBUG);
-        debugLog('Readystate is '+ _self.ws.readyState, DEBUG);
+        gu.debugLog('MESSAGE EVENT at '+ Date.now(), VERBOSE);
+        gu.debugLog('Readystate is '+ _self.ws.readyState, VERBOSE);
         _self.responseQueue.push(data);
 
         if (null != onMessageCB) {
@@ -159,28 +133,28 @@ function altWSWrapper(params) {
     };
 
     this.onOpen = function() {
-        debugLog('OPEN EVENT at '+ Date.now(), DEBUG);
-        debugLog('readystate: '+ _self.ws.readyState, DEBUG);
+        gu.debugLog('OPEN EVENT at '+ Date.now(), VERBOSE);
+        gu.debugLog('readystate: '+ _self.ws.readyState, VERBOSE);
         onOpenCB();
     };
 
     this.createSocket = function() {
-        if (DEBUG) {
+        if (VERBOSE) {
             console.dir(this);
         }
-        this.ws = createWebSocket(this.domain, this.channel, this.onOpen);
+        this.ws = createWebSocket(this.uri, this.onOpen);
         this.ws.on('message', this.onMessage);
     };
 }
-exports.altWSWrapper = altWSWrapper;
+exports.WSWrapper = WSWrapper;
 
-// returns the POST response
+// returns the POST response from channel creation attempt
 var makeChannel = function(myChannelName, myCallback) {
     var myPayload = '{"name":"'+ myChannelName +'"}',
         uri = URL_ROOT +'/channel';
 
-    debugLog('makeChannel.uri: '+ uri, DEBUG);
-    debugLog('makeChannel.payload: '+ myPayload, DEBUG);
+    gu.debugLog('makeChannel.uri: '+ uri, DEBUG);
+    gu.debugLog('makeChannel.payload: '+ myPayload, DEBUG);
 
     superagent.agent().post(uri)
         .set('Content-Type', 'application/json')
@@ -188,7 +162,7 @@ var makeChannel = function(myChannelName, myCallback) {
         .end(function(err, res) {
             myCallback(res);
         }).on('error', function(e) {
-            debugLog('...in makeChannel.post.error()', DEBUG);
+            gu.debugLog('...in makeChannel.post.error()');
             myCallback(e);
         });
 };
@@ -220,6 +194,10 @@ function channelMetadata(responseBody) {
         return responseBody._links.latest.href;
     }
 
+    this.getWebSocketUri = function() {
+        return responseBody._links.ws.href;
+    }
+
     this.getName = function() {
         return responseBody.name;
     }
@@ -230,15 +208,33 @@ function channelMetadata(responseBody) {
 }
 exports.channelMetadata = channelMetadata;
 
-// Calls back with GET response
-var getChannel = function(myChannelName, myCallback) {
-    superagent.agent().get(URL_ROOT +'/channel/'+ myChannelName)
+// params = EITHER 'name': channelname, or 'uri': full uri to channel
+// Calls back with GET response, body
+var getChannel = function(params, myCallback) {
+    var uri,
+        myChannelName = (params.hasOwnProperty('name')) ? params.name : null,
+        channelUri = (params.hasOwnProperty('uri')) ? params.uri : null;
+
+    if (null != myChannelName) {
+        uri = [URL_ROOT, 'channel', myChannelName].join('/');
+    }
+    else if (null != channelUri) {
+        uri = channelUri;
+    }
+    else {
+        gu.debugLog('Missing required parameter in getChannel()');
+    }
+
+    superagent.agent().get(uri)
         .end(function(err, res) {
-            if (err) {throw err};
-            myCallback(res);
+            if (err) {
+                throw err
+            };
+            myCallback(res, res.body);
         });
 };
 exports.getChannel = getChannel;
+
 
 /* Basic health check.
     Returns the get response or throws an error.
@@ -377,53 +373,39 @@ var postDataAndConfirmContentType = function(myChannelName, myContentType, myCal
 exports.postDataAndConfirmContentType = postDataAndConfirmContentType;
 
 // Calls back with data
-var getLatestDataFromChannel = function(myChannelName, myCallback) {
+var getLatestDataFromChannel = function(channelUri, callback) {
 
     var myData = '';
 
-    getLatestUriFromChannel(myChannelName, function(uri) {
+    getLatestUri(channelUri, function(uri) {
         http.get(uri, function(res) {
             res.on('data', function (chunk) {
                 myData += chunk;
             }).on('end', function(){
-                    myCallback(myData);
+                    callback(myData);
                 });
         }).on('error', function(e) {
-                myCallback(e);
+                callback(e);
             });
     });
 };
 exports.getLatestDataFromChannel = getLatestDataFromChannel;
 
-// Calls back with the Uri for the latest set of data
-var getLatestUriFromChannel = function(myChannelName, myCallback) {
-    var getUri = URL_ROOT +'/channel/'+ myChannelName +'/latest';
-    superagent.agent().get(getUri)
-        .redirects(0)
-        .end(function(err, res) {
-            expect(res.status).to.equal(gu.HTTPresponses.See_Other);
-            expect(res.headers['location']).not.to.be.null;
-
-            myCallback(res.headers['location']);
-        });
-};
-exports.getLatestUriFromChannel = getLatestUriFromChannel;
-
 // Returns the last <reqLength> URIs from a channel as an array,
 //      starting with oldest (up to reqLength) and ending with latest.
 // Returns a minimum of 2 (otherwise call getLatestUriFromChannel()).
-var getListOfLatestUrisFromChannel = function(reqLength, myChannelName, myCallback){
+var getListOfLatestUrisFromChannel = function(reqLength, channelUri, myCallback){
     var allUris = [];
 
-    debugLog('In getListofLatestUrisFromChannel...', DEBUG);
-    debugLog('reqLength: '+ reqLength, DEBUG);
-    debugLog('myChannelName: '+ myChannelName, DEBUG);
+    gu.debugLog('In getListofLatestUrisFromChannel...', DEBUG);
+    gu.debugLog('reqLength: '+ reqLength, DEBUG);
+    gu.debugLog('channel Uri: '+ channelUri, DEBUG);
 
     if (reqLength < 2) {
         reqLength = 2;
     }
 
-    getLatestUriFromChannel(myChannelName, function(latest){
+    getLatestUri(channelUri, function(latest){
         var previous = null;
 
         allUris.unshift(latest);
@@ -454,10 +436,26 @@ var getListOfLatestUrisFromChannel = function(reqLength, myChannelName, myCallba
 };
 exports.getListOfLatestUrisFromChannel = getListOfLatestUrisFromChannel;
 
-// writes to console log if doDebug is true *or* if only one param (msg) is provided
-var debugLog = function(msg, doDebug) {
-    if ((arguments.length < 2) || (true === doDebug))  {
-        console.log(msg);
-    }
-};
-exports.debugLog = debugLog;
+// Given a channel URI, calls GET channel, then takes the _latest link from that response and calls
+//   it, returning the URI given
+var getLatestUri = function(channelUri, callback) {
+    getChannel({'uri': channelUri}, function(getCnRes, getCnBody) {
+        expect(getCnRes.status).to.equal(gu.HTTPresponses.OK);
+
+        var cnMetadata = new channelMetadata(getCnBody),
+            latestUri = cnMetadata.getLatestUri();
+
+        superagent.agent().head(latestUri)
+            .redirects(0)
+            .end(function(headErr, headRes) {
+                expect(headRes.status).to.equal(gu.HTTPresponses.See_Other);
+                expect(headRes.headers['location']).to.not.be.null;
+
+                callback(headRes.headers.location);
+            })
+    })
+
+}
+exports.getLatestUri = getLatestUri;
+
+

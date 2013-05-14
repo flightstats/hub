@@ -61,9 +61,10 @@ describe('Create Channel: ', function(){
         });
     })
 
+    // See:  https://www.pivotaltracker.com/story/show/49566971
     it('blank name not allowed', function(done){
         dhh.makeChannel('', function(res) {
-            expect(gu.isHTTPError(res.status)).to.equal(true);
+            expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
             gu.debugLog('Response status: '+ res.status, DEBUG);
             done();
         });
@@ -83,7 +84,7 @@ describe('Create Channel: ', function(){
 
 
     it('(Acceptance) channel created', function(done){
-        dhh.getChannel(channelName, function(res) {
+        dhh.getChannel({'name': channelName}, function(res) {
             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
             done();
         });

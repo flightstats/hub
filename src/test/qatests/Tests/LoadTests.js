@@ -17,9 +17,9 @@ var moment = require('moment');
 var async = require('async');
 var fs = require('fs');
 
-var dhh = require('.././DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('../randomUtils.js');
-var gu = require('../genericUtils.js');
+var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
+    ranU = require('../randomUtils.js'),
+    gu = require('../genericUtils.js');
 
 var MY_4MB_FILE = './artifacts/Iam4Mb.txt';
 var MY_8MB_FILE = './artifacts/Iam8Mb.txt';
@@ -54,7 +54,7 @@ describe.skip('Load tests - POST data:', function(){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             };
-            console.log('Main test channel:'+ channelName);
+            gu.debugLog('Main test channel:'+ channelName);
             myCallback();
         });
     });
@@ -77,7 +77,7 @@ describe.skip('Load tests - POST data:', function(){
             for (var i = 1; i <= numIterations; i++)
             {
                 var thisName = dhh.makeRandomChannelName();
-                var thisPayload = testRandom.randomString(Math.round(Math.random() * 50));
+                var thisPayload = ranU.randomString(Math.round(Math.random() * 50));
                 loadChannels[thisName] = {"uri":'', "data":thisPayload};
 
             }
@@ -118,7 +118,7 @@ describe.skip('Load tests - POST data:', function(){
                         payload = loadChannels[cn].data;
 
                         dhh.getValidationString(uri, payload, function(){
-                            //console.log('Confirmed data retrieval from channel: '+ cn);
+                            //gu.debugLog('Confirmed data retrieval from channel: '+ cn);
                             callback();
                         });
                     }, function(err) {
