@@ -294,6 +294,7 @@ def incrementVersionFile() {
 
 def commitVersionFileAndPush() {
     println "Adding new version file (version.txt) to git..."
+    runExternal "git checkout master"
     runExternal "git add version.txt"
     def commandParts = ["git", "commit", "-m", "Increment build after production deployment.", "version.txt"]
     showExternalOutput(commandParts.execute())
