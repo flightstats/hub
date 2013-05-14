@@ -1,7 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'idea'
-apply plugin: 'artifactory'
 apply plugin: 'application'
+apply from: 'common.gradle'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -38,32 +38,6 @@ buildscript {
 
     dependencies {  //Required to pick up the artifactory plugin
         classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.16')
-    }
-}
-
-repositories {
-    repositories {
-        maven {
-            url 'http://artifactory.office/artifactory/plugins-dev'
-        }
-        maven {
-            url 'http://artifactory.office/artifactory/plugins-release'
-        }
-        maven {
-            url 'https://oss.sonatype.org/content/repositories/snapshots'
-        }
-        ivy {
-            url "http://artifactory.office/artifactory/simple/services-dev"
-            layout "pattern", {
-                artifact "[organization]/[module]/[revision]/[artifact]-[revision](-[suffix]).[ext]"
-            }
-        }
-        ivy {
-            url "http://artifactory.office/artifactory/simple/services-release"
-            layout "pattern", {
-                artifact "[organization]/[module]/[revision]/[artifact]-[revision](-[suffix]).[ext]"
-            }
-        }
     }
 }
 
