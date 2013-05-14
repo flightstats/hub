@@ -41,7 +41,7 @@ describe('GET Channel metadata:', function() {
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             };
-            console.log('Main test channel:'+ channelName);
+            gu.debugLog('Main test channel:'+ channelName);
             myCallback();
         });
     });
@@ -61,7 +61,7 @@ describe('GET Channel metadata:', function() {
             dhh.postData(thisChannel, testRandom.randomString(testRandom.randomNum(51)), function(postRes, myUri) {
                 expect(gu.isHTTPSuccess(postRes.status)).to.equal(true);
 
-                dhh.getChannel(thisChannel, function(cnRes) {
+                dhh.getChannel({'name': thisChannel} , function(cnRes) {
                     expect(gu.isHTTPSuccess(cnRes.status)).to.equal(true);
 
                     cnMetadata = new dhh.channelMetadata(cnRes.body);
@@ -80,7 +80,7 @@ describe('GET Channel metadata:', function() {
     // 404 trying to GET channel before it exists
     it('should return a 404 trying to GET channel before it exists', function(done){
         var myChannel = dhh.makeRandomChannelName();
-        dhh.getChannel(myChannel, function(res) {
+        dhh.getChannel({'name': myChannel}, function(res) {
             expect(gu.isHTTPError(res.status)).to.equal(true);
             done();
         });

@@ -17,9 +17,9 @@ var moment = require('moment');
 var async = require('async');
 var fs = require('fs');
 
-var dhh = require('.././DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('../randomUtils.js');
-var gu = require('../genericUtils.js');
+var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
+    ranU = require('../randomUtils.js'),
+    gu = require('../genericUtils.js');
 
 // DH Content Types
 var appContentTypes = require('../contentTypes.js').applicationTypes;
@@ -32,7 +32,6 @@ var URL_ROOT = dhh.URL_ROOT;
 // Test variables that are regularly overwritten
 var agent
     , payload
-    , fileAsAStream
     , req
     , uri
     , contentType;
@@ -48,7 +47,7 @@ describe('GET data:', function() {
         channelName = dhh.makeRandomChannelName();
         agent = superagent.agent();
         dhh.makeChannel(channelName, function(res){
-            dhh.getChannel(channelName, function(res){
+            dhh.getChannel({'name': channelName}, function(res){
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 console.log('Main test channel:'+ channelName);
@@ -83,7 +82,7 @@ describe('GET data:', function() {
 
         // https://www.pivotaltracker.com/story/show/48696133
         it('getting from a nonexistent channel yields 404 response', function(done) {
-            uri = [URL_ROOT, 'channel', testRandom.randomString(30, testRandom.limitedRandomChar), realDataId].join('/');
+            uri = [URL_ROOT, 'channel', ranU.randomString(30, ranU.limitedRandomChar), realDataId].join('/');
 
             agent.get(uri)
                 .end(function(err, res) {
@@ -288,8 +287,10 @@ describe('GET data:', function() {
         //    Response to a channel creation *or* to a GET on the channel will include the URI to the latest resource in that channel.
         //    NOTE: response is 303 ("see other") – it's a redirect to the latest set of data stored in the channel.
         it('(Acceptance) Save sequence of data to channel, confirm that latest actually returns latest', function(done) {
-            var thisChannel = dhh.makeRandomChannelName();
-            var latestUri, myData;
+            var thisChannelName = dhh.makeRandomChannelName(),
+                channelUri,
+                latestUri,
+                myData;
 
             var payload1 = dhh.getRandomPayload();
             var payload2 = dhh.getRandomPayload();
@@ -301,19 +302,20 @@ describe('GET data:', function() {
 
             async.waterfall([
                 function(callback){
-                    dhh.makeChannel(thisChannel, function(res) {
+                    dhh.makeChannel(thisChannelName, function(res) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         var cnMetadata = new dhh.channelMetadata(res.body);
+                        channelUri = cnMetadata.getChannelUri();
                         latestUri = cnMetadata.getLatestUri();
 
                         callback(null);
                     });
                 },
                 function(callback){
-                    dhh.postData(thisChannel, payload1, function(myRes, myUri) {
+                    dhh.postData(thisChannelName, payload1, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(thisChannel, function(myData) {
+                        dhh.getLatestDataFromChannel(channelUri, function(myData) {
                             expect(myData).to.equal(payload1);
 
                             callback(null);
@@ -321,10 +323,10 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(thisChannel, payload2, function(myRes, myUri) {
+                    dhh.postData(thisChannelName, payload2, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(thisChannel, function(myData) {
+                        dhh.getLatestDataFromChannel(channelUri, function(myData) {
                             expect(myData).to.equal(payload2);
 
                             callback(null);
@@ -332,10 +334,10 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(thisChannel, payload3, function(myRes, myUri) {
+                    dhh.postData(thisChannelName, payload3, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(thisChannel, function(myData) {
+                        dhh.getLatestDataFromChannel(channelUri, function(myData) {
                             expect(myData).to.equal(payload3);
 
                             callback(null);
@@ -348,7 +350,7 @@ describe('GET data:', function() {
         });
 
         it('Return 404 on Get Latest if channel has no data', function(done) {
-            var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+            var thisChannel = ranU.randomString(30, ranU.limitedRandomChar);
 
             dhh.makeChannel(thisChannel, function(res) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
@@ -365,7 +367,7 @@ describe('GET data:', function() {
 
         // regression for https://www.pivotaltracker.com/story/show/47150133
         it('Return 404 on Get Latest if channel does not exist', function(done) {
-            var thisChannel = testRandom.randomString(30, testRandom.limitedRandomChar);
+            var thisChannel = ranU.randomString(30, ranU.limitedRandomChar);
 
             uri = URL_ROOT +'/channel/'+ thisChannel +'/latest';
 
@@ -391,7 +393,7 @@ describe('GET data:', function() {
         });
 
         it('GET on Channel returns link to latest data set', function(done) {
-            dhh.getChannel(channelName, function(res) {
+            dhh.getChannel({'name': channelName} , function(res) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 var cnMetadata = new dhh.channelMetadata(res.body);
                 expect(cnMetadata.getChannelUri()).to.not.be.null;
@@ -402,37 +404,40 @@ describe('GET data:', function() {
 
 
         it('Get latest works when latest data set is an empty set, following a previous non-empty set', function(done) {
-            var thisChannel = dhh.makeRandomChannelName();
-            var latestUri, myData;
+            var channelName = dhh.makeRandomChannelName(),
+                channelUri,
+                latestUri,
+                myData;
 
             payload = dhh.getRandomPayload();
 
             async.waterfall([
                 function(callback){
-                    dhh.makeChannel(thisChannel, function(res) {
+                    dhh.makeChannel(channelName, function(res) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                         var cnMetadata = new dhh.channelMetadata(res.body);
+                        channelUri = cnMetadata.getChannelUri();
                         latestUri = cnMetadata.getLatestUri();
 
                         callback(null);
                     });
                 },
                 function(callback){
-                    dhh.postData(thisChannel, payload, function(myRes, myUri) {
+                    dhh.postData(channelName, payload, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(thisChannel, function(myData) {
+                        dhh.getLatestDataFromChannel(channelUri, function(myData) {
                             expect(myData).to.equal(payload);
                             callback(null);
                         });
                     });
                 },
                 function(callback){
-                    dhh.postData(thisChannel, '', function(myRes, myUri) {
+                    dhh.postData(channelName, '', function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(thisChannel, function(myData) {
+                        dhh.getLatestDataFromChannel(channelUri, function(myData) {
                             expect(myData).to.equal('');
                             callback(null);
                         });
@@ -450,8 +455,8 @@ describe('GET data:', function() {
         //  So repeated calls to this method will always return the same data set.
         it.skip('(*Not yet possible*) Internal sequence of data with same timestamp is preserved', function(done) {
             var thisChannel = dhh.makeRandomChannelName();
-            var payload1 = testRandom.randomString(testRandom.randomNum(51));
-            var payload2 = testRandom.randomString(testRandom.randomNum(51));
+            var payload1 = ranU.randomString(ranU.randomNum(51));
+            var payload2 = ranU.randomString(ranU.randomNum(51));
             var timestamp1, timestamp2;
 
             dhh.makeChannel(thisChannel, function(res) {
@@ -570,8 +575,8 @@ describe('GET data:', function() {
         it('Made-up legal Content-Type should be accepted and returned', function(done) {
             // Note that the DH accepts illegal Content-Types, but does require a slash between two strings, so that's
             //  the standard I'm going with.
-            var myContentType = testRandom.randomString(testRandom.randomNum(10), testRandom.limitedRandomChar);
-            myContentType += '/'+ testRandom.randomString(testRandom.randomNum(10), testRandom.limitedRandomChar);
+            var myContentType = ranU.randomString(ranU.randomNum(10), ranU.limitedRandomChar);
+            myContentType += '/'+ ranU.randomString(ranU.randomNum(10), ranU.limitedRandomChar);
 
             var getAgent = superagent.agent();
 
@@ -777,7 +782,7 @@ describe('GET data:', function() {
             var pHeader;
             var debugThis = false;
 
-            if (debugThis) {console.log('Channel name:'+ myChannel);}
+            if (debugThis) {gu.debugLog('Channel name:'+ myChannel);}
 
             async.series([
                 function(callback){
@@ -791,7 +796,7 @@ describe('GET data:', function() {
                     dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
-                        if (debugThis) {console.log('First value at: '+ firstValueUri);}
+                        if (debugThis) {gu.debugLog('First value at: '+ firstValueUri);}
                         callback(null,null);
                     });
                 },
@@ -799,7 +804,7 @@ describe('GET data:', function() {
                     dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
-                        if (debugThis) {console.log('Second value at: '+ secondValueUri);}
+                        if (debugThis) {gu.debugLog('Second value at: '+ secondValueUri);}
                         callback(null,null);
                     });
                 },
@@ -807,11 +812,11 @@ describe('GET data:', function() {
                     dhh.postData(myChannel, dhh.getRandomPayload(), function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         thirdValueUri = myUri;
-                        if (debugThis) {console.log('Third value at: '+ thirdValueUri);}
+                        if (debugThis) {gu.debugLog('Third value at: '+ thirdValueUri);}
 
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
-                                if (debugThis) {console.log('Getting third value.'+ myUri);}
+                                if (debugThis) {gu.debugLog('Getting third value.'+ myUri);}
                                 pHeader = new dhh.packetGETHeader(res.headers);
                                 expect(pHeader.getPrevious()).to.equal(secondValueUri);
                                 expect(pHeader.getNext()).to.be.null;
@@ -823,7 +828,7 @@ describe('GET data:', function() {
                 function(callback){
                     superagent.agent().get(secondValueUri)
                         .end(function(err, res) {
-                            if (debugThis) {console.log('Getting second value.'+ secondValueUri);}
+                            if (debugThis) {gu.debugLog('Getting second value.'+ secondValueUri);}
                             pHeader = new dhh.packetGETHeader(res.headers);
                             expect(pHeader.getPrevious()).to.equal(firstValueUri);
                             expect(pHeader.getNext()).to.equal(thirdValueUri);
@@ -834,7 +839,7 @@ describe('GET data:', function() {
                 function(callback){
                     superagent.agent().get(firstValueUri)
                         .end(function(err, res) {
-                            if (debugThis) {console.log('Getting first value.'+ firstValueUri);}
+                            if (debugThis) {gu.debugLog('Getting first value.'+ firstValueUri);}
                             pHeader = new dhh.packetGETHeader(res.headers);
                             expect(pHeader.getPrevious()).to.be.null;
                             expect(pHeader.getNext()).to.equal(secondValueUri);
