@@ -15,7 +15,7 @@ var fs = require('fs');
 
 
 var dhh = require('../DH_test_helpers/DHtesthelpers.js');
-var testRandom = require('../randomUtils.js');
+var ranU = require('../randomUtils.js');
 var gu = require('../genericUtils.js');
 
 
@@ -55,13 +55,13 @@ describe('GET Channel metadata:', function() {
         var cnMetadata;
         var thisChannel = dhh.makeRandomChannelName();
 
-        dhh.makeChannel(thisChannel, function(makeRes) {
+        dhh.makeChannel(thisChannel, function(makeRes, channelUri) {
             expect(gu.isHTTPSuccess(makeRes.status)).to.equal(true);
 
-            dhh.postData(thisChannel, testRandom.randomString(testRandom.randomNum(51)), function(postRes, myUri) {
+            dhh.postData(channelUri, ranU.randomString(ranU.randomNum(51)), function(postRes, myUri) {
                 expect(gu.isHTTPSuccess(postRes.status)).to.equal(true);
 
-                dhh.getChannel({'name': thisChannel} , function(cnRes) {
+                dhh.getChannel({'uri': channelUri} , function(cnRes) {
                     expect(gu.isHTTPSuccess(cnRes.status)).to.equal(true);
 
                     cnMetadata = new dhh.channelMetadata(cnRes.body);
