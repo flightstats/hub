@@ -23,7 +23,7 @@ if [[ "$HOST" == "" || ("$BACKEND" != "cassandra" && "$BACKEND" != "memory") ]] 
 	exit 1
 fi
 
-ssh ${USER}@${HOST} "ls ${UPSTART_CONF}"
+ssh ${USER}@${HOST} "[ -f ${UPSTART_CONF} ]"
 if [ "$?" == "0" ] ; then
     echo Shutting down any running datahub instances on ${HOST}...
     ssh ${USER}@${HOST} "sudo stop datahub"
