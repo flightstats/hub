@@ -84,6 +84,7 @@ describe('POST data to channel:', function(){
     });
 
 
+    // Fails with in-memory backend:  https://www.pivotaltracker.com/story/show/49567193
     it('POST should return a 404 trying to save to nonexistent channel', function(done){
         dhh.postData(fakeChannelUri, dhh.getRandomPayload(), function(res, uri) {
             expect(res.status).to.equal(gu.HTTPresponses.Not_Found);
@@ -299,6 +300,7 @@ describe('POST data to channel:', function(){
             });
         });
 
+        // Fails with in-memory backend due to https://www.pivotaltracker.com/story/show/49567193
         it('Negative - failed attempt has no location header:', function(done) {
             payload = ranU.randomString(Math.round(Math.random() * 50));
 

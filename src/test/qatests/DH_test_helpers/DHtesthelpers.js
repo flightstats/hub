@@ -29,8 +29,7 @@ exports.DOMAIN = DOMAIN;
 var URL_ROOT = 'http://'+ DOMAIN;
 exports.URL_ROOT = URL_ROOT;
 
-var DEBUG = true;
-exports.DEBUG = false;
+var DEBUG = false;
 
 
 var getRandomPayload = function() {
@@ -104,7 +103,7 @@ exports.createWebSocket = createWebSocket;
 // onMessageCB: (optional) callback to call at end of Message event
 // debug: (optional) logs way more from within the function
 function WSWrapper(params) {
-    var requiredParams = ['domain', 'uri', 'socketName', 'onOpenCB'];
+    var requiredParams = ['uri', 'socketName', 'onOpenCB'];     // removed 'domain'
 
     lodash.forEach(requiredParams, function(p) {
         if (!params.hasOwnProperty(p)) {
@@ -116,7 +115,7 @@ function WSWrapper(params) {
     this.responseQueue = [];
     this.ws = null;
     this.uri = params.uri;
-    this.domain = params.domain;
+    //this.domain = params.domain;
     var _self = this,
         onOpenCB = params.onOpenCB,
         onMessageCB = (params.hasOwnProperty('onMessageCB')) ? params.onMessageCB : null,
@@ -434,8 +433,7 @@ var getListOfLatestUrisFromChannel = function(reqLength, channelUri, myCallback)
 };
 exports.getListOfLatestUrisFromChannel = getListOfLatestUrisFromChannel;
 
-// Given a channel URI, calls GET channel, then takes the _latest link from that response and calls
-//   it, returning the URI given
+// Calls back with the URI to latest data post, optionally followed by error text (if not null, an error happened)
 var getLatestUri = function(channelUri, callback) {
     getChannel({'uri': channelUri}, function(getCnRes, getCnBody) {
         expect(getCnRes.status).to.equal(gu.HTTPresponses.OK);
@@ -448,10 +446,15 @@ var getLatestUri = function(channelUri, callback) {
         superagent.agent().head(latestUri)
             .redirects(0)
             .end(function(headErr, headRes) {
-                expect(headRes.status).to.equal(gu.HTTPresponses.See_Other);
-                expect(headRes.headers['location']).to.not.be.null;
+                if (headErr) {
+                    callback(null, headErr.message);
+                }
+                else {
+                    expect(headRes.status).to.equal(gu.HTTPresponses.See_Other);
+                    expect(headRes.headers['location']).to.not.be.null;
 
-                callback(headRes.headers.location);
+                    callback(headRes.headers.location, null);
+                }
             })
     })
 
