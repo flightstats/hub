@@ -3,6 +3,7 @@ apply plugin: CommonUtilities
 // This provides a set of common / reusable methods
 
 class CommonUtilities implements Plugin<Project> {
+
     def void apply(Project project) {
         project.convention.plugins.utilities = new CommonUtilitiesConvention(project)
     }
@@ -36,7 +37,7 @@ class CommonUtilitiesConvention {
         def minor = currentVersion.replaceFirst(/\d+\.\d+\.(\d+)/, '$1').toInteger()
         minor++
         def newVersion = major + '.' + minor
-        new File("${projectDir}/version.txt").write(newVersion)
+        new File("${project.projectDir}/version.txt").write(newVersion)
         println "New version updated to: ${newVersion}."
     }
 
@@ -46,12 +47,12 @@ class CommonUtilitiesConvention {
      * @param configuration
      */
     def copyTarballToDistributions(configuration) {
-        def distributionsDir = new File("${buildDir}/distributions")
+        def distributionsDir = new File("${project.buildDir}/distributions")
         distributionsDir.mkdirs()
         def deployTarball = configuration.files.find {
             it.name.endsWith('tgz')
         }
-        copy {
+        project.copy {
             from deployTarball
             into distributionsDir
         }
