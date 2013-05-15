@@ -14,7 +14,7 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
     gu = require('../genericUtils.js');
 
 var URL_ROOT = dhh.URL_ROOT,
-    fakeChannelUri = [URL_ROOT, 'channel', dhh.makeRandomChannelName()].join('/');
+    fakeChannelUri = [URL_ROOT, 'channel', dhh.getRandomChannelName()].join('/');
 
 // The following paths assume this is being run from a parent directory. The before() method will adjust this if
 //  the test is being run in this file's directory
@@ -40,21 +40,34 @@ var channelName,
 
 describe('POST data to channel:', function(){
 
+    var postAndConfirmData = function(data, callback) {
+        dhh.postData(channelUri, data, function(res, uri) {
+            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+
+            dhh.confirmExpectedData(uri, data, function(didMatch) {
+                expect(didMatch).to.be.true;
+
+                callback();
+            });
+        });
+    }
+
     before(function(done){
 
         // Update file paths if test is run in its own directory.
         var cwd = process.cwd();
         var dirRegex = /\/([^/]+)$/;
         var parent = cwd.match(dirRegex)[1];
+
         if ('postdata'.toLowerCase() == parent.toLowerCase()) {
             CAT_TOILET_PIC = '../'+ CAT_TOILET_PIC;
             MY_2KB_FILE = '../'+ MY_2KB_FILE;
             MY_2MB_FILE = '../'+ MY_2MB_FILE;
         };
 
-        channelName = dhh.makeRandomChannelName();
+        channelName = dhh.getRandomChannelName();
         agent = superagent.agent();
-        dhh.makeChannel(channelName, function(res, cnUri){
+        dhh.createChannel(channelName, function(res, cnUri){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 done(res.error);
             };
@@ -78,7 +91,11 @@ describe('POST data to channel:', function(){
             gu.debugLog('Response from POST attempt: '+ res.status, DEBUG);
             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
-            dhh.getValidationString(uri, payload, done);
+            dhh.confirmExpectedData(uri, payload, function(didMatch) {
+                expect(didMatch).to.be.true;
+
+                done();
+            });
         });
 
     });
@@ -103,16 +120,20 @@ describe('POST data to channel:', function(){
             dhh.postData(channelUri, payload, function(res2, uri2) {
                 expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
 
-                dhh.getValidationString(uri, payload, done);
+                dhh.confirmExpectedData(uri, payload, function(didMatch) {
+                    expect(didMatch).to.be.true;
+
+                    done();
+                });
             });
         });
     });
 
     it('POST same set of data to two different channels', function(done) {
-        var otherChannelName = dhh.makeRandomChannelName(),
+        var otherChannelName = dhh.getRandomChannelName(),
             otherChannelUri;
 
-        dhh.makeChannel(otherChannelName, function(res, cnUri) {
+        dhh.createChannel(otherChannelName, function(res, cnUri) {
             otherChannelUri = cnUri;
             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
             payload = ranU.randomString(Math.round(Math.random() * 50));
@@ -120,12 +141,17 @@ describe('POST data to channel:', function(){
             dhh.postData(channelUri, payload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
-                dhh.getValidationString(uri, payload, function() {
+                dhh.confirmExpectedData(uri, payload, function(didMatchFirst) {
+                    expect(didMatchFirst).to.be.true;
 
                     dhh.postData(otherChannelUri, payload, function(res2, uri2) {
                         expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
 
-                        dhh.getValidationString(uri2, payload, done);
+                        dhh.confirmExpectedData(uri2, payload, function(didMatchSecond) {
+                            expect(didMatchSecond).to.be.true;
+
+                            done();
+                        });
                     });
 
                 });
@@ -136,33 +162,20 @@ describe('POST data to channel:', function(){
 
 
     it('POST empty data set to channel', function(done){
-        dhh.postData(channelUri, '', function(res, uri) {
-            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-
-            dhh.getValidationString(uri, '', done);
-        });
-
+        postAndConfirmData('', done);
     });
 
     it('POST 200kb file to channel', function(done) {
         payload = fs.readFileSync(MY_2KB_FILE, "utf8");
 
-        dhh.postData(channelUri, payload, function(res, uri) {
-            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-
-            dhh.getValidationString(uri, payload, done);
-        });
+        postAndConfirmData(payload, done);
     });
 
 
     it('POST 1,000 characters to channel', function(done) {
         payload = ranU.randomString(1000, ranU.simulatedTextChar);
 
-        dhh.postData(channelUri, payload, function(res, uri) {
-            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-
-            dhh.getValidationString(uri, payload, done);
-        });
+        postAndConfirmData(payload, done);
     });
 
     // Confirms via md5 checksum

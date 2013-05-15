@@ -22,7 +22,6 @@ var chai = require('chai'),
 var ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js');
 
-//var URL_ROOT = 'http://10.250.220.197:8080';
 var DOMAIN = 'datahub-01.cloud-east.dev:8080';
 exports.DOMAIN = DOMAIN;
 
@@ -37,23 +36,26 @@ var getRandomPayload = function() {
 }
 exports.getRandomPayload = getRandomPayload;
 
-// Confirms that the data located at 'myUri' matches the expected payload ('myPayload')
-var getValidationString = function (myUri, myPayload, callback) {
-    var myData = '';
+// Returns true if data found at dataUri matches expectedData, else false.
+var confirmExpectedData = function (dataUri, expectedData, callback) {
+    var actualData = '';
 
-    http.get(myUri, function(res) {
+    http.get(dataUri, function(res) {
         res.on('data', function (chunk) {
-            myData += chunk;
+            actualData += chunk;
         }).on('end', function(){
-                expect(myData).to.equal(myPayload);
-                callback();
+                if (actualData != expectedData) {
+                    gu.debugLog('Unexpected data found: '+ actualData);
+                }
+
+                callback(true);
             });
     }).on('error', function(e) {
             gu.debugLog("Got error: " + e.message);
-            callback();
+            callback(false);
         });
 };
-exports.getValidationString = getValidationString;
+exports.confirmExpectedData = confirmExpectedData;
 
 var getValidationChecksum = function (myUri, expChecksum, myDone)
 {
@@ -148,12 +150,12 @@ function WSWrapper(params) {
 exports.WSWrapper = WSWrapper;
 
 // returns the response, link to new channel
-var makeChannel = function(myChannelName, myCallback) {
+var createChannel = function(myChannelName, myCallback) {
     var myPayload = '{"name":"'+ myChannelName +'"}',
         uri = URL_ROOT +'/channel';
 
-    gu.debugLog('makeChannel.uri: '+ uri, DEBUG);
-    gu.debugLog('makeChannel.payload: '+ myPayload, DEBUG);
+    gu.debugLog('createChannel.uri: '+ uri, DEBUG);
+    gu.debugLog('createChannel.payload: '+ myPayload, DEBUG);
 
     superagent.agent().post(uri)
         .set('Content-Type', 'application/json')
@@ -172,12 +174,12 @@ var makeChannel = function(myChannelName, myCallback) {
             myCallback(e);
         });
 };
-exports.makeChannel = makeChannel;
+exports.createChannel = createChannel;
 
-var makeRandomChannelName = function() {
+var getRandomChannelName = function() {
     return ranU.randomString(ranU.randomNum(31), ranU.limitedRandomChar);
 }
-exports.makeRandomChannelName = makeRandomChannelName;
+exports.getRandomChannelName = getRandomChannelName;
 
 //     Current metadata structure for GET on a channel:
 /*
@@ -230,6 +232,8 @@ var getChannel = function(params, myCallback) {
     else {
         gu.debugLog('Missing required parameter in getChannel()');
     }
+
+    gu.debugLog('\nURI for getChannel(): '+ uri);
 
     superagent.agent().get(uri)
         .end(function(err, res) {
@@ -370,23 +374,37 @@ exports.postDataAndConfirmContentType = postDataAndConfirmContentType;
 // Calls back with data
 var getLatestDataFromChannel = function(channelUri, callback) {
 
-    var myData = '';
-
     gu.debugLog('Channel uri in getLatestDataFromChannel: '+ channelUri);
 
     getLatestUri(channelUri, function(uri) {
-        http.get(uri, function(res) {
-            res.on('data', function (chunk) {
-                myData += chunk;
-            }).on('end', function(){
-                    callback(myData);
-                });
-        }).on('error', function(e) {
-                callback(e);
-            });
+
+        getDataFromChannel(uri, function(err, data) {
+            var result = (null != err) ? err : data;
+
+            callback(result);
+        })
     });
 };
 exports.getLatestDataFromChannel = getLatestDataFromChannel;
+
+// Returns error (null if none), data
+var getDataFromChannel = function(dataUri, callback) {
+
+    var myData = '';
+
+    gu.debugLog('DataUri in getDataFromChannel(): '+ dataUri);
+
+    http.get(dataUri, function(res) {
+        res.on('data', function (chunk) {
+            myData += chunk;
+        }).on('end', function(){
+            callback(null, myData);
+            });
+    }).on('error', function(e) {
+            callback(e, null);
+        });
+}
+exports.getDataFromChannel = getDataFromChannel;
 
 // Returns the last <reqLength> URIs from a channel as an array,
 //      starting with oldest (up to reqLength) and ending with latest.

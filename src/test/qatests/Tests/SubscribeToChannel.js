@@ -42,9 +42,9 @@ describe('Channel Subscription:', function() {
         agent = superagent.agent();
         payload = uri = req = null;
 
-        channelName = dhh.makeRandomChannelName();
+        channelName = dhh.getRandomChannelName();
 
-        dhh.makeChannel(channelName, function(res){
+        dhh.createChannel(channelName, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             }

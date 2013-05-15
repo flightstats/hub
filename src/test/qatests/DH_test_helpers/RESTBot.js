@@ -109,7 +109,7 @@ var Bot = function Bot(params) {
             setTimeout(function() {
                 nextAction(_self, function(err) {
                     if (null != err) {
-                        this.report(err);
+                        this.report('*_*_*_*_*  ERROR *_*_*_*_*: '+ err);
                         lastAction();
                     }
                     else if ((0 == actionQueue.length) && (_self.behaviors.length > 0)) {
@@ -222,7 +222,7 @@ var getNextAction = function(behaviors) {
 // Creates channel and returns error, channelUri
 var botCreateChannel = function(theBot, callback) {
     var uri = [dhh.URL_ROOT, 'channel'].join('/'),
-        name = dhh.makeRandomChannelName();
+        name = dhh.getRandomChannelName();
 
     gu.debugLog('createChannel() uri: '+ uri, DEBUG);
     gu.debugLog('createChannel() name: '+ name, DEBUG);
@@ -327,6 +327,8 @@ var botGetLatestValue = function(theBot, callback) {
     });
 }
 exports.botGetLatestValue = botGetLatestValue;
+
+
 
 var makeMainPosterBot = function(TTL) {
     var params = {
