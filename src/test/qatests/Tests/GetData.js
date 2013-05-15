@@ -83,7 +83,8 @@ describe('GET data:', function() {
         })
 
         // https://www.pivotaltracker.com/story/show/48696133
-        it('getting from a nonexistent channel yields 404 response', function(done) {
+        // https://www.pivotaltracker.com/story/show/48704741
+        it('getting real location id from fake channel yields 404 response', function(done) {
             uri = [URL_ROOT, 'channel', ranU.randomString(30, ranU.limitedRandomChar), realDataId].join('/');
 
             agent.get(uri)
