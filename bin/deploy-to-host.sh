@@ -14,8 +14,8 @@ BIN_DIR=`dirname $0`
 CONF_DIR=${BIN_DIR}/../conf
 BUILD_DIR=${BIN_DIR}/../build
 TARFILE=`ls ${BUILD_DIR}/distributions/datahub-*.tgz`
-TARFILE=`basename ${TARFILE}`
-DISTDIR=`basename ${TARFILE} .tgz`
+TARFILE=`basename "${TARFILE}"`
+DISTDIR=`basename "${TARFILE}" .tgz`
 UPSTART_CONF=/etc/init/datahub.conf
 
 if [[ "$HOST" == "" || ("$BACKEND" != "cassandra" && "$BACKEND" != "memory") ]] ; then
