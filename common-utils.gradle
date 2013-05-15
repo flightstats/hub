@@ -32,7 +32,7 @@ class CommonUtilitiesConvention {
     }
 
     def incrementVersionFile() {
-        def currentVersion = version
+        def currentVersion = project.version
         def major = currentVersion.replaceFirst(/(\d+\.\d+)\.\d+/, '$1')
         def minor = currentVersion.replaceFirst(/\d+\.\d+\.(\d+)/, '$1').toInteger()
         minor++
