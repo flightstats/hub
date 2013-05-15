@@ -31,9 +31,9 @@ var agent, payload, req, uri, contentType, channelName;
 describe('Create Channel: ', function(){
 
     before(function(myCallback){
-        channelName = dhh.makeRandomChannelName();
+        channelName = dhh.getRandomChannelName();
         agent = superagent.agent();
-        dhh.makeChannel(channelName, function(res){
+        dhh.createChannel(channelName, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 //console.log('bad things');
                 throw new Error(res.error);
@@ -51,7 +51,7 @@ describe('Create Channel: ', function(){
     it.skip('Create channel with name reserved by Cassandra', function(done) {
         channelName = 'channelMetadata';
         agent = superagent.agent();
-        dhh.makeChannel(channelName, function(res){
+        dhh.createChannel(channelName, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 //console.log('bad things');
                 throw new Error(res.error);
@@ -63,7 +63,7 @@ describe('Create Channel: ', function(){
 
     // See:  https://www.pivotaltracker.com/story/show/49566971
     it('blank name not allowed', function(done){
-        dhh.makeChannel('', function(res) {
+        dhh.createChannel('', function(res) {
             expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
             gu.debugLog('Response status: '+ res.status, DEBUG);
             done();
@@ -93,7 +93,7 @@ describe('Create Channel: ', function(){
     // https://www.pivotaltracker.com/story/show/44113267
     // Attempting to create a channel with a name already in use will return an error. NOT IMPLEMENTED YET.
     it.skip('<CODE NOT IMPLEMENTED> Error if attempting to create channel with a name already in use', function(done) {
-        dhh.makeChannel(channelName, function(res) {
+        dhh.createChannel(channelName, function(res) {
             expect(gu.isHTTPError(res.status)).to.equal(true);
             done();
         });

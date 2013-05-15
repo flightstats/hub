@@ -24,10 +24,7 @@ var URL_ROOT = dhh.URL_ROOT;
 // Test variables that are regularly overwritten
 var agent
     , payload
-    , fileAsAStream
-    , req
-    , uri
-    , contentType;
+    , uri;
 
 var channelName;
 
@@ -35,9 +32,9 @@ var channelName;
 describe('GET Channel metadata:', function() {
 
     before(function(myCallback){
-        channelName = dhh.makeRandomChannelName();
+        channelName = dhh.getRandomChannelName();
         agent = superagent.agent();
-        dhh.makeChannel(channelName, function(res){
+        dhh.createChannel(channelName, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             };
@@ -47,15 +44,13 @@ describe('GET Channel metadata:', function() {
     });
 
     beforeEach(function(){
-        agent = superagent.agent();
-        payload = uri = req = contentType = '';
+        payload = uri = '';
     })
 
-    it('Contains expected metadata', function(done) {
-        var cnMetadata;
-        var thisChannel = dhh.makeRandomChannelName();
+    it('metadata content is present', function(done) {
+        var channelName = dhh.getRandomChannelName();
 
-        dhh.makeChannel(thisChannel, function(makeRes, channelUri) {
+        dhh.createChannel(channelName, function(makeRes, channelUri) {
             expect(gu.isHTTPSuccess(makeRes.status)).to.equal(true);
 
             dhh.postData(channelUri, ranU.randomString(ranU.randomNum(51)), function(postRes, myUri) {
@@ -64,11 +59,12 @@ describe('GET Channel metadata:', function() {
                 dhh.getChannel({'uri': channelUri} , function(cnRes) {
                     expect(gu.isHTTPSuccess(cnRes.status)).to.equal(true);
 
-                    cnMetadata = new dhh.channelMetadata(cnRes.body);
+                    var cnMetadata = new dhh.channelMetadata(cnRes.body);
                     expect(cnMetadata.getChannelUri()).to.not.be.null;
                     expect(moment(cnMetadata.getCreationDate()).isValid()).to.be.true;
                     expect(cnMetadata.getLatestUri()).to.not.be.null;
-                    expect(cnMetadata.getName()).to.equal(thisChannel);
+                    expect(cnMetadata.getWebSocketUri()).to.not.be.null;
+                    expect(cnMetadata.getName()).to.equal(channelName);
 
                     done();
                 });
@@ -79,7 +75,7 @@ describe('GET Channel metadata:', function() {
 
     // 404 trying to GET channel before it exists
     it('should return a 404 trying to GET channel before it exists', function(done){
-        var myChannel = dhh.makeRandomChannelName();
+        var myChannel = dhh.getRandomChannelName();
         dhh.getChannel({'name': myChannel}, function(res) {
             expect(gu.isHTTPError(res.status)).to.equal(true);
             done();

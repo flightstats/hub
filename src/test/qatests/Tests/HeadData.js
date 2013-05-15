@@ -28,9 +28,9 @@ var firstValueUri, secondValueUri, thirdValueUri;
 describe('HEAD on data tests:', function() {
 
     before(function(myCallback){
-        channelName = dhh.makeRandomChannelName();
+        channelName = dhh.getRandomChannelName();
         agent = superagent.agent();
-        dhh.makeChannel(channelName, function(res, cnUri){
+        dhh.createChannel(channelName, function(res, cnUri){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 gu.debugLog('\nDump!');
                 console.dir(res);

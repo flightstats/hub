@@ -45,9 +45,9 @@ describe('GET data:', function() {
     var randomPayload = null;
 
     before(function(myCallback){
-        channelName = dhh.makeRandomChannelName();
+        channelName = dhh.getRandomChannelName();
         agent = superagent.agent();
-        dhh.makeChannel(channelName, function(res, cnUri){
+        dhh.createChannel(channelName, function(res, cnUri){
             dhh.getChannel({'name': channelName}, function(res){
                 mainChannelUri = cnUri;
 
@@ -182,16 +182,16 @@ describe('GET data:', function() {
             var channelA = {"uri": null, "name":null, "dataUri":null, "dataTimestamp":null};
             var channelB = {"uri": null, "name":null, "dataUri":null, "dataTimestamp":null};
 
-            channelA.name = dhh.makeRandomChannelName();
-            channelB.name = dhh.makeRandomChannelName();
+            channelA.name = dhh.getRandomChannelName();
+            channelB.name = dhh.getRandomChannelName();
 
             async.series([
                 function(callback){
-                    dhh.makeChannel(channelA.name, function(res, cnAUri) {
+                    dhh.createChannel(channelA.name, function(res, cnAUri) {
                         channelA.uri = cnAUri;
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
-                        dhh.makeChannel(channelB.name, function(res2, cnBUri) {
+                        dhh.createChannel(channelB.name, function(res2, cnBUri) {
                             channelB.uri = cnBUri;
                             expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
                             callback(null, null);
@@ -248,12 +248,12 @@ describe('GET data:', function() {
         });
 
         it('Get latest returns creation timestamp', function(done) {
-            var thisChannel = dhh.makeRandomChannelName(),
+            var thisChannel = dhh.getRandomChannelName(),
                 channelUri;
 
             async.waterfall([
                 function(callback){
-                    dhh.makeChannel(thisChannel, function(res, cnUri) {
+                    dhh.createChannel(thisChannel, function(res, cnUri) {
                         channelUri = cnUri;
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
@@ -297,9 +297,9 @@ describe('GET data:', function() {
          */
 
         beforeEach(function(done) {
-            thisChannelName = dhh.makeRandomChannelName();
+            thisChannelName = dhh.getRandomChannelName();
 
-            dhh.makeChannel(thisChannelName, function(res, cnUri) {
+            dhh.createChannel(thisChannelName, function(res, cnUri) {
                 channelUri = cnUri;
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 cnMetadata = new dhh.channelMetadata(res.body);
@@ -370,7 +370,6 @@ describe('GET data:', function() {
                 });
         });
 
-        // regression for https://www.pivotaltracker.com/story/show/47150133
         it('BUG: https://www.pivotaltracker.com/story/show/47150133 - Return 404 on Get Latest if channel does not exist', function(done) {
             var thisChannel = ranU.randomString(30, ranU.limitedRandomChar);
 
@@ -384,21 +383,25 @@ describe('GET data:', function() {
         });
 
 
+        // No data exists at 'latest' location on creation, so just confirm the link is available in metadata
         it('Channel creation returns link to latest data set', function() {
             expect(latestUri).to.not.be.null;
 
         });
 
-        it('GET on Channel returns link to latest data set', function(done) {
-            dhh.getChannel({'name': channelName} , function(res) {
-                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-                var cnMetadata = new dhh.channelMetadata(res.body);
-                expect(cnMetadata.getLatestUri()).to.not.be.null;
+        it('GET on Channel returns correct link to latest data set', function(done) {
+            payload = ranU.randomString(100);
 
-                done();
-            });
+            dhh.postData(channelUri, payload, function(postRes, postUri) {
+                expect(gu.isHTTPSuccess(postRes.status)).to.be.true;
+
+                dhh.getLatestDataFromChannel(channelUri, function(latestData) {
+                    expect(latestData).to.equal(payload);
+
+                    done();
+                })
+            })
         });
-
 
         it('Get latest works when latest data set is an empty set, following a previous non-empty set', function(done) {
             payload = dhh.getRandomPayload();
@@ -561,9 +564,9 @@ describe('GET data:', function() {
             channelUri;
 
         beforeEach(function(done) {
-            myChannel = dhh.makeRandomChannelName();
+            myChannel = dhh.getRandomChannelName();
 
-            dhh.makeChannel(myChannel, function(res, cnUri) {
+            dhh.createChannel(myChannel, function(res, cnUri) {
                 channelUri = cnUri;
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
@@ -679,9 +682,9 @@ describe('GET data:', function() {
             channelUri;
 
         beforeEach(function(done) {
-            channelName = dhh.makeRandomChannelName();
+            channelName = dhh.getRandomChannelName();
 
-            dhh.makeChannel(channelName, function(res, cnUri) {
+            dhh.createChannel(channelName, function(res, cnUri) {
                 channelUri = cnUri;
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
