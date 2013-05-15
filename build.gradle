@@ -1,6 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'application'
+apply plugin: 'jacoco'
 apply from: 'common-utils.gradle'
 
 sourceCompatibility = 1.7
