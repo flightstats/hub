@@ -11,7 +11,7 @@ utils.runInTestChannel(channelName, function () {
     frisby.create('Checking that the content-type is returned.')
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "application/fractals")
-        .expectStatus(200)
+        .expectStatus(201)
         .expectHeader('content-type', 'application/json')
         .expectJSON('_links', {
             channel: {
