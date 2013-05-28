@@ -101,7 +101,7 @@ Accept: application/json
 ___body_contains_arbitrary_content
 ```
 
-On success: `HTTP/1.1 200 OK`
+On success: `HTTP/1.1 201 Created`
 
 `Location: http://datahub:8080/channel/stumptown/00002FHOK8JMK000`
 
