@@ -11,7 +11,7 @@ utils.runInTestChannel(channelName, function (channelResponse) {
     frisby.create('Inserting a first item')
         .post(channelResource, null, { body: "FIRST ITEM"})
         .addHeader("Content-Type", "text/plain")
-        .expectStatus(200)
+        .expectStatus(201)
         .afterJSON(function (response) {
             var firstItemUrl = response['_links']['self']['href'];
             frisby.create('Verifying that first channel item doesnt have a next')
@@ -26,7 +26,7 @@ utils.runInTestChannel(channelName, function (channelResponse) {
                     frisby.create("Inserting a second item")
                         .post(channelResource, null, {body: "SECOND ITEM"})
                         .addHeader("Content-Type", "text/plain")
-                        .expectStatus(200)
+                        .expectStatus(201)
                         .afterJSON(function (response) {
                             var secondItemUrl = response['_links']['self']['href'];
                             frisby.create("Checking the Link header that should come back with the first url now.")

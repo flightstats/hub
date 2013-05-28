@@ -78,7 +78,7 @@ public class SingleChannelResource {
 				.withLink("self", payloadUri)
 				.build();
 
-		Response.ResponseBuilder builder = Response.status(Response.Status.OK);
+		Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
 		builder.entity(linkedResult);
 		builder.location(payloadUri);
 		return builder.build();
