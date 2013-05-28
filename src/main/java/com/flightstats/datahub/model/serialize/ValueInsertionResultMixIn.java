@@ -9,13 +9,8 @@ import java.util.Date;
 public abstract class ValueInsertionResultMixIn {
 
 	@JsonIgnore
-	public DataHubKey getKey() {
-		throw new UnsupportedOperationException("MixIn classes should not be used directly.");
-	}
+	abstract public DataHubKey getKey();
 
 	@JsonProperty("timestamp")
-	public Date getDate() {
-		throw new UnsupportedOperationException("MixIn classes should not be used directly.");
-
-	}
+	abstract public Date getDate();
 }
