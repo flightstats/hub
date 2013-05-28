@@ -11,7 +11,7 @@ utils.runInTestChannel(channelName, function () {
     frisby.create('Inserting a value into a channel.')
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "text/plain")
-        .expectStatus(200)
+        .expectStatus(201)
         .expectHeader('content-type', 'application/json')
         .expectJSON('_links', {
             channel: {

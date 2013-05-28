@@ -111,6 +111,9 @@ public class SingleChannelResourceTest {
 
 		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher);
 		Response response = testClass.insertValue(contentType, channelName, data);
+
+		assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
+
 		Linked<ValueInsertionResult> result = (Linked<ValueInsertionResult>) response.getEntity();
 
 		assertThat(result.getHalLinks().getLinks(), hasItems(selfLink, channelLink));

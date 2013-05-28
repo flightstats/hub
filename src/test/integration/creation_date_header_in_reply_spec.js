@@ -12,7 +12,7 @@ utils.runInTestChannel(channelName, function () {
     frisby.create('Inserting a value into a channel.')
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "text/plain")
-        .expectStatus(200)
+        .expectStatus(201)
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
             frisby.create('Fetching value in order to check creation date.')
