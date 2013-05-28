@@ -7,18 +7,12 @@ import java.util.Date;
 public abstract class MetadataResponseMixIn {
 
 	@JsonProperty("name")
-	public String getName() {
-		throw new IllegalStateException("Mix-in methods should not be invoked.");
-	}
+	abstract public String getName();
 
 	@JsonProperty("creationDate")
-	public Date getCreationDate() {
-		throw new IllegalStateException("Mix-in methods should not be invoked.");
-	}
+	abstract public Date getCreationDate();
 
 	@JsonProperty("lastUpdateDate")
-	public Date getLastUpdateDate() {
-		throw new IllegalStateException("Mix-in methods should not be invoked.");
-	}
+	abstract public Date getLastUpdateDate();
 
 }
