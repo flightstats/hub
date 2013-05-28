@@ -24,11 +24,6 @@ utils.runInTestChannel(channelName, function () {
                 expect(value).toMatch(regex);
             }
         })
-        .expectJSON({
-            id: function (value) {
-                expect(value).toMatch(/^[A-Z,0-9]{16}$/);
-            }
-        })
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
             frisby.create('Fetching value to ensure that it was inserted.')

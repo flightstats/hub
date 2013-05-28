@@ -25,9 +25,6 @@ utils.runInTestChannel(channelName, function () {
             }
         })
         .expectJSON({
-            id: function (value) {
-                expect(value).toMatch(/^[A-Z,0-9]{16}$/);
-            },
             timestamp: function (value) {
                 expect(value).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ$/);
             }
