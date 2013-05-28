@@ -21,6 +21,8 @@ In development, it is actually at: http://datahub-01.cloud-east.dev:8080
 
 ## create a channel
 
+Channel names _are case sensitive_, are limited to _48 characters_, and may only contain `a-z`, `A-Z`, and `0-9`.
+
 `POST http://datahub:8080/channel`
 
 * Content-type: application/json
