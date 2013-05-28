@@ -12,8 +12,6 @@ public abstract class ChannelConfigurationMixIn {
 	}
 
 	@JsonIgnore
-	public Date getLastUpdateDate() {
-		throw new UnsupportedOperationException();
-	}
+	abstract public Date getLastUpdateDate();
 
 }
