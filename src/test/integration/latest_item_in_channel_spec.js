@@ -13,7 +13,7 @@ utils.runInTestChannel(channelName, function (channelResponse) {
     frisby.create('Inserting latest item')
         .post(channelResource, null, { body: messageText})
         .addHeader("Content-Type", "text/plain")
-        .expectStatus(200)
+        .expectStatus(201)
         .afterJSON(function (response) {
             var itemUrl = response['_links']['self']['href'];
             frisby.create('Fetching latest item from channel')
