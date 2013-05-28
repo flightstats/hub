@@ -20,8 +20,7 @@ utils.runInTestChannel(channelName, function () {
                     href: thisChannelResource
                 }
                 //TOOD: Validate the value "self" url
-            },
-            //TODO: validate the id
+            }
         })
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];

@@ -14,17 +14,16 @@ import static junit.framework.TestCase.assertEquals;
 
 public class ValueInsertionResultMixInTest {
 
-    @Test
-    public void testSerialize() throws Exception {
-        ObjectMapper objectMapper = new DataHubObjectMapperFactory().build();
-        DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 33);
-        ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key);
-        OutputStream out = new ByteArrayOutputStream();
-        objectMapper.writeValue(out, valueInsertionResult);
-        String result = out.toString();
-        assertEquals("{\n" +
-                "  \"id\" : \"000021CJ7HU0K011\",\n" +
-                "  \"timestamp\" : \"2005-08-07T23:17:58.922Z\"\n" +
-                "}", result);
-    }
+	@Test
+	public void testSerialize() throws Exception {
+		ObjectMapper objectMapper = new DataHubObjectMapperFactory().build();
+		DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 33);
+		ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key);
+		OutputStream out = new ByteArrayOutputStream();
+		objectMapper.writeValue(out, valueInsertionResult);
+		String result = out.toString();
+		assertEquals("{\n" +
+				"  \"timestamp\" : \"2005-08-07T23:17:58.922Z\"\n" +
+				"}", result);
+	}
 }
