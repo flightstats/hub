@@ -10,10 +10,10 @@
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${HOME}/datahub.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>datahub_%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- daily rollover -->
-            <maxHistory>14</maxHistory>
+            <fileNamePattern>datahub_%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- keep 14 days -->
+            <maxHistory>14</maxHistory>
         </rollingPolicy>
 
         <encoder>
