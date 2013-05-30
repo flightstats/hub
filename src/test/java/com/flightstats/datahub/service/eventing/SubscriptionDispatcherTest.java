@@ -13,16 +13,16 @@ public class SubscriptionDispatcherTest {
 	@Test
 	public void testDispatch() throws Exception {
 		URI uri = URI.create("http://spoon.com");
-		WebsocketEvent event = new WebsocketEvent(uri);
+		WebSocketEvent event = new WebSocketEvent(uri);
 
 		SubscriptionRoster roster = mock(SubscriptionRoster.class);
 		WebSocketEventSubscription sub1 = mock(WebSocketEventSubscription.class);
 		WebSocketEventSubscription sub2 = mock(WebSocketEventSubscription.class);
 		WebSocketEventSubscription sub3 = mock(WebSocketEventSubscription.class);
 
-		BlockingQueue<WebsocketEvent> queue1 = mock(BlockingQueue.class);
-		BlockingQueue<WebsocketEvent> queue2 = mock(BlockingQueue.class);
-		BlockingQueue<WebsocketEvent> queue3 = mock(BlockingQueue.class);
+		BlockingQueue<WebSocketEvent> queue1 = mock(BlockingQueue.class);
+		BlockingQueue<WebSocketEvent> queue2 = mock(BlockingQueue.class);
+		BlockingQueue<WebSocketEvent> queue3 = mock(BlockingQueue.class);
 
 		when(sub1.getQueue()).thenReturn(queue1);
 		when(sub2.getQueue()).thenReturn(queue2);

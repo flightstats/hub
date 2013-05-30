@@ -5,12 +5,12 @@ import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import java.io.IOException;
 import java.net.URI;
 
-class JettyWebsocketEndpointSender implements Consumer<URI> {
+class JettyWebSocketEndpointSender implements Consumer<URI> {
 
 	private final RemoteEndpoint remoteEndpoint;
 	private final String remoteAddress;
 
-	public JettyWebsocketEndpointSender(String remoteAddress, RemoteEndpoint remoteEndpoint) {
+	public JettyWebSocketEndpointSender(String remoteAddress, RemoteEndpoint remoteEndpoint) {
 		this.remoteAddress = remoteAddress;
 		this.remoteEndpoint = remoteEndpoint;
 	}
@@ -33,7 +33,7 @@ class JettyWebsocketEndpointSender implements Consumer<URI> {
 			return false;
 		}
 
-		JettyWebsocketEndpointSender that = (JettyWebsocketEndpointSender) o;
+		JettyWebSocketEndpointSender that = (JettyWebSocketEndpointSender) o;
 
 		if (!remoteAddress.equals(that.remoteAddress)) {
 			return false;

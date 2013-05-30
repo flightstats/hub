@@ -12,10 +12,10 @@ class SubscriptionDispatchWorker implements Runnable {
 
 	@Override
 	public void run() {
-		BlockingQueue<WebsocketEvent> queue = subscriber.getQueue();
+		BlockingQueue<WebSocketEvent> queue = subscriber.getQueue();
 		while (true) {
 			try {
-				WebsocketEvent event = queue.take();
+				WebSocketEvent event = queue.take();
 				if (event.isShutdown()) {
 					break;
 				}
