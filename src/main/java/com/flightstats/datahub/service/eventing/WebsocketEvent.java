@@ -2,18 +2,18 @@ package com.flightstats.datahub.service.eventing;
 
 import java.net.URI;
 
-public class WebsocketEvent {
+public class WebSocketEvent {
 
-	public final static WebsocketEvent SHUTDOWN = new WebsocketEvent(null, true);
+	public final static WebSocketEvent SHUTDOWN = new WebSocketEvent(null, true);
 
 	private final URI uri;
 	private final boolean shutdown;
 
-	public WebsocketEvent(URI uri) {
+	public WebSocketEvent(URI uri) {
 		this(uri, false);
 	}
 
-	private WebsocketEvent(URI uri, boolean shutdown) {
+	private WebSocketEvent(URI uri, boolean shutdown) {
 		this.uri = uri;
 		this.shutdown = shutdown;
 	}
@@ -35,7 +35,7 @@ public class WebsocketEvent {
 			return false;
 		}
 
-		WebsocketEvent that = (WebsocketEvent) o;
+		WebSocketEvent that = (WebSocketEvent) o;
 
 		if (shutdown != that.shutdown) {
 			return false;

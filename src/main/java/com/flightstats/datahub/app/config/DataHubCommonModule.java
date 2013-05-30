@@ -21,6 +21,8 @@ import com.sun.jersey.spi.container.servlet.ServletContainer;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.flightstats.datahub.service.eventing.WebSocketChannelNameExtractor.WEBSOCKET_URL_REGEX;
+
 class DataHubCommonModule extends JerseyServletModule {
 	private final static Map<String, String> JERSEY_PROPERTIES = new HashMap<>();
 
@@ -48,7 +50,7 @@ class DataHubCommonModule extends JerseyServletModule {
 
 	private void startUpServlets() {
 		bind(JettyWebSocketServlet.class).in(Singleton.class);
-		serveRegex("/channel/\\w+/ws").with(JettyWebSocketServlet.class);
+		serveRegex(WEBSOCKET_URL_REGEX).with(JettyWebSocketServlet.class);
 		serve("/*").with(GuiceContainer.class, JERSEY_PROPERTIES);
 	}
 }

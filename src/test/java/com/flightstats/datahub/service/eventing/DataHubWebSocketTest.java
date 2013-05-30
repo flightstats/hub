@@ -40,20 +40,22 @@ public class DataHubWebSocketTest {
 	@Test
 	public void testOnConnect() throws Exception {
 
-		BlockingQueue<WebsocketEvent> queue = mock(BlockingQueue.class);
+		BlockingQueue<WebSocketEvent> queue = mock(BlockingQueue.class);
 		WebSocketEventSubscription subscriber = mock(WebSocketEventSubscription.class);
-		WebsocketEvent event = mock(WebsocketEvent.class);
+		WebSocketEvent event = mock(WebSocketEvent.class);
 		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
+		WebSocketChannelNameExtractor channelNameExtractor = mock(WebSocketChannelNameExtractor.class);
 
 		when(queue.take()).thenReturn(event);
 		when(subscriber.getQueue()).thenReturn(queue);
 		when(event.isShutdown()).thenReturn(true);
 		when(subscriptions.subscribe(eq(CHANNEL_NAME), any(Consumer.class))).thenReturn(subscriber);
 		when(subscriptions.getSubscribers(CHANNEL_NAME)).thenReturn(Arrays.asList(subscriber));
+		when(channelNameExtractor.extractChannelName(requestUri)).thenReturn(CHANNEL_NAME);
 
-		Consumer<URI> expectedConsumer = new JettyWebsocketEndpointSender(remoteAddress.toString(), remoteEndpoint);
+		Consumer<URI> expectedConsumer = new JettyWebSocketEndpointSender(remoteAddress.toString(), remoteEndpoint);
 
-		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions);
+		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions, channelNameExtractor);
 
 		testClass.onConnect(session);
 
@@ -65,9 +67,10 @@ public class DataHubWebSocketTest {
 
 		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
 		WebSocketEventSubscription websocketEventSubscription = mock(WebSocketEventSubscription.class);
-		BlockingQueue<WebsocketEvent> queue = mock(BlockingQueue.class);
+		BlockingQueue<WebSocketEvent> queue = mock(BlockingQueue.class);
 		WebSocketEventSubscription subscriber = new WebSocketEventSubscription(null, queue);
-		WebsocketEvent event = mock(WebsocketEvent.class);
+		WebSocketEvent event = mock(WebSocketEvent.class);
+		WebSocketChannelNameExtractor channelNameExtractor = mock(WebSocketChannelNameExtractor.class);
 
 		when(queue.take()).thenReturn(event);
 		when(event.isShutdown()).thenReturn(true);
@@ -75,8 +78,9 @@ public class DataHubWebSocketTest {
 		when(websocketEventSubscription.getQueue()).thenReturn(queue);
 		when(subscriptions.getSubscribers(CHANNEL_NAME)).thenReturn(Arrays.asList(subscriber));
 		when(subscriptions.findSubscriptionForConsumer(eq(CHANNEL_NAME), any(Consumer.class))).thenReturn(Optional.of(subscriber));
+		when(channelNameExtractor.extractChannelName(requestUri)).thenReturn(CHANNEL_NAME);
 
-		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions);
+		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions, channelNameExtractor);
 		testClass.onConnect(session);
 
 		WebSocketEventSubscription subscription = subscriptions.getSubscribers(CHANNEL_NAME).iterator().next();
@@ -84,14 +88,14 @@ public class DataHubWebSocketTest {
 		testClass.onDisconnect(99, "spoon");
 
 		verify(subscriptions).unsubscribe(CHANNEL_NAME, subscription);
-		verify(queue).add(WebsocketEvent.SHUTDOWN);
+		verify(queue).add(WebSocketEvent.SHUTDOWN);
 	}
 
 	@Test
 	public void testOnDisconnectCantFindSubscription() throws Exception {
 		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
 		when(subscriptions.findSubscriptionForConsumer(anyString(), any(Consumer.class))).thenReturn(Optional.<WebSocketEventSubscription>absent());
-		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions);
+		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions, null);
 		testClass.onDisconnect(99, "spoon");
 		verify(subscriptions, never()).unsubscribe(anyString(), any(WebSocketEventSubscription.class));
 
