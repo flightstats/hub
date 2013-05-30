@@ -5,6 +5,7 @@ import com.flightstats.datahub.app.config.GuiceConfig;
 import com.google.inject.servlet.GuiceFilter;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import javax.servlet.DispatcherType;
 import java.io.FileInputStream;
@@ -25,6 +26,11 @@ public class DataHubMain {
 	public static final String DATAHUB_PROPERTIES_FILENAME = "datahub.properties";
 
 	public static void main(String[] args) throws Exception {
+
+		// Bridge java.util.logging over to slf4j (for Jersey and Guice mostly)
+		SLF4JBridgeHandler.removeHandlersForRootLogger();
+		SLF4JBridgeHandler.install();
+
 		Server server = new Server();
 
 		HttpConfiguration httpConfig = new HttpConfiguration();
