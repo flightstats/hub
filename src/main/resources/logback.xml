@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <encoder>
+            <pattern>%5p %d{ISO8601} [%t] %c [line %L] - %msg%n</pattern>
+            <!--<pattern>%5p %d{ISO8601} [%t] %c %F [line %L] - %msg%n</pattern>-->
+            <!--<pattern>%5p %d{ISO8601} [%t] %c %F (line %L) - %msg%n</pattern>-->
+            <!--<pattern>%5p %d{ISO8601} [%t] %c %F</pattern>-->
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${HOME}/datahub.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>datahub_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- daily rollover -->
+            <maxHistory>14</maxHistory>
+            <!-- keep 14 days -->
+        </rollingPolicy>
+
+        <encoder>
+            <!--<pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>-->
+            <pattern>%5p %d{ISO8601} [%t] %c [line %L] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
