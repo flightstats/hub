@@ -269,9 +269,12 @@ function packetMetadata(responseBody) {
         return responseBody._links.self.href;
     };
 
+    // No longer returned in POST to channel
+    /*
     this.getId = function() {
         return responseBody.id;
     };
+    */
 
     this.getTimestamp = function() {
         return responseBody.timestamp;
@@ -405,6 +408,62 @@ var getDataFromChannel = function(dataUri, callback) {
         });
 }
 exports.getDataFromChannel = getDataFromChannel;
+
+// Calls back with err, array of two-property objects: .uri: uri, .data: data
+// array is ordered starting with oldest data and ending (.length - 1) with latest
+var getUrisAndDataSinceLocation = function(startUri, callback) {
+    var dataList = [],
+        VERBOSE = false;
+
+    // First Uri, get data, stash both
+    getDataFromChannel(startUri, function(err, data) {
+        if (err) {
+            callback(err, null);
+        }
+        dataList.push({'uri': startUri, 'data': data});
+        gu.debugLog('Added new entry.\n'+ startUri +'\n(data): '+ data, VERBOSE);
+
+
+        var next = null;
+
+        async.doWhilst(
+            function(cb) {
+                superagent.agent().get(dataList[dataList.length - 1].uri)
+                    .end(function(err, res) {
+                        var pGetHeader = new packetGETHeader(res.headers) ;
+                        next = pGetHeader.getNext();
+
+                        if (null != next) {
+                            getDataFromChannel(next, function(getErr, getData) {
+                                if (getErr) {
+                                    cb(getErr);
+                                }
+
+                                dataList.push({'uri': next, 'data': getData});
+                                gu.debugLog('Added new entry.\n'+ next +'\n(data): '+ getData, VERBOSE);
+
+                                cb();
+                            })
+                        }
+                        else {
+                            gu.debugLog('No more next headers!', VERBOSE);
+                            cb();
+                        }
+                    });
+            },
+            function() {
+                return (null != next);
+            },
+            function(err) {
+                if (err) {
+                    callback(err, null);
+                }
+                callback(null, dataList);
+            }
+        )
+    })
+}
+exports.getUrisAndDataSinceLocation = getUrisAndDataSinceLocation;
 
 // Returns the last <reqLength> URIs from a channel as an array,
 //      starting with oldest (up to reqLength) and ending with latest.
