@@ -9,7 +9,7 @@ import java.net.URI;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
-public class JettyWebsocketEndpointSenderTest {
+public class JettyWebSocketEndpointSenderTest {
 
 	@Test
 	public void testSink() throws Exception {
@@ -17,7 +17,7 @@ public class JettyWebsocketEndpointSenderTest {
 		URI uri = URI.create("http://dorkbot.org");
 		RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
 
-		JettyWebsocketEndpointSender testClass = new JettyWebsocketEndpointSender(address, remoteEndpoint);
+		JettyWebSocketEndpointSender testClass = new JettyWebSocketEndpointSender(address, remoteEndpoint);
 		testClass.apply(uri);
 
 		verify(remoteEndpoint).sendString(uri.toString());
@@ -30,7 +30,7 @@ public class JettyWebsocketEndpointSenderTest {
 		RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
 
 		doThrow(new IOException("Error!  Error!")).when(remoteEndpoint).sendString(anyString());
-		JettyWebsocketEndpointSender testClass = new JettyWebsocketEndpointSender(address, remoteEndpoint);
+		JettyWebSocketEndpointSender testClass = new JettyWebSocketEndpointSender(address, remoteEndpoint);
 
 		testClass.apply(uri);
 	}
