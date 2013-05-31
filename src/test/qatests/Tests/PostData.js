@@ -31,7 +31,7 @@ var channelName,
 
 
 
-describe.only('POST data to channel:', function(){
+describe('POST data to channel:', function(){
 
     var randomPayload;
 
