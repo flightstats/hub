@@ -13,8 +13,9 @@ frisby.create('Making sure channel resource does not yet exist.')
         frisby.create('Test basic channel creation')
             .post(channelUrl, null, { body: jsonBody})
             .addHeader("Content-Type", "application/json")
-            .expectStatus(200)
-            .expectHeader('content-type', 'application/json')
+            .expectStatus(201)
+	        .expectHeader('content-type', 'application/json')
+	        .expectHeader('location', channelResource)
             .expectJSON({
                 _links: {
                     self: {

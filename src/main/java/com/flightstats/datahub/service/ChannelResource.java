@@ -45,13 +45,12 @@ public class ChannelResource {
 
 		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration);
-		return Response
-				.ok(linked(channelConfiguration)
-						.withLink("self", channelUri)
-						.withLink("latest", linkBuilder.buildLatestUri(channelName))
-						.withLink("ws", linkBuilder.buildWsLinkFor(channelName))
-						.build())
-				.build();
+		return Response.created( channelUri ).entity(
+			linked(channelConfiguration)
+				.withLink("self", channelUri)
+				.withLink("latest", linkBuilder.buildLatestUri(channelName))
+				.withLink("ws", linkBuilder.buildWsLinkFor(channelName))
+				.build())
+			.build();
 	}
-
 }
