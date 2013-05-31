@@ -48,7 +48,8 @@ public class ChannelResourceTest {
 
 		verify(dao).createChannel(channelName);
 
-		assertEquals(200, response.getStatus());
+		assertEquals(201, response.getStatus());
+		assertEquals(new URI( channelUri ), response.getMetadata().getFirst( "location" ));
 		assertEquals(expected, response.getEntity());
 	}
 

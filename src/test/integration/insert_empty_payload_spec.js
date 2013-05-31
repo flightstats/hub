@@ -1,6 +1,4 @@
-var utils = require('./utils.js');
 require('./integration_config.js');
-var frisby = require('frisby');
 
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;

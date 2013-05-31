@@ -1,6 +1,4 @@
 require('./integration_config.js');
-var utils = require('./utils.js');
-var frisby = require('frisby');
 var fs = require('fs');
 var request = require('request');
 
