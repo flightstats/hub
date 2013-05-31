@@ -324,7 +324,13 @@ function packetPOSTHeader(responseHeader){
 }
 exports.packetPOSTHeader = packetPOSTHeader;
 
-// Posts data and returns (response, URI)
+/**
+ * Inserts data into channel.
+ *
+ * @param channelUri
+ * @param myData
+ * @param myCallback: response, uri to data
+ */
 var postData = function(channelUri, myData, myCallback) {
     var dataUri = null,
         VERBOSE = true;

@@ -7,7 +7,8 @@ var request = require('request');
 var moment = require('moment');
 var async = require('async'),
     crypto = require('crypto'),
-    fs = require('fs');
+    fs = require('fs'),
+    lodash = require('lodash');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
     ranU = require('../randomUtils.js'),
@@ -23,13 +24,6 @@ var CAT_TOILET_PIC = './artifacts/cattoilet.jpg',
     MY_2KB_FILE = './artifacts/Iam200kb.txt';
 
 
-// Test variables that are regularly overwritten
-var payload
-    , fileAsAStream
-    , req
-    , uri
-    , contentType;
-
 var channelName,
     channelUri,
     DEBUG = true;
@@ -37,7 +31,9 @@ var channelName,
 
 
 
-describe('POST data to channel:', function(){
+describe.only('POST data to channel:', function(){
+
+    var randomPayload;
 
     var postAndConfirmData = function(data, callback) {
         dhh.postData(channelUri, data, function(res, uri) {
@@ -50,7 +46,6 @@ describe('POST data to channel:', function(){
             });
         });
     }
-
 
     before(function(done){
 
@@ -77,148 +72,181 @@ describe('POST data to channel:', function(){
         });
     });
 
-    beforeEach(function(){
-        payload = uri = req = contentType = '';
+    beforeEach(function() {
+        randomPayload = dhh.getRandomPayload();
     })
 
-    it('Acceptance - should return a (DATA_POST_SUCCESS) for POSTing data', function(done){
+    describe('Acceptance', function() {
+        var mainPayload,
+            mainResponse,
+            mainDataUri;
 
-        payload = ranU.randomString(Math.round(Math.random() * 50));
+        before(function(done) {
 
-        dhh.postData(channelUri, payload, function(res, uri) {
-            gu.debugLog('Response from POST attempt: '+ res.status, DEBUG);
-            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+            mainPayload = randomPayload;
 
-            dhh.confirmExpectedData(uri, payload, function(didMatch) {
+            dhh.postData(channelUri, mainPayload, function(res, dataUri) {
+                mainResponse = res;
+                mainDataUri = dataUri;
+
+                done();
+            });
+        })
+
+        it('returns 201 (Created)', function(){
+            expect(mainResponse.status).to.equal(gu.HTTPresponses.Created);
+        });
+
+        it('body has correct structure', function() {
+            var body = mainResponse.body;
+
+            expect(body.hasOwnProperty('_links')).to.be.true;
+            expect(body._links.hasOwnProperty('channel')).to.be.true;
+            expect(body._links.hasOwnProperty('self')).to.be.true;
+            expect(body._links.channel.hasOwnProperty('href')).to.be.true;
+            expect(body._links.self.hasOwnProperty('href')).to.be.true;
+            expect(body.hasOwnProperty('timestamp')).to.be.true;
+
+            expect(lodash.keys(body).length).to.equal(2);
+            expect(lodash.keys(body._links).length).to.equal(2);
+        })
+
+        it('channel link is correct', function() {
+            expect(mainResponse.body._links.channel.href).to.equal(channelUri);
+        })
+
+        it('timestamp is correct', function() {
+            var theTimestamp = moment(mainResponse.body.timestamp);
+
+            expect(theTimestamp.add('minutes', 5).isAfter(moment())).to.be.true;
+        })
+
+        it('data link is correct and data was successfully saved (confirm with get)', function(done) {
+
+            dhh.confirmExpectedData(mainDataUri, mainPayload, function(didMatch) {
                 expect(didMatch).to.be.true;
 
                 done();
             });
-        });
+        })
 
-    });
+        it('POST should return a 404 trying to save to nonexistent channel', function(done){
 
+            dhh.postData(fakeChannelUri, randomPayload, function(res, uri) {
+                expect(res.status).to.equal(gu.HTTPresponses.Not_Found);
 
-    // Fails with in-memory backend:  https://www.pivotaltracker.com/story/show/49567193
-    it('POST should return a 404 trying to save to nonexistent channel', function(done){
-        dhh.postData(fakeChannelUri, dhh.getRandomPayload(), function(res, uri) {
-            expect(res.status).to.equal(gu.HTTPresponses.Not_Found);
-
-            done();
-        });
-    });
-
-
-    it('POST same set of data twice to channel', function(done){
-        payload = ranU.randomString(Math.round(Math.random() * 50));
-
-        dhh.postData(channelUri, payload, function(res, uri) {
-            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-
-            dhh.postData(channelUri, payload, function(res2, uri2) {
-                expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
-
-                dhh.confirmExpectedData(uri, payload, function(didMatch) {
-                    expect(didMatch).to.be.true;
-
-                    done();
-                });
+                done();
             });
         });
-    });
+    })
 
-    it('POST same set of data to two different channels', function(done) {
-        var otherChannelName = dhh.getRandomChannelName(),
-            otherChannelUri;
+    describe('Scenarios', function() {
 
-        dhh.createChannel(otherChannelName, function(res, cnUri) {
-            otherChannelUri = cnUri;
-            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-            payload = ranU.randomString(Math.round(Math.random() * 50));
+        it('POST same set of data twice to channel', function(done){
 
-            dhh.postData(channelUri, payload, function(res, uri) {
+            dhh.postData(channelUri, randomPayload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
-                dhh.confirmExpectedData(uri, payload, function(didMatchFirst) {
-                    expect(didMatchFirst).to.be.true;
+                dhh.postData(channelUri, randomPayload, function(res2, uri2) {
+                    expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
 
-                    dhh.postData(otherChannelUri, payload, function(res2, uri2) {
-                        expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
+                    dhh.confirmExpectedData(uri, randomPayload, function(didMatch) {
+                        expect(didMatch).to.be.true;
 
-                        dhh.confirmExpectedData(uri2, payload, function(didMatchSecond) {
-                            expect(didMatchSecond).to.be.true;
-
-                            done();
-                        });
+                        done();
                     });
-
                 });
             });
+        });
+
+        it('POST same set of data to two different channels', function(done) {
+            var otherChannelName = dhh.getRandomChannelName(),
+                otherChannelUri;
+
+            dhh.createChannel(otherChannelName, function(res, cnUri) {
+                otherChannelUri = cnUri;
+                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+
+                dhh.postData(channelUri, randomPayload, function(res, uri) {
+                    expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+
+                    dhh.confirmExpectedData(uri, randomPayload, function(didMatchFirst) {
+                        expect(didMatchFirst).to.be.true;
+
+                        dhh.postData(otherChannelUri, randomPayload, function(res2, uri2) {
+                            expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
+
+                            dhh.confirmExpectedData(uri2, randomPayload, function(didMatchSecond) {
+                                expect(didMatchSecond).to.be.true;
+
+                                done();
+                            });
+                        });
+
+                    });
+                });
+
+            });
+        });
+
+
+        it('POST empty data set to channel', function(done){
+            postAndConfirmData('', done);
+        });
+
+        it('POST 200kb file to channel', function(done) {
+            var payload = fs.readFileSync(MY_2KB_FILE, "utf8");
+
+            postAndConfirmData(payload, done);
+        });
+
+
+        it('POST 1,000 characters to channel', function(done) {
+            var payload = ranU.randomString(1000, ranU.simulatedTextChar);
+
+            postAndConfirmData(payload, done);
+        });
+
+        // Confirms via md5 checksum
+        it('POST image file to channel and recover', function(done) {
+            var fileAsAStream = fs.createReadStream(CAT_TOILET_PIC);
+
+            fileAsAStream.pipe(request.post(channelUri,
+                function(err, res, body) {
+                    if (err) {
+                        throw err;
+                    }
+                    expect(gu.isHTTPSuccess(res.statusCode)).to.equal(true);
+                    var cnMetadata = new dhh.channelMetadata(JSON.parse(body)),
+                        uri = cnMetadata.getChannelUri();
+
+                    var md5sum = crypto.createHash('md5'),
+                        s = fs.ReadStream(CAT_TOILET_PIC);
+
+                    s.on('data', function(d) {
+                        md5sum.update(d);
+                    }).on('end', function() {
+                            var expCheckSum = md5sum.digest('hex');
+
+                            dhh.getValidationChecksum(uri, expCheckSum, done);
+                        });
+
+                })
+            );
 
         });
-    });
-
-
-    it('POST empty data set to channel', function(done){
-        postAndConfirmData('', done);
-    });
-
-    it('POST 200kb file to channel', function(done) {
-        payload = fs.readFileSync(MY_2KB_FILE, "utf8");
-
-        postAndConfirmData(payload, done);
-    });
-
-
-    it('POST 1,000 characters to channel', function(done) {
-        payload = ranU.randomString(1000, ranU.simulatedTextChar);
-
-        postAndConfirmData(payload, done);
-    });
-
-    // Confirms via md5 checksum
-    it('POST image file to channel and recover', function(done) {
-        var fileAsAStream = fs.createReadStream(CAT_TOILET_PIC);
-
-        fileAsAStream.pipe(request.post(channelUri,
-            function(err, res, body) {
-                if (err) {
-                    throw err;
-                }
-                expect(gu.isHTTPSuccess(res.statusCode)).to.equal(true);
-                var cnMetadata = new dhh.channelMetadata(JSON.parse(body));
-                uri = cnMetadata.getChannelUri();
-
-                var md5sum = crypto.createHash('md5'),
-                    s = fs.ReadStream(CAT_TOILET_PIC);
-
-                s.on('data', function(d) {
-                    md5sum.update(d);
-                }).on('end', function() {
-                        var expCheckSum = md5sum.digest('hex');
-
-                        dhh.getValidationChecksum(uri, expCheckSum, done);
-                    });
-
-            })
-        );
-
-    });
-
+    })
 
     // For story:  Provide the client with a creation-timestamp in the response from a data storage request.k
     // https://www.pivotaltracker.com/story/show/43221779
 
-    describe('POST - Creation timestamps returned:', function() {
+    describe('Creation timestamps returned:', function() {
 
         it('Creation timestamp returned on data storage', function(done){
 
-            var timestamp = '',
-                payload = ranU.randomString(Math.round(Math.random() * 50));
-
-            dhh.postData(channelUri, payload, function(res, uri) {
+            dhh.postData(channelUri, randomPayload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-                timestamp = moment(res.body.timestamp);
+                var timestamp = moment(res.body.timestamp);
 
                 expect(moment(timestamp).isValid()).to.be.true;
                 done();
@@ -226,18 +254,16 @@ describe('POST data to channel:', function(){
         });
 
         it('Multiple POSTings of data to a channel should return ever-increasing creation timestamps.', function(done) {
-            var respMoment;
-
-            // will be set to the diff between now and initial response time plus five minutes, just to ensure there
+            // serverTimeDiff will be set to the diff between now and initial response time plus five minutes, just to ensure there
             //      aren't any egregious shenanigans afoot. In milliseconds.
-            var serverTimeDiff;
+            var serverTimeDiff,
+                respMoment;
 
             async.waterfall([
                 function(callback){
                     setTimeout(function(){
-                        payload = ranU.randomString(ranU.randomNum(51));
 
-                        dhh.postData(channelUri, payload, function(res, uri) {
+                        dhh.postData(channelUri, dhh.getRandomPayload(), function(res, uri) {
                             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
                             //gu.debugLog('Creation time was: '+ respMoment.format('X'));
@@ -251,9 +277,8 @@ describe('POST data to channel:', function(){
                 }
                 ,function(lastResp, callback){
                     setTimeout(function(){
-                        payload = ranU.randomString(ranU.randomNum(51));
 
-                        dhh.postData(channelUri, payload, function(res, uri) {
+                        dhh.postData(channelUri, dhh.getRandomPayload(), function(res, uri) {
                             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
                             //gu.debugLog('Creation time was: '+ respMoment.format('X'));
@@ -270,9 +295,7 @@ describe('POST data to channel:', function(){
                 ,function(lastResp, callback){
                     setTimeout(function(){
 
-                        payload = ranU.randomString(ranU.randomNum(51));
-
-                        dhh.postData(channelUri, payload, function(res, uri) {
+                        dhh.postData(channelUri, dhh.getRandomPayload(), function(res, uri) {
                             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
                             //gu.debugLog('Creation time was: '+ respMoment.format('X'));
@@ -297,11 +320,11 @@ describe('POST data to channel:', function(){
     });
 
     // For story: Provide "self" URI in the Location Header upon storing data  https://www.pivotaltracker.com/story/show/44845167
-    describe('POST, Location header in response:', function() {
-        it('Acceptance - location header exists and is correct', function(done) {
-            payload = ranU.randomString(Math.round(Math.random() * 50));
+    describe('Location header in response:', function() {
 
-            dhh.postData(channelUri, payload, function(res, uri) {
+        it('Acceptance - location header exists and is correct', function(done) {
+
+            dhh.postData(channelUri, randomPayload, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 var myHeader = new dhh.packetPOSTHeader(res.headers),
                     location = myHeader.getLocation();
@@ -311,11 +334,9 @@ describe('POST data to channel:', function(){
             });
         });
 
-        // Fails with in-memory backend due to https://www.pivotaltracker.com/story/show/49567193
         it('Negative - failed attempt has no location header:', function(done) {
-            payload = ranU.randomString(Math.round(Math.random() * 50));
 
-            dhh.postData(fakeChannelUri, payload, function(res, uri) {
+            dhh.postData(fakeChannelUri, randomPayload, function(res, uri) {
                 expect(gu.isHTTPError(res.status)).to.equal(true);
                 var myHeader = new dhh.packetPOSTHeader(res.headers),
                     location = myHeader.getLocation();
