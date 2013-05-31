@@ -216,8 +216,12 @@ function channelMetadata(responseBody) {
 }
 exports.channelMetadata = channelMetadata;
 
-// params = EITHER 'name': channelname, or 'uri': full uri to channel
-// Calls back with GET response, body
+/**
+ * GET a channel
+ *
+ * @param params: .name || .uri
+ * @param myCallback: response, body
+ */
 var getChannel = function(params, myCallback) {
     var uri,
         myChannelName = (params.hasOwnProperty('name')) ? params.name : null,
@@ -536,5 +540,7 @@ var getLatestUri = function(channelUri, callback) {
 
 }
 exports.getLatestUri = getLatestUri;
+
+
 
 
