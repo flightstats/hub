@@ -1,23 +1,19 @@
 require('./integration_config.js');
-jasmine = require('jasmine-node');
+
 var WebSocket = require('ws');
 
-//var url = channelUrl.replace("http", "ws") + "/notgunnafindthisy0/ws";
-var url = channelUrl.replace("http", "ws") + "/spoon/ws";
+var url = channelUrl.replace("http", "ws") + "/notgunnafindthisy0xxx/ws";
 
 describe("websocket 404", function () {
-    it("Verifying that websocket to missing channel returns 404", function () {
-        console.log("Connecting to " + url);
-        var ws = new WebSocket(url);
+    it("Verifying that websocket to missing channel returns 404", function (done) {
+        var ws = new WebSocket(url);    //initiates a connection
         ws.on('open', function (message) {
-            console.log("Connected");
-            expect(false).toBeTruthy(); //fail
+            ws.close();
         });
         ws.on('error', function () {
-            console.log("I got error")
-            //success
+            expect(true).toBeTruthy(); //just to assert _something_
+            done(); //success
         });
-
     });
 });
 
