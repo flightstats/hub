@@ -1,6 +1,4 @@
 require('./integration_config.js');
-var frisby = require('frisby');
-var utils = require('./utils.js');
 
 var channelName = utils.randomChannelName();
 
