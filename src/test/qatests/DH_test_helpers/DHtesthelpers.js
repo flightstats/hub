@@ -269,13 +269,6 @@ function packetMetadata(responseBody) {
         return responseBody._links.self.href;
     };
 
-    // No longer returned in POST to channel
-    /*
-    this.getId = function() {
-        return responseBody.id;
-    };
-    */
-
     this.getTimestamp = function() {
         return responseBody.timestamp;
     } ;

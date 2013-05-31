@@ -74,8 +74,8 @@ describe('GET data:', function() {
             dhh.postData(mainChannelUri, randomPayload, function(res, packetUri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
-                var pMetadata = new dhh.packetMetadata(res.body);
-                realDataId = pMetadata.getId();
+                var index = packetUri.lastIndexOf('/');
+                realDataId = packetUri.substr(index + 1);
                 fakeDataId = realDataId.substring(0, realDataId.length - 7) + '8675309';    // Jenny, I got your number.
 
                 done();
