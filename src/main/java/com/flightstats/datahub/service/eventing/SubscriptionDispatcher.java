@@ -17,9 +17,9 @@ public class SubscriptionDispatcher {
 	}
 
 	public void dispatch(String channelName, URI payloadUri) {
-		WebsocketEvent event = new WebsocketEvent(payloadUri);
+		WebSocketEvent event = new WebSocketEvent(payloadUri);
 		for (WebSocketEventSubscription subscriber : subscriptions.getSubscribers(channelName)) {
-			BlockingQueue<WebsocketEvent> queue = subscriber.getQueue();
+			BlockingQueue<WebSocketEvent> queue = subscriber.getQueue();
 			queue.add(event);
 		}
 	}

@@ -1,7 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
@@ -16,13 +15,14 @@ public class DataHubWebSocket {
 
 	private final static Logger logger = LoggerFactory.getLogger(DataHubWebSocket.class);
 	private final SubscriptionRoster subscriptions;
+	private final WebSocketChannelNameExtractor channelNameExtractor;
 	private String remoteAddress;
 	private String channelName;
-	private JettyWebsocketEndpointSender endpointSender;
+	private JettyWebSocketEndpointSender endpointSender;
 
-	@Inject
-	public DataHubWebSocket(SubscriptionRoster subscriptions) {
+	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor) {
 		this.subscriptions = subscriptions;
+		this.channelNameExtractor = channelNameExtractor;
 	}
 
 	@OnWebSocketConnect
@@ -31,8 +31,8 @@ public class DataHubWebSocket {
 		logger.info("New client connection: " + remoteAddress + " for " + requestUri);
 
 		remoteAddress = session.getRemoteAddress().toString();
-		channelName = extractChannelName(session);
-		endpointSender = new JettyWebsocketEndpointSender(remoteAddress, session.getRemote());
+		channelName = channelNameExtractor.extractChannelName(requestUri);
+		endpointSender = new JettyWebSocketEndpointSender(remoteAddress, session.getRemote());
 		WebSocketEventSubscription subscription = subscriptions.subscribe(channelName, endpointSender);
 		new Thread(new SubscriptionDispatchWorker(subscription)).start();
 	}
@@ -46,14 +46,8 @@ public class DataHubWebSocket {
 			return;
 		}
 		WebSocketEventSubscription subscription = optionalSubscription.get();
-		subscription.getQueue().add(WebsocketEvent.SHUTDOWN);
+		subscription.getQueue().add(WebSocketEvent.SHUTDOWN);
 		subscriptions.unsubscribe(channelName, subscription);
-	}
-
-	private String extractChannelName(Session session) {
-		URI requestURI = session.getUpgradeRequest().getRequestURI();
-		String path = requestURI.getPath();
-		return path.replaceFirst("^/channel/(.*)/ws$", "$1");
 	}
 
 }

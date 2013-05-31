@@ -8,14 +8,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 class WebSocketEventSubscription {
 	private final Consumer<URI> consumer;
-	private final BlockingQueue<WebsocketEvent> queue;
+	private final BlockingQueue<WebSocketEvent> queue;
 
 	WebSocketEventSubscription(Consumer<URI> consumer) {
-		this(consumer, new LinkedBlockingQueue<WebsocketEvent>());
+		this(consumer, new LinkedBlockingQueue<WebSocketEvent>());
 	}
 
 	@VisibleForTesting
-	WebSocketEventSubscription(Consumer<URI> consumer, BlockingQueue<WebsocketEvent> queue) {
+	WebSocketEventSubscription(Consumer<URI> consumer, BlockingQueue<WebSocketEvent> queue) {
 		this.consumer = consumer;
 		this.queue = queue;
 	}
@@ -24,7 +24,7 @@ class WebSocketEventSubscription {
 		return consumer;
 	}
 
-	public BlockingQueue<WebsocketEvent> getQueue() {
+	public BlockingQueue<WebSocketEvent> getQueue() {
 		return queue;
 	}
 

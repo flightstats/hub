@@ -12,7 +12,7 @@ public class SubscriptionDispatchWorkerTest {
 
 	@Test
 	public void testLifecycle() throws Exception {
-		LinkedBlockingQueue<WebsocketEvent> queue = new LinkedBlockingQueue<>();
+		LinkedBlockingQueue<WebSocketEvent> queue = new LinkedBlockingQueue<>();
 		WebSocketEventSubscription subscriber = mock(WebSocketEventSubscription.class);
 
 		when(subscriber.getQueue()).thenReturn(queue);
@@ -20,11 +20,11 @@ public class SubscriptionDispatchWorkerTest {
 		SubscriptionDispatchWorker testClass = new SubscriptionDispatchWorker(subscriber);
 		Thread thread = new Thread(testClass);
 		thread.start();
-		WebsocketEvent e1 = new WebsocketEvent(URI.create("http://path/to/foo1"));
-		WebsocketEvent e2 = new WebsocketEvent(URI.create("http://path/to/foo2"));
+		WebSocketEvent e1 = new WebSocketEvent(URI.create("http://path/to/foo1"));
+		WebSocketEvent e2 = new WebSocketEvent(URI.create("http://path/to/foo2"));
 		queue.add(e1);
 		queue.add(e2);
-		queue.add(WebsocketEvent.SHUTDOWN);
+		queue.add(WebSocketEvent.SHUTDOWN);
 
 		thread.join(50);
 		assertFalse(thread.isAlive());
