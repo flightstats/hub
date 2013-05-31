@@ -1,5 +1,4 @@
 require('./integration_config.js');
-var frisby = require('frisby');
 
 frisby.create('Making sure channel resource does not yet exist.')
     .get(dataHubUrlBase + "/health")
