@@ -16,7 +16,8 @@ var chai = require('chai'),
     ws = require('ws'),
     lodash = require('lodash'),
     events = require('events'),
-    moment = require('moment');
+    moment = require('moment'),
+    feed = require('feed-read');
 
 var ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js'),
@@ -44,17 +45,20 @@ var Bot = function Bot(params) {
     this.description = null;
     this.behaviors = [];   // array of objects: .weight (integer) and .action (function pointer).
     this.logger = (params.hasOwnProperty('logger')) ? params.logger : this.report;
+    this.dataGenerator = (params.hasOwnProperty('dataGenerator')) ? params.dataGenerator : dataGenerator100RandomChars;
     this.endTime = null;
+    this.channelName = (params.hasOwnProperty('channelName')) ? params.channelName : null;
     this.socket = null;         // dhh.WSWrapper. Instantiated within the botSubscribe() method
     this.broadcastBot = null;   // handle to a different Bot that this Bot will subscribe to
     this.eventEmitter = new events.EventEmitter();
 
     // These are all used to enable sequential REST operations
-    this.channelUri = null;     // set to the channel to use
     this.dataUri = null;        // set to the data location
     this.wsUri = null;
+    this.channelUri = null
     this.latestUri = null;
-    this.lastData = null;
+    this.lastDataFetched = null;
+    this.lastDataPosted = null;
 
     var _self = this,
         requiredParams = ['description', 'behaviors'],
@@ -219,10 +223,34 @@ var getNextAction = function(behaviors) {
     }
 }
 
+// Helper method for all data post actions
+var _botPost = function(theBot, data, callback) {
+
+    superagent.agent().post(theBot.channelUri)
+        .send(data)
+        .end(function(err, res) {
+            if (!gu.isHTTPSuccess(res.status)) {
+                callback('Wrong status: '+ res.status);
+            }
+            else {
+                theBot.lastDataPosted = data;
+
+                var pMetadata = new dhh.packetMetadata(res.body);
+                theBot.dataUri = pMetadata.getPacketUri();
+                theBot.report('\nNew data at: '+ theBot.dataUri);
+                theBot.report('Data is: '+ data);
+
+                callback(null);
+            }
+        }).on('error', function(e) {
+            callback(e.message);
+        });
+}
+
 // Creates channel and returns error, channelUri
 var botCreateChannel = function(theBot, callback) {
     var uri = [dhh.URL_ROOT, 'channel'].join('/'),
-        name = dhh.getRandomChannelName();
+        name = (null == theBot.channelName) ? dhh.getRandomChannelName() : theBot.channelName;
 
     gu.debugLog('createChannel() uri: '+ uri, DEBUG);
     gu.debugLog('createChannel() name: '+ name, DEBUG);
@@ -252,31 +280,42 @@ exports.botCreateChannel = botCreateChannel;
 // Posts data and returns error or null
 var botPostData = function(theBot, callback) {
     var dataUri = null,
-        data = ranU.randomString(100, ranU.simulatedTextChar),
+        data = theBot.dataGenerator(theBot).toString(),
         VERBOSE = false;
 
     gu.debugLog('Channel Uri: '+ theBot.channelUri, VERBOSE);
     gu.debugLog('Data: '+ data, VERBOSE);
 
-    superagent.agent().post(theBot.channelUri)
-        .send(data)
-        .end(function(err, res) {
-            if (!gu.isHTTPSuccess(res.status)) {
-                callback('Wrong status: '+ res.status);
-            }
-            else {
-                var pMetadata = new dhh.packetMetadata(res.body);
-                dataUri = pMetadata.getPacketUri();
-                theBot.dataUri = dataUri;
-                theBot.report('New data at: '+ dataUri);
-
-                callback(null);
-            }
-        }).on('error', function(e) {
-            callback(e.message);
-        });
+    _botPost(theBot, data, callback);
 }
 exports.botPostData = botPostData;
+
+// Gets the FlightStats airport delay RSS feed and posts each entry's content.
+//
+var botReportRSSFeed = function(theBot, callback) {
+
+    feed('http://www.flightstats.com/go/rss/airportdelays.do;jsessionid=7A8CE765F8E532ADEE7D6C4505BDD9F4.web2:8009',
+        function(err, articles) {
+            async.each(
+                articles,
+
+                // For each article, post it. If an error is returned, bail out right away.
+                function(article, cb) {
+
+                    _botPost(theBot, article.content, cb);
+                },
+                function(err){
+                    if ((typeof err != 'undefined') && (null != err)) {
+                        callback(err);
+                    }
+                    else {
+                        callback(null);
+                    }
+                }
+            )
+    })
+}
+exports.botReportRSSFeed = botReportRSSFeed;
 
 var botSubscribe = function(theBot, callback) {
 
@@ -328,6 +367,11 @@ var botGetLatestValue = function(theBot, callback) {
 }
 exports.botGetLatestValue = botGetLatestValue;
 
+// bot will start with .latestUri and then fetch all since then by following
+//  'Next' headers, reporting on each uri and data found
+var botGetAllValuesSinceDataUri = function(theBot, callback) {
+
+}
 
 
 var makeMainPosterBot = function(TTL) {
@@ -336,9 +380,9 @@ var makeMainPosterBot = function(TTL) {
         'initialAction': {'action': botCreateChannel},
         'debug': false,
         'timeToLive': TTL,
-        'description': 'I am a Poster Bot',
+        'description': 'I am a main Poster Bot',
         'behaviors': [
-            {'weight': 1, 'action': botPostData, 'minimumWait': 50, 'randomWait': 50}
+            {'weight': 1, 'action': botPostData, 'minimumWait': 500, 'randomWait': 1000}
         ]
     };
 
@@ -360,6 +404,39 @@ var makeOtherPosterBot = function(TTL) {
     return new Bot(params);
 }
 exports.makeOtherPosterBot = makeOtherPosterBot;
+
+var makeIntegerPosterBot = function(TTL) {
+    var params = {
+        'name': ranU.randomString(10, ranU.limitedRandomChar),
+        'debug': false,
+        'timeToLive': TTL,
+        'description': 'I am an Integer Poster Bot',
+        'dataGenerator': dataGeneratorNextInteger,
+        'behaviors': [
+            {'weight': 1, 'action': botPostData, 'minimumWait': 50, 'randomWait': 50}
+        ]
+    };
+
+    return new Bot(params);
+}
+exports.makeIntegerPosterBot = makeIntegerPosterBot;
+
+var makeRSSPosterBot = function(TTL) {
+
+    var params = {
+        'name': ranU.randomString(10, ranU.limitedRandomChar),
+        'debug': false,
+        'timeToLive': TTL,
+        'description': 'I am an RSS Feed poster',
+        'dataGenerator': dataGeneratorNextInteger,
+        'behaviors': [
+            {'weight': 1, 'action': botReportRSSFeed, 'minimumWait': 5000, 'randomWait': 3000}
+        ]
+    };
+
+    return new Bot(params);
+}
+exports.makeRSSPosterBot = makeRSSPosterBot;
 
 var makeSubscriberBot = function(TTL) {
     var params = {
@@ -389,3 +466,23 @@ var makeLatestPollingBot = function(TTL) {
     return new Bot(params);
 }
 exports.makeLatestPollingBot = makeLatestPollingBot;
+
+
+
+var dataGeneratorNextInteger = function(theBot) {
+
+    if (null == theBot.lastDataPosted) {
+        theBot.lastDataPosted = 0;
+    }
+
+    theBot.lastDataPosted = parseInt(theBot.lastDataPosted) + 1;
+
+    return theBot.lastDataPosted;
+}
+exports.dataGeneratorNextInteger = dataGeneratorNextInteger;
+
+var dataGenerator100RandomChars = function(theBot) {
+    return ranU.randomString(100, ranU.simulatedTextChar);
+}
+exports.dataGenerator100RandomChars = dataGenerator100RandomChars;
+

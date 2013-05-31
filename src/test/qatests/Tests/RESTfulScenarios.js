@@ -13,7 +13,7 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
 
 var channelName,
     channelUri,
-    numExtraPosterBots = 3,
+    numExtraPosterBots = 0,
     DEBUG = true;
 
 describe('IN PROGRESS - Restful Scenarios', function() {
@@ -32,28 +32,37 @@ describe('IN PROGRESS - Restful Scenarios', function() {
         })
     })
 
-    describe.skip('Let loose the bots of war', function() {
-        var mainPosterBot,
+    describe('Let loose the bots of war', function() {
+        var mainPosterBot = {},
+            myIntegerPosterBot = {},
+            mySubscriberBot = {},
+            myLatestPollBot = {},
+            myRSSFeedPosterBot = {},
             myExtraPosterBots = [],
-            mySubscriberBot,
-            myLatestPollBot,
-            mainTTL = 12;
-
-
+            mainTTL = 12,
+            allDependentBots = [];  // contains all bots other than mainPosterBot
 
         before(function() {
             mainPosterBot = bot.makeMainPosterBot(mainTTL + 10);
+            mainPosterBot.channelName = 'HotAndSingleRSSFeedsAreWaitingForYou';
+
             mySubscriberBot = bot.makeSubscriberBot(mainTTL);
+            myRSSFeedPosterBot = bot.makeRSSPosterBot(mainTTL);
             myLatestPollBot = bot.makeLatestPollingBot(mainTTL);
+            myIntegerPosterBot = bot.makeIntegerPosterBot(mainTTL);
+
+            allDependentBots = [
+                myIntegerPosterBot,
+                mySubscriberBot,
+                myRSSFeedPosterBot,
+                myLatestPollBot
+            ];
 
             for (var i = 0; i < numExtraPosterBots; i += 1) {
                 var pBot = bot.makeOtherPosterBot(mainTTL);
-                pBot.broadcastBot = mainPosterBot;
                 myExtraPosterBots[i] = pBot;
+                allDependentBots.push(pBot);
             }
-
-            mySubscriberBot.broadcastBot = mainPosterBot;
-            myLatestPollBot.broadcastBot = mainPosterBot;
         })
 
         it('Bot madness', function(done) {
@@ -65,12 +74,13 @@ describe('IN PROGRESS - Restful Scenarios', function() {
             })
 
             mainPosterBot.eventEmitter.on('createdChannel', function() {
-                mySubscriberBot.wakeUp();
-                myLatestPollBot.wakeUp();
 
-                for (var i = 0; i < myExtraPosterBots.length; i += 1) {
-                    var pBot = myExtraPosterBots[i];
-                    pBot.wakeUp();
+                console.dir(allDependentBots);
+
+                for (var i = 0; i < allDependentBots.length; i += 1) {
+                    var depBot = allDependentBots[i];
+                    depBot.broadcastBot = mainPosterBot;
+                    depBot.wakeUp();
                 }
             })
 

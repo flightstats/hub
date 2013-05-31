@@ -5,9 +5,9 @@ var expect = chai.expect;
 var superagent = require('superagent');
 var request = require('request');
 var moment = require('moment');
-var async = require('async');
-var crypto = require('crypto');
-var fs = require('fs');
+var async = require('async'),
+    crypto = require('crypto'),
+    fs = require('fs');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
     ranU = require('../randomUtils.js'),
@@ -24,8 +24,7 @@ var CAT_TOILET_PIC = './artifacts/cattoilet.jpg',
 
 
 // Test variables that are regularly overwritten
-var agent
-    , payload
+var payload
     , fileAsAStream
     , req
     , uri
@@ -52,12 +51,13 @@ describe('POST data to channel:', function(){
         });
     }
 
+
     before(function(done){
 
         // Update file paths if test is run in its own directory.
-        var cwd = process.cwd();
-        var dirRegex = /\/([^/]+)$/;
-        var parent = cwd.match(dirRegex)[1];
+        var cwd = process.cwd(),
+            dirRegex = /\/([^/]+)$/,
+            parent = cwd.match(dirRegex)[1];
 
         if ('postdata'.toLowerCase() == parent.toLowerCase()) {
             CAT_TOILET_PIC = '../'+ CAT_TOILET_PIC;
@@ -66,7 +66,6 @@ describe('POST data to channel:', function(){
         };
 
         channelName = dhh.getRandomChannelName();
-        agent = superagent.agent();
         dhh.createChannel(channelName, function(res, cnUri){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 done(res.error);
@@ -79,7 +78,6 @@ describe('POST data to channel:', function(){
     });
 
     beforeEach(function(){
-        agent = superagent.agent();
         payload = uri = req = contentType = '';
     })
 
