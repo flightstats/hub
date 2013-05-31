@@ -8,6 +8,8 @@ import org.eclipse.jetty.websocket.api.UpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -17,6 +19,7 @@ import java.net.URI;
 
 public class JettyWebSocketServlet extends WebSocketServlet {
 
+	private final static Logger logger = LoggerFactory.getLogger(JettyWebSocketServlet.class);
 	private final WebSocketCreator creator;
 	private final WebSocketChannelNameExtractor channelNameExtractor;
 	private final ChannelDao channelDao;
@@ -34,6 +37,7 @@ public class JettyWebSocketServlet extends WebSocketServlet {
 		URI requestUri = URI.create(requestUriString);
 		String channelName = channelNameExtractor.extractChannelName(requestUri);
 		if (!channelDao.channelExists(channelName)) {
+			logger.warn("No such channel '" + channelName + "', refusing websocket upgrade request.");
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
