@@ -1,5 +1,4 @@
-var utils = require('./utils.js');
-var frisby = require('frisby');
+require('./integration_config.js');
 
 var channelName = "no_way_jose90928280xFF";
 var thisChannelResource = channelUrl + "/" + channelName;
