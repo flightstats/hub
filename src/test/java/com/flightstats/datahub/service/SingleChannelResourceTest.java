@@ -3,6 +3,7 @@ package com.flightstats.datahub.service;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.MetadataResponse;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.service.eventing.SubscriptionDispatcher;
