@@ -1,5 +1,7 @@
 package com.flightstats.datahub.app.config;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.datahub.dao.RowKeyStrategy;
 import com.flightstats.datahub.dao.YearMonthDayRowKeyStrategy;
 import com.flightstats.datahub.model.DataHubCompositeValue;
@@ -10,6 +12,8 @@ import com.flightstats.datahub.service.eventing.SubscriptionDispatcher;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.google.inject.Inject;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.sun.jersey.api.core.PackagesResourceConfig;
@@ -39,6 +43,8 @@ class DataHubCommonModule extends JerseyServletModule {
 	}
 
 	private void bindCommonBeans() {
+		bind(MetricRegistry.class).in(Singleton.class);
+		bind(GraphiteReporterConfiguration.class).asEagerSingleton();
 		bind(ChannelLockExecutor.class).in(Singleton.class);
 		bind(SubscriptionDispatcher.class).in(Singleton.class);
 		bind(SubscriptionRoster.class).in(Singleton.class);
@@ -52,5 +58,12 @@ class DataHubCommonModule extends JerseyServletModule {
 		bind(JettyWebSocketServlet.class).in(Singleton.class);
 		serveRegex(WEBSOCKET_URL_REGEX).with(JettyWebSocketServlet.class);
 		serve("/*").with(GuiceContainer.class, JERSEY_PROPERTIES);
+	}
+
+	@Inject
+	@Provides
+	@Singleton
+	public InstrumentedResourceMethodDispatchAdapter buildMetricsAdapter(MetricRegistry registry) {
+		return new InstrumentedResourceMethodDispatchAdapter(registry);
 	}
 }

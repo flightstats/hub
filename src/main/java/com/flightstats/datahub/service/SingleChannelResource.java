@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service;
 
+import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubKey;
@@ -38,6 +39,7 @@ public class SingleChannelResource {
 	}
 
 	@GET
+	@Timed
 	@Produces(MediaType.APPLICATION_JSON)
 	public Linked<MetadataResponse> getChannelMetadata(@PathParam("channelName") String channelName) {
 		if (!channelDao.channelExists(channelName)) {
