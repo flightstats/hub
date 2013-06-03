@@ -3,8 +3,6 @@ package com.flightstats.datahub.service.eventing;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import org.eclipse.jetty.websocket.api.UpgradeRequest;
-import org.eclipse.jetty.websocket.api.UpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
@@ -19,15 +17,15 @@ import java.net.URI;
 
 public class JettyWebSocketServlet extends WebSocketServlet {
 
-	private final static Logger logger = LoggerFactory.getLogger(JettyWebSocketServlet.class);
+	private static final Logger logger = LoggerFactory.getLogger(JettyWebSocketServlet.class);
 	private final WebSocketCreator creator;
 	private final WebSocketChannelNameExtractor channelNameExtractor;
 	private final ChannelDao channelDao;
 
 	@Inject
-	public JettyWebSocketServlet(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelDao channelDao) {
+	public JettyWebSocketServlet(CustomWebSocketCreator webSocketCreator, WebSocketChannelNameExtractor channelNameExtractor, ChannelDao channelDao) {
 		this.channelDao = channelDao;
-		this.creator = new CustomWebSocketCreator(subscriptions, channelNameExtractor);
+		this.creator = webSocketCreator;
 		this.channelNameExtractor = channelNameExtractor;
 	}
 
@@ -53,20 +51,5 @@ public class JettyWebSocketServlet extends WebSocketServlet {
 	public void configure(WebSocketServletFactory factory) {
 		//		factory.register(DataHubWebSocket.class);	//to let jetty create our instances for us
 		factory.setCreator(creator);
-	}
-
-	public static class CustomWebSocketCreator implements WebSocketCreator {
-		private final SubscriptionRoster subscriptions;
-		private final WebSocketChannelNameExtractor channelNameExtractor;
-
-		public CustomWebSocketCreator(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor) {
-			this.subscriptions = subscriptions;
-			this.channelNameExtractor = channelNameExtractor;
-		}
-
-		@Override
-		public Object createWebSocket(UpgradeRequest req, UpgradeResponse resp) {
-			return new DataHubWebSocket(subscriptions, channelNameExtractor);
-		}
 	}
 }

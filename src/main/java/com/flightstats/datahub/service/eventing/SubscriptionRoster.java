@@ -47,4 +47,8 @@ public class SubscriptionRoster {
 		return Collections.unmodifiableCollection(subscribersCopy);
 	}
 
+	public Integer getTotalSubscriberCount()
+	{
+		return channelSubscribers.size();
+	}
 }
