@@ -44,7 +44,7 @@ class DataHubCommonModule extends JerseyServletModule {
 
 	private void bindCommonBeans() {
 		bind(MetricRegistry.class).in(Singleton.class);
-		bind(GraphiteReporterConfiguration.class).asEagerSingleton();
+		bind(GraphiteConfiguration.class).asEagerSingleton();
 		bind(ChannelLockExecutor.class).in(Singleton.class);
 		bind(SubscriptionDispatcher.class).in(Singleton.class);
 		bind(SubscriptionRoster.class).in(Singleton.class);
