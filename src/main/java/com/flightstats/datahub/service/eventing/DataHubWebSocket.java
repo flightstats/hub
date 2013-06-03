@@ -49,5 +49,4 @@ public class DataHubWebSocket {
 		subscription.getQueue().add(WebSocketEvent.SHUTDOWN);
 		subscriptions.unsubscribe(channelName, subscription);
 	}
-
 }
