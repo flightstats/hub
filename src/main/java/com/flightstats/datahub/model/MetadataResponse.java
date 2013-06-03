@@ -1,6 +1,4 @@
-package com.flightstats.datahub.service;
-
-import com.flightstats.datahub.model.ChannelConfiguration;
+package com.flightstats.datahub.model;
 
 import java.util.Date;
 
