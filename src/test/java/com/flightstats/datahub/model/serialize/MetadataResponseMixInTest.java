@@ -2,7 +2,7 @@ package com.flightstats.datahub.model.serialize;
 
 import com.flightstats.datahub.app.config.DataHubObjectMapperFactory;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.service.MetadataResponse;
+import com.flightstats.datahub.model.MetadataResponse;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.codehaus.jackson.map.ObjectMapper;

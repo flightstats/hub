@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service;
 
+import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
@@ -40,6 +41,7 @@ public class ChannelContentResource {
 	}
 
 	@GET
+	@Timed
 	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id) {
 		DataHubKey key = keyRenderer.fromString(id);
 		Optional<LinkedDataHubCompositeValue> optionalResult = channelDao.getValue(channelName, key);

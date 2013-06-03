@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service;
 
+import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
@@ -20,31 +21,32 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channelName: .*}/latest")
 public class LatestChannelItemResource {
 
-    private final UriInfo uriInfo;
-    private final ChannelDao channelDao;
-    private final DataHubKeyRenderer keyRenderer;
+	private final UriInfo uriInfo;
+	private final ChannelDao channelDao;
+	private final DataHubKeyRenderer keyRenderer;
 
-    @Inject
-    public LatestChannelItemResource(UriInfo uriInfo, ChannelDao channelDao, DataHubKeyRenderer keyRenderer) {
-        this.uriInfo = uriInfo;
-        this.channelDao = channelDao;
-        this.keyRenderer = keyRenderer;
-    }
+	@Inject
+	public LatestChannelItemResource(UriInfo uriInfo, ChannelDao channelDao, DataHubKeyRenderer keyRenderer) {
+		this.uriInfo = uriInfo;
+		this.channelDao = channelDao;
+		this.keyRenderer = keyRenderer;
+	}
 
-    @GET
-    public Response getLatest(@PathParam("channelName") String channelName) {
-        Optional<DataHubKey> latestId = channelDao.findLatestId(channelName);
-        if (!latestId.isPresent()) {
-            //TODO: Don't throw, just set status in response
-            throw new WebApplicationException(NOT_FOUND);
-        }
-        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
+	@GET
+	@Timed
+	public Response getLatest(@PathParam("channelName") String channelName) {
+		Optional<DataHubKey> latestId = channelDao.findLatestId(channelName);
+		if (!latestId.isPresent()) {
+			//TODO: Don't throw, just set status in response
+			throw new WebApplicationException(NOT_FOUND);
+		}
+		Response.ResponseBuilder builder = Response.status(SEE_OTHER);
 
-        String channelUri = uriInfo.getRequestUri().toString().replaceFirst("/latest$", "");
-        DataHubKey keyOfLatestItem = latestId.get();
-        URI uri = URI.create(channelUri + "/" + keyRenderer.keyToString(keyOfLatestItem));
-        builder.location(uri);
-        return builder.build();
-    }
+		String channelUri = uriInfo.getRequestUri().toString().replaceFirst("/latest$", "");
+		DataHubKey keyOfLatestItem = latestId.get();
+		URI uri = URI.create(channelUri + "/" + keyRenderer.keyToString(keyOfLatestItem));
+		builder.location(uri);
+		return builder.build();
+	}
 
 }

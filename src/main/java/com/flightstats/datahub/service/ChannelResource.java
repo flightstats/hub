@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service;
 
+import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
@@ -29,12 +30,14 @@ public class ChannelResource {
 	}
 
 	@GET
+	@Timed
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getChannels() {
 		throw new RuntimeException("Channels metadata is not yet implemented");
 	}
 
 	@POST
+	@Timed
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createChannel(ChannelCreationRequest channelCreationRequest) {
@@ -45,12 +48,12 @@ public class ChannelResource {
 
 		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration);
-		return Response.created( channelUri ).entity(
-			linked(channelConfiguration)
-				.withLink("self", channelUri)
-				.withLink("latest", linkBuilder.buildLatestUri(channelName))
-				.withLink("ws", linkBuilder.buildWsLinkFor(channelName))
-				.build())
-			.build();
+		return Response.created(channelUri).entity(
+				linked(channelConfiguration)
+						.withLink("self", channelUri)
+						.withLink("latest", linkBuilder.buildLatestUri(channelName))
+						.withLink("ws", linkBuilder.buildWsLinkFor(channelName))
+						.build())
+					   .build();
 	}
 }
