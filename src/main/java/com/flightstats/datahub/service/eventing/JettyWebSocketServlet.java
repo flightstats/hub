@@ -23,7 +23,7 @@ public class JettyWebSocketServlet extends WebSocketServlet {
 	private final ChannelDao channelDao;
 
 	@Inject
-	public JettyWebSocketServlet(CustomWebSocketCreator webSocketCreator, WebSocketChannelNameExtractor channelNameExtractor, ChannelDao channelDao) {
+	public JettyWebSocketServlet(WebSocketCreator webSocketCreator, WebSocketChannelNameExtractor channelNameExtractor, ChannelDao channelDao) {
 		this.channelDao = channelDao;
 		this.creator = webSocketCreator;
 		this.channelNameExtractor = channelNameExtractor;
