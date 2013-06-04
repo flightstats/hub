@@ -5,6 +5,10 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import com.codahale.metrics.jvm.FileDescriptorRatioGauge;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -21,8 +25,16 @@ public class GraphiteConfiguration
 		MetricRegistry registry, SubscriptionRoster subscriptions,
 		@Named("graphite.host") String graphiteHost, @Named("graphite.port") int graphitePort ) {
 
+		createJvmMetrics( registry );
 		createAggregateWebSocketGauge( subscriptions, registry );
 		createReporter( registry, graphiteHost, graphitePort );
+	}
+
+	private void createJvmMetrics( MetricRegistry registry )
+	{
+		registry.registerAll( new GarbageCollectorMetricSet() );
+		registry.registerAll( new MemoryUsageGaugeSet() );
+		registry.registerAll( new ThreadStatesGaugeSet() );
 	}
 
 	private void createAggregateWebSocketGauge( final SubscriptionRoster subscriptions, MetricRegistry registry ) {
