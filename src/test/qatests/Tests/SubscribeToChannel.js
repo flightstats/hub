@@ -55,10 +55,7 @@ describe('Channel Subscription:', function() {
         });
     });
 
-
-
-
-    it('(alt) Acceptance: subscription works and updates are sent in order', function(done) {
+    it('Acceptance: subscription works and updates are sent in order', function(done) {
         var socket,
             uriA,
             uriB;
@@ -516,8 +513,6 @@ describe('Channel Subscription:', function() {
     it.skip('<NOT WRITTEN> Server recognizes when agent disconnects (in what time frame?)', function(done) {
         done();
     });
-
-    // ***********  DEPRECATED TESTS **************** //
 
 
 
