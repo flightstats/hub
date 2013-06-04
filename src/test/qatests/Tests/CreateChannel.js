@@ -8,24 +8,18 @@
 
 // CREATE CHANNEL tests
 
-var chai = require('chai');
-var expect = chai.expect;
-var superagent = require('superagent');
-var crypto = require('crypto');
-var request = require('request');
-var moment = require('moment');
-var async = require('async');
-var fs = require('fs'),
+var chai = require('chai'),
+    expect = chai.expect,
+    superagent = require('superagent'),
+    request = require('request'),
+    moment = require('moment'),
+    async = require('async'),
     lodash = require('lodash');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
     gu = require('../genericUtils.js');
 
-
 var DEBUG = true;
-
-// Test variables that are regularly overwritten
-var uri, contentType;
 
 
 describe('Create Channel: ', function(){
@@ -142,6 +136,12 @@ describe('Create Channel: ', function(){
 
         });
 
+        // TODO name consisting only of whitespace not allowed
+
+        // TODO whitespace is trimmed from name
+
+        // TODO name cannot contain forward slash
+
         it('no / empty payload not allowed', function(done) {
             superagent.agent().post(dhh.URL_ROOT +'/channel')
                 .set('Content-Type', 'application/json')
@@ -162,5 +162,14 @@ describe('Create Channel: ', function(){
             });
         });
     })
+
+    /*  Other cases to consider:
+
+        * Multiple channels with same name created at same time? Unlikely scenario -- also code not yet in place to prevent
+            channels with same name.
+        * Name with
+
+
+     */
 
 });
