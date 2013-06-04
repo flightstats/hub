@@ -2,6 +2,7 @@ package com.flightstats.datahub.app.config;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
+import com.flightstats.datahub.app.config.metrics.GraphiteConfiguration;
 import com.flightstats.datahub.dao.RowKeyStrategy;
 import com.flightstats.datahub.dao.YearMonthDayRowKeyStrategy;
 import com.flightstats.datahub.model.DataHubCompositeValue;
