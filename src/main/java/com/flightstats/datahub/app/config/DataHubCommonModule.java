@@ -8,6 +8,7 @@ import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
+import com.flightstats.datahub.service.eventing.MetricsCustomWebSocketCreator;
 import com.flightstats.datahub.service.eventing.SubscriptionDispatcher;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
@@ -21,6 +22,7 @@ import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
+import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,6 +52,7 @@ class DataHubCommonModule extends JerseyServletModule {
 		bind(SubscriptionRoster.class).in(Singleton.class);
 		bind(DataHubKeyRenderer.class).in(Singleton.class);
 		bind(DataHubKeyGenerator.class).in(Singleton.class);
+		bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
 		bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
 		}).to(YearMonthDayRowKeyStrategy.class);
 	}
