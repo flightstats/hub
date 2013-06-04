@@ -87,23 +87,21 @@ var createWebSocket = function(wsUri, onOpen) {
     myWs = new ws(wsUri);
 
     myWs.on('open', onOpen);
-    myWs.on('error', function(e) {gu.debugLog(e); });
 
     return myWs;
 }
 exports.createWebSocket = createWebSocket;
 
 
-// Wrapper for websocket to more easily support tests with multiple sockets.
-//      Yes, I know it's too-tightly coupled with the test code.
-//
-// domain: domain:port for the datahub, e.g., datahub-01.cloud-east.dev:8080
-// channel: name of channel in the datahub
-// socketName: arbitrary name to help identify the socket
-// onOpenCB: callback to call at end of Open event
-// responseQueue: where the message is stuffed when the Message event is called on this socket
-// onMessageCB: (optional) callback to call at end of Message event
-// debug: (optional) logs way more from within the function
+/**
+ * Wrapper for websocket to support test scenarios
+ *
+ * @param params: .domain (domain:port), .channel (name of channel in DH), .socketName (arbitrary name for identifying
+ *  the socket), .onOpenCB (callback to call at end of Open event), .responseQueue (where each message is stashed),.
+ *  .onMessageCB (optional - callback to call at end of Message event), .onErrorCB (optional - callback to call at
+ *  end of Error event),  .debug (optional).
+ * @constructor
+ */
 function WSWrapper(params) {
     var requiredParams = ['uri', 'socketName', 'onOpenCB'];     // removed 'domain'
 
@@ -121,7 +119,14 @@ function WSWrapper(params) {
     var _self = this,
         onOpenCB = params.onOpenCB,
         onMessageCB = (params.hasOwnProperty('onMessageCB')) ? params.onMessageCB : null,
+        onErrorCB = (params.hasOwnProperty('onErrorCB')) ? params.onErrorCB : null,
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : DEBUG;
+
+    this.onOpen = function() {
+        gu.debugLog('OPEN EVENT at '+ Date.now(), VERBOSE);
+        gu.debugLog('readystate: '+ _self.ws.readyState, VERBOSE);
+        onOpenCB();
+    };
 
     this.onMessage = function(data, flags) {
         gu.debugLog('MESSAGE EVENT at '+ Date.now(), VERBOSE);
@@ -133,10 +138,13 @@ function WSWrapper(params) {
         }
     };
 
-    this.onOpen = function() {
-        gu.debugLog('OPEN EVENT at '+ Date.now(), VERBOSE);
-        gu.debugLog('readystate: '+ _self.ws.readyState, VERBOSE);
-        onOpenCB();
+    this.onError = function(msg) {
+        gu.debugLog('ERROR event at '+ Date.now(), VERBOSE);
+        gu.debugLog('Error message: '+ msg);
+
+        if (null != onErrorCB) {
+            onErrorCB(msg);
+        }
     };
 
     this.createSocket = function() {
@@ -145,6 +153,7 @@ function WSWrapper(params) {
         }
         this.ws = createWebSocket(this.uri, this.onOpen);
         this.ws.on('message', this.onMessage);
+        this.ws.on('error', this.onError);
     };
 }
 exports.WSWrapper = WSWrapper;

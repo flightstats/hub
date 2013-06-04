@@ -28,7 +28,7 @@ var DEBUG = true;
 var uri, contentType;
 
 
-describe.only('Create Channel: ', function(){
+describe('Create Channel: ', function(){
 
     var channelName;
 
