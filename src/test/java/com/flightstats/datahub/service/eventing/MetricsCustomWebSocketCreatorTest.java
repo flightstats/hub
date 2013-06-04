@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.codahale.metrics.Metric;
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
@@ -21,6 +21,8 @@ public class MetricsCustomWebSocketCreatorTest {
 		SubscriptionRoster subscriptions = new SubscriptionRoster();
 		WebSocketChannelNameExtractor channelNameExtractor = new WebSocketChannelNameExtractor();
 		int threadCt = 50;
+		String meterName = "websocket-clients.channels.ubuibi";
+
 		final CountDownLatch startLatch = new CountDownLatch(1);
 		final CountDownLatch allStarted = new CountDownLatch(threadCt);
 		final CountDownLatch allFinished = new CountDownLatch(threadCt);
@@ -28,10 +30,12 @@ public class MetricsCustomWebSocketCreatorTest {
 		MetricRegistry registry = mock(MetricRegistry.class);
 		final UpgradeRequest request = mock(UpgradeRequest.class);
 		final Session session = mock(Session.class);
+		Counter counter = spy(new Counter());
 
 		when(request.getRequestURI()).thenReturn(URI.create("/channel/ubuibi/ws"));
 		when(session.getRemoteAddress()).thenReturn(new InetSocketAddress(2133));
 		when(session.getUpgradeRequest()).thenReturn(request);
+		when(registry.counter(meterName)).thenReturn(counter);
 
 		final MetricsCustomWebSocketCreator testClass = new MetricsCustomWebSocketCreator(registry, subscriptions, channelNameExtractor);
 
@@ -58,7 +62,9 @@ public class MetricsCustomWebSocketCreatorTest {
 		startLatch.countDown();
 		allFinished.await();
 		//THEN
-		verify(registry).register(eq("websocket-clients.channels.ubuibi"), any(Metric.class));
-		verify(registry).remove("websocket-clients.channels.ubuibi");
+		verify(registry, times(threadCt * 2)).counter(eq(meterName));    //once per inc, once per dec
+		verify(counter, times(threadCt)).inc();
+		verify(counter, times(threadCt)).dec();
+		verify(registry).remove(meterName);
 	}
 }

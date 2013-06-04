@@ -50,15 +50,18 @@ public class DataHubWebSocket {
 
 	@OnWebSocketClose
 	public void onDisconnect(int statusCode, String reason) {
-		logger.info("Client disconnect: " + remoteAddress + " (status = " + statusCode + ", reason = " + reason + ")");
-		Optional<WebSocketEventSubscription> optionalSubscription = subscriptions.findSubscriptionForConsumer(channelName, endpointSender);
-		if (!optionalSubscription.isPresent()) {
-			logger.warn("Cannot unsubscribe:  No subscription on channel " + channelName + " for " + endpointSender);
-			return;
+		try {
+			logger.info("Client disconnect: " + remoteAddress + " (status = " + statusCode + ", reason = " + reason + ")");
+			Optional<WebSocketEventSubscription> optionalSubscription = subscriptions.findSubscriptionForConsumer(channelName, endpointSender);
+			if (!optionalSubscription.isPresent()) {
+				logger.warn("Cannot unsubscribe:  No subscription on channel " + channelName + " for " + endpointSender);
+				return;
+			}
+			WebSocketEventSubscription subscription = optionalSubscription.get();
+			subscription.getQueue().add(WebSocketEvent.SHUTDOWN);
+			subscriptions.unsubscribe(channelName, subscription);
+		} finally {
+			afterDisconnectCallback.run();
 		}
-		WebSocketEventSubscription subscription = optionalSubscription.get();
-		subscription.getQueue().add(WebSocketEvent.SHUTDOWN);
-		subscriptions.unsubscribe(channelName, subscription);
-		afterDisconnectCallback.run();
 	}
 }
