@@ -15,6 +15,8 @@ import com.google.inject.name.Named;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
+import static com.flightstats.datahub.app.config.metrics.KeyPrefixedMetricSet.prefix;
+
 public class GraphiteConfiguration {
 	@Inject
 	public GraphiteConfiguration(
@@ -27,9 +29,9 @@ public class GraphiteConfiguration {
 	}
 
 	private void createJvmMetrics(MetricRegistry registry) {
-		registry.registerAll(new KeyPrefixedMetricSet("jvm.gc", new GarbageCollectorMetricSet()));
-		registry.registerAll(new KeyPrefixedMetricSet("jvm.memory", new MemoryUsageGaugeSet()));
-		registry.registerAll(new KeyPrefixedMetricSet("jvm.threads", new ThreadStatesGaugeSet()));
+		registry.registerAll(prefix("jvm.gc", new GarbageCollectorMetricSet()));
+		registry.registerAll(prefix("jvm.memory", new MemoryUsageGaugeSet()));
+		registry.registerAll(prefix("jvm.threads", new ThreadStatesGaugeSet()));
 	}
 
 	private void createAggregateWebSocketGauge(final SubscriptionRoster subscriptions, MetricRegistry registry) {
