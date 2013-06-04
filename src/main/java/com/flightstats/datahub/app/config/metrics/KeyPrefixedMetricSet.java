@@ -16,6 +16,10 @@ class KeyPrefixedMetricSet implements MetricSet {
 		this.prefix = prefix;
 	}
 
+	static KeyPrefixedMetricSet prefix(String prefix, MetricSet delegate) {
+		return new KeyPrefixedMetricSet(prefix, delegate);
+	}
+
 	@Override
 	public Map<String, Metric> getMetrics() {
 		Map<String, Metric> result = new HashMap<>();
