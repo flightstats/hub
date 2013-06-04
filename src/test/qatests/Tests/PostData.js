@@ -189,7 +189,6 @@ describe('POST data to channel:', function(){
             });
         });
 
-
         it('POST empty data set to channel', function(done){
             postAndConfirmData('', done);
         });
@@ -199,7 +198,6 @@ describe('POST data to channel:', function(){
 
             postAndConfirmData(payload, done);
         });
-
 
         it('POST 1,000 characters to channel', function(done) {
             var payload = ranU.randomString(1000, ranU.simulatedTextChar);
