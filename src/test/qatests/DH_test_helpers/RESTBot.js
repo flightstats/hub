@@ -27,7 +27,7 @@ var DEBUG = true;
 
 
 // optional params (default value): numChannels (1), timeToLive (30 sec), name (random string),
-//      logger (tbd), initalAction (randomized from behaviors), debug (false), lastAction (null)
+//      logger (tbd), initialAction (randomized from behaviors), debug (false), lastAction (null)
 //
 // The entries in the .behaviors array (as well as .initialAction and .lastAction) have four properties (only two are required):
 //      .weight: integer used for relative weight versus other actions in the possible action array,
