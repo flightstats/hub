@@ -28,8 +28,7 @@ var appContentTypes = require('../contentTypes.js').applicationTypes,
 
 var URL_ROOT = dhh.URL_ROOT;
 
-describe.only
-('GET data:', function() {
+describe('GET data:', function() {
     var randomPayload = null,
         channelName,
         mainChannelUri;
