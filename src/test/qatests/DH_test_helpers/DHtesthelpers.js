@@ -158,7 +158,12 @@ function WSWrapper(params) {
 }
 exports.WSWrapper = WSWrapper;
 
-// returns the response, link to new channel
+/**
+ * Create a channel.
+ *
+ * @param myChannelName
+ * @param myCallback: response, channelUri
+ */
 var createChannel = function(myChannelName, myCallback) {
     var myPayload = '{"name":"'+ myChannelName +'"}',
         uri = URL_ROOT +'/channel';
