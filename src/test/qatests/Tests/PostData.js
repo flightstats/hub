@@ -206,8 +206,11 @@ describe('POST data to channel:', function(){
         });
 
         // Confirms via md5 checksum
+        // As of June 3, 2013, this thing is timing out on the GET intermittently.
         it('POST image file to channel and recover', function(done) {
-            var fileAsAStream = fs.createReadStream(CAT_TOILET_PIC);
+
+            var fileAsAStream = fs.createReadStream(CAT_TOILET_PIC),
+                VERBOSE = true;
 
             fileAsAStream.pipe(request.post(channelUri,
                 function(err, res, body) {
@@ -215,11 +218,13 @@ describe('POST data to channel:', function(){
                         throw err;
                     }
                     expect(gu.isHTTPSuccess(res.statusCode)).to.equal(true);
-                    var cnMetadata = new dhh.channelMetadata(JSON.parse(body)),
-                        uri = cnMetadata.getChannelUri();
+                    gu.debugLog('POST attempt status: '+ res.statusCode, VERBOSE);
 
-                    var md5sum = crypto.createHash('md5'),
+                    var cnMetadata = new dhh.channelMetadata(JSON.parse(body)),
+                        uri = cnMetadata.getChannelUri(),
+                        md5sum = crypto.createHash('md5'),
                         s = fs.ReadStream(CAT_TOILET_PIC);
+                    gu.debugLog('URI to get image: '+ uri, VERBOSE);
 
                     s.on('data', function(d) {
                         md5sum.update(d);
