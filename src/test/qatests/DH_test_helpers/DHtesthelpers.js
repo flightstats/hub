@@ -222,6 +222,10 @@ function channelMetadata(responseBody) {
     this.getCreationDate = function() {
         return responseBody.creationDate;
     }
+
+    this.getLastUpdateDate = function() {
+        return responseBody.lastUpdateDate;
+    }
 }
 exports.channelMetadata = channelMetadata;
 
