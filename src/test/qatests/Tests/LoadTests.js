@@ -14,33 +14,25 @@ var superagent = require('superagent');
 var crypto = require('crypto');
 var request = require('request');
 var moment = require('moment');
-var async = require('async');
-var fs = require('fs');
+var async = require('async'),
+    lodash = require('lodash');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
     ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js');
 
-var MY_4MB_FILE = './artifacts/Iam4Mb.txt';
-var MY_8MB_FILE = './artifacts/Iam8Mb.txt';
-var MY_16MB_FILE = './artifacts/Iam16Mb.txt';
-var MY_32MB_FILE = './artifacts/Iam32Mb.txt';
-var MY_64MB_FILE = './artifacts/Iam64Mb.txt';
+var MY_4MB_FILE = './artifacts/Iam4Mb.txt',
+    MY_8MB_FILE = './artifacts/Iam8Mb.txt',
+    MY_16MB_FILE = './artifacts/Iam16Mb.txt',
+    MY_32MB_FILE = './artifacts/Iam32Mb.txt',
+    MY_64MB_FILE = './artifacts/Iam64Mb.txt';
 
 var URL_ROOT = dhh.URL_ROOT;
-
-// Test variables that are regularly overwritten
-var agent
-    , payload
-    , fileAsAStream
-    , req
-    , uri
-    , contentType;
 
 var channelName,
     channelUri;
 
-describe.skip('Load tests - POST data:', function(){
+describe('Load tests - POST data:', function(){
 
     var loadChannels = {},
         loadChannelKeys = [];  // channel.uri (to fetch data) and channel.data, e.g. { con {uri: x, data: y}}
@@ -61,7 +53,7 @@ describe.skip('Load tests - POST data:', function(){
 
     before(function(myCallback){
         channelName = dhh.getRandomChannelName();
-        agent = superagent.agent();
+
         dhh.createChannel(channelName, function(res, cnUri){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
@@ -74,82 +66,57 @@ describe.skip('Load tests - POST data:', function(){
         });
     });
 
-    beforeEach(function(){
-        agent = superagent.agent();
-        payload = uri = req = contentType = '';
-    })
-
     describe('Rapid data posting:', function() {
         // To ignore the Loadtest cases:  mocha -R nyan --timeout 4000 --grep Load --invert
 
-        it('Loadtest - POST rapidly to ten different channels, then confirm data retrieved via GET is correct', function(done){
-            var VERBOSE = true,
-                cnMetadata,
-                numIterations = 20;
+        it('Loadtest - POST rapidly to many different channels, then confirm data retrieved via GET is correct', function(done){
+            var cnMetadata,
+                numIterations = 30,
+                VERBOSE = true;
 
             this.timeout(5000 * numIterations);
+
             for (var i = 1; i <= numIterations; i++)
             {
                 var thisName = dhh.getRandomChannelName(),
-                    thisChannelUrl,
                     thisPayload = ranU.randomString(Math.round(Math.random() * 50));
-                loadChannels[thisName] = {"channelUri": null, "uri":'', "data":thisPayload};
 
-            }
-
-            for (var x in loadChannels){
-                if (loadChannels.hasOwnProperty(x)) {
-                    loadChannelKeys.push(x);
-                }
-            }
-
-            async.each(loadChannelKeys, function(cn, callback) {
-                dhh.createChannel(cn, function(res, cnUri) {
-                    loadChannels[cn]['channelUri'] = cnUri;
-                    expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-                    cnMetadata = new dhh.channelMetadata(res.body);
-                    expect(cnMetadata.getChannelUri()).to.equal(URL_ROOT +'/channel/'+ cn);
-                    callback();
-                });
-
-            }, function(err) {
-                if (err) {
-                    throw err;
+                loadChannels[thisName] = {
+                    channelUri: null,
+                    dataUri: null,
+                    data: thisPayload
                 };
 
-                async.each(loadChannelKeys, function(cn, callback) {
+            }
 
-                    dhh.postData(loadChannels.channelUri,loadChannels[cn].data, function(res, uri) {
-                        loadChannels[cn].uri = uri;
-                        callback();
-                    });
+            loadChannelKeys = lodash.keys(loadChannels);
 
-                }, function(err) {
-                    if (err) {
-                        throw err;
-                    };
+            async.each(loadChannelKeys,
+                function(cnName, cb) {
 
-                    async.eachSeries(loadChannelKeys, function(cn, callback) {
-                        uri = loadChannels[cn].uri;
-                        payload = loadChannels[cn].data;
+                    dhh.createChannel(cnName, function(createRes, cnUri) {
+                        loadChannels[cnName].channelUri = cnUri;
+                        expect(createRes.status).to.equal(gu.HTTPresponses.Created);
+                        gu.debugLog('CREATED new channel at: '+ cnUri, VERBOSE);
 
-                        dhh.confirmExpectedData(uri, payload, function(didMatch){
-                            //gu.debugLog('Confirmed data retrieval from channel: '+ cn);
-                            expect(didMatch).to.be.true;
+                        dhh.postData(cnUri, loadChannels[cnName].data, function(postRes, theDataUri) {
+                            loadChannels[cnName].dataUri = theDataUri;
+                            gu.debugLog('INSERTED data at: '+ theDataUri, VERBOSE);
 
-                            callback();
-                        });
-                    }, function(err) {
-                        if (err) {
-                            throw err;
-                        };
+                            dhh.confirmExpectedData(theDataUri, loadChannels[cnName].data, function(didMatch){
+                                expect(didMatch).to.be.true;
+                                gu.debugLog('CONFIRMED data with GET at: '+ theDataUri, VERBOSE);
 
-                        done();
-                    });
+                                cb(null);
+                            })
+                        })
+                    })
+                },
+                function(err) {
 
-                });
-
-            });
+                    done();
+                }
+            );
 
         });
     });
