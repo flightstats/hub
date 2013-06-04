@@ -51,7 +51,4 @@ public class SubscriptionRoster {
 		return channelSubscribers.size();
 	}
 
-	public boolean hasNoSubscribers(String channelName) {
-		return getSubscribers(channelName).isEmpty();
-	}
 }
