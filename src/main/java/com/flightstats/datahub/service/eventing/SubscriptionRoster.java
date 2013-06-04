@@ -47,8 +47,11 @@ public class SubscriptionRoster {
 		return Collections.unmodifiableCollection(subscribersCopy);
 	}
 
-	public Integer getTotalSubscriberCount()
-	{
+	public Integer getTotalSubscriberCount() {
 		return channelSubscribers.size();
+	}
+
+	public boolean hasNoSubscribers(String channelName) {
+		return getSubscribers(channelName).isEmpty();
 	}
 }

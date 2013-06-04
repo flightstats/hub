@@ -16,13 +16,24 @@ public class DataHubWebSocket {
 	private final static Logger logger = LoggerFactory.getLogger(DataHubWebSocket.class);
 	private final SubscriptionRoster subscriptions;
 	private final WebSocketChannelNameExtractor channelNameExtractor;
+	private final Runnable afterDisconnectCallback;
 	private String remoteAddress;
 	private String channelName;
 	private JettyWebSocketEndpointSender endpointSender;
 
 	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor) {
+		this(subscriptions, channelNameExtractor, new Runnable() {
+			@Override
+			public void run() {
+				//nop
+			}
+		});
+	}
+
+	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, Runnable afterDisconnectCallback) {
 		this.subscriptions = subscriptions;
 		this.channelNameExtractor = channelNameExtractor;
+		this.afterDisconnectCallback = afterDisconnectCallback;
 	}
 
 	@OnWebSocketConnect
@@ -48,5 +59,6 @@ public class DataHubWebSocket {
 		WebSocketEventSubscription subscription = optionalSubscription.get();
 		subscription.getQueue().add(WebSocketEvent.SHUTDOWN);
 		subscriptions.unsubscribe(channelName, subscription);
+		afterDisconnectCallback.run();
 	}
 }

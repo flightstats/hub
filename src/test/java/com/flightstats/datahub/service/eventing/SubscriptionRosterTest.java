@@ -1,17 +1,12 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.google.common.base.Supplier;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import org.junit.Test;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -72,6 +67,17 @@ public class SubscriptionRosterTest {
 		}
 		assertEquals(3, iterationCount);
 		assertEquals(6, testClass.getSubscribers("chan").size());
+	}
+
+	@Test
+	public void testHasNoSubscribers() throws Exception {
+		//GIVEN
+		SubscriptionRoster testClass = new SubscriptionRoster();
+		testClass.subscribe("bar", mock(Consumer.class));
+		//WHEN
+		//THEN
+		assertTrue(testClass.hasNoSubscribers("foo"));
+		assertFalse(testClass.hasNoSubscribers("bar"));
 	}
 
 }
