@@ -3,6 +3,7 @@ package com.flightstats.datahub.app.config;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.datahub.app.config.metrics.GraphiteConfiguration;
+import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
 import com.flightstats.datahub.dao.RowKeyStrategy;
 import com.flightstats.datahub.dao.YearMonthDayRowKeyStrategy;
 import com.flightstats.datahub.model.DataHubCompositeValue;
@@ -53,6 +54,7 @@ class DataHubCommonModule extends JerseyServletModule {
 		bind(SubscriptionRoster.class).in(Singleton.class);
 		bind(DataHubKeyRenderer.class).in(Singleton.class);
 		bind(DataHubKeyGenerator.class).in(Singleton.class);
+		bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
 		bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
 		bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
 		}).to(YearMonthDayRowKeyStrategy.class);
