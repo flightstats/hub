@@ -15,8 +15,8 @@ class PerChannelTimedRequestDispatcher implements RequestDispatcher {
 	private final AnnotatedElement annotatedElement;
 	private final RequestDispatcher delegate;
 
-	public PerChannelTimedRequestDispatcher(MetricRegistry perChannelTimedMethodDispatchAdapter, AnnotatedElement annotatedElement, RequestDispatcher delegate) {
-		this.registry = perChannelTimedMethodDispatchAdapter;
+	public PerChannelTimedRequestDispatcher(MetricRegistry metricRegistry, AnnotatedElement annotatedElement, RequestDispatcher delegate) {
+		this.registry = metricRegistry;
 		this.annotatedElement = annotatedElement;
 		this.delegate = delegate;
 	}
