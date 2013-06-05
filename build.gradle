@@ -114,10 +114,10 @@ dependencies {
     compile group: 'org.eclipse.jetty', name: 'jetty-security', version: '9.0.0.v20130308'
     compile group: 'org.eclipse.jetty.websocket', name: 'websocket-server', version: '9.0.0.v20130308'
     compile group: 'org.eclipse.jetty.websocket', name: 'websocket-common', version: '9.0.0.v20130308'
-    compile group: 'com.sun.jersey', name: 'jersey-core', version: '1.17'
-    compile group: 'com.sun.jersey', name: 'jersey-json', version: '1.17'
-    compile group: 'com.sun.jersey', name: 'jersey-servlet', version: '1.17'
-    compile group: 'com.sun.jersey', name: 'jersey-server', version: '1.17'
+    compile group: 'com.sun.jersey', name: 'jersey-core', version: '1.17.1'
+    compile group: 'com.sun.jersey', name: 'jersey-json', version: '1.17.1'
+    compile group: 'com.sun.jersey', name: 'jersey-servlet', version: '1.17.1'
+    compile group: 'com.sun.jersey', name: 'jersey-server', version: '1.17.1'
     compile group: 'com.sun.jersey.contribs', name: 'jersey-guice', version: '1.17'
     compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.9.5'
     compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.9.5'
@@ -137,7 +137,14 @@ dependencies {
     compile group: "ch.qos.logback", name: "logback-classic", version: "1.0.13"
     compile group: "org.slf4j", name: "slf4j-api", version: "1.7.2"
     compile group: "org.slf4j", name: "jul-to-slf4j", version: "1.7.2"
-    compile group: "com.hazelcast", name: "hazelcast", version: "2.5"
+	compile group: "com.hazelcast", name: "hazelcast", version: "2.5"
+	compile group: "com.codahale.metrics", name: "metrics-core", version: "3.0.0-BETA2"
+	compile group: "com.codahale.metrics", name: "metrics-graphite", version: "3.0.0-BETA2"
+	compile group: "com.codahale.metrics", name: "metrics-servlets", version: "3.0.0-BETA2"
+	compile group: "com.codahale.metrics", name: "metrics-jersey", version: "3.0.0-BETA2"
+	compile group: "com.codahale.metrics", name: "metrics-logback", version: "3.0.0-BETA2"
+	compile group: "com.codahale.metrics", name: "metrics-jvm", version: "3.0.0-BETA2"
+	compile group: "com.yammer.metrics", name: "metrics-jetty", version: "2.2.0"
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
