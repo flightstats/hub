@@ -45,6 +45,7 @@ public class SingleChannelResource {
 
 	@GET
 	@Timed
+	@PerChannelTimed(operationName = "metadata", channelNamePathParameter = "channelName")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Linked<MetadataResponse> getChannelMetadata(@PathParam("channelName") String channelName) {
 		if (!channelDao.channelExists(channelName)) {
