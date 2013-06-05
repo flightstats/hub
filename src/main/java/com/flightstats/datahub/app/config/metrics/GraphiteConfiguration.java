@@ -12,12 +12,15 @@ import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.datahub.app.config.metrics.KeyPrefixedMetricSet.prefix;
 
 public class GraphiteConfiguration {
+
 	@Inject
 	public GraphiteConfiguration(
 			MetricRegistry registry, SubscriptionRoster subscriptions,
@@ -46,12 +49,20 @@ public class GraphiteConfiguration {
 	private void createReporter(MetricRegistry registry, String graphiteHost, int graphitePort) {
 		final Graphite graphite = new Graphite(new InetSocketAddress(graphiteHost, graphitePort));
 		final GraphiteReporter reporter = GraphiteReporter.forRegistry(registry)
-														  .prefixedWith("datahub")
+														  .prefixedWith(buildPrefix())
 														  .convertRatesTo(TimeUnit.SECONDS)
 														  .convertDurationsTo(TimeUnit.MILLISECONDS)
 														  .filter(MetricFilter.ALL)
 														  .build(graphite);
 		reporter.start(5, TimeUnit.SECONDS);
+	}
+
+	private String buildPrefix() {
+		try {
+			return "datahub." + InetAddress.getLocalHost().getHostName().replaceFirst("\\..*", "");
+		} catch (UnknownHostException e) {
+			throw new RuntimeException("Error determining local hostname");
+		}
 	}
 
 }
