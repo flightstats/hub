@@ -6,17 +6,26 @@ import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.sun.jersey.api.Responses;
+import com.sun.jersey.core.header.MediaTypes;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.flightstats.datahub.service.CustomHttpHeaders.CREATION_DATE_HEADER;
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -40,7 +49,8 @@ public class ChannelContentResource {
 	}
 
 	@GET
-	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id) {
+	@Produces
+	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id, @HeaderParam( "Accept" ) String accept ) {
 		DataHubKey key = keyRenderer.fromString(id);
 		Optional<LinkedDataHubCompositeValue> optionalResult = channelDao.getValue(channelName, key);
 
@@ -48,20 +58,37 @@ public class ChannelContentResource {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
 		LinkedDataHubCompositeValue compositeValue = optionalResult.get();
-		Response.ResponseBuilder builder = Response.status(Response.Status.OK);
 
-		String contentType = compositeValue.getContentType();
-		// Only if we had a content type stored with the data do we specify one here.
-		// If unspecified, the framework will default to application/octet-stream
-		if (!isNullOrEmpty(contentType)) {
-			builder.type(contentType);
+		List<MediaType> acceptableContentTypes = accept != null ?
+		                                         MediaTypes.createMediaTypes( accept.split( "," ) ) :
+		                                         MediaTypes.GENERAL_MEDIA_TYPE_LIST;
+		MediaType actualContentType = isNullOrEmpty(compositeValue.getContentType()) ?
+		                              MediaType.APPLICATION_OCTET_STREAM_TYPE :
+		                              MediaType.valueOf(compositeValue.getContentType());
+		if (isCompatibleContentType(acceptableContentTypes, actualContentType)) {
+			Response.ResponseBuilder builder = Response.status(Response.Status.OK)
+				.type(actualContentType)
+				.entity(compositeValue.getData())
+				.header(CREATION_DATE_HEADER.getHeaderName(), dateTimeFormatter.print(new DateTime(key.getDate())));
+			addPreviousLink(compositeValue, builder);
+			addNextLink(compositeValue, builder);
+			return builder.build();
 		}
-		builder.entity(compositeValue.getData());
+		else {
+			return Responses.notAcceptable().build();
+		}
+	}
 
-		builder.header(CREATION_DATE_HEADER.getHeaderName(), dateTimeFormatter.print(new DateTime(key.getDate())));
-		addPreviousLink(compositeValue, builder);
-		addNextLink(compositeValue, builder);
-		return builder.build();
+	private boolean isCompatibleContentType( List<MediaType> acceptableContentTypes, MediaType actualContentType )
+	{
+		boolean isCompatibleContentType = false;
+		for ( MediaType acceptableContentType : acceptableContentTypes ) {
+			if ( acceptableContentType.isCompatible( actualContentType ) ) {
+				isCompatibleContentType = true;
+				break;
+			}
+		}
+		return isCompatibleContentType;
 	}
 
 	private void addPreviousLink(LinkedDataHubCompositeValue compositeValue, Response.ResponseBuilder builder) {
