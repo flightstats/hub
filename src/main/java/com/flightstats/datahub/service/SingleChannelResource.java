@@ -1,8 +1,12 @@
 package com.flightstats.datahub.service;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.annotation.Timed;
+import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.MetadataResponse;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.service.eventing.SubscriptionDispatcher;
 import com.flightstats.rest.Linked;
@@ -28,16 +32,20 @@ public class SingleChannelResource {
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 	private final ChannelLockExecutor channelLockExecutor;
 	private final SubscriptionDispatcher subscriptionDispatcher;
+	private final MetricRegistry registry;
 
 	@Inject
-	public SingleChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, ChannelLockExecutor channelLockExecutor, SubscriptionDispatcher subscriptionDispatcher) {
+	public SingleChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, ChannelLockExecutor channelLockExecutor, SubscriptionDispatcher subscriptionDispatcher, MetricRegistry registry) {
 		this.channelDao = channelDao;
 		this.linkBuilder = linkBuilder;
 		this.channelLockExecutor = channelLockExecutor;
 		this.subscriptionDispatcher = subscriptionDispatcher;
+		this.registry = registry;
 	}
 
 	@GET
+	@Timed
+	@PerChannelTimed(operationName = "metadata", channelNamePathParameter = "channelName")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Linked<MetadataResponse> getChannelMetadata(@PathParam("channelName") String channelName) {
 		if (!channelDao.channelExists(channelName)) {
@@ -62,8 +70,9 @@ public class SingleChannelResource {
 		return latestId.get().getDate();
 	}
 
-
 	@POST
+	@Timed(name = "all-channels.insert")
+	@PerChannelTimed(operationName = "insert", channelNamePathParameter = "channelName")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response insertValue(@HeaderParam("Content-Type") final String contentType, @PathParam(
 			"channelName") final String channelName, final byte[] data) throws Exception {

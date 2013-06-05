@@ -1,11 +1,7 @@
 package com.flightstats.datahub.app.config;
 
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.ChannelCreationRequest;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.model.serialize.*;
-import com.flightstats.datahub.service.MetadataResponse;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.flightstats.rest.*;
 import org.codehaus.jackson.Version;
