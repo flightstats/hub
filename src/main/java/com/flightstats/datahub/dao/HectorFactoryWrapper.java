@@ -1,5 +1,6 @@
 package com.flightstats.datahub.dao;
 
+import me.prettyprint.cassandra.service.ColumnSliceIterator;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
@@ -54,5 +55,9 @@ public class HectorFactoryWrapper {
 
 	public <K, N, V> SliceQuery<K, N, V> createSliceQuery(Keyspace keyspace, Serializer<K> keySerializer, Serializer<N> nameSerializer, Serializer<V> valueSerializer) {
 		return HFactory.createSliceQuery(keyspace, keySerializer, nameSerializer, valueSerializer);
+	}
+
+	public <K, N, V> ColumnSliceIterator<K, N, V> createColumnSliceIterator(SliceQuery<K, N, V> query, N start, N finish, boolean reversed) {
+		return new ColumnSliceIterator<>(query, start, finish, reversed);
 	}
 }

@@ -31,6 +31,7 @@ public class CassandraChannelsCollection {
 	static final String CHANNELS_ROW_KEY = "DATA_HUB_CHANNELS";
 	static final String CHANNELS_LATEST_ROW_KEY = "DATA_HUB_CHANNELS_LATEST";
 	static final String CHANNELS_COLUMN_FAMILY_NAME = "channelMetadata";
+	static final String MAX_CHANNEL_NAME = Strings.repeat("~", 255);
 
 	private final CassandraConnector connector;
 	private final Serializer<ChannelConfiguration> channelConfigSerializer;
@@ -105,8 +106,7 @@ public class CassandraChannelsCollection {
 				channelConfigSerializer);
 		SliceQuery<String, String, ChannelConfiguration> query = sliceQuery.setKey(CHANNELS_ROW_KEY).setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME);
 
-		ColumnSliceIterator<String, String, ChannelConfiguration> iterator = new ColumnSliceIterator<>(query, null, Strings.repeat("~", 255), false);
-
+		ColumnSliceIterator<String, String, ChannelConfiguration> iterator = hector.createColumnSliceIterator(query, null, MAX_CHANNEL_NAME, false);
 		List<ChannelConfiguration> result = new ArrayList<>();
 		while (iterator.hasNext()) {
 			HColumn<String, ChannelConfiguration> column = iterator.next();
