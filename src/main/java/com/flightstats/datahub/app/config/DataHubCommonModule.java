@@ -19,6 +19,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
 import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
@@ -28,6 +29,7 @@ import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import static com.flightstats.datahub.service.eventing.WebSocketChannelNameExtractor.WEBSOCKET_URL_REGEX;
 
@@ -40,6 +42,12 @@ class DataHubCommonModule extends JerseyServletModule {
 		JERSEY_PROPERTIES.put(PackagesResourceConfig.PROPERTY_PACKAGES, "com.flightstats.datahub");
 	}
 
+	private final Properties properties;
+
+	public DataHubCommonModule(Properties properties) {
+		this.properties = properties;
+	}
+
 	@Override
 	protected void configureServlets() {
 		bindCommonBeans();
@@ -47,6 +55,7 @@ class DataHubCommonModule extends JerseyServletModule {
 	}
 
 	private void bindCommonBeans() {
+		Names.bindProperties(binder(), properties);
 		bind(MetricRegistry.class).in(Singleton.class);
 		bind(GraphiteConfiguration.class).asEagerSingleton();
 		bind(ChannelLockExecutor.class).in(Singleton.class);
