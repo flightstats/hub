@@ -4,11 +4,10 @@ import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
-import com.flightstats.rest.Linked;
-import com.google.common.base.Function;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
-import com.google.common.base.Strings;
+import com.flightstats.rest.Linked;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -33,7 +32,7 @@ public class ChannelResource {
 	private final CreateChannelValidator createChannelValidator;
 
 	@Inject
-	public ChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, CreateChannelValidator createChannelValidator ) {
+	public ChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, CreateChannelValidator createChannelValidator) {
 		this.channelDao = channelDao;
 		this.linkBuilder = linkBuilder;
 		this.createChannelValidator = createChannelValidator;
@@ -71,7 +70,7 @@ public class ChannelResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createChannel(ChannelCreationRequest channelCreationRequest) throws InvalidRequestException, AlreadyExistsException {
 		String channelName = channelCreationRequest.getName();
-		createChannelValidator.validate( channelCreationRequest );
+		createChannelValidator.validate(channelCreationRequest);
 
 		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration);
