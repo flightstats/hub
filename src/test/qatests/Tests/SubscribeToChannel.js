@@ -63,7 +63,7 @@ describe('Channel Subscription:', function() {
         var afterOpen = function() {
             async.parallel([
                 function(callback){
-                    dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         gu.debugLog('Posted first value ', DEBUG);
                         uriA = uri;
@@ -71,7 +71,7 @@ describe('Channel Subscription:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         gu.debugLog('Posted second value ', DEBUG);
                         uriB = uri;
@@ -142,7 +142,7 @@ describe('Channel Subscription:', function() {
 
         var mainTest = function() {
             async.times(numUpdates, function(n, next) {
-                dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
+                dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
                     gu.debugLog('Posted data #'+ n, DEBUG);
                     next(null, uri);
                 });
@@ -208,7 +208,7 @@ describe('Channel Subscription:', function() {
             // Post TWO messages to channel
             async.parallel([
                 function(callback){
-                    dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         gu.debugLog('Posted first value ', DEBUG);
                         uri1 = uri;
@@ -216,7 +216,7 @@ describe('Channel Subscription:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         gu.debugLog('Posted second value ', DEBUG);
                         uri2 = uri;
@@ -337,7 +337,7 @@ describe('Channel Subscription:', function() {
             // broadcast message; confirm socket 1 received
             gu.debugLog('...entering socket1 Open function', DEBUG);
 
-            dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
+            dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 gu.debugLog('Posted first value ', DEBUG);
                 uri1 = uri;
@@ -350,7 +350,7 @@ describe('Channel Subscription:', function() {
 
             expect(socket2.responseQueue.length).to.equal(0);
 
-            dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
+            dhh.postData({channelUri: channelUri, data: ranU.randomString(50)}, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 gu.debugLog('Posted second value ', DEBUG);
                 uri2 = uri;
@@ -498,7 +498,7 @@ describe('Channel Subscription:', function() {
         fickleSocket.ws.on('close', function(code, message) {
             gu.debugLog('Fickle socket closed', VERBOSE);
 
-            dhh.postData(channelUri, ranU.randomString(50), function(res, uri) {
+            dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 gu.debugLog('Posted value ', VERBOSE);
                 postedUri = uri;

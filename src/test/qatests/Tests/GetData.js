@@ -56,7 +56,7 @@ describe('GET data:', function() {
 
         // post data and save location
         before(function(done) {
-            dhh.postData(mainChannelUri, randomPayload, function(res, packetUri) {
+            dhh.postData({channelUri: mainChannelUri, data: randomPayload}, function(res, packetUri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 var index = packetUri.lastIndexOf('/');
@@ -94,7 +94,7 @@ describe('GET data:', function() {
 
         it('(Acceptance) Creation time returned in header', function(done) {
 
-            dhh.postData(mainChannelUri, randomPayload, function(res, packetUri) {
+            dhh.postData({channelUri: mainChannelUri, data: randomPayload}, function(res, packetUri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 var pMetadata = new dhh.packetMetadata(res.body);
@@ -118,7 +118,7 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postData(mainChannelUri, randomPayload, function(res, packetUri) {
+                    dhh.postData({channelUri: mainChannelUri, data: randomPayload}, function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
 
@@ -126,7 +126,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(mainChannelUri, dhh.getRandomPayload(), function(res, packetUri) {
+                    dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
 
@@ -184,7 +184,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelA.uri, dhh.getRandomPayload(), function(res, packetUri) {
+                    dhh.postData({channelUri: channelA.uri, data: dhh.getRandomPayload()}, function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
                         channelA.dataUri = packetUri;
@@ -194,7 +194,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelB.uri, dhh.getRandomPayload(), function(res, packetUri) {
+                    dhh.postData({channelUri: channelB.uri, data: dhh.getRandomPayload()}, function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
                         channelB.dataUri = packetUri;
@@ -246,7 +246,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelUri, dhh.getRandomPayload(), function(myRes, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestUri(channelUri, function(latestUri) {
@@ -309,7 +309,7 @@ describe('GET data:', function() {
 
             async.waterfall([
                 function(callback){
-                    dhh.postData(channelUri, payload1, function(myRes, myUri) {
+                    dhh.postData({channelUri: channelUri, data: payload1}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(channelUri, function(myData) {
@@ -320,7 +320,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelUri, payload2, function(myRes, myUri) {
+                    dhh.postData({channelUri: channelUri, data: payload2}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(channelUri, function(myData) {
@@ -331,7 +331,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelUri, payload3, function(myRes, myUri) {
+                    dhh.postData({channelUri: channelUri, data: payload3}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(channelUri, function(myData) {
@@ -375,7 +375,7 @@ describe('GET data:', function() {
         it('GET on Channel returns correct link to latest data set', function(done) {
             var payload = ranU.randomString(100);
 
-            dhh.postData(channelUri, payload, function(postRes, postUri) {
+            dhh.postData({channelUri: channelUri, data: payload}, function(postRes, postUri) {
                 expect(gu.isHTTPSuccess(postRes.status)).to.be.true;
 
                 dhh.getLatestDataFromChannel(channelUri, function(latestData) {
@@ -392,7 +392,7 @@ describe('GET data:', function() {
 
             async.waterfall([
                 function(callback){
-                    dhh.postData(mainChannelUri, payload, function(myRes, myUri) {
+                    dhh.postData({channelUri: mainChannelUri, data: payload}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(mainChannelUri, function(myData) {
@@ -402,7 +402,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(mainChannelUri, '', function(myRes, myUri) {
+                    dhh.postData({channelUri: mainChannelUri, data: ''}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(mainChannelUri, function(myData) {
@@ -439,19 +439,39 @@ describe('GET data:', function() {
         // Test where specified content type doesn't match actual content type (shouldn't matter, the DH should return specified content type).
         // Test with a range of content types.
 
+        var postDataAndConfirmContentType = function(channelUri, myContentType, callback) {
+
+            var payload = dhh.getRandomPayload();
+
+            superagent.agent().post(channelUri)
+                .set('Content-Type', myContentType)
+                .send(payload)
+                .end(function(err, res) {
+                    if (err) throw err;
+                    expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                    var uri = res.body._links.self.href;
+
+                    superagent.agent().get(uri)
+                        .end(function(err2, res2) {
+                            if (err2) throw err2;
+                            expect(res2.type.toLowerCase()).to.equal(myContentType.toLowerCase());
+
+                            callback(res2);
+                        });
+                });
+        };
+
         it('Acceptance - Content Type that was specified when POSTing data is returned on GET', function(done){
 
-            dhh.postDataAndConfirmContentType(mainChannelUri, 'text/plain', function(res) {
+            postDataAndConfirmContentType(mainChannelUri, 'text/plain', function(res) {
                 done();
             });
 
         });
 
-        // application Content-Types
         it('Content-Type for application/* (19 types)', function(done){
             async.each(appContentTypes, function(ct, nullCallback) {
-                //console.log('CT: '+ ct);
-                dhh.postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
+                postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
                     nullCallback();
                 });
             }, function(err) {
@@ -462,11 +482,9 @@ describe('GET data:', function() {
             });
         });
 
-        // image Content-Types
         it('Content-Type for image/* (7 types)', function(done){
             async.each(imageContentTypes, function(ct, nullCallback) {
-                //console.log('CT: '+ ct);
-                dhh.postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
+                postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
                     nullCallback();
                 });
             }, function(err) {
@@ -477,11 +495,9 @@ describe('GET data:', function() {
             });
         });
 
-        // message Content-Types
         it('Content-Type for message/* (4 types)', function(done){
             async.each(messageContentTypes, function(ct, nullCallback) {
-                //console.log('CT: '+ ct);
-                dhh.postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
+                postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
                     nullCallback();
                 });
             }, function(err) {
@@ -496,7 +512,7 @@ describe('GET data:', function() {
         it('Content-Type for textContentTypes/* (8 types)', function(done){
             async.each(textContentTypes, function(ct, nullCallback) {
                 //console.log('CT: '+ ct);
-                dhh.postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
+                postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
                     nullCallback();
                 });
             }, function(err) {
@@ -537,7 +553,67 @@ describe('GET data:', function() {
 
         });
 
-        // TODO ? multi-part type testing?
+        // https://www.pivotaltracker.com/story/show/44729883
+        it('Trying to GET data with the wrong Content-Type should return 406', function(done) {
+
+            dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                expect(postRes.status).to.equal(gu.HTTPresponses.Created);
+
+                dhh.getDataFromChannel({uri: dataUri, accepts: 'image/gif'}, function(err, getRes, data) {
+                    expect(getRes.statusCode).to.equal(gu.HTTPresponses.Not_Acceptable);
+
+                    done();
+                })
+            })
+
+        })
+
+        // https://www.pivotaltracker.com/story/show/44729883
+        it('GET with Accept: */* is fine', function(done) {
+
+            dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                expect(postRes.status).to.equal(gu.HTTPresponses.Created);
+
+                dhh.getDataFromChannel({uri: dataUri, accepts: '*/*'}, function(err, getRes, data) {
+                    expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
+
+                    done();
+                })
+            })
+
+        })
+
+        // https://www.pivotaltracker.com/story/show/44729883
+        it('multiple Content-Types are fine as long as one is a match for the right type', function(done) {
+
+            dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                expect(postRes.status).to.equal(gu.HTTPresponses.Created);
+
+                dhh.getDataFromChannel({uri: dataUri, accepts: '*/*, image/gif'}, function(err, getRes, data) {
+                    expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
+
+                    done();
+                })
+            })
+
+        })
+
+        // https://www.pivotaltracker.com/story/show/44729883
+        it('wildcard per type is fine if type matches (application/*)', function(done) {
+
+            dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                expect(postRes.status).to.equal(gu.HTTPresponses.Created);
+
+                dhh.getDataFromChannel({uri: dataUri, accepts: 'application/*'}, function(err, getRes, data) {
+                    expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
+
+                    done();
+                })
+            })
+
+        })
+
+
 
     });
 
@@ -562,7 +638,7 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postData(channelUri, dhh.getRandomPayload(), function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
@@ -576,7 +652,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelUri, dhh.getRandomPayload(), function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(myUri)
@@ -603,7 +679,7 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postData(channelUri, dhh.getRandomPayload(), function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
@@ -617,7 +693,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelUri, dhh.getRandomPayload(), function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
 
@@ -631,7 +707,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelUri, dhh.getRandomPayload(), function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(myUri)
@@ -680,7 +756,7 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postData(channelUri, dhh.getRandomPayload(), function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
@@ -694,7 +770,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelUri, dhh.getRandomPayload(), function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(firstValueUri)
@@ -723,7 +799,7 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postData(channelUri, dhh.getRandomPayload(), function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
                         if (VERBOSE) {gu.debugLog('First value at: '+ firstValueUri);}
@@ -731,7 +807,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelUri, dhh.getRandomPayload(), function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
                         if (VERBOSE) {gu.debugLog('Second value at: '+ secondValueUri);}
@@ -739,7 +815,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData(channelUri, dhh.getRandomPayload(), function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         thirdValueUri = myUri;
                         if (VERBOSE) {gu.debugLog('Third value at: '+ thirdValueUri);}

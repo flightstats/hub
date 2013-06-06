@@ -38,9 +38,9 @@ describe('Load tests - POST data:', function(){
         loadChannelKeys = [];  // channel.uri (to fetch data) and channel.data, e.g. { con {uri: x, data: y}}
 
     var postAndConfirmBigFile = function(fileLocation, callback) {
-        payload = fs.readFileSync(fileLocation, "utf8");
+        var payload = fs.readFileSync(fileLocation, "utf8");
 
-        dhh.postData(channelUri, payload, function(res, uri) {
+        dhh.postData({channelUri: channelUri, data: payload}, function(res, uri) {
             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
             dhh.confirmExpectedData(uri, payload, function(didMatch) {
@@ -79,7 +79,7 @@ describe('Load tests - POST data:', function(){
             for (var i = 1; i <= numIterations; i++)
             {
                 var thisName = dhh.getRandomChannelName(),
-                    thisPayload = ranU.randomString(Math.round(Math.random() * 50));
+                    thisPayload = dhh.getRandomPayload();
 
                 loadChannels[thisName] = {
                     channelUri: null,
@@ -95,14 +95,27 @@ describe('Load tests - POST data:', function(){
                 function(cnName, cb) {
 
                     dhh.createChannel(cnName, function(createRes, cnUri) {
+                        if (gu.HTTPresponses.Created != createRes.status) {
+                            gu.debugLog('Failed to create channel "'+ cnName +'"');
+
+                            cb(null);
+                        }
+
                         loadChannels[cnName].channelUri = cnUri;
                         expect(createRes.status).to.equal(gu.HTTPresponses.Created);
                         gu.debugLog('CREATED new channel at: '+ cnUri, VERBOSE);
 
-                        dhh.postData(cnUri, loadChannels[cnName].data, function(postRes, theDataUri) {
+                        dhh.postData({channelUri: cnUri, data: loadChannels[cnName].data}, function(postRes, theDataUri) {
+                            if (!gu.isHTTPSuccess(postRes.status)) {
+                                gu.debugLog('Failed to INSERT data for channel '+ cnUri);
+
+                                cb(null);
+                            }
+
                             loadChannels[cnName].dataUri = theDataUri;
                             gu.debugLog('INSERTED data at: '+ theDataUri, VERBOSE);
 
+                            gu.debugLog('About to confirm data at :'+ theDataUri, VERBOSE);
                             dhh.confirmExpectedData(theDataUri, loadChannels[cnName].data, function(didMatch){
                                 expect(didMatch).to.be.true;
                                 gu.debugLog('CONFIRMED data with GET at: '+ theDataUri, VERBOSE);
