@@ -4,15 +4,21 @@ import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
+import com.flightstats.rest.Linked;
+import com.google.common.base.Function;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.Map;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -36,8 +42,27 @@ public class ChannelResource {
 	@GET
 	@Timed
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getChannels() {
-		throw new RuntimeException("Channels metadata is not yet implemented");
+	public Response getChannels() {
+		Iterable<ChannelConfiguration> channels = channelDao.getChannels();
+		Iterable<String> channelNames = Iterables.transform(channels, new Function<ChannelConfiguration, String>() {
+			@Override
+			public String apply(ChannelConfiguration input) {
+				return input.getName();
+			}
+		});
+		ImmutableMap<String, URI> result = Maps.toMap(channelNames, new Function<String, URI>() {
+			@Override
+			public URI apply(String channelName) {
+				return linkBuilder.buildChannelUri(channelName);
+			}
+		});
+
+		Linked.Builder<?> r2 = Linked.justLinks();
+		for (Map.Entry<String, URI> entry : result.entrySet()) {
+			r2.withLink(entry.getKey(), entry.getValue());
+		}
+		Linked<?> theResult = r2.build();
+		return Response.ok(theResult).build();
 	}
 
 	@POST

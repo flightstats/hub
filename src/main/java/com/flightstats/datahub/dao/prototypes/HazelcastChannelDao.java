@@ -6,6 +6,7 @@ import com.google.common.base.Optional;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -37,6 +38,11 @@ public class HazelcastChannelDao implements ChannelDao {
 	}
 
 	@Override
+	public Iterable<ChannelConfiguration> getChannels() {
+		return Collections.unmodifiableCollection(channelConfigurations.values());
+	}
+
+	@Override
 	public int countChannels() {
 		return channelConfigurations.size();
 	}
@@ -51,13 +57,15 @@ public class HazelcastChannelDao implements ChannelDao {
 			DataHubKey newKey = new DataHubKey(new Date(), newSequence);
 
 			DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, data);
-			LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, Optional.fromNullable(oldLastKey), Optional.<DataHubKey>absent());
+			LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, Optional.fromNullable(oldLastKey),
+					Optional.<DataHubKey>absent());
 			//first put the actual value in.
 			channelValues.put(newKey, newLinkedValue);
 			//then link the old previous to the new value
 			if (oldLastKey != null) {
 				LinkedDataHubCompositeValue previousLinkedValue = channelValues.get(oldLastKey);
-				channelValues.put(oldLastKey, new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(), Optional.of(newKey)));
+				channelValues.put(oldLastKey,
+						new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(), Optional.of(newKey)));
 			}
 			//finally, make it the latest
 			latestPerChannel.put(channelName, newKey);
