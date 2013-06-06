@@ -105,13 +105,13 @@ describe('IN PROGRESS - Restful Scenarios', function() {
 
                     var payload = ranU.randomString(100);
 
-                    dhh.postData(channelUri, payload, function(postRes, dataUri) {
+                    dhh.postData({channelUri: channelUri, data: payload}, function(postRes, dataUri) {
                         expect(gu.isHTTPSuccess(postRes.status)).to.be.true;
 
                         dhh.getLatestUri(channelUri, function(latestUri, latestError) {
                             expect(latestError).to.be.null;
 
-                            dhh.getDataFromChannel(latestUri, function(err, data) {
+                            dhh.getDataFromChannel({uri: latestUri}, function(err, res, data) {
                                 expect(err).to.be.null;
                                 expect(data).to.equal(payload);
 

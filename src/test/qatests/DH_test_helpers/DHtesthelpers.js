@@ -16,6 +16,7 @@ var chai = require('chai'),
     crypto = require('crypto'),
     async = require('async'),
     http = require('http'),
+    url = require('url'),
     ws = require('ws'),
     lodash = require('lodash');
 
@@ -32,7 +33,7 @@ var DEBUG = false;
 
 
 var getRandomPayload = function() {
-    return ranU.randomString(ranU.randomNum(50));
+    return ranU.randomString(10 + ranU.randomNum(40));
 }
 exports.getRandomPayload = getRandomPayload;
 
@@ -191,7 +192,7 @@ var createChannel = function(myChannelName, myCallback) {
 exports.createChannel = createChannel;
 
 var getRandomChannelName = function() {
-    return ranU.randomString(ranU.randomNum(31), ranU.limitedRandomChar);
+    return ranU.randomString( 5 + ranU.randomNum(26), ranU.limitedRandomChar);
 }
 exports.getRandomChannelName = getRandomChannelName;
 
@@ -342,18 +343,22 @@ exports.packetPOSTHeader = packetPOSTHeader;
 /**
  * Inserts data into channel.
  *
- * @param channelUri
- * @param myData
+ * @param params: .channelUri, .data, .contentType=application/x-www-form-urlencoded (optional)
  * @param myCallback: response, uri to data
  */
-var postData = function(channelUri, myData, myCallback) {
+var postData = function(params, myCallback) {
     var dataUri = null,
+        channelUri = params.channelUri,
+        myData = params.data,
+        contentType = (params.hasOwnProperty('contentType')) ? params.contentType : 'application/x-www-form-urlencoded',
         VERBOSE = true;
+
 
     gu.debugLog('Channel Uri: '+ channelUri, VERBOSE);
     gu.debugLog('Data: '+ myData, VERBOSE);
 
     superagent.agent().post(channelUri)
+        .set('Content-Type', contentType)
         .send(myData)
         .end(function(err, res) {
             if (!gu.isHTTPSuccess(res.status)) {
@@ -371,30 +376,6 @@ var postData = function(channelUri, myData, myCallback) {
 };
 exports.postData = postData;
 
-// Returns GET response in callback
-var postDataAndConfirmContentType = function(channelUri, myContentType, myCallback) {
-
-    var payload = getRandomPayload();
-
-    superagent.agent().post(channelUri)
-        .set('Content-Type', myContentType)
-        .send(payload)
-        .end(function(err, res) {
-            if (err) throw err;
-            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-            var uri = res.body._links.self.href;
-
-            superagent.agent().get(uri)
-                .end(function(err2, res2) {
-                    if (err2) throw err2;
-                    expect(res2.type.toLowerCase()).to.equal(myContentType.toLowerCase());
-
-                    myCallback(res2);
-                });
-        });
-};
-exports.postDataAndConfirmContentType = postDataAndConfirmContentType;
-
 // Calls back with data
 var getLatestDataFromChannel = function(channelUri, callback) {
 
@@ -402,7 +383,7 @@ var getLatestDataFromChannel = function(channelUri, callback) {
 
     getLatestUri(channelUri, function(uri) {
 
-        getDataFromChannel(uri, function(err, data) {
+        getDataFromChannel({uri: uri}, function(err, res, data) {
             var result = (null != err) ? err : data;
 
             callback(result);
@@ -411,22 +392,55 @@ var getLatestDataFromChannel = function(channelUri, callback) {
 };
 exports.getLatestDataFromChannel = getLatestDataFromChannel;
 
-// Returns error (null if none), data
-var getDataFromChannel = function(dataUri, callback) {
+/**
+ * Git yo data from the channel.
+ *
+ * @param params: .uri (to the data), .accepts (optional - split multiple options with semicolons), .debug (optional)
+ * @param callback: error || null, response, data
+ */
+var getDataFromChannel = function(params, callback) {
 
-    var myData = '';
+    var myData = '',
+        dataUri = params.uri,
+        accepts = (params.hasOwnProperty('accepts')) ? params.accepts : null,
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
     gu.debugLog('DataUri in getDataFromChannel(): '+ dataUri);
 
-    http.get(dataUri, function(res) {
+    var options = url.parse(dataUri);
+
+    if (null != accepts) {
+        options['headers'] = {
+            accept: accepts
+        };
+    }
+
+    if (VERBOSE) {
+        gu.debugLog('\nDump of options object for request: ');
+        console.dir(options);
+    }
+
+    var req = http.request(options, function(res) {
         res.on('data', function (chunk) {
             myData += chunk;
         }).on('end', function(){
-            callback(null, myData);
+                gu.debugLog('Success. At end of data.', VERBOSE);
+
+            callback(null, res, myData);
             });
     }).on('error', function(e) {
-            callback(e, null);
+            gu.debugLog('Error in response');
+
+            callback(e, null, null);
         });
+
+    req.on('error', function(e) {
+        gu.debugLog('Error in request');
+
+        callback(e, null, null);
+    });
+
+    req.end();
 }
 exports.getDataFromChannel = getDataFromChannel;
 
@@ -437,7 +451,7 @@ var getUrisAndDataSinceLocation = function(startUri, callback) {
         VERBOSE = false;
 
     // First Uri, get data, stash both
-    getDataFromChannel(startUri, function(err, data) {
+    getDataFromChannel({uri: startUri}, function(err, getRes, data) {
         if (err) {
             callback(err, null);
         }
@@ -455,7 +469,7 @@ var getUrisAndDataSinceLocation = function(startUri, callback) {
                         next = pGetHeader.getNext();
 
                         if (null != next) {
-                            getDataFromChannel(next, function(getErr, getData) {
+                            getDataFromChannel({uri: next}, function(getErr, getRes, getData) {
                                 if (getErr) {
                                     cb(getErr);
                                 }
