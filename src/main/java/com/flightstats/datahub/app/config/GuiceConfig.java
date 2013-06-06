@@ -20,7 +20,7 @@ public class GuiceConfig extends GuiceServletContextListener {
 
 	@Override
 	protected Injector getInjector() {
-		return Guice.createInjector(createDataStoreModule(), new DataHubCommonModule());
+		return Guice.createInjector(new DataHubCommonModule(properties), createDataStoreModule());
 	}
 
 	private Module createDataStoreModule() {
