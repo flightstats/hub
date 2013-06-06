@@ -6,6 +6,7 @@ import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.flightstats.datahub.util.TimeProvider;
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.cassandra.service.ColumnSliceIterator;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -13,14 +14,15 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.CountQuery;
 import me.prettyprint.hector.api.query.QueryResult;
+import me.prettyprint.hector.api.query.SliceQuery;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Date;
+import java.util.Iterator;
 
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class CassandraChannelsCollectionTest {
@@ -178,5 +180,38 @@ public class CassandraChannelsCollectionTest {
 
 		//THEN
 		assertEquals(expected, result);
+	}
+
+	@Test
+	public void testGetChannels() throws Exception {
+		//GIVEN
+		ChannelConfiguration expected1 = new ChannelConfiguration("one", null);
+		ChannelConfiguration expected2 = new ChannelConfiguration("two", null);
+
+		SliceQuery<String, String, ChannelConfiguration> sliceQuery = mock(SliceQuery.class, RETURNS_DEEP_STUBS);
+		HColumn column1 = mock(HColumn.class);
+		HColumn column2 = mock(HColumn.class);
+		ColumnSliceIterator<String, String, ChannelConfiguration> sliceIterator = mock(ColumnSliceIterator.class);
+
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, null, keyRenderer);
+
+		//WHEN
+		when(column1.getValue()).thenReturn(expected1);
+		when(column2.getValue()).thenReturn(expected2);
+		when(connector.getKeyspace()).thenReturn(keyspace);
+		when(hector.createSliceQuery(keyspace, StringSerializer.get(), StringSerializer.get(), valueSerializer)).thenReturn(sliceQuery);
+		when(sliceQuery.setKey(CHANNELS_ROW_KEY)).thenReturn(sliceQuery);
+		when(sliceQuery.setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME)).thenReturn(sliceQuery);
+		when(hector.createColumnSliceIterator(sliceQuery, null, CassandraChannelsCollection.MAX_CHANNEL_NAME, false)).thenReturn(sliceIterator);
+		when(sliceIterator.hasNext()).thenReturn(true, true, false);
+		when(sliceIterator.next()).thenReturn(column1, column2);
+
+		Iterable<ChannelConfiguration> result = testClass.getChannels();
+
+		//THEN
+		Iterator<ChannelConfiguration> iterator = result.iterator();
+		assertEquals(expected1, iterator.next());
+		assertEquals(expected2, iterator.next());
+		assertFalse(iterator.hasNext());
 	}
 }
