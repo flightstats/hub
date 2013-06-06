@@ -9,6 +9,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +19,9 @@ public class InMemoryChannelDao implements ChannelDao {
 
 	private final Map<String, ChannelConfiguration> channelConfigurations = Maps.newConcurrentMap();
 	private final Map<String, DataHubChannelValueKey> latestPerChannel = Maps.newConcurrentMap();
-	private final Cache<DataHubChannelValueKey, LinkedDataHubCompositeValue> channelValues = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).build();
+	private final Cache<DataHubChannelValueKey, LinkedDataHubCompositeValue> channelValues = CacheBuilder.newBuilder()
+																										 .expireAfterWrite(1, TimeUnit.HOURS)
+																										 .build();
 
 	@Inject
 	public InMemoryChannelDao(TimeProvider timeProvider) {
@@ -44,6 +47,11 @@ public class InMemoryChannelDao implements ChannelDao {
 	}
 
 	@Override
+	public Iterable<ChannelConfiguration> getChannels() {
+		return Collections.unmodifiableCollection(channelConfigurations.values());
+	}
+
+	@Override
 	public int countChannels() {
 		return channelConfigurations.size();
 	}
@@ -55,7 +63,8 @@ public class InMemoryChannelDao implements ChannelDao {
 		DataHubKey newKey = new DataHubKey(timeProvider.getDate(), newSequence);
 		DataHubChannelValueKey newDataHubChannelValueKey = new DataHubChannelValueKey(newKey, channelName);
 		DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, data);
-		LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, optionalFromCompositeKey(oldLastKey), Optional.<DataHubKey>absent());
+		LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, optionalFromCompositeKey(oldLastKey),
+				Optional.<DataHubKey>absent());
 
 		//note: the order of operations here is actually fairly significant, to avoid races, so I'm calling it out explicitly with comments.
 		//first put the actual value in.
@@ -80,7 +89,8 @@ public class InMemoryChannelDao implements ChannelDao {
 			LinkedDataHubCompositeValue previousLinkedValue = channelValues.getIfPresent(oldLastKey);
 			//in case the value has expired.
 			if (previousLinkedValue != null) {
-				channelValues.put(oldLastKey, new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(), Optional.of(newKey.asDataHubKey())));
+				channelValues.put(oldLastKey, new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(),
+						Optional.of(newKey.asDataHubKey())));
 			}
 		}
 	}

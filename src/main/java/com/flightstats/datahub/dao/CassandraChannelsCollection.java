@@ -4,16 +4,22 @@ import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.flightstats.datahub.util.TimeProvider;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.cassandra.service.ColumnSliceIterator;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
+import me.prettyprint.hector.api.query.SliceQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Encapsulates the channel creation, existence checks, and associated metadata.
@@ -90,6 +96,24 @@ public class CassandraChannelsCollection {
 		QueryResult<HColumn<String, ChannelConfiguration>> result = columnQuery.execute();
 		HColumn<String, ChannelConfiguration> column = result.get();
 		return column == null ? null : column.getValue();
+	}
+
+	public Iterable<ChannelConfiguration> getChannels() {
+		Keyspace keyspace = connector.getKeyspace();
+		SliceQuery<String, String, ChannelConfiguration> sliceQuery = hector.createSliceQuery(keyspace, StringSerializer.get(),
+				StringSerializer.get(),
+				channelConfigSerializer);
+		SliceQuery<String, String, ChannelConfiguration> query = sliceQuery.setKey(CHANNELS_ROW_KEY).setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME);
+
+		ColumnSliceIterator<String, String, ChannelConfiguration> iterator = new ColumnSliceIterator<>(query, null, Strings.repeat("~", 255), false);
+
+		List<ChannelConfiguration> result = new ArrayList<>();
+		while (iterator.hasNext()) {
+			HColumn<String, ChannelConfiguration> column = iterator.next();
+			ChannelConfiguration config = column.getValue();
+			result.add(config);
+		}
+		return result;
 	}
 
 	public void updateLastUpdatedKey(String channelName, DataHubKey key) {
