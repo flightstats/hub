@@ -16,7 +16,13 @@ repositories {
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'
         }
-        ivy {
+	    ivy {
+		    url "http://artifactory.office/artifactory/simple/services-release"
+		    layout "pattern", {
+			    artifact "[organization]/[revision]/[module]/[artifact]-[revision](-[suffix]).[ext]"
+		    }
+	    }
+	    ivy {
             url "http://artifactory.office/artifactory/simple/services-dev"
             layout "pattern", {
                 artifact "[organization]/[module]/[revision]/[artifact]-[revision](-[suffix]).[ext]"

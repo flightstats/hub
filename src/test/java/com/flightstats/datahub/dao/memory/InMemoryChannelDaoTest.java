@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import java.util.Date;
 
-import static junit.framework.TestCase.assertFalse;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;

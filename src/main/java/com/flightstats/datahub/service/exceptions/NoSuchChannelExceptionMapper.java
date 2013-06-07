@@ -1,6 +1,7 @@
 package com.flightstats.datahub.service.exceptions;
 
 import com.flightstats.datahub.model.exception.NoSuchChannelException;
+import com.flightstats.services.common.jersey.exception.mappers.AbstractExceptionMapper;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
