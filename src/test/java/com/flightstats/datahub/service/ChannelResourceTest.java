@@ -3,6 +3,8 @@ package com.flightstats.datahub.service;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
+import com.flightstats.datahub.model.exception.AlreadyExistsException;
+import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.flightstats.rest.Linked;
 import org.junit.Test;
 
@@ -33,6 +35,7 @@ public class ChannelResourceTest {
 													  .build();
 		UriInfo uriInfo = mock(UriInfo.class);
 		ChannelDao dao = mock(ChannelDao.class);
+		CreateChannelValidator createChannelValidator = mock( CreateChannelValidator.class );
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
@@ -42,7 +45,7 @@ public class ChannelResourceTest {
 		when(linkBuilder.buildLatestUri(channelName)).thenReturn(URI.create(latestUri));
 		when(linkBuilder.buildWsLinkFor(channelName)).thenReturn(URI.create(wsUri));
 
-		ChannelResource testClass = new ChannelResource(dao, linkBuilder);
+		ChannelResource testClass = new ChannelResource(dao, linkBuilder, createChannelValidator );
 
 		Response response = testClass.createChannel(channelCreationRequest);
 
@@ -53,20 +56,31 @@ public class ChannelResourceTest {
 		assertEquals(expected, response.getEntity());
 	}
 
-	@Test
+	@Test( expected = InvalidRequestException.class )
 	public void testChannelCreation_emptyChannelName() throws Exception {
 		String channelName = "  ";
 
 		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName);
 		ChannelDao dao = mock(ChannelDao.class);
+		CreateChannelValidator createChannelValidator = new CreateChannelValidator( dao );
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 
-		ChannelResource testClass = new ChannelResource(dao, linkBuilder);
+		ChannelResource testClass = new ChannelResource(dao, linkBuilder, createChannelValidator);
 
-		Response response = testClass.createChannel(channelCreationRequest);
+		testClass.createChannel(channelCreationRequest);
+	}
 
-		verify(dao, never()).createChannel(channelName);
+	@Test( expected = AlreadyExistsException.class )
+	public void testChannelCreation_channelAlreadyExists() throws Exception {
+		String channelName = "zippy";
 
-		assertEquals(400, response.getStatus());
+		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName);
+		ChannelDao dao = mock(ChannelDao.class);
+		CreateChannelValidator createChannelValidator = new CreateChannelValidator( dao );
+		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
+
+		ChannelResource testClass = new ChannelResource(dao, linkBuilder, createChannelValidator);
+		when( dao.channelExists( any( String.class ) ) ).thenReturn( true );
+		testClass.createChannel(channelCreationRequest);
 	}
 }
