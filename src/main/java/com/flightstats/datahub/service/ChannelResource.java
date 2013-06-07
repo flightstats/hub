@@ -4,6 +4,8 @@ import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
+import com.flightstats.datahub.model.exception.AlreadyExistsException;
+import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.google.common.base.Strings;
 
 import javax.inject.Inject;
@@ -22,11 +24,13 @@ public class ChannelResource {
 
 	private final ChannelDao channelDao;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
+	private final CreateChannelValidator createChannelValidator;
 
 	@Inject
-	public ChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder) {
+	public ChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, CreateChannelValidator createChannelValidator ) {
 		this.channelDao = channelDao;
 		this.linkBuilder = linkBuilder;
+		this.createChannelValidator = createChannelValidator;
 	}
 
 	@GET
@@ -40,11 +44,9 @@ public class ChannelResource {
 	@Timed
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createChannel(ChannelCreationRequest channelCreationRequest) {
+	public Response createChannel(ChannelCreationRequest channelCreationRequest) throws InvalidRequestException, AlreadyExistsException {
 		String channelName = channelCreationRequest.getName();
-		if (channelName == null || Strings.isNullOrEmpty(channelName.trim())) {
-			return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\":\"Channel name cannot be blank\"}").build();
-		}
+		createChannelValidator.validate( channelCreationRequest );
 
 		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration);
