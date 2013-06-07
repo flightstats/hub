@@ -27,7 +27,7 @@ public class CreateChannelValidator
 
 	private void validateChannelName( String channelName ) throws InvalidRequestException
 	{
-		if ( Strings.isNullOrEmpty( Strings.nullToEmpty( channelName ).trim() ) )
+		if ( Strings.nullToEmpty( channelName ).trim().isEmpty() )
 		{
 			throw new InvalidRequestException( "{\"error\":\"Channel name cannot be blank\"}" );
 		}
