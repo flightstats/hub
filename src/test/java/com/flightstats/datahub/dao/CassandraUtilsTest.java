@@ -4,8 +4,8 @@ import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import org.junit.Test;
 
 import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.TestCase.assertSame;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 public class CassandraUtilsTest {
 
