@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.net.URI;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static junit.framework.TestCase.assertFalse;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.*;
 
 public class SubscriptionDispatchWorkerTest {
