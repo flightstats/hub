@@ -44,6 +44,7 @@ class DataHub(object):
         print("  latestfile <file>   : Save the latest item into a file")
         print("  previous            : Fetch the previous item")
         print("  next                : Fetch the next item")
+        print("  list                : List all channel names")
         print("  ? or help           : Show this screen")
         print("  quit                : Quit or exit")
 
@@ -55,6 +56,8 @@ class DataHub(object):
             return
         elif line in ("?", "help"):
             return self.help()
+        elif line == "list":
+            return self._list_channels()
         elif line.startswith("chan"):
             parts = re.split("\s+", line)
             if len(parts) > 1:
@@ -140,6 +143,13 @@ class DataHub(object):
         response = conn.getresponse()
         self._prev = self._extract_link(self._find_prev_link(response))
         self._next = self._extract_link(self._find_next_link(response))
+        print(response.status, response.reason)
+        self._show_response_if_text(response)
+
+    def _list_channels(self):
+        conn = httplib.HTTPConnection(self._server)
+        conn.request("GET", "/channel", None, dict())
+        response = conn.getresponse()
         print(response.status, response.reason)
         self._show_response_if_text(response)
 
