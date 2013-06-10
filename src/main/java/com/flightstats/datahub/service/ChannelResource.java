@@ -6,6 +6,7 @@ import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
+import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -16,7 +17,10 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static com.flightstats.rest.Linked.linked;
@@ -29,12 +33,14 @@ public class ChannelResource {
 
 	private final ChannelDao channelDao;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
+	private final UriInfo uriInfo;
 	private final CreateChannelValidator createChannelValidator;
 
 	@Inject
-	public ChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, CreateChannelValidator createChannelValidator) {
+	public ChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, CreateChannelValidator createChannelValidator, UriInfo uriInfo) {
 		this.channelDao = channelDao;
 		this.linkBuilder = linkBuilder;
+		this.uriInfo = uriInfo;
 		this.createChannelValidator = createChannelValidator;
 	}
 
@@ -49,19 +55,24 @@ public class ChannelResource {
 				return input.getName();
 			}
 		});
-		ImmutableMap<String, URI> result = Maps.toMap(channelNames, new Function<String, URI>() {
+		ImmutableMap<String, URI> mappedChannels = Maps.toMap(channelNames, new Function<String, URI>() {
 			@Override
 			public URI apply(String channelName) {
 				return linkBuilder.buildChannelUri(channelName);
 			}
 		});
 
-		Linked.Builder<?> r2 = Linked.justLinks();
-		for (Map.Entry<String, URI> entry : result.entrySet()) {
-			r2.withLink(entry.getKey(), entry.getValue());
+		Linked.Builder<?> responseBuilder = Linked.justLinks();
+		responseBuilder.withLink("self", uriInfo.getRequestUri());
+
+		List<HalLink> channelLinks = new ArrayList<>(mappedChannels.size());
+		for (Map.Entry<String, URI> entry : mappedChannels.entrySet()) {
+			HalLink link = new HalLink(entry.getKey(), entry.getValue());
+			channelLinks.add(link);
 		}
-		Linked<?> theResult = r2.build();
-		return Response.ok(theResult).build();
+		responseBuilder.withLinks("channels", channelLinks);
+		Linked<?> result = responseBuilder.build();
+		return Response.ok(result).build();
 	}
 
 	@POST
