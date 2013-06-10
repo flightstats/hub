@@ -8,6 +8,7 @@ The Data Hub is a robust platform for data distribution.
 There are some descriptions of this here:
 http://confluence.office/display/TECH/Data+Hub
 
+* [list channels](#list-channels)
 * [create a channel](#create-a-channel)
 * [fetch channel metadata](#fetch-channel-metadata)
 * [insert content into channel](#insert-content-into-channel)
@@ -19,6 +20,32 @@ For the purposes of this document, the datahub is at http://datahub:8080.
 
 In development, it is actually at: http://datahub-01.cloud-east.dev:8080
 
+## list channels
+
+To obtain the list of channels:
+
+`GET http://datahub:8080/channel`
+
+On success:  `HTTP/1.1 200 OK`
+Content-Type is `application/json`
+
+```json
+{
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:8080/channel"
+    },
+    "channels" : [ {
+      "name" : "foo",
+      "href" : "http://localhost:8080/channel/foo"
+    }, {
+      "name" : "test_0_26638372987508774",
+      "href" : "http://localhost:8080/channel/test_0_26638372987508774"
+    } ]
+  }
+}
+```
+    
 ## create a channel
 
 Channel names _are case sensitive_, are limited to _48 characters_, and may only contain `a-z`, `A-Z`, and `0-9`.  
