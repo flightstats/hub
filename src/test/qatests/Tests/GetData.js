@@ -432,12 +432,7 @@ describe('GET data:', function() {
     });
 
 
-    // Provide a client with the content type when retrieving a value. https://www.pivotaltracker.com/story/show/43221431
-    describe('Content type is returned in response:', function() {
-        // (acceptance)  Submit a request to save some data with a specified content type (image/jpeg, for example).
-        //          Verify that the same content type is returned when retrieving the data.
-        // Test where specified content type doesn't match actual content type (shouldn't matter, the DH should return specified content type).
-        // Test with a range of content types.
+    describe('Content type:', function() {
 
         var postDataAndConfirmContentType = function(channelUri, myContentType, callback) {
 
@@ -461,161 +456,162 @@ describe('GET data:', function() {
                 });
         };
 
-        it('Acceptance - Content Type that was specified when POSTing data is returned on GET', function(done){
+        // Provide a client with the content type when retrieving a value. https://www.pivotaltracker.com/story/show/43221431
+        describe('the Content Type on creation is returned on GET', function() {
+            it('Acceptance - Content Type that was specified when POSTing data is returned on GET', function(done){
 
-            postDataAndConfirmContentType(mainChannelUri, 'text/plain', function(res) {
-                done();
-            });
-
-        });
-
-        it('Content-Type for application/* (19 types)', function(done){
-            async.each(appContentTypes, function(ct, nullCallback) {
-                postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
-                    nullCallback();
-                });
-            }, function(err) {
-                if (err) {
-                    throw err;
-                };
-                done();
-            });
-        });
-
-        it('Content-Type for image/* (7 types)', function(done){
-            async.each(imageContentTypes, function(ct, nullCallback) {
-                postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
-                    nullCallback();
-                });
-            }, function(err) {
-                if (err) {
-                    throw err;
-                };
-                done();
-            });
-        });
-
-        it('Content-Type for message/* (4 types)', function(done){
-            async.each(messageContentTypes, function(ct, nullCallback) {
-                postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
-                    nullCallback();
-                });
-            }, function(err) {
-                if (err) {
-                    throw err;
-                };
-                done();
-            });
-        });
-
-        // text Content-Types
-        it('Content-Type for textContentTypes/* (8 types)', function(done){
-            async.each(textContentTypes, function(ct, nullCallback) {
-                //console.log('CT: '+ ct);
-                postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
-                    nullCallback();
-                });
-            }, function(err) {
-                if (err) {
-                    throw err;
-                };
-                done();
-            });
-        });
-
-
-        it('Made-up legal Content-Type should be accepted and returned', function(done) {
-            // Note that the DH accepts illegal Content-Types, but does require a slash between two strings, so that's
-            //  the standard I'm going with.
-            var myContentType = ranU.randomString(ranU.randomNum(10), ranU.limitedRandomChar);
-            myContentType += '/'+ ranU.randomString(ranU.randomNum(10), ranU.limitedRandomChar);
-
-            var payload = dhh.getRandomPayload();
-
-            superagent.agent().post(mainChannelUri)
-                .set('Content-Type', myContentType)
-                .send(payload)
-                .end(function(err, res) {
-                    if (err) throw err;
-                    expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-                    var cnMetadata = new dhh.channelMetadata(res.body),
-                        uri = cnMetadata.getChannelUri();
-
-                    superagent.agent().get(uri)
-                        .end(function(err2, res2) {
-                            if (err2) throw err2;
-                            expect(gu.isHTTPSuccess(res.status)).to.equal(true);
-                            expect(res2.type.toLowerCase()).to.equal(myContentType.toLowerCase());
-                            done();
-                        });
-
-                });
-
-        });
-
-        // https://www.pivotaltracker.com/story/show/44729883
-        it('Trying to GET data with the wrong Content-Type should return 406', function(done) {
-
-            dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
-                expect(postRes.status).to.equal(gu.HTTPresponses.Created);
-
-                dhh.getDataFromChannel({uri: dataUri, accepts: 'image/gif'}, function(err, getRes, data) {
-                    expect(getRes.statusCode).to.equal(gu.HTTPresponses.Not_Acceptable);
-
+                postDataAndConfirmContentType(mainChannelUri, 'text/plain', function(res) {
                     done();
-                })
-            })
+                });
 
+            });
+
+            it('Content-Type for application/* (19 types)', function(done){
+                async.each(appContentTypes, function(ct, nullCallback) {
+                    postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
+                        nullCallback();
+                    });
+                }, function(err) {
+                    if (err) {
+                        throw err;
+                    };
+                    done();
+                });
+            });
+
+            it('Content-Type for image/* (7 types)', function(done){
+                async.each(imageContentTypes, function(ct, nullCallback) {
+                    postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
+                        nullCallback();
+                    });
+                }, function(err) {
+                    if (err) {
+                        throw err;
+                    };
+                    done();
+                });
+            });
+
+            it('Content-Type for message/* (4 types)', function(done){
+                async.each(messageContentTypes, function(ct, nullCallback) {
+                    postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
+                        nullCallback();
+                    });
+                }, function(err) {
+                    if (err) {
+                        throw err;
+                    };
+                    done();
+                });
+            });
+
+            // text Content-Types
+            it('Content-Type for textContentTypes/* (8 types)', function(done){
+                async.each(textContentTypes, function(ct, nullCallback) {
+                    //console.log('CT: '+ ct);
+                    postDataAndConfirmContentType(mainChannelUri, ct, function(res) {
+                        nullCallback();
+                    });
+                }, function(err) {
+                    if (err) {
+                        throw err;
+                    };
+                    done();
+                });
+            });
+
+
+            it('Made-up legal Content-Type should be accepted and returned', function(done) {
+                // Note that the DH accepts illegal Content-Types, but does require a slash between two strings, so that's
+                //  the standard I'm going with.
+                var myContentType = ranU.randomString(ranU.randomNum(10), ranU.limitedRandomChar);
+                myContentType += '/'+ ranU.randomString(ranU.randomNum(10), ranU.limitedRandomChar);
+
+                var payload = dhh.getRandomPayload();
+
+                superagent.agent().post(mainChannelUri)
+                    .set('Content-Type', myContentType)
+                    .send(payload)
+                    .end(function(err, res) {
+                        if (err) throw err;
+                        expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                        var cnMetadata = new dhh.channelMetadata(res.body),
+                            uri = cnMetadata.getChannelUri();
+
+                        superagent.agent().get(uri)
+                            .end(function(err2, res2) {
+                                if (err2) throw err2;
+                                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                                expect(res2.type.toLowerCase()).to.equal(myContentType.toLowerCase());
+                                done();
+                            });
+
+                    });
+
+            });
         })
 
         // https://www.pivotaltracker.com/story/show/44729883
-        it('GET with Accept: */* is fine', function(done) {
+        describe('The accept content type specified in GET must include the type originally specified', function() {
 
-            dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
-                expect(postRes.status).to.equal(gu.HTTPresponses.Created);
+            it('Trying to GET data with the wrong Content-Type should return 406', function(done) {
 
-                dhh.getDataFromChannel({uri: dataUri, accepts: '*/*'}, function(err, getRes, data) {
-                    expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
+                dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                    expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
-                    done();
+                    dhh.getDataFromChannel({uri: dataUri, accepts: 'image/gif'}, function(err, getRes, data) {
+                        expect(getRes.statusCode).to.equal(gu.HTTPresponses.Not_Acceptable);
+
+                        done();
+                    })
                 })
+
             })
 
-        })
+            it('GET with Accept: */* is fine', function(done) {
 
-        // https://www.pivotaltracker.com/story/show/44729883
-        it('multiple Content-Types are fine as long as one is a match for the right type', function(done) {
+                dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                    expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
-            dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
-                expect(postRes.status).to.equal(gu.HTTPresponses.Created);
+                    dhh.getDataFromChannel({uri: dataUri, accepts: '*/*'}, function(err, getRes, data) {
+                        expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
 
-                dhh.getDataFromChannel({uri: dataUri, accepts: '*/*, image/gif'}, function(err, getRes, data) {
-                    expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
-
-                    done();
+                        done();
+                    })
                 })
+
             })
 
-        })
+            it('multiple Content-Types are fine as long as one is a match for the right type', function(done) {
 
-        // https://www.pivotaltracker.com/story/show/44729883
-        it('wildcard per type is fine if type matches (application/*)', function(done) {
+                dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                    expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
-            dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
-                expect(postRes.status).to.equal(gu.HTTPresponses.Created);
+                    dhh.getDataFromChannel({uri: dataUri, accepts: '*/*, image/gif'}, function(err, getRes, data) {
+                        expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
 
-                dhh.getDataFromChannel({uri: dataUri, accepts: 'application/*'}, function(err, getRes, data) {
-                    expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
-
-                    done();
+                        done();
+                    })
                 })
+
             })
 
-        })
+            it('wildcard per type is fine if type matches (application/*)', function(done) {
 
+                dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                    expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
+                    dhh.getDataFromChannel({uri: dataUri, accepts: 'application/*'}, function(err, getRes, data) {
+                        expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
 
-    });
+                        done();
+                    })
+                })
+
+            })
+        });
+
+    })
 
     describe('Get previous item link:', function() {
         var myChannel,

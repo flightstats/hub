@@ -17,7 +17,8 @@ var chai = require('chai'),
     lodash = require('lodash');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
-    gu = require('../genericUtils.js');
+    gu = require('../genericUtils.js'),
+    ranU = require('../randomUtils.js');
 
 var DEBUG = true;
 
@@ -128,48 +129,98 @@ describe('Create Channel: ', function(){
 
         // See:  https://www.pivotaltracker.com/story/show/49566971
         it('blank name not allowed', function(done){
+
             dhh.createChannel('', function(res) {
                 expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
-                gu.debugLog('Response status: '+ res.status, DEBUG);
+                gu.debugLog('Response status: '+ res.status, false);
+
                 done();
             });
 
         });
 
-        // TODO name consisting only of whitespace not allowed
+        it('name cannot consist only of whitespace', function(done) {
 
-        // TODO whitespace is trimmed from name
+            dhh.createChannel('    ', function(res) {
+                expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
 
-        // TODO name cannot contain forward slash
+                done();
+            })
+        })
 
-        it('no / empty payload not allowed', function(done) {
+        it.skip('BUG: https://www.pivotaltracker.com/story/show/51434073 - whitespace is trimmed from name', function(done) {
+            var name = dhh.getRandomChannelName();
+
+            dhh.createChannel('  '+ name +'  ', function(res, uri) {
+                expect(res.status).to.equal(gu.HTTPresponses.Created);
+
+                dhh.getChannel({uri: uri}, function(getRes, body) {
+                    expect(getRes.status).to.equal(gu.HTTPresponses.OK);
+                    expect(body.name).to.equal(name);
+
+                    done();
+                })
+            })
+        })
+
+        // https://www.pivotaltracker.com/story/show/51434189  to return 400 instead of 500
+        it('name cannot contain a forward slash', function(done) {
+            var name = ranU.randomString(10) + '/'+ ranU.randomString(10);
+
+            dhh.createChannel(name, function(res) {
+                expect(gu.isHTTPError(res.status)).to.be.true;
+                gu.debugLog('res.status: '+ res.status);
+                gu.debugLog('name: '+ name);
+
+                done();
+            })
+        })
+
+
+        it.skip('BUG: https://www.pivotaltracker.com/story/show/46667409 - no / empty payload not allowed', function(done) {
+
             superagent.agent().post(dhh.URL_ROOT +'/channel')
                 .set('Content-Type', 'application/json')
                 .send('')
                 .end(function(err, res) {
-                    expect(gu.isHTTPError(res.status)).to.equal(true);
+                    expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
                     gu.debugLog('Response status: '+ res.status, DEBUG);
+
                     done();
                 });
         });
 
-        // https://www.pivotaltracker.com/story/show/44113267
-        // Attempting to create a channel with a name already in use will return an error. NOT IMPLEMENTED YET.
-        it.skip('<CODE NOT IMPLEMENTED> Error if attempting to create channel with a name already in use', function(done) {
-            dhh.createChannel(channelName, function(res) {
-                expect(gu.isHTTPError(res.status)).to.equal(true);
-                done();
+        describe('channel names must be unique', function() {
+
+            // TODO: Multiple channels with same name created at same time?
+
+            // https://www.pivotaltracker.com/story/show/44113267
+            it('return 409 if attempting to create channel with a name already in use', function(done) {
+                dhh.createChannel(channelName, function(res) {
+                    expect(res.status).to.equal(gu.HTTPresponses.Conflict);
+
+                    done();
+                });
             });
-        });
+
+            it('can create two channels whose names differ only in case', function(done) {
+                var base = dhh.getRandomChannelName(),
+                    firstName = base +'z',
+                    secondName = base +'Z';
+
+                dhh.createChannel(firstName, function(firstRes) {
+                    expect(firstRes.status).to.equal(gu.HTTPresponses.Created);
+
+                    dhh.createChannel(secondName, function(secondRes) {
+                        expect(secondRes.status).to.equal(gu.HTTPresponses.Created);
+
+                        done();
+                    })
+                })
+            })
+        })
     })
 
-    /*  Other cases to consider:
 
-        * Multiple channels with same name created at same time? Unlikely scenario -- also code not yet in place to prevent
-            channels with same name.
-        * Name with
-
-
-     */
 
 });

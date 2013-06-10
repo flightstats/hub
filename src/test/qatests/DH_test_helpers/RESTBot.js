@@ -113,7 +113,7 @@ var Bot = function Bot(params) {
             setTimeout(function() {
                 nextAction(_self, function(err) {
                     if (null != err) {
-                        this.report('*_*_*_*_*  ERROR *_*_*_*_*: '+ err);
+                        _self.report('*_*_*_*_*  ERROR *_*_*_*_*: '+ err);
                         lastAction();
                     }
                     else if ((0 == actionQueue.length) && (_self.behaviors.length > 0)) {
