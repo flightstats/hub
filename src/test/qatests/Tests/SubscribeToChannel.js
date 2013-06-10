@@ -227,40 +227,6 @@ describe('Channel Subscription:', function() {
                 function(e, r){
 
                     // pass  (rewrote the stuff below and moved it out into testAllSockets() )
-                    /*
-                    gu.debugLog('In final part of async ', DEBUG);
-                    dhh.getLatestUriFromChannel(channelName, function(latestUri) {
-                        var firstUri = (latestUri == uri1) ? uri2 : uri1;
-
-                        //console.log('First uri: '+ firstUri);
-                        //console.log('Second uri: '+ latestUri);
-
-                        // Wait for some period of time for both values
-                        var endWait = Date.now() + (2 * WAIT_FOR_CHANNEL_RESPONSE_MS);
-
-                        while((numFullSockets() < numAgents) && (Date.now() < endWait)) {
-                            setTimeout(function () {
-                                // pass
-                            }, 100)
-                        };
-
-                        expect(numFullSockets()).to.equal(numAgents);
-
-                        for (var i = 0; i < sockets.length; i += 1) {
-                            var thisSocket = sockets[i];
-
-                            expect(thisSocket.responseQueue.length).to.equal(2);
-                            expect(thisSocket.responseQueue[0]).to.equal(firstUri);
-                            expect(thisSocket.responseQueue[1]).to.equal(latestUri);
-
-                            gu.debugLog('Final socket state for socket '+ thisSocket.name +' is '+ socket.ws.readyState, DEBUG);
-
-                            thisSocket.ws.close();
-                        }
-
-                        done();
-                    });
-                    */
                 });
         };
 
@@ -447,13 +413,9 @@ describe('Channel Subscription:', function() {
             postedUri,
             VERBOSE = true;
 
-        // Sequence:
-        // when both sockets are ready, have one disconnect
-        // on close event for the disconnecting socket, send a message
-        // ensure the remaining socket gets the message
-
         // Called when each socket is ready.
         var newSocketIsReady = function() {
+            gu.debugLog('...in newSocketIsReady()', VERBOSE);
             numReadySockets += 1;
             if (2 === numReadySockets) {
                 fickleSocket.ws.close();
@@ -461,18 +423,24 @@ describe('Channel Subscription:', function() {
             }
         };
 
+        // Called after message event has been handled
         var afterOnMessage = function() {
+            gu.debugLog('...in afterOnMessage()', VERBOSE);
 
-            // Allow a few seconds for the post to return with the uri
-            if ('undefined' == typeof postedUri) {
-                setTimeout(function() {
-                    expect(patientSocket.responseQueue.length).to.equal(1);
-                    expect(patientSocket.responseQueue[0]).to.equal(postedUri);
-                    gu.debugLog('Message received', VERBOSE);
-
-                    done();
-                }, 5000);
+            if ('undefined' != typeof postedUri) {
+                finishTest();
             }
+            // else, wait for the postData call to call finishTest()
+        }
+
+        // Because we cannot be sure whether the postData call will complete before the message event has fired, code
+        //  for each of those cases will check if both conditions have been met and then call this.
+        var finishTest = function() {
+            expect(patientSocket.responseQueue.length).to.equal(1);
+            expect(patientSocket.responseQueue[0]).to.equal(postedUri);
+            gu.debugLog('Message received', VERBOSE);
+
+            done();
         }
 
         // Create both sockets
@@ -502,6 +470,10 @@ describe('Channel Subscription:', function() {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 gu.debugLog('Posted value ', VERBOSE);
                 postedUri = uri;
+
+                if (patientSocket.responseQueue.length > 0) {
+                    finishTest();
+                }
             });
         })
     })
