@@ -36,11 +36,11 @@ Content-Type is `application/json`
       "href" : "http://localhost:8080/channel"
     },
     "channels" : [ {
-      "name" : "foo",
-      "href" : "http://localhost:8080/channel/foo"
+      "name" : "stumptown",
+      "href" : "http://localhost:8080/channel/stumptown"
     }, {
-      "name" : "test_0_26638372987508774",
-      "href" : "http://localhost:8080/channel/test_0_26638372987508774"
+      "name" : "ptown",
+      "href" : "http://localhost:8080/channel/ptown"
     } ]
   }
 }
