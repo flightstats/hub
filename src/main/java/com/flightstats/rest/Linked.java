@@ -1,7 +1,13 @@
 package com.flightstats.rest;
 
+import com.google.common.base.Supplier;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 public class Linked<T> {
@@ -59,7 +65,7 @@ public class Linked<T> {
 	}
 
 	public static <T> Builder<T> linked(T object) {
-		return new Builder<T>(object);
+		return new Builder<>(object);
 	}
 
 	public static Builder<?> justLinks() {
@@ -68,6 +74,13 @@ public class Linked<T> {
 
 	public static class Builder<T> {
 		private final List<HalLink> links = new ArrayList<>();
+		private final Multimap<String, HalLink> multiLinks = Multimaps.newListMultimap(new HashMap<String, Collection<HalLink>>(),
+				new Supplier<List<HalLink>>() {
+					@Override
+					public List<HalLink> get() {
+						return new ArrayList<>();
+					}
+				});
 		private final T object;
 
 		public Builder(T object) {
@@ -84,8 +97,13 @@ public class Linked<T> {
 			return this;
 		}
 
+		public Builder<T> withLinks(String name, List<HalLink> links) {
+			multiLinks.putAll(name, links);
+			return this;
+		}
+
 		public Linked<T> build() {
-			return new Linked<>(new HalLinks(links), object);
+			return new Linked<>(new HalLinks(links, multiLinks), object);
 		}
 	}
 }
