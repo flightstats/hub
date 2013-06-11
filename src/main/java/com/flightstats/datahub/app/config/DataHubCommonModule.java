@@ -81,4 +81,5 @@ class DataHubCommonModule extends JerseyServletModule {
 	public InstrumentedResourceMethodDispatchAdapter buildMetricsAdapter(MetricRegistry registry) {
 		return new InstrumentedResourceMethodDispatchAdapter(registry);
 	}
+
 }

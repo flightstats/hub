@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service;
 
+import com.flightstats.datahub.cluster.ReentrantChannelLockFactory;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubKey;
@@ -106,7 +107,7 @@ public class SingleChannelResourceTest {
 		HalLink selfLink = new HalLink("self", itemUri);
 		HalLink channelLink = new HalLink("channel", channelUri);
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey);
-		channelLockExecutor = new ChannelLockExecutor();
+		channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 
 		when(dao.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(dataHubKey));
 
@@ -129,7 +130,7 @@ public class SingleChannelResourceTest {
 		byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
 
 		ValueInsertionResult result = new ValueInsertionResult(dataHubKey);
-		channelLockExecutor = new ChannelLockExecutor();
+		channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 
 		when(dao.insert(channelName, contentType, data)).thenReturn(result);
 

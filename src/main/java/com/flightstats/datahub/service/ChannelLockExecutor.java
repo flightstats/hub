@@ -1,29 +1,33 @@
 package com.flightstats.datahub.service;
 
+import com.flightstats.datahub.cluster.ChannelLockFactory;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
 public class ChannelLockExecutor {
 
 	private final ConcurrentMap<String, Lock> channelLocks;
+	private final ChannelLockFactory channelLockFactory;
 
-	public ChannelLockExecutor() {
-		this(new ConcurrentHashMap<String, Lock>());
+	@Inject
+	public ChannelLockExecutor(ChannelLockFactory channelLockFactory) {
+		this(new ConcurrentHashMap<String, Lock>(), channelLockFactory);
 	}
 
 	/**
 	 * This constructor only exists for testing and should not be used by production code.
 	 */
 	@VisibleForTesting
-	ChannelLockExecutor(ConcurrentMap<String, Lock> channelLocks) {
+	ChannelLockExecutor(ConcurrentMap<String, Lock> channelLocks, ChannelLockFactory channelLockFactory) {
 		this.channelLocks = channelLocks;
+		this.channelLockFactory = channelLockFactory;
 	}
 
 	public <T> T execute(String channelName, Callable<T> callable) throws Exception {
@@ -37,7 +41,7 @@ public class ChannelLockExecutor {
 	}
 
 	private Lock getLock(String channelName) {
-		ReentrantLock newLock = new ReentrantLock();
+		Lock newLock = channelLockFactory.newLock();
 		Lock existingLock = channelLocks.putIfAbsent(channelName, newLock);
 		return existingLock == null ? newLock : existingLock;
 	}

@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service;
 
+import com.flightstats.datahub.cluster.ReentrantChannelLockFactory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -7,10 +8,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -28,7 +26,7 @@ public class ChannelLockExecutorTest {
 
 	@Test
 	public void testExecuteReturnsCallableResult() throws Exception {
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks);
+		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -41,7 +39,7 @@ public class ChannelLockExecutorTest {
 
 	@Test
 	public void testExecuteCreatesLock() throws Exception {
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks);
+		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -55,7 +53,7 @@ public class ChannelLockExecutorTest {
 	@Test
 	public void testLockAlreadyExists() throws Exception {
 		locks.put(CHANNEL_NAME, lock);
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks);
+		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -70,7 +68,7 @@ public class ChannelLockExecutorTest {
 	@Test
 	public void testCallableExplodes() throws Exception {
 		locks.put(CHANNEL_NAME, lock);
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks);
+		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -88,7 +86,7 @@ public class ChannelLockExecutorTest {
 	@Test
 	public void testLockIsReleased() throws Exception {
 		locks.put(CHANNEL_NAME, lock);
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks);
+		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -101,7 +99,7 @@ public class ChannelLockExecutorTest {
 
 	@Test(expected = EsotericException.class)
 	public void testCallableThrows() throws Exception {
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks);
+		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
