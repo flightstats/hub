@@ -8,10 +8,6 @@ import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -20,6 +16,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,18 +46,11 @@ public class ChannelResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getChannels() {
 		Iterable<ChannelConfiguration> channels = channelDao.getChannels();
-		Iterable<String> channelNames = Iterables.transform(channels, new Function<ChannelConfiguration, String>() {
-			@Override
-			public String apply(ChannelConfiguration input) {
-				return input.getName();
-			}
-		});
-		ImmutableMap<String, URI> mappedChannels = Maps.toMap(channelNames, new Function<String, URI>() {
-			@Override
-			public URI apply(String channelName) {
-				return linkBuilder.buildChannelUri(channelName);
-			}
-		});
+		Map<String, URI> mappedChannels = new HashMap<>();
+		for (ChannelConfiguration channelConfiguration : channels) {
+			String channelName = channelConfiguration.getName();
+			mappedChannels.put(channelName, linkBuilder.buildChannelUri(channelName));
+		}
 
 		Linked.Builder<?> responseBuilder = Linked.justLinks();
 		responseBuilder.withLink("self", uriInfo.getRequestUri());
