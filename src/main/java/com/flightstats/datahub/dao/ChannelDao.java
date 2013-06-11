@@ -8,21 +8,23 @@ import com.google.common.base.Optional;
 
 public interface ChannelDao {
 
-    boolean channelExists(String channelName);
+	boolean channelExists(String channelName);
 
-    ChannelConfiguration createChannel(String name);
+	ChannelConfiguration createChannel(String name);
 
 	/**
 	 * Note, this operation is done within a front-end lock on the channel.  The implementation of this method
 	 * can assume that it will be the only insert called for this channel during execution.
 	 */
-    ValueInsertionResult insert(String channelName, String contentType, byte[] data);
+	ValueInsertionResult insert(String channelName, String contentType, byte[] data);
 
-    Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key);
+	Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key);
 
-    ChannelConfiguration getChannelConfiguration(String channelName);
+	ChannelConfiguration getChannelConfiguration(String channelName);
 
-    Optional<DataHubKey> findLatestId(String channelName);
+	Iterable<ChannelConfiguration> getChannels();
 
-    int countChannels();
+	Optional<DataHubKey> findLatestId(String channelName);
+
+	int countChannels();
 }
