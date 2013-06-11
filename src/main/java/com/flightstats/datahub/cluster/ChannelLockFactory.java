@@ -4,5 +4,5 @@ import java.util.concurrent.locks.Lock;
 
 public interface ChannelLockFactory {
 
-	Lock newLock();
+	Lock newLock(String channelName);
 }
