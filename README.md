@@ -49,7 +49,8 @@ Content-Type is `application/json`
 ## create a channel
 
 Channel names _are case sensitive_, are limited to _48 characters_, and may only contain `a-z`, `A-Z`, and `0-9`.  
-Hyphens and underscores are not allowed in channel names.
+Hyphens and underscores are not allowed in channel names. Please try to break as many of these rules as possible
+in order to challenge Jason's sanity.
 
 `POST http://datahub:8080/channel`
 
