@@ -137,7 +137,6 @@ dependencies {
     compile group: "ch.qos.logback", name: "logback-classic", version: "1.0.13"
     compile group: "org.slf4j", name: "slf4j-api", version: "1.7.2"
     compile group: "org.slf4j", name: "jul-to-slf4j", version: "1.7.2"
-    compile group: "com.hazelcast", name: "hazelcast", version: "2.5"
     compile group: "com.codahale.metrics", name: "metrics-core", version: "3.0.0-BETA2"
     compile group: "com.codahale.metrics", name: "metrics-graphite", version: "3.0.0-BETA2"
     compile group: "com.codahale.metrics", name: "metrics-servlets", version: "3.0.0-BETA2"
@@ -146,6 +145,7 @@ dependencies {
     compile group: "com.codahale.metrics", name: "metrics-jvm", version: "3.0.0-BETA2"
     compile group: "com.yammer.metrics", name: "metrics-jetty", version: "2.2.0"
     compile group: "com.hazelcast", name: "hazelcast", version: "2.6"
+    compile group: "com.hazelcast", name: "hazelcast-client", version: "2.6"
     compile(group: "com.flightstats.common", name: "rest", version: "latest.integration") {
         artifact {
             name = 'services-common-rest'

@@ -22,6 +22,12 @@ var ws = new WebSocket(url);
 ws.on('open', function () {
     console.log("Connected.")
 });
+ws.on('close', function () {
+    console.log("Disconnected")
+});
+ws.on('error', function (error) {
+    console.log("Error: " + error)
+});
 ws.on('message', function (message) {
     console.log('received: %s', message);
 });

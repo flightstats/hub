@@ -3,14 +3,12 @@ package com.flightstats.datahub.service;
 import com.flightstats.datahub.cluster.ChannelLockFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 
-@Singleton
 public class ChannelLockExecutor {
 
 	private final ConcurrentMap<String, Lock> channelLocks;
@@ -41,7 +39,7 @@ public class ChannelLockExecutor {
 	}
 
 	private Lock getLock(String channelName) {
-		Lock newLock = channelLockFactory.newLock();
+		Lock newLock = channelLockFactory.newLock(channelName);
 		Lock existingLock = channelLocks.putIfAbsent(channelName, newLock);
 		return existingLock == null ? newLock : existingLock;
 	}

@@ -4,6 +4,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.datahub.app.config.metrics.GraphiteConfiguration;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
+import com.flightstats.datahub.cluster.ChannelLockFactory;
+import com.flightstats.datahub.cluster.HazelcastChannelLockFactory;
 import com.flightstats.datahub.dao.RowKeyStrategy;
 import com.flightstats.datahub.dao.YearMonthDayRowKeyStrategy;
 import com.flightstats.datahub.model.DataHubCompositeValue;
@@ -20,6 +22,11 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
+import com.hazelcast.config.ClasspathXmlConfig;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.FileSystemXmlConfig;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
@@ -27,6 +34,7 @@ import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -35,6 +43,8 @@ import static com.flightstats.datahub.service.eventing.WebSocketChannelNameExtra
 
 class DataHubCommonModule extends JerseyServletModule {
 	private final static Map<String, String> JERSEY_PROPERTIES = new HashMap<>();
+
+	public static final String HAZELCAST_CONFIG_FILE = "hazelcast.config.file";
 
 	static {
 		JERSEY_PROPERTIES.put(ServletContainer.RESOURCE_CONFIG_CLASS, "com.sun.jersey.api.core.PackagesResourceConfig");
@@ -58,11 +68,12 @@ class DataHubCommonModule extends JerseyServletModule {
 		Names.bindProperties(binder(), properties);
 		bind(MetricRegistry.class).in(Singleton.class);
 		bind(GraphiteConfiguration.class).asEagerSingleton();
-		bind(ChannelLockExecutor.class).in(Singleton.class);
+		bind(ChannelLockExecutor.class).asEagerSingleton();
 		bind(SubscriptionDispatcher.class).in(Singleton.class);
 		bind(SubscriptionRoster.class).in(Singleton.class);
 		bind(DataHubKeyRenderer.class).in(Singleton.class);
 		bind(DataHubKeyGenerator.class).in(Singleton.class);
+		bind(ChannelLockFactory.class).to(HazelcastChannelLockFactory.class).in(Singleton.class);
 		bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
 		bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
 		bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
@@ -82,4 +93,15 @@ class DataHubCommonModule extends JerseyServletModule {
 		return new InstrumentedResourceMethodDispatchAdapter(registry);
 	}
 
+	@Provides
+	@Singleton
+	public HazelcastInstance buildHazelcast() throws FileNotFoundException {
+		Config config;
+		if (properties.contains(HAZELCAST_CONFIG_FILE)) {
+			config = new FileSystemXmlConfig((String) properties.get(HAZELCAST_CONFIG_FILE));
+		} else {
+			config = new ClasspathXmlConfig("hazelcast.conf.xml");
+		}
+		return Hazelcast.newHazelcastInstance(config);
+	}
 }
