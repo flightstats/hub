@@ -16,7 +16,8 @@ public class HazelcastChannelLockFactory implements ChannelLockFactory {
 
 	@Override
 	public Lock newLock(String channelName) {
-		return hazelcast.getLock(channelName);
+		String lockName = "CHANNEL_LOCK:" + channelName;
+		return hazelcast.getLock(lockName);
 
 	}
 }
