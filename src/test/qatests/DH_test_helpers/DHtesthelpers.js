@@ -163,7 +163,7 @@ exports.WSWrapper = WSWrapper;
  * Create a channel.
  *
  * @param myChannelName
- * @param myCallback: response, channelUri
+ * @param myCallback: response || error, channelUri || null (if error)
  */
 var createChannel = function(myChannelName, myCallback) {
     var myPayload = '{"name":"'+ myChannelName +'"}',
@@ -186,7 +186,7 @@ var createChannel = function(myChannelName, myCallback) {
             }
         }).on('error', function(e) {
             gu.debugLog('...in makeChannel.post.error()');
-            myCallback(e);
+            myCallback(e, null);
         });
 };
 exports.createChannel = createChannel;
@@ -572,6 +572,27 @@ var getLatestUri = function(channelUri, callback) {
 
 }
 exports.getLatestUri = getLatestUri;
+
+/**
+ * Lists all channels.
+ *
+ * @param params: .debug (optional)
+ * @param callback: response, array of channels
+ */
+var getAllChannels = function(params, callback) {
+    var uri = [URL_ROOT, 'channel'].join('/'),
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
+
+    gu.debugLog('uri for getAllChannels: '+ uri, VERBOSE);
+
+    superagent.agent().get(uri)
+        .end(function(err,res) {
+            if (err) {throw err};
+
+            callback(res, res.body._links.channels);
+        });
+}
+exports.getAllChannels = getAllChannels;
 
 
 

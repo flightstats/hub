@@ -163,8 +163,7 @@ describe('Create Channel: ', function(){
             })
         })
 
-        // https://www.pivotaltracker.com/story/show/51434189  to return 400 instead of 500
-        it('name cannot contain a forward slash', function(done) {
+        it.skip('BUG: https://www.pivotaltracker.com/story/show/51434189 -name cannot contain a forward slash', function(done) {
             var name = ranU.randomString(10) + '/'+ ranU.randomString(10);
 
             dhh.createChannel(name, function(res) {
@@ -176,8 +175,8 @@ describe('Create Channel: ', function(){
             })
         })
 
-
-        it.skip('BUG: https://www.pivotaltracker.com/story/show/46667409 - no / empty payload not allowed', function(done) {
+        // https://www.pivotaltracker.com/story/show/46667409
+        it('no / empty payload not allowed', function(done) {
 
             superagent.agent().post(dhh.URL_ROOT +'/channel')
                 .set('Content-Type', 'application/json')
