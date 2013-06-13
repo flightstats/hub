@@ -17,6 +17,7 @@ import com.flightstats.datahub.service.eventing.SubscriptionDispatcher;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.util.SingleProcessKeyGenerator;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -72,7 +73,7 @@ class DataHubCommonModule extends JerseyServletModule {
 		bind(SubscriptionDispatcher.class).in(Singleton.class);
 		bind(SubscriptionRoster.class).in(Singleton.class);
 		bind(DataHubKeyRenderer.class).in(Singleton.class);
-		bind(DataHubKeyGenerator.class).in(Singleton.class);
+		bind(DataHubKeyGenerator.class).to(SingleProcessKeyGenerator.class).in(Singleton.class);
 		bind(ChannelLockFactory.class).to(HazelcastChannelLockFactory.class).in(Singleton.class);
 		bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
 		bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
