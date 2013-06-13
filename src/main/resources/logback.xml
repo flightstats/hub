@@ -32,4 +32,6 @@
         <appender-ref ref="FILE"/>
         <appender-ref ref="SYSLOG"/>
     </root>
+
+    <logger name="com.sun.jersey.server.wadl.generators" level="WARN"/>
 </configuration>

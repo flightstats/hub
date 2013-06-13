@@ -1,6 +1,5 @@
 package com.flightstats.datahub.service;
 
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelDao;
@@ -32,15 +31,13 @@ public class SingleChannelResource {
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 	private final ChannelLockExecutor channelLockExecutor;
 	private final SubscriptionDispatcher subscriptionDispatcher;
-	private final MetricRegistry registry;
 
 	@Inject
-	public SingleChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, ChannelLockExecutor channelLockExecutor, SubscriptionDispatcher subscriptionDispatcher, MetricRegistry registry) {
+	public SingleChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, ChannelLockExecutor channelLockExecutor, SubscriptionDispatcher subscriptionDispatcher) {
 		this.channelDao = channelDao;
 		this.linkBuilder = linkBuilder;
 		this.channelLockExecutor = channelLockExecutor;
 		this.subscriptionDispatcher = subscriptionDispatcher;
-		this.registry = registry;
 	}
 
 	@GET
