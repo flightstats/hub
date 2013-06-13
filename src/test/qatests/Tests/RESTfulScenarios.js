@@ -91,31 +91,36 @@ describe('IN PROGRESS - Restful Scenarios', function() {
 
     describe('Standard scenarios: ', function() {
 
-        it('Create channel, get channel, insert content, get latest uri, get content', function(done) {
+        it('Create channel, list channels, get channel, insert content, get latest uri, get content', function(done) {
             channelName = dhh.getRandomChannelName();
 
             dhh.createChannel(channelName, function(createRes, createdUri) {
                 expect(gu.isHTTPSuccess(createRes.status)).to.be.true;
 
-                dhh.getChannel({'uri': createdUri}, function(getRes, getBody) {
-                    expect(gu.isHTTPSuccess(getRes.status)).to.be.true;
+                dhh.getAllChannels({}, function(getAllRes, allChannels) {
+                    var foundCn = lodash.find(allChannels, {'name': channelName}),
+                        cnUri = foundCn.href;
 
-                    var cnMetadata = new dhh.channelMetadata(getBody);
-                    channelUri = cnMetadata.getChannelUri();
+                    dhh.getChannel({'uri': cnUri}, function(getRes, getBody) {
+                        expect(gu.isHTTPSuccess(getRes.status)).to.be.true;
 
-                    var payload = ranU.randomString(100);
+                        var cnMetadata = new dhh.channelMetadata(getBody);
+                        channelUri = cnMetadata.getChannelUri();
 
-                    dhh.postData({channelUri: channelUri, data: payload}, function(postRes, dataUri) {
-                        expect(gu.isHTTPSuccess(postRes.status)).to.be.true;
+                        var payload = ranU.randomString(100);
 
-                        dhh.getLatestUri(channelUri, function(latestUri, latestError) {
-                            expect(latestError).to.be.null;
+                        dhh.postData({channelUri: channelUri, data: payload}, function(postRes, dataUri) {
+                            expect(gu.isHTTPSuccess(postRes.status)).to.be.true;
 
-                            dhh.getDataFromChannel({uri: latestUri}, function(err, res, data) {
-                                expect(err).to.be.null;
-                                expect(data).to.equal(payload);
+                            dhh.getLatestUri(channelUri, function(latestUri, latestError) {
+                                expect(latestError).to.be.null;
 
-                                done();
+                                dhh.getDataFromChannel({uri: latestUri}, function(err, res, data) {
+                                    expect(err).to.be.null;
+                                    expect(data).to.equal(payload);
+
+                                    done();
+                                })
                             })
                         })
                     })
