@@ -4,5 +4,5 @@ import com.flightstats.datahub.model.DataHubKey;
 
 public interface DataHubKeyGenerator {
 
-	DataHubKey newKey();
+	DataHubKey newKey(String channelName);
 }

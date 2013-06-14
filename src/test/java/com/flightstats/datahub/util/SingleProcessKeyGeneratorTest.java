@@ -28,7 +28,7 @@ public class SingleProcessKeyGeneratorTest {
 
 		SingleProcessKeyGenerator testClass = new SingleProcessKeyGenerator(timeProvider);
 
-		DataHubKey result = testClass.newKey();
+		DataHubKey result = testClass.newKey("");
 		assertEquals(expected, result);
 	}
 
@@ -47,9 +47,9 @@ public class SingleProcessKeyGeneratorTest {
 
 		SingleProcessKeyGenerator testClass = new SingleProcessKeyGenerator(timeProvider);
 
-		assertEquals(expected0, testClass.newKey());
-		assertEquals(expected1, testClass.newKey());
-		assertEquals(expected2, testClass.newKey());
+		assertEquals(expected0, testClass.newKey(""));
+		assertEquals(expected1, testClass.newKey(""));
+		assertEquals(expected2, testClass.newKey(""));
 	}
 
 	@Test
@@ -65,9 +65,9 @@ public class SingleProcessKeyGeneratorTest {
 
 		SingleProcessKeyGenerator testClass = new SingleProcessKeyGenerator(timeProvider);
 
-		assertEquals(expected0, testClass.newKey());
-		assertEquals(expected1, testClass.newKey());
-		assertEquals(expected2, testClass.newKey());
+		assertEquals(expected0, testClass.newKey(""));
+		assertEquals(expected1, testClass.newKey(""));
+		assertEquals(expected2, testClass.newKey(""));
 	}
 
 	@Test
@@ -90,11 +90,11 @@ public class SingleProcessKeyGeneratorTest {
 
 		SingleProcessKeyGenerator testClass = new SingleProcessKeyGenerator(timeProvider);
 
-		assertEquals(expected0, testClass.newKey());
-		assertEquals(expected1, testClass.newKey());
-		assertEquals(expected2, testClass.newKey());
-		assertEquals(expected3, testClass.newKey());
-		assertEquals(expected4, testClass.newKey());
+		assertEquals(expected0, testClass.newKey(""));
+		assertEquals(expected1, testClass.newKey(""));
+		assertEquals(expected2, testClass.newKey(""));
+		assertEquals(expected3, testClass.newKey(""));
+		assertEquals(expected4, testClass.newKey(""));
 	}
 
 	@Test
@@ -127,7 +127,7 @@ public class SingleProcessKeyGeneratorTest {
 						System.out.println("INTERRUPTED");
 						fail("Didn't expect to be interrupted");
 					}
-					DataHubKey key = testClass.newKey();
+					DataHubKey key = testClass.newKey("");
 					resultKeys.add(key);
 					finishedLatch.countDown();
 				}
