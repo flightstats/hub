@@ -22,7 +22,7 @@ public class SingleProcessKeyGenerator implements DataHubKeyGenerator {
 	}
 
 	@Override
-	public DataHubKey newKey() {
+	public DataHubKey newKey(String channelName) {
 		Date date = timeProvider.getDate();
 		synchronized (mutex) {
 			if (date.compareTo(lastDate) <= 0) {  //in the same millisecond or before in time
