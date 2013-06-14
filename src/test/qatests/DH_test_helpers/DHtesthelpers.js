@@ -100,7 +100,8 @@ exports.createWebSocket = createWebSocket;
  * @param params: .domain (domain:port), .channel (name of channel in DH), .socketName (arbitrary name for identifying
  *  the socket), .onOpenCB (callback to call at end of Open event), .responseQueue (where each message is stashed),.
  *  .onMessageCB (optional - callback to call at end of Message event), .onErrorCB (optional - callback to call at
- *  end of Error event),  .debug (optional).
+ *  end of Error event), .doReconnect=false (optional: if true, will reconnect on close if due to timeout),
+ *  .debug (optional).
  * @constructor
  */
 function WSWrapper(params) {
@@ -121,6 +122,7 @@ function WSWrapper(params) {
         onOpenCB = params.onOpenCB,
         onMessageCB = (params.hasOwnProperty('onMessageCB')) ? params.onMessageCB : null,
         onErrorCB = (params.hasOwnProperty('onErrorCB')) ? params.onErrorCB : null,
+        doReconnect = (params.hasOwnProperty('doReconnect')) ? params.doReconnect : false,
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : DEBUG;
 
     this.onOpen = function() {
@@ -148,6 +150,14 @@ function WSWrapper(params) {
         }
     };
 
+    this.onClose = function(code, msg) {
+        gu.debugLog('CLOSE event (code: '+ code +', msg: '+ msg +')\n at '+ Date.now(), true);
+        if ((doReconnect) && (msg.toLowerCase().lastIndexOf('idle') > -1)) {
+            gu.debugLog('...attempting reconnect after idle timeout.');
+            _self.createSocket();
+        }
+    }
+
     this.createSocket = function() {
         if (VERBOSE) {
             console.dir(this);
@@ -155,6 +165,7 @@ function WSWrapper(params) {
         this.ws = createWebSocket(this.uri, this.onOpen);
         this.ws.on('message', this.onMessage);
         this.ws.on('error', this.onError);
+        this.ws.on('close', this.onClose);
     };
 }
 exports.WSWrapper = WSWrapper;
@@ -444,11 +455,17 @@ var getDataFromChannel = function(params, callback) {
 }
 exports.getDataFromChannel = getDataFromChannel;
 
-// Calls back with err, array of two-property objects: .uri: uri, .data: data
-// array is ordered starting with oldest data and ending (.length - 1) with latest
-var getUrisAndDataSinceLocation = function(startUri, callback) {
-    var dataList = [],
-        VERBOSE = false;
+/**
+ * Gets list of all uris and their data for in a channel that come after the passed-in 'start' uri.
+ *
+ * @param params: .startUri, .debug (optional)
+ * @param callback: err, array = [{uri: , data: }, {uri: , data: }, etc.]. Array is ordered starting with oldest data
+ *          and ending with most recent.
+ */
+var getUrisAndDataSinceLocation = function(params, callback) {
+    var startUri = params.startUri,
+        dataList = [],
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true;
 
     // First Uri, get data, stash both
     getDataFromChannel({uri: startUri}, function(err, getRes, data) {
@@ -458,12 +475,13 @@ var getUrisAndDataSinceLocation = function(startUri, callback) {
         dataList.push({'uri': startUri, 'data': data});
         gu.debugLog('Added new entry.\n'+ startUri +'\n(data): '+ data, VERBOSE);
 
-
         var next = null;
 
         async.doWhilst(
             function(cb) {
-                superagent.agent().get(dataList[dataList.length - 1].uri)
+                var uri = dataList[dataList.length - 1].uri;    // most recent item in dataList
+
+                superagent.agent().get(uri)
                     .end(function(err, res) {
                         var pGetHeader = new packetGETHeader(res.headers) ;
                         next = pGetHeader.getNext();
@@ -493,7 +511,9 @@ var getUrisAndDataSinceLocation = function(startUri, callback) {
                 if (err) {
                     callback(err, null);
                 }
-                callback(null, dataList);
+                else {
+                    callback(null, dataList);
+                }
             }
         )
     })

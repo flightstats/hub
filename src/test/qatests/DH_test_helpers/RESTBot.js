@@ -139,6 +139,7 @@ var Bot = function Bot(params) {
     this.wakeUp = function() {
         _self.report('Waking up!');
 
+        // If .channelUri isn't already set, set it to that of the .broadcastBot
         if ((null == _self.channelUri) && (null != _self.broadcastBot)) {
             _self.channelUri = _self.broadcastBot.channelUri;
         }
@@ -338,6 +339,29 @@ var botSubscribe = function(theBot, callback) {
     })
 }
 exports.botSubscribe = botSubscribe;
+
+/**
+ * Uses getAllChannels to get list of all channels, then picks one at random, setting self.channelUri to its location.
+ *
+ * @param theBot
+ * @param callback
+ */
+var botSelectRandomChannel = function(theBot, callback) {
+
+    dhh.getAllChannels({}, function(res, channels) {
+        if (!gu.isHTTPSuccess(res.status)) {
+            callback('Error getting all channels. HTTP response: '+ res.status);
+        }
+
+        var cn = ranU.getRandomArrayElement(channels);
+        theBot.channelUri = cn.href;
+        gu.debugLog('Picked channel at random. Using: '+ cn.href);
+
+
+        callback(null);
+    })
+}
+exports.botSelectRandomChannel = botSelectRandomChannel;
 
 var botGetLatestValue = function(theBot, callback) {
 
