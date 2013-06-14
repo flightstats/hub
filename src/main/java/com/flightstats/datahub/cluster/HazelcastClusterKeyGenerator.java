@@ -47,11 +47,13 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
 			AtomicNumber atomicDate = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_DATE:" + channelName);
 			Date lastDate = new Date(atomicDate.get());
 
+			AtomicNumber sequenceNumber = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName);
 			if (currentDate.compareTo(lastDate) <= 0) {  //in the same millisecond or before in time
-				long sequence = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName).getAndAdd(1);
+				long sequence = sequenceNumber.getAndAdd(1);
 				return new DataHubKey(lastDate, (short) sequence);
 			}
 			atomicDate.set(currentDate.getTime());
+			sequenceNumber.set(0L);
 			return new DataHubKey(currentDate, (short) 0);
 		}
 	}
