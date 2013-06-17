@@ -26,6 +26,7 @@ public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 	private final Map<WebSocketEventSubscription, MessageListener<URI>> subscriptionToMessageListener = new ConcurrentHashMap<>();
 
 	@Inject
+	//Note: The delegate needs to be the specific concrete type to get Guice to inject properly.  Wishing there was a more elegant solution to this.
 	public HazelcastSubscriptionRoster(SingleProcessSubscriptionRoster delegate, HazelcastInstance hazelcast) {
 		this.delegate = delegate;
 		this.hazelcast = hazelcast;
