@@ -43,7 +43,7 @@ public class DataHubWebSocketTest {
 		BlockingQueue<WebSocketEvent> queue = mock(BlockingQueue.class);
 		WebSocketEventSubscription subscriber = mock(WebSocketEventSubscription.class);
 		WebSocketEvent event = mock(WebSocketEvent.class);
-		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
+		SingleProcessSubscriptionRoster subscriptions = mock(SingleProcessSubscriptionRoster.class);
 		WebSocketChannelNameExtractor channelNameExtractor = mock(WebSocketChannelNameExtractor.class);
 
 		when(queue.take()).thenReturn(event);
@@ -65,7 +65,7 @@ public class DataHubWebSocketTest {
 	@Test
 	public void testOnDisconnect() throws Exception {
 
-		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
+		SingleProcessSubscriptionRoster subscriptions = mock(SingleProcessSubscriptionRoster.class);
 		WebSocketEventSubscription websocketEventSubscription = mock(WebSocketEventSubscription.class);
 		BlockingQueue<WebSocketEvent> queue = mock(BlockingQueue.class);
 		WebSocketEventSubscription subscriber = new WebSocketEventSubscription(null, queue);
@@ -93,7 +93,7 @@ public class DataHubWebSocketTest {
 
 	@Test
 	public void testOnDisconnectCantFindSubscription() throws Exception {
-		SubscriptionRoster subscriptions = mock(SubscriptionRoster.class);
+		SingleProcessSubscriptionRoster subscriptions = mock(SingleProcessSubscriptionRoster.class);
 		when(subscriptions.findSubscriptionForConsumer(anyString(), any(Consumer.class))).thenReturn(Optional.<WebSocketEventSubscription>absent());
 		DataHubWebSocket testClass = new DataHubWebSocket(subscriptions, null);
 		testClass.onDisconnect(99, "spoon");

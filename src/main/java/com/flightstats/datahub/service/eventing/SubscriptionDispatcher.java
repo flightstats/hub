@@ -1,12 +1,10 @@
 package com.flightstats.datahub.service.eventing;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 import java.net.URI;
 import java.util.concurrent.BlockingQueue;
 
-@Singleton
 public class SubscriptionDispatcher {
 
 	private final SubscriptionRoster subscriptions;

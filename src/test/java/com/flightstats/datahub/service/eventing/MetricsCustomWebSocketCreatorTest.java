@@ -18,7 +18,7 @@ public class MetricsCustomWebSocketCreatorTest {
 	@Test
 	public void testCreateWebSocket() throws Exception {
 		//GIVEN
-		SubscriptionRoster subscriptions = new SubscriptionRoster();
+		SingleProcessSubscriptionRoster subscriptions = new SingleProcessSubscriptionRoster();
 		WebSocketChannelNameExtractor channelNameExtractor = new WebSocketChannelNameExtractor();
 		int threadCt = 50;
 		String meterName = "websocket-clients.channels.ubuibi";

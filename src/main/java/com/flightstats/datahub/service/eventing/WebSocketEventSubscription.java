@@ -6,7 +6,7 @@ import java.net.URI;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-class WebSocketEventSubscription {
+public class WebSocketEventSubscription {
 	private final Consumer<URI> consumer;
 	private final BlockingQueue<WebSocketEvent> queue;
 

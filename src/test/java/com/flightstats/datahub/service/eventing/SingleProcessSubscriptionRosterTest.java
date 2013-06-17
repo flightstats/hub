@@ -5,18 +5,18 @@ import org.junit.Test;
 import java.net.URI;
 import java.util.Collection;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
-public class SubscriptionRosterTest {
+public class SingleProcessSubscriptionRosterTest {
 
 	@Test
 	public void testSubscribe() throws Exception {
-		SubscriptionRoster testClass = new SubscriptionRoster();
+		SingleProcessSubscriptionRoster testClass = new SingleProcessSubscriptionRoster();
 		Consumer<URI> sink = mock(Consumer.class);
 
 		WebSocketEventSubscription subscription = testClass.subscribe("mychan", sink);
@@ -25,7 +25,7 @@ public class SubscriptionRosterTest {
 
 	@Test
 	public void testUnsubscribe() throws Exception {
-		SubscriptionRoster testClass = new SubscriptionRoster();
+		SingleProcessSubscriptionRoster testClass = new SingleProcessSubscriptionRoster();
 		Consumer<URI> sink = mock(Consumer.class);
 		WebSocketEventSubscription subscription = testClass.subscribe("mychan", sink);
 		testClass.unsubscribe("mychan", subscription);
@@ -40,7 +40,7 @@ public class SubscriptionRosterTest {
 		Consumer<URI> sink2 = mock(Consumer.class);
 		Consumer<URI> sink3 = mock(Consumer.class);
 
-		SubscriptionRoster testClass = new SubscriptionRoster();
+		SingleProcessSubscriptionRoster testClass = new SingleProcessSubscriptionRoster();
 
 		WebSocketEventSubscription subscription1 = testClass.subscribe(channel1, sink1);
 		WebSocketEventSubscription subscription2 = testClass.subscribe(channel2, sink2);
@@ -54,7 +54,7 @@ public class SubscriptionRosterTest {
 
 	@Test
 	public void testConcurrentModification() throws Exception {
-		SubscriptionRoster testClass = new SubscriptionRoster();
+		SingleProcessSubscriptionRoster testClass = new SingleProcessSubscriptionRoster();
 		testClass.subscribe("chan", mock(Consumer.class));
 		testClass.subscribe("chan", mock(Consumer.class));
 		testClass.subscribe("chan", mock(Consumer.class));
