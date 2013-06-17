@@ -1,0 +1,13 @@
+<hazelcast>
+    <network>
+        <port auto-increment="true">5701</port>
+        <join>
+            <multicast enabled="false"/>
+            <tcp-ip enabled="true">
+                <hostname>datahub-01.cloud-east.prod:5701</hostname>
+                <hostname>datahub-02.cloud-east.prod:5701</hostname>
+                <hostname>datahub-03.cloud-east.prod:5701</hostname>
+            </tcp-ip>
+        </join>
+    </network>
+</hazelcast>
