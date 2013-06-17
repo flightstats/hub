@@ -9,6 +9,7 @@ import com.flightstats.rest.HalLink;
 import com.flightstats.rest.HalLinks;
 import com.flightstats.rest.Linked;
 import com.google.common.collect.Multimap;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
@@ -16,10 +17,9 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.*;
 
-import static junit.framework.Assert.assertNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.matchers.JUnitMatchers.hasItems;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.*;
 
 public class ChannelResourceTest {
@@ -127,7 +127,7 @@ public class ChannelResourceTest {
 		assertEquals(1, resultMultiLinks.keySet().size());
 		assertEquals(2, resultMultiLinks.size());
 		Collection<HalLink> resultChannelLinks = resultMultiLinks.asMap().get("channels");
-		assertThat(resultChannelLinks, hasItems(new HalLink(channel1.getName(), URI.create(channel1Uri)),
-				new HalLink(channel2.getName(), URI.create(channel2Uri))));
+		assertThat(resultChannelLinks, CoreMatchers.hasItems(new HalLink(channel1.getName(), URI.create(channel1Uri)),
+                new HalLink(channel2.getName(), URI.create(channel2Uri))));
 	}
 }

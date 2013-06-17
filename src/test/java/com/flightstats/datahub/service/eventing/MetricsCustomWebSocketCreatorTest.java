@@ -30,13 +30,15 @@ public class MetricsCustomWebSocketCreatorTest {
 		final UpgradeRequest request = mock(UpgradeRequest.class);
 		final Session session = mock(Session.class);
 		Counter counter = spy(new Counter());
+        SubscriptionRoster subscriptionRoster = mock( SubscriptionRoster.class );
+
 
 		when(request.getRequestURI()).thenReturn(URI.create("/channel/ubuibi/ws"));
 		when(session.getRemoteAddress()).thenReturn(new InetSocketAddress(2133));
 		when(session.getUpgradeRequest()).thenReturn(request);
 		when(registry.counter(meterName)).thenReturn(counter);
 
-		final MetricsCustomWebSocketCreator testClass = new MetricsCustomWebSocketCreator(registry, channelNameExtractor);
+		final MetricsCustomWebSocketCreator testClass = new MetricsCustomWebSocketCreator(registry, subscriptionRoster, channelNameExtractor);
 
 		//WHEN
 		for (int i = 0; i < threadCt; i++) {

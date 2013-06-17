@@ -30,7 +30,7 @@ public class DataHubWebSocket {
 		});
 	}
 
-	private DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, Runnable afterDisconnectCallback) {
+	DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, Runnable afterDisconnectCallback) {
 		this.afterDisconnectCallback = afterDisconnectCallback;
 		this.channelNameExtractor = channelNameExtractor;
 		this.subscriptions = subscriptions;
