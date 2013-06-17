@@ -8,7 +8,7 @@ import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
-import com.flightstats.datahub.service.eventing.SingleProcessSubscriptionRoster;
+import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -23,7 +23,7 @@ public class GraphiteConfiguration {
 
 	@Inject
 	public GraphiteConfiguration(
-			MetricRegistry registry, SingleProcessSubscriptionRoster subscriptions,
+			MetricRegistry registry, SubscriptionRoster subscriptions,
 			@Named("graphite.host") String graphiteHost, @Named("graphite.port") int graphitePort) {
 
 		createJvmMetrics(registry);
@@ -37,7 +37,7 @@ public class GraphiteConfiguration {
 		registry.registerAll(prefix("jvm.threads", new ThreadStatesGaugeSet()));
 	}
 
-	private void createAggregateWebSocketGauge(final SingleProcessSubscriptionRoster subscriptions, MetricRegistry registry) {
+	private void createAggregateWebSocketGauge(final SubscriptionRoster subscriptions, MetricRegistry registry) {
 		registry.register("websocket-clients.total", new Gauge<Integer>() {
 			@Override
 			public Integer getValue() {

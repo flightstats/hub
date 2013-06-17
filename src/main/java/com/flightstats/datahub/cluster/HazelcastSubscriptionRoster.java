@@ -1,10 +1,7 @@
 package com.flightstats.datahub.cluster;
 
 import com.flightstats.datahub.service.eventing.Consumer;
-import com.flightstats.datahub.service.eventing.SingleProcessSubscriptionRoster;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
-import com.flightstats.datahub.service.eventing.WebSocketEventSubscription;
-import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
@@ -14,30 +11,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 
 	private final static Logger logger = LoggerFactory.getLogger(HazelcastSubscriptionRoster.class);
-	private final SingleProcessSubscriptionRoster delegate;
 	private final HazelcastInstance hazelcast;
-	private final Map<WebSocketEventSubscription, MessageListener<URI>> subscriptionToMessageListener = new ConcurrentHashMap<>();
+	private final Map<ChannelConsumer, MessageListener<URI>> consumerToMessageListener = new ConcurrentHashMap<>();
 
 	@Inject
 	//Note: The delegate needs to be the specific concrete type to get Guice to inject properly.  Wishing there was a more elegant solution to this.
-	public HazelcastSubscriptionRoster(SingleProcessSubscriptionRoster delegate, HazelcastInstance hazelcast) {
-		this.delegate = delegate;
+	public HazelcastSubscriptionRoster( HazelcastInstance hazelcast) {
 		this.hazelcast = hazelcast;
 	}
 
 	@Override
-	public WebSocketEventSubscription subscribe(final String channelName, Consumer<URI> consumer) {
-		MessageListener<URI> messageListener = addTopicListenerForChannel(channelName, consumer);
-		WebSocketEventSubscription subscription = delegate.subscribe(channelName, consumer);
-		subscriptionToMessageListener.put(subscription, messageListener);
-		return subscription;
+	public void subscribe(final String channelName, Consumer<URI> consumer) {
+		MessageListener<URI> messageListener = addTopicListenerForChannel( channelName, consumer );
+		consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), messageListener );
 	}
 
 	private MessageListener<URI> addTopicListenerForChannel(final String channelName, final Consumer<URI> consumer) {
@@ -56,27 +51,55 @@ public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 	}
 
 	@Override
-	public void unsubscribe(String channelName, WebSocketEventSubscription subscription) {
-		delegate.unsubscribe(channelName, subscription);
+	public void unsubscribe(String channelName, Consumer<URI> subscription) {
 		ITopic<URI> topic = hazelcast.getTopic("ws:" + channelName);
-		MessageListener<URI> messageListener = subscriptionToMessageListener.remove(subscription);
+		MessageListener<URI> messageListener = consumerToMessageListener.remove( new ChannelConsumer( channelName, subscription ) );
 		logger.info("Removing message listener for websocket hazelcast queue for channel " + channelName);
 		topic.removeMessageListener(messageListener);
 	}
 
 	@Override
-	public Optional<WebSocketEventSubscription> findSubscriptionForConsumer(String channelName, Consumer<URI> consumer) {
-		return delegate.findSubscriptionForConsumer(channelName, consumer);
+	public int getTotalSubscriberCount() {
+		return consumerToMessageListener.size();
 	}
 
 	@Override
-	public Integer getTotalSubscriberCount() {
-		return delegate.getTotalSubscriberCount();
+	public Collection<Consumer<URI>> getSubscribers(String channelName) {
+		List<Consumer<URI>> result = new ArrayList<>();
+        for (ChannelConsumer channelConsumer : consumerToMessageListener.keySet()) {
+            if (channelConsumer.channelName.equals(channelName)) {
+                result.add(channelConsumer.consumer);
+            }
+        }
+        return result;
 	}
 
-	@Override
-	public Collection<WebSocketEventSubscription> getSubscribers(String channelName) {
-		return delegate.getSubscribers(channelName);
-	}
+	private static class ChannelConsumer {
+		final String channelName;
+		final Consumer<URI> consumer;
 
+		ChannelConsumer( String channelName, Consumer<URI> consumer ) {
+
+			this.channelName = channelName;
+			this.consumer = consumer;
+		}
+
+		public boolean equals( Object o ) {
+			if ( this == o ) return true;
+			if ( !(o instanceof ChannelConsumer) ) return false;
+
+			ChannelConsumer that = (ChannelConsumer) o;
+
+			if ( !channelName.equals( that.channelName ) ) return false;
+			if ( !consumer.equals( that.consumer ) ) return false;
+
+			return true;
+		}
+
+		public int hashCode() {
+			int result = channelName.hashCode();
+			result = 31 * result + consumer.hashCode();
+			return result;
+		}
+	}
 }

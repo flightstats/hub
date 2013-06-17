@@ -8,13 +8,11 @@ import java.util.Collection;
 public interface SubscriptionRoster {
 
 
-	WebSocketEventSubscription subscribe(String channelName, Consumer<URI> consumer);
+	void subscribe(String channelName, Consumer<URI> consumer);
 
-	void unsubscribe(String channelName, WebSocketEventSubscription subscription);
+	void unsubscribe(String channelName, Consumer<URI> subscription);
 
-	Optional<WebSocketEventSubscription> findSubscriptionForConsumer(String channelName, Consumer<URI> consumer);
+	int getTotalSubscriberCount();
 
-	Integer getTotalSubscriberCount();
-
-	Collection<WebSocketEventSubscription> getSubscribers(String channelName);
+	Collection<Consumer<URI>> getSubscribers(String channelName);
 }
