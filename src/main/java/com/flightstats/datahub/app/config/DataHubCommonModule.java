@@ -53,7 +53,7 @@ class DataHubCommonModule extends JerseyServletModule {
 
 	private final Properties properties;
 
-	public DataHubCommonModule(Properties properties) {
+	DataHubCommonModule(Properties properties) {
 		this.properties = properties;
 	}
 
@@ -64,13 +64,10 @@ class DataHubCommonModule extends JerseyServletModule {
 	}
 
 	private void bindCommonBeans() {
-		Names.bindProperties(binder(), properties);
-		bind(MetricRegistry.class).in(Singleton.class);
+		Names.bindProperties( binder(), properties );
+		bind(MetricRegistry.class).in( Singleton.class );
 		bind(GraphiteConfiguration.class).asEagerSingleton();
 		bind(ChannelLockExecutor.class).asEagerSingleton();
-		bind(SubscriptionDispatcher.class).in(Singleton.class);
-		bind(SingleProcessSubscriptionRoster.class).in(Singleton.class);
-		bind(HazelcastSubscriptionRoster.class).in(Singleton.class);
 		bind(SubscriptionRoster.class).to(HazelcastSubscriptionRoster.class).in(Singleton.class);
 		bind(DataHubKeyRenderer.class).in(Singleton.class);
 		bind(DataHubKeyGenerator.class).to(HazelcastClusterKeyGenerator.class).in(Singleton.class);
@@ -99,7 +96,7 @@ class DataHubCommonModule extends JerseyServletModule {
 	public HazelcastInstance buildHazelcast() throws FileNotFoundException {
 		Config config;
 		if (properties.contains(HAZELCAST_CONFIG_FILE)) {
-			config = new FileSystemXmlConfig((String) properties.get(HAZELCAST_CONFIG_FILE));
+			config = new FileSystemXmlConfig( properties.getProperty( HAZELCAST_CONFIG_FILE ) );
 		} else {
 			config = new ClasspathXmlConfig("hazelcast.conf.xml");
 		}

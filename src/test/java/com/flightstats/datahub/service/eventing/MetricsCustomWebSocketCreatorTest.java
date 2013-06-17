@@ -18,7 +18,6 @@ public class MetricsCustomWebSocketCreatorTest {
 	@Test
 	public void testCreateWebSocket() throws Exception {
 		//GIVEN
-		SingleProcessSubscriptionRoster subscriptions = new SingleProcessSubscriptionRoster();
 		WebSocketChannelNameExtractor channelNameExtractor = new WebSocketChannelNameExtractor();
 		int threadCt = 50;
 		String meterName = "websocket-clients.channels.ubuibi";
@@ -37,7 +36,7 @@ public class MetricsCustomWebSocketCreatorTest {
 		when(session.getUpgradeRequest()).thenReturn(request);
 		when(registry.counter(meterName)).thenReturn(counter);
 
-		final MetricsCustomWebSocketCreator testClass = new MetricsCustomWebSocketCreator(registry, subscriptions, channelNameExtractor);
+		final MetricsCustomWebSocketCreator testClass = new MetricsCustomWebSocketCreator(registry, channelNameExtractor);
 
 		//WHEN
 		for (int i = 0; i < threadCt; i++) {
