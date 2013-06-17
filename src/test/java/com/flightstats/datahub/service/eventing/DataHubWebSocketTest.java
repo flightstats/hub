@@ -15,13 +15,18 @@ public class DataHubWebSocketTest {
 
 	public static final String CHANNEL_NAME = "tumbleweed";
     private Session session;
+    private URI requestUri;
+    private SubscriptionRoster subscriptionRoster;
+    private WebSocketChannelNameExtractor channelNameExtractor;
 
     @Before
 	public void setup() {
-        URI requestUri = URI.create("http://path.to.site.com:999/channel/" + CHANNEL_NAME + "/ws");
+        requestUri = URI.create("http://path.to.site.com:999/channel/" + CHANNEL_NAME + "/ws");
         InetSocketAddress remoteAddress = InetSocketAddress.createUnresolved("superawesome.com", 999);
         RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
-		session = mock(Session.class);
+        subscriptionRoster = mock( SubscriptionRoster.class );
+        channelNameExtractor = mock( WebSocketChannelNameExtractor.class );
+        session = mock(Session.class);
         UpgradeRequest upgradeRequest = mock(UpgradeRequest.class);
 
 		when(session.getRemoteAddress()).thenReturn(remoteAddress);
@@ -32,16 +37,19 @@ public class DataHubWebSocketTest {
 
 	@Test
 	public void testOnConnect() throws Exception {
-		DataHubWebSocket testClass = new DataHubWebSocket();
+		DataHubWebSocket testClass = new DataHubWebSocket( subscriptionRoster, channelNameExtractor );
 		testClass.onConnect(session);
-		verify( session ).getRemoteAddress();
+
+        verify( subscriptionRoster ).subscribe( any( String.class ), any( JettyWebSocketEndpointSender.class ) );
+        verify( channelNameExtractor ).extractChannelName( requestUri );
+		verify(session).getRemoteAddress();
 	}
 
 	@Test
 	public void testOnDisconnect() throws Exception {
 
 		Runnable disconnectCallback = mock( Runnable.class );
-		DataHubWebSocket testClass = new DataHubWebSocket( disconnectCallback );
+		DataHubWebSocket testClass = new DataHubWebSocket( subscriptionRoster, channelNameExtractor, disconnectCallback );
 		testClass.onConnect(session);
 		testClass.onDisconnect(99, "spoon");
 		verify(disconnectCallback).run();
