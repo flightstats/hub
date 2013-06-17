@@ -57,14 +57,17 @@ fi
 
 echo Using properties file: $PROPERTIES_FILENAME
 
-echo Installing properties file
 if [[ "$HOST" == *dev* ]] ; then
-	rsync -avv --progress ${CONF_DIR}/dev/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/datahub.properties
+    HOSTENV=dev
 elif [[ "$HOST" == *staging* ]] ; then
-	rsync -avv --progress ${CONF_DIR}/staging/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/datahub.properties
+	HOSTENV=staging
 elif [[ "$HOST" == *prod* ]] ; then
-    rsync -avv --progress ${CONF_DIR}/prod/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/datahub.properties
+    HOSTENV=prod
 fi
+echo Installing properties file
+rsync -avv --progress ${CONF_DIR}/${HOSTENV}/${PROPERTIES_FILENAME} ${USER}@${HOST}:/home/${USER}/datahub/datahub.properties
+echo Installing hazelcast config file
+rsync -avv --progress ${CONF_DIR}/${HOSTENV}/hazelcast.conf.xml ${USER}@${HOST}:/home/${USER}/datahub/hazelcast.conf.xml
 
 echo Installing upstart script
 rsync -avv --progress ${CONF_DIR}/upstart/datahub.conf ${USER}@${HOST}:/tmp
