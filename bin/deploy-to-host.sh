@@ -39,6 +39,11 @@ fi
 echo Deploying ${TARFILE} to ${HOST}
 rsync -avv --progress ${BUILD_DIR}/distributions/${TARFILE} ${USER}@${HOST}:/home/${USER}/
 
+echo Removing existing deploy dir if it exists...
+set +e
+ssh ${USER}@${HOST} "rm -rf /home/${USER}/${DISTDIR}"
+set -e
+
 echo Exploding tarball...
 ssh ${USER}@${HOST} "tar -xzf /home/${USER}/${TARFILE}"
 

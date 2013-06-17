@@ -75,7 +75,7 @@ public class SingleChannelResourceTest {
 		when(dao.findLatestId(channelName)).thenReturn(Optional.of(key));
 		when(uriInfo.getRequestUri()).thenReturn(channelUri);
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, subscriptionDispatcher);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, subscriptionDispatcher, null);
 
 		Linked<MetadataResponse> result = testClass.getChannelMetadata(channelName);
 		MetadataResponse expectedResponse = new MetadataResponse(channelConfig, key.getDate());
@@ -90,7 +90,7 @@ public class SingleChannelResourceTest {
 	public void testGetChannelMetadataForUnknownChannel() throws Exception {
 		when(dao.channelExists("unknownChannel")).thenReturn(false);
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, subscriptionDispatcher);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, subscriptionDispatcher, null);
 		try {
 			testClass.getChannelMetadata("unknownChannel");
 			fail("Should have thrown a 404");
@@ -111,7 +111,7 @@ public class SingleChannelResourceTest {
 
 		when(dao.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(dataHubKey));
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher, null);
 		Response response = testClass.insertValue(contentType, channelName, data);
 
 		assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
@@ -134,7 +134,7 @@ public class SingleChannelResourceTest {
 
 		when(dao.insert(channelName, contentType, data)).thenReturn(result);
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher, null);
 		testClass.insertValue(contentType, channelName, data);
 		verify(subscriptionDispatcher).dispatch(channelName, itemUri);
 	}
@@ -149,7 +149,7 @@ public class SingleChannelResourceTest {
 		when(channelLockExecutor.execute(eq(channelName), any(Callable.class))).thenThrow(
 				new NoSuchChannelException("No such channel: " + channelName, new RuntimeException()));
 
-		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, subscriptionDispatcher, null);
 		testClass.insertValue(contentType, channelName, data);
 	}
 }

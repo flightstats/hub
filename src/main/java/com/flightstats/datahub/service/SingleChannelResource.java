@@ -7,10 +7,11 @@ import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.MetadataResponse;
 import com.flightstats.datahub.model.ValueInsertionResult;
-import com.flightstats.datahub.service.eventing.SubscriptionDispatcher;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.ITopic;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -30,14 +31,14 @@ public class SingleChannelResource {
 	private final ChannelDao channelDao;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 	private final ChannelLockExecutor channelLockExecutor;
-	private final SubscriptionDispatcher subscriptionDispatcher;
+	private final HazelcastInstance hazelcast;
 
 	@Inject
-	public SingleChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, ChannelLockExecutor channelLockExecutor, SubscriptionDispatcher subscriptionDispatcher) {
+	public SingleChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, ChannelLockExecutor channelLockExecutor, HazelcastInstance hazelcast) {
 		this.channelDao = channelDao;
 		this.linkBuilder = linkBuilder;
 		this.channelLockExecutor = channelLockExecutor;
-		this.subscriptionDispatcher = subscriptionDispatcher;
+		this.hazelcast = hazelcast;
 	}
 
 	@GET
@@ -105,7 +106,8 @@ public class SingleChannelResource {
 		public ValueInsertionResult call() throws Exception {
 			ValueInsertionResult result = channelDao.insert(channelName, contentType, data);
 			URI payloadUri = linkBuilder.buildItemUri(result.getKey());
-			subscriptionDispatcher.dispatch(channelName, payloadUri);
+			ITopic<URI> topic = hazelcast.getTopic("ws:" + channelName);
+			topic.publish(payloadUri);
 			return result;
 		}
 	}

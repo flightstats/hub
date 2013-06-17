@@ -7,15 +7,13 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchA
 import com.flightstats.datahub.cluster.ChannelLockFactory;
 import com.flightstats.datahub.cluster.HazelcastChannelLockFactory;
 import com.flightstats.datahub.cluster.HazelcastClusterKeyGenerator;
+import com.flightstats.datahub.cluster.HazelcastSubscriptionRoster;
 import com.flightstats.datahub.dao.RowKeyStrategy;
 import com.flightstats.datahub.dao.YearMonthDayRowKeyStrategy;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
-import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
-import com.flightstats.datahub.service.eventing.MetricsCustomWebSocketCreator;
-import com.flightstats.datahub.service.eventing.SubscriptionDispatcher;
-import com.flightstats.datahub.service.eventing.SubscriptionRoster;
+import com.flightstats.datahub.service.eventing.*;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
@@ -71,7 +69,9 @@ class DataHubCommonModule extends JerseyServletModule {
 		bind(GraphiteConfiguration.class).asEagerSingleton();
 		bind(ChannelLockExecutor.class).asEagerSingleton();
 		bind(SubscriptionDispatcher.class).in(Singleton.class);
-		bind(SubscriptionRoster.class).in(Singleton.class);
+		bind(SingleProcessSubscriptionRoster.class).in(Singleton.class);
+		bind(HazelcastSubscriptionRoster.class).in(Singleton.class);
+		bind(SubscriptionRoster.class).to(HazelcastSubscriptionRoster.class).in(Singleton.class);
 		bind(DataHubKeyRenderer.class).in(Singleton.class);
 		bind(DataHubKeyGenerator.class).to(HazelcastClusterKeyGenerator.class).in(Singleton.class);
 		bind(ChannelLockFactory.class).to(HazelcastChannelLockFactory.class).in(Singleton.class);

@@ -15,7 +15,7 @@ public class SubscriptionDispatcherTest {
 		URI uri = URI.create("http://spoon.com");
 		WebSocketEvent event = new WebSocketEvent(uri);
 
-		SubscriptionRoster roster = mock(SubscriptionRoster.class);
+		SingleProcessSubscriptionRoster roster = mock(SingleProcessSubscriptionRoster.class);
 		WebSocketEventSubscription sub1 = mock(WebSocketEventSubscription.class);
 		WebSocketEventSubscription sub2 = mock(WebSocketEventSubscription.class);
 		WebSocketEventSubscription sub3 = mock(WebSocketEventSubscription.class);
