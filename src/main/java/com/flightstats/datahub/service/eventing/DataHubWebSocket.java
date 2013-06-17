@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
+import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
@@ -14,10 +15,14 @@ public class DataHubWebSocket {
 
 	private final static Logger logger = LoggerFactory.getLogger(DataHubWebSocket.class);
 	private final Runnable afterDisconnectCallback;
+	private final WebSocketChannelNameExtractor channelNameExtractor;
+	private final SubscriptionRoster subscriptions;
 	private String remoteAddress;
+	private JettyWebSocketEndpointSender endpointSender;
 
-	public DataHubWebSocket() {
-		this(new Runnable() {
+	@Inject
+	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor) {
+		this(subscriptions, channelNameExtractor, new Runnable() {
 			@Override
 			public void run() {
 				//nop
@@ -25,16 +30,19 @@ public class DataHubWebSocket {
 		});
 	}
 
-	public DataHubWebSocket(Runnable afterDisconnectCallback) {
+	private DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, Runnable afterDisconnectCallback) {
 		this.afterDisconnectCallback = afterDisconnectCallback;
+		this.channelNameExtractor = channelNameExtractor;
+		this.subscriptions = subscriptions;
 	}
 
 	@OnWebSocketConnect
 	public void onConnect(final Session session) {
 		URI requestUri = session.getUpgradeRequest().getRequestURI();
 		logger.info("New client connection: " + remoteAddress + " for " + requestUri);
-
 		remoteAddress = session.getRemoteAddress().toString();
+		endpointSender = new JettyWebSocketEndpointSender(remoteAddress, session.getRemote());
+		subscriptions.subscribe(channelNameExtractor.extractChannelName(requestUri), endpointSender);
 	}
 
 	@OnWebSocketClose

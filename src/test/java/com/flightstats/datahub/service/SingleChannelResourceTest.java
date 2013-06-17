@@ -67,7 +67,6 @@ public class SingleChannelResourceTest {
 		when(linkBuilder.buildLatestUri()).thenReturn(latestUri);
 		when(linkBuilder.buildItemUri(dataHubKey)).thenReturn(itemUri);
 		when(hazelcast.getTopic("ws:" + channelName)).thenReturn(topic);
-
 	}
 
 	@Test
