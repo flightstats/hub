@@ -19,6 +19,7 @@ public class InMemoryChannelDao implements ChannelDao {
 
 	private final Map<String, ChannelConfiguration> channelConfigurations = Maps.newConcurrentMap();
 	private final Map<String, DataHubChannelValueKey> latestPerChannel = Maps.newConcurrentMap();
+	private final Map<String, DataHubChannelValueKey> firstPerChannel = Maps.newConcurrentMap();
 	private final Cache<DataHubChannelValueKey, LinkedDataHubCompositeValue> channelValues = CacheBuilder.newBuilder()
 																										 .expireAfterWrite(1, TimeUnit.HOURS)
 																										 .build();
@@ -73,6 +74,9 @@ public class InMemoryChannelDao implements ChannelDao {
 		linkOldPreviousToNew(oldLastKey, newDataHubChannelValueKey);
 		//finally, make it the latest
 		latestPerChannel.put(channelName, newDataHubChannelValueKey);
+		if ( !firstPerChannel.containsKey(channelName)) {
+			firstPerChannel.put( channelName, newDataHubChannelValueKey);
+		}
 
 		return new ValueInsertionResult(newKey);
 	}
@@ -98,6 +102,12 @@ public class InMemoryChannelDao implements ChannelDao {
 	@Override
 	public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
 		return Optional.fromNullable(channelValues.getIfPresent(new DataHubChannelValueKey(key, channelName)));
+	}
+
+	@Override
+	public Optional<DataHubKey> findFirstId(String channelName) {
+		DataHubChannelValueKey key = firstPerChannel.get(channelName);
+		return optionalFromCompositeKey(key);
 	}
 
 	@Override

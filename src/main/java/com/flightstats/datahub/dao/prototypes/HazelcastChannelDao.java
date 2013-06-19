@@ -9,6 +9,7 @@ import com.hazelcast.core.HazelcastInstance;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 
 public class HazelcastChannelDao implements ChannelDao {
@@ -17,6 +18,7 @@ public class HazelcastChannelDao implements ChannelDao {
 
 	private final Map<String, ChannelConfiguration> channelConfigurations = HAZELCAST_INSTANCE.getMap("channelConfigurations");
 	private final Map<String, DataHubKey> latestPerChannel = HAZELCAST_INSTANCE.getMap("latestPerChannel");
+	private final ConcurrentMap<String, DataHubKey> firstPerChannel = HAZELCAST_INSTANCE.getMap("firstPerChannel");
 	private final Map<DataHubKey, LinkedDataHubCompositeValue> channelValues = HAZELCAST_INSTANCE.getMap("channelValues");
 
 	@Override
@@ -69,6 +71,7 @@ public class HazelcastChannelDao implements ChannelDao {
 			}
 			//finally, make it the latest
 			latestPerChannel.put(channelName, newKey);
+			firstPerChannel.putIfAbsent(channelName,newKey);
 			return new ValueInsertionResult(newKey);
 		} finally {
 			lock.unlock();
@@ -78,6 +81,12 @@ public class HazelcastChannelDao implements ChannelDao {
 	@Override
 	public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
 		return Optional.of(channelValues.get(key));
+	}
+
+	@Override
+	public Optional<DataHubKey> findFirstId(String channelName) {
+		DataHubKey key = firstPerChannel.get(channelName);
+		return Optional.fromNullable(key);
 	}
 
 	@Override
