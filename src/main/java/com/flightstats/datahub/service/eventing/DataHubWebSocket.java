@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.google.common.base.Optional;
+import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
@@ -14,13 +14,13 @@ import java.net.URI;
 public class DataHubWebSocket {
 
 	private final static Logger logger = LoggerFactory.getLogger(DataHubWebSocket.class);
-	private final SubscriptionRoster subscriptions;
-	private final WebSocketChannelNameExtractor channelNameExtractor;
 	private final Runnable afterDisconnectCallback;
+	private final WebSocketChannelNameExtractor channelNameExtractor;
+	private final SubscriptionRoster subscriptions;
 	private String remoteAddress;
-	private String channelName;
 	private JettyWebSocketEndpointSender endpointSender;
 
+	@Inject
 	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor) {
 		this(subscriptions, channelNameExtractor, new Runnable() {
 			@Override
@@ -30,38 +30,24 @@ public class DataHubWebSocket {
 		});
 	}
 
-	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, Runnable afterDisconnectCallback) {
-		this.subscriptions = subscriptions;
-		this.channelNameExtractor = channelNameExtractor;
+	DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, Runnable afterDisconnectCallback) {
 		this.afterDisconnectCallback = afterDisconnectCallback;
+		this.channelNameExtractor = channelNameExtractor;
+		this.subscriptions = subscriptions;
 	}
 
 	@OnWebSocketConnect
 	public void onConnect(final Session session) {
 		URI requestUri = session.getUpgradeRequest().getRequestURI();
 		logger.info("New client connection: " + remoteAddress + " for " + requestUri);
-
 		remoteAddress = session.getRemoteAddress().toString();
-		channelName = channelNameExtractor.extractChannelName(requestUri);
 		endpointSender = new JettyWebSocketEndpointSender(remoteAddress, session.getRemote());
-		WebSocketEventSubscription subscription = subscriptions.subscribe(channelName, endpointSender);
-		new Thread(new SubscriptionDispatchWorker(subscription)).start();
+		subscriptions.subscribe(channelNameExtractor.extractChannelName(requestUri), endpointSender);
 	}
 
 	@OnWebSocketClose
 	public void onDisconnect(int statusCode, String reason) {
-		try {
-			logger.info("Client disconnect: " + remoteAddress + " (status = " + statusCode + ", reason = " + reason + ")");
-			Optional<WebSocketEventSubscription> optionalSubscription = subscriptions.findSubscriptionForConsumer(channelName, endpointSender);
-			if (!optionalSubscription.isPresent()) {
-				logger.warn("Cannot unsubscribe:  No subscription on channel " + channelName + " for " + endpointSender);
-				return;
-			}
-			WebSocketEventSubscription subscription = optionalSubscription.get();
-			subscription.getQueue().add(WebSocketEvent.SHUTDOWN);
-			subscriptions.unsubscribe(channelName, subscription);
-		} finally {
-			afterDisconnectCallback.run();
-		}
+		logger.info("Client disconnect: " + remoteAddress + " (status = " + statusCode + ", reason = " + reason + ")");
+		afterDisconnectCallback.run();
 	}
 }

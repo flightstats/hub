@@ -55,7 +55,7 @@ public class CassandraValueWriterTest {
 
 		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
-		when(keyGenerator.newKey()).thenReturn(DATA_HUB_KEY);
+		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 
 		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
 		ValueInsertionResult result = testClass.write(CHANNEL_NAME, value);
@@ -71,7 +71,7 @@ public class CassandraValueWriterTest {
 
 		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
-		when(keyGenerator.newKey()).thenReturn(DATA_HUB_KEY);
+		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 		when(mutator.insert(ROW_KEY, CHANNEL_NAME, column)).thenThrow(
 				new HInvalidRequestException("You must have an unconfigured columnfamily in your soup"));
 
@@ -86,7 +86,7 @@ public class CassandraValueWriterTest {
 
 		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
-		when(keyGenerator.newKey()).thenReturn(DATA_HUB_KEY);
+		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 		when(mutator.insert(ROW_KEY, CHANNEL_NAME, column)).thenThrow(
 				new HInvalidRequestException("Clown-based-tamale"));            //Not the expected verbage
 

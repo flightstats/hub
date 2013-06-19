@@ -12,15 +12,15 @@ import java.net.URI;
 public class MetricsCustomWebSocketCreator implements WebSocketCreator {
 
 	private final MetricRegistry registry;
-	private final SubscriptionRoster subscriptions;
-	private final WebSocketChannelNameExtractor channelNameExtractor;
+    private final SubscriptionRoster subscriptions;
+    private final WebSocketChannelNameExtractor channelNameExtractor;
 	private final Object mutex = new Object();
 
 	@Inject
 	public MetricsCustomWebSocketCreator(MetricRegistry registry, SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor) {
 		this.registry = registry;
-		this.subscriptions = subscriptions;
-		this.channelNameExtractor = channelNameExtractor;
+        this.subscriptions = subscriptions;
+        this.channelNameExtractor = channelNameExtractor;
 	}
 
 	@Override
@@ -33,7 +33,7 @@ public class MetricsCustomWebSocketCreator implements WebSocketCreator {
 			registry.counter(meterName).inc();
 		}
 
-		return new DataHubWebSocket(subscriptions, channelNameExtractor, new Runnable() {
+		return new DataHubWebSocket( subscriptions,  channelNameExtractor, new Runnable() {
 			@Override
 			public void run() {
 				synchronized (mutex) {
