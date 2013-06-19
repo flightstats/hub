@@ -27,7 +27,7 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
 	@Override
 	public DataHubKey newKey(final String channelName) {
 		try {
-			KeyGeneratingCallable keyGeneratingCallable = new KeyGeneratingCallable(channelName);
+			Callable<DataHubKey> keyGeneratingCallable = new KeyGeneratingCallable(channelName);
 			return channelLockExecutor.execute(channelName, keyGeneratingCallable);
 		} catch (Exception e) {
 			throw new RuntimeException("Error generating new DataHubKey: ", e);
@@ -37,24 +37,34 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
 	private class KeyGeneratingCallable implements Callable<DataHubKey> {
 		private final String channelName;
 
-		public KeyGeneratingCallable(String channelName) {
+		KeyGeneratingCallable(String channelName) {
 			this.channelName = channelName;
 		}
 
 		@Override
 		public DataHubKey call() throws Exception {
 			Date currentDate = timeProvider.getDate();
-			AtomicNumber atomicDate = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_DATE:" + channelName);
-			Date lastDate = new Date(atomicDate.get());
+			AtomicNumber lastWriteDateMillis = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_DATE:" + channelName);
+			Date lastWriteDate = new Date(lastWriteDateMillis.get());
 
 			AtomicNumber sequenceNumber = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName);
-			if (currentDate.compareTo(lastDate) <= 0) {  //in the same millisecond or before in time
-				long sequence = sequenceNumber.getAndAdd(1);
-				return new DataHubKey(lastDate, (short) sequence);
+			if (currentDate.compareTo(lastWriteDate) <= 0) {  //in the same millisecond or before in time
+				return createKeyWithCollision(lastWriteDate, sequenceNumber);
 			}
-			atomicDate.set(currentDate.getTime());
+			else
+			{
+				return createKeyWithoutCollision(currentDate, lastWriteDateMillis, sequenceNumber);
+			}
+		}
+
+		private DataHubKey createKeyWithoutCollision(Date keyDate, AtomicNumber lastWriteDateMillis, AtomicNumber sequenceNumber) {
 			sequenceNumber.set(0L);
-			return new DataHubKey(currentDate, (short) 0);
+			lastWriteDateMillis.set(keyDate.getTime());
+			return new DataHubKey(keyDate, (short) 0);
+		}
+
+		private DataHubKey createKeyWithCollision(Date keyDate, AtomicNumber sequenceNumber) {
+			return new DataHubKey(keyDate, (short)sequenceNumber.getAndAdd(1) );
 		}
 	}
 }
