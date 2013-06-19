@@ -58,6 +58,14 @@ public class InMemoryChannelDaoTest {
 		assertEquals(2, testClass.countChannels());
 	}
 
+	@Test
+	public void testFindFirstId() throws Exception {
+		InMemoryChannelDao testClass = new InMemoryChannelDao(new TimeProvider());
+		testClass.createChannel("channelName");
+		assertFalse(testClass.findFirstId("channelName").isPresent());
+		ValueInsertionResult insertionResult = testClass.insert("channelName", "text/plain", "Hello".getBytes());
+		assertEquals(insertionResult.getKey(), testClass.findFirstId("channelName").get());
+	}
 
 	@Test
 	public void testFindLatestId() throws Exception {

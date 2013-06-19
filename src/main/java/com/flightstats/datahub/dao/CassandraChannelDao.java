@@ -39,6 +39,9 @@ public class CassandraChannelDao implements ChannelDao {
 		DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
 		ValueInsertionResult result = cassandraValueWriter.write(channelName, value);
 		channelsCollection.updateLastUpdatedKey(channelName, result.getKey());
+		if ( !findFirstId(channelName).isPresent() ) {
+			channelsCollection.updateFirstKey(channelName,result.getKey());
+		}
 		return result;
 	}
 
@@ -62,6 +65,11 @@ public class CassandraChannelDao implements ChannelDao {
 	@Override
 	public Iterable<ChannelConfiguration> getChannels() {
 		return channelsCollection.getChannels();
+	}
+
+	@Override
+	public Optional<DataHubKey> findFirstId(String channelName) {
+		return cassandraValueReader.findFirstId(channelName);
 	}
 
 	@Override
