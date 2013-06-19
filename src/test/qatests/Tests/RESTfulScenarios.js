@@ -22,7 +22,7 @@ describe('IN PROGRESS - Restful Scenarios', function() {
 
     before(function(done) {
 
-        dhh.createChannel(dhh.getRandomChannelName(), function(res, uri) {
+        dhh.createChannel({name: dhh.getRandomChannelName()}, function(res, uri) {
             expect(gu.isHTTPSuccess(res.status)).to.be.true;
 
             preMadeChannelUri = uri;
@@ -94,7 +94,7 @@ describe('IN PROGRESS - Restful Scenarios', function() {
         it('Create channel, list channels, get channel, insert content, get latest uri, get content', function(done) {
             channelName = dhh.getRandomChannelName();
 
-            dhh.createChannel(channelName, function(createRes, createdUri) {
+            dhh.createChannel({name: channelName}, function(createRes, createdUri) {
                 expect(gu.isHTTPSuccess(createRes.status)).to.be.true;
 
                 dhh.getAllChannels({}, function(getAllRes, allChannels) {

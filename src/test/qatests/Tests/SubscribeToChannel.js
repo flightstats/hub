@@ -43,7 +43,7 @@ describe('Channel Subscription:', function() {
 
         channelName = dhh.getRandomChannelName();
 
-        dhh.createChannel(channelName, function(res){
+        dhh.createChannel({name: channelName}, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             }

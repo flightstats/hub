@@ -54,7 +54,7 @@ describe('Load tests - POST data:', function(){
     before(function(myCallback){
         channelName = dhh.getRandomChannelName();
 
-        dhh.createChannel(channelName, function(res, cnUri){
+        dhh.createChannel({name: channelName}, function(res, cnUri){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             };
@@ -94,7 +94,7 @@ describe('Load tests - POST data:', function(){
             async.each(loadChannelKeys,
                 function(cnName, cb) {
 
-                    dhh.createChannel(cnName, function(createRes, cnUri) {
+                    dhh.createChannel({name: cnName}, function(createRes, cnUri) {
                         if (gu.HTTPresponses.Created != createRes.status) {
                             gu.debugLog('Failed to create channel "'+ cnName +'"');
 

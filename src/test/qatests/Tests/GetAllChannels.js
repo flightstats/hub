@@ -32,7 +32,7 @@ describe('Get All Channels', function() {
         before(function(done) {
             latestChannel.name = dhh.getRandomChannelName();
 
-            dhh.createChannel(latestChannel.name, function(createRes, channelLoc) {
+            dhh.createChannel({name: latestChannel.name}, function(createRes, channelLoc) {
                 expect(createRes.status).to.equal(gu.HTTPresponses.Created);
                 expect(null != channelLoc);
                 latestChannel.loc = channelLoc;

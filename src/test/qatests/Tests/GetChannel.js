@@ -30,7 +30,7 @@ describe('GET Channel metadata:', function() {
         before(function(done){
             channelName = dhh.getRandomChannelName();
 
-            dhh.createChannel(channelName, function(makeRes, channelUri) {
+            dhh.createChannel({name: channelName}, function(makeRes, channelUri) {
                 expect(gu.isHTTPSuccess(makeRes.status)).to.equal(true);
                 cnUri = channelUri;
 

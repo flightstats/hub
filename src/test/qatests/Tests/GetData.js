@@ -35,7 +35,7 @@ describe('GET data:', function() {
 
     before(function(myCallback){
         channelName = dhh.getRandomChannelName();
-        dhh.createChannel(channelName, function(res, cnUri){
+        dhh.createChannel({name: channelName}, function(res, cnUri){
             dhh.getChannel({'name': channelName}, function(res){
                 mainChannelUri = cnUri;
 
@@ -172,11 +172,11 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.createChannel(channelA.name, function(res, cnAUri) {
+                    dhh.createChannel({name: channelA.name}, function(res, cnAUri) {
                         channelA.uri = cnAUri;
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
-                        dhh.createChannel(channelB.name, function(res2, cnBUri) {
+                        dhh.createChannel({name: channelB.name}, function(res2, cnBUri) {
                             channelB.uri = cnBUri;
                             expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
                             callback(null, null);
@@ -238,7 +238,7 @@ describe('GET data:', function() {
 
             async.waterfall([
                 function(callback){
-                    dhh.createChannel(thisChannel, function(res, cnUri) {
+                    dhh.createChannel({name: thisChannel}, function(res, cnUri) {
                         channelUri = cnUri;
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
@@ -267,6 +267,10 @@ describe('GET data:', function() {
         });
     });
 
+    describe.skip('Code not implemented - TTL', function() {
+        // TODO: if item has expired and the cleanup cycle has run, confirm that a GET on it returns 404
+    })
+
     // Allow a client to access the most recently saved item in a channel.
 // https://www.pivotaltracker.com/story/show/43222579
     describe('Access most recently saved item in channel:', function() {
@@ -284,7 +288,7 @@ describe('GET data:', function() {
         beforeEach(function(done) {
             thisChannelName = dhh.getRandomChannelName();
 
-            dhh.createChannel(thisChannelName, function(res, cnUri) {
+            dhh.createChannel({name: thisChannelName}, function(res, cnUri) {
                 channelUri = cnUri;
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 cnMetadata = new dhh.channelMetadata(res.body);
@@ -620,7 +624,7 @@ describe('GET data:', function() {
         beforeEach(function(done) {
             myChannel = dhh.getRandomChannelName();
 
-            dhh.createChannel(myChannel, function(res, cnUri) {
+            dhh.createChannel({name: myChannel}, function(res, cnUri) {
                 channelUri = cnUri;
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
@@ -738,7 +742,7 @@ describe('GET data:', function() {
         beforeEach(function(done) {
             channelName = dhh.getRandomChannelName();
 
-            dhh.createChannel(channelName, function(res, cnUri) {
+            dhh.createChannel({name: channelName}, function(res, cnUri) {
                 channelUri = cnUri;
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
