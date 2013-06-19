@@ -137,6 +137,26 @@ public class CassandraChannelsCollectionTest {
 	}
 
 	@Test
+	public void testUpdateFirstKey() throws Exception {
+		String channelName = "myChan";
+		Date newDate = new Date(123456789L);
+		DataHubKey key = new DataHubKey(newDate, (short) 0);
+		String keyString = new DataHubKeyRenderer().keyToString(key);
+
+		Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
+		HColumn<String, String> newColumn = mock(HColumn.class);
+		Mutator<String> mutator = mock(Mutator.class);
+
+		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
+		when(hector.createColumn(channelName, keyString, StringSerializer.get(), StringSerializer.get())).thenReturn(newColumn);
+
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
+		testClass.updateFirstKey(channelName, key);
+
+		verify(mutator).insert(CHANNELS_FIRST_ROW_KEY, "myChan", newColumn);
+	}
+
+	@Test
 	public void testCountChannels() throws Exception {
 		CountQuery<String, String> countQuery = mock(CountQuery.class);
 		QueryResult<Integer> queryResult = mock(QueryResult.class);
@@ -177,6 +197,34 @@ public class CassandraChannelsCollectionTest {
 
 		//WHEN
 		DataHubKey result = testClass.getLastUpdatedKey(channelName);
+
+		//THEN
+		assertEquals(expected, result);
+	}
+
+	@Test
+	public void testGetFirstKey() throws Exception {
+		//GIVEN
+		String channelName = "chunder";
+		DataHubKey expected = new DataHubKey(new Date(98348974554397L), (short) 0);
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, null, hector, null, keyRenderer);
+
+		ColumnQuery<String, String, String> columnQuery = mock(ColumnQuery.class);
+		QueryResult<HColumn<String, String>> queryResult = mock(QueryResult.class);
+		HColumn<String, String> column = mock(HColumn.class);
+
+		when(connector.getKeyspace()).thenReturn(keyspace);
+		when(columnQuery.setName(channelName)).thenReturn(columnQuery);
+		when(columnQuery.setKey(CassandraChannelsCollection.CHANNELS_FIRST_ROW_KEY)).thenReturn(columnQuery);
+		when(columnQuery.setColumnFamily(channelName)).thenReturn(columnQuery);
+		when(columnQuery.execute()).thenReturn(queryResult);
+		when(queryResult.get()).thenReturn(column);
+		when(column.getValue()).thenReturn(keyRenderer.keyToString(expected));
+
+		when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), StringSerializer.get())).thenReturn(columnQuery);
+
+		//WHEN
+		DataHubKey result = testClass.getFirstKey(channelName);
 
 		//THEN
 		assertEquals(expected, result);
