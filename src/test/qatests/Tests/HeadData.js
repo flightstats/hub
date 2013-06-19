@@ -30,7 +30,7 @@ describe('HEAD on data tests:', function() {
     before(function(myCallback){
         channelName = dhh.getRandomChannelName();
         agent = superagent.agent();
-        dhh.createChannel(channelName, function(res, cnUri){
+        dhh.createChannel({name: channelName}, function(res, cnUri){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 gu.debugLog('\nDump!');
                 console.dir(res);

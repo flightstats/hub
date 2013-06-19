@@ -27,9 +27,24 @@ describe('Create Channel: ', function(){
 
     var channelName;
 
+    var checkChannelBodyStructure = function(body) {
+        expect(body.hasOwnProperty('_links')).to.be.true;
+        expect(body._links.hasOwnProperty('self')).to.be.true;
+        expect(body._links.self.hasOwnProperty('href')).to.be.true;
+        expect(body._links.hasOwnProperty('latest')).to.be.true;
+        expect(body._links.latest.hasOwnProperty('href')).to.be.true;
+        expect(body._links.hasOwnProperty('ws')).to.be.true;
+        expect(body._links.ws.hasOwnProperty('href')).to.be.true;
+        expect(body.hasOwnProperty('name')).to.be.true;
+        expect(body.hasOwnProperty('creationDate')).to.be.true;
+
+        expect(lodash.keys(body).length).to.equal(3);
+        expect(lodash.keys(body._links).length).to.equal(3);
+    }
+
     before(function(myCallback){
         channelName = dhh.getRandomChannelName();
-        dhh.createChannel(channelName, function(res){
+        dhh.createChannel({name: channelName}, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 //console.log('bad things');
                 throw new Error(res.error);
@@ -39,7 +54,7 @@ describe('Create Channel: ', function(){
         });
     });
 
-    describe('Acceptance', function() {
+    describe('Acceptance, TTL not specified', function() {
 
         var createRes,
             channelUri,
@@ -49,7 +64,7 @@ describe('Create Channel: ', function(){
 
             acceptName = dhh.getRandomChannelName();
 
-            dhh.createChannel(acceptName, function(res, uri) {
+            dhh.createChannel({name: acceptName}, function(res, uri) {
                 createRes = res;
                 channelUri = uri;
 
@@ -72,21 +87,7 @@ describe('Create Channel: ', function(){
         })
 
         it('creation response has correctly structured body', function() {
-            var body = createRes.body;
-
-            expect(body.hasOwnProperty('_links')).to.be.true;
-            expect(body._links.hasOwnProperty('self')).to.be.true;
-            expect(body._links.self.hasOwnProperty('href')).to.be.true;
-            expect(body._links.hasOwnProperty('latest')).to.be.true;
-            expect(body._links.latest.hasOwnProperty('href')).to.be.true;
-            expect(body._links.hasOwnProperty('ws')).to.be.true;
-            expect(body._links.ws.hasOwnProperty('href')).to.be.true;
-            expect(body.hasOwnProperty('name')).to.be.true;
-            expect(body.hasOwnProperty('creationDate')).to.be.true;
-
-            expect(lodash.keys(body).length).to.equal(3);
-            expect(lodash.keys(body._links).length).to.equal(3);
-
+            checkChannelBodyStructure(createRes.body);
         })
 
         it('creation response includes correct Location header', function() {
@@ -109,71 +110,130 @@ describe('Create Channel: ', function(){
             expect(returnedDate.add('minutes', 5).isAfter(moment())).to.be.true;
         })
 
+        // TODO: ttl is null
+
+    })
+
+    // TODO all this section
+    describe.skip('CODE NOT IMPLEMENTED - Acceptance with TTL set', function() {
+        var createRes,
+            channelUri,
+            acceptName,
+            acceptTTL = 100;
+
+        before(function(done) {
+
+            acceptName = dhh.getRandomChannelName();
+
+            dhh.createChannel({name: acceptName, ttl: acceptTTL}, function(res, uri) {
+                createRes = res;
+                channelUri = uri;
+
+                done();
+            });
+        })
+
+        it('channel creation returns 201 (Created)', function(){
+            expect(createRes.status).to.equal(gu.HTTPresponses.Created);
+        });
+
+        it('creation response has correctly structured body', function() {
+            checkChannelBodyStructure(createRes.body);
+        })
+
+        it('has correct value for TTL', function() {
+            expect(createRes.body.ttl).to.equal(acceptTTL);
+        })
+    })
+
+    describe('Positive parameter tests', function() {
+
+        describe('name', function() {
+
+        })
+
+        describe('TTL', function() {
+            // TODO: may be null
+            // TODO: may be ?max value?
+        })
     })
 
     describe('Error cases', function() {
 
-        it.skip('Create channel with name reserved by Cassandra', function(done) {
-            channelName = 'channelMetadata';
+        describe('name', function() {
+            it.skip('may not match a word reserved by Cassandra', function(done) {
+                channelName = 'channelMetadata';
 
-            dhh.createChannel(channelName, function(res){
-                if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
-                    //console.log('bad things');
-                    throw new Error(res.error);
-                }
-                gu.debugLog('Main test channel:'+ channelName);
+                dhh.createChannel({name: channelName}, function(res){
+                    if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
+                        //console.log('bad things');
+                        throw new Error(res.error);
+                    }
+                    gu.debugLog('Main test channel:'+ channelName);
 
-                done();
-            });
-        })
-
-        // See:  https://www.pivotaltracker.com/story/show/49566971
-        it('blank name not allowed', function(done){
-
-            dhh.createChannel('', function(res) {
-                expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
-                gu.debugLog('Response status: '+ res.status, false);
-
-                done();
-            });
-
-        });
-
-        it('name cannot consist only of whitespace', function(done) {
-
-            dhh.createChannel('    ', function(res) {
-                expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
-
-                done();
+                    done();
+                });
             })
-        })
 
-        it.skip('BUG: https://www.pivotaltracker.com/story/show/51434073 - whitespace is trimmed from name', function(done) {
-            var name = dhh.getRandomChannelName();
+            // See:  https://www.pivotaltracker.com/story/show/49566971
+            it('may not be blank', function(done){
 
-            dhh.createChannel('  '+ name +'  ', function(res, uri) {
-                expect(res.status).to.equal(gu.HTTPresponses.Created);
+                dhh.createChannel({name: ''}, function(res) {
+                    expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
+                    gu.debugLog('Response status: '+ res.status, false);
 
-                dhh.getChannel({uri: uri}, function(getRes, body) {
-                    expect(getRes.status).to.equal(gu.HTTPresponses.OK);
-                    expect(body.name).to.equal(name);
+                    done();
+                });
+
+            });
+
+            it('cannot consist only of whitespace', function(done) {
+
+                dhh.createChannel({name: '    '}, function(res) {
+                    expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
 
                     done();
                 })
             })
-        })
 
-        it.skip('BUG: https://www.pivotaltracker.com/story/show/51434189 -name cannot contain a forward slash', function(done) {
-            var name = ranU.randomString(10) + '/'+ ranU.randomString(10);
+            it.skip('BUG: https://www.pivotaltracker.com/story/show/51434073 - whitespace is trimmed from name', function(done) {
+                var name = dhh.getRandomChannelName();
 
-            dhh.createChannel(name, function(res) {
-                expect(gu.isHTTPError(res.status)).to.be.true;
-                gu.debugLog('res.status: '+ res.status);
-                gu.debugLog('name: '+ name);
+                dhh.createChannel({name: '  '+ name +'  '}, function(res, uri) {
+                    expect(res.status).to.equal(gu.HTTPresponses.Created);
 
-                done();
+                    dhh.getChannel({uri: uri}, function(getRes, body) {
+                        expect(getRes.status).to.equal(gu.HTTPresponses.OK);
+                        expect(body.name).to.equal(name);
+
+                        done();
+                    })
+                })
             })
+
+            it.skip('BUG: https://www.pivotaltracker.com/story/show/51434189 - cannot contain a forward slash', function(done) {
+                var name = ranU.randomString(10) + '/'+ ranU.randomString(10);
+
+                dhh.createChannel({name: name}, function(res) {
+                    expect(gu.isHTTPError(res.status)).to.be.true;
+                    gu.debugLog('res.status: '+ res.status);
+                    gu.debugLog('name: '+ name);
+
+                    done();
+                })
+            })
+
         })
+
+        describe.skip('Code not implemented - TTL', function() {
+            // TODO: may not be negative
+            // TODO: may not be zero (or other minimum value?)
+            // TODO: blank or empty --> null, or disallowed?
+            // TODO: may not be non-numeral
+            // TODO: may not contain comma
+            // TODO: may not contain period
+        })
+
 
         // https://www.pivotaltracker.com/story/show/46667409
         it('no / empty payload not allowed', function(done) {
@@ -195,7 +255,7 @@ describe('Create Channel: ', function(){
 
             // https://www.pivotaltracker.com/story/show/44113267
             it('return 409 if attempting to create channel with a name already in use', function(done) {
-                dhh.createChannel(channelName, function(res) {
+                dhh.createChannel({name: channelName}, function(res) {
                     expect(res.status).to.equal(gu.HTTPresponses.Conflict);
 
                     done();
@@ -207,10 +267,10 @@ describe('Create Channel: ', function(){
                     firstName = base +'z',
                     secondName = base +'Z';
 
-                dhh.createChannel(firstName, function(firstRes) {
+                dhh.createChannel({name: firstName}, function(firstRes) {
                     expect(firstRes.status).to.equal(gu.HTTPresponses.Created);
 
-                    dhh.createChannel(secondName, function(secondRes) {
+                    dhh.createChannel({name: secondName}, function(secondRes) {
                         expect(secondRes.status).to.equal(gu.HTTPresponses.Created);
 
                         done();

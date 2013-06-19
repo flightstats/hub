@@ -173,19 +173,25 @@ exports.WSWrapper = WSWrapper;
 /**
  * Create a channel.
  *
- * @param myChannelName
+ * @param params: .name, .ttl=null, .debug (optional)
  * @param myCallback: response || error, channelUri || null (if error)
  */
-var createChannel = function(myChannelName, myCallback) {
-    var myPayload = '{"name":"'+ myChannelName +'"}',
-        uri = URL_ROOT +'/channel';
+var createChannel = function(params, myCallback) {
+    var cnName = params.name,
+        ttl = (params.hasOwnProperty('ttl')) ? params.ttl : null,
+        payload = '{"name":"'+ cnName +'"}',
+        uri = [URL_ROOT +'channel'].join('/');
+
+    if (null != ttl) {
+        payload['ttl'] = ttl;
+    }
 
     gu.debugLog('createChannel.uri: '+ uri, DEBUG);
-    gu.debugLog('createChannel.payload: '+ myPayload, DEBUG);
+    gu.debugLog('createChannel.payload: '+ payload, DEBUG);
 
     superagent.agent().post(uri)
         .set('Content-Type', 'application/json')
-        .send(myPayload)
+        .send(payload)
         .end(function(err, res) {
             if (gu.isHTTPError(res.status)) {
                 myCallback(res, null);
@@ -208,17 +214,6 @@ var getRandomChannelName = function() {
 exports.getRandomChannelName = getRandomChannelName;
 
 //     Current metadata structure for GET on a channel:
-/*
- {  _links:
- {   self:
- {   href: 'http://datahub-01.cloud-east.dev:8080/channel/philcollinssucks' },
- latest:
- {   href: 'http://datahub-01.cloud-east.dev:8080/channel/philcollinssucks/latest' }
- },
- name: 'philcollinssucks',
- creationDate: '2013-02-25T23:57:49.477Z'
- }
- */
 function channelMetadata(responseBody) {
     this.getChannelUri = function() {
         return responseBody._links.self.href;
@@ -234,6 +229,10 @@ function channelMetadata(responseBody) {
 
     this.getName = function() {
         return responseBody.name;
+    }
+
+    this.getTTL = function() {
+        throw {message: 'not implemented'}
     }
 
     this.getCreationDate = function() {

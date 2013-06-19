@@ -61,7 +61,7 @@ describe('POST data to channel:', function(){
         };
 
         channelName = dhh.getRandomChannelName();
-        dhh.createChannel(channelName, function(res, cnUri){
+        dhh.createChannel({name: channelName}, function(res, cnUri){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 done(res.error);
             };
@@ -164,7 +164,7 @@ describe('POST data to channel:', function(){
             var otherChannelName = dhh.getRandomChannelName(),
                 otherChannelUri;
 
-            dhh.createChannel(otherChannelName, function(res, cnUri) {
+            dhh.createChannel({name: otherChannelName}, function(res, cnUri) {
                 otherChannelUri = cnUri;
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
