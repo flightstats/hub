@@ -302,7 +302,7 @@ describe('GET data:', function() {
         //    Verify at each step that the "most recent" URI returns what was most recently saved.
         //    Response to a channel creation *or* to a GET on the channel will include the URI to the latest resource in that channel.
         //    NOTE: response is 303 ("see other") – it's a redirect to the latest set of data stored in the channel.
-        it('(Acceptance) Save sequence of data to channel, confirm that latest actually returns latest', function(done) {
+        it('(Acceptance) Save sequence of items to channel, confirm that latest actually returns latest', function(done) {
             var payload1 = dhh.getRandomPayload(),
                 payload2 = dhh.getRandomPayload(),
                 payload3 = dhh.getRandomPayload();
@@ -350,8 +350,8 @@ describe('GET data:', function() {
             });
         });
 
-        it.skip('Return 404 on Get Latest if channel has no data', function(done) {
-            superagent.agent().get(channelUri)
+        it('Return 404 on Get Latest if channel has no data', function(done) {
+            superagent.agent().get(latestUri)
                 .end(function(err, res) {
                     expect(res.status).to.equal(gu.HTTPresponses.Not_Found);
 
@@ -372,11 +372,11 @@ describe('GET data:', function() {
 
 
         // No data exists at 'latest' location on creation, so just confirm the link is available in metadata
-        it('Channel creation returns link to latest data set', function() {
+        it('Channel creation returns link to latest item', function() {
             expect(latestUri).to.not.be.null;
         });
 
-        it('GET on Channel returns correct link to latest data set', function(done) {
+        it('GET on Channel returns correct link to latest item', function(done) {
             var payload = ranU.randomString(100);
 
             dhh.postData({channelUri: channelUri, data: payload}, function(postRes, postUri) {
@@ -390,7 +390,7 @@ describe('GET data:', function() {
             })
         });
 
-        it('Get latest works when latest data set is an empty set, following a previous non-empty set', function(done) {
+        it('Get latest works when latest item is an empty set, following a previous non-empty set', function(done) {
 
             var payload = dhh.getRandomPayload();
 
@@ -425,7 +425,7 @@ describe('GET data:', function() {
         // TODO:  Save two sets of data with the same creation timestamp.
         //  Note: the client can't control which is the 'latest', but once the server has made that determination, it should stick.
         //  So repeated calls to this method will always return the same data set.
-        it.skip('(*Not yet possible*) Internal sequence of data with same timestamp is preserved', function(done) {
+        it.skip('(*Not yet possible*) Internal sequence of items with same timestamp is preserved', function(done) {
             var payload1 = ranU.randomString(ranU.randomNum(51)),
                 payload2 = ranU.randomString(ranU.randomNum(51)),
                 timestamp1,
@@ -433,6 +433,8 @@ describe('GET data:', function() {
 
             // not implemented
         });
+
+        // TODO: if the only remaining item in a channel expires and is cleaned up, then get latest should return 404
     });
 
 
