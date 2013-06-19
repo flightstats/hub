@@ -29,7 +29,7 @@ exports.DOMAIN = DOMAIN;
 var URL_ROOT = 'http://'+ DOMAIN;
 exports.URL_ROOT = URL_ROOT;
 
-var DEBUG = false;
+var DEBUG = true;
 
 
 var getRandomPayload = function() {
@@ -180,7 +180,7 @@ var createChannel = function(params, myCallback) {
     var cnName = params.name,
         ttl = (params.hasOwnProperty('ttl')) ? params.ttl : null,
         payload = '{"name":"'+ cnName +'"}',
-        uri = [URL_ROOT +'channel'].join('/');
+        uri = [URL_ROOT, 'channel'].join('/');
 
     if (null != ttl) {
         payload['ttl'] = ttl;
