@@ -29,7 +29,7 @@ exports.DOMAIN = DOMAIN;
 var URL_ROOT = 'http://'+ DOMAIN;
 exports.URL_ROOT = URL_ROOT;
 
-var DEBUG = true;
+var DEBUG = false;
 
 
 var getRandomPayload = function() {
@@ -180,14 +180,15 @@ var createChannel = function(params, myCallback) {
     var cnName = params.name,
         ttl = (params.hasOwnProperty('ttl')) ? params.ttl : null,
         payload = '{"name":"'+ cnName +'"}',
-        uri = [URL_ROOT, 'channel'].join('/');
+        uri = [URL_ROOT, 'channel'].join('/'),
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
     if (null != ttl) {
         payload['ttl'] = ttl;
     }
 
-    gu.debugLog('createChannel.uri: '+ uri, DEBUG);
-    gu.debugLog('createChannel.payload: '+ payload, DEBUG);
+    gu.debugLog('createChannel.uri: '+ uri, VERBOSE);
+    gu.debugLog('createChannel.payload: '+ payload, VERBOSE);
 
     superagent.agent().post(uri)
         .set('Content-Type', 'application/json')
@@ -199,6 +200,7 @@ var createChannel = function(params, myCallback) {
             else {
                 var cnMetadata = new channelMetadata(res.body),
                     location = cnMetadata.getChannelUri();
+                gu.debugLog('Created channel named: '+ cnName)
                 myCallback(res, location);
             }
         }).on('error', function(e) {
