@@ -1,6 +1,7 @@
 package com.flightstats.datahub.service.eventing;
 
 import com.flightstats.datahub.dao.ChannelDao;
+import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +23,7 @@ public class JettyWebSocketServletTest {
 	private String channelName;
 	private String requestUriString;
 	private URI requestUri;
-	private CustomWebSocketCreator wsCreator;
+	private WebSocketCreator wsCreator;
 	private WebSocketChannelNameExtractor channelNameExtractor;
 	private HttpServletRequest httpRequest;
 	private HttpServletResponse httpResponse;
@@ -34,7 +35,7 @@ public class JettyWebSocketServletTest {
 		channelName = "spoon";
 		requestUriString = "/channel/spoon/ws";
 		requestUri = URI.create(requestUriString);
-		wsCreator = mock(CustomWebSocketCreator.class);
+		wsCreator = mock(WebSocketCreator.class);
 		channelNameExtractor = mock(WebSocketChannelNameExtractor.class);
 		httpRequest = mock(HttpServletRequest.class);
 		httpResponse = mock(HttpServletResponse.class);
@@ -49,7 +50,7 @@ public class JettyWebSocketServletTest {
 
 		testClass.configure(factory);
 
-		verify(factory).setCreator(isA(CustomWebSocketCreator.class));
+		verify(factory).setCreator(isA(WebSocketCreator.class));
 	}
 
 	@Test
@@ -61,7 +62,7 @@ public class JettyWebSocketServletTest {
 		when(httpRequest.getRequestURI()).thenReturn(requestUriString);
 		when(channelDao.channelExists(channelName)).thenReturn(true);
 
-		JettyWebSocketServlet testClass = new JettyWebSocketServlet( wsCreator, channelNameExtractor, channelDao) {
+		JettyWebSocketServlet testClass = new JettyWebSocketServlet(wsCreator, channelNameExtractor, channelDao) {
 			@Override
 			protected void invokeSuper(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 				superWasInvoked.set(true);

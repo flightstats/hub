@@ -33,7 +33,7 @@ public class CassandraValueWriter {
 	public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue) {
 		Mutator<String> mutator = connector.buildMutator(StringSerializer.get());
 
-		DataHubKey key = keyGenerator.newKey();
+		DataHubKey key = keyGenerator.newKey(channelName);
 
 		String columnName = keyRenderer.keyToString(key);
 		HColumn<String, DataHubCompositeValue> column = hector.createColumn(columnName, columnValue, StringSerializer.get(),

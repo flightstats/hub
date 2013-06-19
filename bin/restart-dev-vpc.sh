@@ -13,7 +13,8 @@ INSTANCES=( \
     cassandra-02.i-c0395eb3:9160 \
     cassandra-03.i-9c395eef:9160 \
 	datahub-01.i-b4572ac4:22 \
-	datahub-02.i-52562b22:22
+	datahub-02.i-52562b22:22 \
+	datahub-03.i-22562b52:22
 )
 
 if [ -x /usr/local/bin/nc ] ; then
