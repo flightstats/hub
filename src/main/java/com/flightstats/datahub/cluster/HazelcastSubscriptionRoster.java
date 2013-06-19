@@ -14,18 +14,16 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 
 	private final static Logger logger = LoggerFactory.getLogger(HazelcastSubscriptionRoster.class);
 	private final HazelcastInstance hazelcast;
-	private final Map<ChannelConsumer, MessageListener<URI>> consumerToMessageListener = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<ChannelConsumer, MessageListener<URI>> consumerToMessageListener = new ConcurrentHashMap<>();
 
 	@Inject
-	//Note: The delegate needs to be the specific concrete type to get Guice to inject properly.  Wishing there was a more elegant solution to this.
-	public HazelcastSubscriptionRoster( HazelcastInstance hazelcast) {
+	public HazelcastSubscriptionRoster(HazelcastInstance hazelcast) {
 		this.hazelcast = hazelcast;
 	}
 
