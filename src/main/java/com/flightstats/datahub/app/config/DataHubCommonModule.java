@@ -43,7 +43,7 @@ import static com.flightstats.datahub.service.eventing.WebSocketChannelNameExtra
 class DataHubCommonModule extends JerseyServletModule {
 	private final static Map<String, String> JERSEY_PROPERTIES = new HashMap<>();
 
-	public static final String HAZELCAST_CONFIG_FILE = "hazelcast.config.file";
+	public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
 
 	static {
 		JERSEY_PROPERTIES.put(ServletContainer.RESOURCE_CONFIG_CLASS, "com.sun.jersey.api.core.PackagesResourceConfig");
