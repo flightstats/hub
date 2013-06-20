@@ -6,11 +6,13 @@ import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 
+import java.util.List;
+
 public interface ChannelDao {
 
 	boolean channelExists(String channelName);
 
-	ChannelConfiguration createChannel(String name);
+	ChannelConfiguration createChannel(String channelName, Long ttl);
 
 	/**
 	 * Note, this operation is done within a front-end lock on the channel.  The implementation of this method
@@ -29,4 +31,13 @@ public interface ChannelDao {
 	Optional<DataHubKey> findLatestId(String channelName);
 
 	int countChannels();
+
+	void setFirstKey(String channelName, DataHubKey key);
+	void deleteFirstKey(String channelName);
+
+	void setLastUpdateKey(String channelName, DataHubKey key);
+	void deleteLastUpdateKey(String channelName);
+
+	/** Delete the keys and their corresponding values for the given channel. */
+	void delete(String channelName, List<DataHubKey> keys);
 }

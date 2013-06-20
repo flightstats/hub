@@ -27,11 +27,11 @@ public class CassandraChannelDaoTest {
 
 	@Test
 	public void testCreateChannel() throws Exception {
-		ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999));
+		ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999), null);
 		CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
-		when(collection.createChannel("foo")).thenReturn(expected);
+		when(collection.createChannel("foo", null)).thenReturn(expected);
 		CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null);
-		ChannelConfiguration result = testClass.createChannel("foo");
+		ChannelConfiguration result = testClass.createChannel("foo", null);
 		assertEquals(expected, result);
 	}
 

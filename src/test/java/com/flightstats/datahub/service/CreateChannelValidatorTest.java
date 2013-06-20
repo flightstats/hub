@@ -17,7 +17,7 @@ public class CreateChannelValidatorTest
 	{
 		//GIVEN
 		ChannelDao dao = mock( ChannelDao.class );
-		ChannelCreationRequest request = new ChannelCreationRequest( "achannel" );
+		ChannelCreationRequest request = new ChannelCreationRequest( "achannel", null);
 
 		//WHEN
 		CreateChannelValidator testClass = new CreateChannelValidator( dao );
@@ -33,7 +33,7 @@ public class CreateChannelValidatorTest
 	{
 		//GIVEN
 		ChannelDao dao = mock( ChannelDao.class );
-		ChannelCreationRequest request = new ChannelCreationRequest( null );
+		ChannelCreationRequest request = new ChannelCreationRequest( null, null);
 
 		//WHEN
 		CreateChannelValidator testClass = new CreateChannelValidator( dao );
@@ -46,7 +46,7 @@ public class CreateChannelValidatorTest
 	{
 		//GIVEN
 		ChannelDao dao = mock( ChannelDao.class );
-		ChannelCreationRequest request = new ChannelCreationRequest( "" );
+		ChannelCreationRequest request = new ChannelCreationRequest( "", null);
 
 		//WHEN
 		CreateChannelValidator testClass = new CreateChannelValidator( dao );
@@ -59,7 +59,7 @@ public class CreateChannelValidatorTest
 	{
 		//GIVEN
 		ChannelDao dao = mock( ChannelDao.class );
-		ChannelCreationRequest request = new ChannelCreationRequest( "  " );
+		ChannelCreationRequest request = new ChannelCreationRequest( "  ", null);
 
 		//WHEN
 		CreateChannelValidator testClass = new CreateChannelValidator( dao );
@@ -72,7 +72,7 @@ public class CreateChannelValidatorTest
 	{
 		//GIVEN
 		ChannelDao dao = mock( ChannelDao.class );
-		ChannelCreationRequest request = new ChannelCreationRequest( "achannel" );
+		ChannelCreationRequest request = new ChannelCreationRequest( "achannel", null);
 
 		//WHEN
 		CreateChannelValidator testClass = new CreateChannelValidator( dao );

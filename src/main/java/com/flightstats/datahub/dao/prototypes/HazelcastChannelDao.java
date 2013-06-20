@@ -8,6 +8,7 @@ import com.hazelcast.core.HazelcastInstance;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -27,9 +28,9 @@ public class HazelcastChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ChannelConfiguration createChannel(String name) {
+	public ChannelConfiguration createChannel(String name, Long ttl) {
 		Date creationDate = new Date();
-		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate);
+		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate, ttl);
 		channelConfigurations.put(name, channelConfiguration);
 		return channelConfiguration;
 	}
@@ -47,6 +48,33 @@ public class HazelcastChannelDao implements ChannelDao {
 	@Override
 	public int countChannels() {
 		return channelConfigurations.size();
+	}
+
+	@Override
+	public void setFirstKey(String channelName, DataHubKey key) {
+		firstPerChannel.putIfAbsent(channelName, key);
+	}
+
+	@Override
+	public void deleteFirstKey(String channelName) {
+		firstPerChannel.remove(channelName);
+	}
+
+	@Override
+	public void setLastUpdateKey(String channelName, DataHubKey key) {
+		latestPerChannel.put(channelName, key);
+	}
+
+	@Override
+	public void deleteLastUpdateKey(String channelName) {
+		latestPerChannel.remove(channelName);
+	}
+
+	@Override
+	public void delete(String channelName, List<DataHubKey> keys) {
+		for (DataHubKey reapableKey : keys) {
+			channelValues.remove(reapableKey);
+		}
 	}
 
 	@Override
@@ -70,8 +98,8 @@ public class HazelcastChannelDao implements ChannelDao {
 						new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(), Optional.of(newKey)));
 			}
 			//finally, make it the latest
-			latestPerChannel.put(channelName, newKey);
-			firstPerChannel.putIfAbsent(channelName,newKey);
+			setLastUpdateKey(channelName, newKey);
+			setFirstKey(channelName,newKey);
 			return new ValueInsertionResult(newKey);
 		} finally {
 			lock.unlock();
