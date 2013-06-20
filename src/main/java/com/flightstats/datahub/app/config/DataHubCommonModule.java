@@ -97,7 +97,7 @@ class DataHubCommonModule extends JerseyServletModule {
 	@Singleton
 	public HazelcastInstance buildHazelcast() throws FileNotFoundException {
 		Config config;
-		if (properties.contains(HAZELCAST_CONFIG_FILE)) {
+		if (properties.containsKey(HAZELCAST_CONFIG_FILE)) {
 			config = new FileSystemXmlConfig( properties.getProperty( HAZELCAST_CONFIG_FILE ) );
 		} else {
 			config = new ClasspathXmlConfig("hazelcast.conf.xml");
