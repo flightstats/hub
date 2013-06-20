@@ -13,6 +13,7 @@ import com.flightstats.datahub.dao.YearMonthDayRowKeyStrategy;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
+import com.flightstats.datahub.service.DataHubSweeper;
 import com.flightstats.datahub.service.eventing.*;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
@@ -43,7 +44,7 @@ import static com.flightstats.datahub.service.eventing.WebSocketChannelNameExtra
 class DataHubCommonModule extends JerseyServletModule {
 	private final static Map<String, String> JERSEY_PROPERTIES = new HashMap<>();
 
-	public static final String HAZELCAST_CONFIG_FILE = "hazelcast.config.file";
+	public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
 
 	static {
 		JERSEY_PROPERTIES.put(ServletContainer.RESOURCE_CONFIG_CLASS, "com.sun.jersey.api.core.PackagesResourceConfig");
@@ -76,6 +77,7 @@ class DataHubCommonModule extends JerseyServletModule {
 		bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
 		bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
 		}).to(YearMonthDayRowKeyStrategy.class);
+		bind(DataHubSweeper.class).asEagerSingleton();
 	}
 
 	private void startUpServlets() {

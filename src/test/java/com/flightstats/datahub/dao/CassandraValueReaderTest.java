@@ -146,7 +146,7 @@ public class CassandraValueReaderTest {
 	@Test
 	public void testFindLatestId_lastUpdateNotFound() throws Exception {
 		String channelName = "myChan";
-		ChannelConfiguration config = new ChannelConfiguration(channelName, null);
+		ChannelConfiguration config = new ChannelConfiguration(channelName, null, null);
 
 		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
 
