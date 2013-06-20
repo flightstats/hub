@@ -73,7 +73,7 @@ public class ChannelResource {
 		String channelName = channelCreationRequest.getName();
 		createChannelValidator.validate(channelCreationRequest);
 
-		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName);
+		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName, channelCreationRequest.getTtl());
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration);
 		return Response.created(channelUri).entity(
 				linked(channelConfiguration)

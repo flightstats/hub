@@ -51,7 +51,7 @@ public class SingleChannelResourceTest {
 		URI latestUri = URI.create("http://testification.com/channel/spoon/latest");
 		itemUri = URI.create("http://testification.com/channel/spoon/888item888");
 		dataHubKey = new DataHubKey(CREATION_DATE, (short) 12);
-		channelConfig = new ChannelConfiguration(channelName, CREATION_DATE);
+		channelConfig = new ChannelConfiguration(channelName, CREATION_DATE, null);
 
 		UriInfo urlInfo = mock(UriInfo.class);
 		dao = mock(ChannelDao.class);
