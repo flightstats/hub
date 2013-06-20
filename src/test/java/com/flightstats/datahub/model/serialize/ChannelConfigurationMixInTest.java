@@ -15,9 +15,9 @@ public class ChannelConfigurationMixInTest {
 	public void test() throws Exception {
 		ObjectMapper mapper = new DataHubObjectMapperFactory().build();
 
-		String json = "{\"name\": \"The Name\", \"creationDate\": 808 }";
+		String json = "{\"name\": \"The Name\", \"creationDate\": 808, \"ttlMillis\": 42 }";
 		ChannelConfiguration result = mapper.readValue(json, ChannelConfiguration.class);
-		ChannelConfiguration expected = new ChannelConfiguration("The Name", new Date(808));
+		ChannelConfiguration expected = new ChannelConfiguration("The Name", new Date(808), 42L);
 		assertEquals(expected, result);
 	}
 }

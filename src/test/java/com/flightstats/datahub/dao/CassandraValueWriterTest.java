@@ -13,7 +13,9 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
@@ -94,5 +96,18 @@ public class CassandraValueWriterTest {
 		testClass.write(CHANNEL_NAME, value);
 	}
 
+	@Test
+	public void testDelete() throws Exception {
+		List<DataHubKey> keys = Arrays.asList( DATA_HUB_KEY, DATA_HUB_KEY );
+		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
+		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
+		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
+
+		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
+		testClass.delete(CHANNEL_NAME, keys);
+
+		verify(mutator, times(2)).addDeletion(ROW_KEY, CHANNEL_NAME, columnName, StringSerializer.get());
+		verify(mutator).execute();
+	}
 }

@@ -4,7 +4,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 public abstract class ChannelCreationRequestMixIn {
 
-	public ChannelCreationRequestMixIn(@JsonProperty("name") String name) {
+	public ChannelCreationRequestMixIn(@JsonProperty("name") String name, @JsonProperty("ttlMillis") Long ttlMillis) {
 		throw new IllegalStateException("Do not instantiate mix-in configuration classes.");
 	}
 }
