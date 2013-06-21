@@ -153,7 +153,7 @@ public class CassandraChannelsCollectionTest {
 		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
 		testClass.deleteLastUpdatedKey(channelName, key);
 
-		verify(mutator).delete(CHANNELS_LATEST_ROW_KEY, "myChan", keyString, StringSerializer.get());
+		verify(mutator).delete(CHANNELS_LATEST_ROW_KEY, "myChan", "myChan", StringSerializer.get());
 	}
 
 	@Test
@@ -192,7 +192,7 @@ public class CassandraChannelsCollectionTest {
 		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
 		testClass.deleteFirstKey(channelName, key);
 
-		verify(mutator).delete(CHANNELS_FIRST_ROW_KEY, "myChan", keyString, StringSerializer.get());
+		verify(mutator).delete(CHANNELS_FIRST_ROW_KEY, "myChan", "myChan", StringSerializer.get());
 	}
 
 	@Test

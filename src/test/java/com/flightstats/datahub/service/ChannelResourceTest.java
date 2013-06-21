@@ -46,7 +46,7 @@ public class ChannelResourceTest {
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
 		when(dao.channelExists(channelName)).thenReturn(false);
-		when(dao.createChannel(channelName, null)).thenReturn(channelConfiguration);
+		when(dao.createChannel(channelName, ChannelResource.DEFAULT_TTL)).thenReturn(channelConfiguration);
 		when(linkBuilder.buildChannelUri(channelConfiguration)).thenReturn(URI.create(channelUri));
 		when(linkBuilder.buildLatestUri(channelName)).thenReturn(URI.create(latestUri));
 		when(linkBuilder.buildWsLinkFor(channelName)).thenReturn(URI.create(wsUri));
@@ -55,7 +55,7 @@ public class ChannelResourceTest {
 
 		Response response = testClass.createChannel(channelCreationRequest);
 
-		verify(dao).createChannel(channelName, null);
+		verify(dao).createChannel(channelName, ChannelResource.DEFAULT_TTL);
 
 		assertEquals(201, response.getStatus());
 		assertEquals(new URI(channelUri), response.getMetadata().getFirst("location"));
