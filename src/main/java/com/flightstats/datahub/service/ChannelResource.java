@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -27,6 +28,7 @@ import static com.flightstats.rest.Linked.linked;
  */
 @Path("/channel")
 public class ChannelResource {
+	static final Long DEFAULT_TTL = TimeUnit.DAYS.toMillis(120);
 
 	private final ChannelDao channelDao;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
@@ -73,7 +75,8 @@ public class ChannelResource {
 		String channelName = channelCreationRequest.getName();
 		createChannelValidator.validate(channelCreationRequest);
 
-		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName, channelCreationRequest.getTtl());
+		Long ttl = channelCreationRequest.getTtl() == null ? DEFAULT_TTL : channelCreationRequest.getTtl();
+		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName, ttl);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration);
 		return Response.created(channelUri).entity(
 				linked(channelConfiguration)
