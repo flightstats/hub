@@ -96,7 +96,7 @@ public class SingleChannelResource {
 		private final String contentType;
 		private final byte[] data;
 
-		public WriteAndDispatch(String channelName, String contentType, byte[] data) {
+		private WriteAndDispatch(String channelName, String contentType, byte[] data) {
 			this.channelName = channelName;
 			this.contentType = contentType;
 			this.data = data;
