@@ -40,6 +40,8 @@ public class ChannelLockExecutor {
 
 	private Lock getLock(String channelName) {
 		Lock newLock = channelLockFactory.newLock(channelName);
+
+		// CRK - what's the point of the lock map if we always first get the lock from the factory anyway?
 		Lock existingLock = channelLocks.putIfAbsent(channelName, newLock);
 		return existingLock == null ? newLock : existingLock;
 	}
