@@ -181,10 +181,8 @@ public class CassandraChannelsCollectionTest {
 		String channelName = "myChan";
 		Date newDate = new Date(123456789L);
 		DataHubKey key = new DataHubKey(newDate, (short) 0);
-		String keyString = new DataHubKeyRenderer().keyToString(key);
 
 		Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
-		HColumn<String, String> newColumn = mock(HColumn.class);
 		Mutator<String> mutator = mock(Mutator.class);
 
 		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
