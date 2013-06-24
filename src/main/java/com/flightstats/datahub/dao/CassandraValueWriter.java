@@ -11,6 +11,7 @@ import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import me.prettyprint.hector.api.mutation.Mutator;
 
+import java.util.Collection;
 import java.util.List;
 
 import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
@@ -51,7 +52,7 @@ public class CassandraValueWriter {
 		return new ValueInsertionResult(key);
 	}
 
-	public void delete(String channelName, List<DataHubKey> keys) {
+	public void delete(String channelName, Collection<DataHubKey> keys) {
 		if ( keys.isEmpty() ) return;
 
 		Mutator<String> mutator = connector.buildMutator(StringSerializer.get());
