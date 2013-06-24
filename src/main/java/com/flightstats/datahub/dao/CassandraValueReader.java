@@ -54,6 +54,15 @@ public class CassandraValueReader {
 		return column == null ? null : column.getValue();
 	}
 
+	public Optional<DataHubKey> findFirstId(String channelName) {
+		try {
+			DataHubKey firstKey = channelsCollection.getFirstKey(channelName);
+			return Optional.fromNullable(firstKey);
+		} catch (HInvalidRequestException e) {
+			throw maybePromoteToNoSuchChannel(e, channelName);
+		}
+	}
+
 	public Optional<DataHubKey> findLatestId(String channelName) {
 		try {
 			DataHubKey lastUpdatedKey = channelsCollection.getLastUpdatedKey(channelName);

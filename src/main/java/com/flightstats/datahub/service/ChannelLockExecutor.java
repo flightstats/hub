@@ -11,20 +11,10 @@ import java.util.concurrent.locks.Lock;
 
 public class ChannelLockExecutor {
 
-	private final ConcurrentMap<String, Lock> channelLocks;
 	private final ChannelLockFactory channelLockFactory;
 
 	@Inject
 	public ChannelLockExecutor(ChannelLockFactory channelLockFactory) {
-		this(new ConcurrentHashMap<String, Lock>(), channelLockFactory);
-	}
-
-	/**
-	 * This constructor only exists for testing and should not be used by production code.
-	 */
-	@VisibleForTesting
-	ChannelLockExecutor(ConcurrentMap<String, Lock> channelLocks, ChannelLockFactory channelLockFactory) {
-		this.channelLocks = channelLocks;
 		this.channelLockFactory = channelLockFactory;
 	}
 
@@ -39,8 +29,6 @@ public class ChannelLockExecutor {
 	}
 
 	private Lock getLock(String channelName) {
-		Lock newLock = channelLockFactory.newLock(channelName);
-		Lock existingLock = channelLocks.putIfAbsent(channelName, newLock);
-		return existingLock == null ? newLock : existingLock;
+		return channelLockFactory.getLock(channelName);
 	}
 }

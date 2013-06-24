@@ -21,7 +21,7 @@ public class ChannelCreationRequestMixInTest {
     public void testDeserialize() throws Exception {
         String json = "{ \"name\": \"foo\" }";
         ChannelCreationRequest result = objectMapper.readValue(json, ChannelCreationRequest.class);
-        ChannelCreationRequest expected = new ChannelCreationRequest("foo");
+        ChannelCreationRequest expected = new ChannelCreationRequest("foo", null);
         assertEquals(expected, result);
     }
 }

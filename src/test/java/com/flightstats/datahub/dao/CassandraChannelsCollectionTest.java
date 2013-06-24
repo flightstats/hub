@@ -50,7 +50,7 @@ public class CassandraChannelsCollectionTest {
 	public void testCreateChannel() throws Exception {
 		String channelName = "arturo";
 		final Date creationDate = new Date(99999);
-		ChannelConfiguration expected = new ChannelConfiguration(channelName, creationDate);
+		ChannelConfiguration expected = new ChannelConfiguration(channelName, creationDate, null);
 		HColumn<String, ChannelConfiguration> column = new HColumnImpl<String, ChannelConfiguration>(StringSerializer.get(), mock(Serializer.class));
 
 		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
@@ -59,7 +59,7 @@ public class CassandraChannelsCollectionTest {
 
 		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider, keyRenderer);
 
-		ChannelConfiguration result = testClass.createChannel(channelName);
+		ChannelConfiguration result = testClass.createChannel(channelName, null);
 
 		assertEquals(expected, result);
 		verify(connector).createColumnFamily(channelName);
@@ -69,7 +69,7 @@ public class CassandraChannelsCollectionTest {
 	@Test
 	public void testChannelExists() throws Exception {
 		String channelName = "foo";
-		ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, new Date());
+		ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, new Date(), null);
 
 		Serializer<ChannelConfiguration> channelConfigSerializer = mock(Serializer.class);
 		ColumnQuery<String, String, ChannelConfiguration> query = mock(ColumnQuery.class);
@@ -93,7 +93,7 @@ public class CassandraChannelsCollectionTest {
 
 	@Test
 	public void testGetChannelConfiguration() throws Exception {
-		ChannelConfiguration expected = new ChannelConfiguration("thechan", new Date());
+		ChannelConfiguration expected = new ChannelConfiguration("thechan", new Date(), null);
 
 		Serializer<ChannelConfiguration> channelConfigSerializer = mock(Serializer.class);
 		ColumnQuery<String, String, ChannelConfiguration> columnQuery = mock(ColumnQuery.class);
@@ -134,6 +134,63 @@ public class CassandraChannelsCollectionTest {
 		testClass.updateLastUpdatedKey(channelName, key);
 
 		verify(mutator).insert(CHANNELS_LATEST_ROW_KEY, "myChan", newColumn);
+	}
+
+	@Test
+	public void deleteLastUpdateTime() throws Exception {
+		String channelName = "myChan";
+		Date newDate = new Date(123456789L);
+		DataHubKey key = new DataHubKey(newDate, (short) 0);
+		String keyString = new DataHubKeyRenderer().keyToString(key);
+
+		Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
+		HColumn<String, String> newColumn = mock(HColumn.class);
+		Mutator<String> mutator = mock(Mutator.class);
+
+		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
+		when(hector.createColumn(channelName, keyString, StringSerializer.get(), StringSerializer.get())).thenReturn(newColumn);
+
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
+		testClass.deleteLastUpdatedKey(channelName, key);
+
+		verify(mutator).delete(CHANNELS_LATEST_ROW_KEY, "myChan", "myChan", StringSerializer.get());
+	}
+
+	@Test
+	public void testUpdateFirstKey() throws Exception {
+		String channelName = "myChan";
+		Date newDate = new Date(123456789L);
+		DataHubKey key = new DataHubKey(newDate, (short) 0);
+		String keyString = new DataHubKeyRenderer().keyToString(key);
+
+		Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
+		HColumn<String, String> newColumn = mock(HColumn.class);
+		Mutator<String> mutator = mock(Mutator.class);
+
+		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
+		when(hector.createColumn(channelName, keyString, StringSerializer.get(), StringSerializer.get())).thenReturn(newColumn);
+
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
+		testClass.updateFirstKey(channelName, key);
+
+		verify(mutator).insert(CHANNELS_FIRST_ROW_KEY, "myChan", newColumn);
+	}
+
+	@Test
+	public void testDeleteFirstKey() throws Exception {
+		String channelName = "myChan";
+		Date newDate = new Date(123456789L);
+		DataHubKey key = new DataHubKey(newDate, (short) 0);
+
+		Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
+		Mutator<String> mutator = mock(Mutator.class);
+
+		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
+
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
+		testClass.deleteFirstKey(channelName, key);
+
+		verify(mutator).delete(CHANNELS_FIRST_ROW_KEY, "myChan", "myChan", StringSerializer.get());
 	}
 
 	@Test
@@ -183,10 +240,38 @@ public class CassandraChannelsCollectionTest {
 	}
 
 	@Test
+	public void testGetFirstKey() throws Exception {
+		//GIVEN
+		String channelName = "chunder";
+		DataHubKey expected = new DataHubKey(new Date(98348974554397L), (short) 0);
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, null, hector, null, keyRenderer);
+
+		ColumnQuery<String, String, String> columnQuery = mock(ColumnQuery.class);
+		QueryResult<HColumn<String, String>> queryResult = mock(QueryResult.class);
+		HColumn<String, String> column = mock(HColumn.class);
+
+		when(connector.getKeyspace()).thenReturn(keyspace);
+		when(columnQuery.setName(channelName)).thenReturn(columnQuery);
+		when(columnQuery.setKey(CassandraChannelsCollection.CHANNELS_FIRST_ROW_KEY)).thenReturn(columnQuery);
+		when(columnQuery.setColumnFamily(channelName)).thenReturn(columnQuery);
+		when(columnQuery.execute()).thenReturn(queryResult);
+		when(queryResult.get()).thenReturn(column);
+		when(column.getValue()).thenReturn(keyRenderer.keyToString(expected));
+
+		when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), StringSerializer.get())).thenReturn(columnQuery);
+
+		//WHEN
+		DataHubKey result = testClass.getFirstKey(channelName);
+
+		//THEN
+		assertEquals(expected, result);
+	}
+
+	@Test
 	public void testGetChannels() throws Exception {
 		//GIVEN
-		ChannelConfiguration expected1 = new ChannelConfiguration("one", null);
-		ChannelConfiguration expected2 = new ChannelConfiguration("two", null);
+		ChannelConfiguration expected1 = new ChannelConfiguration("one", null, null);
+		ChannelConfiguration expected2 = new ChannelConfiguration("two", null, null);
 
 		SliceQuery<String, String, ChannelConfiguration> sliceQuery = mock(SliceQuery.class, RETURNS_DEEP_STUBS);
 		HColumn column1 = mock(HColumn.class);

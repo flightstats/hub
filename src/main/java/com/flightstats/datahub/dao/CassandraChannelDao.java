@@ -5,6 +5,9 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import java.util.List;
 
 public class CassandraChannelDao implements ChannelDao {
 
@@ -28,9 +31,9 @@ public class CassandraChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ChannelConfiguration createChannel(String name) {
-		logger.info("Creating channel name = " + name);
-		return channelsCollection.createChannel(name);
+	public ChannelConfiguration createChannel(String name, Long ttl) {
+		logger.info("Creating channel name = " + name + ", with ttl = " + ttl);
+		return channelsCollection.createChannel(name, ttl);
 	}
 
 	@Override
@@ -38,8 +41,42 @@ public class CassandraChannelDao implements ChannelDao {
 		logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
 		DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
 		ValueInsertionResult result = cassandraValueWriter.write(channelName, value);
-		channelsCollection.updateLastUpdatedKey(channelName, result.getKey());
+		setLastUpdateKey(channelName, result.getKey());
+		if ( !findFirstId(channelName).isPresent() ) {
+			setFirstKey(channelName, result.getKey());
+		}
 		return result;
+	}
+
+	@Override
+	public void delete(String channelName, List<DataHubKey> keys) {
+		cassandraValueWriter.delete(channelName, keys);
+	}
+
+	@Override
+	public void setLastUpdateKey(String channelName, DataHubKey result) {
+		channelsCollection.updateLastUpdatedKey(channelName, result);
+	}
+
+	@Override
+	public void deleteLastUpdateKey(String channelName) {
+		Optional<DataHubKey> latestId = findLatestId(channelName);
+		if ( latestId.isPresent() ) {
+			channelsCollection.deleteLastUpdatedKey(channelName, latestId.get());
+		}
+	}
+
+	@Override
+	public void setFirstKey(String channelName, DataHubKey result) {
+		channelsCollection.updateFirstKey(channelName, result);
+	}
+
+	@Override
+	public void deleteFirstKey(String channelName) {
+		Optional<DataHubKey> firstId = findFirstId(channelName);
+		if ( firstId.isPresent() ) {
+			channelsCollection.deleteFirstKey(channelName, firstId.get());
+		}
 	}
 
 	@Override
@@ -62,6 +99,11 @@ public class CassandraChannelDao implements ChannelDao {
 	@Override
 	public Iterable<ChannelConfiguration> getChannels() {
 		return channelsCollection.getChannels();
+	}
+
+	@Override
+	public Optional<DataHubKey> findFirstId(String channelName) {
+		return cassandraValueReader.findFirstId(channelName);
 	}
 
 	@Override

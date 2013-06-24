@@ -28,9 +28,9 @@ public class ChannelResourceTest {
 	public void testChannelCreation() throws Exception {
 		String channelName = "UHF";
 
-		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName);
+		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName, null);
 		Date date = new Date();
-		ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, date);
+		ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, date, null);
 		String channelUri = "http://path/to/UHF";
 		String latestUri = "http://path/to/UHF/latest";
 		String wsUri = "ws://path/to/UHF/ws";
@@ -46,7 +46,7 @@ public class ChannelResourceTest {
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
 		when(dao.channelExists(channelName)).thenReturn(false);
-		when(dao.createChannel(channelName)).thenReturn(channelConfiguration);
+		when(dao.createChannel(channelName, ChannelResource.DEFAULT_TTL)).thenReturn(channelConfiguration);
 		when(linkBuilder.buildChannelUri(channelConfiguration)).thenReturn(URI.create(channelUri));
 		when(linkBuilder.buildLatestUri(channelName)).thenReturn(URI.create(latestUri));
 		when(linkBuilder.buildWsLinkFor(channelName)).thenReturn(URI.create(wsUri));
@@ -55,7 +55,7 @@ public class ChannelResourceTest {
 
 		Response response = testClass.createChannel(channelCreationRequest);
 
-		verify(dao).createChannel(channelName);
+		verify(dao).createChannel(channelName, ChannelResource.DEFAULT_TTL);
 
 		assertEquals(201, response.getStatus());
 		assertEquals(new URI(channelUri), response.getMetadata().getFirst("location"));
@@ -66,7 +66,7 @@ public class ChannelResourceTest {
 	public void testChannelCreation_emptyChannelName() throws Exception {
 		String channelName = "  ";
 
-		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName);
+		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName, null);
 		ChannelDao dao = mock(ChannelDao.class);
 		CreateChannelValidator createChannelValidator = new CreateChannelValidator(dao);
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
@@ -80,7 +80,7 @@ public class ChannelResourceTest {
 	public void testChannelCreation_channelAlreadyExists() throws Exception {
 		String channelName = "zippy";
 
-		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName);
+		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName, null);
 		ChannelDao dao = mock(ChannelDao.class);
 		CreateChannelValidator createChannelValidator = new CreateChannelValidator(dao);
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
@@ -93,8 +93,8 @@ public class ChannelResourceTest {
 	@Test
 	public void testGetChannels() throws Exception {
 		//GIVEN
-		ChannelConfiguration channel1 = new ChannelConfiguration("foo", null);
-		ChannelConfiguration channel2 = new ChannelConfiguration("bar", null);
+		ChannelConfiguration channel1 = new ChannelConfiguration("foo", null, null);
+		ChannelConfiguration channel2 = new ChannelConfiguration("bar", null, null);
 		Iterable<ChannelConfiguration> channels = Arrays.asList(channel1, channel2);
 		String channel1Uri = "http://superfoo";
 		String channel2Uri = "http://superbar";

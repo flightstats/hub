@@ -11,6 +11,7 @@ import com.google.inject.Inject;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -19,6 +20,7 @@ public class InMemoryChannelDao implements ChannelDao {
 
 	private final Map<String, ChannelConfiguration> channelConfigurations = Maps.newConcurrentMap();
 	private final Map<String, DataHubChannelValueKey> latestPerChannel = Maps.newConcurrentMap();
+	private final Map<String, DataHubChannelValueKey> firstPerChannel = Maps.newConcurrentMap();
 	private final Cache<DataHubChannelValueKey, LinkedDataHubCompositeValue> channelValues = CacheBuilder.newBuilder()
 																										 .expireAfterWrite(1, TimeUnit.HOURS)
 																										 .build();
@@ -34,9 +36,9 @@ public class InMemoryChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ChannelConfiguration createChannel(String name) {
+	public ChannelConfiguration createChannel(String name, Long ttl) {
 		Date creationDate = timeProvider.getDate();
-		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate);
+		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate, ttl);
 		channelConfigurations.put(name, channelConfiguration);
 		return channelConfiguration;
 	}
@@ -57,6 +59,31 @@ public class InMemoryChannelDao implements ChannelDao {
 	}
 
 	@Override
+	public void delete(String channelName, List<DataHubKey> keys) {
+		channelValues.invalidateAll(keys);
+	}
+
+	@Override
+	public void setLastUpdateKey(String channelName, DataHubKey key) {
+		latestPerChannel.put(channelName, new DataHubChannelValueKey(key, channelName));
+	}
+
+	@Override
+	public void deleteLastUpdateKey(String channelName) {
+		latestPerChannel.remove(channelName);
+	}
+
+	@Override
+	public void setFirstKey(String channelName, DataHubKey key) {
+		firstPerChannel.put(channelName, new DataHubChannelValueKey(key, channelName));
+	}
+
+	@Override
+	public void deleteFirstKey(String channelName) {
+		firstPerChannel.remove(channelName);
+	}
+
+	@Override
 	public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
 		DataHubChannelValueKey oldLastKey = latestPerChannel.get(channelName);
 		short newSequence = (oldLastKey == null) ? ((short) 0) : (short) (oldLastKey.getSequence() + 1);
@@ -72,7 +99,10 @@ public class InMemoryChannelDao implements ChannelDao {
 		//then link the old previous to the new value
 		linkOldPreviousToNew(oldLastKey, newDataHubChannelValueKey);
 		//finally, make it the latest
-		latestPerChannel.put(channelName, newDataHubChannelValueKey);
+		setLastUpdateKey(channelName, newDataHubChannelValueKey.asDataHubKey());
+		if ( !firstPerChannel.containsKey(channelName)) {
+			setFirstKey(channelName, newDataHubChannelValueKey.asDataHubKey());
+		}
 
 		return new ValueInsertionResult(newKey);
 	}
@@ -98,6 +128,12 @@ public class InMemoryChannelDao implements ChannelDao {
 	@Override
 	public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
 		return Optional.fromNullable(channelValues.getIfPresent(new DataHubChannelValueKey(key, channelName)));
+	}
+
+	@Override
+	public Optional<DataHubKey> findFirstId(String channelName) {
+		DataHubChannelValueKey key = firstPerChannel.get(channelName);
+		return optionalFromCompositeKey(key);
 	}
 
 	@Override

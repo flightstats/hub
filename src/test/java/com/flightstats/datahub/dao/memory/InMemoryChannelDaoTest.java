@@ -18,7 +18,7 @@ public class InMemoryChannelDaoTest {
 	@Test
 	public void testChannelExists() throws Exception {
 		InMemoryChannelDao testClass = new InMemoryChannelDao(mock(TimeProvider.class));
-		testClass.createChannel("thechan");
+		testClass.createChannel("thechan", null);
 		assertTrue(testClass.channelExists("thechan"));
 		assertFalse(testClass.channelExists("nope"));
 	}
@@ -26,24 +26,24 @@ public class InMemoryChannelDaoTest {
 	@Test
 	public void testCreateChannel() throws Exception {
 		Date creationDate = new Date(9999);
-		ChannelConfiguration expected = new ChannelConfiguration("foo", creationDate);
+		ChannelConfiguration expected = new ChannelConfiguration("foo", creationDate, null);
 		TimeProvider timeProvider = mock(TimeProvider.class);
 		when(timeProvider.getDate()).thenReturn(creationDate);
 
 		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-		ChannelConfiguration result = testClass.createChannel("foo");
+		ChannelConfiguration result = testClass.createChannel("foo", null);
 		assertEquals(expected, result);
 	}
 
 	@Test
 	public void testGetChannelConfiguration() throws Exception {
 		Date creationDate = new Date(9999);
-		ChannelConfiguration expected = new ChannelConfiguration("foo", creationDate);
+		ChannelConfiguration expected = new ChannelConfiguration("foo", creationDate, null);
 		TimeProvider timeProvider = mock(TimeProvider.class);
 		when(timeProvider.getDate()).thenReturn(creationDate);
 
 		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-		testClass.createChannel("foo");
+		testClass.createChannel("foo", null);
 		assertEquals(expected, testClass.getChannelConfiguration("foo"));
 	}
 
@@ -52,17 +52,25 @@ public class InMemoryChannelDaoTest {
 		TimeProvider timeProvider = mock(TimeProvider.class);
 
 		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-		testClass.createChannel("one");
+		testClass.createChannel("one", null);
 		assertEquals(1, testClass.countChannels());
-		testClass.createChannel("two");
+		testClass.createChannel("two", null);
 		assertEquals(2, testClass.countChannels());
 	}
 
+	@Test
+	public void testFindFirstId() throws Exception {
+		InMemoryChannelDao testClass = new InMemoryChannelDao(new TimeProvider());
+		testClass.createChannel("channelName", null);
+		assertFalse(testClass.findFirstId("channelName").isPresent());
+		ValueInsertionResult insertionResult = testClass.insert("channelName", "text/plain", "Hello".getBytes());
+		assertEquals(insertionResult.getKey(), testClass.findFirstId("channelName").get());
+	}
 
 	@Test
 	public void testFindLatestId() throws Exception {
 		InMemoryChannelDao testClass = new InMemoryChannelDao(new TimeProvider());
-		testClass.createChannel("channelName");
+		testClass.createChannel("channelName", null);
 		assertFalse(testClass.findLatestId("channelName").isPresent());
 		ValueInsertionResult insertionResult = testClass.insert("channelName", "text/plain", "Hello".getBytes());
 		assertEquals(insertionResult.getKey(), testClass.findLatestId("channelName").get());
@@ -81,7 +89,7 @@ public class InMemoryChannelDaoTest {
 		when(timeProvider.getDate()).thenReturn(date);
 
 		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-		testClass.createChannel(channelName);
+		testClass.createChannel(channelName, null);
 
 		ValueInsertionResult result = testClass.insert(channelName, contentType, data);
 
@@ -109,7 +117,7 @@ public class InMemoryChannelDaoTest {
 		when(timeProvider.getDate()).thenReturn(channelCreationDate, previousDate, date, nextDate);
 
 		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-		testClass.createChannel(channelName);
+		testClass.createChannel(channelName, null);
 		testClass.insert(channelName, "text/plain", "foo".getBytes());
 		testClass.insert(channelName, "text/plain", data);
 		testClass.insert(channelName, "text/plain", "bar".getBytes());
@@ -136,7 +144,7 @@ public class InMemoryChannelDaoTest {
 		when(timeProvider.getDate()).thenReturn(channelCreationDate, previousDate, date);
 
 		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-		testClass.createChannel(channelName);
+		testClass.createChannel(channelName, null);
 		testClass.insert(channelName, "text/plain", "foo".getBytes());
 		testClass.insert(channelName, "text/plain", data);
 
@@ -158,7 +166,7 @@ public class InMemoryChannelDaoTest {
 		when(timeProvider.getDate()).thenReturn(channelCreationDate, date);
 
 		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-		testClass.createChannel(channelName);
+		testClass.createChannel(channelName, null);
 		ValueInsertionResult valueInsertionResult = testClass.insert(channelName, "text/plain", data);
 
 		Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, valueInsertionResult.getKey());
@@ -177,7 +185,7 @@ public class InMemoryChannelDaoTest {
 		when(timeProvider.getDate()).thenReturn(channelCreationDate, date);
 
 		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
-		testClass.createChannel(channelName);
+		testClass.createChannel(channelName, null);
 		ValueInsertionResult valueInsertionResult = testClass.insert(channelName, "text/plain", data);
 
 		Optional<LinkedDataHubCompositeValue> result = testClass.getValue("otherChannel", valueInsertionResult.getKey());
