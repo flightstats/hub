@@ -8,7 +8,9 @@ import com.hazelcast.core.HazelcastInstance;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 
 public class HazelcastChannelDao implements ChannelDao {
@@ -17,6 +19,7 @@ public class HazelcastChannelDao implements ChannelDao {
 
 	private final Map<String, ChannelConfiguration> channelConfigurations = HAZELCAST_INSTANCE.getMap("channelConfigurations");
 	private final Map<String, DataHubKey> latestPerChannel = HAZELCAST_INSTANCE.getMap("latestPerChannel");
+	private final ConcurrentMap<String, DataHubKey> firstPerChannel = HAZELCAST_INSTANCE.getMap("firstPerChannel");
 	private final Map<DataHubKey, LinkedDataHubCompositeValue> channelValues = HAZELCAST_INSTANCE.getMap("channelValues");
 
 	@Override
@@ -25,9 +28,9 @@ public class HazelcastChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ChannelConfiguration createChannel(String name) {
+	public ChannelConfiguration createChannel(String name, Long ttl) {
 		Date creationDate = new Date();
-		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate);
+		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate, ttl);
 		channelConfigurations.put(name, channelConfiguration);
 		return channelConfiguration;
 	}
@@ -45,6 +48,33 @@ public class HazelcastChannelDao implements ChannelDao {
 	@Override
 	public int countChannels() {
 		return channelConfigurations.size();
+	}
+
+	@Override
+	public void setFirstKey(String channelName, DataHubKey key) {
+		firstPerChannel.putIfAbsent(channelName, key);
+	}
+
+	@Override
+	public void deleteFirstKey(String channelName) {
+		firstPerChannel.remove(channelName);
+	}
+
+	@Override
+	public void setLastUpdateKey(String channelName, DataHubKey key) {
+		latestPerChannel.put(channelName, key);
+	}
+
+	@Override
+	public void deleteLastUpdateKey(String channelName) {
+		latestPerChannel.remove(channelName);
+	}
+
+	@Override
+	public void delete(String channelName, List<DataHubKey> keys) {
+		for (DataHubKey reapableKey : keys) {
+			channelValues.remove(reapableKey);
+		}
 	}
 
 	@Override
@@ -68,7 +98,8 @@ public class HazelcastChannelDao implements ChannelDao {
 						new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(), Optional.of(newKey)));
 			}
 			//finally, make it the latest
-			latestPerChannel.put(channelName, newKey);
+			setLastUpdateKey(channelName, newKey);
+			setFirstKey(channelName,newKey);
 			return new ValueInsertionResult(newKey);
 		} finally {
 			lock.unlock();
@@ -78,6 +109,12 @@ public class HazelcastChannelDao implements ChannelDao {
 	@Override
 	public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
 		return Optional.of(channelValues.get(key));
+	}
+
+	@Override
+	public Optional<DataHubKey> findFirstId(String channelName) {
+		DataHubKey key = firstPerChannel.get(channelName);
+		return Optional.fromNullable(key);
 	}
 
 	@Override

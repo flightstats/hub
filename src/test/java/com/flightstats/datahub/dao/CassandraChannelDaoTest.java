@@ -10,6 +10,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class CassandraChannelDaoTest {
@@ -26,11 +27,11 @@ public class CassandraChannelDaoTest {
 
 	@Test
 	public void testCreateChannel() throws Exception {
-		ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999));
+		ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999), null);
 		CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
-		when(collection.createChannel("foo")).thenReturn(expected);
+		when(collection.createChannel("foo", null)).thenReturn(expected);
 		CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null);
-		ChannelConfiguration result = testClass.createChannel("foo");
+		ChannelConfiguration result = testClass.createChannel("foo", null);
 		assertEquals(expected, result);
 	}
 
@@ -46,12 +47,15 @@ public class CassandraChannelDaoTest {
 
 		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
 		CassandraValueWriter inserter = mock(CassandraValueWriter.class);
+		CassandraValueReader reader = mock(CassandraValueReader.class);
 
 		when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(key));
-		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, null, null);
+		when(reader.findFirstId(channelName)).thenReturn(Optional.<DataHubKey>absent());
+		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, reader, null);
 
 		ValueInsertionResult result = testClass.insert(channelName, contentType, data);
 
+		verify( channelsCollection ).updateFirstKey( "foo", key );
 		assertEquals(expected, result);
 	}
 

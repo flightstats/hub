@@ -4,5 +4,6 @@ import java.util.concurrent.locks.Lock;
 
 public interface ChannelLockFactory {
 
-	Lock newLock(String channelName);
+	/** Get the existing lock for the channel name, creating a new one if one doesn't exist. */
+	Lock getLock(String channelName);
 }
