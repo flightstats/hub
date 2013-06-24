@@ -26,7 +26,7 @@ public class ChannelLockExecutorTest {
 
 	@Test
 	public void testExecuteReturnsCallableResult() throws Exception {
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
+		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -39,7 +39,7 @@ public class ChannelLockExecutorTest {
 
 	@Test
 	public void testExecuteCreatesLock() throws Exception {
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
+		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -53,7 +53,7 @@ public class ChannelLockExecutorTest {
 	@Test
 	public void testLockAlreadyExists() throws Exception {
 		locks.put(CHANNEL_NAME, lock);
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
+		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -68,7 +68,7 @@ public class ChannelLockExecutorTest {
 	@Test
 	public void testCallableExplodes() throws Exception {
 		locks.put(CHANNEL_NAME, lock);
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
+		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -86,7 +86,7 @@ public class ChannelLockExecutorTest {
 	@Test
 	public void testLockIsReleased() throws Exception {
 		locks.put(CHANNEL_NAME, lock);
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
+		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -99,7 +99,7 @@ public class ChannelLockExecutorTest {
 
 	@Test(expected = EsotericException.class)
 	public void testCallableThrows() throws Exception {
-		ChannelLockExecutor testClass = new ChannelLockExecutor(locks, new ReentrantChannelLockFactory());
+		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
