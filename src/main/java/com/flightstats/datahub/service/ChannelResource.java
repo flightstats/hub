@@ -72,8 +72,8 @@ public class ChannelResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createChannel(ChannelCreationRequest channelCreationRequest) throws InvalidRequestException, AlreadyExistsException {
-		String channelName = channelCreationRequest.getName();
-		createChannelValidator.validate(channelCreationRequest);
+		createChannelValidator.validate(channelCreationRequest.getName());
+		String channelName = channelCreationRequest.getName().trim();
 
 		Long ttl = channelCreationRequest.getTtl() == null ? DEFAULT_TTL : channelCreationRequest.getTtl();
 		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName, ttl);
