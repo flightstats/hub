@@ -64,7 +64,7 @@ public class CassandraLinkagesFinder {
 		OrderedRows<String, String, DataHubCompositeValue> rows = queryResult.get();
 
 		// Because the rows containing the channel pointers exist in the same column family with the same column name, we need to exclude it here.
-		Iterable<Row<String, String, DataHubCompositeValue>> nonPointerRows = excludeChannelPointerItemRow(rows.getList());
+		Iterable<Row<String, String, DataHubCompositeValue>> nonPointerRows = excludeChannelPointerItemRows(rows.getList());
 		List<Row<String, String, DataHubCompositeValue>> sortedRows = getSortedRows(reversed, nonPointerRows);
 
 		String inputKeyString = keyRenderer.keyToString(inputKey);
@@ -78,7 +78,7 @@ public class CassandraLinkagesFinder {
 		return Optional.absent();
 	}
 
-	private Iterable<Row<String, String, DataHubCompositeValue>> excludeChannelPointerItemRow(List<Row<String, String, DataHubCompositeValue>> rows) {
+	private Iterable<Row<String, String, DataHubCompositeValue>> excludeChannelPointerItemRows(List<Row<String, String, DataHubCompositeValue>> rows) {
 		return Iterables.filter(rows,
 				new Predicate<Row<String, String, DataHubCompositeValue>>() {
 					@Override
