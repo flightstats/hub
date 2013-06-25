@@ -12,12 +12,7 @@ public class ReentrantChannelLockFactory implements ChannelLockFactory {
 	private final ConcurrentMap<String, Lock> channelLocks;
 
 	public ReentrantChannelLockFactory() {
-		this(new ConcurrentHashMap<String, Lock>());
-	}
-
-	@VisibleForTesting
-	public ReentrantChannelLockFactory(ConcurrentHashMap<String, Lock> locks) {
-		channelLocks = locks;
+		channelLocks = new ConcurrentHashMap<>();
 	}
 
 	@Override
