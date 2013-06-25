@@ -26,7 +26,7 @@ public class DataHubSweeper {
 
 	@Inject
 	public DataHubSweeper(@Named("sweeper.periodMillis") Long sweepPeriodMillis, ChannelDao dao,
-						  ChannelLockExecutor channelLockExecutor) {
+	                      ChannelLockExecutor channelLockExecutor ) {
 		sweepPeriodMillis = sweepPeriodMillis == null ? DEFAULT_SWEEP_PERIOD : sweepPeriodMillis;
 
 		sweeper = new Timer(true);
