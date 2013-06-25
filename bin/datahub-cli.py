@@ -8,6 +8,7 @@ import re
 import httplib
 import mimetypes
 import time
+import readline # Leave this if you like history
 
 
 def usage():
@@ -33,7 +34,7 @@ class DataHub(object):
 
     def help(self):
         print("Here are some common commands:")
-        print("  mkchan <chan>       : Create a new channel")
+        print("  mkchan <chan> [ttl] : Create a new channel")
         print("  channel <chan>      : Set/show the current channel")
         print("  meta                : Show current channel metadata")
         print("  post <text>         : Post text to the current channel")
@@ -77,7 +78,10 @@ class DataHub(object):
             return
         elif line.startswith("mkchan"):
             channel_name = re.sub(r'^mkchan\s*', '', line)
-            return self._create_channel(channel_name)
+            ttl = None
+            if (re.match(".*\s+\w+$", channel_name)):
+                [channel_name, ttl] = re.split("\s*", channel_name)
+            return self._create_channel(channel_name, ttl)
         elif line.startswith("latefile"):
             filename = re.sub(r'^latefile\s*', '', line)
             return self._get_latest(filename)
@@ -236,9 +240,15 @@ class DataHub(object):
         print(response.status, response.reason)
         print(response.read())
 
-    def _create_channel(self, channel_name):
+    def _create_channel(self, channel_name, ttl=None):
         conn = httplib.HTTPConnection(self._server)
-        content = '{"name": "%s"}' % channel_name
+        if (ttl):
+            if (ttl == 'null' or ttl == 'None'):
+                content = '{"name": "%s", "ttl": null}' % (channel_name)
+            else:
+                content = '{"name": "%s", "ttl": "%s"}' % (channel_name, ttl)
+        else:
+            content = '{"name": "%s"}' % (channel_name)
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         start = time.time()
         conn.request("POST", "/channel", content, headers)
