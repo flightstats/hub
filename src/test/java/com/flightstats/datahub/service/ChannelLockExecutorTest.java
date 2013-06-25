@@ -7,26 +7,29 @@ import org.junit.Test;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ChannelLockExecutorTest {
 
 	private static final String CHANNEL_NAME = "spoon";
-	private ConcurrentHashMap<String, Lock> locks;
-	private Lock lock;
+	ReentrantChannelLockFactory lockFactory;
 
 	@Before
 	public void setup() {
-		locks = new ConcurrentHashMap<>();
-		lock = mock(Lock.class);
+		lockFactory = mock(ReentrantChannelLockFactory.class);
 	}
 
 	@Test
 	public void testExecuteReturnsCallableResult() throws Exception {
-		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
+		ReentrantLock lock = mock(ReentrantLock.class);
+		when(lockFactory.getLock(anyString())).thenReturn(lock);
+		ChannelLockExecutor testClass = new ChannelLockExecutor(lockFactory);
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -39,7 +42,9 @@ public class ChannelLockExecutorTest {
 
 	@Test
 	public void testExecuteCreatesLock() throws Exception {
-		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
+		ReentrantLock lock = mock(ReentrantLock.class);
+		when(lockFactory.getLock(anyString())).thenReturn(lock);
+		ChannelLockExecutor testClass = new ChannelLockExecutor(lockFactory);
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -47,28 +52,14 @@ public class ChannelLockExecutorTest {
 			}
 		};
 		testClass.execute(CHANNEL_NAME, callable);
-		assertNotNull(locks.get(CHANNEL_NAME));
-	}
-
-	@Test
-	public void testLockAlreadyExists() throws Exception {
-		locks.put(CHANNEL_NAME, lock);
-		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
-		Callable<String> callable = new Callable<String>() {
-			@Override
-			public String call() throws Exception {
-				verify(lock).lock();
-				return "not relevant";
-			}
-		};
-		testClass.execute(CHANNEL_NAME, callable);
-		assertSame(lock, locks.get(CHANNEL_NAME));    //same lock is there
+		verify(lockFactory).getLock(CHANNEL_NAME);
 	}
 
 	@Test
 	public void testCallableExplodes() throws Exception {
-		locks.put(CHANNEL_NAME, lock);
-		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
+		ReentrantLock lock = mock(ReentrantLock.class);
+		when(lockFactory.getLock(anyString())).thenReturn(lock);
+		ChannelLockExecutor testClass = new ChannelLockExecutor(lockFactory);
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -85,8 +76,9 @@ public class ChannelLockExecutorTest {
 
 	@Test
 	public void testLockIsReleased() throws Exception {
-		locks.put(CHANNEL_NAME, lock);
-		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
+		ReentrantLock lock = mock(ReentrantLock.class);
+		when(lockFactory.getLock(anyString())).thenReturn(lock);
+		ChannelLockExecutor testClass = new ChannelLockExecutor(lockFactory);
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
@@ -99,7 +91,9 @@ public class ChannelLockExecutorTest {
 
 	@Test(expected = EsotericException.class)
 	public void testCallableThrows() throws Exception {
-		ChannelLockExecutor testClass = new ChannelLockExecutor(new ReentrantChannelLockFactory(locks));
+		ReentrantLock lock = mock(ReentrantLock.class);
+		when(lockFactory.getLock(anyString())).thenReturn(lock);
+		ChannelLockExecutor testClass = new ChannelLockExecutor(lockFactory);
 		Callable<String> callable = new Callable<String>() {
 			@Override
 			public String call() throws Exception {
