@@ -20,6 +20,7 @@ import java.util.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Mockito.*;
 
 public class ChannelResourceTest {
@@ -128,6 +129,27 @@ public class ChannelResourceTest {
 		assertEquals(2, resultMultiLinks.size());
 		Collection<HalLink> resultChannelLinks = resultMultiLinks.asMap().get("channels");
 		assertThat(resultChannelLinks, CoreMatchers.hasItems(new HalLink(channel1.getName(), URI.create(channel1Uri)),
-                new HalLink(channel2.getName(), URI.create(channel2Uri))));
+				new HalLink(channel2.getName(), URI.create(channel2Uri))));
+	}
+
+	@Test
+	public void testChannelNameIsTrimmed() throws Exception {
+		//GIVEN
+		String channelName = "    \tmyChannel ";
+		ChannelCreationRequest request = new ChannelCreationRequest(channelName, null);
+
+		CreateChannelValidator validator = mock(CreateChannelValidator.class);
+		ChannelDao dao = mock(ChannelDao.class);
+
+		doThrow(new InvalidRequestException("ouch")).when(validator).validate(not(eq(channelName)));
+
+		ChannelResource testClass = new ChannelResource(dao, mock(ChannelHypermediaLinkBuilder.class), validator, null);
+
+
+		//WHEN
+		testClass.createChannel(request);
+
+		//THEN
+		verify(dao).createChannel(channelName.trim(), ChannelResource.DEFAULT_TTL);
 	}
 }
