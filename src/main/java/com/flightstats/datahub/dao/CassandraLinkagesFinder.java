@@ -16,9 +16,11 @@ import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.query.QueryResult;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.CHANNELS_FIRST_ROW_KEY;
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.CHANNELS_LATEST_ROW_KEY;
 
 public class CassandraLinkagesFinder {
@@ -61,9 +63,9 @@ public class CassandraLinkagesFinder {
 	private Optional<DataHubKey> findFirstDifferentResult(DataHubKey inputKey, QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult, final boolean reversed) {
 		OrderedRows<String, String, DataHubCompositeValue> rows = queryResult.get();
 
-		// Because the row containing the latest channel item exists in the same column family with the same column name, we need to exclude it here.
-		Iterable<Row<String, String, DataHubCompositeValue>> nonLatestRows = excludeLatestChannelItemRow(rows.getList());
-		List<Row<String, String, DataHubCompositeValue>> sortedRows = getSortedRows(reversed, nonLatestRows);
+		// Because the rows containing the channel pointers exist in the same column family with the same column name, we need to exclude it here.
+		Iterable<Row<String, String, DataHubCompositeValue>> nonPointerRows = excludeChannelPointerItemRows(rows.getList());
+		List<Row<String, String, DataHubCompositeValue>> sortedRows = getSortedRows(reversed, nonPointerRows);
 
 		String inputKeyString = keyRenderer.keyToString(inputKey);
 		for (Row<String, String, DataHubCompositeValue> row : sortedRows) {
@@ -76,12 +78,12 @@ public class CassandraLinkagesFinder {
 		return Optional.absent();
 	}
 
-	private Iterable<Row<String, String, DataHubCompositeValue>> excludeLatestChannelItemRow(List<Row<String, String, DataHubCompositeValue>> rows) {
+	private Iterable<Row<String, String, DataHubCompositeValue>> excludeChannelPointerItemRows(List<Row<String, String, DataHubCompositeValue>> rows) {
 		return Iterables.filter(rows,
 				new Predicate<Row<String, String, DataHubCompositeValue>>() {
 					@Override
 					public boolean apply(Row<String, String, DataHubCompositeValue> input) {
-						return !CHANNELS_LATEST_ROW_KEY.equals(input.getKey());
+						return !Arrays.asList(CHANNELS_LATEST_ROW_KEY, CHANNELS_FIRST_ROW_KEY).contains(input.getKey());
 					}
 				});
 	}
