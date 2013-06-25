@@ -24,6 +24,10 @@ public class MetadataResponse {
 		return lastUpdateDate;
 	}
 
+	public Long getTtlMillis() {
+		return config.getTtlMillis();
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
