@@ -60,6 +60,7 @@ in order to challenge Jason's sanity.
 ```json
 {  
    "name": "stumptown"
+   "ttl": "3600000" //one hour in millis
 }
 ```
 
@@ -79,7 +80,8 @@ On success:  `HTTP/1.1 200 OK`
         }
     },
     "name": "stumptown",
-    "creationDate": "2013-04-23T20:25:33.434Z"
+    "creationDate": "2013-04-23T20:25:33.434Z",
+    "ttlMillis": 3600000
 }
 ```
 
