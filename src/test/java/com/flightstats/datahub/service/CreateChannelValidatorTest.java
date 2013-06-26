@@ -14,7 +14,7 @@ public class CreateChannelValidatorTest {
 	public void testAllGood() throws InvalidRequestException, AlreadyExistsException {
 		//GIVEN
 		ChannelDao dao = mock(ChannelDao.class);
-		String channelName = "achannel";
+		String channelName = "a_channel";
 
 		//WHEN
 		CreateChannelValidator testClass = new CreateChannelValidator(dao);
