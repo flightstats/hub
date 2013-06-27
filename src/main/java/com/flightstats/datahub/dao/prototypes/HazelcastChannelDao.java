@@ -99,7 +99,7 @@ public class HazelcastChannelDao implements ChannelDao {
 			}
 			//finally, make it the latest
 			setLastUpdateKey(channelName, newKey);
-			setFirstKey(channelName,newKey);
+			setFirstKey(channelName, newKey);
 			return new ValueInsertionResult(newKey);
 		} finally {
 			lock.unlock();
@@ -112,13 +112,13 @@ public class HazelcastChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public Optional<DataHubKey> findFirstId(String channelName) {
+	public Optional<DataHubKey> findFirstUpdateKey(String channelName) {
 		DataHubKey key = firstPerChannel.get(channelName);
 		return Optional.fromNullable(key);
 	}
 
 	@Override
-	public Optional<DataHubKey> findLatestId(String channelName) {
+	public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
 		DataHubKey key = latestPerChannel.get(channelName);
 		return Optional.fromNullable(key);
 	}

@@ -26,7 +26,7 @@ public class DataHubSweeper {
 
 	@Inject
 	public DataHubSweeper(@Named("sweeper.periodMillis") Long sweepPeriodMillis, ChannelDao dao,
-	                      ChannelLockExecutor channelLockExecutor ) {
+						  ChannelLockExecutor channelLockExecutor) {
 		sweepPeriodMillis = sweepPeriodMillis == null ? DEFAULT_SWEEP_PERIOD : sweepPeriodMillis;
 
 		sweeper = new Timer(true);
@@ -50,10 +50,10 @@ public class DataHubSweeper {
 		public void run() {
 			for (ChannelConfiguration channelConfiguration : dao.getChannels()) {
 				try {
-					channelLockExecutor.execute( channelConfiguration.getName(), new SweepChannel(channelConfiguration) );
-				} catch ( Exception e ) {
+					channelLockExecutor.execute(channelConfiguration.getName(), new SweepChannel(channelConfiguration));
+				} catch (Exception e) {
 					// Don't let anything escape or it will negate the parent Timer running this task and we'll never run again.
-					logger.error( "Failure in sweeper for channel " + channelConfiguration.getName(), e );
+					logger.error("Failure in sweeper for channel " + channelConfiguration.getName(), e);
 				}
 			}
 		}
@@ -66,7 +66,9 @@ public class DataHubSweeper {
 			}
 
 			public Void call() throws Exception {
-				if (channelConfiguration.getTtlMillis() == null) return null;
+				if (channelConfiguration.getTtlMillis() == null) {
+					return null;
+				}
 				String channelName = channelConfiguration.getName();
 
 				Date reapDate = new Date(System.currentTimeMillis() - channelConfiguration.getTtlMillis());
@@ -78,7 +80,7 @@ public class DataHubSweeper {
 
 			private List<DataHubKey> findReapableKeys(String channelName, Date reapDate) {
 				List<DataHubKey> toBeReaped = new ArrayList<>();
-				Optional<DataHubKey> reapCandidate = dao.findFirstId(channelName);
+				Optional<DataHubKey> reapCandidate = dao.findFirstUpdateKey(channelName);
 				while (isReapable(reapCandidate, reapDate)) {
 					toBeReaped.add(reapCandidate.get());
 					reapCandidate = getNextKey(channelName, reapCandidate);
@@ -88,7 +90,9 @@ public class DataHubSweeper {
 			}
 
 			private void fixPointersForChannel(String channelName, List<DataHubKey> reapableKeys) {
-				if (reapableKeys.isEmpty()) return;
+				if (reapableKeys.isEmpty()) {
+					return;
+				}
 
 				DataHubKey lastReapKey = reapableKeys.get(reapableKeys.size() - 1);
 				Optional<LinkedDataHubCompositeValue> lastReapKeyValue = dao.getValue(channelName, lastReapKey);
@@ -102,7 +106,7 @@ public class DataHubSweeper {
 			}
 
 			private void reapValues(String channelName, List<DataHubKey> reapableKeys) {
-				dao.delete( channelName, reapableKeys );
+				dao.delete(channelName, reapableKeys);
 			}
 
 			private boolean isReapable(Optional<DataHubKey> currentKey, Date reapDate) {

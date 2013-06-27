@@ -76,7 +76,7 @@ public class SingleChannelResourceTest {
 		DataHubKey key = new DataHubKey(new Date(21), (short) 0);
 		when(dao.channelExists(anyString())).thenReturn(true);
 		when(dao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
-		when(dao.findLatestId(channelName)).thenReturn(Optional.of(key));
+		when(dao.findLastUpdatedKey(channelName)).thenReturn(Optional.of(key));
 		when(uriInfo.getRequestUri()).thenReturn(channelUri);
 
 		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, null);
