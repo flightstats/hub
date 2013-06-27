@@ -23,7 +23,7 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
 var DEBUG = true;
 
 
-describe.only('Create Channel: ', function(){
+describe('Create Channel: ', function(){
 
     var channelName;
 
