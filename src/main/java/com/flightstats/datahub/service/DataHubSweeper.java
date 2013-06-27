@@ -66,9 +66,7 @@ public class DataHubSweeper {
 			}
 
 			public Void call() throws Exception {
-				if (channelConfiguration.getTtlMillis() == null) {
-					return null;
-				}
+				if (channelConfiguration.getTtlMillis() == null) return null;
 				String channelName = channelConfiguration.getName();
 
 				Date reapDate = new Date(System.currentTimeMillis() - channelConfiguration.getTtlMillis());
