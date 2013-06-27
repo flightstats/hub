@@ -152,13 +152,8 @@ public class CassandraChannelsCollectionTest {
 		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
 		when(hector.createColumn(channelName, keyString, StringSerializer.get(), StringSerializer.get())).thenReturn(newColumn);
 
-<<<<<<< HEAD
 		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer, rowKeyStrategy);
-		testClass.deleteLastUpdatedKey(channelName, key);
-=======
-		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
 		testClass.deleteLastUpdatedKey(channelName);
->>>>>>> jason/perfy_perf_perf_perf_perf
 
 		verify(mutator).delete(CHANNELS_LATEST_ROW_KEY, "myChan", "myChan", StringSerializer.get());
 	}
@@ -186,21 +181,13 @@ public class CassandraChannelsCollectionTest {
 	@Test
 	public void testDeleteFirstKey() throws Exception {
 		String channelName = "myChan";
-		Date newDate = new Date(123456789L);
-		DataHubKey key = new DataHubKey(newDate, (short) 0);
-
 		Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
 		Mutator<String> mutator = mock(Mutator.class);
 
 		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
 
-<<<<<<< HEAD
 		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer, rowKeyStrategy);
-		testClass.deleteFirstKey(channelName, key);
-=======
-		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
 		testClass.deleteFirstKey(channelName);
->>>>>>> jason/perfy_perf_perf_perf_perf
 
 		verify(mutator).delete(CHANNELS_FIRST_ROW_KEY, "myChan", "myChan", StringSerializer.get());
 	}
