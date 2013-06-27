@@ -9,10 +9,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class InMemoryChannelDao implements ChannelDao {
@@ -61,6 +58,11 @@ public class InMemoryChannelDao implements ChannelDao {
 	@Override
 	public void delete(String channelName, List<DataHubKey> keys) {
 		channelValues.invalidateAll(keys);
+	}
+
+	@Override
+	public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

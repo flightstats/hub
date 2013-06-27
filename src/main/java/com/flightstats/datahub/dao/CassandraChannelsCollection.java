@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.flightstats.datahub.util.TimeProvider;
@@ -11,6 +12,8 @@ import me.prettyprint.cassandra.service.ColumnSliceIterator;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.HColumn;
+import me.prettyprint.hector.api.beans.OrderedRows;
+import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
@@ -19,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -39,14 +44,17 @@ public class CassandraChannelsCollection {
 	private final HectorFactoryWrapper hector;
 	private final TimeProvider timeProvider;
 	private final DataHubKeyRenderer keyRenderer;
+	private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
 
 	@Inject
-	public CassandraChannelsCollection(CassandraConnector connector, Serializer<ChannelConfiguration> channelConfigSerializer, HectorFactoryWrapper hector, TimeProvider timeProvider, DataHubKeyRenderer keyRenderer) {
+	public CassandraChannelsCollection(CassandraConnector connector, Serializer<ChannelConfiguration> channelConfigSerializer, HectorFactoryWrapper hector, TimeProvider timeProvider, DataHubKeyRenderer keyRenderer, RowKeyStrategy<String, DataHubKey,
+		DataHubCompositeValue> rowKeyStrategy) {
 		this.connector = connector;
 		this.channelConfigSerializer = channelConfigSerializer;
 		this.hector = hector;
 		this.timeProvider = timeProvider;
 		this.keyRenderer = keyRenderer;
+		this.rowKeyStrategy = rowKeyStrategy;
 	}
 
 	public ChannelConfiguration createChannel(String name, Long ttl) {
@@ -166,5 +174,28 @@ public class CassandraChannelsCollection {
 		QueryResult<HColumn<String, String>> result = columnQuery.execute();
 		HColumn<String, String> column = result.get();
 		return column == null ? null : keyRenderer.fromString(column.getValue());
+	}
+
+	public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
+		DataHubKey minKey = new DataHubKey(startTime, (short) 0);
+		DataHubKey maxKey = new DataHubKey(endTime, Short.MAX_VALUE);
+		String minColumnKey = keyRenderer.keyToString(minKey);
+		String maxColumnKey = keyRenderer.keyToString(maxKey);
+		Keyspace keyspace = connector.getKeyspace();
+		String minRowKey = rowKeyStrategy.buildKey(channelName, minKey);
+		String maxRowKey = rowKeyStrategy.buildKey(channelName, maxKey);
+		QueryResult<OrderedRows<String,String,DataHubCompositeValue>> results =
+			hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
+				.setColumnFamily(channelName)
+				.setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
+				.setKeys(minRowKey, maxRowKey)
+				.execute();
+		Collection<DataHubKey> keys = new ArrayList<>();
+		for (Row<String, String, DataHubCompositeValue> row : results.get().getList()) {
+			for (HColumn<String, DataHubCompositeValue> column : row.getColumnSlice().getColumns()) {
+				keys.add( keyRenderer.fromString( column.getName() ) );
+			}
+		}
+		return keys;
 	}
 }

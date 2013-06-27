@@ -5,8 +5,9 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 public class CassandraChannelDao implements ChannelDao {
@@ -51,6 +52,11 @@ public class CassandraChannelDao implements ChannelDao {
 	@Override
 	public void delete(String channelName, List<DataHubKey> keys) {
 		cassandraValueWriter.delete(channelName, keys);
+	}
+
+	@Override
+	public Collection<DataHubKey> findKeysInRange( String channelName, Date startTime, Date endTime) {
+		return channelsCollection.findKeysInRange( channelName, startTime, endTime );
 	}
 
 	@Override
