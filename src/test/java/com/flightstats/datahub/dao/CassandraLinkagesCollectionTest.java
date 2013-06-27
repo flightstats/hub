@@ -45,8 +45,9 @@ public class CassandraLinkagesCollectionTest {
 		testClass.updateLinkages(CHANNEL_NAME, insertedKey, lastUpdateKey);
 
 		//THEN
-		verify(mutator).insert("roe_previous", CHANNEL_NAME, expectedPrevColumn);
-		verify(mutator).insert("roe_next", CHANNEL_NAME, expectedNextColumn);
+		verify(mutator).addInsertion("roe_previous", CHANNEL_NAME, expectedPrevColumn);
+		verify(mutator).addInsertion("roe_next", CHANNEL_NAME, expectedNextColumn);
+		verify(mutator).execute();
 	}
 
 	@Test
