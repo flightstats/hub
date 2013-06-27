@@ -18,8 +18,8 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
     WAIT_FOR_SOCKET_CLOSURE_MS = 10 * 1000,
     URL_ROOT = dhh.URL_ROOT,
     DOMAIN = dhh.DOMAIN,
-    FAKE_SOCKET_URI = 'ws://datahub-01.cloud-east.dev:8080/channel/sQODTvsYlLOLWTFPWNBBQ/ws',
-    DEBUG = false;
+    FAKE_SOCKET_URI = ['ws:/', dhh.DOMAIN, 'channel', 'sQODTvsYlLOLWTFPWNBBQ', 'ws'].join('/'),
+    DEBUG = true;
 
 // Test variables that are regularly overwritten
 var agent, payload, req, uri;
@@ -50,6 +50,8 @@ describe('Channel Subscription:', function() {
             var cnMetadata = new dhh.channelMetadata(res.body);
             channelUri = cnMetadata.getChannelUri();
             wsUri = cnMetadata.getWebSocketUri();
+
+            gu.debugLog('Websocket URI: ');
 
             myCallback();
         });
@@ -135,9 +137,12 @@ describe('Channel Subscription:', function() {
 
     // Note, this test also ensures that all updates are correctly saved in the DH *and* that their
     //  relative links are correct.
+
+    // https://www.pivotaltracker.com/story/show/52092987
     it('Multiple nigh-simultaneous updates are sent with order preserved.', function(done) {
         var actualResponseQueue = [], expectedResponseQueue = [], endWait, i;
-        var numUpdates = 10, doDebug = false;
+        var numUpdates = 10,
+            VERBOSE = true;
         this.timeout((numUpdates * WAIT_FOR_CHANNEL_RESPONSE_MS) + 45000);
 
         var mainTest = function() {
@@ -151,10 +156,11 @@ describe('Channel Subscription:', function() {
             });
         };
 
+        // Confirms order of responses and then calls confirmAllRelativeLinks(), which ends test
         var confirmOrderOfResponses = function() {
             gu.debugLog('...entering confirmOrderOfResponses()');
 
-            dhh.getListOfLatestUrisFromChannel(numUpdates, channelUri, function(allUris) {
+            dhh.getListOfLatestUrisFromChannel({numItems: numUpdates, channelUri: channelUri}, function(allUris) {
                 expectedResponseQueue = allUris;
                 gu.debugLog('Expected response queue length: '+ expectedResponseQueue.length, DEBUG);
 
@@ -168,9 +174,24 @@ describe('Channel Subscription:', function() {
                     gu.debugLog('Matched queue number '+ i, DEBUG);
                 }
 
+                confirmAllRelativeLinks();
+            });
+        }
+
+        // Test next/prev for each uri, as well as latest for channel. Then end test.
+        var confirmAllRelativeLinks = function() {
+            gu.debugLog('...entering confirmAllRelativeLinks()');
+
+            dhh.testRelativeLinkInformation({channelUri: channelUri, numItems: numUpdates, debug: VERBOSE}, function(err) {
+                if (null != err) {
+
+                    gu.debugLog('Error in relative links test: '+ err);
+                    expect(err).to.be.null;
+                }
+
                 ws.close();
                 done();
-            });
+            })
         }
 
         var onOpen = function() {
@@ -481,11 +502,6 @@ describe('Channel Subscription:', function() {
     it.skip('<NOT WRITTEN> Multiple agents on multiple channels is handled appropriately.', function(done) {
         done();
     });
-
-    it.skip('<NOT WRITTEN> Server recognizes when agent disconnects (in what time frame?)', function(done) {
-        done();
-    });
-
 
 
 });
