@@ -1,17 +1,15 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.google.common.base.Optional;
+import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import org.junit.Test;
 
 import java.util.Date;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class CassandraChannelDaoTest {
 
@@ -44,19 +42,22 @@ public class CassandraChannelDaoTest {
 		String contentType = "text/plain";
 		DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
 		ValueInsertionResult expected = new ValueInsertionResult(key);
+		DataHubKey lastUpdateKey = new DataHubKey(new Date(2345678912L), (short) 0);
 
 		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
 		CassandraValueWriter inserter = mock(CassandraValueWriter.class);
 		CassandraValueReader reader = mock(CassandraValueReader.class);
+		CassandraLinkagesCollection linkagesCollection = mock(CassandraLinkagesCollection.class);
 
 		when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(key));
-		when(reader.findFirstId(channelName)).thenReturn(Optional.<DataHubKey>absent());
-		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, reader, null);
+		when(channelsCollection.getLastUpdatedKey(channelName)).thenReturn(lastUpdateKey);
+		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, linkagesCollection, inserter, reader);
 
 		ValueInsertionResult result = testClass.insert(channelName, contentType, data);
 
-		verify( channelsCollection ).updateFirstKey( "foo", key );
+		verify(channelsCollection).updateFirstKey("foo", key);
 		assertEquals(expected, result);
+		verify(linkagesCollection).updateLinkages(channelName, result.getKey(), lastUpdateKey);
 	}
 
 	@Test
@@ -72,13 +73,13 @@ public class CassandraChannelDaoTest {
 		LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(compositeValue, previous, next);
 
 		CassandraValueReader reader = mock(CassandraValueReader.class);
-		CassandraLinkagesFinder linkagesFinder = mock(CassandraLinkagesFinder.class);
+		CassandraLinkagesCollection linkagesCollection = mock(CassandraLinkagesCollection.class);
 
 		when(reader.read(channelName, key)).thenReturn(compositeValue);
-		when(linkagesFinder.findPrevious(channelName, key)).thenReturn(previous);
-		when(linkagesFinder.findNext(channelName, key)).thenReturn(next);
+		when(linkagesCollection.findPreviousKey(channelName, key)).thenReturn(previous);
+		when(linkagesCollection.findNextKey(channelName, key)).thenReturn(next);
 
-		CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader, linkagesFinder);
+		CassandraChannelDao testClass = new CassandraChannelDao(null, linkagesCollection, null, reader);
 
 		Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
 		assertEquals(expected, result.get());
@@ -93,9 +94,50 @@ public class CassandraChannelDaoTest {
 
 		when(reader.read(channelName, key)).thenReturn(null);
 
-		CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader, null);
+		CassandraChannelDao testClass = new CassandraChannelDao(null, null, null, reader);
 
 		Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
 		assertFalse(result.isPresent());
+	}
+
+
+	@Test
+	public void testFindLatestId() throws Exception {
+		DataHubKey expected = new DataHubKey(new Date(999999999), (short) 6);
+		String channelName = "myChan";
+
+		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+
+		when(channelsCollection.getLastUpdatedKey(channelName)).thenReturn(expected);
+
+		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, null);
+
+		Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
+		assertEquals(expected, result.get());
+	}
+
+	@Test(expected = NoSuchChannelException.class)
+	public void testFindLatestId_channelNotFound() throws Exception {
+		String channelName = "myChan";
+		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+
+		when(channelsCollection.getLastUpdatedKey(channelName)).thenThrow(new HInvalidRequestException("unconfigured columnfamily"));
+
+		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, null);
+		testClass.findLastUpdatedKey(channelName);
+	}
+
+	@Test
+	public void testFindLatestId_lastUpdateNotFound() throws Exception {
+		String channelName = "myChan";
+		ChannelConfiguration config = new ChannelConfiguration(channelName, null, null);
+
+		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+
+		when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(config);
+
+		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, null);
+		Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
+		assertEquals(Optional.absent(), result);
 	}
 }

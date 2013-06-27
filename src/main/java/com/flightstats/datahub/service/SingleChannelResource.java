@@ -61,7 +61,7 @@ public class SingleChannelResource {
 	}
 
 	private Date getLastUpdateDate(String channelName) {
-		Optional<DataHubKey> latestId = channelDao.findLatestId(channelName);
+		Optional<DataHubKey> latestId = channelDao.findLastUpdatedKey(channelName);
 		if (!latestId.isPresent()) {
 			return null;
 		}

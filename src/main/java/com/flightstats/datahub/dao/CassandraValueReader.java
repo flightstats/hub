@@ -3,7 +3,6 @@ package com.flightstats.datahub.dao;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
-import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -19,16 +18,14 @@ public class CassandraValueReader {
 	private final CassandraConnector connector;
 	private final HectorFactoryWrapper hector;
 	private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
-	private final CassandraChannelsCollection channelsCollection;
 	private final DataHubKeyRenderer keyRenderer;
 
 	@Inject
 	public CassandraValueReader(CassandraConnector connector, HectorFactoryWrapper hector, RowKeyStrategy<String, DataHubKey,
-			DataHubCompositeValue> rowKeyStrategy, CassandraChannelsCollection channelsCollection, DataHubKeyRenderer keyRenderer) {
+			DataHubCompositeValue> rowKeyStrategy, DataHubKeyRenderer keyRenderer) {
 		this.connector = connector;
 		this.hector = hector;
 		this.rowKeyStrategy = rowKeyStrategy;
-		this.channelsCollection = channelsCollection;
 		this.keyRenderer = keyRenderer;
 	}
 
@@ -52,24 +49,6 @@ public class CassandraValueReader {
 																			   .execute();
 		HColumn<String, DataHubCompositeValue> column = queryResult.get();
 		return column == null ? null : column.getValue();
-	}
-
-	public Optional<DataHubKey> findFirstId(String channelName) {
-		try {
-			DataHubKey firstKey = channelsCollection.getFirstKey(channelName);
-			return Optional.fromNullable(firstKey);
-		} catch (HInvalidRequestException e) {
-			throw maybePromoteToNoSuchChannel(e, channelName);
-		}
-	}
-
-	public Optional<DataHubKey> findLatestId(String channelName) {
-		try {
-			DataHubKey lastUpdatedKey = channelsCollection.getLastUpdatedKey(channelName);
-			return Optional.fromNullable(lastUpdatedKey);
-		} catch (HInvalidRequestException e) {
-			throw maybePromoteToNoSuchChannel(e, channelName);
-		}
 	}
 
 }
