@@ -100,7 +100,7 @@ public class InMemoryChannelDao implements ChannelDao {
 		linkOldPreviousToNew(oldLastKey, newDataHubChannelValueKey);
 		//finally, make it the latest
 		setLastUpdateKey(channelName, newDataHubChannelValueKey.asDataHubKey());
-		if ( !firstPerChannel.containsKey(channelName)) {
+		if (!firstPerChannel.containsKey(channelName)) {
 			setFirstKey(channelName, newDataHubChannelValueKey.asDataHubKey());
 		}
 
@@ -131,13 +131,13 @@ public class InMemoryChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public Optional<DataHubKey> findFirstId(String channelName) {
+	public Optional<DataHubKey> findFirstUpdateKey(String channelName) {
 		DataHubChannelValueKey key = firstPerChannel.get(channelName);
 		return optionalFromCompositeKey(key);
 	}
 
 	@Override
-	public Optional<DataHubKey> findLatestId(String channelName) {
+	public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
 		DataHubChannelValueKey key = latestPerChannel.get(channelName);
 		return optionalFromCompositeKey(key);
 	}

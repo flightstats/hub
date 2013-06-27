@@ -35,7 +35,7 @@ public class LatestChannelItemResource {
 	@GET
 	@Timed
 	public Response getLatest(@PathParam("channelName") String channelName) {
-		Optional<DataHubKey> latestId = channelDao.findLatestId(channelName);
+		Optional<DataHubKey> latestId = channelDao.findLastUpdatedKey(channelName);
 		if (!latestId.isPresent()) {
 			//TODO: Don't throw, just set status in response
 			throw new WebApplicationException(NOT_FOUND);
