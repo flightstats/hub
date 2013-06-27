@@ -23,13 +23,14 @@ var chai = require('chai'),
 var ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js');
 
-var DOMAIN = 'datahub-01.cloud-east.dev:8080';
+// var DOMAIN = 'datahub-01.cloud-east.dev:8080';
+var DOMAIN = 'datahub.svc.dev';
 exports.DOMAIN = DOMAIN;
 
 var URL_ROOT = 'http://'+ DOMAIN;
 exports.URL_ROOT = URL_ROOT;
 
-var DEBUG = false;
+var DEBUG = true;
 
 
 var getRandomPayload = function() {
@@ -81,9 +82,10 @@ exports.getValidationChecksum = getValidationChecksum;
 
 // Given a websocket URI, this will instantiate a websocket on that channel
 var createWebSocket = function(wsUri, onOpen) {
-    var myWs;
+    var myWs,
+        VERBOSE = true;
 
-    gu.debugLog('Trying uri: '+ wsUri, DEBUG);
+    gu.debugLog('Trying uri: '+ wsUri, VERBOSE);
 
     myWs = new ws(wsUri);
 
@@ -179,7 +181,7 @@ exports.WSWrapper = WSWrapper;
 var createChannel = function(params, myCallback) {
     var cnName = params.name,
         ttl = (params.hasOwnProperty('ttl')) ? params.ttl : null,
-        payload = '{"name":"'+ cnName +'"}',
+        payload = {name: cnName},
         uri = [URL_ROOT, 'channel'].join('/'),
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
@@ -187,8 +189,12 @@ var createChannel = function(params, myCallback) {
         payload['ttl'] = ttl;
     }
 
-    gu.debugLog('createChannel.uri: '+ uri, VERBOSE);
-    gu.debugLog('createChannel.payload: '+ payload, VERBOSE);
+    if (VERBOSE) {
+        gu.debugLog('createChannel.uri: '+ uri);
+        gu.debugLog('createChannel.payload: '+ payload);
+        gu.debugLog('dump of params: ');
+        console.dir(params);
+    }
 
     superagent.agent().post(uri)
         .set('Content-Type', 'application/json')
@@ -210,8 +216,16 @@ var createChannel = function(params, myCallback) {
 };
 exports.createChannel = createChannel;
 
-var getRandomChannelName = function() {
-    return ranU.randomString( 5 + ranU.randomNum(26), ranU.limitedRandomChar);
+/**
+ * Create random channel name using only 0-9a-zA-Z (note that underscore is allowed in channel name but not provided here)
+ *
+ * @param length: optional, defaults to 5 + (1-25)
+ * @return the name
+ */
+var getRandomChannelName = function(length) {
+    var cnLength = ('undefined' == typeof length) ? (5 + ranU.randomNum(26)) : length;
+
+    return ranU.randomString(cnLength, ranU.limitedRandomChar);
 }
 exports.getRandomChannelName = getRandomChannelName;
 
@@ -234,7 +248,7 @@ function channelMetadata(responseBody) {
     }
 
     this.getTTL = function() {
-        throw {message: 'not implemented'}
+        return responseBody.ttlMillis;
     }
 
     this.getCreationDate = function() {
@@ -521,25 +535,119 @@ var getUrisAndDataSinceLocation = function(params, callback) {
 }
 exports.getUrisAndDataSinceLocation = getUrisAndDataSinceLocation;
 
-// Returns the last <reqLength> URIs from a channel as an array,
-//      starting with oldest (up to reqLength) and ending with latest.
-// Returns a minimum of 2 (otherwise call getLatestUriFromChannel()).
-var getListOfLatestUrisFromChannel = function(reqLength, channelUri, myCallback){
-    var allUris = [];
+/**
+ * For some or all items in a channel, tests the accuracy of the next/previous headers as well as the /latest link
+ * given by the channel metadata.
+ *
+ * @param params: .channelUri,
+ *  .numItems [optional, number of items back from latest to include (same param as in getListOfLatestUrisFromChannel())
+ *  defaults to Inifinity], .debug (optional).
+ * @param callback: err || null
+ */
+var testRelativeLinkInformation = function(params, callback) {
 
-    gu.debugLog('In getListofLatestUrisFromChannel...', DEBUG);
-    gu.debugLog('reqLength: '+ reqLength, DEBUG);
-    gu.debugLog('channel Uri: '+ channelUri, DEBUG);
+    // handle params
+    var allUris = [],
+        numItems = (params.hasOwnProperty('numItems')) ? params.numItems : Infinity,
+        channelUri = params.channelUri,
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true,
+        listPayload = {
+            channelUri: channelUri,
+            numItems: numItems,
+            debug: VERBOSE
+        };
 
-    if (reqLength < 2) {
-        reqLength = 2;
+    getListOfLatestUrisFromChannel(listPayload, function(theUris) {
+
+        var testUri = function(index, callback) {
+            var uri = theUris[index],
+                expPrevious = (index > 0) ? theUris[index - 1] : null,
+                expNext = (index < (theUris.length -1)) ? theUris[index + 1] : null,
+                err = null;
+
+            superagent.agent().get(uri)
+                .end(function(err, res) {
+                    var pGetHeader = new packetGETHeader(res.headers),
+                        previous = pGetHeader.getPrevious(),
+                        next = pGetHeader.getNext();
+
+                    if (expPrevious != previous) {
+                        err = 'Previous link mismatch for uri '+ uri +'.\nExpected '+ expPrevious +'.\nGot '+ previous;
+                    } else {
+                        gu.debugLog('Matched previous link for uri '+ uri, VERBOSE);
+                    }
+
+                    if (expNext != next) {
+                        if (null == err) {
+                            err = '';
+                        }
+                        err += 'Next link mismatch.\nExpected '+ expNext +'.\nGot '+ next;
+                    } else {
+                        gu.debugLog('Matched next link for uri '+ uri, VERBOSE);
+                    }
+
+                    callback(err, uri);
+                });
+        }
+
+        // Test next/prev for each uri
+        async.timesSeries(theUris.length, function(n, next){
+            testUri(n, function(err, uri) {
+                next(err, uri);
+            })
+        }, function(err, testedUris) {
+
+            if (null != err) {
+                // pass that err along -- null if all went well
+                callback(err);
+            }
+            else {
+                gu.debugLog('Matched all next/prev links for '+ testedUris.length +' uris.', VERBOSE);
+
+                getLatestUri(channelUri, function(latest, err) {
+                    var expLatest = theUris[theUris.length - 1],
+                        finalError = null;
+
+                    if (latest != expLatest) {
+                        finalError = 'Latest link mismatch.\nExpected '+ expLatest +'.\nGot '+ latest;
+
+                        callback(finalError);
+                    } else {
+                        gu.debugLog('Latest link matched!', VERBOSE);
+
+                        callback(null);
+                    }
+                })
+            }
+        });
+    })
+}
+exports.testRelativeLinkInformation = testRelativeLinkInformation;
+
+/**
+ * Returns the last <numItems> of URIs in the channel as an array, going from older (index 0) to latest.
+ * @param params: .numItems=2 (minimum 2; number of URIs to return, starting with the latest), .channelUri,
+ *  .debug (optional)
+ * @param myCallback: list of URIs as described.
+ */
+var getListOfLatestUrisFromChannel = function(params, myCallback){
+    var allUris = [],
+        numItems = params.numItems,
+        channelUri = params.channelUri,
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
+
+    if (numItems < 2) {
+        numItems = 2;
     }
+
+    gu.debugLog('In getListofLatestUrisFromChannel...', false);
+    gu.debugLog('number of items requested: '+ numItems, VERBOSE);
+    gu.debugLog('channel URI: '+ channelUri, VERBOSE);
 
     getLatestUri(channelUri, function(latest){
         var previous = null;
 
         allUris.unshift(latest);
-        //console.log('Added uri:'+ latest);
 
         async.doWhilst(
             function (callback) {
@@ -550,13 +658,12 @@ var getListOfLatestUrisFromChannel = function(reqLength, channelUri, myCallback)
 
                         if (null != previous) {
                             allUris.unshift(previous);
-                            //console.log('Added uri:'+ previous);
                         }
                         callback();
                     });
             },
             function() {
-                return (allUris.length < reqLength) && (null != previous);
+                return (allUris.length < numItems) && (null != previous);
             }
             , function(err) {
                 myCallback(allUris);

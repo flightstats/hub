@@ -37,8 +37,9 @@ describe('Create Channel: ', function(){
         expect(body._links.ws.hasOwnProperty('href')).to.be.true;
         expect(body.hasOwnProperty('name')).to.be.true;
         expect(body.hasOwnProperty('creationDate')).to.be.true;
+        expect(body.hasOwnProperty('ttlMillis')).to.be.true;
 
-        expect(lodash.keys(body).length).to.equal(3);
+        expect(lodash.keys(body).length).to.equal(4);
         expect(lodash.keys(body._links).length).to.equal(3);
     }
 
@@ -110,12 +111,17 @@ describe('Create Channel: ', function(){
             expect(returnedDate.add('minutes', 5).isAfter(moment())).to.be.true;
         })
 
-        // TODO: ttl is null
+        it('TTL has numeric value', function() {
+            expect(lodash.isNumber(createRes.body.ttlMillis)).to.be.true;
+        })
 
+        // https://www.pivotaltracker.com/story/show/50668987
+        it('TTL defaults to 120 days', function() {
+            expect(createRes.body.ttlMillis).to.equal(10368000000);
+        })
     })
 
-    // TODO all this section
-    describe.skip('CODE NOT IMPLEMENTED - Acceptance with TTL set', function() {
+    describe('Acceptance with TTL set', function() {
         var createRes,
             channelUri,
             acceptName,
@@ -142,18 +148,38 @@ describe('Create Channel: ', function(){
         })
 
         it('has correct value for TTL', function() {
-            expect(createRes.body.ttl).to.equal(acceptTTL);
+            var cnMetadata = new dhh.channelMetadata(createRes.body),
+                actualTTL = cnMetadata.getTTL();
+            expect(actualTTL).to.equal(acceptTTL);
         })
     })
 
     describe('Positive parameter tests', function() {
 
         describe('name', function() {
+            it('may contain underscores', function(done) {
+                var name = dhh.getRandomChannelName(5) +'_'+ dhh.getRandomChannelName(5) + '___'+ dhh.getRandomChannelName(5) + '_';
 
+                dhh.createChannel({name: name}, function(res) {
+                    expect(res.status).to.equal(gu.HTTPresponses.Created);
+
+                    done();
+                })
+            })
         })
 
         describe('TTL', function() {
-            // TODO: may be null
+
+            it.skip('BUG: https://www.pivotaltracker.com/story/show/52425747 - may be null', function(done) {
+                var name = dhh.getRandomChannelName();
+
+                dhh.createChannel({name: name, ttl: null}, function(res) {
+                    expect(res.body.ttlMillis).to.be.null;
+
+                    done();
+                })
+            })
+
             // TODO: may be ?max value?
         })
     })
@@ -161,6 +187,15 @@ describe('Create Channel: ', function(){
     describe('Error cases', function() {
 
         describe('name', function() {
+
+            var badNameYieldsBadRequest = function(cnName, callback) {
+                dhh.createChannel({name: cnName}, function(res) {
+                    expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
+
+                    callback();
+                })
+            }
+
             it.skip('may not match a word reserved by Cassandra', function(done) {
                 channelName = 'channelMetadata';
 
@@ -177,23 +212,11 @@ describe('Create Channel: ', function(){
 
             // See:  https://www.pivotaltracker.com/story/show/49566971
             it('may not be blank', function(done){
-
-                dhh.createChannel({name: ''}, function(res) {
-                    expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
-                    gu.debugLog('Response status: '+ res.status, false);
-
-                    done();
-                });
-
+                badNameYieldsBadRequest('', done);
             });
 
             it('cannot consist only of whitespace', function(done) {
-
-                dhh.createChannel({name: '    '}, function(res) {
-                    expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
-
-                    done();
-                })
+                badNameYieldsBadRequest('    ', done);
             })
 
             it.skip('BUG: https://www.pivotaltracker.com/story/show/51434073 - whitespace is trimmed from name', function(done) {
@@ -211,18 +234,31 @@ describe('Create Channel: ', function(){
                 })
             })
 
-            it.skip('BUG: https://www.pivotaltracker.com/story/show/51434189 - cannot contain a forward slash', function(done) {
-                var name = ranU.randomString(10) + '/'+ ranU.randomString(10);
+            // https://www.pivotaltracker.com/story/show/51434189
+            it('cannot contain a forward slash', function(done) {
+                var name = dhh.getRandomChannelName(10) +'/'+ dhh.getRandomChannelName(10);
 
-                dhh.createChannel({name: name}, function(res) {
-                    expect(gu.isHTTPError(res.status)).to.be.true;
-                    gu.debugLog('res.status: '+ res.status);
-                    gu.debugLog('name: '+ name);
-
-                    done();
-                })
+                badNameYieldsBadRequest(name, done);
             })
 
+            it('cannot contain a space', function(done) {
+                var name = dhh.getRandomChannelName(10) +' '+ dhh.getRandomChannelName(10);
+
+                badNameYieldsBadRequest(name, done);
+            })
+
+            it('may not contain a dash', function(done){
+                var name = dhh.getRandomChannelName(10) +'-'+ dhh.getRandomChannelName(10);
+
+                badNameYieldsBadRequest('', done);
+            });
+
+            it('may not contain upper ASCII characters chosen at random (161 - 447)', function(done) {
+                var name = ranU.randomString(26, ranU.extendedCharOnly);
+                gu.debugLog('Name: '+ name);
+
+                badNameYieldsBadRequest(name, done);
+            })
         })
 
         describe.skip('Code not implemented - TTL', function() {
