@@ -44,6 +44,8 @@ public class CassandraChannelDao implements ChannelDao {
 	public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
 		logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
 		DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
+
+		//Note: There are two writes to cassandra -- one here, and one (batch) in the linkagesCollection.updateLinkages().  Combining these into one back could increase performance.
 		ValueInsertionResult result = cassandraValueWriter.write(channelName, value);
 		DataHubKey insertedKey = result.getKey();
 

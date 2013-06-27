@@ -45,20 +45,21 @@ public class CassandraLinkagesCollection {
 
 		insertPreviousLinkage(channelName, insertedKeyString, lastUpdatedKeyString, mutator, rowKey);
 		insertNextLinage(channelName, insertedKeyString, lastUpdatedKeyString, mutator, rowKey);
+		mutator.execute();
 	}
 
 	private void insertPreviousLinkage(String channelName, String insertedKeyString, String lastUpdatedKeyString, Mutator<String> mutator, String rowKey) {
 		HColumn<String, String> keyToPreviousColumn = hector.createColumn(insertedKeyString, lastUpdatedKeyString, StringSerializer.get(),
 				StringSerializer.get());
 		String previousRowKey = buildPreviousRowKey(rowKey);
-		mutator.insert(previousRowKey, channelName, keyToPreviousColumn);
+		mutator.addInsertion(previousRowKey, channelName, keyToPreviousColumn);
 	}
 
 	private void insertNextLinage(String channelName, String insertedKeyString, String lastUpdatedKeyString, Mutator<String> mutator, String rowKey) {
 		HColumn<String, String> keyToNextColumn = hector.createColumn(lastUpdatedKeyString, insertedKeyString, StringSerializer.get(),
 				StringSerializer.get());
 		String nextRowKey = buildNextRowKey(rowKey);
-		mutator.insert(nextRowKey, channelName, keyToNextColumn);
+		mutator.addInsertion(nextRowKey, channelName, keyToNextColumn);
 	}
 
 	private String buildPreviousRowKey(String rowKey) {
