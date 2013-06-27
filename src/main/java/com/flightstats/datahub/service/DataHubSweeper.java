@@ -61,24 +61,11 @@ public class DataHubSweeper {
 		private void sweepChannel(ChannelConfiguration channelConfiguration) throws Exception {
 			if (channelConfiguration.getTtlMillis() == null) return;
 
-<<<<<<< HEAD
 			String channelName = channelConfiguration.getName();
 			Date reapDate = new Date(System.currentTimeMillis() - channelConfiguration.getTtlMillis());
 			List<DataHubKey> reapableKeys = findReapableKeys(channelName, reapDate);
 			if (!reapableKeys.isEmpty()) {
 				logger.debug("Sweeping " + reapableKeys.size() + " for " + channelName);
-=======
-			private SweepChannel(ChannelConfiguration channelConfiguration) {
-				this.channelConfiguration = channelConfiguration;
-			}
-
-			public Void call() throws Exception {
-				if (channelConfiguration.getTtlMillis() == null) return null;
-				String channelName = channelConfiguration.getName();
-
-				Date reapDate = new Date(System.currentTimeMillis() - channelConfiguration.getTtlMillis());
-				List<DataHubKey> reapableKeys = findReapableKeys(channelName, reapDate);
->>>>>>> master
 				fixPointersForChannel(channelName, reapableKeys);
 				reapValues(channelName, reapableKeys);
 			}
