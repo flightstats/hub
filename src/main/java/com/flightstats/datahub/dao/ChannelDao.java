@@ -28,19 +28,23 @@ public interface ChannelDao {
 
 	Iterable<ChannelConfiguration> getChannels();
 
-	Optional<DataHubKey> findFirstId(String channelName);
+	Optional<DataHubKey> findFirstUpdateKey(String channelName);
 
-	Optional<DataHubKey> findLatestId(String channelName);
+	Optional<DataHubKey> findLastUpdatedKey(String channelName);
 
 	int countChannels();
 
 	void setFirstKey(String channelName, DataHubKey key);
+
 	void deleteFirstKey(String channelName);
 
 	void setLastUpdateKey(String channelName, DataHubKey key);
+
 	void deleteLastUpdateKey(String channelName);
 
-	/** Delete the keys and their corresponding values for the given channel. */
+	/**
+	 * Delete the keys and their corresponding values for the given channel.
+	 */
 	void delete(String channelName, List<DataHubKey> keys);
 
 	Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime);
