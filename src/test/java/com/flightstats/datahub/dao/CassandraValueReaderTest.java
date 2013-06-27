@@ -1,11 +1,9 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
-import com.google.common.base.Optional;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -53,7 +51,7 @@ public class CassandraValueReaderTest {
 		when(queryResult.get()).thenReturn(column);
 		when(column.getValue()).thenReturn(expected);
 
-		CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, null, keyRenderer);
+		CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, keyRenderer);
 
 		DataHubCompositeValue result = testClass.read(channelName, key);
 		assertEquals(expected, result);
@@ -84,7 +82,7 @@ public class CassandraValueReaderTest {
 		when(query.execute()).thenReturn(queryResult);
 		when(queryResult.get()).thenReturn(null);
 
-		CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, null, keyRenderer);
+		CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, keyRenderer);
 
 		DataHubCompositeValue result = testClass.read(channelName, key);
 		assertNull(result);
@@ -97,7 +95,6 @@ public class CassandraValueReaderTest {
 		DataHubKey key = new DataHubKey(new Date(1235555), (short) 0);
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 
-		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
 		HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
 		CassandraConnector connector = mock(CassandraConnector.class);
 		Keyspace keyspace = mock(Keyspace.class);
@@ -113,48 +110,8 @@ public class CassandraValueReaderTest {
 		when(query.setName(keyRenderer.keyToString(key))).thenReturn(query);
 		when(query.execute()).thenThrow(new HInvalidRequestException("unconfigured columnfamily"));
 
-		CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, channelsCollection, keyRenderer);
+		CassandraValueReader testClass = new CassandraValueReader(connector, hector, rowKeyStrategy, keyRenderer);
 		testClass.read(channelName, key);
 	}
 
-	@Test
-	public void testFindLatestId() throws Exception {
-		DataHubKey expected = new DataHubKey(new Date(999999999), (short) 6);
-		String channelName = "myChan";
-
-		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-
-		when(channelsCollection.getLastUpdatedKey(channelName)).thenReturn(expected);
-
-		CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
-
-		Optional<DataHubKey> result = testClass.findLatestId(channelName);
-		assertEquals(expected, result.get());
-	}
-
-	@Test(expected = NoSuchChannelException.class)
-	public void testFindLatestId_channelNotFound() throws Exception {
-		String channelName = "myChan";
-		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-
-		when(channelsCollection.getLastUpdatedKey(channelName)).thenThrow(new HInvalidRequestException("unconfigured columnfamily"));
-
-		CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
-		testClass.findLatestId(channelName);
-	}
-
-	@Test
-	public void testFindLatestId_lastUpdateNotFound() throws Exception {
-		String channelName = "myChan";
-		ChannelConfiguration config = new ChannelConfiguration(channelName, null, null);
-
-		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-
-		when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(config);
-
-		CassandraValueReader testClass = new CassandraValueReader(null, null, null, channelsCollection, null);
-		Optional<DataHubKey> result = testClass.findLatestId(channelName);
-
-		assertEquals(Optional.absent(), result);
-	}
 }

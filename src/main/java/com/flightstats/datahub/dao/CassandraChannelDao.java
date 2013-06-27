@@ -3,26 +3,28 @@ package com.flightstats.datahub.dao;
 import com.flightstats.datahub.model.*;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.List;
+
+import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
 
 public class CassandraChannelDao implements ChannelDao {
 
 	private final static Logger logger = LoggerFactory.getLogger(ChannelDao.class);
 	private final CassandraChannelsCollection channelsCollection;
+	private final CassandraLinkagesCollection linkagesCollection;
 	private final CassandraValueWriter cassandraValueWriter;
 	private final CassandraValueReader cassandraValueReader;
-	private final CassandraLinkagesFinder linkagesFinder;
 
 	@Inject
-	public CassandraChannelDao(CassandraChannelsCollection channelsCollection, CassandraValueWriter cassandraValueWriter, CassandraValueReader cassandraValueReader, CassandraLinkagesFinder linkagesFinder) {
+	public CassandraChannelDao(CassandraChannelsCollection channelsCollection, CassandraLinkagesCollection linkagesCollection, CassandraValueWriter cassandraValueWriter, CassandraValueReader cassandraValueReader) {
 		this.channelsCollection = channelsCollection;
+		this.linkagesCollection = linkagesCollection;
 		this.cassandraValueWriter = cassandraValueWriter;
 		this.cassandraValueReader = cassandraValueReader;
-		this.linkagesFinder = linkagesFinder;
 	}
 
 	@Override
@@ -40,12 +42,26 @@ public class CassandraChannelDao implements ChannelDao {
 	public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
 		logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
 		DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
+
+		//Note: There are two writes to cassandra -- one here, and one (batch) in the linkagesCollection.updateLinkages().  Combining these into one back could increase performance.
 		ValueInsertionResult result = cassandraValueWriter.write(channelName, value);
-		setLastUpdateKey(channelName, result.getKey());
-		if ( !findFirstId(channelName).isPresent() ) {
-			setFirstKey(channelName, result.getKey());
-		}
+		DataHubKey insertedKey = result.getKey();
+
+		// Note:  Caching the latest could greatly speed up writes, but this has to be done in a distributed fashion.
+		DataHubKey lastUpdatedKey = channelsCollection.getLastUpdatedKey(channelName);
+
+		updateFirstAndLastKeysForChannel(channelName, insertedKey);
+
+		linkagesCollection.updateLinkages(channelName, insertedKey, lastUpdatedKey);
+
 		return result;
+	}
+
+	private void updateFirstAndLastKeysForChannel(String channelName, DataHubKey insertedKey) {
+		setLastUpdateKey(channelName, insertedKey);
+		if (!findFirstUpdateKey(channelName).isPresent()) {
+			setFirstKey(channelName, insertedKey);
+		}
 	}
 
 	@Override
@@ -60,9 +76,9 @@ public class CassandraChannelDao implements ChannelDao {
 
 	@Override
 	public void deleteLastUpdateKey(String channelName) {
-		Optional<DataHubKey> latestId = findLatestId(channelName);
-		if ( latestId.isPresent() ) {
-			channelsCollection.deleteLastUpdatedKey(channelName, latestId.get());
+		Optional<DataHubKey> latestId = findLastUpdatedKey(channelName);
+		if (latestId.isPresent()) {
+			channelsCollection.deleteLastUpdatedKey(channelName);
 		}
 	}
 
@@ -73,9 +89,9 @@ public class CassandraChannelDao implements ChannelDao {
 
 	@Override
 	public void deleteFirstKey(String channelName) {
-		Optional<DataHubKey> firstId = findFirstId(channelName);
-		if ( firstId.isPresent() ) {
-			channelsCollection.deleteFirstKey(channelName, firstId.get());
+		Optional<DataHubKey> firstId = findFirstUpdateKey(channelName);
+		if (firstId.isPresent()) {
+			channelsCollection.deleteFirstKey(channelName);
 		}
 	}
 
@@ -86,8 +102,8 @@ public class CassandraChannelDao implements ChannelDao {
 		if (value == null) {
 			return Optional.absent();
 		}
-		Optional<DataHubKey> previous = linkagesFinder.findPrevious(channelName, key);
-		Optional<DataHubKey> next = linkagesFinder.findNext(channelName, key);
+		Optional<DataHubKey> previous = linkagesCollection.findPreviousKey(channelName, key);
+		Optional<DataHubKey> next = linkagesCollection.findNextKey(channelName, key);
 		return Optional.of(new LinkedDataHubCompositeValue(value, previous, next));
 	}
 
@@ -102,13 +118,23 @@ public class CassandraChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public Optional<DataHubKey> findFirstId(String channelName) {
-		return cassandraValueReader.findFirstId(channelName);
+	public Optional<DataHubKey> findFirstUpdateKey(String channelName) {
+		try {
+			DataHubKey firstKey = channelsCollection.getFirstKey(channelName);
+			return Optional.fromNullable(firstKey);
+		} catch (HInvalidRequestException e) {
+			throw maybePromoteToNoSuchChannel(e, channelName);
+		}
 	}
 
 	@Override
-	public Optional<DataHubKey> findLatestId(String channelName) {
-		return cassandraValueReader.findLatestId(channelName);
+	public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
+		try {
+			DataHubKey lastUpdatedKey = channelsCollection.getLastUpdatedKey(channelName);
+			return Optional.fromNullable(lastUpdatedKey);
+		} catch (HInvalidRequestException e) {
+			throw maybePromoteToNoSuchChannel(e, channelName);
+		}
 	}
 
 	@Override
