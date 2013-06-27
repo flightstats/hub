@@ -63,7 +63,7 @@ public class CassandraChannelsCollectionTest {
 
 		assertEquals(expected, result);
 		verify(connector).createColumnFamily(channelName);
-		verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_COLUMN_FAMILY_NAME, column);
+		verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_METADATA_COLUMN_FAMILY_NAME, column);
 	}
 
 	@Test
@@ -80,7 +80,7 @@ public class CassandraChannelsCollectionTest {
 		when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), channelConfigSerializer)).thenReturn(query);
 		when(query.setName(channelName)).thenReturn(query);
 		when(query.setKey(CHANNELS_ROW_KEY)).thenReturn(query);
-		when(query.setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME)).thenReturn(query);
+		when(query.setColumnFamily(CHANNELS_METADATA_COLUMN_FAMILY_NAME)).thenReturn(query);
 		when(query.execute()).thenReturn(queryResult);
 		when(queryResult.get()).thenReturn(column);
 		when(column.getValue()).thenReturn(channelConfiguration);
@@ -151,7 +151,7 @@ public class CassandraChannelsCollectionTest {
 		when(hector.createColumn(channelName, keyString, StringSerializer.get(), StringSerializer.get())).thenReturn(newColumn);
 
 		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
-		testClass.deleteLastUpdatedKey(channelName, key);
+		testClass.deleteLastUpdatedKey(channelName);
 
 		verify(mutator).delete(CHANNELS_LATEST_ROW_KEY, "myChan", "myChan", StringSerializer.get());
 	}
@@ -188,7 +188,7 @@ public class CassandraChannelsCollectionTest {
 		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
 
 		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
-		testClass.deleteFirstKey(channelName, key);
+		testClass.deleteFirstKey(channelName);
 
 		verify(mutator).delete(CHANNELS_FIRST_ROW_KEY, "myChan", "myChan", StringSerializer.get());
 	}
@@ -200,7 +200,7 @@ public class CassandraChannelsCollectionTest {
 
 		when(connector.getKeyspace()).thenReturn(keyspace);
 		when(hector.createCountQuery(keyspace, StringSerializer.get(), StringSerializer.get())).thenReturn(countQuery);
-		when(countQuery.setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME)).thenReturn(countQuery);
+		when(countQuery.setColumnFamily(CHANNELS_METADATA_COLUMN_FAMILY_NAME)).thenReturn(countQuery);
 		when(countQuery.setKey(CHANNELS_ROW_KEY)).thenReturn(countQuery);
 		when(countQuery.setRange(null, null, Integer.MAX_VALUE)).thenReturn(countQuery);
 		when(countQuery.execute()).thenReturn(queryResult);
@@ -286,7 +286,7 @@ public class CassandraChannelsCollectionTest {
 		when(connector.getKeyspace()).thenReturn(keyspace);
 		when(hector.createSliceQuery(keyspace, StringSerializer.get(), StringSerializer.get(), valueSerializer)).thenReturn(sliceQuery);
 		when(sliceQuery.setKey(CHANNELS_ROW_KEY)).thenReturn(sliceQuery);
-		when(sliceQuery.setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME)).thenReturn(sliceQuery);
+		when(sliceQuery.setColumnFamily(CHANNELS_METADATA_COLUMN_FAMILY_NAME)).thenReturn(sliceQuery);
 		when(hector.createColumnSliceIterator(sliceQuery, null, CassandraChannelsCollection.MAX_CHANNEL_NAME, false)).thenReturn(sliceIterator);
 		when(sliceIterator.hasNext()).thenReturn(true, true, false);
 		when(sliceIterator.next()).thenReturn(column1, column2);
