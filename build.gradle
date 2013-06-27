@@ -71,35 +71,35 @@ artifacts {
     publish distTar
 }
 
-task setupIntegration << {
-    println "Setting up the integration environment"
-    def integrationTarball = configurations.integrationTests.files.find {
-        it.name.startsWith('datahub-integration')
-    }
+// Commented out for now, while reworking jenkins job graph granularity
+// task setupIntegration << {
+//     println "Setting up the integration environment"
+//     def integrationTarball = configurations.integrationTests.files.find {
+//         it.name.startsWith('datahub-integration')
+//     }
+// 
+//     println "Extracting " + integrationTarball.name
+//     copy {
+//         from tarTree(resources.gzip(integrationTarball))
+//         into projectDir
+//     }
+// 
+//     def distributionsDir = new File("${buildDir}/distributions")
+//     distributionsDir.mkdirs()
+//     def snapshotTarball = configurations.integrationTests.files.find {
+//         !it.name.startsWith('datahub-integration') && it.name.endsWith('tgz')
+//     }
+//     copy {
+//         from snapshotTarball
+//         into distributionsDir
+//     }
+// }
 
-    println "Extracting " + integrationTarball.name
-    copy {
-        from tarTree(resources.gzip(integrationTarball))
-        into projectDir
-    }
-
-    def distributionsDir = new File("${buildDir}/distributions")
-    distributionsDir.mkdirs()
-    def snapshotTarball = configurations.integrationTests.files.find {
-        !it.name.startsWith('datahub-integration') && it.name.endsWith('tgz')
-    }
-    copy {
-        from snapshotTarball
-        into distributionsDir
-    }
-}
-
-task integrationTests(dependsOn: setupIntegration) << {
+task integrationTests() << {
     def testdir = "${projectDir}/src/test/integration"
     def reportsdir = "${projectDir}/build/reports/integration/"
     println "Making " + reportsdir
     new File(reportsdir).mkdirs()
-    tasks.deployDev.execute()
     runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
 }
 
