@@ -52,6 +52,7 @@ describe('Channel Subscription:', function() {
     beforeEach(function(myCallback){
         payload = uri = req = null;
 
+        /*
         // temporarily changed to hardcoded channel
         dhh.getChannel({name: 'lolcats'}, function(res, body) {
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
@@ -71,9 +72,9 @@ describe('Channel Subscription:', function() {
 
             myCallback();
         })
+        */
 
 
-        /*
         channelName = dhh.getRandomChannelName();
 
         dhh.createChannel({name: channelName}, function(res){
@@ -95,7 +96,6 @@ describe('Channel Subscription:', function() {
             myCallback();
         });
 
-        */
     });
 
     it('Acceptance: subscription works and updates are sent in order', function(done) {
@@ -262,7 +262,7 @@ describe('Channel Subscription:', function() {
 
     });
 
-    it.only('Multiple nigh-simultaneous updates are sent with order preserved.', function(done) {
+    it('Multiple nigh-simultaneous updates are sent with order preserved.', function(done) {
         var actualResponseQueue = [], expectedResponseQueue = [], endWait, i;
         var numUpdates = 10,
             VERBOSE = true;
