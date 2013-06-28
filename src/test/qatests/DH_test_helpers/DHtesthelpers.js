@@ -99,10 +99,14 @@ exports.createWebSocket = createWebSocket;
 /**
  * Wrapper for websocket to support test scenarios
  *
- * @param params: .domain (domain:port), .channel (name of channel in DH), .socketName (arbitrary name for identifying
- *  the socket), .onOpenCB (callback to call at end of Open event), .responseQueue (where each message is stashed),.
- *  .onMessageCB (optional - callback to call at end of Message event), .onErrorCB (optional - callback to call at
- *  end of Error event), .doReconnect=false (optional: if true, will reconnect on close if due to timeout),
+ * @param params: .domain (domain:port),
+ *  .channel (name of channel in DH),
+ *  .socketName (arbitrary name for identifying the socket),
+ *  .onOpenCB (callback to call at end of Open event),
+ *  .responseQueue (where each message is stashed),
+ *  .onMessageCB (optional - callback to call at end of Message event),
+ *  .onErrorCB (optional - callback to call at end of Error event),
+ *  .doReconnect=false (optional: if true, will reconnect on close if due to timeout),
  *  .debug (optional).
  * @constructor
  */
@@ -175,14 +179,18 @@ exports.WSWrapper = WSWrapper;
 /**
  * Create a channel.
  *
- * @param params: .name, .ttl=null, .debug (optional)
+ * @param params: .name,
+ *  .ttl=null,
+ *  .domain=DOMAIN
+ *  .debug (optional)
  * @param myCallback: response || error, channelUri || null (if error)
  */
 var createChannel = function(params, myCallback) {
     var cnName = params.name,
         ttl = (params.hasOwnProperty('ttl')) ? params.ttl : null,
         payload = {name: cnName},
-        uri = [URL_ROOT, 'channel'].join('/'),
+        domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN,
+        uri = ['http:/', domain, 'channel'].join('/'),
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
     if (null != ttl) {
@@ -264,16 +272,18 @@ exports.channelMetadata = channelMetadata;
 /**
  * GET a channel
  *
- * @param params: .name || .uri
+ * @param params: .name || .uri,
+ *  .domain=DOMAIN
  * @param myCallback: response, body
  */
 var getChannel = function(params, myCallback) {
     var uri,
         myChannelName = (params.hasOwnProperty('name')) ? params.name : null,
-        channelUri = (params.hasOwnProperty('uri')) ? params.uri : null;
+        channelUri = (params.hasOwnProperty('uri')) ? params.uri : null,
+        domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN;
 
     if (null != myChannelName) {
-        uri = [URL_ROOT, 'channel', myChannelName].join('/');
+        uri = ['http:/', domain, 'channel', myChannelName].join('/');
     }
     else if (null != channelUri) {
         uri = channelUri;
@@ -295,11 +305,16 @@ var getChannel = function(params, myCallback) {
 exports.getChannel = getChannel;
 
 
-/* Basic health check.
-    Returns the get response or throws an error.
+/**
+ * Basic health check.
+ * @param params: .domain=DOMAIN
+ * @param myCallback: Returns the get response or throws an error.
  */
-var getHealth = function(myCallback) {
-    superagent.agent().get(URL_ROOT + '/health')
+var getHealth = function(params, myCallback) {
+    var domain = params.domain || DOMAIN,
+        uri = ['http:/', domain, 'health'].join('/');
+
+    superagent.agent().get(uri)
         .end(function(err,res) {
             if (err) {throw err};
             myCallback(res);
@@ -356,7 +371,6 @@ function packetGETHeader(responseHeader){
     }
 }
 exports.packetGETHeader = packetGETHeader;
-
 
 // Headers in response to POSTing a packet of data
 function packetPOSTHeader(responseHeader){
@@ -704,12 +718,14 @@ exports.getLatestUri = getLatestUri;
 /**
  * Lists all channels.
  *
- * @param params: .debug (optional)
+ * @param params: .domain,
+ *  .debug (optional)
  * @param callback: response, array of channels
  */
 var getAllChannels = function(params, callback) {
-    var uri = [URL_ROOT, 'channel'].join('/'),
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
+    var domain = params.domain || DOMAIN,
+        uri = ['http:/', domain, 'channel'].join('/'),
+        VERBOSE = params.debug || false;
 
     gu.debugLog('uri for getAllChannels: '+ uri, VERBOSE);
 
