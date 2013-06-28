@@ -97,6 +97,11 @@ public class CassandraChannelDao implements ChannelDao {
 
 	@Override
 	public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
+		QueryResult<OrderedRows<String, String, DataHubCompositeValue>> results = queryForKeysInRange(channelName, startTime, endTime);
+		return buildKeysFromResults(results);
+	}
+
+	private QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryForKeysInRange(String channelName, Date startTime, Date endTime) {
 		DataHubKey minKey = new DataHubKey(startTime, (short) 0);
 		DataHubKey maxKey = new DataHubKey(endTime, Short.MAX_VALUE);
 		String minColumnKey = keyRenderer.keyToString(minKey);
@@ -104,15 +109,17 @@ public class CassandraChannelDao implements ChannelDao {
 		Keyspace keyspace = connector.getKeyspace();
 		String minRowKey = rowKeyStrategy.buildKey(channelName, minKey);
 		String maxRowKey = rowKeyStrategy.buildKey(channelName, maxKey);
-		QueryResult<OrderedRows<String,String,DataHubCompositeValue>> results =
-			hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
-				.setColumnFamily(channelName)
-				.setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
-				.setKeys(minRowKey, maxRowKey)
-				.execute();
+		return hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
+			.setColumnFamily(channelName)
+			.setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
+			.setKeys(minRowKey, maxRowKey)
+			.execute();
+	}
 
+	private Collection<DataHubKey> buildKeysFromResults(QueryResult<OrderedRows<String, String, DataHubCompositeValue>> results) {
 		Collection<DataHubKey> keys = new ArrayList<>();
-		Collection<Row<String, String, DataHubCompositeValue>> dataHubKeyRows = Collections2.filter(results.get().getList(), new DataHubRowKeySelector());
+		Collection<Row<String, String, DataHubCompositeValue>> dataHubKeyRows = Collections2.filter(results.get().getList(),
+				new DataHubRowKeySelector());
 		for (Row<String, String, DataHubCompositeValue> row : dataHubKeyRows) {
 			keys.addAll(Collections2.transform(row.getColumnSlice().getColumns(), new KeyRenderer()));
 		}
