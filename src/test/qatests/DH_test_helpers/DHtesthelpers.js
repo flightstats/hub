@@ -23,7 +23,7 @@ var chai = require('chai'),
 var ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js');
 
-// var DOMAIN = 'datahub-01.cloud-east.dev:8080';
+//var DOMAIN = 'datahub-01.cloud-east.dev:8080';
 var DOMAIN = 'datahub.svc.dev';
 exports.DOMAIN = DOMAIN;
 
@@ -555,7 +555,8 @@ exports.getUrisAndDataSinceLocation = getUrisAndDataSinceLocation;
  *
  * @param params: .channelUri,
  *  .numItems [optional, number of items back from latest to include (same param as in getListOfLatestUrisFromChannel())
- *  defaults to Inifinity], .debug (optional).
+ *  defaults to Inifinity],
+ *  .debug (optional).
  * @param callback: err || null
  */
 var testRelativeLinkInformation = function(params, callback) {
@@ -571,11 +572,12 @@ var testRelativeLinkInformation = function(params, callback) {
             debug: VERBOSE
         };
 
-    getListOfLatestUrisFromChannel(listPayload, function(theUris) {
+    getListOfLatestUrisFromChannel(listPayload, function(theUris, gotEntireChannel) {
 
         var testUri = function(index, callback) {
+
             var uri = theUris[index],
-                expPrevious = (index > 0) ? theUris[index - 1] : null,
+                expPrevious = (0 == index) ? null : theUris[index - 1],
                 expNext = (index < (theUris.length -1)) ? theUris[index + 1] : null,
                 err = null;
 
@@ -586,7 +588,12 @@ var testRelativeLinkInformation = function(params, callback) {
                         next = pGetHeader.getNext();
 
                     if (expPrevious != previous) {
-                        err = 'Previous link mismatch for uri '+ uri +'.\nExpected '+ expPrevious +'.\nGot '+ previous;
+                        if (0 == index && !gotEntireChannel) {
+                            gu.debugLog('Ignoring results for previous since expected previous link is unknown.', VERBOSE);
+                        } else {
+                            err = 'Previous link mismatch for uri '+ uri +'.\nExpected '+ expPrevious +'.\nGot '+ previous;
+                        }
+
                     } else {
                         gu.debugLog('Matched previous link for uri '+ uri, VERBOSE);
                     }
@@ -639,22 +646,24 @@ var testRelativeLinkInformation = function(params, callback) {
 exports.testRelativeLinkInformation = testRelativeLinkInformation;
 
 /**
- * Returns the last <numItems> of URIs in the channel as an array, going from older (index 0) to latest.
+ * Returns the last <numItems> of URIs in the channel as an array, going from older (index 0) to latest, as well as
+ *  a flag stating whether or not all URIs in the channel were included (i.e., .numItems >= number of items in channel).
  * @param params: .numItems=2 (minimum 2; number of URIs to return, starting with the latest), .channelUri,
  *  .debug (optional)
- * @param myCallback: list of URIs as described.
+ * @param myCallback: list of URIs as described, gotEntireChannel
  */
 var getListOfLatestUrisFromChannel = function(params, myCallback){
     var allUris = [],
         numItems = params.numItems,
         channelUri = params.channelUri,
+        gotEntireChannel = false,      // will be set to true if a previous link is not found
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
     if (numItems < 2) {
         numItems = 2;
     }
 
-    gu.debugLog('In getListofLatestUrisFromChannel...', false);
+    gu.debugLog('In getListofLatestUrisFromChannel...', VERBOSE);
     gu.debugLog('number of items requested: '+ numItems, VERBOSE);
     gu.debugLog('channel URI: '+ channelUri, VERBOSE);
 
@@ -680,7 +689,10 @@ var getListOfLatestUrisFromChannel = function(params, myCallback){
                 return (allUris.length < numItems) && (null != previous);
             }
             , function(err) {
-                myCallback(allUris);
+                gotEntireChannel = (null == previous);
+                gu.debugLog('Did we get the entire channel? '+ gotEntireChannel, VERBOSE);
+
+                myCallback(allUris, gotEntireChannel);
             }
         );
     });
