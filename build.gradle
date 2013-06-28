@@ -52,48 +52,13 @@ configurations {
     deployProduction
 }
 
-task integrationTar(type: Tar, dependsOn: 'distTar') {
-    baseName = "datahub-integration"
-    compression = Compression.GZIP
-    from "${projectDir}"
-    include "bin/*.*"
-    include "conf/**"
-    include "src/test/integration/*.*"
-    include "settings.gradle"
-}
-
 artifacts {
     publishDev jar
     publishDev distTar
-    publishDev integrationTar
 
     publish jar
     publish distTar
 }
-
-// Commented out for now, while reworking jenkins job graph granularity
-// task setupIntegration << {
-//     println "Setting up the integration environment"
-//     def integrationTarball = configurations.integrationTests.files.find {
-//         it.name.startsWith('datahub-integration')
-//     }
-// 
-//     println "Extracting " + integrationTarball.name
-//     copy {
-//         from tarTree(resources.gzip(integrationTarball))
-//         into projectDir
-//     }
-// 
-//     def distributionsDir = new File("${buildDir}/distributions")
-//     distributionsDir.mkdirs()
-//     def snapshotTarball = configurations.integrationTests.files.find {
-//         !it.name.startsWith('datahub-integration') && it.name.endsWith('tgz')
-//     }
-//     copy {
-//         from snapshotTarball
-//         into distributionsDir
-//     }
-// }
 
 task integrationTests() << {
     def testdir = "${projectDir}/src/test/integration"
