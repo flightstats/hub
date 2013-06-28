@@ -4,6 +4,10 @@ import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -12,10 +16,16 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
  * This class encapsulates access to the payload item linkages.
  */
 public class CassandraLinkagesCollection {
+
+	private final static String NEXT_SUFFIX = "_next";
+	private final static String PREVIOUS_SUFFIX = "_previous";
 
 	private final CassandraConnector connector;
 	private final HectorFactoryWrapper hector;
@@ -48,6 +58,19 @@ public class CassandraLinkagesCollection {
 		mutator.execute();
 	}
 
+	public void delete(String channelName, Collection<DataHubKey> keys) {
+		Mutator<String> mutator = connector.buildMutator(StringSerializer.get());
+		for (DataHubKey key : keys) {
+			String rowKey = rowKeyStrategy.buildKey(channelName, key);
+			String columnKey = keyRenderer.keyToString(key);
+			String previousRowKey = buildPreviousRowKey(rowKey);
+			String nextRowKey = buildNextRowKey(rowKey);
+			mutator.addDeletion(nextRowKey, channelName, columnKey, StringSerializer.get());
+			mutator.addDeletion(previousRowKey, channelName, columnKey, StringSerializer.get());
+		}
+		mutator.execute();
+	}
+
 	private void insertPreviousLinkage(String channelName, String insertedKeyString, String lastUpdatedKeyString, Mutator<String> mutator, String rowKey) {
 		HColumn<String, String> keyToPreviousColumn = hector.createColumn(insertedKeyString, lastUpdatedKeyString, StringSerializer.get(),
 				StringSerializer.get());
@@ -63,11 +86,11 @@ public class CassandraLinkagesCollection {
 	}
 
 	private String buildPreviousRowKey(String rowKey) {
-		return rowKey + "_previous";
+		return rowKey + PREVIOUS_SUFFIX;
 	}
 
 	private String buildNextRowKey(String rowKey) {
-		return rowKey + "_next";
+		return rowKey + NEXT_SUFFIX;
 	}
 
 	public Optional<DataHubKey> findPreviousKey(String channelName, DataHubKey key) {
@@ -94,5 +117,9 @@ public class CassandraLinkagesCollection {
 			return Optional.absent();
 		}
 		return Optional.of(keyRenderer.fromString(column.getValue()));
+	}
+
+	public boolean isLinkageRowKey(String key) {
+		return key.endsWith(NEXT_SUFFIX) || key.endsWith(PREVIOUS_SUFFIX);
 	}
 }

@@ -6,6 +6,8 @@ import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 public interface ChannelDao {
@@ -44,4 +46,6 @@ public interface ChannelDao {
 	 * Delete the keys and their corresponding values for the given channel.
 	 */
 	void delete(String channelName, List<DataHubKey> keys);
+
+	Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime);
 }

@@ -6,10 +6,7 @@ import com.google.common.base.Optional;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 
@@ -75,6 +72,11 @@ public class HazelcastChannelDao implements ChannelDao {
 		for (DataHubKey reapableKey : keys) {
 			channelValues.remove(reapableKey);
 		}
+	}
+
+	@Override
+	public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

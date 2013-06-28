@@ -17,29 +17,8 @@ import static org.mockito.Mockito.*;
 public class DataHubSweeperTest {
 
 	@Test
-	public void testSweepEmptyChannel() {
-		// GIVEN
-		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
-		ChannelDao dao = mock(ChannelDao.class);
-		ChannelConfiguration channel = new ChannelConfiguration("aChannel", new Date(), 1000L);
-		Iterable<ChannelConfiguration> channels = Arrays.asList(channel);
-
-		// WHEN
-		when(dao.getChannels()).thenReturn(channels);
-		when(dao.findFirstUpdateKey(channel.getName())).thenReturn(Optional.<DataHubKey>absent());
-		DataHubSweeper.SweeperTask testClass = new DataHubSweeper.SweeperTask(dao, channelLockExecutor);
-		testClass.run();
-
-		// THEN
-		verify(dao).getChannels();
-		verify(dao).findFirstUpdateKey(channel.getName());
-		verify(dao).delete(channel.getName(), Collections.<DataHubKey>emptyList());
-	}
-
-	@Test
 	public void testSweepNothingToReap() {
 		// GIVEN
-		Optional<DataHubKey> hubKey = Optional.of(new DataHubKey(new Date(), (short) 0));
 		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 		ChannelDao dao = mock(ChannelDao.class);
 		ChannelConfiguration channel = new ChannelConfiguration("aChannel", new Date(), 100000L);
@@ -47,14 +26,14 @@ public class DataHubSweeperTest {
 
 		// WHEN
 		when(dao.getChannels()).thenReturn(channels);
-		when(dao.findFirstUpdateKey(channel.getName())).thenReturn(hubKey);
+		when(dao.findKeysInRange(anyString(), any(Date.class), any(Date.class))).thenReturn(Collections.<DataHubKey>emptyList());
 		DataHubSweeper.SweeperTask testClass = new DataHubSweeper.SweeperTask(dao, channelLockExecutor);
 		testClass.run();
 
 		// THEN
 		verify(dao).getChannels();
-		verify(dao).findFirstUpdateKey(channel.getName());
-		verify(dao).delete(channel.getName(), Collections.<DataHubKey>emptyList());
+		verify(dao).findKeysInRange(anyString(), any(Date.class), any(Date.class));
+		verify(dao,times(0)).delete(channel.getName(), Collections.<DataHubKey>emptyList());
 	}
 
 	@Test
@@ -71,7 +50,7 @@ public class DataHubSweeperTest {
 
 		// WHEN
 		when(dao.getChannels()).thenReturn(channels);
-		when(dao.findFirstUpdateKey(channel.getName())).thenReturn(reapHubKey);
+		when(dao.findKeysInRange(anyString(), any(Date.class), any(Date.class))).thenReturn(Arrays.asList(reapHubKey.get()));
 		when(dao.getValue(channel.getName(), reapHubKey.get())).thenReturn(reapHubKeyValue);
 		when(reapHubKeyValue.get().hasNext()).thenReturn(true);
 		when(reapHubKeyValue.get().getNext()).thenReturn(keepHubKey);
@@ -80,7 +59,7 @@ public class DataHubSweeperTest {
 
 		// THEN
 		verify(dao).getChannels();
-		verify(dao).findFirstUpdateKey(channel.getName());
+		verify(dao).findKeysInRange(anyString(), any(Date.class), any(Date.class));
 		verify(dao).delete(channel.getName(), Arrays.asList(reapHubKey.get()));
 		verify(dao).setFirstKey(channel.getName(), keepHubKey.get());
 	}
@@ -100,11 +79,9 @@ public class DataHubSweeperTest {
 
 		// WHEN
 		when(dao.getChannels()).thenReturn(channels);
-		when(dao.findFirstUpdateKey(channel.getName())).thenReturn(reapHubKey1);
+		when(dao.findKeysInRange(anyString(), any(Date.class), any(Date.class))).thenReturn(Arrays.<DataHubKey>asList(reapHubKey1.get(), reapHubKey2.get()));
 		when(dao.getValue(channel.getName(), reapHubKey1.get())).thenReturn(reapHubKey1Value);
 		when(dao.getValue(channel.getName(), reapHubKey2.get())).thenReturn(reapHubKey2Value);
-		when(reapHubKey1Value.get().hasNext()).thenReturn(true);
-		when(reapHubKey1Value.get().getNext()).thenReturn(reapHubKey2);
 		when(reapHubKey2Value.get().hasNext()).thenReturn(false);
 		when(reapHubKey2Value.get().getNext()).thenReturn(Optional.<DataHubKey>absent());
 		DataHubSweeper.SweeperTask testClass = new DataHubSweeper.SweeperTask(dao, channelLockExecutor);
@@ -112,7 +89,7 @@ public class DataHubSweeperTest {
 
 		// THEN
 		verify(dao).getChannels();
-		verify(dao).findFirstUpdateKey(channel.getName());
+		verify(dao).findKeysInRange(anyString(), any(Date.class), any(Date.class));
 		verify(dao).delete(channel.getName(), Arrays.asList(reapHubKey1.get(), reapHubKey2.get()));
 		verify(dao).deleteFirstKey(channel.getName());
 		verify(dao).deleteLastUpdateKey(channel.getName());
