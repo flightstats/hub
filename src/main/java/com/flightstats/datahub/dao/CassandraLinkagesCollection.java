@@ -120,7 +120,6 @@ public class CassandraLinkagesCollection {
 	}
 
 	public boolean isLinkageRowKey(String key) {
-		return Strings.nullToEmpty(key).endsWith(NEXT_SUFFIX) || Strings.nullToEmpty(key).endsWith(PREVIOUS_SUFFIX);
-
+		return key.endsWith(NEXT_SUFFIX) || key.endsWith(PREVIOUS_SUFFIX);
 	}
 }
