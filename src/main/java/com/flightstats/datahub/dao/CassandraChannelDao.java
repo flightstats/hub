@@ -107,8 +107,8 @@ public class CassandraChannelDao implements ChannelDao {
 		QueryResult<OrderedRows<String,String,DataHubCompositeValue>> results =
 			hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
 				.setColumnFamily(channelName)
-				.setRange(null, null, false, Integer.MAX_VALUE)
-				.setKeys(null, null)
+				.setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
+				.setKeys(minRowKey, maxRowKey)
 				.execute();
 
 		Collection<DataHubKey> keys = new ArrayList<>();
