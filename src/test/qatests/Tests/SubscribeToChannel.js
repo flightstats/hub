@@ -63,9 +63,11 @@ describe('Channel Subscription:', function() {
             wsUri = cnMetadata.getWebSocketUri();
 
             // Need to test this!
-            var m = /\/\/[^\/]+\//.exec(channelUri);
+            var hostRegex = /\/\/[^\/]+\//;
+            var m = hostRegex.exec(channelUri);
+
             postHostCnUri = m[1];
-            m.exec(wsUri);
+            m = hostRegex.exec(wsUri);
             postHostWsUri = m[1];
 
             myCallback();
