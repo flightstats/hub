@@ -44,17 +44,14 @@ public class CassandraChannelsCollection {
 	private final HectorFactoryWrapper hector;
 	private final TimeProvider timeProvider;
 	private final DataHubKeyRenderer keyRenderer;
-	private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
 
 	@Inject
-	public CassandraChannelsCollection(CassandraConnector connector, Serializer<ChannelConfiguration> channelConfigSerializer, HectorFactoryWrapper hector, TimeProvider timeProvider, DataHubKeyRenderer keyRenderer, RowKeyStrategy<String, DataHubKey,
-		DataHubCompositeValue> rowKeyStrategy) {
+	public CassandraChannelsCollection(CassandraConnector connector, Serializer<ChannelConfiguration> channelConfigSerializer, HectorFactoryWrapper hector, TimeProvider timeProvider, DataHubKeyRenderer keyRenderer ) {
 		this.connector = connector;
 		this.channelConfigSerializer = channelConfigSerializer;
 		this.hector = hector;
 		this.timeProvider = timeProvider;
 		this.keyRenderer = keyRenderer;
-		this.rowKeyStrategy = rowKeyStrategy;
 	}
 
 	public ChannelConfiguration createChannel(String name, Long ttl) {
@@ -111,10 +108,10 @@ public class CassandraChannelsCollection {
 	public Iterable<ChannelConfiguration> getChannels() {
 		Keyspace keyspace = connector.getKeyspace();
 		SliceQuery<String, String, ChannelConfiguration> sliceQuery = hector.createSliceQuery(keyspace, StringSerializer.get(),
-				StringSerializer.get(),
-				channelConfigSerializer);
+			StringSerializer.get(),
+			channelConfigSerializer);
 		SliceQuery<String, String, ChannelConfiguration> query = sliceQuery.setKey(CHANNELS_ROW_KEY).setColumnFamily(
-				CHANNELS_METADATA_COLUMN_FAMILY_NAME);
+			CHANNELS_METADATA_COLUMN_FAMILY_NAME);
 
 		ColumnSliceIterator<String, String, ChannelConfiguration> iterator = hector.createColumnSliceIterator(query, null, MAX_CHANNEL_NAME, false);
 		List<ChannelConfiguration> result = new ArrayList<>();
@@ -177,26 +174,7 @@ public class CassandraChannelsCollection {
 		return column == null ? null : keyRenderer.fromString(column.getValue());
 	}
 
-	public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
-		DataHubKey minKey = new DataHubKey(startTime, (short) 0);
-		DataHubKey maxKey = new DataHubKey(endTime, Short.MAX_VALUE);
-		String minColumnKey = keyRenderer.keyToString(minKey);
-		String maxColumnKey = keyRenderer.keyToString(maxKey);
-		Keyspace keyspace = connector.getKeyspace();
-		String minRowKey = rowKeyStrategy.buildKey(channelName, minKey);
-		String maxRowKey = rowKeyStrategy.buildKey(channelName, maxKey);
-		QueryResult<OrderedRows<String,String,DataHubCompositeValue>> results =
-			hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
-				.setColumnFamily(channelName)
-				.setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
-				.setKeys(minRowKey, maxRowKey)
-				.execute();
-		Collection<DataHubKey> keys = new ArrayList<>();
-		for (Row<String, String, DataHubCompositeValue> row : results.get().getList()) {
-			for (HColumn<String, DataHubCompositeValue> column : row.getColumnSlice().getColumns()) {
-				keys.add( keyRenderer.fromString( column.getName() ) );
-			}
-		}
-		return keys;
+	public boolean isChannelMetadataRowKey(String key) {
+		return Strings.nullToEmpty(key).equals(CHANNELS_FIRST_ROW_KEY) || Strings.nullToEmpty(key).equals(CHANNELS_LATEST_ROW_KEY);
 	}
 }
