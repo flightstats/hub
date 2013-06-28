@@ -1,12 +1,25 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.inject.Inject;
+import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.hector.api.Keyspace;
+import me.prettyprint.hector.api.beans.HColumn;
+import me.prettyprint.hector.api.beans.OrderedRows;
+import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
+import me.prettyprint.hector.api.query.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
@@ -18,13 +31,25 @@ public class CassandraChannelDao implements ChannelDao {
 	private final CassandraLinkagesCollection linkagesCollection;
 	private final CassandraValueWriter cassandraValueWriter;
 	private final CassandraValueReader cassandraValueReader;
+	private final DataHubKeyRenderer keyRenderer;
+	private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
+	private final CassandraConnector connector;
+	private final HectorFactoryWrapper hector;
 
 	@Inject
-	public CassandraChannelDao(CassandraChannelsCollection channelsCollection, CassandraLinkagesCollection linkagesCollection, CassandraValueWriter cassandraValueWriter, CassandraValueReader cassandraValueReader) {
+	public CassandraChannelDao(
+		CassandraChannelsCollection channelsCollection, CassandraLinkagesCollection linkagesCollection,
+		CassandraValueWriter cassandraValueWriter, CassandraValueReader cassandraValueReader,
+		DataHubKeyRenderer keyRenderer, RowKeyStrategy<String, DataHubKey,DataHubCompositeValue> rowKeyStrategy,
+		CassandraConnector connector, HectorFactoryWrapper hector ) {
 		this.channelsCollection = channelsCollection;
 		this.linkagesCollection = linkagesCollection;
 		this.cassandraValueWriter = cassandraValueWriter;
 		this.cassandraValueReader = cassandraValueReader;
+		this.keyRenderer = keyRenderer;
+		this.rowKeyStrategy = rowKeyStrategy;
+		this.connector = connector;
+		this.hector = hector;
 	}
 
 	@Override
@@ -67,6 +92,45 @@ public class CassandraChannelDao implements ChannelDao {
 	@Override
 	public void delete(String channelName, List<DataHubKey> keys) {
 		cassandraValueWriter.delete(channelName, keys);
+		linkagesCollection.delete(channelName, keys);
+	}
+
+	@Override
+	public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
+		DataHubKey minKey = new DataHubKey(startTime, (short) 0);
+		DataHubKey maxKey = new DataHubKey(endTime, Short.MAX_VALUE);
+		String minColumnKey = keyRenderer.keyToString(minKey);
+		String maxColumnKey = keyRenderer.keyToString(maxKey);
+		Keyspace keyspace = connector.getKeyspace();
+		String minRowKey = rowKeyStrategy.buildKey(channelName, minKey);
+		String maxRowKey = rowKeyStrategy.buildKey(channelName, maxKey);
+		QueryResult<OrderedRows<String,String,DataHubCompositeValue>> results =
+			hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
+				.setColumnFamily(channelName)
+				.setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
+				.setKeys(minRowKey, maxRowKey)
+				.execute();
+
+		Collection<DataHubKey> keys = new ArrayList<>();
+		Collection<Row<String, String, DataHubCompositeValue>> dataHubKeyRows = Collections2.filter(results.get().getList(), new DataHubRowKeySelector());
+		for (Row<String, String, DataHubCompositeValue> row : dataHubKeyRows) {
+			keys.addAll(Collections2.transform(row.getColumnSlice().getColumns(), new KeyRenderer()));
+		}
+		return keys;
+	}
+
+	private class DataHubRowKeySelector implements Predicate<Row<String, String, DataHubCompositeValue>> {
+		@Override
+		public boolean apply(Row<String, String, DataHubCompositeValue> row) {
+			return !channelsCollection.isChannelMetadataRowKey(row.getKey()) && !linkagesCollection.isLinkageRowKey(row.getKey());
+		}
+	}
+
+	private class KeyRenderer implements Function<HColumn<String, DataHubCompositeValue>, DataHubKey> {
+		@Override
+		public DataHubKey apply(HColumn<String, DataHubCompositeValue> column) {
+			return keyRenderer.fromString(column.getName());
+		}
 	}
 
 	@Override

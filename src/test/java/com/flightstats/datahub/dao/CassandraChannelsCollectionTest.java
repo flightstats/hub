@@ -34,6 +34,7 @@ public class CassandraChannelsCollectionTest {
 	private TimeProvider timeProvider;
 	private DataHubKeyRenderer keyRenderer;
 	private Keyspace keyspace;
+	private YearMonthDayRowKeyStrategy rowKeyStrategy;
 
 	@Before
 	public void setup() {
@@ -43,6 +44,7 @@ public class CassandraChannelsCollectionTest {
 		valueSerializer = mock(Serializer.class);
 		timeProvider = mock(TimeProvider.class);
 		keyRenderer = new DataHubKeyRenderer();
+		rowKeyStrategy = new YearMonthDayRowKeyStrategy();
 		keyspace = mock(Keyspace.class);
 	}
 
@@ -57,7 +59,7 @@ public class CassandraChannelsCollectionTest {
 		when(hector.createColumn(channelName, expected, StringSerializer.get(), valueSerializer)).thenReturn(column);
 		when(timeProvider.getDate()).thenReturn(creationDate);
 
-		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider, keyRenderer);
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider, keyRenderer );
 
 		ChannelConfiguration result = testClass.createChannel(channelName, null);
 
@@ -179,9 +181,6 @@ public class CassandraChannelsCollectionTest {
 	@Test
 	public void testDeleteFirstKey() throws Exception {
 		String channelName = "myChan";
-		Date newDate = new Date(123456789L);
-		DataHubKey key = new DataHubKey(newDate, (short) 0);
-
 		Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
 		Mutator<String> mutator = mock(Mutator.class);
 

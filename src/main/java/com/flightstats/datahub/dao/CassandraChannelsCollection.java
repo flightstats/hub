@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.flightstats.datahub.util.TimeProvider;
@@ -11,6 +12,8 @@ import me.prettyprint.cassandra.service.ColumnSliceIterator;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.HColumn;
+import me.prettyprint.hector.api.beans.OrderedRows;
+import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
@@ -19,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -41,7 +46,7 @@ public class CassandraChannelsCollection {
 	private final DataHubKeyRenderer keyRenderer;
 
 	@Inject
-	public CassandraChannelsCollection(CassandraConnector connector, Serializer<ChannelConfiguration> channelConfigSerializer, HectorFactoryWrapper hector, TimeProvider timeProvider, DataHubKeyRenderer keyRenderer) {
+	public CassandraChannelsCollection(CassandraConnector connector, Serializer<ChannelConfiguration> channelConfigSerializer, HectorFactoryWrapper hector, TimeProvider timeProvider, DataHubKeyRenderer keyRenderer ) {
 		this.connector = connector;
 		this.channelConfigSerializer = channelConfigSerializer;
 		this.hector = hector;
@@ -103,10 +108,10 @@ public class CassandraChannelsCollection {
 	public Iterable<ChannelConfiguration> getChannels() {
 		Keyspace keyspace = connector.getKeyspace();
 		SliceQuery<String, String, ChannelConfiguration> sliceQuery = hector.createSliceQuery(keyspace, StringSerializer.get(),
-				StringSerializer.get(),
-				channelConfigSerializer);
+			StringSerializer.get(),
+			channelConfigSerializer);
 		SliceQuery<String, String, ChannelConfiguration> query = sliceQuery.setKey(CHANNELS_ROW_KEY).setColumnFamily(
-				CHANNELS_METADATA_COLUMN_FAMILY_NAME);
+			CHANNELS_METADATA_COLUMN_FAMILY_NAME);
 
 		ColumnSliceIterator<String, String, ChannelConfiguration> iterator = hector.createColumnSliceIterator(query, null, MAX_CHANNEL_NAME, false);
 		List<ChannelConfiguration> result = new ArrayList<>();
@@ -167,5 +172,9 @@ public class CassandraChannelsCollection {
 		QueryResult<HColumn<String, String>> result = columnQuery.execute();
 		HColumn<String, String> column = result.get();
 		return column == null ? null : keyRenderer.fromString(column.getValue());
+	}
+
+	public boolean isChannelMetadataRowKey(String key) {
+		return Strings.nullToEmpty(key).equals(CHANNELS_FIRST_ROW_KEY) || Strings.nullToEmpty(key).equals(CHANNELS_LATEST_ROW_KEY);
 	}
 }
