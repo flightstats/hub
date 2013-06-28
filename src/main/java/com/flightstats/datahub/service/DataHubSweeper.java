@@ -6,6 +6,7 @@ import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,12 +80,12 @@ public class DataHubSweeper {
 				channelName,
 				new Callable() {
 					@Override
-					public Object call() throws Exception {
+					public Void call() throws Exception {
 						if (reapableKeys.isEmpty()) return null;
 
 						DataHubKey lastReapKey = reapableKeys.get(reapableKeys.size() - 1);
 						Optional<LinkedDataHubCompositeValue> lastReapKeyValue = dao.getValue(channelName, lastReapKey);
-						if (lastReapKeyValue.get().hasNext()) {
+						if ( lastReapKeyValue.isPresent() &&  lastReapKeyValue.get().hasNext()) {
 							dao.setFirstKey(channelName, lastReapKeyValue.get().getNext().get());
 						} else {
 							// Every item in the channel was reaped.
