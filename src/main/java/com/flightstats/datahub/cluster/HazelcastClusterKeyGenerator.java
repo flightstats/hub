@@ -48,20 +48,17 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
 			Date lastWriteDate = new Date(lastWriteDateMillis.get());
 
 			AtomicNumber sequenceNumber = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName);
-			if (currentDate.compareTo(lastWriteDate) > 0) {
-				return createKeyWithoutCollision(currentDate, lastWriteDateMillis, sequenceNumber);
-			}
-			return createKeyWithCollision(lastWriteDate, sequenceNumber);
+			Date keyDate = determineKeyDate(currentDate, lastWriteDate);
+			short sequence = determineKySequence(sequenceNumber);
+			return new DataHubKey( keyDate, sequence );
 		}
 
-		private DataHubKey createKeyWithoutCollision(Date keyDate, AtomicNumber lastWriteDateMillis, AtomicNumber sequenceNumber) {
-			sequenceNumber.set(0L);
-			lastWriteDateMillis.set(keyDate.getTime());
-			return new DataHubKey(keyDate, (short) 0);
+		private Date determineKeyDate(Date currentDate, Date lastWriteDate) {
+			return currentDate.compareTo(lastWriteDate) > 0 ? currentDate : lastWriteDate;
 		}
 
-		private DataHubKey createKeyWithCollision(Date keyDate, AtomicNumber sequenceNumber) {
-			return new DataHubKey(keyDate, (short) sequenceNumber.addAndGet(1));
+		private short determineKySequence(AtomicNumber sequenceNumber) {
+			return sequenceNumber.compareAndSet(Short.MAX_VALUE, 0) ? Short.MAX_VALUE : (short) sequenceNumber.getAndAdd(1);
 		}
 	}
 }
