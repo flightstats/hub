@@ -109,10 +109,10 @@ public class CassandraChannelDao implements ChannelDao {
 		Keyspace keyspace = connector.getKeyspace();
 		String maxRowKey = rowKeyStrategy.buildKey(channelName, maxKey);
 		return hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
-			.setColumnFamily(channelName)
-			.setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
-			.setKeys(null, maxRowKey)
-			.execute();
+					 .setColumnFamily(channelName)
+					 .setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
+					 .setKeys(null, maxRowKey)
+					 .execute();
 	}
 
 	private Collection<DataHubKey> buildKeysFromResults(QueryResult<OrderedRows<String, String, DataHubCompositeValue>> results) {

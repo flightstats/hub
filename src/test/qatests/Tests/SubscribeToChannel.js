@@ -21,15 +21,27 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
     FAKE_SOCKET_URI = ['ws:/', dhh.DOMAIN, 'channel', 'sQODTvsYlLOLWTFPWNBBQ', 'ws'].join('/'),
     DEBUG = true;
 
-// Test variables that are regularly overwritten
-var agent, payload, req, uri;
 
-var channelName,
-    channelUri,
-    wsUri;
 
 
 describe('Channel Subscription:', function() {
+
+    // Test variables that are regularly overwritten
+    var payload, req, uri;
+
+    var channelName,
+        postHostCnUri,  // used for tests that need to hit specific hosts
+        channelUri,
+        postHostWsUri,
+        wsUri;
+
+    var makeCnUri = function(host) {
+        return ['http:/', host.host, postHostCnUri].join('/');
+    }
+
+    var makeWsUri = function(host) {
+        return ['ws:/', host.host, postHostWsUri].join('/');
+    }
 
     before(function(){
         gu.debugLog('\nURL_ROOT: '+ URL_ROOT);
@@ -38,8 +50,30 @@ describe('Channel Subscription:', function() {
     });
 
     beforeEach(function(myCallback){
-        agent = superagent.agent();
         payload = uri = req = null;
+
+        /*
+        // temporarily changed to hardcoded channel
+        dhh.getChannel({name: 'lolcats'}, function(res, body) {
+            if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
+                myCallback(res.error);
+            }
+            var cnMetadata = new dhh.channelMetadata(body);
+            channelUri = cnMetadata.getChannelUri();
+            wsUri = cnMetadata.getWebSocketUri();
+
+            // Need to test this!
+            var hostRegex = /\/\/[^\/]+\//;
+            var m = hostRegex.exec(channelUri);
+
+            postHostCnUri = m[1];
+            m = hostRegex.exec(wsUri);
+            postHostWsUri = m[1];
+
+            myCallback();
+        })
+        */
+
 
         channelName = dhh.getRandomChannelName();
 
@@ -51,10 +85,17 @@ describe('Channel Subscription:', function() {
             channelUri = cnMetadata.getChannelUri();
             wsUri = cnMetadata.getWebSocketUri();
 
-            gu.debugLog('Websocket URI: ');
+            // Need to test this!
+            var hostRegex = /\/\/[^\/]+\//;
+            var m = hostRegex.exec(channelUri);
+
+            postHostCnUri = m[1];
+            m = hostRegex.exec(wsUri);
+            postHostWsUri = m[1];
 
             myCallback();
         });
+
     });
 
     it('Acceptance: subscription works and updates are sent in order', function(done) {
@@ -138,7 +179,89 @@ describe('Channel Subscription:', function() {
     // Note, this test also ensures that all updates are correctly saved in the DH *and* that their
     //  relative links are correct.
 
-    // https://www.pivotaltracker.com/story/show/52092987
+    // Attach a listener to each instance and to the load balancer, all on the same channel.
+    // Insert items in parallel into that channel, directly into each instance and into the load balancer.
+    // Ensure that the messages are reported in order.
+    it.skip('NOT READY YET!!! HA: multiple parallel updates with a socket on each DH instance and the load balancer are reported in order', function(done) {
+        var actualResponsesObjects = [
+                {'host':'datahub-01.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, 'queue': [], socket: null},
+                {'host':'datahub-02.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, 'queue': [], socket: null},
+                {'host':'datahub-03.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, 'queue': [], socket: null},
+                {'host':'datahub.svc.dev', 'cnUri': null, 'wsUri': null, 'queue': [], socket: null}
+            ],
+            expectedResponseQueue = [];
+        var numItemsPerHostToPost = 5,
+            numHosts = 4,
+            numOpenedSockets = 0,
+            VERBOSE = true;
+
+        this.timeout((numItemsPerHostToPost * numHosts * WAIT_FOR_CHANNEL_RESPONSE_MS) + 45000);  // hardcoded for FOUR hosts
+
+        var mainTest = function(cnUri) {
+            async.times(numItemsToPost, function(n, next) {
+                dhh.postData({channelUri: cnUri, data: dhh.getRandomPayload()}, function(res, uri) {
+                    gu.debugLog('Posted data #'+ n, DEBUG);
+                    next(null, uri);
+                });
+            }, function(err, uris) {
+                // pass
+            });
+        };
+
+        // Confirms order of responses and then closes test
+        var confirmOrderOfResponses = function() {
+            gu.debugLog('...entering confirmOrderOfResponses()');
+
+            dhh.getListOfLatestUrisFromChannel({numItems: numItemsToPost, channelUri: channelUri}, function(allUris) {
+                expectedResponseQueue = allUris;
+                gu.debugLog('Expected response queue length: '+ expectedResponseQueue.length, DEBUG);
+
+                expect(actualResponseQueue.length).to.equal(numItemsToPost);
+                expect(expectedResponseQueue.length).to.equal(numItemsToPost);
+
+                gu.debugLog('Expected and Actual queues are full. Comparing queues...', DEBUG);
+
+                for (var i = 0; i < numItemsToPost; i += 1) {
+                    expect(actualResponseQueue[i]).to.equal(expectedResponseQueue[i]);
+                    gu.debugLog('Matched queue number '+ i, DEBUG);
+                }
+
+                ws.close();
+                done();
+            });
+        }
+
+        var onOpen = function() {
+            gu.debugLog('Open event fired!', DEBUG);
+            gu.debugLog('Readystate: '+ ws.readyState, DEBUG);
+            numOpenedSockets += 1;
+
+            if (numHosts >= numOpenedSockets) {
+                mainTest();
+            }
+        };
+
+        lodash.forEach(actualResponsesObjects, function(obj, key) {
+            obj.cnUri = makeCnUri(obj.host);
+            obj.wsUri = makeWsUri(obj.host);
+
+            obj.socket = new dhh.WSWrapper({
+                domain: obj.host,
+                uri: obj.wsUri,
+                socketName: obj.host,
+                onOpenCB: onOpen,
+                onMessageCB: null
+            });
+
+            obj.socket.createSocket();
+            obj.socket.ws.on('close', function(code, message) {
+                gu.debugLog('Socket closed ('+ obj.host +')', DEBUG);
+            })
+
+        });
+
+    });
+
     it('Multiple nigh-simultaneous updates are sent with order preserved.', function(done) {
         var actualResponseQueue = [], expectedResponseQueue = [], endWait, i;
         var numUpdates = 10,
@@ -202,14 +325,14 @@ describe('Channel Subscription:', function() {
 
         var ws = dhh.createWebSocket(wsUri, onOpen);
 
-         ws.on('message', function(data, flags) {
+        ws.on('message', function(data, flags) {
             actualResponseQueue.push(data);
             gu.debugLog('Received message: '+ data, DEBUG);
             gu.debugLog('Response queue length: '+ actualResponseQueue.length, DEBUG);
 
-             if (actualResponseQueue.length == numUpdates) {
-                 confirmOrderOfResponses();
-             }
+            if (actualResponseQueue.length == numUpdates) {
+                confirmOrderOfResponses();
+            }
         });
     });
 
