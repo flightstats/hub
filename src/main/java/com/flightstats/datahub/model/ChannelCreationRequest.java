@@ -26,7 +26,7 @@ public class ChannelCreationRequest {
 					builder.withName(entry.getValue());
 					break;
 				case "ttlMillis":
-					builder.withTtlMillis(entry.getValue() == null ? null : Long.parseLong( entry.getValue() ));
+					builder.withTtlMillis(entry.getValue() == null ? null : Long.parseLong(entry.getValue()));
 					break;
 				default:
 					throw new UnrecognizedPropertyException("Unexpected property", null, ChannelCreationRequest.class, entry.getKey());
@@ -79,8 +79,8 @@ public class ChannelCreationRequest {
 		private Optional<String> name = null;
 		private Optional<Long> ttlMillis = Optional.of(DEFAULT_TTL);
 
-		public Builder withName(String tripName) {
-			this.name = Optional.fromNullable(tripName);
+		public Builder withName(String name) {
+			this.name = Optional.fromNullable(name);
 			return this;
 		}
 
