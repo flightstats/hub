@@ -17,11 +17,12 @@ import static org.mockito.Mockito.*;
 public class HazelcastClusterKeyGeneratorTest {
 
 	@Test
-	public void testNonCollision() throws Exception {
+	public void testIncrementNoRollover() throws Exception {
 		//GIVEN
 		String channelName = "mychanisgood";
 		Date currentDate = new Date(12345678L);
-		DataHubKey expected = new DataHubKey(currentDate, (short) 0);
+		DataHubKey expectedA = new DataHubKey(currentDate,(short)0);
+		DataHubKey expectedB = new DataHubKey(currentDate,(short)1);
 
 		TimeProvider timeProvider = mock(TimeProvider.class);
 		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
@@ -36,19 +37,22 @@ public class HazelcastClusterKeyGeneratorTest {
 		when(atomicDateNumber.get()).thenReturn(currentDate.getTime() - 10);
 		when(hazelcast.getAtomicNumber("CHANNEL_NAME_DATE:mychanisgood")).thenReturn(atomicDateNumber);
 		when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
-		DataHubKey result = testClass.newKey(channelName);
+		when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L).thenReturn(1L);
+		DataHubKey resultA = testClass.newKey(channelName);
+		DataHubKey resultB = testClass.newKey(channelName);
 
 		//THEN
-		assertEquals(expected, result);
-		verify(atomicSeqNumber).set(0);
+		assertEquals(expectedA, resultA);
+		assertEquals(expectedB, resultB);
 	}
 
 	@Test
-	public void testTimeCollision() throws Exception {
+	public void testRollover() throws Exception {
 		//GIVEN
 		String channelName = "mychanisgood";
 		Date currentDate = new Date(12345678L);
-		DataHubKey expected = new DataHubKey(currentDate, (short) 1);
+		DataHubKey expectedA = new DataHubKey(currentDate,(short)Short.MAX_VALUE);
+		DataHubKey expectedB = new DataHubKey(currentDate,(short)0);
 
 		TimeProvider timeProvider = mock(TimeProvider.class);
 		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
@@ -60,14 +64,17 @@ public class HazelcastClusterKeyGeneratorTest {
 
 		//WHEN
 		when(timeProvider.getDate()).thenReturn(currentDate);
-		when(atomicDateNumber.get()).thenReturn(currentDate.getTime());
+		when(atomicDateNumber.get()).thenReturn(currentDate.getTime() - 10);
 		when(hazelcast.getAtomicNumber("CHANNEL_NAME_DATE:mychanisgood")).thenReturn(atomicDateNumber);
 		when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
-		when(atomicSeqNumber.addAndGet(1)).thenReturn(1L);
-		DataHubKey result = testClass.newKey(channelName);
+		when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L);
+		when(atomicSeqNumber.compareAndSet(Short.MAX_VALUE,0)).thenReturn(true);
+		DataHubKey resultA = testClass.newKey(channelName);
+		DataHubKey resultB = testClass.newKey(channelName);
 
 		//THEN
-		assertEquals(expected, result);
+		assertEquals(expectedA, resultA);
+		assertEquals(expectedB, resultB);
 	}
 
 	@Test(expected = RuntimeException.class)
