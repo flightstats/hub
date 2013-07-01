@@ -19,6 +19,7 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
     URL_ROOT = dhh.URL_ROOT,
     DOMAIN = dhh.DOMAIN,
     FAKE_SOCKET_URI = ['ws:/', dhh.DOMAIN, 'channel', 'sQODTvsYlLOLWTFPWNBBQ', 'ws'].join('/'),
+    LOAD_BALANCER_HOSTNAME = 'datahub.svc.dev',
     DEBUG = true;
 
 
@@ -182,66 +183,179 @@ describe('Channel Subscription:', function() {
     // Attach a listener to each instance and to the load balancer, all on the same channel.
     // Insert items in parallel into that channel, directly into each instance and into the load balancer.
     // Ensure that the messages are reported in order.
-    it.skip('NOT READY YET!!! HA: multiple parallel updates with a socket on each DH instance and the load balancer are reported in order', function(done) {
+    it.only('NOT READY YET!!! HA: multiple parallel updates with a socket on each DH instance and the load balancer are reported in order', function(done) {
         var actualResponsesObjects = [
                 {'host':'datahub-01.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, 'queue': [], socket: null},
                 {'host':'datahub-02.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, 'queue': [], socket: null},
                 {'host':'datahub-03.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, 'queue': [], socket: null},
-                {'host':'datahub.svc.dev', 'cnUri': null, 'wsUri': null, 'queue': [], socket: null}
+                {'host':LOAD_BALANCER_HOSTNAME, 'cnUri': null, 'wsUri': null, 'queue': [], socket: null}
             ],
+            lbchannelUri = makeCnUri(LOAD_BALANCER_HOSTNAME),
             expectedResponseQueue = [];
+
         var numItemsPerHostToPost = 5,
             numHosts = 4,
+            totalItemsToPost = numItemsPerHostToPost * numHosts,
             numOpenedSockets = 0,
             VERBOSE = true;
 
-        this.timeout((numItemsPerHostToPost * numHosts * WAIT_FOR_CHANNEL_RESPONSE_MS) + 45000);  // hardcoded for FOUR hosts
+        this.timeout((totalItemsToPost * WAIT_FOR_CHANNEL_RESPONSE_MS) + 45000);  // hardcoded for FOUR hosts
 
-        var mainTest = function(cnUri) {
-            async.times(numItemsToPost, function(n, next) {
-                dhh.postData({channelUri: cnUri, data: dhh.getRandomPayload()}, function(res, uri) {
-                    gu.debugLog('Posted data #'+ n, DEBUG);
-                    next(null, uri);
-                });
-            }, function(err, uris) {
-                // pass
-            });
-        };
+        var dumpAllQueues = function() {
+            gu.debugLog('******************************************\nDumping each host\'s queue.');
 
-        // Confirms order of responses and then closes test
-        var confirmOrderOfResponses = function() {
-            gu.debugLog('...entering confirmOrderOfResponses()');
-
-            dhh.getListOfLatestUrisFromChannel({numItems: numItemsToPost, channelUri: channelUri}, function(allUris) {
-                expectedResponseQueue = allUris;
-                gu.debugLog('Expected response queue length: '+ expectedResponseQueue.length, DEBUG);
-
-                expect(actualResponseQueue.length).to.equal(numItemsToPost);
-                expect(expectedResponseQueue.length).to.equal(numItemsToPost);
-
-                gu.debugLog('Expected and Actual queues are full. Comparing queues...', DEBUG);
-
-                for (var i = 0; i < numItemsToPost; i += 1) {
-                    expect(actualResponseQueue[i]).to.equal(expectedResponseQueue[i]);
-                    gu.debugLog('Matched queue number '+ i, DEBUG);
-                }
-
-                ws.close();
-                done();
-            });
+            lodash.forEach(actualResponsesObjects, function(obj) {
+                gu.debugLog('Host uri'+ obj.cnUri +': ');
+                console.dir(obj.queue);
+            })
         }
 
+        // Post all items for all hosts, calling confirmResults() afterwards if no errors.
+        var doAllPosting = function() {
+
+            // Called by async.map for each host to allow parallel posting by hosts
+            var postForHost = function(hostObj, callback) {
+
+                // called by async.times below to do each post
+                var post = function(index, postCB) {
+                    dhh.postData({channelUri: hostObj.cnUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                        var err = (gu.isHTTPSuccess(postRes.status)) ? null : postRes.status;
+                        gu.debugLog('New data at '+ dataUri, ((null != err) && (VERBOSE)));
+                        gu.debugLog('Error posting to '+ hostObj.cnUri +': '+ postRes.status, (null != err));
+
+                        postCB(err, dataUri);
+                    })
+                };
+
+                // Call post() n times in parallel (n = numItemsPerHostToPost)
+                async.times(numItemsPerHostToPost, function(n, next) {
+                    post(n, function(err, dataUri) {
+                        next(err, dataUri);
+                    })
+                },
+                function(err, dataUris) {
+                    gu.debugLog('Error response: '+ err, (null != err));
+
+                    callback(err, null);
+                })
+            }
+
+            // Parallel version of for-each-host...
+            async.map(actualResponsesObjects, postForHost, function(err, results) {
+                gu.debugLog('At least one error occurred during posting: '+ err, (null != error));
+                expect(err).to.be.null;
+            })
+        };
+
+        // Confirm all queues match and are correct, then call endTest()
+        var confirmResults = function() {
+
+            var lastHost = null,
+                thisHost = null,
+                lastQueue = [],
+                thisQueue = [];
+
+            // Confirm each host's queue is identical.
+            for (var i = 0; i < actualResponsesObjects.length; i += 1) {
+                if (null != thisHost) {
+                    lastHost = thisHost;
+                    lastQueue = thisQueue;
+                }
+                thisHost = actualResponsesObjects[i];
+                thisQueue = thisHost.queue;
+
+                if (null == lastHost) {
+                    continue;
+                }
+
+                // Confirm queue lengths match before bothering to check each item
+                if (thisQueue.length != lastQueue.length) {
+                    gu.debugLog('Different number of items in socket queues!');
+                    gu.debugLog(lastHost.host +' has '+ lastQueue.length +' items.');
+                    gu.debugLog(thisHost.host +' has '+ thisQueue.length +' items.');
+
+                    dumpAllQueues();
+                    expect(thisQueue.length != lastQueue.length);
+                }
+
+                // Check each item is a match
+                for (var j = 0; j < lastQueue.length; j += 1) {
+                    var lastItem = lastQueue[j],
+                        thisItem = thisQueue[j];
+
+                    if (thisItem != lastItem) {
+                        gu.debugLog('Mismatch in socket queues!');
+                        gu.debugLog(lastHost.host +' has url '+ lastItem +' at index '+ j);
+                        gu.debugLog(thisHost.host +' has url '+ thisItem +' at index '+ j);
+
+                        dumpAllQueues();
+                        expect(thisItem).to.equal(lastItem);
+                    }
+                }
+
+                gu.debugLog('Successfully matched queues for '+ lastHost.host +' and '+ thisHost.host, VERBOSE);
+            }
+
+            // Get correct list from backend
+            dhh.getListOfLatestUrisFromChannel({numItems: numItemsPerHostToPost * numHosts, channelUri: lbchannelUri},
+            function(allUris) {
+                expectedResponseQueue = allUris;
+                var actualResponseQueue = actualResponsesObjects[0]['queue'];
+
+                gu.debugLog('Expected response queue length: '+ expectedResponseQueue.length, VERBOSE);
+
+                expect(actualResponseQueue.length).to.equal(totalItemsToPost);
+                expect(expectedResponseQueue.length).to.equal(totalItemsToPost);
+
+                gu.debugLog('Expected and Actual queues are full. Comparing queues...', VERBOSE);
+
+                for (var i = 0; i < totalItemsToPost; i += 1) {
+                    expect(actualResponseQueue[i]).to.equal(expectedResponseQueue[i]);
+                    gu.debugLog('Matched queue number '+ i, VERBOSE);
+                }
+
+                endTest();
+            })
+        }
+
+        // Closes sockets at end of test.
+        var endTest = function() {
+            gu.debugLog('Ending test.', VERBOSE);
+
+            lodash.forEach(actualResponsesObjects, function(hostObj) {
+                hostObj.socket.ws.close();
+            })
+        }
+
+
+        // Increment numOpenedSockets. If all sockets are open, call doAllPosting()
         var onOpen = function() {
-            gu.debugLog('Open event fired!', DEBUG);
-            gu.debugLog('Readystate: '+ ws.readyState, DEBUG);
             numOpenedSockets += 1;
 
-            if (numHosts >= numOpenedSockets) {
-                mainTest();
+            if (numOpenedSockets >= numHosts) {
+                doAllPosting();
             }
         };
 
+        // If all sockets are full, call confirmResults()
+        var onMsg = function() {
+            var numFullSockets = 0;
+
+            lodash.forEach(actualResponsesObjects, function(obj, key) {
+                if (obj.queue.length >= numItemsPerHostToPost) {
+                    numFullSockets += 1;
+                }
+            })
+            gu.debugLog('Number of full sockets: '+ numFullSockets, VERBOSE);
+
+            if (numFullSockets >= numHosts) {
+                confirmResults();
+            }
+        }
+
+        // Flesh out / instantiate host objects with their child sockets and more info.
         lodash.forEach(actualResponsesObjects, function(obj, key) {
+            gu.debugLog('Instantiating socket for '+ obj.host, VERBOSE);
             obj.cnUri = makeCnUri(obj.host);
             obj.wsUri = makeWsUri(obj.host);
 
@@ -254,12 +368,12 @@ describe('Channel Subscription:', function() {
             });
 
             obj.socket.createSocket();
+            obj.queue = obj.ws.responseQueue;
+
             obj.socket.ws.on('close', function(code, message) {
                 gu.debugLog('Socket closed ('+ obj.host +')', DEBUG);
             })
-
         });
-
     });
 
     it('Multiple nigh-simultaneous updates are sent with order preserved.', function(done) {
