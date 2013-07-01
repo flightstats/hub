@@ -29,7 +29,7 @@ public class ChannelResourceTest {
 	public void testChannelCreation() throws Exception {
 		String channelName = "UHF";
 
-		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName, null);
+		ChannelCreationRequest channelCreationRequest = ChannelCreationRequest.builder().withName(channelName).build();
 		Date date = new Date();
 		ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, date, null);
 		String channelUri = "http://path/to/UHF";
@@ -47,7 +47,7 @@ public class ChannelResourceTest {
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
 		when(dao.channelExists(channelName)).thenReturn(false);
-		when(dao.createChannel(channelName, ChannelResource.DEFAULT_TTL)).thenReturn(channelConfiguration);
+		when(dao.createChannel(channelName, ChannelCreationRequest.DEFAULT_TTL)).thenReturn(channelConfiguration);
 		when(linkBuilder.buildChannelUri(channelConfiguration)).thenReturn(URI.create(channelUri));
 		when(linkBuilder.buildLatestUri(channelName)).thenReturn(URI.create(latestUri));
 		when(linkBuilder.buildWsLinkFor(channelName)).thenReturn(URI.create(wsUri));
@@ -56,7 +56,7 @@ public class ChannelResourceTest {
 
 		Response response = testClass.createChannel(channelCreationRequest);
 
-		verify(dao).createChannel(channelName, ChannelResource.DEFAULT_TTL);
+		verify(dao).createChannel(channelName, ChannelCreationRequest.DEFAULT_TTL);
 
 		assertEquals(201, response.getStatus());
 		assertEquals(new URI(channelUri), response.getMetadata().getFirst("location"));
@@ -67,7 +67,7 @@ public class ChannelResourceTest {
 	public void testChannelCreation_emptyChannelName() throws Exception {
 		String channelName = "  ";
 
-		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName, null);
+		ChannelCreationRequest channelCreationRequest = ChannelCreationRequest.builder().withName(channelName).build();
 		ChannelDao dao = mock(ChannelDao.class);
 		CreateChannelValidator createChannelValidator = new CreateChannelValidator(dao);
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
@@ -81,7 +81,7 @@ public class ChannelResourceTest {
 	public void testChannelCreation_channelAlreadyExists() throws Exception {
 		String channelName = "zippy";
 
-		ChannelCreationRequest channelCreationRequest = new ChannelCreationRequest(channelName, null);
+		ChannelCreationRequest channelCreationRequest = ChannelCreationRequest.builder().withName(channelName).build();
 		ChannelDao dao = mock(ChannelDao.class);
 		CreateChannelValidator createChannelValidator = new CreateChannelValidator(dao);
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
@@ -136,7 +136,7 @@ public class ChannelResourceTest {
 	public void testChannelNameIsTrimmed() throws Exception {
 		//GIVEN
 		String channelName = "    \tmyChannel ";
-		ChannelCreationRequest request = new ChannelCreationRequest(channelName, null);
+		ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
 
 		CreateChannelValidator validator = mock(CreateChannelValidator.class);
 		ChannelDao dao = mock(ChannelDao.class);
@@ -150,6 +150,6 @@ public class ChannelResourceTest {
 		testClass.createChannel(request);
 
 		//THEN
-		verify(dao).createChannel(channelName.trim(), ChannelResource.DEFAULT_TTL);
+		verify(dao).createChannel(channelName.trim(), ChannelCreationRequest.DEFAULT_TTL);
 	}
 }
