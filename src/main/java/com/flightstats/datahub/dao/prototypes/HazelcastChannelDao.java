@@ -25,9 +25,9 @@ public class HazelcastChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ChannelConfiguration createChannel(String name, Long ttl) {
+	public ChannelConfiguration createChannel(String name, Long ttlMillis) {
 		Date creationDate = new Date();
-		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate, ttl);
+		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate, ttlMillis);
 		channelConfigurations.put(name, channelConfiguration);
 		return channelConfiguration;
 	}
