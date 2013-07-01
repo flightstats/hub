@@ -8,6 +8,7 @@ import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
+import com.google.common.base.Optional;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.flightstats.datahub.model.ChannelCreationRequest.*;
 import static com.flightstats.rest.Linked.linked;
 
 /**
@@ -28,7 +30,6 @@ import static com.flightstats.rest.Linked.linked;
  */
 @Path("/channel")
 public class ChannelResource {
-	static final Long DEFAULT_TTL = TimeUnit.DAYS.toMillis(120);
 
 	private final ChannelDao channelDao;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
@@ -72,11 +73,12 @@ public class ChannelResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createChannel(ChannelCreationRequest channelCreationRequest) throws InvalidRequestException, AlreadyExistsException {
-		createChannelValidator.validate(channelCreationRequest.getName());
-		String channelName = channelCreationRequest.getName().trim();
+		String channelName = channelCreationRequest.getName().get();
+		createChannelValidator.validate(channelName);
+		channelName = channelName.trim();
 
-		Long ttl = channelCreationRequest.getTtl() == null ? DEFAULT_TTL : channelCreationRequest.getTtl();
-		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName, ttl);
+		Optional<Long> ttlMillis = channelCreationRequest.getTtlMillis();
+		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName, ttlMillis.isPresent() ? ttlMillis.get() : null);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration);
 		return Response.created(channelUri).entity(
 				linked(channelConfiguration)

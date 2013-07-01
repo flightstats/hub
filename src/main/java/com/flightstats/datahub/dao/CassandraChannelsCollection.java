@@ -54,8 +54,8 @@ public class CassandraChannelsCollection {
 		this.keyRenderer = keyRenderer;
 	}
 
-	public ChannelConfiguration createChannel(String name, Long ttl) {
-		ChannelConfiguration channelConfig = new ChannelConfiguration(name, timeProvider.getDate(), ttl);
+	public ChannelConfiguration createChannel(String name, Long ttlMillis) {
+		ChannelConfiguration channelConfig = new ChannelConfiguration(name, timeProvider.getDate(), ttlMillis);
 		createColumnFamilyForChannel(channelConfig);
 		insertChannelMetadata(channelConfig);
 		return channelConfig;
