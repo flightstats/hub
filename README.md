@@ -53,6 +53,9 @@ Channel names _are case sensitive_, are limited to _48 characters_, and may only
 Hyphens and underscores are not allowed in channel names. Please try to break as many of these rules as possible
 in order to challenge Jason's sanity.
 
+TTL is optional and should be a positive number. If not specified, a default value (120 days) is used. If specified as null, 
+then the channel has no TTL.
+
 `POST http://datahub:8080/channel`
 
 * Content-type: application/json
@@ -60,7 +63,7 @@ in order to challenge Jason's sanity.
 ```json
 {  
    "name": "stumptown"
-   "ttl": "3600000" //one hour in millis
+   "ttlMillis": "3600000" //one hour in millis
 }
 ```
 
