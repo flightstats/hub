@@ -14,7 +14,7 @@ public interface ChannelDao {
 
 	boolean channelExists(String channelName);
 
-	ChannelConfiguration createChannel(String channelName, Long ttl);
+	ChannelConfiguration createChannel(String channelName, Long ttlMillis);
 
 	/**
 	 * Note, this operation is done within a front-end lock on the channel.  The implementation of this method

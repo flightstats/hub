@@ -58,9 +58,9 @@ public class CassandraChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ChannelConfiguration createChannel(String name, Long ttl) {
-		logger.info("Creating channel name = " + name + ", with ttl = " + ttl);
-		return channelsCollection.createChannel(name, ttl);
+	public ChannelConfiguration createChannel(String name, Long ttlMillis) {
+		logger.info("Creating channel name = " + name + ", with ttlMillis = " + ttlMillis);
+		return channelsCollection.createChannel(name, ttlMillis);
 	}
 
 	@Override
@@ -107,13 +107,12 @@ public class CassandraChannelDao implements ChannelDao {
 		String minColumnKey = keyRenderer.keyToString(minKey);
 		String maxColumnKey = keyRenderer.keyToString(maxKey);
 		Keyspace keyspace = connector.getKeyspace();
-		String minRowKey = rowKeyStrategy.buildKey(channelName, minKey);
 		String maxRowKey = rowKeyStrategy.buildKey(channelName, maxKey);
 		return hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
-			.setColumnFamily(channelName)
-			.setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
-			.setKeys(minRowKey, maxRowKey)
-			.execute();
+					 .setColumnFamily(channelName)
+					 .setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
+					 .setKeys(null, maxRowKey)
+					 .execute();
 	}
 
 	private Collection<DataHubKey> buildKeysFromResults(QueryResult<OrderedRows<String, String, DataHubCompositeValue>> results) {

@@ -1,10 +1,19 @@
 package com.flightstats.datahub.model.serialize;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.flightstats.datahub.model.ChannelCreationRequest;
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.map.exc.UnrecognizedPropertyException;
 
-public abstract class ChannelCreationRequestMixIn {
+import java.util.Map;
 
-	public ChannelCreationRequestMixIn(@JsonProperty("name") String name, @JsonProperty("ttlMillis") Long ttlMillis) {
-		throw new IllegalStateException("Do not instantiate mix-in configuration classes.");
+public abstract class ChannelCreationRequestMixIn extends ChannelCreationRequest {
+
+	protected ChannelCreationRequestMixIn(Builder builder) {
+		super(builder);
+	}
+
+	@JsonCreator
+	protected static ChannelCreationRequest create(Map<String, String> props) throws UnrecognizedPropertyException {
+		return null;
 	}
 }

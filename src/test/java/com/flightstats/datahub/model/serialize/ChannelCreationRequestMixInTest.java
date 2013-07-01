@@ -17,11 +17,27 @@ public class ChannelCreationRequestMixInTest {
         objectMapper = new DataHubObjectMapperFactory().build();
     }
 
-    @Test
-    public void testDeserialize() throws Exception {
-        String json = "{ \"name\": \"foo\" }";
-        ChannelCreationRequest result = objectMapper.readValue(json, ChannelCreationRequest.class);
-        ChannelCreationRequest expected = new ChannelCreationRequest("foo", null);
-        assertEquals(expected, result);
-    }
+	@Test
+	public void testDeserializeWithTtl() throws Exception {
+		String json = "{ \"name\": \"foo\", \"ttlMillis\": \"30000\" }";
+		ChannelCreationRequest result = objectMapper.readValue(json, ChannelCreationRequest.class);
+		ChannelCreationRequest expected = ChannelCreationRequest.builder().withName("foo").withTtlMillis(30000L).build();
+		assertEquals(expected, result);
+	}
+
+	@Test
+	public void testDeserializeWithNoTtl() throws Exception {
+		String json = "{ \"name\": \"foo\" }";
+		ChannelCreationRequest result = objectMapper.readValue(json, ChannelCreationRequest.class);
+		ChannelCreationRequest expected = ChannelCreationRequest.builder().withName("foo").withTtlMillis(ChannelCreationRequest.DEFAULT_TTL).build();
+		assertEquals(expected, result);
+	}
+
+	@Test
+	public void testDeserializeWithNullTtl() throws Exception {
+		String json = "{ \"name\": \"foo\", \"ttlMillis\": null }";
+		ChannelCreationRequest result = objectMapper.readValue(json, ChannelCreationRequest.class);
+		ChannelCreationRequest expected = ChannelCreationRequest.builder().withName("foo").withTtlMillis(null).build();
+		assertEquals(expected, result);
+	}
 }

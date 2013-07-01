@@ -33,9 +33,9 @@ public class InMemoryChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ChannelConfiguration createChannel(String name, Long ttl) {
+	public ChannelConfiguration createChannel(String name, Long ttlMillis) {
 		Date creationDate = timeProvider.getDate();
-		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate, ttl);
+		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate, ttlMillis);
 		channelConfigurations.put(name, channelConfiguration);
 		return channelConfiguration;
 	}
