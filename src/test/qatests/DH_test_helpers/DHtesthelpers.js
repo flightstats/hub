@@ -23,8 +23,8 @@ var chai = require('chai'),
 var ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js');
 
-// var DOMAIN = 'datahub-01.cloud-east.dev:8080';
-var DOMAIN = 'datahub.svc.dev';
+var DOMAIN = 'datahub-01.cloud-east.dev:8080';
+//var DOMAIN = 'datahub.svc.dev';
 exports.DOMAIN = DOMAIN;
 
 var URL_ROOT = 'http://'+ DOMAIN;
@@ -99,10 +99,14 @@ exports.createWebSocket = createWebSocket;
 /**
  * Wrapper for websocket to support test scenarios
  *
- * @param params: .domain (domain:port), .channel (name of channel in DH), .socketName (arbitrary name for identifying
- *  the socket), .onOpenCB (callback to call at end of Open event), .responseQueue (where each message is stashed),.
- *  .onMessageCB (optional - callback to call at end of Message event), .onErrorCB (optional - callback to call at
- *  end of Error event), .doReconnect=false (optional: if true, will reconnect on close if due to timeout),
+ * @param params: .domain (domain:port),
+ *  .channel (name of channel in DH),
+ *  .socketName (arbitrary name for identifying the socket),
+ *  .onOpenCB (callback to call at end of Open event),
+ *  .responseQueue (where each message is stashed),
+ *  .onMessageCB (optional - callback to call at end of Message event),
+ *  .onErrorCB (optional - callback to call at end of Error event),
+ *  .doReconnect=false (optional: if true, will reconnect on close if due to timeout),
  *  .debug (optional).
  * @constructor
  */
@@ -175,14 +179,18 @@ exports.WSWrapper = WSWrapper;
 /**
  * Create a channel.
  *
- * @param params: .name, .ttl=null, .debug (optional)
+ * @param params: .name,
+ *  .ttl=null,
+ *  .domain=DOMAIN
+ *  .debug (optional)
  * @param myCallback: response || error, channelUri || null (if error)
  */
 var createChannel = function(params, myCallback) {
     var cnName = params.name,
         ttl = (params.hasOwnProperty('ttl')) ? params.ttl : null,
         payload = {name: cnName},
-        uri = [URL_ROOT, 'channel'].join('/'),
+        domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN,
+        uri = ['http:/', domain, 'channel'].join('/'),
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
     if (null != ttl) {
@@ -264,16 +272,18 @@ exports.channelMetadata = channelMetadata;
 /**
  * GET a channel
  *
- * @param params: .name || .uri
+ * @param params: .name || .uri,
+ *  .domain=DOMAIN
  * @param myCallback: response, body
  */
 var getChannel = function(params, myCallback) {
     var uri,
         myChannelName = (params.hasOwnProperty('name')) ? params.name : null,
-        channelUri = (params.hasOwnProperty('uri')) ? params.uri : null;
+        channelUri = (params.hasOwnProperty('uri')) ? params.uri : null,
+        domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN;
 
     if (null != myChannelName) {
-        uri = [URL_ROOT, 'channel', myChannelName].join('/');
+        uri = ['http:/', domain, 'channel', myChannelName].join('/');
     }
     else if (null != channelUri) {
         uri = channelUri;
@@ -295,11 +305,16 @@ var getChannel = function(params, myCallback) {
 exports.getChannel = getChannel;
 
 
-/* Basic health check.
-    Returns the get response or throws an error.
+/**
+ * Basic health check.
+ * @param params: .domain=DOMAIN
+ * @param myCallback: Returns the get response or throws an error.
  */
-var getHealth = function(myCallback) {
-    superagent.agent().get(URL_ROOT + '/health')
+var getHealth = function(params, myCallback) {
+    var domain = params.domain || DOMAIN,
+        uri = ['http:/', domain, 'health'].join('/');
+
+    superagent.agent().get(uri)
         .end(function(err,res) {
             if (err) {throw err};
             myCallback(res);
@@ -356,7 +371,6 @@ function packetGETHeader(responseHeader){
     }
 }
 exports.packetGETHeader = packetGETHeader;
-
 
 // Headers in response to POSTing a packet of data
 function packetPOSTHeader(responseHeader){
@@ -541,7 +555,8 @@ exports.getUrisAndDataSinceLocation = getUrisAndDataSinceLocation;
  *
  * @param params: .channelUri,
  *  .numItems [optional, number of items back from latest to include (same param as in getListOfLatestUrisFromChannel())
- *  defaults to Inifinity], .debug (optional).
+ *  defaults to Inifinity],
+ *  .debug (optional).
  * @param callback: err || null
  */
 var testRelativeLinkInformation = function(params, callback) {
@@ -557,11 +572,12 @@ var testRelativeLinkInformation = function(params, callback) {
             debug: VERBOSE
         };
 
-    getListOfLatestUrisFromChannel(listPayload, function(theUris) {
+    getListOfLatestUrisFromChannel(listPayload, function(theUris, gotEntireChannel) {
 
         var testUri = function(index, callback) {
+
             var uri = theUris[index],
-                expPrevious = (index > 0) ? theUris[index - 1] : null,
+                expPrevious = (0 == index) ? null : theUris[index - 1],
                 expNext = (index < (theUris.length -1)) ? theUris[index + 1] : null,
                 err = null;
 
@@ -572,7 +588,12 @@ var testRelativeLinkInformation = function(params, callback) {
                         next = pGetHeader.getNext();
 
                     if (expPrevious != previous) {
-                        err = 'Previous link mismatch for uri '+ uri +'.\nExpected '+ expPrevious +'.\nGot '+ previous;
+                        if (0 == index && !gotEntireChannel) {
+                            gu.debugLog('Ignoring results for previous since expected previous link is unknown.', VERBOSE);
+                        } else {
+                            err = 'Previous link mismatch for uri '+ uri +'.\nExpected '+ expPrevious +'.\nGot '+ previous;
+                        }
+
                     } else {
                         gu.debugLog('Matched previous link for uri '+ uri, VERBOSE);
                     }
@@ -625,22 +646,24 @@ var testRelativeLinkInformation = function(params, callback) {
 exports.testRelativeLinkInformation = testRelativeLinkInformation;
 
 /**
- * Returns the last <numItems> of URIs in the channel as an array, going from older (index 0) to latest.
+ * Returns the last <numItems> of URIs in the channel as an array, going from older (index 0) to latest, as well as
+ *  a flag stating whether or not all URIs in the channel were included (i.e., .numItems >= number of items in channel).
  * @param params: .numItems=2 (minimum 2; number of URIs to return, starting with the latest), .channelUri,
  *  .debug (optional)
- * @param myCallback: list of URIs as described.
+ * @param myCallback: list of URIs as described, gotEntireChannel
  */
 var getListOfLatestUrisFromChannel = function(params, myCallback){
     var allUris = [],
         numItems = params.numItems,
         channelUri = params.channelUri,
+        gotEntireChannel = false,      // will be set to true if a previous link is not found
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
     if (numItems < 2) {
         numItems = 2;
     }
 
-    gu.debugLog('In getListofLatestUrisFromChannel...', false);
+    gu.debugLog('In getListofLatestUrisFromChannel...', VERBOSE);
     gu.debugLog('number of items requested: '+ numItems, VERBOSE);
     gu.debugLog('channel URI: '+ channelUri, VERBOSE);
 
@@ -666,7 +689,10 @@ var getListOfLatestUrisFromChannel = function(params, myCallback){
                 return (allUris.length < numItems) && (null != previous);
             }
             , function(err) {
-                myCallback(allUris);
+                gotEntireChannel = (null == previous);
+                gu.debugLog('Did we get the entire channel? '+ gotEntireChannel, VERBOSE);
+
+                myCallback(allUris, gotEntireChannel);
             }
         );
     });
@@ -704,12 +730,14 @@ exports.getLatestUri = getLatestUri;
 /**
  * Lists all channels.
  *
- * @param params: .debug (optional)
+ * @param params: .domain,
+ *  .debug (optional)
  * @param callback: response, array of channels
  */
 var getAllChannels = function(params, callback) {
-    var uri = [URL_ROOT, 'channel'].join('/'),
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
+    var domain = params.domain || DOMAIN,
+        uri = ['http:/', domain, 'channel'].join('/'),
+        VERBOSE = params.debug || false;
 
     gu.debugLog('uri for getAllChannels: '+ uri, VERBOSE);
 

@@ -15,7 +15,7 @@ var dhh = require('../DH_test_helpers/DHtesthelpers.js');
 describe('Health check:', function() {
 
     it('/health returns 200', function(done) {
-        dhh.getHealth(function(res) {
+        dhh.getHealth({}, function(res) {
             expect(res.status).to.equal(200);
             done();
         });

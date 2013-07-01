@@ -269,6 +269,18 @@ describe('GET data:', function() {
 
     describe.skip('Code not implemented - TTL', function() {
         // TODO: if item has expired and the cleanup cycle has run, confirm that a GET on it returns 404
+
+        // TODO: confirm GET returns item if expiration has not been met
+
+        // TODO: confirm GET returns item for channel with no TTL
+
+        // TODO: confirm updating TTL to a later value is respected
+
+        // TODO: confirm updating TTL to an earlier value is respected
+
+        // TODO: confirm updating TTL to null is respected
+
+        // TODO: confirm updating null TTL to non-null is respected
     })
 
     // Allow a client to access the most recently saved item in a channel.
