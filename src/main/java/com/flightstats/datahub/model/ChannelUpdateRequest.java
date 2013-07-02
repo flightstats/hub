@@ -60,10 +60,10 @@ public class ChannelUpdateRequest {
 	}
 
 	public static class Builder {
-		private Optional<Long> ttlMillis = Optional.absent();
+		private Optional<Long> ttlMillis = null;
 
 		public Builder withTtlMillis(Long ttlMillis) {
-			this.ttlMillis = ttlMillis == null ? null : Optional.of(ttlMillis);
+			this.ttlMillis = Optional.fromNullable(ttlMillis);
 			return this;
 		}
 
