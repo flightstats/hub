@@ -105,6 +105,17 @@ public class SingleChannelResourceTest {
 		assertEquals(expectedResponse.getEntity(), result.getEntity());
 	}
 
+	@Test(expected = WebApplicationException.class)
+	public void testUpdateChannelMetadataForUnknownChannel() throws Exception {
+
+		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(30000L).build();
+
+		when(dao.channelExists(anyString())).thenReturn(false);
+
+		SingleChannelResource testClass = new SingleChannelResource(dao, null, null, null);
+		testClass.updateMetadata(request, channelName);
+	}
+
 	@Test
 	public void testGetChannelMetadataForUnknownChannel() throws Exception {
 		when(dao.channelExists("unknownChannel")).thenReturn(false);
