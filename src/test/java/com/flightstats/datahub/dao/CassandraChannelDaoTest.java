@@ -43,6 +43,15 @@ public class CassandraChannelDaoTest {
 	}
 
 	@Test
+	public void testUpdateChannel() throws Exception {
+		ChannelConfiguration newConfig = new ChannelConfiguration("foo", new Date(9999), 30000L);
+		CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
+		CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null, null, null, null);
+		testClass.updateChannelMetadata(newConfig);
+		verify(collection).updateChannel(newConfig);
+	}
+
+	@Test
 	public void testInsert() throws Exception {
 		Date date = new Date(2345678910L);
 		DataHubKey key = new DataHubKey(date, (short) 3);

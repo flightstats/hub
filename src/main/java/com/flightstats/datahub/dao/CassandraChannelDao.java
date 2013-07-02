@@ -64,6 +64,11 @@ public class CassandraChannelDao implements ChannelDao {
 	}
 
 	@Override
+	public void updateChannelMetadata(ChannelConfiguration newConfig) {
+		channelsCollection.updateChannel(newConfig);
+	}
+
+	@Override
 	public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
 		logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
 		DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
