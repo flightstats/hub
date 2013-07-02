@@ -2,10 +2,7 @@ package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.cluster.ReentrantChannelLockFactory;
 import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.MetadataResponse;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
@@ -88,6 +85,24 @@ public class SingleChannelResourceTest {
 		HalLink latestLink = result.getHalLinks().getLinks().get(1);
 		assertEquals(new HalLink("self", channelUri), selfLink);
 		assertEquals(new HalLink("latest", URI.create(channelUri.toString() + "/latest")), latestLink);
+	}
+
+	@Test
+	public void testUpdateChannelMetadataForKnownChannel() throws Exception {
+
+		UriInfo uriInfo = mock(UriInfo.class);
+		when(dao.channelExists(anyString())).thenReturn(true);
+		when(dao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+		when(uriInfo.getRequestUri()).thenReturn(channelUri);
+
+		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(30000L).build();
+		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(30000L).build();
+		Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri)).build();
+
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, null);
+		Response result = testClass.updateMetadata(request, channelName);
+
+		assertEquals(expectedResponse.getEntity(), result.getEntity());
 	}
 
 	@Test

@@ -47,7 +47,7 @@ public class CassandraChannelDaoTest {
 		ChannelConfiguration newConfig = new ChannelConfiguration("foo", new Date(9999), 30000L);
 		CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
 		CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null, null, null, null);
-		testClass.updateChannel(newConfig);
+		testClass.updateChannelMetadata(newConfig);
 		verify(collection).updateChannel(newConfig);
 	}
 

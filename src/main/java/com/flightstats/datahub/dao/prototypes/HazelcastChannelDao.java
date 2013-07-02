@@ -80,7 +80,7 @@ public class HazelcastChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public void updateChannel(ChannelConfiguration newConfig) {
+	public void updateChannelMetadata(ChannelConfiguration newConfig) {
 		channelConfigurations.put(newConfig.getName(), newConfig);
 	}
 

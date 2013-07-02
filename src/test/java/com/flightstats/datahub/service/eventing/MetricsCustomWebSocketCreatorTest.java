@@ -8,7 +8,9 @@ import org.junit.Test;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
@@ -23,6 +25,8 @@ public class MetricsCustomWebSocketCreatorTest {
 		String meterName = "websocket-clients.channels.ubuibi";
 
 		final CountDownLatch startLatch = new CountDownLatch(1);
+		final CountDownLatch createLatch = new CountDownLatch(1);
+		final CountDownLatch allCreated = new CountDownLatch(threadCt);
 		final CountDownLatch allStarted = new CountDownLatch(threadCt);
 		final CountDownLatch allFinished = new CountDownLatch(threadCt);
 
@@ -49,6 +53,8 @@ public class MetricsCustomWebSocketCreatorTest {
 						allStarted.countDown();
 						startLatch.await();
 						DataHubWebSocket socket = (DataHubWebSocket) testClass.createWebSocket(request, null);
+						allCreated.countDown();
+						createLatch.await();
 						socket.onConnect(session);            //lifecycle controlled by jetty framework
 						socket.onDisconnect(200, "test");    //lifecycle controlled by jetty framework
 					} catch (InterruptedException e) {
@@ -61,11 +67,13 @@ public class MetricsCustomWebSocketCreatorTest {
 		}
 		allStarted.await();
 		startLatch.countDown();
+		allCreated.await();
+		createLatch.countDown();
 		allFinished.await();
 		//THEN
 		verify(registry, times(threadCt * 2)).counter(eq(meterName));    //once per inc, once per dec
 		verify(counter, times(threadCt)).inc();
 		verify(counter, times(threadCt)).dec();
-		verify(registry).remove(meterName);
+		verify(registry, times(1)).remove(meterName);
 	}
 }

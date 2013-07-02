@@ -82,7 +82,7 @@ public class SingleChannelResource {
 			builder.withTtlMillis( request.getTtlMillis().get() );
 		}
 		ChannelConfiguration newConfig = builder.build();
-		channelDao.updateChannel(newConfig);
+		channelDao.updateChannelMetadata(newConfig);
 		URI channelUri = linkBuilder.buildChannelUri(newConfig);
 		return Response.ok(channelUri).entity(
 			linkBuilder.buildLinkedChannelConfig(newConfig, channelUri))
