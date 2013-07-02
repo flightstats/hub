@@ -132,14 +132,14 @@ function WSWrapper(params) {
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : DEBUG;
 
     this.onOpen = function() {
-        gu.debugLog('OPEN EVENT at '+ Date.now(), VERBOSE);
+        gu.debugLog('OPEN EVENT at '+ Date.now());
         gu.debugLog('readystate: '+ _self.ws.readyState, VERBOSE);
         onOpenCB();
     };
 
     this.onMessage = function(data, flags) {
         gu.debugLog('MESSAGE EVENT at '+ Date.now(), VERBOSE);
-        gu.debugLog('Readystate is '+ _self.ws.readyState, VERBOSE);
+        gu.debugLog('Readystate is '+ _self.ws.readyState, false);
         _self.responseQueue.push(data);
 
         if (null != onMessageCB) {
@@ -148,7 +148,7 @@ function WSWrapper(params) {
     };
 
     this.onError = function(msg) {
-        gu.debugLog('ERROR event at '+ Date.now(), VERBOSE);
+        gu.debugLog('ERROR event at '+ Date.now());
         gu.debugLog('Error message: '+ msg);
 
         if (null != onErrorCB) {
@@ -157,7 +157,7 @@ function WSWrapper(params) {
     };
 
     this.onClose = function(code, msg) {
-        gu.debugLog('CLOSE event (code: '+ code +', msg: '+ msg +')\n at '+ Date.now(), true);
+        gu.debugLog('CLOSE event (code: '+ code +', msg: '+ msg +')\n at '+ Date.now());
         if ((doReconnect) && (msg.toLowerCase().lastIndexOf('idle') > -1)) {
             gu.debugLog('...attempting reconnect after idle timeout.');
             _self.createSocket();
@@ -180,21 +180,20 @@ exports.WSWrapper = WSWrapper;
  * Create a channel.
  *
  * @param params: .name,
- *  .ttl=null,
+ *  .ttlMillis=null,
  *  .domain=DOMAIN
  *  .debug (optional)
  * @param myCallback: response || error, channelUri || null (if error)
  */
 var createChannel = function(params, myCallback) {
     var cnName = params.name,
-        ttl = (params.hasOwnProperty('ttl')) ? params.ttl : null,
         payload = {name: cnName},
         domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN,
         uri = ['http:/', domain, 'channel'].join('/'),
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
-    if (null != ttl) {
-        payload['ttl'] = ttl;
+    if (params.hasOwnProperty('ttlMillis')) {
+        payload['ttlMillis'] = params.ttlMillis;
     }
 
     if (VERBOSE) {
@@ -383,7 +382,7 @@ exports.packetPOSTHeader = packetPOSTHeader;
 /**
  * Inserts data into channel.
  *
- * @param params: .channelUri, .data, .contentType=application/x-www-form-urlencoded (optional)
+ * @param params: .channelUri, .data, .contentType=application/x-www-form-urlencoded (optional), .debug=true
  * @param myCallback: response, uri to data
  */
 var postData = function(params, myCallback) {
@@ -391,7 +390,7 @@ var postData = function(params, myCallback) {
         channelUri = params.channelUri,
         myData = params.data,
         contentType = (params.hasOwnProperty('contentType')) ? params.contentType : 'application/x-www-form-urlencoded',
-        VERBOSE = true;
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true;
 
 
     gu.debugLog('Channel Uri: '+ channelUri, VERBOSE);
