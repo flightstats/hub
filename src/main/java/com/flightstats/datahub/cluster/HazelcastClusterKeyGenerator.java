@@ -43,25 +43,24 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
 
 		@Override
 		public DataHubKey call() throws Exception {
-			Date currentDate = timeProvider.getDate();
+			Date keyDate = determineKeyDate();
+			short sequence = determineKeySequence();
+			return new DataHubKey( keyDate, sequence );
+		}
+
+		private Date determineKeyDate() {
 			AtomicNumber lastWriteDateMillis = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_DATE:" + channelName);
 			Date lastWriteDate = new Date(lastWriteDateMillis.get());
+			Date currentDate = timeProvider.getDate();
 
-			AtomicNumber sequenceNumber = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName);
-			if (currentDate.compareTo(lastWriteDate) > 0) {
-				return createKeyWithoutCollision(currentDate, lastWriteDateMillis, sequenceNumber);
-			}
-			return createKeyWithCollision(lastWriteDate, sequenceNumber);
-		}
-
-		private DataHubKey createKeyWithoutCollision(Date keyDate, AtomicNumber lastWriteDateMillis, AtomicNumber sequenceNumber) {
-			sequenceNumber.set(0L);
+			Date keyDate = currentDate.after(lastWriteDate) ? currentDate : lastWriteDate;
 			lastWriteDateMillis.set(keyDate.getTime());
-			return new DataHubKey(keyDate, (short) 0);
+			return keyDate;
 		}
 
-		private DataHubKey createKeyWithCollision(Date keyDate, AtomicNumber sequenceNumber) {
-			return new DataHubKey(keyDate, (short) sequenceNumber.addAndGet(1));
+		private short determineKeySequence() {
+			AtomicNumber sequenceNumber = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName);
+			return sequenceNumber.compareAndSet(Short.MAX_VALUE, 0) ? Short.MAX_VALUE : (short) sequenceNumber.getAndAdd(1);
 		}
 	}
 }
