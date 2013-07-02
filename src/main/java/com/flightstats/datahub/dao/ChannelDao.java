@@ -49,5 +49,5 @@ public interface ChannelDao {
 
 	Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime);
 
-	void updateChannel(ChannelConfiguration newConfig);
+	void updateChannelMetadata(ChannelConfiguration newConfig);
 }

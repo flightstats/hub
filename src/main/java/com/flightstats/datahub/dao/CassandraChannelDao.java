@@ -64,7 +64,7 @@ public class CassandraChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public void updateChannel(ChannelConfiguration newConfig) {
+	public void updateChannelMetadata(ChannelConfiguration newConfig) {
 		channelsCollection.updateChannel(newConfig);
 	}
 
