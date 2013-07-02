@@ -131,7 +131,7 @@ describe('Create Channel: ', function(){
 
             acceptName = dhh.getRandomChannelName();
 
-            dhh.createChannel({name: acceptName, ttl: acceptTTL}, function(res, uri) {
+            dhh.createChannel({name: acceptName, ttlMillis: acceptTTL}, function(res, uri) {
                 createRes = res;
                 channelUri = uri;
 
@@ -170,11 +170,12 @@ describe('Create Channel: ', function(){
 
         describe('TTL', function() {
 
-            it.skip('BUG: https://www.pivotaltracker.com/story/show/52425747 - may be null', function(done) {
+            // BUG: https://www.pivotaltracker.com/story/show/52425747
+            it('may be null - results in no ttlMillis property being returned', function(done) {
                 var name = dhh.getRandomChannelName();
 
-                dhh.createChannel({name: name, ttl: null}, function(res) {
-                    expect(res.body.ttlMillis).to.be.null;
+                dhh.createChannel({name: name, ttlMillis: null, debug: true}, function(res) {
+                    expect(res.body.hasOwnProperty('ttlMillis')).to.be.false;
 
                     done();
                 })
@@ -262,7 +263,7 @@ describe('Create Channel: ', function(){
         describe('Code not implemented - TTL', function() {
 
             var badTTLYieldsBadRequest = function(TTL, callback) {
-                dhh.createChannel({name: dhh.getRandomChannelName(), ttl: TTL}, function(res) {
+                dhh.createChannel({name: dhh.getRandomChannelName(), ttlMillis: TTL}, function(res) {
                     expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
 
                     callback();
