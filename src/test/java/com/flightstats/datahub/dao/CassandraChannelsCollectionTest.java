@@ -34,7 +34,6 @@ public class CassandraChannelsCollectionTest {
 	private TimeProvider timeProvider;
 	private DataHubKeyRenderer keyRenderer;
 	private Keyspace keyspace;
-	private YearMonthDayRowKeyStrategy rowKeyStrategy;
 
 	@Before
 	public void setup() {
@@ -44,7 +43,6 @@ public class CassandraChannelsCollectionTest {
 		valueSerializer = mock(Serializer.class);
 		timeProvider = mock(TimeProvider.class);
 		keyRenderer = new DataHubKeyRenderer();
-		rowKeyStrategy = new YearMonthDayRowKeyStrategy();
 		keyspace = mock(Keyspace.class);
 	}
 
