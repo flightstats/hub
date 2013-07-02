@@ -66,6 +66,11 @@ public class InMemoryChannelDao implements ChannelDao {
 	}
 
 	@Override
+	public void updateChannel(ChannelConfiguration newConfig) {
+		channelConfigurations.put(newConfig.getName(), newConfig);
+	}
+
+	@Override
 	public void setLastUpdateKey(String channelName, DataHubKey key) {
 		latestPerChannel.put(channelName, new DataHubChannelValueKey(key, channelName));
 	}

@@ -48,4 +48,6 @@ public interface ChannelDao {
 	void delete(String channelName, List<DataHubKey> keys);
 
 	Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime);
+
+	void updateChannel(ChannelConfiguration newConfig);
 }

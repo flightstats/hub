@@ -69,6 +69,22 @@ public class CassandraChannelsCollectionTest {
 	}
 
 	@Test
+	public void testUpdateChannel() throws Exception {
+		String channelName = "arturo";
+		final Date creationDate = new Date(99999);
+		ChannelConfiguration newConfig = new ChannelConfiguration(channelName, creationDate, null);
+		HColumn<String, ChannelConfiguration> column = new HColumnImpl<String, ChannelConfiguration>(StringSerializer.get(), mock(Serializer.class));
+
+		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
+		when(hector.createColumn(channelName, newConfig, StringSerializer.get(), valueSerializer)).thenReturn(column);
+
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider, keyRenderer );
+
+		testClass.updateChannel(newConfig);
+		verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_METADATA_COLUMN_FAMILY_NAME, column);
+	}
+
+	@Test
 	public void testChannelExists() throws Exception {
 		String channelName = "foo";
 		ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, new Date(), null);
