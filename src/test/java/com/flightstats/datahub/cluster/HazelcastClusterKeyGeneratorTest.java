@@ -21,8 +21,8 @@ public class HazelcastClusterKeyGeneratorTest {
 		//GIVEN
 		String channelName = "mychanisgood";
 		Date currentDate = new Date(12345678L);
-		DataHubKey expectedA = new DataHubKey(currentDate,(short)0);
-		DataHubKey expectedB = new DataHubKey(currentDate,(short)1);
+		DataHubKey expectedA = new DataHubKey(currentDate, (short)0);
+		DataHubKey expectedB = new DataHubKey(currentDate, (short)1);
 
 		TimeProvider timeProvider = mock(TimeProvider.class);
 		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
@@ -51,8 +51,8 @@ public class HazelcastClusterKeyGeneratorTest {
 		//GIVEN
 		String channelName = "mychanisgood";
 		Date currentDate = new Date(12345678L);
-		DataHubKey expectedA = new DataHubKey(currentDate,(short)Short.MAX_VALUE);
-		DataHubKey expectedB = new DataHubKey(currentDate,(short)0);
+		DataHubKey expectedA = new DataHubKey(currentDate, Short.MAX_VALUE);
+		DataHubKey expectedB = new DataHubKey(currentDate, (short)0);
 
 		TimeProvider timeProvider = mock(TimeProvider.class);
 		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
@@ -68,7 +68,7 @@ public class HazelcastClusterKeyGeneratorTest {
 		when(hazelcast.getAtomicNumber("CHANNEL_NAME_DATE:mychanisgood")).thenReturn(atomicDateNumber);
 		when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
 		when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L);
-		when(atomicSeqNumber.compareAndSet(Short.MAX_VALUE,0)).thenReturn(true);
+		when(atomicSeqNumber.compareAndSet(Short.MAX_VALUE,0)).thenReturn(true).thenReturn(false);
 		DataHubKey resultA = testClass.newKey(channelName);
 		DataHubKey resultB = testClass.newKey(channelName);
 
