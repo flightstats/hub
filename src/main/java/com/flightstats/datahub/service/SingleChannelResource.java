@@ -1,12 +1,10 @@
 package com.flightstats.datahub.service;
 
 import com.codahale.metrics.annotation.Timed;
+import com.flightstats.datahub.app.config.PATCH;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.MetadataResponse;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.*;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -68,12 +66,35 @@ public class SingleChannelResource {
 		return latestId.get().getDate();
 	}
 
+	@PATCH
+	@Timed
+	@PerChannelTimed(operationName = "update", channelNamePathParameter = "channelName")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response updateMetadata(ChannelUpdateRequest request, @PathParam("channelName") String channelName) throws Exception {
+		if (!channelDao.channelExists(channelName)) {
+			throw new WebApplicationException(Response.Status.NOT_FOUND);
+		}
+
+		ChannelConfiguration oldConfig = channelDao.getChannelConfiguration(channelName);
+		ChannelConfiguration.Builder builder = ChannelConfiguration.builder().withChannelConfiguration(oldConfig);
+		if ( request.getTtlMillis().isPresent() ) {
+			builder.withTtlMillis( request.getTtlMillis().get() );
+		}
+		ChannelConfiguration newConfig = builder.build();
+		channelDao.updateChannel(newConfig);
+		URI channelUri = linkBuilder.buildChannelUri(newConfig);
+		return Response.ok(channelUri).entity(
+			linkBuilder.buildLinkedChannelConfig(newConfig, channelUri))
+			.build();
+	}
+
 	@POST
 	@Timed(name = "all-channels.insert")
 	@PerChannelTimed(operationName = "insert", channelNamePathParameter = "channelName")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response insertValue(@HeaderParam("Content-Type") final String contentType, @PathParam(
-			"channelName") final String channelName, final byte[] data) throws Exception {
+		"channelName") final String channelName, final byte[] data) throws Exception {
 
 		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelName, contentType, data);
 		ValueInsertionResult insertionResult = channelLockExecutor.execute(channelName, task);

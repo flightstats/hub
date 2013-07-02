@@ -49,8 +49,7 @@ public class ChannelResourceTest {
 		when(dao.channelExists(channelName)).thenReturn(false);
 		when(dao.createChannel(channelName, ChannelCreationRequest.DEFAULT_TTL)).thenReturn(channelConfiguration);
 		when(linkBuilder.buildChannelUri(channelConfiguration)).thenReturn(URI.create(channelUri));
-		when(linkBuilder.buildLatestUri(channelName)).thenReturn(URI.create(latestUri));
-		when(linkBuilder.buildWsLinkFor(channelName)).thenReturn(URI.create(wsUri));
+		when(linkBuilder.buildLinkedChannelConfig(channelConfiguration,URI.create(channelUri))).thenReturn(expected);
 
 		ChannelResource testClass = new ChannelResource(dao, linkBuilder, createChannelValidator, null);
 

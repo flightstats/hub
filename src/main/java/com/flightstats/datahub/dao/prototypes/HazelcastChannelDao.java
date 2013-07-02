@@ -80,6 +80,11 @@ public class HazelcastChannelDao implements ChannelDao {
 	}
 
 	@Override
+	public void updateChannel(ChannelConfiguration newConfig) {
+		channelConfigurations.put(newConfig.getName(), newConfig);
+	}
+
+	@Override
 	public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
 		Lock lock = HAZELCAST_INSTANCE.getLock(channelName + "-writeLock");
 		lock.lock();
