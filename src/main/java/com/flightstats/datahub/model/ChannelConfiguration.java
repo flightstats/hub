@@ -58,4 +58,40 @@ public class ChannelConfiguration implements Serializable {
 				", ttl=" + ttlMillis +
 				'}';
 	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+		private String name;
+		private Date creationDate;
+		private Long ttlMillis;
+
+		public Builder withChannelConfiguration(ChannelConfiguration config) {
+			this.name = config.name;
+			this.creationDate = config.creationDate;
+			this.ttlMillis = config.ttlMillis;
+			return this;
+		}
+
+		public Builder withName(String name) {
+			this.name = name;
+			return this;
+		}
+
+		public Builder withTtlMillis(Long ttlMillis) {
+			this.ttlMillis = ttlMillis;
+			return this;
+		}
+
+		public Builder withCreationDate(Date date) {
+			this.creationDate = date;
+			return this;
+		}
+
+		public ChannelConfiguration build() {
+			return new ChannelConfiguration(name, creationDate, ttlMillis );
+		}
+	}
 }

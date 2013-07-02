@@ -61,6 +61,10 @@ public class CassandraChannelsCollection {
 		return channelConfig;
 	}
 
+	public void updateChannel(ChannelConfiguration newConfig) {
+		insertChannelMetadata(newConfig);
+	}
+
 	public int countChannels() {
 		QueryResult<Integer> result = hector.createCountQuery(connector.getKeyspace(), StringSerializer.get(), StringSerializer.get())
 											.setKey(CHANNELS_ROW_KEY)

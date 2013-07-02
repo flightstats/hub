@@ -81,11 +81,7 @@ public class ChannelResource {
 		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName, ttlMillis.isPresent() ? ttlMillis.get() : null);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration);
 		return Response.created(channelUri).entity(
-				linked(channelConfiguration)
-						.withLink("self", channelUri)
-						.withLink("latest", linkBuilder.buildLatestUri(channelName))
-						.withLink("ws", linkBuilder.buildWsLinkFor(channelName))
-						.build())
-					   .build();
+			linkBuilder.buildLinkedChannelConfig(channelConfiguration, channelUri))
+			.build();
 	}
 }
