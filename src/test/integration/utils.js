@@ -31,9 +31,10 @@ function download(url, completionHandler) {
     });
 }
 
-function configureFrisby() {
+function configureFrisby(timeout) {
+    timeout = typeof timeout !== 'undefined' ? timeout : 10000
     frisby.globalSetup({
-        timeout: 10000
+        timeout: timeout
     });
 }
 
