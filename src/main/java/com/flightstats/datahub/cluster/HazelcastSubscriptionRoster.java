@@ -2,10 +2,10 @@ package com.flightstats.datahub.cluster;
 
 import com.flightstats.datahub.service.eventing.Consumer;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
+import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
-import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +20,13 @@ public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 
 	private final static Logger logger = LoggerFactory.getLogger(HazelcastSubscriptionRoster.class);
 	private final HazelcastInstance hazelcast;
+	private final DataHubKeyRenderer keyRenderer;
 	private final ConcurrentHashMap<ChannelConsumer, MessageListener<URI>> consumerToMessageListener = new ConcurrentHashMap<>();
 
 	@Inject
-	public HazelcastSubscriptionRoster(HazelcastInstance hazelcast) {
+	public HazelcastSubscriptionRoster(HazelcastInstance hazelcast, DataHubKeyRenderer keyRenderer) {
 		this.hazelcast = hazelcast;
+		this.keyRenderer = keyRenderer;
 	}
 
 	@Override
@@ -36,14 +38,7 @@ public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 	private MessageListener<URI> addTopicListenerForChannel(final String channelName, final Consumer<URI> consumer) {
 		ITopic<URI> topic = hazelcast.getTopic("ws:" + channelName);
 		logger.info("Adding new message listener for websocket hazelcast queue for channel " + channelName);
-		MessageListener<URI> messageListener = new MessageListener<URI>() {
-			@Override
-			public void onMessage(Message<URI> message) {
-				// When we get something from the topic, pass it along to the delegate consumer
-				URI uri = message.getMessageObject();
-				consumer.apply(uri);
-			}
-		};
+		MessageListener<URI> messageListener = new HazelcastSubscriber(consumer, keyRenderer);
 		topic.addMessageListener(messageListener);
 		return messageListener;
 	}
@@ -73,8 +68,8 @@ public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 	}
 
 	private static class ChannelConsumer {
-		final String channelName;
-		final Consumer<URI> consumer;
+		private final String channelName;
+		private final Consumer<URI> consumer;
 
 		ChannelConsumer( String channelName, Consumer<URI> consumer ) {
 
