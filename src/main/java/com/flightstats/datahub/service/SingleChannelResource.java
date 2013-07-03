@@ -78,8 +78,8 @@ public class SingleChannelResource {
 
 		ChannelConfiguration oldConfig = channelDao.getChannelConfiguration(channelName);
 		ChannelConfiguration.Builder builder = ChannelConfiguration.builder().withChannelConfiguration(oldConfig);
-		if ( request.getTtlMillis().isPresent() ) {
-			builder.withTtlMillis( request.getTtlMillis().get() );
+		if ( request.getTtlMillis() != null ) {
+			builder.withTtlMillis( request.getTtlMillis().isPresent() ? request.getTtlMillis().get() : null );
 		}
 		ChannelConfiguration newConfig = builder.build();
 		channelDao.updateChannelMetadata(newConfig);

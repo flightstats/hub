@@ -88,7 +88,7 @@ public class SingleChannelResourceTest {
 	}
 
 	@Test
-	public void testUpdateChannelMetadataForKnownChannel() throws Exception {
+	public void testUpdateChannelMetadataWithNonNullTtl() throws Exception {
 
 		UriInfo uriInfo = mock(UriInfo.class);
 		when(dao.channelExists(anyString())).thenReturn(true);
@@ -97,6 +97,24 @@ public class SingleChannelResourceTest {
 
 		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(30000L).build();
 		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(30000L).build();
+		Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri)).build();
+
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, null);
+		Response result = testClass.updateMetadata(request, channelName);
+
+		assertEquals(expectedResponse.getEntity(), result.getEntity());
+	}
+
+	@Test
+	public void testUpdateChannelMetadataWithNullTtl() throws Exception {
+
+		UriInfo uriInfo = mock(UriInfo.class);
+		when(dao.channelExists(anyString())).thenReturn(true);
+		when(dao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+		when(uriInfo.getRequestUri()).thenReturn(channelUri);
+
+		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(null).build();
+		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(null).build();
 		Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri)).build();
 
 		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, null);
