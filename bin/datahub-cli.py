@@ -78,10 +78,10 @@ class DataHub(object):
             return
         elif line.startswith("mkchan"):
             channel_name = re.sub(r'^mkchan\s*', '', line)
-            ttl = None
+            ttlMillis = None
             if (re.match(".*\s+\w+$", channel_name)):
-                [channel_name, ttl] = re.split("\s*", channel_name)
-            return self._create_channel(channel_name, ttl)
+                [channel_name, ttlMillis] = re.split("\s*", channel_name)
+            return self._create_channel(channel_name, ttlMillis)
         elif line.startswith("latefile"):
             filename = re.sub(r'^latefile\s*', '', line)
             return self._get_latest(filename)
@@ -240,13 +240,13 @@ class DataHub(object):
         print(response.status, response.reason)
         print(response.read())
 
-    def _create_channel(self, channel_name, ttl=None):
+    def _create_channel(self, channel_name, ttlMillis=None):
         conn = httplib.HTTPConnection(self._server)
-        if (ttl):
-            if (ttl == 'null' or ttl == 'None'):
-                content = '{"name": "%s", "ttl": null}' % (channel_name)
+        if (ttlMillis):
+            if (ttlMillis == 'null' or ttlMillis == 'None'):
+                content = '{"name": "%s", "ttlMillis": null}' % (channel_name)
             else:
-                content = '{"name": "%s", "ttl": "%s"}' % (channel_name, ttl)
+                content = '{"name": "%s", "ttlMillis": "%s"}' % (channel_name, ttlMillis)
         else:
             content = '{"name": "%s"}' % (channel_name)
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}

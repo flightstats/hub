@@ -8,10 +8,13 @@ import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.google.common.base.Optional;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class DataHubSweeperTest {
@@ -33,7 +36,7 @@ public class DataHubSweeperTest {
 		// THEN
 		verify(dao).getChannels();
 		verify(dao).findKeysInRange(anyString(), any(Date.class), any(Date.class));
-		verify(dao,times(0)).delete(channel.getName(), Collections.<DataHubKey>emptyList());
+		verify(dao, times(0)).delete(channel.getName(), Collections.<DataHubKey>emptyList());
 	}
 
 	@Test
@@ -93,5 +96,21 @@ public class DataHubSweeperTest {
 		verify(dao).delete(channel.getName(), Arrays.asList(reapHubKey1.get(), reapHubKey2.get()));
 		verify(dao).deleteFirstKey(channel.getName());
 		verify(dao).deleteLastUpdateKey(channel.getName());
+	}
+
+	@Test
+	public void testSweepRest() {
+		// GIVEN
+		ChannelDao dao = mock(ChannelDao.class);
+		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
+		DataHubSweeper testClass = new DataHubSweeper(TimeUnit.DAYS.toMillis(1), dao, channelLockExecutor );
+
+		// WHEN
+		when( dao.getChannels() ).thenReturn(Collections.<ChannelConfiguration>emptyList());
+		Response response = testClass.sweep();
+
+		// THEN
+		assertEquals(200, response.getStatus());
+		verify( dao ).getChannels();
 	}
 }

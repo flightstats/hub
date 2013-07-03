@@ -1,16 +1,21 @@
 package com.flightstats.datahub.service;
 
+import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -18,25 +23,30 @@ import java.util.concurrent.TimeUnit;
 /**
  * Remove any items from persistence that are beyond their TTL (time to live).
  */
+@Path("/sweep")
 public class DataHubSweeper {
 
 	private final static Logger logger = LoggerFactory.getLogger(DataHubSweeper.class);
 
 	private static final Long DEFAULT_SWEEP_PERIOD = TimeUnit.MINUTES.toMillis(1);
-	private final Timer sweeper;
+	private final Timer sweeperTimer;
+	private final SweeperTask sweeperTask;
 
 	@Inject
 	public DataHubSweeper(@Named("sweeper.periodMillis") Long sweepPeriodMillis, ChannelDao dao,
 	                      ChannelLockExecutor channelLockExecutor) {
 		sweepPeriodMillis = sweepPeriodMillis == null ? DEFAULT_SWEEP_PERIOD : sweepPeriodMillis;
 
-		sweeper = new Timer(true);
-		sweeper.scheduleAtFixedRate(new SweeperTask(dao, channelLockExecutor), sweepPeriodMillis, sweepPeriodMillis);
+		sweeperTimer = new Timer(true);
+		sweeperTask = new SweeperTask(dao, channelLockExecutor);
+		sweeperTimer.scheduleAtFixedRate(sweeperTask, sweepPeriodMillis, sweepPeriodMillis);
 	}
 
 	// This naive implementation bothers me a bit:
 	//  - It causes bursts of activity at each period rather than distributing cleanup more evenly.
 	//  - Every member of the cluster cleans every channel rather than distributing the work.
+	//  - It's sequential, so it can be slow when there are a lot of channels to check. Alternatively it could spawn
+	//    a job per channel, but that might be hard on the system.
 	static class SweeperTask extends TimerTask {
 
 		private final ChannelDao dao;
@@ -59,17 +69,27 @@ public class DataHubSweeper {
 			}
 		}
 
-		private void sweepChannel(ChannelConfiguration channelConfiguration) throws Exception {
+		private void sweepChannel(final ChannelConfiguration channelConfiguration) throws Exception {
 			if (channelConfiguration.getTtlMillis() == null) return;
 
-			String channelName = channelConfiguration.getName();
-			Date reapDate = new Date(System.currentTimeMillis() - channelConfiguration.getTtlMillis());
-			List<DataHubKey> reapableKeys = findReapableKeys(channelName, reapDate);
-			if (!reapableKeys.isEmpty()) {
-				logger.debug("Sweeping " + reapableKeys.size() + " for " + channelName);
-				fixPointersForChannel(channelName, reapableKeys);
-				reapValues(channelName, reapableKeys);
-			}
+			// Reaping has to be in it's own lock or two reaps at the same time could clash with each other over
+			// what keys to reap and how that impacts the first/last channel pointers.
+			final String channelName = channelConfiguration.getName();
+			channelLockExecutor.execute(
+				channelName + "_reap",
+				new Callable() {
+					@Override
+					public Void call() throws Exception {
+						Date reapDate = new Date(System.currentTimeMillis() - channelConfiguration.getTtlMillis());
+						List<DataHubKey> reapableKeys = findReapableKeys(channelName, reapDate);
+						if (!reapableKeys.isEmpty()) {
+							logger.error("Sweeping " + reapableKeys.size() + " for " + channelName);
+							fixPointersForChannel(channelName, reapableKeys);
+							reapValues(channelName, reapableKeys);
+						}
+						return null;
+					}
+				});
 		}
 
 		private void fixPointersForChannel(
@@ -104,5 +124,13 @@ public class DataHubSweeper {
 		private void reapValues(String channelName, List<DataHubKey> reapableKeys) {
 			dao.delete(channelName, reapableKeys);
 		}
+	}
+
+	@POST
+	@Timed
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response sweep() {
+		sweeperTask.run();
+		return Response.ok().build();
 	}
 }
