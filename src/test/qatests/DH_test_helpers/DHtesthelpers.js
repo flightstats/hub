@@ -30,6 +30,9 @@ exports.DOMAIN = DOMAIN;
 var URL_ROOT = 'http://'+ DOMAIN;
 exports.URL_ROOT = URL_ROOT;
 
+var DEFAULT_TTL = 10368000000;
+exports.DEFAULT_TTL = DEFAULT_TTL;
+
 var DEBUG = true;
 
 
@@ -736,7 +739,7 @@ exports.getLatestUri = getLatestUri;
 var getAllChannels = function(params, callback) {
     var domain = params.domain || DOMAIN,
         uri = ['http:/', domain, 'channel'].join('/'),
-        VERBOSE = params.debug || false;
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
     gu.debugLog('uri for getAllChannels: '+ uri, VERBOSE);
 
@@ -748,6 +751,60 @@ var getAllChannels = function(params, callback) {
         });
 }
 exports.getAllChannels = getAllChannels;
+
+/**
+ * Update a channel via PATCH. Currently, code only supports changing .ttlMillis property but this function will
+ *  pass along the .name property if given for testing.
+ *
+ * @param params: .channelUri, .name (optional), .ttlMillis (optional), .debug (optional).
+ * @param callback: response
+ */
+var patchChannel = function(params, callback) {
+    var payload = {},
+        uri = params.channelUri,
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true;
+
+    if (typeof params.name != 'undefined') {
+        payload['name'] = params.name;
+    }
+    if (typeof params.ttlMillis != 'undefined') {
+        payload['ttlMillis'] = params.ttlMillis;
+    }
+
+    if (VERBOSE) {
+        gu.debugLog('PATCH channel URI: '+ uri);
+        gu.debugLog('Payload dump: ');
+        console.dir(payload);
+    }
+
+    superagent.agent().patch(uri)
+        .send(payload)
+        .end(function(err, res) {
+            if (!gu.isHTTPSuccess(res.status)) {
+                gu.debugLog('PATCH channel did not return success: '+ res.status);
+            }
+            else {
+                gu.debugLog('PATCH channel succeeded.', VERBOSE);
+            }
+
+            callback(res);
+        });
+}
+exports.patchChannel = patchChannel;
+
+/**
+ * Calls the TTL reaper and waits for a response -- the reaper will not return errors (current plan, anyway).
+ * @param params: .domain=dhh.DOMAIN, .debug=false
+ * @param callback: true || false in case of some internal error
+ */
+var executeTTLCleanup = function(params, callback) {
+    // do stuff
+
+    callback(true);
+}
+exports.executeTTLCleanup = executeTTLCleanup;
+
+
 
 
 
