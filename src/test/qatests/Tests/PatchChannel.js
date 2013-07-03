@@ -25,7 +25,7 @@ var DEBUG = true;
         deleted when its TTL has been met. That is covered in the TTLDeletion.js file.
  */
 
-describe.only('Patch Channel', function() {
+describe('Patch Channel', function() {
 
     var getLightweightChannel = function(cnBody) {
         var cnMetadata = new dhh.channelMetadata(cnBody),
