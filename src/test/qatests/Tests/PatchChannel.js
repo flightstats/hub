@@ -44,7 +44,7 @@ describe.only('Patch Channel', function() {
      *  .ttlMillis = original TTL,
      *  .newTtlMillis = TTL sent via PATCH,
      *  .newName = name sent via PATCH
-     * @param callback: lightweight channel object (.uri, .name, .newName, .ttl, .newTtl), patch response
+     * @param callback: dhh.channelMetadata object, patch response
      */
     var createAndPatchChannel = function(params, callback) {
         var cnName = (params.hasOwnProperty('name')) ? params.name : dhh.getRandomChannelName(),
@@ -66,14 +66,12 @@ describe.only('Patch Channel', function() {
                 throw new Error(res.error);
             }
 
-            var channel = getLightweightChannel(res.body);
-            gu.debugLog('Test channel:'+ channel.uri, DEBUG);
+            var channel = new dhh.channelMetadata(res.body);
+            gu.debugLog('Test channel:'+ channel.getChannelUri(), DEBUG);
 
-            patchPayload.channelUri = channel.uri;
+            patchPayload.channelUri = channel.getChannelUri();
             dhh.patchChannel(patchPayload, function(pRes) {
-                var cnMetadata = new dhh.channelMetadata(pRes.body);
-                channel['newName'] = cnMetadata.getName();
-                channel['newTtl'] = cnMetadata.getTTL();
+                channel = new dhh.channelMetadata(pRes.body);
 
                 callback(channel, pRes);
             })
@@ -82,11 +80,13 @@ describe.only('Patch Channel', function() {
 
     describe('Acceptance - set channel with default TTL value to non-default TTL value', function() {
         var newTTL = ranU.randomNum(50000) + 10000,
-            patchRes = null;
+            patchRes = null,
+            channel = null;
 
         before(function(callback) {
-            createAndPatchChannel({newTtlMillis: newTTL}, function(channel, pRes) {
+            createAndPatchChannel({newTtlMillis: newTTL}, function(cnMetadata, pRes) {
                 patchRes = pRes;
+                channel = cnMetadata;
 
                 callback();
             })
@@ -97,18 +97,19 @@ describe.only('Patch Channel', function() {
         })
 
         it('returns updated TTL', function() {
-            var cnMetadata = new dhh.channelMetadata(patchRes.body);
-            expect(cnMetadata.getTTL()).to.equal(newTTL);
+            expect(channel.getTTL()).to.equal(newTTL);
         })
     })
 
     describe('Acceptance - set channel with no TTL value to have a TTL value', function() {
         var newTTL = ranU.randomNum(50000) + 10000,
-            patchRes = null;
+            patchRes = null,
+            channel = null;
 
         before(function(callback) {
-            createAndPatchChannel({ttlMillis: null, newTtlMillis: newTTL}, function(channel, pRes) {
+            createAndPatchChannel({ttlMillis: null, newTtlMillis: newTTL}, function(cnMetadata, pRes) {
                 patchRes = pRes;
+                channel = cnMetadata;
 
                 callback();
             })
@@ -119,8 +120,7 @@ describe.only('Patch Channel', function() {
         })
 
         it('returns updated TTL', function() {
-            var cnMetadata = new dhh.channelMetadata(patchRes.body);
-            expect(cnMetadata.getTTL()).to.equal(newTTL);
+            expect(channel.getTTL()).to.equal(newTTL);
         })
     })
 
@@ -130,7 +130,7 @@ describe.only('Patch Channel', function() {
         it('can set channel with default TTL value to have no TTL value', function(done) {
             createAndPatchChannel({newTtlMillis: null}, function(channel, pRes) {
                 expect(pRes.status).to.equal(gu.HTTPresponses.OK);
-                expect(typeof channel.newTtl).to.equal('undefined');
+                expect(typeof channel.getTTL()).to.equal('undefined');
 
                 done();
             })
@@ -139,7 +139,7 @@ describe.only('Patch Channel', function() {
         it('can PATCH with same TTL value, resulting in 200', function(done) {
             createAndPatchChannel({newTtlMillis: dhh.DEFAULT_TTL}, function(channel, pRes) {
                 expect(pRes.status).to.equal(gu.HTTPresponses.OK);
-                expect(channel.newTtl).to.equal(dhh.DEFAULT_TTL);
+                expect(channel.getTTL()).to.equal(dhh.DEFAULT_TTL);
 
                 done();
             })
@@ -151,9 +151,9 @@ describe.only('Patch Channel', function() {
 
             createAndPatchChannel({newTtlMillis: firstUpdatedTTL}, function(channel, pRes) {
                 expect(pRes.status).to.equal(gu.HTTPresponses.OK);
-                expect(channel.newTtl).to.equal(firstUpdatedTTL);
+                expect(channel.getTTL()).to.equal(firstUpdatedTTL);
 
-                dhh.patchChannel({channelUri: channel.uri, ttlMillis: secondUpdatedTTL},
+                dhh.patchChannel({channelUri: channel.getChannelUri(), ttlMillis: secondUpdatedTTL},
                     function(patchRes) {
                         expect(patchRes.status).to.equal(gu.HTTPresponses.OK);
                         var cnMetadata = new dhh.channelMetadata(patchRes.body);
