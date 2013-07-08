@@ -7,11 +7,20 @@ import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.google.common.base.Optional;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import javax.ws.rs.core.Response;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class DataHubSweeperTest {
@@ -33,7 +42,7 @@ public class DataHubSweeperTest {
 		// THEN
 		verify(dao).getChannels();
 		verify(dao).findKeysInRange(anyString(), any(Date.class), any(Date.class));
-		verify(dao,times(0)).delete(channel.getName(), Collections.<DataHubKey>emptyList());
+		verify(dao, times(0)).delete(channel.getName(), Collections.<DataHubKey>emptyList());
 	}
 
 	@Test
@@ -93,5 +102,66 @@ public class DataHubSweeperTest {
 		verify(dao).delete(channel.getName(), Arrays.asList(reapHubKey1.get(), reapHubKey2.get()));
 		verify(dao).deleteFirstKey(channel.getName());
 		verify(dao).deleteLastUpdateKey(channel.getName());
+	}
+
+	@Test
+	public void testSweepRest() {
+		// GIVEN
+		ChannelDao dao = mock(ChannelDao.class);
+		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
+		DataHubSweeper testClass = new DataHubSweeper(TimeUnit.DAYS.toMillis(1), dao, channelLockExecutor );
+
+		// WHEN
+		when( dao.getChannels() ).thenReturn(Collections.<ChannelConfiguration>emptyList());
+		Response response = testClass.sweep();
+
+		// THEN
+		assertEquals(200, response.getStatus());
+		verify( dao ).getChannels();
+	}
+
+	@Test
+	public void testSimultaneousSweep() throws InterruptedException {
+		// GIVEN
+		ChannelDao dao = mock(ChannelDao.class);
+		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
+		final DataHubSweeper testClass = new DataHubSweeper(TimeUnit.DAYS.toMillis(1), dao, channelLockExecutor );
+		final Lock lock = new ReentrantLock();
+		lock.lock();
+
+		// WHEN
+		when(dao.getChannels()).thenAnswer( new Answer<Collection<ChannelConfiguration>>() {
+			@Override
+			public Collection<ChannelConfiguration> answer(InvocationOnMock invocation) throws Throwable {
+				// Force this sweep to stall until unlock, that new sweep requests will see a sweep in progress.
+				lock.lock();
+				return Collections.emptyList();
+			}
+		});
+
+		final AtomicReference<Response> doesSweepResponse = new AtomicReference<>();
+		Thread threadDoesSweep = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				doesSweepResponse.set(testClass.sweep());
+			}
+		});
+		final AtomicReference<Response> bailsOnSweepResponse = new AtomicReference<>();
+		Thread threadBailsOnSweep = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				bailsOnSweepResponse.set(testClass.sweep());
+			}
+		});
+		threadDoesSweep.start();
+		threadBailsOnSweep.start();
+		threadBailsOnSweep.join();
+		lock.unlock();
+		threadDoesSweep.join();
+
+		// THEN
+		assertEquals(200, doesSweepResponse.get().getStatus());
+		assertEquals(409, bailsOnSweepResponse.get().getStatus());
+		verify( dao ).getChannels();
 	}
 }
