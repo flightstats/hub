@@ -67,9 +67,19 @@ public class ChannelContentResource {
 												   .entity(compositeValue.getData())
 												   .header(CREATION_DATE_HEADER.getHeaderName(),
 														   dateTimeFormatter.print(new DateTime(key.getDate())));
+
+		addOptionalHeader("Content-Encoding", compositeValue.getValue().getContentEncoding(), builder);
+		addOptionalHeader("Content-Language", compositeValue.getValue().getContentLanguage(), builder);
+
 		addPreviousLink(compositeValue, builder);
 		addNextLink(compositeValue, builder);
 		return builder.build();
+	}
+
+	private void addOptionalHeader(String headerName, Optional<String> headerValue, Response.ResponseBuilder builder) {
+		if(headerValue.isPresent()){
+			builder.header(headerName, headerValue.get());
+		}
 	}
 
 	private MediaType getContentType(LinkedDataHubCompositeValue compositeValue) {
