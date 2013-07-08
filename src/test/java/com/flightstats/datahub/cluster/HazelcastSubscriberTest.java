@@ -11,26 +11,25 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class HazelcastSubscriberTest {
 
-	@Test public void testCompareExpected() {
-		// Standard cases.
-		assertEquals(1, HazelcastSubscriber.compareExpected((short)1, (short)5, (short)10));
-		assertEquals(-1, HazelcastSubscriber.compareExpected((short)5, (short)1, (short)10));
-		assertEquals(0, HazelcastSubscriber.compareExpected((short)1, (short)1, (short)10));
-
-		// Test buffer, no rollover.
-		assertEquals(1, HazelcastSubscriber.compareExpected((short)1, (short)10, (short)10));
-		assertEquals(-1, HazelcastSubscriber.compareExpected((short)1, (short)11, (short)10));
-
-		// Test buffer, with rollover.
-		assertEquals(1, HazelcastSubscriber.compareExpected((short) (Short.MAX_VALUE - 5), (short)0, (short)10));
-		assertEquals(1, HazelcastSubscriber.compareExpected((short) (Short.MAX_VALUE - 5), (short)4, (short)10));
-		assertEquals(-1, HazelcastSubscriber.compareExpected((short) (Short.MAX_VALUE - 5), (short)5, (short)10));
-	}
+//	@Test public void testCompareExpected() {
+//		// Standard cases.
+//		assertEquals(1, HazelcastSubscriber.compareExpected((short)1, (short)5, (short)10));
+//		assertEquals(-1, HazelcastSubscriber.compareExpected((short)5, (short)1, (short)10));
+//		assertEquals(0, HazelcastSubscriber.compareExpected((short)1, (short)1, (short)10));
+//
+//		// Test buffer, no rollover.
+//		assertEquals(1, HazelcastSubscriber.compareExpected((short)1, (short)10, (short)10));
+//		assertEquals(-1, HazelcastSubscriber.compareExpected((short)1, (short)11, (short)10));
+//
+//		// Test buffer, with rollover.
+//		assertEquals(1, HazelcastSubscriber.compareExpected((short) (Short.MAX_VALUE - 5), (short)0, (short)10));
+//		assertEquals(1, HazelcastSubscriber.compareExpected((short) (Short.MAX_VALUE - 5), (short)4, (short)10));
+//		assertEquals(-1, HazelcastSubscriber.compareExpected((short) (Short.MAX_VALUE - 5), (short)5, (short)10));
+//	}
 
 	@Test
 	public void testOneMessageBasic() throws URISyntaxException {

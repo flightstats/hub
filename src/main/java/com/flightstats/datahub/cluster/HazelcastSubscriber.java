@@ -18,13 +18,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HazelcastSubscriber implements MessageListener<URI> {
 
 	private final static Logger logger = LoggerFactory.getLogger(HazelcastSubscriber.class);
-	static final short BUFFER = (short) 1000;
+	static final short BUFFER_SIZE = (short) 1000;
 
 	private final Consumer<URI> consumer;
 	private final DataHubKeyRenderer keyRenderer;
+	private final Map<Short, URI> futureMessages = new ConcurrentHashMap<>();
 	private short nextExpected = -1;
-	private final Map<Short,Message<URI>> futureMessages = new ConcurrentHashMap<>();
-	private final Object mutex = new Object();
 
 
 	public HazelcastSubscriber(Consumer<URI> consumer, DataHubKeyRenderer keyRenderer) {
@@ -34,59 +33,57 @@ public class HazelcastSubscriber implements MessageListener<URI> {
 
 	@Override
 	public void onMessage(Message<URI> message) {
-		if (message == null) return;
-
-		synchronized (mutex) {
-			short messageSequence = getKeyFromUri(message.getMessageObject()).getSequence();
-			if (handleFirstMessage(message, messageSequence)) return;
-
-			switch (compareExpected(nextExpected, messageSequence, BUFFER)) {
-				case 0: handleExpectedMessage(message); break;
-				case 1: handleFutureMessage(message, messageSequence); break;
-				case -1: handleOldMessage(message); break;
-			}
+		if (message == null) {
+			return;
 		}
-	}
 
-	private boolean handleFirstMessage(Message<URI> message, short messageSequence) {
-		if (nextExpected == -1) {
+		URI uri = message.getMessageObject();
+		short messageSequence = getKeyFromUri(uri).getSequence();
+
+		if (isFirst()) {
+			consumer.apply(uri);
 			nextExpected = getNextExpected(messageSequence);
-			consumer.apply(message.getMessageObject());
-			return true;
 		}
-		return false;
+		else if (isFuture(messageSequence)) {
+			futureMessages.put(messageSequence, uri);    //buffer it up
+		}
+		else if (isOld(messageSequence)) {
+			logger.error("Ignoring old message to avoid out of sequence send to subscriber: " + message.getMessageObject());
+		}
+		else {
+			futureMessages.put(messageSequence, uri);
+			dispatchBufferedInOrder();
+		}
 	}
 
-	private void handleExpectedMessage(Message<URI> message) {
-		nextExpected = getNextExpected(nextExpected);
-		consumer.apply(message.getMessageObject());
-		onMessage(futureMessages.remove(nextExpected));
+	private void dispatchBufferedInOrder() {
+		URI nextUri;
+		while ((nextUri = futureMessages.remove(nextExpected)) != null){
+			consumer.apply(nextUri);
+			nextExpected = getNextExpected(nextExpected);
+		}
 	}
 
-	private void handleFutureMessage(Message<URI> message, short messageSequence) {
-		futureMessages.put(messageSequence, message);
+	private boolean isFirst() {
+		return nextExpected == -1;
 	}
 
-	private void handleOldMessage(Message<URI> message) {
-		logger.error("Ignoring old message to avoid out of sequence send to subscriber: " + message.getMessageObject());
+	private boolean isFuture(short received) {
+		boolean isFutureBeforeRollover = (received > nextExpected) && (received < Math.min(nextExpected + BUFFER_SIZE, Short.MAX_VALUE));
+		boolean isFutureAfterRollover = received < (nextExpected + BUFFER_SIZE - Short.MAX_VALUE);
+		return isFutureBeforeRollover || isFutureAfterRollover;
+	}
+
+	private boolean isOld(short messageSequence) {
+		return !(isFirst() || isExpected(messageSequence) || isFuture(messageSequence));
+	}
+
+	private boolean isExpected(short messageSequence) {
+		return nextExpected == messageSequence;
 	}
 
 	private short getNextExpected(short current) {
 		return (short) (current == Short.MAX_VALUE ? 0 : current + 1);
-	}
-
-	/**
-	 * Check if the message sequence is newer, older, or equal to the expected value. Rollover makes this
-	 * complicated since a "future" message sequence could be either higher than the expected or lower if expected is near
-	 * the rollover point, which is where the buffer comes in. A message is "newer" only if it's in the buffer range.
-	 *
-	 * @return 0 if equal, 1 if received is "future", -1 if received is in the past.
-	 */
-	static int compareExpected(short expected, short received, short buffer) {
-		if (expected == received) return 0;
-		boolean isFutureBeforeRollover = (received > expected) && (received < Math.min(expected + buffer, Short.MAX_VALUE));
-		boolean isFutureAfterRollover = received < (expected + buffer - Short.MAX_VALUE);
-		return isFutureBeforeRollover || isFutureAfterRollover ? 1 : -1;
 	}
 
 	private DataHubKey getKeyFromUri(URI uri) {
