@@ -33,10 +33,6 @@ public class HazelcastSubscriber implements MessageListener<URI> {
 
 	@Override
 	public void onMessage(Message<URI> message) {
-		if (message == null) {
-			return;
-		}
-
 		URI uri = message.getMessageObject();
 		short messageSequence = getKeyFromUri(uri).getSequence();
 
