@@ -4,6 +4,7 @@ import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.google.common.base.Optional;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -28,7 +29,7 @@ public class CassandraValueReaderTest {
 		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
 		byte[] data = new byte[]{'t', 'e', 's', 't', 'i', 'n'};
 		String rowKey = "the_____key___";
-		DataHubCompositeValue expected = new DataHubCompositeValue("text/plain", data);
+		DataHubCompositeValue expected = new DataHubCompositeValue(Optional.of("text/plain"), null, null, data);
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		String columnName = keyRenderer.keyToString(key);
 

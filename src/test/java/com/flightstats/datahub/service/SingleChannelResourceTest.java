@@ -28,6 +28,8 @@ public class SingleChannelResourceTest {
 
 	private String channelName;
 	private String contentType;
+	private String contentEncoding;
+	private String contentLanguage;
 	private URI channelUri;
 	private ChannelDao dao;
 	private ChannelHypermediaLinkBuilder linkBuilder;
@@ -43,6 +45,8 @@ public class SingleChannelResourceTest {
 	public void setup() {
 		channelName = "UHF";
 		contentType = "text/plain";
+		contentEncoding = "gzip";
+		contentLanguage = "en";
 		channelUri = URI.create("http://testification.com/channel/spoon");
 		URI requestUri = URI.create("http://testification.com/channel/spoon");
 		URI latestUri = URI.create("http://testification.com/channel/spoon/latest");
@@ -157,10 +161,10 @@ public class SingleChannelResourceTest {
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey);
 		channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 
-		when(dao.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(dataHubKey));
+		when(dao.insert(channelName, Optional.of(contentType), Optional.of(contentEncoding), Optional.of(contentLanguage), data)).thenReturn(new ValueInsertionResult(dataHubKey));
 
 		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, hazelcast);
-		Response response = testClass.insertValue(contentType, channelName, data);
+		Response response = testClass.insertValue(channelName, contentType, contentEncoding, contentLanguage, data);
 
 		assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
 
@@ -180,10 +184,10 @@ public class SingleChannelResourceTest {
 		ValueInsertionResult result = new ValueInsertionResult(dataHubKey);
 		channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 
-		when(dao.insert(channelName, contentType, data)).thenReturn(result);
+		when(dao.insert(channelName, Optional.of(contentType), Optional.of(contentEncoding), Optional.of(contentLanguage), data)).thenReturn(result);
 
 		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, hazelcast);
-		testClass.insertValue(contentType, channelName, data);
+		testClass.insertValue(channelName, contentType, contentEncoding, contentLanguage, data);
 		verify(topic).publish(itemUri);
 	}
 
@@ -198,6 +202,6 @@ public class SingleChannelResourceTest {
 				new NoSuchChannelException("No such channel: " + channelName, new RuntimeException()));
 
 		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, null);
-		testClass.insertValue(contentType, channelName, data);
+		testClass.insertValue(channelName, contentType, contentEncoding, contentLanguage, data);
 	}
 }

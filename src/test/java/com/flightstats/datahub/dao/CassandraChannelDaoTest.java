@@ -57,8 +57,8 @@ public class CassandraChannelDaoTest {
 		DataHubKey key = new DataHubKey(date, (short) 3);
 		String channelName = "foo";
 		byte[] data = "bar".getBytes();
-		String contentType = "text/plain";
-		DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
+		Optional<String> contentType = Optional.of("text/plain");
+		DataHubCompositeValue value = new DataHubCompositeValue(contentType, null, null, data);
 		ValueInsertionResult expected = new ValueInsertionResult(key);
 		DataHubKey lastUpdateKey = new DataHubKey(new Date(2345678912L), (short) 0);
 
@@ -71,7 +71,7 @@ public class CassandraChannelDaoTest {
 		when(channelsCollection.getLastUpdatedKey(channelName)).thenReturn(lastUpdateKey);
 		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, linkagesCollection, inserter, reader, null, null, null, null);
 
-		ValueInsertionResult result = testClass.insert(channelName, contentType, data);
+		ValueInsertionResult result = testClass.insert(channelName, contentType, null, null, data);
 
 		verify(channelsCollection).updateFirstKey("foo", key);
 		assertEquals(expected, result);
@@ -85,7 +85,7 @@ public class CassandraChannelDaoTest {
 		DataHubKey previousKey = new DataHubKey(new Date(9998888777665L), (short) 0);
 		DataHubKey nextKey = new DataHubKey(new Date(9998888777667L), (short) 0);
 		byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
-		DataHubCompositeValue compositeValue = new DataHubCompositeValue("text/plain", data);
+		DataHubCompositeValue compositeValue = new DataHubCompositeValue(Optional.of("text/plain"), null, null, data);
 		Optional<DataHubKey> previous = Optional.of(previousKey);
 		Optional<DataHubKey> next = Optional.of(nextKey);
 		LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(compositeValue, previous, next);
