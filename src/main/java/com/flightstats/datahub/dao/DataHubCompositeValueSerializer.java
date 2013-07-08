@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.DataHubCompositeValue;
+import com.google.common.base.Optional;
 import me.prettyprint.cassandra.serializers.AbstractSerializer;
 import me.prettyprint.hector.api.Serializer;
 import org.apache.thrift.TBaseHelper;
@@ -26,6 +27,8 @@ public class DataHubCompositeValueSerializer extends AbstractSerializer<DataHubC
             ByteArrayOutputStream out = new ByteArrayOutputStream(calculateBufferLength(obj));
 
             writeContentType(obj, out);
+            writeContentEncoding(obj, out);
+            writeContentLanguage(obj, out);
             writeData(obj, out);
 
             return ByteBuffer.wrap(out.toByteArray());
@@ -34,36 +37,61 @@ public class DataHubCompositeValueSerializer extends AbstractSerializer<DataHubC
         }
     }
 
-    @Override
+	@Override
     public DataHubCompositeValue fromByteBuffer(ByteBuffer byteBuffer) {
         ByteBuffer correctedBuffer = TBaseHelper.rightSize(byteBuffer);
         correctedBuffer.rewind();
 
-        String contentType = readContentType(correctedBuffer);
+        String contentType = readString(correctedBuffer);
+        String contentEncoding = readString(correctedBuffer);
+        String contentLanguage = readString(correctedBuffer);
+
         byte[] valueData = readValueData(correctedBuffer);
 
-        return new DataHubCompositeValue(contentType, valueData);
+        return new DataHubCompositeValue(Optional.of(contentType), Optional.of(contentEncoding), Optional.of(contentLanguage), valueData);
     }
 
-    private int calculateBufferLength(DataHubCompositeValue obj) {
-        return BYTES_PER_INT + obj.getContentTypeLength() + BYTES_PER_INT + obj.getDataLength();
+    private int calculateBufferLength(DataHubCompositeValue value) {
+        return BYTES_PER_INT + optionalLength(value.getContentType()) +
+				BYTES_PER_INT + optionalLength(value.getContentEncoding()) +
+				BYTES_PER_INT + optionalLength(value.getContentLanguage()) +
+				BYTES_PER_INT + value.getDataLength();
     }
 
-    private void writeData(DataHubCompositeValue obj, ByteArrayOutputStream out) throws IOException {
+	private int optionalLength(Optional<String> contentType) {
+		return contentType.isPresent() ? contentType.get().length() : 0;
+	}
+
+	private void writeData(DataHubCompositeValue obj, ByteArrayOutputStream out) throws IOException {
         out.write(ByteBuffer.allocate(4).putInt(obj.getDataLength()).array());
         out.write(obj.getData());
     }
 
     private void writeContentType(DataHubCompositeValue obj, ByteArrayOutputStream out) throws IOException {
-        int contentTypeLength = obj.getContentTypeLength();
-        out.write(ByteBuffer.allocate(4).putInt(contentTypeLength).array());
-        if (contentTypeLength > 0) {
-            byte[] contentType = safeBytesFromString(obj.getContentType());
-            out.write(contentType);
-        }
+		writeString(out, obj.getContentType());
     }
 
-    private String readContentType(ByteBuffer correctedBuffer) {
+	private void writeContentEncoding(DataHubCompositeValue obj, ByteArrayOutputStream out) throws IOException {
+		writeString(out, obj.getContentEncoding());
+	}
+
+	private void writeContentLanguage(DataHubCompositeValue obj, ByteArrayOutputStream out) throws IOException {
+		writeString(out, obj.getContentLanguage());
+	}
+
+	private void writeString(ByteArrayOutputStream out, Optional<String> stringValue) throws IOException {
+		int stringLength = 0;
+		if(stringValue.isPresent()){
+			stringLength = stringValue.get().length();
+		}
+		out.write(ByteBuffer.allocate(4).putInt(stringLength).array());
+		if (stringLength > 0) {
+			byte[] bytes = safeBytesFromString(stringValue.get());
+            out.write(bytes);
+        }
+	}
+
+	private String readString(ByteBuffer correctedBuffer) {
         byte[] contentTypeBuff = readByteBlock(correctedBuffer);
         return safeStringFromBytes(contentTypeBuff);
     }

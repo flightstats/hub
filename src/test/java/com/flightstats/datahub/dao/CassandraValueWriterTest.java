@@ -6,6 +6,7 @@ import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.google.common.base.Optional;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
@@ -26,7 +27,9 @@ public class CassandraValueWriterTest {
 	public static final byte[] DATA = "bar".getBytes();
 	public static final DataHubKey DATA_HUB_KEY = new DataHubKey(new Date(2345678910L), (short) 33);
 	public static final String ROW_KEY = "a super key for this row";
-	public static final String CONTENT_TYPE = "text/plain";
+	public static final Optional<String> CONTENT_TYPE = Optional.of("text/plain");
+	public static final Optional<String> CONTENT_ENCODING = Optional.of("gzip");
+	public static final Optional<String> CONTENT_LANGUAGE = Optional.absent();
 
 	private CassandraConnector connector;
 	private HectorFactoryWrapper hector;
@@ -51,7 +54,7 @@ public class CassandraValueWriterTest {
 
 	@Test
 	public void testInsert() throws Exception {
-		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, DATA);
+		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_ENCODING, CONTENT_LANGUAGE, DATA);
 		ValueInsertionResult expected = new ValueInsertionResult(DATA_HUB_KEY);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
@@ -68,7 +71,7 @@ public class CassandraValueWriterTest {
 
 	@Test(expected = NoSuchChannelException.class)
 	public void testInsertWithMissingChannel() throws Exception {
-		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, DATA);
+		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_ENCODING, CONTENT_LANGUAGE, DATA);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
 		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
@@ -83,7 +86,7 @@ public class CassandraValueWriterTest {
 
 	@Test(expected = HInvalidRequestException.class)
 	public void testOtherExceptionMessages() throws Exception {
-		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, DATA);
+		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_ENCODING, CONTENT_LANGUAGE, DATA);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
 		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
