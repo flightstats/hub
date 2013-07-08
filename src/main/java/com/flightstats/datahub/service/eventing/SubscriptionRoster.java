@@ -1,12 +1,9 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.google.common.base.Optional;
-
 import java.net.URI;
 import java.util.Collection;
 
 public interface SubscriptionRoster {
-
 
 	void subscribe(String channelName, Consumer<URI> consumer);
 

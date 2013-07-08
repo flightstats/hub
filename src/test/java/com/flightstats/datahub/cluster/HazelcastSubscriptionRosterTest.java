@@ -1,6 +1,7 @@
 package com.flightstats.datahub.cluster;
 
 import com.flightstats.datahub.service.eventing.Consumer;
+import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Message;
@@ -20,15 +21,16 @@ public class HazelcastSubscriptionRosterTest {
 	public void testSubscribe() throws Exception {
 		//GIVEN
 		String channelName = "4chan";
-		URI uri = URI.create("http://datahub.flightstats.com/channel/4chan/1234");
+		URI uri = URI.create("http://datahub.flightstats.com/channel/4chan/0000000007H40000");
 
+		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
 		ITopic<Object> topic = mock(ITopic.class);
 		Message message = mock(Message.class);
 		Consumer<URI> consumer = mock(Consumer.class);
 		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
-		HazelcastSubscriptionRoster testClass = new HazelcastSubscriptionRoster(hazelcast);
+		HazelcastSubscriptionRoster testClass = new HazelcastSubscriptionRoster(hazelcast, keyRenderer);
 
 		//WHEN
 		when(hazelcast.getTopic("ws:4chan")).thenReturn(topic);
@@ -47,19 +49,18 @@ public class HazelcastSubscriptionRosterTest {
 	public void testUnsubscribe() throws Exception {
 		//GIVEN
 		String channelName = "4chan";
-		URI uri = URI.create("http://datahub.flightstats.com/channel/4chan/1234");
 
+		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
 		ITopic<Object> topic = mock(ITopic.class);
 		Message message = mock(Message.class);
 		Consumer<URI> consumer = mock(Consumer.class);
 		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
-		HazelcastSubscriptionRoster testClass = new HazelcastSubscriptionRoster(hazelcast);
+		HazelcastSubscriptionRoster testClass = new HazelcastSubscriptionRoster(hazelcast, keyRenderer);
 
 		//WHEN
 		when(hazelcast.getTopic("ws:4chan")).thenReturn(topic);
-		when(message.getMessageObject()).thenReturn(uri);
 
 		testClass.subscribe(channelName, consumer);        //Need to subscribe first because this class is stateful
 		testClass.unsubscribe(channelName, consumer);
