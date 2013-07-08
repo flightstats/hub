@@ -29,7 +29,7 @@ public class ChannelCreationRequest {
 					builder.withTtlMillis(entry.getValue() == null ? null : Long.parseLong(entry.getValue()));
 					break;
 				default:
-					throw new UnrecognizedPropertyException("Unexpected property", null, ChannelCreationRequest.class, entry.getKey());
+					throw new UnrecognizedPropertyException("Unexpected property: " + entry.getKey(), null, ChannelCreationRequest.class, entry.getKey());
 			}
 		}
 		return builder.build();
