@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Remove any items from persistence that are beyond their TTL (time to live).
@@ -31,6 +32,7 @@ public class DataHubSweeper {
 	private static final Long DEFAULT_SWEEP_PERIOD = TimeUnit.MINUTES.toMillis(1);
 	private final Timer sweeperTimer;
 	private final SweeperTask sweeperTask;
+	private final AtomicBoolean restSweepInProgress = new AtomicBoolean(false);
 
 	@Inject
 	public DataHubSweeper(@Named("sweeper.periodMillis") Long sweepPeriodMillis, ChannelDao dao,
@@ -59,13 +61,17 @@ public class DataHubSweeper {
 
 		@Override
 		public void run() {
-			for (ChannelConfiguration channelConfiguration : dao.getChannels()) {
-				try {
-					sweepChannel(channelConfiguration);
-				} catch (Exception e) {
-					// Don't let anything escape or it will negate the parent Timer running this task and we'll never run again.
-					logger.error("Failure in sweeper for channel " + channelConfiguration.getName(), e);
+			try {
+				for (ChannelConfiguration channelConfiguration : dao.getChannels()) {
+					try {
+						sweepChannel(channelConfiguration);
+					} catch (Exception e) {
+						logger.error("Failure in sweeper for channel " + channelConfiguration.getName(), e);
+					}
 				}
+			} catch (Exception e) {
+				// Don't let anything escape or it will negate the parent Timer running this task and we'll never run again.
+				logger.error("Failure getting channels", e);
 			}
 		}
 
@@ -105,7 +111,7 @@ public class DataHubSweeper {
 
 						DataHubKey lastReapKey = reapableKeys.get(reapableKeys.size() - 1);
 						Optional<LinkedDataHubCompositeValue> lastReapKeyValue = dao.getValue(channelName, lastReapKey);
-						if ( lastReapKeyValue.isPresent() &&  lastReapKeyValue.get().hasNext()) {
+						if (lastReapKeyValue.isPresent() && lastReapKeyValue.get().hasNext()) {
 							dao.setFirstKey(channelName, lastReapKeyValue.get().getNext().get());
 						} else {
 							// Every item in the channel was reaped.
@@ -130,7 +136,12 @@ public class DataHubSweeper {
 	@Timed
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response sweep() {
-		sweeperTask.run();
-		return Response.ok().build();
+		// Avoid the possibility of a degenerate client spawning rampaging hordes of simultaneous sweeps via REST.
+		if (restSweepInProgress.compareAndSet(false,true)) {
+			sweeperTask.run();
+			restSweepInProgress.set(false);
+			return Response.ok().build();
+		}
+		return Response.status(Response.Status.CONFLICT).build();
 	}
 }
