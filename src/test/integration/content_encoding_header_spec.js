@@ -5,11 +5,13 @@ var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "Testing that the Content-Encoding header is returned";
 
+var testName = "content_encoding_header_spec";
+
 utils.configureFrisby();
 
 utils.runInTestChannel(channelName, function () {
     // Note: We have to use request directly here, because Frisby insists on having a content-type specified.
-    frisby.create("Testing the content-encoding header")
+    frisby.create(testName + ": Testing the content-encoding header")
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Encoding", "gzip")
         .expectStatus(201)
