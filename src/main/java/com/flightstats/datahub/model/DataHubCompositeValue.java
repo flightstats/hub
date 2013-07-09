@@ -41,30 +41,38 @@ public class DataHubCompositeValue implements Serializable {
 	}
 
 	@Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
 
-        DataHubCompositeValue that = (DataHubCompositeValue) o;
+		DataHubCompositeValue that = (DataHubCompositeValue) o;
 
-        if (contentType != null ? !contentType.equals(that.contentType) : that.contentType != null) {
-            return false;
-        }
-        if (!Arrays.equals(data, that.data)) {
-            return false;
-        }
+		if (!contentEncoding.equals(that.contentEncoding)) {
+			return false;
+		}
+		if (!contentLanguage.equals(that.contentLanguage)) {
+			return false;
+		}
+		if (!contentType.equals(that.contentType)) {
+			return false;
+		}
+		if (!Arrays.equals(data, that.data)) {
+			return false;
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    @Override
-    public int hashCode() {
-        int result = contentType != null ? contentType.hashCode() : 0;
-        result = 31 * result + (data != null ? Arrays.hashCode(data) : 0);
-        return result;
-    }
+	@Override
+	public int hashCode() {
+		int result = contentType.hashCode();
+		result = 31 * result + contentEncoding.hashCode();
+		result = 31 * result + contentLanguage.hashCode();
+		result = 31 * result + (data != null ? Arrays.hashCode(data) : 0);
+		return result;
+	}
 }
