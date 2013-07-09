@@ -129,11 +129,14 @@ Here's how you can do this with curl:
 ## insert content into channel
 
 To insert data to a channel, issue a POST on the channel's `self` URI and specify the appropriate
-content-type header (all content types should be supported):
+content-type header (all content types should be supported).  The `Content-Encoding` and
+`Content-Language` headers are optional:
 
 ```
 POST http://datahub:8080/channel/stumptown
 Content-type: text/plain
+Content-Language: en
+Content-Encoding: gzip
 Accept: application/json
 ___body_contains_arbitrary_content
 ```
