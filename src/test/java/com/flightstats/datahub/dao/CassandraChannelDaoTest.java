@@ -1,5 +1,6 @@
 package com.flightstats.datahub.dao;
 
+import com.flightstats.datahub.dao.serialize.DataHubCompositeValueSerializer;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
