@@ -1,5 +1,6 @@
 package com.flightstats.datahub.dao;
 
+import com.flightstats.datahub.dao.serialize.DataHubCompositeValueSerializer;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;

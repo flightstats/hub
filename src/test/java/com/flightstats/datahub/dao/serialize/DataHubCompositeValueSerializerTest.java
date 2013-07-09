@@ -1,4 +1,4 @@
-package com.flightstats.datahub.dao;
+package com.flightstats.datahub.dao.serialize;
 
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.google.common.base.Optional;
