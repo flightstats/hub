@@ -24,7 +24,7 @@ public class OptionalStringSerializer extends AbstractSerializer<Optional<String
 	@Override
 	public ByteBuffer toByteBuffer(Optional<String> obj) {
 		try {
-			ByteArrayOutputStream out = new ByteArrayOutputStream(getOptionalLength(obj) + 1);
+			ByteArrayOutputStream out = new ByteArrayOutputStream(getOptionalLength(obj) + BYTES_PER_INT);
 			writeString(out, obj);
 			return ByteBuffer.wrap(out.toByteArray());
 		} catch (IOException e) {
