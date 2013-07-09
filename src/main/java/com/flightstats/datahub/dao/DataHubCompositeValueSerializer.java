@@ -2,6 +2,7 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import me.prettyprint.cassandra.serializers.AbstractSerializer;
 import me.prettyprint.hector.api.Serializer;
 import org.apache.thrift.TBaseHelper;
@@ -42,13 +43,13 @@ public class DataHubCompositeValueSerializer extends AbstractSerializer<DataHubC
         ByteBuffer correctedBuffer = TBaseHelper.rightSize(byteBuffer);
         correctedBuffer.rewind();
 
-        String contentType = readString(correctedBuffer);
-        String contentEncoding = readString(correctedBuffer);
-        String contentLanguage = readString(correctedBuffer);
+        Optional<String> contentType = readOptionalString(correctedBuffer);
+        Optional<String> contentEncoding = readOptionalString(correctedBuffer);
+        Optional<String> contentLanguage = readOptionalString(correctedBuffer);
 
         byte[] valueData = readValueData(correctedBuffer);
 
-        return new DataHubCompositeValue(Optional.of(contentType), Optional.of(contentEncoding), Optional.of(contentLanguage), valueData);
+        return new DataHubCompositeValue(contentType, contentEncoding, contentLanguage, valueData);
     }
 
     private int calculateBufferLength(DataHubCompositeValue value) {
@@ -89,6 +90,14 @@ public class DataHubCompositeValueSerializer extends AbstractSerializer<DataHubC
 			byte[] bytes = safeBytesFromString(stringValue.get());
             out.write(bytes);
         }
+	}
+
+	private Optional<String> readOptionalString(ByteBuffer correctedBuffer) {
+		String string = readString(correctedBuffer);
+		if(Strings.isNullOrEmpty(string)){
+			return Optional.absent();
+		}
+		return Optional.of(string);
 	}
 
 	private String readString(ByteBuffer correctedBuffer) {
