@@ -1,5 +1,6 @@
 package com.flightstats.datahub.dao;
 
+import com.flightstats.datahub.dao.serialize.DataHubCompositeValueSerializer;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Function;
@@ -69,9 +70,9 @@ public class CassandraChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
+	public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage, byte[] data) {
 		logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
-		DataHubCompositeValue value = new DataHubCompositeValue(contentType, data);
+		DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentEncoding, contentLanguage, data);
 
 		//Note: There are two writes to cassandra -- one here, and one (batch) in the linkagesCollection.updateLinkages().  Combining these into one back could increase performance.
 		ValueInsertionResult result = cassandraValueWriter.write(channelName, value);

@@ -78,25 +78,28 @@ public class SingleChannelResource {
 
 		ChannelConfiguration oldConfig = channelDao.getChannelConfiguration(channelName);
 		ChannelConfiguration.Builder builder = ChannelConfiguration.builder().withChannelConfiguration(oldConfig);
-		if ( request.getTtlMillis() != null ) {
-			builder.withTtlMillis( request.getTtlMillis().isPresent() ? request.getTtlMillis().get() : null );
+		if (request.getTtlMillis() != null) {
+			builder.withTtlMillis(request.getTtlMillis().isPresent() ? request.getTtlMillis().get() : null);
 		}
 		ChannelConfiguration newConfig = builder.build();
 		channelDao.updateChannelMetadata(newConfig);
 		URI channelUri = linkBuilder.buildChannelUri(newConfig);
 		return Response.ok(channelUri).entity(
-			linkBuilder.buildLinkedChannelConfig(newConfig, channelUri))
-			.build();
+				linkBuilder.buildLinkedChannelConfig(newConfig, channelUri))
+					   .build();
 	}
 
 	@POST
 	@Timed(name = "all-channels.insert")
 	@PerChannelTimed(operationName = "insert", channelNamePathParameter = "channelName")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response insertValue(@HeaderParam("Content-Type") final String contentType, @PathParam(
-		"channelName") final String channelName, final byte[] data) throws Exception {
+	public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
+								@HeaderParam("Content-Encoding") final String contentEncoding,
+								@HeaderParam("Content-Language") final String contentLanguage,
+								final byte[] data) throws Exception {
 
-		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelName, contentType, data);
+		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelName, Optional.fromNullable(contentType), Optional.fromNullable(contentEncoding),
+				Optional.fromNullable(contentLanguage), data);
 		ValueInsertionResult insertionResult = channelLockExecutor.execute(channelName, task);
 
 		URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey());
@@ -114,18 +117,22 @@ public class SingleChannelResource {
 
 	private class WriteAndDispatch implements Callable<ValueInsertionResult> {
 		private final String channelName;
-		private final String contentType;
+		private final Optional<String> contentType;
+		private final Optional<String> contentEncoding;
+		private final Optional<String> contentLanguage;
 		private final byte[] data;
 
-		private WriteAndDispatch(String channelName, String contentType, byte[] data) {
+		private WriteAndDispatch(String channelName, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage, byte[] data) {
 			this.channelName = channelName;
 			this.contentType = contentType;
+			this.contentEncoding = contentEncoding;
+			this.contentLanguage = contentLanguage;
 			this.data = data;
 		}
 
 		@Override
 		public ValueInsertionResult call() throws Exception {
-			ValueInsertionResult result = channelDao.insert(channelName, contentType, data);
+			ValueInsertionResult result = channelDao.insert(channelName, contentType, contentEncoding, contentLanguage, data);
 			URI payloadUri = linkBuilder.buildItemUri(result.getKey());
 			ITopic<URI> topic = hazelcast.getTopic("ws:" + channelName);
 			topic.publish(payloadUri);
