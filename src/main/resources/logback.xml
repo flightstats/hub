@@ -11,7 +11,7 @@
         <file>${HOME}/datahub.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>datahub_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${HOME}/datahub_%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- keep 14 days -->
             <maxHistory>14</maxHistory>
         </rollingPolicy>
