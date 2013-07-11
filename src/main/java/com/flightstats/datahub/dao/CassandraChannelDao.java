@@ -214,7 +214,8 @@ public class CassandraChannelDao implements ChannelDao {
 		try {
 			DataHubKey latest = getLastUpdatedFromCache(channelName);
 			if (latest == null) {
-				latest = initializeLastUpdatedCache(channelName);
+				latest = queryForLatestKey(channelName);
+				setLastUpdateKey(channelName, latest);
 			}
 			return Optional.fromNullable(latest);
 		} catch (HInvalidRequestException e) {
@@ -227,7 +228,7 @@ public class CassandraChannelDao implements ChannelDao {
 	}
 
 	@VisibleForTesting
-	protected DataHubKey initializeLastUpdatedCache(String channelName) {
+	protected DataHubKey queryForLatestKey(String channelName) {
 		Optional<DataHubKey> first = findFirstUpdateKey(channelName);
 		if (!first.isPresent()) return null;
 
@@ -251,9 +252,7 @@ public class CassandraChannelDao implements ChannelDao {
 			List<HColumn<String, DataHubCompositeValue>> columns = rows.get(0).getColumnSlice().getColumns();
 			if ( columns.isEmpty() ) continue;
 
-			DataHubKey latest = keyRenderer.fromString(columns.get(0).getName());
-			setLastUpdateKey(channelName, latest);
-			return latest;
+			return keyRenderer.fromString(columns.get(0).getName());
 		}
 		return null;
 	}

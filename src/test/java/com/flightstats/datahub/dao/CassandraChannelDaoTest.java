@@ -73,7 +73,7 @@ public class CassandraChannelDaoTest {
 		when(lastUpdatedMap.put(channelName, key)).thenReturn(lastUpdateKey);
 		when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(key));
 		CassandraChannelDao testClass = spy(new CassandraChannelDao(channelsCollection, linkagesCollection, inserter, reader, null, null, null, null, lastUpdatedMap));
-		doReturn(lastUpdateKey).when(testClass).initializeLastUpdatedCache(anyString());
+		doReturn(lastUpdateKey).when(testClass).queryForLatestKey(anyString());
 
 		ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), Optional.<String>absent(), data);
 
@@ -149,7 +149,7 @@ public class CassandraChannelDaoTest {
 		when(lastUpdatedMap.get(channelName)).thenReturn(null);
 
 		CassandraChannelDao testClass = spy(new CassandraChannelDao(channelsCollection, null, null, null, null, null, null, null, lastUpdatedMap));
-		doReturn(null).when(testClass).initializeLastUpdatedCache(anyString());
+		doReturn(null).when(testClass).queryForLatestKey(anyString());
 		Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
 
 		// THEN
