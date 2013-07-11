@@ -6,9 +6,6 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
-import java.util.Calendar;
-import java.util.Date;
-
 public class YearMonthDayRowKeyStrategy implements RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> {
 
     private final static DateTimeFormatter formatter = ISODateTimeFormat.basicDate().withZoneUTC();
@@ -21,18 +18,14 @@ public class YearMonthDayRowKeyStrategy implements RowKeyStrategy<String, DataHu
 	@Override
 	public String nextKey(String channelName, String currentRowKey) {
 		DateTime date = formatter.parseDateTime(currentRowKey);
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(date.toDate());
-		cal.add(Calendar.DAY_OF_YEAR, 1);
-		return formatter.print(cal.getTimeInMillis());
+		date = date.plusDays(1);
+		return formatter.print(date.getMillis());
 	}
 
 	@Override
 	public String prevKey(String channelName, String currentRowKey) {
 		DateTime date = formatter.parseDateTime(currentRowKey);
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(date.toDate());
-		cal.add(Calendar.DAY_OF_YEAR, -1);
-		return formatter.print(cal.getTimeInMillis());
+		date = date.minusDays(1);
+		return formatter.print(date.getMillis());
 	}
 }
