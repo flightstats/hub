@@ -3,11 +3,13 @@ package com.flightstats.datahub.dao;
 import com.flightstats.datahub.dao.serialize.DataHubCompositeValueSerializer;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -15,6 +17,7 @@ import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import me.prettyprint.hector.api.query.QueryResult;
+import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,12 +25,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
 
 public class CassandraChannelDao implements ChannelDao {
 
 	private final static Logger logger = LoggerFactory.getLogger(ChannelDao.class);
+
 	private final CassandraChannelsCollection channelsCollection;
 	private final CassandraLinkagesCollection linkagesCollection;
 	private final CassandraValueWriter cassandraValueWriter;
@@ -36,13 +41,15 @@ public class CassandraChannelDao implements ChannelDao {
 	private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
 	private final CassandraConnector connector;
 	private final HectorFactoryWrapper hector;
+	private final ConcurrentMap<String,DataHubKey> lastUpdatedPerChannel;
 
 	@Inject
 	public CassandraChannelDao(
 		CassandraChannelsCollection channelsCollection, CassandraLinkagesCollection linkagesCollection,
 		CassandraValueWriter cassandraValueWriter, CassandraValueReader cassandraValueReader,
-		DataHubKeyRenderer keyRenderer, RowKeyStrategy<String, DataHubKey,DataHubCompositeValue> rowKeyStrategy,
-		CassandraConnector connector, HectorFactoryWrapper hector ) {
+		DataHubKeyRenderer keyRenderer, RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy,
+		CassandraConnector connector, HectorFactoryWrapper hector,
+		@Named("LastUpdatePerChannelMap") ConcurrentMap<String,DataHubKey> lastUpdatedPerChannel) {
 		this.channelsCollection = channelsCollection;
 		this.linkagesCollection = linkagesCollection;
 		this.cassandraValueWriter = cassandraValueWriter;
@@ -51,6 +58,7 @@ public class CassandraChannelDao implements ChannelDao {
 		this.rowKeyStrategy = rowKeyStrategy;
 		this.connector = connector;
 		this.hector = hector;
+		this.lastUpdatedPerChannel = lastUpdatedPerChannel;
 	}
 
 	@Override
@@ -74,25 +82,26 @@ public class CassandraChannelDao implements ChannelDao {
 		logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
 		DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentEncoding, contentLanguage, data);
 
-		//Note: There are two writes to cassandra -- one here, and one (batch) in the linkagesCollection.updateLinkages().  Combining these into one back could increase performance.
 		ValueInsertionResult result = cassandraValueWriter.write(channelName, value);
 		DataHubKey insertedKey = result.getKey();
-
-		// Note:  Caching the latest could greatly speed up writes, but this has to be done in a distributed fashion.
-		DataHubKey lastUpdatedKey = channelsCollection.getLastUpdatedKey(channelName);
-
-		updateFirstAndLastKeysForChannel(channelName, insertedKey);
-
-		linkagesCollection.updateLinkages(channelName, insertedKey, lastUpdatedKey);
+		DataHubKey previousKey = updateLatestKey(channelName, insertedKey);
+		updateFirstKey(channelName, insertedKey);
+		linkagesCollection.updateLinkages(channelName, insertedKey, previousKey);
 
 		return result;
 	}
 
-	private void updateFirstAndLastKeysForChannel(String channelName, DataHubKey insertedKey) {
-		setLastUpdateKey(channelName, insertedKey);
+	private void updateFirstKey(String channelName, DataHubKey newLatestKey) {
 		if (!findFirstUpdateKey(channelName).isPresent()) {
-			setFirstKey(channelName, insertedKey);
+			setFirstKey(channelName, newLatestKey);
 		}
+	}
+
+	/** @return the previous latest key, null if one didn't exist. */
+	private DataHubKey updateLatestKey(String channelName, DataHubKey newLatestKey) {
+		Optional<DataHubKey> previousLastUpdatedKey = findLastUpdatedKey(channelName);
+		setLastUpdateKey(channelName, newLatestKey);
+		return previousLastUpdatedKey.isPresent() ? previousLastUpdatedKey.get() : null;
 	}
 
 	@Override
@@ -115,16 +124,16 @@ public class CassandraChannelDao implements ChannelDao {
 		Keyspace keyspace = connector.getKeyspace();
 		String maxRowKey = rowKeyStrategy.buildKey(channelName, maxKey);
 		return hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
-					 .setColumnFamily(channelName)
-					 .setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
-					 .setKeys(null, maxRowKey)
-					 .execute();
+		             .setColumnFamily(channelName)
+		             .setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
+		             .setKeys(null, maxRowKey)
+		             .execute();
 	}
 
 	private Collection<DataHubKey> buildKeysFromResults(QueryResult<OrderedRows<String, String, DataHubCompositeValue>> results) {
 		Collection<DataHubKey> keys = new ArrayList<>();
 		Collection<Row<String, String, DataHubCompositeValue>> dataHubKeyRows = Collections2.filter(results.get().getList(),
-				new DataHubRowKeySelector());
+		                                                                                            new DataHubRowKeySelector());
 		for (Row<String, String, DataHubCompositeValue> row : dataHubKeyRows) {
 			keys.addAll(Collections2.transform(row.getColumnSlice().getColumns(), new KeyRenderer()));
 		}
@@ -147,15 +156,12 @@ public class CassandraChannelDao implements ChannelDao {
 
 	@Override
 	public void setLastUpdateKey(String channelName, DataHubKey result) {
-		channelsCollection.updateLastUpdatedKey(channelName, result);
+		lastUpdatedPerChannel.put(channelName, result);
 	}
 
 	@Override
 	public void deleteLastUpdateKey(String channelName) {
-		Optional<DataHubKey> latestId = findLastUpdatedKey(channelName);
-		if (latestId.isPresent()) {
-			channelsCollection.deleteLastUpdatedKey(channelName);
-		}
+		lastUpdatedPerChannel.remove(channelName);
 	}
 
 	@Override
@@ -206,11 +212,50 @@ public class CassandraChannelDao implements ChannelDao {
 	@Override
 	public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
 		try {
-			DataHubKey lastUpdatedKey = channelsCollection.getLastUpdatedKey(channelName);
-			return Optional.fromNullable(lastUpdatedKey);
+			DataHubKey latest = getLastUpdatedFromCache(channelName);
+			if (latest == null) {
+				latest = initializeLastUpdatedCache(channelName);
+			}
+			return Optional.fromNullable(latest);
 		} catch (HInvalidRequestException e) {
 			throw maybePromoteToNoSuchChannel(e, channelName);
 		}
+	}
+
+	private DataHubKey getLastUpdatedFromCache(String channelName) {
+		return lastUpdatedPerChannel.get(channelName);
+	}
+
+	@VisibleForTesting
+	protected DataHubKey initializeLastUpdatedCache(String channelName) {
+		Optional<DataHubKey> first = findFirstUpdateKey(channelName);
+		if (!first.isPresent()) return null;
+
+		// Hunt backwards through the rowkeys looking for the most recent column.
+		String firstRowKey = rowKeyStrategy.buildKey(channelName, first.get());
+		Keyspace keyspace = connector.getKeyspace();
+		String currentKey = rowKeyStrategy.buildKey(channelName, new DataHubKey(new Date(), (short) 0));
+		for( String rowKey = rowKeyStrategy.nextKey(channelName, currentKey);
+		     rowKey.compareTo(firstRowKey) >= 0 ;
+		     rowKey = rowKeyStrategy.prevKey(channelName, rowKey)) {
+			RangeSlicesQuery<String,String,DataHubCompositeValue> rangeSlicesQuery = hector.createRangeSlicesQuery(
+				keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get());
+			QueryResult<OrderedRows<String, String, DataHubCompositeValue>> results =
+				rangeSlicesQuery.setColumnFamily(channelName)
+				                .setRange(null, null, true, 1)
+				                .setKeys(rowKey, rowKey)
+				                .execute();
+
+			List<Row<String, String, DataHubCompositeValue>> rows = results.get().getList();
+			if ( rows.isEmpty() ) continue;
+			List<HColumn<String, DataHubCompositeValue>> columns = rows.get(0).getColumnSlice().getColumns();
+			if ( columns.isEmpty() ) continue;
+
+			DataHubKey latest = keyRenderer.fromString(columns.get(0).getName());
+			setLastUpdateKey(channelName, latest);
+			return latest;
+		}
+		return null;
 	}
 
 	@Override
