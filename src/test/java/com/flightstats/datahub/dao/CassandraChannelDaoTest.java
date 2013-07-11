@@ -2,27 +2,20 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.dao.serialize.DataHubCompositeValueSerializer;
 import com.flightstats.datahub.model.*;
-import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.beans.ColumnSlice;
-import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
-import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import org.junit.Test;
-import org.mockito.stubbing.OngoingStubbing;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -74,14 +67,12 @@ public class CassandraChannelDaoTest {
 		CassandraValueWriter inserter = mock(CassandraValueWriter.class);
 		CassandraValueReader reader = mock(CassandraValueReader.class);
 		CassandraLinkagesCollection linkagesCollection = mock(CassandraLinkagesCollection.class);
-		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
-		IMap<Object, Object> hcMap = mock(IMap.class);
+		ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
 
 		// WHEN
-		when(hazelcast.getMap(CassandraChannelDao.LAST_CHANNEL_UPDATE)).thenReturn(hcMap);
-		when(hcMap.put(channelName, key)).thenReturn(lastUpdateKey);
+		when(lastUpdatedMap.put(channelName, key)).thenReturn(lastUpdateKey);
 		when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(key));
-		CassandraChannelDao testClass = spy(new CassandraChannelDao(channelsCollection, linkagesCollection, inserter, reader, null, null, null, null, hazelcast));
+		CassandraChannelDao testClass = spy(new CassandraChannelDao(channelsCollection, linkagesCollection, inserter, reader, null, null, null, null, lastUpdatedMap));
 		doReturn(lastUpdateKey).when(testClass).initializeLastUpdatedCache(anyString());
 
 		ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), Optional.<String>absent(), data);
@@ -136,14 +127,12 @@ public class CassandraChannelDaoTest {
 		DataHubKey expected = new DataHubKey(new Date(999999999), (short) 6);
 		String channelName = "myChan";
 
-		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
-		IMap<Object, Object> hcMap = mock(IMap.class);
+		ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
 		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
 
-		when(hazelcast.getMap(CassandraChannelDao.LAST_CHANNEL_UPDATE)).thenReturn(hcMap);
-		when(hcMap.get(channelName)).thenReturn(expected);
+		when(lastUpdatedMap.get(channelName)).thenReturn(expected);
 
-		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, null, null, null, null, null, hazelcast);
+		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, null, null, null, null, null, lastUpdatedMap);
 
 		Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
 		assertEquals(expected, result.get());
@@ -153,15 +142,13 @@ public class CassandraChannelDaoTest {
 	public void testFindLatestId_lastUpdateNotFound() throws Exception {
 		// GIVEN
 		String channelName = "myChan";
-		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
-		IMap<Object, Object> hcMap = mock(IMap.class);
+		ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
 		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
 
 		// WHEN
-		when(hazelcast.getMap(CassandraChannelDao.LAST_CHANNEL_UPDATE)).thenReturn(hcMap);
-		when(hcMap.get(channelName)).thenReturn(null);
+		when(lastUpdatedMap.get(channelName)).thenReturn(null);
 
-		CassandraChannelDao testClass = spy(new CassandraChannelDao(channelsCollection, null, null, null, null, null, null, null, hazelcast));
+		CassandraChannelDao testClass = spy(new CassandraChannelDao(channelsCollection, null, null, null, null, null, null, null, lastUpdatedMap));
 		doReturn(null).when(testClass).initializeLastUpdatedCache(anyString());
 		Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
 
