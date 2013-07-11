@@ -9,8 +9,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.inject.Inject;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
+import com.google.inject.name.Named;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -22,14 +21,17 @@ import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
 
 public class CassandraChannelDao implements ChannelDao {
 
 	private final static Logger logger = LoggerFactory.getLogger(ChannelDao.class);
-	final static String LAST_CHANNEL_UPDATE = "LAST_CHANNEL_UPDATE";
 
 	private final CassandraChannelsCollection channelsCollection;
 	private final CassandraLinkagesCollection linkagesCollection;
@@ -39,14 +41,15 @@ public class CassandraChannelDao implements ChannelDao {
 	private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
 	private final CassandraConnector connector;
 	private final HectorFactoryWrapper hector;
-	private final HazelcastInstance hazelcast;
+	private final ConcurrentMap<String,DataHubKey> lastUpdatedPerChannel;
 
 	@Inject
 	public CassandraChannelDao(
 		CassandraChannelsCollection channelsCollection, CassandraLinkagesCollection linkagesCollection,
 		CassandraValueWriter cassandraValueWriter, CassandraValueReader cassandraValueReader,
 		DataHubKeyRenderer keyRenderer, RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy,
-		CassandraConnector connector, HectorFactoryWrapper hector, HazelcastInstance hazelcast) {
+		CassandraConnector connector, HectorFactoryWrapper hector,
+		@Named("LastUpdatePerChannelMap") ConcurrentMap<String,DataHubKey> lastUpdatedPerChannel) {
 		this.channelsCollection = channelsCollection;
 		this.linkagesCollection = linkagesCollection;
 		this.cassandraValueWriter = cassandraValueWriter;
@@ -55,7 +58,7 @@ public class CassandraChannelDao implements ChannelDao {
 		this.rowKeyStrategy = rowKeyStrategy;
 		this.connector = connector;
 		this.hector = hector;
-		this.hazelcast = hazelcast;
+		this.lastUpdatedPerChannel = lastUpdatedPerChannel;
 	}
 
 	@Override
@@ -153,13 +156,11 @@ public class CassandraChannelDao implements ChannelDao {
 
 	@Override
 	public void setLastUpdateKey(String channelName, DataHubKey result) {
-		IMap<String, DataHubKey> lastUpdatedPerChannel = hazelcast.getMap(LAST_CHANNEL_UPDATE);
 		lastUpdatedPerChannel.put(channelName, result);
 	}
 
 	@Override
 	public void deleteLastUpdateKey(String channelName) {
-		IMap<String, DataHubKey> lastUpdatedPerChannel = hazelcast.getMap(LAST_CHANNEL_UPDATE);
 		lastUpdatedPerChannel.remove(channelName);
 	}
 
@@ -222,7 +223,6 @@ public class CassandraChannelDao implements ChannelDao {
 	}
 
 	private DataHubKey getLastUpdatedFromCache(String channelName) {
-		IMap<String, DataHubKey> lastUpdatedPerChannel = hazelcast.getMap(LAST_CHANNEL_UPDATE);
 		return lastUpdatedPerChannel.get(channelName);
 	}
 
