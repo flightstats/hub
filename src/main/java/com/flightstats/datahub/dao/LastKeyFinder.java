@@ -48,7 +48,7 @@ public class LastKeyFinder {
 	// Hunt backwards through the rowkeys, stopping on the first row that contains a column
 	private DataHubKey searchBackToFirst(String channelName, String firstRowKey) {
 		String rowBeingChecked = buildRowKeyAfterNow(channelName);
-		while (rowIsAfterFirst(rowBeingChecked, firstRowKey)) {
+		while (rowIsNotBeforeFirst(rowBeingChecked, firstRowKey)) {
 			DataHubKey latestKey = queryForLatestInRow(channelName, rowBeingChecked);
 			if (latestKey != null) {
 				return latestKey;
@@ -58,7 +58,7 @@ public class LastKeyFinder {
 		return null;
 	}
 
-	private boolean rowIsAfterFirst(String rowBeingChecked, String firstRowKey) {
+	private boolean rowIsNotBeforeFirst(String rowBeingChecked, String firstRowKey) {
 		return rowBeingChecked.compareTo(firstRowKey) >= 0;
 	}
 
