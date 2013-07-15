@@ -122,7 +122,6 @@ dependencies {
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
 
     integrationTests group: 'com.flightstats', name: 'datahub', version: snapshotVersion + '+', transitive: false, configuration: 'publishDev'
-    deployStaging group: 'com.flightstats', name: 'datahub', version: version, transitive: false, configuration: 'publish'
     deployProduction group: 'com.flightstats', name: 'datahub', version: version, transitive: false, configuration: 'publish'
 }
 
@@ -140,7 +139,6 @@ task deployDev << {
 
 task deployStaging << {
     description = "Deploys the distribution to the staging environment"
-    copyTarballToDistributions(configurations.deployStaging)
     runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.staging")
     runExternal("${projectDir}/bin/deploy-to-host.sh datahub-02.cloud-east.staging")
     runExternal("${projectDir}/bin/deploy-to-host.sh datahub-03.cloud-east.staging")
