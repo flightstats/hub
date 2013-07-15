@@ -33,6 +33,9 @@ exports.URL_ROOT = URL_ROOT;
 var DEFAULT_TTL = 10368000000;
 exports.DEFAULT_TTL = DEFAULT_TTL;
 
+var FAKE_CHANNEL_URI = [URL_ROOT, 'channel', 'aslKewkfnjkzIKENVYGWHJEFlijf823JBFD2'].join('/');
+exports.FAKE_CHANNEL_URI = FAKE_CHANNEL_URI;
+
 var DEBUG = true;
 
 
@@ -393,7 +396,7 @@ var postData = function(params, myCallback) {
         channelUri = params.channelUri,
         myData = params.data,
         contentType = (params.hasOwnProperty('contentType')) ? params.contentType : 'application/x-www-form-urlencoded',
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true;
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
 
     gu.debugLog('Channel Uri: '+ channelUri, VERBOSE);
@@ -438,7 +441,7 @@ exports.getLatestDataFromChannel = getLatestDataFromChannel;
  * Git yo data from the channel.
  *
  * @param params: .uri (to the data), .accepts (optional - split multiple options with semicolons), .debug (optional)
- * @param callback: error || null, response, data
+ * @param callback: error || null, response (note this is not the same as SuperAgent's response; check .statusCode for status), data
  */
 var getDataFromChannel = function(params, callback) {
 
@@ -795,12 +798,34 @@ exports.patchChannel = patchChannel;
 /**
  * Calls the TTL reaper and waits for a response -- the reaper will not return errors (current plan, anyway).
  * @param params: .domain=dhh.DOMAIN, .debug=false
- * @param callback: true || false in case of some internal error
+ * @param callback: response (200/OK or 409/Conflict if reaper was already running are the expected responses) or null
+ *  if an error was thrown
  */
 var executeTTLCleanup = function(params, callback) {
-    // do stuff
+    var domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN,
+        uri = ['http:/', domain, 'sweep'].join('/'),
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true;
 
-    callback(true);
+    gu.debugLog('/sweep uri: '+ uri, VERBOSE);
+
+    superagent.agent().post(uri)
+        .send({})
+        .end(function(err, res) {
+
+            gu.debugLog('Sweep result: '+ res.status, VERBOSE);
+
+            if (err) {
+                gu.debugLog('Error in /sweep attempt: '+ err.message);
+                callback(null);
+            }
+            else {
+                if (!lodash.contains([gu.HTTPresponses.OK, gu.HTTPresponses.Conflict], res.status)) {
+                    gu.debugLog('Unexpected status on /sweep attempt: '+ res.status);
+                }
+
+                callback(res);
+            }
+        })
 }
 exports.executeTTLCleanup = executeTTLCleanup;
 

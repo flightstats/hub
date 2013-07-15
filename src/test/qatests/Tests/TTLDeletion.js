@@ -40,7 +40,7 @@ describe('TTL Deletion', function() {
                 gu.debugLog('Error posting data: '+ response.status);
             }
             var iMetadata = new dhh.packetMetadata(response.body),
-                expirationTime = getExpirationTime(channel, moment(iMetadata.getTimestamp()));
+                expirationTime = getExpirationTime(channel, moment());
 
             done(iMetadata, expirationTime);
         })
@@ -49,20 +49,34 @@ describe('TTL Deletion', function() {
     /**
      * Execute reap cycle. When complete, call GET on the passed in item URI.
      * @param params: itemUri, debug (optional)
-     * @param callback: GET response
+     * @param callback: reap response, GET response
      */
     var reapAndGetItem = function(params, callback) {
-        var itemUri = params.itemUri;
+        var itemUri = params.itemUri,
+            VERBOSE = (params.hasOwnProperty('debug')) ? (params.debug) : false;
 
-        dhh.executeTTLCleanup({}, function(execRes) {
-            dhh.getDataFromChannel({uri: itemUri}, function(err, getRes) {
-                callback(getRes);
+        gu.debugLog('itemUri for reapAndGetItem(): '+ itemUri, DEBUG);
+
+        dhh.executeTTLCleanup({debug: VERBOSE}, function(execRes) {
+            dhh.getDataFromChannel({uri: itemUri, debug: VERBOSE}, function(err, getRes, data) {
+                getRes['status'] = getRes.statusCode;   // make it match SuperAgent's property
+
+                callback(execRes, getRes);
             })
         })
     }
 
     var getExpirationTime = function(channelMetadata, creationMoment) {
-        return creationMoment.add('milliseconds', channelMetadata.getTTL());
+        var expiration = creationMoment.clone().add('milliseconds', channelMetadata.getTTL()),
+            VERBOSE = false;
+
+        if (VERBOSE) {
+            gu.debugLog('channel TTL: '+ channelMetadata.getTTL());
+            gu.debugLog('creation moment: '+ creationMoment.format());
+            gu.debugLog('expiration: '+ expiration.format());
+        }
+
+        return expiration;
     }
 
     beforeEach(function(done) {
@@ -78,20 +92,30 @@ describe('TTL Deletion', function() {
     })
 
     // This entire section is waiting for the story that enables on-demand kickoff of the TTL checker / reaper.
-    describe.skip('Acceptance', function() {
+    describe('Acceptance', function() {
 
         it('expired item is removed after reaping cycle', function(done) {
-            var newTTL = SHORT_TTL;
+            var newTTL = SHORT_TTL,
+                VERBOSE = false;
 
             dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: newTTL}, function(patchRes) {
                 expect(gu.isHTTPSuccess(patchRes.status)).to.be.true;
                 cnMetadata = new dhh.channelMetadata(patchRes.body);
 
                 createItem({channel: cnMetadata}, function(itemMetadata, expiration) {
-                    var wait = expiration.diff(moment()) + TTL_BUFFER;
+                    var now = moment(),
+                        timeDiff = expiration.diff(now),
+                        wait = timeDiff + TTL_BUFFER;
+
+                    if (VERBOSE) {
+                        gu.debugLog('Now: '+ now.format());
+                        gu.debugLog('time diff: '+ timeDiff);
+                        gu.debugLog('Wait length in ms: '+ wait);
+                    }
 
                     setTimeout(function(){
-                        reapAndGetItem({itemUri: itemMetadata.getLocation()}, function(getRes) {
+                        reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
+                            expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
                             expect(getRes.status).to.equal(gu.HTTPresponses.Not_Found);
 
                             done();
@@ -101,10 +125,28 @@ describe('TTL Deletion', function() {
 
                 })
             })
-
         })
 
         // confirm GET returns item if expiration has not been met
+        it('item is not removed by reaping cycle if its expiration has not been met', function(done) {
+            var newTTL = SHORT_TTL,
+                VERBOSE = false;
+
+            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: newTTL}, function(patchRes) {
+                expect(gu.isHTTPSuccess(patchRes.status)).to.be.true;
+                cnMetadata = new dhh.channelMetadata(patchRes.body);
+
+                createItem({channel: cnMetadata}, function(itemMetadata, expiration) {
+                    reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
+                        expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
+                        expect(getRes.status).to.equal(gu.HTTPresponses.OK);
+
+                        done();
+                    })
+
+                })
+            })
+        })
 
         // confirm GET returns item for channel with no TTL
 
