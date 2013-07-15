@@ -27,17 +27,6 @@ var DEBUG = true;
 
 describe('Patch Channel', function() {
 
-    var getLightweightChannel = function(cnBody) {
-        var cnMetadata = new dhh.channelMetadata(cnBody),
-            channel = {
-                name: cnMetadata.getName(),
-                uri: cnMetadata.getChannelUri(),
-                ttl: cnMetadata.getTTL()
-            };
-
-        return channel;
-    };
-
     /**
      * Creates a new channel and makes a PATCH call to it.
      * @param params: (ALL are optional) .name = original channel name,
@@ -166,19 +155,40 @@ describe('Patch Channel', function() {
     })
 
     describe('Error / invalid cases', function() {
-        // Try to change the channel name = bad request?
 
-        // a channel name that does not exist returns 404
+        it('returns 400 when trying to change channel name', function(done) {
+            var payload = {
+                name: dhh.getRandomChannelName(),
+                newName: dhh.getRandomChannelName(),
+                newTtlMillis: 8675309
+            };
 
-        // negative TTL
+            createAndPatchChannel(payload, function(channel, pRes) {
+                expect(gu.isHTTPError(pRes.status)).to.be.true;
 
-        // alpha characters
+                done();
+            })
+        })
 
-        // TTL is zero
+        it('returns 404 for channel that does not exist', function(done) {
+            dhh.patchChannel({channelUri: dhh.FAKE_CHANNEL_URI, ttlMillis: 8675309}, function(patchRes) {
+                expect(patchRes.status).to.equal(gu.HTTPresponses.Not_Found);
 
-        // TTL contains a period
+                done();
+            })
+        })
 
-        // TTL is blank or empty = ?
+        describe.skip('TODO: low-pri error cases', function() {
+            // negative TTL
+
+            // alpha characters
+
+            // TTL is zero
+
+            // TTL contains a period
+
+            // TTL is blank or empty = ?
+        })
     })
 })
 
