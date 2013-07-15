@@ -6,6 +6,7 @@ import com.flightstats.datahub.util.DataHubKeyRenderer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
+import org.joda.time.DateTime;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -23,19 +24,19 @@ public class CassandraLinkagesCollectionTest {
 	@Test
 	public void testUpdateLinkages() throws Exception {
 		//GIVEN
-		DataHubKey insertedKey = new DataHubKey(new Date(1234556L), (short) 0);
-		DataHubKey lastUpdateKey = new DataHubKey(new Date(8383748734L), (short) 0);
+		DateTime lastUpdateDate = new DateTime(2013, 5, 15, 22, 0);
+		DateTime insertedDate = lastUpdateDate.plusDays(1);
+		DataHubKey insertedKey = new DataHubKey(insertedDate.toDate(), (short) 0);
+		DataHubKey lastUpdateKey = new DataHubKey(lastUpdateDate.toDate(), (short) 0);
 
 		CassandraConnector connector = mock(CassandraConnector.class);
 		Mutator<String> mutator = mock(Mutator.class);
-		RowKeyStrategy rowKeyStrategy = mock(RowKeyStrategy.class);
+		RowKeyStrategy rowKeyStrategy = new YearMonthDayRowKeyStrategy();
 		HColumn<String, String> expectedPrevColumn = mock(HColumn.class);
 		HColumn<String, String> expectedNextColumn = mock(HColumn.class);
 		HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
 
 		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
-		when(rowKeyStrategy.buildKey(CHANNEL_NAME, insertedKey)).thenReturn("roe");
-		when(rowKeyStrategy.buildKey(CHANNEL_NAME, lastUpdateKey)).thenReturn("roe");
 		when(hector.createColumn(keyRenderer.keyToString(insertedKey), keyRenderer.keyToString(lastUpdateKey), STRING_SERIALIZER,
 			STRING_SERIALIZER)).thenReturn(expectedPrevColumn);
 		when(hector.createColumn(keyRenderer.keyToString(lastUpdateKey), keyRenderer.keyToString(insertedKey), STRING_SERIALIZER,
@@ -47,8 +48,8 @@ public class CassandraLinkagesCollectionTest {
 		testClass.updateLinkages(CHANNEL_NAME, insertedKey, lastUpdateKey);
 
 		//THEN
-		verify(mutator).addInsertion("roe_previous", CHANNEL_NAME, expectedPrevColumn);
-		verify(mutator).addInsertion("roe_next", CHANNEL_NAME, expectedNextColumn);
+		verify(mutator).addInsertion("20130517_previous", CHANNEL_NAME, expectedPrevColumn);
+		verify(mutator).addInsertion("20130516_next", CHANNEL_NAME, expectedNextColumn);
 		verify(mutator).execute();
 	}
 

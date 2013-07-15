@@ -46,10 +46,11 @@ public class CassandraLinkagesCollection {
 		String lastUpdatedKeyString = keyRenderer.keyToString(lastUpdatedKey);
 
 		Mutator<String> mutator = connector.buildMutator(keySerializer);
-		String rowKey = rowKeyStrategy.buildKey(channelName, insertedKey);
+		String lastUpdatedRowKey = rowKeyStrategy.buildKey(channelName, lastUpdatedKey);
+		String insertedRowKey = rowKeyStrategy.buildKey(channelName, insertedKey);
 
-		insertPreviousLinkage(channelName, insertedKeyString, lastUpdatedKeyString, mutator, rowKey);
-		insertNextLinage(channelName, insertedKeyString, lastUpdatedKeyString, mutator, rowKey);
+		insertPreviousLinkage(channelName, insertedKeyString, lastUpdatedKeyString, mutator, insertedRowKey);
+		insertNextLinage(channelName, insertedKeyString, lastUpdatedKeyString, mutator, lastUpdatedRowKey);
 		mutator.execute();
 	}
 
