@@ -308,7 +308,8 @@ describe('GET data:', function() {
                     dhh.postData({channelUri: channelUri, data: payload1}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(channelUri, function(myData) {
+                        dhh.getLatestDataFromChannel(channelUri, function(getRes, myData) {
+                            expect(gu.isHTTPSuccess(getRes.status)).to.be.true;
                             expect(myData).to.equal(payload1);
 
                             callback(null);
@@ -319,7 +320,8 @@ describe('GET data:', function() {
                     dhh.postData({channelUri: channelUri, data: payload2}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(channelUri, function(myData) {
+                        dhh.getLatestDataFromChannel(channelUri, function(getRes, myData) {
+                            expect(gu.isHTTPSuccess(getRes.status)).to.be.true;
                             expect(myData).to.equal(payload2);
 
                             callback(null);
@@ -330,7 +332,8 @@ describe('GET data:', function() {
                     dhh.postData({channelUri: channelUri, data: payload3}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(channelUri, function(myData) {
+                        dhh.getLatestDataFromChannel(channelUri, function(getRes, myData) {
+                            expect(gu.isHTTPSuccess(getRes.status)).to.be.true;
                             expect(myData).to.equal(payload3);
 
                             callback(null);
@@ -351,7 +354,8 @@ describe('GET data:', function() {
                 });
         });
 
-        it('BUG: https://www.pivotaltracker.com/story/show/47150133 - Return 404 on Get Latest if channel does not exist', function(done) {
+        // BUG: https://www.pivotaltracker.com/story/show/47150133
+        it('Return 404 on Get Latest if channel does not exist', function(done) {
             var name = ranU.randomString(30, ranU.limitedRandomChar),
                 uri = [URL_ROOT, 'channel', name, 'latest'].join('/');
 
@@ -374,7 +378,8 @@ describe('GET data:', function() {
             dhh.postData({channelUri: channelUri, data: payload}, function(postRes, postUri) {
                 expect(gu.isHTTPSuccess(postRes.status)).to.be.true;
 
-                dhh.getLatestDataFromChannel(channelUri, function(latestData) {
+                dhh.getLatestDataFromChannel(channelUri, function(getRes, latestData) {
+                    expect(gu.isHTTPSuccess(getRes.status)).to.be.true;
                     expect(latestData).to.equal(payload);
 
                     done();
@@ -383,7 +388,6 @@ describe('GET data:', function() {
         });
 
         it('Get latest works when latest item is an empty set, following a previous non-empty set', function(done) {
-
             var payload = dhh.getRandomPayload();
 
             async.waterfall([
@@ -391,8 +395,10 @@ describe('GET data:', function() {
                     dhh.postData({channelUri: mainChannelUri, data: payload}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(mainChannelUri, function(myData) {
+                        dhh.getLatestDataFromChannel(mainChannelUri, function(getRes, myData) {
+                            expect(gu.isHTTPSuccess(getRes.status)).to.be.true;
                             expect(myData).to.equal(payload);
+
                             callback(null);
                         });
                     });
@@ -401,8 +407,10 @@ describe('GET data:', function() {
                     dhh.postData({channelUri: mainChannelUri, data: ''}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(mainChannelUri, function(myData) {
+                        dhh.getLatestDataFromChannel(mainChannelUri, function(getRes, myData) {
+                            expect(gu.isHTTPSuccess(getRes.status)).to.be.true;
                             expect(myData).to.equal('');
+
                             callback(null);
                         });
                     });
@@ -426,7 +434,6 @@ describe('GET data:', function() {
             // not implemented
         });
 
-        // TODO: if the only remaining item in a channel expires and is cleaned up, then get latest should return 404
     });
 
 
@@ -719,12 +726,8 @@ describe('GET data:', function() {
                 });
         });
 
-        // TODO: Future: if the first value in a channel expires, the value after it in the channel should no longer show a 'prev' link.
-
         // TODO: Future: if the first value in a channel is deleted, the value after it in the channel should no longer show a 'prev' link.
 
-        // TODO: Future: if a value that is not the first value in a channel expires, the value after it in the channel should
-        //          accurately point its 'prev' link to the value before the just-expired value.
         // TODO: Future: if a value that is not the first value in a channel is deleted, the value after it in the channel should
         //          accurately point its 'prev' link to the value before the just-expired value.
     });
@@ -853,12 +856,9 @@ describe('GET data:', function() {
                 });
         });
 
-        // TODO: Future: if the last value in a channel expires, the value before it in the channel should no longer show a 'next' link.
 
         // TODO: Future: if the last value in a channel is deleted, the value before it in the channel should no longer show a 'next' link.
 
-        // TODO: Future: if a value that is not the last value in a channel expires, the value before it in the channel should
-        //          accurately point its 'next' link to the value after the just-expired value.
         // TODO: Future: if a value that is not the last value in a channel is deleted, the value before it in the channel should
         //          accurately point its 'next' link to the value after the just-deleted value.
     });
