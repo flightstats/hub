@@ -151,7 +151,6 @@ task deployProduction << {
     description = "Deploys the distribution to the production environment"
     copyTarballToDistributions(configurations.deployProduction)
 		runExternal("${projectDir}/bin/ctdeploy.sh datahub-01.cloud-east.prod")
-
     incrementVersionFile()
     commitVersionFileAndPush()
 }
