@@ -421,17 +421,26 @@ var postData = function(params, myCallback) {
 };
 exports.postData = postData;
 
-// Calls back with data
+/**
+ * Given a channel uri, returns the results of a get data call on the /latest uri
+ * @param channelUri
+ * @param callback: response, data
+ */
 var getLatestDataFromChannel = function(channelUri, callback) {
+    var VERBOSE = true;
 
     gu.debugLog('Channel uri in getLatestDataFromChannel: '+ channelUri);
 
     getLatestUri(channelUri, function(uri) {
 
         getDataFromChannel({uri: uri}, function(err, res, data) {
-            var result = (null != err) ? err : data;
+            if (err) {
+                gu.debugLog('Error getting data at '+ uri +': '+ err.message);
+            }
 
-            callback(result);
+            res['status'] = res.statusCode; // normalizing to match SuperAgent's response
+
+            callback(res, data);
         })
     });
 };
