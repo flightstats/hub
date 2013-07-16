@@ -133,24 +133,24 @@ distTar {
 task deployDev << {
     description = "Deploys the distribution to the development environment"
     runExternal("${projectDir}/bin/restart-dev-vpc.sh")
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.dev")
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-02.cloud-east.dev")
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-03.cloud-east.dev")
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-01.cloud-east.dev")
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-02.cloud-east.dev")
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-03.cloud-east.dev")
 //    runExternal("bash ${projectDir}/bin/ctdeploy.sh datahub-04.cloud-east.dev")
 }
 
 task deployStaging << {
     description = "Deploys the distribution to the staging environment"
     copyTarballToDistributions(configurations.deployStaging)
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.staging")
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-02.cloud-east.staging")
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-03.cloud-east.staging")
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-01.cloud-east.staging")
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-02.cloud-east.staging")
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-03.cloud-east.staging")
 }
 
 task deployProduction << {
     description = "Deploys the distribution to the production environment"
     copyTarballToDistributions(configurations.deployProduction)
-		runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.prod")
+		runExternal("${projectDir}/bin/ctdeploy.sh datahub-01.cloud-east.prod")
     incrementVersionFile()
     commitVersionFileAndPush()
 }
