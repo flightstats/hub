@@ -23,8 +23,8 @@ var chai = require('chai'),
 var ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js');
 
- var DOMAIN = 'datahub-01.cloud-east.dev:8080';
-// var DOMAIN = 'datahub.svc.dev';
+ //var DOMAIN = 'datahub-01.cloud-east.dev:8080';
+var DOMAIN = 'datahub.svc.dev';
 exports.DOMAIN = DOMAIN;
 
 var URL_ROOT = 'http://'+ DOMAIN;
