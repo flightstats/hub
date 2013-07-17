@@ -106,7 +106,7 @@ describe('Channel Subscription:', function() {
 
     });
 
-    it('Acceptance: subscription works and updates are sent in order', function(done) {
+    it.only('Acceptance: subscription works and updates are sent in order', function(done) {
         var socket,
             uriA,
             uriB;
@@ -187,7 +187,9 @@ describe('Channel Subscription:', function() {
     // Attach a listener to each instance and to the load balancer, all on the same channel.
     // Insert items in parallel into that channel, directly into each instance and into the load balancer.
     // Ensure that the messages are reported in order.
-    it('BUG: https://www.pivotaltracker.com/story/show/52726289 - HA: multiple parallel updates with a socket ' +
+    //
+    // BUG: https://www.pivotaltracker.com/story/show/52726289
+    it('HA: multiple parallel updates with a socket ' +
         'on each DH instance and the load balancer are reported in order', function(done) {
 
         // Configurable items
@@ -361,7 +363,7 @@ describe('Channel Subscription:', function() {
                 hostObj.socket.ws.close();
             })
 
-            if (true) {
+            if (VERBOSE) {
                 dumpAllQueues();
             }
 
