@@ -386,6 +386,28 @@ describe('TTL Deletion', function() {
             })
         })
 
+        it('TTL of zero will lead to immediately expired item', function(done) {
+            var VERBOSE = false;
+
+            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: 0}, function(patchRes) {
+                expect(gu.isHTTPSuccess(patchRes.status)).to.be.true;
+                cnMetadata = new dhh.channelMetadata(patchRes.body);
+
+                createItem({channel: cnMetadata}, function(itemMetadata, expiration) {
+                    setTimeout(function(){
+                            reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
+                                expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
+                                expect(getRes.status).to.equal(gu.HTTPresponses.Not_Found);
+
+                                done();
+                            })
+                        }, TTL_BUFFER
+                    );
+
+                })
+            })
+        })
+
         it.skip('BUG: https://www.pivotaltracker.com/story/show/53508215 - if first item in a channel expires, but the following item has not, then following item should no longer have a prev link ', function(done) {
             var cnUri = cnMetadata.getChannelUri(),
                 VERBOSE = true;
