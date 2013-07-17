@@ -24,9 +24,6 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
     LOAD_BALANCER_HOSTNAME = 'datahub.svc.dev',
     DEBUG = true;
 
-
-
-
 describe('Channel Subscription:', function() {
 
     // Test variables that are regularly overwritten
@@ -88,7 +85,7 @@ describe('Channel Subscription:', function() {
 
         channelName = dhh.getRandomChannelName();
 
-        dhh.createChannel({name: channelName}, function(res){
+        dhh.createChannel({name: channelName, domain: DOMAIN}, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             }
@@ -107,7 +104,7 @@ describe('Channel Subscription:', function() {
 
     });
 
-    it.only('Acceptance: subscription works and updates are sent in order', function(done) {
+    it('Acceptance: subscription works and updates are sent in order', function(done) {
         var socket,
             uriA,
             uriB;
