@@ -19,8 +19,6 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
     ranU = require('../randomUtils.js');
 
 var SHORT_TTL = 5000,
-    MEDIUM_TTL = 10000,
-    INFINITE_TTL = 999999999,
     TTL_BUFFER = 1000,  // extra number of milliseconds beyond expiration to wait to run reap cycle
     DEBUG = true;
 
@@ -68,10 +66,8 @@ describe('TTL Deletion', function() {
         })
     }
 
-
     var getExpirationTime = function(channelMetadata, creationMoment) {
-        var cnTTL = (null == channelMetadata.getTTL()) ? INFINITE_TTL : channelMetadata.getTTL(),
-            expiration = creationMoment.clone().add('milliseconds', cnTTL),
+        var expiration = creationMoment.clone().add('milliseconds', channelMetadata.getTTL()),
             VERBOSE = false;
 
         if (VERBOSE) {
@@ -82,14 +78,6 @@ describe('TTL Deletion', function() {
 
         return expiration;
     }
-
-    before(function() {
-        expect(TTL_BUFFER).to.be.above(0);
-        expect(SHORT_TTL).to.be.above(0);
-        expect(MEDIUM_TTL).to.be.above(SHORT_TTL);
-        expect(INFINITE_TTL).to.be.above(MEDIUM_TTL);
-        expect(TTL_BUFFER).to.be.below(MEDIUM_TTL - SHORT_TTL);
-    })
 
     beforeEach(function(done) {
         dhh.createChannel({name: dhh.getRandomChannelName()}, function(res){
@@ -103,12 +91,14 @@ describe('TTL Deletion', function() {
         });
     })
 
+    // This entire section is waiting for the story that enables on-demand kickoff of the TTL checker / reaper.
     describe('Acceptance', function() {
 
         it('expired item is removed after reaping cycle', function(done) {
-            var VERBOSE = false;
+            var newTTL = SHORT_TTL,
+                VERBOSE = false;
 
-            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: SHORT_TTL}, function(patchRes) {
+            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: newTTL}, function(patchRes) {
                 expect(gu.isHTTPSuccess(patchRes.status)).to.be.true;
                 cnMetadata = new dhh.channelMetadata(patchRes.body);
 
@@ -137,329 +127,41 @@ describe('TTL Deletion', function() {
             })
         })
 
+        // confirm GET returns item if expiration has not been met
         it('item is not removed by reaping cycle if its expiration has not been met', function(done) {
-            var VERBOSE = false;
-
-            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: SHORT_TTL}, function(patchRes) {
-                expect(gu.isHTTPSuccess(patchRes.status)).to.be.true;
-                cnMetadata = new dhh.channelMetadata(patchRes.body);
-
-                createItem({channel: cnMetadata}, function(itemMetadata, expiration) {
-                    setTimeout(function() {
-                        reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
-                            expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                            expect(getRes.status).to.equal(gu.HTTPresponses.OK);
-
-                            done();
-                        })
-                    }, TTL_BUFFER
-                    );
-                })
-            })
-        })
-
-        it('channel with no TTL - reaping cycle has no effect', function(done) {
-            var VERBOSE = false;
-
-            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: null}, function(patchRes) {
-                expect(gu.isHTTPSuccess(patchRes.status)).to.be.true;
-                cnMetadata = new dhh.channelMetadata(patchRes.body);
-
-                createItem({channel: cnMetadata}, function(itemMetadata, expiration) {
-                    setTimeout(function() {
-                            reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
-                                expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                                expect(getRes.status).to.equal(gu.HTTPresponses.OK);
-
-                                done();
-                            })
-                        }, TTL_BUFFER
-                    );
-                })
-            })
-        })
-
-
-    })
-
-    describe('Interesting cases', function() {
-        it('updating null TTL to non-null will result in expired item', function(done) {
-            var VERBOSE = false;
-
-            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: null}, function(firstPatchRes) {
-                expect(gu.isHTTPSuccess(firstPatchRes.status)).to.be.true;
-
-                cnMetadata = new dhh.channelMetadata(firstPatchRes.body);
-
-                createItem({channel: cnMetadata}, function(itemMetadata, firstExpiration) {
-
-                    dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: SHORT_TTL}, function(secondPatchRes) {
-                        expect(gu.isHTTPSuccess(secondPatchRes.status)).to.be.true;
-
-                        cnMetadata = new dhh.channelMetadata(secondPatchRes.body);
-                        var expiration = getExpirationTime(cnMetadata, moment());
-
-
-                        var now = moment(),
-                            timeDiff = expiration.diff(now),
-                            wait = timeDiff + TTL_BUFFER;
-
-                        setTimeout(function(){
-                                reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
-                                    expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                                    expect(getRes.status).to.equal(gu.HTTPresponses.Not_Found);
-
-                                    done();
-                                })
-                            }, wait
-                        );
-                    })
-
-
-                })
-            })
-        })
-
-        it('existing item whose channel has increased TTL is not removed after first TTL has been met but second has not', function(done) {
-            var VERBOSE = true;
-
-            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: SHORT_TTL}, function(firstPatchRes) {
-                expect(gu.isHTTPSuccess(firstPatchRes.status)).to.be.true;
-
-                cnMetadata = new dhh.channelMetadata(firstPatchRes.body);
-
-                createItem({channel: cnMetadata}, function(itemMetadata, firstExpiration) {
-
-                    dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: MEDIUM_TTL}, function(secondPatchRes) {
-                        expect(gu.isHTTPSuccess(secondPatchRes.status)).to.be.true;
-
-                        cnMetadata = new dhh.channelMetadata(secondPatchRes.body);
-
-                        var now = moment(),
-                            timeDiff = firstExpiration.diff(now),
-                            wait = timeDiff + TTL_BUFFER;
-
-                        setTimeout(function(){
-                                gu.debugLog('Reaping at first timeout', VERBOSE);
-
-                                reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
-                                    expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                                    expect(getRes.status).to.equal(gu.HTTPresponses.OK);
-
-                                    setTimeout(function() {
-                                            gu.debugLog('Reaping at second timeout', VERBOSE);
-                                            reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
-                                                expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                                                expect(getRes.status).to.equal(gu.HTTPresponses.Not_Found);
-
-                                                done();
-                                            })
-                                        }, (MEDIUM_TTL - SHORT_TTL)
-                                    );
-                                })
-                            }, wait
-                        );
-                    })
-
-                })
-            })
-        })
-
-        it('existing item whose channel has decreased TTL is removed after new earlier TTL has been met but original later TTL has not', function(done) {
-            var creationTime = null,
-                VERBOSE = true;
-
-            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: MEDIUM_TTL}, function(firstPatchRes) {
-                expect(gu.isHTTPSuccess(firstPatchRes.status)).to.be.true;
-
-                cnMetadata = new dhh.channelMetadata(firstPatchRes.body);
-
-                createItem({channel: cnMetadata}, function(itemMetadata, firstExpiration) {
-                    creationTime = moment();
-
-                    dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: SHORT_TTL}, function(secondPatchRes) {
-                        expect(gu.isHTTPSuccess(secondPatchRes.status)).to.be.true;
-
-                        cnMetadata = new dhh.channelMetadata(secondPatchRes.body);
-
-                        var expiration = getExpirationTime(cnMetadata, creationTime),
-                            now = moment(),
-                            timeDiff = expiration.diff(now),
-                            wait = timeDiff + TTL_BUFFER;
-
-                        if (wait < 0) {
-                            wait = 0;
-                        }
-
-                        setTimeout(function(){
-                                // Ensure we haven't hit original expiration yet
-                                expect(moment().isBefore(firstExpiration)).to.be.true;
-
-                                reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
-                                    expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                                    expect(getRes.status).to.equal(gu.HTTPresponses.Not_Found);
-
-                                    done();
-                                })
-                            }, wait
-                        );
-                    })
-
-                })
-            })
-        })
-
-        it('expired item that has been removed is not reinstated after channel TTL is set to near infinite', function(done) {
-            var VERBOSE = false;
-
-            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: SHORT_TTL}, function(firstPatchRes) {
-                expect(gu.isHTTPSuccess(firstPatchRes.status)).to.be.true;
-                cnMetadata = new dhh.channelMetadata(firstPatchRes.body);
-
-                createItem({channel: cnMetadata}, function(itemMetadata, expiration) {
-                    var now = moment(),
-                        timeDiff = expiration.diff(now),
-                        wait = timeDiff + TTL_BUFFER;
-
-                    setTimeout(function(){
-                            reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
-                                expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                                expect(getRes.status).to.equal(gu.HTTPresponses.Not_Found);
-
-                                dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: INFINITE_TTL}, function(secondPatchRes) {
-                                    expect(gu.isHTTPSuccess(firstPatchRes.status)).to.be.true;
-
-                                    // Check twice -- once now and once after five seconds
-                                    dhh.getDataFromChannel({uri: itemMetadata.getPacketUri()}, function(err, getDataRes) {
-                                        expect(err).to.be.null;
-                                        expect(getDataRes.statusCode).to.equal(gu.HTTPresponses.Not_Found);
-
-                                        setTimeout(function() {
-                                                dhh.getDataFromChannel({uri: itemMetadata.getPacketUri()}, function(err, getDataRes) {
-                                                    expect(err).to.be.null;
-                                                    expect(getDataRes.statusCode).to.equal(gu.HTTPresponses.Not_Found);
-
-                                                    done();
-                                                })
-                                            }, 5000
-                                        );
-                                    })
-                                })
-                            })
-                        }, wait
-                    );
-                })
-            })
-        })
-
-        it('if all remaining items in a channel expire and are removed, get latest returns 404', function(done) {
-            var latestUri = '',
-                cnUri = cnMetadata.getChannelUri(),
+            var newTTL = SHORT_TTL,
                 VERBOSE = false;
 
-            dhh.patchChannel({channelUri: cnUri, ttlMillis: SHORT_TTL}, function(patchRes) {
-                expect(gu.isHTTPSuccess(patchRes.status)).to.be.true;
-                cnMetadata = new dhh.channelMetadata(patchRes.body);
-                latestUri = cnMetadata.getLatestUri();
-
-                createItem({channel: cnMetadata}, function(itemMetadata, expiration) {
-                    var now = moment(),
-                        timeDiff = expiration.diff(now),
-                        wait = timeDiff + TTL_BUFFER;
-
-                    setTimeout(function(){
-                            reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
-                                expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                                expect(getRes.status).to.equal(gu.HTTPresponses.Not_Found);
-
-                                superagent.agent().get(latestUri)
-                                    .end(function(err, res) {
-                                        expect(res.status).to.equal(gu.HTTPresponses.Not_Found);
-
-                                        done();
-                                    })
-                            })
-                        }, wait
-                    );
-
-                })
-            })
-        })
-
-        it('TTL of zero will lead to immediately expired item', function(done) {
-            var VERBOSE = false;
-
-            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: 0}, function(patchRes) {
+            dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: newTTL}, function(patchRes) {
                 expect(gu.isHTTPSuccess(patchRes.status)).to.be.true;
                 cnMetadata = new dhh.channelMetadata(patchRes.body);
 
                 createItem({channel: cnMetadata}, function(itemMetadata, expiration) {
-                    setTimeout(function(){
-                            reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
-                                expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                                expect(getRes.status).to.equal(gu.HTTPresponses.Not_Found);
+                    reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
+                        expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
+                        expect(getRes.status).to.equal(gu.HTTPresponses.OK);
 
-                                done();
-                            })
-                        }, TTL_BUFFER
-                    );
+                        done();
+                    })
 
                 })
             })
         })
 
-        it.skip('BUG: https://www.pivotaltracker.com/story/show/53508215 - if first item in a channel expires, but the following item has not, then following item should no longer have a prev link ', function(done) {
-            var cnUri = cnMetadata.getChannelUri(),
-                VERBOSE = true;
+        // confirm GET returns item for channel with no TTL
 
-            dhh.patchChannel({channelUri: cnUri, ttlMillis: SHORT_TTL}, function(patchRes) {
-                expect(gu.isHTTPSuccess(patchRes.status)).to.be.true;
-                gu.debugLog('Updated channel TTL.', VERBOSE);
+        // confirm updating TTL to a later value is respected
 
-                cnMetadata = new dhh.channelMetadata(patchRes.body);
+        // confirm updating TTL to an earlier value is respected
 
-                createItem({channel: cnMetadata}, function(firstItemMetadata, firstItemExpiration) {
-                    gu.debugLog('Created first item.', VERBOSE);
-                    var now = moment(),
-                        timeDiff = firstItemExpiration.diff(now),
-                        wait = timeDiff + TTL_BUFFER;
+        // confirm updating TTL to null is respected
 
-                    // wait until expiration, then:
-                    setTimeout(function(){
-                        gu.debugLog('Waited for first item to expire.', VERBOSE);
+        // confirm updating null TTL to non-null is respected
 
-                        // - create second item and confirm it has prev link
-                        createItem({channel: cnMetadata}, function(secondItemMetadata, secondItemExpiration) {
-                            gu.debugLog('Created second item.', VERBOSE);
+        // Increase TTL and confirm item is not removed after original TTL has been met but new time has not.
 
-                            superagent.agent().get(secondItemMetadata.getPacketUri())
-                                .end(function(err, getRes1) {
-                                    var pheader = new dhh.packetGETHeader(getRes1.headers);
-                                    expect(pheader.getPrevious()).to.equal(firstItemMetadata.getPacketUri());
+        // Decrease TTL and confirm item is removed after new TTL has been met but original time has not.
 
-                                    // Reap and confirm first item is removed
-                                    reapAndGetItem({itemUri: firstItemMetadata.getPacketUri()}, function(reapRes, getRes) {
-                                        expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                                        expect(getRes.status).to.equal(gu.HTTPresponses.Not_Found);
-                                        gu.debugLog('First item was removed via expiration.', VERBOSE);
-
-                                        // Get second item and confirm previous header is gone
-                                        superagent.agent().get(secondItemMetadata.getPacketUri())
-                                            .end(function(err, getRes2) {
-                                                expect(getRes2.status).to.equal(gu.HTTPresponses.OK);
-                                                pheader = new dhh.packetGETHeader(getRes2.headers);
-                                                expect(pheader.getPrevious()).to.be.null;
-
-                                                done();
-                                            })
-                                    })
-
-                                })
-                        })
-                    }, wait
-                    );
-                })
-            })
-        })
+        // An item that has already been removed due to TTL is not restored after its channel's TTL is extended.
     })
 })

@@ -18,11 +18,13 @@ var dhh = require('../DH_test_helpers/DHtesthelpers.js'),
 var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
     WAIT_FOR_SOCKET_CLOSURE_MS = 10 * 1000,
     URL_ROOT = dhh.URL_ROOT,
-    //DOMAIN = 'datahub-01.cloud-east.dev:8080',
-    DOMAIN = 'datahub.svc.dev',
+    DOMAIN = dhh.DOMAIN,
     FAKE_SOCKET_URI = ['ws:/', dhh.DOMAIN, 'channel', 'sQODTvsYlLOLWTFPWNBBQ', 'ws'].join('/'),
     LOAD_BALANCER_HOSTNAME = 'datahub.svc.dev',
     DEBUG = true;
+
+
+
 
 describe('Channel Subscription:', function() {
 
@@ -85,7 +87,7 @@ describe('Channel Subscription:', function() {
 
         channelName = dhh.getRandomChannelName();
 
-        dhh.createChannel({name: channelName, domain: DOMAIN}, function(res){
+        dhh.createChannel({name: channelName}, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             }
@@ -185,9 +187,7 @@ describe('Channel Subscription:', function() {
     // Attach a listener to each instance and to the load balancer, all on the same channel.
     // Insert items in parallel into that channel, directly into each instance and into the load balancer.
     // Ensure that the messages are reported in order.
-    //
-    // BUG: https://www.pivotaltracker.com/story/show/52726289
-    it('HA: multiple parallel updates with a socket ' +
+    it('BUG: https://www.pivotaltracker.com/story/show/52726289 - HA: multiple parallel updates with a socket ' +
         'on each DH instance and the load balancer are reported in order', function(done) {
 
         // Configurable items
@@ -361,7 +361,7 @@ describe('Channel Subscription:', function() {
                 hostObj.socket.ws.close();
             })
 
-            if (VERBOSE) {
+            if (true) {
                 dumpAllQueues();
             }
 
