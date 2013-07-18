@@ -136,7 +136,6 @@ task deployDev << {
     runExternal("${projectDir}/bin/ctdeploy.sh datahub-01.cloud-east.dev")
     runExternal("${projectDir}/bin/ctdeploy.sh datahub-02.cloud-east.dev")
     runExternal("${projectDir}/bin/ctdeploy.sh datahub-03.cloud-east.dev")
-//    runExternal("bash ${projectDir}/bin/ctdeploy.sh datahub-04.cloud-east.dev")
 }
 
 task deployStaging << {
