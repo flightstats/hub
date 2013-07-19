@@ -140,7 +140,7 @@ task deployDev << {
     println "Deploying to datahub-02.cloud-east.dev"
     runExternal("${projectDir}/bin/ctdeploy.sh datahub-02.cloud-east.dev")
 
-    println "Deploying to datahub-02.cloud-east.dev"
+    println "Deploying to datahub-03.cloud-east.dev"
     runExternal("${projectDir}/bin/ctdeploy.sh datahub-03.cloud-east.dev")
 }
 
