@@ -82,11 +82,12 @@ public class CassandraChannelDao implements ChannelDao {
 		logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
 		DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentEncoding, contentLanguage, data);
 
+		Optional<DataHubKey> previousKey = findLastUpdatedKey(channelName);
 		ValueInsertionResult result = cassandraValueWriter.write(channelName, value);
 		DataHubKey insertedKey = result.getKey();
-		DataHubKey previousKey = updateLatestKey(channelName, insertedKey);
+		setLastUpdateKey(channelName, insertedKey);
 		updateFirstKey(channelName, insertedKey);
-		linkagesCollection.updateLinkages(channelName, insertedKey, previousKey);
+		linkagesCollection.updateLinkages(channelName, insertedKey, previousKey.isPresent() ? previousKey.get() : null);
 
 		return result;
 	}
@@ -95,15 +96,6 @@ public class CassandraChannelDao implements ChannelDao {
 		if (!findFirstUpdateKey(channelName).isPresent()) {
 			setFirstKey(channelName, newLatestKey);
 		}
-	}
-
-	/**
-	 * @return the previous latest key, null if one didn't exist.
-	 */
-	private DataHubKey updateLatestKey(String channelName, DataHubKey newLatestKey) {
-		Optional<DataHubKey> previousLastUpdatedKey = findLastUpdatedKey(channelName);
-		setLastUpdateKey(channelName, newLatestKey);
-		return previousLastUpdatedKey.isPresent() ? previousLastUpdatedKey.get() : null;
 	}
 
 	@Override
