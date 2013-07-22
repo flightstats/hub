@@ -71,7 +71,6 @@ public class CassandraChannelDaoTest {
 		LastKeyFinder lastUpdatedKeyFinder = mock(LastKeyFinder.class);
 
 		// WHEN
-		when(lastUpdatedMap.put(channelName, key)).thenReturn(lastUpdateKey);
 		when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(key));
 		when(lastUpdatedKeyFinder.queryForLatestKey(channelName)).thenReturn(lastUpdateKey);
 		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, linkagesCollection, inserter, reader, null, null, null, null, lastUpdatedMap, lastUpdatedKeyFinder);
@@ -81,6 +80,39 @@ public class CassandraChannelDaoTest {
 		// THEN
 		assertEquals(expected, result);
 		verify(linkagesCollection).updateLinkages(channelName, result.getKey(), lastUpdateKey);
+	}
+
+	@Test
+	public void testInsert_lastUpdateCacheMiss() throws Exception {
+		// GIVEN
+		Date date = new Date(2345678910L);
+		DataHubKey key = new DataHubKey(date, (short) 3);
+		String channelName = "foo";
+		byte[] data = "bar".getBytes();
+		Optional<String> contentType = Optional.of("text/plain");
+		DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), Optional.<String>absent(), data);
+		ValueInsertionResult expected = new ValueInsertionResult(key);
+
+		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+		CassandraValueWriter inserter = mock(CassandraValueWriter.class);
+		CassandraValueReader reader = mock(CassandraValueReader.class);
+		CassandraLinkagesCollection linkagesCollection = mock(CassandraLinkagesCollection.class);
+		ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
+
+		// WHEN
+		when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(key));
+		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, linkagesCollection, inserter, reader, null, null, null, null, lastUpdatedMap, null){
+			@Override
+			public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
+				return Optional.absent();
+			}
+		};
+
+		ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), Optional.<String>absent(), data);
+
+		// THEN
+		assertEquals(expected, result);
+		verify(linkagesCollection).updateLinkages(channelName, result.getKey(), null);
 	}
 
 	@Test
