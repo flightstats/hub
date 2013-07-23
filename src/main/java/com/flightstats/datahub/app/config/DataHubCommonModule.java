@@ -13,7 +13,6 @@ import com.flightstats.datahub.dao.YearMonthDayRowKeyStrategy;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
-import com.flightstats.datahub.service.DataHubService;
 import com.flightstats.datahub.service.DataHubSweeper;
 import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
 import com.flightstats.datahub.service.eventing.MetricsCustomWebSocketCreator;
@@ -68,8 +67,8 @@ class DataHubCommonModule extends JerseyServletModule {
 	}
 
 	private void bindCommonBeans() {
-		Names.bindProperties( binder(), properties );
-		bind(MetricRegistry.class).in( Singleton.class );
+		Names.bindProperties(binder(), properties);
+		bind(MetricRegistry.class).in(Singleton.class);
 		bind(GraphiteConfiguration.class).asEagerSingleton();
 		bind(ChannelLockExecutor.class).asEagerSingleton();
 		bind(SubscriptionRoster.class).to(HazelcastSubscriptionRoster.class).in(Singleton.class);
@@ -81,7 +80,6 @@ class DataHubCommonModule extends JerseyServletModule {
 		bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
 		}).to(YearMonthDayRowKeyStrategy.class);
 		bind(DataHubSweeper.class).asEagerSingleton();
-		bind(DataHubService.class).asEagerSingleton();
 	}
 
 	private void startUpServlets() {
