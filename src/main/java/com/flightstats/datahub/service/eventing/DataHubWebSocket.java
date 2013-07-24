@@ -19,6 +19,7 @@ public class DataHubWebSocket {
 	private final SubscriptionRoster subscriptions;
 	private String remoteAddress;
 	private JettyWebSocketEndpointSender endpointSender;
+	private String channelName;
 
 	@Inject
 	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor) {
@@ -42,12 +43,14 @@ public class DataHubWebSocket {
 		logger.info("New client connection: " + remoteAddress + " for " + requestUri);
 		remoteAddress = session.getRemoteAddress().toString();
 		endpointSender = new JettyWebSocketEndpointSender(remoteAddress, session.getRemote());
-		subscriptions.subscribe(channelNameExtractor.extractChannelName(requestUri), endpointSender);
+		channelName = channelNameExtractor.extractChannelName(requestUri);
+		subscriptions.subscribe(channelName, endpointSender);
 	}
 
 	@OnWebSocketClose
 	public void onDisconnect(int statusCode, String reason) {
 		logger.info("Client disconnect: " + remoteAddress + " (status = " + statusCode + ", reason = " + reason + ")");
 		afterDisconnectCallback.run();
+		subscriptions.unsubscribe(channelName, endpointSender);
 	}
 }
