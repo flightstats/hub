@@ -1,6 +1,5 @@
 package com.flightstats.datahub.service;
 
-import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
@@ -27,12 +26,12 @@ public class LatestChannelItemResourceTest {
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 
 		UriInfo uriInfo = mock(UriInfo.class);
-		ChannelDao channelDao = mock(ChannelDao.class);
+		DataHubService dataHubService = mock(DataHubService.class);
 
-		when(channelDao.findLastUpdatedKey(channelName)).thenReturn(Optional.of(key));
+		when(dataHubService.findLastUpdatedKey(channelName)).thenReturn(Optional.of(key));
 		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to/channel/lolcats/latest"));
 
-		LatestChannelItemResource testClass = new LatestChannelItemResource(uriInfo, channelDao, keyRenderer);
+		LatestChannelItemResource testClass = new LatestChannelItemResource(uriInfo, dataHubService, keyRenderer);
 
 		Response response = testClass.getLatest(channelName);
 		assertEquals(Response.Status.SEE_OTHER.getStatusCode(), response.getStatus());
@@ -45,11 +44,11 @@ public class LatestChannelItemResourceTest {
 	public void testGetLatest_channelEmpty() throws Exception {
 		String channelName = "fooChan";
 
-		ChannelDao channelDao = mock(ChannelDao.class);
+		DataHubService dataHubService = mock(DataHubService.class);
 
-		when(channelDao.findLastUpdatedKey(channelName)).thenReturn(Optional.<DataHubKey>absent());
+		when(dataHubService.findLastUpdatedKey(channelName)).thenReturn(Optional.<DataHubKey>absent());
 
-		LatestChannelItemResource testClass = new LatestChannelItemResource(null, channelDao, null);
+		LatestChannelItemResource testClass = new LatestChannelItemResource(null, dataHubService, null);
 
 		try {
 			testClass.getLatest(channelName);

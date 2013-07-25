@@ -1,7 +1,6 @@
 package com.flightstats.datahub.service;
 
 import com.codahale.metrics.annotation.Timed;
-import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
@@ -27,24 +26,22 @@ import java.util.Map;
 @Path("/channel")
 public class ChannelResource {
 
-	private final ChannelDao channelDao;
+	private final DataHubService dataHubService;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 	private final UriInfo uriInfo;
-	private final CreateChannelValidator createChannelValidator;
 
 	@Inject
-	public ChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, CreateChannelValidator createChannelValidator, UriInfo uriInfo) {
-		this.channelDao = channelDao;
+	public ChannelResource(DataHubService dataHubService, ChannelHypermediaLinkBuilder linkBuilder, UriInfo uriInfo) {
+		this.dataHubService = dataHubService;
 		this.linkBuilder = linkBuilder;
 		this.uriInfo = uriInfo;
-		this.createChannelValidator = createChannelValidator;
 	}
 
 	@GET
 	@Timed
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getChannels() {
-		Iterable<ChannelConfiguration> channels = channelDao.getChannels();
+		Iterable<ChannelConfiguration> channels = dataHubService.getChannels();
 		Map<String, URI> mappedChannels = new HashMap<>();
 		for (ChannelConfiguration channelConfiguration : channels) {
 			String channelName = channelConfiguration.getName();
@@ -70,11 +67,10 @@ public class ChannelResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createChannel(ChannelCreationRequest channelCreationRequest) throws InvalidRequestException, AlreadyExistsException {
 		String channelName = channelCreationRequest.getName().get();
-		createChannelValidator.validate(channelName);
 		channelName = channelName.trim();
 
 		Optional<Long> ttlMillis = channelCreationRequest.getTtlMillis();
-		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName, ttlMillis.isPresent() ? ttlMillis.get() : null);
+		ChannelConfiguration channelConfiguration = dataHubService.createChannel(channelName, ttlMillis.orNull());
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
 		return Response.created(channelUri).entity(
 			linkBuilder.buildLinkedChannelConfig(channelConfiguration, channelUri, uriInfo))
