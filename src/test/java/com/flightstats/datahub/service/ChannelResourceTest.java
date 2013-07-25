@@ -46,7 +46,7 @@ public class ChannelResourceTest {
 		when(linkBuilder.buildLatestUri(channelName, uriInfo)).thenReturn(URI.create(latestUri));
 		when(linkBuilder.buildWsLinkFor(channelName, uriInfo)).thenReturn(URI.create(wsUri));
 
-		ChannelResource testClass = new ChannelResource(linkBuilder, null, dataHubService);
+		ChannelResource testClass = new ChannelResource(linkBuilder, uriInfo, dataHubService);
 
 		Response response = testClass.createChannel(channelCreationRequest);
 
