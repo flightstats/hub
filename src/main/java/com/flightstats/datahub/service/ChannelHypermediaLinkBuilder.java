@@ -51,11 +51,11 @@ public class ChannelHypermediaLinkBuilder {
 		return URI.create(requestUri + "/" + channelName + "/ws");
 	}
 
-	public Linked<ChannelConfiguration> buildLinkedChannelConfig(ChannelConfiguration newConfig, URI channelUri) {
+	public Linked<ChannelConfiguration> buildLinkedChannelConfig(ChannelConfiguration newConfig, URI channelUri, UriInfo uriInfo) {
 		return linked(newConfig)
 			.withLink("self", channelUri)
-			.withLink("latest", buildLatestUri(newConfig.getName()))
-			.withLink("ws", buildWsLinkFor(newConfig.getName()))
+			.withLink("latest", buildLatestUri(newConfig.getName(), uriInfo))
+			.withLink("ws", buildWsLinkFor(newConfig.getName(), uriInfo))
 			.build();
 	}
 }
