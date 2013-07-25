@@ -2,6 +2,7 @@ package com.flightstats.datahub.dao.memory;
 
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.common.cache.Cache;
@@ -92,6 +93,9 @@ public class InMemoryChannelDao implements ChannelDao {
 
 	@Override
 	public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage, byte[] data) {
+		if (!channelExists(channelName)) {
+			throw new NoSuchChannelException("No such channel: " + channelName, new RuntimeException());
+		}
 		DataHubChannelValueKey oldLastKey = latestPerChannel.get(channelName);
 		short newSequence = (oldLastKey == null) ? ((short) 0) : (short) (oldLastKey.getSequence() + 1);
 		DataHubKey newKey = new DataHubKey(timeProvider.getDate(), newSequence);
