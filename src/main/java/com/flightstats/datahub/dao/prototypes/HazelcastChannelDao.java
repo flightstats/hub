@@ -6,10 +6,7 @@ import com.google.common.base.Optional;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 
@@ -28,9 +25,9 @@ public class HazelcastChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ChannelConfiguration createChannel(String name, Long ttl) {
+	public ChannelConfiguration createChannel(String name, Long ttlMillis) {
 		Date creationDate = new Date();
-		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate, ttl);
+		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate, ttlMillis);
 		channelConfigurations.put(name, channelConfiguration);
 		return channelConfiguration;
 	}
@@ -78,7 +75,17 @@ public class HazelcastChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ValueInsertionResult insert(String channelName, String contentType, byte[] data) {
+	public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void updateChannelMetadata(ChannelConfiguration newConfig) {
+		channelConfigurations.put(newConfig.getName(), newConfig);
+	}
+
+	@Override
+	public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage, byte[] data) {
 		Lock lock = HAZELCAST_INSTANCE.getLock(channelName + "-writeLock");
 		lock.lock();
 		try {
@@ -86,7 +93,7 @@ public class HazelcastChannelDao implements ChannelDao {
 			short newSequence = (oldLastKey == null) ? ((short) 0) : (short) (oldLastKey.getSequence() + 1);
 			DataHubKey newKey = new DataHubKey(new Date(), newSequence);
 
-			DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, data);
+			DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, contentEncoding, contentLanguage, data);
 			LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, Optional.fromNullable(oldLastKey),
 					Optional.<DataHubKey>absent());
 			//first put the actual value in.
@@ -99,7 +106,7 @@ public class HazelcastChannelDao implements ChannelDao {
 			}
 			//finally, make it the latest
 			setLastUpdateKey(channelName, newKey);
-			setFirstKey(channelName,newKey);
+			setFirstKey(channelName, newKey);
 			return new ValueInsertionResult(newKey);
 		} finally {
 			lock.unlock();
@@ -112,13 +119,13 @@ public class HazelcastChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public Optional<DataHubKey> findFirstId(String channelName) {
+	public Optional<DataHubKey> findFirstUpdateKey(String channelName) {
 		DataHubKey key = firstPerChannel.get(channelName);
 		return Optional.fromNullable(key);
 	}
 
 	@Override
-	public Optional<DataHubKey> findLatestId(String channelName) {
+	public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
 		DataHubKey key = latestPerChannel.get(channelName);
 		return Optional.fromNullable(key);
 	}

@@ -1,6 +1,7 @@
 package com.flightstats.datahub.service;
 
 import com.codahale.metrics.annotation.Timed;
+import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
@@ -21,20 +22,20 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 public class LatestChannelItemResource {
 
 	private final UriInfo uriInfo;
-	private final DataHubService dataHubService;
+	private final ChannelDao channelDao;
 	private final DataHubKeyRenderer keyRenderer;
 
 	@Inject
-	public LatestChannelItemResource(UriInfo uriInfo, DataHubService dataHubService, DataHubKeyRenderer keyRenderer) {
+	public LatestChannelItemResource(UriInfo uriInfo, ChannelDao channelDao, DataHubKeyRenderer keyRenderer) {
 		this.uriInfo = uriInfo;
-		this.dataHubService = dataHubService;
+		this.channelDao = channelDao;
 		this.keyRenderer = keyRenderer;
 	}
 
 	@GET
 	@Timed
 	public Response getLatest(@PathParam("channelName") String channelName) {
-		Optional<DataHubKey> latestId = dataHubService.findLatestId(channelName);
+		Optional<DataHubKey> latestId = channelDao.findLastUpdatedKey(channelName);
 		if (!latestId.isPresent()) {
 			//TODO: Don't throw, just set status in response
 			throw new WebApplicationException(NOT_FOUND);

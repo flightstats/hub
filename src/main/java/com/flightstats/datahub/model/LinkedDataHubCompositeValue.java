@@ -18,16 +18,12 @@ public class LinkedDataHubCompositeValue {
 		return value;
 	}
 
-	public String getContentType() {
+	public Optional<String> getContentType() {
 		return value.getContentType();
 	}
 
 	public int getDataLength() {
 		return value.getDataLength();
-	}
-
-	public int getContentTypeLength() {
-		return value.getContentTypeLength();
 	}
 
 	public byte[] getData() {

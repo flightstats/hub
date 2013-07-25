@@ -1,6 +1,5 @@
 package com.flightstats.datahub.service;
 
-import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.google.inject.Inject;
 
@@ -20,7 +19,6 @@ public class HealthCheck {
 	}
 
 	@GET
-	@Timed
 	@Produces(MediaType.TEXT_PLAIN)
 	public String check() {
 		int channelCount = channelDao.countChannels();
