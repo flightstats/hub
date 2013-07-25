@@ -1,6 +1,5 @@
 package com.flightstats.datahub.service;
 
-import com.flightstats.datahub.cluster.ChannelLockFactory;
 import com.flightstats.datahub.cluster.ReentrantChannelLockFactory;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
@@ -12,8 +11,6 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static org.mockito.Mockito.*;
 
@@ -64,8 +61,8 @@ public class DataHubSweeperTest {
 	public void testSweepPartialReap() {
 		// GIVEN
 		long ttl = 100000L;
-		Optional<DataHubKey> reapHubKey = Optional.of( new DataHubKey(new Date( System.currentTimeMillis() - (ttl+1)), (short) 0));
-		Optional<DataHubKey> keepHubKey = Optional.of( new DataHubKey(new Date(), (short) 0));
+		Optional<DataHubKey> reapHubKey = Optional.of(new DataHubKey(new Date(System.currentTimeMillis() - (ttl + 1)), (short) 0));
+		Optional<DataHubKey> keepHubKey = Optional.of(new DataHubKey(new Date(), (short) 0));
 		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 		ChannelDao dao = mock(ChannelDao.class);
 		Optional<LinkedDataHubCompositeValue> reapHubKeyValue = Optional.of(mock(LinkedDataHubCompositeValue.class));
@@ -92,7 +89,7 @@ public class DataHubSweeperTest {
 	public void testSweepFullReap() {
 		// GIVEN
 		long ttl = 100000L;
-		Optional<DataHubKey> reapHubKey1 = Optional.of( new DataHubKey(new Date( System.currentTimeMillis() - (ttl+2)), (short) 0));
+		Optional<DataHubKey> reapHubKey1 = Optional.of(new DataHubKey(new Date(System.currentTimeMillis() - (ttl + 2)), (short) 0));
 		Optional<DataHubKey> reapHubKey2 = Optional.of(new DataHubKey(new Date(System.currentTimeMillis() - (ttl + 1)), (short) 0));
 		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 		ChannelDao dao = mock(ChannelDao.class);

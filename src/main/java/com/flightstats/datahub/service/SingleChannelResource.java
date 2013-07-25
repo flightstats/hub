@@ -11,8 +11,10 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
 
@@ -37,7 +39,7 @@ public class SingleChannelResource {
 	@Timed
 	@PerChannelTimed(operationName = "metadata", channelNamePathParameter = "channelName")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Linked<MetadataResponse> getChannelMetadata(@PathParam("channelName") String channelName) {
+	public Linked<MetadataResponse> getChannelMetadata(@PathParam("channelName") String channelName, @Context UriInfo uriInfo) {
 		if (!dataHubService.channelExists(channelName)) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
@@ -46,9 +48,9 @@ public class SingleChannelResource {
 		Date lastUpdateDate = getLastUpdateDate(channelName);
 		MetadataResponse response = new MetadataResponse(config, lastUpdateDate);
 		return linked(response)
-				.withLink("self", linkBuilder.buildChannelUri(config))
-				.withLink("latest", linkBuilder.buildLatestUri())
-				.withLink("ws", linkBuilder.buildWsLinkFor())
+				.withLink("self", linkBuilder.buildChannelUri(config, uriInfo))
+				.withLink("latest", linkBuilder.buildLatestUri(uriInfo))
+				.withLink("ws", linkBuilder.buildWsLinkFor(uriInfo))
 				.build();
 	}
 
@@ -65,14 +67,14 @@ public class SingleChannelResource {
 	@PerChannelTimed(operationName = "insert", channelNamePathParameter = "channelName")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response insertValue(@HeaderParam("Content-Type") final String contentType, @PathParam(
-			"channelName") final String channelName, final byte[] data) throws Exception {
+			"channelName") final String channelName, final byte[] data, @Context UriInfo uriInfo) throws Exception {
 
-		ValueInsertionResult insertionResult = dataHubService.insert(channelName, contentType, data);
+		ValueInsertionResult insertionResult = dataHubService.insert(channelName, contentType, data, uriInfo);
 
-		URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey());
+		URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo);
 
 		Linked<ValueInsertionResult> linkedResult = linked(insertionResult)
-				.withLink("channel", linkBuilder.buildChannelUri(channelName))
+				.withLink("channel", linkBuilder.buildChannelUri(channelName, uriInfo))
 				.withLink("self", payloadUri)
 				.build();
 
