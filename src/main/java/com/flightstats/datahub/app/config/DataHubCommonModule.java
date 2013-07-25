@@ -80,6 +80,7 @@ class DataHubCommonModule extends JerseyServletModule {
 		bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
 		}).to(YearMonthDayRowKeyStrategy.class);
 		bind(DataHubSweeper.class).asEagerSingleton();
+
 	}
 
 	private void startUpServlets() {

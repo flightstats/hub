@@ -48,7 +48,7 @@ public class ChannelResource {
 		Map<String, URI> mappedChannels = new HashMap<>();
 		for (ChannelConfiguration channelConfiguration : channels) {
 			String channelName = channelConfiguration.getName();
-			mappedChannels.put(channelName, linkBuilder.buildChannelUri(channelName));
+			mappedChannels.put(channelName, linkBuilder.buildChannelUri(channelName, uriInfo));
 		}
 
 		Linked.Builder<?> responseBuilder = Linked.justLinks();
@@ -72,12 +72,12 @@ public class ChannelResource {
 		String channelName = channelCreationRequest.getName().trim();
 		Long ttl = channelCreationRequest.getTtl() == null ? DEFAULT_TTL : channelCreationRequest.getTtl();
 		ChannelConfiguration channelConfiguration = dataHubService.createChannel(channelName, ttl);
-		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration);
+		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
 		return Response.created(channelUri).entity(
 				linked(channelConfiguration)
 						.withLink("self", channelUri)
-						.withLink("latest", linkBuilder.buildLatestUri(channelName))
-						.withLink("ws", linkBuilder.buildWsLinkFor(channelName))
+						.withLink("latest", linkBuilder.buildLatestUri(channelName, uriInfo))
+						.withLink("ws", linkBuilder.buildWsLinkFor(channelName, uriInfo))
 						.build())
 					   .build();
 	}

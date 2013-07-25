@@ -42,9 +42,9 @@ public class ChannelResourceTest {
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
 		when(dataHubService.createChannel(channelName, ChannelResource.DEFAULT_TTL)).thenReturn(channelConfiguration);
-		when(linkBuilder.buildChannelUri(channelConfiguration)).thenReturn(URI.create(channelUri));
-		when(linkBuilder.buildLatestUri(channelName)).thenReturn(URI.create(latestUri));
-		when(linkBuilder.buildWsLinkFor(channelName)).thenReturn(URI.create(wsUri));
+		when(linkBuilder.buildChannelUri(channelConfiguration, uriInfo)).thenReturn(URI.create(channelUri));
+		when(linkBuilder.buildLatestUri(channelName, uriInfo)).thenReturn(URI.create(latestUri));
+		when(linkBuilder.buildWsLinkFor(channelName, uriInfo)).thenReturn(URI.create(wsUri));
 
 		ChannelResource testClass = new ChannelResource(linkBuilder, null, dataHubService);
 
@@ -75,8 +75,8 @@ public class ChannelResourceTest {
 
 		//WHEN
 		when(dataHubService.getChannels()).thenReturn(channels);
-		when(linkBuilder.buildChannelUri(channel1.getName())).thenReturn(URI.create(channel1Uri));
-		when(linkBuilder.buildChannelUri(channel2.getName())).thenReturn(URI.create(channel2Uri));
+		when(linkBuilder.buildChannelUri(channel1.getName(), uriInfo)).thenReturn(URI.create(channel1Uri));
+		when(linkBuilder.buildChannelUri(channel2.getName(), uriInfo)).thenReturn(URI.create(channel2Uri));
 		when(uriInfo.getRequestUri()).thenReturn(URI.create(requestUri));
 
 		Response result = testClass.getChannels();

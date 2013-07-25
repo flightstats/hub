@@ -3,12 +3,14 @@ package com.flightstats.datahub.service;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
+import javax.ws.rs.core.UriInfo;
 import java.util.concurrent.Callable;
 
 //todo write unit tests.
@@ -47,26 +49,33 @@ public class DataHubService {
 		return channelDao.findLatestId(channelName);
 	}
 
-	public ValueInsertionResult insert(String channelName, String contentType, byte[] data) throws Exception {
-		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelName, contentType, data);
+	//todo: passing in UriInfo here is clearly not cool. figure out how to get rid of HTTP knowledge down here.
+	public ValueInsertionResult insert(String channelName, String contentType, byte[] data, UriInfo uriInfo) throws Exception {
+		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelName, contentType, data, uriInfo);
 		return channelLockExecutor.execute(channelName, task);
+	}
+
+	public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
+		return channelDao.getValue(channelName, key);
 	}
 
 	private class WriteAndDispatch implements Callable<ValueInsertionResult> {
 		private final String channelName;
 		private final String contentType;
 		private final byte[] data;
+		private final UriInfo uriInfo;
 
-		private WriteAndDispatch(String channelName, String contentType, byte[] data) {
+		private WriteAndDispatch(String channelName, String contentType, byte[] data, UriInfo uriInfo) {
 			this.channelName = channelName;
 			this.contentType = contentType;
 			this.data = data;
+			this.uriInfo = uriInfo;
 		}
 
 		@Override
 		public ValueInsertionResult call() throws Exception {
 			ValueInsertionResult result = channelDao.insert(channelName, contentType, data);
-			insertionTopicProxy.publish(channelName, result);
+			insertionTopicProxy.publish(channelName, result, uriInfo);
 			return result;
 		}
 	}

@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.flightstats.datahub.dao.ChannelDao;
+import com.flightstats.datahub.service.DataHubService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
@@ -20,11 +20,11 @@ public class JettyWebSocketServlet extends WebSocketServlet {
 	private static final Logger logger = LoggerFactory.getLogger(JettyWebSocketServlet.class);
 	private final WebSocketCreator creator;
 	private final WebSocketChannelNameExtractor channelNameExtractor;
-	private final ChannelDao channelDao;
+	private final DataHubService dataHubService;
 
 	@Inject
-	public JettyWebSocketServlet(WebSocketCreator webSocketCreator, WebSocketChannelNameExtractor channelNameExtractor, ChannelDao channelDao) {
-		this.channelDao = channelDao;
+	public JettyWebSocketServlet(WebSocketCreator webSocketCreator, WebSocketChannelNameExtractor channelNameExtractor, DataHubService dataHubService) {
+		this.dataHubService = dataHubService;
 		this.creator = webSocketCreator;
 		this.channelNameExtractor = channelNameExtractor;
 	}
@@ -34,7 +34,7 @@ public class JettyWebSocketServlet extends WebSocketServlet {
 		String requestUriString = request.getRequestURI();
 		URI requestUri = URI.create(requestUriString);
 		String channelName = channelNameExtractor.extractChannelName(requestUri);
-		if (!channelDao.channelExists(channelName)) {
+		if (!dataHubService.channelExists(channelName)) {
 			logger.warn("No such channel '" + channelName + "', refusing websocket upgrade request.");
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			return;

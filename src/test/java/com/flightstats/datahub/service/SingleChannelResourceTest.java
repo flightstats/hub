@@ -32,6 +32,7 @@ public class SingleChannelResourceTest {
 	private ChannelConfiguration channelConfig;
 	private DataHubKey dataHubKey;
 	private URI itemUri;
+	private UriInfo urlInfo;
 	private DataHubService dataHubService = mock(DataHubService.class);
 
 	@Before
@@ -45,29 +46,28 @@ public class SingleChannelResourceTest {
 		dataHubKey = new DataHubKey(CREATION_DATE, (short) 12);
 		channelConfig = new ChannelConfiguration(channelName, CREATION_DATE, null);
 		linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
-		UriInfo urlInfo = mock(UriInfo.class);
+		urlInfo = mock(UriInfo.class);
 
 		when(urlInfo.getRequestUri()).thenReturn(requestUri);
 		when(dataHubService.channelExists(channelName)).thenReturn(true);
-		when(linkBuilder.buildChannelUri(channelConfig)).thenReturn(channelUri);
-		when(linkBuilder.buildChannelUri(channelName)).thenReturn(channelUri);
-		when(linkBuilder.buildLatestUri()).thenReturn(latestUri);
-		when(linkBuilder.buildItemUri(dataHubKey)).thenReturn(itemUri);
+		when(linkBuilder.buildChannelUri(channelConfig, urlInfo)).thenReturn(channelUri);
+		when(linkBuilder.buildChannelUri(channelName, urlInfo)).thenReturn(channelUri);
+		when(linkBuilder.buildLatestUri(urlInfo)).thenReturn(latestUri);
+		when(linkBuilder.buildItemUri(dataHubKey, urlInfo)).thenReturn(itemUri);
 	}
 
 	@Test
 	public void testGetChannelMetadataForKnownChannel() throws Exception {
-		UriInfo uriInfo = mock(UriInfo.class);
 		DataHubKey key = new DataHubKey(new Date(21), (short) 0);
 
 		when(dataHubService.channelExists(anyString())).thenReturn(true);
 		when(dataHubService.getChannelConfiguration(channelName)).thenReturn(channelConfig);
 		when(dataHubService.findLatestId(channelName)).thenReturn(Optional.of(key));
-		when(uriInfo.getRequestUri()).thenReturn(channelUri);
+		when(urlInfo.getRequestUri()).thenReturn(channelUri);
 
 		SingleChannelResource testClass = new SingleChannelResource(linkBuilder, dataHubService);
 
-		Linked<MetadataResponse> result = testClass.getChannelMetadata(channelName);
+		Linked<MetadataResponse> result = testClass.getChannelMetadata(channelName, urlInfo);
 		MetadataResponse expectedResponse = new MetadataResponse(channelConfig, key.getDate());
 		assertEquals(expectedResponse, result.getObject());
 		HalLink selfLink = result.getHalLinks().getLinks().get(0);
@@ -82,7 +82,7 @@ public class SingleChannelResourceTest {
 
 		SingleChannelResource testClass = new SingleChannelResource(linkBuilder, dataHubService);
 		try {
-			testClass.getChannelMetadata("unknownChannel");
+			testClass.getChannelMetadata("unknownChannel", urlInfo);
 			fail("Should have thrown a 404");
 		} catch (WebApplicationException e) {
 			Response response = e.getResponse();
@@ -98,10 +98,10 @@ public class SingleChannelResourceTest {
 		HalLink channelLink = new HalLink("channel", channelUri);
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey);
 
-		when(dataHubService.insert(channelName, contentType, data)).thenReturn(new ValueInsertionResult(dataHubKey));
+		when(dataHubService.insert(channelName, contentType, data, urlInfo)).thenReturn(new ValueInsertionResult(dataHubKey));
 
 		SingleChannelResource testClass = new SingleChannelResource(linkBuilder, dataHubService);
-		Response response = testClass.insertValue(contentType, channelName, data);
+		Response response = testClass.insertValue(contentType, channelName, data, urlInfo);
 
 		assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
 

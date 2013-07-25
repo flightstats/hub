@@ -10,42 +10,40 @@ import java.net.URI;
 
 public class ChannelHypermediaLinkBuilder {
 
-	private final UriInfo uriInfo;
 	private final DataHubKeyRenderer keyRenderer;
 
 	@Inject
-	public ChannelHypermediaLinkBuilder(UriInfo uriInfo, DataHubKeyRenderer keyRenderer) {
-		this.uriInfo = uriInfo;
+	public ChannelHypermediaLinkBuilder(DataHubKeyRenderer keyRenderer) {
 		this.keyRenderer = keyRenderer;
 	}
 
-	URI buildChannelUri(ChannelConfiguration channelConfiguration) {
-		return buildChannelUri(channelConfiguration.getName());
+	URI buildChannelUri(ChannelConfiguration channelConfiguration, UriInfo uriInfo) {
+		return buildChannelUri(channelConfiguration.getName(), uriInfo);
 	}
 
-	URI buildChannelUri(String channelName) {
+	URI buildChannelUri(String channelName, UriInfo uriInfo) {
 		return URI.create(uriInfo.getBaseUri() + "channel/" + channelName);
 	}
 
-	URI buildLatestUri() {
+	URI buildLatestUri(UriInfo uriInfo) {
 		return URI.create(uriInfo.getRequestUri() + "/latest");
 	}
 
-	URI buildLatestUri(String channelName) {
+	URI buildLatestUri(String channelName, UriInfo uriInfo) {
 		return URI.create(uriInfo.getRequestUri() + "/" + channelName + "/latest");
 	}
 
-	public URI buildItemUri(DataHubKey key) {
+	public URI buildItemUri(DataHubKey key, UriInfo uriInfo) {
 		String keyId = keyRenderer.keyToString(key);
 		return URI.create(uriInfo.getRequestUri().toString() + "/" + keyId);
 	}
 
-	public URI buildWsLinkFor() {
+	public URI buildWsLinkFor(UriInfo uriInfo) {
 		String requestUri = uriInfo.getRequestUri().toString().replaceFirst("^http", "ws");
 		return URI.create(requestUri + "/ws");
 	}
 
-	public URI buildWsLinkFor(String channelName) {
+	public URI buildWsLinkFor(String channelName, UriInfo uriInfo) {
 		String requestUri = uriInfo.getRequestUri().toString().replaceFirst("^http", "ws");
 		return URI.create(requestUri + "/" + channelName + "/ws");
 	}
