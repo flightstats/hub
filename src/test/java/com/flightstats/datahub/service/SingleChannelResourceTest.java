@@ -1,9 +1,9 @@
 package com.flightstats.datahub.service;
 
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.MetadataResponse;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.cluster.ReentrantChannelLockFactory;
+import com.flightstats.datahub.dao.ChannelDao;
+import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
@@ -26,6 +26,8 @@ public class SingleChannelResourceTest {
 
 	private String channelName;
 	private String contentType;
+	private String contentEncoding;
+	private String contentLanguage;
 	private URI channelUri;
 	private ChannelHypermediaLinkBuilder linkBuilder;
 	public static final Date CREATION_DATE = new Date(12345L);
@@ -39,6 +41,8 @@ public class SingleChannelResourceTest {
 	public void setup() {
 		channelName = "UHF";
 		contentType = "text/plain";
+		contentEncoding = "gzip";
+		contentLanguage = "en";
 		channelUri = URI.create("http://testification.com/channel/spoon");
 		URI requestUri = URI.create("http://testification.com/channel/spoon");
 		URI latestUri = URI.create("http://testification.com/channel/spoon/latest");
@@ -59,6 +63,10 @@ public class SingleChannelResourceTest {
 	@Test
 	public void testGetChannelMetadataForKnownChannel() throws Exception {
 		DataHubKey key = new DataHubKey(new Date(21), (short) 0);
+		when(dao.channelExists(anyString())).thenReturn(true);
+		when(dao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+		when(dao.findLastUpdatedKey(channelName)).thenReturn(Optional.of(key));
+		when(uriInfo.getRequestUri()).thenReturn(channelUri);
 
 		when(dataHubService.channelExists(anyString())).thenReturn(true);
 		when(dataHubService.getChannelConfiguration(channelName)).thenReturn(channelConfig);
@@ -74,6 +82,53 @@ public class SingleChannelResourceTest {
 		HalLink latestLink = result.getHalLinks().getLinks().get(1);
 		assertEquals(new HalLink("self", channelUri), selfLink);
 		assertEquals(new HalLink("latest", URI.create(channelUri.toString() + "/latest")), latestLink);
+	}
+
+	@Test
+	public void testUpdateChannelMetadataWithNonNullTtl() throws Exception {
+
+		UriInfo uriInfo = mock(UriInfo.class);
+		when(dao.channelExists(anyString())).thenReturn(true);
+		when(dao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+		when(uriInfo.getRequestUri()).thenReturn(channelUri);
+
+		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(30000L).build();
+		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(30000L).build();
+		Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri)).build();
+
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, null);
+		Response result = testClass.updateMetadata(request, channelName);
+
+		assertEquals(expectedResponse.getEntity(), result.getEntity());
+	}
+
+	@Test
+	public void testUpdateChannelMetadataWithNullTtl() throws Exception {
+
+		UriInfo uriInfo = mock(UriInfo.class);
+		when(dao.channelExists(anyString())).thenReturn(true);
+		when(dao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+		when(uriInfo.getRequestUri()).thenReturn(channelUri);
+
+		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(null).build();
+		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(null).build();
+		Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri)).build();
+
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, null, null);
+		Response result = testClass.updateMetadata(request, channelName);
+
+		assertEquals(expectedResponse.getEntity(), result.getEntity());
+	}
+
+	@Test(expected = WebApplicationException.class)
+	public void testUpdateChannelMetadataForUnknownChannel() throws Exception {
+
+		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(30000L).build();
+
+		when(dao.channelExists(anyString())).thenReturn(false);
+
+		SingleChannelResource testClass = new SingleChannelResource(dao, null, null, null);
+		testClass.updateMetadata(request, channelName);
 	}
 
 	@Test
@@ -98,10 +153,10 @@ public class SingleChannelResourceTest {
 		HalLink channelLink = new HalLink("channel", channelUri);
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey);
 
-		when(dataHubService.insert(channelName, contentType, data, urlInfo)).thenReturn(new ValueInsertionResult(dataHubKey));
+		when(dao.insert(channelName, Optional.of(contentType), Optional.of(contentEncoding), Optional.of(contentLanguage), data)).thenReturn(new ValueInsertionResult(dataHubKey));
 
-		SingleChannelResource testClass = new SingleChannelResource(linkBuilder, dataHubService);
-		Response response = testClass.insertValue(contentType, channelName, data, urlInfo);
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, hazelcast);
+		Response response = testClass.insertValue(channelName, contentType, contentEncoding, contentLanguage, data);
 
 		assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
 
@@ -114,4 +169,31 @@ public class SingleChannelResourceTest {
 		assertEquals(itemUri, response.getMetadata().getFirst("Location"));
 	}
 
+	@Test
+	public void testInsertPostsToTopic() throws Exception {
+		byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
+
+		ValueInsertionResult result = new ValueInsertionResult(dataHubKey);
+		channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
+
+		when(dao.insert(channelName, Optional.of(contentType), Optional.of(contentEncoding), Optional.of(contentLanguage), data)).thenReturn(result);
+
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, hazelcast);
+		testClass.insertValue(channelName, contentType, contentEncoding, contentLanguage, data);
+		verify(topic).publish(itemUri);
+	}
+
+	@Test(expected = NoSuchChannelException.class)
+	public void testInsertValue_unknownChannel() throws Exception {
+		byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
+
+		ChannelDao dao = mock(ChannelDao.class);
+
+		when(dao.channelExists(anyString())).thenReturn(false);
+		when(channelLockExecutor.execute(eq(channelName), any(Callable.class))).thenThrow(
+				new NoSuchChannelException("No such channel: " + channelName, new RuntimeException()));
+
+		SingleChannelResource testClass = new SingleChannelResource(dao, linkBuilder, channelLockExecutor, null);
+		testClass.insertValue(channelName, contentType, contentEncoding, contentLanguage, data);
+	}
 }

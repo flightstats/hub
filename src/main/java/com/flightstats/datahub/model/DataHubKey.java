@@ -6,9 +6,6 @@ import java.util.Date;
 public class DataHubKey implements Serializable{
     private static final long serialVersionUID = 1L;
 
-    public final static DataHubKey MIN_KEY = new DataHubKey(new Date(0), (short) 0);
-    public final static DataHubKey MAX_KEY = new DataHubKey(new Date(Long.MAX_VALUE), Short.MAX_VALUE);
-
     private final Date date;
     private final short sequence;
 

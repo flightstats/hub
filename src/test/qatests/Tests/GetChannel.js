@@ -66,8 +66,9 @@ describe('GET Channel metadata:', function() {
             expect(body.hasOwnProperty('lastUpdateDate')).to.be.true;
             expect(body.hasOwnProperty('name')).to.be.true;
             expect(body.hasOwnProperty('creationDate')).to.be.true;
+            expect(body.hasOwnProperty('ttlMillis')).to.be.true;
 
-            expect(lodash.keys(body).length).to.equal(4);
+            expect(lodash.keys(body).length).to.equal(5);
             expect(lodash.keys(body._links).length).to.equal(3);
         });
 
@@ -91,6 +92,10 @@ describe('GET Channel metadata:', function() {
 
         it('returns correct name', function() {
             expect(cnMetadata.getName()).to.equal(channelName);
+        })
+
+        it('returns valid TTL', function() {
+            expect(lodash.isNumber(cnMetadata.getTTL())).to.be.true;
         })
     })
 

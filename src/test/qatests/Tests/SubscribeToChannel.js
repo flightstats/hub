@@ -2,12 +2,13 @@
 
 var chai = require('chai');
 var expect = chai.expect;
-var superagent = require('superagent');
-var request = require('request');
-var moment = require('moment');
-var async = require('async');
-var fs = require('fs');
-var WebSocket = require('ws');
+var superagent = require('superagent'),
+    request = require('request'),
+    moment = require('moment'),
+    async = require('async'),
+    fs = require('fs'),
+    WebSocket = require('ws'),
+    lodash = require('lodash');
 
 
 var dhh = require('../DH_test_helpers/DHtesthelpers.js'),
@@ -18,18 +19,39 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
     WAIT_FOR_SOCKET_CLOSURE_MS = 10 * 1000,
     URL_ROOT = dhh.URL_ROOT,
     DOMAIN = dhh.DOMAIN,
-    FAKE_SOCKET_URI = 'ws://datahub-01.cloud-east.dev:8080/channel/sQODTvsYlLOLWTFPWNBBQ/ws',
-    DEBUG = false;
+    FAKE_SOCKET_URI = ['ws:/', dhh.DOMAIN, 'channel', 'sQODTvsYlLOLWTFPWNBBQ', 'ws'].join('/'),
+    LOAD_BALANCER_HOSTNAME = 'datahub.svc.dev',
+    DEBUG = true;
 
-// Test variables that are regularly overwritten
-var agent, payload, req, uri;
 
-var channelName,
-    channelUri,
-    wsUri;
 
 
 describe('Channel Subscription:', function() {
+
+    // Test variables that are regularly overwritten
+    var payload, req, uri;
+
+    var channelName,
+        postHostCnUri,  // used for tests that need to hit specific hosts
+        channelUri,
+        postHostWsUri,
+        wsUri;
+
+    var makeCnUri = function(host) {
+        return ['http:/', host, postHostCnUri].join('/');
+    }
+
+    var makeWsUri = function(host) {
+        return ['ws:/', host, postHostWsUri].join('/');
+    }
+
+    var getPostHostUri = function(uri) {
+        var hostRegex = /\/\/([^/]+)\/(.+)/,
+            m = hostRegex.exec(uri),
+            theRest = m[2];
+
+        return theRest;
+    }
 
     before(function(){
         gu.debugLog('\nURL_ROOT: '+ URL_ROOT);
@@ -38,8 +60,30 @@ describe('Channel Subscription:', function() {
     });
 
     beforeEach(function(myCallback){
-        agent = superagent.agent();
         payload = uri = req = null;
+
+        /*
+        // temporarily changed to hardcoded channel
+        dhh.getChannel({name: 'lolcats'}, function(res, body) {
+            if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
+                myCallback(res.error);
+            }
+            var cnMetadata = new dhh.channelMetadata(body);
+            channelUri = cnMetadata.getChannelUri();
+            wsUri = cnMetadata.getWebSocketUri();
+
+            // Need to test this!
+            var hostRegex = /\/\/[^\/]+\//;
+            var m = hostRegex.exec(channelUri);
+
+            postHostCnUri = m[1];
+            m = hostRegex.exec(wsUri);
+            postHostWsUri = m[1];
+
+            myCallback();
+        })
+        */
+
 
         channelName = dhh.getRandomChannelName();
 
@@ -51,8 +95,15 @@ describe('Channel Subscription:', function() {
             channelUri = cnMetadata.getChannelUri();
             wsUri = cnMetadata.getWebSocketUri();
 
+            gu.debugLog('channelUri: '+ channelUri);
+            gu.debugLog('wsUri: '+ wsUri);
+
+            postHostCnUri = getPostHostUri(channelUri);
+            postHostWsUri = getPostHostUri(wsUri);
+
             myCallback();
         });
+
     });
 
     it('Acceptance: subscription works and updates are sent in order', function(done) {
@@ -133,11 +184,242 @@ describe('Channel Subscription:', function() {
         socket.createSocket();
     })
 
-    // Note, this test also ensures that all updates are correctly saved in the DH *and* that their
-    //  relative links are correct.
+    // Attach a listener to each instance and to the load balancer, all on the same channel.
+    // Insert items in parallel into that channel, directly into each instance and into the load balancer.
+    // Ensure that the messages are reported in order.
+    it('BUG: https://www.pivotaltracker.com/story/show/52726289 - HA: multiple parallel updates with a socket ' +
+        'on each DH instance and the load balancer are reported in order', function(done) {
+
+        // Configurable items
+        var actualResponsesObjects = [
+                {'host':'datahub-01.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, socket: null},
+                {'host':'datahub-02.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, socket: null},
+                {'host':'datahub-03.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, socket: null},
+                {'host':LOAD_BALANCER_HOSTNAME, 'cnUri': null, 'wsUri': null, socket: null}
+            ],
+            lbchannelUri = makeCnUri(LOAD_BALANCER_HOSTNAME),
+            numItemsPerHostToPost = 50,
+
+        // if true, then item inserts will be spread across hosts; if false, then all inserts go through load balancer.
+        // Ideally, this is set to true (exploits more possible cases).
+            postDirectlyThroughHosts = true,
+            VERBOSE = false;
+
+        // Global variables
+        var numHosts = actualResponsesObjects.length,
+            totalItemsToPost = numItemsPerHostToPost * numHosts,
+            numOpenedSockets = 0,
+            expectedResponseQueue = [];
+
+        if (VERBOSE) {
+            gu.debugLog('postHostCnUri: '+ postHostCnUri);
+            gu.debugLog('postHostWsUri: '+ postHostWsUri);
+        }
+
+        // Set timeout
+        var maxTimeout = (totalItemsToPost * WAIT_FOR_CHANNEL_RESPONSE_MS) + 45000,
+            minTimeout = 180000,
+            actTimeout = (maxTimeout <= minTimeout) ? maxTimeout : minTimeout;
+
+        this.timeout(actTimeout);
+
+        var dumpAllQueues = function() {
+            gu.debugLog('******************************************\nDumping each host\'s queue.');
+
+            lodash.forEach(actualResponsesObjects, function(obj) {
+                gu.debugLog('Host uri'+ obj.cnUri +': ');
+                console.dir(obj.socket.responseQueue);
+            })
+        }
+
+        // Post all items for all hosts, calling confirmResults() afterwards if no errors.
+        var doAllPosting = function() {
+
+            // Called by async.map for each host to allow parallel posting by hosts
+            var postForHost = function(hostObj, callback) {
+
+                // called by async.times below to do each post
+                var post = function(index, postCB) {
+
+                    // post either through each host or all through LB
+                    var cnUri = (postDirectlyThroughHosts) ? hostObj.cnUri : lbchannelUri;
+
+                    dhh.postData({channelUri: cnUri, data: dhh.getRandomPayload(), debug: VERBOSE}, function(postRes, dataUri) {
+                        var err = (gu.isHTTPSuccess(postRes.status)) ? null : postRes.status;
+                        gu.debugLog('New data at '+ dataUri, ((null != err) && (VERBOSE)));
+                        gu.debugLog('Error posting to '+ hostObj.cnUri +': '+ postRes.status, (null != err));
+
+                        postCB(err, dataUri);
+                    })
+                };
+
+                // Call post() n times in parallel (n = numItemsPerHostToPost)
+                async.times(numItemsPerHostToPost, function(n, next) {
+                    post(n, function(err, dataUri) {
+                        next(err, dataUri);
+                    })
+                },
+                function(err, dataUris) {
+                    gu.debugLog('Error response: '+ err, (null != err));
+
+                    callback(err, null);
+                })
+            }
+
+            // Parallel version of for-each-host...
+            async.map(actualResponsesObjects, postForHost, function(err, results) {
+                gu.debugLog('At least one error occurred during posting: '+ err, (null != err));
+                expect(err).to.be.null;
+            })
+        };
+
+        // Confirm all queues match and are correct, then call endTest()
+        var confirmResults = function() {
+
+            var lastHost = null,
+                thisHost = null,
+                lastQueue = [],
+                thisQueue = [];
+
+            // Confirm each host's queue is identical.
+            for (var i = 0; i < actualResponsesObjects.length; i += 1) {
+                if (null != thisHost) {
+                    lastHost = thisHost;
+                    lastQueue = thisQueue;
+                }
+                thisHost = actualResponsesObjects[i];
+                thisQueue = thisHost.socket.responseQueue;
+
+                if (null == lastHost) {
+                    continue;
+                }
+
+                // Confirm queue lengths match before bothering to check each item
+                if (thisQueue.length != lastQueue.length) {
+                    gu.debugLog('Different number of items in socket queues!');
+                    gu.debugLog(lastHost.host +' has '+ lastQueue.length +' items.');
+                    gu.debugLog(thisHost.host +' has '+ thisQueue.length +' items.');
+
+                    dumpAllQueues();
+                    expect(thisQueue.length != lastQueue.length);
+                }
+
+                // Check each item is a match
+                for (var j = 0; j < lastQueue.length; j += 1) {
+                    var lastItem = lastQueue[j],
+                        thisItem = thisQueue[j];
+
+                    if (thisItem != lastItem) {
+                        gu.debugLog('Mismatch in socket queues!');
+                        gu.debugLog(lastHost.host +' has url '+ lastItem +' at index '+ j);
+                        gu.debugLog(thisHost.host +' has url '+ thisItem +' at index '+ j);
+
+                        dumpAllQueues();
+                        expect(thisItem).to.equal(lastItem);
+                    }
+                }
+
+                gu.debugLog('Successfully matched queues for '+ lastHost.host +' and '+ thisHost.host);
+            }
+
+            // Get correct list from backend
+            dhh.getListOfLatestUrisFromChannel({numItems: numItemsPerHostToPost * numHosts, channelUri: lbchannelUri},
+            function(allUris) {
+                expectedResponseQueue = allUris;
+                var actualResponseQueue = actualResponsesObjects[0]['socket']['responseQueue'];
+
+                gu.debugLog('Total items posted: '+ totalItemsToPost);
+                gu.debugLog('Expected response queue length: '+ expectedResponseQueue.length);
+                gu.debugLog('Actual response queue length: '+ actualResponseQueue.length);
+
+                if ((actualResponseQueue.length != totalItemsToPost) || (expectedResponseQueue.length != totalItemsToPost)) {
+                    dumpAllQueues();
+                }
+
+                expect(actualResponseQueue.length).to.equal(totalItemsToPost);
+                expect(expectedResponseQueue.length).to.equal(totalItemsToPost);
+
+                gu.debugLog('Expected and Actual queues are full. Comparing queues...', VERBOSE);
+
+                for (var i = 0; i < totalItemsToPost; i += 1) {
+                    var actTrimmed = getPostHostUri(actualResponseQueue[i]),
+                        expTrimmed = getPostHostUri(expectedResponseQueue[i]);
+
+                    expect(actTrimmed).to.equal(expTrimmed);
+                    gu.debugLog('Matched queue number '+ i, VERBOSE);
+                }
+
+                endTest();
+            })
+        }
+
+        // Closes sockets at end of test.
+        var endTest = function() {
+            gu.debugLog('Ending test.', VERBOSE);
+
+            lodash.forEach(actualResponsesObjects, function(hostObj) {
+                hostObj.socket.ws.close();
+            })
+
+            if (true) {
+                dumpAllQueues();
+            }
+
+            done();
+        }
+
+        // Increment numOpenedSockets. If all sockets are open, call doAllPosting()
+        var onOpen = function() {
+            numOpenedSockets += 1;
+
+            if (numOpenedSockets >= numHosts) {
+                doAllPosting();
+            }
+        };
+
+        // If all sockets are full, call confirmResults()
+        var onMsg = function() {
+            var numFullSockets = 0;
+
+            lodash.forEach(actualResponsesObjects, function(obj, key) {
+                if (obj.socket.responseQueue.length >= totalItemsToPost) {
+                    numFullSockets += 1;
+                }
+            })
+            gu.debugLog('Number of full sockets: '+ numFullSockets, VERBOSE);
+
+            if (numFullSockets >= numHosts) {
+                confirmResults();
+            }
+        }
+
+        // Flesh out / instantiate host objects with their child sockets and more info.
+        lodash.forEach(actualResponsesObjects, function(obj, key) {
+            gu.debugLog('Instantiating socket for '+ obj.host, VERBOSE);
+            obj.cnUri = makeCnUri(obj.host);
+            obj.wsUri = makeWsUri(obj.host);
+
+            obj.socket = new dhh.WSWrapper({
+                domain: obj.host,
+                uri: obj.wsUri,
+                socketName: obj.host,
+                onOpenCB: onOpen,
+                onMessageCB: onMsg,
+                debug: false
+            });
+
+            obj.socket.createSocket();
+
+            obj.socket.ws.on('close', function(code, message) {
+                gu.debugLog('Socket closed ('+ obj.host +')', DEBUG);
+            })
+        });
+    });
+
     it('Multiple nigh-simultaneous updates are sent with order preserved.', function(done) {
         var actualResponseQueue = [], expectedResponseQueue = [], endWait, i;
-        var numUpdates = 10, doDebug = false;
+        var numUpdates = 10,
+            VERBOSE = true;
         this.timeout((numUpdates * WAIT_FOR_CHANNEL_RESPONSE_MS) + 45000);
 
         var mainTest = function() {
@@ -151,10 +433,11 @@ describe('Channel Subscription:', function() {
             });
         };
 
+        // Confirms order of responses and then calls confirmAllRelativeLinks(), which ends test
         var confirmOrderOfResponses = function() {
             gu.debugLog('...entering confirmOrderOfResponses()');
 
-            dhh.getListOfLatestUrisFromChannel(numUpdates, channelUri, function(allUris) {
+            dhh.getListOfLatestUrisFromChannel({numItems: numUpdates, channelUri: channelUri}, function(allUris) {
                 expectedResponseQueue = allUris;
                 gu.debugLog('Expected response queue length: '+ expectedResponseQueue.length, DEBUG);
 
@@ -168,9 +451,24 @@ describe('Channel Subscription:', function() {
                     gu.debugLog('Matched queue number '+ i, DEBUG);
                 }
 
+                confirmAllRelativeLinks();
+            });
+        }
+
+        // Test next/prev for each uri, as well as latest for channel. Then end test.
+        var confirmAllRelativeLinks = function() {
+            gu.debugLog('...entering confirmAllRelativeLinks()');
+
+            dhh.testRelativeLinkInformation({channelUri: channelUri, numItems: numUpdates, debug: VERBOSE}, function(err) {
+                if (null != err) {
+
+                    gu.debugLog('Error in relative links test: '+ err);
+                    expect(err).to.be.null;
+                }
+
                 ws.close();
                 done();
-            });
+            })
         }
 
         var onOpen = function() {
@@ -181,14 +479,14 @@ describe('Channel Subscription:', function() {
 
         var ws = dhh.createWebSocket(wsUri, onOpen);
 
-         ws.on('message', function(data, flags) {
+        ws.on('message', function(data, flags) {
             actualResponseQueue.push(data);
             gu.debugLog('Received message: '+ data, DEBUG);
             gu.debugLog('Response queue length: '+ actualResponseQueue.length, DEBUG);
 
-             if (actualResponseQueue.length == numUpdates) {
-                 confirmOrderOfResponses();
-             }
+            if (actualResponseQueue.length == numUpdates) {
+                confirmOrderOfResponses();
+            }
         });
     });
 
@@ -481,11 +779,6 @@ describe('Channel Subscription:', function() {
     it.skip('<NOT WRITTEN> Multiple agents on multiple channels is handled appropriately.', function(done) {
         done();
     });
-
-    it.skip('<NOT WRITTEN> Server recognizes when agent disconnects (in what time frame?)', function(done) {
-        done();
-    });
-
 
 
 });

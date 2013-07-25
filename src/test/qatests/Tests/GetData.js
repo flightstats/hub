@@ -267,10 +267,6 @@ describe('GET data:', function() {
         });
     });
 
-    describe.skip('Code not implemented - TTL', function() {
-        // TODO: if item has expired and the cleanup cycle has run, confirm that a GET on it returns 404
-    })
-
     // Allow a client to access the most recently saved item in a channel.
 // https://www.pivotaltracker.com/story/show/43222579
     describe('Access most recently saved item in channel:', function() {
@@ -306,10 +302,6 @@ describe('GET data:', function() {
             var payload1 = dhh.getRandomPayload(),
                 payload2 = dhh.getRandomPayload(),
                 payload3 = dhh.getRandomPayload();
-
-            //console.log('Payload1:'+ payload1);
-            //console.log('Payload2:'+ payload2);
-            //console.log('Payload3:'+ payload3);
 
             async.waterfall([
                 function(callback){

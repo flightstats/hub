@@ -3,10 +3,13 @@ package com.flightstats.datahub.service;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
 
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+
+import static com.flightstats.rest.Linked.linked;
 
 public class ChannelHypermediaLinkBuilder {
 
@@ -48,4 +51,11 @@ public class ChannelHypermediaLinkBuilder {
 		return URI.create(requestUri + "/" + channelName + "/ws");
 	}
 
+	public Linked<ChannelConfiguration> buildLinkedChannelConfig(ChannelConfiguration newConfig, URI channelUri) {
+		return linked(newConfig)
+			.withLink("self", channelUri)
+			.withLink("latest", buildLatestUri(newConfig.getName()))
+			.withLink("ws", buildWsLinkFor(newConfig.getName()))
+			.build();
+	}
 }

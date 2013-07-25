@@ -29,6 +29,7 @@ public class DataHubObjectMapperFactory {
 		objectMapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
 		objectMapper.registerModule(module);
 		objectMapper.getDeserializationConfig().addMixInAnnotations(ChannelCreationRequest.class, ChannelCreationRequestMixIn.class);
+		objectMapper.getDeserializationConfig().addMixInAnnotations(ChannelUpdateRequest.class, ChannelUpdateRequestMixIn.class);
 		objectMapper.getDeserializationConfig().addMixInAnnotations(ChannelConfiguration.class, ChannelConfigurationMixIn.class);
 		objectMapper.getDeserializationConfig().addMixInAnnotations(MetadataResponse.class, MetadataResponseMixIn.class);
 		objectMapper.getSerializationConfig().addMixInAnnotations(ValueInsertionResult.class, ValueInsertionResultMixIn.class);

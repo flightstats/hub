@@ -23,6 +23,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
@@ -40,6 +41,7 @@ import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.flightstats.datahub.service.eventing.WebSocketChannelNameExtractor.WEBSOCKET_URL_REGEX;
 
@@ -106,5 +108,13 @@ class DataHubCommonModule extends JerseyServletModule {
 			config = new ClasspathXmlConfig("hazelcast.conf.xml");
 		}
 		return Hazelcast.newHazelcastInstance(config);
+	}
+
+	@Provides
+	@Singleton
+	@Inject
+	public @Named("LastUpdatePerChannelMap")
+	ConcurrentMap<String,DataHubKey> buildLastUpdatePerChannelMap(HazelcastInstance hazelcast) throws FileNotFoundException {
+		return hazelcast.getMap("LAST_CHANNEL_UPDATE");
 	}
 }

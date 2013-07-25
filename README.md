@@ -10,6 +10,7 @@ http://confluence.office/display/TECH/Data+Hub
 
 * [list channels](#list-channels)
 * [create a channel](#create-a-channel)
+* [update a channel](#update-a-channel)
 * [fetch channel metadata](#fetch-channel-metadata)
 * [insert content into channel](#insert-content-into-channel)
 * [fetch content from channel](#fetch-content-from-channel)
@@ -53,14 +54,17 @@ Channel names _are case sensitive_, are limited to _48 characters_, and may only
 Hyphens and underscores are not allowed in channel names. Please try to break as many of these rules as possible
 in order to challenge Jason's sanity.
 
+TTL is optional and should be a positive number. If not specified, a default value (120 days) is used. If specified as null,
+then the channel has no TTL.
+
 `POST http://datahub:8080/channel`
 
 * Content-type: application/json
 
 ```json
-{  
+{
    "name": "stumptown"
-   "ttl": "3600000" //one hour in millis
+   "ttlMillis": "3600000" //one hour in millis
 }
 ```
 
@@ -90,6 +94,29 @@ Here's how you can do this with curl:
 curl -i -X POST --header "Content-type: application/json" \
     --data '{"name": "stumptown"}'  \
     http://datahub:8080/channel
+```
+
+## update a channel
+
+Some channel metadata can be updated. The update format looks much like the channel create format (currently, only TTL can be updated).
+
+`PATCH http://datahub:8080/channel/channelname`
+
+* Content-type: application/json
+
+```json
+{
+   "ttlMillis": "30000" //30 seconds
+}
+```
+
+On success:  `HTTP/1.1 200 OK`, and the new channel metadata is returned (see example return data from create channel).
+
+Here's how you can do this with curl:
+```bash
+curl -i -X POST --header "Content-type: application/json" \
+    --data '{"ttlMillis": "30000"}'  \
+    http://datahub:8080/channel/stumptown
 ```
 
 ## fetch channel metadata
@@ -126,11 +153,14 @@ Here's how you can do this with curl:
 ## insert content into channel
 
 To insert data to a channel, issue a POST on the channel's `self` URI and specify the appropriate
-content-type header (all content types should be supported):
+content-type header (all content types should be supported).  The `Content-Encoding` and
+`Content-Language` headers are optional:
 
 ```
 POST http://datahub:8080/channel/stumptown
 Content-type: text/plain
+Content-Language: en
+Content-Encoding: gzip
 Accept: application/json
 ___body_contains_arbitrary_content
 ```

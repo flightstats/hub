@@ -23,13 +23,20 @@ var chai = require('chai'),
 var ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js');
 
-var DOMAIN = 'datahub-01.cloud-east.dev:8080';
+// var DOMAIN = 'datahub-01.cloud-east.dev:8080';
+var DOMAIN = 'datahub.svc.dev';
 exports.DOMAIN = DOMAIN;
 
 var URL_ROOT = 'http://'+ DOMAIN;
 exports.URL_ROOT = URL_ROOT;
 
-var DEBUG = false;
+var DEFAULT_TTL = 10368000000;
+exports.DEFAULT_TTL = DEFAULT_TTL;
+
+var FAKE_CHANNEL_URI = [URL_ROOT, 'channel', 'aslKewkfnjkzIKENVYGWHJEFlijf823JBFD2'].join('/');
+exports.FAKE_CHANNEL_URI = FAKE_CHANNEL_URI;
+
+var DEBUG = true;
 
 
 var getRandomPayload = function() {
@@ -81,9 +88,10 @@ exports.getValidationChecksum = getValidationChecksum;
 
 // Given a websocket URI, this will instantiate a websocket on that channel
 var createWebSocket = function(wsUri, onOpen) {
-    var myWs;
+    var myWs,
+        VERBOSE = true;
 
-    gu.debugLog('Trying uri: '+ wsUri, DEBUG);
+    gu.debugLog('Trying uri: '+ wsUri, VERBOSE);
 
     myWs = new ws(wsUri);
 
@@ -97,10 +105,14 @@ exports.createWebSocket = createWebSocket;
 /**
  * Wrapper for websocket to support test scenarios
  *
- * @param params: .domain (domain:port), .channel (name of channel in DH), .socketName (arbitrary name for identifying
- *  the socket), .onOpenCB (callback to call at end of Open event), .responseQueue (where each message is stashed),.
- *  .onMessageCB (optional - callback to call at end of Message event), .onErrorCB (optional - callback to call at
- *  end of Error event), .doReconnect=false (optional: if true, will reconnect on close if due to timeout),
+ * @param params: .domain (domain:port),
+ *  .channel (name of channel in DH),
+ *  .socketName (arbitrary name for identifying the socket),
+ *  .onOpenCB (callback to call at end of Open event),
+ *  .responseQueue (where each message is stashed),
+ *  .onMessageCB (optional - callback to call at end of Message event),
+ *  .onErrorCB (optional - callback to call at end of Error event),
+ *  .doReconnect=false (optional: if true, will reconnect on close if due to timeout),
  *  .debug (optional).
  * @constructor
  */
@@ -126,14 +138,14 @@ function WSWrapper(params) {
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : DEBUG;
 
     this.onOpen = function() {
-        gu.debugLog('OPEN EVENT at '+ Date.now(), VERBOSE);
+        gu.debugLog('OPEN EVENT at '+ Date.now());
         gu.debugLog('readystate: '+ _self.ws.readyState, VERBOSE);
         onOpenCB();
     };
 
     this.onMessage = function(data, flags) {
         gu.debugLog('MESSAGE EVENT at '+ Date.now(), VERBOSE);
-        gu.debugLog('Readystate is '+ _self.ws.readyState, VERBOSE);
+        gu.debugLog('Readystate is '+ _self.ws.readyState, false);
         _self.responseQueue.push(data);
 
         if (null != onMessageCB) {
@@ -142,7 +154,7 @@ function WSWrapper(params) {
     };
 
     this.onError = function(msg) {
-        gu.debugLog('ERROR event at '+ Date.now(), VERBOSE);
+        gu.debugLog('ERROR event at '+ Date.now());
         gu.debugLog('Error message: '+ msg);
 
         if (null != onErrorCB) {
@@ -151,7 +163,7 @@ function WSWrapper(params) {
     };
 
     this.onClose = function(code, msg) {
-        gu.debugLog('CLOSE event (code: '+ code +', msg: '+ msg +')\n at '+ Date.now(), true);
+        gu.debugLog('CLOSE event (code: '+ code +', msg: '+ msg +')\n at '+ Date.now());
         if ((doReconnect) && (msg.toLowerCase().lastIndexOf('idle') > -1)) {
             gu.debugLog('...attempting reconnect after idle timeout.');
             _self.createSocket();
@@ -173,22 +185,29 @@ exports.WSWrapper = WSWrapper;
 /**
  * Create a channel.
  *
- * @param params: .name, .ttl=null, .debug (optional)
+ * @param params: .name,
+ *  .ttlMillis=null,
+ *  .domain=DOMAIN
+ *  .debug (optional)
  * @param myCallback: response || error, channelUri || null (if error)
  */
 var createChannel = function(params, myCallback) {
     var cnName = params.name,
-        ttl = (params.hasOwnProperty('ttl')) ? params.ttl : null,
-        payload = '{"name":"'+ cnName +'"}',
-        uri = [URL_ROOT, 'channel'].join('/'),
+        payload = {name: cnName},
+        domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN,
+        uri = ['http:/', domain, 'channel'].join('/'),
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
-    if (null != ttl) {
-        payload['ttl'] = ttl;
+    if (params.hasOwnProperty('ttlMillis')) {
+        payload['ttlMillis'] = params.ttlMillis;
     }
 
-    gu.debugLog('createChannel.uri: '+ uri, VERBOSE);
-    gu.debugLog('createChannel.payload: '+ payload, VERBOSE);
+    if (VERBOSE) {
+        gu.debugLog('createChannel.uri: '+ uri);
+        gu.debugLog('createChannel.payload: '+ payload);
+        gu.debugLog('dump of params: ');
+        console.dir(params);
+    }
 
     superagent.agent().post(uri)
         .set('Content-Type', 'application/json')
@@ -210,8 +229,16 @@ var createChannel = function(params, myCallback) {
 };
 exports.createChannel = createChannel;
 
-var getRandomChannelName = function() {
-    return ranU.randomString( 5 + ranU.randomNum(26), ranU.limitedRandomChar);
+/**
+ * Create random channel name using only 0-9a-zA-Z (note that underscore is allowed in channel name but not provided here)
+ *
+ * @param length: optional, defaults to 5 + (1-25)
+ * @return the name
+ */
+var getRandomChannelName = function(length) {
+    var cnLength = ('undefined' == typeof length) ? (5 + ranU.randomNum(26)) : length;
+
+    return ranU.randomString(cnLength, ranU.limitedRandomChar);
 }
 exports.getRandomChannelName = getRandomChannelName;
 
@@ -234,7 +261,7 @@ function channelMetadata(responseBody) {
     }
 
     this.getTTL = function() {
-        throw {message: 'not implemented'}
+        return responseBody.ttlMillis;
     }
 
     this.getCreationDate = function() {
@@ -250,16 +277,18 @@ exports.channelMetadata = channelMetadata;
 /**
  * GET a channel
  *
- * @param params: .name || .uri
+ * @param params: .name || .uri,
+ *  .domain=DOMAIN
  * @param myCallback: response, body
  */
 var getChannel = function(params, myCallback) {
     var uri,
         myChannelName = (params.hasOwnProperty('name')) ? params.name : null,
-        channelUri = (params.hasOwnProperty('uri')) ? params.uri : null;
+        channelUri = (params.hasOwnProperty('uri')) ? params.uri : null,
+        domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN;
 
     if (null != myChannelName) {
-        uri = [URL_ROOT, 'channel', myChannelName].join('/');
+        uri = ['http:/', domain, 'channel', myChannelName].join('/');
     }
     else if (null != channelUri) {
         uri = channelUri;
@@ -281,11 +310,16 @@ var getChannel = function(params, myCallback) {
 exports.getChannel = getChannel;
 
 
-/* Basic health check.
-    Returns the get response or throws an error.
+/**
+ * Basic health check.
+ * @param params: .domain=DOMAIN
+ * @param myCallback: Returns the get response or throws an error.
  */
-var getHealth = function(myCallback) {
-    superagent.agent().get(URL_ROOT + '/health')
+var getHealth = function(params, myCallback) {
+    var domain = params.domain || DOMAIN,
+        uri = ['http:/', domain, 'health'].join('/');
+
+    superagent.agent().get(uri)
         .end(function(err,res) {
             if (err) {throw err};
             myCallback(res);
@@ -343,7 +377,6 @@ function packetGETHeader(responseHeader){
 }
 exports.packetGETHeader = packetGETHeader;
 
-
 // Headers in response to POSTing a packet of data
 function packetPOSTHeader(responseHeader){
     this.getLocation = function() {
@@ -355,7 +388,7 @@ exports.packetPOSTHeader = packetPOSTHeader;
 /**
  * Inserts data into channel.
  *
- * @param params: .channelUri, .data, .contentType=application/x-www-form-urlencoded (optional)
+ * @param params: .channelUri, .data, .contentType=application/x-www-form-urlencoded (optional), .debug=true
  * @param myCallback: response, uri to data
  */
 var postData = function(params, myCallback) {
@@ -363,7 +396,7 @@ var postData = function(params, myCallback) {
         channelUri = params.channelUri,
         myData = params.data,
         contentType = (params.hasOwnProperty('contentType')) ? params.contentType : 'application/x-www-form-urlencoded',
-        VERBOSE = true;
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
 
     gu.debugLog('Channel Uri: '+ channelUri, VERBOSE);
@@ -408,7 +441,7 @@ exports.getLatestDataFromChannel = getLatestDataFromChannel;
  * Git yo data from the channel.
  *
  * @param params: .uri (to the data), .accepts (optional - split multiple options with semicolons), .debug (optional)
- * @param callback: error || null, response, data
+ * @param callback: error || null, response (note this is not the same as SuperAgent's response; check .statusCode for status), data
  */
 var getDataFromChannel = function(params, callback) {
 
@@ -521,25 +554,128 @@ var getUrisAndDataSinceLocation = function(params, callback) {
 }
 exports.getUrisAndDataSinceLocation = getUrisAndDataSinceLocation;
 
-// Returns the last <reqLength> URIs from a channel as an array,
-//      starting with oldest (up to reqLength) and ending with latest.
-// Returns a minimum of 2 (otherwise call getLatestUriFromChannel()).
-var getListOfLatestUrisFromChannel = function(reqLength, channelUri, myCallback){
-    var allUris = [];
+/**
+ * For some or all items in a channel, tests the accuracy of the next/previous headers as well as the /latest link
+ * given by the channel metadata.
+ *
+ * @param params: .channelUri,
+ *  .numItems [optional, number of items back from latest to include (same param as in getListOfLatestUrisFromChannel())
+ *  defaults to Inifinity],
+ *  .debug (optional).
+ * @param callback: err || null
+ */
+var testRelativeLinkInformation = function(params, callback) {
 
-    gu.debugLog('In getListofLatestUrisFromChannel...', DEBUG);
-    gu.debugLog('reqLength: '+ reqLength, DEBUG);
-    gu.debugLog('channel Uri: '+ channelUri, DEBUG);
+    // handle params
+    var allUris = [],
+        numItems = (params.hasOwnProperty('numItems')) ? params.numItems : Infinity,
+        channelUri = params.channelUri,
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true,
+        listPayload = {
+            channelUri: channelUri,
+            numItems: numItems,
+            debug: VERBOSE
+        };
 
-    if (reqLength < 2) {
-        reqLength = 2;
+    getListOfLatestUrisFromChannel(listPayload, function(theUris, gotEntireChannel) {
+
+        var testUri = function(index, callback) {
+
+            var uri = theUris[index],
+                expPrevious = (0 == index) ? null : theUris[index - 1],
+                expNext = (index < (theUris.length -1)) ? theUris[index + 1] : null,
+                err = null;
+
+            superagent.agent().get(uri)
+                .end(function(err, res) {
+                    var pGetHeader = new packetGETHeader(res.headers),
+                        previous = pGetHeader.getPrevious(),
+                        next = pGetHeader.getNext();
+
+                    if (expPrevious != previous) {
+                        if (0 == index && !gotEntireChannel) {
+                            gu.debugLog('Ignoring results for previous since expected previous link is unknown.', VERBOSE);
+                        } else {
+                            err = 'Previous link mismatch for uri '+ uri +'.\nExpected '+ expPrevious +'.\nGot '+ previous;
+                        }
+
+                    } else {
+                        gu.debugLog('Matched previous link for uri '+ uri, VERBOSE);
+                    }
+
+                    if (expNext != next) {
+                        if (null == err) {
+                            err = '';
+                        }
+                        err += 'Next link mismatch.\nExpected '+ expNext +'.\nGot '+ next;
+                    } else {
+                        gu.debugLog('Matched next link for uri '+ uri, VERBOSE);
+                    }
+
+                    callback(err, uri);
+                });
+        }
+
+        // Test next/prev for each uri
+        async.timesSeries(theUris.length, function(n, next){
+            testUri(n, function(err, uri) {
+                next(err, uri);
+            })
+        }, function(err, testedUris) {
+
+            if (null != err) {
+                // pass that err along -- null if all went well
+                callback(err);
+            }
+            else {
+                gu.debugLog('Matched all next/prev links for '+ testedUris.length +' uris.', VERBOSE);
+
+                getLatestUri(channelUri, function(latest, err) {
+                    var expLatest = theUris[theUris.length - 1],
+                        finalError = null;
+
+                    if (latest != expLatest) {
+                        finalError = 'Latest link mismatch.\nExpected '+ expLatest +'.\nGot '+ latest;
+
+                        callback(finalError);
+                    } else {
+                        gu.debugLog('Latest link matched!', VERBOSE);
+
+                        callback(null);
+                    }
+                })
+            }
+        });
+    })
+}
+exports.testRelativeLinkInformation = testRelativeLinkInformation;
+
+/**
+ * Returns the last <numItems> of URIs in the channel as an array, going from older (index 0) to latest, as well as
+ *  a flag stating whether or not all URIs in the channel were included (i.e., .numItems >= number of items in channel).
+ * @param params: .numItems=2 (minimum 2; number of URIs to return, starting with the latest), .channelUri,
+ *  .debug (optional)
+ * @param myCallback: list of URIs as described, gotEntireChannel
+ */
+var getListOfLatestUrisFromChannel = function(params, myCallback){
+    var allUris = [],
+        numItems = params.numItems,
+        channelUri = params.channelUri,
+        gotEntireChannel = false,      // will be set to true if a previous link is not found
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
+
+    if (numItems < 2) {
+        numItems = 2;
     }
+
+    gu.debugLog('In getListofLatestUrisFromChannel...', VERBOSE);
+    gu.debugLog('number of items requested: '+ numItems, VERBOSE);
+    gu.debugLog('channel URI: '+ channelUri, VERBOSE);
 
     getLatestUri(channelUri, function(latest){
         var previous = null;
 
         allUris.unshift(latest);
-        //console.log('Added uri:'+ latest);
 
         async.doWhilst(
             function (callback) {
@@ -550,16 +686,18 @@ var getListOfLatestUrisFromChannel = function(reqLength, channelUri, myCallback)
 
                         if (null != previous) {
                             allUris.unshift(previous);
-                            //console.log('Added uri:'+ previous);
                         }
                         callback();
                     });
             },
             function() {
-                return (allUris.length < reqLength) && (null != previous);
+                return (allUris.length < numItems) && (null != previous);
             }
             , function(err) {
-                myCallback(allUris);
+                gotEntireChannel = (null == previous);
+                gu.debugLog('Did we get the entire channel? '+ gotEntireChannel, VERBOSE);
+
+                myCallback(allUris, gotEntireChannel);
             }
         );
     });
@@ -597,11 +735,13 @@ exports.getLatestUri = getLatestUri;
 /**
  * Lists all channels.
  *
- * @param params: .debug (optional)
+ * @param params: .domain,
+ *  .debug (optional)
  * @param callback: response, array of channels
  */
 var getAllChannels = function(params, callback) {
-    var uri = [URL_ROOT, 'channel'].join('/'),
+    var domain = params.domain || DOMAIN,
+        uri = ['http:/', domain, 'channel'].join('/'),
         VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
 
     gu.debugLog('uri for getAllChannels: '+ uri, VERBOSE);
@@ -614,6 +754,82 @@ var getAllChannels = function(params, callback) {
         });
 }
 exports.getAllChannels = getAllChannels;
+
+/**
+ * Update a channel via PATCH. Currently, code only supports changing .ttlMillis property but this function will
+ *  pass along the .name property if given for testing.
+ *
+ * @param params: .channelUri, .name (optional), .ttlMillis (optional), .debug (optional).
+ * @param callback: response
+ */
+var patchChannel = function(params, callback) {
+    var payload = {},
+        uri = params.channelUri,
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true;
+
+    if (typeof params.name != 'undefined') {
+        payload['name'] = params.name;
+    }
+    if (typeof params.ttlMillis != 'undefined') {
+        payload['ttlMillis'] = params.ttlMillis;
+    }
+
+    if (VERBOSE) {
+        gu.debugLog('PATCH channel URI: '+ uri);
+        gu.debugLog('Payload dump: ');
+        console.dir(payload);
+    }
+
+    superagent.agent().patch(uri)
+        .send(payload)
+        .end(function(err, res) {
+            if (!gu.isHTTPSuccess(res.status)) {
+                gu.debugLog('PATCH channel did not return success: '+ res.status);
+            }
+            else {
+                gu.debugLog('PATCH channel succeeded.', VERBOSE);
+            }
+
+            callback(res);
+        });
+}
+exports.patchChannel = patchChannel;
+
+/**
+ * Calls the TTL reaper and waits for a response -- the reaper will not return errors (current plan, anyway).
+ * @param params: .domain=dhh.DOMAIN, .debug=false
+ * @param callback: response (200/OK or 409/Conflict if reaper was already running are the expected responses) or null
+ *  if an error was thrown
+ */
+var executeTTLCleanup = function(params, callback) {
+    var domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN,
+        uri = ['http:/', domain, 'sweep'].join('/'),
+        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true;
+
+    gu.debugLog('/sweep uri: '+ uri, VERBOSE);
+
+    superagent.agent().post(uri)
+        .send({})
+        .end(function(err, res) {
+
+            gu.debugLog('Sweep result: '+ res.status, VERBOSE);
+
+            if (err) {
+                gu.debugLog('Error in /sweep attempt: '+ err.message);
+                callback(null);
+            }
+            else {
+                if (!lodash.contains([gu.HTTPresponses.OK, gu.HTTPresponses.Conflict], res.status)) {
+                    gu.debugLog('Unexpected status on /sweep attempt: '+ res.status);
+                }
+
+                callback(res);
+            }
+        })
+}
+exports.executeTTLCleanup = executeTTLCleanup;
+
+
 
 
 

@@ -32,6 +32,7 @@ public class DataHubWebSocketTest {
 		when(session.getRemoteAddress()).thenReturn(remoteAddress);
 		when(session.getRemote()).thenReturn(remoteEndpoint);
 		when(session.getUpgradeRequest()).thenReturn(upgradeRequest);
+	    when(channelNameExtractor.extractChannelName(requestUri)).thenReturn(CHANNEL_NAME);
 		when(upgradeRequest.getRequestURI()).thenReturn(requestUri);
 	}
 
@@ -40,7 +41,7 @@ public class DataHubWebSocketTest {
 		DataHubWebSocket testClass = new DataHubWebSocket( subscriptionRoster, channelNameExtractor );
 		testClass.onConnect(session);
 
-        verify( subscriptionRoster ).subscribe( any( String.class ), any( JettyWebSocketEndpointSender.class ) );
+        verify( subscriptionRoster ).subscribe( eq( CHANNEL_NAME ), any( JettyWebSocketEndpointSender.class ) );
         verify( channelNameExtractor ).extractChannelName( requestUri );
 		verify(session).getRemoteAddress();
 	}
@@ -53,5 +54,6 @@ public class DataHubWebSocketTest {
 		testClass.onConnect(session);
 		testClass.onDisconnect(99, "spoon");
 		verify(disconnectCallback).run();
+		verify(subscriptionRoster).unsubscribe( eq(CHANNEL_NAME), any( JettyWebSocketEndpointSender.class ) );
 	}
 }

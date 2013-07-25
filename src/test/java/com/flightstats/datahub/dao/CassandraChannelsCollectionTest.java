@@ -57,13 +57,29 @@ public class CassandraChannelsCollectionTest {
 		when(hector.createColumn(channelName, expected, StringSerializer.get(), valueSerializer)).thenReturn(column);
 		when(timeProvider.getDate()).thenReturn(creationDate);
 
-		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider, keyRenderer);
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider, keyRenderer );
 
 		ChannelConfiguration result = testClass.createChannel(channelName, null);
 
 		assertEquals(expected, result);
 		verify(connector).createColumnFamily(channelName);
-		verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_COLUMN_FAMILY_NAME, column);
+		verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_METADATA_COLUMN_FAMILY_NAME, column);
+	}
+
+	@Test
+	public void testUpdateChannel() throws Exception {
+		String channelName = "arturo";
+		final Date creationDate = new Date(99999);
+		ChannelConfiguration newConfig = new ChannelConfiguration(channelName, creationDate, null);
+		HColumn<String, ChannelConfiguration> column = new HColumnImpl<String, ChannelConfiguration>(StringSerializer.get(), mock(Serializer.class));
+
+		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
+		when(hector.createColumn(channelName, newConfig, StringSerializer.get(), valueSerializer)).thenReturn(column);
+
+		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider, keyRenderer );
+
+		testClass.updateChannel(newConfig);
+		verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_METADATA_COLUMN_FAMILY_NAME, column);
 	}
 
 	@Test
@@ -80,7 +96,7 @@ public class CassandraChannelsCollectionTest {
 		when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), channelConfigSerializer)).thenReturn(query);
 		when(query.setName(channelName)).thenReturn(query);
 		when(query.setKey(CHANNELS_ROW_KEY)).thenReturn(query);
-		when(query.setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME)).thenReturn(query);
+		when(query.setColumnFamily(CHANNELS_METADATA_COLUMN_FAMILY_NAME)).thenReturn(query);
 		when(query.execute()).thenReturn(queryResult);
 		when(queryResult.get()).thenReturn(column);
 		when(column.getValue()).thenReturn(channelConfiguration);
@@ -117,46 +133,6 @@ public class CassandraChannelsCollectionTest {
 	}
 
 	@Test
-	public void testUpdateLastUpdateTime() throws Exception {
-		String channelName = "myChan";
-		Date newDate = new Date(123456789L);
-		DataHubKey key = new DataHubKey(newDate, (short) 0);
-		String keyString = new DataHubKeyRenderer().keyToString(key);
-
-		Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
-		HColumn<String, String> newColumn = mock(HColumn.class);
-		Mutator<String> mutator = mock(Mutator.class);
-
-		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
-		when(hector.createColumn(channelName, keyString, StringSerializer.get(), StringSerializer.get())).thenReturn(newColumn);
-
-		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
-		testClass.updateLastUpdatedKey(channelName, key);
-
-		verify(mutator).insert(CHANNELS_LATEST_ROW_KEY, "myChan", newColumn);
-	}
-
-	@Test
-	public void deleteLastUpdateTime() throws Exception {
-		String channelName = "myChan";
-		Date newDate = new Date(123456789L);
-		DataHubKey key = new DataHubKey(newDate, (short) 0);
-		String keyString = new DataHubKeyRenderer().keyToString(key);
-
-		Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
-		HColumn<String, String> newColumn = mock(HColumn.class);
-		Mutator<String> mutator = mock(Mutator.class);
-
-		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
-		when(hector.createColumn(channelName, keyString, StringSerializer.get(), StringSerializer.get())).thenReturn(newColumn);
-
-		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
-		testClass.deleteLastUpdatedKey(channelName, key);
-
-		verify(mutator).delete(CHANNELS_LATEST_ROW_KEY, "myChan", "myChan", StringSerializer.get());
-	}
-
-	@Test
 	public void testUpdateFirstKey() throws Exception {
 		String channelName = "myChan";
 		Date newDate = new Date(123456789L);
@@ -179,16 +155,13 @@ public class CassandraChannelsCollectionTest {
 	@Test
 	public void testDeleteFirstKey() throws Exception {
 		String channelName = "myChan";
-		Date newDate = new Date(123456789L);
-		DataHubKey key = new DataHubKey(newDate, (short) 0);
-
 		Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
 		Mutator<String> mutator = mock(Mutator.class);
 
 		when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
 
 		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
-		testClass.deleteFirstKey(channelName, key);
+		testClass.deleteFirstKey(channelName);
 
 		verify(mutator).delete(CHANNELS_FIRST_ROW_KEY, "myChan", "myChan", StringSerializer.get());
 	}
@@ -200,7 +173,7 @@ public class CassandraChannelsCollectionTest {
 
 		when(connector.getKeyspace()).thenReturn(keyspace);
 		when(hector.createCountQuery(keyspace, StringSerializer.get(), StringSerializer.get())).thenReturn(countQuery);
-		when(countQuery.setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME)).thenReturn(countQuery);
+		when(countQuery.setColumnFamily(CHANNELS_METADATA_COLUMN_FAMILY_NAME)).thenReturn(countQuery);
 		when(countQuery.setKey(CHANNELS_ROW_KEY)).thenReturn(countQuery);
 		when(countQuery.setRange(null, null, Integer.MAX_VALUE)).thenReturn(countQuery);
 		when(countQuery.execute()).thenReturn(queryResult);
@@ -209,34 +182,6 @@ public class CassandraChannelsCollectionTest {
 		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, null, hector, null, keyRenderer);
 		int result = testClass.countChannels();
 		assertEquals(5, result);
-	}
-
-	@Test
-	public void testGetLastUpdatedKey() throws Exception {
-		//GIVEN
-		String channelName = "chunder";
-		DataHubKey expected = new DataHubKey(new Date(98348974554397L), (short) 0);
-		CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, null, hector, null, keyRenderer);
-
-		ColumnQuery<String, String, String> columnQuery = mock(ColumnQuery.class);
-		QueryResult<HColumn<String, String>> queryResult = mock(QueryResult.class);
-		HColumn<String, String> column = mock(HColumn.class);
-
-		when(connector.getKeyspace()).thenReturn(keyspace);
-		when(columnQuery.setName(channelName)).thenReturn(columnQuery);
-		when(columnQuery.setKey(CassandraChannelsCollection.CHANNELS_LATEST_ROW_KEY)).thenReturn(columnQuery);
-		when(columnQuery.setColumnFamily(channelName)).thenReturn(columnQuery);
-		when(columnQuery.execute()).thenReturn(queryResult);
-		when(queryResult.get()).thenReturn(column);
-		when(column.getValue()).thenReturn(keyRenderer.keyToString(expected));
-
-		when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), StringSerializer.get())).thenReturn(columnQuery);
-
-		//WHEN
-		DataHubKey result = testClass.getLastUpdatedKey(channelName);
-
-		//THEN
-		assertEquals(expected, result);
 	}
 
 	@Test
@@ -286,7 +231,7 @@ public class CassandraChannelsCollectionTest {
 		when(connector.getKeyspace()).thenReturn(keyspace);
 		when(hector.createSliceQuery(keyspace, StringSerializer.get(), StringSerializer.get(), valueSerializer)).thenReturn(sliceQuery);
 		when(sliceQuery.setKey(CHANNELS_ROW_KEY)).thenReturn(sliceQuery);
-		when(sliceQuery.setColumnFamily(CHANNELS_COLUMN_FAMILY_NAME)).thenReturn(sliceQuery);
+		when(sliceQuery.setColumnFamily(CHANNELS_METADATA_COLUMN_FAMILY_NAME)).thenReturn(sliceQuery);
 		when(hector.createColumnSliceIterator(sliceQuery, null, CassandraChannelsCollection.MAX_CHANNEL_NAME, false)).thenReturn(sliceIterator);
 		when(sliceIterator.hasNext()).thenReturn(true, true, false);
 		when(sliceIterator.next()).thenReturn(column1, column2);
