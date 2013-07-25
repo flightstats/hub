@@ -20,10 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import static com.flightstats.datahub.model.ChannelCreationRequest.*;
-import static com.flightstats.rest.Linked.linked;
 
 /**
  * This resource represents the collection of all channels in the DataHub.
@@ -52,7 +48,7 @@ public class ChannelResource {
 		Map<String, URI> mappedChannels = new HashMap<>();
 		for (ChannelConfiguration channelConfiguration : channels) {
 			String channelName = channelConfiguration.getName();
-			mappedChannels.put(channelName, linkBuilder.buildChannelUri(channelName));
+			mappedChannels.put(channelName, linkBuilder.buildChannelUri(channelName, uriInfo));
 		}
 
 		Linked.Builder<?> responseBuilder = Linked.justLinks();
@@ -79,9 +75,9 @@ public class ChannelResource {
 
 		Optional<Long> ttlMillis = channelCreationRequest.getTtlMillis();
 		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName, ttlMillis.isPresent() ? ttlMillis.get() : null);
-		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration);
+		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
 		return Response.created(channelUri).entity(
-			linkBuilder.buildLinkedChannelConfig(channelConfiguration, channelUri))
+			linkBuilder.buildLinkedChannelConfig(channelConfiguration, channelUri, uriInfo))
 			.build();
 	}
 }

@@ -48,10 +48,10 @@ public class ChannelResourceTest {
 		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
 		when(dao.channelExists(channelName)).thenReturn(false);
 		when(dao.createChannel(channelName, ChannelCreationRequest.DEFAULT_TTL)).thenReturn(channelConfiguration);
-		when(linkBuilder.buildChannelUri(channelConfiguration)).thenReturn(URI.create(channelUri));
-		when(linkBuilder.buildLinkedChannelConfig(channelConfiguration,URI.create(channelUri))).thenReturn(expected);
+		when(linkBuilder.buildChannelUri(channelConfiguration, uriInfo)).thenReturn(URI.create(channelUri));
+		when(linkBuilder.buildLinkedChannelConfig(channelConfiguration,URI.create(channelUri), uriInfo)).thenReturn(expected);
 
-		ChannelResource testClass = new ChannelResource(dao, linkBuilder, createChannelValidator, null);
+		ChannelResource testClass = new ChannelResource(dao, linkBuilder, createChannelValidator, uriInfo);
 
 		Response response = testClass.createChannel(channelCreationRequest);
 
@@ -108,8 +108,8 @@ public class ChannelResourceTest {
 
 		//WHEN
 		when(dao.getChannels()).thenReturn(channels);
-		when(linkBuilder.buildChannelUri(channel1.getName())).thenReturn(URI.create(channel1Uri));
-		when(linkBuilder.buildChannelUri(channel2.getName())).thenReturn(URI.create(channel2Uri));
+		when(linkBuilder.buildChannelUri(channel1.getName(), uriInfo)).thenReturn(URI.create(channel1Uri));
+		when(linkBuilder.buildChannelUri(channel2.getName(), uriInfo)).thenReturn(URI.create(channel2Uri));
 		when(uriInfo.getRequestUri()).thenReturn(URI.create(requestUri));
 
 		Response result = testClass.getChannels();
