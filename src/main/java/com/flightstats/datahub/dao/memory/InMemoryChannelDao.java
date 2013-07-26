@@ -5,13 +5,10 @@ import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public class InMemoryChannelDao implements ChannelDao {
 	private final TimeProvider timeProvider;
@@ -19,7 +16,7 @@ public class InMemoryChannelDao implements ChannelDao {
 	private final Map<String, ChannelConfiguration> channelConfigurations = Maps.newConcurrentMap();
 	private final Map<String, DataHubChannelValueKey> latestPerChannel = Maps.newConcurrentMap();
 	private final Map<String, DataHubChannelValueKey> firstPerChannel = Maps.newConcurrentMap();
-	private final Map<String, Cache<DataHubChannelValueKey, LinkedDataHubCompositeValue>> channelValues = Maps.newConcurrentMap();
+	private final Map<String, Map<DataHubChannelValueKey, LinkedDataHubCompositeValue>> channelValues = Maps.newConcurrentMap();
 
 	@Inject
 	public InMemoryChannelDao(TimeProvider timeProvider) {
@@ -36,10 +33,7 @@ public class InMemoryChannelDao implements ChannelDao {
 		Date creationDate = timeProvider.getDate();
 		ChannelConfiguration channelConfiguration = new ChannelConfiguration(name, creationDate, ttlMillis);
 		channelConfigurations.put(name, channelConfiguration);
-		if (ttlMillis == null) {
-			ttlMillis = TimeUnit.HOURS.toMillis(1);
-		}
-		channelValues.put(name, CacheBuilder.newBuilder().expireAfterWrite(ttlMillis, TimeUnit.MILLISECONDS).<DataHubChannelValueKey, LinkedDataHubCompositeValue>build());
+		channelValues.put(name, new HashMap<DataHubChannelValueKey, LinkedDataHubCompositeValue>());
 		return channelConfiguration;
 	}
 
@@ -60,12 +54,23 @@ public class InMemoryChannelDao implements ChannelDao {
 
 	@Override
 	public void delete(String channelName, List<DataHubKey> keys) {
-		channelValues.get(channelName).invalidateAll(keys);
+		Map<DataHubChannelValueKey, LinkedDataHubCompositeValue> values = channelValues.get(channelName);
+		for (DataHubKey key : keys) {
+			values.remove(new DataHubChannelValueKey(key, channelName));
+		}
 	}
 
 	@Override
 	public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
-		throw new UnsupportedOperationException();
+		List<DataHubKey> results = new ArrayList<>();
+		Map<DataHubChannelValueKey, LinkedDataHubCompositeValue> cache = channelValues.get(channelName);
+		for (DataHubChannelValueKey key : cache.keySet()) {
+			Date date = key.asDataHubKey().getDate();
+			if(date.after(startTime) && date.before(endTime)) {
+				results.add(key.asDataHubKey());
+			}
+		}
+		return results;
 	}
 
 	@Override
@@ -133,8 +138,8 @@ public class InMemoryChannelDao implements ChannelDao {
 
 	private void linkOldPreviousToNew(String channelName, DataHubChannelValueKey oldLastKey, DataHubChannelValueKey newKey) {
 		if (oldLastKey != null) {
-			Cache<DataHubChannelValueKey, LinkedDataHubCompositeValue> valueCache = channelValues.get(channelName);
-			LinkedDataHubCompositeValue previousLinkedValue = valueCache.getIfPresent(oldLastKey);
+			Map<DataHubChannelValueKey, LinkedDataHubCompositeValue> valueCache = channelValues.get(channelName);
+			LinkedDataHubCompositeValue previousLinkedValue = valueCache.get(oldLastKey);
 			//in case the value has expired.
 			if (previousLinkedValue != null) {
 				valueCache.put(oldLastKey, new LinkedDataHubCompositeValue(previousLinkedValue.getValue(), previousLinkedValue.getPrevious(),
@@ -146,7 +151,7 @@ public class InMemoryChannelDao implements ChannelDao {
 	@Override
 	public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
 		verifyChannelExists(channelName);
-		return Optional.fromNullable(channelValues.get(channelName).getIfPresent(new DataHubChannelValueKey(key, channelName)));
+		return Optional.fromNullable(channelValues.get(channelName).get(new DataHubChannelValueKey(key, channelName)));
 	}
 
 	@Override
