@@ -187,7 +187,7 @@ describe('Channel Subscription:', function() {
     // Attach a listener to each instance and to the load balancer, all on the same channel.
     // Insert items in parallel into that channel, directly into each instance and into the load balancer.
     // Ensure that the messages are reported in order.
-    it('BUG: https://www.pivotaltracker.com/story/show/52726289 - HA: multiple parallel updates with a socket ' +
+    it.skip('BUG: https://www.pivotaltracker.com/story/show/52726289 - HA: multiple parallel updates with a socket ' +
         'on each DH instance and the load balancer are reported in order', function(done) {
 
         // Configurable items

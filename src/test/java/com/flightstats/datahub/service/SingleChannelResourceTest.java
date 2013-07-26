@@ -54,7 +54,7 @@ public class SingleChannelResourceTest {
 		when(linkBuilder.buildChannelUri(channelConfig, urlInfo)).thenReturn(channelUri);
 		when(linkBuilder.buildChannelUri(channelName, urlInfo)).thenReturn(channelUri);
 		when(linkBuilder.buildLatestUri(urlInfo)).thenReturn(latestUri);
-		when(linkBuilder.buildItemUri(dataHubKey, urlInfo)).thenReturn(itemUri);
+		when(linkBuilder.buildItemUri(dataHubKey, requestUri)).thenReturn(itemUri);
 	}
 
 	@Test
@@ -146,7 +146,7 @@ public class SingleChannelResourceTest {
 		HalLink channelLink = new HalLink("channel", channelUri);
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey);
 
-		when(dataHubService.insert(channelName, Optional.of(contentType), data, urlInfo, Optional.of(contentEncoding), Optional.of(contentLanguage))).thenReturn(new ValueInsertionResult(dataHubKey));
+		when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentEncoding), Optional.of(contentLanguage))).thenReturn(new ValueInsertionResult(dataHubKey));
 
 		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder);
 		Response response = testClass.insertValue(channelName, contentType, contentEncoding, contentLanguage, data, urlInfo);
