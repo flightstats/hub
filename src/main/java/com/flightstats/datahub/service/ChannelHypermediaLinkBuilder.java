@@ -36,9 +36,9 @@ public class ChannelHypermediaLinkBuilder {
 		return URI.create(uriInfo.getRequestUri() + "/" + channelName + "/latest");
 	}
 
-	public URI buildItemUri(DataHubKey key, UriInfo uriInfo) {
+	public URI buildItemUri(DataHubKey key, URI channelUri) {
 		String keyId = keyRenderer.keyToString(key);
-		return URI.create(uriInfo.getRequestUri().toString() + "/" + keyId);
+		return URI.create(channelUri.toString() + "/" + keyId);
 	}
 
 	public URI buildWsLinkFor(UriInfo uriInfo) {

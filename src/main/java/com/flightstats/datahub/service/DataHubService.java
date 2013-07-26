@@ -10,7 +10,6 @@ import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
-import javax.ws.rs.core.UriInfo;
 import java.util.concurrent.Callable;
 
 //todo write unit tests.
@@ -49,9 +48,8 @@ public class DataHubService {
 		return channelDao.findLastUpdatedKey(channelName);
 	}
 
-	//todo: passing in UriInfo here is clearly not cool. figure out how to get rid of HTTP knowledge down here.
-	public ValueInsertionResult insert(String channelName, Optional<String> contentType, byte[] data, UriInfo uriInfo, Optional<String> contentEncoding, Optional<String> contentLanguage) throws Exception {
-		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelName, contentType, contentEncoding, contentLanguage, data, uriInfo);
+	public ValueInsertionResult insert(String channelName, byte[] data, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage) throws Exception {
+		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelName, contentType, contentEncoding, contentLanguage, data);
 		return channelLockExecutor.execute(channelName, task);
 	}
 
@@ -69,21 +67,19 @@ public class DataHubService {
 		private final Optional<String> contentEncoding;
 		private final Optional<String> contentLanguage;
 		private final byte[] data;
-		private final UriInfo uriInfo;
 
-		private WriteAndDispatch(String channelName, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage, byte[] data, UriInfo uriInfo) {
+		private WriteAndDispatch(String channelName, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage, byte[] data) {
 			this.channelName = channelName;
 			this.contentType = contentType;
 			this.contentEncoding = contentEncoding;
 			this.contentLanguage = contentLanguage;
 			this.data = data;
-			this.uriInfo = uriInfo;
 		}
 
 		@Override
 		public ValueInsertionResult call() throws Exception {
 			ValueInsertionResult result = channelDao.insert(channelName, contentType, contentEncoding, contentLanguage, data);
-			insertionTopicProxy.publish(channelName, result, uriInfo);
+			insertionTopicProxy.publish(channelName, result);
 			return result;
 		}
 	}

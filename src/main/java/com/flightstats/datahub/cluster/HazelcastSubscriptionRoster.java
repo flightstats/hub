@@ -10,7 +10,6 @@ import com.hazelcast.core.MessageListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -21,7 +20,7 @@ public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 	private final static Logger logger = LoggerFactory.getLogger(HazelcastSubscriptionRoster.class);
 	private final HazelcastInstance hazelcast;
 	private final DataHubKeyRenderer keyRenderer;
-	private final ConcurrentHashMap<ChannelConsumer, MessageListener<URI>> consumerToMessageListener = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<ChannelConsumer, MessageListener<String>> consumerToMessageListener = new ConcurrentHashMap<>();
 
 	@Inject
 	public HazelcastSubscriptionRoster(HazelcastInstance hazelcast, DataHubKeyRenderer keyRenderer) {
@@ -30,23 +29,23 @@ public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 	}
 
 	@Override
-	public void subscribe(final String channelName, Consumer<URI> consumer) {
-		MessageListener<URI> messageListener = addTopicListenerForChannel( channelName, consumer );
+	public void subscribe(final String channelName, Consumer<String> consumer) {
+		MessageListener<String> messageListener = addTopicListenerForChannel( channelName, consumer );
 		consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), messageListener );
 	}
 
-	private MessageListener<URI> addTopicListenerForChannel(final String channelName, final Consumer<URI> consumer) {
-		ITopic<URI> topic = hazelcast.getTopic("ws:" + channelName);
+	private MessageListener<String> addTopicListenerForChannel(final String channelName, final Consumer<String> consumer) {
+		ITopic<String> topic = hazelcast.getTopic("ws:" + channelName);
 		logger.info("Adding new message listener for websocket hazelcast queue for channel " + channelName);
-		MessageListener<URI> messageListener = new HazelcastSubscriber(consumer, keyRenderer);
+		MessageListener<String> messageListener = new HazelcastSubscriber(consumer, keyRenderer);
 		topic.addMessageListener(messageListener);
 		return messageListener;
 	}
 
 	@Override
-	public void unsubscribe(String channelName, Consumer<URI> subscription) {
-		ITopic<URI> topic = hazelcast.getTopic("ws:" + channelName);
-		MessageListener<URI> messageListener = consumerToMessageListener.remove( new ChannelConsumer( channelName, subscription ) );
+	public void unsubscribe(String channelName, Consumer<String> subscription) {
+		ITopic<String> topic = hazelcast.getTopic("ws:" + channelName);
+		MessageListener<String> messageListener = consumerToMessageListener.remove( new ChannelConsumer( channelName, subscription ) );
 		logger.info("Removing message listener for websocket hazelcast queue for channel " + channelName);
 		topic.removeMessageListener(messageListener);
 	}
@@ -57,8 +56,8 @@ public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 	}
 
 	@Override
-	public Collection<Consumer<URI>> getSubscribers(String channelName) {
-		List<Consumer<URI>> result = new ArrayList<>();
+	public Collection<Consumer<String>> getSubscribers(String channelName) {
+		List<Consumer<String>> result = new ArrayList<>();
         for (ChannelConsumer channelConsumer : consumerToMessageListener.keySet()) {
             if (channelConsumer.channelName.equals(channelName)) {
                 result.add(channelConsumer.consumer);
@@ -69,9 +68,9 @@ public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 
 	private static class ChannelConsumer {
 		private final String channelName;
-		private final Consumer<URI> consumer;
+		private final Consumer<String> consumer;
 
-		ChannelConsumer( String channelName, Consumer<URI> consumer ) {
+		ChannelConsumer( String channelName, Consumer<String> consumer ) {
 
 			this.channelName = channelName;
 			this.consumer = consumer;

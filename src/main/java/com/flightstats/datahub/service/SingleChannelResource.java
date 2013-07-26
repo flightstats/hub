@@ -93,9 +93,9 @@ public class SingleChannelResource {
 								final byte[] data,
 								@Context UriInfo uriInfo) throws Exception {
 
-		ValueInsertionResult insertionResult = dataHubService.insert(channelName, Optional.fromNullable(contentType), data, uriInfo, Optional.fromNullable(contentEncoding), Optional.fromNullable(contentLanguage));
-		URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo);
-
+		ValueInsertionResult insertionResult = dataHubService.insert(channelName, data, Optional.fromNullable(contentType), Optional.fromNullable(contentEncoding), Optional.fromNullable(contentLanguage));
+		URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo.getRequestUri());
+//		System.out.println("payloadUri = " + payloadUri);
 		Linked<ValueInsertionResult> linkedResult = linked(insertionResult)
 				.withLink("channel", linkBuilder.buildChannelUri(channelName, uriInfo))
 				.withLink("self", payloadUri)

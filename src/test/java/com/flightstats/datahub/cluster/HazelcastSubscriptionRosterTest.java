@@ -9,7 +9,6 @@ import com.hazelcast.core.MessageListener;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.net.URI;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
@@ -21,27 +20,27 @@ public class HazelcastSubscriptionRosterTest {
 	public void testSubscribe() throws Exception {
 		//GIVEN
 		String channelName = "4chan";
-		URI uri = URI.create("http://datahub.flightstats.com/channel/4chan/0000000007H40000");
+		String key = "0000000007H40000";
 
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
 		ITopic<Object> topic = mock(ITopic.class);
 		Message message = mock(Message.class);
-		Consumer<URI> consumer = mock(Consumer.class);
+		Consumer<String> consumer = mock(Consumer.class);
 		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
 		HazelcastSubscriptionRoster testClass = new HazelcastSubscriptionRoster(hazelcast, keyRenderer);
 
 		//WHEN
 		when(hazelcast.getTopic("ws:4chan")).thenReturn(topic);
-		when(message.getMessageObject()).thenReturn(uri);
+		when(message.getMessageObject()).thenReturn(key);
 
 		testClass.subscribe(channelName, consumer);
 
 		//THEN
 		verify(topic).addMessageListener(messageListenerCaptor.capture());
 		messageListenerCaptor.getValue().onMessage(message);
-		verify(consumer).apply(uri);
+		verify(consumer).apply(key);
         assertEquals(Arrays.asList( consumer), testClass.getSubscribers( channelName ) );
 	}
 
@@ -53,8 +52,7 @@ public class HazelcastSubscriptionRosterTest {
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
 		ITopic<Object> topic = mock(ITopic.class);
-		Message message = mock(Message.class);
-		Consumer<URI> consumer = mock(Consumer.class);
+		Consumer<String> consumer = mock(Consumer.class);
 		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
 		HazelcastSubscriptionRoster testClass = new HazelcastSubscriptionRoster(hazelcast, keyRenderer);
