@@ -7,7 +7,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
 
-//todo figure out a better name and write unit tests!
+//todo figure out a better name!
 public class InsertionTopicProxy {
 	private final HazelcastInstance hazelcast;
 	private final DataHubKeyRenderer keyRenderer;
