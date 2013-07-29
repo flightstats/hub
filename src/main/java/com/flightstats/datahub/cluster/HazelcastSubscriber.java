@@ -44,7 +44,7 @@ public class HazelcastSubscriber implements MessageListener<URI> {
 			futureMessages.put(messageSequence, uri);    //buffer it up
 		}
 		else if (isOld(messageSequence)) {
-			logger.error("Ignoring old message to avoid out of sequence send to subscriber: " + message.getMessageObject());
+			logger.error("Ignoring old message(expected=" + nextExpected + ", ignored=" + messageSequence + "):" + message.getMessageObject());
 		}
 		else {
 			futureMessages.put(messageSequence, uri);

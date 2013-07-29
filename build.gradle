@@ -122,6 +122,7 @@ dependencies {
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
 
     integrationTests group: 'com.flightstats', name: 'datahub', version: snapshotVersion + '+', transitive: false, configuration: 'publishDev'
+    deployStaging group: 'com.flightstats', name: 'datahub', version: version, transitive: false, configuration: 'publish'
     deployProduction group: 'com.flightstats', name: 'datahub', version: version, transitive: false, configuration: 'publish'
 }
 
@@ -132,22 +133,42 @@ distTar {
 task deployDev << {
     description = "Deploys the distribution to the development environment"
     runExternal("${projectDir}/bin/restart-dev-vpc.sh")
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.dev")
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-02.cloud-east.dev")
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-03.cloud-east.dev")
+
+    println "Deploying to datahub-01.cloud-east.dev"
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-01.cloud-east.dev")
+
+    println "Deploying to datahub-02.cloud-east.dev"
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-02.cloud-east.dev")
+
+    println "Deploying to datahub-03.cloud-east.dev"
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-03.cloud-east.dev")
 }
 
 task deployStaging << {
     description = "Deploys the distribution to the staging environment"
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.staging")
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-02.cloud-east.staging")
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-03.cloud-east.staging")
+    copyTarballToDistributions(configurations.deployStaging)
+    println "Deploying to datahub-01.cloud-east.staging"
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-01.cloud-east.staging")
+
+    println "Deploying to datahub-02.cloud-east.staging"
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-02.cloud-east.staging")
+
+    println "Deploying to datahub-03.cloud-east.staging"
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-03.cloud-east.staging")
 }
 
 task deployProduction << {
     description = "Deploys the distribution to the production environment"
     copyTarballToDistributions(configurations.deployProduction)
-    runExternal("${projectDir}/bin/deploy-to-host.sh datahub-01.cloud-east.prod")
+
+    println "Deploying to datahub-01.cloud-east.prod"
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-01.cloud-east.prod")
+
+    println "Deploying to datahub-02.cloud-east.prod"
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-02.cloud-east.prod")
+
+    println "Deploying to datahub-03.cloud-east.prod"
+    runExternal("${projectDir}/bin/ctdeploy.sh datahub-03.cloud-east.prod")
     incrementVersionFile()
     commitVersionFileAndPush()
 }
