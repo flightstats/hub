@@ -53,7 +53,7 @@ var confirmExpectedData = function (dataUri, expectedData, callback) {
             actualData += chunk;
         }).on('end', function(){
                 if (actualData != expectedData) {
-                    gu.debugLog('Unexpected data found: '+ actualData);
+                    gu.debugLog('Unexpected data found at '+ dataUri +': '+ actualData);
                 }
 
                 callback(true);
@@ -132,10 +132,10 @@ function WSWrapper(params) {
     //this.domain = params.domain;
     var _self = this,
         onOpenCB = params.onOpenCB,
-        onMessageCB = (params.hasOwnProperty('onMessageCB')) ? params.onMessageCB : null,
-        onErrorCB = (params.hasOwnProperty('onErrorCB')) ? params.onErrorCB : null,
-        doReconnect = (params.hasOwnProperty('doReconnect')) ? params.doReconnect : false,
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : DEBUG;
+        onMessageCB = params.onMessageCB || null,
+        onErrorCB = params.onErrorCB || null,
+        doReconnect = (undefined !== params.doReconnect) ? params.doReconnect : false,
+        VERBOSE = (undefined !== params.debug) ? params.debug : DEBUG;
 
     this.onOpen = function() {
         gu.debugLog('OPEN EVENT at '+ Date.now());
@@ -156,6 +156,9 @@ function WSWrapper(params) {
     this.onError = function(msg) {
         gu.debugLog('ERROR event at '+ Date.now());
         gu.debugLog('Error message: '+ msg);
+        gu.debugLog('object dump: ');
+        console.dir(this);
+        console.dir(this.ws);
 
         if (null != onErrorCB) {
             onErrorCB(msg);
@@ -194,9 +197,9 @@ exports.WSWrapper = WSWrapper;
 var createChannel = function(params, myCallback) {
     var cnName = params.name,
         payload = {name: cnName},
-        domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN,
+        domain = params.domain || DOMAIN,
         uri = ['http:/', domain, 'channel'].join('/'),
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
+        VERBOSE = (undefined !== params.debug) ? params.debug : false;
 
     if (params.hasOwnProperty('ttlMillis')) {
         payload['ttlMillis'] = params.ttlMillis;
@@ -236,7 +239,7 @@ exports.createChannel = createChannel;
  * @return the name
  */
 var getRandomChannelName = function(length) {
-    var cnLength = ('undefined' == typeof length) ? (5 + ranU.randomNum(26)) : length;
+    var cnLength = (undefined === length) ? (5 + ranU.randomNum(26)) : length;
 
     return ranU.randomString(cnLength, ranU.limitedRandomChar);
 }
@@ -283,9 +286,9 @@ exports.channelMetadata = channelMetadata;
  */
 var getChannel = function(params, myCallback) {
     var uri,
-        myChannelName = (params.hasOwnProperty('name')) ? params.name : null,
-        channelUri = (params.hasOwnProperty('uri')) ? params.uri : null,
-        domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN;
+        myChannelName = params.name || null,
+        channelUri = params.uri || null,
+        domain = params.domain || DOMAIN;
 
     if (null != myChannelName) {
         uri = ['http:/', domain, 'channel', myChannelName].join('/');
@@ -395,8 +398,8 @@ var postData = function(params, myCallback) {
     var dataUri = null,
         channelUri = params.channelUri,
         myData = params.data,
-        contentType = (params.hasOwnProperty('contentType')) ? params.contentType : 'application/x-www-form-urlencoded',
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
+        contentType = params.contentType || 'application/x-www-form-urlencoded',
+        VERBOSE = (undefined !== params.debug) ? params.debug : false;
 
 
     gu.debugLog('Channel Uri: '+ channelUri, VERBOSE);
@@ -456,8 +459,8 @@ var getDataFromChannel = function(params, callback) {
 
     var myData = '',
         dataUri = params.uri,
-        accepts = (params.hasOwnProperty('accepts')) ? params.accepts : null,
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
+        accepts = params.accepts || null,
+        VERBOSE = (undefined !== params.debug) ? params.debug : false;
 
     gu.debugLog('DataUri in getDataFromChannel(): '+ dataUri);
 
@@ -508,7 +511,7 @@ exports.getDataFromChannel = getDataFromChannel;
 var getUrisAndDataSinceLocation = function(params, callback) {
     var startUri = params.startUri,
         dataList = [],
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true;
+        VERBOSE = (undefined !== params.debug) ? params.debug : true;
 
     // First Uri, get data, stash both
     getDataFromChannel({uri: startUri}, function(err, getRes, data) {
@@ -577,9 +580,9 @@ var testRelativeLinkInformation = function(params, callback) {
 
     // handle params
     var allUris = [],
-        numItems = (params.hasOwnProperty('numItems')) ? params.numItems : Infinity,
+        numItems = params.numItems || Infinity,
         channelUri = params.channelUri,
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true,
+        VERBOSE = (undefined !== params.debug) ? params.debug : true,
         listPayload = {
             channelUri: channelUri,
             numItems: numItems,
@@ -671,7 +674,7 @@ var getListOfLatestUrisFromChannel = function(params, myCallback){
         numItems = params.numItems,
         channelUri = params.channelUri,
         gotEntireChannel = false,      // will be set to true if a previous link is not found
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
+        VERBOSE = (undefined !== params.debug) ? params.debug : false;
 
     if (numItems < 2) {
         numItems = 2;
@@ -751,7 +754,7 @@ exports.getLatestUri = getLatestUri;
 var getAllChannels = function(params, callback) {
     var domain = params.domain || DOMAIN,
         uri = ['http:/', domain, 'channel'].join('/'),
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : false;
+        VERBOSE = (undefined !== params.debug) ? params.debug : false;
 
     gu.debugLog('uri for getAllChannels: '+ uri, VERBOSE);
 
@@ -774,7 +777,7 @@ exports.getAllChannels = getAllChannels;
 var patchChannel = function(params, callback) {
     var payload = {},
         uri = params.channelUri,
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true;
+        VERBOSE = (undefined !== params.debug) ? params.debug : true;
 
     if (typeof params.name != 'undefined') {
         payload['name'] = params.name;
@@ -811,9 +814,9 @@ exports.patchChannel = patchChannel;
  *  if an error was thrown
  */
 var executeTTLCleanup = function(params, callback) {
-    var domain = (params.hasOwnProperty('domain')) ? params.domain : DOMAIN,
+    var domain = params.domain || DOMAIN,
         uri = ['http:/', domain, 'sweep'].join('/'),
-        VERBOSE = (params.hasOwnProperty('debug')) ? params.debug : true;
+        VERBOSE = (undefined !== params.debug) ? params.debug : true;
 
     gu.debugLog('/sweep uri: '+ uri, VERBOSE);
 
