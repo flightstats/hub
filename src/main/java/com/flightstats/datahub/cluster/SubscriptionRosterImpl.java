@@ -36,7 +36,7 @@ public class SubscriptionRosterImpl implements SubscriptionRoster {
 	private MessageListener<String> addTopicListenerForChannel(final String channelName, final Consumer<String> consumer) {
 		logger.info("Adding new message listener for websocket hazelcast queue for channel " + channelName);
 		MessageListener<String> messageListener = new HazelcastSubscriber(consumer, keyRenderer);
-		insertionTopicProxy.addListener(channelName, messageListener);
+		insertionTopicProxy.subscribe(channelName, messageListener);
 		return messageListener;
 	}
 
@@ -44,7 +44,7 @@ public class SubscriptionRosterImpl implements SubscriptionRoster {
 	public void unsubscribe(String channelName, Consumer<String> subscription) {
 		MessageListener<String> messageListener = consumerToMessageListener.remove(new ChannelConsumer(channelName, subscription));
 		logger.info("Removing message listener for websocket hazelcast queue for channel " + channelName);
-		insertionTopicProxy.removeListener(channelName, messageListener);
+		insertionTopicProxy.unsubscribe(channelName, messageListener);
 	}
 
 	@Override

@@ -36,7 +36,7 @@ public class SubscriptionRosterImplTest {
 		testClass.subscribe(channelName, consumer);
 
 		//THEN
-		verify(insertionTopicProxy).addListener(eq(channelName), messageListenerCaptor.capture());
+		verify(insertionTopicProxy).subscribe(eq(channelName), messageListenerCaptor.capture());
 		messageListenerCaptor.getValue().onMessage(message);
 		verify(consumer).apply(key);
         assertEquals(Arrays.asList( consumer), testClass.getSubscribers( channelName ) );
@@ -60,8 +60,8 @@ public class SubscriptionRosterImplTest {
 		testClass.unsubscribe(channelName, consumer);
 
 		//THEN
-		verify(insertionTopicProxy).addListener(eq(channelName), messageListenerCaptor.capture());
-		verify(insertionTopicProxy).removeListener(channelName, messageListenerCaptor.getValue());
+		verify(insertionTopicProxy).subscribe(eq(channelName), messageListenerCaptor.capture());
+		verify(insertionTopicProxy).unsubscribe(channelName, messageListenerCaptor.getValue());
         assertEquals(0, testClass.getTotalSubscriberCount());
 	}
 }
