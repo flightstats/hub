@@ -39,6 +39,7 @@ public class MetricsCustomWebSocketCreatorTest {
 
 
 		when(request.getRequestURI()).thenReturn(requestUri);
+		when(request.getHeader("Host")).thenReturn("myhost:8080");
 		when(session.getRemoteAddress()).thenReturn(new InetSocketAddress(2133));
 		when(session.getUpgradeRequest()).thenReturn(request);
 		when(registry.counter(meterName)).thenReturn(counter);

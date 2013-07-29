@@ -5,6 +5,7 @@ import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
+import com.hazelcast.core.MessageListener;
 
 //todo figure out a better name and write unit tests!
 public class InsertionTopicProxy {
@@ -18,8 +19,18 @@ public class InsertionTopicProxy {
 	}
 
 	public void publish(String channelName, ValueInsertionResult result) {
-		ITopic<String> topic = hazelcast.getTopic("ws:" + channelName);
-		topic.publish(keyRenderer.keyToString(result.getKey()));
+		getTopicForChannel(channelName).publish(keyRenderer.keyToString(result.getKey()));
 	}
 
+	public void addListener(String channelName, MessageListener<String> messageListener) {
+		getTopicForChannel(channelName).addMessageListener(messageListener);
+	}
+
+	public void removeListener(String channelName, MessageListener<String> messageListener) {
+		getTopicForChannel(channelName).removeMessageListener(messageListener);
+	}
+
+	private ITopic<String> getTopicForChannel(String channelName) {
+		return hazelcast.getTopic("ws:" + channelName);
+	}
 }
