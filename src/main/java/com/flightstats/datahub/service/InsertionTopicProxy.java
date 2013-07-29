@@ -22,11 +22,11 @@ public class InsertionTopicProxy {
 		getTopicForChannel(channelName).publish(keyRenderer.keyToString(result.getKey()));
 	}
 
-	public void addListener(String channelName, MessageListener<String> messageListener) {
+	public void subscribe(String channelName, MessageListener<String> messageListener) {
 		getTopicForChannel(channelName).addMessageListener(messageListener);
 	}
 
-	public void removeListener(String channelName, MessageListener<String> messageListener) {
+	public void unsubscribe(String channelName, MessageListener<String> messageListener) {
 		getTopicForChannel(channelName).removeMessageListener(messageListener);
 	}
 
