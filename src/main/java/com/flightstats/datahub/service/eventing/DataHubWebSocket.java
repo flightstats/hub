@@ -4,6 +4,7 @@ import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.UpgradeRequest;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
@@ -12,8 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
 
 @WebSocket(maxMessageSize = 1024 * 10)    //10k
 public class DataHubWebSocket {
@@ -49,13 +48,14 @@ public class DataHubWebSocket {
 
 	@OnWebSocketConnect
 	public void onConnect(final Session session) {
-		URI requestUri = session.getUpgradeRequest().getRequestURI();
+		UpgradeRequest upgradeRequest = session.getUpgradeRequest();
+		URI requestUri = upgradeRequest.getRequestURI();
 		logger.info("New client connection: " + remoteAddress + " for " + requestUri);
 		remoteAddress = session.getRemoteAddress().toString();
-		String websocketUri = requestUri.toString();
-		String channelUri = websocketUri.substring(0, websocketUri.length() - 3);
-		Map<String,List<String>> headers = session.getUpgradeRequest().getHeaders();
-		String host = headers.get("Host").get(0);
+		String webSocketUri = requestUri.toString();
+		String channelUri = webSocketUri.substring(0, webSocketUri.length() - 3);
+		String host = upgradeRequest.getHeader("Host");
+
 		//todo this is totally hacky. Is there no way to get the full request URI?
 		channelUri = "http://" + host + channelUri;
 //		System.out.println("channelUri = " + channelUri);

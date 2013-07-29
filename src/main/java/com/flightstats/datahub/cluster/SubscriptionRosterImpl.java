@@ -1,11 +1,10 @@
 package com.flightstats.datahub.cluster;
 
+import com.flightstats.datahub.service.InsertionTopicProxy;
 import com.flightstats.datahub.service.eventing.Consumer;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,17 +14,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class HazelcastSubscriptionRoster implements SubscriptionRoster {
+public class SubscriptionRosterImpl implements SubscriptionRoster {
 
-	private final static Logger logger = LoggerFactory.getLogger(HazelcastSubscriptionRoster.class);
-	private final HazelcastInstance hazelcast;
+	private final static Logger logger = LoggerFactory.getLogger(SubscriptionRosterImpl.class);
+	private final InsertionTopicProxy insertionTopicProxy;
 	private final DataHubKeyRenderer keyRenderer;
 	private final ConcurrentHashMap<ChannelConsumer, MessageListener<String>> consumerToMessageListener = new ConcurrentHashMap<>();
 
 	@Inject
-	public HazelcastSubscriptionRoster(HazelcastInstance hazelcast, DataHubKeyRenderer keyRenderer) {
-		this.hazelcast = hazelcast;
+	public SubscriptionRosterImpl(InsertionTopicProxy insertionTopicProxy, DataHubKeyRenderer keyRenderer) {
 		this.keyRenderer = keyRenderer;
+		this.insertionTopicProxy = insertionTopicProxy;
 	}
 
 	@Override
@@ -35,19 +34,17 @@ public class HazelcastSubscriptionRoster implements SubscriptionRoster {
 	}
 
 	private MessageListener<String> addTopicListenerForChannel(final String channelName, final Consumer<String> consumer) {
-		ITopic<String> topic = hazelcast.getTopic("ws:" + channelName);
 		logger.info("Adding new message listener for websocket hazelcast queue for channel " + channelName);
 		MessageListener<String> messageListener = new HazelcastSubscriber(consumer, keyRenderer);
-		topic.addMessageListener(messageListener);
+		insertionTopicProxy.addListener(channelName, messageListener);
 		return messageListener;
 	}
 
 	@Override
 	public void unsubscribe(String channelName, Consumer<String> subscription) {
-		ITopic<String> topic = hazelcast.getTopic("ws:" + channelName);
-		MessageListener<String> messageListener = consumerToMessageListener.remove( new ChannelConsumer( channelName, subscription ) );
+		MessageListener<String> messageListener = consumerToMessageListener.remove(new ChannelConsumer(channelName, subscription));
 		logger.info("Removing message listener for websocket hazelcast queue for channel " + channelName);
-		topic.removeMessageListener(messageListener);
+		insertionTopicProxy.removeListener(channelName, messageListener);
 	}
 
 	@Override

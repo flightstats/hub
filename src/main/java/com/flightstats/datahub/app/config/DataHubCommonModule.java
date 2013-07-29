@@ -7,7 +7,7 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchA
 import com.flightstats.datahub.cluster.ChannelLockFactory;
 import com.flightstats.datahub.cluster.HazelcastChannelLockFactory;
 import com.flightstats.datahub.cluster.HazelcastClusterKeyGenerator;
-import com.flightstats.datahub.cluster.HazelcastSubscriptionRoster;
+import com.flightstats.datahub.cluster.SubscriptionRosterImpl;
 import com.flightstats.datahub.dao.RowKeyStrategy;
 import com.flightstats.datahub.dao.YearMonthDayRowKeyStrategy;
 import com.flightstats.datahub.model.DataHubCompositeValue;
@@ -73,7 +73,7 @@ class DataHubCommonModule extends JerseyServletModule {
 		bind(MetricRegistry.class).in(Singleton.class);
 		bind(GraphiteConfiguration.class).asEagerSingleton();
 		bind(ChannelLockExecutor.class).asEagerSingleton();
-		bind(SubscriptionRoster.class).to(HazelcastSubscriptionRoster.class).in(Singleton.class);
+		bind(SubscriptionRoster.class).to(SubscriptionRosterImpl.class).in(Singleton.class);
 		bind(DataHubKeyRenderer.class).in(Singleton.class);
 		bind(DataHubKeyGenerator.class).to(HazelcastClusterKeyGenerator.class).in(Singleton.class);
 		bind(ChannelLockFactory.class).to(HazelcastChannelLockFactory.class).in(Singleton.class);
