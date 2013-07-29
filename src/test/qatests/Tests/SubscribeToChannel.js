@@ -198,7 +198,7 @@ describe('Channel Subscription:', function() {
                 {'host':LOAD_BALANCER_HOSTNAME, 'cnUri': null, 'wsUri': null, socket: null}
             ],
             lbchannelUri = makeCnUri(LOAD_BALANCER_HOSTNAME),
-            numItemsPerHostToPost = 50,
+            numItemsPerHostToPost = 100,
 
         // if true, then item inserts will be spread across hosts; if false, then all inserts go through load balancer.
         // Ideally, this is set to true (exploits more possible cases).
@@ -246,7 +246,7 @@ describe('Channel Subscription:', function() {
 
                     dhh.postData({channelUri: cnUri, data: dhh.getRandomPayload(), debug: VERBOSE}, function(postRes, dataUri) {
                         var err = (gu.isHTTPSuccess(postRes.status)) ? null : postRes.status;
-                        gu.debugLog('New data at '+ dataUri, ((null != err) && (VERBOSE)));
+                        gu.debugLog('New data at '+ dataUri, ((null == err) && (VERBOSE)));
                         gu.debugLog('Error posting to '+ hostObj.cnUri +': '+ postRes.status, (null != err));
 
                         postCB(err, dataUri);
