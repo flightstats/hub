@@ -8,10 +8,10 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${HOME}/datahub.log</file>
+        <file>${HOME}/var/log/datahub.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>${HOME}/datahub_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${HOME}/var/log/datahub_%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- keep 14 days -->
             <maxHistory>14</maxHistory>
         </rollingPolicy>

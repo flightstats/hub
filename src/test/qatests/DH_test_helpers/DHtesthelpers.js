@@ -23,7 +23,7 @@ var chai = require('chai'),
 var ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js');
 
- //var DOMAIN = 'datahub-01.cloud-east.dev:8080';
+// var DOMAIN = 'datahub-01.cloud-east.dev:8080';
 var DOMAIN = 'datahub.svc.dev';
 exports.DOMAIN = DOMAIN;
 
@@ -36,7 +36,7 @@ exports.DEFAULT_TTL = DEFAULT_TTL;
 var FAKE_CHANNEL_URI = [URL_ROOT, 'channel', 'aslKewkfnjkzIKENVYGWHJEFlijf823JBFD2'].join('/');
 exports.FAKE_CHANNEL_URI = FAKE_CHANNEL_URI;
 
-var DEBUG = false;
+var DEBUG = true;
 
 
 var getRandomPayload = function() {
@@ -424,26 +424,17 @@ var postData = function(params, myCallback) {
 };
 exports.postData = postData;
 
-/**
- * Given a channel uri, returns the results of a get data call on the /latest uri
- * @param channelUri
- * @param callback: response, data
- */
+// Calls back with data
 var getLatestDataFromChannel = function(channelUri, callback) {
-    var VERBOSE = true;
 
     gu.debugLog('Channel uri in getLatestDataFromChannel: '+ channelUri);
 
     getLatestUri(channelUri, function(uri) {
 
         getDataFromChannel({uri: uri}, function(err, res, data) {
-            if (err) {
-                gu.debugLog('Error getting data at '+ uri +': '+ err.message);
-            }
+            var result = (null != err) ? err : data;
 
-            res['status'] = res.statusCode; // normalizing to match SuperAgent's response
-
-            callback(res, data);
+            callback(result);
         })
     });
 };
