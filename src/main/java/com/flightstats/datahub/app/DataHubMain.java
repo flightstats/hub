@@ -26,7 +26,6 @@ public class DataHubMain {
 	public static final String DATAHUB_PROPERTIES_FILENAME = "datahub.properties";
 
 	public static void main(String[] args) throws Exception {
-
 		// Bridge java.util.logging over to slf4j (for Jersey and Guice mostly)
 		SLF4JBridgeHandler.removeHandlersForRootLogger();
 		SLF4JBridgeHandler.install();

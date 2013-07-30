@@ -187,6 +187,7 @@ public class InMemoryChannelDaoTest {
 
 		InMemoryChannelDao testClass = new InMemoryChannelDao(timeProvider);
 		testClass.createChannel(channelName, null);
+		testClass.createChannel("otherChannel", null);
 		ValueInsertionResult valueInsertionResult = testClass.insert(channelName, Optional.of("text/plain"), Optional.<String>absent(), Optional.<String>absent(), data);
 
 		Optional<LinkedDataHubCompositeValue> result = testClass.getValue("otherChannel", valueInsertionResult.getKey());
@@ -199,6 +200,7 @@ public class InMemoryChannelDaoTest {
 		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
 
 		InMemoryChannelDao testClass = new InMemoryChannelDao(mock(TimeProvider.class));
+		testClass.createChannel(channelName, null);
 
 		Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
 		assertFalse(result.isPresent());

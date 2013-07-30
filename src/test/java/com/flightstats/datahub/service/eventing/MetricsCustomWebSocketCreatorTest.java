@@ -2,15 +2,15 @@ package com.flightstats.datahub.service.eventing;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
+import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
+import com.flightstats.datahub.util.DataHubKeyRenderer;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
@@ -23,6 +23,7 @@ public class MetricsCustomWebSocketCreatorTest {
 		WebSocketChannelNameExtractor channelNameExtractor = new WebSocketChannelNameExtractor();
 		int threadCt = 50;
 		String meterName = "websocket-clients.channels.ubuibi";
+		URI requestUri = URI.create("/channel/ubuibi/ws");
 
 		final CountDownLatch startLatch = new CountDownLatch(1);
 		final CountDownLatch createLatch = new CountDownLatch(1);
@@ -34,15 +35,16 @@ public class MetricsCustomWebSocketCreatorTest {
 		final UpgradeRequest request = mock(UpgradeRequest.class);
 		final Session session = mock(Session.class);
 		Counter counter = spy(new Counter());
-        SubscriptionRoster subscriptionRoster = mock( SubscriptionRoster.class );
+		SubscriptionRoster subscriptionRoster = mock(SubscriptionRoster.class);
 
 
-		when(request.getRequestURI()).thenReturn(URI.create("/channel/ubuibi/ws"));
+		when(request.getRequestURI()).thenReturn(requestUri);
+		when(request.getHeader("Host")).thenReturn("myhost:8080");
 		when(session.getRemoteAddress()).thenReturn(new InetSocketAddress(2133));
 		when(session.getUpgradeRequest()).thenReturn(request);
 		when(registry.counter(meterName)).thenReturn(counter);
 
-		final MetricsCustomWebSocketCreator testClass = new MetricsCustomWebSocketCreator(registry, subscriptionRoster, channelNameExtractor);
+		final MetricsCustomWebSocketCreator testClass = new MetricsCustomWebSocketCreator(registry, subscriptionRoster, channelNameExtractor, mock(DataHubKeyRenderer.class), mock(ChannelHypermediaLinkBuilder.class));
 
 		//WHEN
 		for (int i = 0; i < threadCt; i++) {
