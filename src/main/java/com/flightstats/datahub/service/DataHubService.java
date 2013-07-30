@@ -16,14 +16,14 @@ public class DataHubService {
 	private final ChannelDao channelDao;
 	private final CreateChannelValidator createChannelValidator;
 	private final ChannelLockExecutor channelLockExecutor;
-	private final InsertionTopicProxy insertionTopicProxy;
+	private final ChannelInsertionPublisher channelInsertionPublisher;
 
 	@Inject
-	public DataHubService(ChannelDao channelDao, CreateChannelValidator createChannelValidator, ChannelLockExecutor channelLockExecutor, InsertionTopicProxy insertionTopicProxy) {
+	public DataHubService(ChannelDao channelDao, CreateChannelValidator createChannelValidator, ChannelLockExecutor channelLockExecutor, ChannelInsertionPublisher channelInsertionPublisher) {
 		this.channelDao = channelDao;
 		this.createChannelValidator = createChannelValidator;
 		this.channelLockExecutor = channelLockExecutor;
-		this.insertionTopicProxy = insertionTopicProxy;
+		this.channelInsertionPublisher = channelInsertionPublisher;
 	}
 
 	public Iterable<ChannelConfiguration> getChannels() {
@@ -48,7 +48,7 @@ public class DataHubService {
 	}
 
 	public ValueInsertionResult insert(String channelName, byte[] data, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage) throws Exception {
-		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelDao, insertionTopicProxy, channelName, data, contentType, contentEncoding, contentLanguage);
+		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelDao, channelInsertionPublisher, channelName, data, contentType, contentEncoding, contentLanguage);
 		return channelLockExecutor.execute(channelName, task);
 	}
 

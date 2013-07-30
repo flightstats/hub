@@ -89,14 +89,14 @@ public class DataHubServiceTest {
 
 		ChannelDao channelDao = mock(ChannelDao.class);
 		ChannelLockExecutor channelLockExecutor = mock(ChannelLockExecutor.class);
-		InsertionTopicProxy insertionTopicProxy = mock(InsertionTopicProxy.class);
+		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
 
-		WriteAndDispatch expectedDispatch = new WriteAndDispatch(channelDao, insertionTopicProxy, channelName, data, contentType, contentEncoding, contentLanguage);
+		WriteAndDispatch expectedDispatch = new WriteAndDispatch(channelDao, channelInsertionPublisher, channelName, data, contentType, contentEncoding, contentLanguage);
 
 		when(channelLockExecutor.execute(channelName, expectedDispatch)).thenReturn(new ValueInsertionResult(dataHubKey));
 		when(channelDao.insert(channelName, contentType, contentEncoding, contentLanguage, data)).thenReturn(new ValueInsertionResult(dataHubKey));
 
-		DataHubService testClass = new DataHubService(channelDao, null, channelLockExecutor, insertionTopicProxy);
+		DataHubService testClass = new DataHubService(channelDao, null, channelLockExecutor, channelInsertionPublisher);
 		ValueInsertionResult result = testClass.insert(channelName, data, contentType, contentEncoding, contentLanguage);
 
 		assertEquals(dataHubKey, result.getKey());

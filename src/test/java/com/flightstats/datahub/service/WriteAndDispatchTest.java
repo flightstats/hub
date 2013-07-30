@@ -23,14 +23,14 @@ public class WriteAndDispatchTest {
 
 
 		ChannelDao channelDao = mock(ChannelDao.class);
-		InsertionTopicProxy insertionTopicProxy = mock(InsertionTopicProxy.class);
+		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
 
 		when(channelDao.insert(channelName, contentType, contentEncoding, contentLanguage, data)).thenReturn(new ValueInsertionResult(dataHubKey));
 
-		WriteAndDispatch testClass = new WriteAndDispatch(channelDao, insertionTopicProxy, channelName, data, contentType, contentEncoding, contentLanguage);
+		WriteAndDispatch testClass = new WriteAndDispatch(channelDao, channelInsertionPublisher, channelName, data, contentType, contentEncoding, contentLanguage);
 		ValueInsertionResult result = testClass.call();
 
 		assertEquals(dataHubKey, result.getKey());
-		verify(insertionTopicProxy).publish(channelName, new ValueInsertionResult(dataHubKey));
+		verify(channelInsertionPublisher).publish(channelName, new ValueInsertionResult(dataHubKey));
 	}
 }

@@ -14,11 +14,11 @@ class WriteAndDispatch implements Callable<ValueInsertionResult> {
 	private final Optional<String> contentLanguage;
 	private final byte[] data;
 	private final ChannelDao channelDao;
-	private final InsertionTopicProxy insertionTopicProxy;
+	private final ChannelInsertionPublisher channelInsertionPublisher;
 
-	WriteAndDispatch(ChannelDao channelDao, InsertionTopicProxy insertionTopicProxy, String channelName, byte[] data, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage) {
+	WriteAndDispatch(ChannelDao channelDao, ChannelInsertionPublisher channelInsertionPublisher, String channelName, byte[] data, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage) {
 		this.channelDao = channelDao;
-		this.insertionTopicProxy = insertionTopicProxy;
+		this.channelInsertionPublisher = channelInsertionPublisher;
 		this.channelName = channelName;
 		this.contentType = contentType;
 		this.contentEncoding = contentEncoding;
@@ -29,7 +29,7 @@ class WriteAndDispatch implements Callable<ValueInsertionResult> {
 	@Override
 	public ValueInsertionResult call() throws Exception {
 		ValueInsertionResult result = channelDao.insert(channelName, contentType, contentEncoding, contentLanguage, data);
-		insertionTopicProxy.publish(channelName, result);
+		channelInsertionPublisher.publish(channelName, result);
 		return result;
 	}
 
@@ -48,7 +48,7 @@ class WriteAndDispatch implements Callable<ValueInsertionResult> {
 			return false;
 		if (contentType != null ? !contentType.equals(that.contentType) : that.contentType != null) return false;
 		if (!Arrays.equals(data, that.data)) return false;
-		if (insertionTopicProxy != null ? !insertionTopicProxy.equals(that.insertionTopicProxy) : that.insertionTopicProxy != null)
+		if (channelInsertionPublisher != null ? !channelInsertionPublisher.equals(that.channelInsertionPublisher) : that.channelInsertionPublisher != null)
 			return false;
 
 		return true;
@@ -62,7 +62,7 @@ class WriteAndDispatch implements Callable<ValueInsertionResult> {
 		result = 31 * result + (contentLanguage != null ? contentLanguage.hashCode() : 0);
 		result = 31 * result + (data != null ? Arrays.hashCode(data) : 0);
 		result = 31 * result + (channelDao != null ? channelDao.hashCode() : 0);
-		result = 31 * result + (insertionTopicProxy != null ? insertionTopicProxy.hashCode() : 0);
+		result = 31 * result + (channelInsertionPublisher != null ? channelInsertionPublisher.hashCode() : 0);
 		return result;
 	}
 }

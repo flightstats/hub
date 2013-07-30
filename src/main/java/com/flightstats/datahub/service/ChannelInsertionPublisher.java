@@ -7,13 +7,12 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
 
-//todo figure out a better name!
-public class InsertionTopicProxy {
+public class ChannelInsertionPublisher {
 	private final HazelcastInstance hazelcast;
 	private final DataHubKeyRenderer keyRenderer;
 
 	@Inject
-	public InsertionTopicProxy(HazelcastInstance hazelcast, DataHubKeyRenderer keyRenderer) {
+	public ChannelInsertionPublisher(HazelcastInstance hazelcast, DataHubKeyRenderer keyRenderer) {
 		this.hazelcast = hazelcast;
 		this.keyRenderer = keyRenderer;
 	}
