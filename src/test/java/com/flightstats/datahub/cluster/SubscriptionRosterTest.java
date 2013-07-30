@@ -2,18 +2,17 @@ package com.flightstats.datahub.cluster;
 
 import com.flightstats.datahub.service.InsertionTopicProxy;
 import com.flightstats.datahub.service.eventing.Consumer;
+import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.util.Arrays;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
-public class SubscriptionRosterImplTest {
+public class SubscriptionRosterTest {
 
 	@Test
 	public void testSubscribe() throws Exception {
@@ -28,7 +27,7 @@ public class SubscriptionRosterImplTest {
 
 		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
-		SubscriptionRosterImpl testClass = new SubscriptionRosterImpl(insertionTopicProxy, keyRenderer);
+		SubscriptionRoster testClass = new SubscriptionRoster(insertionTopicProxy, keyRenderer);
 
 		//WHEN
 		when(message.getMessageObject()).thenReturn(key);
@@ -39,7 +38,6 @@ public class SubscriptionRosterImplTest {
 		verify(insertionTopicProxy).subscribe(eq(channelName), messageListenerCaptor.capture());
 		messageListenerCaptor.getValue().onMessage(message);
 		verify(consumer).apply(key);
-        assertEquals(Arrays.asList( consumer), testClass.getSubscribers( channelName ) );
 	}
 
 	@Test
@@ -53,7 +51,7 @@ public class SubscriptionRosterImplTest {
 
 		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
-		SubscriptionRosterImpl testClass = new SubscriptionRosterImpl(insertionTopicProxy, keyRenderer);
+		SubscriptionRoster testClass = new SubscriptionRoster(insertionTopicProxy, keyRenderer);
 
 		//WHEN
 		testClass.subscribe(channelName, consumer);        //Need to subscribe first because this class is stateful
@@ -62,6 +60,6 @@ public class SubscriptionRosterImplTest {
 		//THEN
 		verify(insertionTopicProxy).subscribe(eq(channelName), messageListenerCaptor.capture());
 		verify(insertionTopicProxy).unsubscribe(channelName, messageListenerCaptor.getValue());
-        assertEquals(0, testClass.getTotalSubscriberCount());
+		assertEquals(0, testClass.getTotalSubscriberCount());
 	}
 }
