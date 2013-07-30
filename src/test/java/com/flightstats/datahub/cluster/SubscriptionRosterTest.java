@@ -1,6 +1,6 @@
 package com.flightstats.datahub.cluster;
 
-import com.flightstats.datahub.service.InsertionTopicProxy;
+import com.flightstats.datahub.service.ChannelInsertionPublisher;
 import com.flightstats.datahub.service.eventing.Consumer;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
@@ -23,11 +23,11 @@ public class SubscriptionRosterTest {
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		Message message = mock(Message.class);
 		Consumer<String> consumer = mock(Consumer.class);
-		InsertionTopicProxy insertionTopicProxy = mock(InsertionTopicProxy.class);
+		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
 
 		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
-		SubscriptionRoster testClass = new SubscriptionRoster(insertionTopicProxy, keyRenderer);
+		SubscriptionRoster testClass = new SubscriptionRoster(channelInsertionPublisher, keyRenderer);
 
 		//WHEN
 		when(message.getMessageObject()).thenReturn(key);
@@ -35,7 +35,7 @@ public class SubscriptionRosterTest {
 		testClass.subscribe(channelName, consumer);
 
 		//THEN
-		verify(insertionTopicProxy).subscribe(eq(channelName), messageListenerCaptor.capture());
+		verify(channelInsertionPublisher).subscribe(eq(channelName), messageListenerCaptor.capture());
 		messageListenerCaptor.getValue().onMessage(message);
 		verify(consumer).apply(key);
 	}
@@ -47,19 +47,19 @@ public class SubscriptionRosterTest {
 
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		Consumer<String> consumer = mock(Consumer.class);
-		InsertionTopicProxy insertionTopicProxy = mock(InsertionTopicProxy.class);
+		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
 
 		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
-		SubscriptionRoster testClass = new SubscriptionRoster(insertionTopicProxy, keyRenderer);
+		SubscriptionRoster testClass = new SubscriptionRoster(channelInsertionPublisher, keyRenderer);
 
 		//WHEN
 		testClass.subscribe(channelName, consumer);        //Need to subscribe first because this class is stateful
 		testClass.unsubscribe(channelName, consumer);
 
 		//THEN
-		verify(insertionTopicProxy).subscribe(eq(channelName), messageListenerCaptor.capture());
-		verify(insertionTopicProxy).unsubscribe(channelName, messageListenerCaptor.getValue());
+		verify(channelInsertionPublisher).subscribe(eq(channelName), messageListenerCaptor.capture());
+		verify(channelInsertionPublisher).unsubscribe(channelName, messageListenerCaptor.getValue());
 		assertEquals(0, testClass.getTotalSubscriberCount());
 	}
 }

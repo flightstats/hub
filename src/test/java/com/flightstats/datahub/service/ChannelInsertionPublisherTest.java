@@ -12,7 +12,7 @@ import java.util.Date;
 
 import static org.mockito.Mockito.*;
 
-public class InsertionTopicProxyTest {
+public class ChannelInsertionPublisherTest {
 
 	@Test
 	public void testPublish() throws Exception {
@@ -25,7 +25,7 @@ public class InsertionTopicProxyTest {
 		when(keyRenderer.keyToString(dataHubKey)).thenReturn("key message");
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		InsertionTopicProxy testClass = new InsertionTopicProxy(hazelcastInstance, keyRenderer);
+		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, keyRenderer);
 
 		testClass.publish("channelName", new ValueInsertionResult(dataHubKey));
 
@@ -40,7 +40,7 @@ public class InsertionTopicProxyTest {
 
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		InsertionTopicProxy testClass = new InsertionTopicProxy(hazelcastInstance, null);
+		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, null);
 
 		testClass.subscribe("channelName", messageListener);
 		verify(iTopic).addMessageListener(messageListener);
@@ -54,7 +54,7 @@ public class InsertionTopicProxyTest {
 
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		InsertionTopicProxy testClass = new InsertionTopicProxy(hazelcastInstance, null);
+		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, null);
 
 		testClass.unsubscribe("channelName", messageListener);
 		verify(iTopic).removeMessageListener(messageListener);
