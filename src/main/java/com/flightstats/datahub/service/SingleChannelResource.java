@@ -95,7 +95,6 @@ public class SingleChannelResource {
 
 		ValueInsertionResult insertionResult = dataHubService.insert(channelName, data, Optional.fromNullable(contentType), Optional.fromNullable(contentEncoding), Optional.fromNullable(contentLanguage));
 		URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo.getRequestUri());
-//		System.out.println("payloadUri = " + payloadUri);
 		Linked<ValueInsertionResult> linkedResult = linked(insertionResult)
 				.withLink("channel", linkBuilder.buildChannelUri(channelName, uriInfo))
 				.withLink("self", payloadUri)

@@ -29,7 +29,6 @@ class JettyWebSocketEndpointSender implements Consumer<String> {
 		try {
 			DataHubKey dataHubKey = keyRenderer.fromString(stringKey);
 			URI itemUri = linkBuilder.buildItemUri(dataHubKey, channelUri);
-//			System.out.println("itemUri = " + itemUri);
 			remoteEndpoint.sendString(itemUri.toString());
 		} catch (IOException e) {
 			throw new RuntimeException("Error replying to client: ", e);
