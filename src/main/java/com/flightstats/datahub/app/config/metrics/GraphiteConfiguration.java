@@ -24,8 +24,10 @@ public class GraphiteConfiguration {
 	@Inject
 	public GraphiteConfiguration(
 			MetricRegistry registry, SubscriptionRoster subscriptions,
-			@Named("graphite.host") String graphiteHost, @Named("graphite.port") int graphitePort) {
-
+			@Named("graphite.host") String graphiteHost, @Named("graphite.port") int graphitePort, @Named("graphite.enabled") Boolean graphiteEnabled) {
+		if (graphiteEnabled != null && !graphiteEnabled) {
+			return;
+		}
 		createJvmMetrics(registry);
 		createAggregateWebSocketGauge(subscriptions, registry);
 		createReporter(registry, graphiteHost, graphitePort);
