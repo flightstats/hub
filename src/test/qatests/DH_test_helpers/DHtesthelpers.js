@@ -65,22 +65,26 @@ var confirmExpectedData = function (dataUri, expectedData, callback) {
 };
 exports.confirmExpectedData = confirmExpectedData;
 
-var getValidationChecksum = function (myUri, expChecksum, myDone)
+/**
+ * Given a data uri, calls back with the checksum (or null if an error has occured).
+ * @param dataUri
+ * @param callback: checksum || null (on error)
+ */
+var getValidationChecksum = function (dataUri, callback)
 {
     var md5sum = crypto.createHash('md5'),
         actChecksum;
 
-    http.get(myUri, function(res) {
+    http.get(dataUri, function(res) {
         res.on('data', function (chunk) {
             md5sum.update(chunk);
         }).on('end', function(){
                 actChecksum = md5sum.digest('hex');
-                expect(actChecksum).to.equal(expChecksum);
-                myDone();
+                callback(actChecksum);
             });
     }).on('error', function(e) {
             console.log("Got error: " + e.message);
-            myDone();
+            callback(null);
         });
 
 };
@@ -710,26 +714,32 @@ exports.getListOfLatestUrisFromChannel = getListOfLatestUrisFromChannel;
 // Calls back with the URI to latest data post, optionally followed by error text (if not null, an error happened)
 var getLatestUri = function(channelUri, callback) {
     getChannel({'uri': channelUri}, function(getCnRes, getCnBody) {
-        expect(getCnRes.status).to.equal(gu.HTTPresponses.OK);
+        if (getCnRes.status != gu.HTTPresponses.OK) {
 
-        var cnMetadata = new channelMetadata(getCnBody),
-            latestUri = cnMetadata.getLatestUri();
+            callback(null, 'getChannel() failed in getLatestUri: '+ getCnRes.status)
+        }
+        else {
+            var cnMetadata = new channelMetadata(getCnBody),
+                latestUri = cnMetadata.getLatestUri();
 
-        gu.debugLog('latestUri in getLatestUri(): '+ latestUri);
+            gu.debugLog('latestUri in getLatestUri(): '+ latestUri);
 
-        superagent.agent().head(latestUri)
-            .redirects(0)
-            .end(function(headErr, headRes) {
-                if (headErr) {
-                    callback(null, headErr.message);
-                }
-                else {
-                    expect(headRes.status).to.equal(gu.HTTPresponses.See_Other);
-                    expect(headRes.headers['location']).to.not.be.null;
-
-                    callback(headRes.headers.location, null);
-                }
-            })
+            superagent.agent().head(latestUri)
+                .redirects(0)
+                .end(function(headErr, headRes) {
+                    if (headErr) {
+                        callback(null, headErr.message);
+                    }
+                    else {
+                        if (headRes.status != gu.HTTPresponses.See_Other) {
+                            callback(null, headRes.status);
+                        }
+                        else {
+                            callback(headRes.headers.location, null);
+                        }
+                    }
+                })
+        }
     })
 
 }

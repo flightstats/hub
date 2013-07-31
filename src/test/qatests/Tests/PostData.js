@@ -207,7 +207,6 @@ describe('POST data to channel:', function(){
         });
 
         // Confirms via md5 checksum
-        // As of June 3, 2013, this thing is timing out on the GET intermittently.
         it('POST image file to channel and recover', function(done) {
 
             var fileAsAStream = fs.createReadStream(CAT_TOILET_PIC),
@@ -232,7 +231,11 @@ describe('POST data to channel:', function(){
                     }).on('end', function() {
                             var expCheckSum = md5sum.digest('hex');
 
-                            dhh.getValidationChecksum(uri, expCheckSum, done);
+                            dhh.getValidationChecksum(uri, function(actualCheckSum) {
+                                expect(actualCheckSum).to.equal(expCheckSum);
+
+                                done();
+                            });
                         });
 
                 })
