@@ -26,7 +26,7 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
 
 
 
-describe('Channel Subscription:', function() {
+describe.only('Channel Subscription:', function() {
 
     // Test variables that are regularly overwritten
     var payload, req, uri;

@@ -39,12 +39,12 @@ describe('IN PROGRESS - Restful Scenarios', function() {
             myLatestPollBot = {},
             myRSSFeedPosterBot = {},
             myExtraPosterBots = [],
-            mainTTL = 12,
+            mainTTL = 120,
             allDependentBots = [];  // contains all bots other than mainPosterBot
 
         before(function() {
             mainPosterBot = bot.makeMainPosterBot(mainTTL + 10);
-            mainPosterBot.channelName = 'HotAndSingleRSSFeedsAreWaitingForYou';
+            mainPosterBot.channelName = dhh.getRandomChannelName();
 
             mySubscriberBot = bot.makeSubscriberBot(mainTTL);
             myRSSFeedPosterBot = bot.makeRSSPosterBot(mainTTL);
@@ -66,6 +66,11 @@ describe('IN PROGRESS - Restful Scenarios', function() {
         })
 
         it('Bot madness', function(done) {
+
+            var calculatedTimeout = (mainTTL * 1000) + 30000;
+            this.timeout(calculatedTimeout);
+            gu.debugLog('************   Timeout will be '+ calculatedTimeout +' milliseconds   *************');
+
             mainPosterBot.eventEmitter.on('terminate', function() {
                 expect(true).to.be.true;
                 mainPosterBot.report('My last data Uri was: '+ mainPosterBot.dataUri);

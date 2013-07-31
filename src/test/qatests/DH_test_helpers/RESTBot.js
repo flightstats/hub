@@ -8,8 +8,8 @@
 
 "use strict";
 
-var chai = require('chai'),
-    expect = chai.expect,
+var //chai = require('chai'),
+    //expect = chai.expect,
     superagent = require('superagent'),
     http = require('http'),
     async = require('async'),
@@ -231,7 +231,7 @@ var _botPost = function(theBot, data, callback) {
         .send(data)
         .end(function(err, res) {
             if (!gu.isHTTPSuccess(res.status)) {
-                callback('Wrong status: '+ res.status);
+                callback('Wrong status in _botPost(): '+ res.status);
             }
             else {
                 theBot.lastDataPosted = data;
@@ -244,7 +244,7 @@ var _botPost = function(theBot, data, callback) {
                 callback(null);
             }
         }).on('error', function(e) {
-            callback(e.message);
+            callback('in _botPost(): '+ e.message);
         });
 }
 
@@ -261,7 +261,7 @@ var botCreateChannel = function(theBot, callback) {
         .send({'name': name})
         .end(function(err, res) {
             if (gu.isHTTPError(res.status)) {
-                callback('Wrong status: '+ res.status);
+                callback('Wrong status in botCreateChannel(): '+ res.status);
             }
             else {
                 var cnMetadata = new dhh.channelMetadata(res.body),
@@ -273,7 +273,7 @@ var botCreateChannel = function(theBot, callback) {
                 callback(null);
             }
         }).on('error', function(e) {
-            callback(e.message);
+            callback('in botCreateChannel(): '+ e.message);
         });
 }
 exports.botCreateChannel = botCreateChannel;
@@ -384,7 +384,7 @@ var botGetLatestValue = function(theBot, callback) {
                         callback(null);
                     });
             }).on('error', function(e) {
-                    callback(e.message);
+                    callback('in botGetLatestValue(): '+ e.message);
                 });
         }
     });
