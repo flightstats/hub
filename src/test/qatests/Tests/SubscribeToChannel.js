@@ -8,7 +8,8 @@ var superagent = require('superagent'),
     async = require('async'),
     fs = require('fs'),
     WebSocket = require('ws'),
-    lodash = require('lodash');
+    lodash = require('lodash'),
+    url = require('url');
 
 
 var dhh = require('../DH_test_helpers/DHtesthelpers.js'),
@@ -26,7 +27,7 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
 
 
 
-describe.only('Channel Subscription:', function() {
+describe('Channel Subscription:', function() {
 
     // Test variables that are regularly overwritten
     var payload, req, uri;
@@ -51,6 +52,31 @@ describe.only('Channel Subscription:', function() {
             theRest = m[2];
 
         return theRest;
+    }
+
+    var doUrlsMatch = function(params) {
+        var urlA = url.parse(params.urlA),
+            urlB = url.parse(params.urlB),
+            doIgnorePort = (undefined != params.doIgnorePort) ? params.doIgnorePort : true,
+            doIgnoreHost = (undefined != params.doIgnoreHost) ? params.doIgnoreHost : false;
+
+        // one-off function to deliver text version of url in known format
+        var spitIt = function(obj) {
+            var port = (obj.port) ? ':'+ obj.port : '',
+                text = obj.protocol +'//'+ obj.hostname + port + obj.path;
+
+            return text;
+        }
+
+        if (doIgnorePort) {
+            urlA['port'] = urlB['port'];
+        }
+
+        if (doIgnoreHost) {
+            urlA['hostname'] = urlB['hostname'];
+        }
+
+        return (spitIt(urlA) == spitIt(urlB))
     }
 
     before(function(){
@@ -142,8 +168,12 @@ describe.only('Channel Subscription:', function() {
                 var firstUri = (latestUri == uriA) ? uriB : uriA;
 
                 expect(socket.responseQueue.length).to.equal(2);
-                expect(socket.responseQueue[0]).to.equal(firstUri);
-                expect(socket.responseQueue[1]).to.equal(latestUri);
+
+                //expect(socket.responseQueue[0]).to.equal(firstUri);
+                //expect(socket.responseQueue[1]).to.equal(latestUri);
+
+                expect(doUrlsMatch({urlA: socket.responseQueue[0], urlB: firstUri})).to.be.true;
+                expect(doUrlsMatch({urlA: socket.responseQueue[1], urlB: latestUri})).to.be.true;
 
                 gu.debugLog('final socket state is '+ socket.ws.readyState, DEBUG);
 
@@ -309,13 +339,16 @@ describe.only('Channel Subscription:', function() {
                     var lastItem = lastQueue[j],
                         thisItem = thisQueue[j];
 
-                    if (thisItem != lastItem) {
+                    //if (thisItem != lastItem)
+                    if (!doUrlsMatch({urlA: thisItem, urlB: lastItem, doIgnoreHost: true}))
+                    {
                         gu.debugLog('Mismatch in socket queues!');
                         gu.debugLog(lastHost.host +' has url '+ lastItem +' at index '+ j);
                         gu.debugLog(thisHost.host +' has url '+ thisItem +' at index '+ j);
 
                         dumpAllQueues();
-                        expect(thisItem).to.equal(lastItem);
+                        //expect(thisItem).to.equal(lastItem);
+                        expect(doUrlsMatch({urlA: thisItem, urlB: lastItem, doIgnoreHost: true})).to.be.true;
                     }
                 }
 
@@ -345,7 +378,8 @@ describe.only('Channel Subscription:', function() {
                     var actTrimmed = getPostHostUri(actualResponseQueue[i]),
                         expTrimmed = getPostHostUri(expectedResponseQueue[i]);
 
-                    expect(actTrimmed).to.equal(expTrimmed);
+                    //expect(actTrimmed).to.equal(expTrimmed);
+                    expect(doUrlsMatch({urlA: actTrimmed, urlB: expTrimmed, doIgnoreHost: true})).to.be.true;
                     gu.debugLog('Matched queue number '+ i, VERBOSE);
                 }
 
@@ -447,7 +481,8 @@ describe.only('Channel Subscription:', function() {
                 gu.debugLog('Expected and Actual queues are full. Comparing queues...', DEBUG);
 
                 for (i = 0; i < numUpdates; i += 1) {
-                    expect(actualResponseQueue[i]).to.equal(expectedResponseQueue[i]);
+                    //expect(actualResponseQueue[i]).to.equal(expectedResponseQueue[i]);
+                    expect(doUrlsMatch({urlA: actualResponseQueue[i], urlB: expectedResponseQueue[i]})).to.be.true;
                     gu.debugLog('Matched queue number '+ i, DEBUG);
                 }
 
@@ -539,8 +574,13 @@ describe.only('Channel Subscription:', function() {
                     var thisSocket = sockets[i];
 
                     expect(thisSocket.responseQueue.length).to.equal(2);
-                    expect(thisSocket.responseQueue[0]).to.equal(firstUri);
-                    expect(thisSocket.responseQueue[1]).to.equal(latestUri);
+
+                    //expect(thisSocket.responseQueue[0]).to.equal(firstUri);
+                    //expect(thisSocket.responseQueue[1]).to.equal(latestUri);
+
+                    expect(doUrlsMatch({urlA: thisSocket.responseQueue[0], urlB: firstUri})).to.be.true;
+                    expect(doUrlsMatch({urlA: thisSocket.responseQueue[1], urlB: latestUri})).to.be.true;
+
 
                     gu.debugLog('Final socket state for socket '+ thisSocket.name +' is '+ socket.ws.readyState, DEBUG);
 
@@ -653,7 +693,8 @@ describe.only('Channel Subscription:', function() {
             gu.debugLog('... entering finishSocket1');
 
             expect(socket1.responseQueue.length).to.equal(1);
-            expect(uri1).to.equal(socket1.responseQueue[0]);
+            //expect(uri1).to.equal(socket1.responseQueue[0]);
+            expect(doUrlsMatch({urlA: uri1, urlB: socket1.responseQueue[0]})).to.be.true;
             gu.debugLog('Confirmed first socket received msg', DEBUG);
 
             expect(socket2.responseQueue.length).to.equal(0);   // socket2 not connected yet
@@ -675,7 +716,8 @@ describe.only('Channel Subscription:', function() {
             gu.debugLog('...entering finishSocket2()');
 
             expect(socket2.responseQueue.length).to.equal(1);
-            expect(uri2).to.equal(socket2.responseQueue[0]);
+            //expect(uri2).to.equal(socket2.responseQueue[0]);
+            expect(doUrlsMatch({urlA: uri2, urlB: socket2.responseQueue[0]})).to.be.true;
             gu.debugLog('Confirmed second socket received msg', DEBUG);
 
             socket2.ws.close();
@@ -735,7 +777,8 @@ describe.only('Channel Subscription:', function() {
         //  for each of those cases will check if both conditions have been met and then call this.
         var finishTest = function() {
             expect(patientSocket.responseQueue.length).to.equal(1);
-            expect(patientSocket.responseQueue[0]).to.equal(postedUri);
+            //expect(patientSocket.responseQueue[0]).to.equal(postedUri);
+            expect(doUrlsMatch({urlA: patientSocket.responseQueue[0], urlB: postedUri})).to.be.true;
             gu.debugLog('Message received', VERBOSE);
 
             done();
