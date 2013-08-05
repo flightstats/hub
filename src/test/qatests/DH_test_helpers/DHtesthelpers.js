@@ -37,7 +37,7 @@ exports.DEFAULT_TTL = DEFAULT_TTL;
 var FAKE_CHANNEL_URI = [URL_ROOT, 'channel', 'aslKewkfnjkzIKENVYGWHJEFlijf823JBFD2'].join('/');
 exports.FAKE_CHANNEL_URI = FAKE_CHANNEL_URI;
 
-var DEBUG = true;
+var DEBUG = false;
 
 
 var getRandomPayload = function() {
