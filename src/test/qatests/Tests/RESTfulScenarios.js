@@ -39,7 +39,7 @@ describe('IN PROGRESS - Restful Scenarios', function() {
             myLatestPollBot = {},
             myRSSFeedPosterBot = {},
             myExtraPosterBots = [],
-            mainTTL = 120,
+            mainTTL = 12,
             allDependentBots = [];  // contains all bots other than mainPosterBot
 
         before(function() {
