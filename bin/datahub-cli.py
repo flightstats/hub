@@ -228,9 +228,11 @@ class DataHub(object):
             return re.sub(r'.*<(.*)>.*', r'\1', value)
 
     def _can_render_content_type(self, content_type):
-        return (content_type.startswith("text/") or
-                content_type in ("application/json", "application/xml", "application/html", "application/javascript"))
+        # Allow "application/json" as prefixes, because sometimes the content type includes charset info too (e.g. 
+        # "application/json; charset=UTF-8")
+        prefixes = ("text/", "application/json", "application/xml", "application/html", "application/javascript")
         # others tbd
+        return any(content_type.startswith(prefix) for prefix in prefixes)
 
     def _send_to_channel(self, content, mime_type):
         conn = httplib.HTTPConnection(self._server)
