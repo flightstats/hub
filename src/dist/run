@@ -11,7 +11,7 @@ DEPLOYED_DIR=$(cd $(dirname $0) 1>/dev/null 2>&1 && pwd)
 cd $DEPLOYED_DIR
 
 JAVA_HOME=/opt/java7
-MAX_HEAP=256m
+MAX_HEAP=450m
 MIN_HEAP=256m
 MIN_NEW=100m
 DEBUG_PORT=3333
