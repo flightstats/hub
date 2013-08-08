@@ -68,7 +68,7 @@ then the channel has no TTL.
 }
 ```
 
-On success:  `HTTP/1.1 200 OK`
+On success:  `HTTP/1.1 201 OK`
 
 ```json
 {
