@@ -21,6 +21,7 @@ For the purposes of this document, the datahub is at http://datahub:8080.
 
 In development, it is actually at: http://datahub.svc.dev.
 In staging, it is actually at: http://datahub.svc.staging.
+In production, it is actually at: http://datahub.svc.prod.
 
 ## list channels
 
