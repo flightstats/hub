@@ -180,11 +180,8 @@ var Bot = function Bot(params) {
      * @param reportLevel=REPORT_LEVEL.CHATTY if not given.
      */
     this.report = function(message, reportLevel) {
-        var practicalReportLevel = (undefined != reportLevel) ? reportLevel : REPORT_LEVEL.SHY,
-            sayIt = (practicalReportLevel >= _self.reportLevel);
-
-        //gu.debugLog('\nSELF.REPORT_LEVEL: '+ _self.reportLevel);
-        //gu.debugLog('practical report level: '+ practicalReportLevel);
+        var messageReportLevel = (undefined != reportLevel) ? reportLevel : REPORT_LEVEL.SHY,
+            sayIt = (messageReportLevel >= _self.reportLevel);
 
         gu.debugLog('\n"'+ this.name + '" ('+ this.description +') says:"'+ message +'"', sayIt);
     }
