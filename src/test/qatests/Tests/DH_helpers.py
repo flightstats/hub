@@ -19,7 +19,7 @@ class ChannelMetadata():
             self.ws = JSON['_links']['ws']['href']
             self.name = JSON['name']
             self.creationDate = JSON['creationDate']
-            self.ttl = JSON['ttlMillis']
+            self.ttlMillis = JSON['ttlMillis']
         except:
             msg = 'Error parsing channel metadata: '+ str(sys.exc_info()[0])
             raise ValueError(msg)
@@ -73,8 +73,7 @@ class DataHub(fs.FsResource):
         myChannel = None
         if (fs.isHTTPSuccess(self.response.status_code)):
             try:
-                cnMeta = ChannelMetadata(self.response.json())
-                myChannel = Channel(cnMeta.uri, self.debug)
+                myChannel = Channel(self.response.json(), self.debug)
             except ValueError as ex:
                 print(ex.message)
         else:
@@ -103,25 +102,25 @@ class Channel(fs.FsResource):
     To be created as the result of a POST to DataHub.
     Implements GET, POST, PATCH
     """
-    def __init__(self, uri, debug=False):
-        parsed = urlparse(uri)
-        fs.FsResource.__init__(self, domain=parsed.netloc, debug=debug, uri=uri)
+    def __init__(self, cnCreateJSON, debug=False):
+        self.metadata = ChannelMetadata(cnCreateJSON)
+        parsed = urlparse(self.metadata.uri)
+        fs.FsResource.__init__(self, domain=parsed.netloc, debug=debug, uri=self.metadata.uri)
 
     def get(self, callParams={}):
         """
         Returns instance of ChannelMetadata, response.
         """
         self.response = fs.FsResource.get(self, callParams)
-        cnMeta = None
         if (fs.isHTTPSuccess(self.response.status_code)):
             try:
-                cnMeta = ChannelMetadata(self.response.json())
+                self.metadata = ChannelMetadata(self.response.json())
             except ValueError as ex:
                 print(ex.message)
         else:
             print('Did not receive success code fetching channel metadata ', self.response.status_code)
 
-        return cnMeta, self.response
+        return self.metadata, self.response
 
     def post(self, data, headers={'content-type': 'text/plain'}):
         """
