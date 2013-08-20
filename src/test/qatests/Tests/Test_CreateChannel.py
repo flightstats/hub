@@ -1,5 +1,6 @@
 __author__ = 'gnewcomb'
 
+from nose.plugins.attrib import attr
 import DH_helpers as dhh
 import FStest_helpers as fstest
 import unittest
@@ -11,6 +12,7 @@ import time
 import thread
 import json as jsonMod
 import datetime
+import sys
 
 _mainDH = None
 
@@ -21,33 +23,15 @@ def getDataHub():
 
     return _mainDH
 
-
-#class NoParams(unittest.TestCase):
-#
-#    @classmethod
-#    def setUpClass(cls):
-#        cls.AllTripsResource = triph.AllTrips(debug=True)
-#        cls.id, cls.createRes = cls.AllTripsResource.post(callParams = {}, isItinSource=True)
-#
-#        cls.TripResource = triph.Trip(id=cls.id, debug=True)
-#        cls.getRes = cls.TripResource.get()
-#        print('GET response: ', cls.getRes.json())
-#
-#    @attr('acceptance')
-#    def test_no_params(self):
-#    #        print('**********\r\n', NoParams.getRes.json())
-#        self.assertIsNotNone(NoParams.id)
-#        self.assertEqual(NoParams.createRes.status_code, httplib.CREATED)
-#
-#    @attr('acceptance')
-#    def test_confirm_no_fields_on_GET(self):
-#        self.body = NoParams.getRes.json()
-#        for key in ['description', 'itineraryName', 'itineraryReferenceNumber', 'itineraryId', '_user',
-#                    'name']:
-#            self.assertIsNone(self.body[key])
-#        self.assertEqual(0, len(self.body['flights']))
-#        self.assertEqual(NoParams.TripResource.getUri(), str(self.body['_self']))
-#        self.assertEqual(NoParams.id, str(self.body['id']))
+def confirmChannelBody(channelMetadata):
+    """
+    Takes a ChannelMetadata instance and returns True if expected properties are present, else False.
+    """
+    required_properties = ('uri', 'latest', 'ws', 'name', 'creationDate', 'ttlMillis')
+    for p in required_properties:
+        if (not hasattr(channelMetadata, p)):
+            return False
+    return True
 
 class UnspecifiedTTL(unittest.TestCase):
 
@@ -66,28 +50,43 @@ class UnspecifiedTTL(unittest.TestCase):
         self.assertEqual(meta.uri, cn.uri)
 
     def test_response_has_correct_structure(self):
-        meta = dhh.ChannelMetadata(UnspecifiedTTL.cnCreationResponse.json())
-        self.assertIsNotNone(meta)
-        self.assertIsNotNone(meta.uri)
-        self.assertIsNotNone(meta.latest)
-        self.assertIsNotNone(meta.ws)
-        self.assertIsNotNone(meta.name)
-        self.assertIsNotNone(meta.creationDate)
-        self.assertIsNotNone(meta.ttl)
+        meta = UnspecifiedTTL.cn.metadata
+        self.assertTrue(confirmChannelBody(meta))
 
     def test_location_header_is_correct(self):
         self.assertEqual(UnspecifiedTTL.cnCreationResponse.headers['location'], UnspecifiedTTL.cn.uri)
 
     def test_name_is_correct(self):
-        self.assertEqual(UnspecifiedTTL.cnCreationResponse.json()['name'], UnspecifiedTTL.channelName)
+        self.assertEqual(UnspecifiedTTL.cn.metadata.name, UnspecifiedTTL.channelName)
 
     def test_creation_date_is_correct(self):
-        myDt = fstest.parseFSDateTime(UnspecifiedTTL.cnCreationResponse.json()['creationDate'])
+        myDt = fstest.parseFSDateTime(UnspecifiedTTL.cn.metadata.creationDate)
         print('myDt: ', myDt)
         print('now: ', datetime.datetime.now())
         self.assertTrue(fstest.areDatesClose(myDt, datetime.datetime.utcnow()))
 
+#    @attr('only')
+    def test_TTL_is_numeric(self):
+        self.assertTrue(str.isdigit(str(UnspecifiedTTL.cn.metadata.ttlMillis)))
 
-#    it('TTL has numeric value', function() {
+    def test_TTL_defaults_to_120_days(self):
+        self.assertEqual(UnspecifiedTTL.cn.metadata.ttlMillis, 10368000000)
 
-#    it('TTL defaults to 120 days', function() {
+class SpecifiedTTL(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.DH = getDataHub()
+        cls.channelName = txu.text_generator(min=10, max=20, includeSpace=False)
+        cls.channelTTLMillis = 25000
+        cls.cn, cls.cnCreationResponse = cls.DH.post({'name': cls.channelName, 'ttlMillis': cls.channelTTLMillis})
+
+    def test_returns_201(self):
+        self.assertEqual(SpecifiedTTL.cnCreationResponse.status_code, httplib.CREATED)
+
+    def test_response_has_correct_structure(self):
+        meta = SpecifiedTTL.cn.metadata
+        self.assertTrue(confirmChannelBody(meta))
+
+    def test_has_correct_TTL_value(self):
+        self.assertEqual(SpecifiedTTL.cn.metadata.ttlMillis, SpecifiedTTL.channelTTLMillis)
