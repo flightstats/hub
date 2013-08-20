@@ -19,7 +19,6 @@ class ChannelMetadata():
             self.ws = JSON['_links']['ws']['href']
             self.name = JSON['name']
             self.creationDate = JSON['creationDate']
-            self.ttlMillis = JSON['ttlMillis']
         except:
             msg = 'Error parsing channel metadata: '+ str(sys.exc_info()[0])
             raise ValueError(msg)
@@ -29,7 +28,13 @@ class ChannelMetadata():
         try:
             self.lastUpdateDate = JSON['lastUpdateDate']
         except:
-            self.lastUpdateDate = None
+            pass
+
+        # Special case for ttlMillis, which is not always present
+        try:
+            self.ttlMillis = JSON['ttlMillis']
+        except:
+            pass
 
 class ItemMetadata():
     def __init__(self, JSON, debug=False):
@@ -63,13 +68,13 @@ class DataHub(fs.FsResource):
     def delete(self, *args):
         raise NotImplementedError
 
-    def post(self, callParams, headers={'content-type': 'application/json'}):
+    def post(self, callParams, headers={'content-type': 'application/json'}, debug=False):
         """
         Create a channel.
         Returns Channel obj, response
         """
         self.headers = headers
-        self.response = fs.FsResource.post(self, callParams, self.headers)
+        self.response = fs.FsResource.post(self, callParams, self.headers, debug=debug)
         myChannel = None
         if (fs.isHTTPSuccess(self.response.status_code)):
             try:
@@ -81,11 +86,11 @@ class DataHub(fs.FsResource):
 
         return myChannel, self.response
 
-    def get(self, callParams={}):
+    def get(self, callParams={}, debug=False):
         """
         Returns list of channels, response
         """
-        self.response = fs.FsResource.get(self, callParams)
+        self.response = fs.FsResource.get(self, callParams, debug=debug)
         channels = None
         if (fs.isHTTPSuccess(self.response.status_code)):
             try:
@@ -107,11 +112,15 @@ class Channel(fs.FsResource):
         parsed = urlparse(self.metadata.uri)
         fs.FsResource.__init__(self, domain=parsed.netloc, debug=debug, uri=self.metadata.uri)
 
-    def get(self, callParams={}):
+    @staticmethod
+    def makeRandomChannelName(min=10, max=25):
+        return txu.text_generator(min=min, max=max, includeSpace=False)
+
+    def get(self, callParams={}, debug=False):
         """
         Returns instance of ChannelMetadata, response.
         """
-        self.response = fs.FsResource.get(self, callParams)
+        self.response = fs.FsResource.get(self, callParams, debug=debug)
         if (fs.isHTTPSuccess(self.response.status_code)):
             try:
                 self.metadata = ChannelMetadata(self.response.json())
@@ -122,7 +131,7 @@ class Channel(fs.FsResource):
 
         return self.metadata, self.response
 
-    def post(self, data, headers={'content-type': 'text/plain'}):
+    def post(self, data, headers={'content-type': 'text/plain'}, debug=False):
         """
         Inserts data into a channel. To stream the data, use the 'with' statement as shown here:
             http://docs.python-requests.org/en/latest/user/advanced/#streaming-uploads
@@ -130,7 +139,7 @@ class Channel(fs.FsResource):
         """
         self.headers = headers
         self.payload = data
-        if (self.debug):
+        if (debug) or (self.debug):
             self.report()
         print ('Calling POST at {}', self.uri)
         self.response = None
@@ -189,13 +198,13 @@ class Channel(fs.FsResource):
             print('Error getting data from /latest: '+ sys.exc_info()[0])
         return data, response
 
-    def patch(self, callParams, headers={'content-type': 'application/json'}):
+    def patch(self, callParams, headers={'content-type': 'application/json'}, debug=False):
         """
         Updates a channel.
         Returns instance of ChannelMetadata, response.
         """
         self.headers = headers
-        self.response = fs.FsResource.patch(callParams, self.headers)
+        self.response = fs.FsResource.patch(callParams, self.headers, debug=debug)
         cnMeta = None
 
         if (fs.isHTTPSuccess(self.response.status_code)):
