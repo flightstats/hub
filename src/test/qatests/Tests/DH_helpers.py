@@ -82,7 +82,7 @@ class DataHub(fs.FsResource):
 
         return myChannel, self.response
 
-    def get(self, callParams):
+    def get(self, callParams={}):
         """
         Returns list of channels, response
         """
@@ -107,7 +107,7 @@ class Channel(fs.FsResource):
         parsed = urlparse(uri)
         fs.FsResource.__init__(self, domain=parsed.netloc, debug=debug, uri=uri)
 
-    def get(self, callParams):
+    def get(self, callParams={}):
         """
         Returns instance of ChannelMetadata, response.
         """
