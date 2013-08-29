@@ -137,7 +137,7 @@ task versionDHBackup(type: Copy) {
 
 task tarDHBackup(dependsOn: 'versionDHBackup', type: Tar) {
     inputs.dir new File("${buildDir}/dhbackup-${version}")
-    baseName = "dhbackupzzzzzzzz"
+    baseName = "dhbackup"
     compression = Compression.GZIP
     from("${buildDir}")
     include("dhbackup-${version}/**")
