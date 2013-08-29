@@ -5,7 +5,7 @@ This client will back up a DataHub channel to a directory structure on disk.  Fi
 
 ## Installing
 
-Run the setup.sh script.  This will do the following:
+Extract the tgz archive and then run the setup.sh script.  This will do the following:
 
 1. Create a virtualenv named `env`
 2. Activate the virtualenv
@@ -15,5 +15,5 @@ Run the setup.sh script.  This will do the following:
 
 ```
 $ source env/bin/activate
-$ dhbackup.py -d /path/to/backup/root http://datahub.svc.xxx/channel/yourChannelName
+$ ./dhbackup.py -d /path/to/backup/root http://datahub.svc.xxx/channel/yourChannelName
 ```
