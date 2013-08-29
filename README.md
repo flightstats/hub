@@ -52,8 +52,7 @@ Content-Type is `application/json`
 ## create a channel
 
 Channel names _are case sensitive_, are limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
-Hyphens and underscores are not allowed in channel names. Please try to break as many of these rules as possible
-in order to challenge Jason's sanity.
+Hyphens and underscores are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
 
 TTL is optional and should be a positive number. If not specified, a default value (120 days) is used. If specified as null,
 then the channel has no TTL.
