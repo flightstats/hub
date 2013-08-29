@@ -37,8 +37,9 @@ public class ChannelResourceTest {
 				.withLink("ws", wsUri)
 				.build();
 		UriInfo uriInfo = mock(UriInfo.class);
+        CreateChannelValidator createChannelValidator = mock(CreateChannelValidator.class);
 		DataHubService datahubservice = mock(DataHubService.class);
-		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
+        ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
 		when(datahubservice.channelExists(channelName)).thenReturn(false);
@@ -46,7 +47,7 @@ public class ChannelResourceTest {
 		when(linkBuilder.buildChannelUri(channelConfiguration, uriInfo)).thenReturn(URI.create(channelUri));
 		when(linkBuilder.buildLinkedChannelConfig(channelConfiguration, URI.create(channelUri), uriInfo)).thenReturn(expected);
 
-		ChannelResource testClass = new ChannelResource(datahubservice, linkBuilder, uriInfo);
+        ChannelResource testClass = new ChannelResource(datahubservice, linkBuilder, uriInfo, createChannelValidator);
 
 		Response response = testClass.createChannel(channelCreationRequest);
 
@@ -68,10 +69,11 @@ public class ChannelResourceTest {
 		String requestUri = "http://datahüb/channel";
 
 		DataHubService datahubservice = mock(DataHubService.class);
+        CreateChannelValidator createChannelValidator = mock(CreateChannelValidator.class);
 		UriInfo uriInfo = mock(UriInfo.class);
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 
-		ChannelResource testClass = new ChannelResource(datahubservice, linkBuilder, uriInfo);
+		ChannelResource testClass = new ChannelResource(datahubservice, linkBuilder, uriInfo, createChannelValidator);
 
 		//WHEN
 		when(datahubservice.getChannels()).thenReturn(channels);
@@ -103,10 +105,11 @@ public class ChannelResourceTest {
 		//GIVEN
 		String channelName = "    \tmyChannel ";
 		ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
+        CreateChannelValidator createChannelValidator = mock(CreateChannelValidator.class);
 
 		DataHubService datahubservice = mock(DataHubService.class);
 
-		ChannelResource testClass = new ChannelResource(datahubservice, mock(ChannelHypermediaLinkBuilder.class), null);
+		ChannelResource testClass = new ChannelResource(datahubservice, mock(ChannelHypermediaLinkBuilder.class), null, createChannelValidator);
 
 		//WHEN
 		testClass.createChannel(request);

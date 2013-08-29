@@ -1,8 +1,10 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelDao;
+import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
+import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
@@ -14,15 +16,24 @@ public class CreateChannelValidator {
 		this.channelDao = channelDao;
 	}
 
-	public void validate(String channelName) throws InvalidRequestException, AlreadyExistsException {
-		ensureNotAllBlank(channelName);
+	public void validate(ChannelCreationRequest request) throws InvalidRequestException, AlreadyExistsException {
+        Optional<String> channelNameOptional = request.getName();
+        validateNameWasGiven(channelNameOptional);
+        String channelName = channelNameOptional.get().trim();
+        ensureNotAllBlank(channelName);
 		checkForInvalidCharacters(channelName);
 		validateChannelUniqueness(channelName);
 	}
 
-	private void ensureNotAllBlank(String channelName) throws InvalidRequestException {
+    private void validateNameWasGiven(Optional<String> channelName) throws InvalidRequestException {
+        if ((channelName == null) || !channelName.isPresent()) {
+            throw new InvalidRequestException("{\"error\": \"Channel name wasn't given\"}");
+        }
+    }
+
+    private void ensureNotAllBlank(String channelName) throws InvalidRequestException {
 		if (Strings.nullToEmpty(channelName).trim().isEmpty()) {
-			throw new InvalidRequestException("{\"error\": \"Channel name cannot be blank\"}");
+            throw new InvalidRequestException("{\"error\": \"Channel name cannot be blank\"}");
 		}
 	}
 

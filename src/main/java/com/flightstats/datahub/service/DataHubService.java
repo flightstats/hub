@@ -14,14 +14,12 @@ import java.util.concurrent.Callable;
 
 public class DataHubService {
 	private final ChannelDao channelDao;
-	private final CreateChannelValidator createChannelValidator;
 	private final ChannelLockExecutor channelLockExecutor;
 	private final ChannelInsertionPublisher channelInsertionPublisher;
 
 	@Inject
-	public DataHubService(ChannelDao channelDao, CreateChannelValidator createChannelValidator, ChannelLockExecutor channelLockExecutor, ChannelInsertionPublisher channelInsertionPublisher) {
+	public DataHubService(ChannelDao channelDao, ChannelLockExecutor channelLockExecutor, ChannelInsertionPublisher channelInsertionPublisher) {
 		this.channelDao = channelDao;
-		this.createChannelValidator = createChannelValidator;
 		this.channelLockExecutor = channelLockExecutor;
 		this.channelInsertionPublisher = channelInsertionPublisher;
 	}
@@ -31,7 +29,6 @@ public class DataHubService {
 	}
 
 	public ChannelConfiguration createChannel(String channelName, Long ttl) throws InvalidRequestException, AlreadyExistsException {
-		createChannelValidator.validate(channelName);
 		return channelDao.createChannel(channelName, ttl);
 	}
 

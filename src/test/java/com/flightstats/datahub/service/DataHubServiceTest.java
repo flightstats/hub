@@ -24,7 +24,7 @@ public class DataHubServiceTest {
 		ChannelDao channelDao = mock(ChannelDao.class);
 		when(channelDao.getChannels()).thenReturn(channelConfigurations);
 
-		DataHubService testClass = new DataHubService(channelDao, null, null, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 
 		Iterable<ChannelConfiguration> channels = testClass.getChannels();
 		assertEquals(channelConfigurations, channels);
@@ -33,13 +33,11 @@ public class DataHubServiceTest {
 	@Test
 	public void testCreateChannel() throws Exception {
 		ChannelDao channelDao = mock(ChannelDao.class);
-		CreateChannelValidator createChannelValidator = mock(CreateChannelValidator.class);
 
-		DataHubService testClass = new DataHubService(channelDao, createChannelValidator, null, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 
 		testClass.createChannel("channelName", 1000L);
 
-		verify(createChannelValidator).validate("channelName");
 		verify(channelDao).createChannel("channelName", 1000L);
 	}
 
@@ -48,7 +46,7 @@ public class DataHubServiceTest {
 		ChannelDao channelDao = mock(ChannelDao.class);
 		when(channelDao.channelExists("channelName")).thenReturn(true);
 
-		DataHubService testClass = new DataHubService(channelDao, null, null, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 		boolean result = testClass.channelExists("channelName");
 		assertTrue(result);
 	}
@@ -60,7 +58,7 @@ public class DataHubServiceTest {
 		ChannelDao channelDao = mock(ChannelDao.class);
 		when(channelDao.getChannelConfiguration("channelName")).thenReturn(channelConfiguration);
 
-		DataHubService testClass = new DataHubService(channelDao, null, null, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 		ChannelConfiguration result = testClass.getChannelConfiguration("channelName");
 		assertEquals(channelConfiguration, result);
 	}
@@ -72,7 +70,7 @@ public class DataHubServiceTest {
 		ChannelDao channelDao = mock(ChannelDao.class);
 		when(channelDao.findLastUpdatedKey("channelName")).thenReturn(Optional.of(dataHubKey));
 
-		DataHubService testClass = new DataHubService(channelDao, null, null, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 
 		Optional<DataHubKey> result = testClass.findLastUpdatedKey("channelName");
 		assertEquals(dataHubKey, result.get());
@@ -96,7 +94,7 @@ public class DataHubServiceTest {
 		when(channelLockExecutor.execute(channelName, expectedDispatch)).thenReturn(new ValueInsertionResult(dataHubKey));
 		when(channelDao.insert(channelName, contentType, contentEncoding, contentLanguage, data)).thenReturn(new ValueInsertionResult(dataHubKey));
 
-		DataHubService testClass = new DataHubService(channelDao, null, channelLockExecutor, channelInsertionPublisher);
+		DataHubService testClass = new DataHubService(channelDao, channelLockExecutor, channelInsertionPublisher);
 		ValueInsertionResult result = testClass.insert(channelName, data, contentType, contentEncoding, contentLanguage);
 
 		assertEquals(dataHubKey, result.getKey());
@@ -114,7 +112,7 @@ public class DataHubServiceTest {
 
 		ChannelDao channelDao = mock(ChannelDao.class);
 		when(channelDao.getValue("channelName", dataHubKey)).thenReturn(Optional.of(compositeValue));
-		DataHubService testClass = new DataHubService(channelDao, null, null, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 
 		Optional<LinkedDataHubCompositeValue> result = testClass.getValue("channelName", dataHubKey);
 		assertEquals(compositeValue, result.get());
@@ -125,7 +123,7 @@ public class DataHubServiceTest {
 		ChannelConfiguration channelConfiguration = new ChannelConfiguration("channel1", new Date(), 1000L);
 
 		ChannelDao channelDao = mock(ChannelDao.class);
-		DataHubService testClass = new DataHubService(channelDao, null, null, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 
 		testClass.updateChannelMetadata(channelConfiguration);
 		verify(channelDao).updateChannelMetadata(channelConfiguration);
