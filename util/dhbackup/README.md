@@ -14,5 +14,8 @@ Extract the tgz archive and then run the setup.sh script.  This will do the foll
 
 ```
 $ source env/bin/activate
-$ ./dhbackup.py -d /path/to/backup/root http://datahub.svc.xxx/channel/yourChannelName
+$ ./dhbackup.py \
+    --dir /path/to/backup/root \
+    --path "%Y/%m/%d/%H/%M/%S" \
+    http://datahub.svc.xxx/channel/yourChannelName
 ```
