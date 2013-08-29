@@ -66,7 +66,7 @@ class BackupClient:
 
 def main(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument("chan", help="The URI of the channel to back up")
+    parser.add_argument("channel-uri", help="The URI of the channel to back up")
     parser.add_argument("-d", "--dir", help="The directory to save data into", required=True)
     parser.add_argument("-p", "--path", help="The date format to use when creating subdirectories (see python's strftime)", required=False)
     args = parser.parse_args(argv)
