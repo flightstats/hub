@@ -44,6 +44,19 @@ buildscript {
     }
 }
 
+task versionDHBackup(type: Copy) {
+    from "${projectDir}/util/dhbackup"
+    into "${buildDir}/dhbackup-${version}"
+}
+
+task tarDHBackup(dependsOn: 'versionDHBackup', type: Tar) {
+    inputs.dir new File("${buildDir}/dhbackup-${version}")
+    baseName = "dhbackup"
+    compression = Compression.GZIP
+    from("${buildDir}")
+    include("dhbackup-${version}/**")
+}
+
 configurations {
     publish
     publishDev
@@ -55,9 +68,11 @@ configurations {
 artifacts {
     publishDev jar
     publishDev distTar
+    publishDev tarDHBackup
 
     publish jar
     publish distTar
+    publish tarDHBackup
 }
 
 task integrationTests() << {
@@ -128,19 +143,6 @@ dependencies {
 
 distTar {
     compression = Compression.GZIP
-}
-
-task versionDHBackup(type: Copy) {
-    from "${projectDir}/util/dhbackup"
-    into "${buildDir}/dhbackup-${version}"
-}
-
-task tarDHBackup(dependsOn: 'versionDHBackup', type: Tar) {
-    inputs.dir new File("${buildDir}/dhbackup-${version}")
-    baseName = "dhbackup"
-    compression = Compression.GZIP
-    from("${buildDir}")
-    include("dhbackup-${version}/**")
 }
 
 task deployDev << {
