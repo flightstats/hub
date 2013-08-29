@@ -130,6 +130,19 @@ distTar {
     compression = Compression.GZIP
 }
 
+task versionDHBackup(type: Copy) {
+    from "${projectDir}/util/dhbackup"
+    into "${buildDir}/dhbackup-${version}"
+}
+
+task tarDHBackup(dependsOn: 'versionDHBackup', type: Tar) {
+    inputs.dir new File("${buildDir}/dhbackup-${version}")
+    baseName = "dhbackupzzzzzzzz"
+    compression = Compression.GZIP
+    from("${buildDir}")
+    include("dhbackup-${version}/**")
+}
+
 task deployDev << {
     description = "Deploys the distribution to the development environment"
     runExternal("${projectDir}/bin/restart-dev-vpc.sh")
