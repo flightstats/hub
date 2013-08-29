@@ -19,3 +19,18 @@ $ ./dhbackup.py \
     --path "%Y/%m/%d/%H/%M/%S" \
     http://datahub.svc.xxx/channel/yourChannelName
 ```
+
+If you need help:
+```
+$ ./dhbackup.py --help
+usage: dhbackup.py [-h] -d DIR [-p PATH] chan
+
+positional arguments:
+  chan                  The URI of the channel to back up
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d DIR, --dir DIR     The directory to save data into
+  -p PATH, --path PATH  The date format to use when creating subdirectories
+                        (see python's strftime)
+```
