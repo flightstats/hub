@@ -8,10 +8,9 @@ import argparse
 import json
 import gzip
 from urlparse import urlsplit
-
 import websocket
 import httplib2
-
+import dateutil.parser
 
 class BackupClient:
     def __init__(self, directory, channel):
@@ -20,8 +19,7 @@ class BackupClient:
         self._http = None
 
     def listen(self):
-        if not os.path.exists(self._directory):
-            os.makedirs(self._directory)
+        self._make_dir_if_missing(self._directory)
         self._http = httplib2.Http(".cache")
         ws_uri = self._find_websocket_uri()
         print ws_uri
@@ -31,7 +29,10 @@ class BackupClient:
 
     def on_message(self, ws, message):
         r, c = self._http.request(message, 'GET')
-        filename = self._build_filename(message)
+        creation_date = dateutil.parser.parse(r['creation-date'])
+        filename = self._build_filename(message, creation_date)
+        directory = os.path.dirname(filename)
+        self._make_dir_if_missing(directory)
         output = gzip.open(filename, "wb")
         output.write(c)
         output.close()
@@ -40,10 +41,15 @@ class BackupClient:
         meta = self._load_metadata()
         return meta['_links']['ws']['href']
 
-    def _build_filename(self, message):
+    def _make_dir_if_missing(self, directory):
+        if not os.path.exists(directory):
+            print("Creating directory: %s" % directory)
+            os.makedirs(directory)
+
+    def _build_filename(self, message, creation_date):
         url_path = urlsplit(message).path
         file_name = url_path.split("/")[-1]
-        return "%s/%s.gz" %(self._directory, file_name)
+        return "%s/%04d/%02d/%02d/%s.gz" %(self._directory, creation_date.year, creation_date.month, creation_date.day, file_name)
 
     def _load_metadata(self):
         print("Fetching channel metadata...")
