@@ -1,7 +1,6 @@
-
 # DataHub backup client
 
-This client will back up a DataHub channel to a directory structure on disk.  Files are gzipped to save space.
+This client will back up a DataHub channel to a directory structure on disk.  Files are gzipped to save space.  The backup client does not process existing channel content, only new content as it is being written.
 
 ## Installing
 
