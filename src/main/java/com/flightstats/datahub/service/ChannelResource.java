@@ -29,13 +29,15 @@ public class ChannelResource {
 	private final DataHubService dataHubService;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 	private final UriInfo uriInfo;
+    private final CreateChannelValidator createChannelValidator;
 
 	@Inject
-	public ChannelResource(DataHubService dataHubService, ChannelHypermediaLinkBuilder linkBuilder, UriInfo uriInfo) {
+	public ChannelResource(DataHubService dataHubService, ChannelHypermediaLinkBuilder linkBuilder, UriInfo uriInfo, CreateChannelValidator createChannelValidator) {
 		this.dataHubService = dataHubService;
 		this.linkBuilder = linkBuilder;
 		this.uriInfo = uriInfo;
-	}
+        this.createChannelValidator = createChannelValidator;
+    }
 
 	@GET
 	@Timed
@@ -66,8 +68,8 @@ public class ChannelResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createChannel(ChannelCreationRequest channelCreationRequest) throws InvalidRequestException, AlreadyExistsException {
-		String channelName = channelCreationRequest.getName().get();
-		channelName = channelName.trim();
+        createChannelValidator.validate(channelCreationRequest);
+		String channelName = channelCreationRequest.getName().get().trim();
 
 		Optional<Long> ttlMillis = channelCreationRequest.getTtlMillis();
 		ChannelConfiguration channelConfiguration = dataHubService.createChannel(channelName, ttlMillis.orNull());
