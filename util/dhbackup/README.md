@@ -26,7 +26,7 @@ $ ./dhbackup.py --help
 usage: dhbackup.py [-h] -d DIR [-p PATH] channel-uri
 
 positional arguments:
-  channel-uri           The URI of the channel to back up
+  channel_uri           The URI of the channel to back up
 
 optional arguments:
   -h, --help            show this help message and exit
