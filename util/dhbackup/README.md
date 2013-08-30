@@ -14,5 +14,23 @@ Extract the tgz archive and then run the setup.sh script.  This will do the foll
 
 ```
 $ source env/bin/activate
-$ ./dhbackup.py -d /path/to/backup/root http://datahub.svc.xxx/channel/yourChannelName
+$ ./dhbackup.py \
+    --dir /path/to/backup/root \
+    --path "%Y/%m/%d/%H/%M/%S" \
+    http://datahub.svc.xxx/channel/yourChannelName
+```
+
+If you need help:
+```
+$ ./dhbackup.py --help
+usage: dhbackup.py [-h] -d DIR [-p PATH] channel-uri
+
+positional arguments:
+  channel-uri           The URI of the channel to back up
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d DIR, --dir DIR     The directory to save data into
+  -p PATH, --path PATH  The date format to use when creating subdirectories
+                        (see python's strftime)
 ```
