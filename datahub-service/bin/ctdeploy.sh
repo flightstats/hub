@@ -8,4 +8,4 @@ if [ -z "$DESTHOST" ] ; then
 		exit 1
 fi
 
-cat ${BUILD_DIR}/distributions/datahub-*.tgz | ssh ctdeploy@${DESTHOST} deploy_stdin
+cat ${BUILD_DIR}/distributions/datahub-service-*.tgz | ssh ctdeploy@${DESTHOST} deploy_stdin
