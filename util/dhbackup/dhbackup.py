@@ -29,7 +29,6 @@ class ChannelWebsocketListener:
         while True:
             ws = websocket.WebSocketApp(ws_uri, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
             ws.run_forever()
-            print("NO LONGER RUNNING FOREVER.  Universe over.  Insert coin.")
 
     def on_message(self, ws, message):
         print("Queuing: %s" %(message))
@@ -63,13 +62,11 @@ class ContentWriter:
         while (True):
             try:
                 uri = self._new_uri_queue.get(block=True)
-                # print "READ from queue: %s" %(uri)
                 headers = self._fetch_and_save_content(uri)
                 previous_uri = self._find_previous(headers)
                 self._download_complete_queue.put((uri, previous_uri), block=True)
-                # print "Done fetching and saving for %s" %(uri)
             except Exception as e:
-                print("Failed to fetch content: %s" %(e))
+                print("Failed to fetch content: %s" % e)
 
     def _fetch_and_save_content(self, uri):
         r, c = self._http.request(uri, 'GET')
@@ -111,34 +108,27 @@ class CatchupWorker:
     def run(self):
         while True:
             uri, previous_uri = self._download_complete_queue.get(block=True)
-            print "Catchup worker sees: %s -> %s" %(uri, previous_uri)
             self._history[uri] = previous_uri
             if self._earliest is None:
                 self._earliest = uri
             elif previous_uri not in self._history:
-                print "GAP DETECTED"
+                print "GAP DETECTED: Requesting backfill for %s" % previous_uri
                 self._new_uri_queue.put(previous_uri, block=True)
                 continue
 
             candidates = []
             current = uri
-            while current is not None and current != self._earliest:
+            while current is not None and current in self._history and current != self._earliest:
                 previous = self._history[current]
                 candidates.append(previous)
                 if previous == self._earliest:
-                    print "Removing: %s" %(candidates)
+                    print "Removing %d earlier consecutive items." %(len(candidates))
                     [self._history.pop(x) for x in candidates]
-                    print "size is now: %d" %(len(self._history))
+                    if(len(self._history) > 1):
+                        print "Catchup worker history cache size is now %d" %(len(self._history))
                     self._earliest = uri
                     break
                 current = previous
-
-"""
-if previous not in history,
-    push previous to queue
-else
-
-"""
 
 
 def main(argv):
