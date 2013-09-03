@@ -1,1 +1,1 @@
-rootProject.name = 'datahub'
+include 'datahub-service' //, 'datahub-proxy-service'

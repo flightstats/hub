@@ -1,0 +1,3 @@
+httplib2
+websocket-client
+python-dateutil
