@@ -78,8 +78,8 @@ export JAVA_HOME="$JAVA_HOME"
 
 MAIN_CLASS="com.flightstats.datahub.app.DataHubMain"
 
-if [ -e ${DEPLOYED_DIR}/conf/datahub.properties ] ; then
-    DATAHUB_PROPS=${DEPLOYED_DIR}/conf/datahub.properties
+if [ -e ${DEPLOYED_DIR}/datahub.properties ] ; then
+    DATAHUB_PROPS=${DEPLOYED_DIR}/datahub.properties
 fi
 
 echo Running datahub in the background...
