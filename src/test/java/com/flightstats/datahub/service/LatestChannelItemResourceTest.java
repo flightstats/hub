@@ -50,11 +50,7 @@ public class LatestChannelItemResourceTest {
 
 		LatestChannelItemResource testClass = new LatestChannelItemResource(null, dataHubService, null);
 
-		try {
-			testClass.getLatest(channelName);
-			fail("Expected exception");
-		} catch (WebApplicationException e) {
-			assertEquals(Response.Status.NOT_FOUND.getStatusCode(), e.getResponse().getStatus());
-		}
+        Response response = testClass.getLatest(channelName);
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
 	}
 }
