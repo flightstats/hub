@@ -27,18 +27,11 @@ class ChannelWebsocketListener:
         ws_uri = self._find_websocket_uri()
         print ws_uri
         while True:
-            ws = websocket.WebSocketApp(ws_uri, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
+            ws = websocket.WebSocketApp(ws_uri, on_message=self.on_message)
             ws.run_forever()
 
     def on_message(self, ws, message):
-        print("Queuing: %s" %(message))
         self._queue.put(message, block=True)
-
-    def on_error(ws, error):
-        print(error)
-
-    def on_close(ws):
-        print("### closed ###")
 
     def _find_websocket_uri(self):
         meta = self._load_metadata()
@@ -95,9 +88,10 @@ class ContentWriter:
 
     def _find_previous(self, headers):
         for link in headers['link'].split(','):
-            if(re.match(".*rel=\"previous\"", link.strip())):
+            if (re.match(".*rel=\"previous\"", link.strip())):
                 return re.sub(r".*<(http.*)>;.*", r"\1", link)
         return None
+
 
 class CatchupWorker:
     def __init__(self, new_uri_queue, download_complete_queue):
@@ -105,30 +99,36 @@ class CatchupWorker:
         self._download_complete_queue = download_complete_queue
         self._earliest = None
         self._history = dict()
+
     def run(self):
         while True:
             uri, previous_uri = self._download_complete_queue.get(block=True)
-            self._history[uri] = previous_uri
-            if self._earliest is None:
-                self._earliest = uri
-            elif previous_uri not in self._history:
-                print "GAP DETECTED: Requesting backfill for %s" % previous_uri
-                self._new_uri_queue.put(previous_uri, block=True)
-                continue
+            self._handle_new_uri(uri, previous_uri)
 
-            candidates = []
-            current = uri
-            while current is not None and current in self._history and current != self._earliest:
-                previous = self._history[current]
-                candidates.append(previous)
-                if previous == self._earliest:
-                    print "Removing %d earlier consecutive items." %(len(candidates))
-                    [self._history.pop(x) for x in candidates]
-                    if(len(self._history) > 1):
-                        print "Catchup worker history cache size is now %d" %(len(self._history))
-                    self._earliest = uri
-                    break
-                current = previous
+    def _handle_new_uri(self, uri, previous_uri):
+        self._history[uri] = previous_uri
+        if self._earliest is None:
+            self._earliest = uri
+        elif previous_uri not in self._history:
+            print("GAP DETECTED: Requesting backfill for %s" % previous_uri)
+            self._new_uri_queue.put(previous_uri, block=True)
+            return
+        candidates = self._find_completed_chain(uri)
+        if len(candidates):
+            [self._history.pop(x) for x in candidates]
+            if len(candidates) > 1:
+                print("Catchup worker purged %d catchup records" % (len(candidates)))
+            self._earliest = uri
+
+    def _find_completed_chain(self, uri):
+        results = []
+        while uri is not None and uri in self._history and uri != self._earliest:
+            previous = self._history[uri]
+            results.append(previous)
+            if previous == self._earliest:
+                return results
+            uri = previous
+        return []
 
 
 def main(argv):
