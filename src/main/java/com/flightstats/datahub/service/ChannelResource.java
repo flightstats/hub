@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
@@ -41,6 +42,7 @@ public class ChannelResource {
 
 	@GET
 	@Timed
+    @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getChannels() {
 		Iterable<ChannelConfiguration> channels = dataHubService.getChannels();
@@ -65,6 +67,7 @@ public class ChannelResource {
 
 	@POST
 	@Timed
+    @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createChannel(ChannelCreationRequest channelCreationRequest) throws InvalidRequestException, AlreadyExistsException {

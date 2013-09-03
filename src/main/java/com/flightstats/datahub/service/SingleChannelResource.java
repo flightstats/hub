@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.app.config.PATCH;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
@@ -35,6 +36,7 @@ public class SingleChannelResource {
 
 	@GET
 	@Timed
+    @ExceptionMetered
 	@PerChannelTimed(operationName = "metadata", channelNamePathParameter = "channelName")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Linked<MetadataResponse> getChannelMetadata(@PathParam("channelName") String channelName, @Context UriInfo uriInfo) {
@@ -62,6 +64,7 @@ public class SingleChannelResource {
 
 	@PATCH
 	@Timed
+    @ExceptionMetered
 	@PerChannelTimed(operationName = "update", channelNamePathParameter = "channelName")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -85,6 +88,7 @@ public class SingleChannelResource {
 
 	@POST
 	@Timed(name = "all-channels.insert")
+    @ExceptionMetered
 	@PerChannelTimed(operationName = "insert", channelNamePathParameter = "channelName")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,

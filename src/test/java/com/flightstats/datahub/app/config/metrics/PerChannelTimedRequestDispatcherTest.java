@@ -1,5 +1,6 @@
 package com.flightstats.datahub.app.config.metrics;
 
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.sun.jersey.api.core.HttpContext;
@@ -14,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.MatchResult;
 
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -41,46 +43,93 @@ public class PerChannelTimedRequestDispatcherTest {
 		verify(delegate).dispatch(resource, context);
 	}
 
-	@Test
-	public void testHappyPath() throws Exception {
-		//GIVEN
-		Object resource = new Object();
-		String timerName = "per-channel.theSpoon.invert";
-		String channelName = "theSpoon";
-		List<String> paramNames = Arrays.asList("channelName");
-		WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), null, null);
+    @Test
+    public void testHappyPath() throws Exception {
+        //GIVEN
+        Object resource = new Object();
+        String timerName = "per-channel.theSpoon.invert";
+        String channelName = "theSpoon";
+        List<String> paramNames = Arrays.asList("channelName");
+        WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), null, null);
 
-		AnnotatedElement annotatedElement = mock(AnnotatedElement.class);
-		MetricRegistry registry = mock(MetricRegistry.class);
-		RequestDispatcher delegate = mock(RequestDispatcher.class);
-		UriTemplate uriTemplate = mock(UriTemplate.class);
-		MatchResult matchResult = mock(MatchResult.class);
-		PerChannelTimed annotation = mock(PerChannelTimed.class);
-		Timer.Context timerContext = mock(Timer.Context.class);
-		Timer timer = mock(Timer.class);
+        AnnotatedElement annotatedElement = mock(AnnotatedElement.class);
+        MetricRegistry registry = mock(MetricRegistry.class);
+        RequestDispatcher delegate = mock(RequestDispatcher.class);
+        UriTemplate uriTemplate = mock(UriTemplate.class);
+        MatchResult matchResult = mock(MatchResult.class);
+        PerChannelTimed annotation = mock(PerChannelTimed.class);
+        Timer.Context timerContext = mock(Timer.Context.class);
+        Timer timer = mock(Timer.class);
 
-		when(annotatedElement.getAnnotation(PerChannelTimed.class)).thenReturn(annotation);
-		when(annotation.channelNamePathParameter()).thenReturn("channelName");
-		when(annotation.operationName()).thenReturn("invert");
-		when(registry.timer(timerName)).thenReturn(timer);
-		when(timer.time()).thenReturn(timerContext);
-		when(matchResult.group(anyInt())).thenReturn(channelName);
+        when(annotatedElement.getAnnotation(PerChannelTimed.class)).thenReturn(annotation);
+        when(annotation.channelNamePathParameter()).thenReturn("channelName");
+        when(annotation.operationName()).thenReturn("invert");
+        when(registry.timer(timerName)).thenReturn(timer);
+        when(timer.time()).thenReturn(timerContext);
+        when(matchResult.group(anyInt())).thenReturn(channelName);
 
-		context.setMatchResult(matchResult);
-		context.pushMatch(uriTemplate, paramNames);
+        context.setMatchResult(matchResult);
+        context.pushMatch(uriTemplate, paramNames);
 
-		PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
+        PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
 
-		//WHEN
-		testClass.dispatch(resource, context);
+        //WHEN
+        testClass.dispatch(resource, context);
 
-		//THEN
-		verify(timer).time();
-		verify(delegate).dispatch(resource, context);
-		verify(timerContext).stop();
-	}
+        //THEN
+        verify(timer).time();
+        verify(delegate).dispatch(resource, context);
+        verify(timerContext).close();
+    }
 
-	@Test(expected = IllegalArgumentException.class)
+    @Test
+    public void testExceptionPath() throws Exception {
+        //GIVEN
+        Object resource = new Object();
+        String timerName = "per-channel.theSpoon.invert";
+        String channelName = "theSpoon";
+        List<String> paramNames = Arrays.asList("channelName");
+        WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), null, null);
+
+        AnnotatedElement annotatedElement = mock(AnnotatedElement.class);
+        MetricRegistry registry = mock(MetricRegistry.class);
+        RequestDispatcher delegate = mock(RequestDispatcher.class);
+        UriTemplate uriTemplate = mock(UriTemplate.class);
+        MatchResult matchResult = mock(MatchResult.class);
+        PerChannelTimed annotation = mock(PerChannelTimed.class);
+        Meter exceptionMeter = mock(Meter.class);
+        Timer.Context timerContext = mock(Timer.Context.class);
+        Timer timer = mock(Timer.class);
+
+        when(annotatedElement.getAnnotation(PerChannelTimed.class)).thenReturn(annotation);
+        when(annotation.channelNamePathParameter()).thenReturn("channelName");
+        when(annotation.operationName()).thenReturn("invert");
+        when(registry.timer(timerName)).thenReturn(timer);
+        when(registry.meter(timerName + ".exceptions")).thenReturn(exceptionMeter);
+        when(timer.time()).thenReturn(timerContext);
+        when(matchResult.group(anyInt())).thenReturn(channelName);
+        doThrow(new RuntimeException()).when(delegate).dispatch(anyObject(), any(HttpContext.class));
+
+        context.setMatchResult(matchResult);
+        context.pushMatch(uriTemplate, paramNames);
+
+        PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
+
+        //WHEN
+        try {
+            testClass.dispatch(resource, context);
+            fail("dispatch() should have thrown an exception");
+        } catch ( RuntimeException ignored ) {
+        }
+
+        //THEN
+        verify(timer).time();
+        verify(exceptionMeter).mark();
+        verify(delegate).dispatch(resource, context);
+        verify(timerContext).close();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
 	public void testCantFindChannelName() throws Exception {
 		//GIVEN
 		Object resource = new Object();
