@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.model.DataHubKey;
@@ -46,6 +47,7 @@ public class ChannelContentResource {
 	@GET
 	@Timed(name = "all-channels.fetch")
 	@PerChannelTimed(operationName = "fetch", channelNamePathParameter = "channelName")
+    @ExceptionMetered
 	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id, @HeaderParam("Accept") String accept) {
 		DataHubKey key = keyRenderer.fromString(id);
 		Optional<LinkedDataHubCompositeValue> optionalResult = dataHubService.getValue(channelName, key);

@@ -1,6 +1,8 @@
 package com.flightstats.datahub.service;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
@@ -32,14 +34,15 @@ public class LatestChannelItemResource {
 	}
 
 	@GET
+    @PerChannelTimed(operationName = "latest", channelNamePathParameter = "channelName")
 	@Timed
+    @ExceptionMetered
 	public Response getLatest(@PathParam("channelName") String channelName) {
 		Optional<DataHubKey> latestId = dataHubService.findLastUpdatedKey(channelName);
 		if (!latestId.isPresent()) {
-			//TODO: Don't throw, just set status in response
-			throw new WebApplicationException(NOT_FOUND);
+            return Response.status(NOT_FOUND).build();
 		}
-		Response.ResponseBuilder builder = Response.status(SEE_OTHER);
+        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
 
 		String channelUri = uriInfo.getRequestUri().toString().replaceFirst("/latest$", "");
 		DataHubKey keyOfLatestItem = latestId.get();
