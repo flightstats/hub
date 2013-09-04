@@ -136,9 +136,9 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
 
-    integrationTests group: 'com.flightstats', name: 'datahub', version: snapshotVersion + '+', transitive: false, configuration: 'publishDev'
-    deployStaging group: 'com.flightstats', name: 'datahub', version: version, transitive: false, configuration: 'publish'
-    deployProduction group: 'com.flightstats', name: 'datahub', version: version, transitive: false, configuration: 'publish'
+    integrationTests group: 'com.flightstats', name: 'datahub-service', version: snapshotVersion + '+', transitive: false, configuration: 'publishDev'
+    deployStaging group: 'com.flightstats', name: 'datahub-service', version: version, transitive: false, configuration: 'publish'
+    deployProduction group: 'com.flightstats', name: 'datahub-service', version: version, transitive: false, configuration: 'publish'
 }
 
 distTar {
