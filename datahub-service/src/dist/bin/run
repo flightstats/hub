@@ -24,8 +24,6 @@ JAVA_OPTS="
  -Xmx$MAX_HEAP
  -Xms$MIN_HEAP
  -XX:NewSize=$MIN_NEW
- -Dsun.rmi.dgc.client.gcInterval=1200000
- -Dsun.rmi.dgc.server.gcInterval=1200000
  -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n"
 
 
