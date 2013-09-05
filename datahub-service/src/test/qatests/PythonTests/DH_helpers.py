@@ -1,10 +1,11 @@
+from src.test.qatests.PythonTests import text_utils as txu
+
 __author__ = 'gnewcomb'
 
 import re
 import sys
 import string
 import FStest_helpers as fs
-import text_utils as txu
 import requests
 import json as jsonMod
 from urlparse import urlparse
