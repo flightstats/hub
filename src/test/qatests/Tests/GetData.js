@@ -351,7 +351,7 @@ describe('GET data:', function() {
                 });
         });
 
-        it('BUG: https://www.pivotaltracker.com/story/show/47150133 - Return 404 on Get Latest if channel does not exist', function(done) {
+        it('Return 404 on Get Latest if channel does not exist', function(done) {
             var name = ranU.randomString(30, ranU.limitedRandomChar),
                 uri = [URL_ROOT, 'channel', name, 'latest'].join('/');
 

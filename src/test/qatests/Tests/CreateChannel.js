@@ -65,9 +65,10 @@ describe('Create Channel: ', function(){
 
             acceptName = dhh.getRandomChannelName();
 
-            dhh.createChannel({name: acceptName}, function(res, uri) {
+            dhh.createChannel({name: acceptName, debug: false}, function(res, uri) {
                 createRes = res;
                 channelUri = uri;
+                gu.debugLog('create result status: '+ createRes.status);
 
                 done();
             });
@@ -77,7 +78,7 @@ describe('Create Channel: ', function(){
             expect(createRes.status).to.equal(gu.HTTPresponses.Created);
         });
 
-        it('channel uri is correct', function(done) {
+        it.only('channel uri is correct', function(done) {
 
             dhh.getChannel({'uri': channelUri}, function(res) {
                 expect(res.status).to.equal(gu.HTTPresponses.OK);
@@ -218,7 +219,8 @@ describe('Create Channel: ', function(){
                 badNameYieldsBadRequest('    ', done);
             })
 
-            it.skip('BUG: https://www.pivotaltracker.com/story/show/51434073 - whitespace is trimmed from name', function(done) {
+            // https://www.pivotaltracker.com/story/show/51434073 -
+            it('whitespace is trimmed from name', function(done) {
                 var name = dhh.getRandomChannelName();
 
                 dhh.createChannel({name: '  '+ name +'  '}, function(res, uri) {
