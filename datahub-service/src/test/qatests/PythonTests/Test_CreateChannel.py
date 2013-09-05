@@ -1,10 +1,10 @@
+from src.test.qatests.PythonTests import DH_helpers as dhh
+
 __author__ = 'gnewcomb'
 
 from nose.plugins.attrib import attr
-import DH_helpers as dhh
 import FStest_helpers as fstest
 import unittest
-import text_utils as txu
 import unittest_helpers as uh
 import requests
 import httplib
