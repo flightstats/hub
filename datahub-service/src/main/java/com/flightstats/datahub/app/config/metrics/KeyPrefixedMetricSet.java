@@ -11,12 +11,12 @@ public class KeyPrefixedMetricSet implements MetricSet {
 	private final MetricSet delegate;
 	private final String prefix;
 
-	KeyPrefixedMetricSet(String prefix, MetricSet delegate) {
+    public KeyPrefixedMetricSet(String prefix, MetricSet delegate) {
 		this.delegate = delegate;
 		this.prefix = prefix;
 	}
 
-	static KeyPrefixedMetricSet prefix(String prefix, MetricSet delegate) {
+    public static KeyPrefixedMetricSet prefix(String prefix, MetricSet delegate) {
 		return new KeyPrefixedMetricSet(prefix, delegate);
 	}
 
