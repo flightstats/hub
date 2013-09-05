@@ -212,7 +212,8 @@ var createChannel = function(params, myCallback) {
 
     if (VERBOSE) {
         gu.debugLog('createChannel.uri: '+ uri);
-        gu.debugLog('createChannel.payload: '+ payload);
+        gu.debugLog('createChannel.payload: ');
+        console.dir(payload);
         gu.debugLog('dump of params: ');
         console.dir(params);
     }
@@ -312,6 +313,10 @@ var getChannel = function(params, myCallback) {
             if (err) {
                 throw err
             };
+
+            gu.debugLog('Res.body: ');
+            console.dir(res.body);
+
             myCallback(res, res.body);
         });
 };
