@@ -11,6 +11,7 @@ import re
 from urlparse import urlsplit
 from time import strftime
 from multiprocessing import Process, Queue
+import mimetypes
 
 import websocket
 import httplib2
@@ -45,9 +46,10 @@ class ChannelWebsocketListener:
 
 
 class ContentWriter:
-    def __init__(self, new_uri_queue, download_complete_queue, directory, path_format):
+    def __init__(self, new_uri_queue, download_complete_queue, filename_builder, directory, path_format):
         self._new_uri_queue = new_uri_queue
         self._download_complete_queue = download_complete_queue
+        self._filename_builder = filename_builder
         self._directory = directory
         self._path_format = path_format
         self._http = httplib2.Http(".cache")
@@ -66,7 +68,7 @@ class ContentWriter:
     def _fetch_and_save_content(self, uri):
         r, c = self._http.request(uri, 'GET')
         creation_date = dateutil.parser.parse(r['creation-date'])
-        filename = self._build_filename(uri, creation_date)
+        filename = self._filename_builder.build_payload_filename(uri, r['content-type'], creation_date)
         directory = os.path.dirname(filename)
         self._make_dir_if_missing(directory)
         output = gzip.open(filename, "wb")
@@ -79,20 +81,46 @@ class ContentWriter:
             print("Creating directory: %s" % directory)
             os.makedirs(directory)
 
-    def _build_filename(self, message, creation_date):
-        url_path = urlsplit(message).path
-        file_name = url_path.split("/")[-1]
-        subdirectory = ""
-        if self._path_format is not None:
-            subdirectory = strftime(self._path_format, creation_date.timetuple())
-        full_path = "%s/%s/%s.gz" % (self._directory, subdirectory, file_name)
-        return re.sub("//+", "/", full_path)
-
     def _find_previous(self, headers):
         for link in headers['link'].split(','):
             if re.match(".*rel=\"previous\"", link.strip()):
                 return re.sub(r".*<(http.*)>;.*", r"\1", link)
         return None
+
+
+class FilenameBuilder:
+    common_types = {
+        'text/plain': '.txt',
+        'text/html': '.html',
+        'application/xml': '.xml',
+        'application/json': '.json',
+        'image/jpeg': '.jpg',
+        'image/gif': '.gif',
+    }
+
+    def __init__(self, directory, path_format, channel_name):
+        self._directory = directory
+        self._path_format = path_format
+        self._channel_name = channel_name
+
+    def build_payload_filename(self, uri, content_type, creation_date):
+        url_path = urlsplit(uri).path
+        file_name = url_path.split("/")[-1]
+        subdirectory = ""
+        extension = self._extension_from_content_type(content_type)
+        if self._path_format is not None:
+            subdirectory = strftime(self._path_format, creation_date.timetuple())
+        full_path = "%s/%s/%s%s.gz" % (self._directory, subdirectory, file_name, extension)
+        return re.sub("//+", "/", full_path)
+
+    def build_memento_filename(self):
+        return "%s/%s.progress.txt" % (self._directory, self._channel_name)
+
+    def _extension_from_content_type(self, content_type):
+        short_type = re.sub(r';.*', '', content_type)
+        if FilenameBuilder.common_types.has_key(short_type):
+            return FilenameBuilder.common_types[short_type]
+        return mimetypes.guess_extension(short_type)
 
 
 class CatchupWorker:
@@ -139,31 +167,27 @@ class CatchupWorker:
 
     def _update_earliest_and_persist(self, uri):
         self._earliest = uri
-        previous = self._history[uri]
-        self._memento.update(uri, previous)
+        self._memento.update(uri)
 
 
 class ProgressMemento:
-    def __init__(self, directory, channel_name):
+    def __init__(self, directory, filename_builder):
         self._directory = directory
-        self._channel_name = channel_name
+        self._filename_builder = filename_builder
 
-    def update(self, new_uri, previous):
-        f = open(self._build_filename(), "w")
+    def update(self, new_uri):
+        f = open(self._filename_builder.build_memento_filename(), "w")
         f.write("%s" % new_uri)
         f.close()
 
     def load_state(self):
-        filename = self._build_filename()
+        filename = self._filename_builder.build_memento_filename()
         if not os.path.exists(filename):
             return None
         f = open(filename, "r")
         result = f.read()
         f.close()
         return result
-
-    def _build_filename(self):
-        return "%s/%s.progress.txt" % (self._directory, self._channel_name)
 
 
 def main(argv):
@@ -178,10 +202,12 @@ def main(argv):
     new_uri_queue = Queue()
     download_complete_queue = Queue()
 
-    memento = ProgressMemento(args.dir, channel_name_from_channel_uri(args.channel_uri))
+    channel_name = channel_name_from_channel_uri(args.channel_uri)
+    filename_builder = FilenameBuilder(args.dir, args.path, channel_name)
+    memento = ProgressMemento(args.dir, filename_builder)
 
     websocket_listener = ChannelWebsocketListener(args.channel_uri, new_uri_queue)
-    content_writer = ContentWriter(new_uri_queue, download_complete_queue, args.dir, args.path)
+    content_writer = ContentWriter(new_uri_queue, download_complete_queue, filename_builder, args.dir, args.path)
     catchup_worker = CatchupWorker(new_uri_queue, download_complete_queue, memento)
 
     content_writer_process = Process(target=content_writer.run)
