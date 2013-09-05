@@ -15,7 +15,6 @@ function usage {
 	echo " - The host must be able to resolve its own name to an IP address."
 }
 
-
 while getopts "fh:s:m:" opt; do
 	case $opt in 
 		h)
@@ -40,12 +39,14 @@ if [ "$HOST" == "" ] || [ "$SEED_HOST" == "" ] || [ "$#" == "0" ]; then
 fi
 
 USER=ubuntu
-CASSANDRA_TGZ_URL=http://apache.osuosl.org/cassandra/1.2.4/apache-cassandra-1.2.4-bin.tar.gz
+CASSANDRA_TGZ_URL=http://apache.osuosl.org/cassandra/1.2.9/apache-cassandra-1.2.9-bin.tar.gz
 CASSANDRA_TGZ=`basename ${CASSANDRA_TGZ_URL}`
 LOCAL_CASSANDRA_TGZ=/tmp/${CASSANDRA_TGZ}
 CASSANDRA_DIR=`basename ${CASSANDRA_TGZ} '-bin.tar.gz'`
 BIN_DIR=`dirname ${0}`
 CONF_DIR=${BIN_DIR}/../conf
+
+source ${BIN_DIR}/cassandra_graphite_setup.sh
 
 echo
 echo Got it.  I like your style.
@@ -88,6 +89,9 @@ rsync -a ${CONF_DIR}/log4j-server.properties ${USER}@${HOST}:~/${CASSANDRA_DIR}/
 
 echo Uploading cassandra logging configuration...
 rsync -a ${CONF_DIR}/log4j-server.properties ${USER}@${HOST}:~/${CASSANDRA_DIR}/conf/
+
+echo Setting up graphite metrics reporting
+setup_graphite
 
 # Kinda bold and presumptuous to be doing this here...but hmmmmph.
 echo Installing JNA so that native code will run from Java...
