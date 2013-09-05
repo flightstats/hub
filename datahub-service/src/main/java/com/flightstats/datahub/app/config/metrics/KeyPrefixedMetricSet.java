@@ -6,7 +6,7 @@ import com.codahale.metrics.MetricSet;
 import java.util.HashMap;
 import java.util.Map;
 
-class KeyPrefixedMetricSet implements MetricSet {
+public class KeyPrefixedMetricSet implements MetricSet {
 
 	private final MetricSet delegate;
 	private final String prefix;
