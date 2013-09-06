@@ -23,7 +23,6 @@ public class SingleChannelResourceTest {
 
 	private String channelName;
 	private String contentType;
-	private String contentEncoding;
 	private String contentLanguage;
 	private URI channelUri;
 	private ChannelHypermediaLinkBuilder linkBuilder;
@@ -38,7 +37,6 @@ public class SingleChannelResourceTest {
 	public void setup() {
 		channelName = "UHF";
 		contentType = "text/plain";
-		contentEncoding = "gzip";
 		contentLanguage = "en";
 		channelUri = URI.create("http://testification.com/channel/spoon");
 		URI requestUri = URI.create("http://testification.com/channel/spoon");
@@ -146,10 +144,10 @@ public class SingleChannelResourceTest {
 		HalLink channelLink = new HalLink("channel", channelUri);
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey);
 
-		when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentEncoding), Optional.of(contentLanguage))).thenReturn(new ValueInsertionResult(dataHubKey));
+		when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentLanguage))).thenReturn(new ValueInsertionResult(dataHubKey));
 
 		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder);
-		Response response = testClass.insertValue(channelName, contentType, contentEncoding, contentLanguage, data, urlInfo);
+		Response response = testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);
 
 		assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
 

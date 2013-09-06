@@ -20,7 +20,7 @@ public interface ChannelDao {
 	 * Note, this operation is done within a front-end lock on the channel.  The implementation of this method
 	 * can assume that it will be the only insert called for this channel during execution.
 	 */
-	ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage, byte[] data);
+	ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data);
 
 	Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key);
 

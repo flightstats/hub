@@ -85,7 +85,7 @@ public class HazelcastChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage, byte[] data) {
+	public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
 		Lock lock = HAZELCAST_INSTANCE.getLock(channelName + "-writeLock");
 		lock.lock();
 		try {
@@ -93,7 +93,7 @@ public class HazelcastChannelDao implements ChannelDao {
 			short newSequence = (oldLastKey == null) ? ((short) 0) : (short) (oldLastKey.getSequence() + 1);
 			DataHubKey newKey = new DataHubKey(new Date(), newSequence);
 
-			DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, contentEncoding, contentLanguage, data);
+			DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, contentLanguage, data);
 			LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, Optional.fromNullable(oldLastKey),
 					Optional.<DataHubKey>absent());
 			//first put the actual value in.

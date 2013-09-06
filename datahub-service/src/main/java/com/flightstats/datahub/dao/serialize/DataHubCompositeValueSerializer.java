@@ -29,7 +29,6 @@ public class DataHubCompositeValueSerializer extends AbstractSerializer<DataHubC
 			ByteArrayOutputStream out = new ByteArrayOutputStream(calculateBufferLength(obj));
 
 			writeContentType(obj, out);
-			writeContentEncoding(obj, out);
 			writeContentLanguage(obj, out);
 			writeData(obj, out);
 
@@ -45,17 +44,15 @@ public class DataHubCompositeValueSerializer extends AbstractSerializer<DataHubC
 		correctedBuffer.rewind();
 
 		Optional<String> contentType = optionalStringSerializer.fromByteBuffer(correctedBuffer);
-		Optional<String> contentEncoding = optionalStringSerializer.fromByteBuffer(correctedBuffer);
 		Optional<String> contentLanguage = optionalStringSerializer.fromByteBuffer(correctedBuffer);
 
 		byte[] valueData = readValueData(correctedBuffer);
 
-		return new DataHubCompositeValue(contentType, contentEncoding, contentLanguage, valueData);
+		return new DataHubCompositeValue(contentType, contentLanguage, valueData);
 	}
 
 	private int calculateBufferLength(DataHubCompositeValue value) {
 		return BYTES_PER_INT + optionalLength(value.getContentType()) +
-				BYTES_PER_INT + optionalLength(value.getContentEncoding()) +
 				BYTES_PER_INT + optionalLength(value.getContentLanguage()) +
 				BYTES_PER_INT + value.getDataLength();
 	}
@@ -71,10 +68,6 @@ public class DataHubCompositeValueSerializer extends AbstractSerializer<DataHubC
 
 	private void writeContentType(DataHubCompositeValue obj, ByteArrayOutputStream out) throws IOException {
 		out.write(optionalStringSerializer.toBytes(obj.getContentType()));
-	}
-
-	private void writeContentEncoding(DataHubCompositeValue obj, ByteArrayOutputStream out) throws IOException {
-		out.write(optionalStringSerializer.toBytes(obj.getContentEncoding()));
 	}
 
 	private void writeContentLanguage(DataHubCompositeValue obj, ByteArrayOutputStream out) throws IOException {

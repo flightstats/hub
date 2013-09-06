@@ -25,9 +25,9 @@ public class WriteAndDispatchTest {
 		ChannelDao channelDao = mock(ChannelDao.class);
 		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
 
-		when(channelDao.insert(channelName, contentType, contentEncoding, contentLanguage, data)).thenReturn(new ValueInsertionResult(dataHubKey));
+		when(channelDao.insert(channelName, contentType, contentLanguage, data)).thenReturn(new ValueInsertionResult(dataHubKey));
 
-		WriteAndDispatch testClass = new WriteAndDispatch(channelDao, channelInsertionPublisher, channelName, data, contentType, contentEncoding, contentLanguage);
+		WriteAndDispatch testClass = new WriteAndDispatch(channelDao, channelInsertionPublisher, channelName, data, contentType, contentLanguage);
 		ValueInsertionResult result = testClass.call();
 
 		assertEquals(dataHubKey, result.getKey());
