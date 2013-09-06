@@ -13,20 +13,22 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
 
 var channelName,
     channelUri,
-    numExtraPosterBots = 0,
+    numExtraPosterBots = 100,
     DEBUG = true;
 
-describe('IN PROGRESS - Restful Scenarios', function() {
+describe.only('RESTful Scenarios', function() {
 
-    var preMadeChannelUri;
+    var mainChannelUri,
+//        mainChannelName = dhh.getRandomChannelName();
+        newChannelName = 'ActiveChannel3';
 
     before(function(done) {
 
         dhh.createChannel({name: dhh.getRandomChannelName()}, function(res, uri) {
             expect(gu.isHTTPSuccess(res.status)).to.be.true;
 
-            preMadeChannelUri = uri;
-            gu.debugLog('pre-made channel URI: '+ preMadeChannelUri, DEBUG);
+            mainChannelUri = uri;
+            gu.debugLog('(new) main channel URI: '+ mainChannelUri, DEBUG);
 
             done();
         })
@@ -39,12 +41,12 @@ describe('IN PROGRESS - Restful Scenarios', function() {
             myLatestPollBot = {},
             myRSSFeedPosterBot = {},
             myExtraPosterBots = [],
-            mainTTL = 12,
+            mainTTL = 120,
             allDependentBots = [];  // contains all bots other than mainPosterBot
 
         before(function() {
             mainPosterBot = bot.makeMainPosterBot(mainTTL + 10);
-            mainPosterBot.channelName = dhh.getRandomChannelName();
+            mainPosterBot.channelName = newChannelName;
 
             mySubscriberBot = bot.makeSubscriberBot(mainTTL);
             myRSSFeedPosterBot = bot.makeRSSPosterBot(mainTTL);
@@ -116,7 +118,7 @@ describe('IN PROGRESS - Restful Scenarios', function() {
 
                         var payload = ranU.randomString(100);
 
-                        dhh.postData({channelUri: channelUri, data: payload, debug: VERBOSE}, function(postRes, dataUri) {
+                        dhh.postFileToChannel({channelUri: channelUri, data: payload, debug: VERBOSE}, function(postRes, dataUri) {
                             expect(gu.isHTTPSuccess(postRes.status)).to.be.true;
 
                             dhh.getLatestUri(channelUri, function(latestUri, latestError) {
