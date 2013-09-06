@@ -9,13 +9,11 @@ public class DataHubCompositeValue implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final Optional<String> contentType;
-	private final Optional<String> contentEncoding;
 	private final Optional<String> contentLanguage;
 	private final byte[] data;
 
-    public DataHubCompositeValue(Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage, byte[] data) {
+    public DataHubCompositeValue(Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
         this.contentType = contentType;
-		this.contentEncoding = contentEncoding;
 		this.contentLanguage = contentLanguage;
 		this.data = data;
     }
@@ -30,10 +28,6 @@ public class DataHubCompositeValue implements Serializable {
 
 	public int getDataLength() {
 		return data == null ? 0 : data.length;
-	}
-
-	public Optional<String> getContentEncoding() {
-		return contentEncoding;
 	}
 
 	public Optional<String> getContentLanguage() {
@@ -51,9 +45,6 @@ public class DataHubCompositeValue implements Serializable {
 
 		DataHubCompositeValue that = (DataHubCompositeValue) o;
 
-		if (!contentEncoding.equals(that.contentEncoding)) {
-			return false;
-		}
 		if (!contentLanguage.equals(that.contentLanguage)) {
 			return false;
 		}
@@ -70,7 +61,6 @@ public class DataHubCompositeValue implements Serializable {
 	@Override
 	public int hashCode() {
 		int result = contentType.hashCode();
-		result = 31 * result + contentEncoding.hashCode();
 		result = 31 * result + contentLanguage.hashCode();
 		result = 31 * result + (data != null ? Arrays.hashCode(data) : 0);
 		return result;

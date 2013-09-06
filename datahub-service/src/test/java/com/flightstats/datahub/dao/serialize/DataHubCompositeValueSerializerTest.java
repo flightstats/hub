@@ -14,7 +14,7 @@ public class DataHubCompositeValueSerializerTest {
     @Test
     public void testRoundTrip() throws Exception {
         Serializer<DataHubCompositeValue> testClass = DataHubCompositeValueSerializer.get();
-        DataHubCompositeValue instance = new DataHubCompositeValue(Optional.of("text/plain"), Optional.of("gzip"), Optional.of("en, mi"), "any arbitrary massage".getBytes());
+        DataHubCompositeValue instance = new DataHubCompositeValue(Optional.of("text/plain"), Optional.of("en, mi"), "any arbitrary massage".getBytes());
         ByteBuffer byteBuffer = testClass.toByteBuffer(instance);
         DataHubCompositeValue result = testClass.fromByteBuffer(byteBuffer);
         assertEquals(result, instance);

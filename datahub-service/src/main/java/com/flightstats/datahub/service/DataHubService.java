@@ -44,8 +44,9 @@ public class DataHubService {
 		return channelDao.findLastUpdatedKey(channelName);
 	}
 
-	public ValueInsertionResult insert(String channelName, byte[] data, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage) throws Exception {
-		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelDao, channelInsertionPublisher, channelName, data, contentType, contentEncoding, contentLanguage);
+	public ValueInsertionResult insert(String channelName, byte[] data, Optional<String> contentType, Optional<String> contentLanguage) throws Exception {
+		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelDao, channelInsertionPublisher, channelName, data, contentType,
+                contentLanguage);
 		return channelLockExecutor.execute(channelName, task);
 	}
 
