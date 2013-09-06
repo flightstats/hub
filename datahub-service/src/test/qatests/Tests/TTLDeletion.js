@@ -22,7 +22,7 @@ var SHORT_TTL = 5000,
     TTL_BUFFER = 1000,  // extra number of milliseconds beyond expiration to wait to run reap cycle
     DEBUG = true;
 
-describe.only('TTL Deletion', function() {
+describe('TTL Deletion', function() {
 
     var cnMetadata = null;
 
@@ -35,7 +35,7 @@ describe.only('TTL Deletion', function() {
         var channel = params.channel,
             payload = {channelUri: channel.getChannelUri(), data: dhh.getRandomPayload()};
 
-        dhh.postData(payload, function(response) {
+        dhh.postFileToChannel(payload, function(response) {
             if (!gu.isHTTPSuccess(response.status)) {
                 gu.debugLog('Error posting data: '+ response.status);
             }

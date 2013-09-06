@@ -56,7 +56,7 @@ describe('GET data:', function() {
 
         // post data and save location
         before(function(done) {
-            dhh.postData({channelUri: mainChannelUri, data: randomPayload}, function(res, packetUri) {
+            dhh.postFileToChannel({channelUri: mainChannelUri, data: randomPayload}, function(res, packetUri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 var index = packetUri.lastIndexOf('/');
@@ -94,7 +94,7 @@ describe('GET data:', function() {
 
         it('(Acceptance) Creation time returned in header', function(done) {
 
-            dhh.postData({channelUri: mainChannelUri, data: randomPayload}, function(res, packetUri) {
+            dhh.postFileToChannel({channelUri: mainChannelUri, data: randomPayload}, function(res, packetUri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                 var pMetadata = new dhh.packetMetadata(res.body);
@@ -118,7 +118,7 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postData({channelUri: mainChannelUri, data: randomPayload}, function(res, packetUri) {
+                    dhh.postFileToChannel({channelUri: mainChannelUri, data: randomPayload}, function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
 
@@ -126,7 +126,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(res, packetUri) {
+                    dhh.postFileToChannel({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
 
@@ -184,7 +184,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelA.uri, data: dhh.getRandomPayload()}, function(res, packetUri) {
+                    dhh.postFileToChannel({channelUri: channelA.uri, data: dhh.getRandomPayload()}, function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
                         channelA.dataUri = packetUri;
@@ -194,7 +194,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelB.uri, data: dhh.getRandomPayload()}, function(res, packetUri) {
+                    dhh.postFileToChannel({channelUri: channelB.uri, data: dhh.getRandomPayload()}, function(res, packetUri) {
                         pMetadata = new dhh.packetMetadata(res.body);
                         timestamp = moment(pMetadata.getTimestamp());
                         channelB.dataUri = packetUri;
@@ -246,7 +246,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(myRes, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestUri(channelUri, function(latestUri) {
@@ -305,7 +305,7 @@ describe('GET data:', function() {
 
             async.waterfall([
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: payload1}, function(myRes, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: payload1}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(channelUri, function(myData) {
@@ -316,7 +316,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: payload2}, function(myRes, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: payload2}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(channelUri, function(myData) {
@@ -327,7 +327,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: payload3}, function(myRes, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: payload3}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(channelUri, function(myData) {
@@ -371,7 +371,7 @@ describe('GET data:', function() {
         it('GET on Channel returns correct link to latest item', function(done) {
             var payload = ranU.randomString(100);
 
-            dhh.postData({channelUri: channelUri, data: payload}, function(postRes, postUri) {
+            dhh.postFileToChannel({channelUri: channelUri, data: payload}, function(postRes, postUri) {
                 expect(gu.isHTTPSuccess(postRes.status)).to.be.true;
 
                 dhh.getLatestDataFromChannel(channelUri, function(latestData) {
@@ -388,7 +388,7 @@ describe('GET data:', function() {
 
             async.waterfall([
                 function(callback){
-                    dhh.postData({channelUri: mainChannelUri, data: payload}, function(myRes, myUri) {
+                    dhh.postFileToChannel({channelUri: mainChannelUri, data: payload}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(mainChannelUri, function(myData) {
@@ -398,7 +398,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: mainChannelUri, data: ''}, function(myRes, myUri) {
+                    dhh.postFileToChannel({channelUri: mainChannelUri, data: ''}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
                         dhh.getLatestDataFromChannel(mainChannelUri, function(myData) {
@@ -554,7 +554,7 @@ describe('GET data:', function() {
 
             it('Trying to GET data with the wrong Content-Type should return 406', function(done) {
 
-                dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                dhh.postFileToChannel({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
                     expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
                     dhh.getDataFromChannel({uri: dataUri, accepts: 'image/gif'}, function(err, getRes, data) {
@@ -568,7 +568,7 @@ describe('GET data:', function() {
 
             it('GET with Accept: */* is fine', function(done) {
 
-                dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                dhh.postFileToChannel({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
                     expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
                     dhh.getDataFromChannel({uri: dataUri, accepts: '*/*'}, function(err, getRes, data) {
@@ -582,7 +582,7 @@ describe('GET data:', function() {
 
             it('multiple Content-Types are fine as long as one is a match for the right type', function(done) {
 
-                dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                dhh.postFileToChannel({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
                     expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
                     dhh.getDataFromChannel({uri: dataUri, accepts: '*/*, image/gif'}, function(err, getRes, data) {
@@ -596,7 +596,7 @@ describe('GET data:', function() {
 
             it('wildcard per type is fine if type matches (application/*)', function(done) {
 
-                dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
+                dhh.postFileToChannel({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
                     expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
                     dhh.getDataFromChannel({uri: dataUri, accepts: 'application/*'}, function(err, getRes, data) {
@@ -632,7 +632,7 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
@@ -646,7 +646,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(myUri)
@@ -673,7 +673,7 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
@@ -687,7 +687,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
 
@@ -701,7 +701,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(myUri)
@@ -750,7 +750,7 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
 
@@ -764,7 +764,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
                         superagent.agent().get(firstValueUri)
@@ -793,7 +793,7 @@ describe('GET data:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
                         if (VERBOSE) {gu.debugLog('First value at: '+ firstValueUri);}
@@ -801,7 +801,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
                         if (VERBOSE) {gu.debugLog('Second value at: '+ secondValueUri);}
@@ -809,7 +809,7 @@ describe('GET data:', function() {
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         thirdValueUri = myUri;
                         if (VERBOSE) {gu.debugLog('Third value at: '+ thirdValueUri);}

@@ -15,7 +15,8 @@ var crypto = require('crypto');
 var request = require('request');
 var moment = require('moment');
 var async = require('async'),
-    lodash = require('lodash');
+    lodash = require('lodash')
+    fs = require('filesystem');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
     ranU = require('../randomUtils.js'),
@@ -40,7 +41,7 @@ describe('Load tests - POST data:', function(){
     var postAndConfirmBigFile = function(fileLocation, callback) {
         var payload = fs.readFileSync(fileLocation, "utf8");
 
-        dhh.postData({channelUri: channelUri, data: payload}, function(res, uri) {
+        dhh.postFileToChannel({channelUri: channelUri, data: payload}, function(res, uri) {
             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
             dhh.confirmExpectedData(uri, payload, function(didMatch) {
@@ -145,7 +146,7 @@ describe('Load tests - POST data:', function(){
             data = dhh.getRandomPayload(),
             VERBOSE = false;
 
-        dhh.postData({channelUri: cnUri, data: data}, function(postRes, theDataUri) {
+        dhh.postFileToChannel({channelUri: cnUri, data: data}, function(postRes, theDataUri) {
             if (!gu.isHTTPSuccess(postRes.status)) {
                 gu.debugLog('Failed to INSERT data for channel '+ cnUri +' at '+ moment().format());
                 gu.debugLog('Status: '+ postRes.status);
