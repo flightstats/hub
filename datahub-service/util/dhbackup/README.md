@@ -14,7 +14,7 @@ Extract the tgz archive and then run the setup.sh script.  This will do the foll
 
 ```
 $ source env/bin/activate
-$ ./dhbackup.py \
+$ python dhbackup.py \
     --dir /path/to/backup/root \
     --path "%Y/%m/%d/%H/%M/%S" \
     http://datahub.svc.xxx/channel/yourChannelName
@@ -22,8 +22,8 @@ $ ./dhbackup.py \
 
 If you need help:
 ```
-$ ./dhbackup.py --help
-usage: dhbackup.py [-h] -d DIR [-p PATH] channel-uri
+$ python dhbackup.py --help
+usage: python dhbackup.py [-h] -d DIR [-p PATH] channel-uri
 
 positional arguments:
   channel_uri           The URI of the channel to back up
