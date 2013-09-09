@@ -21,12 +21,12 @@ import java.util.Map;
 @Path("/channel/{channelName}")
 public class ProxyChannelResource {
 
-    private final String datahubLocation;
+    private final URI datahubLocation;
     private final RestClient restClient;
 
     @Inject
-    public ProxyChannelResource(@Named("datahub.uri") String datahubLocation, RestClient restClient) {
-        this.datahubLocation = datahubLocation;
+    public ProxyChannelResource(@Named("datahub.uri") String datahubLocation, RestClient restClient) throws URISyntaxException {
+        this.datahubLocation = new URI(datahubLocation);
         this.restClient = restClient;
     }
 
@@ -74,9 +74,9 @@ public class ProxyChannelResource {
         return responseBuilder.build();
     }
 
-    protected static Response.ResponseBuilder createResponseBuilderWithoutEntity(ClientResponse response) {
-        Response.ResponseBuilder rb = Response.status(response.getStatus());
-        for (Map.Entry<String, List<String>> entry : response.getHeaders().entrySet()) {
+    protected static Response.ResponseBuilder createResponseBuilderWithoutEntity(ClientResponse restClientResponse) {
+        Response.ResponseBuilder rb = Response.status(restClientResponse.getStatus());
+        for (Map.Entry<String, List<String>> entry : restClientResponse.getHeaders().entrySet()) {
             for (String value : entry.getValue()) {
                 rb.header(entry.getKey(), value);
             }
@@ -85,6 +85,9 @@ public class ProxyChannelResource {
     }
 
     private URI adjustDatahubUri(UriInfo uriInfo) throws URISyntaxException {
-        return new URI(datahubLocation + "/" + uriInfo.getPath());
+        return uriInfo.getAbsolutePathBuilder()
+                .host(datahubLocation.getHost())
+                .port(datahubLocation.getPort())
+                .build();
     }
 }
