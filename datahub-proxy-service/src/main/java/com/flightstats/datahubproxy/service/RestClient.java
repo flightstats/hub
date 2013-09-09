@@ -24,13 +24,13 @@ public class RestClient {
 
     public ClientResponse get(URI uri, MultivaluedMap<String, String> requestHeaders) {
         WebResource.Builder requestBuilder = client.resource(uri).getRequestBuilder();
+        applyHeaders(requestBuilder, requestHeaders);
 
+        // Needed since jersey rest client adds some weird default types when not specified
         boolean isAcceptHeaderPresent = null != requestHeaders.get("Accept");
         if (!isAcceptHeaderPresent) {
             requestBuilder.accept(MediaType.WILDCARD);
         }
-
-        applyHeaders(requestBuilder, requestHeaders);
 
         return requestBuilder.get(ClientResponse.class);
     }
