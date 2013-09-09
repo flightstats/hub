@@ -27,7 +27,6 @@ utils.runInTestChannel(channelName, function () {
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
             valueUrl = valueUrl.replace(channelResource, channelCryptoResource);
-            console.log(valueUrl);
             frisby.create('Fetching value to ensure that it was inserted.')
                 //.addHeader("Accept", "text/plain")
                 .get(valueUrl)
