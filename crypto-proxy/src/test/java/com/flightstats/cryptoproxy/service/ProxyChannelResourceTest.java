@@ -7,11 +7,9 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -20,22 +18,20 @@ import static org.mockito.Mockito.*;
 
 public class ProxyChannelResourceTest {
 
-    public static final String DATAHUB_URI = "http://test";
-    public static final String URI_QUERY_PARAMS = "param=value";
+    private static final String datahubLocation = "http://test";
+    private final static String URI_PATH = "/channel/spoon";
     private String channelName;
     private UriInfo uriInfo;
     private RestClient restClient;
     private final byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
-    private final static String URI_PATH = "channel/spoon";
 
     @Before
-    public void setup() {
+    public void setup() throws URISyntaxException {
         channelName = "UHF";
-        URI requestUri = URI.create("http://testification.com/" + URI_PATH + "?" + URI_QUERY_PARAMS);
         uriInfo = mock(UriInfo.class);
         restClient = mock(RestClient.class);
 
-        when(uriInfo.getRequestUri()).thenReturn(requestUri);
+        when(uriInfo.getAbsolutePathBuilder()).thenReturn(UriBuilder.fromPath(URI_PATH).scheme("http"));
     }
 
     @Test
@@ -55,7 +51,7 @@ public class ProxyChannelResourceTest {
         when(clientResponse.getEntity(byte[].class)).thenReturn(data);
         when(restClient.get(any(URI.class), any(MultivaluedMap.class))).thenReturn(clientResponse);
 
-        ProxyChannelResource testClass = new ProxyChannelResource("http://test", restClient);
+        ProxyChannelResource testClass = new ProxyChannelResource(datahubLocation, restClient);
         Response result = testClass.getValue(channelName, uriInfo, requestHeaders);
 
         // THEN
@@ -88,14 +84,14 @@ public class ProxyChannelResourceTest {
         when(restClient.post(any(URI.class), any(byte[].class), any(MultivaluedMap.class))).thenReturn(clientResponse);
         when(uriInfo.getPath()).thenReturn(URI_PATH);
 
-        ProxyChannelResource testClass = new ProxyChannelResource(DATAHUB_URI, restClient);
+        ProxyChannelResource testClass = new ProxyChannelResource(datahubLocation, restClient);
         Response response = testClass.insertValue(channelName, data, requestHeaders, uriInfo);
 
         // THEN
         assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
         Object object = response.getEntity();
         assertNotNull(linked);
-        verify(restClient).post(new URI(DATAHUB_URI + "/" + URI_PATH + "?" + URI_QUERY_PARAMS), data, requestHeadersMap);
+        verify(restClient).post(UriBuilder.fromUri(datahubLocation).path(URI_PATH).build(), data, requestHeadersMap);
     }
 
     @Test
