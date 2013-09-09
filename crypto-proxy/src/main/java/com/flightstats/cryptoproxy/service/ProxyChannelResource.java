@@ -85,8 +85,6 @@ public class ProxyChannelResource {
     }
 
     private URI adjustDatahubUri(UriInfo uriInfo) throws URISyntaxException {
-        String queryParams = uriInfo.getRequestUri().getQuery();
-        queryParams = Strings.isNullOrEmpty(queryParams) ? "" : "?" + queryParams;
-        return new URI(datahubLocation + "/" + uriInfo.getPath() + queryParams);
+        return new URI(datahubLocation + "/" + uriInfo.getPath());
     }
 }
