@@ -1,0 +1,6 @@
+crypto-proxy.iws
+crypto-proxy.ipr
+crypto-proxy.iml
+build/
+.gradle/
+out/
