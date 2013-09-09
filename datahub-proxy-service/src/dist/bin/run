@@ -1,0 +1,93 @@
+#!/bin/bash
+
+# Exit on any error
+#
+set -e
+
+# Determine deploy dir and chdir to that directory,
+# then source the config to get user info
+#
+DEPLOYED_DIR=$(cd $(dirname $0) 1>/dev/null 2>&1 && pwd)
+cd $DEPLOYED_DIR
+
+JAVA_HOME=/opt/java7
+MAX_HEAP=450m
+MIN_HEAP=256m
+MIN_NEW=100m
+DEBUG_PORT=3333
+JMXREMOTE_PORT=8888
+
+JAVA_OPTS="
+ $JAVA_OPTS
+ -d64
+ -server
+ -Xmx$MAX_HEAP
+ -Xms$MIN_HEAP
+ -XX:NewSize=$MIN_NEW
+ -Dsun.rmi.dgc.client.gcInterval=1200000
+ -Dsun.rmi.dgc.server.gcInterval=1200000
+ -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n"
+
+
+# add this for jmxremote/jconsole access
+JAVA_OPTS="$JAVA_OPTS
+ -Dcom.sun.management.jmxremote
+ -Dcom.sun.management.jmxremote.port=$JMXREMOTE_PORT
+ -Dcom.sun.management.jmxremote.ssl=false
+ -Dcom.sun.management.jmxremote.authenticate=false"
+
+
+# add this for verbose gc
+JAVA_OPTS="$JAVA_OPTS
+ -XX:+PrintGCDetails
+ -XX:+PrintTenuringDistribution
+ -XX:+PrintGCDateStamps"
+
+# disable JVM's stupid DNS cache
+JAVA_OPTS="$JAVA_OPTS
+ -Dsun.net.inetaddr.ttl=0"
+
+
+# gc logging
+JAVA_OPTS="$JAVA_OPTS
+ -Xloggc:../var/log/gc.log-$(date -u '+%Y-%m-%d-%H-%M-%S')"
+
+CHILDPID=""
+function shutdownChild()
+{
+        echo signal trap caught - taking stack trace and sleeping 5s before relaying signal
+
+        if [ -z "$CHILDPID" ]
+        then
+                echo no datahub proxy child PID to shutdown
+                return
+        fi
+        
+        kill -QUIT $CHILDPID
+        sleep 5
+
+        kill -TERM $CHILDPID
+        echo signal sent, waiting ...
+        wait $CHILDPID
+        echo datahub proxy is down
+}
+trap "shutdownChild" SIGTERM SIGINT
+
+export JAVA_OPTS="$JAVA_OPTS"
+export JAVA_HOME="$JAVA_HOME"
+
+MAIN_CLASS="com.flightstats.datahubproxy.app.DataHubProxyMain"
+
+if [ -e ${DEPLOYED_DIR}/conf/datahub-proxy.properties ] ; then
+    DATAHUB_PROXY_PROPS=${DEPLOYED_DIR}/conf/datahub-proxy.properties
+fi
+
+echo Running datahub proxy in the background...
+${JAVA_HOME}/bin/java -cp "${DEPLOYED_DIR}/lib/*" \
+    ${JAVA_OPTS} ${MAIN_CLASS} ${DATAHUB_PROXY_PROPS} &
+
+CHILDPID=$!
+echo ... datahub proxy pid is $CHILDPID
+
+wait $CHILDPID
+exit $?
