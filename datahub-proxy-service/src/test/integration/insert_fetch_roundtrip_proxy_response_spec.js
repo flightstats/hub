@@ -13,17 +13,17 @@ utils.runInTestChannel(channelName, function () {
         .addHeader("Content-Type", "text/plain")
         .expectStatus(201)
         .expectHeader('content-type', 'application/json')
-//        .expectJSON('_links', {
-//            channel: {
-//                href: channelResource
-//            }
-//        })
-//        .expectJSON('_links.self', {
-//            href: function (value) {
-//                var regex = new RegExp("^" + channelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/[A-Z,0-9]{16}$");
-//                expect(value).toMatch(regex);
-//            }
-//        })
+        .expectJSON('_links', {
+            channel: {
+                href: channelResource
+            }
+        })
+        .expectJSON('_links.self', {
+            href: function (value) {
+                var regex = new RegExp("^" + channelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/[A-Z,0-9]{16}$");
+                expect(value).toMatch(regex);
+            }
+        })
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
             valueUrl = valueUrl.replace(channelResource, channelProxyResource);
