@@ -1,8 +1,8 @@
 package com.flightstats.datahub.model.serialize;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.app.config.DataHubObjectMapperFactory;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
 import java.util.Date;
@@ -13,7 +13,7 @@ public class ChannelConfigurationMixInTest {
 
 	@Test
 	public void test() throws Exception {
-		ObjectMapper mapper = new DataHubObjectMapperFactory().build();
+		ObjectMapper mapper = DataHubObjectMapperFactory.construct();
 
 		String json = "{\"name\": \"The Name\", \"creationDate\": 808, \"ttlMillis\": 42 }";
 		ChannelConfiguration result = mapper.readValue(json, ChannelConfiguration.class);

@@ -1,1 +1,1 @@
-include 'datahub-service' //, 'datahub-proxy-service'
+include 'datahub-service', 'datahub-proxy-service'

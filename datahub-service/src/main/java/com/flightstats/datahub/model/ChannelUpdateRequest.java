@@ -1,7 +1,7 @@
 package com.flightstats.datahub.model;
 
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.base.Optional;
-import org.codehaus.jackson.map.exc.UnrecognizedPropertyException;
 
 import java.util.Map;
 
@@ -21,7 +21,7 @@ public class ChannelUpdateRequest {
 					builder.withTtlMillis(entry.getValue() == null ? null : Long.parseLong(entry.getValue()));
 					break;
 				default:
-					throw new UnrecognizedPropertyException("Unexpected property", null, ChannelUpdateRequest.class, entry.getKey());
+					throw new UnrecognizedPropertyException("Unexpected property", null, ChannelUpdateRequest.class, entry.getKey(), null);
 			}
 		}
 		return builder.build();

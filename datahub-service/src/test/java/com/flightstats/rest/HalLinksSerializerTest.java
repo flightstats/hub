@@ -1,8 +1,8 @@
 package com.flightstats.rest;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import org.codehaus.jackson.JsonGenerator;
 import org.junit.Test;
 import org.mockito.InOrder;
 

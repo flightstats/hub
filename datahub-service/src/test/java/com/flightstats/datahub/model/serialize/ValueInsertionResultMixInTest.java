@@ -1,9 +1,9 @@
 package com.flightstats.datahub.model.serialize;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.app.config.DataHubObjectMapperFactory;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -16,7 +16,7 @@ public class ValueInsertionResultMixInTest {
 
 	@Test
 	public void testSerialize() throws Exception {
-		ObjectMapper objectMapper = new DataHubObjectMapperFactory().build();
+		ObjectMapper objectMapper = DataHubObjectMapperFactory.construct();
 		DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 33);
 		ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key);
 		OutputStream out = new ByteArrayOutputStream();

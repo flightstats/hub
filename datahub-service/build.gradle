@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'application'
 apply plugin: 'jacoco'
-apply from: 'common-utils.gradle'
+apply from:'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-utils-1.0.1.gradle'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -18,7 +18,7 @@ def snapshotVersion = version + "-SNAPSHOT"
 
 project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
 
-apply from: 'common.gradle'
+apply from:'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-1.0.1.gradle'
 
 if (project.ext.isDevBuild) {
     def buildNumber = "dev";
@@ -27,7 +27,7 @@ if (project.ext.isDevBuild) {
     }
     version = snapshotVersion + "-" + buildNumber
 }
-println "Builing version: ${version}"
+println "Building version: ${version}"
 
 buildDir = 'build'
 
@@ -58,6 +58,7 @@ task tarDHBackup(dependsOn: 'versionDHBackup', type: Tar) {
 }
 
 configurations {
+    all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
     publish
     publishDev
     integrationTests
@@ -99,10 +100,11 @@ dependencies {
     compile group: 'com.sun.jersey', name: 'jersey-servlet', version: '1.17.1'
     compile group: 'com.sun.jersey', name: 'jersey-server', version: '1.17.1'
     compile group: 'com.sun.jersey.contribs', name: 'jersey-guice', version: '1.17'
-    compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.9.5'
-    compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.9.5'
-    compile group: 'org.codehaus.jackson', name: 'jackson-jaxrs', version: '1.9.5'
-    compile group: 'org.codehaus.jackson', name: 'jackson-xc', version: '1.9.5'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.1.+'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.1.+'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.1.+'
+    compile group: 'com.fasterxml.jackson.jaxrs', name: 'jackson-jaxrs-json-provider', version: '2.1.+'
+    compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: '2.1.1'
     compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.0.1'
     compile group: 'javax.ws.rs', name: 'jsr311-api', version: '1.1.1'
     compile group: 'asm', name: 'asm', version: '3.1'
@@ -126,12 +128,12 @@ dependencies {
     compile group: "com.yammer.metrics", name: "metrics-jetty", version: "2.2.0"
     compile group: "com.hazelcast", name: "hazelcast", version: "2.6"
     compile group: "com.hazelcast", name: "hazelcast-client", version: "2.6"
-    compile(group: "com.flightstats.common", name: "rest", version: "latest.integration") {
-        artifact {
-            name = 'services-common-rest'
-            type = 'jar'
-        }
-    }
+    compile group: "com.flightstats.common", name: "util", version: "3.+"
+    compile group: "com.flightstats.common", name: "jaxb", version: "3.+"
+    compile group: "com.flightstats.common", name: "rest", version: "3.+"
+    compile group: "com.flightstats.common", name: "jerseyguice", version: "3.+"
+    compile group: 'com.intellij', name: 'annotations', version: '7.0.3'
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
@@ -148,42 +150,19 @@ distTar {
 task deployDev << {
     description = "Deploys the distribution to the development environment"
     runExternal("${projectDir}/bin/restart-dev-vpc.sh")
-
-    println "Deploying to datahub-01.cloud-east.dev"
-    runExternal("${projectDir}/bin/ctdeploy.sh datahub-01.cloud-east.dev")
-
-    println "Deploying to datahub-02.cloud-east.dev"
-    runExternal("${projectDir}/bin/ctdeploy.sh datahub-02.cloud-east.dev")
-
-    println "Deploying to datahub-03.cloud-east.dev"
-    runExternal("${projectDir}/bin/ctdeploy.sh datahub-03.cloud-east.dev")
+    doCtDeploy("datahub-01.cloud-east.dev", "datahub-02.cloud-east.dev", "datahub-03.cloud-east.dev")
 }
 
 task deployStaging << {
     description = "Deploys the distribution to the staging environment"
     copyTarballToDistributions(configurations.deployStaging)
-    println "Deploying to datahub-01.cloud-east.staging"
-    runExternal("${projectDir}/bin/ctdeploy.sh datahub-01.cloud-east.staging")
-
-    println "Deploying to datahub-02.cloud-east.staging"
-    runExternal("${projectDir}/bin/ctdeploy.sh datahub-02.cloud-east.staging")
-
-    println "Deploying to datahub-03.cloud-east.staging"
-    runExternal("${projectDir}/bin/ctdeploy.sh datahub-03.cloud-east.staging")
+    doCtDeploy("datahub-01.cloud-east.staging", "datahub-02.cloud-east.staging", "datahub-03.cloud-east.staging")
 }
 
 task deployProduction << {
     description = "Deploys the distribution to the production environment"
     copyTarballToDistributions(configurations.deployProduction)
-
-    println "Deploying to datahub-01.cloud-east.prod"
-    runExternal("${projectDir}/bin/ctdeploy.sh datahub-01.cloud-east.prod")
-
-    println "Deploying to datahub-02.cloud-east.prod"
-    runExternal("${projectDir}/bin/ctdeploy.sh datahub-02.cloud-east.prod")
-
-    println "Deploying to datahub-03.cloud-east.prod"
-    runExternal("${projectDir}/bin/ctdeploy.sh datahub-03.cloud-east.prod")
+    doCtDeploy("datahub-01.cloud-east.prod", "datahub-02.cloud-east.prod", "datahub-03.cloud-east.prod")
     incrementVersionFile()
     commitVersionFileAndPush()
 }
