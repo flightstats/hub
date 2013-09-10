@@ -89,13 +89,14 @@ public class DataHubServiceTest {
 		ChannelLockExecutor channelLockExecutor = mock(ChannelLockExecutor.class);
 		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
 
-		WriteAndDispatch expectedDispatch = new WriteAndDispatch(channelDao, channelInsertionPublisher, channelName, data, contentType, contentEncoding, contentLanguage);
+		WriteAndDispatch expectedDispatch = new WriteAndDispatch(channelDao, channelInsertionPublisher, channelName, data, contentType,
+                contentLanguage);
 
 		when(channelLockExecutor.execute(channelName, expectedDispatch)).thenReturn(new ValueInsertionResult(dataHubKey));
-		when(channelDao.insert(channelName, contentType, contentEncoding, contentLanguage, data)).thenReturn(new ValueInsertionResult(dataHubKey));
+		when(channelDao.insert(channelName, contentType, contentLanguage, data)).thenReturn(new ValueInsertionResult(dataHubKey));
 
 		DataHubService testClass = new DataHubService(channelDao, channelLockExecutor, channelInsertionPublisher);
-		ValueInsertionResult result = testClass.insert(channelName, data, contentType, contentEncoding, contentLanguage);
+		ValueInsertionResult result = testClass.insert(channelName, data, contentType, contentLanguage);
 
 		assertEquals(dataHubKey, result.getKey());
 	}
@@ -107,7 +108,7 @@ public class DataHubServiceTest {
 		Optional<String> contentType = Optional.of("contentType");
 		Optional<String> contentEncoding = Optional.of("contentEncoding");
 		Optional<String> contentLanguage = Optional.of("contentLanguage");
-		LinkedDataHubCompositeValue compositeValue = new LinkedDataHubCompositeValue(new DataHubCompositeValue(contentType, contentEncoding, contentLanguage, data),
+		LinkedDataHubCompositeValue compositeValue = new LinkedDataHubCompositeValue(new DataHubCompositeValue(contentType, contentLanguage, data),
 				Optional.<DataHubKey>absent(), Optional.<DataHubKey>absent());
 
 		ChannelDao channelDao = mock(ChannelDao.class);

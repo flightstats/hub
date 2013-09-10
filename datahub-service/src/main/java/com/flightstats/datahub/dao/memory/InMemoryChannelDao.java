@@ -99,13 +99,13 @@ public class InMemoryChannelDao implements ChannelDao {
 	}
 
 	@Override
-	public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentEncoding, Optional<String> contentLanguage, byte[] data) {
+	public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
 		verifyChannelExists(channelName);
 		DataHubChannelValueKey oldLastKey = latestPerChannel.get(channelName);
 		short newSequence = (oldLastKey == null) ? ((short) 0) : (short) (oldLastKey.getSequence() + 1);
 		DataHubKey newKey = new DataHubKey(timeProvider.getDate(), newSequence);
 		DataHubChannelValueKey newDataHubChannelValueKey = new DataHubChannelValueKey(newKey, channelName);
-		DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, contentEncoding, contentLanguage, data);
+		DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(contentType, contentLanguage, data);
 		LinkedDataHubCompositeValue newLinkedValue = new LinkedDataHubCompositeValue(dataHubCompositeValue, optionalFromCompositeKey(oldLastKey),
 				Optional.<DataHubKey>absent());
 

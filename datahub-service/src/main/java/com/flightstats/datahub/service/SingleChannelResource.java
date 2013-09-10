@@ -92,12 +92,11 @@ public class SingleChannelResource {
 	@PerChannelTimed(operationName = "insert", channelNamePathParameter = "channelName")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
-								@HeaderParam("Content-Encoding") final String contentEncoding,
 								@HeaderParam("Content-Language") final String contentLanguage,
 								final byte[] data,
 								@Context UriInfo uriInfo) throws Exception {
 
-		ValueInsertionResult insertionResult = dataHubService.insert(channelName, data, Optional.fromNullable(contentType), Optional.fromNullable(contentEncoding), Optional.fromNullable(contentLanguage));
+		ValueInsertionResult insertionResult = dataHubService.insert(channelName, data, Optional.fromNullable(contentType), Optional.fromNullable(contentLanguage));
 		URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo.getRequestUri());
 		Linked<ValueInsertionResult> linkedResult = linked(insertionResult)
 				.withLink("channel", linkBuilder.buildChannelUri(channelName, uriInfo))

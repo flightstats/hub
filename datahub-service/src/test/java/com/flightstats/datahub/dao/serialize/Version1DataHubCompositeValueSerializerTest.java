@@ -10,11 +10,11 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 
-public class DataHubCompositeValueSerializerTest {
+public class Version1DataHubCompositeValueSerializerTest {
 
     @Test
     public void testRoundTrip() throws Exception {
-        Serializer<DataHubCompositeValue> testClass = DataHubCompositeValueSerializer.get();
+        Serializer<DataHubCompositeValue> testClass = new Version1DataHubCompositeValueSerializer();
         DataHubCompositeValue instance = new DataHubCompositeValue(Optional.of("text/plain"), Optional.of("en, mi"), "any arbitrary massage".getBytes());
         ByteBuffer byteBuffer = testClass.toByteBuffer(instance);
         DataHubCompositeValue result = testClass.fromByteBuffer(byteBuffer);
@@ -23,7 +23,7 @@ public class DataHubCompositeValueSerializerTest {
 
     @Test
     public void testFromBytes_UnknownField() throws Exception {
-        Serializer<DataHubCompositeValue> testClass = DataHubCompositeValueSerializer.get();
+        Serializer<DataHubCompositeValue> testClass = new Version1DataHubCompositeValueSerializer();
         DataHubCompositeValue instance = new DataHubCompositeValue(Optional.of("nomatta"), Optional.of("en, mi"), "God lived as a devil dog.".getBytes());
         ByteBuffer byteBuffer = testClass.toByteBuffer(instance);
         byte[] bytes = byteBuffer.array();
@@ -37,7 +37,7 @@ public class DataHubCompositeValueSerializerTest {
 
     @Test
     public void testFromBytes_MissingField() throws Exception {
-        Serializer<DataHubCompositeValue> testClass = DataHubCompositeValueSerializer.get();
+        Serializer<DataHubCompositeValue> testClass = new Version1DataHubCompositeValueSerializer();
         DataHubCompositeValue instance = new DataHubCompositeValue(Optional.of("a"), Optional.of("b"), "c".getBytes());
         ByteBuffer byteBuffer = testClass.toByteBuffer(instance);
         byte[] bytes = byteBuffer.array();
@@ -52,14 +52,12 @@ public class DataHubCompositeValueSerializerTest {
     }
 
     @Test(expected = HectorSerializationException.class)
-    public void testFromBytes_VersionMismatch() throws Exception {
-        Serializer<DataHubCompositeValue> testClass = DataHubCompositeValueSerializer.get();
-        DataHubCompositeValue instance = new DataHubCompositeValue(Optional.of("a"), Optional.of("b"), "c".getBytes());
+    public void testVersionMismatch() throws Exception {
+        Serializer<DataHubCompositeValue> testClass = new Version1DataHubCompositeValueSerializer();
+        DataHubCompositeValue instance = new DataHubCompositeValue(Optional.of("text/plain"), Optional.of("en, mi"), "any arbitrary massage".getBytes());
         ByteBuffer byteBuffer = testClass.toByteBuffer(instance);
-        byte[] bytes = byteBuffer.array();
-        byte[] newBytes = new byte[bytes.length];
-        newBytes[0] = (byte) (bytes[0] + 1);
-        testClass.fromBytes(newBytes);
+        byteBuffer.array()[0] = 0x07;
+        testClass.fromByteBuffer(byteBuffer);
     }
 
 }
