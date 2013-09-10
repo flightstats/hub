@@ -39,7 +39,7 @@ public class DataHubCompositeValueSerializer extends AbstractSerializer<DataHubC
         ByteBuffer correctedBuffer = TBaseHelper.rightSize(byteBuffer);
         correctedBuffer.rewind();
 
-        byte versionByte = byteBuffer.array()[0];
+        byte versionByte = correctedBuffer.array()[0];
         switch(versionByte){
             case FORMAT_VERSION_01:
                 return version1Serializer.fromByteBuffer(correctedBuffer);
