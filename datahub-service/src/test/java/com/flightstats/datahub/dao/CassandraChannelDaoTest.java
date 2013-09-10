@@ -59,7 +59,7 @@ public class CassandraChannelDaoTest {
 		String channelName = "foo";
 		byte[] data = "bar".getBytes();
 		Optional<String> contentType = Optional.of("text/plain");
-		DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), Optional.<String>absent(), data);
+		DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data);
 		ValueInsertionResult expected = new ValueInsertionResult(key);
 		DataHubKey lastUpdateKey = new DataHubKey(new Date(2345678912L), (short) 0);
 
@@ -75,7 +75,7 @@ public class CassandraChannelDaoTest {
 		when(lastUpdatedKeyFinder.queryForLatestKey(channelName)).thenReturn(lastUpdateKey);
 		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, linkagesCollection, inserter, reader, null, null, null, null, lastUpdatedMap, lastUpdatedKeyFinder);
 
-		ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), Optional.<String>absent(), data);
+		ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), data);
 
 		// THEN
 		assertEquals(expected, result);
@@ -90,7 +90,7 @@ public class CassandraChannelDaoTest {
 		String channelName = "foo";
 		byte[] data = "bar".getBytes();
 		Optional<String> contentType = Optional.of("text/plain");
-		DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), Optional.<String>absent(), data);
+		DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data);
 		ValueInsertionResult expected = new ValueInsertionResult(key);
 
 		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
@@ -108,7 +108,7 @@ public class CassandraChannelDaoTest {
 			}
 		};
 
-		ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), Optional.<String>absent(), data);
+		ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), data);
 
 		// THEN
 		assertEquals(expected, result);
@@ -122,7 +122,7 @@ public class CassandraChannelDaoTest {
 		DataHubKey previousKey = new DataHubKey(new Date(9998888777665L), (short) 0);
 		DataHubKey nextKey = new DataHubKey(new Date(9998888777667L), (short) 0);
 		byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
-		DataHubCompositeValue compositeValue = new DataHubCompositeValue(Optional.of("text/plain"), null, null, data);
+		DataHubCompositeValue compositeValue = new DataHubCompositeValue(Optional.of("text/plain"), null, data);
 		Optional<DataHubKey> previous = Optional.of(previousKey);
 		Optional<DataHubKey> next = Optional.of(nextKey);
 		LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(compositeValue, previous, next);
