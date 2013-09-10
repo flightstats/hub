@@ -2,12 +2,15 @@ package com.flightstats.cryptoproxy.app.config;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
+import com.flightstats.cryptoproxy.service.RestClient;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
 import com.flightstats.cryptoproxy.app.config.metrics.GraphiteConfiguration;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
@@ -56,5 +59,14 @@ class CryptoProxyCommonModule extends JerseyServletModule {
     @Singleton
     public InstrumentedResourceMethodDispatchAdapter buildMetricsAdapter(MetricRegistry registry) {
         return new InstrumentedResourceMethodDispatchAdapter(registry);
+    }
+
+    @Inject
+    @Provides
+    public Client buildRestClient(@Named("restclient.connect.timeout.seconds") int connectTimeoutSec, @Named("restclient.read.timeout.seconds") int readTimeoutSec) {
+        Client client = Client.create();
+        client.setConnectTimeout(connectTimeoutSec * 1000);
+        client.setReadTimeout(readTimeoutSec * 1000);
+        return client;
     }
 }

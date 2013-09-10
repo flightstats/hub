@@ -1,6 +1,7 @@
 package com.flightstats.cryptoproxy.service;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -12,14 +13,13 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+@Singleton
 public class RestClient {
     private final Client client;
 
     @Inject
-    public RestClient(@Named("restclient.connect.timeout.seconds") int connectTimeoutSec, @Named("restclient.read.timeout.seconds") int readTimeoutSec) {
-        client = Client.create();
-        client.setConnectTimeout(connectTimeoutSec * 1000);
-        client.setReadTimeout(readTimeoutSec * 1000);
+    public RestClient(Client client) {
+        this.client = client;
     }
 
     public ClientResponse get(URI uri, MultivaluedMap<String, String> requestHeaders) {
