@@ -32,6 +32,8 @@ import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;
+import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.FileNotFoundException;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.sun.jersey.api.core.ResourceConfig.PROPERTY_CONTAINER_REQUEST_FILTERS;
+import static com.sun.jersey.api.core.ResourceConfig.PROPERTY_CONTAINER_RESPONSE_FILTERS;
 
 public class GuiceContextListenerFactory {
     public static final String BACKING_STORE_PROPERTY = "backing.store";
@@ -52,6 +57,9 @@ public class GuiceContextListenerFactory {
 
         JerseyServletModule jerseyModule = new JerseyServletModuleBuilder()
                 .withJerseyPackage("com.flightstats.datahub")
+                .withJerseryProperty(PROPERTY_CONTAINER_REQUEST_FILTERS, GZIPContentEncodingFilter.class.getName())
+                .withJerseryProperty(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName())
+                .withJerseryProperty(JSONConfiguration.FEATURE_POJO_MAPPING, "true")
                 .withNamedProperties(properties)
                 .withGraphiteConfig(graphiteConfig)
                 .withObjectMapper(DataHubObjectMapperFactory.construct())
