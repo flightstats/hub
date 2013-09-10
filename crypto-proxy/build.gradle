@@ -1,0 +1,136 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'application'
+apply plugin: 'jacoco'
+apply from: 'common-utils.gradle'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+project.ext.jenkinsBuildNumber = "$System.env.BUILD_NUMBER"
+project.ext.jenkinsJobName = "$System.env.JOB_NAME"
+
+group = 'com.flightstats'
+
+version = new File("${projectDir}/version.txt").text
+
+def snapshotVersion = version + "-SNAPSHOT"
+
+project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
+
+apply from: 'common.gradle'
+
+if (project.ext.isDevBuild) {
+    def buildNumber = "dev";
+    if (System.env.BUILD_NUMBER != null) {
+        buildNumber = System.env.BUILD_NUMBER
+    }
+    version = snapshotVersion + "-" + buildNumber
+}
+println "Building version: ${version}"
+
+buildDir = 'build'
+
+mainClassName = "com.flightstats.cryptoproxy.app.CryptoProxyMain"
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url 'http://repo.jfrog.org/artifactory/gradle-plugins' }
+    }
+
+    dependencies {  //Required to pick up the artifactory plugin
+        classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.16')
+    }
+}
+
+configurations {
+    publish
+    publishDev
+    integrationTests
+    deployStaging
+    deployProduction
+}
+
+artifacts {
+    publishDev jar
+    publishDev distTar
+
+    publish jar
+    publish distTar
+}
+
+task integrationTests() << {
+    def testdir = "${projectDir}/src/test/integration"
+    def reportsdir = "${projectDir}/build/reports/integration/"
+    println "Making " + reportsdir
+    new File(reportsdir).mkdirs()
+    runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
+}
+dependencies {
+    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: '9.0.3.v20130506'
+    compile group: 'com.flightstats', name: 'datahub-service', version: '0.1.+'
+    compile group: 'com.sun.jersey', name: 'jersey-client', version: '1.17'
+
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+    testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
+
+    integrationTests group: 'com.flightstats', name: 'crypto-proxy', version: snapshotVersion + '+', transitive: false, configuration: 'publishDev'
+    deployStaging group: 'com.flightstats', name: 'crypto-proxy', version: version, transitive: false, configuration: 'publish'
+    deployProduction group: 'com.flightstats', name: 'crypto-proxy', version: version, transitive: false, configuration: 'publish'
+}
+
+
+distTar {
+    compression = Compression.GZIP
+}
+
+task deployDev << {
+    description = "Deploys the distribution to the development environment"
+    runExternal("${projectDir}/bin/restart-dev-vpc.sh")
+
+    println "Deploying to crypto-proxy-01.cloud-east.dev"
+    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-01.cloud-east.dev")
+
+    println "Deploying to crypto-proxy-02.cloud-east.dev"
+    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-02.cloud-east.dev")
+
+    println "Deploying to crypto-proxy-03.cloud-east.dev"
+    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-03.cloud-east.dev")
+}
+
+task deployStaging << {
+    description = "Deploys the distribution to the staging environment"
+    copyTarballToDistributions(configurations.deployStaging)
+    println "Deploying to crypto-proxy-01.cloud-east.staging"
+    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-01.cloud-east.staging")
+
+    println "Deploying to crypto-proxy-02.cloud-east.staging"
+    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-02.cloud-east.staging")
+
+    println "Deploying to crypto-proxy-03.cloud-east.staging"
+    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-03.cloud-east.staging")
+}
+
+task deployProduction << {
+    description = "Deploys the distribution to the production environment"
+    copyTarballToDistributions(configurations.deployProduction)
+
+    println "Deploying to crypto-proxy-01.cloud-east.prod"
+    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-01.cloud-east.prod")
+
+    println "Deploying to crypto-proxy-02.cloud-east.prod"
+    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-02.cloud-east.prod")
+
+    println "Deploying to crypto-proxy-03.cloud-east.prod"
+    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-03.cloud-east.prod")
+    incrementVersionFile()
+    commitVersionFileAndPush()
+}
+
+startScripts {
+    ext.jvmOpts = "-Xmx256m"
+    doLast {
+        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"$ext.jvmOpts\"")
+    }
+}

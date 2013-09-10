@@ -41,7 +41,7 @@ public class CassandraConnector {
 			return true;
 		} catch (HInvalidRequestException e) {
 			if (verbose) {
-				logger.warn("Error creating channel: " + e.getMessage(), verbose ? e : null);
+				logger.warn("Error creating channel: " + e.getMessage(), e);
 			}
 			return false;
 		}
