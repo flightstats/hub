@@ -1,17 +1,19 @@
 package com.flightstats.datahub.model.serialize;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.jackson.AbstractMixIn;
 
 import java.util.Date;
 
-public abstract class ChannelConfigurationMixIn {
+@AbstractMixIn
+public abstract class ChannelConfigurationMixIn extends ChannelConfiguration {
 
 	public ChannelConfigurationMixIn(@JsonProperty("name") String name, @JsonProperty("creationDate") Date creationDate, @JsonProperty("ttlMillis") Long ttlMillis) {
-		throw new IllegalStateException("Do not instantiate mix-in configuration classes.");
+		super(name, creationDate, ttlMillis);
 	}
 
 	@JsonIgnore
-	abstract public Date getLastUpdateDate();
-
+    public abstract Date getLastUpdateDate();
 }

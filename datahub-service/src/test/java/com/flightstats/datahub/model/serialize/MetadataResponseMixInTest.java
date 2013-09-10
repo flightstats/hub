@@ -1,11 +1,11 @@
 package com.flightstats.datahub.model.serialize;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.app.config.DataHubObjectMapperFactory;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.MetadataResponse;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -21,7 +21,7 @@ public class MetadataResponseMixInTest {
 
 	@Test
 	public void test() throws Exception {
-		ObjectMapper mapper = new DataHubObjectMapperFactory().build();
+		ObjectMapper mapper = DataHubObjectMapperFactory.construct();
 		OutputStream out = new ByteArrayOutputStream();
 		Date date = new Date(902103L);
 		ChannelConfiguration config = new ChannelConfiguration("The Name", new Date(808), null);

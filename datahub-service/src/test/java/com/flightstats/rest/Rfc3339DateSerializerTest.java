@@ -1,6 +1,6 @@
 package com.flightstats.rest;
 
-import org.codehaus.jackson.JsonGenerator;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.Test;
 
 import java.util.Date;
