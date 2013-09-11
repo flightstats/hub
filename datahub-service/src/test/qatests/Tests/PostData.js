@@ -83,7 +83,7 @@ describe('POST data to channel:', function(){
 
         before(function(done) {
 
-            mainPayload = dhh.getRandomPayload()    ;
+            mainPayload = dhh.getRandomPayload();
 
             dhh.postData({channelUri: channelUri, data: mainPayload}, function(res, dataUri) {
                 mainResponse = res;
@@ -129,6 +129,22 @@ describe('POST data to channel:', function(){
 
                 done();
             });
+        })
+
+        it('content-length is correct', function(done) {
+            var payload = ranU.randomString(5 + ranU.randomNum(50), ranU.limitedRandomChar);
+
+            dhh.postData({channelUri: channelUri, data: payload}, function(res, uri) {
+                expect(res.status).to.equal(gu.HTTPresponses.Created);
+
+                dhh.getDataFromChannel({uri: uri, headers: {'Accept-Encoding': 'identity'}}, function(err, getRes) {
+                    expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
+                    expect(getRes.headers['content-length'].toString()).to.equal(payload.length.toString());
+
+                    done();
+
+                })
+            })
         })
 
         it('POST should return a 404 trying to save to nonexistent channel', function(done){
