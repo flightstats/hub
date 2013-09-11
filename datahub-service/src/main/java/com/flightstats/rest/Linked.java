@@ -15,7 +15,7 @@ public class Linked<T> {
 	private final HalLinks halLinks;
 	private final T object;
 
-	private Linked(HalLinks halLinks, T object) {
+	protected Linked(HalLinks halLinks, T object) {
 		this.halLinks = halLinks;
 		this.object = object;
 	}

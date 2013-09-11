@@ -1,27 +1,29 @@
 package com.flightstats.datahub.model.serialize;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.MetadataResponse;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.flightstats.jackson.AbstractMixIn;
 
 import java.util.Date;
 
+@AbstractMixIn
 public abstract class MetadataResponseMixIn extends MetadataResponse {
 
-	public MetadataResponseMixIn(ChannelConfiguration config, Date lastUpdateDate) {
-		super(config, lastUpdateDate);
-	}
+    public MetadataResponseMixIn(ChannelConfiguration config, Date lastUpdateDate) {
+        super(config, lastUpdateDate);
+    }
 
-	@JsonProperty("name")
-	abstract public String getName();
+    @JsonProperty("name")
+    public abstract String getName();
 
-	@JsonProperty("creationDate")
-	abstract public Date getCreationDate();
+    @JsonProperty("creationDate")
+    public abstract Date getCreationDate();
 
-	@JsonProperty("lastUpdateDate")
-	abstract public Date getLastUpdateDate();
+    @JsonProperty("lastUpdateDate")
+    public abstract Date getLastUpdateDate();
 
-	@JsonProperty("ttlMillis")
-	abstract public Long getTtlMillis();
+    @JsonProperty("ttlMillis")
+    public abstract Long getTtlMillis();
 
 }

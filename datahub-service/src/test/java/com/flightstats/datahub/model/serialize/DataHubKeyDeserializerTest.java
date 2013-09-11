@@ -1,8 +1,8 @@
 package com.flightstats.datahub.model.serialize;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
-import org.codehaus.jackson.JsonParser;
 import org.junit.Test;
 
 import java.util.Date;

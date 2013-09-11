@@ -1,8 +1,8 @@
 package com.flightstats.datahub.model.serialize;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.app.config.DataHubObjectMapperFactory;
 import com.flightstats.datahub.model.ChannelCreationRequest;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,7 +14,7 @@ public class ChannelCreationRequestMixInTest {
 
     @Before
     public void setup() {
-        objectMapper = new DataHubObjectMapperFactory().build();
+        objectMapper = DataHubObjectMapperFactory.construct();
     }
 
 	@Test

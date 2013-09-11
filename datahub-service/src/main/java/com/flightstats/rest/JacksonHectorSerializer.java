@@ -1,8 +1,8 @@
 package com.flightstats.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import me.prettyprint.cassandra.serializers.AbstractSerializer;
 import org.apache.thrift.TBaseHelper;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

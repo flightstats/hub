@@ -1,7 +1,7 @@
 package com.flightstats.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.app.config.DataHubObjectMapperFactory;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -15,7 +15,7 @@ public class LinkedMixInTest {
 
 	@Test
 	public void testSerialize() throws Exception {
-		ObjectMapper mapper = new DataHubObjectMapperFactory().build();
+		ObjectMapper mapper = DataHubObjectMapperFactory.construct();
 		URI link1 = URI.create("http://path/to/previous");
 		URI link2 = URI.create("http://path/to/next");
 		Map<String, String> map = new HashMap<>();
@@ -44,7 +44,7 @@ public class LinkedMixInTest {
 
 	@Test
 	public void testJustLinks() throws Exception {
-		ObjectMapper mapper = new DataHubObjectMapperFactory().build();
+		ObjectMapper mapper = DataHubObjectMapperFactory.construct();
 		URI link = URI.create("http://path/to/joe");
 		Linked<?> testClass = Linked.justLinks()
 									.withLink("joe", link)
