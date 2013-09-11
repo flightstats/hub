@@ -1,5 +1,6 @@
 package com.flightstats.cryptoproxy.service;
 
+import com.flightstats.cryptoproxy.security.AESCipher;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.rest.Linked;
 import com.sun.jersey.api.client.ClientResponse;
@@ -7,6 +8,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.crypto.Cipher;
 import javax.ws.rs.core.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,6 +25,7 @@ public class ProxyChannelResourceTest {
     private String channelName;
     private UriInfo uriInfo;
     private RestClient restClient;
+    private AESCipher cipher;
     private final byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
 
     @Before
@@ -30,6 +33,7 @@ public class ProxyChannelResourceTest {
         channelName = "UHF";
         uriInfo = mock(UriInfo.class);
         restClient = mock(RestClient.class);
+        cipher = mock(AESCipher.class);
 
         when(uriInfo.getAbsolutePathBuilder()).thenReturn(UriBuilder.fromPath(URI_PATH).scheme("http"));
     }
@@ -50,8 +54,9 @@ public class ProxyChannelResourceTest {
         when(clientResponse.getHeaders()).thenReturn(responseHeaders);
         when(clientResponse.getEntity(byte[].class)).thenReturn(data);
         when(restClient.get(any(URI.class), any(MultivaluedMap.class))).thenReturn(clientResponse);
+        when(cipher.decrypt(data)).thenReturn(data);
 
-        ProxyChannelResource testClass = new ProxyChannelResource(datahubLocation, restClient);
+        ProxyChannelResource testClass = new ProxyChannelResource(datahubLocation, restClient, cipher);
         Response result = testClass.getValue(channelName, uriInfo, requestHeaders);
 
         // THEN
@@ -83,8 +88,9 @@ public class ProxyChannelResourceTest {
         when(clientResponse.getEntity(Linked.class)).thenReturn(linked);
         when(restClient.post(any(URI.class), any(byte[].class), any(MultivaluedMap.class))).thenReturn(clientResponse);
         when(uriInfo.getPath()).thenReturn(URI_PATH);
+        when(cipher.encrypt(data)).thenReturn(data);
 
-        ProxyChannelResource testClass = new ProxyChannelResource(datahubLocation, restClient);
+        ProxyChannelResource testClass = new ProxyChannelResource(datahubLocation, restClient, cipher);
         Response response = testClass.insertValue(channelName, data, requestHeaders, uriInfo);
 
         // THEN

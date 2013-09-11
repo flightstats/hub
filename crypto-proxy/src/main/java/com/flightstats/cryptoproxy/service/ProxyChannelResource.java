@@ -2,8 +2,8 @@ package com.flightstats.cryptoproxy.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.flightstats.cryptoproxy.security.AESCipher;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
-import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.ClientResponse;
 
@@ -23,9 +23,12 @@ public class ProxyChannelResource {
 
     private final URI datahubLocation;
     private final RestClient restClient;
+    private final AESCipher cipher;
 
     @Inject
-    public ProxyChannelResource(@Named("datahub.uri") String datahubLocation, RestClient restClient) throws URISyntaxException {
+    public ProxyChannelResource(@Named("datahub.uri") String datahubLocation, RestClient restClient, AESCipher cipher)
+            throws URISyntaxException {
+        this.cipher = cipher;
         this.datahubLocation = new URI(datahubLocation);
         this.restClient = restClient;
     }
@@ -37,14 +40,15 @@ public class ProxyChannelResource {
     @Path("/{id}")
     public Response getValue(@PathParam("channelName") String channelName,
                              @Context UriInfo uriInfo,
-                             @Context HttpHeaders headers) throws URISyntaxException {
+                             @Context HttpHeaders headers)
+            throws Exception {
 
         URI datahubUri = adjustDatahubUri(uriInfo);
 
         MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
         ClientResponse clientResponse = restClient.get(datahubUri, requestHeaders);
 
-        byte[] decryptedEntity = clientResponse.getEntity(byte[].class);
+        byte[] decryptedEntity = cipher.decrypt(clientResponse.getEntity(byte[].class));
 
         Response.ResponseBuilder responseBuilder = createResponseBuilderWithoutEntity(clientResponse)
                 .entity(decryptedEntity);
@@ -61,7 +65,7 @@ public class ProxyChannelResource {
                                 @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) throws Exception {
 
-        byte[] encryptedEntity = data;
+        byte[] encryptedEntity = cipher.encrypt(data);
 
         URI datahubUri = adjustDatahubUri(uriInfo);
         MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
