@@ -76,17 +76,28 @@ describe('HEAD on data tests:', function() {
         payload = uri = req = contentType = '';
     });
 
+    // NOTE: because gzip is on by default here, the HEAD and GET results are slightly different (gzip adds a bit of an
+    //      envelope or something). So the 'Accept-Encoding' header needs to be set to 'identity' to get the item as-is.
     it('Acceptance: HEAD returns all expected headers for item with siblings in a channel', function(done) {
         var getHeaders,
             headHeaders;
 
         superagent.agent().get(secondValueUri)
+            .set('Accept-Encoding', 'identity')
             .end(function(err, res) {
                 getHeaders = res.headers;
 
                 superagent.agent().head(secondValueUri)
+                    .set('Accept-Encoding', 'identity')
                     .end(function(err2, res2) {
                         headHeaders = res2.headers;
+
+                        if (!gu.dictCompare(getHeaders, headHeaders)) {
+                            gu.debugLog('Dump of getHeaders, headHeaders.\ngetHeaders: ');
+                            console.dir(getHeaders);
+                            gu.debugLog('headHeaders: ');
+                            console.dir(headHeaders);
+                        }
 
                         expect(gu.dictCompare(getHeaders, headHeaders)).to.be.true;
 
