@@ -1,5 +1,6 @@
 package com.flightstats.datahub.app.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.dao.CassandraChannelDao;
 import com.flightstats.datahub.dao.CassandraConnector;
 import com.flightstats.datahub.dao.CassandraConnectorFactory;
@@ -9,13 +10,12 @@ import com.flightstats.datahub.model.serialize.JacksonHectorSerializer;
 import com.google.inject.*;
 import com.google.inject.name.Names;
 import me.prettyprint.hector.api.Serializer;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.Properties;
 
 class CassandraDataStoreModule extends AbstractModule {
 
-	private final ObjectMapper objectMapper = new DataHubObjectMapperFactory().build();
+	private final ObjectMapper objectMapper = DataHubObjectMapperFactory.construct();
 	private final JacksonHectorSerializer<ChannelConfiguration> jacksonHectorSerializer = new JacksonHectorSerializer<>(objectMapper,
 			ChannelConfiguration.class);
 	private final Properties properties;

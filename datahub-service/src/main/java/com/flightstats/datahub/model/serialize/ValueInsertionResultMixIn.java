@@ -1,16 +1,23 @@
 package com.flightstats.datahub.model.serialize;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.flightstats.datahub.model.DataHubKey;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.jackson.AbstractMixIn;
 
 import java.util.Date;
 
-public abstract class ValueInsertionResultMixIn {
+@AbstractMixIn
+public abstract class ValueInsertionResultMixIn extends ValueInsertionResult {
 
-	@JsonIgnore
-	abstract public DataHubKey getKey();
+    public ValueInsertionResultMixIn(DataHubKey key) {
+        super(key);
+    }
+
+    @JsonIgnore
+    public abstract DataHubKey getKey();
 
 	@JsonProperty("timestamp")
-	abstract public Date getDate();
+    public abstract Date getDate();
 }

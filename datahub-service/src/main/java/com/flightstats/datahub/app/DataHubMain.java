@@ -1,18 +1,19 @@
 package com.flightstats.datahub.app;
 
-import com.flightstats.datahub.app.config.EmptyServlet;
-import com.flightstats.datahub.app.config.GuiceConfig;
-import com.google.inject.servlet.GuiceFilter;
-import org.eclipse.jetty.server.*;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.slf4j.bridge.SLF4JBridgeHandler;
+import com.conducivetech.services.common.util.PropertyConfiguration;
+import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
+import com.flightstats.jerseyguice.jetty.JettyConfig;
+import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
+import com.flightstats.jerseyguice.jetty.JettyServer;
+import com.flightstats.jerseyguice.metrics.GraphiteConfig;
+import com.flightstats.jerseyguice.metrics.GraphiteConfigImpl;
+import com.google.inject.servlet.GuiceServletContextListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.servlet.DispatcherType;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.EnumSet;
+import java.net.URL;
 import java.util.Properties;
 
 /**
@@ -20,60 +21,21 @@ import java.util.Properties;
  */
 public class DataHubMain {
 
-	private static final String DEFAULT_HOST = "0.0.0.0";
-	private static final int DEFAULT_PORT = 8080;
-	private static final int DEFAULT_IDLE_TIMEOUT = 30000;
-	public static final String DATAHUB_PROPERTIES_FILENAME = "datahub.properties";
+    private static final Logger logger = LoggerFactory.getLogger(DataHubMain.class);
 
-	public static void main(String[] args) throws Exception {
-		// Bridge java.util.logging over to slf4j (for Jersey and Guice mostly)
-		SLF4JBridgeHandler.removeHandlersForRootLogger();
-		SLF4JBridgeHandler.install();
+    public static void main(String[] args) throws Exception {
 
-		Server server = new Server();
+        Properties properties = loadProperties(args);
+        final JettyConfig jettyConfig = new JettyConfigImpl(properties);
+        final GuiceServletContextListener guice = GuiceContextListenerFactory.construct(properties);
+        new JettyServer(jettyConfig, guice).start();
+    }
 
-		HttpConfiguration httpConfig = new HttpConfiguration();
-
-		ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
-
-		ServerConnector serverConnector = new ServerConnector(server, connectionFactory);
-
-		//TODO: Don't hard code these here.
-		serverConnector.setHost(DEFAULT_HOST);
-		serverConnector.setPort(DEFAULT_PORT);
-		serverConnector.setIdleTimeout(DEFAULT_IDLE_TIMEOUT);
-
-		server.setConnectors(new Connector[]{serverConnector});
-
-		ServletContextHandler rootContextHandler = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
-
-		Properties properties = loadProperties(args);
-		GuiceConfig guiceConfig = new GuiceConfig(properties);
-		rootContextHandler.addEventListener(guiceConfig);
-		rootContextHandler.addFilter(GuiceFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
-		rootContextHandler.addServlet(EmptyServlet.class, "/*");
-
-		server.start();
-		server.join();
-	}
-
-	//TODO: This basically exists in the Users project as the PropertiesLoader.  We should eventually
-	//consolidate this code and eliminate duplication.
-	private static Properties loadProperties(String[] args) throws IOException {
-		try (InputStream in = openInputStream(args)) {
-			Properties properties = new Properties();
-			properties.load(in);
-			return properties;
-		} catch (IOException e) {
-			throw new RuntimeException("Error loading properties.", e);
-		}
-	}
-
-	private static InputStream openInputStream(String[] args) throws FileNotFoundException {
-		if (args.length == 0) {
-			return Thread.currentThread().getContextClassLoader().getResourceAsStream(DATAHUB_PROPERTIES_FILENAME);
-		}
-		return new FileInputStream(args[0]);
-	}
-
+    private static Properties loadProperties(String[] args) throws IOException {
+        if (args.length > 0) {
+            return PropertyConfiguration.loadProperties(new File(args[0]), true, logger);
+        }
+        URL resource = DataHubMain.class.getResource("/default.properties");
+        return PropertyConfiguration.loadProperties(resource, true, logger);
+    }
 }
