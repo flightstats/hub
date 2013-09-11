@@ -78,7 +78,7 @@ describe('Create Channel: ', function(){
             expect(createRes.status).to.equal(gu.HTTPresponses.Created);
         });
 
-        it.only('channel uri is correct', function(done) {
+        it('channel uri is correct', function(done) {
 
             dhh.getChannel({'uri': channelUri}, function(res) {
                 expect(res.status).to.equal(gu.HTTPresponses.OK);

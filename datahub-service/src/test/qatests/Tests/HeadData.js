@@ -43,21 +43,21 @@ describe('HEAD on data tests:', function() {
 
             async.series([
                 function(callback){
-                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
                         callback(null,null);
                     });
                 },
                 function(callback){
-                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
                         callback(null,null);
                     });
                 },
                 function(callback){
-                    dhh.postFileToChannel({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         thirdValueUri = myUri;
 

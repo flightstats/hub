@@ -13,10 +13,13 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
 
 var channelName,
     channelUri,
-    numExtraPosterBots = 100,
+    numExtraPosterBots = 10,
+
+    // if this is true, then the test will not blow up if the main bot tries to create a channel that already exists.
+    allowExistingChannel = true,
     DEBUG = true;
 
-describe.only('RESTful Scenarios', function() {
+describe('RESTful Scenarios', function() {
 
     var mainChannelUri,
 //        mainChannelName = dhh.getRandomChannelName();
@@ -41,7 +44,7 @@ describe.only('RESTful Scenarios', function() {
             myLatestPollBot = {},
             myRSSFeedPosterBot = {},
             myExtraPosterBots = [],
-            mainTTL = 120,
+            mainTTL = 15,
             allDependentBots = [];  // contains all bots other than mainPosterBot
 
         before(function() {
@@ -118,7 +121,7 @@ describe.only('RESTful Scenarios', function() {
 
                         var payload = ranU.randomString(100);
 
-                        dhh.postFileToChannel({channelUri: channelUri, data: payload, debug: VERBOSE}, function(postRes, dataUri) {
+                        dhh.postData({channelUri: channelUri, data: payload, debug: VERBOSE}, function(postRes, dataUri) {
                             expect(gu.isHTTPSuccess(postRes.status)).to.be.true;
 
                             dhh.getLatestUri(channelUri, function(latestUri, latestError) {

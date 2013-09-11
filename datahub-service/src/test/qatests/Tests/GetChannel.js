@@ -34,7 +34,7 @@ describe('GET Channel metadata:', function() {
                 expect(gu.isHTTPSuccess(makeRes.status)).to.equal(true);
                 cnUri = channelUri;
 
-                dhh.postFileToChannel({channelUri: channelUri, data: ranU.randomString(ranU.randomNum(51))}, function(postRes, myUri) {
+                dhh.postData({channelUri: channelUri, data: ranU.randomString(ranU.randomNum(51))}, function(postRes, myUri) {
                     expect(gu.isHTTPSuccess(postRes.status)).to.equal(true);
 
                     dhh.getChannel({'uri': channelUri} , function(cnRes) {
