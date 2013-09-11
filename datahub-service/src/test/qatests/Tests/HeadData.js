@@ -26,6 +26,7 @@ var channelName,
 var firstValueUri, secondValueUri, thirdValueUri;
 
 describe('HEAD on data tests:', function() {
+    var payload1, payload2, payload3;
 
     before(function(myCallback){
         channelName = dhh.getRandomChannelName();
@@ -40,24 +41,31 @@ describe('HEAD on data tests:', function() {
 
             channelUri = cnUri;
             console.log('Main test channel:'+ channelName);
+            payload1 = ranU.randomString(5 + ranU.randomNum(50), ranU.limitedRandomChar);
+            payload2 = ranU.randomString(5 + ranU.randomNum(50), ranU.limitedRandomChar);
+            payload3 = ranU.randomString(5 + ranU.randomNum(50), ranU.limitedRandomChar);
+
+            gu.debugLog('Payload1: '+ payload1, false);
+            gu.debugLog('Payload2: '+ payload2);
+            gu.debugLog('Payload3: '+ payload3, false);
 
             async.series([
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: payload1}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         firstValueUri = myUri;
                         callback(null,null);
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: payload2}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         secondValueUri = myUri;
                         callback(null,null);
                     });
                 },
                 function(callback){
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                    dhh.postData({channelUri: channelUri, data: payload3}, function(res, myUri) {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         thirdValueUri = myUri;
 
@@ -80,7 +88,8 @@ describe('HEAD on data tests:', function() {
     //      envelope or something). So the 'Accept-Encoding' header needs to be set to 'identity' to get the item as-is.
     it('Acceptance: HEAD returns all expected headers for item with siblings in a channel', function(done) {
         var getHeaders,
-            headHeaders;
+            headHeaders,
+            VERBOSE = true;
 
         superagent.agent().get(secondValueUri)
             .set('Accept-Encoding', 'identity')
@@ -92,7 +101,7 @@ describe('HEAD on data tests:', function() {
                     .end(function(err2, res2) {
                         headHeaders = res2.headers;
 
-                        if (!gu.dictCompare(getHeaders, headHeaders)) {
+                        if ((!gu.dictCompare(getHeaders, headHeaders)) || (VERBOSE)) {
                             gu.debugLog('Dump of getHeaders, headHeaders.\ngetHeaders: ');
                             console.dir(getHeaders);
                             gu.debugLog('headHeaders: ');
@@ -125,4 +134,17 @@ describe('HEAD on data tests:', function() {
             });
     });
 
+    // Have to use basic chars to ensure that they are single-byte encoded
+    it('HEAD returns correct content length', function(done) {
+        superagent.agent().head(secondValueUri)
+            .set('Accept-Encoding', 'identity')
+            .end(function(err, res) {
+                var contentLength = res.headers['content-length'];
+                expect(contentLength).to.equal(payload2.length.toString());
+
+                done();
+            })
+    })
+
 })
+
