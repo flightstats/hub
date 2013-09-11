@@ -217,7 +217,8 @@ describe('Channel Subscription:', function() {
     // Attach a listener to each instance and to the load balancer, all on the same channel.
     // Insert items in parallel into that channel, directly into each instance and into the load balancer.
     // Ensure that the messages are reported in order.
-    it('BUG: https://www.pivotaltracker.com/story/show/52726289 - HA: multiple parallel updates with a socket ' +
+    // https://www.pivotaltracker.com/story/show/52726289
+    it('HA: multiple parallel updates with a socket ' +
         'on each DH instance and the load balancer are reported in order', function(done) {
 
         // Configurable items
@@ -225,6 +226,9 @@ describe('Channel Subscription:', function() {
                 {'host':'datahub-01.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, socket: null},
                 {'host':'datahub-02.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, socket: null},
                 {'host':'datahub-03.cloud-east.dev:8080', 'cnUri': null, 'wsUri': null, socket: null},
+//                {'host':'datahub-01.cloud-east.staging:8080', 'cnUri': null, 'wsUri': null, socket: null},
+//                {'host':'datahub-02.cloud-east.staging:8080', 'cnUri': null, 'wsUri': null, socket: null},
+//                {'host':'datahub-03.cloud-east.staging:8080', 'cnUri': null, 'wsUri': null, socket: null},
                 {'host':LOAD_BALANCER_HOSTNAME, 'cnUri': null, 'wsUri': null, socket: null}
             ],
             lbchannelUri = makeCnUri(LOAD_BALANCER_HOSTNAME),
