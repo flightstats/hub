@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'application'
 apply plugin: 'jacoco'
-apply from: 'common-utils.gradle'
+apply from:'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-utils-1.0.1.gradle'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -18,7 +18,7 @@ def snapshotVersion = version + "-SNAPSHOT"
 
 project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
 
-apply from: 'common.gradle'
+apply from:'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-1.0.1.gradle'
 
 if (project.ext.isDevBuild) {
     def buildNumber = "dev";
@@ -45,6 +45,7 @@ buildscript {
 }
 
 configurations {
+    all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
     publish
     publishDev
     integrationTests
@@ -88,42 +89,19 @@ distTar {
 task deployDev << {
     description = "Deploys the distribution to the development environment"
     runExternal("${projectDir}/bin/restart-dev-vpc.sh")
-
-    println "Deploying to crypto-proxy-01.cloud-east.dev"
-    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-01.cloud-east.dev")
-
-    println "Deploying to crypto-proxy-02.cloud-east.dev"
-    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-02.cloud-east.dev")
-
-    println "Deploying to crypto-proxy-03.cloud-east.dev"
-    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-03.cloud-east.dev")
+    doCtDeploy("datahub-01.cloud-east.dev", "datahub-02.cloud-east.dev", "datahub-03.cloud-east.dev")
 }
 
 task deployStaging << {
     description = "Deploys the distribution to the staging environment"
     copyTarballToDistributions(configurations.deployStaging)
-    println "Deploying to crypto-proxy-01.cloud-east.staging"
-    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-01.cloud-east.staging")
-
-    println "Deploying to crypto-proxy-02.cloud-east.staging"
-    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-02.cloud-east.staging")
-
-    println "Deploying to crypto-proxy-03.cloud-east.staging"
-    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-03.cloud-east.staging")
+    doCtDeploy("datahub-01.cloud-east.staging", "datahub-02.cloud-east.staging", "datahub-03.cloud-east.staging")
 }
 
 task deployProduction << {
     description = "Deploys the distribution to the production environment"
     copyTarballToDistributions(configurations.deployProduction)
-
-    println "Deploying to crypto-proxy-01.cloud-east.prod"
-    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-01.cloud-east.prod")
-
-    println "Deploying to crypto-proxy-02.cloud-east.prod"
-    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-02.cloud-east.prod")
-
-    println "Deploying to crypto-proxy-03.cloud-east.prod"
-    runExternal("${projectDir}/bin/ctdeploy.sh crypto-proxy-03.cloud-east.prod")
+    doCtDeploy("datahub-01.cloud-east.prod", "datahub-02.cloud-east.prod", "datahub-03.cloud-east.prod")
     incrementVersionFile()
     commitVersionFileAndPush()
 }
