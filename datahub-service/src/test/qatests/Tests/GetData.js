@@ -429,7 +429,6 @@ describe('GET data:', function() {
         // TODO: if the only remaining item in a channel expires and is cleaned up, then get latest should return 404
     });
 
-
     describe('Content type:', function() {
 
         var postDataAndConfirmContentType = function(channelUri, myContentType, callback) {
@@ -557,7 +556,7 @@ describe('GET data:', function() {
                 dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
                     expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
-                    dhh.getDataFromChannel({uri: dataUri, accepts: 'image/gif'}, function(err, getRes, data) {
+                    dhh.getDataFromChannel({uri: dataUri, headers: {accept: 'image/gif'}}, function(err, getRes, data) {
                         expect(getRes.statusCode).to.equal(gu.HTTPresponses.Not_Acceptable);
 
                         done();
@@ -571,7 +570,7 @@ describe('GET data:', function() {
                 dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
                     expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
-                    dhh.getDataFromChannel({uri: dataUri, accepts: '*/*'}, function(err, getRes, data) {
+                    dhh.getDataFromChannel({uri: dataUri, headers: {accept: '*/*'}}, function(err, getRes, data) {
                         expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
 
                         done();
@@ -585,7 +584,7 @@ describe('GET data:', function() {
                 dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
                     expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
-                    dhh.getDataFromChannel({uri: dataUri, accepts: '*/*, image/gif'}, function(err, getRes, data) {
+                    dhh.getDataFromChannel({uri: dataUri, headers: {accept: '*/*, image/gif'}}, function(err, getRes, data) {
                         expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
 
                         done();
@@ -599,7 +598,7 @@ describe('GET data:', function() {
                 dhh.postData({channelUri: mainChannelUri, data: dhh.getRandomPayload()}, function(postRes, dataUri) {
                     expect(postRes.status).to.equal(gu.HTTPresponses.Created);
 
-                    dhh.getDataFromChannel({uri: dataUri, accepts: 'application/*'}, function(err, getRes, data) {
+                    dhh.getDataFromChannel({uri: dataUri, headers: {accept: 'application/*'}}, function(err, getRes, data) {
                         expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
 
                         done();

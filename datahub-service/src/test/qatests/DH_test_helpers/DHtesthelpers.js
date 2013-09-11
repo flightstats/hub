@@ -453,24 +453,23 @@ exports.getLatestDataFromChannel = getLatestDataFromChannel;
 /**
  * Git yo data from the channel.
  *
- * @param params: .uri (to the data), .accepts (optional - split multiple options with semicolons), .debug (optional)
+ * @param params: .uri (to the data), .debug (optional), .headers object (optional) - for usage, see docs on http.request
  * @param callback: error || null, response (note this is not the same as SuperAgent's response; check .statusCode for status), data
  */
 var getDataFromChannel = function(params, callback) {
 
     var myData = '',
         dataUri = params.uri,
-        accepts = params.accepts || null,
+//        accepts = params.accepts || null,
+        headers = params.headers || null,
         VERBOSE = (undefined !== params.debug) ? params.debug : false;
 
     gu.debugLog('DataUri in getDataFromChannel(): '+ dataUri);
 
     var options = url.parse(dataUri);
 
-    if (null != accepts) {
-        options['headers'] = {
-            accept: accepts
-        };
+    if (null != headers) {
+        options['headers'] = headers;
     }
 
     if (VERBOSE) {
