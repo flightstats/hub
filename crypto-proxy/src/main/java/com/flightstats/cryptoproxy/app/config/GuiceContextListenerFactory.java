@@ -15,6 +15,12 @@ import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
 import org.jetbrains.annotations.NotNull;
 
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Properties;
 
 public class GuiceContextListenerFactory {
@@ -69,6 +75,33 @@ public class GuiceContextListenerFactory {
             client.setConnectTimeout(connectTimeoutSec * 1000);
             client.setReadTimeout(readTimeoutSec * 1000);
             return client;
+        }
+
+        @Inject
+        @Provides
+        public Cipher buildCipher() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchAlgorithmException {
+            // TODO: configurable params
+            String transformation="AES";
+
+            Cipher cipher = Cipher.getInstance(transformation);
+            return cipher;
+        }
+
+        @Inject
+        @Provides
+        public SecretKey buildSecretKey() throws NoSuchAlgorithmException {
+            // TODO: configurable params
+            String passphrase = "TheSecretKey";
+            int keyLength = 128;
+            String keyGeneratorAlgorithm = "AES";
+            String secureRandomAlgorithm = "SHA1PRNG";
+
+            KeyGenerator kgen = KeyGenerator.getInstance(keyGeneratorAlgorithm);
+            SecureRandom sr = SecureRandom.getInstance(secureRandomAlgorithm);
+            sr.setSeed(passphrase.getBytes());
+            kgen.init(keyLength, sr);
+            SecretKey skey = kgen.generateKey();
+            return skey;
         }
     }
 }
