@@ -35,7 +35,7 @@ describe('TTL Deletion', function() {
         var channel = params.channel,
             payload = {channelUri: channel.getChannelUri(), data: dhh.getRandomPayload()};
 
-        dhh.postFileToChannel(payload, function(response) {
+        dhh.postData(payload, function(response) {
             if (!gu.isHTTPSuccess(response.status)) {
                 gu.debugLog('Error posting data: '+ response.status);
             }

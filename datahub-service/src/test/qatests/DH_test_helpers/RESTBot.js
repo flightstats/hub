@@ -285,7 +285,7 @@ var botCreateChannel = function(theBot, callback) {
             if (gu.isHTTPError(res.status)) {
                 callback('Wrong status in botCreateChannel(): '+ res.status);
             }
-            else {
+            else {  // Created successfully
                 var cnMetadata = new dhh.channelMetadata(res.body),
                     location = cnMetadata.getChannelUri();
 

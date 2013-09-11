@@ -204,7 +204,7 @@ var createChannel = function(params, myCallback) {
         payload = {name: cnName},
         domain = params.domain || DOMAIN,
         uri = ['http:/', domain, 'channel'].join('/'),
-        VERBOSE = (undefined !== params.debug) ? params.debug : false;
+        VERBOSE = (undefined !== params.debug) ? params.debug : true;
 
     if (params.hasOwnProperty('ttlMillis')) {
         payload['ttlMillis'] = params.ttlMillis;
@@ -503,7 +503,7 @@ var getDataFromChannel = function(params, callback) {
 exports.getDataFromChannel = getDataFromChannel;
 
 /**
- * Gets list of all uris and their data for in a channel that come after the passed-in 'start' uri.
+ * Gets list of all uris and their data in a channel from the passed-in 'start' uri and any more recent.
  *
  * @param params: .startUri, .debug (optional)
  * @param callback: err, array = [{uri: , data: }, {uri: , data: }, etc.]. Array is ordered starting with oldest data
@@ -512,7 +512,7 @@ exports.getDataFromChannel = getDataFromChannel;
 var getUrisAndDataSinceLocation = function(params, callback) {
     var startUri = params.startUri,
         dataList = [],
-        VERBOSE = (undefined !== params.debug) ? params.debug : true;
+        VERBOSE = (undefined !== params.debug) ? params.debug : false;
 
     // First Uri, get data, stash both
     getDataFromChannel({uri: startUri}, function(err, getRes, data) {
