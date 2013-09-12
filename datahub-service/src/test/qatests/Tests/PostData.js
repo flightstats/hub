@@ -172,18 +172,65 @@ describe('POST data to channel:', function(){
                 expect(res.status).to.equal(gu.HTTPresponses.Created);
                 uriCreatedWithGzip = uri;
 
-                dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res2, uri2) {
+                var headers = {'Accept-Encoding':'identity'},
+                    params = {channelUri: channelUri,
+                        data: dhh.getRandomPayload(),
+                        headers: headers
+                    };
+
+                dhh.postData(params, function(res2, uri2) {
                     expect(res2.status).to.equal(gu.HTTPresponses.Created);
-                    uriCreatedWithIdentity
+                    uriCreatedWithIdentity = uri2;
+
+                    done();
                 })
             })
         })
 
-        // TODO: acc-enc set to gzip --> send with gzip
-        // TODO: acc-enc not set --> send without anything
-        // TODO: acc-enc set to identity --> send with identity
-        // TODO: POST with enc set to gzip, request without specifying, should be sent without gzip
-        // TODO: POST with enc set to identity, request with gzip, should be sent *with* gzip
+        it('requesting gzip returns gzip', function(done) {
+            dhh.getDataFromChannel({uri: uriCreatedWithGzip, headers: {'Accept-Encoding': 'gzip'}}, function(err, res) {
+                expect(res.headers['content-encoding'].toLowerCase()).to.equal('gzip');
+                expect(res.statusCode).to.equal(gu.HTTPresponses.OK);
+
+                done();
+            })
+        })
+
+        it('requesting with an empty accept-encoding does not return gzip', function(done) {
+            dhh.getDataFromChannel({uri: uriCreatedWithIdentity, headers: {'Accept-Encoding': ''}}, function(err, res) {
+                expect(res.headers.hasOwnProperty('content-encoding')).to.be.false;
+                expect(res.statusCode).to.equal(gu.HTTPresponses.OK);
+
+                done();
+            })
+        })
+
+        it('requesting identity returns no content-encoding', function(done) {
+            dhh.getDataFromChannel({uri: uriCreatedWithIdentity, headers: {'Accept-Encoding': 'identity'}}, function(err, res) {
+                expect(res.headers.hasOwnProperty('content-encoding')).to.be.false;
+                expect(res.statusCode).to.equal(gu.HTTPresponses.OK);
+
+                done();
+            })
+        })
+
+        it('item posted with gzip then requested without specifying acc-enc does not return gzip', function(done) {
+            dhh.getDataFromChannel({uri: uriCreatedWithGzip, headers: {'Accept-Encoding': ''}}, function(err, res) {
+                expect(res.headers.hasOwnProperty('content-encoding')).to.be.false;
+                expect(res.statusCode).to.equal(gu.HTTPresponses.OK);
+
+                done();
+            })
+        })
+
+        it('item posted with identity then requested with gzip returns gzip', function(done) {
+            dhh.getDataFromChannel({uri: uriCreatedWithIdentity, headers: {'Accept-Encoding': 'gzip'}}, function(err, res) {
+                expect(res.headers['content-encoding'].toLowerCase()).to.equal('gzip');
+                expect(res.statusCode).to.equal(gu.HTTPresponses.OK);
+
+                done();
+            })
+        })
     })
 
     describe('Scenarios', function() {
