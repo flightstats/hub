@@ -68,7 +68,6 @@ public class GuiceContextListenerFactory {
         protected void configure() {
         }
 
-        @Inject
         @Provides
         public static Client buildRestClient(@Named("restclient.connect.timeout.seconds") int connectTimeoutSec, @Named("restclient.read.timeout.seconds") int readTimeoutSec) {
             Client client = Client.create();
@@ -77,7 +76,6 @@ public class GuiceContextListenerFactory {
             return client;
         }
 
-        @Inject
         @Provides
         public Cipher buildCipher() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchAlgorithmException {
             // TODO: configurable params
@@ -87,7 +85,6 @@ public class GuiceContextListenerFactory {
             return cipher;
         }
 
-        @Inject
         @Provides
         public SecretKey buildSecretKey() throws NoSuchAlgorithmException {
             // TODO: configurable params
