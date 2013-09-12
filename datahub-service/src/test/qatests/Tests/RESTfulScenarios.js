@@ -13,7 +13,7 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
 
 var channelName,
     channelUri,
-    numExtraPosterBots = 10,
+    numExtraPosterBots = 100,
 
     // if this is true, then the test will not blow up if the main bot tries to create a channel that already exists.
     allowExistingChannel = true,
@@ -23,7 +23,7 @@ describe('RESTful Scenarios', function() {
 
     var mainChannelUri,
 //        mainChannelName = dhh.getRandomChannelName();
-        newChannelName = 'ActiveChannel3';
+        newChannelName = 'ActiveChannel5';
 
     before(function(done) {
 
@@ -44,7 +44,7 @@ describe('RESTful Scenarios', function() {
             myLatestPollBot = {},
             myRSSFeedPosterBot = {},
             myExtraPosterBots = [],
-            mainTTL = 15,
+            mainTTL = 45,
             allDependentBots = [];  // contains all bots other than mainPosterBot
 
         before(function() {

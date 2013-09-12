@@ -401,22 +401,23 @@ exports.packetPOSTHeader = packetPOSTHeader;
 /**
  * Inserts data into channel.
  *
- * @param params: .channelUri, .data, .contentType=application/x-www-form-urlencoded (optional), .debug=true
+ * @param params: .channelUri, .data, .headers=(optional), if provided, then will be set on the superagent request,
+ *  .debug=true
  * @param myCallback: response, uri to data
  */
 var postData = function(params, myCallback) {
     var dataUri = null,
         channelUri = params.channelUri,
         myData = params.data,
-        contentType = params.contentType || 'application/x-www-form-urlencoded',
-        VERBOSE = (undefined !== params.debug) ? params.debug : false;
+        headers = ('undefined' != typeof params.headers) ? params.headers : {'Content-Type': 'application/x-www-form-urlencoded'},
+        VERBOSE = ('undefined' != typeof params.debug) ? params.debug : false;
 
 
     gu.debugLog('Channel Uri: '+ channelUri, VERBOSE);
     gu.debugLog('Data: '+ myData, VERBOSE);
 
     superagent.agent().post(channelUri)
-        .set('Content-Type', contentType)
+        .set(headers)
         .send(myData)
         .end(function(err, res) {
             if (!gu.isHTTPSuccess(res.status)) {
