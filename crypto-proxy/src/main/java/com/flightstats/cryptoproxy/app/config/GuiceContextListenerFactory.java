@@ -77,7 +77,7 @@ public class GuiceContextListenerFactory {
         }
 
         @Provides
-        public Cipher buildCipher() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchAlgorithmException {
+        public static Cipher buildAESCipher() throws NoSuchPaddingException, NoSuchAlgorithmException {
             // TODO: configurable params
             String transformation="AES";
 
@@ -85,8 +85,9 @@ public class GuiceContextListenerFactory {
             return cipher;
         }
 
+        @Singleton
         @Provides
-        public SecretKey buildSecretKey() throws NoSuchAlgorithmException {
+        public static SecretKey buildSecretKey() throws NoSuchAlgorithmException {
             // TODO: configurable params
             String passphrase = "TheSecretKey";
             int keyLength = 128;
