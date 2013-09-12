@@ -52,7 +52,7 @@ var Bot = function Bot(params) {
     this.socket = null;         // dhh.WSWrapper. Instantiated within the botSubscribe() method
     this.broadcastBot = null;   // handle to a different Bot that this Bot will subscribe to
     this.eventEmitter = new events.EventEmitter();
-    this.reportLevel = (undefined != params.reportLevel) ? params.reportLevel : REPORT_LEVEL.SHY;
+    this.reportLevel = (undefined != params.reportLevel) ? params.reportLevel : REPORT_LEVEL.SHY;;
 
     // These are all used to enable sequential REST operations.
     this.dataUri = null;        // set to the data location
@@ -66,7 +66,10 @@ var Bot = function Bot(params) {
         requiredParams = ['description', 'behaviors'],
         actionQueue = [],   // queue of objects with two properties: .wait in ms to wait before executing function, and .action, the function to run
         lastAction = (params.lastAction) ? params.lastAction : null,    // function pointer
-        initialAction = (params.initialAction) ? params.initialAction : null;
+        initialAction = (params.initialAction) ? params.initialAction : null,
+        birthMoment = null,
+        deathMoment = null,
+        statistics = {};    // e.g., postCounts, postTotalTime, channelCreationCounts, etc.
 
     // Check parameters for any errors.
     lodash.forEach(requiredParams, function(p) {
@@ -87,6 +90,25 @@ var Bot = function Bot(params) {
         gu.debugLog('Bot Dump: ');
         console.dir(_self);
     }
+
+    // For stats gathering. Action isn't an enum, just a string reported by each botAction function.
+    this.setStat = function(action, didSucceed, time) {
+        if (!statistics.hasOwnProperty(action)) {
+            statistics[action] = {
+                totalTime: 0,
+                pass: 0,
+                fail: 0
+            }
+        }
+               
+        if (didSucceed) {
+            statistics[action]['pass'] += 1;
+            statistics[action]['totalTime'] += time;
+        }
+        else {
+            statistics[action]['fail'] += 1;
+        }
+    };
 
     // Call this to add new actionObject (.wait, .action) to queue and emit the event
     var addAction = function(actionObj) {
@@ -145,6 +167,7 @@ var Bot = function Bot(params) {
 
     // Initializer. Sets .channelUri and sets next action for the bot.
     this.wakeUp = function() {
+        birthMoment = moment();
         _self.report('Waking up!');
 
         // If .channelUri isn't already set, set it to that of the .broadcastBot
@@ -195,6 +218,10 @@ var Bot = function Bot(params) {
             _self.report('...closing socket.', REPORT_LEVEL.SOCIAL);
             _self.socket.ws.close();
         }
+
+        // Gather and report statistics
+        deathMoment = moment();
+
 
         _self.eventEmitter.emit('terminate');
     }
@@ -248,14 +275,22 @@ var getNextAction = function(behaviors) {
 
 // Helper method for all data post actions
 var _botPost = function(theBot, data, callback) {
+    var start = moment(),
+        delta = -1,
+        name = 'post';
 
     superagent.agent().post(theBot.channelUri)
         .send(data)
         .end(function(err, res) {
             if (!gu.isHTTPSuccess(res.status)) {
+                theBot.setStat(name, false, 0);
+
                 callback('Wrong status in _botPost(): '+ res.status);
             }
             else {
+                delta = moment().diff(start);
+                theBot.setStat(name, true, delta);
+
                 theBot.lastDataPosted = data;
 
                 var pMetadata = new dhh.packetMetadata(res.body);

@@ -79,7 +79,8 @@ describe('POST data to channel:', function(){
     describe('Acceptance', function() {
         var mainPayload,
             mainResponse,
-            mainDataUri;
+            mainDataUri,
+            VERBOSE = false;
 
         before(function(done) {
 
@@ -89,6 +90,11 @@ describe('POST data to channel:', function(){
                 mainResponse = res;
                 mainDataUri = dataUri;
                 gu.debugLog('Acceptance Data Uri: '+ mainDataUri);
+
+                if (VERBOSE) {
+                    gu.debugLog('Acceptance headers: ');
+                    console.dir(res.headers);
+                }
 
                 done();
             });
@@ -155,6 +161,29 @@ describe('POST data to channel:', function(){
                 done();
             });
         });
+    })
+
+    describe('Content-Encoding tests', function() {
+        var uriCreatedWithGzip,
+            uriCreatedWithIdentity;
+
+        before(function(done) {
+            dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
+                expect(res.status).to.equal(gu.HTTPresponses.Created);
+                uriCreatedWithGzip = uri;
+
+                dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res2, uri2) {
+                    expect(res2.status).to.equal(gu.HTTPresponses.Created);
+                    uriCreatedWithIdentity
+                })
+            })
+        })
+
+        // TODO: acc-enc set to gzip --> send with gzip
+        // TODO: acc-enc not set --> send without anything
+        // TODO: acc-enc set to identity --> send with identity
+        // TODO: POST with enc set to gzip, request without specifying, should be sent without gzip
+        // TODO: POST with enc set to identity, request with gzip, should be sent *with* gzip
     })
 
     describe('Scenarios', function() {
