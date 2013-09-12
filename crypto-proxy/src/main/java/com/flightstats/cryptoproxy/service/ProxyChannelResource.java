@@ -2,9 +2,11 @@ package com.flightstats.cryptoproxy.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import com.flightstats.cryptoproxy.security.AESCipher;
+import com.flightstats.cryptoproxy.security.AESDecryptionCipher;
+import com.flightstats.cryptoproxy.security.AESEncryptionCipher;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.sun.jersey.api.client.ClientResponse;
 
 import javax.inject.Named;
@@ -23,12 +25,17 @@ public class ProxyChannelResource {
 
     private final URI datahubLocation;
     private final RestClient restClient;
-    private final AESCipher cipher;
+    private final Provider<AESDecryptionCipher> decryptionCipherProvider;
+    private final Provider<AESEncryptionCipher> encryptionCipherProvider;
 
     @Inject
-    public ProxyChannelResource(@Named("datahub.uri") String datahubLocation, RestClient restClient, AESCipher cipher)
+    public ProxyChannelResource(@Named("datahub.uri") String datahubLocation,
+                                RestClient restClient,
+                                Provider<AESEncryptionCipher> encryptionCipherProvider,
+                                Provider<AESDecryptionCipher> decryptionCipherProvider)
             throws URISyntaxException {
-        this.cipher = cipher;
+        this.decryptionCipherProvider = decryptionCipherProvider;
+        this.encryptionCipherProvider = encryptionCipherProvider;
         this.datahubLocation = new URI(datahubLocation);
         this.restClient = restClient;
     }
@@ -48,7 +55,7 @@ public class ProxyChannelResource {
         MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
         ClientResponse clientResponse = restClient.get(datahubUri, requestHeaders);
 
-        byte[] decryptedEntity = cipher.decrypt(clientResponse.getEntity(byte[].class));
+        byte[] decryptedEntity = decryptionCipherProvider.get().decrypt(clientResponse.getEntity(byte[].class));
 
         Response.ResponseBuilder responseBuilder = createResponseBuilderWithoutEntity(clientResponse)
                 .entity(decryptedEntity);
@@ -65,7 +72,7 @@ public class ProxyChannelResource {
                                 @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) throws Exception {
 
-        byte[] encryptedEntity = cipher.encrypt(data);
+        byte[] encryptedEntity = encryptionCipherProvider.get().encrypt(data);
 
         URI datahubUri = adjustDatahubUri(uriInfo);
         MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
