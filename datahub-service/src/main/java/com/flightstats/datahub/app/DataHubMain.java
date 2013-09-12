@@ -5,8 +5,6 @@ import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
 import com.flightstats.jerseyguice.jetty.JettyConfig;
 import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
 import com.flightstats.jerseyguice.jetty.JettyServer;
-import com.flightstats.jerseyguice.metrics.GraphiteConfig;
-import com.flightstats.jerseyguice.metrics.GraphiteConfigImpl;
 import com.google.inject.servlet.GuiceServletContextListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
