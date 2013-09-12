@@ -5,6 +5,7 @@ var expect = chai.expect;
 var superagent = require('superagent');
 var async = require('async');
 var lodash = require('lodash');
+var moment = require('moment');
 
 var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
     ranU = require('../randomUtils.js'),
@@ -13,17 +14,94 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
 
 var channelName,
     channelUri,
-    numExtraPosterBots = 100,
+    numExtraPosterBots = 10,
+    mainTTL = 30,
 
     // if this is true, then the test will not blow up if the main bot tries to create a channel that already exists.
-    allowExistingChannel = true,
+    makeNewChannel = true,
     DEBUG = true;
 
 describe('RESTful Scenarios', function() {
 
     var mainChannelUri,
+        aggregateStats = {
+            totalBots: 0,
+            totalBotLifetime: 0,
+            runTime: 0,
+            totalActions: 0
+        },    // Stats aggregated by action
 //        mainChannelName = dhh.getRandomChannelName();
-        newChannelName = 'ActiveChannel5';
+        start = null,
+        newChannelName = 'ActiveChannel21';
+
+
+    var reportStats = function(theStats) {
+        gu.debugLog('************   Statistics - by bot  *************************************');
+        lodash.forOwn(theStats, function(val, botName) {
+            var lifetime = val['death'].diff(val['birth']);
+            aggregateStats.totalBots += 1;
+            aggregateStats.totalBotLifetime += lifetime;
+
+            gu.debugLog('Stats for bot "'+ botName +'":');
+            gu.debugLog('Lifetime (ms): '+ lifetime);
+
+            lodash.forOwn(val['statistics'], function(val, action) {
+                var pass = Number(val['pass']),
+                    fail = Number(val['fail']),
+                    totalTime = Number(val['totalTime']);
+
+                gu.debugLog(action);
+                gu.debugLog('Successful attempts: '+ pass);
+                gu.debugLog('Failed attempts: '+ fail);
+                gu.debugLog('Total time (ms) for all successful attempts: '+ totalTime);
+                gu.debugLog('Avg time per successful attempt: '+ totalTime / pass +'\n');
+                gu.debugLog('% lifetime spent on action: '+ (Math.round((totalTime / lifetime) * 1000))/10 +'%');
+
+                aggregateStats.totalActions += (pass + fail);
+
+                if (!aggregateStats.hasOwnProperty(action)) {
+                    aggregateStats[action] = {
+                        'totalTime': totalTime,
+                        'pass': pass,
+                        'fail': fail
+                    }
+                }
+                else {
+                    aggregateStats[action]['totalTime'] += totalTime;
+                    aggregateStats[action]['pass'] += pass;
+                    aggregateStats[action]['fail'] += fail;
+                }
+            })
+
+            gu.debugLog('*******************************************************');
+        })
+
+        var testRunSeconds = Math.round(aggregateStats.runTime / 1000);
+
+        gu.debugLog('************   Statistics - aggregated  *************************************');
+        gu.debugLog('Total test run (from creating first channel to end) in seconds: '+ testRunSeconds);
+        gu.debugLog('Total actions taken: '+ aggregateStats.totalActions);
+        gu.debugLog('Average number of actions per second: '+ aggregateStats.totalActions / testRunSeconds);
+        gu.debugLog('Total number of bots: '+ aggregateStats.totalBots);
+        gu.debugLog('Average bot lifetime: '+ Math.round(aggregateStats.totalBotLifetime / aggregateStats.totalBots));
+
+        lodash.forOwn(aggregateStats, function(val, action) {
+            if (
+                !lodash.contains(['totalBots', 'totalBotLifetime', 'runTime', 'totalActions'], action)
+//                ('totalBots' != action) && ('totalBotLifetime' != action)
+                ) {
+                var pass = Number(aggregateStats[action]['pass']),
+                    fail = Number(aggregateStats[action]['fail']),
+                    totalTime = Number(aggregateStats[action]['totalTime']);
+
+                gu.debugLog('\nAction: '+ action);
+                gu.debugLog(pass +' successful attempts');
+                gu.debugLog(fail +' failed attempts');
+                gu.debugLog('total time (ms): '+ totalTime);
+                gu.debugLog('average time per successful attempt (ms): '+ Math.round(totalTime / pass));
+            }
+        })
+    }
 
     before(function(done) {
 
@@ -44,11 +122,11 @@ describe('RESTful Scenarios', function() {
             myLatestPollBot = {},
             myRSSFeedPosterBot = {},
             myExtraPosterBots = [],
-            mainTTL = 45,
-            allDependentBots = [];  // contains all bots other than mainPosterBot
+            allDependentBots = [],  // contains all bots other than mainPosterBot
+            allStatistics = {};
 
         before(function() {
-            mainPosterBot = bot.makeMainPosterBot(mainTTL + 10);
+            mainPosterBot = bot.makeMainPosterBot(mainTTL + 15);
             mainPosterBot.channelName = newChannelName;
 
             mySubscriberBot = bot.makeSubscriberBot(mainTTL);
@@ -56,6 +134,7 @@ describe('RESTful Scenarios', function() {
             myLatestPollBot = bot.makeLatestPollingBot(mainTTL);
             myIntegerPosterBot = bot.makeIntegerPosterBot(mainTTL);
 
+            // Register the bots
             allDependentBots = [
                 myIntegerPosterBot,
                 mySubscriberBot,
@@ -77,19 +156,34 @@ describe('RESTful Scenarios', function() {
             gu.debugLog('************   Timeout will be '+ calculatedTimeout +' milliseconds   *************');
 
             mainPosterBot.eventEmitter.on('terminate', function() {
+                aggregateStats.runTime = moment().diff(start);
                 expect(true).to.be.true;
                 mainPosterBot.report('My last data Uri was: '+ mainPosterBot.dataUri);
+                allStatistics[mainPosterBot.name] = mainPosterBot.getAllStats();
+                reportStats(allStatistics);
 
                 done();
             })
 
             mainPosterBot.eventEmitter.on('createdChannel', function() {
-
+                var depBot;
                 console.dir(allDependentBots);
+                start = moment();
 
                 for (var i = 0; i < allDependentBots.length; i += 1) {
-                    var depBot = allDependentBots[i];
+                    depBot = allDependentBots[i];
                     depBot.broadcastBot = mainPosterBot;
+
+                    // Have to wrap the assignment of event listener in a closure to ensure that it is made for each
+                    //      bot instead of only the last one.
+                    //  http://stackoverflow.com/questions/8909652/adding-click-event-listeners-in-loop
+                    (function (_bot) {
+                        _bot.eventEmitter.on('terminate', function() {
+                            allStatistics[_bot.name] = _bot.getAllStats();
+                            _bot.report('Wrote stats!');
+                        })
+                    })(depBot);
+
                     depBot.wakeUp();
                 }
             })
