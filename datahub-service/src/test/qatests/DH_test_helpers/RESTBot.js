@@ -100,7 +100,7 @@ var Bot = function Bot(params) {
                 fail: 0
             }
         }
-               
+
         if (didSucceed) {
             statistics[action]['pass'] += 1;
             statistics[action]['totalTime'] += time;
@@ -109,6 +109,15 @@ var Bot = function Bot(params) {
             statistics[action]['fail'] += 1;
         }
     };
+
+    // To be called by the running test when the bot terminates
+    this.getAllStats = function() {
+        return {
+            statistics: statistics,
+            birth: birthMoment,
+            death: deathMoment
+        }
+    }
 
     // Call this to add new actionObject (.wait, .action) to queue and emit the event
     var addAction = function(actionObj) {
@@ -277,20 +286,19 @@ var getNextAction = function(behaviors) {
 var _botPost = function(theBot, data, callback) {
     var start = moment(),
         delta = -1,
-        name = 'post';
+        actionName = 'post';
 
     superagent.agent().post(theBot.channelUri)
         .send(data)
         .end(function(err, res) {
             if (!gu.isHTTPSuccess(res.status)) {
-                theBot.setStat(name, false, 0);
+                theBot.setStat(actionName, false, 0);
 
                 callback('Wrong status in _botPost(): '+ res.status);
             }
             else {
                 delta = moment().diff(start);
-                theBot.setStat(name, true, delta);
-
+                theBot.setStat(actionName, true, delta);
                 theBot.lastDataPosted = data;
 
                 var pMetadata = new dhh.packetMetadata(res.body);
@@ -307,7 +315,10 @@ var _botPost = function(theBot, data, callback) {
 
 // Creates channel and returns error, channelUri
 var botCreateChannel = function(theBot, callback) {
-    var uri = [dhh.URL_ROOT, 'channel'].join('/'),
+    var start = moment(),
+        delta = -1,
+        actionName = 'createChannel',
+        uri = [dhh.URL_ROOT, 'channel'].join('/'),
         name = (null == theBot.channelName) ? dhh.getRandomChannelName() : theBot.channelName;
 
     gu.debugLog('createChannel() uri: '+ uri, REPORT_LEVEL.CHATTY);
@@ -318,9 +329,13 @@ var botCreateChannel = function(theBot, callback) {
         .send({'name': name})
         .end(function(err, res) {
             if (gu.isHTTPError(res.status)) {
+                theBot.setStat(actionName, false, 0);
                 callback('Wrong status in botCreateChannel(): '+ res.status);
             }
             else {  // Created successfully
+                delta = moment().diff(start);
+                theBot.setStat(actionName, true, delta);
+
                 var cnMetadata = new dhh.channelMetadata(res.body),
                     location = cnMetadata.getChannelUri();
 
@@ -377,6 +392,9 @@ var botReportRSSFeed = function(theBot, callback) {
 exports.botReportRSSFeed = botReportRSSFeed;
 
 var botSubscribe = function(theBot, callback) {
+    var start = moment(),
+        delta = -1,
+        actionName = 'subscribe';
 
     theBot.report('Subscriber is going to use this channel URI: '+ theBot.channelUri);
 
@@ -392,6 +410,8 @@ var botSubscribe = function(theBot, callback) {
                 'onMessageCB': theBot.onSocketMsg
                 });
         theBot.socket.createSocket();
+        delta = moment().diff(start);
+        theBot.setStat(actionName, true, delta);
 
         callback(null);
     })
@@ -405,30 +425,47 @@ exports.botSubscribe = botSubscribe;
  * @param callback
  */
 var botSelectRandomChannel = function(theBot, callback) {
+    var start = moment(),
+        delta = -1,
+        actionName = 'getChannels';
 
     dhh.getAllChannels({}, function(res, channels) {
         if (!gu.isHTTPSuccess(res.status)) {
+            theBot.setStat(actionName, false, 0);
+
             callback('Error getting all channels. HTTP response: '+ res.status);
         }
+        else {
+            delta = moment().diff(start);
+            theBot.setStat(actionName, true, delta);
 
-        var cn = ranU.getRandomArrayElement(channels);
-        theBot.channelUri = cn.href;
-        theBot.report('Picked channel at random. Using: '+ cn.href);
+            var cn = ranU.getRandomArrayElement(channels);
+            theBot.channelUri = cn.href;
+            theBot.report('Picked channel at random. Using: '+ cn.href);
 
-        callback(null);
+            callback(null);
+        }
     })
 }
 exports.botSelectRandomChannel = botSelectRandomChannel;
 
 var botGetLatestValue = function(theBot, callback) {
+    var start = moment(),
+        delta = -1,
+        actionName = 'getLatestValue';
 
     dhh.getLatestUri(theBot.channelUri, function(uri, getErr) {
         var myData = '';
 
         if (null != getErr) {
+            theBot.setStat(actionName, false, 0);
+
             callback('Error getting latest URI: '+ getErr);
         }
         else {
+            delta = moment().diff(start);
+            theBot.setStat(actionName, true, delta);
+
             theBot.latestUri = uri;
             theBot.report('My latest URI is: '+ theBot.latestUri);
 
@@ -453,8 +490,6 @@ exports.botGetLatestValue = botGetLatestValue;
 var botGetAllValuesSinceDataUri = function(theBot, callback) {
 
 }
-
-
 
 var makeMainPosterBot = function(TTL) {
     var params = {
