@@ -141,6 +141,7 @@ On success: `HTTP/1.1 200 OK`
     }
   },
   "lastUpdateDate" : "2013-04-23T20:36:35.310Z",
+  "ttlMillis" : "30000",
   "name" : "stumptown",
   "creationDate" : "2013-04-23T20:36:17.885Z"
 }
@@ -179,7 +180,6 @@ On success: `HTTP/1.1 201 Created`
       "href" : "http://datahub:8080/channel/stumptown/00002FHOK8JMK000"
     }
   },
-  "id" : "00002FHOK8JMK000",
   "timestamp" : "2013-04-23T20:42:31.146Z"
 }
 ```
