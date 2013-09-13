@@ -351,6 +351,41 @@ var botCreateChannel = function(theBot, callback) {
 }
 exports.botCreateChannel = botCreateChannel;
 
+// To allow for cases where the main channel can already exist
+var botCreateOrConfirmChannel = function(theBot, callback) {
+    var start = moment(),
+        delta = -1,
+        actionName = 'createOrConfirmChannel',
+        uri = [dhh.URL_ROOT, 'channel'].join('/'),
+        name = (null == theBot.channelName) ? dhh.getRandomChannelName() : theBot.channelName;
+
+    gu.debugLog('createOrConfirmChannel() uri: '+ uri, REPORT_LEVEL.CHATTY);
+    gu.debugLog('createOrConfirmChannel() name: '+ name, REPORT_LEVEL.CHATTY);
+
+    dhh.getChannel({'name': name}, function(getRes, body) {
+
+        // Already exists
+        if (getRes.status == gu.HTTPresponses.OK) {
+            theBot.channelUri = body._links.self.href;
+            theBot.eventEmitter.emit('confirmedChannel');
+            theBot.report('Confirmed channel at :'+ body._links.self.href);
+
+            callback(null);
+        }
+
+        // Some unexpected response
+        else if (getRes.status != gu.HTTPresponses.Not_Found) {
+            callback('Wrong status checking for existence of channel in createOrConfirmChannel(): '+ res.status);
+        }
+
+        // Channel not found -- create it
+        else {
+            botCreateChannel(theBot, callback);
+        }
+    })
+}
+exports.botCreateOrConfirmChannel = botCreateOrConfirmChannel;
+
 // Posts data and returns error or null
 var botPostData = function(theBot, callback) {
     var dataUri = null,
@@ -494,7 +529,7 @@ var botGetAllValuesSinceDataUri = function(theBot, callback) {
 var makeMainPosterBot = function(TTL) {
     var params = {
         'name': 'Marvin',
-        'initialAction': {'action': botCreateChannel},
+        'initialAction': {'action': botCreateOrConfirmChannel},
         'reportLevel': REPORT_LEVEL.SHY,
         'timeToLive': TTL,
         'description': 'I am a main Poster Bot',
