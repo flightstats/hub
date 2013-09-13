@@ -17,7 +17,7 @@ import static org.junit.Assert.assertEquals;
 public class AESDecryptionCipherTest {
 
     @Test
-    public void testCiphers() throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidParameterSpecException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
+    public void testDecryption() throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidParameterSpecException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
         // GIVEN
         String data = "Hello, World!";
         String key = "testKey";
