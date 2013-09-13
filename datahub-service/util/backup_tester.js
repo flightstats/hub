@@ -1,3 +1,16 @@
+/* How to use this for testing:
+
+1. Start backup client on an existing channel -- ensure the root diretory into which it is going to put data is empty.
+2. Find uri to latest piece of data in the channel and save it for later.
+3. Put some data into the channel.
+4. Ensure the backup client has caught up to the data you put in (by specifying the inclusion of seconds in the file/directory
+    name, you can see when the backup client has finished creating directories once it's shown no activity for a bit).
+5. Get the *next* uri after the one saved in #2 above (this is the first uri that should've been backed up by the backup client).
+6. Pass that uri to this tool and run this tool.
+
+ */
+
+
 var walk = require('walk'),
     dhh = require('../src/test/qatests/DH_test_helpers/DHtesthelpers.js'),
     lodash = require('lodash');
@@ -37,7 +50,7 @@ walker.on('end', function() {
             })
         }
         else {
-            'All expected files found.';
+            console.log('All expected files found.');
         }
 
     })
