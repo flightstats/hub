@@ -530,6 +530,11 @@ var getUrisAndDataSinceLocation = function(params, callback) {
 
                 superagent.agent().get(uri)
                     .end(function(err, res) {
+                        if (err) {
+                            gu.debugLog('Error GETting url '+ uri);
+                            callback(err, null);
+                        }
+
                         var pGetHeader = new packetGETHeader(res.headers) ;
                         next = pGetHeader.getNext();
 

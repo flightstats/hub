@@ -14,8 +14,8 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
 
 var channelName,
     channelUri,
-    numExtraPosterBots = 2,
-    mainTTL = 10,
+    numExtraPosterBots = 10,
+    mainTTLSeconds = 25,
     DEBUG = true;
 
 describe('RESTful Scenarios', function() {
@@ -109,13 +109,13 @@ describe('RESTful Scenarios', function() {
             allStatistics;
 
         before(function() {
-            mainPosterBot = bot.makeMainPosterBot(mainTTL + 15);
+            mainPosterBot = bot.makeMainPosterBot(mainTTLSeconds + 15);
             mainPosterBot.channelName = mainChannelName;
 
-            mySubscriberBot = bot.makeSubscriberBot(mainTTL);
-            myRSSFeedPosterBot = bot.makeRSSPosterBot(mainTTL);
-            myLatestPollBot = bot.makeLatestPollingBot(mainTTL);
-            myIntegerPosterBot = bot.makeIntegerPosterBot(mainTTL);
+            mySubscriberBot = bot.makeSubscriberBot(mainTTLSeconds);
+            myRSSFeedPosterBot = bot.makeRSSPosterBot(mainTTLSeconds);
+            myLatestPollBot = bot.makeLatestPollingBot(mainTTLSeconds);
+            myIntegerPosterBot = bot.makeIntegerPosterBot(mainTTLSeconds);
 
             // Register the bots
             allDependentBots = [
@@ -127,15 +127,15 @@ describe('RESTful Scenarios', function() {
             myExtraPosterBots = [];
 
             for (var i = 0; i < numExtraPosterBots; i += 1) {
-                var pBot = bot.makeOtherPosterBot(mainTTL);
+                var pBot = bot.makeOtherPosterBot(mainTTLSeconds);
                 myExtraPosterBots[i] = pBot;
                 allDependentBots.push(pBot);
             }
         })
 
-        it('Bot madness', function(done) {
+        it.only('Bot madness', function(done) {
 
-            var calculatedTimeout = (mainTTL * 1000) + 30000;
+            var calculatedTimeout = (mainTTLSeconds * 1000) + 30000;
             this.timeout(calculatedTimeout);
             gu.debugLog('************   Timeout will be '+ calculatedTimeout +' milliseconds   *************');
 
