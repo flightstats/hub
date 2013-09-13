@@ -117,7 +117,6 @@ public class GuiceContextListenerFactory {
     }
 
     public static class DatahubCommonModule extends AbstractModule {
-        @Inject
         @Singleton
         @Provides
         public static HazelcastInstance buildHazelcast(@Named(HAZELCAST_CONFIG_FILE) String hazelcastConfigFile) throws FileNotFoundException {
@@ -131,7 +130,6 @@ public class GuiceContextListenerFactory {
         }
 
         @Named("LastUpdatePerChannelMap")
-        @Inject
         @Singleton
         @Provides
         public static ConcurrentMap<String, DataHubKey> buildLastUpdatePerChannelMap(HazelcastInstance hazelcast) throws FileNotFoundException {
