@@ -14,25 +14,20 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
 
 var channelName,
     channelUri,
-    numExtraPosterBots = 10,
-    mainTTL = 30,
-
-    // if this is true, then the test will not blow up if the main bot tries to create a channel that already exists.
-    makeNewChannel = true,
+    numExtraPosterBots = 2,
+    mainTTL = 10,
     DEBUG = true;
 
 describe('RESTful Scenarios', function() {
 
-    var mainChannelUri,
-        aggregateStats = {
+    var aggregateStats = {
             totalBots: 0,
             totalBotLifetime: 0,
             runTime: 0,
             totalActions: 0
         },    // Stats aggregated by action
-//        mainChannelName = dhh.getRandomChannelName();
         start = null,
-        newChannelName = 'ActiveChannel21';
+        mainChannelName = 'ActiveChannel21';
 
 
     var reportStats = function(theStats) {
@@ -103,31 +98,19 @@ describe('RESTful Scenarios', function() {
         })
     }
 
-    before(function(done) {
-
-        dhh.createChannel({name: dhh.getRandomChannelName()}, function(res, uri) {
-            expect(gu.isHTTPSuccess(res.status)).to.be.true;
-
-            mainChannelUri = uri;
-            gu.debugLog('(new) main channel URI: '+ mainChannelUri, DEBUG);
-
-            done();
-        })
-    })
-
     describe('Let loose the bots of war', function() {
-        var mainPosterBot = {},
-            myIntegerPosterBot = {},
-            mySubscriberBot = {},
-            myLatestPollBot = {},
-            myRSSFeedPosterBot = {},
-            myExtraPosterBots = [],
-            allDependentBots = [],  // contains all bots other than mainPosterBot
-            allStatistics = {};
+        var mainPosterBot = null,
+            myIntegerPosterBot = null,
+            mySubscriberBot = null,
+            myLatestPollBot = null,
+            myRSSFeedPosterBot = null,
+            myExtraPosterBots,
+            allDependentBots,  // contains all bots other than mainPosterBot
+            allStatistics;
 
         before(function() {
             mainPosterBot = bot.makeMainPosterBot(mainTTL + 15);
-            mainPosterBot.channelName = newChannelName;
+            mainPosterBot.channelName = mainChannelName;
 
             mySubscriberBot = bot.makeSubscriberBot(mainTTL);
             myRSSFeedPosterBot = bot.makeRSSPosterBot(mainTTL);
@@ -141,6 +124,7 @@ describe('RESTful Scenarios', function() {
                 myRSSFeedPosterBot,
                 myLatestPollBot
             ];
+            myExtraPosterBots = [];
 
             for (var i = 0; i < numExtraPosterBots; i += 1) {
                 var pBot = bot.makeOtherPosterBot(mainTTL);
@@ -155,18 +139,14 @@ describe('RESTful Scenarios', function() {
             this.timeout(calculatedTimeout);
             gu.debugLog('************   Timeout will be '+ calculatedTimeout +' milliseconds   *************');
 
-            mainPosterBot.eventEmitter.on('terminate', function() {
-                aggregateStats.runTime = moment().diff(start);
-                expect(true).to.be.true;
-                mainPosterBot.report('My last data Uri was: '+ mainPosterBot.dataUri);
-                allStatistics[mainPosterBot.name] = mainPosterBot.getAllStats();
-                reportStats(allStatistics);
-
-                done();
-            })
-
-            mainPosterBot.eventEmitter.on('createdChannel', function() {
+            // Called by either the createdChannel or confirmedChannel event fired by mainPosterBot
+            var mainTest = function() {
                 var depBot;
+
+                if ('undefined' == typeof allStatistics) {
+                    allStatistics = {};
+                }
+
                 console.dir(allDependentBots);
                 start = moment();
 
@@ -186,7 +166,20 @@ describe('RESTful Scenarios', function() {
 
                     depBot.wakeUp();
                 }
+            }
+
+            mainPosterBot.eventEmitter.on('terminate', function() {
+                aggregateStats.runTime = moment().diff(start);
+                expect(true).to.be.true;
+                mainPosterBot.report('My last data Uri was: '+ mainPosterBot.dataUri);
+                allStatistics[mainPosterBot.name] = mainPosterBot.getAllStats();
+                reportStats(allStatistics);
+
+                done();
             })
+
+            mainPosterBot.eventEmitter.on('createdChannel', mainTest);
+            mainPosterBot.eventEmitter.on('confirmedChannel', mainTest);
 
             mainPosterBot.wakeUp();
 

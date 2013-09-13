@@ -20,7 +20,7 @@ var startUri = process.argv[2],
 walker.on('file', function(root, stat, next) {
     // Add this file to the list of files
     if ('.gz' == stat.name.slice(-3)) {
-        actualFiles.push(stat.name.slice(0, stat.name.lastIndexOf('.')));
+        actualFiles.push(stat.name.slice(0, 16));
     }
     next();
 });
