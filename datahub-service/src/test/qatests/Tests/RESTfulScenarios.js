@@ -133,7 +133,7 @@ describe('RESTful Scenarios', function() {
             }
         })
 
-        it.only('Bot madness', function(done) {
+        it('Bot madness', function(done) {
 
             var calculatedTimeout = (mainTTLSeconds * 1000) + 30000;
             this.timeout(calculatedTimeout);
