@@ -7,6 +7,7 @@ import com.flightstats.jerseyguice.Bindings;
 import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
 import com.flightstats.jerseyguice.metrics.GraphiteConfig;
 import com.flightstats.jerseyguice.metrics.GraphiteConfigImpl;
+import com.google.common.io.Files;
 import com.google.inject.*;
 import com.google.inject.name.Named;
 import com.google.inject.servlet.GuiceServletContextListener;
@@ -14,11 +15,16 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
 import org.jetbrains.annotations.NotNull;
+import sun.misc.IOUtils;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Properties;
@@ -79,7 +85,7 @@ public class GuiceContextListenerFactory {
         @Provides
         public static Cipher buildAESCipher() throws NoSuchPaddingException, NoSuchAlgorithmException {
             // TODO: configurable params
-            String transformation="AES";
+            String transformation = "AES";
 
             Cipher cipher = Cipher.getInstance(transformation);
             return cipher;
@@ -87,19 +93,26 @@ public class GuiceContextListenerFactory {
 
         @Singleton
         @Provides
-        public static SecretKey buildSecretKey() throws NoSuchAlgorithmException {
-            // TODO: configurable params
-            String passphrase = "TheSecretKey";
+        public static SecretKey buildSecretKey(@Named("CipherKey") byte[] key) throws NoSuchAlgorithmException, IOException {
             int keyLength = 128;
             String keyGeneratorAlgorithm = "AES";
             String secureRandomAlgorithm = "SHA1PRNG";
 
-            KeyGenerator kgen = KeyGenerator.getInstance(keyGeneratorAlgorithm);
             SecureRandom sr = SecureRandom.getInstance(secureRandomAlgorithm);
-            sr.setSeed(passphrase.getBytes());
+            sr.setSeed(key);
+
+            KeyGenerator kgen = KeyGenerator.getInstance(keyGeneratorAlgorithm);
             kgen.init(keyLength, sr);
             SecretKey skey = kgen.generateKey();
             return skey;
+        }
+
+        @Named("CipherKey")
+        @Provides
+        private static byte[] loadSecretKey(@Named("cipher.key.location") String keyLocation) throws IOException {
+            File file = new File(keyLocation);
+            byte[] key = Files.toByteArray(file);
+            return key;
         }
     }
 }
