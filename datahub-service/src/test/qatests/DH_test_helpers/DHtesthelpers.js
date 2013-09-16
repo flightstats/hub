@@ -722,7 +722,11 @@ var getListOfLatestUrisFromChannel = function(params, myCallback){
 };
 exports.getListOfLatestUrisFromChannel = getListOfLatestUrisFromChannel;
 
-// Calls back with the URI to latest data post, optionally followed by error text (if not null, an error happened)
+/**
+ * Get latest URI for channel
+ * @param channelUri
+ * @param callback: URI to latest data post, null || error text
+ */
 var getLatestUri = function(channelUri, callback) {
     getChannel({'uri': channelUri}, function(getCnRes, getCnBody) {
         if (getCnRes.status != gu.HTTPresponses.OK) {
@@ -772,9 +776,13 @@ var getAllChannels = function(params, callback) {
 
     superagent.agent().get(uri)
         .end(function(err,res) {
-            if (err) {throw err};
+            if (err) {
+                throw err
+            };
 
-            callback(res, res.body._links.channels);
+            var channels = ('undefined' == typeof res.body._links) ? null : res.body._links.channels;
+
+            callback(res, channels);
         });
 }
 exports.getAllChannels = getAllChannels;
