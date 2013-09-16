@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.crypto.*;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -17,11 +18,12 @@ import static org.junit.Assert.assertNotEquals;
 public class AESEncryptionCipherTest {
 
     @Test
-    public void testCiphers() throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidParameterSpecException, UnsupportedEncodingException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
+    public void testEncryption() throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidParameterSpecException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
         // GIVEN
         String data = "Hello, World!";
+        String key = "testKey";
 
-        SecretKey secretKey = GuiceContextListenerFactory.CryptoProxyModule.buildSecretKey();
+        SecretKey secretKey = GuiceContextListenerFactory.CryptoProxyModule.buildSecretKey(key.getBytes());
         Cipher cipher = GuiceContextListenerFactory.CryptoProxyModule.buildAESCipher();
         AESEncryptionCipher encryptionCipher = new AESEncryptionCipher(secretKey, cipher);
 
