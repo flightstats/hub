@@ -28,7 +28,6 @@ utils.runInTestChannel(channelName, function () {
             var valueUrl = result['_links']['self']['href'];
             valueUrl = valueUrl.replace(channelResource, channelCryptoResource);
             frisby.create('Fetching value to ensure that it was inserted.')
-                //.addHeader("Accept", "text/plain")
                 .get(valueUrl)
                 .expectStatus(200)
                 .expectHeader('content-type', 'text/plain')
