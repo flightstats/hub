@@ -14,16 +14,15 @@ import com.google.inject.servlet.GuiceServletContextListener;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
+import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
-import sun.misc.IOUtils;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -83,28 +82,16 @@ public class GuiceContextListenerFactory {
         }
 
         @Provides
-        public static Cipher buildAESCipher() throws NoSuchPaddingException, NoSuchAlgorithmException {
-            // TODO: configurable params
-            String transformation = "AES";
-
-            Cipher cipher = Cipher.getInstance(transformation);
+        public static Cipher buildAESCipher(@Named("cipher.algorithm") String cipherAlgorithm) throws NoSuchPaddingException, NoSuchAlgorithmException {
+            Cipher cipher = Cipher.getInstance(cipherAlgorithm);
             return cipher;
         }
 
         @Singleton
         @Provides
-        public static SecretKey buildSecretKey(@Named("CipherKey") byte[] key) throws NoSuchAlgorithmException, IOException {
-            int keyLength = 128;
-            String keyGeneratorAlgorithm = "AES";
-            String secureRandomAlgorithm = "SHA1PRNG";
-
-            SecureRandom sr = SecureRandom.getInstance(secureRandomAlgorithm);
-            sr.setSeed(key);
-
-            KeyGenerator kgen = KeyGenerator.getInstance(keyGeneratorAlgorithm);
-            kgen.init(keyLength, sr);
-            SecretKey skey = kgen.generateKey();
-            return skey;
+        public static SecretKey buildSecretKey(@Named("CipherKey") byte[] keyBytes, @Named("cipher.key.algorithm") String keyAlgorithm) throws NoSuchAlgorithmException, IOException {
+            SecretKey key = new SecretKeySpec(keyBytes, keyAlgorithm);
+            return key;
         }
 
         @Named("CipherKey")
@@ -114,5 +101,7 @@ public class GuiceContextListenerFactory {
             byte[] key = Files.toByteArray(file);
             return key;
         }
+
+
     }
 }
