@@ -1,12 +1,10 @@
 package com.flightstats.cryptoproxy.security;
 
 import com.flightstats.cryptoproxy.app.config.GuiceContextListenerFactory;
-import org.junit.Before;
 import org.junit.Test;
 
 import javax.crypto.*;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -21,10 +19,13 @@ public class AESEncryptionCipherTest {
     public void testEncryption() throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidParameterSpecException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
         // GIVEN
         String data = "Hello, World!";
-        String key = "testKey";
+        String keyAlgorithm = "AES";
+        String cipherAlgorithm = "AES";
+        SecretKey key = SecretKeyUtil.createKey("testKey", keyAlgorithm);
 
-        SecretKey secretKey = GuiceContextListenerFactory.CryptoProxyModule.buildSecretKey(key.getBytes());
-        Cipher cipher = GuiceContextListenerFactory.CryptoProxyModule.buildAESCipher();
+        SecretKey secretKey = GuiceContextListenerFactory.CryptoProxyModule.buildSecretKey(key.getEncoded(), keyAlgorithm);
+
+        Cipher cipher = GuiceContextListenerFactory.CryptoProxyModule.buildAESCipher(cipherAlgorithm);
         AESEncryptionCipher encryptionCipher = new AESEncryptionCipher(secretKey, cipher);
 
         // WHEN
@@ -33,4 +34,5 @@ public class AESEncryptionCipherTest {
         // THEN
         assertNotEquals(data, new String(cipherData));
     }
+
 }
