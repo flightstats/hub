@@ -53,12 +53,14 @@ public class ProxyChannelResource {
         URI datahubUri = adjustDatahubUri(uriInfo);
 
         MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
+        requestHeaders.remove("Accept-Encoding");
         ClientResponse clientResponse = restClient.get(datahubUri, requestHeaders);
 
         byte[] decryptedEntity = decryptionCipherProvider.get().decrypt(clientResponse.getEntity(byte[].class));
 
-        Response.ResponseBuilder responseBuilder = createResponseBuilderWithoutEntity(clientResponse)
-                .entity(decryptedEntity);
+        Response.ResponseBuilder responseBuilder = createResponseBuilderWithoutEntityOrContentLength(clientResponse)
+                .entity(decryptedEntity)
+                .header("Content-Length", decryptedEntity.length);
         return responseBuilder.build();
     }
 
@@ -76,20 +78,24 @@ public class ProxyChannelResource {
 
         URI datahubUri = adjustDatahubUri(uriInfo);
         MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
+        requestHeaders.remove("Accept-Encoding");
         ClientResponse clientResponse = restClient.post(datahubUri, encryptedEntity, requestHeaders);
 
-        String entity = clientResponse.getEntity(String.class);
-        Response.ResponseBuilder responseBuilder = createResponseBuilderWithoutEntity(clientResponse)
+        byte[] entity = clientResponse.getEntity(byte[].class);
+        Response.ResponseBuilder responseBuilder = createResponseBuilderWithoutEntityOrContentLength(clientResponse)
                 .type(MediaType.APPLICATION_JSON)
+                .header("Content-Length", entity.length)
                 .entity(entity);
         return responseBuilder.build();
     }
 
-    protected static Response.ResponseBuilder createResponseBuilderWithoutEntity(ClientResponse restClientResponse) {
+    protected static Response.ResponseBuilder createResponseBuilderWithoutEntityOrContentLength(ClientResponse restClientResponse) {
         Response.ResponseBuilder rb = Response.status(restClientResponse.getStatus());
         for (Map.Entry<String, List<String>> entry : restClientResponse.getHeaders().entrySet()) {
             for (String value : entry.getValue()) {
-                rb.header(entry.getKey(), value);
+                if (!entry.getKey().equalsIgnoreCase("Content-Length")) {
+                    rb.header(entry.getKey(), value);
+                }
             }
         }
         return rb;

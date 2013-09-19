@@ -79,10 +79,13 @@ public class ProxyChannelResourceTest {
         // THEN
         assertEquals(Response.Status.OK.getStatusCode(), result.getStatus());
         MultivaluedMap<String, Object> metadata = result.getMetadata();
-        assertEquals(1, metadata.size());
+        assertEquals(2, metadata.size());
         List<Object> foo = metadata.get("foo1");
         assertEquals(1, foo.size());
         assertEquals("bar1", foo.get(0));
+        List<Object> contentLength = metadata.get("Content-Length");
+        assertEquals(1, contentLength.size());
+        assertEquals(7, contentLength.get(0));
         assertEquals(data, result.getEntity());
 
     }
@@ -96,13 +99,13 @@ public class ProxyChannelResourceTest {
         requestHeadersMap.add("foo1", "bar1");
         MultivaluedMapImpl responseHeaders = new MultivaluedMapImpl();
         responseHeaders.add("foo1", "bar1");
-        Linked<ValueInsertionResult> linked = mock(Linked.class);
+        String stringEntity = "blah data blah";
 
         // WHEN
         when(requestHeaders.getRequestHeaders()).thenReturn(requestHeadersMap);
         when(clientResponse.getHeaders()).thenReturn(responseHeaders);
         when(clientResponse.getStatus()).thenReturn(Response.Status.CREATED.getStatusCode());
-        when(clientResponse.getEntity(Linked.class)).thenReturn(linked);
+        when(clientResponse.getEntity(byte[].class)).thenReturn(stringEntity.getBytes());
         when(restClient.post(any(URI.class), any(byte[].class), any(MultivaluedMap.class))).thenReturn(clientResponse);
         when(uriInfo.getPath()).thenReturn(URI_PATH);
         when(encryptionCipher.encrypt(data)).thenReturn(data);
@@ -112,8 +115,7 @@ public class ProxyChannelResourceTest {
 
         // THEN
         assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
-        Object object = response.getEntity();
-        assertNotNull(linked);
+        assertNotNull(response.getEntity());
         verify(restClient).post(UriBuilder.fromUri(datahubLocation).path(URI_PATH).build(), data, requestHeadersMap);
     }
 
@@ -128,7 +130,7 @@ public class ProxyChannelResourceTest {
         when(clientResponse.getEntity(Linked.class)).thenReturn(linked);
         when(clientResponse.getHeaders()).thenReturn(new MultivaluedMapImpl());
 
-        Response.ResponseBuilder responseBuilderWithoutEntity = ProxyChannelResource.createResponseBuilderWithoutEntity(clientResponse);
+        Response.ResponseBuilder responseBuilderWithoutEntity = ProxyChannelResource.createResponseBuilderWithoutEntityOrContentLength(clientResponse);
 
         //THEN
         Response response = responseBuilderWithoutEntity.build();

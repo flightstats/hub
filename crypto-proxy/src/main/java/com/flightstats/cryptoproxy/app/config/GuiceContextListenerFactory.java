@@ -12,20 +12,18 @@ import com.google.inject.*;
 import com.google.inject.name.Named;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.filter.GZIPContentEncodingFilter;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
-import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Properties;
 
 public class GuiceContextListenerFactory {
@@ -78,6 +76,7 @@ public class GuiceContextListenerFactory {
             Client client = Client.create();
             client.setConnectTimeout(connectTimeoutSec * 1000);
             client.setReadTimeout(readTimeoutSec * 1000);
+            client.addFilter(new GZIPContentEncodingFilter(true));
             return client;
         }
 
