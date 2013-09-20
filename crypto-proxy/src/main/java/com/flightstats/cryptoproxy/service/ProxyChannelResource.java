@@ -53,14 +53,14 @@ public class ProxyChannelResource {
         URI datahubUri = adjustDatahubUri(uriInfo);
 
         MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
-        requestHeaders.remove("Accept-Encoding");
+        requestHeaders.remove("accept-encoding");
         ClientResponse clientResponse = restClient.get(datahubUri, requestHeaders);
 
         byte[] decryptedEntity = decryptionCipherProvider.get().decrypt(clientResponse.getEntity(byte[].class));
 
         Response.ResponseBuilder responseBuilder = createResponseBuilderWithoutEntityOrContentLength(clientResponse)
                 .entity(decryptedEntity)
-                .header("Content-Length", decryptedEntity.length);
+                .header("content-length", decryptedEntity.length);
         return responseBuilder.build();
     }
 
@@ -78,13 +78,13 @@ public class ProxyChannelResource {
 
         URI datahubUri = adjustDatahubUri(uriInfo);
         MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
-        requestHeaders.remove("Accept-Encoding");
+        requestHeaders.remove("accept-encoding");
         ClientResponse clientResponse = restClient.post(datahubUri, encryptedEntity, requestHeaders);
 
         byte[] entity = clientResponse.getEntity(byte[].class);
         Response.ResponseBuilder responseBuilder = createResponseBuilderWithoutEntityOrContentLength(clientResponse)
                 .type(MediaType.APPLICATION_JSON)
-                .header("Content-Length", entity.length)
+                .header("content-length", entity.length)
                 .entity(entity);
         return responseBuilder.build();
     }
@@ -93,7 +93,7 @@ public class ProxyChannelResource {
         Response.ResponseBuilder rb = Response.status(restClientResponse.getStatus());
         for (Map.Entry<String, List<String>> entry : restClientResponse.getHeaders().entrySet()) {
             for (String value : entry.getValue()) {
-                if (!entry.getKey().equalsIgnoreCase("Content-Length")) {
+                if (!("content-length".equalsIgnoreCase(entry.getKey()))) {
                     rb.header(entry.getKey(), value);
                 }
             }
