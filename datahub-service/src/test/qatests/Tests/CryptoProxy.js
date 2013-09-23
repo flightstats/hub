@@ -31,9 +31,9 @@ describe('CODE NOT DEPLOYED YET - Crypto Proxy testing', function() {
             cnDirectUri,
             cnProxyUri,
             defaultPOSTHeader = {
-                "Content-type": "text/plain",
+                "Content-type": "text/plain"
 //                "Content-encoding": "identity"
-                "Accept-encoding": "identity"
+//                "Accept-encoding": "identity" // Don't need this anymore as the bug is fixed
             },
             cnMetadata;
 
@@ -199,8 +199,8 @@ describe('CODE NOT DEPLOYED YET - Crypto Proxy testing', function() {
                     })
                 })
 
-                it('NEED TO REWRITE - Get latest from channel returns client error', function(done) {
-                    var VERBOSE = false;
+                it.skip('BUG: https://www.pivotaltracker.com/story/show/57516862 - Get latest from channel returns client error', function(done) {
+                    var VERBOSE = true;
 
                     // Insert an item so that getLatest doesn't return 404
                     dhh.postData({channelUri: cnProxyUri, data: dhh.getRandomPayload(), headers: defaultPOSTHeader, debug: true}, function(res, dataUri) {
