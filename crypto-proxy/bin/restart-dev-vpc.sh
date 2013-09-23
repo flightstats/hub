@@ -9,9 +9,7 @@ OWNER='jason.plumb@flightstats.com'
 OS=`uname`
 
 INSTANCES=( \
-	crypto-proxy-01.i-b4572ac4:22 \
-	crypto-proxy-02.i-52562b22:22 \
-	crypto-proxy-03.i-22562b52:22
+	jhutton-ctdeploy.i-f8fb089d:22
 )
 
 if [ -x /usr/local/bin/nc ] ; then
