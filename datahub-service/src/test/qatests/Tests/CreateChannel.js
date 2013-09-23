@@ -20,7 +20,9 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
     gu = require('../genericUtils.js'),
     ranU = require('../randomUtils.js');
 
-var DEBUG = true;
+var DOMAIN = dhh.DOMAIN,
+    // DOMAIN = '10.11.15.162:8080',   // crypto proxy
+    DEBUG = true;
 
 
 describe('Create Channel: ', function(){
@@ -45,7 +47,7 @@ describe('Create Channel: ', function(){
 
     before(function(myCallback){
         channelName = dhh.getRandomChannelName();
-        dhh.createChannel({name: channelName}, function(res){
+        dhh.createChannel({name: channelName, domain: DOMAIN}, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 //console.log('bad things');
                 throw new Error(res.error);
@@ -65,7 +67,7 @@ describe('Create Channel: ', function(){
 
             acceptName = dhh.getRandomChannelName();
 
-            dhh.createChannel({name: acceptName, debug: false}, function(res, uri) {
+            dhh.createChannel({name: acceptName, debug: false, domain: DOMAIN}, function(res, uri) {
                 createRes = res;
                 channelUri = uri;
                 gu.debugLog('create result status: '+ createRes.status);
@@ -132,7 +134,7 @@ describe('Create Channel: ', function(){
 
             acceptName = dhh.getRandomChannelName();
 
-            dhh.createChannel({name: acceptName, ttlMillis: acceptTTL}, function(res, uri) {
+            dhh.createChannel({name: acceptName, ttlMillis: acceptTTL, domain: DOMAIN}, function(res, uri) {
                 createRes = res;
                 channelUri = uri;
 
@@ -161,7 +163,7 @@ describe('Create Channel: ', function(){
             it('may contain underscores', function(done) {
                 var name = dhh.getRandomChannelName(5) +'_'+ dhh.getRandomChannelName(5) + '___'+ dhh.getRandomChannelName(5) + '_';
 
-                dhh.createChannel({name: name}, function(res) {
+                dhh.createChannel({name: name, domain: DOMAIN}, function(res) {
                     expect(res.status).to.equal(gu.HTTPresponses.Created);
 
                     done();
@@ -175,7 +177,7 @@ describe('Create Channel: ', function(){
             it('may be null - results in no ttlMillis property being returned', function(done) {
                 var name = dhh.getRandomChannelName();
 
-                dhh.createChannel({name: name, ttlMillis: null, debug: true}, function(res) {
+                dhh.createChannel({name: name, ttlMillis: null, debug: true, domain: DOMAIN}, function(res) {
                     expect(res.body.hasOwnProperty('ttlMillis')).to.be.false;
 
                     done();
@@ -189,7 +191,7 @@ describe('Create Channel: ', function(){
         describe('name', function() {
 
             var badNameYieldsBadRequest = function(cnName, callback) {
-                dhh.createChannel({name: cnName}, function(res) {
+                dhh.createChannel({name: cnName, domain: DOMAIN}, function(res) {
                     expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
 
                     callback();
@@ -199,7 +201,7 @@ describe('Create Channel: ', function(){
             it.skip('may not match a word reserved by Cassandra', function(done) {
                 channelName = 'channelMetadata';
 
-                dhh.createChannel({name: channelName}, function(res){
+                dhh.createChannel({name: channelName, domain: DOMAIN}, function(res){
                     if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                         //console.log('bad things');
                         throw new Error(res.error);
@@ -223,7 +225,7 @@ describe('Create Channel: ', function(){
             it('whitespace is trimmed from name', function(done) {
                 var name = dhh.getRandomChannelName();
 
-                dhh.createChannel({name: '  '+ name +'  '}, function(res, uri) {
+                dhh.createChannel({name: '  '+ name +'  ', domain: DOMAIN}, function(res, uri) {
                     expect(res.status).to.equal(gu.HTTPresponses.Created);
 
                     dhh.getChannel({uri: uri}, function(getRes, body) {
@@ -265,7 +267,7 @@ describe('Create Channel: ', function(){
         describe('Code not implemented - TTL', function() {
 
             var badTTLYieldsBadRequest = function(TTL, callback) {
-                dhh.createChannel({name: dhh.getRandomChannelName(), ttlMillis: TTL}, function(res) {
+                dhh.createChannel({name: dhh.getRandomChannelName(), ttlMillis: TTL, domain: DOMAIN}, function(res) {
                     expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
 
                     callback();
@@ -314,7 +316,7 @@ describe('Create Channel: ', function(){
                     VERBOSE = true;
 
                 var makeChannel = function(index, callback) {
-                    dhh.createChannel({name: name}, function(res, channelUri) {
+                    dhh.createChannel({name: name, domain: DOMAIN}, function(res, channelUri) {
                         gu.debugLog('channel creation attempt result: '+ res.status, VERBOSE);
 
                         if (!lodash.contains([gu.HTTPresponses.Created, gu.HTTPresponses.Conflict], res.status)) {
@@ -348,7 +350,7 @@ describe('Create Channel: ', function(){
 
             // https://www.pivotaltracker.com/story/show/44113267
             it('return 409 if attempting to create channel with a name already in use', function(done) {
-                dhh.createChannel({name: channelName}, function(res) {
+                dhh.createChannel({name: channelName, domain: DOMAIN}, function(res) {
                     expect(res.status).to.equal(gu.HTTPresponses.Conflict);
 
                     done();
@@ -360,10 +362,10 @@ describe('Create Channel: ', function(){
                     firstName = base +'z',
                     secondName = base +'Z';
 
-                dhh.createChannel({name: firstName}, function(firstRes) {
+                dhh.createChannel({name: firstName, domain: DOMAIN}, function(firstRes) {
                     expect(firstRes.status).to.equal(gu.HTTPresponses.Created);
 
-                    dhh.createChannel({name: secondName}, function(secondRes) {
+                    dhh.createChannel({name: secondName, domain: DOMAIN}, function(secondRes) {
                         expect(secondRes.status).to.equal(gu.HTTPresponses.Created);
 
                         done();
