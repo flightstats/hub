@@ -28,6 +28,9 @@ var DOMAIN = 'datahub.svc.dev';
 //var DOMAIN = 'localhost:8080';
 exports.DOMAIN = DOMAIN;
 
+var CP_DOMAIN = '10.11.15.162:8080';    // Crypto Proxy
+exports.CP_DOMAIN = CP_DOMAIN;
+
 var URL_ROOT = 'http://'+ DOMAIN;
 exports.URL_ROOT = URL_ROOT;
 
@@ -409,19 +412,38 @@ var postData = function(params, myCallback) {
     var dataUri = null,
         channelUri = params.channelUri,
         myData = params.data,
-        headers = ('undefined' != typeof params.headers) ? params.headers : {'Content-Type': 'application/x-www-form-urlencoded'},
+        headers = ('undefined' != typeof params.headers) ? params.headers : null,
         VERBOSE = ('undefined' != typeof params.debug) ? params.debug : false;
 
+    // Temporarily defaulting Accept-Encoding to */* because any POST through the crypto proxy will fail unless
+    //      this is set.
+    if (null == headers) {
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept-Encoding': '*/*'
+        }
+    }
 
     gu.debugLog('Channel Uri: '+ channelUri, VERBOSE);
     gu.debugLog('Data: '+ myData, VERBOSE);
+
+    if (VERBOSE) {
+        gu.debugLog('Headers: ');
+        console.dir(headers);
+    }
 
     superagent.agent().post(channelUri)
         .set(headers)
         .send(myData)
         .end(function(err, res) {
+            if (err) {
+                throw err;
+            }
+
             if (!gu.isHTTPSuccess(res.status)) {
                 gu.debugLog('POST of data did not return success: '+ res.status, VERBOSE);
+                gu.debugLog('Response:');
+                console.dir(res.text);
                 dataUri = null;
             }
             else {
@@ -728,6 +750,8 @@ exports.getListOfLatestUrisFromChannel = getListOfLatestUrisFromChannel;
  * @param callback: URI to latest data post, null || error text
  */
 var getLatestUri = function(channelUri, callback) {
+
+
     getChannel({'uri': channelUri}, function(getCnRes, getCnBody) {
         if (getCnRes.status != gu.HTTPresponses.OK) {
 

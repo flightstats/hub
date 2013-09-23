@@ -26,7 +26,9 @@ var appContentTypes = require('../contentTypes.js').applicationTypes,
     messageContentTypes = require('../contentTypes.js').messageTypes,
     textContentTypes = require('../contentTypes.js').textTypes;
 
-var URL_ROOT = dhh.URL_ROOT;
+var DOMAIN = dhh.DOMAIN,
+//var DOMAIN = '10.11.15.162:8080',   // crypto proxy
+    URL_ROOT = dhh.URL_ROOT;
 
 describe('GET data:', function() {
     var randomPayload = null,
@@ -80,7 +82,7 @@ describe('GET data:', function() {
         })
 
         it('getting from real channel but fake location yields 404 response', function(done) {
-            var uri = [URL_ROOT, 'channel', channelName, fakeDataId].join('/');
+            var uri = ['http:/', DOMAIN, 'channel', channelName, fakeDataId].join('/');
 
             superagent.agent().get(uri)
                 .end(function(err, res) {

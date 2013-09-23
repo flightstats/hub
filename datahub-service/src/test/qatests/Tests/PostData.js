@@ -3,9 +3,10 @@
 var chai = require('chai');
 var expect = chai.expect;
 var superagent = require('superagent');
-var request = require('request');
-var moment = require('moment');
-var async = require('async'),
+var request = require('request'),
+    url = require('url'),
+    moment = require('moment'),
+    async = require('async'),
     crypto = require('crypto'),
     fs = require('fs'),
     lodash = require('lodash');
@@ -14,8 +15,9 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
     ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js');
 
-var URL_ROOT = dhh.URL_ROOT,
-    fakeChannelUri = [URL_ROOT, 'channel', dhh.getRandomChannelName()].join('/');
+var DOMAIN = dhh.DOMAIN,
+//var DOMAIN = dhh.CP_DOMAIN,
+    fakeChannelUri = ['http:/', DOMAIN, 'channel', dhh.getRandomChannelName()].join('/');
 
 // The following paths assume this is being run from a parent directory. The before() method will adjust this if
 //  the test is being run in this file's directory
@@ -23,13 +25,9 @@ var CAT_TOILET_PIC = './artifacts/cattoilet.jpg',
     MY_2MB_FILE = './artifacts/Iam2_5Mb.txt',
     MY_2KB_FILE = './artifacts/Iam200kb.txt';
 
-
 var channelName,
     channelUri,
     DEBUG = true;
-
-
-
 
 describe('POST data to channel:', function(){
 
@@ -65,7 +63,9 @@ describe('POST data to channel:', function(){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 done(res.error);
             };
-            channelUri = cnUri;
+            var parsed = url.parse(cnUri);
+
+            channelUri = 'http://'+ DOMAIN + parsed.path;
             gu.debugLog('Main test channel:'+ channelName);
 
             done();
@@ -155,7 +155,7 @@ describe('POST data to channel:', function(){
 
         it('POST should return a 404 trying to save to nonexistent channel', function(done){
 
-            dhh.postData({channelUri: fakeChannelUri, data: randomPayload}, function(res, uri) {
+            dhh.postData({channelUri: fakeChannelUri, data: randomPayload, debug: true}, function(res, uri) {
                 expect(res.status).to.equal(gu.HTTPresponses.Not_Found);
 
                 done();
