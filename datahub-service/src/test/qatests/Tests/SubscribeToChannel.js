@@ -121,7 +121,7 @@ describe('Channel Subscription:', function() {
             channelUri = cnMetadata.getChannelUri();
             wsUri = cnMetadata.getWebSocketUri();
 
-            gu.debugLog('channelUri: '+ channelUri);
+            gu.debugLog('cnProxyUri: '+ channelUri);
             gu.debugLog('wsUri: '+ wsUri);
 
             postHostCnUri = getPostHostUri(channelUri);

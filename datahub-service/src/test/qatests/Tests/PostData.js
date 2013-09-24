@@ -26,16 +26,31 @@ var CAT_TOILET_PIC = './artifacts/cattoilet.jpg',
     MY_2KB_FILE = './artifacts/Iam200kb.txt';
 
 var channelName,
-    channelUri,
+    cnProxyUri,
+    cnDatahubUri,
     DEBUG = true;
+
+/**
+ * Replaces the domain for a uri -- to support crypto proxy testing.
+ * @param uri: uri to be munged
+ * @param theDomain (optional, defaults to DOMAIN)
+ */
+var resolveUriWithDomain = function(uri, theDomain) {
+    var domain = (arguments.length > 1) ? theDomain : DOMAIN,
+        parsed = url.parse(uri);
+
+    return 'http://'+ domain + parsed.path;
+
+}
 
 describe('POST data to channel:', function(){
 
     var randomPayload;
 
     var postAndConfirmData = function(data, callback) {
-        dhh.postData({channelUri: channelUri, data: data}, function(res, uri) {
+        dhh.postData({channelUri: cnProxyUri, data: data}, function(res, uri) {
             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+            uri = resolveUriWithDomain(uri);
 
             dhh.confirmExpectedData(uri, data, function(didMatch) {
                 expect(didMatch).to.be.true;
@@ -58,15 +73,17 @@ describe('POST data to channel:', function(){
             MY_2MB_FILE = '../'+ MY_2MB_FILE;
         };
 
+        // Create channel
         channelName = dhh.getRandomChannelName();
         dhh.createChannel({name: channelName}, function(res, cnUri){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 done(res.error);
             };
-            var parsed = url.parse(cnUri);
+            cnDatahubUri = cnUri;
 
-            channelUri = 'http://'+ DOMAIN + parsed.path;
-            gu.debugLog('Main test channel:'+ channelName);
+            var parsed = url.parse(cnUri);
+            cnProxyUri = 'http://'+ DOMAIN + parsed.path;
+            gu.debugLog('Main test channel name: '+ channelName +'\nUri: '+ cnProxyUri);
 
             done();
         });
@@ -86,9 +103,9 @@ describe('POST data to channel:', function(){
 
             mainPayload = dhh.getRandomPayload();
 
-            dhh.postData({channelUri: channelUri, data: mainPayload}, function(res, dataUri) {
+            dhh.postData({channelUri: cnProxyUri, data: mainPayload}, function(res, dataUri) {
                 mainResponse = res;
-                mainDataUri = dataUri;
+                mainDataUri = resolveUriWithDomain(dataUri);
                 gu.debugLog('Acceptance Data Uri: '+ mainDataUri);
 
                 if (VERBOSE) {
@@ -119,7 +136,7 @@ describe('POST data to channel:', function(){
         })
 
         it('channel link is correct', function() {
-            expect(mainResponse.body._links.channel.href).to.equal(channelUri);
+            expect(mainResponse.body._links.channel.href).to.equal(cnDatahubUri);
         })
 
         it('timestamp is correct', function() {
@@ -140,8 +157,9 @@ describe('POST data to channel:', function(){
         it('content-length is correct', function(done) {
             var payload = ranU.randomString(5 + ranU.randomNum(50), ranU.limitedRandomChar);
 
-            dhh.postData({channelUri: channelUri, data: payload}, function(res, uri) {
+            dhh.postData({channelUri: cnProxyUri, data: payload}, function(res, uri) {
                 expect(res.status).to.equal(gu.HTTPresponses.Created);
+                uri = resolveUriWithDomain(uri);
 
                 dhh.getDataFromChannel({uri: uri, headers: {'Accept-Encoding': 'identity'}}, function(err, getRes) {
                     expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
@@ -168,19 +186,20 @@ describe('POST data to channel:', function(){
             uriCreatedWithIdentity;
 
         before(function(done) {
-            dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
+            dhh.postData({channelUri: cnProxyUri, data: dhh.getRandomPayload()}, function(res, uri) {
                 expect(res.status).to.equal(gu.HTTPresponses.Created);
                 uriCreatedWithGzip = uri;
 
                 var headers = {'Accept-Encoding':'identity'},
-                    params = {channelUri: channelUri,
+                    params = {
+                        channelUri: cnProxyUri,
                         data: dhh.getRandomPayload(),
                         headers: headers
                     };
 
                 dhh.postData(params, function(res2, uri2) {
                     expect(res2.status).to.equal(gu.HTTPresponses.Created);
-                    uriCreatedWithIdentity = uri2;
+                    uriCreatedWithIdentity = resolveUriWithDomain(uri2);
 
                     done();
                 })
@@ -223,10 +242,17 @@ describe('POST data to channel:', function(){
             })
         })
 
+        // This fails via the Crypto Proxy due to: https://www.pivotaltracker.com/story/show/57587730
         it('item posted with identity then requested with gzip returns gzip', function(done) {
             dhh.getDataFromChannel({uri: uriCreatedWithIdentity, headers: {'Accept-Encoding': 'gzip'}}, function(err, res) {
-                expect(res.headers['content-encoding'].toLowerCase()).to.equal('gzip');
-                expect(res.statusCode).to.equal(gu.HTTPresponses.OK);
+                if (gu.isHTTPSuccess(res.statusCode)) {
+                    expect(res.headers['content-encoding'].toLowerCase()).to.equal('gzip');
+                    expect(res.statusCode).to.equal(gu.HTTPresponses.OK);
+                }
+                else {
+                    gu.debugLog('Unexpected response to get data: '+ res.statusCode);
+                    expect(true).to.be.false;
+                }
 
                 done();
             })
@@ -237,10 +263,11 @@ describe('POST data to channel:', function(){
 
         it('POST same set of data twice to channel', function(done){
 
-            dhh.postData({channelUri: channelUri, data: randomPayload}, function(res, uri) {
+            dhh.postData({channelUri: cnProxyUri, data: randomPayload}, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                uri = resolveUriWithDomain(uri);
 
-                dhh.postData({channelUri: channelUri, data: randomPayload}, function(res2, uri2) {
+                dhh.postData({channelUri: cnProxyUri, data: randomPayload}, function(res2, uri2) {
                     expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
 
                     dhh.confirmExpectedData(uri, randomPayload, function(didMatch) {
@@ -257,17 +284,19 @@ describe('POST data to channel:', function(){
                 otherChannelUri;
 
             dhh.createChannel({name: otherChannelName}, function(res, cnUri) {
-                otherChannelUri = cnUri;
+                otherChannelUri = resolveUriWithDomain(cnUri);
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
 
-                dhh.postData({channelUri: channelUri, data: randomPayload}, function(res, uri) {
+                dhh.postData({channelUri: cnProxyUri, data: randomPayload}, function(res, uri) {
                     expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                    uri = resolveUriWithDomain(uri);
 
                     dhh.confirmExpectedData(uri, randomPayload, function(didMatchFirst) {
                         expect(didMatchFirst).to.be.true;
 
                         dhh.postData({channelUri: otherChannelUri, data: randomPayload}, function(res2, uri2) {
                             expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
+                            uri2 = resolveUriWithDomain(uri2);
 
                             dhh.confirmExpectedData(uri2, randomPayload, function(didMatchSecond) {
                                 expect(didMatchSecond).to.be.true;
@@ -304,7 +333,7 @@ describe('POST data to channel:', function(){
             var fileAsAStream = fs.createReadStream(CAT_TOILET_PIC),
                 VERBOSE = true;
 
-            fileAsAStream.pipe(request.post(channelUri,
+            fileAsAStream.pipe(request.post(cnProxyUri,
                 function(err, res, body) {
                     if (err) {
                         throw err;
@@ -313,7 +342,7 @@ describe('POST data to channel:', function(){
                     gu.debugLog('POST attempt status: '+ res.statusCode, VERBOSE);
 
                     var cnMetadata = new dhh.channelMetadata(JSON.parse(body)),
-                        uri = cnMetadata.getChannelUri(),
+                        uri = resolveUriWithDomain(cnMetadata.getChannelUri()),
                         md5sum = crypto.createHash('md5'),
                         s = fs.ReadStream(CAT_TOILET_PIC);
                     gu.debugLog('URI to get image: '+ uri, VERBOSE);
@@ -343,7 +372,7 @@ describe('POST data to channel:', function(){
 
         it('Creation timestamp returned on data storage', function(done){
 
-            dhh.postData({channelUri: channelUri, data: randomPayload}, function(res, uri) {
+            dhh.postData({channelUri: cnProxyUri, data: randomPayload}, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                 var timestamp = moment(res.body.timestamp);
 
@@ -362,7 +391,7 @@ describe('POST data to channel:', function(){
                 function(callback){
                     setTimeout(function(){
 
-                        dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
+                        dhh.postData({channelUri: cnProxyUri, data: dhh.getRandomPayload()}, function(res, uri) {
                             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
                             //gu.debugLog('Creation time was: '+ respMoment.format('X'));
@@ -377,7 +406,7 @@ describe('POST data to channel:', function(){
                 ,function(lastResp, callback){
                     setTimeout(function(){
 
-                        dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
+                        dhh.postData({channelUri: cnProxyUri, data: dhh.getRandomPayload()}, function(res, uri) {
                             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
                             //gu.debugLog('Creation time was: '+ respMoment.format('X'));
@@ -394,7 +423,7 @@ describe('POST data to channel:', function(){
                 ,function(lastResp, callback){
                     setTimeout(function(){
 
-                        dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
+                        dhh.postData({channelUri: cnProxyUri, data: dhh.getRandomPayload()}, function(res, uri) {
                             expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                             respMoment = moment(res.body.timestamp);
                             //gu.debugLog('Creation time was: '+ respMoment.format('X'));
@@ -423,10 +452,12 @@ describe('POST data to channel:', function(){
 
         it('Acceptance - location header exists and is correct', function(done) {
 
-            dhh.postData({channelUri: channelUri, data: randomPayload}, function(res, uri) {
+            dhh.postData({channelUri: cnProxyUri, data: randomPayload}, function(res, uri) {
                 expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                uri = resolveUriWithDomain(uri);
+
                 var myHeader = new dhh.packetPOSTHeader(res.headers),
-                    location = myHeader.getLocation();
+                    location = resolveUriWithDomain(myHeader.getLocation());
                 expect(location).to.equal(uri);
 
                 done();
