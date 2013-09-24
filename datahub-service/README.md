@@ -63,9 +63,10 @@ then the channel has no TTL.
 
 ```json
 {
-   "name": "stumptown"
-   "ttlMillis": "3600000" //one hour in millis
+   "name": "stumptown",
+   "ttlMillis": "3600000"
 }
+//one hour in millis == 3600000
 ```
 
 On success:  `HTTP/1.1 201 OK`
