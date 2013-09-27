@@ -28,7 +28,8 @@ public class ProxyChannelResourceTest {
     private RestClient restClient;
     private AESEncryptionCipher encryptionCipher;
     private AESDecryptionCipher decryptionCipher;
-    private final byte[] data = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
+    private final byte[] encryptedData = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a', 'b', 'o', 'l', 'o', 'g', 'n', 'a'};
+    private final byte[] decryptedData = new byte[]{'b', 'o', 'l', 'o', 'g', 'n', 'a'};
     private Provider<AESEncryptionCipher> encryptionCipherProvider;
     private Provider<AESDecryptionCipher> decryptionCipherProvider;
 
@@ -69,9 +70,9 @@ public class ProxyChannelResourceTest {
         when(requestHeaders.getRequestHeaders()).thenReturn(requestHeadersMap);
         when(clientResponse.getStatus()).thenReturn(Response.Status.OK.getStatusCode());
         when(clientResponse.getHeaders()).thenReturn(responseHeaders);
-        when(clientResponse.getEntity(byte[].class)).thenReturn(data);
+        when(clientResponse.getEntity(byte[].class)).thenReturn(encryptedData);
         when(restClient.get(any(URI.class), any(MultivaluedMap.class))).thenReturn(clientResponse);
-        when(decryptionCipher.decrypt(data)).thenReturn(data);
+        when(decryptionCipher.decrypt(encryptedData)).thenReturn(decryptedData);
 
         ProxyChannelResource testClass = new ProxyChannelResource(datahubLocation, restClient, encryptionCipherProvider, decryptionCipherProvider);
         Response result = testClass.getValue(channelName, uriInfo, requestHeaders);
@@ -86,7 +87,41 @@ public class ProxyChannelResourceTest {
         List<Object> contentLength = metadata.get("Content-Length");
         assertEquals(1, contentLength.size());
         assertEquals(7, contentLength.get(0));
-        assertEquals(data, result.getEntity());
+        assertEquals(decryptedData, result.getEntity());
+
+    }
+
+    @Test
+    public void testGetNonExistingValue() throws Exception {
+        // GIVEN
+        ClientResponse clientResponse = mock(ClientResponse.class);
+        HttpHeaders requestHeaders = mock(HttpHeaders.class);
+        MultivaluedMapImpl requestHeadersMap = new MultivaluedMapImpl();
+        requestHeadersMap.add("foo", "bar");
+        MultivaluedMapImpl responseHeaders = new MultivaluedMapImpl();
+        responseHeaders.add("foo1", "bar1");
+
+        // WHEN
+        when(requestHeaders.getRequestHeaders()).thenReturn(requestHeadersMap);
+        when(clientResponse.getStatus()).thenReturn(Response.Status.FORBIDDEN.getStatusCode());
+        when(clientResponse.getHeaders()).thenReturn(responseHeaders);
+        when(clientResponse.getEntity(byte[].class)).thenReturn(decryptedData);
+        when(restClient.get(any(URI.class), any(MultivaluedMap.class))).thenReturn(clientResponse);
+
+        ProxyChannelResource testClass = new ProxyChannelResource(datahubLocation, restClient, encryptionCipherProvider, decryptionCipherProvider);
+        Response result = testClass.getValue(channelName, uriInfo, requestHeaders);
+
+        // THEN
+        assertEquals(Response.Status.FORBIDDEN.getStatusCode(), result.getStatus());
+        MultivaluedMap<String, Object> metadata = result.getMetadata();
+        assertEquals(2, metadata.size());
+        List<Object> foo = metadata.get("foo1");
+        assertEquals(1, foo.size());
+        assertEquals("bar1", foo.get(0));
+        List<Object> contentLength = metadata.get("Content-Length");
+        assertEquals(1, contentLength.size());
+        assertEquals(7, contentLength.get(0));
+        assertEquals(decryptedData, result.getEntity());
 
     }
 
@@ -108,15 +143,15 @@ public class ProxyChannelResourceTest {
         when(clientResponse.getEntity(byte[].class)).thenReturn(stringEntity.getBytes());
         when(restClient.post(any(URI.class), any(byte[].class), any(MultivaluedMap.class))).thenReturn(clientResponse);
         when(uriInfo.getPath()).thenReturn(URI_PATH);
-        when(encryptionCipher.encrypt(data)).thenReturn(data);
+        when(encryptionCipher.encrypt(decryptedData)).thenReturn(encryptedData);
 
         ProxyChannelResource testClass = new ProxyChannelResource(datahubLocation, restClient, encryptionCipherProvider, decryptionCipherProvider);
-        Response response = testClass.insertValue(channelName, data, requestHeaders, uriInfo);
+        Response response = testClass.insertValue(channelName, decryptedData, requestHeaders, uriInfo);
 
         // THEN
         assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
         assertNotNull(response.getEntity());
-        verify(restClient).post(UriBuilder.fromUri(datahubLocation).path(URI_PATH).build(), data, requestHeadersMap);
+        verify(restClient).post(UriBuilder.fromUri(datahubLocation).path(URI_PATH).build(), encryptedData, requestHeadersMap);
     }
 
     @Test
