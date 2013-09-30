@@ -56,11 +56,16 @@ public class ProxyChannelResource {
         requestHeaders.remove("accept-encoding");
         ClientResponse clientResponse = restClient.get(datahubUri, requestHeaders);
 
-        byte[] decryptedEntity = decryptionCipherProvider.get().decrypt(clientResponse.getEntity(byte[].class));
+        final byte[] responseEntity;
+        if (Response.Status.OK.getStatusCode() != clientResponse.getStatus()) {
+            responseEntity = clientResponse.getEntity(byte[].class);
+        } else {
+            responseEntity = decryptionCipherProvider.get().decrypt(clientResponse.getEntity(byte[].class));
+        }
 
         Response.ResponseBuilder responseBuilder = createResponseBuilderWithoutEntityOrContentLength(clientResponse)
-                .entity(decryptedEntity)
-                .header("content-length", decryptedEntity.length);
+                .entity(responseEntity)
+                .header("content-length", responseEntity.length);
         return responseBuilder.build();
     }
 
