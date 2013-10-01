@@ -1,9 +1,10 @@
 require('./integration_config.js');
 
-utils.configureFrisby();
 var channelName = utils.randomChannelName();
-var testName = "channel_creation_with_whitespace_spec";
 var jsonBody = JSON.stringify({ "name": "    " + channelName + "    "});
+var testName = "channel_creation_with_whitespace_spec";
+
+utils.configureFrisby();
 
 frisby.create(testName + ':Test create channel with whitespace')
     .post(channelUrl, null, { body: jsonBody })

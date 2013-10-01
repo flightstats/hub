@@ -3,17 +3,18 @@ require('./integration_config.js');
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
+var testName = "channel_metadata_spec";
 
 utils.configureFrisby();
 
 utils.runInTestChannel(channelName, function () {
-    frisby.create('Inserting a value into a channel.')
+    frisby.create(testName + ': Inserting a value into a channel.')
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "text/plain")
         .expectStatus(201)
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
-            frisby.create('Now fetching metadata')
+            frisby.create(testName + ': Now fetching metadata')
                 .get(thisChannelResource)
                 .expectStatus(200)
                 .expectHeader('content-type', 'application/json')

@@ -3,17 +3,18 @@ require('./integration_config.js');
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "there's a snake in my boot!";
+var testName = "creation_date_header_in_reply_spec";
 
 utils.configureFrisby();
 
 utils.runInTestChannel(channelName, function () {
-    frisby.create('Inserting a value into a channel.')
+    frisby.create(testName + ': Inserting a value into a channel.')
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "text/plain")
         .expectStatus(201)
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
-            frisby.create('Fetching value in order to check creation date.')
+            frisby.create(testName + ': Fetching value in order to check creation date.')
                 .get(valueUrl)
                 .expectStatus(200)
                 // Wishing frisby allowed callbacks for header validation too...but it doesn't yet.

@@ -4,7 +4,6 @@ var request = require('request');
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "Testing that the Content-Encoding header is returned";
-
 var testName = "content_encoding_header_spec";
 
 utils.configureFrisby();
@@ -17,7 +16,7 @@ utils.runInTestChannel(channelName, function () {
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
             console.info("yeah " + valueUrl);
-            frisby.create("Fetching to confirm header")
+            frisby.create(testName + ": Fetching to confirm header")
                 .get(valueUrl)
 				.addHeader('accept-encoding', 'gzip')
                 .expectHeader('content-encoding', 'gzip')

@@ -4,11 +4,12 @@ var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var channelCryptoResource = cyptoChannelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
+var testName = 'insert_fetch_roundtrip_proxy_response_spec';
 
 utils.configureFrisby();
 
 utils.runInTestChannel(channelName, function () {
-    frisby.create('Inserting a value into a channel.')
+    frisby.create(testName + ': Inserting a value into a channel.')
         .post(channelCryptoResource, null, { body: messageText})
         .addHeader("Content-Type", "text/plain")
         .expectStatus(201)
@@ -27,7 +28,7 @@ utils.runInTestChannel(channelName, function () {
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
             valueUrl = valueUrl.replace(channelResource, channelCryptoResource);
-            frisby.create('Fetching value to ensure that it was inserted.')
+            frisby.create(testName + ': Fetching value to ensure that it was inserted.')
                 .get(valueUrl)
                 .expectStatus(200)
                 .expectHeader('content-type', 'text/plain')

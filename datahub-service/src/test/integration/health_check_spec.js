@@ -1,5 +1,7 @@
 require('./integration_config.js');
+
 var testName = 'health_check_spec';
+
 frisby.create(testName + ': Making sure channel resource does not yet exist.')
     .get(dataHubUrlBase + "/health")
     .expectStatus(200)

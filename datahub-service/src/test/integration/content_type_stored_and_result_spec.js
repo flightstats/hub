@@ -3,11 +3,12 @@ require('./integration_config.js');
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
+var testName = "content_type_stored_and_result_spec";
 
 utils.configureFrisby();
 
 utils.runInTestChannel(channelName, function () {
-    frisby.create('Checking that the content-type is returned.')
+    frisby.create(testName + ': Checking that the content-type is returned.')
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "application/fractals")
         .expectStatus(201)
@@ -19,7 +20,7 @@ utils.runInTestChannel(channelName, function () {
         })
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
-            frisby.create('Fetching data and checking content-type header.')
+            frisby.create(testName + ': Fetching data and checking content-type header.')
                 .get(valueUrl)
                 .expectStatus(200)
                 .expectHeader('content-type', 'application/fractals')
