@@ -2,6 +2,7 @@ require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
 var testName = "latest_item_in_channel_is_404_when_channel_empty_spec";
+
 utils.configureFrisby();
 
 utils.runInTestChannel(channelName, function (channelResponse) {

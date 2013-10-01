@@ -17,7 +17,7 @@ utils.runInTestChannel(channelName, function () {
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
             console.info("yeah " + valueUrl);
-            frisby.create("Fetching to confirm header")
+            frisby.create(testName + ": Fetching to confirm header")
                 .get(valueUrl)
                 .expectHeader('content-language', 'en, sp')
                 .toss()

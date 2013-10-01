@@ -1,14 +1,15 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
+var testName = "get_channels_spec";
 
 utils.configureFrisby();
 
-frisby.create('Making a channel and then checking that it is in the result list...')
+frisby.create(testName + ': Making a channel and then checking that it is in the result list...')
     .post(channelUrl, null, { body: JSON.stringify({ "name": channelName})})
     .addHeader("Content-Type", "application/json")
     .afterJSON(function () {
-        frisby.create("Fetching the channel list")
+        frisby.create(testName + ": Fetching the channel list")
             .get(channelUrl)
             .expectStatus(200)
             .expectHeader('content-type', 'application/json')
