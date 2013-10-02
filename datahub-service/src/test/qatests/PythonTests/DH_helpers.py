@@ -1,4 +1,4 @@
-from src.test.qatests.PythonTests import text_utils as txu
+#from src.test.qatests.PythonTests import text_utils as txu
 
 __author__ = 'gnewcomb'
 
@@ -9,6 +9,7 @@ import FStest_helpers as fs
 import requests
 import json as jsonMod
 from urlparse import urlparse
+import text_utils as txu
 
 DH_DOMAIN = 'datahub.svc.dev'
 

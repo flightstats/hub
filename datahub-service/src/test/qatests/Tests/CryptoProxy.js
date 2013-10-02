@@ -24,7 +24,7 @@ var URL_ROOT = dhh.URL_ROOT,
     DOMAIN = dhh.CP_DOMAIN;
 //    DOMAIN = dhh.DOMAIN;
 
-describe('CODE NOT DEPLOYED YET - Crypto Proxy testing', function() {
+describe.only('Crypto Proxy testing', function() {
 
     describe('Proxy functionality', function() {
         var cnName,
@@ -84,7 +84,7 @@ describe('CODE NOT DEPLOYED YET - Crypto Proxy testing', function() {
                         gu.debugLog('data uri via proxy: '+ dataProxyUri);
 
                         dhh.getDataFromChannel({uri: dataProxyUri, debug: true}, function(err, getRes, gottenData) {
-                            if (gu.isHTTPSuccess(getRes.status)) {
+                            if (gu.isHTTPSuccess(getRes.statusCode)) {
                                 getResponse = getRes;
                                 getData = gottenData;
 
@@ -105,7 +105,7 @@ describe('CODE NOT DEPLOYED YET - Crypto Proxy testing', function() {
 
             })
 
-            it('Insert data via Crypto Proxy', function() {
+            describe('Insert data via Crypto Proxy', function() {
 
                 it('Returned 201', function() {
                     expect(postResponse.status).to.equal(gu.HTTPresponses.Created);
@@ -126,8 +126,8 @@ describe('CODE NOT DEPLOYED YET - Crypto Proxy testing', function() {
                 })
 
                 it('data URI correctly uses direct datahub URI, not CP', function() {
-                    expect(postResponse.body._links.self.toString().lastIndexOf(DOMAIN)).to.equal(-1);
-                    expect(postResponse.body._links.self.toString().lastIndexOf(URL_ROOT)).to.be.at.least(0);
+                    expect(postResponse.body._links.self.href.toString().lastIndexOf(DOMAIN)).to.equal(-1);
+                    expect(postResponse.body._links.self.href.toString().lastIndexOf(URL_ROOT)).to.be.at.least(0);
                 })
 
                 it('channel link is correct', function() {
@@ -139,9 +139,19 @@ describe('CODE NOT DEPLOYED YET - Crypto Proxy testing', function() {
 
                     expect(theTimestamp.add('minutes', 5).isAfter(moment())).to.be.true;
                 })
+
+                it('mangles the data in the DH', function(done) {
+                    dhh.getDataFromChannel({uri: dataDirectUri, debug: true}, function(err, response, data) {
+                        expect(gu.isHTTPSuccess(response.statusCode)).to.be.true;
+                        expect(data).to.not.be.null;
+                        expect(data).to.not.equal(payload);
+
+                        done();
+                    })
+                })
             })
 
-            it('Get data via Crypto Proxy', function() {
+            describe('Get data via Crypto Proxy', function() {
 
                 it('Returned 200', function() {
                     expect(getResponse.statusCode).to.equal(gu.HTTPresponses.OK);
