@@ -24,7 +24,7 @@ var URL_ROOT = dhh.URL_ROOT,
     DOMAIN = dhh.CP_DOMAIN;
 //    DOMAIN = dhh.DOMAIN;
 
-describe.only('Crypto Proxy testing', function() {
+describe('Crypto Proxy testing', function() {
 
     describe('Proxy functionality', function() {
         var cnName,
