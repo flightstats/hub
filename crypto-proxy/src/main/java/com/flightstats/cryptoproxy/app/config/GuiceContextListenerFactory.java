@@ -13,6 +13,7 @@ import com.google.inject.name.Named;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.filter.GZIPContentEncodingFilter;
+import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,7 @@ public class GuiceContextListenerFactory {
         JerseyServletModule jerseyModule = new JerseyServletModuleBuilder()
                 .withJerseyPackage("com.flightstats.cryptoproxy")
                 .withJerseryProperty(JSONConfiguration.FEATURE_POJO_MAPPING, "true")
+                .withJerseryProperty(ResourceConfig.FEATURE_CANONICALIZE_URI_PATH, "true")
                 .withNamedProperties(properties)
                 .withGraphiteConfig(graphiteConfig)
                 .withObjectMapper(DataHubObjectMapperFactory.construct())
