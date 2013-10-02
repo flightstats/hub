@@ -46,7 +46,7 @@ public class LatestChannelItemResource {
 
 		String channelUri = uriInfo.getRequestUri().toString().replaceFirst("/latest$", "");
 		DataHubKey keyOfLatestItem = latestId.get();
-		URI uri = URI.create(channelUri + "/" + keyRenderer.keyToString(keyOfLatestItem));
+		URI uri = URI.create(channelUri + "/" + keyRenderer.keyToString(keyOfLatestItem)).normalize();
 		builder.location(uri);
 		return builder.build();
 	}

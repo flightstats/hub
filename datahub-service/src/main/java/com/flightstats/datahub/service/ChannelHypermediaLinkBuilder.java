@@ -25,30 +25,30 @@ public class ChannelHypermediaLinkBuilder {
 	}
 
 	URI buildChannelUri(String channelName, UriInfo uriInfo) {
-		return URI.create(uriInfo.getBaseUri() + "channel/" + channelName);
+		return URI.create(uriInfo.getBaseUri() + "channel/" + channelName).normalize();
 	}
 
 	URI buildLatestUri(UriInfo uriInfo) {
-		return URI.create(uriInfo.getRequestUri() + "/latest");
+		return URI.create(uriInfo.getRequestUri() + "/latest").normalize();
 	}
 
 	URI buildLatestUri(String channelName, UriInfo uriInfo) {
-		return URI.create(uriInfo.getRequestUri() + "/" + channelName + "/latest");
+		return URI.create(uriInfo.getRequestUri() + "/" + channelName + "/latest").normalize();
 	}
 
 	public URI buildItemUri(DataHubKey key, URI channelUri) {
 		String keyId = keyRenderer.keyToString(key);
-		return URI.create(channelUri.toString() + "/" + keyId);
+		return URI.create(channelUri.toString() + "/" + keyId).normalize();
 	}
 
 	public URI buildWsLinkFor(UriInfo uriInfo) {
 		String requestUri = uriInfo.getRequestUri().toString().replaceFirst("^http", "ws");
-		return URI.create(requestUri + "/ws");
+		return URI.create(requestUri + "/ws").normalize();
 	}
 
 	public URI buildWsLinkFor(String channelName, UriInfo uriInfo) {
 		String requestUri = uriInfo.getRequestUri().toString().replaceFirst("^http", "ws");
-		return URI.create(requestUri + "/" + channelName + "/ws");
+		return URI.create(requestUri + "/" + channelName + "/ws").normalize();
 	}
 
 	public Linked<ChannelConfiguration> buildLinkedChannelConfig(ChannelConfiguration newConfig, URI channelUri, UriInfo uriInfo) {
