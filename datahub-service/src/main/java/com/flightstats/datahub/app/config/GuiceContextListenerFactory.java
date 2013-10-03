@@ -62,6 +62,7 @@ public class GuiceContextListenerFactory {
                 .withJerseryProperty(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName())
                 .withJerseryProperty(JSONConfiguration.FEATURE_POJO_MAPPING, "true")
                 .withJerseryProperty(ResourceConfig.FEATURE_CANONICALIZE_URI_PATH, "true")
+                .withJerseryProperty(PROPERTY_CONTAINER_REQUEST_FILTERS, RemoveSlashFilter.class.getName())
                 .withNamedProperties(properties)
                 .withGraphiteConfig(graphiteConfig)
                 .withObjectMapper(DataHubObjectMapperFactory.construct())
