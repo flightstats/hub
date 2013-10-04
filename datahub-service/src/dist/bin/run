@@ -83,11 +83,11 @@ if [ -e ${DEPLOYED_DIR}/conf/datahub.properties ] ; then
 fi
 
 while true ; do
-  echo Running datahub crypto proxy in the background...
+  echo Running datahub in the background...
   ${JAVA_HOME}/bin/java -cp "${DEPLOYED_DIR}/lib/*" \
-    ${JAVA_OPTS} ${MAIN_CLASS} ${CRYPTO_PROXY_PROPS} &
+    ${JAVA_OPTS} ${MAIN_CLASS} ${DATAHUB_PROPS} &
   CHILDPID=$!
-  echo ... datahub crypto proxy pid is $CHILDPID
+  echo ... datahub pid is $CHILDPID
   set +e
   wait $CHILDPID
   set -e
