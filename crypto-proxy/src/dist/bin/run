@@ -55,7 +55,7 @@ JAVA_OPTS="$JAVA_OPTS
 CHILDPID=""
 function shutdownChild()
 {
-        echo signal trap caught - taking stack trace and sleeping 5s before relaying signal
+        echo signal trap $1 caught - taking stack trace and sleeping 5s before relaying signal
 
         if [ -z "$CHILDPID" ]
         then
@@ -70,8 +70,10 @@ function shutdownChild()
         echo signal sent, waiting ...
         wait $CHILDPID
         echo datahub crypto proxy is down
+	    exit
 }
-trap "shutdownChild" SIGTERM SIGINT
+trap "shutdownChild TERM" SIGTERM
+trap "shutdownChild INT"  SIGINT
 
 export JAVA_OPTS="$JAVA_OPTS"
 export JAVA_HOME="$JAVA_HOME"
@@ -82,12 +84,15 @@ if [ -e ${DEPLOYED_DIR}/conf/crypto-proxy.properties ] ; then
     CRYPTO_PROXY_PROPS=${DEPLOYED_DIR}/conf/crypto-proxy.properties
 fi
 
-echo Running datahub crypto proxy in the background...
-${JAVA_HOME}/bin/java -cp "${DEPLOYED_DIR}/lib/*" \
+while true ; do 
+  echo Running datahub crypto proxy in the background...
+  ${JAVA_HOME}/bin/java -cp "${DEPLOYED_DIR}/lib/*" \
     ${JAVA_OPTS} ${MAIN_CLASS} ${CRYPTO_PROXY_PROPS} &
-
-CHILDPID=$!
-echo ... datahub crypto proxy pid is $CHILDPID
-
-wait $CHILDPID
-exit $?
+  CHILDPID=$!
+  echo ... datahub crypto proxy pid is $CHILDPID
+  set +e
+  wait $CHILDPID
+  set -e
+  sleep 30
+  echo "child pid did not exit cleanly. Respawning ..."
+done

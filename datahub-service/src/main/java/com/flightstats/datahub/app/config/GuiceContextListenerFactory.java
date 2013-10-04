@@ -33,6 +33,7 @@ import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;
+import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
@@ -60,6 +61,8 @@ public class GuiceContextListenerFactory {
                 .withJerseryProperty(PROPERTY_CONTAINER_REQUEST_FILTERS, GZIPContentEncodingFilter.class.getName())
                 .withJerseryProperty(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName())
                 .withJerseryProperty(JSONConfiguration.FEATURE_POJO_MAPPING, "true")
+                .withJerseryProperty(ResourceConfig.FEATURE_CANONICALIZE_URI_PATH, "true")
+                .withJerseryProperty(PROPERTY_CONTAINER_REQUEST_FILTERS, RemoveSlashFilter.class.getName())
                 .withNamedProperties(properties)
                 .withGraphiteConfig(graphiteConfig)
                 .withObjectMapper(DataHubObjectMapperFactory.construct())
