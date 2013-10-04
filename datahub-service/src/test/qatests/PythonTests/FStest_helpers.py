@@ -22,7 +22,7 @@ def parseFSDateTime(x):
     myDt = dt.datetime(int(x[0:4]), int(x[5:7]), int(x[8:10]), int(x[11:13]), int(x[14:16]), int(x[17:19]), int(x[20:23]))
     return myDt
 
-def areDatesClose(pA, pB):
+def areDatesClose(pA, pB, tolerance_minutes=5):
     """
     Given two datetimes (datetime.datetime), check that they are within 5 minutes of each other
     """
@@ -31,7 +31,7 @@ def areDatesClose(pA, pB):
     if  (pA.year == pB.year and pA.month == pB.month and pA.day == pB.day):
         aMin = (pA.hour * 60) + pA.minute
         bMin = (pB.hour * 60) + pB.minute
-        if ((aMin + 6) > bMin) and ((aMin - 6 < bMin)):
+        if ((aMin + (tolerance_minutes + 1)) > bMin) and ((aMin - (tolerance_minutes + 1) < bMin)):
             return True
         else:
             return False

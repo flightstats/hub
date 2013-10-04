@@ -1,11 +1,10 @@
-from src.test.qatests.PythonTests import DH_helpers as dhh
 
 __author__ = 'gnewcomb'
 
+#from src.test.qatests.PythonTests import DH_helpers as dhh
 from nose.plugins.attrib import attr
 import FStest_helpers as fstest
 import unittest
-import unittest_helpers as uh
 import requests
 import httplib
 import time
@@ -13,6 +12,7 @@ import thread
 import json as jsonMod
 import datetime
 import sys
+import DH_helpers as dhh
 
 _mainDH = None
 
@@ -100,6 +100,7 @@ class NameTests(unittest.TestCase):
         randomName = dhh.Channel.makeRandomChannelName()
         self.name = randomName[:10] +'_'+ randomName[10:]
         self.channel, self.response = NameTests.DH.post({'name': self.name})
+#        print('Underscores allowed? '+ str(self.response.status_code))
         self.assertEqual(self.response.status_code, httplib.CREATED)
         self.assertEqual(self.channel.metadata.name, self.name)
 
@@ -208,3 +209,6 @@ class OtherScenarios(unittest.TestCase):
         self.cn2, self.res2 = OtherScenarios.DH.post({'name': randomName +'X'})
         self.assertEqual(self.res1.status_code, httplib.CREATED)
         self.assertEqual(self.res2.status_code, httplib.CREATED)
+
+if __name__ == '__main__':
+    unittest.main()
