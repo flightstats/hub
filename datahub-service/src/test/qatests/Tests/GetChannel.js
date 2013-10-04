@@ -30,11 +30,11 @@ describe('GET Channel metadata:', function() {
         before(function(done){
             channelName = dhh.getRandomChannelName();
 
-            dhh.createChannel({name: channelName}, function(makeRes, channelUri) {
+            dhh.createChannel({name: channelName, debug: true}, function(makeRes, channelUri) {
                 expect(gu.isHTTPSuccess(makeRes.status)).to.equal(true);
                 cnUri = channelUri;
 
-                dhh.postData({channelUri: channelUri, data: ranU.randomString(ranU.randomNum(51))}, function(postRes, myUri) {
+                dhh.postData({channelUri: channelUri, data: ranU.randomString(ranU.randomNum(51)), debug: true}, function(postRes, myUri) {
                     expect(gu.isHTTPSuccess(postRes.status)).to.equal(true);
 
                     dhh.getChannel({'uri': channelUri} , function(cnRes) {
@@ -97,6 +97,13 @@ describe('GET Channel metadata:', function() {
         it('returns valid TTL', function() {
             expect(lodash.isNumber(cnMetadata.getTTL())).to.be.true;
         })
+
+        it('should successfully GET real channel but with trailing slash', function(done){
+            dhh.getChannel({uri: cnUri +'/' }, function(res) {
+                expect(res.status).to.equal(gu.HTTPresponses.OK);
+                done();
+            });
+        });
     })
 
     describe('Error cases', function() {
