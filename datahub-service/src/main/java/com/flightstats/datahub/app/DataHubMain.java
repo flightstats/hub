@@ -26,7 +26,11 @@ public class DataHubMain {
         Properties properties = loadProperties(args);
         final JettyConfig jettyConfig = new JettyConfigImpl(properties);
         final GuiceServletContextListener guice = GuiceContextListenerFactory.construct(properties);
-        new JettyServer(jettyConfig, guice).start();
+        JettyServer server = new JettyServer(jettyConfig, guice);
+        server.start();
+        logger.info("Jetty server has been started.");
+        server.join();
+        logger.info("Server shutdown complete.  Exiting application.");
     }
 
     private static Properties loadProperties(String[] args) throws IOException {
