@@ -115,7 +115,7 @@ On success:  `HTTP/1.1 200 OK`, and the new channel metadata is returned (see ex
 
 Here's how you can do this with curl:
 ```bash
-curl -i -X POST --header "Content-type: application/json" \
+curl -i -X PATCH --header "Content-type: application/json" \
     --data '{"ttlMillis": "30000"}'  \
     http://datahub:8080/channel/stumptown
 ```
