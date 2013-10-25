@@ -43,9 +43,6 @@ import java.io.FileNotFoundException;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.sun.jersey.api.core.ResourceConfig.PROPERTY_CONTAINER_REQUEST_FILTERS;
-import static com.sun.jersey.api.core.ResourceConfig.PROPERTY_CONTAINER_RESPONSE_FILTERS;
-
 public class GuiceContextListenerFactory {
     public static final String BACKING_STORE_PROPERTY = "backing.store";
     public static final String CASSANDRA_BACKING_STORE_TAG = "cassandra";
@@ -58,11 +55,10 @@ public class GuiceContextListenerFactory {
 
         JerseyServletModule jerseyModule = new JerseyServletModuleBuilder()
                 .withJerseyPackage("com.flightstats.datahub")
-                .withJerseryProperty(PROPERTY_CONTAINER_REQUEST_FILTERS, GZIPContentEncodingFilter.class.getName())
-                .withJerseryProperty(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName())
+                .withContainerResponseFilters(GZIPContentEncodingFilter.class)
                 .withJerseryProperty(JSONConfiguration.FEATURE_POJO_MAPPING, "true")
                 .withJerseryProperty(ResourceConfig.FEATURE_CANONICALIZE_URI_PATH, "true")
-                .withJerseryProperty(PROPERTY_CONTAINER_REQUEST_FILTERS, RemoveSlashFilter.class.getName())
+                .withContainerRequestFilters(GZIPContentEncodingFilter.class, RemoveSlashFilter.class)
                 .withNamedProperties(properties)
                 .withGraphiteConfig(graphiteConfig)
                 .withObjectMapper(DataHubObjectMapperFactory.construct())
