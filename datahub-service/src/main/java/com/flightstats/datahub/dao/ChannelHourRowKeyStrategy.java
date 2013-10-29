@@ -23,19 +23,25 @@ public class ChannelHourRowKeyStrategy implements RowKeyStrategy<String, DataHub
 
     @Override
     public String nextKey(String channelName, String currentRowKey) {
-        DateTime date = formatter.parseDateTime(currentRowKey);
-        date = date.plusDays(1);
+        String datePart = stripPrefix(channelName, currentRowKey);
+        DateTime date = formatter.parseDateTime(datePart);
+        date = date.plusHours(1);
         return addPrefix(channelName, formatter.print(date.getMillis()));
     }
 
     @Override
     public String prevKey(String channelName, String currentRowKey) {
-        DateTime date = formatter.parseDateTime(currentRowKey);
-        date = date.minusDays(1);
+        String datePart = stripPrefix(channelName, currentRowKey);
+        DateTime date = formatter.parseDateTime(datePart);
+        date = date.minusHours(1);
         return addPrefix(channelName, formatter.print(date.getMillis()));
     }
 
     private String addPrefix(String channelName, String dateString) {
         return channelName + ":" + dateString;
+    }
+
+    private String stripPrefix(String channelName, String key){
+        return key.substring(channelName.length() + 1);
     }
 }
