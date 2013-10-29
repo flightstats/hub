@@ -14,7 +14,8 @@ public class ChannelHourRowKeyStrategy implements RowKeyStrategy<String, DataHub
             .appendFixedDecimal(DateTimeFieldType.monthOfYear(), 2)
             .appendFixedDecimal(DateTimeFieldType.dayOfMonth(), 2)
             .appendFixedDecimal(DateTimeFieldType.hourOfDay(), 2)
-            .toFormatter();
+            .toFormatter()
+            .withZoneUTC();
 
     @Override
     public String buildKey(String channelName, DataHubKey dataHubKey) {
