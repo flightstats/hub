@@ -27,7 +27,7 @@ import java.util.List;
 public class CassandraChannelsCollection {
 
 	private final static Logger logger = LoggerFactory.getLogger(CassandraChannelsCollection.class);
-
+    public static final String DATA_HUB_COLUMN_FAMILY_NAME = "DataHub";
 	static final String CHANNELS_ROW_KEY = "DATA_HUB_CHANNELS";
 	static final String CHANNELS_FIRST_ROW_KEY = "DATA_HUB_CHANNELS_FIRST";
 	static final String CHANNELS_METADATA_COLUMN_FAMILY_NAME = "channelMetadata";
@@ -50,7 +50,6 @@ public class CassandraChannelsCollection {
 
 	public ChannelConfiguration createChannel(String name, Long ttlMillis) {
 		ChannelConfiguration channelConfig = new ChannelConfiguration(name, timeProvider.getDate(), ttlMillis);
-		createColumnFamilyForChannel(channelConfig);
 		insertChannelMetadata(channelConfig);
 		return channelConfig;
 	}
@@ -79,11 +78,6 @@ public class CassandraChannelsCollection {
 	public void initializeMetadata() {
 		logger.info("Initializing channel metadata column family " + CHANNELS_METADATA_COLUMN_FAMILY_NAME);
 		connector.createColumnFamily(CHANNELS_METADATA_COLUMN_FAMILY_NAME, false);
-	}
-
-	private void createColumnFamilyForChannel(ChannelConfiguration channelConfig) {
-		String columnSpaceName = channelConfig.getName();
-		connector.createColumnFamily(columnSpaceName);
 	}
 
 	public boolean channelExists(String channelName) {
@@ -122,17 +116,17 @@ public class CassandraChannelsCollection {
 	}
 
 	public void updateFirstKey(String channelName, DataHubKey key) {
-		updateMetadataKey(channelName, key, CHANNELS_FIRST_ROW_KEY);
+		updateMetadataKey(channelName, key, channelName + ":" + CHANNELS_FIRST_ROW_KEY);
 	}
 
 	public void deleteFirstKey(String channelName) {
-		deleteMetadataKey(channelName, CHANNELS_FIRST_ROW_KEY);
+		deleteMetadataKey(channelName, channelName + ":" + CHANNELS_FIRST_ROW_KEY);
 	}
 
 	private void deleteMetadataKey(String channelName, String rowKey) {
 		StringSerializer keySerializer = StringSerializer.get();
 		Mutator<String> mutator = connector.buildMutator(keySerializer);
-		mutator.delete(rowKey, channelName, channelName, keySerializer);
+		mutator.delete(rowKey, DATA_HUB_COLUMN_FAMILY_NAME, channelName, keySerializer);
 	}
 
 	private void updateMetadataKey(String channelName, DataHubKey hubKey, String rowKey) {
@@ -140,7 +134,7 @@ public class CassandraChannelsCollection {
 		Mutator<String> mutator = connector.buildMutator(keySerializer);
 		String keyString = keyRenderer.keyToString(hubKey);
 		HColumn<String, String> column = hector.createColumn(channelName, keyString, StringSerializer.get(), StringSerializer.get());
-		mutator.insert(rowKey, channelName, column);
+		mutator.insert(rowKey, DATA_HUB_COLUMN_FAMILY_NAME, column);
 	}
 
 	public DataHubKey getFirstKey(String channelName) {
@@ -154,7 +148,7 @@ public class CassandraChannelsCollection {
 		ColumnQuery<String, String, String> columnQuery = rawQuery
 				.setName(channelName)
 				.setKey(key)
-				.setColumnFamily(channelName);
+				.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME);
 		QueryResult<HColumn<String, String>> result = columnQuery.execute();
 		HColumn<String, String> column = result.get();
 		return column == null ? null : keyRenderer.fromString(column.getValue());

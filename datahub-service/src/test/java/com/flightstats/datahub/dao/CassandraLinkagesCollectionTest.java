@@ -12,6 +12,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Date;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
 import static org.mockito.Mockito.*;
 
 public class CassandraLinkagesCollectionTest {
@@ -48,8 +49,8 @@ public class CassandraLinkagesCollectionTest {
 		testClass.updateLinkages(CHANNEL_NAME, insertedKey, lastUpdateKey);
 
 		//THEN
-		verify(mutator).addInsertion("20130517_previous", CHANNEL_NAME, expectedPrevColumn);
-		verify(mutator).addInsertion("20130516_next", CHANNEL_NAME, expectedNextColumn);
+		verify(mutator).addInsertion("20130517_previous", DATA_HUB_COLUMN_FAMILY_NAME, expectedPrevColumn);
+		verify(mutator).addInsertion("20130516_next", DATA_HUB_COLUMN_FAMILY_NAME, expectedNextColumn);
 		verify(mutator).execute();
 	}
 
@@ -88,8 +89,8 @@ public class CassandraLinkagesCollectionTest {
 		testClass.delete(CHANNEL_NAME, Arrays.asList(keyToDelete));
 
 		//THEN
-		verify(mutator).addDeletion("roe_previous", CHANNEL_NAME, columnKey, StringSerializer.get());
-		verify(mutator).addDeletion("roe_next", CHANNEL_NAME, columnKey, StringSerializer.get());
+		verify(mutator).addDeletion("roe_previous", DATA_HUB_COLUMN_FAMILY_NAME, columnKey, StringSerializer.get());
+		verify(mutator).addDeletion("roe_next", DATA_HUB_COLUMN_FAMILY_NAME, columnKey, StringSerializer.get());
 		verify(mutator).execute();
 	}
 }
