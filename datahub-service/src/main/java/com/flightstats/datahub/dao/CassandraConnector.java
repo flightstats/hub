@@ -37,11 +37,15 @@ public class CassandraConnector {
 	public boolean createColumnFamily(final String columnFamilyName, boolean verbose) {
 		ColumnFamilyDefinition columnFamilyDefinition = hector.createColumnFamilyDefinition(KEYSPACE_NAME, columnFamilyName);
 		try {
+//            columnFamilyDefinition.setMemtableThroughputInMb();
+//            columnFamilyDefinition.setMemtableOperationsInMillions();
+//            columnFamilyDefinition.setMemtableFlushAfterMins();
+
 			cluster.addColumnFamily(columnFamilyDefinition, true);
 			return true;
 		} catch (HInvalidRequestException e) {
 			if (verbose) {
-				logger.warn("Error creating channel: " + e.getMessage(), e);
+				logger.warn("Error creating column family: " + e.getMessage(), e);
 			}
 			return false;
 		}
