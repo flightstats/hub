@@ -95,6 +95,9 @@ public class SingleChannelResource {
 								@HeaderParam("Content-Language") final String contentLanguage,
 								final byte[] data,
 								@Context UriInfo uriInfo) throws Exception {
+        if (!dataHubService.channelExists(channelName)) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
 
 		ValueInsertionResult insertionResult = dataHubService.insert(channelName, data, Optional.fromNullable(contentType), Optional.fromNullable(contentLanguage));
 		URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo.getRequestUri());

@@ -12,6 +12,7 @@ import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
 import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
 
 public class CassandraValueReader {
@@ -36,15 +37,15 @@ public class CassandraValueReader {
 				DataHubCompositeValueSerializer.get());
 		String rowKey = rowKeyStrategy.buildKey(channelName, key);
 		try {
-			return executeQuery(channelName, key, query, rowKey);
+			return executeQuery(key, query, rowKey);
 
 		} catch (HInvalidRequestException e) {
 			throw maybePromoteToNoSuchChannel(e, channelName);
 		}
 	}
 
-	private DataHubCompositeValue executeQuery(String channelName, DataHubKey key, ColumnQuery<String, String, DataHubCompositeValue> query, String rowKey) {
-		QueryResult<HColumn<String, DataHubCompositeValue>> queryResult = query.setColumnFamily(channelName)
+	private DataHubCompositeValue executeQuery(DataHubKey key, ColumnQuery<String, String, DataHubCompositeValue> query, String rowKey) {
+		QueryResult<HColumn<String, DataHubCompositeValue>> queryResult = query.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)
 																			   .setKey(rowKey)
 																			   .setName(keyRenderer.keyToString(key))
 																			   .execute();
