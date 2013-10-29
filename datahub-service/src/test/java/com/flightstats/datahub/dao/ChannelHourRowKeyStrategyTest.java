@@ -19,7 +19,7 @@ public class ChannelHourRowKeyStrategyTest {
         String result = testClass.buildKey("fooChan", key);
 
         //THEN
-    	assertEquals("fooChan:1970041501", result);
+    	assertEquals("fooChan:1970041509", result);
     }
 
     @Test
