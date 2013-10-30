@@ -17,6 +17,8 @@ import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import java.util.Date;
 import java.util.List;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
+
 public class LastKeyFinder {
 
 	private final HectorFactoryWrapper hector;
@@ -49,7 +51,7 @@ public class LastKeyFinder {
 	private DataHubKey searchBackToFirst(String channelName, String firstRowKey) {
 		String rowBeingChecked = buildRowKeyAfterNow(channelName);
 		while (rowIsNotBeforeFirst(rowBeingChecked, firstRowKey)) {
-			DataHubKey latestKey = queryForLatestInRow(channelName, rowBeingChecked);
+			DataHubKey latestKey = queryForLatestInRow(rowBeingChecked);
 			if (latestKey != null) {
 				return latestKey;
 			}
@@ -62,11 +64,11 @@ public class LastKeyFinder {
 		return rowBeingChecked.compareTo(firstRowKey) >= 0;
 	}
 
-	private DataHubKey queryForLatestInRow(String channelName, String rowKey) {
+	private DataHubKey queryForLatestInRow(String rowKey) {
 		Keyspace keyspace = connector.getKeyspace();
 		RangeSlicesQuery<String, String, DataHubCompositeValue> query = hector.createRangeSlicesQuery(
 				keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get());
-		QueryResult<OrderedRows<String, String, DataHubCompositeValue>> results = query.setColumnFamily(channelName)
+		QueryResult<OrderedRows<String, String, DataHubCompositeValue>> results = query.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)
 																					   .setRange(null, null, true, 1)
 																					   .setKeys(rowKey, rowKey)
 																					   .execute();
