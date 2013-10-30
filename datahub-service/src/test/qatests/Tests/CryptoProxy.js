@@ -65,7 +65,7 @@ describe('Crypto Proxy testing', function() {
             });
         })
 
-        describe.only('Acceptance', function() {
+        describe('Acceptance', function() {
             var payload = dhh.getRandomPayload(),
                 dataDirectUri,
                 dataProxyUri,
