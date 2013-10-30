@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
@@ -67,7 +68,7 @@ public class CassandraValueWriterTest {
 		ValueInsertionResult result = testClass.write(CHANNEL_NAME, value);
 
 		assertEquals(expected, result);
-		verify(mutator).insert(ROW_KEY, CHANNEL_NAME, column);
+		verify(mutator).insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column);
 	}
 
 	@Test(expected = NoSuchChannelException.class)
@@ -78,8 +79,8 @@ public class CassandraValueWriterTest {
 		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
-		when(mutator.insert(ROW_KEY, CHANNEL_NAME, column)).thenThrow(
-				new HInvalidRequestException("You must have an unconfigured columnfamily in your soup"));
+		when(mutator.insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column)).thenThrow(
+                new HInvalidRequestException("You must have an unconfigured columnfamily in your soup"));
 
 		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
 		testClass.write(CHANNEL_NAME, value);
@@ -93,8 +94,8 @@ public class CassandraValueWriterTest {
 		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
-		when(mutator.insert(ROW_KEY, CHANNEL_NAME, column)).thenThrow(
-				new HInvalidRequestException("Clown-based-tamale"));            //Not the expected verbage
+		when(mutator.insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column)).thenThrow(
+                new HInvalidRequestException("Clown-based-tamale"));            //Not the expected verbage
 
 		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
 		testClass.write(CHANNEL_NAME, value);

@@ -14,6 +14,7 @@ import me.prettyprint.hector.api.mutation.Mutator;
 
 import java.util.Collection;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
 import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
 
 public class CassandraValueWriter {
@@ -45,7 +46,7 @@ public class CassandraValueWriter {
 		String rowKey = rowKeyStrategy.buildKey(channelName, key);
 
 		try {
-			mutator.insert(rowKey, channelName, column);
+			mutator.insert(rowKey, DATA_HUB_COLUMN_FAMILY_NAME, column);
 		} catch (HInvalidRequestException e) {
 			throw maybePromoteToNoSuchChannel(e, channelName);
 		}

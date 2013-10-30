@@ -18,15 +18,16 @@ import javax.inject.Named;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
 import static com.flightstats.datahub.dao.CassandraConnector.KEYSPACE_NAME;
 import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
 
 public class CassandraConnectorFactory {
 
-	private final static Logger logger = LoggerFactory.getLogger(CassandraConnectorFactory.class);
+    private final static Logger logger = LoggerFactory.getLogger(CassandraConnectorFactory.class);
 	private static final int TIME_BETWEEN_CONNECTION_RETRIES = 5;
 
-	private final String clusterName;
+    private final String clusterName;
 	private final String hostPort;
 	private final int replicationFactor;
 	private final HectorFactoryWrapper hector;
@@ -56,10 +57,18 @@ public class CassandraConnectorFactory {
 		Cluster cluster = getCluster(hostConfigurator);
 		addKeyspaceIfMissing(replicationFactor, cluster);
 		Keyspace keyspace = hector.createKeyspace(KEYSPACE_NAME, cluster);
-		return new CassandraConnector(cluster, keyspace, hector);
+        CassandraConnector connector = new CassandraConnector(cluster, keyspace, hector);
+        ensureChannelsColumnFamilyExists(connector);
+        return connector;
 	}
 
-	private void logErrorAndWait(HectorException e) {
+    private void ensureChannelsColumnFamilyExists(CassandraConnector connector) {
+        if(connector.createColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME, false)){
+            logger.warn("Default column family '" + DATA_HUB_COLUMN_FAMILY_NAME + "' did not exist and was created.");
+        }
+    }
+
+    private void logErrorAndWait(HectorException e) {
 		logger.error("Error creating CassandraConnector: " + e.getMessage(), e);
 		logger.info("Sleeping before retrying...");
 		sleepUninterruptibly(TIME_BETWEEN_CONNECTION_RETRIES, TimeUnit.SECONDS);
