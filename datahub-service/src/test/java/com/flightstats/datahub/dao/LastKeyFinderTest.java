@@ -13,7 +13,6 @@ import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.RangeSlicesQuery;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -21,6 +20,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
@@ -77,7 +77,7 @@ public class LastKeyFinderTest {
 		when(cassandraConnector.getKeyspace()).thenReturn(keyspace);
 		when(hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(query1, query2);
 
-		when(query1.setColumnFamily(CHANNEL_NAME)).thenReturn(query1);
+		when(query1.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)).thenReturn(query1);
 		when(query1.setRange(null, null, true, 1)).thenReturn(query1);
 		when(query1.setKeys("TOMORROW_ROW", "TOMORROW_ROW")).thenReturn(query1);
 		when(query1.execute()).thenReturn(query1Result);
@@ -89,7 +89,7 @@ public class LastKeyFinderTest {
 		when(rowKeyStrategy.prevKey(CHANNEL_NAME, "TOMORROW_ROW")).thenReturn("NOW_ROW");
 		when(rowKeyStrategy.prevKey(CHANNEL_NAME, "NOW_ROW")).thenReturn("0BEFORE_FIRST");
 
-		when(query2.setColumnFamily(CHANNEL_NAME)).thenReturn(query2);
+		when(query2.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)).thenReturn(query2);
 		when(query2.setRange(null, null, true, 1)).thenReturn(query2);
 		when(query2.setKeys("NOW_ROW", "NOW_ROW")).thenReturn(query2);
 		when(query2.execute()).thenReturn(query2Result);
@@ -141,7 +141,7 @@ public class LastKeyFinderTest {
 		when(cassandraConnector.getKeyspace()).thenReturn(keyspace);
 		when(hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(query1, query2);
 
-		when(query1.setColumnFamily(CHANNEL_NAME)).thenReturn(query1);
+		when(query1.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)).thenReturn(query1);
 		when(query1.setRange(null, null, true, 1)).thenReturn(query1);
 		when(query1.setKeys("TOMORROW_ROW", "TOMORROW_ROW")).thenReturn(query1);
 		when(query1.execute()).thenReturn(query1Result);
@@ -153,7 +153,7 @@ public class LastKeyFinderTest {
 		when(rowKeyStrategy.prevKey(CHANNEL_NAME, "TOMORROW_ROW")).thenReturn("NOW_ROW");
 		when(rowKeyStrategy.prevKey(CHANNEL_NAME, "NOW_ROW")).thenReturn("0BEFORE_FIRST");
 
-		when(query2.setColumnFamily(CHANNEL_NAME)).thenReturn(query2);
+		when(query2.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)).thenReturn(query2);
 		when(query2.setRange(null, null, true, 1)).thenReturn(query2);
 		when(query2.setKeys("NOW_ROW", "NOW_ROW")).thenReturn(query2);
 		when(query2.execute()).thenReturn(query2Result);
