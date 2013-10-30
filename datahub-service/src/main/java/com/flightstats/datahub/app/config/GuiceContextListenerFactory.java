@@ -24,6 +24,8 @@ import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
 import com.flightstats.jerseyguice.metrics.GraphiteConfig;
 import com.flightstats.jerseyguice.metrics.GraphiteConfigImpl;
 import com.google.common.base.Strings;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.inject.*;
 import com.google.inject.name.Named;
 import com.google.inject.servlet.GuiceServletContextListener;
@@ -42,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.FileNotFoundException;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 public class GuiceContextListenerFactory {
     public static final String BACKING_STORE_PROPERTY = "backing.store";
@@ -82,7 +85,8 @@ public class GuiceContextListenerFactory {
             binder.bind(ChannelLockFactory.class).to(HazelcastChannelLockFactory.class).in(Singleton.class);
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
             binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
-            binder.bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() { }).to(ChannelHourRowKeyStrategy.class);
+            binder.bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
+            }).to(ChannelHourRowKeyStrategy.class);
             binder.bind(DataHubSweeper.class).asEagerSingleton();
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
         }
@@ -132,6 +136,15 @@ public class GuiceContextListenerFactory {
         @Provides
         public static ConcurrentMap<String, DataHubKey> buildLastUpdatePerChannelMap(HazelcastInstance hazelcast) throws FileNotFoundException {
             return hazelcast.getMap("LAST_CHANNEL_UPDATE");
+        }
+
+        @Named("KnownChannelCache")
+        @Singleton
+        @Provides
+        public static Cache<String, Boolean> buildKnownChannelCache() throws FileNotFoundException {
+            return CacheBuilder.newBuilder().maximumSize(1000)
+                               .expireAfterAccess(15L, TimeUnit.MINUTES)
+                               .build();
         }
 
         @Override
