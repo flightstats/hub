@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Main entry point for the data hub.  This is the main runnable class.
@@ -26,7 +27,20 @@ public class DataHubMain {
         Properties properties = loadProperties(args);
         final JettyConfig jettyConfig = new JettyConfigImpl(properties);
         final GuiceServletContextListener guice = GuiceContextListenerFactory.construct(properties);
-        new JettyServer(jettyConfig, guice).start();
+        JettyServer server = new JettyServer(jettyConfig, guice);
+        server.start();
+        logger.info("Jetty server has been started.");
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                logger.info("Jetty Server shutting down...");
+                latch.countDown();
+            }
+        });
+        latch.await();
+        server.halt();
+        logger.info("Server shutdown complete.  Exiting application.");
     }
 
     private static Properties loadProperties(String[] args) throws IOException {

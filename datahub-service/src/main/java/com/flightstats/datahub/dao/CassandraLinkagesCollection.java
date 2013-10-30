@@ -14,6 +14,8 @@ import me.prettyprint.hector.api.query.QueryResult;
 
 import java.util.Collection;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
+
 /**
  * This class encapsulates access to the payload item linkages.
  */
@@ -49,8 +51,8 @@ public class CassandraLinkagesCollection {
 		String lastUpdatedRowKey = rowKeyStrategy.buildKey(channelName, lastUpdatedKey);
 		String insertedRowKey = rowKeyStrategy.buildKey(channelName, insertedKey);
 
-		insertPreviousLinkage(channelName, insertedKeyString, lastUpdatedKeyString, mutator, insertedRowKey);
-		insertNextLinage(channelName, insertedKeyString, lastUpdatedKeyString, mutator, lastUpdatedRowKey);
+		insertPreviousLinkage(insertedKeyString, lastUpdatedKeyString, mutator, insertedRowKey);
+		insertNextLinage(insertedKeyString, lastUpdatedKeyString, mutator, lastUpdatedRowKey);
 		mutator.execute();
 	}
 
@@ -61,24 +63,24 @@ public class CassandraLinkagesCollection {
 			String columnKey = keyRenderer.keyToString(key);
 			String previousRowKey = buildPreviousRowKey(rowKey);
 			String nextRowKey = buildNextRowKey(rowKey);
-			mutator.addDeletion(nextRowKey, channelName, columnKey, StringSerializer.get());
-			mutator.addDeletion(previousRowKey, channelName, columnKey, StringSerializer.get());
+			mutator.addDeletion(nextRowKey, DATA_HUB_COLUMN_FAMILY_NAME, columnKey, StringSerializer.get());
+			mutator.addDeletion(previousRowKey, DATA_HUB_COLUMN_FAMILY_NAME, columnKey, StringSerializer.get());
 		}
 		mutator.execute();
 	}
 
-	private void insertPreviousLinkage(String channelName, String insertedKeyString, String lastUpdatedKeyString, Mutator<String> mutator, String rowKey) {
+	private void insertPreviousLinkage(String insertedKeyString, String lastUpdatedKeyString, Mutator<String> mutator, String rowKey) {
 		HColumn<String, String> keyToPreviousColumn = hector.createColumn(insertedKeyString, lastUpdatedKeyString, StringSerializer.get(),
 				StringSerializer.get());
 		String previousRowKey = buildPreviousRowKey(rowKey);
-		mutator.addInsertion(previousRowKey, channelName, keyToPreviousColumn);
+		mutator.addInsertion(previousRowKey, DATA_HUB_COLUMN_FAMILY_NAME, keyToPreviousColumn);
 	}
 
-	private void insertNextLinage(String channelName, String insertedKeyString, String lastUpdatedKeyString, Mutator<String> mutator, String rowKey) {
+	private void insertNextLinage(String insertedKeyString, String lastUpdatedKeyString, Mutator<String> mutator, String rowKey) {
 		HColumn<String, String> keyToNextColumn = hector.createColumn(lastUpdatedKeyString, insertedKeyString, StringSerializer.get(),
 				StringSerializer.get());
 		String nextRowKey = buildNextRowKey(rowKey);
-		mutator.addInsertion(nextRowKey, channelName, keyToNextColumn);
+		mutator.addInsertion(nextRowKey, DATA_HUB_COLUMN_FAMILY_NAME, keyToNextColumn);
 	}
 
 	private String buildPreviousRowKey(String rowKey) {
@@ -91,21 +93,21 @@ public class CassandraLinkagesCollection {
 
 	public Optional<DataHubKey> findPreviousKey(String channelName, DataHubKey key) {
 		String previousRowKey = buildPreviousRowKey(rowKeyStrategy.buildKey(channelName, key));
-		return queryLinkage(channelName, previousRowKey, key);
+		return queryLinkage(previousRowKey, key);
 	}
 
 	public Optional<DataHubKey> findNextKey(String channelName, DataHubKey key) {
 		String nextRowKey = buildNextRowKey(rowKeyStrategy.buildKey(channelName, key));
-		return queryLinkage(channelName, nextRowKey, key);
+		return queryLinkage(nextRowKey, key);
 	}
 
-	private Optional<DataHubKey> queryLinkage(String channelName, String rowKey, DataHubKey key) {
+	private Optional<DataHubKey> queryLinkage(String rowKey, DataHubKey key) {
 		Keyspace keyspace = connector.getKeyspace();
 		ColumnQuery<String, String, String> rawQuery = hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(),
 				StringSerializer.get());
 		ColumnQuery<String, String, String> columnQuery = rawQuery
 				.setKey(rowKey)
-				.setColumnFamily(channelName)
+				.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)
 				.setName(keyRenderer.keyToString(key));
 		QueryResult<HColumn<String, String>> result = columnQuery.execute();
 		HColumn<String, String> column = result.get();

@@ -16,6 +16,7 @@ import org.junit.Test;
 
 import java.util.Date;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
@@ -47,7 +48,7 @@ public class CassandraValueReaderTest {
 				query);
 		when(rowKeyStrategy.buildKey(channelName, key)).thenReturn(rowKey);
 		when(query.setKey(rowKey)).thenReturn(query);
-		when(query.setColumnFamily(channelName)).thenReturn(query);
+		when(query.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)).thenReturn(query);
 		when(query.setName(columnName)).thenReturn(query);
 		when(query.execute()).thenReturn(queryResult);
 		when(queryResult.get()).thenReturn(column);
@@ -79,7 +80,7 @@ public class CassandraValueReaderTest {
 				query);
 		when(rowKeyStrategy.buildKey(channelName, key)).thenReturn(rowKey);
 		when(query.setKey(rowKey)).thenReturn(query);
-		when(query.setColumnFamily(channelName)).thenReturn(query);
+		when(query.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)).thenReturn(query);
 		when(query.setName(columnName)).thenReturn(query);
 		when(query.execute()).thenReturn(queryResult);
 		when(queryResult.get()).thenReturn(null);
@@ -106,7 +107,7 @@ public class CassandraValueReaderTest {
 		when(connector.getKeyspace()).thenReturn(keyspace);
 		when(hector.createColumnQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(
 				query);
-		when(query.setColumnFamily(channelName)).thenReturn(query);
+		when(query.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)).thenReturn(query);
 		when(rowKeyStrategy.buildKey(channelName, key)).thenReturn(rowKey);
 		when(query.setKey(rowKey)).thenReturn(query);
 		when(query.setName(keyRenderer.keyToString(key))).thenReturn(query);
