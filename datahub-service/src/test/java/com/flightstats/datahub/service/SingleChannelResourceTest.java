@@ -63,7 +63,7 @@ public class SingleChannelResourceTest {
 		when(linkBuilder.buildChannelUri(channelName, urlInfo)).thenReturn(channelUri);
 		when(linkBuilder.buildLatestUri(urlInfo)).thenReturn(latestUri);
 		when(linkBuilder.buildItemUri(dataHubKey, requestUri)).thenReturn(itemUri);
-        when(cache.get(anyObject(), any(Callable.class))).thenReturn(false);
+        when(cache.get(anyObject(), any(Callable.class))).thenReturn(true);
 	}
 
 	@Test
@@ -127,7 +127,7 @@ public class SingleChannelResourceTest {
 
 		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(30000L).build();
 
-		when(cache.get(anyString(), any(Callable.class))).thenReturn(true);
+		when(cache.get(anyString(), any(Callable.class))).thenReturn(false);
 
 		SingleChannelResource testClass = new SingleChannelResource(dataHubService, null, cache, DEFAULT_MAX_PAYLOAD);
 		testClass.updateMetadata(request, channelName, urlInfo);
@@ -135,7 +135,7 @@ public class SingleChannelResourceTest {
 
 	@Test
 	public void testGetChannelMetadataForUnknownChannel() throws Exception {
-        when(cache.get(eq("unknownChannel"), any(Callable.class))).thenReturn(true);
+        when(cache.get(eq("unknownChannel"), any(Callable.class))).thenReturn(false);
 
 		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
 		try {
@@ -156,6 +156,7 @@ public class SingleChannelResourceTest {
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey);
 
 		when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentLanguage))).thenReturn(new ValueInsertionResult(dataHubKey));
+        when(cache.get(eq(channelName), any(Callable.class))).thenReturn(true);
 
 		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
 		Response response = testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);
@@ -181,7 +182,7 @@ public class SingleChannelResourceTest {
 
         //WHEN
         when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentLanguage))).thenReturn(result);
-        when(cache.get(eq(channelName), any(Callable.class))).thenReturn(false);
+        when(cache.get(eq(channelName), any(Callable.class))).thenReturn(true);
         testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);
 
         //THEN
@@ -199,7 +200,7 @@ public class SingleChannelResourceTest {
         //WHEN
         ArgumentCaptor<Callable> callableCaptor = ArgumentCaptor.forClass(Callable.class);
         when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentLanguage))).thenReturn(result);
-        when(cache.get(eq(channelName), callableCaptor.capture())).thenReturn(false);
+        when(cache.get(eq(channelName), callableCaptor.capture())).thenReturn(true);
 
         testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);
         Callable callback = callableCaptor.getValue();
@@ -208,8 +209,25 @@ public class SingleChannelResourceTest {
 
         //THEN
         verify(dataHubService).channelExists(channelName);
-        assertFalse(exists);
+        assertTrue(exists);
     }
+
+    @Test(expected = WebApplicationException.class)
+    public void testInsert_channelExistenceNotCached_channelDoesntExist() throws Exception {
+        //GIVEN
+        ValueInsertionResult result = new ValueInsertionResult(null);
+        byte[] data = "SomeData".getBytes();
+        Cache<String, Boolean> cache = mock(Cache.class);
+        SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
+
+        //WHEN
+        ArgumentCaptor<Callable> callableCaptor = ArgumentCaptor.forClass(Callable.class);
+        when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentLanguage))).thenReturn(result);
+        when(cache.get(eq(channelName), callableCaptor.capture())).thenReturn(false);
+
+        testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);
+    }
+
 
     @Test
     public void testInsert_payloadSizeGreaterThanMaxSizeReturns413() throws Exception {
