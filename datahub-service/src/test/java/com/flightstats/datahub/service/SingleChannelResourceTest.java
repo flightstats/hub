@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
+import java.util.Random;
 import java.util.concurrent.Callable;
 
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
