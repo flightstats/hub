@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
 import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
 
 public class CassandraChannelDao implements ChannelDao {
@@ -118,7 +119,7 @@ public class CassandraChannelDao implements ChannelDao {
 		Keyspace keyspace = connector.getKeyspace();
 		String maxRowKey = rowKeyStrategy.buildKey(channelName, maxKey);
 		return hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
-					 .setColumnFamily(channelName)
+					 .setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)
 					 .setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
 					 .setKeys(null, maxRowKey)
 					 .execute();
