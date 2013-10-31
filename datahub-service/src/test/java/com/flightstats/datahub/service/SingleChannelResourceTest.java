@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
+import java.util.Random;
 import java.util.concurrent.Callable;
 
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
@@ -38,6 +39,8 @@ public class SingleChannelResourceTest {
 	private UriInfo urlInfo;
 	private DataHubService dataHubService = mock(DataHubService.class);
     private Cache cache;
+
+    private int DEFAULT_MAX_PAYLOAD = 1024 * 10;
 
 	@Before
 	public void setup() throws Exception {
@@ -72,7 +75,7 @@ public class SingleChannelResourceTest {
 		when(dataHubService.findLastUpdatedKey(channelName)).thenReturn(Optional.of(key));
 		when(urlInfo.getRequestUri()).thenReturn(channelUri);
 
-		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache );
+		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
 
 		Linked<MetadataResponse> result = testClass.getChannelMetadata(channelName, urlInfo);
 		MetadataResponse expectedResponse = new MetadataResponse(channelConfig, key.getDate());
@@ -95,7 +98,7 @@ public class SingleChannelResourceTest {
 		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(30000L).build();
 		Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri, uriInfo)).build();
 
-		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache);
+		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
 		Response result = testClass.updateMetadata(request, channelName, uriInfo);
 
 		assertEquals(expectedResponse.getEntity(), result.getEntity());
@@ -113,7 +116,7 @@ public class SingleChannelResourceTest {
 		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(null).build();
 		Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri, uriInfo)).build();
 
-		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache);
+		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
 		Response result = testClass.updateMetadata(request, channelName, uriInfo);
 
 		assertEquals(expectedResponse.getEntity(), result.getEntity());
@@ -126,7 +129,7 @@ public class SingleChannelResourceTest {
 
 		when(cache.get(anyString(), any(Callable.class))).thenReturn(true);
 
-		SingleChannelResource testClass = new SingleChannelResource(dataHubService, null, cache);
+		SingleChannelResource testClass = new SingleChannelResource(dataHubService, null, cache, DEFAULT_MAX_PAYLOAD);
 		testClass.updateMetadata(request, channelName, urlInfo);
 	}
 
@@ -134,7 +137,7 @@ public class SingleChannelResourceTest {
 	public void testGetChannelMetadataForUnknownChannel() throws Exception {
         when(cache.get(eq("unknownChannel"), any(Callable.class))).thenReturn(true);
 
-		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache);
+		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
 		try {
 			testClass.getChannelMetadata("unknownChannel", urlInfo);
 			fail("Should have thrown a 404");
@@ -154,7 +157,7 @@ public class SingleChannelResourceTest {
 
 		when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentLanguage))).thenReturn(new ValueInsertionResult(dataHubKey));
 
-		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache);
+		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
 		Response response = testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);
 
 		assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
@@ -174,7 +177,7 @@ public class SingleChannelResourceTest {
         ValueInsertionResult result = new ValueInsertionResult(null);
         byte[] data = "SomeData".getBytes();
         Cache<String, Boolean> cache = mock(Cache.class);
-        SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache);
+        SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
 
         //WHEN
         when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentLanguage))).thenReturn(result);
@@ -191,7 +194,7 @@ public class SingleChannelResourceTest {
         ValueInsertionResult result = new ValueInsertionResult(null);
         byte[] data = "SomeData".getBytes();
         Cache<String, Boolean> cache = mock(Cache.class);
-        SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache);
+        SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
 
         //WHEN
         ArgumentCaptor<Callable> callableCaptor = ArgumentCaptor.forClass(Callable.class);
@@ -206,6 +209,21 @@ public class SingleChannelResourceTest {
         //THEN
         verify(dataHubService).channelExists(channelName);
         assertFalse(exists);
+    }
+
+    @Test
+    public void testInsert_payloadSizeGreaterThanMaxSizeReturns413() throws Exception {
+        //GIVEN
+        byte[] data = new byte[1025];
+        new Random().nextBytes(data);
+        SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, 1024);
+
+        //WHEN
+        Response result = testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);
+
+        //THEN
+        assertEquals(413, result.getStatus());
+        assertEquals("Max payload size is 1024 bytes.", result.getEntity().toString());
     }
 
 }
