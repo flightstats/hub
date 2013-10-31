@@ -40,7 +40,7 @@ public class SingleChannelResourceTest {
 	private DataHubService dataHubService = mock(DataHubService.class);
     private Cache cache;
 
-    private int DEFAULT_MAX_PAYLOAD = 1024 * 10;
+    private int DEFAULT_MAX_PAYLOAD = 1024 * 1024 * 10;
 
 	@Before
 	public void setup() throws Exception {
