@@ -32,12 +32,16 @@ public class SingleChannelResource {
     private final DataHubService dataHubService;
     private final ChannelHypermediaLinkBuilder linkBuilder;
     private final Cache<String, Boolean> knownChannelCache;
+    private final Integer maxPayloadSizeBytes;
 
     @Inject
-    public SingleChannelResource(DataHubService dataHubService, ChannelHypermediaLinkBuilder linkBuilder, @Named("KnownChannelCache") Cache<String,Boolean> knownChannelCache) {
+    public SingleChannelResource(DataHubService dataHubService, ChannelHypermediaLinkBuilder linkBuilder,
+                                 @Named("KnownChannelCache") Cache<String,Boolean> knownChannelCache,
+                                 @Named("maxPayloadSizeBytes") Integer maxPayloadSizeBytes) {
         this.dataHubService = dataHubService;
         this.linkBuilder = linkBuilder;
         this.knownChannelCache = knownChannelCache;
+        this.maxPayloadSizeBytes = maxPayloadSizeBytes;
     }
 
     @GET
@@ -104,6 +108,10 @@ public class SingleChannelResource {
                                 @Context UriInfo uriInfo) throws Exception {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+
+        if (data.length > maxPayloadSizeBytes) {
+            return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
         }
 
         ValueInsertionResult insertionResult = dataHubService.insert(channelName, data, Optional.fromNullable(contentType),
