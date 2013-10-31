@@ -122,10 +122,14 @@ public class SingleChannelResource {
 
     private boolean noSuchChannel(final String channelName) {
         try {
-            return knownChannelCache.get(channelName, new Callable<Boolean>() {
+            return !knownChannelCache.get(channelName, new Callable<Boolean>() {
                 @Override
                 public Boolean call() throws Exception {
-                    return !dataHubService.channelExists(channelName);
+                    boolean existsOrNot = dataHubService.channelExists(channelName);
+                    if (existsOrNot) {
+                        return true;
+                    }
+                    throw new ExecutionException("Channel does not exist.", new RuntimeException());
                 }
             });
         } catch (ExecutionException e) {
