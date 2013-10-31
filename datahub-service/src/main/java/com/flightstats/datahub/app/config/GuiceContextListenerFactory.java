@@ -28,7 +28,9 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.inject.*;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
+import com.google.inject.util.Modules;
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
@@ -40,8 +42,11 @@ import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +61,8 @@ public class GuiceContextListenerFactory {
             @NotNull final Properties properties) throws ConstraintException {
         GraphiteConfig graphiteConfig = new GraphiteConfigImpl(properties);
 
+        Module module = getMaxPaloadSizeModule(properties);
+
         JerseyServletModule jerseyModule = new JerseyServletModuleBuilder()
                 .withJerseyPackage("com.flightstats.datahub")
                 .withContainerResponseFilters(GZIPContentEncodingFilter.class)
@@ -68,9 +75,35 @@ public class GuiceContextListenerFactory {
                 .withBindings(new DataHubBindings())
                 .withHealthCheckClass(DataHubHealthCheck.class)
                 .withRegexServe(WebSocketChannelNameExtractor.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
+                .withModules(Arrays.asList(module))
                 .build();
 
         return new DataHubGuiceServletContextListener(jerseyModule, createDataStoreModule(properties), new DatahubCommonModule());
+    }
+
+    private static Module getMaxPaloadSizeModule(Properties properties) {
+        final int maxPayloadSizeBytes;
+        Logger logger = LoggerFactory.getLogger(GuiceContextListenerFactory.class);
+        String maxPayloadSizeMB = properties.getProperty("service.maxPayloadSizeMB");
+        if (maxPayloadSizeMB == null) {
+            logger.info("MAX_PAYLOAD_SIZE not specified, setting to the default 10MB");
+            maxPayloadSizeBytes = 1024 * 10;
+        } else {
+            try {
+                int mb = Integer.parseInt(maxPayloadSizeMB);
+                maxPayloadSizeBytes = 1024 * mb;
+                logger.info("Setting MAX_PAYLOAD_SIZE to " + maxPayloadSizeMB + "MB");
+            } catch (NumberFormatException e) {
+                throw new RuntimeException("Unable to parse 'service.maxPayloadSizeMB", e);
+            }
+        }
+
+        return new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(Integer.class).annotatedWith(Names.named("maxPayloadSizeBytes")).toInstance(maxPayloadSizeBytes);
+            }
+        };
     }
 
     public static class DataHubBindings implements Bindings {
