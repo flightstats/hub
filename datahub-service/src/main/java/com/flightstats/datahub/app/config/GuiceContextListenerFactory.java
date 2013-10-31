@@ -82,21 +82,23 @@ public class GuiceContextListenerFactory {
     }
 
     private static Module getMaxPaloadSizeModule(Properties properties) {
-        final int maxPayloadSizeBytes;
         Logger logger = LoggerFactory.getLogger(GuiceContextListenerFactory.class);
         String maxPayloadSizeMB = properties.getProperty("service.maxPayloadSizeMB");
+        final int mb;
         if (maxPayloadSizeMB == null) {
             logger.info("MAX_PAYLOAD_SIZE not specified, setting to the default 10MB");
-            maxPayloadSizeBytes = 1024 * 10;
+            mb = 10;
         } else {
             try {
-                int mb = Integer.parseInt(maxPayloadSizeMB);
-                maxPayloadSizeBytes = 1024 * mb;
+                mb = Integer.parseInt(maxPayloadSizeMB);
+
                 logger.info("Setting MAX_PAYLOAD_SIZE to " + maxPayloadSizeMB + "MB");
             } catch (NumberFormatException e) {
                 throw new RuntimeException("Unable to parse 'service.maxPayloadSizeMB", e);
             }
         }
+
+        final Integer maxPayloadSizeBytes = 1024 * 1024 * mb;
 
         return new AbstractModule() {
             @Override
