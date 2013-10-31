@@ -209,8 +209,25 @@ public class SingleChannelResourceTest {
 
         //THEN
         verify(dataHubService).channelExists(channelName);
-        assertFalse(exists);
+        assertTrue(exists);
     }
+
+    @Test(expected = WebApplicationException.class)
+    public void testInsert_channelExistenceNotCached_channelDoesntExist() throws Exception {
+        //GIVEN
+        ValueInsertionResult result = new ValueInsertionResult(null);
+        byte[] data = "SomeData".getBytes();
+        Cache<String, Boolean> cache = mock(Cache.class);
+        SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
+
+        //WHEN
+        ArgumentCaptor<Callable> callableCaptor = ArgumentCaptor.forClass(Callable.class);
+        when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentLanguage))).thenReturn(result);
+        when(cache.get(eq(channelName), callableCaptor.capture())).thenReturn(false);
+
+        testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);
+    }
+
 
     @Test
     public void testInsert_payloadSizeGreaterThanMaxSizeReturns413() throws Exception {
