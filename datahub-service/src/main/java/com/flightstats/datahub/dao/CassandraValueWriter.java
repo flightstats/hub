@@ -60,7 +60,7 @@ public class CassandraValueWriter {
 		for (DataHubKey key : keys) {
 			String rowKey = rowKeyStrategy.buildKey(channelName, key);
 			String columnName = keyRenderer.keyToString(key);
-			mutator.addDeletion(rowKey, channelName, columnName, StringSerializer.get());
+			mutator.addDeletion(rowKey, DATA_HUB_COLUMN_FAMILY_NAME, columnName, StringSerializer.get());
 		}
 		mutator.execute();
 	}

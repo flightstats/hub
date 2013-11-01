@@ -138,7 +138,7 @@ public class CassandraChannelsCollection {
 	}
 
 	public DataHubKey getFirstKey(String channelName) {
-		return getMetadataKey(channelName, CHANNELS_FIRST_ROW_KEY);
+		return getMetadataKey(channelName, channelName + ":" + CHANNELS_FIRST_ROW_KEY);
 	}
 
 	private DataHubKey getMetadataKey(String channelName, String key) {

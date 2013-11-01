@@ -197,7 +197,7 @@ public class CassandraChannelsCollectionTest {
 
 		when(connector.getKeyspace()).thenReturn(keyspace);
 		when(columnQuery.setName(channelName)).thenReturn(columnQuery);
-		when(columnQuery.setKey(CassandraChannelsCollection.CHANNELS_FIRST_ROW_KEY)).thenReturn(columnQuery);
+		when(columnQuery.setKey(channelName + ":" + CassandraChannelsCollection.CHANNELS_FIRST_ROW_KEY)).thenReturn(columnQuery);
 		when(columnQuery.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)).thenReturn(columnQuery);
 		when(columnQuery.execute()).thenReturn(queryResult);
 		when(queryResult.get()).thenReturn(column);
