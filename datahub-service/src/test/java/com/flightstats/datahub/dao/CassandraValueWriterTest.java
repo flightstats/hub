@@ -112,7 +112,7 @@ public class CassandraValueWriterTest {
 		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
 		testClass.delete(CHANNEL_NAME, keys);
 
-		verify(mutator, times(2)).addDeletion(ROW_KEY, CHANNEL_NAME, columnName, StringSerializer.get());
+		verify(mutator, times(2)).addDeletion(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, columnName, StringSerializer.get());
 		verify(mutator).execute();
 	}
 }

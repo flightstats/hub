@@ -19,10 +19,7 @@ import me.prettyprint.hector.api.query.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
@@ -105,27 +102,49 @@ public class CassandraChannelDao implements ChannelDao {
 		linkagesCollection.delete(channelName, keys);
 	}
 
-	@Override
-	public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
-		QueryResult<OrderedRows<String, String, DataHubCompositeValue>> results = queryForKeysInRange(channelName, startTime, endTime);
-		return buildKeysFromResults(results);
-	}
+    @Override
+    public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
 
-	private QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryForKeysInRange(String channelName, Date startTime, Date endTime) {
-		DataHubKey minKey = new DataHubKey(startTime, (short) 0);
-		DataHubKey maxKey = new DataHubKey(endTime, Short.MAX_VALUE);
-		String minColumnKey = keyRenderer.keyToString(minKey);
-		String maxColumnKey = keyRenderer.keyToString(maxKey);
-		Keyspace keyspace = connector.getKeyspace();
-		String maxRowKey = rowKeyStrategy.buildKey(channelName, maxKey);
-		return hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
-					 .setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)
-					 .setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
-					 .setKeys(null, maxRowKey)
-					 .execute();
-	}
+        Optional<DataHubKey> firstKey = findFirstUpdateKey(channelName);
+        if (!firstKey.isPresent()) {
+            return Collections.emptyList();
+        }
 
-	private Collection<DataHubKey> buildKeysFromResults(QueryResult<OrderedRows<String, String, DataHubCompositeValue>> results) {
+        DataHubKey maxKey = new DataHubKey(endTime, Short.MAX_VALUE);
+        String minColumnKey = keyRenderer.keyToString(firstKey.get());
+        String maxColumnKey = keyRenderer.keyToString(maxKey);
+        Keyspace keyspace = connector.getKeyspace();
+
+        List<DataHubKey> result = new LinkedList<>();
+        List<String> rowKeys = buildRowKeysInRange(channelName, firstKey.get(), maxKey);
+        for (String rowKey : rowKeys) {
+            QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResult =
+                    hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())
+                          .setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME)
+                          .setReturnKeysOnly()
+                          .setRange(minColumnKey, maxColumnKey, false, Integer.MAX_VALUE)
+                          .setKeys(rowKey, rowKey) //TODO: Should we limit the number coming back!?!?  Possible road trip to OOME city?
+                          .execute();
+            Collection<DataHubKey> keys = buildKeysFromResults(queryResult);
+            result.addAll(keys);
+        }
+
+        return result;
+    }
+
+    private List<String> buildRowKeysInRange(String channelName, DataHubKey firstKey, DataHubKey maxKey) {
+        String current  = rowKeyStrategy.buildKey(channelName, firstKey);
+        String max = rowKeyStrategy.buildKey(channelName, maxKey);
+        List<String> result = new ArrayList<>();
+        while(current.compareTo(max) <= 0){
+            result.add(current);
+            current = rowKeyStrategy.nextKey(channelName, current);
+        }
+        return result;
+
+    }
+
+    private Collection<DataHubKey> buildKeysFromResults(QueryResult<OrderedRows<String, String, DataHubCompositeValue>> results) {
 		Collection<DataHubKey> keys = new ArrayList<>();
 		Collection<Row<String, String, DataHubCompositeValue>> dataHubKeyRows = Collections2.filter(results.get().getList(),
 				new DataHubRowKeySelector());
@@ -135,7 +154,7 @@ public class CassandraChannelDao implements ChannelDao {
 		return keys;
 	}
 
-	private class DataHubRowKeySelector implements Predicate<Row<String, String, DataHubCompositeValue>> {
+    private class DataHubRowKeySelector implements Predicate<Row<String, String, DataHubCompositeValue>> {
 		@Override
 		public boolean apply(Row<String, String, DataHubCompositeValue> row) {
 			return !channelsCollection.isChannelMetadataRowKey(row.getKey()) && !linkagesCollection.isLinkageRowKey(row.getKey());
