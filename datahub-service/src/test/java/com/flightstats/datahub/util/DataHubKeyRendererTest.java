@@ -3,8 +3,6 @@ package com.flightstats.datahub.util;
 import com.flightstats.datahub.model.DataHubKey;
 import org.junit.Test;
 
-import java.util.Date;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -12,26 +10,25 @@ public class DataHubKeyRendererTest {
 
     @Test
     public void testKeyToString() throws Exception {
-        DataHubKey key = new DataHubKey(new Date(1361404433284L), (short) 129);
+        DataHubKey key = new DataHubKey((short) 129);
         DataHubKeyRenderer testClass = new DataHubKeyRenderer();
         String result = testClass.keyToString(key);
-        assertEquals("00002F7Q0S9O8041", result);
+        assertEquals("0000000000082===", result);
     }
 
     @Test
     public void testKeyFromString() throws Exception {
-        DataHubKey expected = new DataHubKey(new Date(1361404433284L), (short) 129);
+        DataHubKey expected = new DataHubKey((short) 129);
         DataHubKeyRenderer testClass = new DataHubKeyRenderer();
-        DataHubKey result = testClass.fromString("00002F7Q0S9O8041");
+        DataHubKey result = testClass.fromString(testClass.keyToString(expected));
         assertEquals(expected, result);
     }
 
     @Test
     public void testSequencesAreOrderedWithinSameMillis() throws Exception {
-        Date date = new Date(55555L);
-        DataHubKey key1 = new DataHubKey(date, (short) 1);
-        DataHubKey key2 = new DataHubKey(date, (short) 2);
-        DataHubKey key3 = new DataHubKey(date, (short) 3);
+        DataHubKey key1 = new DataHubKey((short) 1);
+        DataHubKey key2 = new DataHubKey((short) 2);
+        DataHubKey key3 = new DataHubKey((short) 3);
 
         DataHubKeyRenderer testClass = new DataHubKeyRenderer();
 

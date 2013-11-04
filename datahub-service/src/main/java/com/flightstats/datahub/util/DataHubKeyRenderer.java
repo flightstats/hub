@@ -4,7 +4,6 @@ import com.flightstats.datahub.model.DataHubKey;
 import org.apache.commons.codec.binary.Base32;
 
 import java.io.*;
-import java.util.Date;
 
 public class DataHubKeyRenderer {
 
@@ -22,9 +21,7 @@ public class DataHubKeyRenderer {
         ByteArrayInputStream bytesIn = new ByteArrayInputStream(bytes);
         DataInputStream in = new DataInputStream(bytesIn);
         try {
-            Date date = new Date(in.readLong());
-            short sequence = in.readShort();
-            return new DataHubKey(date, sequence);
+            return new DataHubKey(in.readLong());
         } catch (IOException e) {
             throw new RuntimeException("Error converting data hub key", e);
         }
@@ -32,8 +29,7 @@ public class DataHubKeyRenderer {
 
     private void writeBytesSafely(DataHubKey key, DataOutputStream out) {
         try {
-            out.writeLong(key.getDate().getTime());
-            out.writeShort(key.getSequence());
+            out.writeLong(key.getSequence());
         } catch (IOException e) {
             throw new RuntimeException("Error converting long to bytes", e);
         }
