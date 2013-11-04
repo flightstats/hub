@@ -8,7 +8,6 @@ import com.hazelcast.core.HazelcastInstance;
 import org.junit.Test;
 
 import java.nio.channels.AlreadyBoundException;
-import java.util.Date;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
@@ -16,38 +15,35 @@ import static org.mockito.Mockito.*;
 
 public class HazelcastClusterKeyGeneratorTest {
 
-	@Test
-	public void testIncrementNoRollover() throws Exception {
-		//GIVEN
-		String channelName = "mychanisgood";
-		Date currentDate = new Date(12345678L);
-		DataHubKey expectedA = new DataHubKey(currentDate, (short)0);
-		DataHubKey expectedB = new DataHubKey(currentDate, (short)1);
+    @Test
+    public void testIncrementNoRollover() throws Exception {
+        //GIVEN
+        String channelName = "mychanisgood";
+        DataHubKey expectedA = new DataHubKey((short) 0);
+        DataHubKey expectedB = new DataHubKey((short) 1);
 
-		TimeProvider timeProvider = mock(TimeProvider.class);
-		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
-		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
-		AtomicNumber atomicDateNumber = mock(AtomicNumber.class);
-		AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
+        TimeProvider timeProvider = mock(TimeProvider.class);
+        HazelcastInstance hazelcast = mock(HazelcastInstance.class);
+        ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
+        AtomicNumber atomicDateNumber = mock(AtomicNumber.class);
+        AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
 
-		HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(timeProvider, hazelcast, channelLockExecutor);
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor);
 
-		//WHEN
-		when(timeProvider.getDate()).thenReturn(currentDate);
-		when(atomicDateNumber.get()).thenReturn(currentDate.getTime() - 10);
-		when(hazelcast.getAtomicNumber("CHANNEL_NAME_DATE:mychanisgood")).thenReturn(atomicDateNumber);
-		when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
-		when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L).thenReturn(1L);
-		DataHubKey resultA = testClass.newKey(channelName);
-		DataHubKey resultB = testClass.newKey(channelName);
+        //WHEN
+        when(hazelcast.getAtomicNumber("CHANNEL_NAME_DATE:mychanisgood")).thenReturn(atomicDateNumber);
+        when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
+        when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L).thenReturn(1L);
+        DataHubKey resultA = testClass.newKey(channelName);
+        DataHubKey resultB = testClass.newKey(channelName);
 
-		//THEN
-		assertEquals(expectedA, resultA);
-		assertEquals(expectedB, resultB);
-	}
+        //THEN
+        assertEquals(expectedA, resultA);
+        assertEquals(expectedB, resultB);
+    }
 
-	@Test
-	public void testRollover() throws Exception {
+	/*@Test
+    public void testRollover() throws Exception {
 		//GIVEN
 		String channelName = "mychanisgood";
 		Date currentDate = new Date(12345678L);
@@ -60,7 +56,7 @@ public class HazelcastClusterKeyGeneratorTest {
 		AtomicNumber atomicDateNumber = mock(AtomicNumber.class);
 		AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
 
-		HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(timeProvider, hazelcast, channelLockExecutor);
+		HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor);
 
 		//WHEN
 		when(timeProvider.getDate()).thenReturn(currentDate);
@@ -75,17 +71,17 @@ public class HazelcastClusterKeyGeneratorTest {
 		//THEN
 		assertEquals(expectedA, resultA);
 		assertEquals(expectedB, resultB);
-	}
+	}*/
 
-	@Test(expected = RuntimeException.class)
-	public void testExceptionCoerced() throws Exception {
-		//GIVEN
-		ChannelLockExecutor channelLockExecutor = mock(ChannelLockExecutor.class);
+    @Test(expected = RuntimeException.class)
+    public void testExceptionCoerced() throws Exception {
+        //GIVEN
+        ChannelLockExecutor channelLockExecutor = mock(ChannelLockExecutor.class);
 
-		HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(null, null, channelLockExecutor);
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(null, channelLockExecutor);
 
-		//WHEN
-		when(channelLockExecutor.execute(anyString(), any(Callable.class))).thenThrow(new AlreadyBoundException());
-		testClass.newKey("mychanisgood");
-	}
+        //WHEN
+        when(channelLockExecutor.execute(anyString(), any(Callable.class))).thenThrow(new AlreadyBoundException());
+        testClass.newKey("mychanisgood");
+    }
 }
