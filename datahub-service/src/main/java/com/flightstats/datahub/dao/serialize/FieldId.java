@@ -5,7 +5,8 @@ public enum FieldId {
     //TODO: Put a notice in here about the sensitivity of these numeric values and that these fields must never be deleted?
     CONTENT_TYPE(1),
     CONTENT_LANGUAGE(2),
-    CONTENT(3);
+    CONTENT(3),
+    MILLIS(4);
 
     private final int id;
 

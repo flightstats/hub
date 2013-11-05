@@ -102,13 +102,12 @@ public class ChannelContentResourceTest {
         }
     }
 
-    //todo - gfm - 11/4/13 - fix this
-    /*@Test
+    @Test
     public void testCreationDateHeaderInResponse() throws Exception {
         String channelName = "woo";
         DataHubKey key = new DataHubKey( (short) 0);
         DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes());
+        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 987654321);
         LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
                 Optional.<DataHubKey>absent());
 
@@ -120,8 +119,8 @@ public class ChannelContentResourceTest {
         Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null);
 
         String creationDateString = (String) result.getMetadata().getFirst(CustomHttpHeaders.CREATION_DATE_HEADER.getHeaderName());
-        assertEquals("2005-08-07T23:17:58.922Z", creationDateString);
-    }*/
+        assertEquals("1970-01-12T10:20:54.321Z", creationDateString);
+    }
 
     @Test
     public void testPreviousLink() throws Exception {

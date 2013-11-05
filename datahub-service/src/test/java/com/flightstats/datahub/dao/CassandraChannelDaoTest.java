@@ -125,7 +125,9 @@ public class CassandraChannelDaoTest {
 
         when(reader.read(channelName, key)).thenReturn(compositeValue);
 
-        CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader, null, null, null, null, null, null);
+        ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
+        when(lastUpdatedMap.get(channelName)).thenReturn(nextKey);
+        CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader, null, null, null, null, lastUpdatedMap, null);
 
         Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
         assertEquals(expected, result.get());

@@ -10,11 +10,20 @@ public class DataHubCompositeValue implements Serializable {
 
     private final Optional<String> contentType;
     private final Optional<String> contentLanguage;
+    private final long millis;
     private final byte[] data;
 
     public DataHubCompositeValue(Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
         this.contentType = contentType;
         this.contentLanguage = contentLanguage;
+        this.data = data;
+        this.millis = System.currentTimeMillis();
+    }
+
+    public DataHubCompositeValue(Optional<String> contentType, Optional<String> contentLanguage, byte[] data, long millis) {
+        this.contentType = contentType;
+        this.contentLanguage = contentLanguage;
+        this.millis = millis;
         this.data = data;
     }
 
@@ -34,6 +43,11 @@ public class DataHubCompositeValue implements Serializable {
         return contentLanguage;
     }
 
+    public long getMillis() {
+        return millis;
+    }
+
+    //todo - gfm - 11/5/13 - are these really useful?
     @Override
     public boolean equals(Object o) {
         if (this == o) {

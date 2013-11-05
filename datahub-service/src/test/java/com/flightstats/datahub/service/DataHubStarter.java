@@ -9,11 +9,9 @@ import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
  */
 public class DataHubStarter {
 
-
+    //todo - gfm - 11/5/13 - this can probably go away
     public static void main(String[] args) throws Exception {
-        //todo - gfm - 11/4/13 - does this need to use a custom yaml?
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();
-        //todo - gfm - 11/4/13 - this path needs to be generic :)
         args = new String[]{"/Users/gmoulliet/code/datahub/datahub-service/src/test/conf/datahub.properties"};
         DataHubMain.main(args);
     }
