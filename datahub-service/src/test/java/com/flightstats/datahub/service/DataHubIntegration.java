@@ -1,23 +1,13 @@
 package com.flightstats.datahub.service;
 
-import com.flightstats.datahub.app.DataHubMain;
 import com.flightstats.jerseyguice.jetty.JettyServer;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.core.MediaType;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * The goal of this is to test the interface from end to end, using all of the real technologies we can,
@@ -31,23 +21,31 @@ public class DataHubIntegration {
     private static JettyServer server;
     private final ObjectMapper mapper = new ObjectMapper();
 
+    @Ignore
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+/*
         //todo - gfm - 11/4/13 - does this need to use a custom yaml?
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();
         //todo - gfm - 11/4/13 - this path needs to be generic :)
         String[] args = {"/Users/gmoulliet/code/datahub/datahub-service/src/test/conf/datahub.properties"};
         server = DataHubMain.startServer(args);
+*/
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+/*
         EmbeddedCassandraServerHelper.cleanEmbeddedCassandra();
         server.halt();
+*/
     }
 
+    @Ignore
     @Test
     public void testLifecyle() throws Exception {
+
+/*
         Client client = Client.create();
         //create a channel
         ObjectNode channelNode = mapper.createObjectNode();
@@ -96,6 +94,7 @@ public class DataHubIntegration {
 
 
         }
+*/
 
     }
 
