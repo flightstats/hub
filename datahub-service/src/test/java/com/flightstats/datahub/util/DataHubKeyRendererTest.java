@@ -1,6 +1,7 @@
 package com.flightstats.datahub.util;
 
 import com.flightstats.datahub.model.DataHubKey;
+import com.google.common.base.Optional;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -20,8 +21,8 @@ public class DataHubKeyRendererTest {
     public void testKeyFromString() throws Exception {
         DataHubKey expected = new DataHubKey(129);
         DataHubKeyRenderer testClass = new DataHubKeyRenderer();
-        DataHubKey result = testClass.fromString(testClass.keyToString(expected));
-        assertEquals(expected, result);
+        Optional<DataHubKey> result = testClass.fromString(testClass.keyToString(expected));
+        assertEquals(expected, result.get());
     }
 
     @Test

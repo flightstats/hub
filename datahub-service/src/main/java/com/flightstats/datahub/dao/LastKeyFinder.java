@@ -86,7 +86,7 @@ public class LastKeyFinder {
 			return null;
 		}
 		String columnName = columns.get(0).getName();
-		return keyRenderer.fromString(columnName);
+		return keyRenderer.fromString(columnName).get();
 	}
 
 	private String buildRowKeyAfterNow(String channelName) {

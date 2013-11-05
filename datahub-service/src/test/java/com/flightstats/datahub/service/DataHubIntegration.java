@@ -29,6 +29,7 @@ import static org.junit.Assert.assertTrue;
  * The goal of this is to test the interface from end to end, using all of the real technologies we can,
  * such as HazelCast, Cassandra, Jersey, etc.
  */
+//todo - gfm - 11/5/13 - kill this
 public class DataHubIntegration {
     private final static Logger logger = LoggerFactory.getLogger(DataHubIntegration.class);
 

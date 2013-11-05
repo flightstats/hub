@@ -10,7 +10,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-//todo - gfm - 11/5/13 - does this need to move to version 2?
 public class Version1DataHubCompositeValueSerializer extends AbstractSerializer<DataHubCompositeValue> {
 
     static final byte FORMAT_VERSION_01 = 0x01;
@@ -25,8 +24,7 @@ public class Version1DataHubCompositeValueSerializer extends AbstractSerializer<
         Optional<String> contentType = Optional.absent();
         Optional<String> contentLanguage = Optional.absent();
         byte[] valueData = new byte[]{};
-        //todo - gfm - 11/5/13 - should this have a default?
-        long millis = System.currentTimeMillis();
+        long millis = 0;
 
         byte version = byteBuffer.get();
         if(version != FORMAT_VERSION_01){

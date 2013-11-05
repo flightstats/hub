@@ -20,6 +20,6 @@ public class DataHubKeyDeserializer extends JsonDeserializer<DataHubKey> {
     @Override
     public DataHubKey deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
         String value = jp.getText();
-        return dataHubKeyRenderer.fromString(value);
+        return dataHubKeyRenderer.fromString(value).get();
     }
 }

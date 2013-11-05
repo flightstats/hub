@@ -49,8 +49,11 @@ public class ChannelContentResource {
 	@PerChannelTimed(operationName = "fetch", channelNamePathParameter = "channelName")
     @ExceptionMetered
 	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id, @HeaderParam("Accept") String accept) {
-		DataHubKey key = keyRenderer.fromString(id);
-		Optional<LinkedDataHubCompositeValue> optionalResult = dataHubService.getValue(channelName, key);
+		Optional<DataHubKey> optionalKey = keyRenderer.fromString(id);
+        if (!optionalKey.isPresent()) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+		Optional<LinkedDataHubCompositeValue> optionalResult = dataHubService.getValue(channelName, optionalKey.get());
 
 		if (!optionalResult.isPresent()) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);

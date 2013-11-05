@@ -5,6 +5,7 @@ import java.util.Date;
 public class ValueInsertionResult {
 
     private final DataHubKey key;
+    private final Date date = new Date();
 
     public ValueInsertionResult(DataHubKey key) {
         this.key = key;
@@ -15,7 +16,7 @@ public class ValueInsertionResult {
     }
 
     public Date getDate() {
-        return key.getDate();
+        return date;
     }
 
     @Override
