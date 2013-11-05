@@ -21,6 +21,7 @@
         </encoder>
     </appender>
 
+    <!--todo seems like syslog.util.pdx.prod shouldn't be here-->
     <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
         <syslogHost>syslog.util.pdx.prod</syslogHost>
         <facility>USER</facility>
@@ -29,7 +30,7 @@
 
     <root level="info">
         <appender-ref ref="FILE"/>
-        <appender-ref ref="SYSLOG"/>
+        <appender-ref ref="STDOUT"/>
     </root>
 
     <logger name="com.sun.jersey.server.wadl.generators" level="WARN"/>
