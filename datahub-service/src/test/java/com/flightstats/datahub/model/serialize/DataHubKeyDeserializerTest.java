@@ -5,6 +5,8 @@ import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import org.junit.Test;
 
+import java.util.Date;
+
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -13,9 +15,9 @@ public class DataHubKeyDeserializerTest {
 
     @Test
     public void testDeserialize() throws Exception {
-
+        Date date = new Date(987654321L);
         short sequence = 54;
-        DataHubKey expected = new DataHubKey(sequence);
+        DataHubKey expected = new DataHubKey(date, sequence);
         DataHubKeyRenderer renderer = new DataHubKeyRenderer();
 
         JsonParser parser = mock(JsonParser.class);

@@ -6,8 +6,8 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchA
 import com.flightstats.datahub.cluster.ChannelLockFactory;
 import com.flightstats.datahub.cluster.HazelcastChannelLockFactory;
 import com.flightstats.datahub.cluster.HazelcastClusterKeyGenerator;
+import com.flightstats.datahub.dao.ChannelHourRowKeyStrategy;
 import com.flightstats.datahub.dao.RowKeyStrategy;
-import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
@@ -120,7 +120,7 @@ public class GuiceContextListenerFactory {
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
             binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
             binder.bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
-            }).to(SequenceRowKeyStrategy.class);
+            }).to(ChannelHourRowKeyStrategy.class);
             binder.bind(DataHubSweeper.class).asEagerSingleton();
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
         }
@@ -177,8 +177,8 @@ public class GuiceContextListenerFactory {
         @Provides
         public static Cache<String, Boolean> buildKnownChannelCache() throws FileNotFoundException {
             return CacheBuilder.newBuilder().maximumSize(1000)
-                    .expireAfterAccess(15L, TimeUnit.MINUTES)
-                    .build();
+                               .expireAfterAccess(15L, TimeUnit.MINUTES)
+                               .build();
         }
 
         @Override
