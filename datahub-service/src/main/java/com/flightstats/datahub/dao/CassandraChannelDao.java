@@ -162,7 +162,7 @@ public class CassandraChannelDao implements ChannelDao {
     private class KeyRenderer implements Function<HColumn<String, DataHubCompositeValue>, DataHubKey> {
         @Override
         public DataHubKey apply(HColumn<String, DataHubCompositeValue> column) {
-            return keyRenderer.fromString(column.getName());
+            return keyRenderer.fromString(column.getName()).get();
         }
     }
 

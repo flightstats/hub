@@ -77,6 +77,6 @@ public class HazelcastSubscriber implements MessageListener<String> {
     }
 
     private DataHubKey getKeyFromUri(String stringKey) {
-        return keyRenderer.fromString(stringKey);
+        return keyRenderer.fromString(stringKey).get();
     }
 }

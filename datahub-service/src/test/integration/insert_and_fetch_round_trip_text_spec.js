@@ -20,7 +20,7 @@ utils.runInTestChannel(channelName, function () {
         })
         .expectJSON('_links.self', {
             href: function (value) {
-                var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/[A-Z,0-9]{16}$");
+                var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/[0-9]$");
                 expect(value).toMatch(regex);
             }
         })

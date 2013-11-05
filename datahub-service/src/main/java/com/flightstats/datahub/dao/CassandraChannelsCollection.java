@@ -151,7 +151,7 @@ public class CassandraChannelsCollection {
 				.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME);
 		QueryResult<HColumn<String, String>> result = columnQuery.execute();
 		HColumn<String, String> column = result.get();
-		return column == null ? null : keyRenderer.fromString(column.getValue());
+		return column == null ? null : keyRenderer.fromString(column.getValue()).get();
 	}
 
 	public boolean isChannelMetadataRowKey(String key) {

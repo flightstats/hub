@@ -13,6 +13,7 @@ public class DataHubCompositeValue implements Serializable {
     private final long millis;
     private final byte[] data;
 
+    //todo - gfm - 11/5/13 - get rid of this
     public DataHubCompositeValue(Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
         this.contentType = contentType;
         this.contentLanguage = contentLanguage;
@@ -47,7 +48,7 @@ public class DataHubCompositeValue implements Serializable {
         return millis;
     }
 
-    //todo - gfm - 11/5/13 - are these really useful?
+    //todo - gfm - 11/5/13 - do this
     @Override
     public boolean equals(Object o) {
         if (this == o) {
