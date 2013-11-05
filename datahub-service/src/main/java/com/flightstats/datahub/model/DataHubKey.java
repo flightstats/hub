@@ -37,7 +37,6 @@ public class DataHubKey implements Serializable {
     }
 
     public Optional<DataHubKey> getNext() {
-        //todo - gfm - 11/4/13 - this needs to handle the last in the line
         return Optional.of(new DataHubKey(getSequence() + 1));
     }
 

@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentMap;
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
 import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
 
-//todo - gfm - 11/4/13 - make sure this is using the new sequence key correctly
 public class CassandraChannelDao implements ChannelDao {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelDao.class);

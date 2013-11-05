@@ -8,6 +8,9 @@ import com.sun.jersey.api.client.WebResource;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -15,9 +18,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import java.util.List;
 
+import static com.flightstats.datahub.service.CustomHttpHeaders.CREATION_DATE_HEADER;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * The goal of this is to test the interface from end to end, using all of the real technologies we can,
@@ -30,10 +36,10 @@ public class DataHubIntegration {
     public static final String CHANNEL_NAME = "testLifecycle";
     private static JettyServer server;
     private final ObjectMapper mapper = new ObjectMapper();
+    DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        //todo - gfm - 11/4/13 - does this need to use a custom yaml?
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();
         //todo - gfm - 11/4/13 - this path needs to be generic :)
         String[] args = {"/Users/gmoulliet/code/datahub/datahub-service/src/test/conf/datahub.properties"};
@@ -67,6 +73,7 @@ public class DataHubIntegration {
                     .post(ClientResponse.class, "content value " + i);
             assertEquals(201, post.getStatus());
         }
+
         //pull latest
         WebResource latest = client.resource(CHANNEL_URL + CHANNEL_NAME + "/latest");
         ClientResponse head = latest.accept(MediaType.TEXT_PLAIN_TYPE).head();
@@ -74,6 +81,7 @@ public class DataHubIntegration {
         //200  {Creation-Date=[2013-11-05T01:57:05.919Z], Link=[<http://localhost:8080/channel/testLifecycle/100>;rel="next", <http://localhost:8080/channel/testLifecycle/98>;rel="previous"], Vary=[Accept-Encoding], Content-Length=[16], Content-Type=[text/plain], Server=[Jetty(9.0.3.v20130506)]}
         logger.info(head.getStatus() + " " + head.getEntity(String.class) + " " + head.getHeaders());
         //iterate through all 100 items
+        DateTime afterPosts = new DateTime();
 
         for (int i = 0; i < 100; i++) {
             WebResource data = client.resource(CHANNEL_URL + CHANNEL_NAME + "/" + i);
@@ -81,7 +89,10 @@ public class DataHubIntegration {
                     .get(ClientResponse.class);
             assertEquals(200, get.getStatus());
             assertEquals("content value " + i, get.getEntity(String.class));
-            List<String> links = get.getHeaders().get("Link");
+            MultivaluedMap<String,String> headers = get.getHeaders();
+            DateTime creation = dateTimeFormatter.parseDateTime(headers.getFirst(CREATION_DATE_HEADER.getHeaderName()));
+            assertTrue(creation.isBefore(afterPosts));
+            List<String> links = headers.get("Link");
             if (i == 0) {
                 assertEquals(1, links.size());
                 assertEquals("<http://localhost:8080/channel/testLifecycle/1>;rel=\"next\"", links.get(0));

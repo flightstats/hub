@@ -67,7 +67,7 @@ public class ChannelContentResource {
 												   .type(actualContentType)
 												   .entity(compositeValue.getData())
 												   .header(CREATION_DATE_HEADER.getHeaderName(),
-														   dateTimeFormatter.print(new DateTime(key.getDate())));
+														   dateTimeFormatter.print(new DateTime(compositeValue.getValue().getMillis())));
 
 		addOptionalHeader("Content-Language", compositeValue.getValue().getContentLanguage(), builder);
 

@@ -23,7 +23,6 @@ public class DataHubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(DataHubMain.class);
 
-    //todo - gfm - 11/4/13 - this needs to have a method pulled out for running in int tests
     public static void main(String[] args) throws Exception {
 
         JettyServer server = startServer(args);
