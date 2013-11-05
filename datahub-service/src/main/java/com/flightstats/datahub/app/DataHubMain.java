@@ -1,6 +1,7 @@
 package com.flightstats.datahub.app;
 
 import com.conducivetech.services.common.util.PropertyConfiguration;
+import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
 import com.flightstats.jerseyguice.jetty.JettyConfig;
 import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
@@ -22,14 +23,10 @@ public class DataHubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(DataHubMain.class);
 
+    //todo - gfm - 11/4/13 - this needs to have a method pulled out for running in int tests
     public static void main(String[] args) throws Exception {
 
-        Properties properties = loadProperties(args);
-        final JettyConfig jettyConfig = new JettyConfigImpl(properties);
-        final GuiceServletContextListener guice = GuiceContextListenerFactory.construct(properties);
-        JettyServer server = new JettyServer(jettyConfig, guice);
-        server.start();
-        logger.info("Jetty server has been started.");
+        JettyServer server = startServer(args);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -41,6 +38,16 @@ public class DataHubMain {
         latch.await();
         server.halt();
         logger.info("Server shutdown complete.  Exiting application.");
+    }
+
+    public static JettyServer startServer(String[] args) throws IOException, ConstraintException {
+        Properties properties = loadProperties(args);
+        final JettyConfig jettyConfig = new JettyConfigImpl(properties);
+        final GuiceServletContextListener guice = GuiceContextListenerFactory.construct(properties);
+        JettyServer server = new JettyServer(jettyConfig, guice);
+        server.start();
+        logger.info("Jetty server has been started.");
+        return server;
     }
 
     private static Properties loadProperties(String[] args) throws IOException {
