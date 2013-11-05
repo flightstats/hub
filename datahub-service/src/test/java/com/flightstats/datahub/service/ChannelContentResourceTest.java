@@ -143,7 +143,7 @@ public class ChannelContentResourceTest {
         Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null);
 
         String link = (String) result.getMetadata().getFirst("Link");
-        assertEquals("<http://path/to/0000000000000===>;rel=\"previous\"", link);
+        assertEquals("<http://path/to/0>;rel=\"previous\"", link);
     }
 
     @Test
@@ -186,7 +186,7 @@ public class ChannelContentResourceTest {
         Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null);
 
         String link = (String) result.getMetadata().getFirst("Link");
-        assertEquals("<http://path/to/0000000000002===>;rel=\"next\"", link);
+        assertEquals("<http://path/to/1>;rel=\"next\"", link);
     }
 
     @Test
