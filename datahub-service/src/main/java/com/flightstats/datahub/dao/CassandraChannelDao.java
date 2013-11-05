@@ -198,7 +198,15 @@ public class CassandraChannelDao implements ChannelDao {
             return Optional.absent();
         }
         Optional<DataHubKey> previous = key.getPrevious();
+        //todo - gfm - 11/4/13 - this may need some work
         Optional<DataHubKey> next = key.getNext();
+        Optional<DataHubKey> lastUpdatedKey = findLastUpdatedKey(channelName);
+        if (lastUpdatedKey.isPresent()) {
+            if (lastUpdatedKey.get().getSequence() == key.getSequence()) {
+                next = Optional.absent();
+            }
+        }
+
         return Optional.of(new LinkedDataHubCompositeValue(value, previous, next));
     }
 
