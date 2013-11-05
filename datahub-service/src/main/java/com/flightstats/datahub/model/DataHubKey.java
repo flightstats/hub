@@ -37,12 +37,11 @@ public class DataHubKey implements Serializable {
     }
 
     public Optional<DataHubKey> getNext() {
-        //todo - gfm - 11/4/13 - this needs to handle the last in the line
         return Optional.of(new DataHubKey(getSequence() + 1));
     }
 
     public Optional<DataHubKey> getPrevious() {
-        if (getSequence() <= MIN_SEQUENCE) {
+        if (getSequence() < MIN_SEQUENCE) {
             return Optional.absent();
         }
         return Optional.of(new DataHubKey(getSequence() - 1));
