@@ -10,15 +10,15 @@ public class DataHubKeyRendererTest {
 
     @Test
     public void testKeyToString() throws Exception {
-        DataHubKey key = new DataHubKey((short) 129);
+        DataHubKey key = new DataHubKey(987654321);
         DataHubKeyRenderer testClass = new DataHubKeyRenderer();
         String result = testClass.keyToString(key);
-        assertEquals("0000000000082===", result);
+        assertEquals("987654321", result);
     }
 
     @Test
     public void testKeyFromString() throws Exception {
-        DataHubKey expected = new DataHubKey((short) 129);
+        DataHubKey expected = new DataHubKey(129);
         DataHubKeyRenderer testClass = new DataHubKeyRenderer();
         DataHubKey result = testClass.fromString(testClass.keyToString(expected));
         assertEquals(expected, result);
@@ -26,9 +26,9 @@ public class DataHubKeyRendererTest {
 
     @Test
     public void testSequencesAreOrderedWithinSameMillis() throws Exception {
-        DataHubKey key1 = new DataHubKey((short) 1);
-        DataHubKey key2 = new DataHubKey((short) 2);
-        DataHubKey key3 = new DataHubKey((short) 3);
+        DataHubKey key1 = new DataHubKey(1);
+        DataHubKey key2 = new DataHubKey(2);
+        DataHubKey key3 = new DataHubKey(3);
 
         DataHubKeyRenderer testClass = new DataHubKeyRenderer();
 
