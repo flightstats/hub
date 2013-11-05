@@ -12,6 +12,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Date;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
@@ -24,10 +25,10 @@ public class ChannelContentResourceTest {
         String channelName = "canal4";
         byte[] expected = new byte[]{55, 66, 77, 88};
         Optional<String> contentType = Optional.of("text/plain");
-        Optional<String> contentLanguage = Optional.of("en");
-        DataHubKey key = new DataHubKey((short) 0);
-        DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
-        DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, expected);
+		Optional<String> contentLanguage = Optional.of("en");
+		DataHubKey key = new DataHubKey(new Date(11), (short) 0);
+		DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
+		DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, expected);
         LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
                 Optional.<DataHubKey>absent());
 
@@ -36,57 +37,57 @@ public class ChannelContentResourceTest {
         when(dataHubService.getValue(channelName, key)).thenReturn(Optional.of(linkedValue));
 
         ChannelContentResource testClass = new ChannelContentResource(null, dataHubService, dataHubKeyRenderer);
-        Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null);
+        Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null );
 
         assertEquals(MediaType.TEXT_PLAIN_TYPE, result.getMetadata().getFirst("Content-Type"));
         assertEquals("en", result.getMetadata().getFirst("Content-Language"));
         assertEquals(expected, result.getEntity());
     }
 
-    @Test
-    public void testGetValueNoContentTypeSpecified() throws Exception {
-        String channelName = "canal4";
-        DataHubKey key = new DataHubKey((short) 0);
-        DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
-        byte[] expected = new byte[]{55, 66, 77, 88};
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), expected);
-        Optional<DataHubKey> previous = Optional.absent();
+	@Test
+	public void testGetValueNoContentTypeSpecified() throws Exception {
+		String channelName = "canal4";
+		DataHubKey key = new DataHubKey(new Date(11), (short) 0);
+		DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
+		byte[] expected = new byte[]{55, 66, 77, 88};
+		DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), expected);
+		Optional<DataHubKey> previous = Optional.absent();
 
-        DataHubService dataHubService = mock(DataHubService.class);
+		DataHubService dataHubService = mock(DataHubService.class);
 
-        when(dataHubService.getValue(channelName, key)).thenReturn(Optional.of(new LinkedDataHubCompositeValue(value, previous, Optional.<DataHubKey>absent())));
+		when(dataHubService.getValue(channelName, key)).thenReturn(Optional.of(new LinkedDataHubCompositeValue(value, previous, Optional.<DataHubKey>absent())));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, dataHubService, dataHubKeyRenderer);
-        Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null);
+		ChannelContentResource testClass = new ChannelContentResource(null, dataHubService, dataHubKeyRenderer);
+		Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null);
 
-        assertEquals(MediaType.APPLICATION_OCTET_STREAM_TYPE, result.getMetadata().getFirst("Content-Type"));      //null, and the framework defaults to application/octet-stream
-        assertEquals(expected, result.getEntity());
-    }
+		assertEquals(MediaType.APPLICATION_OCTET_STREAM_TYPE, result.getMetadata().getFirst("Content-Type"));      //null, and the framework defaults to application/octet-stream
+		assertEquals(expected, result.getEntity());
+	}
 
-    @Test
-    public void testGetValueContentMismatch() throws Exception {
-        String channelName = "canal4";
-        DataHubKey key = new DataHubKey((short) 0);
-        DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
-        byte[] expected = new byte[]{55, 66, 77, 88};
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.of(MediaType.APPLICATION_XML), Optional.<String>absent(), expected);
-        Optional<DataHubKey> previous = Optional.absent();
+	@Test
+	public void testGetValueContentMismatch() throws Exception {
+		String channelName = "canal4";
+		DataHubKey key = new DataHubKey(new Date(11), (short) 0);
+		DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
+		byte[] expected = new byte[]{55, 66, 77, 88};
+		DataHubCompositeValue value = new DataHubCompositeValue(Optional.of(MediaType.APPLICATION_XML), Optional.<String>absent(), expected);
+		Optional<DataHubKey> previous = Optional.absent();
 
-        DataHubService dataHubService = mock(DataHubService.class);
+		DataHubService dataHubService = mock(DataHubService.class);
 
-        when(dataHubService.getValue(channelName, key)).thenReturn(Optional.of(new LinkedDataHubCompositeValue(value, previous, Optional.<DataHubKey>absent())));
+		when(dataHubService.getValue(channelName, key)).thenReturn(Optional.of(new LinkedDataHubCompositeValue(value, previous, Optional.<DataHubKey>absent())));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, dataHubService, dataHubKeyRenderer);
-        Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), MediaType.APPLICATION_JSON);
+		ChannelContentResource testClass = new ChannelContentResource(null, dataHubService, dataHubKeyRenderer);
+		Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), MediaType.APPLICATION_JSON);
 
-        assertEquals(406, result.getStatus());
-    }
+		assertEquals(406, result.getStatus());
+	}
 
     @Test
     public void testGetValueNotFound() throws Exception {
 
         String channelName = "canal4";
-        DataHubKey key = new DataHubKey((short) 0);
+        DataHubKey key = new DataHubKey(new Date(11), (short) 0);
         DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
 
         DataHubService dataHubService = mock(DataHubService.class);
@@ -102,11 +103,10 @@ public class ChannelContentResourceTest {
         }
     }
 
-    //todo - gfm - 11/4/13 - fix this
-    /*@Test
+    @Test
     public void testCreationDateHeaderInResponse() throws Exception {
         String channelName = "woo";
-        DataHubKey key = new DataHubKey( (short) 0);
+        DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 0);
         DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
         DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes());
         LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
@@ -121,13 +121,13 @@ public class ChannelContentResourceTest {
 
         String creationDateString = (String) result.getMetadata().getFirst(CustomHttpHeaders.CREATION_DATE_HEADER.getHeaderName());
         assertEquals("2005-08-07T23:17:58.922Z", creationDateString);
-    }*/
+    }
 
     @Test
     public void testPreviousLink() throws Exception {
         String channelName = "woo";
-        DataHubKey previousKey = new DataHubKey(0);
-        DataHubKey key = new DataHubKey(1);
+        DataHubKey previousKey = new DataHubKey(new Date(1123456678921L), (short) 0);
+        DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 0);
         DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
         DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes());
         Optional<DataHubKey> previous = Optional.of(previousKey);
@@ -143,13 +143,13 @@ public class ChannelContentResourceTest {
         Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null);
 
         String link = (String) result.getMetadata().getFirst("Link");
-        assertEquals("<http://path/to/0000000000000===>;rel=\"previous\"", link);
+        assertEquals("<http://path/to/000021CJ7HU0I000>;rel=\"previous\"", link);
     }
 
     @Test
     public void testPreviousLink_none() throws Exception {
         String channelName = "woo";
-        DataHubKey key = new DataHubKey((short) 0);
+        DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 0);
         DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
         DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes());
         Optional<DataHubKey> previous = Optional.absent();
@@ -169,8 +169,8 @@ public class ChannelContentResourceTest {
     @Test
     public void testNextLink() throws Exception {
         String channelName = "nerxt";
-        DataHubKey nextKey = new DataHubKey((short) 1);
-        DataHubKey key = new DataHubKey((short) 0);
+        DataHubKey nextKey = new DataHubKey(new Date(1123456678923L), (short) 0);
+        DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 0);
         DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
         DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes());
         Optional<DataHubKey> next = Optional.of(nextKey);
@@ -186,13 +186,13 @@ public class ChannelContentResourceTest {
         Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null);
 
         String link = (String) result.getMetadata().getFirst("Link");
-        assertEquals("<http://path/to/0000000000002===>;rel=\"next\"", link);
+        assertEquals("<http://path/to/000021CJ7HU0M000>;rel=\"next\"", link);
     }
 
     @Test
     public void testNextLinkNone() throws Exception {
         String channelName = "nerxt";
-        DataHubKey key = new DataHubKey((short) 0);
+        DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 0);
         DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
         DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes());
         LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
@@ -209,41 +209,41 @@ public class ChannelContentResourceTest {
         assertNull(link);
     }
 
-    @Test
-    public void testLanguageHeader_missing() throws Exception {
-        String channelName = "canal4";
-        DataHubKey key = new DataHubKey((short) 0);
-        DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), new byte[]{});
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
-                Optional.<DataHubKey>absent());
+	@Test
+	public void testLanguageHeader_missing() throws Exception {
+		String channelName = "canal4";
+		DataHubKey key = new DataHubKey(new Date(11), (short) 0);
+		DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
+		DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), new byte[]{});
+		LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
+				Optional.<DataHubKey>absent());
 
-        DataHubService dataHubService = mock(DataHubService.class);
+		DataHubService dataHubService = mock(DataHubService.class);
 
-        when(dataHubService.getValue(channelName, key)).thenReturn(Optional.of(linkedValue));
+		when(dataHubService.getValue(channelName, key)).thenReturn(Optional.of(linkedValue));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, dataHubService, dataHubKeyRenderer);
-        Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null);
+		ChannelContentResource testClass = new ChannelContentResource(null, dataHubService, dataHubKeyRenderer);
+		Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null );
 
-        assertNull(result.getMetadata().getFirst("Content-Language"));
-    }
+		assertNull(result.getMetadata().getFirst("Content-Language"));
+	}
 
-    @Test
-    public void testEncodingHeader_missing() throws Exception {
-        String channelName = "canal4";
-        DataHubKey key = new DataHubKey((short) 0);
-        DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), new byte[]{});
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
-                Optional.<DataHubKey>absent());
+	@Test
+	public void testEncodingHeader_missing() throws Exception {
+		String channelName = "canal4";
+		DataHubKey key = new DataHubKey(new Date(11), (short) 0);
+		DataHubKeyRenderer dataHubKeyRenderer = new DataHubKeyRenderer();
+		DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), new byte[]{});
+		LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
+				Optional.<DataHubKey>absent());
 
-        DataHubService dataHubService = mock(DataHubService.class);
+		DataHubService dataHubService = mock(DataHubService.class);
 
-        when(dataHubService.getValue(channelName, key)).thenReturn(Optional.of(linkedValue));
+		when(dataHubService.getValue(channelName, key)).thenReturn(Optional.of(linkedValue));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, dataHubService, dataHubKeyRenderer);
-        Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null);
+		ChannelContentResource testClass = new ChannelContentResource(null, dataHubService, dataHubKeyRenderer);
+		Response result = testClass.getValue(channelName, dataHubKeyRenderer.keyToString(key), null );
 
-        assertNull(result.getMetadata().getFirst("Content-Encoding"));
-    }
+		assertNull(result.getMetadata().getFirst("Content-Encoding"));
+	}
 }

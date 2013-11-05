@@ -16,67 +16,72 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class HazelcastSubscriber implements MessageListener<String> {
 
-    private final static Logger logger = LoggerFactory.getLogger(HazelcastSubscriber.class);
-    static final short BUFFER_SIZE = (short) 1000;
+	private final static Logger logger = LoggerFactory.getLogger(HazelcastSubscriber.class);
+	static final short BUFFER_SIZE = (short) 1000;
 
-    private final Consumer<String> consumer;
-    private final DataHubKeyRenderer keyRenderer;
-    private final Map<Long, String> futureMessages = new ConcurrentHashMap<>();
-    private long nextExpected = -1;
+	private final Consumer<String> consumer;
+	private final DataHubKeyRenderer keyRenderer;
+	private final Map<Short, String> futureMessages = new ConcurrentHashMap<>();
+	private short nextExpected = -1;
 
 
-    public HazelcastSubscriber(Consumer<String> consumer, DataHubKeyRenderer keyRenderer) {
-        this.consumer = consumer;
-        this.keyRenderer = keyRenderer;
-    }
+	public HazelcastSubscriber(Consumer<String> consumer, DataHubKeyRenderer keyRenderer) {
+		this.consumer = consumer;
+		this.keyRenderer = keyRenderer;
+	}
 
-    @Override
-    public void onMessage(Message<String> message) {
-        String stringKey = message.getMessageObject();
-        long messageSequence = getKeyFromUri(stringKey).getSequence();
+	@Override
+	public void onMessage(Message<String> message) {
+		String stringKey = message.getMessageObject();
+		short messageSequence = getKeyFromUri(stringKey).getSequence();
 
-        if (isFirst()) {
-            consumer.apply(stringKey);
-            nextExpected = getNextExpected(messageSequence);
-        } else if (isFuture(messageSequence)) {
-            futureMessages.put(messageSequence, stringKey);    //buffer it up
-        } else if (isOld(messageSequence)) {
-            logger.error("Ignoring old message(expected=" + nextExpected + ", ignored=" + messageSequence + "):" + message.getMessageObject());
-        } else {
-            futureMessages.put(messageSequence, stringKey);
-            dispatchBufferedInOrder();
-        }
-    }
+		if (isFirst()) {
+			consumer.apply(stringKey);
+			nextExpected = getNextExpected(messageSequence);
+		}
+		else if (isFuture(messageSequence)) {
+			futureMessages.put(messageSequence, stringKey);    //buffer it up
+		}
+		else if (isOld(messageSequence)) {
+			logger.error("Ignoring old message(expected=" + nextExpected + ", ignored=" + messageSequence + "):" + message.getMessageObject());
+		}
+		else {
+			futureMessages.put(messageSequence, stringKey);
+			dispatchBufferedInOrder();
+		}
+	}
 
-    private void dispatchBufferedInOrder() {
-        String nextUri;
-        while ((nextUri = futureMessages.remove(nextExpected)) != null) {
-            consumer.apply(nextUri);
-            nextExpected = getNextExpected(nextExpected);
-        }
-    }
+	private void dispatchBufferedInOrder() {
+		String nextUri;
+		while ((nextUri = futureMessages.remove(nextExpected)) != null){
+			consumer.apply(nextUri);
+			nextExpected = getNextExpected(nextExpected);
+		}
+	}
 
-    private boolean isFirst() {
-        return nextExpected == -1;
-    }
+	private boolean isFirst() {
+		return nextExpected == -1;
+	}
 
-    private boolean isFuture(long received) {
-        return (received > nextExpected);
-    }
+	private boolean isFuture(short received) {
+		boolean isFutureBeforeRollover = (received > nextExpected) && (received < Math.min(nextExpected + BUFFER_SIZE, Short.MAX_VALUE));
+		boolean isFutureAfterRollover = received < (nextExpected + BUFFER_SIZE - Short.MAX_VALUE);
+		return isFutureBeforeRollover || isFutureAfterRollover;
+	}
 
-    private boolean isOld(long messageSequence) {
-        return !(isFirst() || isExpected(messageSequence) || isFuture(messageSequence));
-    }
+	private boolean isOld(short messageSequence) {
+		return !(isFirst() || isExpected(messageSequence) || isFuture(messageSequence));
+	}
 
-    private boolean isExpected(long messageSequence) {
-        return nextExpected == messageSequence;
-    }
+	private boolean isExpected(short messageSequence) {
+		return nextExpected == messageSequence;
+	}
 
-    private long getNextExpected(long current) {
-        return current + 1;
-    }
+	private short getNextExpected(short current) {
+		return (short) (current == Short.MAX_VALUE ? 0 : current + 1);
+	}
 
-    private DataHubKey getKeyFromUri(String stringKey) {
-        return keyRenderer.fromString(stringKey);
-    }
+	private DataHubKey getKeyFromUri(String stringKey) {
+		return keyRenderer.fromString(stringKey);
+	}
 }
