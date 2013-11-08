@@ -28,7 +28,7 @@ public class HazelcastClusterKeyGeneratorTest {
         AtomicNumber atomicDateNumber = mock(AtomicNumber.class);
         AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
 
-        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor);
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast);
 
         //WHEN
         when(hazelcast.getAtomicNumber("CHANNEL_NAME_DATE:mychanisgood")).thenReturn(atomicDateNumber);
@@ -78,7 +78,7 @@ public class HazelcastClusterKeyGeneratorTest {
         //GIVEN
         ChannelLockExecutor channelLockExecutor = mock(ChannelLockExecutor.class);
 
-        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(null, channelLockExecutor);
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(null);
 
         //WHEN
         when(channelLockExecutor.execute(anyString(), any(Callable.class))).thenThrow(new AlreadyBoundException());
