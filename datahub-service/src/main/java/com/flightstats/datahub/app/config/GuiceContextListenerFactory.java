@@ -8,6 +8,7 @@ import com.flightstats.datahub.cluster.HazelcastChannelLockFactory;
 import com.flightstats.datahub.cluster.HazelcastClusterKeyGenerator;
 import com.flightstats.datahub.dao.RowKeyStrategy;
 import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
@@ -170,6 +171,13 @@ public class GuiceContextListenerFactory {
         @Provides
         public static ConcurrentMap<String, DataHubKey> buildLastUpdatePerChannelMap(HazelcastInstance hazelcast) throws FileNotFoundException {
             return hazelcast.getMap("LAST_CHANNEL_UPDATE");
+        }
+
+        @Named("ChannelConfigurationMap")
+        @Singleton
+        @Provides
+        public static ConcurrentMap<String, ChannelConfiguration> buildChannelConfigurationMap(HazelcastInstance hazelcast) throws FileNotFoundException {
+            return hazelcast.getMap("CHANNEL_CONFIGURATION_MAP");
         }
 
         @Named("KnownChannelCache")

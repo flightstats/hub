@@ -60,12 +60,12 @@ public class CassandraValueWriterTest {
 		ValueInsertionResult expected = new ValueInsertionResult(DATA_HUB_KEY);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
-		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
+		when(hector.createColumn(columnName, value, 0, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 
 		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
-		ValueInsertionResult result = testClass.write(CHANNEL_NAME, value);
+		ValueInsertionResult result = testClass.write(CHANNEL_NAME, value, 0);
 
 		assertEquals(expected, result);
 		verify(mutator).insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column);
@@ -76,14 +76,14 @@ public class CassandraValueWriterTest {
 		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
-		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
+		when(hector.createColumn(columnName, value, 0, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 		when(mutator.insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column)).thenThrow(
                 new HInvalidRequestException("You must have an unconfigured columnfamily in your soup"));
 
 		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
-		testClass.write(CHANNEL_NAME, value);
+		testClass.write(CHANNEL_NAME, value, 0);
 	}
 
 	@Test(expected = HInvalidRequestException.class)
@@ -91,14 +91,14 @@ public class CassandraValueWriterTest {
 		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
-		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
+		when(hector.createColumn(columnName, value, 0, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 		when(mutator.insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column)).thenThrow(
                 new HInvalidRequestException("Clown-based-tamale"));            //Not the expected verbage
 
 		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
-		testClass.write(CHANNEL_NAME, value);
+		testClass.write(CHANNEL_NAME, value, 0);
 	}
 
 	@Test

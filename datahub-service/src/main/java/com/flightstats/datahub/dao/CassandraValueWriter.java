@@ -34,13 +34,13 @@ public class CassandraValueWriter {
 		this.keyRenderer = keyRenderer;
 	}
 
-	public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue) {
+	public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue, int ttlSeconds) {
 		Mutator<String> mutator = connector.buildMutator(StringSerializer.get());
 
 		DataHubKey key = keyGenerator.newKey(channelName);
 
 		String columnName = keyRenderer.keyToString(key);
-		HColumn<String, DataHubCompositeValue> column = hector.createColumn(columnName, columnValue, StringSerializer.get(),
+		HColumn<String, DataHubCompositeValue> column = hector.createColumn(columnName, columnValue, ttlSeconds, StringSerializer.get(),
 				DataHubCompositeValueSerializer.get());
 
 		String rowKey = rowKeyStrategy.buildKey(channelName, key);

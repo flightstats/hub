@@ -61,7 +61,7 @@ public class DataHubSweeper {
 
 		@Override
 		public void run() {
-			try {
+			/*try {
 				for (ChannelConfiguration channelConfiguration : dao.getChannels()) {
 					try {
 						sweepChannel(channelConfiguration);
@@ -72,7 +72,7 @@ public class DataHubSweeper {
 			} catch (Exception e) {
 				// Don't let anything escape or it will negate the parent Timer running this task and we'll never run again.
 				logger.error("Failure getting channels", e);
-			}
+			}*/
 		}
 
 		private void sweepChannel(final ChannelConfiguration channelConfiguration) throws Exception {

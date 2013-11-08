@@ -48,7 +48,6 @@ public class DataHubCompositeValue implements Serializable {
         return millis;
     }
 
-    //todo - gfm - 11/5/13 - do this
     @Override
     public boolean equals(Object o) {
         if (this == o) {

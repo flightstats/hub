@@ -20,9 +20,12 @@ import org.junit.Test;
 
 import java.util.Date;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.*;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class CassandraChannelsCollectionTest {
@@ -34,6 +37,7 @@ public class CassandraChannelsCollectionTest {
     private TimeProvider timeProvider;
     private DataHubKeyRenderer keyRenderer;
     private Keyspace keyspace;
+    private ConcurrentMap<String,ChannelConfiguration> channelConfigurationMap;
 
     @Before
     public void setup() {
@@ -44,6 +48,7 @@ public class CassandraChannelsCollectionTest {
         timeProvider = mock(TimeProvider.class);
         keyRenderer = new DataHubKeyRenderer();
         keyspace = mock(Keyspace.class);
+        channelConfigurationMap = new ConcurrentHashMap<>();
     }
 
     @Test
@@ -57,13 +62,14 @@ public class CassandraChannelsCollectionTest {
         when(hector.createColumn(channelName, expected, StringSerializer.get(), valueSerializer)).thenReturn(column);
         when(timeProvider.getDate()).thenReturn(creationDate);
 
-        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider, keyRenderer);
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider, keyRenderer, channelConfigurationMap);
 
         ChannelConfiguration result = testClass.createChannel(channelName, null);
 
         assertEquals(expected, result);
         verify(connector, never()).createColumnFamily(anyString());
         verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_METADATA_COLUMN_FAMILY_NAME, column);
+        assertEquals(result, channelConfigurationMap.get(channelName));
     }
 
     @Test
@@ -76,10 +82,11 @@ public class CassandraChannelsCollectionTest {
         when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
         when(hector.createColumn(channelName, newConfig, StringSerializer.get(), valueSerializer)).thenReturn(column);
 
-        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider, keyRenderer);
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, timeProvider, keyRenderer, channelConfigurationMap);
 
         testClass.updateChannel(newConfig);
         verify(mutator).insert(CHANNELS_ROW_KEY, CHANNELS_METADATA_COLUMN_FAMILY_NAME, column);
+        assertEquals(newConfig, channelConfigurationMap.get(channelName));
     }
 
     @Test
@@ -102,7 +109,7 @@ public class CassandraChannelsCollectionTest {
         when(column.getValue()).thenReturn(channelConfiguration);
 
 
-        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, channelConfigSerializer, hector, null, keyRenderer);
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, channelConfigSerializer, hector, null, keyRenderer, channelConfigurationMap);
         boolean result = testClass.channelExists(channelName);
         assertTrue(result);
     }
@@ -125,11 +132,23 @@ public class CassandraChannelsCollectionTest {
         when(queryResult.get()).thenReturn(column);
         when(column.getValue()).thenReturn(expected);
 
-        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, channelConfigSerializer, hector, null, keyRenderer);
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, channelConfigSerializer, hector, null, keyRenderer, channelConfigurationMap);
 
         ChannelConfiguration result = testClass.getChannelConfiguration("thechan");
 
         assertEquals(expected, result);
+        assertEquals(expected, channelConfigurationMap.get("thechan"));
+    }
+
+    @Test
+    public void testCache() {
+        String channel = "cashChan";
+        ChannelConfiguration expected = new ChannelConfiguration(channel, new Date(), 1000L);
+        channelConfigurationMap.put(channel, expected);
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(null, null, null, null, null, channelConfigurationMap);
+        ChannelConfiguration result = testClass.getChannelConfiguration(channel);
+        assertEquals(expected, result);
+
     }
 
     @Test
@@ -146,7 +165,7 @@ public class CassandraChannelsCollectionTest {
         when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
         when(hector.createColumn(channelName, keyString, StringSerializer.get(), StringSerializer.get())).thenReturn(newColumn);
 
-        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer, channelConfigurationMap);
         testClass.updateFirstKey(channelName, key);
 
         verify(mutator).insert(channelName + ":" + CHANNELS_FIRST_ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, newColumn);
@@ -160,7 +179,7 @@ public class CassandraChannelsCollectionTest {
 
         when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
 
-        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer);
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer, channelConfigurationMap);
         testClass.deleteFirstKey(channelName);
 
         verify(mutator).delete(channelName + ":" + CHANNELS_FIRST_ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, "myChan", StringSerializer.get());
@@ -179,7 +198,7 @@ public class CassandraChannelsCollectionTest {
         when(countQuery.execute()).thenReturn(queryResult);
         when(queryResult.get()).thenReturn(5);
 
-        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, null, hector, null, keyRenderer);
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, null, hector, null, keyRenderer, channelConfigurationMap);
         int result = testClass.countChannels();
         assertEquals(5, result);
     }
@@ -189,7 +208,7 @@ public class CassandraChannelsCollectionTest {
         //GIVEN
         String channelName = "chunder";
         DataHubKey expected = new DataHubKey(0);
-        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, null, hector, null, keyRenderer);
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, null, hector, null, keyRenderer, channelConfigurationMap);
 
         ColumnQuery<String, String, String> columnQuery = mock(ColumnQuery.class);
         QueryResult<HColumn<String, String>> queryResult = mock(QueryResult.class);
@@ -223,7 +242,7 @@ public class CassandraChannelsCollectionTest {
         HColumn column2 = mock(HColumn.class);
         ColumnSliceIterator<String, String, ChannelConfiguration> sliceIterator = mock(ColumnSliceIterator.class);
 
-        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, null, keyRenderer);
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, valueSerializer, hector, null, keyRenderer, channelConfigurationMap);
 
         //WHEN
         when(column1.getValue()).thenReturn(expected1);
