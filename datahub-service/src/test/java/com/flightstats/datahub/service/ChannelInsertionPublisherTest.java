@@ -16,7 +16,7 @@ public class ChannelInsertionPublisherTest {
 
 	@Test
 	public void testPublish() throws Exception {
-		DataHubKey dataHubKey = new DataHubKey(new Date(), (short) 1);
+		DataHubKey dataHubKey = new DataHubKey((short) 1);
 
 		HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 		DataHubKeyRenderer keyRenderer = mock(DataHubKeyRenderer.class);

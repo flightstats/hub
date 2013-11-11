@@ -25,13 +25,6 @@ public class DataHubKey implements Serializable {
         this.sequence = sequence;
     }
 
-    /**
-     * @deprecated
-     */
-    public Date getDate() {
-        return date;
-    }
-
     public long getSequence() {
         return sequence;
     }
@@ -61,20 +54,13 @@ public class DataHubKey implements Serializable {
         if (sequence != that.sequence) {
             return false;
         }
-        //todo - gfm - 11/4/13 - eventually remove date
-        if (date != null ? !date.equals(that.date) : that.date != null) {
-            return false;
-        }
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        //todo - gfm - 11/4/13 - eventually remove date
-        int result = date != null ? date.hashCode() : 0;
-        result = 31 * result + (int) (sequence ^ (sequence >>> 32));
-        return result;
+        return (int) (sequence ^ (sequence >>> 32));
     }
 
     @Override

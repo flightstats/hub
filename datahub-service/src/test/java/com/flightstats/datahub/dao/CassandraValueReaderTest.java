@@ -28,7 +28,7 @@ public class CassandraValueReaderTest {
 	public void testRead() throws Exception {
 
 		String channelName = "spoon";
-		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
+		DataHubKey key = new DataHubKey((short) 0);
 		byte[] data = new byte[]{'t', 'e', 's', 't', 'i', 'n'};
 		String rowKey = "the_____key___";
 		DataHubCompositeValue expected = new DataHubCompositeValue(Optional.of("text/plain"), null, data);
@@ -63,7 +63,7 @@ public class CassandraValueReaderTest {
 	@Test
 	public void testReadNotFound() throws Exception {
 		String channelName = "spoon";
-		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
+		DataHubKey key = new DataHubKey((short) 0);
 		String rowKey = "the_____key___";
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		String columnName = keyRenderer.keyToString(key);
@@ -95,7 +95,7 @@ public class CassandraValueReaderTest {
 	public void testRead_invalidChannel() throws Exception {
 		String channelName = "myChan";
 		String rowKey = "1234";
-		DataHubKey key = new DataHubKey(new Date(1235555), (short) 0);
+		DataHubKey key = new DataHubKey((short) 0);
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 
 		HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);

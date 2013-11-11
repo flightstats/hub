@@ -26,16 +26,14 @@ public class LastKeyFinder {
 	private final DataHubKeyRenderer keyRenderer;
 	private final CassandraConnector connector;
 	private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
-	private final TimeProvider timeProvider;
 
 	@Inject
-	public LastKeyFinder(CassandraChannelsCollection channelsCollection, HectorFactoryWrapper hector, DataHubKeyRenderer keyRenderer, CassandraConnector connector, RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy, TimeProvider timeProvider) {
+	public LastKeyFinder(CassandraChannelsCollection channelsCollection, HectorFactoryWrapper hector, DataHubKeyRenderer keyRenderer, CassandraConnector connector, RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy) {
 		this.hector = hector;
 		this.channelsCollection = channelsCollection;
 		this.keyRenderer = keyRenderer;
 		this.connector = connector;
 		this.rowKeyStrategy = rowKeyStrategy;
-		this.timeProvider = timeProvider;
 	}
 
 	public DataHubKey queryForLatestKey(String channelName) {
@@ -90,8 +88,7 @@ public class LastKeyFinder {
 	}
 
 	private String buildRowKeyAfterNow(String channelName) {
-		Date now = timeProvider.getDate();
-		String currentKey = rowKeyStrategy.buildKey(channelName, new DataHubKey(now, (short) 0));
+		String currentKey = rowKeyStrategy.buildKey(channelName, new DataHubKey((short) 0));
 		return rowKeyStrategy.nextKey(channelName, currentKey);
 	}
 }

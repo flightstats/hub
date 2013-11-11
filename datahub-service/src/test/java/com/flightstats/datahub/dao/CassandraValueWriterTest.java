@@ -27,7 +27,7 @@ public class CassandraValueWriterTest {
 
 	public static final String CHANNEL_NAME = "foo";
 	public static final byte[] DATA = "bar".getBytes();
-	public static final DataHubKey DATA_HUB_KEY = new DataHubKey(new Date(2345678910L), (short) 33);
+	public static final DataHubKey DATA_HUB_KEY = new DataHubKey((short) 33);
 	public static final String ROW_KEY = "a super key for this row";
 	public static final Optional<String> CONTENT_TYPE = Optional.of("text/plain");
 	public static final Optional<String> CONTENT_ENCODING = Optional.of("gzip");
