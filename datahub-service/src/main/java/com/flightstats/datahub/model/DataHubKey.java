@@ -9,16 +9,7 @@ public class DataHubKey implements Serializable {
     private static final long serialVersionUID = 1L;
     //todo - gfm - 11/4/13 - figure out how MIN_SEQUENCE works
     private static final long MIN_SEQUENCE = 0;
-    private Date date;
     private final long sequence;
-
-    /**
-     * @deprecated
-     */
-    public DataHubKey(Date date, long sequence) {
-        this.date = date;
-        this.sequence = sequence;
-    }
 
     public DataHubKey(long sequence) {
         //todo - gfm - 11/4/13 - how to enforce MIN_SEQUENCE?
@@ -66,8 +57,7 @@ public class DataHubKey implements Serializable {
     @Override
     public String toString() {
         return "DataHubKey{" +
-                "date=" + date +
-                ", sequence=" + sequence +
+                " sequence=" + sequence +
                 '}';
     }
 }
