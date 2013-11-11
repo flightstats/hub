@@ -155,7 +155,7 @@ public class CassandraChannelsCollectionTest {
     public void testUpdateFirstKey() throws Exception {
         String channelName = "myChan";
         Date newDate = new Date(123456789L);
-        DataHubKey key = new DataHubKey(newDate, (short) 0);
+        DataHubKey key = new DataHubKey((short) 0);
         String keyString = new DataHubKeyRenderer().keyToString(key);
 
         Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
