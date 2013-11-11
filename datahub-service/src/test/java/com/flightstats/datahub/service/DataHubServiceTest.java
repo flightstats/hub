@@ -65,7 +65,7 @@ public class DataHubServiceTest {
 
 	@Test
 	public void testFindLastUpdatedKey() throws Exception {
-		DataHubKey dataHubKey = new DataHubKey((short) 33);
+		DataHubKey dataHubKey = new DataHubKey((short) 1033);
 
 		ChannelDao channelDao = mock(ChannelDao.class);
 		when(channelDao.findLastUpdatedKey("channelName")).thenReturn(Optional.of(dataHubKey));
@@ -83,7 +83,7 @@ public class DataHubServiceTest {
 		Optional<String> contentType = Optional.of("contentType");
 		Optional<String> contentEncoding = Optional.of("contentEncoding");
 		Optional<String> contentLanguage = Optional.of("contentLanguage");
-		DataHubKey dataHubKey = new DataHubKey((short) 300);
+		DataHubKey dataHubKey = new DataHubKey((short) 3000);
 
 		ChannelDao channelDao = mock(ChannelDao.class);
 		ChannelLockExecutor channelLockExecutor = mock(ChannelLockExecutor.class);
@@ -103,7 +103,7 @@ public class DataHubServiceTest {
 
 	@Test
 	public void testGetValue() throws Exception {
-		DataHubKey dataHubKey = new DataHubKey((short) 33);
+		DataHubKey dataHubKey = new DataHubKey((short) 1033);
 		byte[] data = {'h', 'e', 'l', 'l', 'o'};
 		Optional<String> contentType = Optional.of("contentType");
 		Optional<String> contentEncoding = Optional.of("contentEncoding");

@@ -19,7 +19,7 @@ public class HazelcastSubscriberTest {
     public void testOneMessageBasic() throws URISyntaxException {
         // GIVEN
         DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
-        DataHubKey key = new DataHubKey((short) 0);
+        DataHubKey key = new DataHubKey((short) 1000);
         String stringKey = keyRenderer.keyToString(key);
         Consumer<String> consumer = mock(Consumer.class);
         HazelcastSubscriber testClass = new HazelcastSubscriber(consumer, keyRenderer);
@@ -35,8 +35,8 @@ public class HazelcastSubscriberTest {
     public void testTwoMessageInOrder() throws URISyntaxException {
         // GIVEN
         DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
-        DataHubKey key_1 = new DataHubKey(0);
-        DataHubKey key_2 = new DataHubKey(1);
+        DataHubKey key_1 = new DataHubKey(1000);
+        DataHubKey key_2 = new DataHubKey(1001);
         String stringKey1 = keyRenderer.keyToString(key_1);
         String stringKey2 = keyRenderer.keyToString(key_2);
         Consumer<String> consumer = mock(Consumer.class);
@@ -56,8 +56,8 @@ public class HazelcastSubscriberTest {
     public void testTwoMessageOutOfOrder() throws URISyntaxException {
         // GIVEN
         DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
-        DataHubKey key_1 = new DataHubKey((short) 0);
-        DataHubKey key_2 = new DataHubKey((short) 1);
+        DataHubKey key_1 = new DataHubKey((short) 1000);
+        DataHubKey key_2 = new DataHubKey((short) 1001);
         String stringKey1 = keyRenderer.keyToString(key_1);
         String stringKey2 = keyRenderer.keyToString(key_2);
         Consumer<String> consumer = mock(Consumer.class);

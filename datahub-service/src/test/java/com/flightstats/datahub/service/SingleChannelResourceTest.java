@@ -51,7 +51,7 @@ public class SingleChannelResourceTest {
 		URI requestUri = URI.create("http://testification.com/channel/spoon");
 		URI latestUri = URI.create("http://testification.com/channel/spoon/latest");
 		itemUri = URI.create("http://testification.com/channel/spoon/888item888");
-		dataHubKey = new DataHubKey((short) 12);
+		dataHubKey = new DataHubKey((short) 1200);
 		//dataHubKey = new DataHubKey(CREATION_DATE, (short) 12);
 		channelConfig = new ChannelConfiguration(channelName, CREATION_DATE, null);
 		linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
@@ -69,7 +69,7 @@ public class SingleChannelResourceTest {
 
 	@Test
 	public void testGetChannelMetadataForKnownChannel() throws Exception {
-		DataHubKey key = new DataHubKey((short) 0);
+		DataHubKey key = new DataHubKey((short) 1000);
         DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "blah".getBytes());
         LinkedDataHubCompositeValue linkedDataHubCompositeValue = new LinkedDataHubCompositeValue(dataHubCompositeValue,
                 Optional.<DataHubKey>absent(), Optional.<DataHubKey>absent());

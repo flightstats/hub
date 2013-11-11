@@ -18,7 +18,7 @@ public class ValueInsertionResultMixInTest {
 	@Test
 	public void testSerialize() throws Exception {
 		ObjectMapper objectMapper = DataHubObjectMapperFactory.construct();
-		DataHubKey key = new DataHubKey((short) 33);
+		DataHubKey key = new DataHubKey((short) 1033);
 		ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key);
 		OutputStream out = new ByteArrayOutputStream();
 		objectMapper.writeValue(out, valueInsertionResult);

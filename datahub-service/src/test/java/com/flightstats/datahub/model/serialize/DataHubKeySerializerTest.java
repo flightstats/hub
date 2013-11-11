@@ -12,7 +12,7 @@ public class DataHubKeySerializerTest {
 
     @Test
     public void testSerialize() throws Exception {
-        DataHubKey key = new DataHubKey(4);
+        DataHubKey key = new DataHubKey(1004);
         DataHubKeyRenderer renderer = new DataHubKeyRenderer();
 
         JsonGenerator jgen = mock(JsonGenerator.class);
@@ -20,7 +20,7 @@ public class DataHubKeySerializerTest {
         DataHubKeySerializer testClass = new DataHubKeySerializer(renderer);
 
         testClass.serialize(key, jgen, null);
-        verify(jgen).writeString("4");
+        verify(jgen).writeString("1004");
 
     }
 }

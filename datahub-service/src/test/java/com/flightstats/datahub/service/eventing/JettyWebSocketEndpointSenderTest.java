@@ -22,7 +22,7 @@ public class JettyWebSocketEndpointSenderTest {
 		URI requestUri = URI.create("http://dorkbot.org");
 		URI itemUri = URI.create("http://flightstats.com/datahub/channel/itemKey");
 		String itemKey = "itemKey";
-		DataHubKey dataHubKey = new DataHubKey((short) 5);
+		DataHubKey dataHubKey = new DataHubKey((short) 5000);
 
 		RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
@@ -43,7 +43,7 @@ public class JettyWebSocketEndpointSenderTest {
 		URI requestUri = URI.create("http://dorkbot.org");
 		URI itemUri = URI.create("http://flightstats.com/datahub/channel/itemKey");
 		String itemKey = "itemKey";
-		DataHubKey dataHubKey = new DataHubKey((short) 5);
+		DataHubKey dataHubKey = new DataHubKey((short) 5000);
 
 		RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);

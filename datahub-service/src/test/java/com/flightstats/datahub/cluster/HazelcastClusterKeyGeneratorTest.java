@@ -19,8 +19,8 @@ public class HazelcastClusterKeyGeneratorTest {
     public void testIncrementNoRollover() throws Exception {
         //GIVEN
         String channelName = "mychanisgood";
-        DataHubKey expectedA = new DataHubKey((short) 0);
-        DataHubKey expectedB = new DataHubKey((short) 1);
+        DataHubKey expectedA = new DataHubKey((short) 1000);
+        DataHubKey expectedB = new DataHubKey((short) 1001);
 
         TimeProvider timeProvider = mock(TimeProvider.class);
         HazelcastInstance hazelcast = mock(HazelcastInstance.class);
@@ -33,7 +33,7 @@ public class HazelcastClusterKeyGeneratorTest {
         //WHEN
         when(hazelcast.getAtomicNumber("CHANNEL_NAME_DATE:mychanisgood")).thenReturn(atomicDateNumber);
         when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
-        when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L).thenReturn(1L);
+        when(atomicSeqNumber.getAndAdd(1)).thenReturn(1000L).thenReturn(1001L);
         DataHubKey resultA = testClass.newKey(channelName);
         DataHubKey resultB = testClass.newKey(channelName);
 

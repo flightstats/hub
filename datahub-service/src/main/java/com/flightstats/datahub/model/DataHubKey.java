@@ -1,5 +1,6 @@
 package com.flightstats.datahub.model;
 
+import com.flightstats.datahub.model.exception.MissingKeyException;
 import com.google.common.base.Optional;
 
 import java.io.Serializable;
@@ -7,12 +8,14 @@ import java.util.Date;
 
 public class DataHubKey implements Serializable {
     private static final long serialVersionUID = 1L;
-    //todo - gfm - 11/4/13 - figure out how MIN_SEQUENCE works
-    private static final long MIN_SEQUENCE = 0;
+    public static final long MIN_SEQUENCE = 1000;
     private final long sequence;
 
     public DataHubKey(long sequence) {
-        //todo - gfm - 11/4/13 - how to enforce MIN_SEQUENCE?
+        if (sequence < MIN_SEQUENCE)
+        {
+            throw new MissingKeyException("sequence number is too small " + sequence);
+        }
         this.sequence = sequence;
     }
 
