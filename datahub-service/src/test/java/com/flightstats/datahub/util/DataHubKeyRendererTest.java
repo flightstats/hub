@@ -19,7 +19,7 @@ public class DataHubKeyRendererTest {
 
     @Test
     public void testKeyFromString() throws Exception {
-        DataHubKey expected = new DataHubKey(129);
+        DataHubKey expected = new DataHubKey(1290);
         DataHubKeyRenderer testClass = new DataHubKeyRenderer();
         Optional<DataHubKey> result = testClass.fromString(testClass.keyToString(expected));
         assertEquals(expected, result.get());
@@ -27,9 +27,9 @@ public class DataHubKeyRendererTest {
 
     @Test
     public void testSequencesAreOrderedWithinSameMillis() throws Exception {
-        DataHubKey key1 = new DataHubKey(1);
-        DataHubKey key2 = new DataHubKey(2);
-        DataHubKey key3 = new DataHubKey(3);
+        DataHubKey key1 = new DataHubKey(1000);
+        DataHubKey key2 = new DataHubKey(2000);
+        DataHubKey key3 = new DataHubKey(3000);
 
         DataHubKeyRenderer testClass = new DataHubKeyRenderer();
 

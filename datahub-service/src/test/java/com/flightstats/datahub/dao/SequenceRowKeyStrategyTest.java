@@ -20,7 +20,7 @@ public class SequenceRowKeyStrategyTest {
 
     @Test
     public void testBuildKey() throws Exception {
-        assertEquals("blah:0", strategy.buildKey("blah", new DataHubKey(999)));
+
         assertEquals("blah:1", strategy.buildKey("blah", new DataHubKey(1000)));
         assertEquals("blah:1", strategy.buildKey("blah", new DataHubKey(1001)));
         assertEquals("blah:1", strategy.buildKey("blah", new DataHubKey(1999)));

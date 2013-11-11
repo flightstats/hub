@@ -19,7 +19,7 @@ public class WriteAndDispatchTest {
 		Optional<String> contentType = Optional.of("contentType");
 		Optional<String> contentEncoding = Optional.of("contentEncoding");
 		Optional<String> contentLanguage = Optional.of("contentLanguage");
-		DataHubKey dataHubKey = new DataHubKey((short) 300);
+		DataHubKey dataHubKey = new DataHubKey((short) 3000);
 
 
 		ChannelDao channelDao = mock(ChannelDao.class);

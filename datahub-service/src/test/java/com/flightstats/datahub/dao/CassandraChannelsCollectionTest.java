@@ -154,8 +154,7 @@ public class CassandraChannelsCollectionTest {
     @Test
     public void testUpdateFirstKey() throws Exception {
         String channelName = "myChan";
-        Date newDate = new Date(123456789L);
-        DataHubKey key = new DataHubKey((short) 0);
+        DataHubKey key = new DataHubKey((short) 1000);
         String keyString = new DataHubKeyRenderer().keyToString(key);
 
         Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
@@ -207,7 +206,7 @@ public class CassandraChannelsCollectionTest {
     public void testGetFirstKey() throws Exception {
         //GIVEN
         String channelName = "chunder";
-        DataHubKey expected = new DataHubKey(0);
+        DataHubKey expected = new DataHubKey(1000);
         CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, null, hector, null, keyRenderer, channelConfigurationMap);
 
         ColumnQuery<String, String, String> columnQuery = mock(ColumnQuery.class);

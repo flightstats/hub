@@ -14,7 +14,7 @@ public class DataHubKeyDeserializerTest {
     @Test
     public void testDeserialize() throws Exception {
 
-        short sequence = 54;
+        short sequence = 1054;
         DataHubKey expected = new DataHubKey(sequence);
         DataHubKeyRenderer renderer = new DataHubKeyRenderer();
 

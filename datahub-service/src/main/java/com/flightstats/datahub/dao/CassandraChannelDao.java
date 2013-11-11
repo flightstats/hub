@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -21,19 +22,21 @@ public class CassandraChannelDao implements ChannelDao {
     private final CassandraValueWriter cassandraValueWriter;
     private final CassandraValueReader cassandraValueReader;
     private final ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel;
-    final LastKeyFinder lastKeyFinder;
+    private final LastKeyFinder lastKeyFinder;
+    private final DataHubKeyGenerator keyGenerator;
 
     @Inject
     public CassandraChannelDao(
             CassandraChannelsCollection channelsCollection,
             CassandraValueWriter cassandraValueWriter, CassandraValueReader cassandraValueReader,
             @Named("LastUpdatePerChannelMap") ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel,
-            LastKeyFinder lastKeyFinder) {
+            LastKeyFinder lastKeyFinder, DataHubKeyGenerator keyGenerator) {
         this.channelsCollection = channelsCollection;
         this.cassandraValueWriter = cassandraValueWriter;
         this.cassandraValueReader = cassandraValueReader;
         this.lastUpdatedPerChannel = lastUpdatedPerChannel;
         this.lastKeyFinder = lastKeyFinder;
+        this.keyGenerator = keyGenerator;
     }
 
     @Override
@@ -44,7 +47,9 @@ public class CassandraChannelDao implements ChannelDao {
     @Override
     public ChannelConfiguration createChannel(String name, Long ttlMillis) {
         logger.info("Creating channel name = " + name + ", with ttlMillis = " + ttlMillis);
-        return channelsCollection.createChannel(name, ttlMillis);
+        ChannelConfiguration configuration = channelsCollection.createChannel(name, ttlMillis);
+        keyGenerator.seedChannel(name);
+        return configuration;
     }
 
     @Override

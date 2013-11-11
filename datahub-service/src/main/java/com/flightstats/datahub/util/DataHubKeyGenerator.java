@@ -5,4 +5,6 @@ import com.flightstats.datahub.model.DataHubKey;
 public interface DataHubKeyGenerator {
 
 	DataHubKey newKey(String channelName);
+
+    void seedChannel(String channelName);
 }
