@@ -146,8 +146,6 @@ public class GuiceContextListenerFactory {
         switch (backingStoreName) {
             case CASSANDRA_BACKING_STORE_TAG:
                 return new CassandraDataStoreModule(properties);
-            case MEMORY_BACKING_STORY_TAG:
-                return new MemoryBackedDataStoreModule();
             default:
                 throw new IllegalStateException(String.format("Unknown backing store specified: %s", backingStoreName));
         }

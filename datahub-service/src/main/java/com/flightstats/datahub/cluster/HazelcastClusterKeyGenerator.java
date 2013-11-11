@@ -18,6 +18,7 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
     @Override
     public DataHubKey newKey(final String channelName) {
         try {
+            //todo - gfm - 11/10/13 - this needs to make sure the value exists, otherwise find the next value
             AtomicNumber sequenceNumber = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName);
             return new DataHubKey(sequenceNumber.getAndAdd(1));
         } catch (Exception e) {

@@ -13,12 +13,9 @@ public class DataHubCompositeValue implements Serializable {
     private final long millis;
     private final byte[] data;
 
-    //todo - gfm - 11/5/13 - get rid of this
     public DataHubCompositeValue(Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
-        this.contentType = contentType;
-        this.contentLanguage = contentLanguage;
-        this.data = data;
-        this.millis = System.currentTimeMillis();
+        //todo - gfm - 11/8/13 - make this a TimeProvider?
+        this(contentType, contentLanguage, data, System.currentTimeMillis());
     }
 
     public DataHubCompositeValue(Optional<String> contentType, Optional<String> contentLanguage, byte[] data, long millis) {

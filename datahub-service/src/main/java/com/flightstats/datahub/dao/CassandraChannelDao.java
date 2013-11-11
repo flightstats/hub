@@ -84,13 +84,9 @@ public class CassandraChannelDao implements ChannelDao {
         cassandraValueWriter.delete(channelName, keys);
     }
 
-    /**
-     * todo - gfm - 11/7/13 - currently only used by the sweeper
-     */
     @Override
     public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
-
-        return Collections.emptyList();
+        throw new UnsupportedOperationException("This is not currently supported");
     }
 
     @Override

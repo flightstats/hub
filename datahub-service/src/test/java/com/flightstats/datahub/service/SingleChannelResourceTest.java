@@ -51,7 +51,8 @@ public class SingleChannelResourceTest {
 		URI requestUri = URI.create("http://testification.com/channel/spoon");
 		URI latestUri = URI.create("http://testification.com/channel/spoon/latest");
 		itemUri = URI.create("http://testification.com/channel/spoon/888item888");
-		dataHubKey = new DataHubKey(CREATION_DATE, (short) 12);
+		dataHubKey = new DataHubKey((short) 12);
+		//dataHubKey = new DataHubKey(CREATION_DATE, (short) 12);
 		channelConfig = new ChannelConfiguration(channelName, CREATION_DATE, null);
 		linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 		urlInfo = mock(UriInfo.class);
@@ -68,17 +69,22 @@ public class SingleChannelResourceTest {
 
 	@Test
 	public void testGetChannelMetadataForKnownChannel() throws Exception {
-		DataHubKey key = new DataHubKey(new Date(21), (short) 0);
+		DataHubKey key = new DataHubKey((short) 0);
+        DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "blah".getBytes());
+        LinkedDataHubCompositeValue linkedDataHubCompositeValue = new LinkedDataHubCompositeValue(dataHubCompositeValue,
+                Optional.<DataHubKey>absent(), Optional.<DataHubKey>absent());
 
-		when(dataHubService.channelExists(anyString())).thenReturn(true);
+        when(dataHubService.channelExists(anyString())).thenReturn(true);
 		when(dataHubService.getChannelConfiguration(channelName)).thenReturn(channelConfig);
 		when(dataHubService.findLastUpdatedKey(channelName)).thenReturn(Optional.of(key));
+		when(dataHubService.getValue(channelName, key)).thenReturn(Optional.of(linkedDataHubCompositeValue));
+
 		when(urlInfo.getRequestUri()).thenReturn(channelUri);
 
 		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
 
 		Linked<MetadataResponse> result = testClass.getChannelMetadata(channelName, urlInfo);
-		MetadataResponse expectedResponse = new MetadataResponse(channelConfig, key.getDate());
+		MetadataResponse expectedResponse = new MetadataResponse(channelConfig, new Date(dataHubCompositeValue.getMillis()));
 		assertEquals(expectedResponse, result.getObject());
 		HalLink selfLink = result.getHalLinks().getLinks().get(0);
 		HalLink latestLink = result.getHalLinks().getLinks().get(1);
