@@ -1,22 +1,11 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.dao.serialize.DataHubCompositeValueSerializer;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.beans.OrderedRows;
-import me.prettyprint.hector.api.beans.Row;
-import me.prettyprint.hector.api.query.QueryResult;
-import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.*;
@@ -214,38 +203,4 @@ public class CassandraChannelDaoTest {
         assertEquals(Optional.<DataHubKey>absent(), result);
     }
 
-    //todo - gfm - 11/10/13 - fix this?
-/*
-    @Test
-    public void testFindKeysInRange() throws Exception {
-        String channelName = "myChan";
-        ChannelConfiguration config = new ChannelConfiguration(channelName, null, null);
-        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-        DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
-        CassandraConnector connector = mock(CassandraConnector.class);
-        Keyspace keyspace = mock(Keyspace.class);
-        HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
-        RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy = new YearMonthDayRowKeyStrategy();
-        RangeSlicesQuery<String, String, DataHubCompositeValue> query = mock(RangeSlicesQuery.class);
-        QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResults = mock(QueryResult.class);
-        OrderedRows<String, String, DataHubCompositeValue> queryResultsGuts = mock(OrderedRows.class);
-
-        when(connector.getKeyspace()).thenReturn(keyspace);
-        when(hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(query);
-        when(query.setColumnFamily(anyString())).thenReturn(query);
-        when(query.setKeys(anyString(), anyString())).thenReturn(query);
-        when(query.setColumnFamily(anyString())).thenReturn(query);
-        when(query.setRange(anyString(), anyString(), anyBoolean(), anyInt())).thenReturn(query);
-        when(query.execute()).thenReturn(queryResults);
-        when(queryResults.get()).thenReturn(queryResultsGuts);
-        when(queryResultsGuts.getList()).thenReturn(Collections.<Row<String, String, DataHubCompositeValue>>emptyList());
-        when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(config);
-        when(connector.getKeyspace()).thenReturn(keyspace);
-        when(keyspace.getKeyspaceName()).thenReturn("datahub");
-
-        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, null, null);
-        Collection<DataHubKey> result = testClass.findKeysInRange(channelName, new Date(0), new Date());
-        assertEquals(Collections.emptyList(), result);
-    }
-*/
 }

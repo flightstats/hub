@@ -50,7 +50,7 @@ public class CassandraValueWriter {
 		} catch (HInvalidRequestException e) {
 			throw maybePromoteToNoSuchChannel(e, channelName);
 		}
-		return new ValueInsertionResult(key);
+		return new ValueInsertionResult(key, rowKey);
 	}
 
 	public void delete(String channelName, Collection<DataHubKey> keys) {
