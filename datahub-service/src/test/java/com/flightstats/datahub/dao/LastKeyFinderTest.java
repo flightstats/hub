@@ -3,7 +3,7 @@ package com.flightstats.datahub.dao;
 import com.flightstats.datahub.dao.serialize.DataHubCompositeValueSerializer;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.util.TimeProvider;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.ColumnSlice;
