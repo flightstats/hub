@@ -29,23 +29,6 @@ public class LastKeyFinderTest {
     private final static String CHANNEL_NAME = "supadupaunitspandadotcom";
 
     @Test
-    public void testQueryLatest_noFirst() throws Exception {
-        //GIVEN
-
-        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-
-        when(channelsCollection.getFirstKey(CHANNEL_NAME)).thenReturn(null);
-
-        LastKeyFinder testClass = new LastKeyFinder(channelsCollection, null, null, null, null);
-
-        //WHEN
-        DataHubKey result = testClass.queryForLatestKey(CHANNEL_NAME);
-
-        //THEN
-        assertNull(result);
-    }
-
-    @Test
     public void testMissing() throws Exception {
         DataHubKey expected = new DataHubKey(9999);
         SequenceRowKeyStrategy rowKeyStrategy = new SequenceRowKeyStrategy();

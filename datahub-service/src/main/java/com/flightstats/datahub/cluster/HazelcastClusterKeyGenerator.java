@@ -37,29 +37,35 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
     public DataHubKey newKey(final String channelName) {
 
         try {
-            try {
-                return nextDataHubKey(channelName);
-            } catch (MissingKeyException e) {
-                logger.info("sequence number for channel " + channelName + " is not found.  searching");
-                return channelLockExecutor.execute(channelName, new Callable<DataHubKey>() {
-                    @Override
-                    public DataHubKey call() throws Exception {
-                        if (DataHubKey.isValidSequence(getAtomicNumber(channelName).get())) {
-                            return nextDataHubKey(channelName);
-                        }
-                        DataHubKey latestKey = lastKeyFinder.queryForLatestKey(channelName);
-                        if (null == latestKey) {
-                            getAtomicNumber(channelName).set(DataHubKey.MIN_SEQUENCE);
-                        } else {
-                            getAtomicNumber(channelName).set(latestKey.getSequence() + 1);
-                        }
+            return nextDataHubKey(channelName);
+        } catch (MissingKeyException e) {
+            return handleMissingKey(channelName);
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating new DataHubKey: " + channelName, e);
+        }
+    }
 
+    private DataHubKey handleMissingKey(final String channelName) {
+        logger.info("sequence number for channel " + channelName + " is not found.  searching");
+        try {
+            return channelLockExecutor.execute(channelName, new Callable<DataHubKey>() {
+                @Override
+                public DataHubKey call() throws Exception {
+                    if (DataHubKey.isValidSequence(getAtomicNumber(channelName).get())) {
                         return nextDataHubKey(channelName);
                     }
-                });
-            }
+                    DataHubKey latestKey = lastKeyFinder.queryForLatestKey(channelName);
+                    if (null == latestKey) {
+                        getAtomicNumber(channelName).set(DataHubKey.MIN_SEQUENCE);
+                    } else {
+                        getAtomicNumber(channelName).set(latestKey.getSequence() + 1);
+                    }
+
+                    return nextDataHubKey(channelName);
+                }
+            });
         } catch (Exception e) {
-            throw new RuntimeException("Error generating new DataHubKey: ", e);
+            throw new RuntimeException("Error generating new DataHubKey: " + channelName, e);
         }
     }
 

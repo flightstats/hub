@@ -65,7 +65,6 @@ public class CassandraChannelDao implements ChannelDao {
         ValueInsertionResult result = cassandraValueWriter.write(channelName, value, ttlSeconds);
         DataHubKey insertedKey = result.getKey();
         setLastUpdateKey(channelName, insertedKey);
-        updateFirstKey(channelName, insertedKey);
         if (insertedKey.isNewRow()) {
             channelsCollection.updateLatestRowKey(channelName, result.getRowKey());
         }
@@ -80,20 +79,9 @@ public class CassandraChannelDao implements ChannelDao {
         return (int) (channelConfiguration.getTtlMillis() / 1000);
     }
 
-    private void updateFirstKey(String channelName, DataHubKey newLatestKey) {
-        if (!findFirstUpdateKey(channelName).isPresent()) {
-            setFirstKey(channelName, newLatestKey);
-        }
-    }
-
     @Override
     public void delete(String channelName, List<DataHubKey> keys) {
         cassandraValueWriter.delete(channelName, keys);
-    }
-
-    @Override
-    public Collection<DataHubKey> findKeysInRange(String channelName, Date startTime, Date endTime) {
-        throw new UnsupportedOperationException("This is not currently supported");
     }
 
     @Override
@@ -107,19 +95,6 @@ public class CassandraChannelDao implements ChannelDao {
     }
 
     @Override
-    public void setFirstKey(String channelName, DataHubKey result) {
-        channelsCollection.updateFirstKey(channelName, result);
-    }
-
-    @Override
-    public void deleteFirstKey(String channelName) {
-        Optional<DataHubKey> firstId = findFirstUpdateKey(channelName);
-        if (firstId.isPresent()) {
-            channelsCollection.deleteFirstKey(channelName);
-        }
-    }
-
-    @Override
     public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
         logger.debug("Fetching " + key.toString() + " from channel " + channelName);
         DataHubCompositeValue value = cassandraValueReader.read(channelName, key);
@@ -127,7 +102,6 @@ public class CassandraChannelDao implements ChannelDao {
             return Optional.absent();
         }
         Optional<DataHubKey> previous = key.getPrevious();
-        //todo - gfm - 11/4/13 - this may need some work
         Optional<DataHubKey> next = key.getNext();
         Optional<DataHubKey> lastUpdatedKey = findLastUpdatedKey(channelName);
         if (lastUpdatedKey.isPresent()) {
@@ -147,16 +121,6 @@ public class CassandraChannelDao implements ChannelDao {
     @Override
     public Iterable<ChannelConfiguration> getChannels() {
         return channelsCollection.getChannels();
-    }
-
-    @Override
-    public Optional<DataHubKey> findFirstUpdateKey(String channelName) {
-        try {
-            DataHubKey firstKey = channelsCollection.getFirstKey(channelName);
-            return Optional.fromNullable(firstKey);
-        } catch (HInvalidRequestException e) {
-            throw maybePromoteToNoSuchChannel(e, channelName);
-        }
     }
 
     @Override
