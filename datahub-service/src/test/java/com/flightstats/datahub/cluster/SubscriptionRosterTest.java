@@ -18,7 +18,7 @@ public class SubscriptionRosterTest {
 	public void testSubscribe() throws Exception {
 		//GIVEN
 		String channelName = "4chan";
-		String key = "0000000007H40000";
+        String key = "54321";
 
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		Message message = mock(Message.class);
