@@ -8,8 +8,7 @@ import com.flightstats.datahub.model.DataHubKey;
  */
 public class SequenceRowKeyStrategy implements RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> {
 
-    //todo - gfm - 11/4/13 - may want to make this configurable
-    private static final long INCREMENT = 1000;
+    public static final long INCREMENT = 1000;
 
     @Override
     public String buildKey(String channelName, DataHubKey dataHubKey) {

@@ -262,4 +262,24 @@ public class CassandraChannelsCollectionTest {
         assertEquals(expected2, iterator.next());
         assertFalse(iterator.hasNext());
     }
+
+    @Test
+    public void testUpdateLatestRowKey() throws Exception {
+        String channelName = "chunnel";
+        DataHubKey key = new DataHubKey(1000);
+        SequenceRowKeyStrategy rowKeyStrategy = new SequenceRowKeyStrategy();
+        String rowKey = rowKeyStrategy.buildKey(channelName, key);
+
+        Serializer<ChannelConfiguration> configSerializer = mock(Serializer.class);
+        HColumn<String, String> newColumn = mock(HColumn.class);
+        Mutator<String> mutator = mock(Mutator.class);
+
+        when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
+        when(hector.createColumn(channelName, rowKey, StringSerializer.get(), StringSerializer.get())).thenReturn(newColumn);
+
+        CassandraChannelsCollection testClass = new CassandraChannelsCollection(connector, configSerializer, hector, timeProvider, keyRenderer, channelConfigurationMap);
+        testClass.updateLatestRowKey(channelName, rowKey);
+
+        verify(mutator).insert(channelName + ":" + CHANNELS_LATEST_ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, newColumn);
+    }
 }

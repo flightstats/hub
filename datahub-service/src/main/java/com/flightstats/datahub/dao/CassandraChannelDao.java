@@ -66,7 +66,9 @@ public class CassandraChannelDao implements ChannelDao {
         DataHubKey insertedKey = result.getKey();
         setLastUpdateKey(channelName, insertedKey);
         updateFirstKey(channelName, insertedKey);
-
+        if (insertedKey.isNewRow()) {
+            channelsCollection.updateLatestRowKey(channelName, result.getRowKey());
+        }
         return result;
     }
 

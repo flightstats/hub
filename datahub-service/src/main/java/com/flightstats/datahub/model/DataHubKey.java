@@ -1,5 +1,6 @@
 package com.flightstats.datahub.model;
 
+import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
 import com.flightstats.datahub.model.exception.MissingKeyException;
 import com.google.common.base.Optional;
 
@@ -8,15 +9,19 @@ import java.util.Date;
 
 public class DataHubKey implements Serializable {
     private static final long serialVersionUID = 1L;
-    public static final long MIN_SEQUENCE = 1000;
+    public static final long MIN_SEQUENCE = SequenceRowKeyStrategy.INCREMENT;
     private final long sequence;
 
     public DataHubKey(long sequence) {
-        if (sequence < MIN_SEQUENCE)
+        if (!isValidSequence(sequence))
         {
             throw new MissingKeyException("sequence number is too small " + sequence);
         }
         this.sequence = sequence;
+    }
+
+    public static boolean isValidSequence(long sequence) {
+        return sequence >= MIN_SEQUENCE;
     }
 
     public long getSequence() {
@@ -32,6 +37,11 @@ public class DataHubKey implements Serializable {
             return Optional.absent();
         }
         return Optional.of(new DataHubKey(getSequence() - 1));
+    }
+
+    public boolean isNewRow()
+    {
+        return sequence % SequenceRowKeyStrategy.INCREMENT == 0;
     }
 
     @Override

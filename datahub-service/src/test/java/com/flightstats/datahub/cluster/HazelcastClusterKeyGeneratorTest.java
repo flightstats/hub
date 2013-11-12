@@ -1,8 +1,8 @@
 package com.flightstats.datahub.cluster;
 
+import com.flightstats.datahub.dao.LastKeyFinder;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
-import com.flightstats.datahub.util.TimeProvider;
 import com.hazelcast.core.AtomicNumber;
 import com.hazelcast.core.HazelcastInstance;
 import org.junit.Test;
@@ -19,66 +19,98 @@ public class HazelcastClusterKeyGeneratorTest {
     public void testIncrementNoRollover() throws Exception {
         //GIVEN
         String channelName = "mychanisgood";
-        DataHubKey expectedA = new DataHubKey((short) 1000);
-        DataHubKey expectedB = new DataHubKey((short) 1001);
 
-        TimeProvider timeProvider = mock(TimeProvider.class);
         HazelcastInstance hazelcast = mock(HazelcastInstance.class);
         ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
-        AtomicNumber atomicDateNumber = mock(AtomicNumber.class);
         AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
 
-        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast);
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor, null);
 
         //WHEN
-        when(hazelcast.getAtomicNumber("CHANNEL_NAME_DATE:mychanisgood")).thenReturn(atomicDateNumber);
         when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(1000L).thenReturn(1001L);
-        DataHubKey resultA = testClass.newKey(channelName);
-        DataHubKey resultB = testClass.newKey(channelName);
 
         //THEN
-        assertEquals(expectedA, resultA);
-        assertEquals(expectedB, resultB);
+        assertEquals(new DataHubKey(1000), testClass.newKey(channelName));
+        verify(atomicSeqNumber, times(1)).getAndAdd(1);
+        assertEquals(new DataHubKey(1001), testClass.newKey(channelName));
+        verify(atomicSeqNumber, times(2)).getAndAdd(1);
     }
 
-	/*@Test
-    public void testRollover() throws Exception {
-		//GIVEN
-		String channelName = "mychanisgood";
-		Date currentDate = new Date(12345678L);
-		DataHubKey expectedA = new DataHubKey(currentDate, Short.MAX_VALUE);
-		DataHubKey expectedB = new DataHubKey(currentDate, (short)0);
+    @Test
+    public void testMissingKey() throws Exception {
+        String channelName = "missingKey";
 
-		TimeProvider timeProvider = mock(TimeProvider.class);
-		HazelcastInstance hazelcast = mock(HazelcastInstance.class);
-		ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
-		AtomicNumber atomicDateNumber = mock(AtomicNumber.class);
-		AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
+        HazelcastInstance hazelcast = mock(HazelcastInstance.class);
+        AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
+        LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
+        ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 
-		HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor);
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor, lastKeyFinder);
 
-		//WHEN
-		when(timeProvider.getDate()).thenReturn(currentDate);
-		when(atomicDateNumber.get()).thenReturn(currentDate.getTime() - 10);
-		when(hazelcast.getAtomicNumber("CHANNEL_NAME_DATE:mychanisgood")).thenReturn(atomicDateNumber);
-		when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
-		when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L);
-		when(atomicSeqNumber.compareAndSet(Short.MAX_VALUE,0)).thenReturn(true).thenReturn(false);
-		DataHubKey resultA = testClass.newKey(channelName);
-		DataHubKey resultB = testClass.newKey(channelName);
+        when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName)).thenReturn(atomicSeqNumber);
+        when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(null);
+        when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L).thenReturn(1000L);
+        when(atomicSeqNumber.get()).thenReturn(0L);
 
-		//THEN
-		assertEquals(expectedA, resultA);
-		assertEquals(expectedB, resultB);
-	}*/
+        assertEquals(new DataHubKey(1000), testClass.newKey(channelName));
+        verify(atomicSeqNumber).set(1000L);
+        verify(atomicSeqNumber, times(2)).getAndAdd(1);
+    }
+
+    @Test
+    public void testFoundMissingKey() throws Exception {
+        String channelName = "foundKey";
+        DataHubKey latestKey = new DataHubKey(9999);
+        DataHubKey expectedKey = latestKey.getNext().get();
+
+        HazelcastInstance hazelcast = mock(HazelcastInstance.class);
+        AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
+        LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
+        ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
+
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor, lastKeyFinder);
+
+        when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName)).thenReturn(atomicSeqNumber);
+        when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(latestKey);
+        when(atomicSeqNumber.getAndAdd(1)).thenReturn(1L).thenReturn(expectedKey.getSequence());
+        when(atomicSeqNumber.get()).thenReturn(0L);
+
+        assertEquals(expectedKey.getSequence(), testClass.newKey(channelName).getSequence());
+        verify(atomicSeqNumber).set(expectedKey.getSequence());
+        verify(atomicSeqNumber, times(2)).getAndAdd(1);
+        verify(lastKeyFinder, times(1)).queryForLatestKey(channelName);
+    }
+
+    @Test
+    public void testKeyAfterLock() throws Exception {
+        String channelName = "secondLock";
+        DataHubKey latestKey = new DataHubKey(9999);
+        DataHubKey expectedKey = latestKey.getNext().get();
+
+        HazelcastInstance hazelcast = mock(HazelcastInstance.class);
+        AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
+        LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
+        ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
+
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor, lastKeyFinder);
+
+        when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName)).thenReturn(atomicSeqNumber);
+        when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(latestKey);
+        when(atomicSeqNumber.getAndAdd(1)).thenReturn(1L).thenReturn(expectedKey.getSequence());
+        when(atomicSeqNumber.get()).thenReturn(expectedKey.getSequence());
+
+        assertEquals(expectedKey.getSequence(), testClass.newKey(channelName).getSequence());
+        verify(atomicSeqNumber, times(0)).set(anyLong());
+        verify(atomicSeqNumber, times(2)).getAndAdd(1);
+    }
 
     @Test(expected = RuntimeException.class)
     public void testExceptionCoerced() throws Exception {
         //GIVEN
         ChannelLockExecutor channelLockExecutor = mock(ChannelLockExecutor.class);
 
-        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(null);
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(null, null, null);
 
         //WHEN
         when(channelLockExecutor.execute(anyString(), any(Callable.class))).thenThrow(new AlreadyBoundException());
