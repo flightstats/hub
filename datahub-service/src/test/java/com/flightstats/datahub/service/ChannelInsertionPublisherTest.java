@@ -8,8 +8,6 @@ import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
 import org.junit.Test;
 
-import java.util.Date;
-
 import static org.mockito.Mockito.*;
 
 public class ChannelInsertionPublisherTest {
@@ -27,7 +25,7 @@ public class ChannelInsertionPublisherTest {
 
 		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, keyRenderer);
 
-		testClass.publish("channelName", new ValueInsertionResult(dataHubKey));
+		testClass.publish("channelName", new ValueInsertionResult(dataHubKey, null));
 
 		verify(iTopic).publish("key message");
 	}

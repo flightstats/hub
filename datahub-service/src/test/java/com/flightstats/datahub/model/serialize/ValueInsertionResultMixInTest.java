@@ -8,9 +8,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.util.Date;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class ValueInsertionResultMixInTest {
@@ -19,7 +17,7 @@ public class ValueInsertionResultMixInTest {
 	public void testSerialize() throws Exception {
 		ObjectMapper objectMapper = DataHubObjectMapperFactory.construct();
 		DataHubKey key = new DataHubKey((short) 1033);
-		ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key);
+		ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key, null);
 		OutputStream out = new ByteArrayOutputStream();
 		objectMapper.writeValue(out, valueInsertionResult);
 		String result = out.toString();

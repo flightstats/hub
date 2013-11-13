@@ -52,7 +52,7 @@ public class CassandraChannelDaoTest {
         byte[] data = "bar".getBytes();
         Optional<String> contentType = Optional.of("text/plain");
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data);
-        ValueInsertionResult expected = new ValueInsertionResult(key);
+        ValueInsertionResult expected = new ValueInsertionResult(key, null);
         DataHubKey lastUpdateKey = new DataHubKey((short) 1000);
 
         CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
@@ -62,7 +62,7 @@ public class CassandraChannelDaoTest {
         LastKeyFinder lastUpdatedKeyFinder = mock(LastKeyFinder.class);
 
         // WHEN
-        when(inserter.write(channelName, value, 0)).thenReturn(new ValueInsertionResult(key));
+        when(inserter.write(channelName, value, 0)).thenReturn(new ValueInsertionResult(key, null));
         when(lastUpdatedKeyFinder.queryForLatestKey(channelName)).thenReturn(lastUpdateKey);
         CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, reader, lastUpdatedMap, lastUpdatedKeyFinder, null
         );
@@ -81,7 +81,7 @@ public class CassandraChannelDaoTest {
         byte[] data = "bar".getBytes();
         Optional<String> contentType = Optional.of("text/plain");
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data);
-        ValueInsertionResult expected = new ValueInsertionResult(key);
+        ValueInsertionResult expected = new ValueInsertionResult(key, null);
 
         CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
         CassandraValueWriter inserter = mock(CassandraValueWriter.class);
@@ -89,7 +89,7 @@ public class CassandraChannelDaoTest {
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
 
         // WHEN
-        when(inserter.write(channelName, value, 0)).thenReturn(new ValueInsertionResult(key));
+        when(inserter.write(channelName, value, 0)).thenReturn(new ValueInsertionResult(key, null));
         CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, reader, lastUpdatedMap, null, null
         ) {
             @Override
