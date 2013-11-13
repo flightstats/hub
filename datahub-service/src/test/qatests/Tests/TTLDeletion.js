@@ -19,6 +19,7 @@ var dhh = require('.././DH_test_helpers/DHtesthelpers.js'),
     ranU = require('../randomUtils.js');
 
 var SHORT_TTL = 5000,
+    LONG_TTL = 10000,
     TTL_BUFFER = 1000,  // extra number of milliseconds beyond expiration to wait to run reap cycle
     DEBUG = true;
 
@@ -51,6 +52,8 @@ describe('TTL Deletion', function() {
      * @param params: itemUri, debug (optional)
      * @param callback: reap response, GET response
      */
+    // COMMENTING OUT FOR NOW:  in case we go back to this functionality, I'm just hiding this :)
+    /*
     var reapAndGetItem = function(params, callback) {
         var itemUri = params.itemUri,
             VERBOSE = (params.hasOwnProperty('debug')) ? (params.debug) : false;
@@ -65,12 +68,14 @@ describe('TTL Deletion', function() {
             })
         })
     }
+    */
 
     var getExpirationTime = function(channelMetadata, creationMoment) {
         var expiration = creationMoment.clone().add('milliseconds', channelMetadata.getTTL()),
             VERBOSE = false;
 
         if (VERBOSE) {
+            gu.debugLog('****\ngetExpirationTime()')
             gu.debugLog('channel TTL: '+ channelMetadata.getTTL());
             gu.debugLog('creation moment: '+ creationMoment.format());
             gu.debugLog('expiration: '+ expiration.format());
@@ -114,12 +119,21 @@ describe('TTL Deletion', function() {
                     }
 
                     setTimeout(function(){
+                        dhh.getDataFromChannel({uri: itemMetadata.getPacketUri(), debug: VERBOSE}, function(err, getRes, data) {
+                            getRes['status'] = getRes.statusCode;   // make it match SuperAgent's property
+                            expect(getRes.statusCode).to.equal(gu.HTTPresponses.Not_Found);
+
+                            done();
+                        })
+
+                        /*
                         reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
                             expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
                             expect(getRes.status).to.equal(gu.HTTPresponses.Not_Found);
 
                             done();
                         })
+                        */
                     }, wait
                     );
                 })
@@ -135,12 +149,20 @@ describe('TTL Deletion', function() {
                 cnMetadata = new dhh.channelMetadata(patchRes.body);
 
                 createItem({channel: cnMetadata}, function(itemMetadata, expiration) {
+                    dhh.getDataFromChannel({uri: itemMetadata.getPacketUri(), debug: VERBOSE}, function(err, getRes, data) {
+                        expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
+
+                        done();
+                    })
+
+                    /*
                     reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
                         expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
                         expect(getRes.status).to.equal(gu.HTTPresponses.OK);
 
                         done();
                     })
+                    */
 
                 })
             })
@@ -156,26 +178,32 @@ describe('TTL Deletion', function() {
 
                 createItem({channel: cnMetadata}, function(itemMetadata, expiration) {
                     setTimeout(function() {
+                        dhh.getDataFromChannel({uri: itemMetadata.getPacketUri(), debug: VERBOSE}, function(err, getRes, data) {
+                            expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
+
+                            done();
+                        })
+                        /*
                         reapAndGetItem({itemUri: itemMetadata.getPacketUri()}, function(reapRes, getRes) {
                             expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
                             expect(getRes.status).to.equal(gu.HTTPresponses.OK);
 
                             done();
                         })
+                        */
                     }, newTTL + 1000);
                 })
             })
         })
 
-        // TODO: Create channel and insert data -- change TTL and insert another item. Confirm the TTL for each item is
-        //  different and is respected.
-
-        it.skip('INVALID TEST, TBD: reporpoise. if channel TTL is updated to later value, item is not removed until that later time', function(done) {
-            var firstTTL = SHORT_TTL,
+        it('Second item created with shorter TTL is reaped first, second is reaped when appropriate', function(done) {
+            var secondTTL = SHORT_TTL,
                 delta = 4000,
-                secondTTL = SHORT_TTL + delta,
-                expiration = null,
-                metadata = null,
+                firstTTL = secondTTL + delta,
+                first_expiration = null,
+                second_expiration = null,
+                first_metadata = null,
+                second_metadata = null,
                 VERBOSE = false;
 
             dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: firstTTL}, function(patchRes) {
@@ -184,50 +212,63 @@ describe('TTL Deletion', function() {
 
                 async.series([
                     function(cb) {
-                        gu.debugLog('Creating item', VERBOSE);
+                        gu.debugLog('Creating first item', VERBOSE);
                         createItem({channel: cnMetadata}, function(itemMetadata, theExpiration) {
-                            metadata = itemMetadata;
-                            expiration = theExpiration;
-                            gu.debugLog('Original expiration at '+ expiration.format(), VERBOSE);
+                            first_metadata = itemMetadata;
+                            first_expiration = theExpiration;
+                            gu.debugLog('Original expiration at '+ first_expiration.format(), VERBOSE);
                             cb(null, null);
                         })
                     },
                     function(cb) {
                         dhh.patchChannel({channelUri: cnMetadata.getChannelUri(), ttlMillis: secondTTL}, function(patchRes) {
-                            gu.debugLog('Updating channel to longer TTL', VERBOSE);
+                            gu.debugLog('Updating channel to shorter TTL', VERBOSE);
                             var err = gu.isHTTPError(patchRes.status);
+                            cnMetadata = new dhh.channelMetadata(patchRes.body);
+
                             cb(err, null);
                         })
                     },
-                    // Wait through original TTL expiration (plus 500 ms), reap, and confirm that item is still there
+                    // Create second item now that TTL is shorter
                     function(cb) {
-                        var myWait = expiration.diff(moment());
+                        gu.debugLog('Creating second item', VERBOSE);
+                        createItem({channel: cnMetadata}, function(itemMetadata, theExpiration) {
+                            second_metadata = itemMetadata;
+                            second_expiration = theExpiration;
+                            gu.debugLog('Second item expiration at '+ second_expiration.format(), VERBOSE);
+                            cb(null, null);
+                        })
+                    },
+                    // Wait through new short TTL expiration (plus 500 ms), and confirm second item is gone but first is not
+                    function(cb) {
+                        var myWait = second_expiration.diff(moment());
                         myWait = (myWait <= 500) ? 500 : myWait + 500;
-                        gu.debugLog('Going to wait '+ myWait +' milliseconds and reap at original TTL', VERBOSE);
+                        gu.debugLog('Going to wait '+ myWait +' milliseconds and try to GET second item at its short TTL', VERBOSE);
                         setTimeout(function() {
-                            reapAndGetItem({itemUri: metadata.getPacketUri()}, function(reapRes, getRes) {
-                                expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                                expect(getRes.status).to.equal(gu.HTTPresponses.OK);
-                                gu.debugLog('Item not reaped.', VERBOSE);
+                            dhh.getDataFromChannel({uri: second_metadata.getPacketUri(), debug: VERBOSE}, function(err, getRes, data) {
+                                expect(getRes.statusCode).to.equal(gu.HTTPresponses.Not_Found);
 
-                                cb(null, null);
+                                dhh.getDataFromChannel({uri: first_metadata.getPacketUri(), debug: VERBOSE},
+                                    function(err, getRes, data) {
+                                        expect(getRes.statusCode).to.equal(gu.HTTPresponses.OK);
+
+                                        cb(err, null);
+                                    })
                             })
                         }, myWait);
                     },
-                    // Wait through new TTL expiration, reap, and confirm item has been reaped
+                    // Wait through first item's TTL expiration and confirm item has been reaped
                     function(cb) {
-                        var myWait = expiration.diff(moment()) + delta;
-                        myWait = (myWait <= delta) ? delta : myWait;
-                        myWait = myWait + 500;
+                        var myWait = first_expiration.diff(moment());
+                        myWait = (myWait <= 500) ? 500 : myWait + 500;
                         gu.debugLog('Going to wait '+ myWait +' milliseconds and reap at new TTL', VERBOSE);
                         setTimeout(function() {
-                            reapAndGetItem({itemUri: metadata.getPacketUri()}, function(reapRes, getRes) {
-                                expect(reapRes.status).to.equal(gu.HTTPresponses.OK);
-                                expect(getRes.status).to.equal(gu.HTTPresponses.Not_Found);
-                                gu.debugLog('Item was reaped as expected', VERBOSE);
+                            dhh.getDataFromChannel({uri: first_metadata.getPacketUri(), debug: VERBOSE},
+                                function(err, getRes, data) {
+                                    expect(getRes.statusCode).to.equal(gu.HTTPresponses.Not_Found);
 
-                                cb(null, null);
-                            })
+                                    cb(err, null);
+                                })
                         }, myWait);
                     }
                     ],
@@ -242,14 +283,14 @@ describe('TTL Deletion', function() {
 
 
 
-        // confirm updating TTL to an earlier value is respected
+        // TODO: confirm updating TTL to an earlier value is respected
 
-        // confirm updating TTL to null is respected
+        // TODO: confirm updating TTL to null is respected
 
-        // confirm updating null TTL to non-null is respected
+        // TODO: confirm updating null TTL to non-null is respected
 
-        // Decrease TTL and confirm item is removed after new TTL has been met but original time has not.
+        // TODO: Decrease TTL and confirm item is removed after new TTL has been met but original time has not.
 
-        // An item that has already been removed due to TTL is not restored after its channel's TTL is extended.
+        // TODO: An item that has already been removed due to TTL is not restored after its channel's TTL is extended.
     })
 })
