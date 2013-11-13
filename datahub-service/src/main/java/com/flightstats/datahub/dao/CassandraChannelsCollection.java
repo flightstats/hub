@@ -91,8 +91,9 @@ public class CassandraChannelsCollection {
 	}
 
 	public ChannelConfiguration getChannelConfiguration(String channelName) {
-        if (channelConfigurationMap.containsKey(channelName)) {
-            return channelConfigurationMap.get(channelName);
+        ChannelConfiguration configuration = channelConfigurationMap.get(channelName);
+        if (configuration != null) {
+            return configuration;
         }
 		Keyspace keyspace = connector.getKeyspace();
 		ColumnQuery<String, String, ChannelConfiguration> rawQuery = hector.createColumnQuery(keyspace, StringSerializer.get(),
@@ -104,12 +105,11 @@ public class CassandraChannelsCollection {
 		HColumn<String, ChannelConfiguration> column = result.get();
         if (column == null) {
             return null;
-        } else {
-            ChannelConfiguration configuration = column.getValue();
-            channelConfigurationMap.put(channelName, configuration);
-            return configuration;
         }
-	}
+        configuration = column.getValue();
+        channelConfigurationMap.put(channelName, configuration);
+        return configuration;
+    }
 
 	public Iterable<ChannelConfiguration> getChannels() {
 		Keyspace keyspace = connector.getKeyspace();
