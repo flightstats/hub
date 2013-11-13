@@ -4,7 +4,6 @@ import com.flightstats.datahub.dao.serialize.DataHubCompositeValueSerializer;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
-import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -16,7 +15,6 @@ import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
 import java.util.List;
 
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
@@ -29,18 +27,15 @@ public class LastKeyFinder {
 	private final CassandraChannelsCollection channelsCollection;
     private final DataHubKeyRenderer keyRenderer;
     private final CassandraConnector connector;
-    private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
 
     @Inject
     public LastKeyFinder(CassandraChannelsCollection channelsCollection, HectorFactoryWrapper hector,
                          DataHubKeyRenderer keyRenderer,
-                         CassandraConnector connector,
-                         RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy) {
+                         CassandraConnector connector) {
         this.hector = hector;
         this.channelsCollection = channelsCollection;
         this.keyRenderer = keyRenderer;
         this.connector = connector;
-        this.rowKeyStrategy = rowKeyStrategy;
     }
 
     /**

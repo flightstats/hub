@@ -179,7 +179,7 @@ public class CassandraChannelDaoTest {
 
         // THEN
         assertEquals(Optional.of(lastUpdateKey), result);
-        verify(lastUpdatedMap).put(channelName, lastUpdateKey);
+        verify(lastUpdatedMap).putIfAbsent(channelName, lastUpdateKey);
     }
 
 
