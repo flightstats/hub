@@ -5,9 +5,13 @@ import java.util.Date;
 public class ValueInsertionResult {
 
     private final DataHubKey key;
+    private final String rowKey;
+    private final Date date;
 
-    public ValueInsertionResult(DataHubKey key) {
+    public ValueInsertionResult(DataHubKey key, String rowKey, Date date) {
         this.key = key;
+        this.rowKey = rowKey;
+        this.date = date;
     }
 
     public DataHubKey getKey() {
@@ -15,7 +19,11 @@ public class ValueInsertionResult {
     }
 
     public Date getDate() {
-        return key.getDate();
+        return date;
+    }
+
+    public String getRowKey() {
+        return rowKey;
     }
 
     @Override

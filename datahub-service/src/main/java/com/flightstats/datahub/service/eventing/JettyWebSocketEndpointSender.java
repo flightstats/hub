@@ -3,6 +3,7 @@ package com.flightstats.datahub.service.eventing;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.google.common.base.Optional;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 
 import java.io.IOException;
@@ -27,8 +28,8 @@ class JettyWebSocketEndpointSender implements Consumer<String> {
 	@Override
 	public void apply(String stringKey) {
 		try {
-			DataHubKey dataHubKey = keyRenderer.fromString(stringKey);
-			URI itemUri = linkBuilder.buildItemUri(dataHubKey, channelUri);
+			Optional<DataHubKey> dataHubKey = keyRenderer.fromString(stringKey);
+			URI itemUri = linkBuilder.buildItemUri(dataHubKey.get(), channelUri);
 			remoteEndpoint.sendString(itemUri.toString());
 		} catch (IOException e) {
 			throw new RuntimeException("Error replying to client: ", e);

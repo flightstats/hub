@@ -14,8 +14,6 @@ import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 import org.junit.Test;
 
-import java.util.Date;
-
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -28,10 +26,10 @@ public class CassandraValueReaderTest {
 	public void testRead() throws Exception {
 
 		String channelName = "spoon";
-		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
+		DataHubKey key = new DataHubKey((short) 1000);
 		byte[] data = new byte[]{'t', 'e', 's', 't', 'i', 'n'};
 		String rowKey = "the_____key___";
-		DataHubCompositeValue expected = new DataHubCompositeValue(Optional.of("text/plain"), null, data);
+		DataHubCompositeValue expected = new DataHubCompositeValue(Optional.of("text/plain"), null, data, 0L);
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		String columnName = keyRenderer.keyToString(key);
 
@@ -63,7 +61,7 @@ public class CassandraValueReaderTest {
 	@Test
 	public void testReadNotFound() throws Exception {
 		String channelName = "spoon";
-		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
+		DataHubKey key = new DataHubKey((short) 1000);
 		String rowKey = "the_____key___";
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		String columnName = keyRenderer.keyToString(key);
@@ -95,7 +93,7 @@ public class CassandraValueReaderTest {
 	public void testRead_invalidChannel() throws Exception {
 		String channelName = "myChan";
 		String rowKey = "1234";
-		DataHubKey key = new DataHubKey(new Date(1235555), (short) 0);
+		DataHubKey key = new DataHubKey((short) 1000);
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 
 		HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);

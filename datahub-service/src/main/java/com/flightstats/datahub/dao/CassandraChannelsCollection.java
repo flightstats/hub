@@ -1,11 +1,10 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.ColumnSliceIterator;
 import me.prettyprint.hector.api.Keyspace;
@@ -20,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Encapsulates the channel creation, existence checks, and associated metadata.
@@ -29,7 +29,7 @@ public class CassandraChannelsCollection {
 	private final static Logger logger = LoggerFactory.getLogger(CassandraChannelsCollection.class);
     public static final String DATA_HUB_COLUMN_FAMILY_NAME = "DataHub";
 	static final String CHANNELS_ROW_KEY = "DATA_HUB_CHANNELS";
-	static final String CHANNELS_FIRST_ROW_KEY = "DATA_HUB_CHANNELS_FIRST";
+	static final String CHANNELS_LATEST_ROW_KEY = "DATA_HUB_CHANNELS_LATEST";
 	static final String CHANNELS_METADATA_COLUMN_FAMILY_NAME = "channelMetadata";
 	static final String MAX_CHANNEL_NAME = Strings.repeat("~", 255);
 
@@ -37,15 +37,19 @@ public class CassandraChannelsCollection {
 	private final Serializer<ChannelConfiguration> channelConfigSerializer;
 	private final HectorFactoryWrapper hector;
 	private final TimeProvider timeProvider;
-	private final DataHubKeyRenderer keyRenderer;
+    private final ConcurrentMap<String,ChannelConfiguration> channelConfigurationMap;
 
 	@Inject
-	public CassandraChannelsCollection(CassandraConnector connector, Serializer<ChannelConfiguration> channelConfigSerializer, HectorFactoryWrapper hector, TimeProvider timeProvider, DataHubKeyRenderer keyRenderer ) {
+	public CassandraChannelsCollection(CassandraConnector connector,
+                                       Serializer<ChannelConfiguration> channelConfigSerializer,
+                                       HectorFactoryWrapper hector, TimeProvider timeProvider,
+                                       @Named("ChannelConfigurationMap") ConcurrentMap<String,
+                                               ChannelConfiguration> channelConfigurationMap) {
 		this.connector = connector;
 		this.channelConfigSerializer = channelConfigSerializer;
 		this.hector = hector;
 		this.timeProvider = timeProvider;
-		this.keyRenderer = keyRenderer;
+        this.channelConfigurationMap = channelConfigurationMap;
 	}
 
 	public ChannelConfiguration createChannel(String name, Long ttlMillis) {
@@ -73,6 +77,7 @@ public class CassandraChannelsCollection {
 		HColumn<String, ChannelConfiguration> column = hector.createColumn(channelConfig.getName(), channelConfig, StringSerializer.get(),
 				channelConfigSerializer);
 		mutator.insert(CHANNELS_ROW_KEY, CHANNELS_METADATA_COLUMN_FAMILY_NAME, column);
+        channelConfigurationMap.put(channelConfig.getName(), channelConfig);
 	}
 
 	public void initializeMetadata() {
@@ -86,6 +91,10 @@ public class CassandraChannelsCollection {
 	}
 
 	public ChannelConfiguration getChannelConfiguration(String channelName) {
+        ChannelConfiguration configuration = channelConfigurationMap.get(channelName);
+        if (configuration != null) {
+            return configuration;
+        }
 		Keyspace keyspace = connector.getKeyspace();
 		ColumnQuery<String, String, ChannelConfiguration> rawQuery = hector.createColumnQuery(keyspace, StringSerializer.get(),
 		                                                                                      StringSerializer.get(), channelConfigSerializer);
@@ -94,8 +103,13 @@ public class CassandraChannelsCollection {
 																				.setColumnFamily(CHANNELS_METADATA_COLUMN_FAMILY_NAME);
 		QueryResult<HColumn<String, ChannelConfiguration>> result = columnQuery.execute();
 		HColumn<String, ChannelConfiguration> column = result.get();
-		return column == null ? null : column.getValue();
-	}
+        if (column == null) {
+            return null;
+        }
+        configuration = column.getValue();
+        channelConfigurationMap.put(channelName, configuration);
+        return configuration;
+    }
 
 	public Iterable<ChannelConfiguration> getChannels() {
 		Keyspace keyspace = connector.getKeyspace();
@@ -115,46 +129,26 @@ public class CassandraChannelsCollection {
 		return result;
 	}
 
-	public void updateFirstKey(String channelName, DataHubKey key) {
-		updateMetadataKey(channelName, key, channelName + ":" + CHANNELS_FIRST_ROW_KEY);
-	}
+    public void updateLatestRowKey(String channelName, String rowKeyValue) {
+        Mutator<String> mutator = connector.buildMutator(StringSerializer.get());
+        HColumn<String, String> column = hector.createColumn(channelName, rowKeyValue, StringSerializer.get(), StringSerializer.get());
+        mutator.insert(latestKey(channelName), DATA_HUB_COLUMN_FAMILY_NAME, column);
+    }
 
-	public void deleteFirstKey(String channelName) {
-		deleteMetadataKey(channelName, channelName + ":" + CHANNELS_FIRST_ROW_KEY);
-	}
+    private String latestKey(String channelName) {
+        return channelName + ":" + CHANNELS_LATEST_ROW_KEY;
+    }
 
-	private void deleteMetadataKey(String channelName, String rowKey) {
-		StringSerializer keySerializer = StringSerializer.get();
-		Mutator<String> mutator = connector.buildMutator(keySerializer);
-		mutator.delete(rowKey, DATA_HUB_COLUMN_FAMILY_NAME, channelName, keySerializer);
-	}
+    public String getLatestRowKey(String channelName) {
+        Keyspace keyspace = connector.getKeyspace();
+        ColumnQuery<String, String, String> rawQuery = hector.createColumnQuery(
+                keyspace, StringSerializer.get(), StringSerializer.get(), StringSerializer.get());
+        QueryResult<HColumn<String, String>> result = rawQuery
+                .setKey(latestKey(channelName))
+                .setName(channelName)
+                .setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME).execute();
+        HColumn<String, String> column = result.get();
+        return column == null ? null : column.getValue();
+    }
 
-	private void updateMetadataKey(String channelName, DataHubKey hubKey, String rowKey) {
-		StringSerializer keySerializer = StringSerializer.get();
-		Mutator<String> mutator = connector.buildMutator(keySerializer);
-		String keyString = keyRenderer.keyToString(hubKey);
-		HColumn<String, String> column = hector.createColumn(channelName, keyString, StringSerializer.get(), StringSerializer.get());
-		mutator.insert(rowKey, DATA_HUB_COLUMN_FAMILY_NAME, column);
-	}
-
-	public DataHubKey getFirstKey(String channelName) {
-		return getMetadataKey(channelName, channelName + ":" + CHANNELS_FIRST_ROW_KEY);
-	}
-
-	private DataHubKey getMetadataKey(String channelName, String key) {
-		Keyspace keyspace = connector.getKeyspace();
-		ColumnQuery<String, String, String> rawQuery = hector.createColumnQuery(
-				keyspace, StringSerializer.get(), StringSerializer.get(), StringSerializer.get());
-		ColumnQuery<String, String, String> columnQuery = rawQuery
-				.setName(channelName)
-				.setKey(key)
-				.setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME);
-		QueryResult<HColumn<String, String>> result = columnQuery.execute();
-		HColumn<String, String> column = result.get();
-		return column == null ? null : keyRenderer.fromString(column.getValue());
-	}
-
-	public boolean isChannelMetadataRowKey(String key) {
-		return Strings.nullToEmpty(key).equals(CHANNELS_FIRST_ROW_KEY);
-	}
 }

@@ -34,6 +34,10 @@ public class HectorFactoryWrapper {
 		return HFactory.createColumn(name, value, nameSerializer, valueSerializer);
 	}
 
+    public <K, V> HColumn<K, V> createColumn(K name, V value, int ttlSeconds, Serializer<K> nameSerializer, Serializer<V> valueSerializer) {
+        return HFactory.createColumn(name, value, HFactory.createClock(), ttlSeconds, nameSerializer, valueSerializer);
+    }
+
 	public <K, N, V> ColumnQuery<K, N, V> createColumnQuery(Keyspace keyspace, Serializer<K> keySerializer, Serializer<N> nameSerializer, Serializer<V> valueSerializer) {
 		return HFactory.createColumnQuery(keyspace, keySerializer, nameSerializer, valueSerializer);
 	}
