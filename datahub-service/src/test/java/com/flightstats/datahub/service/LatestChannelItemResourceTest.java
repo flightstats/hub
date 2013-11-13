@@ -22,7 +22,7 @@ public class LatestChannelItemResourceTest {
 	@Test
 	public void testGetLatest() throws Exception {
 		String channelName = "fooChan";
-		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
+		DataHubKey key = new DataHubKey((short) 1000);
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 
 		UriInfo uriInfo = mock(UriInfo.class);

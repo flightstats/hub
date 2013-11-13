@@ -9,10 +9,7 @@ import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
-import me.prettyprint.hector.api.query.ColumnQuery;
-import me.prettyprint.hector.api.query.CountQuery;
-import me.prettyprint.hector.api.query.RangeSlicesQuery;
-import me.prettyprint.hector.api.query.SliceQuery;
+import me.prettyprint.hector.api.query.*;
 
 import java.util.List;
 
@@ -37,6 +34,10 @@ public class HectorFactoryWrapper {
 		return HFactory.createColumn(name, value, nameSerializer, valueSerializer);
 	}
 
+    public <K, V> HColumn<K, V> createColumn(K name, V value, int ttlSeconds, Serializer<K> nameSerializer, Serializer<V> valueSerializer) {
+        return HFactory.createColumn(name, value, HFactory.createClock(), ttlSeconds, nameSerializer, valueSerializer);
+    }
+
 	public <K, N, V> ColumnQuery<K, N, V> createColumnQuery(Keyspace keyspace, Serializer<K> keySerializer, Serializer<N> nameSerializer, Serializer<V> valueSerializer) {
 		return HFactory.createColumnQuery(keyspace, keySerializer, nameSerializer, valueSerializer);
 	}
@@ -56,6 +57,10 @@ public class HectorFactoryWrapper {
 	public <K, N, V> SliceQuery<K, N, V> createSliceQuery(Keyspace keyspace, Serializer<K> keySerializer, Serializer<N> nameSerializer, Serializer<V> valueSerializer) {
 		return HFactory.createSliceQuery(keyspace, keySerializer, nameSerializer, valueSerializer);
 	}
+
+    public <K,N,V> MultigetSliceQuery<K, N, V> createMultiGetSliceQuery(Keyspace keyspace, Serializer<K> keySerializer, Serializer<N> nameSerializer, Serializer<V> valueSerializer){
+        return HFactory.createMultigetSliceQuery(keyspace, keySerializer, nameSerializer, valueSerializer);
+    }
 
 	public <K, N, V> ColumnSliceIterator<K, N, V> createColumnSliceIterator(SliceQuery<K, N, V> query, N start, N finish, boolean reversed) {
 		return new ColumnSliceIterator<>(query, start, finish, reversed);

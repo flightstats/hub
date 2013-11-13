@@ -1,66 +1,92 @@
 package com.flightstats.datahub.cluster;
 
+import com.flightstats.datahub.dao.LastKeyFinder;
+import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
-import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import com.hazelcast.core.AtomicNumber;
 import com.hazelcast.core.HazelcastInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Date;
 import java.util.concurrent.Callable;
 
+/**
+ * This would be simpler with Zookeeper's persisted values
+ */
 public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
 
-	private final TimeProvider timeProvider;
-	private final HazelcastInstance hazelcastInstance;
-	private final ChannelLockExecutor channelLockExecutor;
+    private final static Logger logger = LoggerFactory.getLogger(HazelcastClusterKeyGenerator.class);
 
-	@Inject
-	public HazelcastClusterKeyGenerator(TimeProvider timeProvider, HazelcastInstance hazelcastInstance, ChannelLockExecutor channelLockExecutor) {
-		this.timeProvider = timeProvider;
-		this.hazelcastInstance = hazelcastInstance;
-		this.channelLockExecutor = channelLockExecutor;
-	}
+    private final HazelcastInstance hazelcastInstance;
+    private ChannelLockExecutor channelLockExecutor;
+    private LastKeyFinder lastKeyFinder;
 
-	@Override
-	public DataHubKey newKey(final String channelName) {
-		try {
-			Callable<DataHubKey> keyGeneratingCallable = new KeyGeneratingCallable(channelName);
-			return channelLockExecutor.execute(channelName, keyGeneratingCallable);
-		} catch (Exception e) {
-			throw new RuntimeException("Error generating new DataHubKey: ", e);
-		}
-	}
+    @Inject
+    public HazelcastClusterKeyGenerator(HazelcastInstance hazelcastInstance,
+                                        ChannelLockExecutor channelLockExecutor,
+                                        LastKeyFinder lastKeyFinder) {
+        this.hazelcastInstance = hazelcastInstance;
+        this.channelLockExecutor = channelLockExecutor;
+        this.lastKeyFinder = lastKeyFinder;
+    }
 
-	private class KeyGeneratingCallable implements Callable<DataHubKey> {
-		private final String channelName;
+    @Override
+    public DataHubKey newKey(final String channelName) {
+        try {
+            return nextDataHubKey(channelName);
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating new DataHubKey: " + channelName, e);
+        }
+    }
 
-		KeyGeneratingCallable(String channelName) {
-			this.channelName = channelName;
-		}
+    private DataHubKey nextDataHubKey(String channelName) {
+        long sequence = getAtomicNumber(channelName).getAndAdd(1);
+        if (isValidSequence(sequence)) {
+            return new DataHubKey(sequence);
+        }
+        return handleMissingKey(channelName);
+    }
 
-		@Override
-		public DataHubKey call() throws Exception {
-			Date keyDate = determineKeyDate();
-			short sequence = determineKeySequence();
-			return new DataHubKey( keyDate, sequence );
-		}
+    private DataHubKey handleMissingKey(final String channelName) {
+        logger.info("sequence number for channel " + channelName + " is not found.  searching");
+        try {
+            return channelLockExecutor.execute(channelName, new Callable<DataHubKey>() {
+                @Override
+                public DataHubKey call() throws Exception {
+                    AtomicNumber sequenceNumber = getAtomicNumber(channelName);
+                    if (isValidSequence(sequenceNumber.get())) {
+                        return nextDataHubKey(channelName);
+                    }
+                    long currentSequence = findCurrentSequence();
+                    sequenceNumber.set(currentSequence + 1);
+                    return new DataHubKey(currentSequence);
+                }
 
-		private Date determineKeyDate() {
-			AtomicNumber lastWriteDateMillis = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_DATE:" + channelName);
-			Date lastWriteDate = new Date(lastWriteDateMillis.get());
-			Date currentDate = timeProvider.getDate();
+                private long findCurrentSequence() {
+                    DataHubKey latestKey = lastKeyFinder.queryForLatestKey(channelName);
+                    if (null == latestKey) {
+                        return SequenceRowKeyStrategy.INCREMENT;
+                    }
+                    return latestKey.getSequence() + 1;
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating new DataHubKey: " + channelName, e);
+        }
+    }
 
-			Date keyDate = currentDate.after(lastWriteDate) ? currentDate : lastWriteDate;
-			lastWriteDateMillis.set(keyDate.getTime());
-			return keyDate;
-		}
+    private boolean isValidSequence(long sequence) {
+        return sequence >= SequenceRowKeyStrategy.INCREMENT;
+    }
 
-		private short determineKeySequence() {
-			AtomicNumber sequenceNumber = hazelcastInstance.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName);
-			return sequenceNumber.compareAndSet(Short.MAX_VALUE, 0) ? Short.MAX_VALUE : (short) sequenceNumber.getAndAdd(1);
-		}
-	}
+    public void seedChannel(String channelName) {
+        getAtomicNumber(channelName).compareAndSet(0, SequenceRowKeyStrategy.INCREMENT);
+    }
+
+    private AtomicNumber getAtomicNumber(String channelName) {
+        return hazelcastInstance.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName);
+    }
 }

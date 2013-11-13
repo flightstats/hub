@@ -7,6 +7,7 @@ import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -16,7 +17,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
@@ -27,7 +27,7 @@ public class CassandraValueWriterTest {
 
 	public static final String CHANNEL_NAME = "foo";
 	public static final byte[] DATA = "bar".getBytes();
-	public static final DataHubKey DATA_HUB_KEY = new DataHubKey(new Date(2345678910L), (short) 33);
+	public static final DataHubKey DATA_HUB_KEY = new DataHubKey((short) 1033);
 	public static final String ROW_KEY = "a super key for this row";
 	public static final Optional<String> CONTENT_TYPE = Optional.of("text/plain");
 	public static final Optional<String> CONTENT_ENCODING = Optional.of("gzip");
@@ -56,16 +56,16 @@ public class CassandraValueWriterTest {
 
 	@Test
 	public void testInsert() throws Exception {
-		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA);
-		ValueInsertionResult expected = new ValueInsertionResult(DATA_HUB_KEY);
+		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA, 0L);
+		ValueInsertionResult expected = new ValueInsertionResult(DATA_HUB_KEY, null, null);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
-		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
+		when(hector.createColumn(columnName, value, 0, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 
-		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
-		ValueInsertionResult result = testClass.write(CHANNEL_NAME, value);
+		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
+		ValueInsertionResult result = testClass.write(CHANNEL_NAME, value, 0);
 
 		assertEquals(expected, result);
 		verify(mutator).insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column);
@@ -73,32 +73,32 @@ public class CassandraValueWriterTest {
 
 	@Test(expected = NoSuchChannelException.class)
 	public void testInsertWithMissingChannel() throws Exception {
-		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA);
+		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA, 0L);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
-		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
+		when(hector.createColumn(columnName, value, 0, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 		when(mutator.insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column)).thenThrow(
                 new HInvalidRequestException("You must have an unconfigured columnfamily in your soup"));
 
-		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
-		testClass.write(CHANNEL_NAME, value);
+		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
+		testClass.write(CHANNEL_NAME, value, 0);
 	}
 
 	@Test(expected = HInvalidRequestException.class)
 	public void testOtherExceptionMessages() throws Exception {
-		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA);
+		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA, 0L);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
-		when(hector.createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
+		when(hector.createColumn(columnName, value, 0, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 		when(mutator.insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column)).thenThrow(
                 new HInvalidRequestException("Clown-based-tamale"));            //Not the expected verbage
 
-		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
-		testClass.write(CHANNEL_NAME, value);
+		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
+		testClass.write(CHANNEL_NAME, value, 0);
 	}
 
 	@Test
@@ -109,10 +109,10 @@ public class CassandraValueWriterTest {
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 
-		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
+		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
 		testClass.delete(CHANNEL_NAME, keys);
 
-		verify(mutator, times(2)).addDeletion(ROW_KEY, CHANNEL_NAME, columnName, StringSerializer.get());
+		verify(mutator, times(2)).addDeletion(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, columnName, StringSerializer.get());
 		verify(mutator).execute();
 	}
 }

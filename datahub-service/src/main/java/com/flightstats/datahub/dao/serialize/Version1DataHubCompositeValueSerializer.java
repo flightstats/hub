@@ -3,6 +3,7 @@ package com.flightstats.datahub.dao.serialize;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.google.common.base.Optional;
 import me.prettyprint.cassandra.serializers.AbstractSerializer;
+import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.hector.api.exceptions.HectorSerializationException;
 
 import java.io.ByteArrayOutputStream;
@@ -15,6 +16,7 @@ public class Version1DataHubCompositeValueSerializer extends AbstractSerializer<
 
     private final ByteBlockReader byteBlockReader = new ByteBlockReader();
     private final OptionalStringSerializer optionalStringSerializer = OptionalStringSerializer.get();
+    private final LongSerializer longSerializer = new LongSerializer();
 
     @Override
     public DataHubCompositeValue fromByteBuffer(ByteBuffer byteBuffer) {
@@ -22,6 +24,7 @@ public class Version1DataHubCompositeValueSerializer extends AbstractSerializer<
         Optional<String> contentType = Optional.absent();
         Optional<String> contentLanguage = Optional.absent();
         byte[] valueData = new byte[]{};
+        long millis = 0;
 
         byte version = byteBuffer.get();
         if(version != FORMAT_VERSION_01){
@@ -43,9 +46,13 @@ public class Version1DataHubCompositeValueSerializer extends AbstractSerializer<
                 case CONTENT:
                     valueData = byteBlockReader.readByteBlock(byteBuffer);
                     break;
+                case MILLIS:
+                    millis = longSerializer.fromByteBuffer(byteBuffer);
+                    break;
+
             }
         }
-        return new DataHubCompositeValue(contentType, contentLanguage, valueData);
+        return new DataHubCompositeValue(contentType, contentLanguage, valueData, millis);
     }
 
     @Override
@@ -56,6 +63,7 @@ public class Version1DataHubCompositeValueSerializer extends AbstractSerializer<
             writeContentType(obj, out);
             writeContentLanguage(obj, out);
             writeContent(obj, out);
+            writeLong(out, FieldId.MILLIS, obj.getMillis());
             return ByteBuffer.wrap(out.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException("Unable to serialize DataHubCompositeValue: ", e);
@@ -91,5 +99,10 @@ public class Version1DataHubCompositeValueSerializer extends AbstractSerializer<
 
     private void writeInt(ByteArrayOutputStream out, int id) throws IOException {
         out.write(ByteBuffer.allocate(DataHubCompositeValueSerializer.BYTES_PER_INT).putInt(id).array());
+    }
+
+    private void writeLong(ByteArrayOutputStream out, FieldId fieldId, long longValue) throws IOException {
+        writeInt(out, fieldId.getId());
+        out.write(longSerializer.toBytes(longValue));
     }
 }
