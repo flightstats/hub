@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class ValueInsertionResultMixInTest {
 
@@ -23,6 +24,16 @@ public class ValueInsertionResultMixInTest {
 		objectMapper.writeValue(out, valueInsertionResult);
 		String result = out.toString();
         assertEquals("{\n  \"timestamp\" : \"2013-11-13T01:15:09.087Z\"\n}", result);
+    }
 
+    @Test
+    public void testRowKeyIgnored() throws Exception {
+        ObjectMapper objectMapper = DataHubObjectMapperFactory.construct();
+        DataHubKey key = new DataHubKey((short) 1033);
+        ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key, "rowKeyIsAwesome", new Date(1384305309087L));
+        OutputStream out = new ByteArrayOutputStream();
+        objectMapper.writeValue(out, valueInsertionResult);
+        String result = out.toString();
+        assertFalse(result.contains("rowKey"));
     }
 }

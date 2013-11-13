@@ -16,8 +16,14 @@ public abstract class ValueInsertionResultMixIn extends ValueInsertionResult {
     }
 
     @JsonIgnore
+    @Override
     public abstract DataHubKey getKey();
 
+    @JsonIgnore
+    @Override
+    public abstract String getRowKey();
+
 	@JsonProperty("timestamp")
+    @Override
     public abstract Date getDate();
 }
