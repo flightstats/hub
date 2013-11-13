@@ -132,7 +132,7 @@ describe('GET data:', function() {
                         expect(gu.isHTTPSuccess(res.status)).to.equal(true);
                         expect(res.header['creation-date']).to.not.be.null;
                         var returnedTimestamp = moment(res.header['creation-date']);
-                        expect(returnedTimestamp.isSame(timestamp)).to.be.true;
+                        expect(timestamp.diff(returnedTimestamp, 'seconds')).to.be.below(2);
 
                         done();
                     });
@@ -170,7 +170,7 @@ describe('GET data:', function() {
                             expect(gu.isHTTPSuccess(res1.status)).to.equal(true);
                             expect(res1.header['creation-date']).to.not.be.null;
                             var returnedTimestamp = moment(res1.header['creation-date']);
-                            expect(returnedTimestamp.isSame(timestamp)).to.be.true;
+                            expect(timestamp.diff(returnedTimestamp, 'seconds')).to.be.below(2);
 
                             //console.log(returnedTimestamp);
 
@@ -182,8 +182,7 @@ describe('GET data:', function() {
                                     expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
                                     expect(res2.header['creation-date']).to.not.be.null;
                                     returnedTimestamp = moment(res2.header['creation-date']);
-                                    expect(returnedTimestamp.isSame(timestamp)).to.be.true;
-
+                                    expect(timestamp.diff(returnedTimestamp, 'seconds')).to.be.below(2);
                                     //console.log(returnedTimestamp);
 
                                     done();
@@ -243,7 +242,7 @@ describe('GET data:', function() {
                             expect(gu.isHTTPSuccess(res1.status)).to.equal(true);
                             expect(res1.header['creation-date']).to.not.be.null;
                             var returnedTimestamp = moment(res1.header['creation-date']);
-                            expect(returnedTimestamp.isSame(timestamp)).to.be.true;
+                            expect(timestamp.diff(returnedTimestamp, 'seconds')).to.be.below(2);
 
                             //console.log(returnedTimestamp);
 
@@ -253,7 +252,7 @@ describe('GET data:', function() {
                                     expect(gu.isHTTPSuccess(res2.status)).to.equal(true);
                                     expect(res2.header['creation-date']).to.not.be.null;
                                     returnedTimestamp = moment(res2.header['creation-date']);
-                                    expect(returnedTimestamp.isSame(timestamp)).to.be.true;
+                                    expect(timestamp.diff(returnedTimestamp, 'seconds')).to.be.below(2);
 
                                     //console.log(returnedTimestamp);
 
@@ -749,7 +748,7 @@ describe('GET data:', function() {
                         superagent.agent().get(myUri)
                             .end(function(err, res) {
                                 pHeader = new dhh.packetGETHeader(res.headers);
-                                expect(pHeader.getPrevious()).to.be.null;
+                                expect(pHeader.getPrevious()).to.not.be.null;
 
                                 callback(null, null);
                             });
@@ -930,7 +929,7 @@ describe('GET data:', function() {
                                 gu.debugLog('Getting first value.'+ firstValueUri);
                             }
                             pHeader = new dhh.packetGETHeader(res.headers);
-                            expect(pHeader.getPrevious()).to.be.null;
+                            expect(pHeader.getPrevious()).to.not.be.null;
                             expect(pHeader.getNext()).to.equal(secondValueUri);
 
                             callback(null,null);
