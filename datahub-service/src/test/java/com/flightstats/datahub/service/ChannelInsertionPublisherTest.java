@@ -25,7 +25,7 @@ public class ChannelInsertionPublisherTest {
 
 		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, keyRenderer);
 
-		testClass.publish("channelName", new ValueInsertionResult(dataHubKey, null));
+		testClass.publish("channelName", new ValueInsertionResult(dataHubKey, null, null));
 
 		verify(iTopic).publish("key message");
 	}

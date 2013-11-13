@@ -8,8 +8,9 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.util.Date;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 public class ValueInsertionResultMixInTest {
 
@@ -17,15 +18,11 @@ public class ValueInsertionResultMixInTest {
 	public void testSerialize() throws Exception {
 		ObjectMapper objectMapper = DataHubObjectMapperFactory.construct();
 		DataHubKey key = new DataHubKey((short) 1033);
-		ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key, null);
+        ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key, null, new Date(1384305309087L));
 		OutputStream out = new ByteArrayOutputStream();
 		objectMapper.writeValue(out, valueInsertionResult);
 		String result = out.toString();
-        //todo - gfm - 11/5/13 - presume this needs time provider or ?
-        assertTrue(result.contains("timestamp"));
-        assertTrue(result.contains("T"));
-        assertTrue(result.contains("Z"));
-        //assertEquals("{\n  \"timestamp\" : \"2005-08-07T23:17:58.922Z\"\n}", result);
+        assertEquals("{\n  \"timestamp\" : \"2013-11-13T01:15:09.087Z\"\n}", result);
 
     }
 }

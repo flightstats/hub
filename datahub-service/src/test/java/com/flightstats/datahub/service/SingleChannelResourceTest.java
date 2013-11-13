@@ -160,9 +160,10 @@ public class SingleChannelResourceTest {
 
 		HalLink selfLink = new HalLink("self", itemUri);
 		HalLink channelLink = new HalLink("channel", channelUri);
-		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey, null);
+		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey, null, null);
 
-		when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentLanguage))).thenReturn(new ValueInsertionResult(dataHubKey, null));
+		when(dataHubService.insert(channelName, data, Optional.of(contentType), Optional.of(contentLanguage))).thenReturn(new ValueInsertionResult(dataHubKey, null,
+                null));
         when(cache.get(eq(channelName), any(Callable.class))).thenReturn(true);
 
 		SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
@@ -182,7 +183,7 @@ public class SingleChannelResourceTest {
     @Test
     public void testInsert_channelExistenceCached() throws Exception {
         //GIVEN
-        ValueInsertionResult result = new ValueInsertionResult(null, null);
+        ValueInsertionResult result = new ValueInsertionResult(null, null, null);
         byte[] data = "SomeData".getBytes();
         Cache<String, Boolean> cache = mock(Cache.class);
         SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
@@ -199,7 +200,7 @@ public class SingleChannelResourceTest {
     @Test
     public void testInsert_channelExistenceNotCached() throws Exception {
         //GIVEN
-        ValueInsertionResult result = new ValueInsertionResult(null, null);
+        ValueInsertionResult result = new ValueInsertionResult(null, null, null);
         byte[] data = "SomeData".getBytes();
         Cache<String, Boolean> cache = mock(Cache.class);
         SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
@@ -222,7 +223,7 @@ public class SingleChannelResourceTest {
     @Test(expected = WebApplicationException.class)
     public void testInsert_channelExistenceNotCached_channelDoesntExist() throws Exception {
         //GIVEN
-        ValueInsertionResult result = new ValueInsertionResult(null, null);
+        ValueInsertionResult result = new ValueInsertionResult(null, null, null);
         byte[] data = "SomeData".getBytes();
         Cache<String, Boolean> cache = mock(Cache.class);
         SingleChannelResource testClass = new SingleChannelResource(dataHubService, linkBuilder, cache, DEFAULT_MAX_PAYLOAD);
