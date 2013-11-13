@@ -1,6 +1,5 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.model.DataHubKey;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
@@ -30,7 +29,7 @@ public class LastKeyIntegration {
 
     public static final String CHANNEL_URL = "http://localhost:8080/channel/";
     public static final String CHANNEL_NAME = "LastKeyIntegration";
-    public static final long LOOPS = DataHubKey.MIN_SEQUENCE * 2;
+    public static final long LOOPS = SequenceRowKeyStrategy.INCREMENT * 2;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public static void main(String[] args) throws Exception {

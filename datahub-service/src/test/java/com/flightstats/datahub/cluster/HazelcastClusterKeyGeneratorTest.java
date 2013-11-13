@@ -28,7 +28,7 @@ public class HazelcastClusterKeyGeneratorTest {
 
         //WHEN
         when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
-        when(atomicSeqNumber.getAndAdd(1)).thenReturn(1000L).thenReturn(1001L);
+        when(atomicSeqNumber.getAndAdd(1)).thenReturn(1000L, 1001L);
 
         //THEN
         assertEquals(new DataHubKey(1000), testClass.newKey(channelName));
@@ -54,8 +54,8 @@ public class HazelcastClusterKeyGeneratorTest {
         when(atomicSeqNumber.get()).thenReturn(0L);
 
         assertEquals(new DataHubKey(1000), testClass.newKey(channelName));
-        verify(atomicSeqNumber).set(1000L);
-        verify(atomicSeqNumber, times(2)).getAndAdd(1);
+        verify(atomicSeqNumber).set(1001L);
+        verify(atomicSeqNumber).getAndAdd(1);
     }
 
     @Test
@@ -76,10 +76,11 @@ public class HazelcastClusterKeyGeneratorTest {
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(1L).thenReturn(expectedKey.getSequence());
         when(atomicSeqNumber.get()).thenReturn(0L);
 
-        assertEquals(expectedKey.getSequence(), testClass.newKey(channelName).getSequence());
-        verify(atomicSeqNumber).set(expectedKey.getSequence());
-        verify(atomicSeqNumber, times(2)).getAndAdd(1);
-        verify(lastKeyFinder, times(1)).queryForLatestKey(channelName);
+        DataHubKey result = testClass.newKey(channelName);
+
+        assertEquals(expectedKey, result);
+        verify(atomicSeqNumber).getAndAdd(1);
+        verify(atomicSeqNumber).set(result.getSequence() + 1);
     }
 
     @Test
