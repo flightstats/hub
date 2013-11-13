@@ -671,10 +671,30 @@ describe('GET data:', function() {
             });
         })
 
-        it('(Acceptance) No Prev link with only one value set; Prev link does show on second value set.', function(done) {
+        it('(Acceptance) A Prev link exists with only one value set; result of getting prev is 404.', function(done) {
             var firstValueUri,
                 pHeader;
 
+            dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
+                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                myUri = resolveUriWithDomain(myUri);
+                firstValueUri = myUri;
+
+                superagent.agent().get(myUri)
+                    .end(function(err, res) {
+                        pHeader = new dhh.packetGETHeader(res.headers);
+                        expect(pHeader.getPrevious()).to.not.be.null;
+
+                        dhh.getDataFromChannel({uri: pHeader.getPrevious()}, function(err, res) {
+                            expect(res.statusCode).to.equal(gu.HTTPresponses.Not_Found);
+
+                            done();
+                        })
+                    });
+            });
+
+            // OLD version of the test, before we changed the expected behavior
+            /*
             async.series([
                 function(callback){
                     dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, myUri) {
@@ -709,6 +729,7 @@ describe('GET data:', function() {
                 function(err, results){
                     done();
                 });
+            */
         });
 
         // Create a new channel with three values in it. Starting with the latest value, confirm each prev points to the

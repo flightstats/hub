@@ -24,9 +24,9 @@ var ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js');
 
 // var DOMAIN = 'datahub-01.cloud-east.dev:8080';
-var DOMAIN = 'datahub.svc.dev';
+//var DOMAIN = 'datahub.svc.dev';
 //var DOMAIN = 'localhost:8080';
-//var DOMAIN = 'datahub.svc.staging';
+var DOMAIN = 'datahub.svc.staging';
 exports.DOMAIN = DOMAIN;
 
 var CP_DOMAIN = '10.11.15.162:8080';    // Crypto Proxy
