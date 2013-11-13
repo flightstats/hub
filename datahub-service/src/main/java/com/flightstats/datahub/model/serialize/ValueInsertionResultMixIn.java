@@ -11,8 +11,8 @@ import java.util.Date;
 @AbstractMixIn
 public abstract class ValueInsertionResultMixIn extends ValueInsertionResult {
 
-    public ValueInsertionResultMixIn(DataHubKey key, String rowKey) {
-        super(key, rowKey);
+    public ValueInsertionResultMixIn(DataHubKey key, String rowKey, Date date) {
+        super(key, rowKey, date);
     }
 
     @JsonIgnore

@@ -7,6 +7,7 @@ import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.model.exception.NoSuchChannelException;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -56,14 +57,14 @@ public class CassandraValueWriterTest {
 	@Test
 	public void testInsert() throws Exception {
 		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA, 0L);
-		ValueInsertionResult expected = new ValueInsertionResult(DATA_HUB_KEY, null);
+		ValueInsertionResult expected = new ValueInsertionResult(DATA_HUB_KEY, null, null);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
 		when(hector.createColumn(columnName, value, 0, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 
-		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
+		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
 		ValueInsertionResult result = testClass.write(CHANNEL_NAME, value, 0);
 
 		assertEquals(expected, result);
@@ -81,7 +82,7 @@ public class CassandraValueWriterTest {
 		when(mutator.insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column)).thenThrow(
                 new HInvalidRequestException("You must have an unconfigured columnfamily in your soup"));
 
-		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
+		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
 		testClass.write(CHANNEL_NAME, value, 0);
 	}
 
@@ -96,7 +97,7 @@ public class CassandraValueWriterTest {
 		when(mutator.insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column)).thenThrow(
                 new HInvalidRequestException("Clown-based-tamale"));            //Not the expected verbage
 
-		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
+		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
 		testClass.write(CHANNEL_NAME, value, 0);
 	}
 
@@ -108,7 +109,7 @@ public class CassandraValueWriterTest {
 		when(rowStrategy.buildKey(CHANNEL_NAME, DATA_HUB_KEY)).thenReturn(ROW_KEY);
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 
-		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer);
+		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
 		testClass.delete(CHANNEL_NAME, keys);
 
 		verify(mutator, times(2)).addDeletion(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, columnName, StringSerializer.get());
