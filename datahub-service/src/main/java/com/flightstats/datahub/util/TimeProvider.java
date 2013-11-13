@@ -11,4 +11,8 @@ public class TimeProvider {
     public Date getDate() {
         return new Date();
     }
+
+    public long getMillis(){
+        return System.currentTimeMillis();
+    }
 }
