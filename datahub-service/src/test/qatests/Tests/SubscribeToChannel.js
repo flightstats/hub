@@ -20,8 +20,9 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
     WAIT_FOR_SOCKET_CLOSURE_MS = 10 * 1000,
     URL_ROOT = dhh.URL_ROOT,
     DOMAIN = dhh.DOMAIN,
+//    DOMAIN = 'datahub-02.cloud-east.staging:8080',
     FAKE_SOCKET_URI = ['ws:/', dhh.DOMAIN, 'channel', 'sQODTvsYlLOLWTFPWNBBQ', 'ws'].join('/'),
-    LOAD_BALANCER_HOSTNAME = 'datahub.svc.dev',
+    LOAD_BALANCER_HOSTNAME = 'datahub.svc.staging',
     DEBUG = true;
 
 
@@ -113,7 +114,7 @@ describe('Channel Subscription:', function() {
 
         channelName = dhh.getRandomChannelName();
 
-        dhh.createChannel({name: channelName}, function(res){
+        dhh.createChannel({name: channelName, domain: DOMAIN }, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 myCallback(res.error);
             }
@@ -132,7 +133,7 @@ describe('Channel Subscription:', function() {
 
     });
 
-    it('Acceptance: subscription works and updates are sent in order', function(done) {
+    it.only('Acceptance: subscription works and updates are sent in order', function(done) {
         var socket,
             uriA,
             uriB;
@@ -158,6 +159,10 @@ describe('Channel Subscription:', function() {
             ])};
 
         var afterMessage = function() {
+            if (DEBUG) {
+                gu.debugLog('MESSAGE RECEIVED: ' + socket.responseQueue[socket.responseQueue.length - 1]);
+            }
+
             if (socket.responseQueue.length == 2)  {
                 confirmSocketData();
             }
@@ -218,7 +223,7 @@ describe('Channel Subscription:', function() {
     // Insert items in parallel into that channel, directly into each instance and into the load balancer.
     // Ensure that the messages are reported in order.
     // https://www.pivotaltracker.com/story/show/52726289
-    it('HA: multiple parallel updates with a socket ' +
+    it.skip('HA: multiple parallel updates with a socket ' +
         'on each DH instance and the load balancer are reported in order', function(done) {
 
         // Configurable items
