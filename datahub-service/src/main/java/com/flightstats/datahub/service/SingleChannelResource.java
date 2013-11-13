@@ -69,7 +69,13 @@ public class SingleChannelResource {
         if (!latestId.isPresent()) {
             return null;
         }
-        return latestId.get().getDate();
+        //todo - gfm - 11/11/13 - not sure channel metadata is the proper place to make a get call into the service
+        //todo - gfm - 11/11/13 - is returning last updated date actually useful?
+        Optional<LinkedDataHubCompositeValue> optionalResult = dataHubService.getValue(channelName, latestId.get());
+        if (!optionalResult.isPresent()) {
+            return null;
+        }
+        return new Date(optionalResult.get().getValue().getMillis());
     }
 
     @PATCH

@@ -10,17 +10,13 @@ import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
-import java.util.concurrent.Callable;
-
 public class DataHubService {
 	private final ChannelDao channelDao;
-	private final ChannelLockExecutor channelLockExecutor;
 	private final ChannelInsertionPublisher channelInsertionPublisher;
 
 	@Inject
-	public DataHubService(ChannelDao channelDao, ChannelLockExecutor channelLockExecutor, ChannelInsertionPublisher channelInsertionPublisher) {
+	public DataHubService(ChannelDao channelDao, ChannelInsertionPublisher channelInsertionPublisher) {
 		this.channelDao = channelDao;
-		this.channelLockExecutor = channelLockExecutor;
 		this.channelInsertionPublisher = channelInsertionPublisher;
 	}
 
@@ -45,9 +41,9 @@ public class DataHubService {
 	}
 
 	public ValueInsertionResult insert(String channelName, byte[] data, Optional<String> contentType, Optional<String> contentLanguage) throws Exception {
-		Callable<ValueInsertionResult> task = new WriteAndDispatch(channelDao, channelInsertionPublisher, channelName, data, contentType,
-                contentLanguage);
-		return channelLockExecutor.execute(channelName, task);
+        ValueInsertionResult result = channelDao.insert(channelName, contentType, contentLanguage, data);
+        channelInsertionPublisher.publish(channelName, result);
+        return result;
 	}
 
 	public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {

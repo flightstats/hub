@@ -1,25 +1,33 @@
 package com.flightstats.datahub.model;
 
+import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
+import com.google.common.base.Optional;
+
 import java.io.Serializable;
-import java.util.Date;
 
-public class DataHubKey implements Serializable{
+public class DataHubKey implements Serializable {
     private static final long serialVersionUID = 1L;
+    private final long sequence;
 
-    private final Date date;
-    private final short sequence;
-
-    public DataHubKey(Date date, short sequence) {
-        this.date = date;
+    public DataHubKey(long sequence) {
         this.sequence = sequence;
     }
 
-    public Date getDate() {
-        return date;
+    public Optional<DataHubKey> getNext() {
+        return Optional.of(new DataHubKey(sequence + 1));
     }
 
-    public short getSequence() {
+    public Optional<DataHubKey> getPrevious() {
+        return Optional.of(new DataHubKey(sequence - 1));
+    }
+
+    public long getSequence() {
         return sequence;
+    }
+
+    public boolean isNewRow()
+    {
+        return sequence % SequenceRowKeyStrategy.INCREMENT == 0;
     }
 
     @Override
@@ -36,25 +44,19 @@ public class DataHubKey implements Serializable{
         if (sequence != that.sequence) {
             return false;
         }
-        if (date != null ? !date.equals(that.date) : that.date != null) {
-            return false;
-        }
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = date != null ? date.hashCode() : 0;
-        result = 31 * result + sequence;
-        return result;
+        return (int) (sequence ^ (sequence >>> 32));
     }
 
     @Override
     public String toString() {
         return "DataHubKey{" +
-                "date=" + date +
-                ", sequence=" + sequence +
+                " sequence=" + sequence +
                 '}';
     }
 }

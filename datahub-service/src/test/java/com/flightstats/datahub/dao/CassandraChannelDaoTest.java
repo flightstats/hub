@@ -1,19 +1,11 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.dao.serialize.DataHubCompositeValueSerializer;
 import com.flightstats.datahub.model.*;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.util.DataHubKeyGenerator;
+import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.beans.OrderedRows;
-import me.prettyprint.hector.api.beans.Row;
-import me.prettyprint.hector.api.query.QueryResult;
-import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.ConcurrentMap;
 
@@ -22,226 +14,198 @@ import static org.mockito.Mockito.*;
 
 public class CassandraChannelDaoTest {
 
-	@Test
-	public void testChannelExists() throws Exception {
-		CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
-		when(collection.channelExists("thechan")).thenReturn(true);
-		when(collection.channelExists("nope")).thenReturn(false);
-		CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null, null, null, null, null, null);
-		assertTrue(testClass.channelExists("thechan"));
-		assertFalse(testClass.channelExists("nope"));
-	}
+    @Test
+    public void testChannelExists() throws Exception {
+        CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
+        when(collection.channelExists("thechan")).thenReturn(true);
+        when(collection.channelExists("nope")).thenReturn(false);
+        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null, null, null);
+        assertTrue(testClass.channelExists("thechan"));
+        assertFalse(testClass.channelExists("nope"));
+    }
 
-	@Test
-	public void testCreateChannel() throws Exception {
-		ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999), null);
-		CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
-		when(collection.createChannel("foo", null)).thenReturn(expected);
-		CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null, null, null, null, null, null);
-		ChannelConfiguration result = testClass.createChannel("foo", null);
-		assertEquals(expected, result);
-	}
+    @Test
+    public void testCreateChannel() throws Exception {
+        ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999), null);
+        CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
+        when(collection.createChannel("foo", null)).thenReturn(expected);
+        DataHubKeyGenerator keyGenerator = mock(DataHubKeyGenerator.class);
+        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null, keyGenerator, null);
+        ChannelConfiguration result = testClass.createChannel("foo", null);
+        assertEquals(expected, result);
+        verify(keyGenerator).seedChannel("foo");
+    }
 
-	@Test
-	public void testUpdateChannel() throws Exception {
-		ChannelConfiguration newConfig = new ChannelConfiguration("foo", new Date(9999), 30000L);
-		CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
-		CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null, null, null, null, null, null);
-		testClass.updateChannelMetadata(newConfig);
-		verify(collection).updateChannel(newConfig);
-	}
+    @Test
+    public void testUpdateChannel() throws Exception {
+        ChannelConfiguration newConfig = new ChannelConfiguration("foo", new Date(9999), 30000L);
+        CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
+        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null, null, null);
+        testClass.updateChannelMetadata(newConfig);
+        verify(collection).updateChannel(newConfig);
+    }
 
-	@Test
-	public void testInsert() throws Exception {
-		// GIVEN
-		Date date = new Date(2345678910L);
-		DataHubKey key = new DataHubKey(date, (short) 3);
-		String channelName = "foo";
-		byte[] data = "bar".getBytes();
-		Optional<String> contentType = Optional.of("text/plain");
-		DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data);
-		ValueInsertionResult expected = new ValueInsertionResult(key);
-		DataHubKey lastUpdateKey = new DataHubKey(new Date(2345678912L), (short) 0);
+    @Test
+    public void testInsert() throws Exception {
+        // GIVEN
+        DataHubKey key = new DataHubKey((short) 1003);
+        String channelName = "foo";
+        byte[] data = "bar".getBytes();
+        long millis = 90210L;
+        Optional<String> contentType = Optional.of("text/plain");
+        DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data, millis);
+        ValueInsertionResult expected = new ValueInsertionResult(key, null, null);
+        DataHubKey lastUpdateKey = new DataHubKey((short) 1000);
 
-		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-		CassandraValueWriter inserter = mock(CassandraValueWriter.class);
-		CassandraValueReader reader = mock(CassandraValueReader.class);
-		CassandraLinkagesCollection linkagesCollection = mock(CassandraLinkagesCollection.class);
-		ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
-		LastKeyFinder lastUpdatedKeyFinder = mock(LastKeyFinder.class);
+        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+        CassandraValueWriter inserter = mock(CassandraValueWriter.class);
+        CassandraValueReader reader = mock(CassandraValueReader.class);
+        ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
+        TimeProvider timeProvider = mock(TimeProvider.class);
+        LastKeyFinder lastUpdatedKeyFinder = mock(LastKeyFinder.class);
 
-		// WHEN
-		when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(key));
-		when(lastUpdatedKeyFinder.queryForLatestKey(channelName)).thenReturn(lastUpdateKey);
-		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, linkagesCollection, inserter, reader, null, null, null, null, lastUpdatedMap, lastUpdatedKeyFinder);
+        // WHEN
+        when(timeProvider.getMillis()).thenReturn(millis);
+        when(inserter.write(channelName, value, 0)).thenReturn(new ValueInsertionResult(key, null, null));
+        when(lastUpdatedKeyFinder.queryForLatestKey(channelName)).thenReturn(lastUpdateKey);
+        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, reader, lastUpdatedMap, lastUpdatedKeyFinder, null,
+                timeProvider);
 
-		ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), data);
+        ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), data);
 
-		// THEN
-		assertEquals(expected, result);
-		verify(linkagesCollection).updateLinkages(channelName, result.getKey(), lastUpdateKey);
-	}
+        // THEN
+        assertEquals(expected, result);
+    }
 
-	@Test
-	public void testInsert_lastUpdateCacheMiss() throws Exception {
-		// GIVEN
-		Date date = new Date(2345678910L);
-		DataHubKey key = new DataHubKey(date, (short) 3);
-		String channelName = "foo";
-		byte[] data = "bar".getBytes();
-		Optional<String> contentType = Optional.of("text/plain");
-		DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data);
-		ValueInsertionResult expected = new ValueInsertionResult(key);
+    @Test
+    public void testInsert_lastUpdateCacheMiss() throws Exception {
+        // GIVEN
+        DataHubKey key = new DataHubKey((short) 1003);
+        String channelName = "foo";
+        byte[] data = "bar".getBytes();
+        Optional<String> contentType = Optional.of("text/plain");
+        long millis = 90210L;
+        DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data, millis);
+        ValueInsertionResult expected = new ValueInsertionResult(key, null, null);
 
-		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-		CassandraValueWriter inserter = mock(CassandraValueWriter.class);
-		CassandraValueReader reader = mock(CassandraValueReader.class);
-		CassandraLinkagesCollection linkagesCollection = mock(CassandraLinkagesCollection.class);
-		ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
+        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+        CassandraValueWriter inserter = mock(CassandraValueWriter.class);
+        CassandraValueReader reader = mock(CassandraValueReader.class);
+        ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
+        TimeProvider timeProvider = mock(TimeProvider.class);
 
-		// WHEN
-		when(inserter.write(channelName, value)).thenReturn(new ValueInsertionResult(key));
-		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, linkagesCollection, inserter, reader, null, null, null, null, lastUpdatedMap, null){
-			@Override
-			public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
-				return Optional.absent();
-			}
-		};
+        // WHEN
+        when(inserter.write(channelName, value, 0)).thenReturn(new ValueInsertionResult(key, null, null));
+        when(timeProvider.getMillis()).thenReturn(millis);
+        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, reader, lastUpdatedMap, null, null, timeProvider) {
+            @Override
+            public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
+                return Optional.absent();
+            }
+        };
 
-		ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), data);
+        ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), data);
 
-		// THEN
-		assertEquals(expected, result);
-		verify(linkagesCollection).updateLinkages(channelName, result.getKey(), null);
-	}
+        // THEN
+        assertEquals(expected, result);
+    }
 
-	@Test
-	public void testGetValue() throws Exception {
-		String channelName = "cccccc";
-		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
-		DataHubKey previousKey = new DataHubKey(new Date(9998888777665L), (short) 0);
-		DataHubKey nextKey = new DataHubKey(new Date(9998888777667L), (short) 0);
-		byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
-		DataHubCompositeValue compositeValue = new DataHubCompositeValue(Optional.of("text/plain"), null, data);
-		Optional<DataHubKey> previous = Optional.of(previousKey);
-		Optional<DataHubKey> next = Optional.of(nextKey);
-		LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(compositeValue, previous, next);
+    @Test
+    public void testGetValue() throws Exception {
+        String channelName = "cccccc";
+        DataHubKey key = new DataHubKey((short) 1001);
+        DataHubKey previousKey = new DataHubKey((short) 1000);
+        DataHubKey nextKey = new DataHubKey((short) 1002);
+        byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
+        DataHubCompositeValue compositeValue = new DataHubCompositeValue(Optional.of("text/plain"), null, data, 0L);
+        Optional<DataHubKey> previous = Optional.of(previousKey);
+        Optional<DataHubKey> next = Optional.of(nextKey);
+        LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(compositeValue, previous, next);
 
-		CassandraValueReader reader = mock(CassandraValueReader.class);
-		CassandraLinkagesCollection linkagesCollection = mock(CassandraLinkagesCollection.class);
+        CassandraValueReader reader = mock(CassandraValueReader.class);
 
-		when(reader.read(channelName, key)).thenReturn(compositeValue);
-		when(linkagesCollection.findPreviousKey(channelName, key)).thenReturn(previous);
-		when(linkagesCollection.findNextKey(channelName, key)).thenReturn(next);
+        when(reader.read(channelName, key)).thenReturn(compositeValue);
 
-		CassandraChannelDao testClass = new CassandraChannelDao(null, linkagesCollection, null, reader, null, null, null, null, null, null);
+        ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
+        when(lastUpdatedMap.get(channelName)).thenReturn(nextKey);
+        CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader, lastUpdatedMap, null, null, null);
 
-		Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
-		assertEquals(expected, result.get());
-	}
+        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
+        assertEquals(expected, result.get());
+    }
 
-	@Test
-	public void testGetValue_notFound() throws Exception {
-		String channelName = "cccccc";
-		DataHubKey key = new DataHubKey(new Date(9998888777666L), (short) 0);
+    @Test
+    public void testGetValue_notFound() throws Exception {
+        String channelName = "cccccc";
+        DataHubKey key = new DataHubKey((short) 1000);
 
-		CassandraValueReader reader = mock(CassandraValueReader.class);
+        CassandraValueReader reader = mock(CassandraValueReader.class);
 
-		when(reader.read(channelName, key)).thenReturn(null);
+        when(reader.read(channelName, key)).thenReturn(null);
 
-		CassandraChannelDao testClass = new CassandraChannelDao(null, null, null, reader, null, null, null, null, null, null);
+        CassandraChannelDao testClass = new CassandraChannelDao(null, null, reader, null, null, null, null);
 
-		Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
-		assertFalse(result.isPresent());
-	}
+        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
+        assertFalse(result.isPresent());
+    }
 
-	@Test
-	public void testFindLatestId_cachedInMap() throws Exception {
-		DataHubKey expected = new DataHubKey(new Date(999999999), (short) 6);
-		String channelName = "myChan";
+    @Test
+    public void testFindLatestId_cachedInMap() throws Exception {
+        DataHubKey expected = new DataHubKey((short) 1006);
+        String channelName = "myChan";
 
-		ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
-		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+        ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
+        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
 
-		when(lastUpdatedMap.get(channelName)).thenReturn(expected);
+        when(lastUpdatedMap.get(channelName)).thenReturn(expected);
 
-		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, null, null, null, null, null, lastUpdatedMap,
-				null);
+        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, lastUpdatedMap,
+                null, null, null);
 
-		Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
-		assertEquals(expected, result.get());
-	}
+        Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
+        assertEquals(expected, result.get());
+    }
 
-	@Test
-	public void testFindLatestId_lazyLoadCacheMiss() throws Exception {
-		// GIVEN
-		String channelName = "myChan";
-		DataHubKey lastUpdateKey = new DataHubKey(new Date(9021111L), (short) 5);
-		ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
-		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-		LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
+    @Test
+    public void testFindLatestId_lazyLoadCacheMiss() throws Exception {
+        // GIVEN
+        String channelName = "myChan";
+        DataHubKey lastUpdateKey = new DataHubKey((short) 1005);
+        ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
+        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+        LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
 
-		// WHEN
-		when(lastUpdatedMap.get(channelName)).thenReturn(null);
-		when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(lastUpdateKey);
+        // WHEN
+        when(lastUpdatedMap.get(channelName)).thenReturn(null);
+        when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(lastUpdateKey);
 
-		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, null, null, null, null, null, lastUpdatedMap, lastKeyFinder);
-		Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
+        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, lastUpdatedMap, lastKeyFinder, null, null);
+        Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
 
-		// THEN
-		assertEquals(Optional.of(lastUpdateKey), result);
-		verify(lastUpdatedMap).put(channelName, lastUpdateKey);
-	}
+        // THEN
+        assertEquals(Optional.of(lastUpdateKey), result);
+        verify(lastUpdatedMap).putIfAbsent(channelName, lastUpdateKey);
+    }
 
 
-	@Test
-	public void testFindLatestId_lastUpdateNotFound() throws Exception {
-		// GIVEN
-		String channelName = "myChan";
-		ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
-		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-		LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
+    @Test
+    public void testFindLatestId_lastUpdateNotFound() throws Exception {
+        // GIVEN
+        String channelName = "myChan";
+        ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
+        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
+        LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
 
-		// WHEN
-		when(lastUpdatedMap.get(channelName)).thenReturn(null);
-		when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(null);
+        // WHEN
+        when(lastUpdatedMap.get(channelName)).thenReturn(null);
+        when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(null);
 
-		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, null, null, null, null, null, lastUpdatedMap, lastKeyFinder);
-		Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
+        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, lastUpdatedMap, lastKeyFinder, null, null);
 
-		// THEN
-		assertEquals(Optional.<DataHubKey>absent(), result);
-	}
+        Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
 
-	@Test
-	public void testFindKeysInRange() throws Exception {
-		String channelName = "myChan";
-		ChannelConfiguration config = new ChannelConfiguration(channelName, null, null);
-		CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
-		CassandraConnector connector = mock(CassandraConnector.class);
-		Keyspace keyspace = mock(Keyspace.class);
-		HectorFactoryWrapper hector = mock(HectorFactoryWrapper.class);
-		RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy = new YearMonthDayRowKeyStrategy();
-		RangeSlicesQuery<String, String, DataHubCompositeValue> query = mock(RangeSlicesQuery.class);
-		QueryResult<OrderedRows<String, String, DataHubCompositeValue>> queryResults = mock(QueryResult.class);
-		OrderedRows<String, String, DataHubCompositeValue> queryResultsGuts = mock(OrderedRows.class);
+        // THEN
+        assertEquals(Optional.<DataHubKey>absent(), result);
+    }
 
-		when(connector.getKeyspace()).thenReturn(keyspace);
-		when(hector.createRangeSlicesQuery(keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(query);
-		when(query.setColumnFamily(anyString())).thenReturn(query);
-		when(query.setKeys(anyString(), anyString())).thenReturn(query);
-		when(query.setColumnFamily(anyString())).thenReturn(query);
-		when(query.setRange(anyString(), anyString(), anyBoolean(), anyInt())).thenReturn(query);
-		when(query.execute()).thenReturn(queryResults);
-		when(queryResults.get()).thenReturn(queryResultsGuts);
-		when(queryResultsGuts.getList()).thenReturn(Collections.<Row<String, String, DataHubCompositeValue>>emptyList());
-		when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(config);
-		when(connector.getKeyspace()).thenReturn(keyspace);
-		when(keyspace.getKeyspaceName()).thenReturn("datahub");
-
-		CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, null, null, keyRenderer, rowKeyStrategy, connector, hector, null, null);
-		Collection<DataHubKey> result = testClass.findKeysInRange(channelName, new Date(0), new Date());
-		assertEquals(Collections.emptyList(), result);
-	}
 }

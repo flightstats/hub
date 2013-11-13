@@ -6,6 +6,7 @@ import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -24,23 +25,25 @@ public class CassandraValueWriter {
 	private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
 	private final DataHubKeyGenerator keyGenerator;
 	private final DataHubKeyRenderer keyRenderer;
+    private final TimeProvider timeProvider;
 
-	@Inject
-	public CassandraValueWriter(CassandraConnector connector, HectorFactoryWrapper hector, RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy, DataHubKeyGenerator keyGenerator, DataHubKeyRenderer keyRenderer) {
+    @Inject
+	public CassandraValueWriter(CassandraConnector connector, HectorFactoryWrapper hector, RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy, DataHubKeyGenerator keyGenerator, DataHubKeyRenderer keyRenderer, TimeProvider timeProvider) {
 		this.connector = connector;
 		this.hector = hector;
 		this.rowKeyStrategy = rowKeyStrategy;
 		this.keyGenerator = keyGenerator;
 		this.keyRenderer = keyRenderer;
-	}
+        this.timeProvider = timeProvider;
+    }
 
-	public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue) {
+	public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue, int ttlSeconds) {
 		Mutator<String> mutator = connector.buildMutator(StringSerializer.get());
 
 		DataHubKey key = keyGenerator.newKey(channelName);
 
 		String columnName = keyRenderer.keyToString(key);
-		HColumn<String, DataHubCompositeValue> column = hector.createColumn(columnName, columnValue, StringSerializer.get(),
+		HColumn<String, DataHubCompositeValue> column = hector.createColumn(columnName, columnValue, ttlSeconds, StringSerializer.get(),
 				DataHubCompositeValueSerializer.get());
 
 		String rowKey = rowKeyStrategy.buildKey(channelName, key);
@@ -50,7 +53,7 @@ public class CassandraValueWriter {
 		} catch (HInvalidRequestException e) {
 			throw maybePromoteToNoSuchChannel(e, channelName);
 		}
-		return new ValueInsertionResult(key);
+		return new ValueInsertionResult(key, rowKey, timeProvider.getDate());
 	}
 
 	public void delete(String channelName, Collection<DataHubKey> keys) {

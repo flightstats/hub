@@ -6,8 +6,9 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchA
 import com.flightstats.datahub.cluster.ChannelLockFactory;
 import com.flightstats.datahub.cluster.HazelcastChannelLockFactory;
 import com.flightstats.datahub.cluster.HazelcastClusterKeyGenerator;
-import com.flightstats.datahub.dao.ChannelHourRowKeyStrategy;
 import com.flightstats.datahub.dao.RowKeyStrategy;
+import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
@@ -120,7 +121,7 @@ public class GuiceContextListenerFactory {
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
             binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
             binder.bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
-            }).to(ChannelHourRowKeyStrategy.class);
+            }).to(SequenceRowKeyStrategy.class);
             binder.bind(DataHubSweeper.class).asEagerSingleton();
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
         }
@@ -145,8 +146,6 @@ public class GuiceContextListenerFactory {
         switch (backingStoreName) {
             case CASSANDRA_BACKING_STORE_TAG:
                 return new CassandraDataStoreModule(properties);
-            case MEMORY_BACKING_STORY_TAG:
-                return new MemoryBackedDataStoreModule();
             default:
                 throw new IllegalStateException(String.format("Unknown backing store specified: %s", backingStoreName));
         }
@@ -172,13 +171,20 @@ public class GuiceContextListenerFactory {
             return hazelcast.getMap("LAST_CHANNEL_UPDATE");
         }
 
+        @Named("ChannelConfigurationMap")
+        @Singleton
+        @Provides
+        public static ConcurrentMap<String, ChannelConfiguration> buildChannelConfigurationMap(HazelcastInstance hazelcast) throws FileNotFoundException {
+            return hazelcast.getMap("CHANNEL_CONFIGURATION_MAP");
+        }
+
         @Named("KnownChannelCache")
         @Singleton
         @Provides
         public static Cache<String, Boolean> buildKnownChannelCache() throws FileNotFoundException {
             return CacheBuilder.newBuilder().maximumSize(1000)
-                               .expireAfterAccess(15L, TimeUnit.MINUTES)
-                               .build();
+                    .expireAfterAccess(15L, TimeUnit.MINUTES)
+                    .build();
         }
 
         @Override

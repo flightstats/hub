@@ -17,13 +17,12 @@ public class ValueInsertionResultMixInTest {
 	@Test
 	public void testSerialize() throws Exception {
 		ObjectMapper objectMapper = DataHubObjectMapperFactory.construct();
-		DataHubKey key = new DataHubKey(new Date(1123456678922L), (short) 33);
-		ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key);
+		DataHubKey key = new DataHubKey((short) 1033);
+        ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key, null, new Date(1384305309087L));
 		OutputStream out = new ByteArrayOutputStream();
 		objectMapper.writeValue(out, valueInsertionResult);
 		String result = out.toString();
-		assertEquals("{\n" +
-				"  \"timestamp\" : \"2005-08-07T23:17:58.922Z\"\n" +
-				"}", result);
-	}
+        assertEquals("{\n  \"timestamp\" : \"2013-11-13T01:15:09.087Z\"\n}", result);
+
+    }
 }
