@@ -146,7 +146,7 @@ describe('TTL Deletion', function() {
             })
         })
 
-        it('item is not removed by reaping cycle if channel has no TTL', function(done) {
+        it.skip('BUG: https://www.pivotaltracker.com/story/show/60730604 - item is not removed by reaping cycle if channel has no TTL', function(done) {
             var newTTL = SHORT_TTL,
                 VERBOSE = false;
 
@@ -167,7 +167,10 @@ describe('TTL Deletion', function() {
             })
         })
 
-        it('if channel TTL is updated to later value, item is not removed until that later time', function(done) {
+        // TODO: Create channel and insert data -- change TTL and insert another item. Confirm the TTL for each item is
+        //  different and is respected.
+
+        it.skip('INVALID TEST, TBD: reporpoise. if channel TTL is updated to later value, item is not removed until that later time', function(done) {
             var firstTTL = SHORT_TTL,
                 delta = 4000,
                 secondTTL = SHORT_TTL + delta,
@@ -236,6 +239,8 @@ describe('TTL Deletion', function() {
 
             })
         })
+
+
 
         // confirm updating TTL to an earlier value is respected
 

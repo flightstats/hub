@@ -121,7 +121,7 @@ describe('POST data to channel:', function(){
             expect(mainResponse.status).to.equal(gu.HTTPresponses.Created);
         });
 
-        it('body has correct structure', function() {
+        it.only('body has correct structure', function() {
             var body = mainResponse.body;
 
             expect(body.hasOwnProperty('_links')).to.be.true;
