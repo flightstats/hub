@@ -14,8 +14,6 @@ import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 import org.junit.Test;
 
-import java.util.Date;
-
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -31,7 +29,7 @@ public class CassandraValueReaderTest {
 		DataHubKey key = new DataHubKey((short) 1000);
 		byte[] data = new byte[]{'t', 'e', 's', 't', 'i', 'n'};
 		String rowKey = "the_____key___";
-		DataHubCompositeValue expected = new DataHubCompositeValue(Optional.of("text/plain"), null, data);
+		DataHubCompositeValue expected = new DataHubCompositeValue(Optional.of("text/plain"), null, data, 0L);
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		String columnName = keyRenderer.keyToString(key);
 

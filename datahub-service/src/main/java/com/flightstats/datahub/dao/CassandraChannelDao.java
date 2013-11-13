@@ -2,6 +2,7 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
+import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -24,19 +25,22 @@ public class CassandraChannelDao implements ChannelDao {
     private final ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel;
     private final LastKeyFinder lastKeyFinder;
     private final DataHubKeyGenerator keyGenerator;
+    private final TimeProvider timeProvider;
 
     @Inject
     public CassandraChannelDao(
             CassandraChannelsCollection channelsCollection,
             CassandraValueWriter cassandraValueWriter, CassandraValueReader cassandraValueReader,
             @Named("LastUpdatePerChannelMap") ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel,
-            LastKeyFinder lastKeyFinder, DataHubKeyGenerator keyGenerator) {
+            LastKeyFinder lastKeyFinder, DataHubKeyGenerator keyGenerator,
+            TimeProvider timeProvider) {
         this.channelsCollection = channelsCollection;
         this.cassandraValueWriter = cassandraValueWriter;
         this.cassandraValueReader = cassandraValueReader;
         this.lastUpdatedPerChannel = lastUpdatedPerChannel;
         this.lastKeyFinder = lastKeyFinder;
         this.keyGenerator = keyGenerator;
+        this.timeProvider = timeProvider;
     }
 
     @Override
@@ -60,7 +64,7 @@ public class CassandraChannelDao implements ChannelDao {
     @Override
     public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
         logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
-        DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, data);
+        DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, data, timeProvider.getMillis());
         int ttlSeconds = getTtlSeconds(channelName);
         ValueInsertionResult result = cassandraValueWriter.write(channelName, value, ttlSeconds);
         DataHubKey insertedKey = result.getKey();

@@ -13,11 +13,6 @@ public class DataHubCompositeValue implements Serializable {
     private final long millis;
     private final byte[] data;
 
-    public DataHubCompositeValue(Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
-        //todo - gfm - 11/8/13 - make this a TimeProvider?
-        this(contentType, contentLanguage, data, System.currentTimeMillis());
-    }
-
     public DataHubCompositeValue(Optional<String> contentType, Optional<String> contentLanguage, byte[] data, long millis) {
         this.contentType = contentType;
         this.contentLanguage = contentLanguage;

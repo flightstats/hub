@@ -70,7 +70,8 @@ public class SingleChannelResourceTest {
 	@Test
 	public void testGetChannelMetadataForKnownChannel() throws Exception {
 		DataHubKey key = new DataHubKey((short) 1000);
-        DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "blah".getBytes());
+        DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "blah".getBytes(),
+                0L);
         LinkedDataHubCompositeValue linkedDataHubCompositeValue = new LinkedDataHubCompositeValue(dataHubCompositeValue,
                 Optional.<DataHubKey>absent(), Optional.<DataHubKey>absent());
 

@@ -1,7 +1,10 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.DataHubCompositeValue;
+import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.google.common.base.Optional;
 import org.junit.Test;
 
@@ -83,7 +86,7 @@ public class DataHubServiceTest {
 		Optional<String> contentType = Optional.of("contentType");
 		Optional<String> contentEncoding = Optional.of("contentEncoding");
 		Optional<String> contentLanguage = Optional.of("contentLanguage");
-		LinkedDataHubCompositeValue compositeValue = new LinkedDataHubCompositeValue(new DataHubCompositeValue(contentType, contentLanguage, data),
+		LinkedDataHubCompositeValue compositeValue = new LinkedDataHubCompositeValue(new DataHubCompositeValue(contentType, contentLanguage, data, 0L),
 				Optional.<DataHubKey>absent(), Optional.<DataHubKey>absent());
 
 		ChannelDao channelDao = mock(ChannelDao.class);

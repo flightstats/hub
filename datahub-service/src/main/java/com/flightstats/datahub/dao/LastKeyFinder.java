@@ -48,7 +48,7 @@ public class LastKeyFinder {
             logger.warn("unable to find latest row key, presuming channel has no data " + channelName);
             return null;
         }
-        //todo - gfm - 11/11/13 - should this look at previous row keys?
+        //todo - gfm - 11/11/13 - should this look at next row keys?
         DataHubKey dataHubKey = queryForLatestInRow(latestRowKey);
         if (null == dataHubKey) {
             logger.warn("unable to find latest data hub key in row, presuming channel has no data " + channelName);

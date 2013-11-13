@@ -55,7 +55,7 @@ public class CassandraValueWriterTest {
 
 	@Test
 	public void testInsert() throws Exception {
-		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA);
+		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA, 0L);
 		ValueInsertionResult expected = new ValueInsertionResult(DATA_HUB_KEY, null);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
@@ -72,7 +72,7 @@ public class CassandraValueWriterTest {
 
 	@Test(expected = NoSuchChannelException.class)
 	public void testInsertWithMissingChannel() throws Exception {
-		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA);
+		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA, 0L);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
 		when(hector.createColumn(columnName, value, 0, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);
@@ -87,7 +87,7 @@ public class CassandraValueWriterTest {
 
 	@Test(expected = HInvalidRequestException.class)
 	public void testOtherExceptionMessages() throws Exception {
-		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA);
+		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA, 0L);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
 		when(hector.createColumn(columnName, value, 0, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);

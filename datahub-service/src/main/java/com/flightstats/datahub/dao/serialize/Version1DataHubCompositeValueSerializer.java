@@ -48,6 +48,7 @@ public class Version1DataHubCompositeValueSerializer extends AbstractSerializer<
                     break;
                 case MILLIS:
                     millis = longSerializer.fromByteBuffer(byteBuffer);
+                    break;
 
             }
         }
