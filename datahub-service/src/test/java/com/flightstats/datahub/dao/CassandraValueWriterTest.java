@@ -16,7 +16,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
@@ -57,7 +56,7 @@ public class CassandraValueWriterTest {
 	@Test
 	public void testInsert() throws Exception {
 		DataHubCompositeValue value = new DataHubCompositeValue(CONTENT_TYPE, CONTENT_LANGUAGE, DATA);
-		ValueInsertionResult expected = new ValueInsertionResult(DATA_HUB_KEY);
+		ValueInsertionResult expected = new ValueInsertionResult(DATA_HUB_KEY, null);
 		String columnName = keyRenderer.keyToString(DATA_HUB_KEY);
 
 		when(hector.createColumn(columnName, value, 0, StringSerializer.get(), DataHubCompositeValueSerializer.get())).thenReturn(column);

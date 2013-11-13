@@ -5,15 +5,11 @@ import java.util.Date;
 public class ValueInsertionResult {
 
     private final DataHubKey key;
-    private String rowKey;
+    private final String rowKey;
     private final Date date = new Date();
 
-    public ValueInsertionResult(DataHubKey key) {
-        this.key = key;
-    }
-
     public ValueInsertionResult(DataHubKey key, String rowKey) {
-        this(key);
+        this.key = key;
         this.rowKey = rowKey;
     }
 
