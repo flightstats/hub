@@ -13,7 +13,7 @@ utils.runInTestChannel(channelName, function () {
         .addHeader("Content-Type", "text/plain")
         .expectStatus(201)
         .after(function (err, res, body) {
-            var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/[A-Z,0-9]{16}$");
+            var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/1000");
             expect(res.headers['location']).toMatch(regex);
         })
         .toss();

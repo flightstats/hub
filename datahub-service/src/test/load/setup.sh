@@ -10,7 +10,4 @@ sudo apt-get install libevent-dev
 sudo apt-get install python-dev
 sudo pip install locustio
 sudo pip install https://github.com/surfly/gevent/releases/download/1.0rc3/gevent-1.0rc3.tar.gz
-
-#turn TTL off
-
-rsync -avr * ubuntu@datahub-test.cloud-east.dev:local/
+sudo pip install websocket-client

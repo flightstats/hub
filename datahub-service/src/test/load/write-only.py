@@ -31,7 +31,6 @@ class WebsiteTasks(TaskSet):
                          headers = {"Content-Type": "application/json"}
         )
         self.count += 1
-        #add get for returned url
 
 
 

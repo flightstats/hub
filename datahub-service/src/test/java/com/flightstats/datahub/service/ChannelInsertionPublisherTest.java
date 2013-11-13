@@ -8,15 +8,13 @@ import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
 import org.junit.Test;
 
-import java.util.Date;
-
 import static org.mockito.Mockito.*;
 
 public class ChannelInsertionPublisherTest {
 
 	@Test
 	public void testPublish() throws Exception {
-		DataHubKey dataHubKey = new DataHubKey(new Date(), (short) 1);
+		DataHubKey dataHubKey = new DataHubKey((short) 1000);
 
 		HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 		DataHubKeyRenderer keyRenderer = mock(DataHubKeyRenderer.class);
@@ -27,7 +25,7 @@ public class ChannelInsertionPublisherTest {
 
 		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, keyRenderer);
 
-		testClass.publish("channelName", new ValueInsertionResult(dataHubKey));
+		testClass.publish("channelName", new ValueInsertionResult(dataHubKey, null, null));
 
 		verify(iTopic).publish("key message");
 	}
