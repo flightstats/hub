@@ -9,7 +9,7 @@ import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
@@ -130,7 +130,7 @@ public class CassandraChannelDao implements ChannelDao {
             if (latest == null) {
                 latest = lastKeyFinder.queryForLatestKey(channelName);
                 if (latest != null) {
-                    setLastUpdateKey(channelName, latest);
+                    lastUpdatedPerChannel.putIfAbsent(channelName, latest);
                 }
             }
             return Optional.fromNullable(latest);

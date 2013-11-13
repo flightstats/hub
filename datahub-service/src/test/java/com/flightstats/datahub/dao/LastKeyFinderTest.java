@@ -63,7 +63,7 @@ public class LastKeyFinderTest {
         when(query1Row1.getColumnSlice()).thenReturn(query1ColumnSlice);
         when(query1ColumnSlice.getColumns()).thenReturn(Collections.<HColumn<String, DataHubCompositeValue>>emptyList());
 
-        LastKeyFinder testClass = new LastKeyFinder(channelsCollection, hector, keyRenderer, cassandraConnector, null);
+        LastKeyFinder testClass = new LastKeyFinder(channelsCollection, hector, keyRenderer, cassandraConnector);
 
         assertNull(testClass.queryForLatestKey(CHANNEL_NAME));
     }
@@ -105,7 +105,7 @@ public class LastKeyFinderTest {
 		when(query1ColumnSlice.getColumns()).thenReturn(Arrays.<HColumn<String, DataHubCompositeValue>>asList(col1));
         when(col1.getName()).thenReturn(keyRenderer.keyToString(expected));
 
-		LastKeyFinder testClass = new LastKeyFinder(channelsCollection, hector, keyRenderer, cassandraConnector, null);
+		LastKeyFinder testClass = new LastKeyFinder(channelsCollection, hector, keyRenderer, cassandraConnector);
 
         assertEquals(expected, testClass.queryForLatestKey(CHANNEL_NAME));
 	}
