@@ -63,10 +63,13 @@ public class CassandraChannelDaoTest {
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         TimeProvider timeProvider = mock(TimeProvider.class);
         LastKeyFinder lastUpdatedKeyFinder = mock(LastKeyFinder.class);
+        ChannelConfiguration channelConfig = mock(ChannelConfiguration.class);
 
         // WHEN
+        when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+        when(channelConfig.getTtlMillis()).thenReturn(millis);
         when(timeProvider.getMillis()).thenReturn(millis);
-        when(inserter.write(channelName, value, 0)).thenReturn(new ValueInsertionResult(key, null, null));
+        when(inserter.write(channelName, value, Optional.of((int)millis/1000))).thenReturn(new ValueInsertionResult(key, null, null));
         when(lastUpdatedKeyFinder.queryForLatestKey(channelName)).thenReturn(lastUpdateKey);
         CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, reader, lastUpdatedMap, lastUpdatedKeyFinder, null,
                 timeProvider);
@@ -93,9 +96,12 @@ public class CassandraChannelDaoTest {
         CassandraValueReader reader = mock(CassandraValueReader.class);
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         TimeProvider timeProvider = mock(TimeProvider.class);
+        ChannelConfiguration channelConfig = mock(ChannelConfiguration.class);
 
         // WHEN
-        when(inserter.write(channelName, value, 0)).thenReturn(new ValueInsertionResult(key, null, null));
+        when(channelsCollection.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+        when(channelConfig.getTtlMillis()).thenReturn(millis);
+        when(inserter.write(channelName, value, Optional.of((int) millis / 1000))).thenReturn(new ValueInsertionResult(key, null, null));
         when(timeProvider.getMillis()).thenReturn(millis);
         CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, reader, lastUpdatedMap, null, null, timeProvider) {
             @Override
