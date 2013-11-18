@@ -30,8 +30,7 @@ public class CassandraValueWriterTest {
 	public static final DataHubKey DATA_HUB_KEY = new DataHubKey((short) 1033);
 	public static final String ROW_KEY = "a super key for this row";
 	public static final Optional<String> CONTENT_TYPE = Optional.of("text/plain");
-	public static final Optional<String> CONTENT_ENCODING = Optional.of("gzip");
-	public static final Optional<String> CONTENT_LANGUAGE = Optional.absent();
+    public static final Optional<String> CONTENT_LANGUAGE = Optional.absent();
 
 	private CassandraConnector connector;
 	private HectorFactoryWrapper hector;
@@ -65,7 +64,7 @@ public class CassandraValueWriterTest {
 		when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(DATA_HUB_KEY);
 
 		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
-		ValueInsertionResult result = testClass.write(CHANNEL_NAME, value, 0);
+		ValueInsertionResult result = testClass.write(CHANNEL_NAME, value, Optional.of(0));
 
 		assertEquals(expected, result);
 		verify(mutator).insert(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, column);
@@ -83,7 +82,7 @@ public class CassandraValueWriterTest {
                 new HInvalidRequestException("You must have an unconfigured columnfamily in your soup"));
 
 		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
-		testClass.write(CHANNEL_NAME, value, 0);
+		testClass.write(CHANNEL_NAME, value, Optional.of(0));
 	}
 
 	@Test(expected = HInvalidRequestException.class)
@@ -98,7 +97,7 @@ public class CassandraValueWriterTest {
                 new HInvalidRequestException("Clown-based-tamale"));            //Not the expected verbage
 
 		CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
-		testClass.write(CHANNEL_NAME, value, 0);
+		testClass.write(CHANNEL_NAME, value, Optional.of(0));
 	}
 
 	@Test
@@ -115,4 +114,20 @@ public class CassandraValueWriterTest {
 		verify(mutator, times(2)).addDeletion(ROW_KEY, DATA_HUB_COLUMN_FAMILY_NAME, columnName, StringSerializer.get());
 		verify(mutator).execute();
 	}
+
+    @Test
+    public void testWriteWithNullTtl() throws Exception {
+    	//GIVEN
+        DataHubKey key = new DataHubKey(902100000L);
+        String columnName = keyRenderer.keyToString(key);
+        CassandraValueWriter testClass = new CassandraValueWriter(connector, hector, rowStrategy, keyGenerator, keyRenderer, mock(TimeProvider.class));
+        DataHubCompositeValue value = mock(DataHubCompositeValue.class);
+        //WHEN
+        when(connector.buildMutator(StringSerializer.get())).thenReturn(mutator);
+        when(keyGenerator.newKey(CHANNEL_NAME)).thenReturn(key);
+        testClass.write(CHANNEL_NAME, value, Optional.<Integer>absent());
+
+        //THEN
+    	verify(hector).createColumn(columnName, value, StringSerializer.get(), DataHubCompositeValueSerializer.get());
+    }
 }

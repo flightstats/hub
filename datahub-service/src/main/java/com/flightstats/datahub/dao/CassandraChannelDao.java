@@ -65,7 +65,7 @@ public class CassandraChannelDao implements ChannelDao {
     public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
         logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, data, timeProvider.getMillis());
-        int ttlSeconds = getTtlSeconds(channelName);
+        Optional<Integer> ttlSeconds = getTtlSeconds(channelName);
         ValueInsertionResult result = cassandraValueWriter.write(channelName, value, ttlSeconds);
         DataHubKey insertedKey = result.getKey();
         setLastUpdateKey(channelName, insertedKey);
@@ -75,12 +75,13 @@ public class CassandraChannelDao implements ChannelDao {
         return result;
     }
 
-    private int getTtlSeconds(String channelName) {
+    private Optional<Integer> getTtlSeconds(String channelName) {
         ChannelConfiguration channelConfiguration = getChannelConfiguration(channelName);
         if (null == channelConfiguration) {
-            return 0;
+            return Optional.absent();
         }
-        return (int) (channelConfiguration.getTtlMillis() / 1000);
+        Long ttlMillis = channelConfiguration.getTtlMillis();
+        return ttlMillis == null ? Optional.<Integer>absent() : Optional.of((int) (ttlMillis / 1000));
     }
 
     @Override
