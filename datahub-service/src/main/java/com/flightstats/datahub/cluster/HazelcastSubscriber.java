@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HazelcastSubscriber implements MessageListener<String> {
 
     private final static Logger logger = LoggerFactory.getLogger(HazelcastSubscriber.class);
-    static final short BUFFER_SIZE = (short) 1000;
 
     private final Consumer<String> consumer;
     private final DataHubKeyRenderer keyRenderer;

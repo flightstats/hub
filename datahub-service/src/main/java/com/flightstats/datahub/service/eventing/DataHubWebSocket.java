@@ -50,8 +50,8 @@ public class DataHubWebSocket {
 	public void onConnect(final Session session) {
 		UpgradeRequest upgradeRequest = session.getUpgradeRequest();
 		URI requestUri = upgradeRequest.getRequestURI();
-		logger.info("New client connection: " + remoteAddress + " for " + requestUri);
-		remoteAddress = session.getRemoteAddress().toString();
+        remoteAddress = session.getRemoteAddress().toString();
+        logger.info("New client connection: " + remoteAddress + " for " + requestUri);
 		String webSocketUri = requestUri.toString();
 		String channelUri = webSocketUri.substring(0, webSocketUri.length() - "/ws".length());
 		String host = upgradeRequest.getHeader("Host");
