@@ -123,7 +123,7 @@ describe('HEAD on data tests:', function() {
             });
     });
 
-    it.only('HEAD on a fake item URI returns 404', function(done) {
+    it('HEAD on a fake item URI returns 404', function(done) {
         var iSlash = secondValueUri.lastIndexOf('/');
         uri = secondValueUri.substring(0,iSlash) + '0'+ secondValueUri.substring(iSlash + 1);
         gu.debugLog('uri: ' + uri)
