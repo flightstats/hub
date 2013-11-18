@@ -10,15 +10,19 @@ import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
+import java.util.concurrent.Callable;
+
 public class DataHubService {
 	private final ChannelDao channelDao;
 	private final ChannelInsertionPublisher channelInsertionPublisher;
+    private ChannelLockExecutor channelLockExecutor;
 
-	@Inject
-	public DataHubService(ChannelDao channelDao, ChannelInsertionPublisher channelInsertionPublisher) {
+    @Inject
+	public DataHubService(ChannelDao channelDao, ChannelInsertionPublisher channelInsertionPublisher, ChannelLockExecutor channelLockExecutor) {
 		this.channelDao = channelDao;
 		this.channelInsertionPublisher = channelInsertionPublisher;
-	}
+        this.channelLockExecutor = channelLockExecutor;
+    }
 
 	public Iterable<ChannelConfiguration> getChannels() {
 		return channelDao.getChannels();
@@ -40,11 +44,17 @@ public class DataHubService {
 		return channelDao.findLastUpdatedKey(channelName);
 	}
 
-	public ValueInsertionResult insert(String channelName, byte[] data, Optional<String> contentType, Optional<String> contentLanguage) throws Exception {
-        ValueInsertionResult result = channelDao.insert(channelName, contentType, contentLanguage, data);
-        channelInsertionPublisher.publish(channelName, result);
-        return result;
-	}
+    public ValueInsertionResult insert(final String channelName, final byte[] data, final Optional<String> contentType,
+                                       final Optional<String> contentLanguage) throws Exception {
+        return channelLockExecutor.execute(channelName, new Callable<ValueInsertionResult>() {
+            @Override
+            public ValueInsertionResult call() throws Exception {
+                ValueInsertionResult result = channelDao.insert(channelName, contentType, contentLanguage, data);
+                channelInsertionPublisher.publish(channelName, result);
+                return result;
+            }
+        });
+    }
 
 	public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
 		return channelDao.getValue(channelName, key);

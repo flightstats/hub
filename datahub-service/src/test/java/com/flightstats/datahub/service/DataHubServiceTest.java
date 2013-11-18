@@ -1,16 +1,15 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubCompositeValue;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
+import com.flightstats.datahub.model.*;
 import com.google.common.base.Optional;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -27,7 +26,7 @@ public class DataHubServiceTest {
 		ChannelDao channelDao = mock(ChannelDao.class);
 		when(channelDao.getChannels()).thenReturn(channelConfigurations);
 
-		DataHubService testClass = new DataHubService(channelDao, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 
 		Iterable<ChannelConfiguration> channels = testClass.getChannels();
 		assertEquals(channelConfigurations, channels);
@@ -37,7 +36,7 @@ public class DataHubServiceTest {
 	public void testCreateChannel() throws Exception {
 		ChannelDao channelDao = mock(ChannelDao.class);
 
-		DataHubService testClass = new DataHubService(channelDao, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 
 		testClass.createChannel("channelName", 1000L);
 
@@ -49,7 +48,7 @@ public class DataHubServiceTest {
 		ChannelDao channelDao = mock(ChannelDao.class);
 		when(channelDao.channelExists("channelName")).thenReturn(true);
 
-		DataHubService testClass = new DataHubService(channelDao, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 		boolean result = testClass.channelExists("channelName");
 		assertTrue(result);
 	}
@@ -61,7 +60,7 @@ public class DataHubServiceTest {
 		ChannelDao channelDao = mock(ChannelDao.class);
 		when(channelDao.getChannelConfiguration("channelName")).thenReturn(channelConfiguration);
 
-		DataHubService testClass = new DataHubService(channelDao, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 		ChannelConfiguration result = testClass.getChannelConfiguration("channelName");
 		assertEquals(channelConfiguration, result);
 	}
@@ -73,11 +72,41 @@ public class DataHubServiceTest {
 		ChannelDao channelDao = mock(ChannelDao.class);
 		when(channelDao.findLastUpdatedKey("channelName")).thenReturn(Optional.of(dataHubKey));
 
-		DataHubService testClass = new DataHubService(channelDao, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 
 		Optional<DataHubKey> result = testClass.findLastUpdatedKey("channelName");
 		assertEquals(dataHubKey, result.get());
 	}
+
+    @Test
+    public void testInsert() throws Exception {
+        String channelName = "channelName";
+        byte[] data = {'h', 'e', 'l', 'l', 'o'};
+        Optional<String> contentType = Optional.of("contentType");
+        Optional<String> contentLanguage = Optional.of("contentLanguage");
+        DataHubKey dataHubKey = new DataHubKey(300);
+        final AtomicInteger callCount = new AtomicInteger(0);
+        ChannelDao channelDao = mock(ChannelDao.class);
+        ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(null) {
+            @Override
+            public <T> T execute(String channelName, Callable<T> callable) throws Exception {
+                callCount.incrementAndGet();
+                return callable.call();
+            }
+        };
+        ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
+
+        ValueInsertionResult valueInsertionResult = new ValueInsertionResult(dataHubKey, "stuff", new Date());
+        when(channelDao.insert(channelName, contentType, contentLanguage, data)).thenReturn(valueInsertionResult);
+
+        DataHubService dataHubService = new DataHubService(channelDao, channelInsertionPublisher, channelLockExecutor);
+        ValueInsertionResult result = dataHubService.insert(channelName, data, contentType, contentLanguage);
+
+        assertEquals(dataHubKey, result.getKey());
+        verify(channelDao).insert(channelName, contentType, contentLanguage, data);
+        verify(channelInsertionPublisher).publish(channelName, valueInsertionResult);
+        assertEquals(1, callCount.get());
+    }
 
 	@Test
 	public void testGetValue() throws Exception {
@@ -91,7 +120,7 @@ public class DataHubServiceTest {
 
 		ChannelDao channelDao = mock(ChannelDao.class);
 		when(channelDao.getValue("channelName", dataHubKey)).thenReturn(Optional.of(compositeValue));
-		DataHubService testClass = new DataHubService(channelDao, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 
 		Optional<LinkedDataHubCompositeValue> result = testClass.getValue("channelName", dataHubKey);
 		assertEquals(compositeValue, result.get());
@@ -102,7 +131,7 @@ public class DataHubServiceTest {
 		ChannelConfiguration channelConfiguration = new ChannelConfiguration("channel1", new Date(), 1000L);
 
 		ChannelDao channelDao = mock(ChannelDao.class);
-		DataHubService testClass = new DataHubService(channelDao, null);
+		DataHubService testClass = new DataHubService(channelDao, null, null);
 
 		testClass.updateChannelMetadata(channelConfiguration);
 		verify(channelDao).updateChannelMetadata(channelConfiguration);
