@@ -396,7 +396,13 @@ describe('Load tests - POST data:', function(){
         it('POST 16 MB file to channel', function(done) {
             this.timeout(240000);
 
-            postAndConfirmBigFile(MY_16MB_FILE, done);
+            var payload = fs.readFileSync(MY_16MB_FILE, "utf8");
+
+            dhh.postData({channelUri: channelUri, data: payload}, function(res, uri) {
+                expect(gu.HTTPresponses.Request_Entity_Too_Large).to.equal(res.status)
+
+                done();
+            });
         });
     });
 
