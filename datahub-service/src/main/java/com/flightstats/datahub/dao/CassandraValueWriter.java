@@ -7,6 +7,7 @@ import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.flightstats.datahub.util.TimeProvider;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -37,14 +38,13 @@ public class CassandraValueWriter {
         this.timeProvider = timeProvider;
     }
 
-	public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue, int ttlSeconds) {
+	public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue, Optional<Integer> ttlSeconds) {
 		Mutator<String> mutator = connector.buildMutator(StringSerializer.get());
 
 		DataHubKey key = keyGenerator.newKey(channelName);
 
 		String columnName = keyRenderer.keyToString(key);
-		HColumn<String, DataHubCompositeValue> column = hector.createColumn(columnName, columnValue, ttlSeconds, StringSerializer.get(),
-				DataHubCompositeValueSerializer.get());
+        HColumn<String, DataHubCompositeValue> column = createColumn(columnValue, ttlSeconds, columnName);
 
 		String rowKey = rowKeyStrategy.buildKey(channelName, key);
 
@@ -56,7 +56,16 @@ public class CassandraValueWriter {
 		return new ValueInsertionResult(key, rowKey, timeProvider.getDate());
 	}
 
-	public void delete(String channelName, Collection<DataHubKey> keys) {
+    private HColumn<String, DataHubCompositeValue> createColumn(DataHubCompositeValue columnValue, Optional<Integer> ttlSeconds, String columnName) {
+        if (ttlSeconds.isPresent()) {
+            return hector.createColumn(columnName, columnValue, ttlSeconds.get(), StringSerializer.get(),
+                    DataHubCompositeValueSerializer.get());
+        }
+        return hector.createColumn(columnName, columnValue, StringSerializer.get(),
+                DataHubCompositeValueSerializer.get());
+    }
+
+    public void delete(String channelName, Collection<DataHubKey> keys) {
 		if ( keys.isEmpty() ) return;
 
 		Mutator<String> mutator = connector.buildMutator(StringSerializer.get());
