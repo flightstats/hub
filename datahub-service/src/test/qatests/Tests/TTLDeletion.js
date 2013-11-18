@@ -168,7 +168,7 @@ describe('TTL Deletion', function() {
             })
         })
 
-        it.skip('BUG: https://www.pivotaltracker.com/story/show/60730604 - item is not removed by reaping cycle if channel has no TTL', function(done) {
+        it('item is not removed by reaping cycle if channel has no TTL', function(done) {
             var newTTL = SHORT_TTL,
                 VERBOSE = false;
 
