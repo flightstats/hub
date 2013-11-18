@@ -133,7 +133,7 @@ describe('Channel Subscription:', function() {
 
     });
 
-    it.only('Acceptance: subscription works and updates are sent in order', function(done) {
+    it('Acceptance: subscription works and updates are sent in order', function(done) {
         var socket,
             uriA,
             uriB;
