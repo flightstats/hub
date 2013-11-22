@@ -3,6 +3,7 @@ package com.flightstats.datahub.service;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.app.config.PATCH;
+import com.flightstats.datahub.app.config.metrics.PerChannelThroughput;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.model.*;
 import com.flightstats.rest.Linked;
@@ -107,6 +108,7 @@ public class SingleChannelResource {
     @Timed(name = "all-channels.insert")
     @ExceptionMetered
     @PerChannelTimed(operationName = "insert", channelNamePathParameter = "channelName")
+    @PerChannelThroughput(operationName = "insertBytes", channelNamePathParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage,
