@@ -57,7 +57,7 @@ public class GuiceContextListenerFactory {
     public static final String MEMORY_BACKING_STORY_TAG = "memory";
     public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
 
-    public static GuiceServletContextListener construct(
+    public static DataHubGuiceServletContextListener construct(
             @NotNull final Properties properties) throws ConstraintException {
         GraphiteConfig graphiteConfig = new GraphiteConfigImpl(properties);
 
@@ -136,7 +136,7 @@ public class GuiceContextListenerFactory {
         }
 
         @Override
-        protected Injector getInjector() {
+        public Injector getInjector() {
             return Guice.createInjector(modules);
         }
     }
