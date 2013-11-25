@@ -1,63 +1,51 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.dao.serialize.DataHubCompositeValueSerializer;
-import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.beans.HColumn;
-import me.prettyprint.hector.api.beans.OrderedRows;
-import me.prettyprint.hector.api.beans.Row;
-import me.prettyprint.hector.api.query.QueryResult;
-import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
-import static com.flightstats.datahub.dao.CassandraChannelsCollection.DATA_HUB_COLUMN_FAMILY_NAME;
-
+/**
+ * If we switch to a persistent store for keys, this can go away
+ */
 public class LastKeyFinder {
 
     private final static Logger logger = LoggerFactory.getLogger(LastKeyFinder.class);
 
-    private final HectorFactoryWrapper hector;
 	private final CassandraChannelsCollection channelsCollection;
     private final DataHubKeyRenderer keyRenderer;
-    private final CassandraConnector connector;
 
     @Inject
-    public LastKeyFinder(CassandraChannelsCollection channelsCollection, HectorFactoryWrapper hector,
-                         DataHubKeyRenderer keyRenderer,
-                         CassandraConnector connector) {
-        this.hector = hector;
+    public LastKeyFinder(CassandraChannelsCollection channelsCollection,
+                         DataHubKeyRenderer keyRenderer) {
         this.channelsCollection = channelsCollection;
         this.keyRenderer = keyRenderer;
-        this.connector = connector;
     }
 
     /**
      * This presumes that the latest DataHubKey is not in the cache, and therefore the entire cluster
      * must have been stopped, losing state in Hazelcast.
+     * todo - gfm - 11/25/13 - this currently isn't implemented in cql, may go away, either by:
+     * 1 - switching to Zookeeper for sequence generation
+     * 2 - by querying for latest values with cql.
      */
     public DataHubKey queryForLatestKey(String channelName) {
-        String latestRowKey = channelsCollection.getLatestRowKey(channelName);
+        /*String latestRowKey = channelsCollection.getLatestRowKey(channelName);
         if (latestRowKey == null) {
             logger.warn("unable to find latest row key, presuming channel has no data " + channelName);
             return null;
         }
-        //todo - gfm - 11/11/13 - should this look at next row keys?
         DataHubKey dataHubKey = queryForLatestInRow(latestRowKey);
         if (null == dataHubKey) {
             logger.warn("unable to find latest data hub key in row, presuming channel has no data " + channelName);
             return null;
         }
-        return dataHubKey;
+        return dataHubKey;*/
+        return null;
     }
 
-    private DataHubKey queryForLatestInRow(String rowKey) {
+    /*private DataHubKey queryForLatestInRow(String rowKey) {
         Keyspace keyspace = connector.getKeyspace();
         RangeSlicesQuery<String, String, DataHubCompositeValue> query = hector.createRangeSlicesQuery(
                 keyspace, StringSerializer.get(), StringSerializer.get(), DataHubCompositeValueSerializer.get());
@@ -81,5 +69,5 @@ public class LastKeyFinder {
         }
         String columnName = columns.get(0).getName();
         return keyRenderer.fromString(columnName).get();
-    }
+    }*/
 }
