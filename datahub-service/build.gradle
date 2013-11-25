@@ -85,7 +85,6 @@ task integrationTests() << {
 }
 
 dependencies {
-    compile group: 'org.hectorclient', name: 'hector-core', version: '1.+'
     compile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.0.3.v20130506'
     compile group: 'org.eclipse.jetty', name: 'jetty-webapp', version: '9.0.3.v20130506'
     compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: '9.0.3.v20130506'
@@ -134,6 +133,8 @@ dependencies {
     compile group: "com.flightstats.common", name: "jerseyguice", version: "3.+"
     compile group: 'com.intellij', name: 'annotations', version: '7.0.3'
     compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
+    //for cassandra 1.2.x, use 1.04.  for cass 2.x, use 2.0.0-rc1
+    compile group: 'com.datastax.cassandra', name: 'cassandra-driver-core', version: '1.0.4'
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
