@@ -52,19 +52,16 @@ public class DataHubWebSocket {
 		URI requestUri = upgradeRequest.getRequestURI();
         remoteAddress = session.getRemoteAddress().toString();
         logger.info("New client connection: " + remoteAddress + " for " + requestUri);
-		String webSocketUri = requestUri.toString();
-		String channelUri = webSocketUri.substring(0, webSocketUri.length() - "/ws".length());
 		String host = upgradeRequest.getHeader("Host");
-
+        channelName = channelNameExtractor.extractChannelName(requestUri);
 		//todo this is totally hacky. Is there no way to get the full request URI?
-		channelUri = "http://" + host + channelUri;
+        String channelUri = "http://" + host + "/channel/" + channelName;
 		try {
 			endpointSender = new JettyWebSocketEndpointSender(remoteAddress, session.getRemote(), linkBuilder, keyRenderer, new URI(channelUri));
 		} catch (URISyntaxException e) {
 			//this should really never happen.  stupid checked exceptions!
 			throw new RuntimeException(e);
 		}
-		channelName = channelNameExtractor.extractChannelName(requestUri);
 		subscriptions.subscribe(channelName, endpointSender);
 	}
 

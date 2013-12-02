@@ -3,8 +3,8 @@ package com.flightstats.datahub.cluster;
 import com.flightstats.datahub.dao.LastKeyFinder;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
-import com.hazelcast.core.AtomicNumber;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IAtomicLong;
 import org.junit.Test;
 
 import java.nio.channels.AlreadyBoundException;
@@ -22,12 +22,12 @@ public class HazelcastClusterKeyGeneratorTest {
 
         HazelcastInstance hazelcast = mock(HazelcastInstance.class);
         ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
-        AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
+        IAtomicLong atomicSeqNumber = mock(IAtomicLong.class);
 
         HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor, null);
 
         //WHEN
-        when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
+        when(hazelcast.getAtomicLong("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(1000L, 1001L);
 
         //THEN
@@ -42,13 +42,13 @@ public class HazelcastClusterKeyGeneratorTest {
         String channelName = "missingKey";
 
         HazelcastInstance hazelcast = mock(HazelcastInstance.class);
-        AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
+        IAtomicLong atomicSeqNumber = mock(IAtomicLong.class);
         LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
         ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 
         HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor, lastKeyFinder);
 
-        when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName)).thenReturn(atomicSeqNumber);
+        when(hazelcast.getAtomicLong("CHANNEL_NAME_SEQ:" + channelName)).thenReturn(atomicSeqNumber);
         when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(null);
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L).thenReturn(1000L);
         when(atomicSeqNumber.get()).thenReturn(0L);
@@ -65,13 +65,13 @@ public class HazelcastClusterKeyGeneratorTest {
         DataHubKey expectedKey = latestKey.getNext().get();
 
         HazelcastInstance hazelcast = mock(HazelcastInstance.class);
-        AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
+        IAtomicLong atomicSeqNumber = mock(IAtomicLong.class);
         LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
         ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 
         HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor, lastKeyFinder);
 
-        when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName)).thenReturn(atomicSeqNumber);
+        when(hazelcast.getAtomicLong("CHANNEL_NAME_SEQ:" + channelName)).thenReturn(atomicSeqNumber);
         when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(latestKey);
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(1L).thenReturn(expectedKey.getSequence());
         when(atomicSeqNumber.get()).thenReturn(0L);
@@ -90,13 +90,13 @@ public class HazelcastClusterKeyGeneratorTest {
         DataHubKey expectedKey = latestKey.getNext().get();
 
         HazelcastInstance hazelcast = mock(HazelcastInstance.class);
-        AtomicNumber atomicSeqNumber = mock(AtomicNumber.class);
+        IAtomicLong atomicSeqNumber = mock(IAtomicLong.class);
         LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
         ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 
         HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor, lastKeyFinder);
 
-        when(hazelcast.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName)).thenReturn(atomicSeqNumber);
+        when(hazelcast.getAtomicLong("CHANNEL_NAME_SEQ:" + channelName)).thenReturn(atomicSeqNumber);
         when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(latestKey);
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(1L).thenReturn(expectedKey.getSequence());
         when(atomicSeqNumber.get()).thenReturn(expectedKey.getSequence());

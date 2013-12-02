@@ -1,5 +1,6 @@
 package com.flightstats.datahub.dao;
 
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
@@ -48,7 +49,7 @@ public class CqlValueOperations {
         PreparedStatement statement = session.prepare("INSERT INTO values" +
                 " (rowkey, sequence, data, millis, contentType, contentLanguage)" +
                 "VALUES (?, ?, ?, ?, ?, ?) USING TTL " + ttl);
-
+        statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
         session.execute(statement.bind(rowKey, key.getSequence(), ByteBuffer.wrap(columnValue.getData()), columnValue.getMillis(),
                 columnValue.getContentType().orNull(), columnValue.getContentLanguage().orNull()));
 		return new ValueInsertionResult(key, rowKey, timeProvider.getDate());
@@ -62,6 +63,7 @@ public class CqlValueOperations {
 
         String rowKey = rowKeyStrategy.buildKey(channelName, key);
         PreparedStatement statement = session.prepare("SELECT * FROM values WHERE rowkey = ? and sequence = ?");
+        statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
         Row row = session.execute(statement.bind(rowKey, key.getSequence())).one();
         //todo - gfm - 11/22/13 - test null
         if (row == null) {

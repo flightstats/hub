@@ -2,10 +2,10 @@ package com.flightstats.datahub.app.config.metrics;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.google.common.base.Strings;
 import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.server.impl.application.WebApplicationContext;
 import com.sun.jersey.spi.dispatch.RequestDispatcher;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +38,7 @@ class PerChannelThroughputRequestDispatcher implements RequestDispatcher {
         Meter meter = registry.meter(metricName);
         try {
             String contentLength = context.getRequest().getHeaderValue(HttpHeaders.CONTENT_LENGTH);
-            if (StringUtils.isNotBlank(contentLength)) {
+            if (!Strings.isNullOrEmpty(contentLength)) {
                 meter.mark(Long.parseLong(contentLength));
             }
         } catch (Exception e) {
