@@ -6,8 +6,8 @@ import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.google.inject.Inject;
-import com.hazelcast.core.AtomicNumber;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IAtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,7 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
             return channelLockExecutor.execute(channelName, new Callable<DataHubKey>() {
                 @Override
                 public DataHubKey call() throws Exception {
-                    AtomicNumber sequenceNumber = getAtomicNumber(channelName);
+                    IAtomicLong sequenceNumber = getAtomicNumber(channelName);
                     if (isValidSequence(sequenceNumber.get())) {
                         return nextDataHubKey(channelName);
                     }
@@ -86,7 +86,7 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
         getAtomicNumber(channelName).compareAndSet(0, SequenceRowKeyStrategy.INCREMENT);
     }
 
-    private AtomicNumber getAtomicNumber(String channelName) {
-        return hazelcastInstance.getAtomicNumber("CHANNEL_NAME_SEQ:" + channelName);
+    private IAtomicLong getAtomicNumber(String channelName) {
+        return hazelcastInstance.getAtomicLong("CHANNEL_NAME_SEQ:" + channelName);
     }
 }

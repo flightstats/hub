@@ -21,12 +21,12 @@ public class ChannelInsertionPublisher {
 		getTopicForChannel(channelName).publish(keyRenderer.keyToString(result.getKey()));
 	}
 
-	public void subscribe(String channelName, MessageListener<String> messageListener) {
-		getTopicForChannel(channelName).addMessageListener(messageListener);
-	}
+	public String subscribe(String channelName, MessageListener<String> messageListener) {
+        return getTopicForChannel(channelName).addMessageListener(messageListener);
+    }
 
-	public void unsubscribe(String channelName, MessageListener<String> messageListener) {
-		getTopicForChannel(channelName).removeMessageListener(messageListener);
+	public void unsubscribe(String channelName, String registrationId) {
+		getTopicForChannel(channelName).removeMessageListener(registrationId);
 	}
 
 	private ITopic<String> getTopicForChannel(String channelName) {

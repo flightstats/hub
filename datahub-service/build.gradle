@@ -85,29 +85,29 @@ task integrationTests() << {
 }
 
 dependencies {
-    compile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.0.3.v20130506'
-    compile group: 'org.eclipse.jetty', name: 'jetty-webapp', version: '9.0.3.v20130506'
-    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: '9.0.3.v20130506'
-    compile group: 'org.eclipse.jetty', name: 'jetty-util', version: '9.0.3.v20130506'
-    compile group: 'org.eclipse.jetty', name: 'jetty-http', version: '9.0.3.v20130506'
-    compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.0.3.v20130506'
-    compile group: 'org.eclipse.jetty', name: 'jetty-security', version: '9.0.3.v20130506'
-    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-server', version: '9.0.3.v20130506'
-    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-common', version: '9.0.3.v20130506'
+    compile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.0.6.v20130930'
+    compile group: 'org.eclipse.jetty', name: 'jetty-webapp', version: '9.0.6.v20130930'
+    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: '9.0.6.v20130930'
+    compile group: 'org.eclipse.jetty', name: 'jetty-util', version: '9.0.6.v20130930'
+    compile group: 'org.eclipse.jetty', name: 'jetty-http', version: '9.0.6.v20130930'
+    compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.0.6.v20130930'
+    compile group: 'org.eclipse.jetty', name: 'jetty-security', version: '9.0.6.v20130930'
+    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-server', version: '9.0.6.v20130930'
+    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-common', version: '9.0.6.v20130930'
     compile group: 'com.sun.jersey', name: 'jersey-core', version: '1.17.1'
     compile group: 'com.sun.jersey', name: 'jersey-json', version: '1.17.1'
     compile group: 'com.sun.jersey', name: 'jersey-servlet', version: '1.17.1'
     compile group: 'com.sun.jersey', name: 'jersey-server', version: '1.17.1'
     compile group: 'com.sun.jersey.contribs', name: 'jersey-guice', version: '1.17'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.1.+'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.1.+'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.1.+'
-    compile group: 'com.fasterxml.jackson.jaxrs', name: 'jackson-jaxrs-json-provider', version: '2.1.+'
-    compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: '2.1.1'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.2.+'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.2.+'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.2.+'
+    compile group: 'com.fasterxml.jackson.jaxrs', name: 'jackson-jaxrs-json-provider', version: '2.2.+'
+    compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: '2.2.+'
     compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.0.1'
     compile group: 'javax.ws.rs', name: 'jsr311-api', version: '1.1.1'
-    compile group: 'asm', name: 'asm', version: '3.1'
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.7'
+    compile group: 'asm', name: 'asm', version: '3.3.1'
+    compile group: 'commons-codec', name: 'commons-codec', version: '1.8'
     compile group: 'org.glassfish', name: 'javax.servlet', version: '3.0'
     compile group: 'com.google.inject', name: 'guice', version: '3.0'
     compile group: 'com.google.inject.extensions', name: 'guice-servlet', version: '3.0'
@@ -118,23 +118,23 @@ dependencies {
     compile group: "ch.qos.logback", name: "logback-classic", version: "1.0.13"
     compile group: "org.slf4j", name: "slf4j-api", version: "1.7.2"
     compile group: "org.slf4j", name: "jul-to-slf4j", version: "1.7.2"
-    compile group: "com.codahale.metrics", name: "metrics-core", version: "3.0.0-BETA2"
-    compile group: "com.codahale.metrics", name: "metrics-graphite", version: "3.0.0-BETA2"
-    compile group: "com.codahale.metrics", name: "metrics-servlets", version: "3.0.0-BETA2"
-    compile group: "com.codahale.metrics", name: "metrics-jersey", version: "3.0.0-BETA2"
-    compile group: "com.codahale.metrics", name: "metrics-logback", version: "3.0.0-BETA2"
-    compile group: "com.codahale.metrics", name: "metrics-jvm", version: "3.0.0-BETA2"
-    compile group: "com.yammer.metrics", name: "metrics-jetty", version: "2.2.0"
-    compile group: "com.hazelcast", name: "hazelcast", version: "2.6"
-    compile group: "com.hazelcast", name: "hazelcast-client", version: "2.6"
+    compile group: "com.codahale.metrics", name: "metrics-core", version: "3.0.1"
+    compile group: "com.codahale.metrics", name: "metrics-graphite", version: "3.0.1"
+    compile group: "com.codahale.metrics", name: "metrics-servlets", version: "3.0.1"
+    compile group: "com.codahale.metrics", name: "metrics-jersey", version: "3.0.1"
+    compile group: "com.codahale.metrics", name: "metrics-logback", version: "3.0.1"
+    compile group: "com.codahale.metrics", name: "metrics-jvm", version: "3.0.1"
+    compile 'com.codahale.metrics:metrics-jetty9:3.0.1'
+    compile group: "com.hazelcast", name: "hazelcast", version: "3.1.1"
+    compile group: "com.hazelcast", name: "hazelcast-client", version: "3.1.1"
     compile group: "com.flightstats.common", name: "util", version: "3.+"
     compile group: "com.flightstats.common", name: "jaxb", version: "3.+"
     compile group: "com.flightstats.common", name: "rest", version: "3.+"
     compile group: "com.flightstats.common", name: "jerseyguice", version: "3.+"
     compile group: 'com.intellij', name: 'annotations', version: '7.0.3'
     compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
-    //for cassandra 1.2.x, use 1.04.  for cass 2.x, use 2.0.0-rc1
-    compile group: 'com.datastax.cassandra', name: 'cassandra-driver-core', version: '1.0.4'
+    //for cassandra 1.2.x, use 1.0.4  for cass 2.x, use 2.0.0-rc1
+    compile 'com.datastax.cassandra:cassandra-driver-core:1.0.4'
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
