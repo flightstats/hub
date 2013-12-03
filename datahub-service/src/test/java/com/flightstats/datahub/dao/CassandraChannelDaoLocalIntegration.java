@@ -34,6 +34,7 @@ public class CassandraChannelDaoLocalIntegration {
         properties.put("cassandra.host", "127.0.0.1");
         properties.put("cassandra.port", "9142");
         properties.put("cassandra.replication_factor", "1");
+        properties.put("cassandra.gc_grace_seconds", "1");
         properties.put("backing.store", "cassandra");
         properties.put("hazelcast.conf.xml", "");
         injector = GuiceContextListenerFactory.construct(properties).getInjector();
