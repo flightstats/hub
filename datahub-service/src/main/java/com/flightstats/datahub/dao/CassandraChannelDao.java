@@ -6,22 +6,18 @@ import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.flightstats.datahub.dao.CassandraUtils.maybePromoteToNoSuchChannel;
-
 public class CassandraChannelDao implements ChannelDao {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelDao.class);
 
     private final CassandraChannelsCollection channelsCollection;
-    private final CassandraValueWriter cassandraValueWriter;
-    private final CassandraValueReader cassandraValueReader;
+    private final CqlValueOperations cqlValueOperations;
     private final ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel;
     private final LastKeyFinder lastKeyFinder;
     private final DataHubKeyGenerator keyGenerator;
@@ -30,13 +26,12 @@ public class CassandraChannelDao implements ChannelDao {
     @Inject
     public CassandraChannelDao(
             CassandraChannelsCollection channelsCollection,
-            CassandraValueWriter cassandraValueWriter, CassandraValueReader cassandraValueReader,
+            CqlValueOperations cqlValueOperations,
             @Named("LastUpdatePerChannelMap") ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel,
             LastKeyFinder lastKeyFinder, DataHubKeyGenerator keyGenerator,
             TimeProvider timeProvider) {
         this.channelsCollection = channelsCollection;
-        this.cassandraValueWriter = cassandraValueWriter;
-        this.cassandraValueReader = cassandraValueReader;
+        this.cqlValueOperations = cqlValueOperations;
         this.lastUpdatedPerChannel = lastUpdatedPerChannel;
         this.lastKeyFinder = lastKeyFinder;
         this.keyGenerator = keyGenerator;
@@ -66,12 +61,12 @@ public class CassandraChannelDao implements ChannelDao {
         logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, data, timeProvider.getMillis());
         Optional<Integer> ttlSeconds = getTtlSeconds(channelName);
-        ValueInsertionResult result = cassandraValueWriter.write(channelName, value, ttlSeconds);
+        ValueInsertionResult result = cqlValueOperations.write(channelName, value, ttlSeconds);
         DataHubKey insertedKey = result.getKey();
         setLastUpdateKey(channelName, insertedKey);
-        if (insertedKey.isNewRow()) {
+        /*if (insertedKey.isNewRow()) {
             channelsCollection.updateLatestRowKey(channelName, result.getRowKey());
-        }
+        }*/
         return result;
     }
 
@@ -86,7 +81,7 @@ public class CassandraChannelDao implements ChannelDao {
 
     @Override
     public void delete(String channelName, List<DataHubKey> keys) {
-        cassandraValueWriter.delete(channelName, keys);
+        cqlValueOperations.delete(channelName, keys);
     }
 
     @Override
@@ -102,7 +97,7 @@ public class CassandraChannelDao implements ChannelDao {
     @Override
     public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
         logger.debug("Fetching " + key.toString() + " from channel " + channelName);
-        DataHubCompositeValue value = cassandraValueReader.read(channelName, key);
+        DataHubCompositeValue value = cqlValueOperations.read(channelName, key);
         if (value == null) {
             return Optional.absent();
         }
@@ -130,18 +125,14 @@ public class CassandraChannelDao implements ChannelDao {
 
     @Override
     public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
-        try {
-            DataHubKey latest = getLastUpdatedFromCache(channelName);
-            if (latest == null) {
-                latest = lastKeyFinder.queryForLatestKey(channelName);
-                if (latest != null) {
-                    lastUpdatedPerChannel.putIfAbsent(channelName, latest);
-                }
+        DataHubKey latest = getLastUpdatedFromCache(channelName);
+        if (latest == null) {
+            latest = lastKeyFinder.queryForLatestKey(channelName);
+            if (latest != null) {
+                lastUpdatedPerChannel.putIfAbsent(channelName, latest);
             }
-            return Optional.fromNullable(latest);
-        } catch (HInvalidRequestException e) {
-            throw maybePromoteToNoSuchChannel(e, channelName);
         }
+        return Optional.fromNullable(latest);
     }
 
     private DataHubKey getLastUpdatedFromCache(String channelName) {
