@@ -29,16 +29,4 @@ public class SequenceRowKeyStrategyTest {
         assertEquals("toot:15", strategy.buildKey("toot", new DataHubKey(15642)));
     }
 
-    @Test
-    public void testNextKey() throws Exception {
-        assertEquals("bleh:11", strategy.nextKey("bleh", "bleh:10"));
-        assertEquals("bleh:100", strategy.nextKey("bleh", "bleh:99"));
-    }
-
-    @Test
-    public void testPrevKey() throws Exception {
-        assertEquals("bleh:9", strategy.prevKey("bleh", "bleh:10"));
-        assertEquals("bleh:98", strategy.prevKey("bleh", "bleh:99"));
-        assertEquals("bleh:99", strategy.prevKey("bleh", "bleh:100"));
-    }
 }

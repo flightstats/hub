@@ -18,9 +18,6 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-/**
- * todo - gfm - 11/21/13 - move this code to a different path?
- */
 public class CassandraChannelDaoLocalIntegration {
     private final static Logger logger = LoggerFactory.getLogger(CassandraChannelDaoLocalIntegration.class);
 
@@ -32,10 +29,10 @@ public class CassandraChannelDaoLocalIntegration {
     @BeforeClass
     public static void setupClass() throws Exception {
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();
-        //todo - gfm - 11/21/13 - these could be in a file, and then we'd need to know where it is
         Properties properties = new Properties();
         properties.put("cassandra.cluster_name", "data hub");
-        properties.put("cassandra.hostport", "localhost:9171");
+        properties.put("cassandra.host", "127.0.0.1");
+        properties.put("cassandra.port", "9142");
         properties.put("cassandra.replication_factor", "1");
         properties.put("backing.store", "cassandra");
         properties.put("hazelcast.conf.xml", "");
@@ -108,6 +105,8 @@ public class CassandraChannelDaoLocalIntegration {
 
         assertEquals(found.size(), channelDao.countChannels());
     }
+
+    //todo - gfm - 11/25/13 - tests for latest row key
 
 
 }

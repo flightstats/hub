@@ -19,21 +19,4 @@ public class SequenceRowKeyStrategy implements RowKeyStrategy<String, DataHubKey
         return channelName + ":" + value;
     }
 
-    @Override
-    public String nextKey(String channelName, String currentRowKey) {
-        return concat(channelName, getCurrent(channelName, currentRowKey) + 1);
-    }
-
-    @Override
-    public String prevKey(String channelName, String currentRowKey) {
-        return concat(channelName, getCurrent(channelName, currentRowKey) - 1);
-    }
-
-    private long getCurrent(String channelName, String key) {
-        return Long.parseLong(stripPrefix(channelName, key));
-    }
-
-    private String stripPrefix(String channelName, String key) {
-        return key.substring(channelName.length() + 1);
-    }
 }
