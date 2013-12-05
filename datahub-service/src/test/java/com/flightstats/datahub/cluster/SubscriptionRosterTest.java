@@ -24,7 +24,7 @@ public class SubscriptionRosterTest {
 		Message message = mock(Message.class);
 		Consumer<String> consumer = mock(Consumer.class);
 		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
-
+        when(channelInsertionPublisher.subscribe(any(String.class), any(MessageListener.class))).thenReturn("54321");
 		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
 		SubscriptionRoster testClass = new SubscriptionRoster(channelInsertionPublisher, keyRenderer);
@@ -48,8 +48,9 @@ public class SubscriptionRosterTest {
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		Consumer<String> consumer = mock(Consumer.class);
 		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
-
-		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
+        String id = "12345";
+        when(channelInsertionPublisher.subscribe(any(String.class), any(MessageListener.class))).thenReturn(id);
+        ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
 		SubscriptionRoster testClass = new SubscriptionRoster(channelInsertionPublisher, keyRenderer);
 
@@ -59,7 +60,7 @@ public class SubscriptionRosterTest {
 
 		//THEN
 		verify(channelInsertionPublisher).subscribe(eq(channelName), messageListenerCaptor.capture());
-		verify(channelInsertionPublisher).unsubscribe(channelName, messageListenerCaptor.getValue());
+		verify(channelInsertionPublisher).unsubscribe(channelName, id);
 		assertEquals(0, testClass.getTotalSubscriberCount());
 	}
 }

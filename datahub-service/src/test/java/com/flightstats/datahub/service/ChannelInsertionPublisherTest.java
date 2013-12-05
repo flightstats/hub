@@ -47,15 +47,14 @@ public class ChannelInsertionPublisherTest {
 	@Test
 	public void testUnsubscribe() throws Exception {
 		HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
-		MessageListener messageListener = mock(MessageListener.class);
 		ITopic iTopic = mock(ITopic.class);
 
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
 		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, null);
 
-		testClass.unsubscribe("channelName", messageListener);
-		verify(iTopic).removeMessageListener(messageListener);
+		testClass.unsubscribe("channelName", "todo");
+		verify(iTopic).removeMessageListener("todo");
 	}
 
 
