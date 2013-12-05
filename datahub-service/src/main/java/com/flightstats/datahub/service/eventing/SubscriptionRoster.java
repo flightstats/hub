@@ -15,7 +15,7 @@ public class SubscriptionRoster {
 	private final static Logger logger = LoggerFactory.getLogger(SubscriptionRoster.class);
 	private final ChannelInsertionPublisher channelInsertionPublisher;
 	private final DataHubKeyRenderer keyRenderer;
-	private final ConcurrentHashMap<ChannelConsumer, MessageListener<String>> consumerToMessageListener = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<ChannelConsumer, String> consumerToMessageListener = new ConcurrentHashMap<>();
 
 	@Inject
 	public SubscriptionRoster(ChannelInsertionPublisher channelInsertionPublisher, DataHubKeyRenderer keyRenderer) {
@@ -24,21 +24,16 @@ public class SubscriptionRoster {
 	}
 
 	public void subscribe(final String channelName, Consumer<String> consumer) {
-		MessageListener<String> messageListener = addTopicListenerForChannel( channelName, consumer );
-		consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), messageListener );
+        logger.info("Adding new message listener for websocket hazelcast queue for channel " + channelName);
+        MessageListener<String> messageListener = new HazelcastSubscriber(consumer, keyRenderer);
+        String registrationId = channelInsertionPublisher.subscribe(channelName, messageListener);
+        consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), registrationId );
 	}
 
-	private MessageListener<String> addTopicListenerForChannel(final String channelName, final Consumer<String> consumer) {
-		logger.info("Adding new message listener for websocket hazelcast queue for channel " + channelName);
-		MessageListener<String> messageListener = new HazelcastSubscriber(consumer, keyRenderer);
-		channelInsertionPublisher.subscribe(channelName, messageListener);
-		return messageListener;
-	}
-
-	public void unsubscribe(String channelName, Consumer<String> subscription) {
-		MessageListener<String> messageListener = consumerToMessageListener.remove(new ChannelConsumer(channelName, subscription));
+    public void unsubscribe(String channelName, Consumer<String> subscription) {
+		String registrationId = consumerToMessageListener.remove(new ChannelConsumer(channelName, subscription));
 		logger.info("Removing message listener for websocket hazelcast queue for channel " + channelName);
-		channelInsertionPublisher.unsubscribe(channelName, messageListener);
+		channelInsertionPublisher.unsubscribe(channelName, registrationId);
 	}
 
 	public int getTotalSubscriberCount() {

@@ -9,7 +9,6 @@ import org.mockito.InOrder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Date;
 
 import static org.mockito.Mockito.*;
 
@@ -25,7 +24,7 @@ public class HazelcastSubscriberTest {
         HazelcastSubscriber testClass = new HazelcastSubscriber(consumer, keyRenderer);
 
         // WHEN
-        testClass.onMessage(new Message<>("foo", stringKey));
+        testClass.onMessage(new Message<>("foo", stringKey, 0L, null));
 
         // THEN
         verify(consumer).apply(stringKey);
@@ -44,8 +43,8 @@ public class HazelcastSubscriberTest {
         HazelcastSubscriber testClass = new HazelcastSubscriber(consumer, keyRenderer);
 
         // WHEN
-        testClass.onMessage(new Message<>("foo", stringKey1));
-        testClass.onMessage(new Message<>("foo", stringKey2));
+        testClass.onMessage(new Message<>("foo", stringKey1, 0L, null));
+        testClass.onMessage(new Message<>("foo", stringKey2, 0L, null));
 
         // THEN
         messageOrder.verify(consumer).apply(stringKey1);
@@ -64,8 +63,8 @@ public class HazelcastSubscriberTest {
         HazelcastSubscriber testClass = new HazelcastSubscriber(consumer, keyRenderer);
 
         // WHEN
-        testClass.onMessage(new Message<>("foo", stringKey2));
-        testClass.onMessage(new Message<>("foo", stringKey1));
+        testClass.onMessage(new Message<>("foo", stringKey2, 0L, null));
+        testClass.onMessage(new Message<>("foo", stringKey1, 0L, null));
 
         // THEN
         verify(consumer, times(1)).apply(stringKey2);
@@ -96,11 +95,11 @@ public class HazelcastSubscriberTest {
         HazelcastSubscriber testClass = new HazelcastSubscriber(consumer, keyRenderer);
 
         // WHEN
-        testClass.onMessage(new Message<>("foo", key2)); // first message
-        testClass.onMessage(new Message<>("foo", key1)); // old and thrown out, lower sequence than uri_2
-        testClass.onMessage(new Message<>("foo", key4)); // future
-        testClass.onMessage(new Message<>("foo", key5)); // future
-        testClass.onMessage(new Message<>("foo", key3)); // expected, then futures should get handled
+        testClass.onMessage(new Message<>("foo", key2, 0L, null)); // first message
+        testClass.onMessage(new Message<>("foo", key1, 0L, null)); // old and thrown out, lower sequence than uri_2
+        testClass.onMessage(new Message<>("foo", key4, 0L, null)); // future
+        testClass.onMessage(new Message<>("foo", key5, 0L, null)); // future
+        testClass.onMessage(new Message<>("foo", key3, 0L, null)); // expected, then futures should get handled
 
         // THEN
         messageOrder.verify(consumer).apply(key2);
