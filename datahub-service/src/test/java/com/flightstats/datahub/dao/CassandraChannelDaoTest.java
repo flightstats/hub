@@ -19,7 +19,7 @@ public class CassandraChannelDaoTest {
         CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
         when(collection.channelExists("thechan")).thenReturn(true);
         when(collection.channelExists("nope")).thenReturn(false);
-        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null, null);
+        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null);
         assertTrue(testClass.channelExists("thechan"));
         assertFalse(testClass.channelExists("nope"));
     }
@@ -30,7 +30,7 @@ public class CassandraChannelDaoTest {
         CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
         when(collection.createChannel("foo", null)).thenReturn(expected);
         DataHubKeyGenerator keyGenerator = mock(DataHubKeyGenerator.class);
-        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, keyGenerator, null);
+        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, keyGenerator, null);
         ChannelConfiguration result = testClass.createChannel("foo", null);
         assertEquals(expected, result);
         verify(keyGenerator).seedChannel("foo");
@@ -40,7 +40,7 @@ public class CassandraChannelDaoTest {
     public void testUpdateChannel() throws Exception {
         ChannelConfiguration newConfig = new ChannelConfiguration("foo", new Date(9999), 30000L);
         CassandraChannelsCollection collection = mock(CassandraChannelsCollection.class);
-        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null, null);
+        CassandraChannelDao testClass = new CassandraChannelDao(collection, null, null, null, null);
         testClass.updateChannelMetadata(newConfig);
         verify(collection).updateChannel(newConfig);
     }
@@ -61,7 +61,6 @@ public class CassandraChannelDaoTest {
         CqlValueOperations inserter = mock(CqlValueOperations.class);
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         TimeProvider timeProvider = mock(TimeProvider.class);
-        LastKeyFinder lastUpdatedKeyFinder = mock(LastKeyFinder.class);
         ChannelConfiguration channelConfig = mock(ChannelConfiguration.class);
 
         // WHEN
@@ -69,8 +68,7 @@ public class CassandraChannelDaoTest {
         when(channelConfig.getTtlMillis()).thenReturn(millis);
         when(timeProvider.getMillis()).thenReturn(millis);
         when(inserter.write(channelName, value, Optional.of((int)millis/1000))).thenReturn(new ValueInsertionResult(key, null, null));
-        when(lastUpdatedKeyFinder.queryForLatestKey(channelName)).thenReturn(lastUpdateKey);
-        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, lastUpdatedMap, lastUpdatedKeyFinder, null,
+        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, lastUpdatedMap, null,
                 timeProvider);
 
         ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), data);
@@ -101,7 +99,7 @@ public class CassandraChannelDaoTest {
         when(channelConfig.getTtlMillis()).thenReturn(millis);
         when(inserter.write(channelName, value, Optional.of((int) millis / 1000))).thenReturn(new ValueInsertionResult(key, null, null));
         when(timeProvider.getMillis()).thenReturn(millis);
-        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, lastUpdatedMap, null, null, timeProvider) {
+        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, inserter, lastUpdatedMap, null, timeProvider) {
             @Override
             public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
                 return Optional.absent();
@@ -132,7 +130,7 @@ public class CassandraChannelDaoTest {
 
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         when(lastUpdatedMap.get(channelName)).thenReturn(nextKey);
-        CassandraChannelDao testClass = new CassandraChannelDao(null, inserter, lastUpdatedMap, null, null, null);
+        CassandraChannelDao testClass = new CassandraChannelDao(null, inserter, lastUpdatedMap, null, null);
 
         Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
         assertEquals(expected, result.get());
@@ -147,7 +145,7 @@ public class CassandraChannelDaoTest {
 
         when(inserter.read(channelName, key)).thenReturn(null);
 
-        CassandraChannelDao testClass = new CassandraChannelDao(null, inserter, null, null, null, null);
+        CassandraChannelDao testClass = new CassandraChannelDao(null, inserter, null, null, null);
 
         Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
         assertFalse(result.isPresent());
@@ -164,33 +162,11 @@ public class CassandraChannelDaoTest {
         when(lastUpdatedMap.get(channelName)).thenReturn(expected);
 
         CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, lastUpdatedMap,
-                null, null, null);
+                null, null);
 
         Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
         assertEquals(expected, result.get());
     }
-
-    @Test
-    public void testFindLatestId_lazyLoadCacheMiss() throws Exception {
-        // GIVEN
-        String channelName = "myChan";
-        DataHubKey lastUpdateKey = new DataHubKey((short) 1005);
-        ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
-        CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-        LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
-
-        // WHEN
-        when(lastUpdatedMap.get(channelName)).thenReturn(null);
-        when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(lastUpdateKey);
-
-        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, lastUpdatedMap, lastKeyFinder, null, null);
-        Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
-
-        // THEN
-        assertEquals(Optional.of(lastUpdateKey), result);
-        verify(lastUpdatedMap).putIfAbsent(channelName, lastUpdateKey);
-    }
-
 
     @Test
     public void testFindLatestId_lastUpdateNotFound() throws Exception {
@@ -198,13 +174,11 @@ public class CassandraChannelDaoTest {
         String channelName = "myChan";
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         CassandraChannelsCollection channelsCollection = mock(CassandraChannelsCollection.class);
-        LastKeyFinder lastKeyFinder = mock(LastKeyFinder.class);
 
         // WHEN
         when(lastUpdatedMap.get(channelName)).thenReturn(null);
-        when(lastKeyFinder.queryForLatestKey(channelName)).thenReturn(null);
 
-        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, lastUpdatedMap, lastKeyFinder, null, null);
+        CassandraChannelDao testClass = new CassandraChannelDao(channelsCollection, null, lastUpdatedMap, null, null);
 
         Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
 
