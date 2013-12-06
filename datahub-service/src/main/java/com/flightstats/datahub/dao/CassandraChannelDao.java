@@ -19,7 +19,6 @@ public class CassandraChannelDao implements ChannelDao {
     private final CassandraChannelsCollection channelsCollection;
     private final CqlValueOperations cqlValueOperations;
     private final ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel;
-    private final LastKeyFinder lastKeyFinder;
     private final DataHubKeyGenerator keyGenerator;
     private final TimeProvider timeProvider;
 
@@ -28,12 +27,11 @@ public class CassandraChannelDao implements ChannelDao {
             CassandraChannelsCollection channelsCollection,
             CqlValueOperations cqlValueOperations,
             @Named("LastUpdatePerChannelMap") ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel,
-            LastKeyFinder lastKeyFinder, DataHubKeyGenerator keyGenerator,
+            DataHubKeyGenerator keyGenerator,
             TimeProvider timeProvider) {
         this.channelsCollection = channelsCollection;
         this.cqlValueOperations = cqlValueOperations;
         this.lastUpdatedPerChannel = lastUpdatedPerChannel;
-        this.lastKeyFinder = lastKeyFinder;
         this.keyGenerator = keyGenerator;
         this.timeProvider = timeProvider;
     }
@@ -125,14 +123,8 @@ public class CassandraChannelDao implements ChannelDao {
 
     @Override
     public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
-        DataHubKey latest = getLastUpdatedFromCache(channelName);
-        if (latest == null) {
-            latest = lastKeyFinder.queryForLatestKey(channelName);
-            if (latest != null) {
-                lastUpdatedPerChannel.putIfAbsent(channelName, latest);
-            }
-        }
-        return Optional.fromNullable(latest);
+
+        return Optional.fromNullable(getLastUpdatedFromCache(channelName));
     }
 
     private DataHubKey getLastUpdatedFromCache(String channelName) {

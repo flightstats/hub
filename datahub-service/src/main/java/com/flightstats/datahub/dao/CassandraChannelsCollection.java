@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -104,9 +103,8 @@ public class CassandraChannelsCollection {
 	public Iterable<ChannelConfiguration> getChannels() {
         List<ChannelConfiguration> result = new ArrayList<>();
         ResultSet results = session.execute("SELECT * FROM channelMetadata");
-        Iterator<Row> iterator = results.iterator();
-        while (iterator.hasNext()) {
-            result.add(createChannelConfig(iterator.next()));
+        for (Row row : results) {
+            result.add(createChannelConfig(row));
         }
 		return result;
 	}
@@ -115,27 +113,5 @@ public class CassandraChannelsCollection {
         return new ChannelConfiguration(row.getString("name"), row.getDate("creationDate"), row.getLong("ttlMillis"));
     }
 
-    //todo - gfm - 11/22/13 - switch to cql if we still need this
-    /*public void updateLatestRowKey(String channelName, String rowKeyValue) {
-        Mutator<String> mutator = connector.buildMutator(StringSerializer.get());
-        HColumn<String, String> column = hector.createColumn(channelName, rowKeyValue, StringSerializer.get(), StringSerializer.get());
-        mutator.insert(latestKey(channelName), DATA_HUB_COLUMN_FAMILY_NAME, column);
-    }
-
-    private String latestKey(String channelName) {
-        return channelName + ":" + CHANNELS_LATEST_ROW_KEY;
-    }
-
-    public String getLatestRowKey(String channelName) {
-        Keyspace keyspace = connector.getKeyspace();
-        ColumnQuery<String, String, String> rawQuery = hector.createColumnQuery(
-                keyspace, StringSerializer.get(), StringSerializer.get(), StringSerializer.get());
-        QueryResult<HColumn<String, String>> result = rawQuery
-                .setKey(latestKey(channelName))
-                .setName(channelName)
-                .setColumnFamily(DATA_HUB_COLUMN_FAMILY_NAME).execute();
-        HColumn<String, String> column = result.get();
-        return column == null ? null : column.getValue();
-    }*/
 
 }

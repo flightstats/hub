@@ -1,6 +1,5 @@
 package com.flightstats.datahub.cluster;
 
-import com.flightstats.datahub.dao.LastKeyFinder;
 import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
@@ -22,15 +21,12 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
 
     private final HazelcastInstance hazelcastInstance;
     private ChannelLockExecutor channelLockExecutor;
-    private LastKeyFinder lastKeyFinder;
 
     @Inject
     public HazelcastClusterKeyGenerator(HazelcastInstance hazelcastInstance,
-                                        ChannelLockExecutor channelLockExecutor,
-                                        LastKeyFinder lastKeyFinder) {
+                                        ChannelLockExecutor channelLockExecutor) {
         this.hazelcastInstance = hazelcastInstance;
         this.channelLockExecutor = channelLockExecutor;
-        this.lastKeyFinder = lastKeyFinder;
     }
 
     @Override
@@ -51,7 +47,7 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
     }
 
     private DataHubKey handleMissingKey(final String channelName) {
-        logger.info("sequence number for channel " + channelName + " is not found.  searching");
+        logger.warn("sequence number for channel " + channelName + " is not found.  this will over write any existing data!");
         try {
             return channelLockExecutor.execute(channelName, new Callable<DataHubKey>() {
                 @Override
@@ -60,18 +56,11 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
                     if (isValidSequence(sequenceNumber.get())) {
                         return nextDataHubKey(channelName);
                     }
-                    long currentSequence = findCurrentSequence();
+                    long currentSequence = SequenceRowKeyStrategy.INCREMENT;
                     sequenceNumber.set(currentSequence + 1);
                     return new DataHubKey(currentSequence);
                 }
 
-                private long findCurrentSequence() {
-                    DataHubKey latestKey = lastKeyFinder.queryForLatestKey(channelName);
-                    if (null == latestKey) {
-                        return SequenceRowKeyStrategy.INCREMENT;
-                    }
-                    return latestKey.getSequence() + 1;
-                }
             });
         } catch (Exception e) {
             throw new RuntimeException("Error generating new DataHubKey: " + channelName, e);

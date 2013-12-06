@@ -25,8 +25,6 @@ import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
 import com.flightstats.jerseyguice.metrics.GraphiteConfig;
 import com.flightstats.jerseyguice.metrics.GraphiteConfigImpl;
 import com.google.common.base.Strings;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.inject.*;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -49,7 +47,6 @@ import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 
 public class GuiceContextListenerFactory {
     public static final String BACKING_STORE_PROPERTY = "backing.store";
@@ -176,15 +173,6 @@ public class GuiceContextListenerFactory {
         @Provides
         public static ConcurrentMap<String, ChannelConfiguration> buildChannelConfigurationMap(HazelcastInstance hazelcast) throws FileNotFoundException {
             return hazelcast.getMap("CHANNEL_CONFIGURATION_MAP");
-        }
-
-        @Named("KnownChannelCache")
-        @Singleton
-        @Provides
-        public static Cache<String, Boolean> buildKnownChannelCache() throws FileNotFoundException {
-            return CacheBuilder.newBuilder().maximumSize(1000)
-                    .expireAfterAccess(15L, TimeUnit.MINUTES)
-                    .build();
         }
 
         @Override

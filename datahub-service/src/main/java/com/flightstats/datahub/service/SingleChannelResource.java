@@ -8,7 +8,6 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.model.*;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
-import com.google.common.cache.Cache;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -19,8 +18,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -32,16 +29,13 @@ public class SingleChannelResource {
 
     private final DataHubService dataHubService;
     private final ChannelHypermediaLinkBuilder linkBuilder;
-    private final Cache<String, Boolean> knownChannelCache;
     private final Integer maxPayloadSizeBytes;
 
     @Inject
     public SingleChannelResource(DataHubService dataHubService, ChannelHypermediaLinkBuilder linkBuilder,
-                                 @Named("KnownChannelCache") Cache<String,Boolean> knownChannelCache,
                                  @Named("maxPayloadSizeBytes") Integer maxPayloadSizeBytes) {
         this.dataHubService = dataHubService;
         this.linkBuilder = linkBuilder;
-        this.knownChannelCache = knownChannelCache;
         this.maxPayloadSizeBytes = maxPayloadSizeBytes;
     }
 
@@ -137,20 +131,7 @@ public class SingleChannelResource {
     }
 
     private boolean noSuchChannel(final String channelName) {
-        try {
-            return !knownChannelCache.get(channelName, new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    boolean existsOrNot = dataHubService.channelExists(channelName);
-                    if (existsOrNot) {
-                        return true;
-                    }
-                    throw new ExecutionException("Channel does not exist.", new RuntimeException());
-                }
-            });
-        } catch (ExecutionException e) {
-            return true;
-        }
+        return !dataHubService.channelExists(channelName);
     }
 
 }
