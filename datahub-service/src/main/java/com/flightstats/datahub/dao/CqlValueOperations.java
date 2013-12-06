@@ -12,6 +12,7 @@ import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,15 +27,20 @@ public class CqlValueOperations {
 	private final DataHubKeyGenerator keyGenerator;
     private final TimeProvider timeProvider;
     private final Session session;
+    private int gcGraceSeconds;
 
     @Inject
-	public CqlValueOperations(RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy,
+	public CqlValueOperations(RowKeyStrategy<String, DataHubKey,
+                              DataHubCompositeValue> rowKeyStrategy,
                               DataHubKeyGenerator keyGenerator,
-                              TimeProvider timeProvider, Session session) {
+                              TimeProvider timeProvider,
+                              Session session,
+                              @Named("cassandra.gc_grace_seconds") int gcGraceSeconds) {
 		this.rowKeyStrategy = rowKeyStrategy;
 		this.keyGenerator = keyGenerator;
         this.timeProvider = timeProvider;
         this.session = session;
+        this.gcGraceSeconds = gcGraceSeconds;
     }
 
 	public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue, Optional<Integer> ttlSeconds) {
@@ -97,5 +103,6 @@ public class CqlValueOperations {
         } catch (AlreadyExistsException e) {
             logger.info("values table already exists");
         }
+        session.execute("ALTER TABLE values with gc_grace_seconds = " + gcGraceSeconds);
     }
 }
