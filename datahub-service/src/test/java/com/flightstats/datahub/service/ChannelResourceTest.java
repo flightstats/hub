@@ -1,5 +1,6 @@
 package com.flightstats.datahub.service;
 
+import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.rest.HalLink;
@@ -38,20 +39,20 @@ public class ChannelResourceTest {
 				.build();
 		UriInfo uriInfo = mock(UriInfo.class);
         CreateChannelValidator createChannelValidator = mock(CreateChannelValidator.class);
-		DataHubService datahubservice = mock(DataHubService.class);
+		ChannelDao channelDao = mock(ChannelDao.class);
         ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
-		when(datahubservice.channelExists(channelName)).thenReturn(false);
-		when(datahubservice.createChannel(channelName, ChannelCreationRequest.DEFAULT_TTL)).thenReturn(channelConfiguration);
+		when(channelDao.channelExists(channelName)).thenReturn(false);
+		when(channelDao.createChannel(channelName, ChannelCreationRequest.DEFAULT_TTL)).thenReturn(channelConfiguration);
 		when(linkBuilder.buildChannelUri(channelConfiguration, uriInfo)).thenReturn(URI.create(channelUri));
 		when(linkBuilder.buildLinkedChannelConfig(channelConfiguration, URI.create(channelUri), uriInfo)).thenReturn(expected);
 
-        ChannelResource testClass = new ChannelResource(datahubservice, linkBuilder, uriInfo, createChannelValidator);
+        ChannelResource testClass = new ChannelResource(channelDao, linkBuilder, uriInfo, createChannelValidator);
 
 		Response response = testClass.createChannel(channelCreationRequest);
 
-		verify(datahubservice).createChannel(channelName, ChannelCreationRequest.DEFAULT_TTL);
+		verify(channelDao).createChannel(channelName, ChannelCreationRequest.DEFAULT_TTL);
 
 		assertEquals(201, response.getStatus());
 		assertEquals(new URI(channelUri), response.getMetadata().getFirst("location"));
@@ -68,15 +69,15 @@ public class ChannelResourceTest {
 		String channel2Uri = "http://superbar";
 		String requestUri = "http://datahüb/channel";
 
-		DataHubService datahubservice = mock(DataHubService.class);
+		ChannelDao channelDao = mock(ChannelDao.class);
         CreateChannelValidator createChannelValidator = mock(CreateChannelValidator.class);
 		UriInfo uriInfo = mock(UriInfo.class);
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 
-		ChannelResource testClass = new ChannelResource(datahubservice, linkBuilder, uriInfo, createChannelValidator);
+		ChannelResource testClass = new ChannelResource(channelDao, linkBuilder, uriInfo, createChannelValidator);
 
 		//WHEN
-		when(datahubservice.getChannels()).thenReturn(channels);
+		when(channelDao.getChannels()).thenReturn(channels);
 		when(linkBuilder.buildChannelUri(channel1.getName(), uriInfo)).thenReturn(URI.create(channel1Uri));
 		when(linkBuilder.buildChannelUri(channel2.getName(), uriInfo)).thenReturn(URI.create(channel2Uri));
 		when(uriInfo.getRequestUri()).thenReturn(URI.create(requestUri));
@@ -107,14 +108,14 @@ public class ChannelResourceTest {
 		ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
         CreateChannelValidator createChannelValidator = mock(CreateChannelValidator.class);
 
-		DataHubService datahubservice = mock(DataHubService.class);
+		ChannelDao channelDao = mock(ChannelDao.class);
 
-		ChannelResource testClass = new ChannelResource(datahubservice, mock(ChannelHypermediaLinkBuilder.class), null, createChannelValidator);
+		ChannelResource testClass = new ChannelResource(channelDao, mock(ChannelHypermediaLinkBuilder.class), null, createChannelValidator);
 
 		//WHEN
 		testClass.createChannel(request);
 
 		//THEN
-		verify(datahubservice).createChannel(channelName.trim(), ChannelCreationRequest.DEFAULT_TTL);
+		verify(channelDao).createChannel(channelName.trim(), ChannelCreationRequest.DEFAULT_TTL);
 	}
 }

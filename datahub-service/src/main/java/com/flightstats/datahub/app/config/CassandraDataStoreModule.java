@@ -2,9 +2,7 @@ package com.flightstats.datahub.app.config;
 
 import com.datastax.driver.core.Session;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.datahub.dao.CassandraChannelDao;
-import com.flightstats.datahub.dao.CassandraConnectorFactory;
-import com.flightstats.datahub.dao.ChannelDao;
+import com.flightstats.datahub.dao.*;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -25,11 +23,13 @@ class CassandraDataStoreModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		Names.bindProperties(binder(), properties);
-		bind(CassandraChannelDao.class).asEagerSingleton();
+		bind(ChannelDaoImpl.class).asEagerSingleton();
 		bind(CassandraConnectorFactory.class).in(Singleton.class);
-		bindListener(CassandraChannelMetadataInitialization.buildTypeMatcher(), new CassandraChannelMetadataInitialization());
-		bindListener(CqlValueOperationsInitialization.buildTypeMatcher(), new CqlValueOperationsInitialization());
-		bind(ChannelDao.class).to(CassandraChannelDao.class).in(Singleton.class);
+		bindListener(ChannelMetadataInitialization.buildTypeMatcher(), new ChannelMetadataInitialization());
+		bindListener(DataHubValueDaoInitialization.buildTypeMatcher(), new DataHubValueDaoInitialization());
+		bind(ChannelDao.class).to(ChannelDaoImpl.class).in(Singleton.class);
+		bind(ChannelsCollectionDao.class).to(CassandraChannelsCollectionDao.class).in(Singleton.class);
+		bind(DataHubValueDao.class).to(CassandraDataHubValueDao.class).in(Singleton.class);
 	}
 
     @Inject

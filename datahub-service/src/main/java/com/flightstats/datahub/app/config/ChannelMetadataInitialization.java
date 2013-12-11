@@ -1,6 +1,6 @@
 package com.flightstats.datahub.app.config;
 
-import com.flightstats.datahub.dao.CassandraChannelsCollection;
+import com.flightstats.datahub.dao.ChannelsCollectionDao;
 import com.flightstats.datahub.util.ApplyOnce;
 import com.google.common.base.Function;
 import com.google.inject.TypeLiteral;
@@ -13,21 +13,21 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This is a guice binding via TypeListener.  It provides a means for the
- * CassandraChannelsCollection to initialize (bootstrap) the channels metadata
+ * ChannelsCollectionDao to initialize (bootstrap) the channels metadata
  * column family.  Ideally, this only ever happens once and is forgotten...but realistically....
  * in the event that we spin up a new datahub this will help facilitate bootstrapping.
  * Also dev + ephemeral storage will like this.
  */
-class CassandraChannelMetadataInitialization implements TypeListener {
+class ChannelMetadataInitialization implements TypeListener {
 
-	private final static Logger logger = LoggerFactory.getLogger(CassandraChannelMetadataInitialization.class);
+	private final static Logger logger = LoggerFactory.getLogger(ChannelMetadataInitialization.class);
 
-	private final ApplyOnce<CassandraChannelsCollection, Void> initOnce = new ApplyOnce<>(
-			new Function<CassandraChannelsCollection, Void>() {
+	private final ApplyOnce<ChannelsCollectionDao, Void> initOnce = new ApplyOnce<>(
+			new Function<ChannelsCollectionDao, Void>() {
 				@Override
-				public Void apply(CassandraChannelsCollection channelsCollection) {
+				public Void apply(ChannelsCollectionDao channelsCollectionDao) {
 					logger.info("Bootstrapping channel metadata...");
-					channelsCollection.initializeMetadata();
+					channelsCollectionDao.initializeMetadata();
 					return null;
 				}
 			});
@@ -37,8 +37,8 @@ class CassandraChannelMetadataInitialization implements TypeListener {
 		encounter.register(new InjectionListener<I>() {
 			@Override
 			public void afterInjection(Object instance) {
-				CassandraChannelsCollection channelsCollection = (CassandraChannelsCollection) instance;
-				initOnce.apply(channelsCollection);
+				ChannelsCollectionDao channelsCollectionDao = (ChannelsCollectionDao) instance;
+				initOnce.apply(channelsCollectionDao);
 			}
 		});
 
@@ -48,7 +48,7 @@ class CassandraChannelMetadataInitialization implements TypeListener {
 		return new AbstractMatcher<TypeLiteral<?>>() {
 			@Override
 			public boolean matches(TypeLiteral<?> typeLiteral) {
-				return CassandraChannelsCollection.class.isAssignableFrom(typeLiteral.getRawType());
+				return ChannelsCollectionDao.class.isAssignableFrom(typeLiteral.getRawType());
 			}
 		};
 	}
