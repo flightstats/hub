@@ -2,7 +2,6 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.service.ChannelInsertionPublisher;
-import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -20,7 +19,6 @@ public class ChannelDaoImpl implements ChannelDao {
     private final ChannelsCollectionDao channelsCollectionDao;
     private final DataHubValueDao dataHubValueDao;
     private final ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel;
-    private final DataHubKeyGenerator keyGenerator;
     private final TimeProvider timeProvider;
     private ChannelInsertionPublisher channelInsertionPublisher;
 
@@ -29,13 +27,11 @@ public class ChannelDaoImpl implements ChannelDao {
             ChannelsCollectionDao channelsCollectionDao,
             DataHubValueDao dataHubValueDao,
             @Named("LastUpdatePerChannelMap") ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel,
-            DataHubKeyGenerator keyGenerator,
             TimeProvider timeProvider,
             ChannelInsertionPublisher channelInsertionPublisher) {
         this.channelsCollectionDao = channelsCollectionDao;
         this.dataHubValueDao = dataHubValueDao;
         this.lastUpdatedPerChannel = lastUpdatedPerChannel;
-        this.keyGenerator = keyGenerator;
         this.timeProvider = timeProvider;
         this.channelInsertionPublisher = channelInsertionPublisher;
     }
@@ -49,7 +45,7 @@ public class ChannelDaoImpl implements ChannelDao {
     public ChannelConfiguration createChannel(String name, Long ttlMillis) {
         logger.info("Creating channel name = " + name + ", with ttlMillis = " + ttlMillis);
         ChannelConfiguration configuration = channelsCollectionDao.createChannel(name, ttlMillis);
-        keyGenerator.seedChannel(name);
+        dataHubValueDao.initializeChannel(name);
         return configuration;
     }
 
@@ -98,6 +94,11 @@ public class ChannelDaoImpl implements ChannelDao {
     }
 
     @Override
+    public boolean isHealthy() {
+        return channelsCollectionDao.isHealthy();
+    }
+
+    @Override
     public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
         logger.debug("Fetching " + key.toString() + " from channel " + channelName);
         DataHubCompositeValue value = dataHubValueDao.read(channelName, key);
@@ -136,8 +137,4 @@ public class ChannelDaoImpl implements ChannelDao {
         return lastUpdatedPerChannel.get(channelName);
     }
 
-    @Override
-    public int countChannels() {
-        return channelsCollectionDao.countChannels();
-    }
 }

@@ -8,6 +8,8 @@ import com.flightstats.datahub.cluster.HazelcastChannelLockFactory;
 import com.flightstats.datahub.cluster.HazelcastClusterKeyGenerator;
 import com.flightstats.datahub.dao.RowKeyStrategy;
 import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
+import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
+import com.flightstats.datahub.dao.dynamo.DynamoDataStoreModule;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
@@ -51,6 +53,7 @@ import java.util.concurrent.ConcurrentMap;
 public class GuiceContextListenerFactory {
     public static final String BACKING_STORE_PROPERTY = "backing.store";
     public static final String CASSANDRA_BACKING_STORE_TAG = "cassandra";
+    public static final String DYNAMO_BACKING_STORE_TAG = "dynamo";
     public static final String MEMORY_BACKING_STORY_TAG = "memory";
     public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
 
@@ -143,6 +146,8 @@ public class GuiceContextListenerFactory {
         switch (backingStoreName) {
             case CASSANDRA_BACKING_STORE_TAG:
                 return new CassandraDataStoreModule(properties);
+            case DYNAMO_BACKING_STORE_TAG:
+                return new DynamoDataStoreModule(properties);
             default:
                 throw new IllegalStateException(String.format("Unknown backing store specified: %s", backingStoreName));
         }
