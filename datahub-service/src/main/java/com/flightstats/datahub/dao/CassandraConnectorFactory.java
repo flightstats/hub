@@ -1,7 +1,6 @@
 package com.flightstats.datahub.dao;
 
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -33,7 +32,7 @@ public class CassandraConnectorFactory {
     }
 
     @Provides
-    public Session getSession() {
+    public QuorumSession getSession() {
         while (true) {
             try {
                 return attemptSession();
@@ -44,13 +43,13 @@ public class CassandraConnectorFactory {
         }
     }
 
-    private Session attemptSession() {
+    private QuorumSession attemptSession() {
         String[] splitHosts = StringUtils.split(host, ",");
         com.datastax.driver.core.Cluster cluster = Cluster.builder()
                 .addContactPoints(splitHosts).withPort(port)
                 .build();
-        addKeyspaceIfMissing(cluster.connect());
-        return cluster.connect("datahub");
+        addKeyspaceIfMissing(new QuorumSession(cluster.connect()));
+        return new QuorumSession(cluster.connect("datahub"));
     }
 
     private void logErrorAndWait(Exception e) {
@@ -60,15 +59,15 @@ public class CassandraConnectorFactory {
 		logger.info("Retrying cassandra connection");
 	}
 
-	private void addKeyspaceIfMissing(Session session) {
-        //if we upgrade to Cassandra 2, can use CREATE KEYSPACE IF NOT EXISTS
+	private void addKeyspaceIfMissing(QuorumSession session) {
+        String keyspaceCql = "KEYSPACE datahub WITH replication = {'class':'SimpleStrategy', 'replication_factor': " + replicationFactor + "};";
         try {
-            session.execute("CREATE KEYSPACE datahub" +
-                    " WITH replication = {'class':'SimpleStrategy', 'replication_factor': " + replicationFactor + "};");
+            session.execute("CREATE " + keyspaceCql);
             logger.info("Created keyspace datahub");
         } catch (AlreadyExistsException e) {
-            logger.info("keyspace alreayd exists");
+            logger.info("keyspace already exists");
         }
+        session.execute("ALTER " + keyspaceCql);
     }
 
 }

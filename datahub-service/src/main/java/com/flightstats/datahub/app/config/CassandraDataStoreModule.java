@@ -1,6 +1,5 @@
 package com.flightstats.datahub.app.config;
 
-import com.datastax.driver.core.Session;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.dao.*;
 import com.google.inject.AbstractModule;
@@ -35,7 +34,7 @@ class CassandraDataStoreModule extends AbstractModule {
     @Inject
     @Provides
     @Singleton
-    public Session buildSession(CassandraConnectorFactory factory) {
+    public QuorumSession buildSession(CassandraConnectorFactory factory) {
         return factory.getSession();
     }
 }

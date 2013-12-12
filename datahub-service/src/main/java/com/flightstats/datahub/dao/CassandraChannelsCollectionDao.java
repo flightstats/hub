@@ -3,7 +3,6 @@ package com.flightstats.datahub.dao;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.util.TimeProvider;
@@ -25,13 +24,13 @@ public class CassandraChannelsCollectionDao implements ChannelsCollectionDao {
 
     private final TimeProvider timeProvider;
     private final ConcurrentMap<String,ChannelConfiguration> channelConfigurationMap;
-    private Session session;
+    private QuorumSession session;
 
     @Inject
 	public CassandraChannelsCollectionDao(TimeProvider timeProvider,
                                           @Named("ChannelConfigurationMap") ConcurrentMap<String,
                                                   ChannelConfiguration> channelConfigurationMap,
-                                          Session session) {
+                                          QuorumSession session) {
 		this.timeProvider = timeProvider;
         this.channelConfigurationMap = channelConfigurationMap;
         this.session = session;
