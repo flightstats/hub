@@ -1,7 +1,8 @@
 package com.flightstats.datahub.app.config;
 
-import com.flightstats.datahub.dao.CassandraChannelsCollectionDao;
+import com.flightstats.datahub.dao.ChannelMetadataInitialization;
 import com.flightstats.datahub.dao.ChannelsCollectionDao;
+import com.flightstats.datahub.dao.cassandra.CassandraChannelsCollectionDao;
 import com.google.inject.TypeLiteral;
 import com.google.inject.spi.InjectionListener;
 import com.google.inject.spi.TypeEncounter;

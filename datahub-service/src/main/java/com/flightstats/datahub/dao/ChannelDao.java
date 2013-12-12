@@ -28,7 +28,7 @@ public interface ChannelDao {
 
 	Optional<DataHubKey> findLastUpdatedKey(String channelName);
 
-	int countChannels();
+    boolean isHealthy();
 
 	void setLastUpdateKey(String channelName, DataHubKey key);
 

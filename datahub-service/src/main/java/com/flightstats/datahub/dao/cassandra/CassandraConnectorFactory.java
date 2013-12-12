@@ -1,4 +1,4 @@
-package com.flightstats.datahub.dao;
+package com.flightstats.datahub.dao.cassandra;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;

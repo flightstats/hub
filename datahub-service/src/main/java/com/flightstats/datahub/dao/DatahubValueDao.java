@@ -17,5 +17,7 @@ public interface DataHubValueDao {
 
     DataHubCompositeValue read(String channelName, DataHubKey key);
 
-    void initializeTable();
+    void initialize();
+
+    void initializeChannel(String channelName);
 }
