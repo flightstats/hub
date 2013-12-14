@@ -2,6 +2,7 @@ package com.flightstats.datahub.dao.dynamo;
 
 import com.flightstats.datahub.dao.ChannelDaoLocalIntegration;
 import com.flightstats.datahub.dao.DataHubValueDao;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.util.Properties;
@@ -18,13 +19,22 @@ public class DynamoChannelDaoLocalIntegration extends ChannelDaoLocalIntegration
         Properties properties = new Properties();
 
         properties.put("backing.store", "dynamo");
+        //properties.put("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
         properties.put("dynamo.endpoint", "localhost:8000");
         properties.put("dynamo.protocol", "HTTP");
-        properties.put("dynamo.environment", "integration");
+        properties.put("dynamo.environment", "dev");
+        properties.put("dynamo.table.creation.wait.minutes", "5");
+        //todo - gfm - 12/13/13 - make this generic
+        properties.put("dynamo.credentials", "/Users/gmoulliet/code/datahub/datahub-service/src/conf/datahub/dev/credentials.properties");
         properties.put("hazelcast.conf.xml", "");
         finalStartup(properties);
     }
 
+    @AfterClass
+    public static void teardownClass() {
+        //todo - gfm - 12/13/13 - delete any tables?
+
+    }
 
     @Override
     protected void verifyStartup() {

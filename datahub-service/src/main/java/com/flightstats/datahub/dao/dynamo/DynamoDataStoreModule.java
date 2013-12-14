@@ -31,6 +31,7 @@ public class DynamoDataStoreModule extends AbstractModule {
                 .annotatedWith(Names.named(CachedChannelsCollectionDao.DELEGATE))
                 .to(DynamoChannelsCollectionDao.class);
 		bind(DataHubValueDao.class).to(DynamoDataHubValueDao.class).in(Singleton.class);
+        bind(DynamoUtils.class).in(Singleton.class);
 	}
 
     @Inject

@@ -44,9 +44,8 @@ public class ChannelDaoImpl implements ChannelDao {
     @Override
     public ChannelConfiguration createChannel(String name, Long ttlMillis) {
         logger.info("Creating channel name = " + name + ", with ttlMillis = " + ttlMillis);
-        ChannelConfiguration configuration = channelsCollectionDao.createChannel(name, ttlMillis);
         dataHubValueDao.initializeChannel(name);
-        return configuration;
+        return channelsCollectionDao.createChannel(name, ttlMillis);
     }
 
     @Override
@@ -62,9 +61,6 @@ public class ChannelDaoImpl implements ChannelDao {
         ValueInsertionResult result = dataHubValueDao.write(channelName, value, ttlSeconds);
         DataHubKey insertedKey = result.getKey();
         setLastUpdateKey(channelName, insertedKey);
-        /*if (insertedKey.isNewRow()) {
-            channelsCollectionDao.updateLatestRowKey(channelName, result.getRowKey());
-        }*/
         channelInsertionPublisher.publish(channelName, result);
         return result;
     }
