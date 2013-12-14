@@ -29,12 +29,17 @@ public class DynamoDataHubValueDao implements DataHubValueDao {
     private final DataHubKeyGenerator keyGenerator;
     private final TimeProvider timeProvider;
     private final AmazonDynamoDBClient dbClient;
+    private final DynamoUtils dynamoUtils;
 
     @Inject
-    public DynamoDataHubValueDao(DataHubKeyGenerator keyGenerator, TimeProvider timeProvider, AmazonDynamoDBClient dbClient) {
+    public DynamoDataHubValueDao(DataHubKeyGenerator keyGenerator,
+                                 TimeProvider timeProvider,
+                                 AmazonDynamoDBClient dbClient,
+                                 DynamoUtils dynamoUtils) {
         this.keyGenerator = keyGenerator;
         this.timeProvider = timeProvider;
         this.dbClient = dbClient;
+        this.dynamoUtils = dynamoUtils;
     }
 
     @Override
@@ -54,8 +59,9 @@ public class DynamoDataHubValueDao implements DataHubValueDao {
         }
 
         PutItemRequest putItemRequest = new PutItemRequest()
-                .withTableName(channelName)
+                .withTableName(dynamoUtils.getTableName(channelName))
                 .withItem(item);
+        //todo - gfm - 12/13/13 - this needs to handle ProvisionedThroughputExceededException
         PutItemResult result = dbClient.putItem(putItemRequest);
         //todo - gfm - 12/11/13 - do we need a rowkey for this?
         return new ValueInsertionResult(key, "", timeProvider.getDate());
@@ -73,7 +79,7 @@ public class DynamoDataHubValueDao implements DataHubValueDao {
         keyMap.put("key", new AttributeValue().withN(String.valueOf(key.getSequence())));
 
         GetItemRequest getItemRequest = new GetItemRequest()
-                .withTableName(channelName)
+                .withTableName(dynamoUtils.getTableName(channelName))
                 .withKey(keyMap);
 
         GetItemResult result = dbClient.getItem(getItemRequest);
@@ -93,7 +99,6 @@ public class DynamoDataHubValueDao implements DataHubValueDao {
         }
         long millis = Long.parseLong(item.get("millis").getN());
         ByteBuffer byteBuffer = item.get("data").getB();
-        //todo - gfm - 12/12/13 - might need something other than .array()
         return new DataHubCompositeValue(contentType, contentLanguage, byteBuffer.array() , millis);
     }
 
@@ -105,26 +110,23 @@ public class DynamoDataHubValueDao implements DataHubValueDao {
     @Override
     public void initializeChannel(String channelName) {
 
-        //todo - gfm - 12/11/13 - do we need to check if table exists first?
-
         ArrayList<AttributeDefinition> attributeDefinitions= new ArrayList<>();
         attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("N"));
 
-        ArrayList<KeySchemaElement> ks = new ArrayList<>();
-        ks.add(new KeySchemaElement().withAttributeName("key").withKeyType(KeyType.HASH));
+        ArrayList<KeySchemaElement> keySchema = new ArrayList<>();
+        keySchema.add(new KeySchemaElement().withAttributeName("key").withKeyType(KeyType.HASH));
 
         ProvisionedThroughput provisionedThroughput = new ProvisionedThroughput()
-                .withReadCapacityUnits(1L)
-                .withWriteCapacityUnits(1L);
+                .withReadCapacityUnits(10L)
+                .withWriteCapacityUnits(10L);
 
         CreateTableRequest request = new CreateTableRequest()
-                .withTableName(channelName)
+                .withTableName(dynamoUtils.getTableName(channelName))
                 .withAttributeDefinitions(attributeDefinitions)
-                .withKeySchema(ks)
+                .withKeySchema(keySchema)
                 .withProvisionedThroughput(provisionedThroughput);
 
-        CreateTableResult result = dbClient.createTable(request);
-        logger.info(result.getTableDescription().toString());
         keyGenerator.seedChannel(channelName);
+        dynamoUtils.createTable(request);
     }
 }

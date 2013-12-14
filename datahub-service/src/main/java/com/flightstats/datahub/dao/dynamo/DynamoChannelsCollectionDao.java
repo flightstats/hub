@@ -6,7 +6,6 @@ import com.flightstats.datahub.dao.ChannelsCollectionDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,19 +18,17 @@ public class DynamoChannelsCollectionDao implements ChannelsCollectionDao {
     private final static Logger logger = LoggerFactory.getLogger(DynamoChannelsCollectionDao.class);
 
     private final AmazonDynamoDBClient dbClient;
-    private final String environment;
+    private final DynamoUtils dynamoUtils;
     private final TimeProvider timeProvider;
-    private String tableName;
 
     @Inject
     public DynamoChannelsCollectionDao(AmazonDynamoDBClient dbClient,
-                                       @Named("dynamo.environment") String environment,
+                                       DynamoUtils dynamoUtils,
                                        TimeProvider timeProvider) {
 
         this.dbClient = dbClient;
-        this.environment = environment;
+        this.dynamoUtils = dynamoUtils;
         this.timeProvider = timeProvider;
-        tableName = "channelMetaData." + environment;
     }
 
     @Override
@@ -50,23 +47,14 @@ public class DynamoChannelsCollectionDao implements ChannelsCollectionDao {
             item.put("ttlMillis", new AttributeValue().withN(String.valueOf(config.getTtlMillis())));
         }
         PutItemRequest putItemRequest = new PutItemRequest()
-                .withTableName(tableName)
+                .withTableName(getTableName())
                 .withItem(item);
         PutItemResult result = dbClient.putItem(putItemRequest);
     }
 
     @Override
     public void initializeMetadata() {
-        try {
-            logger.info(getDescribeTableResult().toString());
-        } catch (ResourceNotFoundException e) {
-            createTable();
-        }
-
-    }
-
-    private DescribeTableResult getDescribeTableResult() {
-        return dbClient.describeTable(tableName);
+        createTable();
     }
 
     private void createTable() {
@@ -81,12 +69,11 @@ public class DynamoChannelsCollectionDao implements ChannelsCollectionDao {
                 .withWriteCapacityUnits(10L);
 
         CreateTableRequest request = new CreateTableRequest()
-                .withTableName(tableName)
+                .withTableName(getTableName())
                 .withAttributeDefinitions(attributeDefinitions)
                 .withKeySchema(ks)
                 .withProvisionedThroughput(provisionedThroughput);
-        CreateTableResult result = dbClient.createTable(request);
-        logger.info(result.getTableDescription().toString());
+        dynamoUtils.createTable(request);
     }
 
     @Override
@@ -100,14 +87,19 @@ public class DynamoChannelsCollectionDao implements ChannelsCollectionDao {
         keyMap.put("key", new AttributeValue().withS(channelName));
 
         GetItemRequest getItemRequest = new GetItemRequest()
-                .withTableName(tableName)
+                .withTableName(getTableName())
                 .withKey(keyMap);
 
-        GetItemResult result = dbClient.getItem(getItemRequest);
-        if (result.getItem() == null) {
+        try {
+            GetItemResult result = dbClient.getItem(getItemRequest);
+            if (result.getItem() == null) {
+                return null;
+            }
+            return mapItem(result.getItem());
+        } catch (ResourceNotFoundException e) {
+            logger.info("channel not found " + e.getMessage());
             return null;
         }
-        return mapItem(result.getItem());
     }
 
     private ChannelConfiguration mapItem(Map<String, AttributeValue> item) {
@@ -123,10 +115,10 @@ public class DynamoChannelsCollectionDao implements ChannelsCollectionDao {
 
     @Override
     public Iterable<ChannelConfiguration> getChannels() {
-        //todo - gfm - 12/12/13 - this may need to use paging, if we have over 1MB worth of table names.
+        //todo - gfm - 12/12/13 - this may need to use paging, if we have over 1MB worth of table configs.
         List<ChannelConfiguration> configurations = new ArrayList<>();
         ScanRequest scanRequest = new ScanRequest()
-                .withTableName(tableName);
+                .withTableName(getTableName());
 
         ScanResult result = dbClient.scan(scanRequest);
         for (Map<String, AttributeValue> item : result.getItems()){
@@ -138,11 +130,15 @@ public class DynamoChannelsCollectionDao implements ChannelsCollectionDao {
     @Override
     public boolean isHealthy() {
         try {
-            getDescribeTableResult();
+            dbClient.describeTable(getTableName());
             return true;
         } catch (Exception e) {
             return false;
         }
 
+    }
+
+    public String getTableName() {
+        return dynamoUtils.getTableName("channelMetaData");
     }
 }

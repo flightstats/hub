@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
-import java.io.IOException;
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
@@ -23,12 +23,15 @@ public class DynamoConnectorFactory {
 
     private final String endpoint;
     private final String protocol;
+    private final String credentials;
 
     @Inject
 	public DynamoConnectorFactory(@Named("dynamo.endpoint") String endpoint,
-                                  @Named("dynamo.protocol") String protocol){
+                                  @Named("dynamo.protocol") String protocol,
+                                  @Named("dynamo.credentials") String credentials){
         this.endpoint = endpoint;
         this.protocol = protocol;
+        this.credentials = credentials;
     }
 
     @Provides
@@ -48,16 +51,15 @@ public class DynamoConnectorFactory {
             logger.info("creating for  " + protocol + " " + endpoint);
             //todo - gfm - 12/12/13 - figure out credentials
             //look at com.amazonaws.auth.AWSCredentialsProvider
-            AWSCredentials credentials = new PropertiesCredentials(
-                    this.getClass().getResourceAsStream("credentials.properties"));
-            AmazonDynamoDBClient client = new AmazonDynamoDBClient(credentials);
+            AWSCredentials awsCredentials = new PropertiesCredentials(new File(credentials));
+            AmazonDynamoDBClient client = new AmazonDynamoDBClient(awsCredentials);
             ClientConfiguration configuration = new ClientConfiguration();
 
             configuration.setProtocol(Protocol.valueOf(protocol));
             client.setConfiguration(configuration);
             client.setEndpoint(endpoint);
             return client;
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("unable to load credentials", e);
             throw new RuntimeException(e);
         }

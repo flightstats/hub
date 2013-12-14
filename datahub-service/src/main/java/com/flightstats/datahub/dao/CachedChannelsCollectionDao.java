@@ -42,7 +42,10 @@ public class CachedChannelsCollectionDao implements ChannelsCollectionDao {
 
     @Override
     public boolean channelExists(String channelName) {
-        return delegate.channelExists(channelName);
+        if (channelConfigurationMap.get(channelName) != null) {
+            return true;
+        }
+        return getChannelConfiguration(channelName) != null;
     }
 
     @Override
