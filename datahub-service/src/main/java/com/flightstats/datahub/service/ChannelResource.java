@@ -2,6 +2,7 @@ package com.flightstats.datahub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
@@ -27,14 +28,14 @@ import java.util.Map;
 @Path("/channel")
 public class ChannelResource {
 
-	private final DataHubService dataHubService;
+	private final ChannelDao channelDao;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 	private final UriInfo uriInfo;
     private final CreateChannelValidator createChannelValidator;
 
 	@Inject
-	public ChannelResource(DataHubService dataHubService, ChannelHypermediaLinkBuilder linkBuilder, UriInfo uriInfo, CreateChannelValidator createChannelValidator) {
-		this.dataHubService = dataHubService;
+	public ChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, UriInfo uriInfo, CreateChannelValidator createChannelValidator) {
+		this.channelDao = channelDao;
 		this.linkBuilder = linkBuilder;
 		this.uriInfo = uriInfo;
         this.createChannelValidator = createChannelValidator;
@@ -45,7 +46,7 @@ public class ChannelResource {
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getChannels() {
-		Iterable<ChannelConfiguration> channels = dataHubService.getChannels();
+		Iterable<ChannelConfiguration> channels = channelDao.getChannels();
 		Map<String, URI> mappedChannels = new HashMap<>();
 		for (ChannelConfiguration channelConfiguration : channels) {
 			String channelName = channelConfiguration.getName();
@@ -75,7 +76,7 @@ public class ChannelResource {
 		String channelName = channelCreationRequest.getName().get().trim();
 
 		Optional<Long> ttlMillis = channelCreationRequest.getTtlMillis();
-		ChannelConfiguration channelConfiguration = dataHubService.createChannel(channelName, ttlMillis.orNull());
+		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName, ttlMillis.orNull());
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
 		return Response.created(channelUri).entity(
 			linkBuilder.buildLinkedChannelConfig(channelConfiguration, channelUri, uriInfo))

@@ -5,6 +5,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.app.config.PATCH;
 import com.flightstats.datahub.app.config.metrics.PerChannelThroughput;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
+import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.*;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
@@ -27,14 +28,14 @@ import static com.flightstats.rest.Linked.linked;
 @Path("/channel/{channelName}")
 public class SingleChannelResource {
 
-    private final DataHubService dataHubService;
+    private final ChannelDao channelDao;
     private final ChannelHypermediaLinkBuilder linkBuilder;
     private final Integer maxPayloadSizeBytes;
 
     @Inject
-    public SingleChannelResource(DataHubService dataHubService, ChannelHypermediaLinkBuilder linkBuilder,
+    public SingleChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder,
                                  @Named("maxPayloadSizeBytes") Integer maxPayloadSizeBytes) {
-        this.dataHubService = dataHubService;
+        this.channelDao = channelDao;
         this.linkBuilder = linkBuilder;
         this.maxPayloadSizeBytes = maxPayloadSizeBytes;
     }
@@ -49,7 +50,7 @@ public class SingleChannelResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        ChannelConfiguration config = dataHubService.getChannelConfiguration(channelName);
+        ChannelConfiguration config = channelDao.getChannelConfiguration(channelName);
         Date lastUpdateDate = getLastUpdateDate(channelName);
         MetadataResponse response = new MetadataResponse(config, lastUpdateDate);
         return linked(response)
@@ -60,13 +61,13 @@ public class SingleChannelResource {
     }
 
     private Date getLastUpdateDate(String channelName) {
-        Optional<DataHubKey> latestId = dataHubService.findLastUpdatedKey(channelName);
+        Optional<DataHubKey> latestId = channelDao.findLastUpdatedKey(channelName);
         if (!latestId.isPresent()) {
             return null;
         }
         //todo - gfm - 11/11/13 - not sure channel metadata is the proper place to make a get call into the service
         //todo - gfm - 11/11/13 - is returning last updated date actually useful?
-        Optional<LinkedDataHubCompositeValue> optionalResult = dataHubService.getValue(channelName, latestId.get());
+        Optional<LinkedDataHubCompositeValue> optionalResult = channelDao.getValue(channelName, latestId.get());
         if (!optionalResult.isPresent()) {
             return null;
         }
@@ -85,13 +86,13 @@ public class SingleChannelResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        ChannelConfiguration oldConfig = dataHubService.getChannelConfiguration(channelName);
+        ChannelConfiguration oldConfig = channelDao.getChannelConfiguration(channelName);
         ChannelConfiguration.Builder builder = ChannelConfiguration.builder().withChannelConfiguration(oldConfig);
         if (request.getTtlMillis() != null) {
             builder.withTtlMillis(request.getTtlMillis().isPresent() ? request.getTtlMillis().get() : null);
         }
         ChannelConfiguration newConfig = builder.build();
-        dataHubService.updateChannelMetadata(newConfig);
+        channelDao.updateChannelMetadata(newConfig);
         URI channelUri = linkBuilder.buildChannelUri(newConfig, uriInfo);
         return Response.ok(channelUri).entity(
                 linkBuilder.buildLinkedChannelConfig(newConfig, channelUri, uriInfo))
@@ -116,8 +117,8 @@ public class SingleChannelResource {
             return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
         }
 
-        ValueInsertionResult insertionResult = dataHubService.insert(channelName, data, Optional.fromNullable(contentType),
-                Optional.fromNullable(contentLanguage));
+        ValueInsertionResult insertionResult = channelDao.insert(channelName, Optional.fromNullable(contentType),
+                Optional.fromNullable(contentLanguage), data);
         URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo.getRequestUri());
         Linked<ValueInsertionResult> linkedResult = linked(insertionResult)
                 .withLink("channel", linkBuilder.buildChannelUri(channelName, uriInfo))
@@ -131,7 +132,7 @@ public class SingleChannelResource {
     }
 
     private boolean noSuchChannel(final String channelName) {
-        return !dataHubService.channelExists(channelName);
+        return !channelDao.channelExists(channelName);
     }
 
 }
