@@ -1,6 +1,5 @@
-package com.flightstats.datahub.app.config;
+package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.dao.DataHubValueDao;
 import com.flightstats.datahub.util.ApplyOnce;
 import com.google.common.base.Function;
 import com.google.inject.TypeLiteral;
@@ -13,21 +12,21 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This is a guice binding via TypeListener.  It provides a means for the
- * DataHubValueDao to initialize (bootstrap) the values table.
- * Ideally, this only ever happens once and is forgotten...but realistically....
+ * ChannelsCollectionDao to initialize (bootstrap) the channels metadata
+ * column family.  Ideally, this only ever happens once and is forgotten...but realistically....
  * in the event that we spin up a new datahub this will help facilitate bootstrapping.
  * Also dev + ephemeral storage will like this.
  */
-class DataHubValueDaoInitialization implements TypeListener {
+public class ChannelMetadataInitialization implements TypeListener {
 
-	private final static Logger logger = LoggerFactory.getLogger(DataHubValueDaoInitialization.class);
+	private final static Logger logger = LoggerFactory.getLogger(ChannelMetadataInitialization.class);
 
-	private final ApplyOnce<DataHubValueDao, Void> initOnce = new ApplyOnce<>(
-			new Function<DataHubValueDao, Void>() {
+	private final ApplyOnce<ChannelsCollectionDao, Void> initOnce = new ApplyOnce<>(
+			new Function<ChannelsCollectionDao, Void>() {
 				@Override
-				public Void apply(DataHubValueDao dataHubValueDao) {
-					logger.info("Bootstrapping value table...");
-					dataHubValueDao.initializeTable();
+				public Void apply(ChannelsCollectionDao channelsCollectionDao) {
+					logger.info("Bootstrapping channel metadata...");
+					channelsCollectionDao.initializeMetadata();
 					return null;
 				}
 			});
@@ -37,7 +36,8 @@ class DataHubValueDaoInitialization implements TypeListener {
 		encounter.register(new InjectionListener<I>() {
 			@Override
 			public void afterInjection(Object instance) {
-                initOnce.apply((DataHubValueDao) instance);
+				ChannelsCollectionDao channelsCollectionDao = (ChannelsCollectionDao) instance;
+				initOnce.apply(channelsCollectionDao);
 			}
 		});
 
@@ -47,7 +47,7 @@ class DataHubValueDaoInitialization implements TypeListener {
 		return new AbstractMatcher<TypeLiteral<?>>() {
 			@Override
 			public boolean matches(TypeLiteral<?> typeLiteral) {
-				return DataHubValueDao.class.isAssignableFrom(typeLiteral.getRawType());
+				return ChannelsCollectionDao.class.isAssignableFrom(typeLiteral.getRawType());
 			}
 		};
 	}

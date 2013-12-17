@@ -8,10 +8,10 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${HOME}/var/log/datahub.log</file>
+        <file>${HOME}/local/log/datahub.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>${HOME}/var/log/datahub_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${HOME}/local/log/datahub_%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- keep 14 days -->
             <maxHistory>14</maxHistory>
         </rollingPolicy>
@@ -23,7 +23,7 @@
 
     <!--todo seems like syslog.util.pdx.prod shouldn't be here-->
     <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
-        <syslogHost>syslog.util.pdx.prod</syslogHost>
+        <syslogHost>syslog.util.pdx.dev</syslogHost>
         <facility>USER</facility>
         <suffixPattern>[%thread] %logger %msg</suffixPattern>
     </appender>

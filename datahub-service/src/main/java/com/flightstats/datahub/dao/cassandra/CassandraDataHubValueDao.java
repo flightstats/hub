@@ -1,9 +1,11 @@
-package com.flightstats.datahub.dao;
+package com.flightstats.datahub.dao.cassandra;
 
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
+import com.flightstats.datahub.dao.DataHubValueDao;
+import com.flightstats.datahub.dao.RowKeyStrategy;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
@@ -29,8 +31,7 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
     private int gcGraceSeconds;
 
     @Inject
-	public CassandraDataHubValueDao(RowKeyStrategy<String, DataHubKey,
-            DataHubCompositeValue> rowKeyStrategy,
+	public CassandraDataHubValueDao(RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy,
                                     DataHubKeyGenerator keyGenerator,
                                     TimeProvider timeProvider,
                                     QuorumSession session,
@@ -89,8 +90,7 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
     }
 
     @Override
-    public void initializeTable() {
-        //todo - gfm - 11/19/13 - make more tables eventually?
+    public void initialize() {
         try {
             session.execute(
                     "CREATE TABLE values (" +
@@ -107,5 +107,10 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
             logger.info("values table already exists");
         }
         session.execute("ALTER TABLE values with gc_grace_seconds = " + gcGraceSeconds);
+    }
+
+    @Override
+    public void initializeChannel(String channelName) {
+        keyGenerator.seedChannel(channelName);
     }
 }
