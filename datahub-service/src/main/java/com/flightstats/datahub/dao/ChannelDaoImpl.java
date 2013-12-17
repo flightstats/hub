@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.service.ChannelInsertionPublisher;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
@@ -12,46 +13,49 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
-public class CassandraChannelDao implements ChannelDao {
+public class ChannelDaoImpl implements ChannelDao {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelDao.class);
 
-    private final CassandraChannelsCollection channelsCollection;
-    private final CqlValueOperations cqlValueOperations;
+    private final ChannelsCollectionDao channelsCollectionDao;
+    private final DataHubValueDao dataHubValueDao;
     private final ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel;
     private final DataHubKeyGenerator keyGenerator;
     private final TimeProvider timeProvider;
+    private ChannelInsertionPublisher channelInsertionPublisher;
 
     @Inject
-    public CassandraChannelDao(
-            CassandraChannelsCollection channelsCollection,
-            CqlValueOperations cqlValueOperations,
+    public ChannelDaoImpl(
+            ChannelsCollectionDao channelsCollectionDao,
+            DataHubValueDao dataHubValueDao,
             @Named("LastUpdatePerChannelMap") ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel,
             DataHubKeyGenerator keyGenerator,
-            TimeProvider timeProvider) {
-        this.channelsCollection = channelsCollection;
-        this.cqlValueOperations = cqlValueOperations;
+            TimeProvider timeProvider,
+            ChannelInsertionPublisher channelInsertionPublisher) {
+        this.channelsCollectionDao = channelsCollectionDao;
+        this.dataHubValueDao = dataHubValueDao;
         this.lastUpdatedPerChannel = lastUpdatedPerChannel;
         this.keyGenerator = keyGenerator;
         this.timeProvider = timeProvider;
+        this.channelInsertionPublisher = channelInsertionPublisher;
     }
 
     @Override
     public boolean channelExists(String channelName) {
-        return channelsCollection.channelExists(channelName);
+        return channelsCollectionDao.channelExists(channelName);
     }
 
     @Override
     public ChannelConfiguration createChannel(String name, Long ttlMillis) {
         logger.info("Creating channel name = " + name + ", with ttlMillis = " + ttlMillis);
-        ChannelConfiguration configuration = channelsCollection.createChannel(name, ttlMillis);
+        ChannelConfiguration configuration = channelsCollectionDao.createChannel(name, ttlMillis);
         keyGenerator.seedChannel(name);
         return configuration;
     }
 
     @Override
     public void updateChannelMetadata(ChannelConfiguration newConfig) {
-        channelsCollection.updateChannel(newConfig);
+        channelsCollectionDao.updateChannel(newConfig);
     }
 
     @Override
@@ -59,12 +63,13 @@ public class CassandraChannelDao implements ChannelDao {
         logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, data, timeProvider.getMillis());
         Optional<Integer> ttlSeconds = getTtlSeconds(channelName);
-        ValueInsertionResult result = cqlValueOperations.write(channelName, value, ttlSeconds);
+        ValueInsertionResult result = dataHubValueDao.write(channelName, value, ttlSeconds);
         DataHubKey insertedKey = result.getKey();
         setLastUpdateKey(channelName, insertedKey);
         /*if (insertedKey.isNewRow()) {
-            channelsCollection.updateLatestRowKey(channelName, result.getRowKey());
+            channelsCollectionDao.updateLatestRowKey(channelName, result.getRowKey());
         }*/
+        channelInsertionPublisher.publish(channelName, result);
         return result;
     }
 
@@ -79,7 +84,7 @@ public class CassandraChannelDao implements ChannelDao {
 
     @Override
     public void delete(String channelName, List<DataHubKey> keys) {
-        cqlValueOperations.delete(channelName, keys);
+        dataHubValueDao.delete(channelName, keys);
     }
 
     @Override
@@ -95,7 +100,7 @@ public class CassandraChannelDao implements ChannelDao {
     @Override
     public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
         logger.debug("Fetching " + key.toString() + " from channel " + channelName);
-        DataHubCompositeValue value = cqlValueOperations.read(channelName, key);
+        DataHubCompositeValue value = dataHubValueDao.read(channelName, key);
         if (value == null) {
             return Optional.absent();
         }
@@ -113,12 +118,12 @@ public class CassandraChannelDao implements ChannelDao {
 
     @Override
     public ChannelConfiguration getChannelConfiguration(String channelName) {
-        return channelsCollection.getChannelConfiguration(channelName);
+        return channelsCollectionDao.getChannelConfiguration(channelName);
     }
 
     @Override
     public Iterable<ChannelConfiguration> getChannels() {
-        return channelsCollection.getChannels();
+        return channelsCollectionDao.getChannels();
     }
 
     @Override
@@ -133,6 +138,6 @@ public class CassandraChannelDao implements ChannelDao {
 
     @Override
     public int countChannels() {
-        return channelsCollection.countChannels();
+        return channelsCollectionDao.countChannels();
     }
 }

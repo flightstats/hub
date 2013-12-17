@@ -19,41 +19,45 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Encapsulates the channel creation, existence checks, and associated metadata.
  */
-public class CassandraChannelsCollection {
+public class CassandraChannelsCollectionDao implements ChannelsCollectionDao {
 
-	private final static Logger logger = LoggerFactory.getLogger(CassandraChannelsCollection.class);
+	private final static Logger logger = LoggerFactory.getLogger(CassandraChannelsCollectionDao.class);
 
     private final TimeProvider timeProvider;
     private final ConcurrentMap<String,ChannelConfiguration> channelConfigurationMap;
     private Session session;
 
     @Inject
-	public CassandraChannelsCollection(TimeProvider timeProvider,
-                                       @Named("ChannelConfigurationMap") ConcurrentMap<String,
-                                       ChannelConfiguration> channelConfigurationMap,
-                                       Session session) {
+	public CassandraChannelsCollectionDao(TimeProvider timeProvider,
+                                          @Named("ChannelConfigurationMap") ConcurrentMap<String,
+                                                  ChannelConfiguration> channelConfigurationMap,
+                                          Session session) {
 		this.timeProvider = timeProvider;
         this.channelConfigurationMap = channelConfigurationMap;
         this.session = session;
     }
 
-	public ChannelConfiguration createChannel(String name, Long ttlMillis) {
+	@Override
+    public ChannelConfiguration createChannel(String name, Long ttlMillis) {
 		ChannelConfiguration channelConfig = new ChannelConfiguration(name, timeProvider.getDate(), ttlMillis);
 		insertChannelMetadata(channelConfig);
 		return channelConfig;
 	}
 
-	public void updateChannel(ChannelConfiguration newConfig) {
+	@Override
+    public void updateChannel(ChannelConfiguration newConfig) {
 		insertChannelMetadata(newConfig);
 	}
 
-	public int countChannels() {
+	@Override
+    public int countChannels() {
 
         Row row = session.execute("SELECT count(*) FROM channelMetadata").one();
 		return (int) row.getLong(0);
 	}
 
-	public void initializeMetadata() {
+	@Override
+    public void initializeMetadata() {
 		logger.info("Initializing channel metadata table");
         try {
             session.execute(
@@ -78,12 +82,14 @@ public class CassandraChannelsCollection {
         channelConfigurationMap.put(channelConfig.getName(), channelConfig);
     }
 
-	public boolean channelExists(String channelName) {
+	@Override
+    public boolean channelExists(String channelName) {
 		ChannelConfiguration channelConfiguration = getChannelConfiguration(channelName);
 		return channelConfiguration != null;
 	}
 
-	public ChannelConfiguration getChannelConfiguration(String channelName) {
+	@Override
+    public ChannelConfiguration getChannelConfiguration(String channelName) {
         //todo - gfm - 11/22/13 - pull out caching into separate class?
         ChannelConfiguration configuration = channelConfigurationMap.get(channelName);
         if (configuration != null) {
@@ -100,7 +106,8 @@ public class CassandraChannelsCollection {
         return configuration;
     }
 
-	public Iterable<ChannelConfiguration> getChannels() {
+	@Override
+    public Iterable<ChannelConfiguration> getChannels() {
         List<ChannelConfiguration> result = new ArrayList<>();
         ResultSet results = session.execute("SELECT * FROM channelMetadata");
         for (Row row : results) {

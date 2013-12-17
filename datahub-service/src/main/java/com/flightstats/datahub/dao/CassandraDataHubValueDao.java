@@ -19,9 +19,9 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 
-public class CqlValueOperations {
+public class CassandraDataHubValueDao implements DataHubValueDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(CqlValueOperations.class);
+    private final static Logger logger = LoggerFactory.getLogger(CassandraDataHubValueDao.class);
 
 	private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
 	private final DataHubKeyGenerator keyGenerator;
@@ -30,12 +30,12 @@ public class CqlValueOperations {
     private int gcGraceSeconds;
 
     @Inject
-	public CqlValueOperations(RowKeyStrategy<String, DataHubKey,
-                              DataHubCompositeValue> rowKeyStrategy,
-                              DataHubKeyGenerator keyGenerator,
-                              TimeProvider timeProvider,
-                              Session session,
-                              @Named("cassandra.gc_grace_seconds") int gcGraceSeconds) {
+	public CassandraDataHubValueDao(RowKeyStrategy<String, DataHubKey,
+            DataHubCompositeValue> rowKeyStrategy,
+                                    DataHubKeyGenerator keyGenerator,
+                                    TimeProvider timeProvider,
+                                    Session session,
+                                    @Named("cassandra.gc_grace_seconds") int gcGraceSeconds) {
 		this.rowKeyStrategy = rowKeyStrategy;
 		this.keyGenerator = keyGenerator;
         this.timeProvider = timeProvider;
@@ -43,7 +43,8 @@ public class CqlValueOperations {
         this.gcGraceSeconds = gcGraceSeconds;
     }
 
-	public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue, Optional<Integer> ttlSeconds) {
+	@Override
+    public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue, Optional<Integer> ttlSeconds) {
         DataHubKey key = keyGenerator.newKey(channelName);
         String rowKey = rowKeyStrategy.buildKey(channelName, key);
 
@@ -61,10 +62,12 @@ public class CqlValueOperations {
 		return new ValueInsertionResult(key, rowKey, timeProvider.getDate());
 	}
 
+    @Override
     public void delete(String channelName, Collection<DataHubKey> keys) {
 		//todo - gfm - 11/22/13 -
 	}
 
+    @Override
     public DataHubCompositeValue read(String channelName, DataHubKey key) {
 
         String rowKey = rowKeyStrategy.buildKey(channelName, key);
@@ -86,6 +89,7 @@ public class CqlValueOperations {
                 Optional.fromNullable(contentLanguage), array, row.getLong("millis"));
     }
 
+    @Override
     public void initializeTable() {
         //todo - gfm - 11/19/13 - make more tables eventually?
         try {

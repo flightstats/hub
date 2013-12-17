@@ -1,6 +1,6 @@
 package com.flightstats.datahub.app.config;
 
-import com.flightstats.datahub.dao.CqlValueOperations;
+import com.flightstats.datahub.dao.DataHubValueDao;
 import com.flightstats.datahub.util.ApplyOnce;
 import com.google.common.base.Function;
 import com.google.inject.TypeLiteral;
@@ -13,21 +13,21 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This is a guice binding via TypeListener.  It provides a means for the
- * CqlValueOperations to initialize (bootstrap) the values table.
+ * DataHubValueDao to initialize (bootstrap) the values table.
  * Ideally, this only ever happens once and is forgotten...but realistically....
  * in the event that we spin up a new datahub this will help facilitate bootstrapping.
  * Also dev + ephemeral storage will like this.
  */
-class CqlValueOperationsInitialization implements TypeListener {
+class DataHubValueDaoInitialization implements TypeListener {
 
-	private final static Logger logger = LoggerFactory.getLogger(CqlValueOperationsInitialization.class);
+	private final static Logger logger = LoggerFactory.getLogger(DataHubValueDaoInitialization.class);
 
-	private final ApplyOnce<CqlValueOperations, Void> initOnce = new ApplyOnce<>(
-			new Function<CqlValueOperations, Void>() {
+	private final ApplyOnce<DataHubValueDao, Void> initOnce = new ApplyOnce<>(
+			new Function<DataHubValueDao, Void>() {
 				@Override
-				public Void apply(CqlValueOperations cqlValueOperations) {
+				public Void apply(DataHubValueDao dataHubValueDao) {
 					logger.info("Bootstrapping value table...");
-					cqlValueOperations.initializeTable();
+					dataHubValueDao.initializeTable();
 					return null;
 				}
 			});
@@ -37,7 +37,7 @@ class CqlValueOperationsInitialization implements TypeListener {
 		encounter.register(new InjectionListener<I>() {
 			@Override
 			public void afterInjection(Object instance) {
-                initOnce.apply((CqlValueOperations) instance);
+                initOnce.apply((DataHubValueDao) instance);
 			}
 		});
 
@@ -47,7 +47,7 @@ class CqlValueOperationsInitialization implements TypeListener {
 		return new AbstractMatcher<TypeLiteral<?>>() {
 			@Override
 			public boolean matches(TypeLiteral<?> typeLiteral) {
-				return CqlValueOperations.class.isAssignableFrom(typeLiteral.getRawType());
+				return DataHubValueDao.class.isAssignableFrom(typeLiteral.getRawType());
 			}
 		};
 	}

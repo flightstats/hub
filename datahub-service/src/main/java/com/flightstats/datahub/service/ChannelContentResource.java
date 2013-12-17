@@ -3,6 +3,7 @@ package com.flightstats.datahub.service;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
+import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
@@ -33,14 +34,14 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 public class ChannelContentResource {
 
 	private final UriInfo uriInfo;
-	private final DataHubService dataHubService;
+	private final ChannelDao channelDao;
 	private final DataHubKeyRenderer keyRenderer;
 	private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
 	@Inject
-	public ChannelContentResource(UriInfo uriInfo, DataHubService dataHubService, DataHubKeyRenderer keyRenderer) {
+	public ChannelContentResource(UriInfo uriInfo, ChannelDao channelDao, DataHubKeyRenderer keyRenderer) {
 		this.uriInfo = uriInfo;
-		this.dataHubService = dataHubService;
+		this.channelDao = channelDao;
 		this.keyRenderer = keyRenderer;
 	}
 
@@ -53,7 +54,7 @@ public class ChannelContentResource {
         if (!optionalKey.isPresent()) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-		Optional<LinkedDataHubCompositeValue> optionalResult = dataHubService.getValue(channelName, optionalKey.get());
+		Optional<LinkedDataHubCompositeValue> optionalResult = channelDao.getValue(channelName, optionalKey.get());
 
 		if (!optionalResult.isPresent()) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
