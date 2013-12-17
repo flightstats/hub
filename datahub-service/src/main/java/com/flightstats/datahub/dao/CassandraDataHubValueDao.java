@@ -3,7 +3,6 @@ package com.flightstats.datahub.dao;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
@@ -26,7 +25,7 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
 	private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
 	private final DataHubKeyGenerator keyGenerator;
     private final TimeProvider timeProvider;
-    private final Session session;
+    private final QuorumSession session;
     private int gcGraceSeconds;
 
     @Inject
@@ -34,7 +33,7 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
             DataHubCompositeValue> rowKeyStrategy,
                                     DataHubKeyGenerator keyGenerator,
                                     TimeProvider timeProvider,
-                                    Session session,
+                                    QuorumSession session,
                                     @Named("cassandra.gc_grace_seconds") int gcGraceSeconds) {
 		this.rowKeyStrategy = rowKeyStrategy;
 		this.keyGenerator = keyGenerator;
