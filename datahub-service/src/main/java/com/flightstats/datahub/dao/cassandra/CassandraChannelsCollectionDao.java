@@ -1,19 +1,18 @@
-package com.flightstats.datahub.dao;
+package com.flightstats.datahub.dao.cassandra;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
+import com.flightstats.datahub.dao.ChannelsCollectionDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Encapsulates the channel creation, existence checks, and associated metadata.
@@ -23,16 +22,13 @@ public class CassandraChannelsCollectionDao implements ChannelsCollectionDao {
 	private final static Logger logger = LoggerFactory.getLogger(CassandraChannelsCollectionDao.class);
 
     private final TimeProvider timeProvider;
-    private final ConcurrentMap<String,ChannelConfiguration> channelConfigurationMap;
+
     private QuorumSession session;
 
     @Inject
 	public CassandraChannelsCollectionDao(TimeProvider timeProvider,
-                                          @Named("ChannelConfigurationMap") ConcurrentMap<String,
-                                                  ChannelConfiguration> channelConfigurationMap,
                                           QuorumSession session) {
 		this.timeProvider = timeProvider;
-        this.channelConfigurationMap = channelConfigurationMap;
         this.session = session;
     }
 
@@ -46,13 +42,6 @@ public class CassandraChannelsCollectionDao implements ChannelsCollectionDao {
 	@Override
     public void updateChannel(ChannelConfiguration newConfig) {
 		insertChannelMetadata(newConfig);
-	}
-
-	@Override
-    public int countChannels() {
-
-        Row row = session.execute("SELECT count(*) FROM channelMetadata").one();
-		return (int) row.getLong(0);
 	}
 
 	@Override
@@ -78,31 +67,21 @@ public class CassandraChannelsCollectionDao implements ChannelsCollectionDao {
                 "VALUES (?, ?, ?)");
 
         session.execute(statement.bind(channelConfig.getName(), channelConfig.getCreationDate(), channelConfig.getTtlMillis()));
-        channelConfigurationMap.put(channelConfig.getName(), channelConfig);
     }
 
 	@Override
     public boolean channelExists(String channelName) {
-		ChannelConfiguration channelConfiguration = getChannelConfiguration(channelName);
-		return channelConfiguration != null;
+        return getChannelConfiguration(channelName) != null;
 	}
 
 	@Override
     public ChannelConfiguration getChannelConfiguration(String channelName) {
-        //todo - gfm - 11/22/13 - pull out caching into separate class?
-        ChannelConfiguration configuration = channelConfigurationMap.get(channelName);
-        if (configuration != null) {
-            return configuration;
-        }
         PreparedStatement statement = session.prepare("SELECT * FROM channelMetadata WHERE name = ? ");
         Row row = session.execute(statement.bind(channelName)).one();
         if (row == null) {
             return null;
         }
-
-        configuration = createChannelConfig(row);
-        channelConfigurationMap.put(channelName, configuration);
-        return configuration;
+        return createChannelConfig(row);
     }
 
 	@Override
@@ -114,6 +93,16 @@ public class CassandraChannelsCollectionDao implements ChannelsCollectionDao {
         }
 		return result;
 	}
+
+    @Override
+    public boolean isHealthy() {
+        try {
+            getChannels();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     private ChannelConfiguration createChannelConfig(Row row) {
         return new ChannelConfiguration(row.getString("name"), row.getDate("creationDate"), row.getLong("ttlMillis"));

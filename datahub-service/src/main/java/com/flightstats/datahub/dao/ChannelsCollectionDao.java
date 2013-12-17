@@ -10,7 +10,7 @@ public interface ChannelsCollectionDao {
 
     void updateChannel(ChannelConfiguration newConfig);
 
-    int countChannels();
+    boolean isHealthy();
 
     void initializeMetadata();
 

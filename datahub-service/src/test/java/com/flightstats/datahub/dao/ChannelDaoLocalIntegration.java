@@ -7,9 +7,7 @@ import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import com.google.inject.Injector;
-import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,34 +16,33 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class CassandraChannelDaoLocalIntegration {
-    private final static Logger logger = LoggerFactory.getLogger(CassandraChannelDaoLocalIntegration.class);
+public abstract class ChannelDaoLocalIntegration {
+    private final static Logger logger = LoggerFactory.getLogger(ChannelDaoLocalIntegration.class);
 
-    private static Injector injector;
-    private ChannelDao channelDao;
-    private String channelName;
-    private static List<String> channelNames = new ArrayList<>();
+    protected static Injector injector;
+    protected ChannelDao channelDao;
+    protected String channelName;
+    protected static List<String> channelNames = new ArrayList<>();
 
-    @BeforeClass
-    public static void setupClass() throws Exception {
-        EmbeddedCassandraServerHelper.startEmbeddedCassandra();
-        Properties properties = new Properties();
-        properties.put("cassandra.cluster_name", "data hub");
-        properties.put("cassandra.host", "127.0.0.1");
-        properties.put("cassandra.port", "9142");
-        properties.put("cassandra.replication_factor", "1");
-        properties.put("cassandra.gc_grace_seconds", "1");
-        properties.put("backing.store", "cassandra");
-        properties.put("hazelcast.conf.xml", "");
+
+    public static void finalStartup(Properties properties) throws Exception {
+
         injector = GuiceContextListenerFactory.construct(properties).getInjector();
+        channelNames.clear();
     }
 
     @Before
     public void setUp() throws Exception {
+        verifyStartup();
         channelDao = injector.getInstance(ChannelDao.class);
         channelName = UUID.randomUUID().toString();
         channelNames.add(channelName);
     }
+
+    /**
+     * Do any additional verification here
+     */
+    protected abstract void verifyStartup();
 
     @Test
     public void testChannelCreation() throws Exception {
@@ -104,10 +101,7 @@ public class CassandraChannelDaoLocalIntegration {
         logger.info("found " + found);
         assertTrue(found.containsAll(existing));
 
-        assertEquals(found.size(), channelDao.countChannels());
+        assertTrue(channelDao.isHealthy());
     }
-
-    //todo - gfm - 11/25/13 - tests for latest row key
-
 
 }

@@ -1,6 +1,5 @@
-package com.flightstats.datahub.app.config;
+package com.flightstats.datahub.dao.cassandra;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.dao.*;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
@@ -10,9 +9,8 @@ import com.google.inject.name.Names;
 
 import java.util.Properties;
 
-class CassandraDataStoreModule extends AbstractModule {
+public class CassandraDataStoreModule extends AbstractModule {
 
-	private final ObjectMapper objectMapper = DataHubObjectMapperFactory.construct();
 	private final Properties properties;
 
 	public CassandraDataStoreModule(Properties properties) {
@@ -27,7 +25,10 @@ class CassandraDataStoreModule extends AbstractModule {
 		bindListener(ChannelMetadataInitialization.buildTypeMatcher(), new ChannelMetadataInitialization());
 		bindListener(DataHubValueDaoInitialization.buildTypeMatcher(), new DataHubValueDaoInitialization());
 		bind(ChannelDao.class).to(ChannelDaoImpl.class).in(Singleton.class);
-		bind(ChannelsCollectionDao.class).to(CassandraChannelsCollectionDao.class).in(Singleton.class);
+        bind(ChannelsCollectionDao.class).to(CachedChannelsCollectionDao.class).in(Singleton.class);
+        bind(ChannelsCollectionDao.class)
+                .annotatedWith(Names.named(CachedChannelsCollectionDao.DELEGATE))
+                .to(CassandraChannelsCollectionDao.class);
 		bind(DataHubValueDao.class).to(CassandraDataHubValueDao.class).in(Singleton.class);
 	}
 
