@@ -25,11 +25,19 @@ public class CassandraDataStoreModule extends AbstractModule {
 		bindListener(ChannelMetadataInitialization.buildTypeMatcher(), new ChannelMetadataInitialization());
 		bindListener(DataHubValueDaoInitialization.buildTypeMatcher(), new DataHubValueDaoInitialization());
 		bind(ChannelDao.class).to(ChannelDaoImpl.class).in(Singleton.class);
-        bind(ChannelsCollectionDao.class).to(CachedChannelsCollectionDao.class).in(Singleton.class);
+
+        bind(ChannelsCollectionDao.class).to(TimedChannelsCollectionDao.class).in(Singleton.class);
+        bind(ChannelsCollectionDao.class)
+                .annotatedWith(Names.named(TimedChannelsCollectionDao.DELEGATE))
+                .to(CachedChannelsCollectionDao.class);
         bind(ChannelsCollectionDao.class)
                 .annotatedWith(Names.named(CachedChannelsCollectionDao.DELEGATE))
                 .to(CassandraChannelsCollectionDao.class);
-		bind(DataHubValueDao.class).to(CassandraDataHubValueDao.class).in(Singleton.class);
+
+        bind(DataHubValueDao.class).to(TimedDataHubValueDao.class).in(Singleton.class);
+        bind(DataHubValueDao.class)
+                .annotatedWith(Names.named(TimedDataHubValueDao.DELEGATE))
+                .to(CassandraDataHubValueDao.class);
 	}
 
     @Inject

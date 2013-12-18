@@ -66,10 +66,6 @@ public class DynamoUtils {
         long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(tableCreationWaitMinutes);
         while (System.currentTimeMillis() < endTime) {
             try {
-                Thread.sleep(1000);
-            } catch (Exception e) {
-            }
-            try {
                 DescribeTableRequest request = new DescribeTableRequest(tableName);
                 TableDescription tableDescription = dbClient.describeTable(request).getTable();
                 String tableStatus = tableDescription.getTableStatus();
@@ -84,6 +80,10 @@ public class DynamoUtils {
                     throw ase;
                 }
                 logger.info("retrying for table " + tableName);
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
             }
         }
         logger.warn("table never went active " + tableName);

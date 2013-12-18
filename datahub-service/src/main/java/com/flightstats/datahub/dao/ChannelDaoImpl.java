@@ -1,5 +1,7 @@
 package com.flightstats.datahub.dao;
 
+import com.flightstats.datahub.metrics.MetricsTimer;
+import com.flightstats.datahub.metrics.TimedCallback;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.service.ChannelInsertionPublisher;
 import com.flightstats.datahub.util.TimeProvider;
@@ -21,6 +23,7 @@ public class ChannelDaoImpl implements ChannelDao {
     private final ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel;
     private final TimeProvider timeProvider;
     private ChannelInsertionPublisher channelInsertionPublisher;
+    private final MetricsTimer metricsTimer;
 
     @Inject
     public ChannelDaoImpl(
@@ -28,12 +31,14 @@ public class ChannelDaoImpl implements ChannelDao {
             DataHubValueDao dataHubValueDao,
             @Named("LastUpdatePerChannelMap") ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel,
             TimeProvider timeProvider,
-            ChannelInsertionPublisher channelInsertionPublisher) {
+            ChannelInsertionPublisher channelInsertionPublisher,
+            MetricsTimer metricsTimer) {
         this.channelsCollectionDao = channelsCollectionDao;
         this.dataHubValueDao = dataHubValueDao;
         this.lastUpdatedPerChannel = lastUpdatedPerChannel;
         this.timeProvider = timeProvider;
         this.channelInsertionPublisher = channelInsertionPublisher;
+        this.metricsTimer = metricsTimer;
     }
 
     @Override
@@ -55,7 +60,7 @@ public class ChannelDaoImpl implements ChannelDao {
 
     @Override
     public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
-        logger.debug("Inserting " + data.length + " bytes of type " + contentType + " into channel " + channelName);
+        logger.debug("inserting {} bytes into channel {} ", data.length, channelName);
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, data, timeProvider.getMillis());
         Optional<Integer> ttlSeconds = getTtlSeconds(channelName);
         ValueInsertionResult result = dataHubValueDao.write(channelName, value, ttlSeconds);
@@ -80,13 +85,14 @@ public class ChannelDaoImpl implements ChannelDao {
     }
 
     @Override
-    public void setLastUpdateKey(String channelName, DataHubKey lastUpdateKey) {
-        lastUpdatedPerChannel.put(channelName, lastUpdateKey);
-    }
-
-    @Override
-    public void deleteLastUpdateKey(String channelName) {
-        lastUpdatedPerChannel.remove(channelName);
+    public void setLastUpdateKey(final String channelName, final DataHubKey lastUpdateKey) {
+        metricsTimer.time("hazelcast.setLastUpdated", new TimedCallback<Object>() {
+            @Override
+            public Object call() {
+                lastUpdatedPerChannel.put(channelName, lastUpdateKey);
+                return null;
+            }
+        });
     }
 
     @Override
@@ -96,7 +102,7 @@ public class ChannelDaoImpl implements ChannelDao {
 
     @Override
     public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
-        logger.debug("Fetching " + key.toString() + " from channel " + channelName);
+        logger.debug("fetching {} from channel {} ", key.toString(), channelName);
         DataHubCompositeValue value = dataHubValueDao.read(channelName, key);
         if (value == null) {
             return Optional.absent();
@@ -129,8 +135,13 @@ public class ChannelDaoImpl implements ChannelDao {
         return Optional.fromNullable(getLastUpdatedFromCache(channelName));
     }
 
-    private DataHubKey getLastUpdatedFromCache(String channelName) {
-        return lastUpdatedPerChannel.get(channelName);
+    private DataHubKey getLastUpdatedFromCache(final String channelName) {
+        return metricsTimer.time("hazelcast.getLastUpdated", new TimedCallback<DataHubKey>() {
+            @Override
+            public DataHubKey call() {
+                return lastUpdatedPerChannel.get(channelName);
+            }
+        });
     }
 
 }

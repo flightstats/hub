@@ -1,13 +1,10 @@
 package com.flightstats.datahub.dao.dynamo;
 
 import com.flightstats.datahub.dao.ChannelDaoLocalIntegration;
-import com.flightstats.datahub.dao.DataHubValueDao;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.util.Properties;
-
-import static org.junit.Assert.assertTrue;
 
 public class DynamoChannelDaoLocalIntegration extends ChannelDaoLocalIntegration {
 
@@ -38,7 +35,5 @@ public class DynamoChannelDaoLocalIntegration extends ChannelDaoLocalIntegration
 
     @Override
     protected void verifyStartup() {
-        DataHubValueDao dataHubValueDao = injector.getInstance(DataHubValueDao.class);
-        assertTrue(DynamoDataHubValueDao.class.isAssignableFrom(dataHubValueDao.getClass()));
     }
 }

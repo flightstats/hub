@@ -14,10 +14,6 @@ public interface ChannelDao {
 
 	ChannelConfiguration createChannel(String channelName, Long ttlMillis);
 
-	/**
-	 * Note, this operation is done within a front-end lock on the channel.  The implementation of this method
-	 * can assume that it will be the only insert called for this channel during execution.
-	 */
 	ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data);
 
 	Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key);
@@ -31,8 +27,6 @@ public interface ChannelDao {
     boolean isHealthy();
 
 	void setLastUpdateKey(String channelName, DataHubKey key);
-
-	void deleteLastUpdateKey(String channelName);
 
 	/**
 	 * Delete the keys and their corresponding values for the given channel.
