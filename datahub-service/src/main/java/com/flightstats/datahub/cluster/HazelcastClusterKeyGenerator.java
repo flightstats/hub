@@ -1,6 +1,8 @@
 package com.flightstats.datahub.cluster;
 
 import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
+import com.flightstats.datahub.metrics.MetricsTimer;
+import com.flightstats.datahub.metrics.TimedCallback;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
@@ -21,18 +23,26 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
 
     private final HazelcastInstance hazelcastInstance;
     private ChannelLockExecutor channelLockExecutor;
+    private final MetricsTimer metricsTimer;
 
     @Inject
     public HazelcastClusterKeyGenerator(HazelcastInstance hazelcastInstance,
-                                        ChannelLockExecutor channelLockExecutor) {
+                                        ChannelLockExecutor channelLockExecutor, MetricsTimer metricsTimer) {
         this.hazelcastInstance = hazelcastInstance;
         this.channelLockExecutor = channelLockExecutor;
+        this.metricsTimer = metricsTimer;
     }
 
     @Override
     public DataHubKey newKey(final String channelName) {
+
         try {
-            return nextDataHubKey(channelName);
+            return metricsTimer.time("hazelcast.newKey", new TimedCallback<DataHubKey>() {
+                @Override
+                public DataHubKey call() {
+                    return nextDataHubKey(channelName);
+                }
+            });
         } catch (Exception e) {
             throw new RuntimeException("Error generating new DataHubKey: " + channelName, e);
         }

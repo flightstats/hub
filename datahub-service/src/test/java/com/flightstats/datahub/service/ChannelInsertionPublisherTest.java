@@ -1,18 +1,28 @@
 package com.flightstats.datahub.service;
 
+import com.codahale.metrics.MetricRegistry;
+import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.mockito.Mockito.*;
 
 public class ChannelInsertionPublisherTest {
 
-	@Test
+    private MetricsTimer metricsTimer;
+
+    @Before
+    public void setUp() throws Exception {
+        metricsTimer = new MetricsTimer(new MetricRegistry());
+    }
+
+    @Test
 	public void testPublish() throws Exception {
 		DataHubKey dataHubKey = new DataHubKey((short) 1000);
 
@@ -23,7 +33,7 @@ public class ChannelInsertionPublisherTest {
 		when(keyRenderer.keyToString(dataHubKey)).thenReturn("key message");
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, keyRenderer);
+		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, keyRenderer, metricsTimer);
 
 		testClass.publish("channelName", new ValueInsertionResult(dataHubKey, null, null));
 
@@ -38,7 +48,7 @@ public class ChannelInsertionPublisherTest {
 
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, null);
+		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, null, metricsTimer);
 
 		testClass.subscribe("channelName", messageListener);
 		verify(iTopic).addMessageListener(messageListener);
@@ -51,7 +61,7 @@ public class ChannelInsertionPublisherTest {
 
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, null);
+		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, null, metricsTimer);
 
 		testClass.unsubscribe("channelName", "todo");
 		verify(iTopic).removeMessageListener("todo");
