@@ -15,6 +15,7 @@ public class DataHubHealthCheck implements HealthCheck {
 
     @Override
     public boolean isHealthy() {
+        //todo - gfm - 12/19/13 - this should check if zookeeper has a connection/quorum.
         return channelDao.isHealthy();
     }
 }
