@@ -1,9 +1,12 @@
 package com.flightstats.datahub.cluster;
 
+import com.codahale.metrics.MetricRegistry;
+import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IAtomicLong;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.channels.AlreadyBoundException;
@@ -14,6 +17,14 @@ import static org.mockito.Mockito.*;
 
 public class HazelcastClusterKeyGeneratorTest {
 
+    private MetricsTimer metricsTimer;
+
+    @Before
+    public void setUp() throws Exception {
+        metricsTimer = new MetricsTimer(new MetricRegistry());
+
+    }
+
     @Test
     public void testIncrementNoRollover() throws Exception {
         //GIVEN
@@ -23,7 +34,7 @@ public class HazelcastClusterKeyGeneratorTest {
         ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
         IAtomicLong atomicSeqNumber = mock(IAtomicLong.class);
 
-        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor);
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor, metricsTimer);
 
         //WHEN
         when(hazelcast.getAtomicLong("CHANNEL_NAME_SEQ:mychanisgood")).thenReturn(atomicSeqNumber);
@@ -44,7 +55,7 @@ public class HazelcastClusterKeyGeneratorTest {
         IAtomicLong atomicSeqNumber = mock(IAtomicLong.class);
         ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 
-        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor);
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor, metricsTimer);
 
         when(hazelcast.getAtomicLong("CHANNEL_NAME_SEQ:" + channelName)).thenReturn(atomicSeqNumber);
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L).thenReturn(1000L);
@@ -65,7 +76,7 @@ public class HazelcastClusterKeyGeneratorTest {
         IAtomicLong atomicSeqNumber = mock(IAtomicLong.class);
         ChannelLockExecutor channelLockExecutor = new ChannelLockExecutor(new ReentrantChannelLockFactory());
 
-        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor);
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(hazelcast, channelLockExecutor, metricsTimer);
 
         when(hazelcast.getAtomicLong("CHANNEL_NAME_SEQ:" + channelName)).thenReturn(atomicSeqNumber);
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(1L).thenReturn(expectedKey.getSequence());
@@ -81,7 +92,7 @@ public class HazelcastClusterKeyGeneratorTest {
         //GIVEN
         ChannelLockExecutor channelLockExecutor = mock(ChannelLockExecutor.class);
 
-        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(null, null);
+        HazelcastClusterKeyGenerator testClass = new HazelcastClusterKeyGenerator(null, null, metricsTimer);
 
         //WHEN
         when(channelLockExecutor.execute(anyString(), any(Callable.class))).thenThrow(new AlreadyBoundException());

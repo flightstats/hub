@@ -1,13 +1,10 @@
 package com.flightstats.datahub.dao.cassandra;
 
 import com.flightstats.datahub.dao.ChannelDaoLocalIntegration;
-import com.flightstats.datahub.dao.DataHubValueDao;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.junit.BeforeClass;
 
 import java.util.Properties;
-
-import static org.junit.Assert.assertTrue;
 
 public class CassandraChannelDaoLocalIntegration extends ChannelDaoLocalIntegration {
 
@@ -28,7 +25,5 @@ public class CassandraChannelDaoLocalIntegration extends ChannelDaoLocalIntegrat
 
     @Override
     protected void verifyStartup() {
-        DataHubValueDao dataHubValueDao = injector.getInstance(DataHubValueDao.class);
-        assertTrue(CassandraDataHubValueDao.class.isAssignableFrom(dataHubValueDao.getClass()));
     }
 }
