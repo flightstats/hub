@@ -7,11 +7,14 @@ import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import com.google.inject.Injector;
+import org.apache.curator.test.TestingServer;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -23,10 +26,12 @@ public abstract class ChannelDaoLocalIntegration {
     protected ChannelDao channelDao;
     protected String channelName;
     protected static List<String> channelNames = new ArrayList<>();
+    private static TestingServer testingServer;
 
 
     public static void finalStartup(Properties properties) throws Exception {
-
+        properties.put("zookeeper.connection", "localhost:2181");
+        testingServer = new TestingServer(2181);
         injector = GuiceContextListenerFactory.construct(properties).getInjector();
         channelNames.clear();
     }
@@ -37,6 +42,11 @@ public abstract class ChannelDaoLocalIntegration {
         channelDao = injector.getInstance(ChannelDao.class);
         channelName = UUID.randomUUID().toString();
         channelNames.add(channelName);
+    }
+
+    @AfterClass
+    public static void teardownClass() throws IOException {
+        testingServer.stop();
     }
 
     /**

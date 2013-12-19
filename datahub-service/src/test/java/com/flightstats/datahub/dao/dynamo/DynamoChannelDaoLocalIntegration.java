@@ -1,7 +1,6 @@
 package com.flightstats.datahub.dao.dynamo;
 
 import com.flightstats.datahub.dao.ChannelDaoLocalIntegration;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.util.Properties;
@@ -27,11 +26,6 @@ public class DynamoChannelDaoLocalIntegration extends ChannelDaoLocalIntegration
         finalStartup(properties);
     }
 
-    @AfterClass
-    public static void teardownClass() {
-        //todo - gfm - 12/13/13 - delete any tables?
-
-    }
 
     @Override
     protected void verifyStartup() {
