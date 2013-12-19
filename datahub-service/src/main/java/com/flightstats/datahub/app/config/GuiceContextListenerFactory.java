@@ -27,6 +27,8 @@ import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
 import com.flightstats.jerseyguice.metrics.GraphiteConfig;
 import com.flightstats.jerseyguice.metrics.GraphiteConfigImpl;
 import com.google.common.base.Strings;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.inject.*;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -55,6 +57,7 @@ import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 public class GuiceContextListenerFactory {
     private final static Logger logger = LoggerFactory.getLogger(GuiceContextListenerFactory.class);
@@ -186,8 +189,11 @@ public class GuiceContextListenerFactory {
         @Named("ChannelConfigurationMap")
         @Singleton
         @Provides
-        public static ConcurrentMap<String, ChannelConfiguration> buildChannelConfigurationMap(HazelcastInstance hazelcast) throws FileNotFoundException {
-            return hazelcast.getMap("CHANNEL_CONFIGURATION_MAP");
+        public static ConcurrentMap<String, ChannelConfiguration> buildChannelConfigurationMap() throws FileNotFoundException {
+            Cache<String, ChannelConfiguration> cache = CacheBuilder.newBuilder()
+                    .expireAfterAccess(15L, TimeUnit.MINUTES)
+                    .build();
+            return cache.asMap();
         }
 
         @Override
