@@ -7,6 +7,7 @@ import com.flightstats.jerseyguice.jetty.JettyConfig;
 import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
 import com.flightstats.jerseyguice.jetty.JettyServer;
 import com.google.inject.servlet.GuiceServletContextListener;
+import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +25,12 @@ public class DataHubMain {
     private static final Logger logger = LoggerFactory.getLogger(DataHubMain.class);
 
     public static void main(String[] args) throws Exception {
+        final Properties properties = loadProperties(args);
+        logger.info(properties.toString());
 
-        JettyServer server = startServer(args);
+        startZookeeper(properties);
+
+        JettyServer server = startServer(properties);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -39,8 +44,23 @@ public class DataHubMain {
         logger.info("Server shutdown complete.  Exiting application.");
     }
 
-    public static JettyServer startServer(String[] args) throws IOException, ConstraintException {
-        Properties properties = loadProperties(args);
+    private static void startZookeeper(final Properties properties) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                String zkConfigFile = properties.getProperty("zookeeper.cfg", "");
+                if ("singleNode".equals(zkConfigFile)) {
+                    logger.warn("using single node config file");
+                    zkConfigFile = DataHubMain.class.getResource("/zooSingleNode.cfg").getFile();
+                }
+                logger.info("using " + zkConfigFile);
+                QuorumPeerMain.main(new String[]{zkConfigFile});
+            }
+        }).start();
+    }
+
+    public static JettyServer startServer(Properties properties) throws IOException, ConstraintException {
         final JettyConfig jettyConfig = new JettyConfigImpl(properties);
         final GuiceServletContextListener guice = GuiceContextListenerFactory.construct(properties);
         JettyServer server = new JettyServer(jettyConfig, guice);
