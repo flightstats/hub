@@ -5,7 +5,6 @@ import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
 import com.flightstats.datahub.cluster.ChannelLockFactory;
 import com.flightstats.datahub.cluster.HazelcastChannelLockFactory;
-import com.flightstats.datahub.cluster.HazelcastClusterKeyGenerator;
 import com.flightstats.datahub.dao.RowKeyStrategy;
 import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
@@ -20,6 +19,7 @@ import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
 import com.flightstats.datahub.service.eventing.MetricsCustomWebSocketCreator;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.flightstats.datahub.service.eventing.WebSocketChannelNameExtractor;
+import com.flightstats.datahub.util.CuratorKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.flightstats.jerseyguice.Bindings;
@@ -40,6 +40,12 @@ import com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;
 import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.ensemble.fixed.FixedEnsembleProvider;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.BoundedExponentialBackoffRetry;
+import org.apache.zookeeper.data.Stat;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -51,14 +57,17 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentMap;
 
 public class GuiceContextListenerFactory {
+    private final static Logger logger = LoggerFactory.getLogger(GuiceContextListenerFactory.class);
+
     public static final String BACKING_STORE_PROPERTY = "backing.store";
     public static final String CASSANDRA_BACKING_STORE_TAG = "cassandra";
     public static final String DYNAMO_BACKING_STORE_TAG = "dynamo";
-    public static final String MEMORY_BACKING_STORY_TAG = "memory";
     public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
+    private static Properties properties;
 
     public static DataHubGuiceServletContextListener construct(
             @NotNull final Properties properties) throws ConstraintException {
+        GuiceContextListenerFactory.properties = properties;
         GraphiteConfig graphiteConfig = new GraphiteConfigImpl(properties);
 
         Module module = getMaxPaloadSizeModule(properties);
@@ -116,7 +125,7 @@ public class GuiceContextListenerFactory {
             binder.bind(ChannelLockExecutor.class).asEagerSingleton();
             binder.bind(SubscriptionRoster.class).in(Singleton.class);
             binder.bind(DataHubKeyRenderer.class).in(Singleton.class);
-            binder.bind(DataHubKeyGenerator.class).to(HazelcastClusterKeyGenerator.class).in(Singleton.class);
+            binder.bind(DataHubKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
             binder.bind(ChannelLockFactory.class).to(HazelcastChannelLockFactory.class).in(Singleton.class);
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
             binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
@@ -142,7 +151,8 @@ public class GuiceContextListenerFactory {
     }
 
     private static Module createDataStoreModule(Properties properties) {
-        String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, MEMORY_BACKING_STORY_TAG);
+        String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, DYNAMO_BACKING_STORE_TAG);
+        logger.info("using data store " + backingStoreName);
         switch (backingStoreName) {
             case CASSANDRA_BACKING_STORE_TAG:
                 return new CassandraDataStoreModule(properties);
@@ -182,6 +192,36 @@ public class GuiceContextListenerFactory {
 
         @Override
         protected void configure() {
+        }
+
+        @Singleton
+        @Provides
+        public static CuratorFramework buildCurator(@Named("zookeeper.connection") String zkConnection,
+                                                    RetryPolicy retryPolicy) {
+            logger.info("connecting to zookeeper(s) at " + zkConnection);
+            FixedEnsembleProvider ensembleProvider = new FixedEnsembleProvider(zkConnection);
+            CuratorFramework curatorFramework = CuratorFrameworkFactory.builder().namespace("deihub")
+                    .ensembleProvider(ensembleProvider)
+                    .retryPolicy(retryPolicy).build();
+            curatorFramework.start();
+
+            try {
+                Stat stat = curatorFramework.checkExists().forPath("/startup");
+            } catch (Exception e) {
+                logger.warn("unable to access zookeeper");
+                throw new RuntimeException("unable to access zookeeper");
+            }
+            return curatorFramework;
+        }
+
+        @Singleton
+        @Provides
+        public static RetryPolicy buildRetryPolicy(){
+            Integer baseSleepTimeMs = Integer.valueOf(properties.getProperty("zookeeper.baseSleepTimeMs", "10"));
+            Integer maxSleepTimeMs = Integer.valueOf(properties.getProperty("zookeeper.maxSleepTimeMs", "10000"));
+            Integer maxRetries = Integer.valueOf(properties.getProperty("zookeeper.maxRetries", "20"));
+
+            return new BoundedExponentialBackoffRetry(baseSleepTimeMs, maxSleepTimeMs, maxRetries);
         }
     }
 }

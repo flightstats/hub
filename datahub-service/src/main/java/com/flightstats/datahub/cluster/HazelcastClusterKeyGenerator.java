@@ -37,7 +37,7 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
     public DataHubKey newKey(final String channelName) {
 
         try {
-            return metricsTimer.time("hazelcast.newKey", new TimedCallback<DataHubKey>() {
+            return metricsTimer.time("keyGen.newKey", new TimedCallback<DataHubKey>() {
                 @Override
                 public DataHubKey call() {
                     return nextDataHubKey(channelName);
