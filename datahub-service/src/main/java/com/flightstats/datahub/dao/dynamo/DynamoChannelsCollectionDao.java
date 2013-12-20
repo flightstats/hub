@@ -33,7 +33,11 @@ public class DynamoChannelsCollectionDao implements ChannelsCollectionDao {
 
     @Override
     public ChannelConfiguration createChannel(String name, Long ttlMillis) {
-        ChannelConfiguration configuration = new ChannelConfiguration(name, timeProvider.getDate(), ttlMillis);
+        ChannelConfiguration configuration = ChannelConfiguration.builder()
+                .withName(name)
+                .withTtlMillis(ttlMillis)
+                .withCreationDate(timeProvider.getDate())
+                .build();
         updateChannel(configuration);
         return configuration;
     }
@@ -109,8 +113,11 @@ public class DynamoChannelsCollectionDao implements ChannelsCollectionDao {
         if (millis != null) {
             ttlMillis = Long.parseLong(millis.getN());
         }
+        return ChannelConfiguration.builder()
+                .withCreationDate(date).withTtlMillis(ttlMillis)
+                .withName(item.get("key").getS())
+                .build();
 
-        return new ChannelConfiguration(item.get("key").getS(), date, ttlMillis);
     }
 
     @Override

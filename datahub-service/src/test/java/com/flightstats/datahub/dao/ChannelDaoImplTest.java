@@ -39,7 +39,9 @@ public class ChannelDaoImplTest {
 
     @Test
     public void testCreateChannel() throws Exception {
-        ChannelConfiguration expected = new ChannelConfiguration("foo", new Date(9999), null);
+        ChannelConfiguration expected = ChannelConfiguration.builder()
+                .withCreationDate(new Date(9999))
+                .withName("foo").build();
         ChannelsCollectionDao collection = mock(CassandraChannelsCollectionDao.class);
         when(collection.createChannel("foo", null)).thenReturn(expected);
         DataHubKeyGenerator keyGenerator = mock(DataHubKeyGenerator.class);
@@ -51,7 +53,9 @@ public class ChannelDaoImplTest {
 
     @Test
     public void testUpdateChannel() throws Exception {
-        ChannelConfiguration newConfig = new ChannelConfiguration("foo", new Date(9999), 30000L);
+        ChannelConfiguration newConfig = ChannelConfiguration.builder()
+                .withCreationDate(new Date(9999))
+                .withName("foo").build();
         ChannelsCollectionDao collection = mock(CassandraChannelsCollectionDao.class);
         ChannelDaoImpl testClass = new ChannelDaoImpl(collection, null, null, null, null, metricsTimer);
         testClass.updateChannelMetadata(newConfig);

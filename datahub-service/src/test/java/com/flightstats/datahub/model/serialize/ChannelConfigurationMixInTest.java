@@ -17,7 +17,7 @@ public class ChannelConfigurationMixInTest {
 
 		String json = "{\"name\": \"The Name\", \"creationDate\": 808, \"ttlMillis\": 42 }";
 		ChannelConfiguration result = mapper.readValue(json, ChannelConfiguration.class);
-		ChannelConfiguration expected = new ChannelConfiguration("The Name", new Date(808), 42L);
+		ChannelConfiguration expected = ChannelConfiguration.builder().withName("The Name").withCreationDate(new Date(808)).withTtlMillis(42L).build();
 		assertEquals(expected, result);
 	}
 }

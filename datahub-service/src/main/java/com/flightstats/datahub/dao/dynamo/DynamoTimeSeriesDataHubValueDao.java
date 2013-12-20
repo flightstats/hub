@@ -99,12 +99,12 @@ public class DynamoTimeSeriesDataHubValueDao implements DataHubValueDao {
     @Override
     public void initialize() {
         //do nothing
-        logger.info("*********************** blah time series");
     }
 
     @Override
     public void initializeChannel(String channelName) {
 
+        //todo - gfm - 12/20/13 - what needs to change here?
         ArrayList<AttributeDefinition> attributeDefinitions= new ArrayList<>();
         attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("N"));
 

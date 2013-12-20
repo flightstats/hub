@@ -34,7 +34,11 @@ public class CassandraChannelsCollectionDao implements ChannelsCollectionDao {
 
 	@Override
     public ChannelConfiguration createChannel(String name, Long ttlMillis) {
-		ChannelConfiguration channelConfig = new ChannelConfiguration(name, timeProvider.getDate(), ttlMillis);
+        ChannelConfiguration channelConfig = ChannelConfiguration.builder()
+                .withName(name)
+                .withTtlMillis(ttlMillis)
+                .withCreationDate(timeProvider.getDate())
+                .build();
 		insertChannelMetadata(channelConfig);
 		return channelConfig;
 	}
@@ -105,7 +109,11 @@ public class CassandraChannelsCollectionDao implements ChannelsCollectionDao {
     }
 
     private ChannelConfiguration createChannelConfig(Row row) {
-        return new ChannelConfiguration(row.getString("name"), row.getDate("creationDate"), row.getLong("ttlMillis"));
+        return ChannelConfiguration.builder()
+                .withName(row.getString("name"))
+                .withTtlMillis(row.getLong("ttlMillis"))
+                .withCreationDate(row.getDate("creationDate"))
+                .build();
     }
 
 
