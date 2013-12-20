@@ -9,8 +9,6 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
-import java.util.Collection;
-
 /**
  *
  */
@@ -31,17 +29,6 @@ public class TimedDataHubValueDao implements DataHubValueDao {
             @Override
             public ValueInsertionResult call() {
                 return delegate.write(channelName, columnValue, ttlSeconds);
-            }
-        });
-    }
-
-    @Override
-    public void delete(final String channelName, final Collection<DataHubKey> keys) {
-        metricsTimer.time("valueDao.delete", new TimedCallback<Object>() {
-            @Override
-            public Object call() {
-                delegate.delete(channelName, keys);
-                return null;
             }
         });
     }

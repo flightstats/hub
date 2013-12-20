@@ -1,18 +1,17 @@
 package com.flightstats.datahub.util;
 
 import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.SequenceDataHubKey;
 import com.google.common.base.Optional;
 
 public class DataHubKeyRenderer {
 
-    public String keyToString(DataHubKey key) {
-        return Long.toString(key.getSequence());
-    }
-
     public Optional<DataHubKey> fromString(String key) {
 
+        //todo - gfm - 12/20/13 - do we still need this?
         try {
-            return Optional.of(new DataHubKey(Long.parseLong(key)));
+            Optional<? extends DataHubKey> optional = Optional.of(new SequenceDataHubKey(Long.parseLong(key)));
+            return (Optional<DataHubKey>) optional;
         } catch (Exception e) {
             return Optional.absent();
         }

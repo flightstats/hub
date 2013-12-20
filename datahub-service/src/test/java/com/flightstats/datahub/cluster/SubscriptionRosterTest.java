@@ -27,7 +27,7 @@ public class SubscriptionRosterTest {
         when(channelInsertionPublisher.subscribe(any(String.class), any(MessageListener.class))).thenReturn("54321");
 		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
-		SubscriptionRoster testClass = new SubscriptionRoster(channelInsertionPublisher, keyRenderer);
+		SubscriptionRoster testClass = new SubscriptionRoster(channelInsertionPublisher);
 
 		//WHEN
 		when(message.getMessageObject()).thenReturn(key);
@@ -52,7 +52,7 @@ public class SubscriptionRosterTest {
         when(channelInsertionPublisher.subscribe(any(String.class), any(MessageListener.class))).thenReturn(id);
         ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
 
-		SubscriptionRoster testClass = new SubscriptionRoster(channelInsertionPublisher, keyRenderer);
+		SubscriptionRoster testClass = new SubscriptionRoster(channelInsertionPublisher);
 
 		//WHEN
 		testClass.subscribe(channelName, consumer);        //Need to subscribe first because this class is stateful

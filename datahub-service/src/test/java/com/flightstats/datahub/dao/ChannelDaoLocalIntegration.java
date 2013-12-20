@@ -2,8 +2,8 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
+import com.flightstats.datahub.model.SequenceDataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import com.google.inject.Injector;
@@ -67,7 +67,7 @@ public abstract class ChannelDaoLocalIntegration {
     public void testChannelWriteRead() throws Exception {
 
         channelDao.createChannel(channelName, 36000L);
-        assertFalse(channelDao.getValue(channelName, new DataHubKey(1000)).isPresent());
+        assertFalse(channelDao.getValue(channelName, new SequenceDataHubKey(1000)).isPresent());
         byte[] bytes = "some data".getBytes();
         ValueInsertionResult insert = channelDao.insert(channelName, Optional.<String>absent(), Optional.<String>absent(), bytes);
 

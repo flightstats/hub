@@ -11,7 +11,6 @@ import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 public class ChannelDaoImpl implements ChannelDao {
@@ -79,12 +78,6 @@ public class ChannelDaoImpl implements ChannelDao {
         return ttlMillis == null ? Optional.<Integer>absent() : Optional.of((int) (ttlMillis / 1000));
     }
 
-    @Override
-    public void delete(String channelName, List<DataHubKey> keys) {
-        dataHubValueDao.delete(channelName, keys);
-    }
-
-    @Override
     public void setLastUpdateKey(final String channelName, final DataHubKey lastUpdateKey) {
         metricsTimer.time("hazelcast.setLastUpdated", new TimedCallback<Object>() {
             @Override

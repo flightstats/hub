@@ -61,14 +61,14 @@ public class ChannelDaoImplTest {
     @Test
     public void testInsert() throws Exception {
         // GIVEN
-        DataHubKey key = new DataHubKey((short) 1003);
+        DataHubKey key = new SequenceDataHubKey( 1003);
         String channelName = "foo";
         byte[] data = "bar".getBytes();
         long millis = 90210L;
         Optional<String> contentType = Optional.of("text/plain");
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data, millis);
         ValueInsertionResult expected = new ValueInsertionResult(key, null, null);
-        DataHubKey lastUpdateKey = new DataHubKey((short) 1000);
+        DataHubKey lastUpdateKey = new SequenceDataHubKey( 1000);
 
         ChannelsCollectionDao channelsCollectionDao = mock(CassandraChannelsCollectionDao.class);
         DataHubValueDao inserter = mock(CassandraDataHubValueDao.class);
@@ -94,7 +94,7 @@ public class ChannelDaoImplTest {
     @Test
     public void testInsert_lastUpdateCacheMiss() throws Exception {
         // GIVEN
-        DataHubKey key = new DataHubKey((short) 1003);
+        DataHubKey key = new SequenceDataHubKey(1003);
         String channelName = "foo";
         byte[] data = "bar".getBytes();
         Optional<String> contentType = Optional.of("text/plain");
@@ -130,9 +130,9 @@ public class ChannelDaoImplTest {
     @Test
     public void testGetValue() throws Exception {
         String channelName = "cccccc";
-        DataHubKey key = new DataHubKey((short) 1001);
-        DataHubKey previousKey = new DataHubKey((short) 1000);
-        DataHubKey nextKey = new DataHubKey((short) 1002);
+        DataHubKey key = new SequenceDataHubKey( 1001);
+        DataHubKey previousKey = new SequenceDataHubKey( 1000);
+        DataHubKey nextKey = new SequenceDataHubKey( 1002);
         byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
         DataHubCompositeValue compositeValue = new DataHubCompositeValue(Optional.of("text/plain"), null, data, 0L);
         Optional<DataHubKey> previous = Optional.of(previousKey);
@@ -154,7 +154,7 @@ public class ChannelDaoImplTest {
     @Test
     public void testGetValue_notFound() throws Exception {
         String channelName = "cccccc";
-        DataHubKey key = new DataHubKey((short) 1000);
+        DataHubKey key = new SequenceDataHubKey( 1000);
 
         DataHubValueDao inserter = mock(CassandraDataHubValueDao.class);
 
@@ -168,7 +168,7 @@ public class ChannelDaoImplTest {
 
     @Test
     public void testFindLatestId_cachedInMap() throws Exception {
-        DataHubKey expected = new DataHubKey((short) 1006);
+        DataHubKey expected = new SequenceDataHubKey( 1006);
         String channelName = "myChan";
 
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
@@ -198,7 +198,7 @@ public class ChannelDaoImplTest {
         Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
 
         // THEN
-        assertEquals(Optional.<DataHubKey>absent(), result);
+        assertEquals(Optional.<SequenceDataHubKey>absent(), result);
     }
 
 }

@@ -4,6 +4,7 @@ import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
 import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.SequenceDataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.google.inject.Inject;
@@ -51,7 +52,7 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
     private DataHubKey nextDataHubKey(String channelName) {
         long sequence = getAtomicNumber(channelName).getAndAdd(1);
         if (isValidSequence(sequence)) {
-            return new DataHubKey(sequence);
+            return new SequenceDataHubKey(sequence);
         }
         return handleMissingKey(channelName);
     }
@@ -68,7 +69,7 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
                     }
                     long currentSequence = SequenceRowKeyStrategy.INCREMENT;
                     sequenceNumber.set(currentSequence + 1);
-                    return new DataHubKey(currentSequence);
+                    return new SequenceDataHubKey(currentSequence);
                 }
 
             });

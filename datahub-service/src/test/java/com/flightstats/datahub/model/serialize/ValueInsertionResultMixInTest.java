@@ -3,6 +3,7 @@ package com.flightstats.datahub.model.serialize;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.app.config.DataHubObjectMapperFactory;
 import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.SequenceDataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import org.junit.Test;
 
@@ -18,7 +19,7 @@ public class ValueInsertionResultMixInTest {
 	@Test
 	public void testSerialize() throws Exception {
 		ObjectMapper objectMapper = DataHubObjectMapperFactory.construct();
-		DataHubKey key = new DataHubKey((short) 1033);
+		DataHubKey key = new SequenceDataHubKey( 1033);
         ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key, null, new Date(1384305309087L));
 		OutputStream out = new ByteArrayOutputStream();
 		objectMapper.writeValue(out, valueInsertionResult);
@@ -29,7 +30,7 @@ public class ValueInsertionResultMixInTest {
     @Test
     public void testRowKeyIgnored() throws Exception {
         ObjectMapper objectMapper = DataHubObjectMapperFactory.construct();
-        DataHubKey key = new DataHubKey((short) 1033);
+        DataHubKey key = new SequenceDataHubKey( 1033);
         ValueInsertionResult valueInsertionResult = new ValueInsertionResult(key, "rowKeyIsAwesome", new Date(1384305309087L));
         OutputStream out = new ByteArrayOutputStream();
         objectMapper.writeValue(out, valueInsertionResult);

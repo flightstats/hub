@@ -3,6 +3,7 @@ package com.flightstats.datahub.util;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
 import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.SequenceDataHubKey;
 import com.google.inject.Inject;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -49,7 +50,7 @@ public class CuratorKeyGenerator implements DataHubKeyGenerator {
         try {
             AtomicValue<Long> value = atomicLong.increment();
             if (value.succeeded()) {
-                return new DataHubKey(value.postValue());
+                return new SequenceDataHubKey(value.postValue());
             } else {
                 //todo - gfm - 12/17/13 - do what?
                 logger.warn("not sure what this means " + channelName + " " + value);

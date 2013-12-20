@@ -22,7 +22,6 @@ public class DataHubWebSocket {
 	private final WebSocketChannelNameExtractor channelNameExtractor;
 	private final SubscriptionRoster subscriptions;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
-	private final DataHubKeyRenderer keyRenderer;
 	private String remoteAddress;
 	private JettyWebSocketEndpointSender endpointSender;
 	private String channelName;
@@ -40,7 +39,6 @@ public class DataHubWebSocket {
 	DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder,
 					 DataHubKeyRenderer keyRenderer, Runnable afterDisconnectCallback) {
 		this.linkBuilder = linkBuilder;
-		this.keyRenderer = keyRenderer;
 		this.afterDisconnectCallback = afterDisconnectCallback;
 		this.channelNameExtractor = channelNameExtractor;
 		this.subscriptions = subscriptions;
@@ -57,7 +55,7 @@ public class DataHubWebSocket {
 		//todo this is totally hacky. Is there no way to get the full request URI?
         String channelUri = "http://" + host + "/channel/" + channelName;
 		try {
-			endpointSender = new JettyWebSocketEndpointSender(remoteAddress, session.getRemote(), linkBuilder, keyRenderer, new URI(channelUri));
+			endpointSender = new JettyWebSocketEndpointSender(remoteAddress, session.getRemote(), linkBuilder, new URI(channelUri));
 		} catch (URISyntaxException e) {
 			//this should really never happen.  stupid checked exceptions!
 			throw new RuntimeException(e);
