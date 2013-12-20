@@ -1,9 +1,8 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.flightstats.datahub.cluster.HazelcastSubscriber;
 import com.flightstats.datahub.service.ChannelInsertionPublisher;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
+import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,19 +13,21 @@ public class SubscriptionRoster {
 
 	private final static Logger logger = LoggerFactory.getLogger(SubscriptionRoster.class);
 	private final ChannelInsertionPublisher channelInsertionPublisher;
-	private final DataHubKeyRenderer keyRenderer;
 	private final ConcurrentHashMap<ChannelConsumer, String> consumerToMessageListener = new ConcurrentHashMap<>();
 
 	@Inject
-	public SubscriptionRoster(ChannelInsertionPublisher channelInsertionPublisher, DataHubKeyRenderer keyRenderer) {
-		this.keyRenderer = keyRenderer;
+	public SubscriptionRoster(ChannelInsertionPublisher channelInsertionPublisher) {
 		this.channelInsertionPublisher = channelInsertionPublisher;
 	}
 
-	public void subscribe(final String channelName, Consumer<String> consumer) {
+	public void subscribe(final String channelName, final Consumer<String> consumer) {
         logger.info("Adding new message listener for websocket hazelcast queue for channel " + channelName);
-        MessageListener<String> messageListener = new HazelcastSubscriber(consumer, keyRenderer);
-        String registrationId = channelInsertionPublisher.subscribe(channelName, messageListener);
+        String registrationId = channelInsertionPublisher.subscribe(channelName, new MessageListener<String>() {
+            @Override
+            public void onMessage(Message<String> message) {
+                consumer.apply(message.getMessageObject());
+            }
+        });
         consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), registrationId );
 	}
 

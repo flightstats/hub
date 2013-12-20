@@ -3,6 +3,7 @@ package com.flightstats.datahub.cluster;
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.SequenceDataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IAtomicLong;
@@ -41,9 +42,9 @@ public class HazelcastClusterKeyGeneratorTest {
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(1000L, 1001L);
 
         //THEN
-        assertEquals(new DataHubKey(1000), testClass.newKey(channelName));
+        assertEquals(new SequenceDataHubKey(1000), testClass.newKey(channelName));
         verify(atomicSeqNumber, times(1)).getAndAdd(1);
-        assertEquals(new DataHubKey(1001), testClass.newKey(channelName));
+        assertEquals(new SequenceDataHubKey(1001), testClass.newKey(channelName));
         verify(atomicSeqNumber, times(2)).getAndAdd(1);
     }
 
@@ -61,7 +62,7 @@ public class HazelcastClusterKeyGeneratorTest {
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L).thenReturn(1000L);
         when(atomicSeqNumber.get()).thenReturn(0L);
 
-        assertEquals(new DataHubKey(1000), testClass.newKey(channelName));
+        assertEquals(new SequenceDataHubKey(1000), testClass.newKey(channelName));
         verify(atomicSeqNumber).set(1001L);
         verify(atomicSeqNumber).getAndAdd(1);
     }
@@ -69,7 +70,7 @@ public class HazelcastClusterKeyGeneratorTest {
     @Test
     public void testKeyAfterLock() throws Exception {
         String channelName = "secondLock";
-        DataHubKey latestKey = new DataHubKey(9999);
+        DataHubKey latestKey = new SequenceDataHubKey(9999);
         DataHubKey expectedKey = latestKey.getNext().get();
 
         HazelcastInstance hazelcast = mock(HazelcastInstance.class);

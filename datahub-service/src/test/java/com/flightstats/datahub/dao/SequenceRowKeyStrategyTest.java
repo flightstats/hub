@@ -1,6 +1,6 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.SequenceDataHubKey;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,12 +21,12 @@ public class SequenceRowKeyStrategyTest {
     @Test
     public void testBuildKey() throws Exception {
 
-        assertEquals("blah:1", strategy.buildKey("blah", new DataHubKey(1000)));
-        assertEquals("blah:1", strategy.buildKey("blah", new DataHubKey(1001)));
-        assertEquals("blah:1", strategy.buildKey("blah", new DataHubKey(1999)));
-        assertEquals("blah:2", strategy.buildKey("blah", new DataHubKey(2000)));
-        assertEquals("blah:2", strategy.buildKey("blah", new DataHubKey(2001)));
-        assertEquals("toot:15", strategy.buildKey("toot", new DataHubKey(15642)));
+        assertEquals("blah:1", strategy.buildKey("blah", new SequenceDataHubKey(1000)));
+        assertEquals("blah:1", strategy.buildKey("blah", new SequenceDataHubKey(1001)));
+        assertEquals("blah:1", strategy.buildKey("blah", new SequenceDataHubKey(1999)));
+        assertEquals("blah:2", strategy.buildKey("blah", new SequenceDataHubKey(2000)));
+        assertEquals("blah:2", strategy.buildKey("blah", new SequenceDataHubKey(2001)));
+        assertEquals("toot:15", strategy.buildKey("toot", new SequenceDataHubKey(15642)));
     }
 
 }

@@ -2,7 +2,7 @@ package com.flightstats.datahub.model.serialize;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.model.SequenceDataHubKey;
 import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
@@ -12,12 +12,11 @@ public class DataHubKeySerializerTest {
 
     @Test
     public void testSerialize() throws Exception {
-        DataHubKey key = new DataHubKey(1004);
-        DataHubKeyRenderer renderer = new DataHubKeyRenderer();
+        DataHubKey key = new SequenceDataHubKey(1004);
 
         JsonGenerator jgen = mock(JsonGenerator.class);
 
-        DataHubKeySerializer testClass = new DataHubKeySerializer(renderer);
+        DataHubKeySerializer testClass = new DataHubKeySerializer();
 
         testClass.serialize(key, jgen, null);
         verify(jgen).writeString("1004");

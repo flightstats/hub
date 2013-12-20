@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,11 +64,6 @@ public class DynamoDataHubValueDao implements DataHubValueDao {
         PutItemResult result = dbClient.putItem(putItemRequest);
         //todo - gfm - 12/11/13 - do we need a rowkey for this?
         return new ValueInsertionResult(key, "", timeProvider.getDate());
-    }
-
-    @Override
-    public void delete(String channelName, Collection<DataHubKey> keys) {
-
     }
 
     @Override

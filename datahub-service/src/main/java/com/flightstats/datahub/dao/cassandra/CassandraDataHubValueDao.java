@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
 
 public class CassandraDataHubValueDao implements DataHubValueDao {
 
@@ -60,11 +59,6 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
         session.execute(statement.bind(rowKey, key.getSequence(), ByteBuffer.wrap(columnValue.getData()), columnValue.getMillis(),
                 columnValue.getContentType().orNull(), columnValue.getContentLanguage().orNull()));
 		return new ValueInsertionResult(key, rowKey, timeProvider.getDate());
-	}
-
-    @Override
-    public void delete(String channelName, Collection<DataHubKey> keys) {
-		//todo - gfm - 11/22/13 -
 	}
 
     @Override

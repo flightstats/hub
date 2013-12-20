@@ -30,7 +30,7 @@ public class ChannelHypermediaLinkBuilderTest {
 		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL));
 		when(uriInfo.getBaseUri()).thenReturn(URI.create(BASE_URL));
 
-		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder(null);
+		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder();
 		URI result = testClass.buildChannelUri(channelConfig, uriInfo);
 		assertEquals(expected, result);
 	}
@@ -42,7 +42,7 @@ public class ChannelHypermediaLinkBuilderTest {
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL + "/spoon"));
 
-		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder(null);
+		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder();
 		URI result = testClass.buildLatestUri(uriInfo);
 		assertEquals(expected, result);
 	}
@@ -55,7 +55,7 @@ public class ChannelHypermediaLinkBuilderTest {
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL));
 
-		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder(null);
+		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder();
 		URI result = testClass.buildLatestUri(channelName, uriInfo);
 		assertEquals(expected, result);
 	}
@@ -64,7 +64,7 @@ public class ChannelHypermediaLinkBuilderTest {
 	public void testBuildWsLink() throws Exception {
 		UriInfo uriInfo = mock(UriInfo.class);
 		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL + "/" + channelConfig.getName()));
-		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder(null);
+		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder();
 		URI result = testClass.buildWsLinkFor(uriInfo);
 		assertEquals(URI.create("ws://path.to:8080/channel" + "/" +
 				channelConfig.getName() + "/ws"), result);
@@ -75,7 +75,7 @@ public class ChannelHypermediaLinkBuilderTest {
 		UriInfo uriInfo = mock(UriInfo.class);
 		String channelName = channelConfig.getName();
 		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL));
-		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder(null);
+		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder();
 		URI result = testClass.buildWsLinkFor(channelName, uriInfo);
 		assertEquals(URI.create("ws://path.to:8080/channel" + "/" +
 				channelName + "/ws"), result);

@@ -117,7 +117,7 @@ public class ChannelContentResource {
 
 	private void addLink(Response.ResponseBuilder builder, String type, Optional<DataHubKey> key) {
 		if (key.isPresent()) {
-			URI linkUrl = URI.create(uriInfo.getRequestUri().resolve(".") + keyRenderer.keyToString(key.get()));
+			URI linkUrl = URI.create(uriInfo.getRequestUri().resolve(".") + key.get().keyToString());
 			builder.header("Link", "<" + linkUrl + ">;rel=\"" + type + "\"");
 		}
 	}

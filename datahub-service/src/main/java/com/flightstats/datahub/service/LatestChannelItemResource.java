@@ -5,7 +5,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelDao;
 import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
@@ -24,13 +23,11 @@ public class LatestChannelItemResource {
 
 	private final UriInfo uriInfo;
 	private final ChannelDao channelDao;
-	private final DataHubKeyRenderer keyRenderer;
 
 	@Inject
-	public LatestChannelItemResource(UriInfo uriInfo, ChannelDao channelDao, DataHubKeyRenderer keyRenderer) {
+	public LatestChannelItemResource(UriInfo uriInfo, ChannelDao channelDao) {
 		this.uriInfo = uriInfo;
 		this.channelDao = channelDao;
-		this.keyRenderer = keyRenderer;
 	}
 
 	@GET
@@ -46,7 +43,7 @@ public class LatestChannelItemResource {
 
 		String channelUri = uriInfo.getRequestUri().toString().replaceFirst("/latest$", "");
 		DataHubKey keyOfLatestItem = latestId.get();
-		URI uri = URI.create(channelUri + "/" + keyRenderer.keyToString(keyOfLatestItem));
+		URI uri = URI.create(channelUri + "/" + keyOfLatestItem.keyToString());
 		builder.location(uri);
 		return builder.build();
 	}
