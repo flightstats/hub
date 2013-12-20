@@ -113,6 +113,16 @@ public class ChannelDaoImpl implements ChannelDao {
     }
 
     @Override
+    public Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id) {
+        //todo - gfm - 12/20/13 - this needs to support time sequence
+        Optional<DataHubKey> key = SequenceDataHubKey.fromString(id);
+        if (!key.isPresent()) {
+            return Optional.absent();
+        }
+        return getValue(channelName, key.get());
+    }
+
+    @Override
     public ChannelConfiguration getChannelConfiguration(String channelName) {
         return channelsCollectionDao.getChannelConfiguration(channelName);
     }

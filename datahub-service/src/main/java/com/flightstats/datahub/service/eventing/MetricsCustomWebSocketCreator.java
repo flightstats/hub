@@ -3,7 +3,6 @@ package com.flightstats.datahub.service.eventing;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
 import org.eclipse.jetty.websocket.api.UpgradeResponse;
@@ -17,15 +16,13 @@ public class MetricsCustomWebSocketCreator implements WebSocketCreator {
     private final SubscriptionRoster subscriptions;
     private final WebSocketChannelNameExtractor channelNameExtractor;
 	private final Object mutex = new Object();
-	private final DataHubKeyRenderer keyRenderer;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 
 	@Inject
-	public MetricsCustomWebSocketCreator(MetricRegistry registry, SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, DataHubKeyRenderer keyRenderer, ChannelHypermediaLinkBuilder linkBuilder) {
+	public MetricsCustomWebSocketCreator(MetricRegistry registry, SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder) {
 		this.registry = registry;
         this.subscriptions = subscriptions;
         this.channelNameExtractor = channelNameExtractor;
-		this.keyRenderer = keyRenderer;
 		this.linkBuilder = linkBuilder;
 	}
 
@@ -39,7 +36,7 @@ public class MetricsCustomWebSocketCreator implements WebSocketCreator {
 			registry.counter(meterName).inc();
 		}
 
-		return new DataHubWebSocket( subscriptions,  channelNameExtractor, linkBuilder, keyRenderer, new Runnable() {
+		return new DataHubWebSocket( subscriptions,  channelNameExtractor, linkBuilder, new Runnable() {
 			@Override
 			public void run() {
 				synchronized (mutex) {

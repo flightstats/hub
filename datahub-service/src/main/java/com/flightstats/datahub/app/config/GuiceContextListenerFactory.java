@@ -21,7 +21,6 @@ import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.flightstats.datahub.service.eventing.WebSocketChannelNameExtractor;
 import com.flightstats.datahub.util.CuratorKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.flightstats.jerseyguice.Bindings;
 import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
 import com.flightstats.jerseyguice.metrics.GraphiteConfig;
@@ -127,7 +126,6 @@ public class GuiceContextListenerFactory {
             binder.bind(MetricRegistry.class).in(Singleton.class);
             binder.bind(ChannelLockExecutor.class).asEagerSingleton();
             binder.bind(SubscriptionRoster.class).in(Singleton.class);
-            binder.bind(DataHubKeyRenderer.class).in(Singleton.class);
             binder.bind(DataHubKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
             binder.bind(ChannelLockFactory.class).to(HazelcastChannelLockFactory.class).in(Singleton.class);
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
