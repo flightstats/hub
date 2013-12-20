@@ -19,6 +19,7 @@ public class ChannelDaoImpl implements ChannelDao {
 
     private final ChannelsCollectionDao channelsCollectionDao;
     private final DataHubValueDao dataHubValueDao;
+    //todo - gfm - 12/20/13 - pull out this into it's own class, which will also remove the need for metricsTimer
     private final ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel;
     private final TimeProvider timeProvider;
     private ChannelInsertionPublisher channelInsertionPublisher;

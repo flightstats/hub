@@ -21,9 +21,9 @@ import java.util.Map;
 /**
  *
  */
-public class DynamoDataHubValueDao implements DataHubValueDao {
+public class DynamoTimeSeriesDataHubValueDao implements DataHubValueDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(DynamoDataHubValueDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(DynamoTimeSeriesDataHubValueDao.class);
 
     private final DataHubKeyGenerator keyGenerator;
     private final TimeProvider timeProvider;
@@ -31,10 +31,10 @@ public class DynamoDataHubValueDao implements DataHubValueDao {
     private final DynamoUtils dynamoUtils;
 
     @Inject
-    public DynamoDataHubValueDao(DataHubKeyGenerator keyGenerator,
-                                 TimeProvider timeProvider,
-                                 AmazonDynamoDBClient dbClient,
-                                 DynamoUtils dynamoUtils) {
+    public DynamoTimeSeriesDataHubValueDao(DataHubKeyGenerator keyGenerator,
+                                           TimeProvider timeProvider,
+                                           AmazonDynamoDBClient dbClient,
+                                           DynamoUtils dynamoUtils) {
         this.keyGenerator = keyGenerator;
         this.timeProvider = timeProvider;
         this.dbClient = dbClient;
@@ -99,6 +99,7 @@ public class DynamoDataHubValueDao implements DataHubValueDao {
     @Override
     public void initialize() {
         //do nothing
+        logger.info("*********************** blah time series");
     }
 
     @Override

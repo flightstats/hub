@@ -1,7 +1,5 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.util.ApplyOnce;
-import com.google.common.base.Function;
 import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.AbstractMatcher;
 import com.google.inject.spi.InjectionListener;
@@ -21,25 +19,15 @@ public class DataHubValueDaoInitialization implements TypeListener {
 
 	private final static Logger logger = LoggerFactory.getLogger(DataHubValueDaoInitialization.class);
 
-	private final ApplyOnce<DataHubValueDao, Void> initOnce = new ApplyOnce<>(
-			new Function<DataHubValueDao, Void>() {
-				@Override
-				public Void apply(DataHubValueDao dataHubValueDao) {
-					logger.info("Bootstrapping value table...");
-					dataHubValueDao.initialize();
-					return null;
-				}
-			});
-
 	@Override
 	public <I> void hear(TypeLiteral<I> type, TypeEncounter<I> encounter) {
 		encounter.register(new InjectionListener<I>() {
 			@Override
 			public void afterInjection(Object instance) {
-                initOnce.apply((DataHubValueDao) instance);
+                logger.info("Bootstrapping DataHubValueDao...");
+                ((DataHubValueDao)instance).initialize();
 			}
 		});
-
 	}
 
 	public static AbstractMatcher<TypeLiteral<?>> buildTypeMatcher() {
