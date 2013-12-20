@@ -17,6 +17,8 @@ public interface ChannelDao {
 
 	Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key);
 
+	Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id);
+
 	ChannelConfiguration getChannelConfiguration(String channelName);
 
 	Iterable<ChannelConfiguration> getChannels();

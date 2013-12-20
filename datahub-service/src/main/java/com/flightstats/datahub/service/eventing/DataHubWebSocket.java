@@ -1,7 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
 import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
@@ -27,8 +26,8 @@ public class DataHubWebSocket {
 	private String channelName;
 
 	@Inject
-	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder, DataHubKeyRenderer keyRenderer) {
-		this(subscriptions, channelNameExtractor, linkBuilder, keyRenderer, new Runnable() {
+	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder) {
+		this(subscriptions, channelNameExtractor, linkBuilder, new Runnable() {
 			@Override
 			public void run() {
 				//nop
@@ -37,7 +36,7 @@ public class DataHubWebSocket {
 	}
 
 	DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder,
-					 DataHubKeyRenderer keyRenderer, Runnable afterDisconnectCallback) {
+					Runnable afterDisconnectCallback) {
 		this.linkBuilder = linkBuilder;
 		this.afterDisconnectCallback = afterDisconnectCallback;
 		this.channelNameExtractor = channelNameExtractor;

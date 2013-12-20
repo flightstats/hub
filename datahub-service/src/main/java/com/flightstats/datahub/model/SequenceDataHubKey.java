@@ -33,8 +33,7 @@ public class SequenceDataHubKey implements DataHubKey {
         return Long.toString(getSequence());
     }
 
-    @Override
-    public Optional<DataHubKey> fromString(String key) {
+    public static Optional<DataHubKey> fromString(String key) {
         try {
             Optional<? extends DataHubKey> optional = Optional.of(new SequenceDataHubKey(Long.parseLong(key)));
             return (Optional<DataHubKey>) optional;

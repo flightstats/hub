@@ -16,5 +16,4 @@ public interface DataHubKey extends Serializable {
 
     public String keyToString();
 
-    public Optional<DataHubKey> fromString(String key);
 }
