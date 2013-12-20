@@ -28,7 +28,7 @@ public class ChannelResourceTest {
 
 		ChannelCreationRequest channelCreationRequest = ChannelCreationRequest.builder().withName(channelName).build();
 		Date date = new Date();
-		ChannelConfiguration channelConfiguration = new ChannelConfiguration(channelName, date, null);
+		ChannelConfiguration channelConfiguration = ChannelConfiguration.builder().withName(channelName).withCreationDate(date).build();
 		String channelUri = "http://path/to/UHF";
 		String latestUri = "http://path/to/UHF/latest";
 		String wsUri = "ws://path/to/UHF/ws";
@@ -62,8 +62,8 @@ public class ChannelResourceTest {
 	@Test
 	public void testGetChannels() throws Exception {
 		//GIVEN
-		ChannelConfiguration channel1 = new ChannelConfiguration("foo", null, null);
-		ChannelConfiguration channel2 = new ChannelConfiguration("bar", null, null);
+		ChannelConfiguration channel1 =  ChannelConfiguration.builder().withName("foo").build();
+		ChannelConfiguration channel2 = ChannelConfiguration.builder().withName("bar").build();
 		Iterable<ChannelConfiguration> channels = Arrays.asList(channel1, channel2);
 		String channel1Uri = "http://superfoo";
 		String channel2Uri = "http://superbar";

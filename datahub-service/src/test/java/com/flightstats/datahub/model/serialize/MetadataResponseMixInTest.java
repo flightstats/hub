@@ -24,7 +24,7 @@ public class MetadataResponseMixInTest {
 		ObjectMapper mapper = DataHubObjectMapperFactory.construct();
 		OutputStream out = new ByteArrayOutputStream();
 		Date date = new Date(902103L);
-		ChannelConfiguration config = new ChannelConfiguration("The Name", new Date(808), null);
+        ChannelConfiguration config = ChannelConfiguration.builder().withName("The Name").withCreationDate(new Date(808)).build();
 		MetadataResponse response = new MetadataResponse(config, date);
 		mapper.writeValue(out, response);
 		String result = out.toString();

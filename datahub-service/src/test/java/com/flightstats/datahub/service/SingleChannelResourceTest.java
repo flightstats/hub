@@ -46,7 +46,7 @@ public class SingleChannelResourceTest {
 		URI latestUri = URI.create("http://testification.com/channel/spoon/latest");
 		itemUri = URI.create("http://testification.com/channel/spoon/888item888");
 		dataHubKey = new SequenceDataHubKey(1200);
-		channelConfig = new ChannelConfiguration(channelName, CREATION_DATE, null);
+		channelConfig = ChannelConfiguration.builder().withName(channelName).withCreationDate(CREATION_DATE).build();
 		linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 		urlInfo = mock(UriInfo.class);
 

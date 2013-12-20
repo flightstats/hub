@@ -19,7 +19,7 @@ public class ChannelHypermediaLinkBuilderTest {
 
 	@Before
 	public void setup() {
-		channelConfig = new ChannelConfiguration("spoon", null, null);
+		channelConfig = ChannelConfiguration.builder().withName("spoon").build();
 	}
 
 	@Test

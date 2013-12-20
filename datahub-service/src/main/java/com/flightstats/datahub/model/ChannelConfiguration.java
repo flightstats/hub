@@ -9,8 +9,9 @@ public class ChannelConfiguration implements Serializable {
 	private final String name;
 	private final Date creationDate;
 	private final Long ttlMillis;
+    //private String type = "sequence";
 
-	public ChannelConfiguration(String name, Date creationDate, Long ttlMillis) {
+	protected ChannelConfiguration(String name, Date creationDate, Long ttlMillis) {
 		this.creationDate = creationDate;
 		this.name = name;
 		this.ttlMillis = ttlMillis;

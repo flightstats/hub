@@ -7,6 +7,7 @@ import com.flightstats.jackson.AbstractMixIn;
 
 import java.util.Date;
 
+//todo - gfm - 12/20/13 - do we still need this?
 @AbstractMixIn
 public abstract class ChannelConfigurationMixIn extends ChannelConfiguration {
 
