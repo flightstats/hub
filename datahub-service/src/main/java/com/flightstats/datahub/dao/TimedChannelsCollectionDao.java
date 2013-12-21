@@ -22,11 +22,11 @@ public class TimedChannelsCollectionDao implements ChannelsCollectionDao {
     }
 
     @Override
-    public ChannelConfiguration createChannel(final String name, final Long ttlMillis) {
+    public ChannelConfiguration createChannel(final ChannelConfiguration configuration) {
         return metricsTimer.time("channelsCollection.createChannel", new TimedCallback<ChannelConfiguration>() {
             @Override
             public ChannelConfiguration call() {
-                return delegate.createChannel(name, ttlMillis);
+                return delegate.createChannel(configuration);
             }
         });
     }

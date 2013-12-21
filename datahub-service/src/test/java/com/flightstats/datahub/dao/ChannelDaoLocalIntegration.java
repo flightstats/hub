@@ -23,7 +23,7 @@ public abstract class ChannelDaoLocalIntegration {
     private final static Logger logger = LoggerFactory.getLogger(ChannelDaoLocalIntegration.class);
 
     protected static Injector injector;
-    protected ChannelDao channelDao;
+    protected ChannelService channelService;
     protected String channelName;
     protected static List<String> channelNames = new ArrayList<>();
     private static TestingServer testingServer;
@@ -39,7 +39,7 @@ public abstract class ChannelDaoLocalIntegration {
     @Before
     public void setUp() throws Exception {
         verifyStartup();
-        channelDao = injector.getInstance(ChannelDao.class);
+        channelService = injector.getInstance(ChannelService.class);
         channelName = UUID.randomUUID().toString();
         channelNames.add(channelName);
     }
@@ -57,21 +57,22 @@ public abstract class ChannelDaoLocalIntegration {
     @Test
     public void testChannelCreation() throws Exception {
 
-        assertNull(channelDao.getChannelConfiguration(channelName));
-        ChannelConfiguration createdChannel = channelDao.createChannel(channelName, 36000L);
+        assertNull(channelService.getChannelConfiguration(channelName));
+        ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlMillis(36000L).build();
+        ChannelConfiguration createdChannel = channelService.createChannel(configuration);
         assertEquals(channelName, createdChannel.getName());
-        assertEquals(createdChannel, channelDao.getChannelConfiguration(channelName));
+        assertEquals(createdChannel, channelService.getChannelConfiguration(channelName));
     }
 
     @Test
     public void testChannelWriteRead() throws Exception {
-
-        channelDao.createChannel(channelName, 36000L);
-        assertFalse(channelDao.getValue(channelName, new SequenceDataHubKey(1000)).isPresent());
+        ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlMillis(36000L).build();
+        channelService.createChannel(configuration);
+        assertFalse(channelService.getValue(channelName, new SequenceDataHubKey(1000).keyToString()).isPresent());
         byte[] bytes = "some data".getBytes();
-        ValueInsertionResult insert = channelDao.insert(channelName, Optional.<String>absent(), Optional.<String>absent(), bytes);
+        ValueInsertionResult insert = channelService.insert(channelName, Optional.<String>absent(), Optional.<String>absent(), bytes);
 
-        Optional<LinkedDataHubCompositeValue> value = channelDao.getValue(channelName, insert.getKey());
+        Optional<LinkedDataHubCompositeValue> value = channelService.getValue(channelName, insert.getKey().keyToString());
         assertTrue(value.isPresent());
         LinkedDataHubCompositeValue compositeValue = value.get();
         assertArrayEquals(bytes, compositeValue.getData());
@@ -83,11 +84,12 @@ public abstract class ChannelDaoLocalIntegration {
     @Test
     public void testChannelOptionals() throws Exception {
 
-        channelDao.createChannel(channelName, 36000L);
+        ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlMillis(36000L).build();
+        channelService.createChannel(configuration);
         byte[] bytes = "testChannelOptionals".getBytes();
-        ValueInsertionResult insert = channelDao.insert(channelName, Optional.of("content"), Optional.of("lang"), bytes);
+        ValueInsertionResult insert = channelService.insert(channelName, Optional.of("content"), Optional.of("lang"), bytes);
 
-        Optional<LinkedDataHubCompositeValue> value = channelDao.getValue(channelName, insert.getKey());
+        Optional<LinkedDataHubCompositeValue> value = channelService.getValue(channelName, insert.getKey().keyToString());
         assertTrue(value.isPresent());
         LinkedDataHubCompositeValue compositeValue = value.get();
         assertArrayEquals(bytes, compositeValue.getData());
@@ -101,7 +103,7 @@ public abstract class ChannelDaoLocalIntegration {
         Set<String> existing = new HashSet<>(channelNames);
         existing.remove(channelName);
         Set<String> found = new HashSet<>();
-        Iterable<ChannelConfiguration> foundChannels = channelDao.getChannels();
+        Iterable<ChannelConfiguration> foundChannels = channelService.getChannels();
         Iterator<ChannelConfiguration> iterator = foundChannels.iterator();
         while (iterator.hasNext()) {
             ChannelConfiguration configuration = iterator.next();
@@ -111,7 +113,7 @@ public abstract class ChannelDaoLocalIntegration {
         logger.info("found " + found);
         assertTrue(found.containsAll(existing));
 
-        assertTrue(channelDao.isHealthy());
+        assertTrue(channelService.isHealthy());
     }
 
 }

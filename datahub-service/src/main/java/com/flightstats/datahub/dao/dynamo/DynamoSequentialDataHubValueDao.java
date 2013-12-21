@@ -3,6 +3,7 @@ package com.flightstats.datahub.dao.dynamo;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.datahub.dao.DataHubValueDao;
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
@@ -102,7 +103,7 @@ public class DynamoSequentialDataHubValueDao implements DataHubValueDao {
     }
 
     @Override
-    public void initializeChannel(String channelName) {
+    public void initializeChannel(ChannelConfiguration configuration) {
 
         ArrayList<AttributeDefinition> attributeDefinitions= new ArrayList<>();
         attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("N"));
@@ -115,12 +116,12 @@ public class DynamoSequentialDataHubValueDao implements DataHubValueDao {
                 .withWriteCapacityUnits(10L);
 
         CreateTableRequest request = new CreateTableRequest()
-                .withTableName(dynamoUtils.getTableName(channelName))
+                .withTableName(dynamoUtils.getTableName(configuration.getName()))
                 .withAttributeDefinitions(attributeDefinitions)
                 .withKeySchema(keySchema)
                 .withProvisionedThroughput(provisionedThroughput);
 
-        keyGenerator.seedChannel(channelName);
+        keyGenerator.seedChannel(configuration.getName());
         dynamoUtils.createTable(request);
     }
 }

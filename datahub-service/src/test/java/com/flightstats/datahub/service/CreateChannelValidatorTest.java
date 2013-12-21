@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service;
 
-import com.flightstats.datahub.dao.ChannelDao;
+import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
@@ -14,7 +14,7 @@ public class CreateChannelValidatorTest {
 	@Test
 	public void testAllGood() throws InvalidRequestException, AlreadyExistsException {
 		//GIVEN
-		ChannelDao dao = mock(ChannelDao.class);
+		ChannelService dao = mock(ChannelService.class);
 		String channelName = "a_channel";
 
         ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
@@ -31,7 +31,7 @@ public class CreateChannelValidatorTest {
 	@Test(expected = InvalidRequestException.class)
 	public void testChannelNameNull() throws InvalidRequestException, AlreadyExistsException {
 		//GIVEN
-		ChannelDao dao = mock(ChannelDao.class);
+		ChannelService dao = mock(ChannelService.class);
         ChannelCreationRequest request = ChannelCreationRequest.builder().withName(null).build();
 
 		//WHEN
@@ -43,7 +43,7 @@ public class CreateChannelValidatorTest {
 	@Test(expected = InvalidRequestException.class)
 	public void testChannelNameEmpty() throws InvalidRequestException, AlreadyExistsException {
 		//GIVEN
-		ChannelDao dao = mock(ChannelDao.class);
+		ChannelService dao = mock(ChannelService.class);
         ChannelCreationRequest request = ChannelCreationRequest.builder().withName("").build();
 
 		//WHEN
@@ -55,7 +55,7 @@ public class CreateChannelValidatorTest {
 	@Test(expected = InvalidRequestException.class)
 	public void testChannelNameBlank() throws InvalidRequestException, AlreadyExistsException {
 		//GIVEN
-		ChannelDao dao = mock(ChannelDao.class);
+		ChannelService dao = mock(ChannelService.class);
         ChannelCreationRequest request = ChannelCreationRequest.builder().withName("  ").build();
 
 		//WHEN
@@ -67,7 +67,7 @@ public class CreateChannelValidatorTest {
 	@Test(expected = AlreadyExistsException.class)
 	public void testChannelExists() throws InvalidRequestException, AlreadyExistsException {
 		//GIVEN
-		ChannelDao dao = mock(ChannelDao.class);
+		ChannelService dao = mock(ChannelService.class);
 		String channelName = "achannel";
         ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
 
@@ -82,7 +82,7 @@ public class CreateChannelValidatorTest {
 	public void testInvalidSpaceCharacter() throws Exception {
 		//GIVEN
 		String channelName = "my chan";
-		ChannelDao dao = mock(ChannelDao.class);
+		ChannelService dao = mock(ChannelService.class);
         ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
 
 		CreateChannelValidator testClass = new CreateChannelValidator(dao);
@@ -96,7 +96,7 @@ public class CreateChannelValidatorTest {
 	public void testInvalidCharacter() throws Exception {
 		//GIVEN
 		String channelName = "my#chan";
-		ChannelDao dao = mock(ChannelDao.class);
+		ChannelService dao = mock(ChannelService.class);
         ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
 
 		CreateChannelValidator testClass = new CreateChannelValidator(dao);

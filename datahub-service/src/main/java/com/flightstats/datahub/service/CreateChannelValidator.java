@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service;
 
-import com.flightstats.datahub.dao.ChannelDao;
+import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
@@ -9,11 +9,11 @@ import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
 public class CreateChannelValidator {
-    private final ChannelDao channelDao;
+    private final ChannelService channelService;
 
     @Inject
-    public CreateChannelValidator(ChannelDao channelDao) {
-        this.channelDao = channelDao;
+    public CreateChannelValidator(ChannelService channelService) {
+        this.channelService = channelService;
     }
 
     public void validate(ChannelCreationRequest request) throws InvalidRequestException, AlreadyExistsException {
@@ -44,7 +44,7 @@ public class CreateChannelValidator {
     }
 
     private void validateChannelUniqueness(String channelName) throws AlreadyExistsException {
-        if (channelDao.channelExists(channelName)) {
+        if (channelService.channelExists(channelName)) {
             throw new AlreadyExistsException("{\"error\": \"Channel name " + channelName + " already exists\"}");
         }
     }

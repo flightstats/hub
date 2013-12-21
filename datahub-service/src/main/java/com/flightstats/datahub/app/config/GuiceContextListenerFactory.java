@@ -14,7 +14,6 @@ import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.service.DataHubHealthCheck;
-import com.flightstats.datahub.service.DataHubSweeper;
 import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
 import com.flightstats.datahub.service.eventing.MetricsCustomWebSocketCreator;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
@@ -132,7 +131,6 @@ public class GuiceContextListenerFactory {
             binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
             binder.bind(new TypeLiteral<RowKeyStrategy<String, DataHubKey, DataHubCompositeValue>>() {
             }).to(SequenceRowKeyStrategy.class);
-            binder.bind(DataHubSweeper.class).asEagerSingleton();
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
         }
     }

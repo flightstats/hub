@@ -15,9 +15,8 @@ import java.util.concurrent.ConcurrentMap;
 
 public class ChannelDaoImpl implements ChannelDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(ChannelDaoImpl.class);
 
-    private final ChannelsCollectionDao channelsCollectionDao;
     private final DataHubValueDao dataHubValueDao;
     //todo - gfm - 12/20/13 - pull out this into it's own class, which will also remove the need for metricsTimer
     private final ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel;
@@ -27,13 +26,11 @@ public class ChannelDaoImpl implements ChannelDao {
 
     @Inject
     public ChannelDaoImpl(
-            ChannelsCollectionDao channelsCollectionDao,
             DataHubValueDao dataHubValueDao,
             @Named("LastUpdatePerChannelMap") ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel,
             TimeProvider timeProvider,
             ChannelInsertionPublisher channelInsertionPublisher,
             MetricsTimer metricsTimer) {
-        this.channelsCollectionDao = channelsCollectionDao;
         this.dataHubValueDao = dataHubValueDao;
         this.lastUpdatedPerChannel = lastUpdatedPerChannel;
         this.timeProvider = timeProvider;
@@ -42,27 +39,17 @@ public class ChannelDaoImpl implements ChannelDao {
     }
 
     @Override
-    public boolean channelExists(String channelName) {
-        return channelsCollectionDao.channelExists(channelName);
+    public void createChannel(ChannelConfiguration configuration) {
+        logger.info("Creating channel " + configuration);
+        dataHubValueDao.initializeChannel(configuration);
     }
 
     @Override
-    public ChannelConfiguration createChannel(String name, Long ttlMillis) {
-        logger.info("Creating channel name = " + name + ", with ttlMillis = " + ttlMillis);
-        dataHubValueDao.initializeChannel(name);
-        return channelsCollectionDao.createChannel(name, ttlMillis);
-    }
-
-    @Override
-    public void updateChannelMetadata(ChannelConfiguration newConfig) {
-        channelsCollectionDao.updateChannel(newConfig);
-    }
-
-    @Override
-    public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
+    public ValueInsertionResult insert(ChannelConfiguration configuration, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
+        String channelName = configuration.getName();
         logger.debug("inserting {} bytes into channel {} ", data.length, channelName);
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, data, timeProvider.getMillis());
-        Optional<Integer> ttlSeconds = getTtlSeconds(channelName);
+        Optional<Integer> ttlSeconds = getTtlSeconds(configuration);
         ValueInsertionResult result = dataHubValueDao.write(channelName, value, ttlSeconds);
         DataHubKey insertedKey = result.getKey();
         setLastUpdateKey(channelName, insertedKey);
@@ -70,8 +57,7 @@ public class ChannelDaoImpl implements ChannelDao {
         return result;
     }
 
-    private Optional<Integer> getTtlSeconds(String channelName) {
-        ChannelConfiguration channelConfiguration = getChannelConfiguration(channelName);
+    private Optional<Integer> getTtlSeconds(ChannelConfiguration channelConfiguration) {
         if (null == channelConfiguration) {
             return Optional.absent();
         }
@@ -90,11 +76,6 @@ public class ChannelDaoImpl implements ChannelDao {
     }
 
     @Override
-    public boolean isHealthy() {
-        return channelsCollectionDao.isHealthy();
-    }
-
-    @Override
     public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
         logger.debug("fetching {} from channel {} ", key.toString(), channelName);
         DataHubCompositeValue value = dataHubValueDao.read(channelName, key);
@@ -103,34 +84,16 @@ public class ChannelDaoImpl implements ChannelDao {
         }
         Optional<DataHubKey> previous = key.getPrevious();
         Optional<DataHubKey> next = key.getNext();
-        Optional<DataHubKey> lastUpdatedKey = findLastUpdatedKey(channelName);
-        if (lastUpdatedKey.isPresent()) {
-            if (lastUpdatedKey.get().getSequence() == key.getSequence()) {
-                next = Optional.absent();
+        if (next.isPresent()) {
+            Optional<DataHubKey> lastUpdatedKey = findLastUpdatedKey(channelName);
+            if (lastUpdatedKey.isPresent()) {
+                if (lastUpdatedKey.get().getSequence() == key.getSequence()) {
+                    next = Optional.absent();
+                }
             }
         }
 
         return Optional.of(new LinkedDataHubCompositeValue(value, previous, next));
-    }
-
-    @Override
-    public Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id) {
-        //todo - gfm - 12/20/13 - this needs to support time sequence
-        Optional<DataHubKey> key = SequenceDataHubKey.fromString(id);
-        if (!key.isPresent()) {
-            return Optional.absent();
-        }
-        return getValue(channelName, key.get());
-    }
-
-    @Override
-    public ChannelConfiguration getChannelConfiguration(String channelName) {
-        return channelsCollectionDao.getChannelConfiguration(channelName);
-    }
-
-    @Override
-    public Iterable<ChannelConfiguration> getChannels() {
-        return channelsCollectionDao.getChannels();
     }
 
     @Override

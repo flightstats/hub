@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service;
 
-import com.flightstats.datahub.dao.ChannelDao;
+import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.*;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
@@ -32,7 +32,7 @@ public class SingleChannelResourceTest {
 	private DataHubKey dataHubKey;
 	private URI itemUri;
 	private UriInfo urlInfo;
-	private ChannelDao channelDao = mock(ChannelDao.class);
+	private ChannelService channelService = mock(ChannelService.class);
 
     private int DEFAULT_MAX_PAYLOAD = 1024 * 1024 * 10;
 
@@ -51,7 +51,7 @@ public class SingleChannelResourceTest {
 		urlInfo = mock(UriInfo.class);
 
 		when(urlInfo.getRequestUri()).thenReturn(requestUri);
-		when(channelDao.channelExists(channelName)).thenReturn(true);
+		when(channelService.channelExists(channelName)).thenReturn(true);
 		when(linkBuilder.buildChannelUri(channelConfig, urlInfo)).thenReturn(channelUri);
 		when(linkBuilder.buildChannelUri(channelName, urlInfo)).thenReturn(channelUri);
 		when(linkBuilder.buildLatestUri(urlInfo)).thenReturn(latestUri);
@@ -66,14 +66,14 @@ public class SingleChannelResourceTest {
         LinkedDataHubCompositeValue linkedDataHubCompositeValue = new LinkedDataHubCompositeValue(dataHubCompositeValue,
                 Optional.<DataHubKey>absent(), Optional.<DataHubKey>absent());
 
-        when(channelDao.channelExists(anyString())).thenReturn(true);
-		when(channelDao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
-		when(channelDao.findLastUpdatedKey(channelName)).thenReturn(Optional.of(key));
-		when(channelDao.getValue(channelName, key)).thenReturn(Optional.of(linkedDataHubCompositeValue));
+        when(channelService.channelExists(anyString())).thenReturn(true);
+		when(channelService.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+		when(channelService.findLastUpdatedKey(channelName)).thenReturn(Optional.of(key));
+		when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedDataHubCompositeValue));
 
 		when(urlInfo.getRequestUri()).thenReturn(channelUri);
 
-		SingleChannelResource testClass = new SingleChannelResource(channelDao, linkBuilder, DEFAULT_MAX_PAYLOAD);
+		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 
 		Linked<MetadataResponse> result = testClass.getChannelMetadata(channelName, urlInfo);
 		MetadataResponse expectedResponse = new MetadataResponse(channelConfig, new Date(dataHubCompositeValue.getMillis()));
@@ -88,15 +88,15 @@ public class SingleChannelResourceTest {
 	public void testUpdateChannelMetadataWithNonNullTtl() throws Exception {
 
 		UriInfo uriInfo = mock(UriInfo.class);
-		when(channelDao.channelExists(anyString())).thenReturn(true);
-		when(channelDao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+		when(channelService.channelExists(anyString())).thenReturn(true);
+		when(channelService.getChannelConfiguration(channelName)).thenReturn(channelConfig);
 		when(uriInfo.getRequestUri()).thenReturn(channelUri);
 
 		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(30000L).build();
 		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(30000L).build();
 		Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri, uriInfo)).build();
 
-		SingleChannelResource testClass = new SingleChannelResource(channelDao, linkBuilder, DEFAULT_MAX_PAYLOAD);
+		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 		Response result = testClass.updateMetadata(request, channelName, uriInfo);
 
 		assertEquals(expectedResponse.getEntity(), result.getEntity());
@@ -106,15 +106,15 @@ public class SingleChannelResourceTest {
 	public void testUpdateChannelMetadataWithNullTtl() throws Exception {
 
 		UriInfo uriInfo = mock(UriInfo.class);
-		when(channelDao.channelExists(anyString())).thenReturn(true);
-		when(channelDao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+		when(channelService.channelExists(anyString())).thenReturn(true);
+		when(channelService.getChannelConfiguration(channelName)).thenReturn(channelConfig);
 		when(uriInfo.getRequestUri()).thenReturn(channelUri);
 
 		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(null).build();
 		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(null).build();
 		Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri, uriInfo)).build();
 
-		SingleChannelResource testClass = new SingleChannelResource(channelDao, linkBuilder, DEFAULT_MAX_PAYLOAD);
+		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 		Response result = testClass.updateMetadata(request, channelName, uriInfo);
 
 		assertEquals(expectedResponse.getEntity(), result.getEntity());
@@ -124,15 +124,15 @@ public class SingleChannelResourceTest {
 	public void testUpdateChannelMetadataForUnknownChannel() throws Exception {
 
 		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(30000L).build();
-        when(channelDao.channelExists(channelName)).thenReturn(false);
-		SingleChannelResource testClass = new SingleChannelResource(channelDao, null, DEFAULT_MAX_PAYLOAD);
+        when(channelService.channelExists(channelName)).thenReturn(false);
+		SingleChannelResource testClass = new SingleChannelResource(channelService, null, DEFAULT_MAX_PAYLOAD);
 		testClass.updateMetadata(request, channelName, urlInfo);
 	}
 
 	@Test
 	public void testGetChannelMetadataForUnknownChannel() throws Exception {
 
-		SingleChannelResource testClass = new SingleChannelResource(channelDao, linkBuilder, DEFAULT_MAX_PAYLOAD);
+		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 		try {
 			testClass.getChannelMetadata("unknownChannel", urlInfo);
 			fail("Should have thrown a 404");
@@ -150,10 +150,10 @@ public class SingleChannelResourceTest {
 		HalLink channelLink = new HalLink("channel", channelUri);
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey, null, null);
 
-		when(channelDao.insert(channelName, Optional.of(contentType), Optional.of(contentLanguage), data)).thenReturn(new ValueInsertionResult(dataHubKey, null,
+		when(channelService.insert(channelName, Optional.of(contentType), Optional.of(contentLanguage), data)).thenReturn(new ValueInsertionResult(dataHubKey, null,
                 null));
 
-		SingleChannelResource testClass = new SingleChannelResource(channelDao, linkBuilder, DEFAULT_MAX_PAYLOAD);
+		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 		Response response = testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);
 
 		assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
@@ -172,15 +172,15 @@ public class SingleChannelResourceTest {
         //GIVEN
         ValueInsertionResult result = new ValueInsertionResult(null, null, null);
         byte[] data = "SomeData".getBytes();
-        SingleChannelResource testClass = new SingleChannelResource(channelDao, linkBuilder, DEFAULT_MAX_PAYLOAD);
+        SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 
         //WHEN
-        when(channelDao.insert(channelName, Optional.of(contentType), Optional.of(contentLanguage), data)).thenReturn(result);
+        when(channelService.insert(channelName, Optional.of(contentType), Optional.of(contentLanguage), data)).thenReturn(result);
 
         testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);
 
         //THEN
-        verify(channelDao).channelExists(channelName);
+        verify(channelService).channelExists(channelName);
     }
 
     @Test(expected = WebApplicationException.class)
@@ -188,11 +188,11 @@ public class SingleChannelResourceTest {
         //GIVEN
         ValueInsertionResult result = new ValueInsertionResult(null, null, null);
         byte[] data = "SomeData".getBytes();
-        when(channelDao.channelExists(channelName)).thenReturn(false);
-        SingleChannelResource testClass = new SingleChannelResource(channelDao, linkBuilder, DEFAULT_MAX_PAYLOAD);
+        when(channelService.channelExists(channelName)).thenReturn(false);
+        SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 
         //WHEN
-        when(channelDao.insert(channelName, Optional.of(contentType), Optional.of(contentLanguage), data)).thenReturn(result);
+        when(channelService.insert(channelName, Optional.of(contentType), Optional.of(contentLanguage), data)).thenReturn(result);
 
         testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);
     }
@@ -203,7 +203,7 @@ public class SingleChannelResourceTest {
         //GIVEN
         byte[] data = new byte[1025];
         new Random().nextBytes(data);
-        SingleChannelResource testClass = new SingleChannelResource(channelDao, linkBuilder, 1024);
+        SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, 1024);
 
         //WHEN
         Response result = testClass.insertValue(channelName, contentType, contentLanguage, data, urlInfo);

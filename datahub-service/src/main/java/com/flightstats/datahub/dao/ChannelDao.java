@@ -8,24 +8,12 @@ import com.google.common.base.Optional;
 
 public interface ChannelDao {
 
-	boolean channelExists(String channelName);
+	void createChannel(ChannelConfiguration configuration);
 
-    //todo - gfm - 12/19/13 - use ChannelConfiguration instead
-	ChannelConfiguration createChannel(String channelName, Long ttlMillis);
-
-	ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data);
+	ValueInsertionResult insert(ChannelConfiguration configuration, Optional<String> contentType, Optional<String> contentLanguage, byte[] data);
 
 	Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key);
 
-	Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id);
-
-	ChannelConfiguration getChannelConfiguration(String channelName);
-
-	Iterable<ChannelConfiguration> getChannels();
-
 	Optional<DataHubKey> findLastUpdatedKey(String channelName);
 
-    boolean isHealthy();
-
-	void updateChannelMetadata(ChannelConfiguration newConfig);
 }
