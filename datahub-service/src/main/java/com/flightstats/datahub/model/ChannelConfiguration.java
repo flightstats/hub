@@ -9,13 +9,16 @@ public class ChannelConfiguration implements Serializable {
 	private final String name;
 	private final Date creationDate;
 	private final Long ttlMillis;
-    //private String type = "sequence";
+    private final ChannelType type;
 
-	protected ChannelConfiguration(String name, Date creationDate, Long ttlMillis) {
+    public enum ChannelType { Sequence, TimeSeries }
+
+    private ChannelConfiguration(String name, Date creationDate, Long ttlMillis, ChannelType type) {
 		this.creationDate = creationDate;
 		this.name = name;
 		this.ttlMillis = ttlMillis;
-	}
+        this.type = type;
+    }
 
 	public String getName() {
 		return name;
@@ -29,6 +32,10 @@ public class ChannelConfiguration implements Serializable {
 		return ttlMillis;
 	}
 
+    public boolean isSequence() {
+        return ChannelType.Sequence.equals(type);
+    }
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -36,7 +43,6 @@ public class ChannelConfiguration implements Serializable {
 
 		ChannelConfiguration that = (ChannelConfiguration) o;
 
-		if (creationDate != null ? !creationDate.equals(that.creationDate) : that.creationDate != null) return false;
 		if (name != null ? !name.equals(that.name) : that.name != null) return false;
 		if (ttlMillis != null ? !ttlMillis.equals(that.ttlMillis) : that.ttlMillis != null) return false;
 
@@ -46,7 +52,6 @@ public class ChannelConfiguration implements Serializable {
 	@Override
 	public int hashCode() {
 		int result = name != null ? name.hashCode() : 0;
-		result = 31 * result + (creationDate != null ? creationDate.hashCode() : 0);
 		result = 31 * result + (ttlMillis != null ? ttlMillis.hashCode() : 0);
 		return result;
 	}
@@ -66,8 +71,9 @@ public class ChannelConfiguration implements Serializable {
 
 	public static class Builder {
 		private String name;
-		private Date creationDate;
+		private Date creationDate = new Date();
 		private Long ttlMillis;
+        private ChannelType type = ChannelType.Sequence;
 
 		public Builder withChannelConfiguration(ChannelConfiguration config) {
 			this.name = config.name;
@@ -91,8 +97,13 @@ public class ChannelConfiguration implements Serializable {
 			return this;
 		}
 
+        public Builder withType(ChannelType channelType) {
+            this.type = channelType;
+            return this;
+        }
+
 		public ChannelConfiguration build() {
-			return new ChannelConfiguration(name, creationDate, ttlMillis );
+			return new ChannelConfiguration(name, creationDate, ttlMillis, type);
 		}
 	}
 }

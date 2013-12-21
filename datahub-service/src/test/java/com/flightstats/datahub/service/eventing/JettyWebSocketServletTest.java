@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.flightstats.datahub.dao.ChannelDao;
+import com.flightstats.datahub.dao.ChannelService;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.junit.Before;
@@ -27,7 +27,7 @@ public class JettyWebSocketServletTest {
 	private WebSocketChannelNameExtractor channelNameExtractor;
 	private HttpServletRequest httpRequest;
 	private HttpServletResponse httpResponse;
-	private ChannelDao channelDao;
+	private ChannelService channelService;
 	private WebSocketServletFactory factory;
 
 	@Before
@@ -39,7 +39,7 @@ public class JettyWebSocketServletTest {
 		channelNameExtractor = mock(WebSocketChannelNameExtractor.class);
 		httpRequest = mock(HttpServletRequest.class);
 		httpResponse = mock(HttpServletResponse.class);
-		channelDao = mock(ChannelDao.class);
+		channelService = mock(ChannelService.class);
 		factory = mock(WebSocketServletFactory.class);
 	}
 
@@ -60,9 +60,9 @@ public class JettyWebSocketServletTest {
 
 		when(channelNameExtractor.extractChannelName(requestUri)).thenReturn(channelName);
 		when(httpRequest.getRequestURI()).thenReturn(requestUriString);
-		when(channelDao.channelExists(channelName)).thenReturn(true);
+		when(channelService.channelExists(channelName)).thenReturn(true);
 
-		JettyWebSocketServlet testClass = new JettyWebSocketServlet(wsCreator, channelNameExtractor, channelDao) {
+		JettyWebSocketServlet testClass = new JettyWebSocketServlet(wsCreator, channelNameExtractor, channelService) {
 			@Override
 			protected void invokeSuper(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 				superWasInvoked.set(true);
@@ -84,9 +84,9 @@ public class JettyWebSocketServletTest {
 
 		when(channelNameExtractor.extractChannelName(requestUri)).thenReturn(channelName);
 		when(httpRequest.getRequestURI()).thenReturn(requestUriString);
-		when(channelDao.channelExists(channelName)).thenReturn(false);        //NOPE!
+		when(channelService.channelExists(channelName)).thenReturn(false);        //NOPE!
 
-		JettyWebSocketServlet testClass = new JettyWebSocketServlet(wsCreator, channelNameExtractor, channelDao) {
+		JettyWebSocketServlet testClass = new JettyWebSocketServlet(wsCreator, channelNameExtractor, channelService) {
 			@Override
 			protected void invokeSuper(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 				superWasInvoked.set(true);

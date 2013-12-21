@@ -6,17 +6,17 @@ import com.flightstats.datahub.dao.cassandra.CassandraDataHubValueDao;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.service.ChannelInsertionPublisher;
-import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Date;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ChannelDaoImplTest {
 
@@ -25,41 +25,6 @@ public class ChannelDaoImplTest {
     @Before
     public void setUp() throws Exception {
         metricsTimer = new MetricsTimer(new MetricRegistry());
-    }
-
-    @Test
-    public void testChannelExists() throws Exception {
-        ChannelsCollectionDao collection = mock(CassandraChannelsCollectionDao.class);
-        when(collection.channelExists("thechan")).thenReturn(true);
-        when(collection.channelExists("nope")).thenReturn(false);
-        ChannelDaoImpl testClass = new ChannelDaoImpl(collection, null, null, null, null, metricsTimer);
-        assertTrue(testClass.channelExists("thechan"));
-        assertFalse(testClass.channelExists("nope"));
-    }
-
-    @Test
-    public void testCreateChannel() throws Exception {
-        ChannelConfiguration expected = ChannelConfiguration.builder()
-                .withCreationDate(new Date(9999))
-                .withName("foo").build();
-        ChannelsCollectionDao collection = mock(CassandraChannelsCollectionDao.class);
-        when(collection.createChannel("foo", null)).thenReturn(expected);
-        DataHubKeyGenerator keyGenerator = mock(DataHubKeyGenerator.class);
-        DataHubValueDao valueDao = mock(DataHubValueDao.class);
-        ChannelDaoImpl testClass = new ChannelDaoImpl(collection, valueDao, null, null, null, metricsTimer);
-        ChannelConfiguration result = testClass.createChannel("foo", null);
-        assertEquals(expected, result);
-    }
-
-    @Test
-    public void testUpdateChannel() throws Exception {
-        ChannelConfiguration newConfig = ChannelConfiguration.builder()
-                .withCreationDate(new Date(9999))
-                .withName("foo").build();
-        ChannelsCollectionDao collection = mock(CassandraChannelsCollectionDao.class);
-        ChannelDaoImpl testClass = new ChannelDaoImpl(collection, null, null, null, null, metricsTimer);
-        testClass.updateChannelMetadata(newConfig);
-        verify(collection).updateChannel(newConfig);
     }
 
     @Test
@@ -78,18 +43,18 @@ public class ChannelDaoImplTest {
         DataHubValueDao inserter = mock(CassandraDataHubValueDao.class);
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         TimeProvider timeProvider = mock(TimeProvider.class);
-        ChannelConfiguration channelConfig = mock(ChannelConfiguration.class);
+        ChannelConfiguration channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlMillis(millis).build();
         ChannelInsertionPublisher publisher = mock(ChannelInsertionPublisher.class);
 
         // WHEN
         when(channelsCollectionDao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
-        when(channelConfig.getTtlMillis()).thenReturn(millis);
         when(timeProvider.getMillis()).thenReturn(millis);
         when(inserter.write(channelName, value, Optional.of((int)millis/1000))).thenReturn(new ValueInsertionResult(key, null, null));
-        ChannelDaoImpl testClass = new ChannelDaoImpl(channelsCollectionDao, inserter, lastUpdatedMap,
+        ChannelDaoImpl testClass = new ChannelDaoImpl(inserter, lastUpdatedMap,
                 timeProvider, publisher, metricsTimer);
 
-        ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), data);
+
+        ValueInsertionResult result = testClass.insert(channelConfig, contentType, Optional.<String>absent(), data);
 
         // THEN
         assertEquals(expected, result);
@@ -110,22 +75,21 @@ public class ChannelDaoImplTest {
         DataHubValueDao inserter = mock(CassandraDataHubValueDao.class);
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         TimeProvider timeProvider = mock(TimeProvider.class);
-        ChannelConfiguration channelConfig = mock(ChannelConfiguration.class);
+        ChannelConfiguration channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlMillis(millis).build();
         ChannelInsertionPublisher publisher = mock(ChannelInsertionPublisher.class);
 
         // WHEN
         when(channelsCollectionDao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
-        when(channelConfig.getTtlMillis()).thenReturn(millis);
         when(inserter.write(channelName, value, Optional.of((int) millis / 1000))).thenReturn(new ValueInsertionResult(key, null, null));
         when(timeProvider.getMillis()).thenReturn(millis);
-        ChannelDaoImpl testClass = new ChannelDaoImpl(channelsCollectionDao, inserter, lastUpdatedMap, timeProvider, publisher, metricsTimer) {
+        ChannelDaoImpl testClass = new ChannelDaoImpl(inserter, lastUpdatedMap, timeProvider, publisher, metricsTimer) {
             @Override
             public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
                 return Optional.absent();
             }
         };
 
-        ValueInsertionResult result = testClass.insert(channelName, contentType, Optional.<String>absent(), data);
+        ValueInsertionResult result = testClass.insert(channelConfig, contentType, Optional.<String>absent(), data);
 
         // THEN
         assertEquals(expected, result);
@@ -149,7 +113,7 @@ public class ChannelDaoImplTest {
 
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         when(lastUpdatedMap.get(channelName)).thenReturn(nextKey);
-        ChannelDaoImpl testClass = new ChannelDaoImpl(null, inserter, lastUpdatedMap, null, null, metricsTimer);
+        ChannelDaoImpl testClass = new ChannelDaoImpl(inserter, lastUpdatedMap, null, null, metricsTimer);
 
         Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
         assertEquals(expected, result.get());
@@ -164,7 +128,7 @@ public class ChannelDaoImplTest {
 
         when(inserter.read(channelName, key)).thenReturn(null);
 
-        ChannelDaoImpl testClass = new ChannelDaoImpl(null, inserter, null, null, null, metricsTimer);
+        ChannelDaoImpl testClass = new ChannelDaoImpl(inserter, null, null, null, metricsTimer);
 
         Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
         assertFalse(result.isPresent());
@@ -180,7 +144,7 @@ public class ChannelDaoImplTest {
 
         when(lastUpdatedMap.get(channelName)).thenReturn(expected);
 
-        ChannelDaoImpl testClass = new ChannelDaoImpl(channelsCollectionDao, null, lastUpdatedMap,
+        ChannelDaoImpl testClass = new ChannelDaoImpl(null, lastUpdatedMap,
                 null, null, metricsTimer);
 
         Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
@@ -197,7 +161,7 @@ public class ChannelDaoImplTest {
         // WHEN
         when(lastUpdatedMap.get(channelName)).thenReturn(null);
 
-        ChannelDaoImpl testClass = new ChannelDaoImpl(channelsCollectionDao, null, lastUpdatedMap, null, null, metricsTimer);
+        ChannelDaoImpl testClass = new ChannelDaoImpl(null, lastUpdatedMap, null, null, metricsTimer);
 
         Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
 

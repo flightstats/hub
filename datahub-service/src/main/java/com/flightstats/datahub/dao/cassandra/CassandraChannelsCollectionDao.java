@@ -6,7 +6,6 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.flightstats.datahub.dao.ChannelsCollectionDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,26 +20,17 @@ public class CassandraChannelsCollectionDao implements ChannelsCollectionDao {
 
 	private final static Logger logger = LoggerFactory.getLogger(CassandraChannelsCollectionDao.class);
 
-    private final TimeProvider timeProvider;
-
     private QuorumSession session;
 
     @Inject
-	public CassandraChannelsCollectionDao(TimeProvider timeProvider,
-                                          QuorumSession session) {
-		this.timeProvider = timeProvider;
+	public CassandraChannelsCollectionDao(QuorumSession session) {
         this.session = session;
     }
 
 	@Override
-    public ChannelConfiguration createChannel(String name, Long ttlMillis) {
-        ChannelConfiguration channelConfig = ChannelConfiguration.builder()
-                .withName(name)
-                .withTtlMillis(ttlMillis)
-                .withCreationDate(timeProvider.getDate())
-                .build();
-		insertChannelMetadata(channelConfig);
-		return channelConfig;
+    public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
+		insertChannelMetadata(configuration);
+		return configuration;
 	}
 
 	@Override

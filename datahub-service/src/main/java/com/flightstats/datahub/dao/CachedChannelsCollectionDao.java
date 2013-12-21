@@ -23,8 +23,8 @@ public class CachedChannelsCollectionDao implements ChannelsCollectionDao {
     }
 
     @Override
-    public ChannelConfiguration createChannel(String name, Long ttlMillis) {
-        ChannelConfiguration channelConfig = delegate.createChannel(name, ttlMillis);
+    public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
+        ChannelConfiguration channelConfig = delegate.createChannel(configuration);
         channelConfigurationMap.put(channelConfig.getName(), channelConfig);
         return channelConfig;
     }

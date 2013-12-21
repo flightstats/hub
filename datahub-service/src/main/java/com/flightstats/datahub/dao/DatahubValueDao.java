@@ -1,5 +1,6 @@
 package com.flightstats.datahub.dao;
 
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
@@ -15,5 +16,5 @@ public interface DataHubValueDao {
 
     void initialize();
 
-    void initializeChannel(String channelName);
+    void initializeChannel(ChannelConfiguration configuration);
 }

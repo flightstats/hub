@@ -4,7 +4,6 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.datahub.dao.ChannelsCollectionDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,25 +18,17 @@ public class DynamoChannelsCollectionDao implements ChannelsCollectionDao {
 
     private final AmazonDynamoDBClient dbClient;
     private final DynamoUtils dynamoUtils;
-    private final TimeProvider timeProvider;
 
     @Inject
     public DynamoChannelsCollectionDao(AmazonDynamoDBClient dbClient,
-                                       DynamoUtils dynamoUtils,
-                                       TimeProvider timeProvider) {
+                                       DynamoUtils dynamoUtils) {
 
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
-        this.timeProvider = timeProvider;
     }
 
     @Override
-    public ChannelConfiguration createChannel(String name, Long ttlMillis) {
-        ChannelConfiguration configuration = ChannelConfiguration.builder()
-                .withName(name)
-                .withTtlMillis(ttlMillis)
-                .withCreationDate(timeProvider.getDate())
-                .build();
+    public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
         updateChannel(configuration);
         return configuration;
     }

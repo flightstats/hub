@@ -6,6 +6,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.flightstats.datahub.dao.DataHubValueDao;
 import com.flightstats.datahub.dao.RowKeyStrategy;
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
@@ -104,7 +105,7 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
     }
 
     @Override
-    public void initializeChannel(String channelName) {
-        keyGenerator.seedChannel(channelName);
+    public void initializeChannel(ChannelConfiguration configuration) {
+        keyGenerator.seedChannel(configuration.getName());
     }
 }

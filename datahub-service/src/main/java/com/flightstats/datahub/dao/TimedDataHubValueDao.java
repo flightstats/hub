@@ -2,6 +2,7 @@ package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
@@ -49,11 +50,11 @@ public class TimedDataHubValueDao implements DataHubValueDao {
     }
 
     @Override
-    public void initializeChannel(final String channelName) {
+    public void initializeChannel(final ChannelConfiguration configuration) {
         metricsTimer.time("valueDao.initializeChannel", new TimedCallback<Object>() {
             @Override
             public Object call() {
-                delegate.initializeChannel(channelName);
+                delegate.initializeChannel(configuration);
                 return null;
             }
         });
