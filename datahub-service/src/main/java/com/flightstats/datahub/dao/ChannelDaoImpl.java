@@ -76,7 +76,12 @@ public class ChannelDaoImpl implements ChannelDao {
     }
 
     @Override
-    public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
+    public Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id) {
+        Optional<DataHubKey> keyOptional = dataHubValueDao.getKey(id);
+        if (!keyOptional.isPresent()) {
+            return Optional.absent();
+        }
+        DataHubKey key = keyOptional.get();
         logger.debug("fetching {} from channel {} ", key.toString(), channelName);
         DataHubCompositeValue value = dataHubValueDao.read(channelName, key);
         if (value == null) {
@@ -87,7 +92,7 @@ public class ChannelDaoImpl implements ChannelDao {
         if (next.isPresent()) {
             Optional<DataHubKey> lastUpdatedKey = findLastUpdatedKey(channelName);
             if (lastUpdatedKey.isPresent()) {
-                if (lastUpdatedKey.get().getSequence() == key.getSequence()) {
+                if (lastUpdatedKey.get().equals(key)) {
                     next = Optional.absent();
                 }
             }

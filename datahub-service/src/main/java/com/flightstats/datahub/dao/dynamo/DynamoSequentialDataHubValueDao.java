@@ -3,10 +3,7 @@ package com.flightstats.datahub.dao.dynamo;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.datahub.dao.DataHubValueDao;
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubCompositeValue;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
@@ -45,7 +42,7 @@ public class DynamoSequentialDataHubValueDao implements DataHubValueDao {
     @Override
     public ValueInsertionResult write(String channelName, DataHubCompositeValue value, Optional<Integer> ttlSeconds) {
         //todo - gfm - 12/11/13 - this may need to change if we don't want to create unlimited dynamo tables in dev & qa
-        DataHubKey key = keyGenerator.newKey(channelName);
+        SequenceDataHubKey key = keyGenerator.newKey(channelName);
 
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("key", new AttributeValue().withN(String.valueOf(key.getSequence())));
@@ -71,7 +68,8 @@ public class DynamoSequentialDataHubValueDao implements DataHubValueDao {
     public DataHubCompositeValue read(String channelName, DataHubKey key) {
 
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
-        keyMap.put("key", new AttributeValue().withN(String.valueOf(key.getSequence())));
+        SequenceDataHubKey sequenceDataHubKey = (SequenceDataHubKey) key;
+        keyMap.put("key", new AttributeValue().withN(String.valueOf(sequenceDataHubKey.getSequence())));
 
         GetItemRequest getItemRequest = new GetItemRequest()
                 .withTableName(dynamoUtils.getTableName(channelName))
@@ -123,5 +121,10 @@ public class DynamoSequentialDataHubValueDao implements DataHubValueDao {
 
         keyGenerator.seedChannel(configuration.getName());
         dynamoUtils.createTable(request);
+    }
+
+    @Override
+    public Optional<DataHubKey> getKey(String id) {
+        return SequenceDataHubKey.fromString(id);
     }
 }

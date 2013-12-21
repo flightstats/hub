@@ -2,7 +2,6 @@ package com.flightstats.datahub.util;
 
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
-import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.SequenceDataHubKey;
 import com.google.inject.Inject;
 import org.apache.curator.RetryPolicy;
@@ -36,16 +35,16 @@ public class CuratorKeyGenerator implements DataHubKeyGenerator {
     }
 
     @Override
-    public DataHubKey newKey(final String channelName) {
-        return metricsTimer.time("keyGen.newKey", new TimedCallback<DataHubKey>() {
+    public SequenceDataHubKey newKey(final String channelName) {
+        return metricsTimer.time("keyGen.newKey", new TimedCallback<SequenceDataHubKey>() {
             @Override
-            public DataHubKey call() {
+            public SequenceDataHubKey call() {
                 return getDataHubKey(channelName);
             }
         });
     }
 
-    private DataHubKey getDataHubKey(String channelName) {
+    private SequenceDataHubKey getDataHubKey(String channelName) {
         DistributedAtomicLong atomicLong = getDistributedAtomicLong(channelName);
         try {
             AtomicValue<Long> value = atomicLong.increment();

@@ -59,4 +59,9 @@ public class TimedDataHubValueDao implements DataHubValueDao {
             }
         });
     }
+
+    @Override
+    public Optional<DataHubKey> getKey(String id) {
+        return delegate.getKey(id);
+    }
 }

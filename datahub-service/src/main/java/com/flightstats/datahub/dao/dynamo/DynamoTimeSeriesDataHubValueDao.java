@@ -48,7 +48,7 @@ public class DynamoTimeSeriesDataHubValueDao implements DataHubValueDao {
         DataHubKey key = keyGenerator.newKey(channelName);
 
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put("key", new AttributeValue().withN(String.valueOf(key.getSequence())));
+        item.put("key", new AttributeValue().withS(key.keyToString()));
         item.put("data", new AttributeValue().withB(ByteBuffer.wrap(value.getData())));
         item.put("millis", new AttributeValue().withN(String.valueOf(value.getMillis())));
         if (value.getContentType().isPresent()) {
@@ -71,7 +71,7 @@ public class DynamoTimeSeriesDataHubValueDao implements DataHubValueDao {
     public DataHubCompositeValue read(String channelName, DataHubKey key) {
 
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
-        keyMap.put("key", new AttributeValue().withN(String.valueOf(key.getSequence())));
+        keyMap.put("key", new AttributeValue().withS(key.keyToString()));
 
         GetItemRequest getItemRequest = new GetItemRequest()
                 .withTableName(dynamoUtils.getTableName(channelName))
@@ -105,7 +105,16 @@ public class DynamoTimeSeriesDataHubValueDao implements DataHubValueDao {
     @Override
     public void initializeChannel(ChannelConfiguration configuration) {
 
-        //todo - gfm - 12/20/13 - what needs to change here?
+        /**
+         * The Primary Key should remain a hash key so items are directly retrievable.
+         * To support range queries based on time, we may need some sort of Global Secondary Index
+         * A - we could simply use a small time value (minute?) as a String as the GSI's hash key,
+         * then be able to pull back groups of id's directly.
+         * This time based grouping could cause issues with hot spots under high load.
+         * B - Use a batching mechanism to allow retrieval based on time
+         * This would not be unique to non-sequentials
+         *
+         */
         ArrayList<AttributeDefinition> attributeDefinitions= new ArrayList<>();
         attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("N"));
 
@@ -124,5 +133,11 @@ public class DynamoTimeSeriesDataHubValueDao implements DataHubValueDao {
 
         keyGenerator.seedChannel(configuration.getName());
         dynamoUtils.createTable(request);
+    }
+
+    @Override
+    public Optional<DataHubKey> getKey(String id) {
+        //todo - gfm - 12/21/13 -
+        return Optional.absent();
     }
 }

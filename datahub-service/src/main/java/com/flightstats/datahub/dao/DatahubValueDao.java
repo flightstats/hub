@@ -17,4 +17,6 @@ public interface DataHubValueDao {
     void initialize();
 
     void initializeChannel(ChannelConfiguration configuration);
+
+    Optional<DataHubKey> getKey(String id);
 }

@@ -23,7 +23,6 @@ public class SequenceDataHubKey implements DataHubKey {
         return (Optional<DataHubKey>) optional;
     }
 
-    @Override
     public long getSequence() {
         return sequence;
     }
