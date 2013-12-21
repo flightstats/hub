@@ -1,9 +1,7 @@
 package com.flightstats.datahub.cluster;
 
-import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
-import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.SequenceDataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
@@ -21,6 +19,7 @@ import java.util.concurrent.Callable;
 public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
 
     private final static Logger logger = LoggerFactory.getLogger(HazelcastClusterKeyGenerator.class);
+    public static final int STARTING_SEQUENCE = 1000;
 
     private final HazelcastInstance hazelcastInstance;
     private ChannelLockExecutor channelLockExecutor;
@@ -35,12 +34,12 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
     }
 
     @Override
-    public DataHubKey newKey(final String channelName) {
+    public SequenceDataHubKey newKey(final String channelName) {
 
         try {
-            return metricsTimer.time("keyGen.newKey", new TimedCallback<DataHubKey>() {
+            return metricsTimer.time("keyGen.newKey", new TimedCallback<SequenceDataHubKey>() {
                 @Override
-                public DataHubKey call() {
+                public SequenceDataHubKey call() {
                     return nextDataHubKey(channelName);
                 }
             });
@@ -49,7 +48,7 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
         }
     }
 
-    private DataHubKey nextDataHubKey(String channelName) {
+    private SequenceDataHubKey nextDataHubKey(String channelName) {
         long sequence = getAtomicNumber(channelName).getAndAdd(1);
         if (isValidSequence(sequence)) {
             return new SequenceDataHubKey(sequence);
@@ -57,17 +56,17 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
         return handleMissingKey(channelName);
     }
 
-    private DataHubKey handleMissingKey(final String channelName) {
+    private SequenceDataHubKey handleMissingKey(final String channelName) {
         logger.warn("sequence number for channel " + channelName + " is not found.  this will over write any existing data!");
         try {
-            return channelLockExecutor.execute(channelName, new Callable<DataHubKey>() {
+            return channelLockExecutor.execute(channelName, new Callable<SequenceDataHubKey>() {
                 @Override
-                public DataHubKey call() throws Exception {
+                public SequenceDataHubKey call() throws Exception {
                     IAtomicLong sequenceNumber = getAtomicNumber(channelName);
                     if (isValidSequence(sequenceNumber.get())) {
                         return nextDataHubKey(channelName);
                     }
-                    long currentSequence = SequenceRowKeyStrategy.INCREMENT;
+                    long currentSequence = STARTING_SEQUENCE;
                     sequenceNumber.set(currentSequence + 1);
                     return new SequenceDataHubKey(currentSequence);
                 }
@@ -79,11 +78,11 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
     }
 
     private boolean isValidSequence(long sequence) {
-        return sequence >= SequenceRowKeyStrategy.INCREMENT;
+        return sequence >= STARTING_SEQUENCE;
     }
 
     public void seedChannel(String channelName) {
-        getAtomicNumber(channelName).compareAndSet(0, SequenceRowKeyStrategy.INCREMENT);
+        getAtomicNumber(channelName).compareAndSet(0, STARTING_SEQUENCE);
     }
 
     private IAtomicLong getAtomicNumber(String channelName) {

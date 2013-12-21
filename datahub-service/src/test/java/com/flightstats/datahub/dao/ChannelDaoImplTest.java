@@ -37,7 +37,6 @@ public class ChannelDaoImplTest {
         Optional<String> contentType = Optional.of("text/plain");
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data, millis);
         ValueInsertionResult expected = new ValueInsertionResult(key, null, null);
-        DataHubKey lastUpdateKey = new SequenceDataHubKey( 1000);
 
         ChannelsCollectionDao channelsCollectionDao = mock(CassandraChannelsCollectionDao.class);
         DataHubValueDao inserter = mock(CassandraDataHubValueDao.class);
@@ -107,15 +106,16 @@ public class ChannelDaoImplTest {
         Optional<DataHubKey> next = Optional.of(nextKey);
         LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(compositeValue, previous, next);
 
-        DataHubValueDao inserter = mock(CassandraDataHubValueDao.class);
+        DataHubValueDao valueDao = mock(DataHubValueDao.class);
 
-        when(inserter.read(channelName, key)).thenReturn(compositeValue);
+        when(valueDao.read(channelName, key)).thenReturn(compositeValue);
+        when(valueDao.getKey(key.keyToString())).thenReturn(Optional.of(key));
 
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         when(lastUpdatedMap.get(channelName)).thenReturn(nextKey);
-        ChannelDaoImpl testClass = new ChannelDaoImpl(inserter, lastUpdatedMap, null, null, metricsTimer);
+        ChannelDaoImpl testClass = new ChannelDaoImpl(valueDao, lastUpdatedMap, null, null, metricsTimer);
 
-        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
+        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key.keyToString());
         assertEquals(expected, result.get());
     }
 
@@ -124,13 +124,14 @@ public class ChannelDaoImplTest {
         String channelName = "cccccc";
         DataHubKey key = new SequenceDataHubKey( 1000);
 
-        DataHubValueDao inserter = mock(CassandraDataHubValueDao.class);
+        DataHubValueDao valueDao = mock(DataHubValueDao.class);
 
-        when(inserter.read(channelName, key)).thenReturn(null);
+        when(valueDao.read(channelName, key)).thenReturn(null);
+        when(valueDao.getKey(key.keyToString())).thenReturn(Optional.of(key));
 
-        ChannelDaoImpl testClass = new ChannelDaoImpl(inserter, null, null, null, metricsTimer);
+        ChannelDaoImpl testClass = new ChannelDaoImpl(valueDao, null, null, null, metricsTimer);
 
-        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key);
+        Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key.keyToString());
         assertFalse(result.isPresent());
     }
 
@@ -140,7 +141,6 @@ public class ChannelDaoImplTest {
         String channelName = "myChan";
 
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
-        ChannelsCollectionDao channelsCollectionDao = mock(CassandraChannelsCollectionDao.class);
 
         when(lastUpdatedMap.get(channelName)).thenReturn(expected);
 
@@ -156,7 +156,6 @@ public class ChannelDaoImplTest {
         // GIVEN
         String channelName = "myChan";
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
-        ChannelsCollectionDao channelsCollectionDao = mock(CassandraChannelsCollectionDao.class);
 
         // WHEN
         when(lastUpdatedMap.get(channelName)).thenReturn(null);

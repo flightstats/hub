@@ -12,7 +12,7 @@ public interface ChannelDao {
 
 	ValueInsertionResult insert(ChannelConfiguration configuration, Optional<String> contentType, Optional<String> contentLanguage, byte[] data);
 
-	Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key);
+	Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id);
 
 	Optional<DataHubKey> findLastUpdatedKey(String channelName);
 

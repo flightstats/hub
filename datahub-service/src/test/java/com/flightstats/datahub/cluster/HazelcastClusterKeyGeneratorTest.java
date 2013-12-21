@@ -2,7 +2,6 @@ package com.flightstats.datahub.cluster;
 
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.datahub.metrics.MetricsTimer;
-import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.SequenceDataHubKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.hazelcast.core.HazelcastInstance;
@@ -70,8 +69,8 @@ public class HazelcastClusterKeyGeneratorTest {
     @Test
     public void testKeyAfterLock() throws Exception {
         String channelName = "secondLock";
-        DataHubKey latestKey = new SequenceDataHubKey(9999);
-        DataHubKey expectedKey = latestKey.getNext().get();
+        SequenceDataHubKey latestKey = new SequenceDataHubKey(9999);
+        SequenceDataHubKey expectedKey = (SequenceDataHubKey) latestKey.getNext().get();
 
         HazelcastInstance hazelcast = mock(HazelcastInstance.class);
         IAtomicLong atomicSeqNumber = mock(IAtomicLong.class);

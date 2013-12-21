@@ -1,6 +1,9 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
+import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
@@ -37,8 +40,7 @@ public class SimpleChannelService implements ChannelService {
 
     @Override
     public Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id) {
-        Optional<DataHubKey> key = SequenceDataHubKey.fromString(id);
-        return channelDao.getValue(channelName, key.get());
+        return channelDao.getValue(channelName, id);
     }
 
     @Override

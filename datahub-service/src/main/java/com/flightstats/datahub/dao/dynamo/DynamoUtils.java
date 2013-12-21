@@ -60,7 +60,7 @@ public class DynamoUtils {
         waitForTableToBecomeActive(tableName);
     }
 
-    //todo - gfm - 12/12/13 - make this generic for states for deletion
+    //todo - gfm - 12/12/13 - make this generic for states for deletion - needs to wait for ResourceNotFoundException
     private void waitForTableToBecomeActive(String tableName) {
         logger.info("Waiting for " + tableName + " to become ACTIVE...");
         long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(tableCreationWaitMinutes);

@@ -1,10 +1,10 @@
 package com.flightstats.datahub.util;
 
-import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.SequenceDataHubKey;
 
 public interface DataHubKeyGenerator {
 
-	DataHubKey newKey(String channelName);
+    SequenceDataHubKey newKey(String channelName);
 
     void seedChannel(String channelName);
 }

@@ -5,11 +5,7 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.flightstats.datahub.dao.DataHubValueDao;
-import com.flightstats.datahub.dao.RowKeyStrategy;
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubCompositeValue;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
@@ -24,19 +20,16 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
 
     private final static Logger logger = LoggerFactory.getLogger(CassandraDataHubValueDao.class);
 
-	private final RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy;
 	private final DataHubKeyGenerator keyGenerator;
     private final TimeProvider timeProvider;
     private final QuorumSession session;
     private int gcGraceSeconds;
 
     @Inject
-	public CassandraDataHubValueDao(RowKeyStrategy<String, DataHubKey, DataHubCompositeValue> rowKeyStrategy,
-                                    DataHubKeyGenerator keyGenerator,
+	public CassandraDataHubValueDao(DataHubKeyGenerator keyGenerator,
                                     TimeProvider timeProvider,
                                     QuorumSession session,
                                     @Named("cassandra.gc_grace_seconds") int gcGraceSeconds) {
-		this.rowKeyStrategy = rowKeyStrategy;
 		this.keyGenerator = keyGenerator;
         this.timeProvider = timeProvider;
         this.session = session;
@@ -45,8 +38,8 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
 
 	@Override
     public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue, Optional<Integer> ttlSeconds) {
-        DataHubKey key = keyGenerator.newKey(channelName);
-        String rowKey = rowKeyStrategy.buildKey(channelName, key);
+        SequenceDataHubKey key = keyGenerator.newKey(channelName);
+        String rowKey = buildKey(channelName, key);
 
         Integer ttl = 0;
         if (ttlSeconds.isPresent())
@@ -65,10 +58,11 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
     @Override
     public DataHubCompositeValue read(String channelName, DataHubKey key) {
 
-        String rowKey = rowKeyStrategy.buildKey(channelName, key);
+        SequenceDataHubKey sequenceKey = (SequenceDataHubKey) key;
+        String rowKey = buildKey(channelName, sequenceKey);
         PreparedStatement statement = session.prepare("SELECT * FROM values WHERE rowkey = ? and sequence = ?");
         statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
-        Row row = session.execute(statement.bind(rowKey, key.getSequence())).one();
+        Row row = session.execute(statement.bind(rowKey, sequenceKey.getSequence())).one();
         //todo - gfm - 11/22/13 - test null
         if (row == null) {
             return null;
@@ -108,4 +102,16 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
     public void initializeChannel(ChannelConfiguration configuration) {
         keyGenerator.seedChannel(configuration.getName());
     }
+
+    @Override
+    public Optional<DataHubKey> getKey(String id) {
+        return SequenceDataHubKey.fromString(id);
+    }
+
+    private static final long INCREMENT = 1000;
+
+    private String buildKey(String channelName, SequenceDataHubKey dataHubKey) {
+        return channelName + ":" + (dataHubKey.getSequence() / INCREMENT);
+    }
+
 }

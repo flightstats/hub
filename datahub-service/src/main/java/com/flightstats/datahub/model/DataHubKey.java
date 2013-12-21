@@ -12,8 +12,6 @@ public interface DataHubKey extends Serializable {
 
     Optional<DataHubKey> getPrevious();
 
-    long getSequence();
-
     public String keyToString();
 
 }

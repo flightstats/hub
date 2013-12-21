@@ -1,6 +1,9 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
+import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
@@ -23,7 +26,7 @@ public class SplittingChannelService implements ChannelService {
         }
 
         @Override
-        public Optional<LinkedDataHubCompositeValue> getValue(String channelName, DataHubKey key) {
+        public Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id) {
             return Optional.absent();
         }
 
@@ -77,17 +80,7 @@ public class SplittingChannelService implements ChannelService {
 
     @Override
     public Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id) {
-        ChannelConfiguration configuration = channelsCollectionDao.getChannelConfiguration(channelName);
-        //todo - gfm - 12/20/13 - this could be cleaner
-        if (configuration.isSequence()) {
-            Optional<DataHubKey> key = SequenceDataHubKey.fromString(id);
-            if (key.isPresent()) {
-                return getChannelDao(channelName).getValue(channelName, key.get());
-            }
-        } else {
-            //todo - gfm - 12/20/13 - this needs a key
-        }
-        return Optional.absent();
+        return getChannelDao(channelName).getValue(channelName, id);
     }
 
     @Override
@@ -107,7 +100,6 @@ public class SplittingChannelService implements ChannelService {
 
     @Override
     public boolean isHealthy() {
-        //todo - gfm - 12/20/13 - should this include a zookeeper healthcheck?
         return channelsCollectionDao.isHealthy();
     }
 
