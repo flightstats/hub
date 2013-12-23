@@ -14,10 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  *
@@ -116,12 +113,7 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
         //todo - gfm - 12/21/13 - this is option A
         ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
 
-        attributeDefinitions.add(new AttributeDefinition()
-                .withAttributeName("hashstamp")
-                .withAttributeType("S"));
-        attributeDefinitions.add(new AttributeDefinition()
-                .withAttributeName("millis")
-                .withAttributeType("N"));
+        attributeDefinitions.add(new AttributeDefinition().withAttributeName("hashstamp").withAttributeType("S"));
 
         GlobalSecondaryIndex secondaryIndex = new GlobalSecondaryIndex()
                 .withIndexName("TimeIndex")
@@ -130,16 +122,11 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
 
         ArrayList<KeySchemaElement> indexKeySchema = new ArrayList<>();
 
-        indexKeySchema.add(new KeySchemaElement()
-                .withAttributeName("hashstamp")
-                .withKeyType(KeyType.HASH));
-        indexKeySchema.add(new KeySchemaElement()
-                .withAttributeName("millis")
-                .withKeyType(KeyType.RANGE));
+        indexKeySchema.add(new KeySchemaElement().withAttributeName("hashstamp").withKeyType(KeyType.HASH));
 
         secondaryIndex.setKeySchema(indexKeySchema);
 
-        attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("N"));
+        attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("S"));
 
         ArrayList<KeySchemaElement> tableKeySchema = new ArrayList<>();
         tableKeySchema.add(new KeySchemaElement().withAttributeName("key").withKeyType(KeyType.HASH));
@@ -160,7 +147,7 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
     }
 
     @Override
-    public Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime) {
+    public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(dynamoUtils.getTableName(channelName))
                 .withIndexName("TimeIndex")
@@ -176,15 +163,19 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
         queryRequest.setKeyConditions(keyConditions);
 
         QueryResult result = dbClient.query(queryRequest);
-        //todo - gfm - 12/21/13 - can this return null?
+        //todo - gfm - 12/21/13 - can query return null?
+        List<ContentKey> keys = new ArrayList<>();
         for (Map<String, AttributeValue> attribs : result.getItems()) {
 
-            for (Map.Entry<String, AttributeValue> attrib : attribs.entrySet()) {
-                System.out.println(attrib.getKey() + " ---> " + attrib.getValue());
+            AttributeValue keyValue = attribs.get("key");
+            if (keyValue != null) {
+                Optional<ContentKey> keyOptional = TimeSeriesContentKey.fromString(keyValue.getS());
+                if (keyOptional.isPresent()) {
+                    keys.add(keyOptional.get());
+                }
             }
 
-            System.out.println();
         }
-        return null;
+        return keys;
     }
 }

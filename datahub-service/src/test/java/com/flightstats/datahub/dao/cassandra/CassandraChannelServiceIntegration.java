@@ -1,12 +1,12 @@
 package com.flightstats.datahub.dao.cassandra;
 
-import com.flightstats.datahub.dao.ChannelDaoLocalIntegration;
+import com.flightstats.datahub.dao.ChannelServiceIntegration;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.junit.BeforeClass;
 
 import java.util.Properties;
 
-public class CassandraChannelDaoLocalIntegration extends ChannelDaoLocalIntegration {
+public class CassandraChannelServiceIntegration extends ChannelServiceIntegration {
 
     @BeforeClass
     public static void setupClass() throws Exception {

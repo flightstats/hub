@@ -70,7 +70,7 @@ public class SimpleChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime) {
+    public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
         return contentService.getKeys(channelName, dateTime);
     }
 }

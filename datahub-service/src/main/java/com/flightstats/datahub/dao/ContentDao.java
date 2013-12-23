@@ -21,5 +21,5 @@ public interface ContentDao {
 
     Optional<ContentKey> getKey(String id);
 
-    Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime);
+    Iterable<ContentKey> getKeys(String channelName, DateTime dateTime);
 }

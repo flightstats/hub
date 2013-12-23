@@ -10,6 +10,8 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+
 /**
  *
  */
@@ -41,8 +43,8 @@ public class SplittingChannelService implements ChannelService {
         }
 
         @Override
-        public Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime) {
-            return Optional.absent();
+        public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
+            return Collections.emptyList();
         }
 
     };
@@ -120,7 +122,7 @@ public class SplittingChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime) {
+    public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
         return getChannelDao(channelName).getKeys(channelName, dateTime);
     }
 }
