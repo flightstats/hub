@@ -7,7 +7,6 @@ import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.flightstats.datahub.dao.ContentDao;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
-import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -16,30 +15,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.Date;
 
 public class CassandraContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(CassandraContentDao.class);
 
 	private final DataHubKeyGenerator keyGenerator;
-    private final TimeProvider timeProvider;
     private final QuorumSession session;
     private int gcGraceSeconds;
 
     @Inject
 	public CassandraContentDao(DataHubKeyGenerator keyGenerator,
-                               TimeProvider timeProvider,
                                QuorumSession session,
                                @Named("cassandra.gc_grace_seconds") int gcGraceSeconds) {
 		this.keyGenerator = keyGenerator;
-        this.timeProvider = timeProvider;
         this.session = session;
         this.gcGraceSeconds = gcGraceSeconds;
     }
 
 	@Override
-    public ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue, Optional<Integer> ttlSeconds) {
-        SequenceDataHubKey key = keyGenerator.newKey(channelName);
+    public ValueInsertionResult write(String channelName, Content columnValue, Optional<Integer> ttlSeconds) {
+        SequenceContentKey key = keyGenerator.newKey(channelName);
         String rowKey = buildKey(channelName, key);
 
         Integer ttl = 0;
@@ -53,13 +50,13 @@ public class CassandraContentDao implements ContentDao {
         statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
         session.execute(statement.bind(rowKey, key.getSequence(), ByteBuffer.wrap(columnValue.getData()), columnValue.getMillis(),
                 columnValue.getContentType().orNull(), columnValue.getContentLanguage().orNull()));
-		return new ValueInsertionResult(key, rowKey, timeProvider.getDate());
+		return new ValueInsertionResult(key, new Date(columnValue.getMillis()));
 	}
 
     @Override
-    public DataHubCompositeValue read(String channelName, DataHubKey key) {
+    public Content read(String channelName, ContentKey key) {
 
-        SequenceDataHubKey sequenceKey = (SequenceDataHubKey) key;
+        SequenceContentKey sequenceKey = (SequenceContentKey) key;
         String rowKey = buildKey(channelName, sequenceKey);
         PreparedStatement statement = session.prepare("SELECT * FROM values WHERE rowkey = ? and sequence = ?");
         statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
@@ -75,7 +72,7 @@ public class CassandraContentDao implements ContentDao {
         byte[] array = new byte[data.remaining()];
         data.get(array);
 
-        return new DataHubCompositeValue(Optional.fromNullable(contentType),
+        return new Content(Optional.fromNullable(contentType),
                 Optional.fromNullable(contentLanguage), array, row.getLong("millis"));
     }
 
@@ -105,18 +102,18 @@ public class CassandraContentDao implements ContentDao {
     }
 
     @Override
-    public Optional<DataHubKey> getKey(String id) {
-        return SequenceDataHubKey.fromString(id);
+    public Optional<ContentKey> getKey(String id) {
+        return SequenceContentKey.fromString(id);
     }
 
     @Override
-    public Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime) {
+    public Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime) {
         throw new UnsupportedOperationException("this implementation does not support get keys " + channelName);
     }
 
     private static final long INCREMENT = 1000;
 
-    private String buildKey(String channelName, SequenceDataHubKey dataHubKey) {
+    private String buildKey(String channelName, SequenceContentKey dataHubKey) {
         return channelName + ":" + (dataHubKey.getSequence() / INCREMENT);
     }
 

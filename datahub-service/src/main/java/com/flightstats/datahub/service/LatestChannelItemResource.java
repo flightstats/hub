@@ -4,7 +4,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.ContentKey;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
@@ -35,14 +35,14 @@ public class LatestChannelItemResource {
 	@Timed
     @ExceptionMetered
 	public Response getLatest(@PathParam("channelName") String channelName) {
-		Optional<DataHubKey> latestId = channelService.findLastUpdatedKey(channelName);
+		Optional<ContentKey> latestId = channelService.findLastUpdatedKey(channelName);
 		if (!latestId.isPresent()) {
             return Response.status(NOT_FOUND).build();
 		}
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
 
 		String channelUri = uriInfo.getRequestUri().toString().replaceFirst("/latest$", "");
-		DataHubKey keyOfLatestItem = latestId.get();
+		ContentKey keyOfLatestItem = latestId.get();
 		URI uri = URI.create(channelUri + "/" + keyOfLatestItem.keyToString());
 		builder.location(uri);
 		return builder.build();

@@ -5,7 +5,6 @@ import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.datahub.dao.ContentDao;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
-import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -14,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,25 +25,22 @@ public class DynamoSequentialContentDao implements ContentDao {
     private final static Logger logger = LoggerFactory.getLogger(DynamoSequentialContentDao.class);
 
     private final DataHubKeyGenerator keyGenerator;
-    private final TimeProvider timeProvider;
     private final AmazonDynamoDBClient dbClient;
     private final DynamoUtils dynamoUtils;
 
     @Inject
     public DynamoSequentialContentDao(DataHubKeyGenerator keyGenerator,
-                                      TimeProvider timeProvider,
                                       AmazonDynamoDBClient dbClient,
                                       DynamoUtils dynamoUtils) {
         this.keyGenerator = keyGenerator;
-        this.timeProvider = timeProvider;
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
     }
 
     @Override
-    public ValueInsertionResult write(String channelName, DataHubCompositeValue value, Optional<Integer> ttlSeconds) {
+    public ValueInsertionResult write(String channelName, Content value, Optional<Integer> ttlSeconds) {
         //todo - gfm - 12/11/13 - this may need to change if we don't want to create unlimited dynamo tables in dev & qa
-        SequenceDataHubKey key = keyGenerator.newKey(channelName);
+        SequenceContentKey key = keyGenerator.newKey(channelName);
 
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("key", new AttributeValue().withN(String.valueOf(key.getSequence())));
@@ -62,14 +59,14 @@ public class DynamoSequentialContentDao implements ContentDao {
         //todo - gfm - 12/13/13 - this needs to handle ProvisionedThroughputExceededException
         PutItemResult result = dbClient.putItem(putItemRequest);
         //todo - gfm - 12/11/13 - do we need a rowkey for this?
-        return new ValueInsertionResult(key, "", timeProvider.getDate());
+        return new ValueInsertionResult(key, new Date(value.getMillis()));
     }
 
     @Override
-    public DataHubCompositeValue read(String channelName, DataHubKey key) {
+    public Content read(String channelName, ContentKey key) {
 
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
-        SequenceDataHubKey sequenceDataHubKey = (SequenceDataHubKey) key;
+        SequenceContentKey sequenceDataHubKey = (SequenceContentKey) key;
         keyMap.put("key", new AttributeValue().withN(String.valueOf(sequenceDataHubKey.getSequence())));
 
         GetItemRequest getItemRequest = new GetItemRequest()
@@ -93,7 +90,7 @@ public class DynamoSequentialContentDao implements ContentDao {
         }
         long millis = Long.parseLong(item.get("millis").getN());
         ByteBuffer byteBuffer = item.get("data").getB();
-        return new DataHubCompositeValue(contentType, contentLanguage, byteBuffer.array() , millis);
+        return new Content(contentType, contentLanguage, byteBuffer.array() , millis);
     }
 
     @Override
@@ -125,12 +122,12 @@ public class DynamoSequentialContentDao implements ContentDao {
     }
 
     @Override
-    public Optional<DataHubKey> getKey(String id) {
-        return SequenceDataHubKey.fromString(id);
+    public Optional<ContentKey> getKey(String id) {
+        return SequenceContentKey.fromString(id);
     }
 
     @Override
-    public Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime) {
+    public Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime) {
         throw new UnsupportedOperationException("this implementation does not support get keys " + channelName);
     }
 }

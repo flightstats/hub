@@ -3,24 +3,24 @@ package com.flightstats.datahub.model;
 import com.google.common.base.Optional;
 
 @SuppressWarnings({"unchecked", "ConstantConditions"})
-public class SequenceDataHubKey implements DataHubKey {
+public class SequenceContentKey implements ContentKey {
     private static final long serialVersionUID = 1L;
     private final long sequence;
 
-    public SequenceDataHubKey(long sequence) {
+    public SequenceContentKey(long sequence) {
         this.sequence = sequence;
     }
 
     @Override
-    public Optional<DataHubKey> getNext() {
-        Optional<? extends DataHubKey> optional = Optional.of(new SequenceDataHubKey(sequence + 1));
-        return (Optional<DataHubKey>) optional;
+    public Optional<ContentKey> getNext() {
+        Optional<? extends ContentKey> optional = Optional.of(new SequenceContentKey(sequence + 1));
+        return (Optional<ContentKey>) optional;
     }
 
     @Override
-    public Optional<DataHubKey> getPrevious() {
-        Optional<? extends DataHubKey> optional = Optional.of(new SequenceDataHubKey(sequence - 1));
-        return (Optional<DataHubKey>) optional;
+    public Optional<ContentKey> getPrevious() {
+        Optional<? extends ContentKey> optional = Optional.of(new SequenceContentKey(sequence - 1));
+        return (Optional<ContentKey>) optional;
     }
 
     public long getSequence() {
@@ -32,10 +32,10 @@ public class SequenceDataHubKey implements DataHubKey {
         return Long.toString(getSequence());
     }
 
-    public static Optional<DataHubKey> fromString(String key) {
+    public static Optional<ContentKey> fromString(String key) {
         try {
-            Optional<? extends DataHubKey> optional = Optional.of(new SequenceDataHubKey(Long.parseLong(key)));
-            return (Optional<DataHubKey>) optional;
+            Optional<? extends ContentKey> optional = Optional.of(new SequenceContentKey(Long.parseLong(key)));
+            return (Optional<ContentKey>) optional;
         } catch (Exception e) {
             return Optional.absent();
         }
@@ -50,7 +50,7 @@ public class SequenceDataHubKey implements DataHubKey {
             return false;
         }
 
-        SequenceDataHubKey that = (SequenceDataHubKey) o;
+        SequenceContentKey that = (SequenceContentKey) o;
 
         if (sequence != that.sequence) {
             return false;
@@ -66,7 +66,7 @@ public class SequenceDataHubKey implements DataHubKey {
 
     @Override
     public String toString() {
-        return "DataHubKey{" +
+        return "ContentKey{" +
                 " sequence=" + sequence +
                 '}';
     }

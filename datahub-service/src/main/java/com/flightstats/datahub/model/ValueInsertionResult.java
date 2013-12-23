@@ -2,28 +2,23 @@ package com.flightstats.datahub.model;
 
 import java.util.Date;
 
+//todo - gfm - 12/23/13 - wondering how useful this class is.
 public class ValueInsertionResult {
 
-    private final DataHubKey key;
-    private final String rowKey;
+    private final ContentKey key;
     private final Date date;
 
-    public ValueInsertionResult(DataHubKey key, String rowKey, Date date) {
+    public ValueInsertionResult(ContentKey key, Date date) {
         this.key = key;
-        this.rowKey = rowKey;
         this.date = date;
     }
 
-    public DataHubKey getKey() {
+    public ContentKey getKey() {
         return key;
     }
 
     public Date getDate() {
         return date;
-    }
-
-    public String getRowKey() {
-        return rowKey;
     }
 
     @Override

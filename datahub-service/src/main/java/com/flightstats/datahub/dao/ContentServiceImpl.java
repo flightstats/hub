@@ -19,7 +19,7 @@ public class ContentServiceImpl implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
     private final ContentDao contentDao;
-    private final ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel;
+    private final ConcurrentMap<String, ContentKey> lastUpdatedPerChannel;
     private final TimeProvider timeProvider;
     private ChannelInsertionPublisher channelInsertionPublisher;
     private final MetricsTimer metricsTimer;
@@ -27,7 +27,7 @@ public class ContentServiceImpl implements ContentService {
     @Inject
     public ContentServiceImpl(
             ContentDao contentDao,
-            @Named("LastUpdatePerChannelMap") ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel,
+            @Named("LastUpdatePerChannelMap") ConcurrentMap<String, ContentKey> lastUpdatedPerChannel,
             TimeProvider timeProvider,
             ChannelInsertionPublisher channelInsertionPublisher,
             MetricsTimer metricsTimer) {
@@ -48,10 +48,10 @@ public class ContentServiceImpl implements ContentService {
     public ValueInsertionResult insert(ChannelConfiguration configuration, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
         String channelName = configuration.getName();
         logger.debug("inserting {} bytes into channel {} ", data.length, channelName);
-        DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, data, timeProvider.getMillis());
+        Content value = new Content(contentType, contentLanguage, data, timeProvider.getMillis());
         Optional<Integer> ttlSeconds = getTtlSeconds(configuration);
         ValueInsertionResult result = contentDao.write(channelName, value, ttlSeconds);
-        DataHubKey insertedKey = result.getKey();
+        ContentKey insertedKey = result.getKey();
         setLastUpdateKey(channelName, insertedKey);
         channelInsertionPublisher.publish(channelName, result);
         return result;
@@ -66,21 +66,21 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id) {
-        Optional<DataHubKey> keyOptional = contentDao.getKey(id);
+    public Optional<LinkedContent> getValue(String channelName, String id) {
+        Optional<ContentKey> keyOptional = contentDao.getKey(id);
         if (!keyOptional.isPresent()) {
             return Optional.absent();
         }
-        DataHubKey key = keyOptional.get();
+        ContentKey key = keyOptional.get();
         logger.debug("fetching {} from channel {} ", key.toString(), channelName);
-        DataHubCompositeValue value = contentDao.read(channelName, key);
+        Content value = contentDao.read(channelName, key);
         if (value == null) {
             return Optional.absent();
         }
-        Optional<DataHubKey> previous = key.getPrevious();
-        Optional<DataHubKey> next = key.getNext();
+        Optional<ContentKey> previous = key.getPrevious();
+        Optional<ContentKey> next = key.getNext();
         if (next.isPresent()) {
-            Optional<DataHubKey> lastUpdatedKey = findLastUpdatedKey(channelName);
+            Optional<ContentKey> lastUpdatedKey = findLastUpdatedKey(channelName);
             if (lastUpdatedKey.isPresent()) {
                 if (lastUpdatedKey.get().equals(key)) {
                     next = Optional.absent();
@@ -88,20 +88,20 @@ public class ContentServiceImpl implements ContentService {
             }
         }
 
-        return Optional.of(new LinkedDataHubCompositeValue(value, previous, next));
+        return Optional.of(new LinkedContent(value, previous, next));
     }
 
     @Override
-    public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
+    public Optional<ContentKey> findLastUpdatedKey(String channelName) {
         return Optional.fromNullable(getLastUpdatedFromCache(channelName));
     }
 
     @Override
-    public Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime) {
+    public Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime) {
         return contentDao.getKeys(channelName, dateTime);
     }
 
-    private void setLastUpdateKey(final String channelName, final DataHubKey lastUpdateKey) {
+    private void setLastUpdateKey(final String channelName, final ContentKey lastUpdateKey) {
         metricsTimer.time("hazelcast.setLastUpdated", new TimedCallback<Object>() {
             @Override
             public Object call() {
@@ -111,10 +111,10 @@ public class ContentServiceImpl implements ContentService {
         });
     }
 
-    private DataHubKey getLastUpdatedFromCache(final String channelName) {
-        return metricsTimer.time("hazelcast.getLastUpdated", new TimedCallback<DataHubKey>() {
+    private ContentKey getLastUpdatedFromCache(final String channelName) {
+        return metricsTimer.time("hazelcast.getLastUpdated", new TimedCallback<ContentKey>() {
             @Override
-            public DataHubKey call() {
+            public ContentKey call() {
                 return lastUpdatedPerChannel.get(channelName);
             }
         });

@@ -1,10 +1,10 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.model.DataHubCompositeValue;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
-import com.flightstats.datahub.model.SequenceDataHubKey;
+import com.flightstats.datahub.model.Content;
+import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.LinkedContent;
+import com.flightstats.datahub.model.SequenceContentKey;
 import com.google.common.base.Optional;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,10 +34,10 @@ public class ChannelContentResourceTest {
         byte[] expected = new byte[]{55, 66, 77, 88};
         Optional<String> contentType = Optional.of("text/plain");
         Optional<String> contentLanguage = Optional.of("en");
-        DataHubKey key = new SequenceDataHubKey( 1000);
-        DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, expected, 0L);
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
-                Optional.<DataHubKey>absent());
+        ContentKey key = new SequenceContentKey( 1000);
+        Content value = new Content(contentType, contentLanguage, expected, 0L);
+        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(),
+                Optional.<ContentKey>absent());
 
         when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedValue));
 
@@ -52,12 +52,12 @@ public class ChannelContentResourceTest {
     @Test
     public void testGetValueNoContentTypeSpecified() throws Exception {
         String channelName = "canal4";
-        DataHubKey key = new SequenceDataHubKey( 1000);
+        ContentKey key = new SequenceContentKey( 1000);
         byte[] expected = new byte[]{55, 66, 77, 88};
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), expected, 0L);
-        Optional<DataHubKey> previous = Optional.absent();
+        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), expected, 0L);
+        Optional<ContentKey> previous = Optional.absent();
 
-        when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(new LinkedDataHubCompositeValue(value, previous, Optional.<DataHubKey>absent())));
+        when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(new LinkedContent(value, previous, Optional.<ContentKey>absent())));
 
         ChannelContentResource testClass = new ChannelContentResource(null, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), null);
@@ -69,12 +69,12 @@ public class ChannelContentResourceTest {
     @Test
     public void testGetValueContentMismatch() throws Exception {
         String channelName = "canal4";
-        DataHubKey key = new SequenceDataHubKey( 1000);
+        ContentKey key = new SequenceContentKey( 1000);
         byte[] expected = new byte[]{55, 66, 77, 88};
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.of(MediaType.APPLICATION_XML), Optional.<String>absent(), expected, 0L);
-        Optional<DataHubKey> previous = Optional.absent();
+        Content value = new Content(Optional.of(MediaType.APPLICATION_XML), Optional.<String>absent(), expected, 0L);
+        Optional<ContentKey> previous = Optional.absent();
 
-        when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(new LinkedDataHubCompositeValue(value, previous, Optional.<DataHubKey>absent())));
+        when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(new LinkedContent(value, previous, Optional.<ContentKey>absent())));
 
         ChannelContentResource testClass = new ChannelContentResource(null, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), MediaType.APPLICATION_JSON);
@@ -86,9 +86,9 @@ public class ChannelContentResourceTest {
     public void testGetValueNotFound() throws Exception {
 
         String channelName = "canal4";
-        DataHubKey key = new SequenceDataHubKey( 1000);
+        ContentKey key = new SequenceContentKey( 1000);
 
-        when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.<LinkedDataHubCompositeValue>absent());
+        when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.<LinkedContent>absent());
 
         ChannelContentResource testClass = new ChannelContentResource(null, channelService);
         try {
@@ -102,10 +102,10 @@ public class ChannelContentResourceTest {
     @Test
     public void testCreationDateHeaderInResponse() throws Exception {
         String channelName = "woo";
-        DataHubKey key = new SequenceDataHubKey(  1000);
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 987654321);
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
-                Optional.<DataHubKey>absent());
+        ContentKey key = new SequenceContentKey(  1000);
+        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 987654321);
+        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(),
+                Optional.<ContentKey>absent());
 
         when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedValue));
 
@@ -119,11 +119,11 @@ public class ChannelContentResourceTest {
     @Test
     public void testPreviousLink() throws Exception {
         String channelName = "woo";
-        DataHubKey previousKey = new SequenceDataHubKey(1000);
-        DataHubKey key = new SequenceDataHubKey(1001);
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
-        Optional<DataHubKey> previous = Optional.of(previousKey);
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, previous, Optional.<DataHubKey>absent());
+        ContentKey previousKey = new SequenceContentKey(1000);
+        ContentKey key = new SequenceContentKey(1001);
+        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
+        Optional<ContentKey> previous = Optional.of(previousKey);
+        LinkedContent linkedValue = new LinkedContent(value, previous, Optional.<ContentKey>absent());
 
         UriInfo uriInfo = mock(UriInfo.class);
 
@@ -140,10 +140,10 @@ public class ChannelContentResourceTest {
     @Test
     public void testPreviousLink_none() throws Exception {
         String channelName = "woo";
-        DataHubKey key = new SequenceDataHubKey( 1000);
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
-        Optional<DataHubKey> previous = Optional.absent();
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, previous, Optional.<DataHubKey>absent());
+        ContentKey key = new SequenceContentKey( 1000);
+        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
+        Optional<ContentKey> previous = Optional.absent();
+        LinkedContent linkedValue = new LinkedContent(value, previous, Optional.<ContentKey>absent());
 
         when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedValue));
 
@@ -157,11 +157,11 @@ public class ChannelContentResourceTest {
     @Test
     public void testNextLink() throws Exception {
         String channelName = "nerxt";
-        DataHubKey nextKey = new SequenceDataHubKey( 1001);
-        DataHubKey key = new SequenceDataHubKey( 1000);
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
-        Optional<DataHubKey> next = Optional.of(nextKey);
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(), next);
+        ContentKey nextKey = new SequenceContentKey( 1001);
+        ContentKey key = new SequenceContentKey( 1000);
+        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
+        Optional<ContentKey> next = Optional.of(nextKey);
+        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(), next);
 
         UriInfo uriInfo = mock(UriInfo.class);
 
@@ -178,10 +178,10 @@ public class ChannelContentResourceTest {
     @Test
     public void testNextLinkNone() throws Exception {
         String channelName = "nerxt";
-        DataHubKey key = new SequenceDataHubKey( 1000);
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
-                Optional.<DataHubKey>absent());
+        ContentKey key = new SequenceContentKey( 1000);
+        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
+        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(),
+                Optional.<ContentKey>absent());
 
 
         when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedValue));
@@ -196,10 +196,10 @@ public class ChannelContentResourceTest {
     @Test
     public void testLanguageHeader_missing() throws Exception {
         String channelName = "canal4";
-        DataHubKey key = new SequenceDataHubKey( 1000);
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), new byte[]{}, 0L);
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
-                Optional.<DataHubKey>absent());
+        ContentKey key = new SequenceContentKey( 1000);
+        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), new byte[]{}, 0L);
+        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(),
+                Optional.<ContentKey>absent());
 
         when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedValue));
 
@@ -212,10 +212,10 @@ public class ChannelContentResourceTest {
     @Test
     public void testEncodingHeader_missing() throws Exception {
         String channelName = "canal4";
-        DataHubKey key = new SequenceDataHubKey( 1000);
-        DataHubCompositeValue value = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), new byte[]{}, 0L);
-        LinkedDataHubCompositeValue linkedValue = new LinkedDataHubCompositeValue(value, Optional.<DataHubKey>absent(),
-                Optional.<DataHubKey>absent());
+        ContentKey key = new SequenceContentKey( 1000);
+        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), new byte[]{}, 0L);
+        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(),
+                Optional.<ContentKey>absent());
 
         when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedValue));
 
