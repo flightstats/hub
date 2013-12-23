@@ -1,8 +1,8 @@
 package com.flightstats.datahub.app.config;
 
+import com.flightstats.datahub.dao.ChannelMetadataDao;
 import com.flightstats.datahub.dao.ChannelMetadataInitialization;
-import com.flightstats.datahub.dao.ChannelsCollectionDao;
-import com.flightstats.datahub.dao.cassandra.CassandraChannelsCollectionDao;
+import com.flightstats.datahub.dao.cassandra.CassandraChannelMetadataDao;
 import com.google.inject.TypeLiteral;
 import com.google.inject.spi.InjectionListener;
 import com.google.inject.spi.TypeEncounter;
@@ -35,16 +35,16 @@ public class ChannelMetadataInitializationTest {
 		//WHEN
 		TypeLiteral<Object> type = mock(TypeLiteral.class);
 		TypeEncounter<Object> encounter = mock(TypeEncounter.class);
-		ChannelsCollectionDao channelsCollectionDao = mock(CassandraChannelsCollectionDao.class);
+		ChannelMetadataDao channelMetadataDao = mock(CassandraChannelMetadataDao.class);
 		testClass.hear(type, encounter);
 
 		//THEN
 		ArgumentCaptor<InjectionListener> captor = ArgumentCaptor.forClass(InjectionListener.class);
 		verify(encounter).register(captor.capture());
 		InjectionListener listener = captor.getValue();
-		listener.afterInjection(channelsCollectionDao);
-		listener.afterInjection(channelsCollectionDao);
-		listener.afterInjection(channelsCollectionDao);
-		verify(channelsCollectionDao).initializeMetadata();
+		listener.afterInjection(channelMetadataDao);
+		listener.afterInjection(channelMetadataDao);
+		listener.afterInjection(channelMetadataDao);
+		verify(channelMetadataDao).initializeMetadata();
 	}
 }

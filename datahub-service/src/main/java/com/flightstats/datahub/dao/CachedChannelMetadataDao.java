@@ -9,15 +9,15 @@ import java.util.concurrent.ConcurrentMap;
 /**
  *
  */
-public class CachedChannelsCollectionDao implements ChannelsCollectionDao {
+public class CachedChannelMetadataDao implements ChannelMetadataDao {
 
-    public static final String DELEGATE = "CachedChannelsCollectionDao.DELEGATE";
-    private final ChannelsCollectionDao delegate;
+    public static final String DELEGATE = "CachedChannelMetadataDao.DELEGATE";
+    private final ChannelMetadataDao delegate;
     private final ConcurrentMap<String,ChannelConfiguration> channelConfigurationMap;
 
     @Inject
-    public CachedChannelsCollectionDao(@Named(DELEGATE) ChannelsCollectionDao delegate,
-                                       @Named("ChannelConfigurationMap") ConcurrentMap<String, ChannelConfiguration> channelConfigurationMap) {
+    public CachedChannelMetadataDao(@Named(DELEGATE) ChannelMetadataDao delegate,
+                                    @Named("ChannelConfigurationMap") ConcurrentMap<String, ChannelConfiguration> channelConfigurationMap) {
         this.delegate = delegate;
         this.channelConfigurationMap = channelConfigurationMap;
     }

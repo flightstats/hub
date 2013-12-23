@@ -1,8 +1,8 @@
 package com.flightstats.datahub.dao;
 
 import com.codahale.metrics.MetricRegistry;
-import com.flightstats.datahub.dao.cassandra.CassandraChannelsCollectionDao;
-import com.flightstats.datahub.dao.cassandra.CassandraDataHubValueDao;
+import com.flightstats.datahub.dao.cassandra.CassandraChannelMetadataDao;
+import com.flightstats.datahub.dao.cassandra.CassandraContentDao;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.service.ChannelInsertionPublisher;
@@ -38,18 +38,18 @@ public class ChannelDaoImplTest {
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data, millis);
         ValueInsertionResult expected = new ValueInsertionResult(key, null, null);
 
-        ChannelsCollectionDao channelsCollectionDao = mock(CassandraChannelsCollectionDao.class);
-        DataHubValueDao inserter = mock(CassandraDataHubValueDao.class);
+        ChannelMetadataDao channelMetadataDao = mock(CassandraChannelMetadataDao.class);
+        ContentDao inserter = mock(CassandraContentDao.class);
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         TimeProvider timeProvider = mock(TimeProvider.class);
         ChannelConfiguration channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlMillis(millis).build();
         ChannelInsertionPublisher publisher = mock(ChannelInsertionPublisher.class);
 
         // WHEN
-        when(channelsCollectionDao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+        when(channelMetadataDao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
         when(timeProvider.getMillis()).thenReturn(millis);
         when(inserter.write(channelName, value, Optional.of((int)millis/1000))).thenReturn(new ValueInsertionResult(key, null, null));
-        ChannelDaoImpl testClass = new ChannelDaoImpl(inserter, lastUpdatedMap,
+        ContentServiceImpl testClass = new ContentServiceImpl(inserter, lastUpdatedMap,
                 timeProvider, publisher, metricsTimer);
 
 
@@ -70,18 +70,18 @@ public class ChannelDaoImplTest {
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, Optional.<String>absent(), data, millis);
         ValueInsertionResult expected = new ValueInsertionResult(key, null, null);
 
-        ChannelsCollectionDao channelsCollectionDao = mock(CassandraChannelsCollectionDao.class);
-        DataHubValueDao inserter = mock(CassandraDataHubValueDao.class);
+        ChannelMetadataDao channelMetadataDao = mock(CassandraChannelMetadataDao.class);
+        ContentDao inserter = mock(CassandraContentDao.class);
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         TimeProvider timeProvider = mock(TimeProvider.class);
         ChannelConfiguration channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlMillis(millis).build();
         ChannelInsertionPublisher publisher = mock(ChannelInsertionPublisher.class);
 
         // WHEN
-        when(channelsCollectionDao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
+        when(channelMetadataDao.getChannelConfiguration(channelName)).thenReturn(channelConfig);
         when(inserter.write(channelName, value, Optional.of((int) millis / 1000))).thenReturn(new ValueInsertionResult(key, null, null));
         when(timeProvider.getMillis()).thenReturn(millis);
-        ChannelDaoImpl testClass = new ChannelDaoImpl(inserter, lastUpdatedMap, timeProvider, publisher, metricsTimer) {
+        ContentServiceImpl testClass = new ContentServiceImpl(inserter, lastUpdatedMap, timeProvider, publisher, metricsTimer) {
             @Override
             public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
                 return Optional.absent();
@@ -106,14 +106,14 @@ public class ChannelDaoImplTest {
         Optional<DataHubKey> next = Optional.of(nextKey);
         LinkedDataHubCompositeValue expected = new LinkedDataHubCompositeValue(compositeValue, previous, next);
 
-        DataHubValueDao valueDao = mock(DataHubValueDao.class);
+        ContentDao valueDao = mock(ContentDao.class);
 
         when(valueDao.read(channelName, key)).thenReturn(compositeValue);
         when(valueDao.getKey(key.keyToString())).thenReturn(Optional.of(key));
 
         ConcurrentMap<String, DataHubKey> lastUpdatedMap = mock(ConcurrentMap.class);
         when(lastUpdatedMap.get(channelName)).thenReturn(nextKey);
-        ChannelDaoImpl testClass = new ChannelDaoImpl(valueDao, lastUpdatedMap, null, null, metricsTimer);
+        ContentServiceImpl testClass = new ContentServiceImpl(valueDao, lastUpdatedMap, null, null, metricsTimer);
 
         Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key.keyToString());
         assertEquals(expected, result.get());
@@ -124,12 +124,12 @@ public class ChannelDaoImplTest {
         String channelName = "cccccc";
         DataHubKey key = new SequenceDataHubKey( 1000);
 
-        DataHubValueDao valueDao = mock(DataHubValueDao.class);
+        ContentDao valueDao = mock(ContentDao.class);
 
         when(valueDao.read(channelName, key)).thenReturn(null);
         when(valueDao.getKey(key.keyToString())).thenReturn(Optional.of(key));
 
-        ChannelDaoImpl testClass = new ChannelDaoImpl(valueDao, null, null, null, metricsTimer);
+        ContentServiceImpl testClass = new ContentServiceImpl(valueDao, null, null, null, metricsTimer);
 
         Optional<LinkedDataHubCompositeValue> result = testClass.getValue(channelName, key.keyToString());
         assertFalse(result.isPresent());
@@ -144,7 +144,7 @@ public class ChannelDaoImplTest {
 
         when(lastUpdatedMap.get(channelName)).thenReturn(expected);
 
-        ChannelDaoImpl testClass = new ChannelDaoImpl(null, lastUpdatedMap,
+        ContentServiceImpl testClass = new ContentServiceImpl(null, lastUpdatedMap,
                 null, null, metricsTimer);
 
         Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
@@ -160,7 +160,7 @@ public class ChannelDaoImplTest {
         // WHEN
         when(lastUpdatedMap.get(channelName)).thenReturn(null);
 
-        ChannelDaoImpl testClass = new ChannelDaoImpl(null, lastUpdatedMap, null, null, metricsTimer);
+        ContentServiceImpl testClass = new ContentServiceImpl(null, lastUpdatedMap, null, null, metricsTimer);
 
         Optional<DataHubKey> result = testClass.findLastUpdatedKey(channelName);
 

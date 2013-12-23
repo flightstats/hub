@@ -9,17 +9,18 @@ import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.joda.time.DateTime;
 
 /**
  *
  */
-public class TimedDataHubValueDao implements DataHubValueDao {
-    public static final String DELEGATE = "TimedDataHubValueDao.DELEGATE";
-    private final DataHubValueDao delegate;
+public class TimedContentDao implements ContentDao {
+    public static final String DELEGATE = "TimedContentDao.DELEGATE";
+    private final ContentDao delegate;
     private final MetricsTimer metricsTimer;
 
     @Inject
-    public TimedDataHubValueDao(@Named(DELEGATE) DataHubValueDao delegate, MetricsTimer metricsTimer) {
+    public TimedContentDao(@Named(DELEGATE) ContentDao delegate, MetricsTimer metricsTimer) {
         this.delegate = delegate;
         this.metricsTimer = metricsTimer;
     }
@@ -63,5 +64,16 @@ public class TimedDataHubValueDao implements DataHubValueDao {
     @Override
     public Optional<DataHubKey> getKey(String id) {
         return delegate.getKey(id);
+    }
+
+    @Override
+    public Optional<Iterable<DataHubKey>> getKeys(final String channelName, final DateTime dateTime) {
+        return metricsTimer.time("valueDao.getKeys", new TimedCallback<Optional<Iterable<DataHubKey>>>() {
+            @Override
+            public Optional<Iterable<DataHubKey>> call() {
+                return delegate.getKeys(channelName, dateTime);
+            }
+        });
+
     }
 }

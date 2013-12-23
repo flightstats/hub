@@ -8,30 +8,30 @@ import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentMap;
 
-public class ChannelDaoImpl implements ChannelDao {
+public class ContentServiceImpl implements ContentService {
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelDaoImpl.class);
+    private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
-    private final DataHubValueDao dataHubValueDao;
-    //todo - gfm - 12/20/13 - pull out this into it's own class, which will also remove the need for metricsTimer
+    private final ContentDao contentDao;
     private final ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel;
     private final TimeProvider timeProvider;
     private ChannelInsertionPublisher channelInsertionPublisher;
     private final MetricsTimer metricsTimer;
 
     @Inject
-    public ChannelDaoImpl(
-            DataHubValueDao dataHubValueDao,
+    public ContentServiceImpl(
+            ContentDao contentDao,
             @Named("LastUpdatePerChannelMap") ConcurrentMap<String, DataHubKey> lastUpdatedPerChannel,
             TimeProvider timeProvider,
             ChannelInsertionPublisher channelInsertionPublisher,
             MetricsTimer metricsTimer) {
-        this.dataHubValueDao = dataHubValueDao;
+        this.contentDao = contentDao;
         this.lastUpdatedPerChannel = lastUpdatedPerChannel;
         this.timeProvider = timeProvider;
         this.channelInsertionPublisher = channelInsertionPublisher;
@@ -41,7 +41,7 @@ public class ChannelDaoImpl implements ChannelDao {
     @Override
     public void createChannel(ChannelConfiguration configuration) {
         logger.info("Creating channel " + configuration);
-        dataHubValueDao.initializeChannel(configuration);
+        contentDao.initializeChannel(configuration);
     }
 
     @Override
@@ -50,7 +50,7 @@ public class ChannelDaoImpl implements ChannelDao {
         logger.debug("inserting {} bytes into channel {} ", data.length, channelName);
         DataHubCompositeValue value = new DataHubCompositeValue(contentType, contentLanguage, data, timeProvider.getMillis());
         Optional<Integer> ttlSeconds = getTtlSeconds(configuration);
-        ValueInsertionResult result = dataHubValueDao.write(channelName, value, ttlSeconds);
+        ValueInsertionResult result = contentDao.write(channelName, value, ttlSeconds);
         DataHubKey insertedKey = result.getKey();
         setLastUpdateKey(channelName, insertedKey);
         channelInsertionPublisher.publish(channelName, result);
@@ -65,25 +65,15 @@ public class ChannelDaoImpl implements ChannelDao {
         return ttlMillis == null ? Optional.<Integer>absent() : Optional.of((int) (ttlMillis / 1000));
     }
 
-    public void setLastUpdateKey(final String channelName, final DataHubKey lastUpdateKey) {
-        metricsTimer.time("hazelcast.setLastUpdated", new TimedCallback<Object>() {
-            @Override
-            public Object call() {
-                lastUpdatedPerChannel.put(channelName, lastUpdateKey);
-                return null;
-            }
-        });
-    }
-
     @Override
     public Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id) {
-        Optional<DataHubKey> keyOptional = dataHubValueDao.getKey(id);
+        Optional<DataHubKey> keyOptional = contentDao.getKey(id);
         if (!keyOptional.isPresent()) {
             return Optional.absent();
         }
         DataHubKey key = keyOptional.get();
         logger.debug("fetching {} from channel {} ", key.toString(), channelName);
-        DataHubCompositeValue value = dataHubValueDao.read(channelName, key);
+        DataHubCompositeValue value = contentDao.read(channelName, key);
         if (value == null) {
             return Optional.absent();
         }
@@ -103,8 +93,22 @@ public class ChannelDaoImpl implements ChannelDao {
 
     @Override
     public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
-
         return Optional.fromNullable(getLastUpdatedFromCache(channelName));
+    }
+
+    @Override
+    public Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime) {
+        return contentDao.getKeys(channelName, dateTime);
+    }
+
+    private void setLastUpdateKey(final String channelName, final DataHubKey lastUpdateKey) {
+        metricsTimer.time("hazelcast.setLastUpdated", new TimedCallback<Object>() {
+            @Override
+            public Object call() {
+                lastUpdatedPerChannel.put(channelName, lastUpdateKey);
+                return null;
+            }
+        });
     }
 
     private DataHubKey getLastUpdatedFromCache(final String channelName) {

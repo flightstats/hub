@@ -6,16 +6,21 @@ import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class SplittingChannelService implements ChannelService {
 
-    private final ChannelDao sequentialDao;
-    private final ChannelDao timeSeriesDao;
-    private final ChannelsCollectionDao channelsCollectionDao;
-    private final ChannelDao missingDao = new ChannelDao() {
+    private final static Logger logger = LoggerFactory.getLogger(SplittingChannelService.class);
+
+    private final ContentService sequentialDao;
+    private final ContentService timeSeriesDao;
+    private final ChannelMetadataDao channelMetadataDao;
+    private final ContentService missingDao = new ContentService() {
         @Override
         public void createChannel(ChannelConfiguration configuration) {
         }
@@ -35,26 +40,32 @@ public class SplittingChannelService implements ChannelService {
             return Optional.absent();
         }
 
+        @Override
+        public Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime) {
+            return Optional.absent();
+        }
+
     };
 
     @Inject
-    public SplittingChannelService(@Sequential ChannelDao sequentialDao,
-                                   @TimeSeries ChannelDao timeSeriesDao,
-                                   ChannelsCollectionDao channelsCollectionDao) {
+    public SplittingChannelService(@Sequential ContentService sequentialDao,
+                                   @TimeSeries ContentService timeSeriesDao,
+                                   ChannelMetadataDao channelMetadataDao) {
         this.sequentialDao = sequentialDao;
         this.timeSeriesDao = timeSeriesDao;
-        this.channelsCollectionDao = channelsCollectionDao;
+        this.channelMetadataDao = channelMetadataDao;
     }
 
-    private ChannelDao getChannelDao(String channelName){
-        ChannelConfiguration channelConfiguration = channelsCollectionDao.getChannelConfiguration(channelName);
+    private ContentService getChannelDao(String channelName){
+        ChannelConfiguration channelConfiguration = channelMetadataDao.getChannelConfiguration(channelName);
         if (null == channelConfiguration) {
+            logger.info("did not find config for " + channelName);
             return missingDao;
         }
         return getChannelDao(channelConfiguration);
     }
 
-    private ChannelDao getChannelDao(ChannelConfiguration channelConfiguration) {
+    private ContentService getChannelDao(ChannelConfiguration channelConfiguration) {
         if (channelConfiguration.isSequence()) {
             return sequentialDao;
         }
@@ -63,18 +74,18 @@ public class SplittingChannelService implements ChannelService {
 
     @Override
     public boolean channelExists(String channelName) {
-        return channelsCollectionDao.channelExists(channelName);
+        return channelMetadataDao.channelExists(channelName);
     }
 
     @Override
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
         getChannelDao(configuration).createChannel(configuration);
-        return channelsCollectionDao.createChannel(configuration);
+        return channelMetadataDao.createChannel(configuration);
     }
 
     @Override
     public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
-        ChannelConfiguration configuration = channelsCollectionDao.getChannelConfiguration(channelName);
+        ChannelConfiguration configuration = channelMetadataDao.getChannelConfiguration(channelName);
         return getChannelDao(channelName).insert(configuration, contentType, contentLanguage, data);
     }
 
@@ -85,12 +96,12 @@ public class SplittingChannelService implements ChannelService {
 
     @Override
     public ChannelConfiguration getChannelConfiguration(String channelName) {
-        return channelsCollectionDao.getChannelConfiguration(channelName);
+        return channelMetadataDao.getChannelConfiguration(channelName);
     }
 
     @Override
     public Iterable<ChannelConfiguration> getChannels() {
-        return channelsCollectionDao.getChannels();
+        return channelMetadataDao.getChannels();
     }
 
     @Override
@@ -100,11 +111,16 @@ public class SplittingChannelService implements ChannelService {
 
     @Override
     public boolean isHealthy() {
-        return channelsCollectionDao.isHealthy();
+        return channelMetadataDao.isHealthy();
     }
 
     @Override
     public void updateChannelMetadata(ChannelConfiguration newConfig) {
-        channelsCollectionDao.updateChannel(newConfig);
+        channelMetadataDao.updateChannel(newConfig);
+    }
+
+    @Override
+    public Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime) {
+        return getChannelDao(channelName).getKeys(channelName, dateTime);
     }
 }

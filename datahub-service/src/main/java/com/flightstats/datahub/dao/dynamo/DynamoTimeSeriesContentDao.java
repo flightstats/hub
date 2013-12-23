@@ -2,7 +2,7 @@ package com.flightstats.datahub.dao.dynamo;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
-import com.flightstats.datahub.dao.DataHubValueDao;
+import com.flightstats.datahub.dao.ContentDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
@@ -11,6 +11,10 @@ import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,24 +26,28 @@ import java.util.Map;
 /**
  *
  */
-public class DynamoTimeSeriesDataHubValueDao implements DataHubValueDao {
+public class DynamoTimeSeriesContentDao implements ContentDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(DynamoTimeSeriesDataHubValueDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(DynamoTimeSeriesContentDao.class);
 
     private final DataHubKeyGenerator keyGenerator;
     private final TimeProvider timeProvider;
     private final AmazonDynamoDBClient dbClient;
     private final DynamoUtils dynamoUtils;
+    private final DateTimeFormatter formatter;
+    private final DateTimeZone timeZone;
 
     @Inject
-    public DynamoTimeSeriesDataHubValueDao(DataHubKeyGenerator keyGenerator,
-                                           TimeProvider timeProvider,
-                                           AmazonDynamoDBClient dbClient,
-                                           DynamoUtils dynamoUtils) {
+    public DynamoTimeSeriesContentDao(DataHubKeyGenerator keyGenerator,
+                                      TimeProvider timeProvider,
+                                      AmazonDynamoDBClient dbClient,
+                                      DynamoUtils dynamoUtils) {
         this.keyGenerator = keyGenerator;
         this.timeProvider = timeProvider;
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
+        formatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH-mmZ");
+        timeZone = DateTimeZone.forID("America/Los_Angeles");
     }
 
     @Override
@@ -50,6 +58,7 @@ public class DynamoTimeSeriesDataHubValueDao implements DataHubValueDao {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("key", new AttributeValue().withS(key.keyToString()));
         item.put("data", new AttributeValue().withB(ByteBuffer.wrap(value.getData())));
+        item.put("hashstamp", new AttributeValue().withS(formatter.print(new DateTime().withZone(timeZone))));
         item.put("millis", new AttributeValue().withN(String.valueOf(value.getMillis())));
         if (value.getContentType().isPresent()) {
             item.put("contentType", new AttributeValue(value.getContentType().get()));
@@ -115,29 +124,80 @@ public class DynamoTimeSeriesDataHubValueDao implements DataHubValueDao {
          * This would not be unique to non-sequentials
          *
          */
-        ArrayList<AttributeDefinition> attributeDefinitions= new ArrayList<>();
+        //todo - gfm - 12/21/13 - this is option A
+        ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
+
+        attributeDefinitions.add(new AttributeDefinition()
+                .withAttributeName("hashstamp")
+                .withAttributeType("S"));
+        attributeDefinitions.add(new AttributeDefinition()
+                .withAttributeName("millis")
+                .withAttributeType("N"));
+
+        GlobalSecondaryIndex secondaryIndex = new GlobalSecondaryIndex()
+                .withIndexName("TimeIndex")
+                .withProvisionedThroughput(new ProvisionedThroughput(10L, 10L))
+                .withProjection(new Projection().withProjectionType("KEYS_ONLY"));
+
+        ArrayList<KeySchemaElement> indexKeySchema = new ArrayList<>();
+
+        indexKeySchema.add(new KeySchemaElement()
+                .withAttributeName("hashstamp")
+                .withKeyType(KeyType.HASH));
+        indexKeySchema.add(new KeySchemaElement()
+                .withAttributeName("millis")
+                .withKeyType(KeyType.RANGE));
+
+        secondaryIndex.setKeySchema(indexKeySchema);
+
         attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("N"));
 
-        ArrayList<KeySchemaElement> keySchema = new ArrayList<>();
-        keySchema.add(new KeySchemaElement().withAttributeName("key").withKeyType(KeyType.HASH));
+        ArrayList<KeySchemaElement> tableKeySchema = new ArrayList<>();
+        tableKeySchema.add(new KeySchemaElement().withAttributeName("key").withKeyType(KeyType.HASH));
 
-        ProvisionedThroughput provisionedThroughput = new ProvisionedThroughput()
-                .withReadCapacityUnits(10L)
-                .withWriteCapacityUnits(10L);
-
-        CreateTableRequest request = new CreateTableRequest()
+        CreateTableRequest createTableRequest = new CreateTableRequest()
                 .withTableName(dynamoUtils.getTableName(configuration.getName()))
                 .withAttributeDefinitions(attributeDefinitions)
-                .withKeySchema(keySchema)
-                .withProvisionedThroughput(provisionedThroughput);
+                .withKeySchema(tableKeySchema)
+                .withGlobalSecondaryIndexes(secondaryIndex)
+                .withProvisionedThroughput(new ProvisionedThroughput(10L, 10L));
 
         keyGenerator.seedChannel(configuration.getName());
-        dynamoUtils.createTable(request);
+        dynamoUtils.createTable(createTableRequest);
     }
 
     @Override
     public Optional<DataHubKey> getKey(String id) {
         //todo - gfm - 12/21/13 -
         return Optional.absent();
+    }
+
+    @Override
+    public Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime) {
+        QueryRequest queryRequest = new QueryRequest()
+                .withTableName(dynamoUtils.getTableName(channelName))
+                .withIndexName("TimeIndex")
+                .withSelect("ALL_PROJECTED_ATTRIBUTES")
+                .withScanIndexForward(true);
+
+        HashMap<String, Condition> keyConditions = new HashMap<>();
+
+        keyConditions.put("hashstamp",new Condition()
+                .withComparisonOperator(ComparisonOperator.EQ)
+                .withAttributeValueList(new AttributeValue().withS(formatter.print(dateTime))));
+
+        queryRequest.setKeyConditions(keyConditions);
+
+        QueryResult result = dbClient.query(queryRequest);
+        //todo - gfm - 12/21/13 - can this return null?
+        for (Map<String, AttributeValue> attribs : result.getItems()) {
+
+            for (Map.Entry<String, AttributeValue> attrib : attribs.entrySet()) {
+                System.out.println(attrib.getKey() + " ---> " + attrib.getValue());
+            }
+
+            System.out.println();
+        }
+        return null;
     }
 }

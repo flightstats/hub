@@ -5,11 +5,12 @@ import com.flightstats.datahub.model.DataHubCompositeValue;
 import com.flightstats.datahub.model.DataHubKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
+import org.joda.time.DateTime;
 
 /**
  *
  */
-public interface DataHubValueDao {
+public interface ContentDao {
     ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue, Optional<Integer> ttlSeconds);
 
     DataHubCompositeValue read(String channelName, DataHubKey key);
@@ -19,4 +20,6 @@ public interface DataHubValueDao {
     void initializeChannel(ChannelConfiguration configuration);
 
     Optional<DataHubKey> getKey(String id);
+
+    Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime);
 }

@@ -4,21 +4,22 @@ import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
-import com.flightstats.datahub.dao.DataHubValueDao;
+import com.flightstats.datahub.dao.ContentDao;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 
-public class CassandraDataHubValueDao implements DataHubValueDao {
+public class CassandraContentDao implements ContentDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(CassandraDataHubValueDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(CassandraContentDao.class);
 
 	private final DataHubKeyGenerator keyGenerator;
     private final TimeProvider timeProvider;
@@ -26,10 +27,10 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
     private int gcGraceSeconds;
 
     @Inject
-	public CassandraDataHubValueDao(DataHubKeyGenerator keyGenerator,
-                                    TimeProvider timeProvider,
-                                    QuorumSession session,
-                                    @Named("cassandra.gc_grace_seconds") int gcGraceSeconds) {
+	public CassandraContentDao(DataHubKeyGenerator keyGenerator,
+                               TimeProvider timeProvider,
+                               QuorumSession session,
+                               @Named("cassandra.gc_grace_seconds") int gcGraceSeconds) {
 		this.keyGenerator = keyGenerator;
         this.timeProvider = timeProvider;
         this.session = session;
@@ -106,6 +107,11 @@ public class CassandraDataHubValueDao implements DataHubValueDao {
     @Override
     public Optional<DataHubKey> getKey(String id) {
         return SequenceDataHubKey.fromString(id);
+    }
+
+    @Override
+    public Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime) {
+        throw new UnsupportedOperationException("this implementation does not support get keys " + channelName);
     }
 
     private static final long INCREMENT = 1000;
