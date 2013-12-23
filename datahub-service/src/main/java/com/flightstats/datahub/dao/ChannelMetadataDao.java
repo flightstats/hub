@@ -5,7 +5,7 @@ import com.flightstats.datahub.model.ChannelConfiguration;
 /**
  *
  */
-public interface ChannelsCollectionDao {
+public interface ChannelMetadataDao {
     ChannelConfiguration createChannel(ChannelConfiguration configuration);
 
     void updateChannel(ChannelConfiguration newConfig);

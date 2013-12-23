@@ -2,12 +2,13 @@ package com.flightstats.datahub.dao.dynamo;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
-import com.flightstats.datahub.dao.DataHubValueDao;
+import com.flightstats.datahub.dao.ContentDao;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,9 +20,9 @@ import java.util.Map;
 /**
  *
  */
-public class DynamoSequentialDataHubValueDao implements DataHubValueDao {
+public class DynamoSequentialContentDao implements ContentDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(DynamoSequentialDataHubValueDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(DynamoSequentialContentDao.class);
 
     private final DataHubKeyGenerator keyGenerator;
     private final TimeProvider timeProvider;
@@ -29,10 +30,10 @@ public class DynamoSequentialDataHubValueDao implements DataHubValueDao {
     private final DynamoUtils dynamoUtils;
 
     @Inject
-    public DynamoSequentialDataHubValueDao(DataHubKeyGenerator keyGenerator,
-                                           TimeProvider timeProvider,
-                                           AmazonDynamoDBClient dbClient,
-                                           DynamoUtils dynamoUtils) {
+    public DynamoSequentialContentDao(DataHubKeyGenerator keyGenerator,
+                                      TimeProvider timeProvider,
+                                      AmazonDynamoDBClient dbClient,
+                                      DynamoUtils dynamoUtils) {
         this.keyGenerator = keyGenerator;
         this.timeProvider = timeProvider;
         this.dbClient = dbClient;
@@ -126,5 +127,10 @@ public class DynamoSequentialDataHubValueDao implements DataHubValueDao {
     @Override
     public Optional<DataHubKey> getKey(String id) {
         return SequenceDataHubKey.fromString(id);
+    }
+
+    @Override
+    public Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime) {
+        throw new UnsupportedOperationException("this implementation does not support get keys " + channelName);
     }
 }

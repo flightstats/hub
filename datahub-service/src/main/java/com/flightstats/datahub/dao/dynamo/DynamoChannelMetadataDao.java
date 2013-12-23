@@ -2,7 +2,7 @@ package com.flightstats.datahub.dao.dynamo;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
-import com.flightstats.datahub.dao.ChannelsCollectionDao;
+import com.flightstats.datahub.dao.ChannelMetadataDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -13,15 +13,15 @@ import java.util.*;
 /**
  *
  */
-public class DynamoChannelsCollectionDao implements ChannelsCollectionDao {
-    private final static Logger logger = LoggerFactory.getLogger(DynamoChannelsCollectionDao.class);
+public class DynamoChannelMetadataDao implements ChannelMetadataDao {
+    private final static Logger logger = LoggerFactory.getLogger(DynamoChannelMetadataDao.class);
 
     private final AmazonDynamoDBClient dbClient;
     private final DynamoUtils dynamoUtils;
 
     @Inject
-    public DynamoChannelsCollectionDao(AmazonDynamoDBClient dbClient,
-                                       DynamoUtils dynamoUtils) {
+    public DynamoChannelMetadataDao(AmazonDynamoDBClient dbClient,
+                                    DynamoUtils dynamoUtils) {
 
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;

@@ -20,25 +20,25 @@ public class CassandraDataStoreModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		Names.bindProperties(binder(), properties);
-		bind(ChannelDaoImpl.class).asEagerSingleton();
+		bind(ContentServiceImpl.class).asEagerSingleton();
 		bind(CassandraConnectorFactory.class).in(Singleton.class);
 		bindListener(ChannelMetadataInitialization.buildTypeMatcher(), new ChannelMetadataInitialization());
 		bindListener(DataHubValueDaoInitialization.buildTypeMatcher(), new DataHubValueDaoInitialization());
 		bind(ChannelService.class).to(SimpleChannelService.class).in(Singleton.class);
-        bind(ChannelDao.class).to(ChannelDaoImpl.class).in(Singleton.class);
+        bind(ContentService.class).to(ContentServiceImpl.class).in(Singleton.class);
 
-        bind(ChannelsCollectionDao.class).to(TimedChannelsCollectionDao.class).in(Singleton.class);
-        bind(ChannelsCollectionDao.class)
-                .annotatedWith(Names.named(TimedChannelsCollectionDao.DELEGATE))
-                .to(CachedChannelsCollectionDao.class);
-        bind(ChannelsCollectionDao.class)
-                .annotatedWith(Names.named(CachedChannelsCollectionDao.DELEGATE))
-                .to(CassandraChannelsCollectionDao.class);
+        bind(ChannelMetadataDao.class).to(TimedChannelMetadataDao.class).in(Singleton.class);
+        bind(ChannelMetadataDao.class)
+                .annotatedWith(Names.named(TimedChannelMetadataDao.DELEGATE))
+                .to(CachedChannelMetadataDao.class);
+        bind(ChannelMetadataDao.class)
+                .annotatedWith(Names.named(CachedChannelMetadataDao.DELEGATE))
+                .to(CassandraChannelMetadataDao.class);
 
-        bind(DataHubValueDao.class).to(TimedDataHubValueDao.class).in(Singleton.class);
-        bind(DataHubValueDao.class)
-                .annotatedWith(Names.named(TimedDataHubValueDao.DELEGATE))
-                .to(CassandraDataHubValueDao.class);
+        bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
+        bind(ContentDao.class)
+                .annotatedWith(Names.named(TimedContentDao.DELEGATE))
+                .to(CassandraContentDao.class);
 	}
 
     @Inject

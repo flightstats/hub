@@ -22,25 +22,25 @@ public class DynamoDataStoreModule extends AbstractModule {
 		bindListener(ChannelMetadataInitialization.buildTypeMatcher(), new ChannelMetadataInitialization());
 		bindListener(DataHubValueDaoInitialization.buildTypeMatcher(), new DataHubValueDaoInitialization());
         bind(ChannelService.class).to(SplittingChannelService.class).asEagerSingleton();
-        bind(ChannelsCollectionDao.class).to(TimedChannelsCollectionDao.class).in(Singleton.class);
-        bind(ChannelsCollectionDao.class)
-                .annotatedWith(Names.named(TimedChannelsCollectionDao.DELEGATE))
-                .to(CachedChannelsCollectionDao.class);
-        bind(ChannelsCollectionDao.class)
-                .annotatedWith(Names.named(CachedChannelsCollectionDao.DELEGATE))
-                .to(DynamoChannelsCollectionDao.class);
+        bind(ChannelMetadataDao.class).to(TimedChannelMetadataDao.class).in(Singleton.class);
+        bind(ChannelMetadataDao.class)
+                .annotatedWith(Names.named(TimedChannelMetadataDao.DELEGATE))
+                .to(CachedChannelMetadataDao.class);
+        bind(ChannelMetadataDao.class)
+                .annotatedWith(Names.named(CachedChannelMetadataDao.DELEGATE))
+                .to(DynamoChannelMetadataDao.class);
 
         install(new PrivateModule() {
             @Override
             protected void configure() {
 
-                bind(ChannelDao.class).annotatedWith(Sequential.class).to(ChannelDaoImpl.class).in(Singleton.class);
-                expose(ChannelDao.class).annotatedWith(Sequential.class);
+                bind(ContentService.class).annotatedWith(Sequential.class).to(ContentServiceImpl.class).in(Singleton.class);
+                expose(ContentService.class).annotatedWith(Sequential.class);
 
-                bind(DataHubValueDao.class).to(TimedDataHubValueDao.class).in(Singleton.class);
-                bind(DataHubValueDao.class)
-                        .annotatedWith(Names.named(TimedDataHubValueDao.DELEGATE))
-                        .to(DynamoSequentialDataHubValueDao.class);
+                bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
+                bind(ContentDao.class)
+                        .annotatedWith(Names.named(TimedContentDao.DELEGATE))
+                        .to(DynamoSequentialContentDao.class);
             }
         });
 
@@ -48,13 +48,13 @@ public class DynamoDataStoreModule extends AbstractModule {
             @Override
             protected void configure() {
 
-                bind(ChannelDao.class).annotatedWith(TimeSeries.class).to(ChannelDaoImpl.class).in(Singleton.class);
-                expose(ChannelDao.class).annotatedWith(TimeSeries.class);
+                bind(ContentService.class).annotatedWith(TimeSeries.class).to(ContentServiceImpl.class).in(Singleton.class);
+                expose(ContentService.class).annotatedWith(TimeSeries.class);
 
-                bind(DataHubValueDao.class).to(TimedDataHubValueDao.class).in(Singleton.class);
-                bind(DataHubValueDao.class)
-                        .annotatedWith(Names.named(TimedDataHubValueDao.DELEGATE))
-                        .to(DynamoTimeSeriesDataHubValueDao.class);
+                bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
+                bind(ContentDao.class)
+                        .annotatedWith(Names.named(TimedContentDao.DELEGATE))
+                        .to(DynamoTimeSeriesContentDao.class);
             }
         });
 

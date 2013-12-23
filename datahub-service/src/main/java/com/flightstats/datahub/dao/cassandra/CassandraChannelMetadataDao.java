@@ -4,7 +4,7 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
-import com.flightstats.datahub.dao.ChannelsCollectionDao;
+import com.flightstats.datahub.dao.ChannelMetadataDao;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -16,14 +16,14 @@ import java.util.List;
 /**
  * Encapsulates the channel creation, existence checks, and associated metadata.
  */
-public class CassandraChannelsCollectionDao implements ChannelsCollectionDao {
+public class CassandraChannelMetadataDao implements ChannelMetadataDao {
 
-	private final static Logger logger = LoggerFactory.getLogger(CassandraChannelsCollectionDao.class);
+	private final static Logger logger = LoggerFactory.getLogger(CassandraChannelMetadataDao.class);
 
     private QuorumSession session;
 
     @Inject
-	public CassandraChannelsCollectionDao(QuorumSession session) {
+	public CassandraChannelMetadataDao(QuorumSession session) {
         this.session = session;
     }
 
