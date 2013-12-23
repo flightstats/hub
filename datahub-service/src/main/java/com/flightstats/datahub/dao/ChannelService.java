@@ -27,5 +27,5 @@ public interface ChannelService {
 
 	void updateChannelMetadata(ChannelConfiguration newConfig);
 
-    Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime);
+    Iterable<ContentKey> getKeys(String channelName, DateTime dateTime);
 }

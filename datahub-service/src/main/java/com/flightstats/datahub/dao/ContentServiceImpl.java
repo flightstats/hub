@@ -97,7 +97,7 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime) {
+    public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
         return contentDao.getKeys(channelName, dateTime);
     }
 

@@ -19,8 +19,8 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public abstract class ChannelDaoLocalIntegration {
-    private final static Logger logger = LoggerFactory.getLogger(ChannelDaoLocalIntegration.class);
+public abstract class ChannelServiceIntegration {
+    private final static Logger logger = LoggerFactory.getLogger(ChannelServiceIntegration.class);
 
     protected static Injector injector;
     protected ChannelService channelService;
