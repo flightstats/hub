@@ -2,7 +2,7 @@ package com.flightstats.datahub.cluster;
 
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
-import com.flightstats.datahub.model.SequenceDataHubKey;
+import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.google.inject.Inject;
@@ -34,46 +34,46 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
     }
 
     @Override
-    public SequenceDataHubKey newKey(final String channelName) {
+    public SequenceContentKey newKey(final String channelName) {
 
         try {
-            return metricsTimer.time("keyGen.newKey", new TimedCallback<SequenceDataHubKey>() {
+            return metricsTimer.time("keyGen.newKey", new TimedCallback<SequenceContentKey>() {
                 @Override
-                public SequenceDataHubKey call() {
+                public SequenceContentKey call() {
                     return nextDataHubKey(channelName);
                 }
             });
         } catch (Exception e) {
-            throw new RuntimeException("Error generating new DataHubKey: " + channelName, e);
+            throw new RuntimeException("Error generating new ContentKey: " + channelName, e);
         }
     }
 
-    private SequenceDataHubKey nextDataHubKey(String channelName) {
+    private SequenceContentKey nextDataHubKey(String channelName) {
         long sequence = getAtomicNumber(channelName).getAndAdd(1);
         if (isValidSequence(sequence)) {
-            return new SequenceDataHubKey(sequence);
+            return new SequenceContentKey(sequence);
         }
         return handleMissingKey(channelName);
     }
 
-    private SequenceDataHubKey handleMissingKey(final String channelName) {
+    private SequenceContentKey handleMissingKey(final String channelName) {
         logger.warn("sequence number for channel " + channelName + " is not found.  this will over write any existing data!");
         try {
-            return channelLockExecutor.execute(channelName, new Callable<SequenceDataHubKey>() {
+            return channelLockExecutor.execute(channelName, new Callable<SequenceContentKey>() {
                 @Override
-                public SequenceDataHubKey call() throws Exception {
+                public SequenceContentKey call() throws Exception {
                     IAtomicLong sequenceNumber = getAtomicNumber(channelName);
                     if (isValidSequence(sequenceNumber.get())) {
                         return nextDataHubKey(channelName);
                     }
                     long currentSequence = STARTING_SEQUENCE;
                     sequenceNumber.set(currentSequence + 1);
-                    return new SequenceDataHubKey(currentSequence);
+                    return new SequenceContentKey(currentSequence);
                 }
 
             });
         } catch (Exception e) {
-            throw new RuntimeException("Error generating new DataHubKey: " + channelName, e);
+            throw new RuntimeException("Error generating new ContentKey: " + channelName, e);
         }
     }
 

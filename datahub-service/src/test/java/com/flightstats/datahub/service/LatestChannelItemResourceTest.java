@@ -1,8 +1,8 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.SequenceDataHubKey;
+import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
 import org.junit.Test;
@@ -21,7 +21,7 @@ public class LatestChannelItemResourceTest {
 	@Test
 	public void testGetLatest() throws Exception {
 		String channelName = "fooChan";
-		DataHubKey key = new SequenceDataHubKey(1000);
+		ContentKey key = new SequenceContentKey(1000);
 		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 
 		UriInfo uriInfo = mock(UriInfo.class);
@@ -45,7 +45,7 @@ public class LatestChannelItemResourceTest {
 
 		ChannelService channelService = mock(ChannelService.class);
 
-		when(channelService.findLastUpdatedKey(channelName)).thenReturn(Optional.<DataHubKey>absent());
+		when(channelService.findLastUpdatedKey(channelName)).thenReturn(Optional.<ContentKey>absent());
 
 		LatestChannelItemResource testClass = new LatestChannelItemResource(null, channelService);
 

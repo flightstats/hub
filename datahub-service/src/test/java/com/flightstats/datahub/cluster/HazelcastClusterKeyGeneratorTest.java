@@ -2,7 +2,7 @@ package com.flightstats.datahub.cluster;
 
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.datahub.metrics.MetricsTimer;
-import com.flightstats.datahub.model.SequenceDataHubKey;
+import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IAtomicLong;
@@ -41,9 +41,9 @@ public class HazelcastClusterKeyGeneratorTest {
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(1000L, 1001L);
 
         //THEN
-        assertEquals(new SequenceDataHubKey(1000), testClass.newKey(channelName));
+        assertEquals(new SequenceContentKey(1000), testClass.newKey(channelName));
         verify(atomicSeqNumber, times(1)).getAndAdd(1);
-        assertEquals(new SequenceDataHubKey(1001), testClass.newKey(channelName));
+        assertEquals(new SequenceContentKey(1001), testClass.newKey(channelName));
         verify(atomicSeqNumber, times(2)).getAndAdd(1);
     }
 
@@ -61,7 +61,7 @@ public class HazelcastClusterKeyGeneratorTest {
         when(atomicSeqNumber.getAndAdd(1)).thenReturn(0L).thenReturn(1000L);
         when(atomicSeqNumber.get()).thenReturn(0L);
 
-        assertEquals(new SequenceDataHubKey(1000), testClass.newKey(channelName));
+        assertEquals(new SequenceContentKey(1000), testClass.newKey(channelName));
         verify(atomicSeqNumber).set(1001L);
         verify(atomicSeqNumber).getAndAdd(1);
     }
@@ -69,8 +69,8 @@ public class HazelcastClusterKeyGeneratorTest {
     @Test
     public void testKeyAfterLock() throws Exception {
         String channelName = "secondLock";
-        SequenceDataHubKey latestKey = new SequenceDataHubKey(9999);
-        SequenceDataHubKey expectedKey = (SequenceDataHubKey) latestKey.getNext().get();
+        SequenceContentKey latestKey = new SequenceContentKey(9999);
+        SequenceContentKey expectedKey = (SequenceContentKey) latestKey.getNext().get();
 
         HazelcastInstance hazelcast = mock(HazelcastInstance.class);
         IAtomicLong atomicSeqNumber = mock(IAtomicLong.class);

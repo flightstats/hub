@@ -29,7 +29,7 @@ public class SingleChannelResourceTest {
 	private ChannelHypermediaLinkBuilder linkBuilder;
 	public static final Date CREATION_DATE = new Date(12345L);
 	private ChannelConfiguration channelConfig;
-	private DataHubKey dataHubKey;
+	private ContentKey contentKey;
 	private URI itemUri;
 	private UriInfo urlInfo;
 	private ChannelService channelService = mock(ChannelService.class);
@@ -45,7 +45,7 @@ public class SingleChannelResourceTest {
 		URI requestUri = URI.create("http://testification.com/channel/spoon");
 		URI latestUri = URI.create("http://testification.com/channel/spoon/latest");
 		itemUri = URI.create("http://testification.com/channel/spoon/888item888");
-		dataHubKey = new SequenceDataHubKey(1200);
+		contentKey = new SequenceContentKey(1200);
 		channelConfig = ChannelConfiguration.builder().withName(channelName).withCreationDate(CREATION_DATE).build();
 		linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 		urlInfo = mock(UriInfo.class);
@@ -55,28 +55,28 @@ public class SingleChannelResourceTest {
 		when(linkBuilder.buildChannelUri(channelConfig, urlInfo)).thenReturn(channelUri);
 		when(linkBuilder.buildChannelUri(channelName, urlInfo)).thenReturn(channelUri);
 		when(linkBuilder.buildLatestUri(urlInfo)).thenReturn(latestUri);
-		when(linkBuilder.buildItemUri(dataHubKey, requestUri)).thenReturn(itemUri);
+		when(linkBuilder.buildItemUri(contentKey, requestUri)).thenReturn(itemUri);
 	}
 
 	@Test
 	public void testGetChannelMetadataForKnownChannel() throws Exception {
-		DataHubKey key = new SequenceDataHubKey( 1000);
-        DataHubCompositeValue dataHubCompositeValue = new DataHubCompositeValue(Optional.<String>absent(), Optional.<String>absent(), "blah".getBytes(),
+		ContentKey key = new SequenceContentKey( 1000);
+        Content content = new Content(Optional.<String>absent(), Optional.<String>absent(), "blah".getBytes(),
                 0L);
-        LinkedDataHubCompositeValue linkedDataHubCompositeValue = new LinkedDataHubCompositeValue(dataHubCompositeValue,
-                Optional.<DataHubKey>absent(), Optional.<DataHubKey>absent());
+        LinkedContent linkedContent = new LinkedContent(content,
+                Optional.<ContentKey>absent(), Optional.<ContentKey>absent());
 
         when(channelService.channelExists(anyString())).thenReturn(true);
 		when(channelService.getChannelConfiguration(channelName)).thenReturn(channelConfig);
 		when(channelService.findLastUpdatedKey(channelName)).thenReturn(Optional.of(key));
-		when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedDataHubCompositeValue));
+		when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedContent));
 
 		when(urlInfo.getRequestUri()).thenReturn(channelUri);
 
 		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 
 		Linked<MetadataResponse> result = testClass.getChannelMetadata(channelName, urlInfo);
-		MetadataResponse expectedResponse = new MetadataResponse(channelConfig, new Date(dataHubCompositeValue.getMillis()));
+		MetadataResponse expectedResponse = new MetadataResponse(channelConfig, new Date(content.getMillis()));
 		assertEquals(expectedResponse, result.getObject());
 		HalLink selfLink = result.getHalLinks().getLinks().get(0);
 		HalLink latestLink = result.getHalLinks().getLinks().get(1);
@@ -148,9 +148,9 @@ public class SingleChannelResourceTest {
 
 		HalLink selfLink = new HalLink("self", itemUri);
 		HalLink channelLink = new HalLink("channel", channelUri);
-		ValueInsertionResult expectedResponse = new ValueInsertionResult(dataHubKey, null, null);
+		ValueInsertionResult expectedResponse = new ValueInsertionResult(contentKey, null);
 
-		when(channelService.insert(channelName, Optional.of(contentType), Optional.of(contentLanguage), data)).thenReturn(new ValueInsertionResult(dataHubKey, null,
+		when(channelService.insert(channelName, Optional.of(contentType), Optional.of(contentLanguage), data)).thenReturn(new ValueInsertionResult(contentKey,
                 null));
 
 		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
@@ -170,7 +170,7 @@ public class SingleChannelResourceTest {
     @Test
     public void testInsert_channelExistenceNotCached() throws Exception {
         //GIVEN
-        ValueInsertionResult result = new ValueInsertionResult(null, null, null);
+        ValueInsertionResult result = new ValueInsertionResult(null, null);
         byte[] data = "SomeData".getBytes();
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 
@@ -186,7 +186,7 @@ public class SingleChannelResourceTest {
     @Test(expected = WebApplicationException.class)
     public void testInsert_channelExistenceNotCached_channelDoesntExist() throws Exception {
         //GIVEN
-        ValueInsertionResult result = new ValueInsertionResult(null, null, null);
+        ValueInsertionResult result = new ValueInsertionResult(null, null);
         byte[] data = "SomeData".getBytes();
         when(channelService.channelExists(channelName)).thenReturn(false);
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);

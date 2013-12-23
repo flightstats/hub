@@ -2,8 +2,8 @@ package com.flightstats.datahub.service;
 
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.datahub.metrics.MetricsTimer;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.SequenceDataHubKey;
+import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
@@ -24,7 +24,7 @@ public class ChannelInsertionPublisherTest {
 
     @Test
 	public void testPublish() throws Exception {
-		DataHubKey dataHubKey = new SequenceDataHubKey((short) 1000);
+		ContentKey contentKey = new SequenceContentKey((short) 1000);
 
 		HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 		ITopic iTopic = mock(ITopic.class);
@@ -33,7 +33,7 @@ public class ChannelInsertionPublisherTest {
 
 		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, metricsTimer);
 
-		testClass.publish("channelName", new ValueInsertionResult(dataHubKey, null, null));
+		testClass.publish("channelName", new ValueInsertionResult(contentKey, null));
 
 		verify(iTopic).publish("1000");
 	}

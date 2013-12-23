@@ -7,10 +7,10 @@ import java.io.Serializable;
 /**
  *
  */
-public interface DataHubKey extends Serializable {
-    Optional<DataHubKey> getNext();
+public interface ContentKey extends Serializable {
+    Optional<ContentKey> getNext();
 
-    Optional<DataHubKey> getPrevious();
+    Optional<ContentKey> getPrevious();
 
     public String keyToString();
 

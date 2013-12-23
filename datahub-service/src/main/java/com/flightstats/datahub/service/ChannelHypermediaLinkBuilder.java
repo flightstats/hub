@@ -1,7 +1,7 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
 
@@ -32,7 +32,7 @@ public class ChannelHypermediaLinkBuilder {
 		return URI.create(uriInfo.getRequestUri() + "/" + channelName + "/latest");
 	}
 
-	public URI buildItemUri(DataHubKey key, URI channelUri) {
+	public URI buildItemUri(ContentKey key, URI channelUri) {
         return buildItemUri(key.keyToString(), channelUri);
 	}
 

@@ -3,8 +3,8 @@ package com.flightstats.datahub.dao;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubCompositeValue;
-import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.Content;
+import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -26,7 +26,7 @@ public class TimedContentDao implements ContentDao {
     }
 
     @Override
-    public ValueInsertionResult write(final String channelName, final DataHubCompositeValue columnValue, final Optional<Integer> ttlSeconds) {
+    public ValueInsertionResult write(final String channelName, final Content columnValue, final Optional<Integer> ttlSeconds) {
         return metricsTimer.time("valueDao.write", new TimedCallback<ValueInsertionResult>() {
             @Override
             public ValueInsertionResult call() {
@@ -36,10 +36,10 @@ public class TimedContentDao implements ContentDao {
     }
 
     @Override
-    public DataHubCompositeValue read(final String channelName, final DataHubKey key) {
-        return metricsTimer.time("valueDao.read", new TimedCallback<DataHubCompositeValue>() {
+    public Content read(final String channelName, final ContentKey key) {
+        return metricsTimer.time("valueDao.read", new TimedCallback<Content>() {
             @Override
-            public DataHubCompositeValue call() {
+            public Content call() {
                 return delegate.read(channelName, key);
             }
         });
@@ -62,15 +62,15 @@ public class TimedContentDao implements ContentDao {
     }
 
     @Override
-    public Optional<DataHubKey> getKey(String id) {
+    public Optional<ContentKey> getKey(String id) {
         return delegate.getKey(id);
     }
 
     @Override
-    public Optional<Iterable<DataHubKey>> getKeys(final String channelName, final DateTime dateTime) {
-        return metricsTimer.time("valueDao.getKeys", new TimedCallback<Optional<Iterable<DataHubKey>>>() {
+    public Optional<Iterable<ContentKey>> getKeys(final String channelName, final DateTime dateTime) {
+        return metricsTimer.time("valueDao.getKeys", new TimedCallback<Optional<Iterable<ContentKey>>>() {
             @Override
-            public Optional<Iterable<DataHubKey>> call() {
+            public Optional<Iterable<ContentKey>> call() {
                 return delegate.getKeys(channelName, dateTime);
             }
         });

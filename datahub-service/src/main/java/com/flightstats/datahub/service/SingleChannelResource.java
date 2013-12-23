@@ -61,12 +61,12 @@ public class SingleChannelResource {
     }
 
     private Date getLastUpdateDate(String channelName) {
-        Optional<DataHubKey> latestId = channelService.findLastUpdatedKey(channelName);
+        Optional<ContentKey> latestId = channelService.findLastUpdatedKey(channelName);
         if (!latestId.isPresent()) {
             return null;
         }
         //todo - gfm - 11/11/13 - is returning last updated date actually useful?
-        Optional<LinkedDataHubCompositeValue> optionalResult = channelService.getValue(channelName, latestId.get().keyToString());
+        Optional<LinkedContent> optionalResult = channelService.getValue(channelName, latestId.get().keyToString());
         if (!optionalResult.isPresent()) {
             return null;
         }

@@ -2,19 +2,19 @@ package com.flightstats.datahub.model;
 
 import com.google.common.base.Optional;
 
-public class LinkedDataHubCompositeValue {
+public class LinkedContent {
 
-	private final DataHubCompositeValue value;
-	private final Optional<DataHubKey> previous;
-	private final Optional<DataHubKey> next;
+	private final Content value;
+	private final Optional<ContentKey> previous;
+	private final Optional<ContentKey> next;
 
-	public LinkedDataHubCompositeValue(DataHubCompositeValue value, Optional<DataHubKey> previous, Optional<DataHubKey> next) {
+	public LinkedContent(Content value, Optional<ContentKey> previous, Optional<ContentKey> next) {
 		this.value = value;
 		this.previous = previous;
 		this.next = next;
 	}
 
-	public DataHubCompositeValue getValue() {
+	public Content getValue() {
 		return value;
 	}
 
@@ -38,11 +38,11 @@ public class LinkedDataHubCompositeValue {
 		return next.isPresent();
 	}
 
-	public Optional<DataHubKey> getPrevious() {
+	public Optional<ContentKey> getPrevious() {
 		return previous;
 	}
 
-	public Optional<DataHubKey> getNext() {
+	public Optional<ContentKey> getNext() {
 		return next;
 	}
 
@@ -55,7 +55,7 @@ public class LinkedDataHubCompositeValue {
 			return false;
 		}
 
-		LinkedDataHubCompositeValue that = (LinkedDataHubCompositeValue) o;
+		LinkedContent that = (LinkedContent) o;
 
 		if (!next.equals(that.next)) {
 			return false;
@@ -80,7 +80,7 @@ public class LinkedDataHubCompositeValue {
 
 	@Override
 	public String toString() {
-		return "LinkedDataHubCompositeValue{" +
+		return "LinkedContent{" +
 				"value=" + value +
 				", previous=" + previous +
 				", next=" + next +

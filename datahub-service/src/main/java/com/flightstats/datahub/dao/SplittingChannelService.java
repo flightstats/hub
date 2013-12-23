@@ -1,8 +1,8 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
+import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.LinkedContent;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -31,17 +31,17 @@ public class SplittingChannelService implements ChannelService {
         }
 
         @Override
-        public Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id) {
+        public Optional<LinkedContent> getValue(String channelName, String id) {
             return Optional.absent();
         }
 
         @Override
-        public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
+        public Optional<ContentKey> findLastUpdatedKey(String channelName) {
             return Optional.absent();
         }
 
         @Override
-        public Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime) {
+        public Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime) {
             return Optional.absent();
         }
 
@@ -90,7 +90,7 @@ public class SplittingChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<LinkedDataHubCompositeValue> getValue(String channelName, String id) {
+    public Optional<LinkedContent> getValue(String channelName, String id) {
         return getChannelDao(channelName).getValue(channelName, id);
     }
 
@@ -105,7 +105,7 @@ public class SplittingChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<DataHubKey> findLastUpdatedKey(String channelName) {
+    public Optional<ContentKey> findLastUpdatedKey(String channelName) {
         return getChannelDao(channelName).findLastUpdatedKey(channelName);
     }
 
@@ -120,7 +120,7 @@ public class SplittingChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime) {
+    public Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime) {
         return getChannelDao(channelName).getKeys(channelName, dateTime);
     }
 }

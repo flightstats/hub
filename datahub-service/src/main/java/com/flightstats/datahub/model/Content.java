@@ -5,7 +5,7 @@ import com.google.common.base.Optional;
 import java.io.Serializable;
 import java.util.Arrays;
 
-public class DataHubCompositeValue implements Serializable {
+public class Content implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final Optional<String> contentType;
@@ -13,7 +13,7 @@ public class DataHubCompositeValue implements Serializable {
     private final long millis;
     private final byte[] data;
 
-    public DataHubCompositeValue(Optional<String> contentType, Optional<String> contentLanguage, byte[] data, long millis) {
+    public Content(Optional<String> contentType, Optional<String> contentLanguage, byte[] data, long millis) {
         this.contentType = contentType;
         this.contentLanguage = contentLanguage;
         this.millis = millis;
@@ -49,7 +49,7 @@ public class DataHubCompositeValue implements Serializable {
             return false;
         }
 
-        DataHubCompositeValue that = (DataHubCompositeValue) o;
+        Content that = (Content) o;
 
         if (!contentLanguage.equals(that.contentLanguage)) {
             return false;

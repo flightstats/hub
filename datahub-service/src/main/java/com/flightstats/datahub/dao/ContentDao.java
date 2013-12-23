@@ -1,8 +1,8 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubCompositeValue;
-import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.Content;
+import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
@@ -11,15 +11,15 @@ import org.joda.time.DateTime;
  *
  */
 public interface ContentDao {
-    ValueInsertionResult write(String channelName, DataHubCompositeValue columnValue, Optional<Integer> ttlSeconds);
+    ValueInsertionResult write(String channelName, Content columnValue, Optional<Integer> ttlSeconds);
 
-    DataHubCompositeValue read(String channelName, DataHubKey key);
+    Content read(String channelName, ContentKey key);
 
     void initialize();
 
     void initializeChannel(ChannelConfiguration configuration);
 
-    Optional<DataHubKey> getKey(String id);
+    Optional<ContentKey> getKey(String id);
 
-    Optional<Iterable<DataHubKey>> getKeys(String channelName, DateTime dateTime);
+    Optional<Iterable<ContentKey>> getKeys(String channelName, DateTime dateTime);
 }

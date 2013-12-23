@@ -8,7 +8,7 @@ import com.flightstats.datahub.cluster.HazelcastChannelLockFactory;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
 import com.flightstats.datahub.dao.dynamo.DynamoDataStoreModule;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.service.DataHubHealthCheck;
 import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
@@ -173,7 +173,7 @@ public class GuiceContextListenerFactory {
         @Named("LastUpdatePerChannelMap")
         @Singleton
         @Provides
-        public static ConcurrentMap<String, DataHubKey> buildLastUpdatePerChannelMap(HazelcastInstance hazelcast) throws FileNotFoundException {
+        public static ConcurrentMap<String, ContentKey> buildLastUpdatePerChannelMap(HazelcastInstance hazelcast) throws FileNotFoundException {
             return hazelcast.getMap("LAST_CHANNEL_UPDATE");
         }
 
