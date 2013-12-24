@@ -7,9 +7,6 @@ import com.flightstats.datahub.model.*;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,16 +22,12 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
 
     private final AmazonDynamoDBClient dbClient;
     private final DynamoUtils dynamoUtils;
-    private final DateTimeFormatter formatter;
-    private final DateTimeZone timeZone;
 
     @Inject
     public DynamoTimeSeriesContentDao(AmazonDynamoDBClient dbClient,
                                       DynamoUtils dynamoUtils) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
-        formatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH-mmZ");
-        timeZone = DateTimeZone.forID("America/Los_Angeles");
     }
 
     @Override
@@ -45,7 +38,7 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("key", new AttributeValue().withS(key.keyToString()));
         item.put("data", new AttributeValue().withB(ByteBuffer.wrap(content.getData())));
-        item.put("hashstamp", new AttributeValue().withS(formatter.print(new DateTime().withZone(timeZone))));
+        item.put("hashstamp", new AttributeValue().withS(TimeSeriesHashStamp.getHashStamp()));
         item.put("millis", new AttributeValue().withN(String.valueOf(content.getMillis())));
         if (content.getContentType().isPresent()) {
             item.put("contentType", new AttributeValue(content.getContentType().get()));
@@ -98,7 +91,7 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
     }
 
     @Override
-    public void initializeChannel(ChannelConfiguration configuration) {
+    public void initializeChannel(ChannelConfiguration config) {
 
         /**
          * The Primary Key should remain a hash key so items are directly retrievable.
@@ -113,11 +106,11 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
         //todo - gfm - 12/21/13 - this is option A
         ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
 
+        long indexThroughput = config.getRequestRateInSeconds();
         attributeDefinitions.add(new AttributeDefinition().withAttributeName("hashstamp").withAttributeType("S"));
-
         GlobalSecondaryIndex secondaryIndex = new GlobalSecondaryIndex()
                 .withIndexName("TimeIndex")
-                .withProvisionedThroughput(new ProvisionedThroughput(10L, 10L))
+                .withProvisionedThroughput(new ProvisionedThroughput(indexThroughput, indexThroughput))
                 .withProjection(new Projection().withProjectionType("KEYS_ONLY"));
 
         ArrayList<KeySchemaElement> indexKeySchema = new ArrayList<>();
@@ -125,19 +118,21 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
         indexKeySchema.add(new KeySchemaElement().withAttributeName("hashstamp").withKeyType(KeyType.HASH));
 
         secondaryIndex.setKeySchema(indexKeySchema);
-
         attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("S"));
 
         ArrayList<KeySchemaElement> tableKeySchema = new ArrayList<>();
         tableKeySchema.add(new KeySchemaElement().withAttributeName("key").withKeyType(KeyType.HASH));
 
+        long tableThroughput = config.getContentThroughputInSeconds();
+        String tableName = dynamoUtils.getTableName(config.getName());
         CreateTableRequest createTableRequest = new CreateTableRequest()
-                .withTableName(dynamoUtils.getTableName(configuration.getName()))
+                .withTableName(tableName)
                 .withAttributeDefinitions(attributeDefinitions)
                 .withKeySchema(tableKeySchema)
                 .withGlobalSecondaryIndexes(secondaryIndex)
-                .withProvisionedThroughput(new ProvisionedThroughput(10L, 10L));
+                .withProvisionedThroughput(new ProvisionedThroughput(tableThroughput, tableThroughput));
 
+        logger.info("creating times series " + tableName + " table with " + tableThroughput + " " + indexThroughput);
         dynamoUtils.createTable(createTableRequest);
     }
 
@@ -148,6 +143,33 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
 
     @Override
     public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
+        //todo see if Parallel Scan is relevant here - http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html
+        List<ContentKey> keys = new ArrayList<>();
+        QueryRequest queryRequest = getQueryRequest(channelName, dateTime);
+        QueryResult result = dbClient.query(queryRequest);
+        addResults(keys, result);
+        while (result.getLastEvaluatedKey() != null) {
+            queryRequest.setExclusiveStartKey(result.getLastEvaluatedKey());
+            result = dbClient.query(queryRequest);
+            addResults(keys, result);
+
+        }
+        return keys;
+    }
+
+    private void addResults(List<ContentKey> keys, QueryResult result) {
+        for (Map<String, AttributeValue> attribs : result.getItems()) {
+            AttributeValue keyValue = attribs.get("key");
+            if (keyValue != null) {
+                Optional<ContentKey> keyOptional = TimeSeriesContentKey.fromString(keyValue.getS());
+                if (keyOptional.isPresent()) {
+                    keys.add(keyOptional.get());
+                }
+            }
+        }
+    }
+
+    private QueryRequest getQueryRequest(String channelName, DateTime dateTime) {
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(dynamoUtils.getTableName(channelName))
                 .withIndexName("TimeIndex")
@@ -156,26 +178,11 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
 
         HashMap<String, Condition> keyConditions = new HashMap<>();
 
-        keyConditions.put("hashstamp",new Condition()
+        keyConditions.put("hashstamp", new Condition()
                 .withComparisonOperator(ComparisonOperator.EQ)
-                .withAttributeValueList(new AttributeValue().withS(formatter.print(dateTime))));
+                .withAttributeValueList(new AttributeValue().withS(TimeSeriesHashStamp.getHashStamp(dateTime))));
 
         queryRequest.setKeyConditions(keyConditions);
-
-        QueryResult result = dbClient.query(queryRequest);
-        //todo - gfm - 12/21/13 - can query return null?
-        List<ContentKey> keys = new ArrayList<>();
-        for (Map<String, AttributeValue> attribs : result.getItems()) {
-
-            AttributeValue keyValue = attribs.get("key");
-            if (keyValue != null) {
-                Optional<ContentKey> keyOptional = TimeSeriesContentKey.fromString(keyValue.getS());
-                if (keyOptional.isPresent()) {
-                    keys.add(keyOptional.get());
-                }
-            }
-
-        }
-        return keys;
+        return queryRequest;
     }
 }

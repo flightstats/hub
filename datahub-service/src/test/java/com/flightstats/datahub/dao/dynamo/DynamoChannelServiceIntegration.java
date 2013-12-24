@@ -27,8 +27,8 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
         Properties properties = new Properties();
 
         properties.put("backing.store", "dynamo");
-        properties.put("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
-        //properties.put("dynamo.endpoint", "localhost:8000");
+        //properties.put("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
+        properties.put("dynamo.endpoint", "localhost:8000");
         properties.put("dynamo.protocol", "HTTP");
         properties.put("dynamo.environment", "dev");
         properties.put("dynamo.table.creation.wait.minutes", "5");
