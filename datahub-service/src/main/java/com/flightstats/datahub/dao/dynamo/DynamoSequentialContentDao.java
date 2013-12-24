@@ -99,7 +99,7 @@ public class DynamoSequentialContentDao implements ContentDao {
     }
 
     @Override
-    public void initializeChannel(ChannelConfiguration configuration) {
+    public void initializeChannel(ChannelConfiguration config) {
 
         ArrayList<AttributeDefinition> attributeDefinitions= new ArrayList<>();
         attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("N"));
@@ -107,17 +107,16 @@ public class DynamoSequentialContentDao implements ContentDao {
         ArrayList<KeySchemaElement> keySchema = new ArrayList<>();
         keySchema.add(new KeySchemaElement().withAttributeName("key").withKeyType(KeyType.HASH));
 
-        ProvisionedThroughput provisionedThroughput = new ProvisionedThroughput()
-                .withReadCapacityUnits(10L)
-                .withWriteCapacityUnits(10L);
+        long tableThroughput = config.getContentThroughputInSeconds();
+        ProvisionedThroughput provisionedThroughput = new ProvisionedThroughput(tableThroughput, tableThroughput);
 
         CreateTableRequest request = new CreateTableRequest()
-                .withTableName(dynamoUtils.getTableName(configuration.getName()))
+                .withTableName(dynamoUtils.getTableName(config.getName()))
                 .withAttributeDefinitions(attributeDefinitions)
                 .withKeySchema(keySchema)
                 .withProvisionedThroughput(provisionedThroughput);
 
-        keyGenerator.seedChannel(configuration.getName());
+        keyGenerator.seedChannel(config.getName());
         dynamoUtils.createTable(request);
     }
 
