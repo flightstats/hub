@@ -1,7 +1,7 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.model.ChannelCreationRequest;
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.google.common.base.Optional;
@@ -16,8 +16,12 @@ public class CreateChannelValidator {
         this.channelService = channelService;
     }
 
-    public void validate(ChannelCreationRequest request) throws InvalidRequestException, AlreadyExistsException {
-        Optional<String> channelNameOptional = request != null ? request.getName() : Optional.<String>absent();
+    public void validate(ChannelConfiguration request) throws InvalidRequestException, AlreadyExistsException {
+        Optional<String> channelNameOptional =  Optional.absent();
+        if (request != null) {
+            channelNameOptional = Optional.fromNullable(request.getName());
+        }
+
         validateNameWasGiven(channelNameOptional);
         String channelName = channelNameOptional.get().trim();
         ensureNotAllBlank(channelName);

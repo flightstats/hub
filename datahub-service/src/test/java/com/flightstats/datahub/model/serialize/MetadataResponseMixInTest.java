@@ -36,7 +36,7 @@ public class MetadataResponseMixInTest {
 				return input.replaceFirst(",$", "");
 			}
 		});
-		assertEquals(5, lines.size());
+		assertEquals(6, lines.size());
 		assertTrue(lines.contains("{"));
 		assertTrue(lines.contains("  \"creationDate\" : \"1970-01-01T00:00:00.808Z\""));
 		assertTrue(lines.contains("  \"lastUpdateDate\" : \"1970-01-01T00:15:02.103Z\""));

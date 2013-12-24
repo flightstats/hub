@@ -1,7 +1,7 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.model.ChannelCreationRequest;
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
 import org.junit.Test;
@@ -17,7 +17,7 @@ public class CreateChannelValidatorTest {
 		ChannelService dao = mock(ChannelService.class);
 		String channelName = "a_channel";
 
-        ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
+        ChannelConfiguration request = ChannelConfiguration.builder().withName(channelName).build();
 
 		//WHEN
 		CreateChannelValidator testClass = new CreateChannelValidator(dao);
@@ -32,7 +32,7 @@ public class CreateChannelValidatorTest {
 	public void testChannelNameNull() throws InvalidRequestException, AlreadyExistsException {
 		//GIVEN
 		ChannelService dao = mock(ChannelService.class);
-        ChannelCreationRequest request = ChannelCreationRequest.builder().withName(null).build();
+        ChannelConfiguration request = ChannelConfiguration.builder().withName(null).build();
 
 		//WHEN
 		CreateChannelValidator testClass = new CreateChannelValidator(dao);
@@ -44,7 +44,7 @@ public class CreateChannelValidatorTest {
 	public void testChannelNameEmpty() throws InvalidRequestException, AlreadyExistsException {
 		//GIVEN
 		ChannelService dao = mock(ChannelService.class);
-        ChannelCreationRequest request = ChannelCreationRequest.builder().withName("").build();
+        ChannelConfiguration request = ChannelConfiguration.builder().withName("").build();
 
 		//WHEN
 		CreateChannelValidator testClass = new CreateChannelValidator(dao);
@@ -56,7 +56,7 @@ public class CreateChannelValidatorTest {
 	public void testChannelNameBlank() throws InvalidRequestException, AlreadyExistsException {
 		//GIVEN
 		ChannelService dao = mock(ChannelService.class);
-        ChannelCreationRequest request = ChannelCreationRequest.builder().withName("  ").build();
+        ChannelConfiguration request = ChannelConfiguration.builder().withName("  ").build();
 
 		//WHEN
 		CreateChannelValidator testClass = new CreateChannelValidator(dao);
@@ -69,7 +69,7 @@ public class CreateChannelValidatorTest {
 		//GIVEN
 		ChannelService dao = mock(ChannelService.class);
 		String channelName = "achannel";
-        ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
+        ChannelConfiguration request = ChannelConfiguration.builder().withName(channelName).build();
 
         //WHEN
 		//THEN
@@ -83,7 +83,7 @@ public class CreateChannelValidatorTest {
 		//GIVEN
 		String channelName = "my chan";
 		ChannelService dao = mock(ChannelService.class);
-        ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
+        ChannelConfiguration request = ChannelConfiguration.builder().withName(channelName).build();
 
 		CreateChannelValidator testClass = new CreateChannelValidator(dao);
 
@@ -97,7 +97,7 @@ public class CreateChannelValidatorTest {
 		//GIVEN
 		String channelName = "my#chan";
 		ChannelService dao = mock(ChannelService.class);
-        ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
+        ChannelConfiguration request = ChannelConfiguration.builder().withName(channelName).build();
 
 		CreateChannelValidator testClass = new CreateChannelValidator(dao);
 

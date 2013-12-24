@@ -2,7 +2,6 @@ package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.HalLinks;
 import com.flightstats.rest.Linked;
@@ -30,10 +29,10 @@ public class ChannelResourceTest {
 	public void testChannelCreation() throws Exception {
 		String channelName = "UHF";
 
-		ChannelCreationRequest channelCreationRequest = ChannelCreationRequest.builder().withName(channelName).build();
+        ChannelConfiguration channelCreationRequest = ChannelConfiguration.builder().withName(channelName).build();
 		Date date = new Date();
 		ChannelConfiguration channelConfiguration = ChannelConfiguration.builder()
-                .withName(channelName).withCreationDate(date).withTtlMillis(ChannelCreationRequest.DEFAULT_TTL).build();
+                .withName(channelName).withCreationDate(date).build();
 		String channelUri = "http://path/to/UHF";
 		String latestUri = "http://path/to/UHF/latest";
 		String wsUri = "ws://path/to/UHF/ws";
@@ -106,22 +105,4 @@ public class ChannelResourceTest {
 				new HalLink(channel2.getName(), URI.create(channel2Uri))));
 	}
 
-	@Test
-	public void testChannelNameIsTrimmed() throws Exception {
-		//GIVEN
-		String channelName = "    \tmyChannel ";
-		ChannelCreationRequest request = ChannelCreationRequest.builder().withName(channelName).build();
-        CreateChannelValidator createChannelValidator = mock(CreateChannelValidator.class);
-
-		ChannelService channelService = mock(ChannelService.class);
-
-		ChannelResource testClass = new ChannelResource(channelService, mock(ChannelHypermediaLinkBuilder.class), null, createChannelValidator);
-
-		//WHEN
-		testClass.createChannel(request);
-
-		//THEN
-        ChannelConfiguration channelConfig = ChannelConfiguration.builder().withName(channelName.trim()).withTtlMillis(ChannelCreationRequest.DEFAULT_TTL).build();
-		verify(channelService).createChannel(channelConfig);
-	}
 }

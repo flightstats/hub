@@ -4,12 +4,10 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
-import com.google.common.base.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,15 +73,15 @@ public class ChannelResource {
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createChannel(ChannelCreationRequest channelCreationRequest) throws InvalidRequestException, AlreadyExistsException {
-        createChannelValidator.validate(channelCreationRequest);
-		String channelName = channelCreationRequest.getName().get().trim();
+	public Response createChannel(ChannelConfiguration channelConfiguration) throws InvalidRequestException, AlreadyExistsException {
+        createChannelValidator.validate(channelConfiguration);
+		/*String channelName = channelConfiguration1.getName().get().trim();
 
-		Optional<Long> ttlMillis = channelCreationRequest.getTtlMillis();
+		Optional<Long> ttlMillis = channelConfiguration1.getTtlMillis();
         //todo - gfm - 12/20/13 - handle more options
         ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName)
-                .withTtlMillis(ttlMillis.orNull()).build();
-        ChannelConfiguration channelConfiguration = channelService.createChannel(configuration);
+                .withTtlMillis(ttlMillis.orNull()).build();*/
+        channelService.createChannel(channelConfiguration);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
 		return Response.created(channelUri).entity(
 			linkBuilder.buildLinkedChannelConfig(channelConfiguration, channelUri, uriInfo))

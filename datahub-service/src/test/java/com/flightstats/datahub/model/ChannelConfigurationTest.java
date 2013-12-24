@@ -16,7 +16,7 @@ public class ChannelConfigurationTest {
     public void testDefaults() throws Exception {
         ChannelConfiguration config = ChannelConfiguration.builder().withName("defaults").build();
         assertEquals("defaults", config.getName());
-        assertNull(config.getTtlMillis());
+        assertEquals(10368000000L, config.getTtlMillis().longValue());
         assertTrue(config.isSequence());
         assertEquals(10L, config.getContentThroughputInSeconds());
         assertEquals(1L, config.getRequestRateInSeconds());
@@ -31,7 +31,7 @@ public class ChannelConfigurationTest {
                 .withType(ChannelConfiguration.ChannelType.TimeSeries)
                 .withCreationDate(date)
                 .withContentKiloBytes(100)
-                .withPeakRequestRate(100, TimeUnit.MINUTES)
+                .withPeakRequestRate(100).withRateTimeUnit(TimeUnit.MINUTES)
                 .build();
         assertOptions(date, config);
         ChannelConfiguration copy = ChannelConfiguration.builder().withChannelConfiguration(config).build();

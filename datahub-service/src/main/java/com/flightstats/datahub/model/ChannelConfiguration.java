@@ -1,31 +1,66 @@
 package com.flightstats.datahub.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ChannelConfiguration implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public static final Long DEFAULT_TTL = TimeUnit.DAYS.toMillis(120);
 	private final String name;
 	private final Date creationDate;
 	private final Long ttlMillis;
     private final ChannelType type;
-    private final int contentKiloBytes;
+    private final int contentSizeKB;
     private final int peakRequestRate;
     private final TimeUnit rateTimeUnit;
 
     public enum ChannelType { Sequence, TimeSeries }
 
     public ChannelConfiguration(String name, Date creationDate, Long ttlMillis, ChannelType type,
-                                int contentKiloBytes, int peakRequestRate, TimeUnit rateTimeUnit) {
+                                int contentSizeKB, int peakRequestRate, TimeUnit rateTimeUnit) {
         this.name = name;
         this.creationDate = creationDate;
         this.ttlMillis = ttlMillis;
         this.type = type;
-        this.contentKiloBytes = contentKiloBytes;
+        this.contentSizeKB = contentSizeKB;
         this.peakRequestRate = peakRequestRate;
         this.rateTimeUnit = rateTimeUnit;
+    }
+
+    @JsonCreator
+    protected static ChannelConfiguration create(Map<String, String> props) throws UnrecognizedPropertyException {
+        Builder builder = builder();
+        for (Map.Entry<String, String> entry : props.entrySet()) {
+            switch (entry.getKey()) {
+                case "name":
+                    builder.withName(entry.getValue().trim());
+                    break;
+                case "ttlMillis":
+                    builder.withTtlMillis(entry.getValue() == null ? null : Long.parseLong(entry.getValue()));
+                    break;
+                case "type":
+                    builder.withType(ChannelType.valueOf(entry.getValue()));
+                    break;
+                case "contentSizeKB":
+                    builder.withContentKiloBytes(Integer.parseInt(entry.getValue()));
+                    break;
+                case "peakRequestRate":
+                    builder.withPeakRequestRate(Integer.parseInt(entry.getValue()));
+                    break;
+                case "rateTimeUnit":
+                    builder.withRateTimeUnit(TimeUnit.valueOf(entry.getValue()));
+                    break;
+                default:
+                    throw new UnrecognizedPropertyException("Unexpected property: " + entry.getKey(), null, ChannelConfiguration.class, entry.getKey(), null);
+            }
+        }
+        return builder.build();
     }
 
     public String getName() {
@@ -45,7 +80,7 @@ public class ChannelConfiguration implements Serializable {
     }
 
     public long getContentThroughputInSeconds() {
-        return contentKiloBytes * getRequestRateInSeconds();
+        return contentSizeKB * getRequestRateInSeconds();
     }
 
     public long getRequestRateInSeconds() {
@@ -79,7 +114,7 @@ public class ChannelConfiguration implements Serializable {
                 ", creationDate=" + creationDate +
                 ", ttlMillis=" + ttlMillis +
                 ", type=" + type +
-                ", contentKiloBytes=" + contentKiloBytes +
+                ", contentSizeKB=" + contentSizeKB +
                 ", peakRequestRate=" + peakRequestRate +
                 ", rateTimeUnit=" + rateTimeUnit +
                 '}';
@@ -92,7 +127,7 @@ public class ChannelConfiguration implements Serializable {
 	public static class Builder {
 		private String name;
 		private Date creationDate = new Date();
-		private Long ttlMillis;
+		private Long ttlMillis = DEFAULT_TTL;
         private ChannelType type = ChannelType.Sequence;
         private int contentKiloBytes = 10;
         private int peakRequestRate = 1;
@@ -103,7 +138,7 @@ public class ChannelConfiguration implements Serializable {
 			this.creationDate = config.creationDate;
 			this.ttlMillis = config.ttlMillis;
             this.type = config.type;
-            this.contentKiloBytes = config.contentKiloBytes;
+            this.contentKiloBytes = config.contentSizeKB;
             this.peakRequestRate = config.peakRequestRate;
             this.rateTimeUnit = config.rateTimeUnit;
 			return this;
@@ -134,8 +169,12 @@ public class ChannelConfiguration implements Serializable {
             return this;
         }
 
-        public Builder withPeakRequestRate(int peakRequestRate, TimeUnit rateTimeUnit) {
+        public Builder withPeakRequestRate(int peakRequestRate) {
             this.peakRequestRate = peakRequestRate;
+            return this;
+        }
+
+        public Builder withRateTimeUnit(TimeUnit rateTimeUnit) {
             this.rateTimeUnit = rateTimeUnit;
             return this;
         }
