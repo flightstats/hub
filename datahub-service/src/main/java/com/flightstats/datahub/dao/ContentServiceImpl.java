@@ -14,6 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentMap;
 
+//todo - gfm - 12/24/13 - wondering about the remaining value of this class
+//seems like the common functionality could move up into ChannelService, and some lower level functionality
+//could move into the DAOs
 public class ContentServiceImpl implements ContentService {
 
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
@@ -102,6 +105,8 @@ public class ContentServiceImpl implements ContentService {
     }
 
     private void setLastUpdateKey(final String channelName, final ContentKey lastUpdateKey) {
+        //todo - gfm - 12/24/13 - this is relatively slow with hazelcast and high throughput
+        //wondering if this is needed for time series
         metricsTimer.time("hazelcast.setLastUpdated", new TimedCallback<Object>() {
             @Override
             public Object call() {

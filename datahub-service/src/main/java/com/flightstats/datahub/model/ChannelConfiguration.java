@@ -54,7 +54,7 @@ public class ChannelConfiguration implements Serializable {
                     builder.withPeakRequestRate(Integer.parseInt(entry.getValue()));
                     break;
                 case "rateTimeUnit":
-                    builder.withRateTimeUnit(TimeUnit.valueOf(entry.getValue()));
+                    builder.withRateTimeUnit(TimeUnit.valueOf(entry.getValue().toUpperCase()));
                     break;
                 default:
                     throw new UnrecognizedPropertyException("Unexpected property: " + entry.getKey(), null, ChannelConfiguration.class, entry.getKey(), null);
@@ -85,6 +85,10 @@ public class ChannelConfiguration implements Serializable {
 
     public long getRequestRateInSeconds() {
         return (long) Math.ceil(peakRequestRate / (double) TimeUnit.SECONDS.convert(1, rateTimeUnit));
+    }
+
+    public ChannelType getType() {
+        return type;
     }
 
     @Override

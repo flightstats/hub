@@ -41,6 +41,8 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
         if (config.getTtlMillis() != null) {
             item.put("ttlMillis", new AttributeValue().withN(String.valueOf(config.getTtlMillis())));
         }
+        item.put("type", new AttributeValue().withS(config.getType().toString()));
+        //todo - gfm - 12/23/13 - add size & rate info
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(getTableName())
                 .withItem(item);
@@ -68,6 +70,7 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
                 .withAttributeDefinitions(attributeDefinitions)
                 .withKeySchema(ks)
                 .withProvisionedThroughput(provisionedThroughput);
+        //todo - gfm - 12/23/13 - this needs to wait until the table is active, even if it already exists
         dynamoUtils.createTable(request);
     }
 
@@ -98,6 +101,7 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
     }
 
     private ChannelConfiguration mapItem(Map<String, AttributeValue> item) {
+        //todo - gfm - 12/23/13 - add size & rate info
         Date date = new Date(Long.parseLong(item.get("date").getN()));
         AttributeValue millis = item.get("ttlMillis");
         Long ttlMillis = null;
@@ -105,8 +109,10 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
             ttlMillis = Long.parseLong(millis.getN());
         }
         return ChannelConfiguration.builder()
-                .withCreationDate(date).withTtlMillis(ttlMillis)
+                .withCreationDate(date)
+                .withTtlMillis(ttlMillis)
                 .withName(item.get("key").getS())
+                .withType(ChannelConfiguration.ChannelType.valueOf(item.get("type").getS()))
                 .build();
 
     }
