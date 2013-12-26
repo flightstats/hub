@@ -41,6 +41,7 @@ public class DynamoDataStoreModule extends AbstractModule {
                 bind(ContentDao.class)
                         .annotatedWith(Names.named(TimedContentDao.DELEGATE))
                         .to(DynamoSequentialContentDao.class);
+                bind(KeyCoordination.class).to(SequenceKeyCoordination.class).in(Singleton.class);
             }
         });
 
@@ -55,6 +56,7 @@ public class DynamoDataStoreModule extends AbstractModule {
                 bind(ContentDao.class)
                         .annotatedWith(Names.named(TimedContentDao.DELEGATE))
                         .to(DynamoTimeSeriesContentDao.class);
+                bind(KeyCoordination.class).to(TimeSeriesKeyCoordination.class).in(Singleton.class);
             }
         });
 

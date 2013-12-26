@@ -2,7 +2,7 @@ package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.ContentKey;
 import com.google.inject.Inject;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
@@ -18,11 +18,11 @@ public class ChannelInsertionPublisher {
         this.metricsTimer = metricsTimer;
     }
 
-	public void publish(final String channelName, final ValueInsertionResult result) {
+	public void publish(final String channelName, final ContentKey key) {
         metricsTimer.time("hazelcast.publish", new TimedCallback<Object>() {
             @Override
             public Object call() {
-                getTopicForChannel(channelName).publish(result.getKey().keyToString());
+                getTopicForChannel(channelName).publish(key.keyToString());
                 return null;
             }
         });

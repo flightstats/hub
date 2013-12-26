@@ -51,6 +51,7 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
                 .withTableName(dynamoUtils.getTableName(channelName))
                 .withItem(item);
         //todo - gfm - 12/13/13 - this needs to handle ProvisionedThroughputExceededException
+        //return a 503 to the client
         PutItemResult result = dbClient.putItem(putItemRequest);
         return new ValueInsertionResult(key, new Date(content.getMillis()));
     }

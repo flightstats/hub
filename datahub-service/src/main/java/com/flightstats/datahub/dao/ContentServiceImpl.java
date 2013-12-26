@@ -1,44 +1,29 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.metrics.MetricsTimer;
-import com.flightstats.datahub.metrics.TimedCallback;
 import com.flightstats.datahub.model.*;
-import com.flightstats.datahub.service.ChannelInsertionPublisher;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ConcurrentMap;
-
-//todo - gfm - 12/24/13 - wondering about the remaining value of this class
-//seems like the common functionality could move up into ChannelService, and some lower level functionality
-//could move into the DAOs
 public class ContentServiceImpl implements ContentService {
 
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
     private final ContentDao contentDao;
-    private final ConcurrentMap<String, ContentKey> lastUpdatedPerChannel;
     private final TimeProvider timeProvider;
-    private ChannelInsertionPublisher channelInsertionPublisher;
-    private final MetricsTimer metricsTimer;
+    private final KeyCoordination keyCoordination;
 
     @Inject
     public ContentServiceImpl(
             ContentDao contentDao,
-            @Named("LastUpdatePerChannelMap") ConcurrentMap<String, ContentKey> lastUpdatedPerChannel,
             TimeProvider timeProvider,
-            ChannelInsertionPublisher channelInsertionPublisher,
-            MetricsTimer metricsTimer) {
+            KeyCoordination keyCoordination) {
         this.contentDao = contentDao;
-        this.lastUpdatedPerChannel = lastUpdatedPerChannel;
         this.timeProvider = timeProvider;
-        this.channelInsertionPublisher = channelInsertionPublisher;
-        this.metricsTimer = metricsTimer;
+        this.keyCoordination = keyCoordination;
     }
 
     @Override
@@ -54,9 +39,7 @@ public class ContentServiceImpl implements ContentService {
         Content value = new Content(contentType, contentLanguage, data, timeProvider.getMillis());
         Optional<Integer> ttlSeconds = getTtlSeconds(configuration);
         ValueInsertionResult result = contentDao.write(channelName, value, ttlSeconds);
-        ContentKey insertedKey = result.getKey();
-        setLastUpdateKey(channelName, insertedKey);
-        channelInsertionPublisher.publish(channelName, result);
+        keyCoordination.insert(channelName, result.getKey());
         return result;
     }
 
@@ -96,7 +79,7 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     public Optional<ContentKey> findLastUpdatedKey(String channelName) {
-        return Optional.fromNullable(getLastUpdatedFromCache(channelName));
+        return Optional.fromNullable(keyCoordination.getLastUpdated(channelName));
     }
 
     @Override
@@ -104,25 +87,6 @@ public class ContentServiceImpl implements ContentService {
         return contentDao.getKeys(channelName, dateTime);
     }
 
-    private void setLastUpdateKey(final String channelName, final ContentKey lastUpdateKey) {
-        //todo - gfm - 12/24/13 - this is relatively slow with hazelcast and high throughput
-        //wondering if this is needed for time series
-        metricsTimer.time("hazelcast.setLastUpdated", new TimedCallback<Object>() {
-            @Override
-            public Object call() {
-                lastUpdatedPerChannel.put(channelName, lastUpdateKey);
-                return null;
-            }
-        });
-    }
 
-    private ContentKey getLastUpdatedFromCache(final String channelName) {
-        return metricsTimer.time("hazelcast.getLastUpdated", new TimedCallback<ContentKey>() {
-            @Override
-            public ContentKey call() {
-                return lastUpdatedPerChannel.get(channelName);
-            }
-        });
-    }
 
 }
