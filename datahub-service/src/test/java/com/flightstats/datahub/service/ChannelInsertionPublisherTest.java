@@ -4,7 +4,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
-import com.flightstats.datahub.model.ValueInsertionResult;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
@@ -33,7 +32,7 @@ public class ChannelInsertionPublisherTest {
 
 		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, metricsTimer);
 
-		testClass.publish("channelName", new ValueInsertionResult(contentKey, null));
+		testClass.publish("channelName", contentKey);
 
 		verify(iTopic).publish("1000");
 	}

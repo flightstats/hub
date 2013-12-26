@@ -26,6 +26,7 @@ public class CassandraDataStoreModule extends AbstractModule {
 		bindListener(DataHubValueDaoInitialization.buildTypeMatcher(), new DataHubValueDaoInitialization());
 		bind(ChannelService.class).to(SimpleChannelService.class).in(Singleton.class);
         bind(ContentService.class).to(ContentServiceImpl.class).in(Singleton.class);
+        bind(KeyCoordination.class).to(SequenceKeyCoordination.class).in(Singleton.class);
 
         bind(ChannelMetadataDao.class).to(TimedChannelMetadataDao.class).in(Singleton.class);
         bind(ChannelMetadataDao.class)
