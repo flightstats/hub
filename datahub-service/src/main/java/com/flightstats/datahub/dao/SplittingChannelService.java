@@ -125,4 +125,10 @@ public class SplittingChannelService implements ChannelService {
     public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
         return getChannelDao(channelName).getKeys(channelName, dateTime);
     }
+
+    @Override
+    public void delete(String channelName) {
+        //todo - gfm - 12/27/13 - remove from channel meta data
+        //todo - gfm - 12/27/13 - delete content
+    }
 }

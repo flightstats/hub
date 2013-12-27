@@ -53,6 +53,7 @@ public class DynamoConnectorFactory {
             //look at com.amazonaws.auth.AWSCredentialsProvider
             AWSCredentials awsCredentials = new PropertiesCredentials(new File(credentials));
             AmazonDynamoDBClient client = new AmazonDynamoDBClient(awsCredentials);
+            //todo - gfm - 12/27/13 - look at exponential backoff & retrys for 400s
             ClientConfiguration configuration = new ClientConfiguration();
 
             configuration.setProtocol(Protocol.valueOf(protocol));
