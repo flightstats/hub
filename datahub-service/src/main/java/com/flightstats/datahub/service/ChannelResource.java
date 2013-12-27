@@ -75,12 +75,6 @@ public class ChannelResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createChannel(ChannelConfiguration channelConfiguration) throws InvalidRequestException, AlreadyExistsException {
         createChannelValidator.validate(channelConfiguration);
-		/*String channelName = channelConfiguration1.getName().get().trim();
-
-		Optional<Long> ttlMillis = channelConfiguration1.getTtlMillis();
-        //todo - gfm - 12/20/13 - handle more options
-        ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName)
-                .withTtlMillis(ttlMillis.orNull()).build();*/
         channelService.createChannel(channelConfiguration);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
 		return Response.created(channelUri).entity(

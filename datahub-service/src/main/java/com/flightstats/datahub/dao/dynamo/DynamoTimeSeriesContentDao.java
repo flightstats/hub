@@ -3,6 +3,7 @@ package com.flightstats.datahub.dao.dynamo;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.datahub.dao.ContentDao;
+import com.flightstats.datahub.dao.TimeIndexDates;
 import com.flightstats.datahub.model.*;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -38,7 +39,7 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("key", new AttributeValue().withS(key.keyToString()));
         item.put("data", new AttributeValue().withB(ByteBuffer.wrap(content.getData())));
-        item.put("hashstamp", new AttributeValue().withS(TimeSeriesHashStamp.getHashStamp()));
+        item.put("hashstamp", new AttributeValue().withS(TimeIndexDates.getString()));
         item.put("millis", new AttributeValue().withN(String.valueOf(content.getMillis())));
         if (content.getContentType().isPresent()) {
             item.put("contentType", new AttributeValue(content.getContentType().get()));
@@ -155,6 +156,7 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
             addResults(keys, result);
 
         }
+        logger.info("returning " + keys.size() + " keys for " + channelName + " at " + TimeIndexDates.getString(dateTime));
         return keys;
     }
 
@@ -181,7 +183,7 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
 
         keyConditions.put("hashstamp", new Condition()
                 .withComparisonOperator(ComparisonOperator.EQ)
-                .withAttributeValueList(new AttributeValue().withS(TimeSeriesHashStamp.getHashStamp(dateTime))));
+                .withAttributeValueList(new AttributeValue().withS(TimeIndexDates.getString(dateTime))));
 
         queryRequest.setKeyConditions(keyConditions);
         return queryRequest;

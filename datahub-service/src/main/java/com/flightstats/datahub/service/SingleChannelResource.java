@@ -11,6 +11,8 @@ import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -27,7 +29,7 @@ import static com.flightstats.rest.Linked.linked;
  */
 @Path("/channel/{channelName}")
 public class SingleChannelResource {
-
+    private final static Logger logger = LoggerFactory.getLogger(SingleChannelResource.class);
     private final ChannelService channelService;
     private final ChannelHypermediaLinkBuilder linkBuilder;
     private final Integer maxPayloadSizeBytes;
@@ -49,9 +51,14 @@ public class SingleChannelResource {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-
         ChannelConfiguration config = channelService.getChannelConfiguration(channelName);
-        Date lastUpdateDate = getLastUpdateDate(channelName);
+        //todo - gfm - 12/27/13 - what should the default date be?
+        Date lastUpdateDate = new Date();
+        try {
+            lastUpdateDate = getLastUpdateDate(channelName);
+        } catch (UnsupportedOperationException e) {
+            logger.info("unable to get last updated " + channelName, e);
+        }
         MetadataResponse response = new MetadataResponse(config, lastUpdateDate);
         return linked(response)
                 .withLink("self", linkBuilder.buildChannelUri(config, uriInfo))
@@ -128,6 +135,12 @@ public class SingleChannelResource {
         builder.entity(linkedResult);
         builder.location(payloadUri);
         return builder.build();
+    }
+
+    @DELETE
+    public Response delete(@PathParam("channelName") final String channelName) throws Exception {
+        channelService.delete(channelName);
+        return Response.ok().build();
     }
 
     private boolean noSuchChannel(final String channelName) {

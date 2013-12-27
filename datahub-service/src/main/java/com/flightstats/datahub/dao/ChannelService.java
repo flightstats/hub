@@ -28,4 +28,6 @@ public interface ChannelService {
 	void updateChannelMetadata(ChannelConfiguration newConfig);
 
     Iterable<ContentKey> getKeys(String channelName, DateTime dateTime);
+
+    void delete(String channelName);
 }

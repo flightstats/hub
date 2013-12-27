@@ -59,4 +59,11 @@ public class TimeSeriesContentKey implements ContentKey {
     public int hashCode() {
         return id.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "TimeSeriesContentKey{" +
+                "id='" + id + '\'' +
+                '}';
+    }
 }
