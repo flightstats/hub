@@ -4,8 +4,12 @@ var http = require('http');
 var fs = require('fs');
 
 function runInTestChannel(channelName, functionToExecute) {
+    runInTestChannelJson(JSON.stringify({ "name": channelName}), functionToExecute);
+}
+
+function runInTestChannelJson(jsonBody, functionToExecute) {
     frisby.create('Ensuring that the test channel exists.')
-        .post(channelUrl, null, { body: JSON.stringify({ "name": channelName})})
+        .post(channelUrl, null, { body: jsonBody})
         .addHeader("Content-Type", "application/json")
         .expectStatus(201)
         .afterJSON(functionToExecute)
@@ -42,3 +46,4 @@ exports.runInTestChannel = runInTestChannel;
 exports.download = download;
 exports.randomChannelName = randomChannelName;
 exports.configureFrisby = configureFrisby;
+exports.runInTestChannelJson = runInTestChannelJson;

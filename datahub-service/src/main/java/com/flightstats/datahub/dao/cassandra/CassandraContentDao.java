@@ -111,6 +111,11 @@ public class CassandraContentDao implements ContentDao {
         throw new UnsupportedOperationException("this implementation does not support get keys " + channelName);
     }
 
+    @Override
+    public void delete(String channelName) {
+        logger.warn("Cassandra impl doesn't support deleting channels " + channelName);
+    }
+
     private static final long INCREMENT = 1000;
 
     private String buildKey(String channelName, SequenceContentKey dataHubKey) {

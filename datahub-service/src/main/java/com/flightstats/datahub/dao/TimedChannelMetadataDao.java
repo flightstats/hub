@@ -86,4 +86,9 @@ public class TimedChannelMetadataDao implements ChannelMetadataDao {
             }
         });
     }
+
+    @Override
+    public void delete(String channelName) {
+        delegate.delete(channelName);
+    }
 }
