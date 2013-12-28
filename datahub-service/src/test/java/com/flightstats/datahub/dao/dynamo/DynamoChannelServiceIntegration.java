@@ -63,7 +63,7 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
     }
 
     @Test
-    public void testTimeSeriesChannelWriteRead() throws Exception {
+    public void testTimeSeriesChannelWriteReadDelete() throws Exception {
         //channelName ="testTimeSeriesChannelWriteRead2";
         ChannelConfiguration configuration = getChannelConfig();
         channelService.createChannel(configuration);
@@ -86,6 +86,10 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
         HashSet<ContentKey> foundKeys = Sets.newHashSet(keys);
 
         assertEquals(createdKeys, foundKeys);*/
+
+        channelService.delete(channelName);
+        assertNull(channelService.getChannelConfiguration(channelName));
+        channelNames.remove(channelName);
 
     }
 
