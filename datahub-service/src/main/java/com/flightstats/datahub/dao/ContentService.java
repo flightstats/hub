@@ -19,4 +19,5 @@ public interface ContentService {
 
     Iterable<ContentKey> getKeys(String channelName, DateTime dateTime);
 
+    void delete(String channelName);
 }

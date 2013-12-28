@@ -47,6 +47,11 @@ public class SplittingChannelService implements ChannelService {
             return Collections.emptyList();
         }
 
+        @Override
+        public void delete(String channelName) {
+            //do nothing
+        }
+
     };
 
     @Inject
@@ -128,7 +133,10 @@ public class SplittingChannelService implements ChannelService {
 
     @Override
     public void delete(String channelName) {
+        getChannelDao(channelName).delete(channelName);
         //todo - gfm - 12/27/13 - remove from channel meta data
+        channelMetadataDao.delete(channelName);
         //todo - gfm - 12/27/13 - delete content
+
     }
 }

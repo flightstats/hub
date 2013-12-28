@@ -67,6 +67,12 @@ public class CachedChannelMetadataDao implements ChannelMetadataDao {
     }
 
     @Override
+    public void delete(String channelName) {
+        delegate.delete(channelName);
+        channelConfigurationMap.remove(channelName);
+    }
+
+    @Override
     public boolean isHealthy() {
         return delegate.isHealthy();
     }

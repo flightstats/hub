@@ -160,6 +160,11 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
         return keys;
     }
 
+    @Override
+    public void delete(String channelName) {
+        dbClient.deleteTable(dynamoUtils.getTableName(channelName));
+    }
+
     private void addResults(List<ContentKey> keys, QueryResult result) {
         for (Map<String, AttributeValue> attribs : result.getItems()) {
             AttributeValue keyValue = attribs.get("key");

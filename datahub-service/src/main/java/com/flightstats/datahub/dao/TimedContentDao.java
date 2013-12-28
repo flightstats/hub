@@ -76,4 +76,9 @@ public class TimedContentDao implements ContentDao {
         });
 
     }
+
+    @Override
+    public void delete(String channelName) {
+        delegate.delete(channelName);
+    }
 }

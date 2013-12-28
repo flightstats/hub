@@ -19,4 +19,6 @@ public interface ChannelMetadataDao {
     ChannelConfiguration getChannelConfiguration(String channelName);
 
     Iterable<ChannelConfiguration> getChannels();
+
+    void delete(String channelName);
 }

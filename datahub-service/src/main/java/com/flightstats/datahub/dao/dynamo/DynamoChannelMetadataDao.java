@@ -132,6 +132,13 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
     }
 
     @Override
+    public void delete(String channelName) {
+        Map<String, AttributeValue> key = new HashMap<>();
+        key.put("key", new AttributeValue().withS(channelName));
+        dbClient.deleteItem(new DeleteItemRequest(getTableName(), key));
+    }
+
+    @Override
     public boolean isHealthy() {
         try {
             dbClient.describeTable(getTableName());

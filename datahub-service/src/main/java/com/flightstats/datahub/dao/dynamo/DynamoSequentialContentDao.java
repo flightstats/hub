@@ -129,4 +129,9 @@ public class DynamoSequentialContentDao implements ContentDao {
     public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
         throw new UnsupportedOperationException("this implementation does not support get keys " + channelName);
     }
+
+    @Override
+    public void delete(String channelName) {
+        dbClient.deleteTable(dynamoUtils.getTableName(channelName));
+    }
 }

@@ -89,6 +89,11 @@ public class CassandraChannelMetadataDao implements ChannelMetadataDao {
 	}
 
     @Override
+    public void delete(String channelName) {
+        logger.warn("Cassandra impl doesn't support deleting channels " + channelName);
+    }
+
+    @Override
     public boolean isHealthy() {
         try {
             getChannels();

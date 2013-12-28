@@ -87,6 +87,11 @@ public class ContentServiceImpl implements ContentService {
         return contentDao.getKeys(channelName, dateTime);
     }
 
+    @Override
+    public void delete(String channelName) {
+        logger.info("deleting channel " + channelName);
+        contentDao.delete(channelName);
+    }
 
 
 }
