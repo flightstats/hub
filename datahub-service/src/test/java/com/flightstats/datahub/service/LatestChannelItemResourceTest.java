@@ -1,8 +1,8 @@
 package com.flightstats.datahub.service;
 
-import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.dao.ChannelService;
+import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.SequenceContentKey;
 import com.google.common.base.Optional;
 import org.junit.Test;
 
@@ -20,33 +20,32 @@ public class LatestChannelItemResourceTest {
 	@Test
 	public void testGetLatest() throws Exception {
 		String channelName = "fooChan";
-		DataHubKey key = new DataHubKey((short) 1000);
-		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
+		ContentKey key = new SequenceContentKey(1000);
 
 		UriInfo uriInfo = mock(UriInfo.class);
-		ChannelDao channelDao = mock(ChannelDao.class);
+		ChannelService channelService = mock(ChannelService.class);
 
-		when(channelDao.findLastUpdatedKey(channelName)).thenReturn(Optional.of(key));
+		when(channelService.findLastUpdatedKey(channelName)).thenReturn(Optional.of(key));
 		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to/channel/lolcats/latest"));
 
-		LatestChannelItemResource testClass = new LatestChannelItemResource(uriInfo, channelDao, keyRenderer);
+		LatestChannelItemResource testClass = new LatestChannelItemResource(uriInfo, channelService);
 
 		Response response = testClass.getLatest(channelName);
 		assertEquals(Response.Status.SEE_OTHER.getStatusCode(), response.getStatus());
 		List<Object> locations = response.getMetadata().get("Location");
 		assertEquals(1, locations.size());
-		assertEquals(URI.create("http://path/to/channel/lolcats/" + keyRenderer.keyToString(key)), locations.get(0));
+		assertEquals(URI.create("http://path/to/channel/lolcats/" + key.keyToString()), locations.get(0));
 	}
 
 	@Test
 	public void testGetLatest_channelEmpty() throws Exception {
 		String channelName = "fooChan";
 
-		ChannelDao channelDao = mock(ChannelDao.class);
+		ChannelService channelService = mock(ChannelService.class);
 
-		when(channelDao.findLastUpdatedKey(channelName)).thenReturn(Optional.<DataHubKey>absent());
+		when(channelService.findLastUpdatedKey(channelName)).thenReturn(Optional.<ContentKey>absent());
 
-		LatestChannelItemResource testClass = new LatestChannelItemResource(null, channelDao, null);
+		LatestChannelItemResource testClass = new LatestChannelItemResource(null, channelService);
 
         Response response = testClass.getLatest(channelName);
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());

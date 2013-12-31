@@ -1,7 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
 import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
@@ -22,14 +21,13 @@ public class DataHubWebSocket {
 	private final WebSocketChannelNameExtractor channelNameExtractor;
 	private final SubscriptionRoster subscriptions;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
-	private final DataHubKeyRenderer keyRenderer;
 	private String remoteAddress;
 	private JettyWebSocketEndpointSender endpointSender;
 	private String channelName;
 
 	@Inject
-	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder, DataHubKeyRenderer keyRenderer) {
-		this(subscriptions, channelNameExtractor, linkBuilder, keyRenderer, new Runnable() {
+	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder) {
+		this(subscriptions, channelNameExtractor, linkBuilder, new Runnable() {
 			@Override
 			public void run() {
 				//nop
@@ -38,9 +36,8 @@ public class DataHubWebSocket {
 	}
 
 	DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder,
-					 DataHubKeyRenderer keyRenderer, Runnable afterDisconnectCallback) {
+					Runnable afterDisconnectCallback) {
 		this.linkBuilder = linkBuilder;
-		this.keyRenderer = keyRenderer;
 		this.afterDisconnectCallback = afterDisconnectCallback;
 		this.channelNameExtractor = channelNameExtractor;
 		this.subscriptions = subscriptions;
@@ -57,7 +54,7 @@ public class DataHubWebSocket {
 		//todo this is totally hacky. Is there no way to get the full request URI?
         String channelUri = "http://" + host + "/channel/" + channelName;
 		try {
-			endpointSender = new JettyWebSocketEndpointSender(remoteAddress, session.getRemote(), linkBuilder, keyRenderer, new URI(channelUri));
+			endpointSender = new JettyWebSocketEndpointSender(remoteAddress, session.getRemote(), linkBuilder, new URI(channelUri));
 		} catch (URISyntaxException e) {
 			//this should really never happen.  stupid checked exceptions!
 			throw new RuntimeException(e);

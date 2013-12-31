@@ -94,6 +94,7 @@ dependencies {
     compile group: 'org.eclipse.jetty', name: 'jetty-security', version: '9.0.6.v20130930'
     compile group: 'org.eclipse.jetty.websocket', name: 'websocket-server', version: '9.0.6.v20130930'
     compile group: 'org.eclipse.jetty.websocket', name: 'websocket-common', version: '9.0.6.v20130930'
+    //todo upgrade these to latest jersey from glassfish
     compile group: 'com.sun.jersey', name: 'jersey-core', version: '1.17.1'
     compile group: 'com.sun.jersey', name: 'jersey-json', version: '1.17.1'
     compile group: 'com.sun.jersey', name: 'jersey-servlet', version: '1.17.1'

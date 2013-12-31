@@ -3,9 +3,8 @@ package com.flightstats.datahub.service;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
-import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.dao.ChannelService;
+import com.flightstats.datahub.model.ContentKey;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
@@ -23,14 +22,12 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 public class LatestChannelItemResource {
 
 	private final UriInfo uriInfo;
-	private final ChannelDao channelDao;
-	private final DataHubKeyRenderer keyRenderer;
+	private final ChannelService channelService;
 
 	@Inject
-	public LatestChannelItemResource(UriInfo uriInfo, ChannelDao channelDao, DataHubKeyRenderer keyRenderer) {
+	public LatestChannelItemResource(UriInfo uriInfo, ChannelService channelService) {
 		this.uriInfo = uriInfo;
-		this.channelDao = channelDao;
-		this.keyRenderer = keyRenderer;
+		this.channelService = channelService;
 	}
 
 	@GET
@@ -38,15 +35,15 @@ public class LatestChannelItemResource {
 	@Timed
     @ExceptionMetered
 	public Response getLatest(@PathParam("channelName") String channelName) {
-		Optional<DataHubKey> latestId = channelDao.findLastUpdatedKey(channelName);
+		Optional<ContentKey> latestId = channelService.findLastUpdatedKey(channelName);
 		if (!latestId.isPresent()) {
             return Response.status(NOT_FOUND).build();
 		}
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
 
 		String channelUri = uriInfo.getRequestUri().toString().replaceFirst("/latest$", "");
-		DataHubKey keyOfLatestItem = latestId.get();
-		URI uri = URI.create(channelUri + "/" + keyRenderer.keyToString(keyOfLatestItem));
+		ContentKey keyOfLatestItem = latestId.get();
+		URI uri = URI.create(channelUri + "/" + keyOfLatestItem.keyToString());
 		builder.location(uri);
 		return builder.build();
 	}

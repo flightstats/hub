@@ -19,8 +19,6 @@ JAVA_OPTS="
  -Xmx$MAX_HEAP
  -Xms$MIN_HEAP
  -XX:NewSize=$MIN_NEW
- -XX:+UseG1GC
- -XX:MaxGCPauseMillis=100
  -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n"
 
 # add this for jmxremote/jconsole access

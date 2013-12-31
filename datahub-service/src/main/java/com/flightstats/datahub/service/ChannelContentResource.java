@@ -3,10 +3,9 @@ package com.flightstats.datahub.service;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
-import com.flightstats.datahub.dao.ChannelDao;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.model.LinkedDataHubCompositeValue;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.dao.ChannelService;
+import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.LinkedContent;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -34,15 +33,13 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 public class ChannelContentResource {
 
 	private final UriInfo uriInfo;
-	private final ChannelDao channelDao;
-	private final DataHubKeyRenderer keyRenderer;
+	private final ChannelService channelService;
 	private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
 	@Inject
-	public ChannelContentResource(UriInfo uriInfo, ChannelDao channelDao, DataHubKeyRenderer keyRenderer) {
+	public ChannelContentResource(UriInfo uriInfo, ChannelService channelService) {
 		this.uriInfo = uriInfo;
-		this.channelDao = channelDao;
-		this.keyRenderer = keyRenderer;
+		this.channelService = channelService;
 	}
 
 	@GET
@@ -50,16 +47,12 @@ public class ChannelContentResource {
 	@PerChannelTimed(operationName = "fetch", channelNamePathParameter = "channelName")
     @ExceptionMetered
 	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id, @HeaderParam("Accept") String accept) {
-		Optional<DataHubKey> optionalKey = keyRenderer.fromString(id);
-        if (!optionalKey.isPresent()) {
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-		Optional<LinkedDataHubCompositeValue> optionalResult = channelDao.getValue(channelName, optionalKey.get());
+		Optional<LinkedContent> optionalResult = channelService.getValue(channelName, id);
 
 		if (!optionalResult.isPresent()) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
-		LinkedDataHubCompositeValue compositeValue = optionalResult.get();
+		LinkedContent compositeValue = optionalResult.get();
 
 		MediaType actualContentType = getContentType(compositeValue);
 
@@ -86,7 +79,7 @@ public class ChannelContentResource {
 		}
 	}
 
-	private MediaType getContentType(LinkedDataHubCompositeValue compositeValue) {
+	private MediaType getContentType(LinkedContent compositeValue) {
 		Optional<String> contentType = compositeValue.getContentType();
 		if (contentType.isPresent() && !isNullOrEmpty(contentType.get())) {
 			return MediaType.valueOf(contentType.get());
@@ -107,17 +100,17 @@ public class ChannelContentResource {
 		});
 	}
 
-	private void addPreviousLink(LinkedDataHubCompositeValue compositeValue, Response.ResponseBuilder builder) {
+	private void addPreviousLink(LinkedContent compositeValue, Response.ResponseBuilder builder) {
 		addLink(builder, "previous", compositeValue.getPrevious());
 	}
 
-	private void addNextLink(LinkedDataHubCompositeValue compositeValue, Response.ResponseBuilder builder) {
+	private void addNextLink(LinkedContent compositeValue, Response.ResponseBuilder builder) {
 		addLink(builder, "next", compositeValue.getNext());
 	}
 
-	private void addLink(Response.ResponseBuilder builder, String type, Optional<DataHubKey> key) {
+	private void addLink(Response.ResponseBuilder builder, String type, Optional<ContentKey> key) {
 		if (key.isPresent()) {
-			URI linkUrl = URI.create(uriInfo.getRequestUri().resolve(".") + keyRenderer.keyToString(key.get()));
+			URI linkUrl = URI.create(uriInfo.getRequestUri().resolve(".") + key.get().keyToString());
 			builder.header("Link", "<" + linkUrl + ">;rel=\"" + type + "\"");
 		}
 	}

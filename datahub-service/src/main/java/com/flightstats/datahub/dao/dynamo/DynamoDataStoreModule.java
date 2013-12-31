@@ -2,10 +2,10 @@ package com.flightstats.datahub.dao.dynamo;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.flightstats.datahub.dao.*;
-import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
+import com.flightstats.datahub.util.CuratorKeyGenerator;
+import com.flightstats.datahub.util.DataHubKeyGenerator;
+import com.flightstats.datahub.util.TimeSeriesKeyGenerator;
+import com.google.inject.*;
 import com.google.inject.name.Names;
 
 import java.util.Properties;
@@ -21,24 +21,50 @@ public class DynamoDataStoreModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		Names.bindProperties(binder(), properties);
-		bind(ChannelDaoImpl.class).asEagerSingleton();
 		bind(DynamoConnectorFactory.class).in(Singleton.class);
 		bindListener(ChannelMetadataInitialization.buildTypeMatcher(), new ChannelMetadataInitialization());
 		bindListener(DataHubValueDaoInitialization.buildTypeMatcher(), new DataHubValueDaoInitialization());
-		bind(ChannelDao.class).to(ChannelDaoImpl.class).in(Singleton.class);
+        bind(ChannelService.class).to(SplittingChannelService.class).asEagerSingleton();
+        bind(ChannelMetadataDao.class).to(TimedChannelMetadataDao.class).in(Singleton.class);
+        bind(ChannelMetadataDao.class)
+                .annotatedWith(Names.named(TimedChannelMetadataDao.DELEGATE))
+                .to(CachedChannelMetadataDao.class);
+        bind(ChannelMetadataDao.class)
+                .annotatedWith(Names.named(CachedChannelMetadataDao.DELEGATE))
+                .to(DynamoChannelMetadataDao.class);
 
-		bind(ChannelsCollectionDao.class).to(TimedChannelsCollectionDao.class).in(Singleton.class);
-        bind(ChannelsCollectionDao.class)
-                .annotatedWith(Names.named(TimedChannelsCollectionDao.DELEGATE))
-                .to(CachedChannelsCollectionDao.class);
-        bind(ChannelsCollectionDao.class)
-                .annotatedWith(Names.named(CachedChannelsCollectionDao.DELEGATE))
-                .to(DynamoChannelsCollectionDao.class);
+        install(new PrivateModule() {
+            @Override
+            protected void configure() {
 
-		bind(DataHubValueDao.class).to(TimedDataHubValueDao.class).in(Singleton.class);
-        bind(DataHubValueDao.class)
-                .annotatedWith(Names.named(TimedDataHubValueDao.DELEGATE))
-                .to(DynamoDataHubValueDao.class);
+                bind(ContentService.class).annotatedWith(Sequential.class).to(ContentServiceImpl.class).in(Singleton.class);
+                expose(ContentService.class).annotatedWith(Sequential.class);
+
+                bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
+                bind(ContentDao.class)
+                        .annotatedWith(Names.named(TimedContentDao.DELEGATE))
+                        .to(DynamoContentDao.class);
+                bind(KeyCoordination.class).to(SequenceKeyCoordination.class).in(Singleton.class);
+                bind(DataHubKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
+            }
+        });
+
+        install(new PrivateModule() {
+            @Override
+            protected void configure() {
+
+                bind(ContentService.class).annotatedWith(TimeSeries.class).to(ContentServiceImpl.class).in(Singleton.class);
+                expose(ContentService.class).annotatedWith(TimeSeries.class);
+
+                //todo - gfm - 12/30/13 - can this be pulled out?
+                bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
+                bind(ContentDao.class)
+                        .annotatedWith(Names.named(TimedContentDao.DELEGATE))
+                        .to(DynamoContentDao.class);
+                bind(KeyCoordination.class).to(TimeSeriesKeyCoordination.class).in(Singleton.class);
+                bind(DataHubKeyGenerator.class).to(TimeSeriesKeyGenerator.class).in(Singleton.class);
+            }
+        });
 
         bind(DynamoUtils.class).in(Singleton.class);
 	}

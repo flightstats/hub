@@ -2,7 +2,9 @@ package com.flightstats.datahub.util;
 
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
-import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.SequenceContentKey;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -35,21 +37,21 @@ public class CuratorKeyGenerator implements DataHubKeyGenerator {
     }
 
     @Override
-    public DataHubKey newKey(final String channelName) {
-        return metricsTimer.time("keyGen.newKey", new TimedCallback<DataHubKey>() {
+    public SequenceContentKey newKey(final String channelName) {
+        return metricsTimer.time("keyGen.newKey", new TimedCallback<SequenceContentKey>() {
             @Override
-            public DataHubKey call() {
+            public SequenceContentKey call() {
                 return getDataHubKey(channelName);
             }
         });
     }
 
-    private DataHubKey getDataHubKey(String channelName) {
+    private SequenceContentKey getDataHubKey(String channelName) {
         DistributedAtomicLong atomicLong = getDistributedAtomicLong(channelName);
         try {
             AtomicValue<Long> value = atomicLong.increment();
             if (value.succeeded()) {
-                return new DataHubKey(value.postValue());
+                return new SequenceContentKey(value.postValue());
             } else {
                 //todo - gfm - 12/17/13 - do what?
                 logger.warn("not sure what this means " + channelName + " " + value);
@@ -70,6 +72,11 @@ public class CuratorKeyGenerator implements DataHubKeyGenerator {
 
             logger.warn("unable to seed " + channelName, e);
         }
+    }
+
+    @Override
+    public Optional<ContentKey> parse(String keyString) {
+        return SequenceContentKey.fromString(keyString);
     }
 
     private DistributedAtomicLong getDistributedAtomicLong(String channelName) {

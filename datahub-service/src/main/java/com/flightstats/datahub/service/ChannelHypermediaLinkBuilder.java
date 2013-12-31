@@ -1,8 +1,7 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.DataHubKey;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
+import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
 
@@ -13,11 +12,8 @@ import static com.flightstats.rest.Linked.linked;
 
 public class ChannelHypermediaLinkBuilder {
 
-	private final DataHubKeyRenderer keyRenderer;
-
 	@Inject
-	public ChannelHypermediaLinkBuilder(DataHubKeyRenderer keyRenderer) {
-		this.keyRenderer = keyRenderer;
+	public ChannelHypermediaLinkBuilder() {
 	}
 
 	URI buildChannelUri(ChannelConfiguration channelConfiguration, UriInfo uriInfo) {
@@ -36,10 +32,13 @@ public class ChannelHypermediaLinkBuilder {
 		return URI.create(uriInfo.getRequestUri() + "/" + channelName + "/latest");
 	}
 
-	public URI buildItemUri(DataHubKey key, URI channelUri) {
-		String keyId = keyRenderer.keyToString(key);
-		return URI.create(channelUri.toString() + "/" + keyId);
+	public URI buildItemUri(ContentKey key, URI channelUri) {
+        return buildItemUri(key.keyToString(), channelUri);
 	}
+
+    public URI buildItemUri(String key, URI channelUri) {
+        return URI.create(channelUri.toString() + "/" + key);
+    }
 
 	public URI buildWsLinkFor(UriInfo uriInfo) {
 		String requestUri = uriInfo.getRequestUri().toString().replaceFirst("^http", "ws");

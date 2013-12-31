@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service;
 
-import com.flightstats.datahub.dao.ChannelDao;
+import com.flightstats.datahub.dao.ChannelService;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
@@ -11,9 +11,9 @@ public class DataHubHealthCheckTest {
 
     @Test
     public void testGet() throws Exception {
-        ChannelDao channelDao = mock(ChannelDao.class);
-        when(channelDao.isHealthy()).thenReturn(true);
-        DataHubHealthCheck testClass = new DataHubHealthCheck(channelDao);
+        ChannelService channelService = mock(ChannelService.class);
+        when(channelService.isHealthy()).thenReturn(true);
+        DataHubHealthCheck testClass = new DataHubHealthCheck(channelService);
         assertTrue(testClass.isHealthy());
     }
 }

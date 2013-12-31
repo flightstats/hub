@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This is a guice binding via TypeListener.  It provides a means for the
- * ChannelsCollectionDao to initialize (bootstrap) the channels metadata
+ * ChannelMetadataDao to initialize (bootstrap) the channels metadata
  * column family.  Ideally, this only ever happens once and is forgotten...but realistically....
  * in the event that we spin up a new datahub this will help facilitate bootstrapping.
  * Also dev + ephemeral storage will like this.
@@ -21,12 +21,12 @@ public class ChannelMetadataInitialization implements TypeListener {
 
 	private final static Logger logger = LoggerFactory.getLogger(ChannelMetadataInitialization.class);
 
-	private final ApplyOnce<ChannelsCollectionDao, Void> initOnce = new ApplyOnce<>(
-			new Function<ChannelsCollectionDao, Void>() {
+	private final ApplyOnce<ChannelMetadataDao, Void> initOnce = new ApplyOnce<>(
+			new Function<ChannelMetadataDao, Void>() {
 				@Override
-				public Void apply(ChannelsCollectionDao channelsCollectionDao) {
+				public Void apply(ChannelMetadataDao channelMetadataDao) {
 					logger.info("Bootstrapping channel metadata...");
-					channelsCollectionDao.initializeMetadata();
+					channelMetadataDao.initializeMetadata();
 					return null;
 				}
 			});
@@ -36,8 +36,8 @@ public class ChannelMetadataInitialization implements TypeListener {
 		encounter.register(new InjectionListener<I>() {
 			@Override
 			public void afterInjection(Object instance) {
-				ChannelsCollectionDao channelsCollectionDao = (ChannelsCollectionDao) instance;
-				initOnce.apply(channelsCollectionDao);
+				ChannelMetadataDao channelMetadataDao = (ChannelMetadataDao) instance;
+				initOnce.apply(channelMetadataDao);
 			}
 		});
 
@@ -47,7 +47,7 @@ public class ChannelMetadataInitialization implements TypeListener {
 		return new AbstractMatcher<TypeLiteral<?>>() {
 			@Override
 			public boolean matches(TypeLiteral<?> typeLiteral) {
-				return ChannelsCollectionDao.class.isAssignableFrom(typeLiteral.getRawType());
+				return ChannelMetadataDao.class.isAssignableFrom(typeLiteral.getRawType());
 			}
 		};
 	}
