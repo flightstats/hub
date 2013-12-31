@@ -3,8 +3,6 @@ package com.flightstats.datahub.service.eventing;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
-import com.google.common.base.Optional;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.junit.Test;
 
@@ -41,9 +39,7 @@ public class JettyWebSocketEndpointSenderTest {
 
 		RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
-		DataHubKeyRenderer keyRenderer = mock(DataHubKeyRenderer.class);
 
-		when(keyRenderer.fromString(itemKey)).thenReturn(Optional.of(contentKey));
 		when(linkBuilder.buildItemUri(contentKey, requestUri)).thenReturn(itemUri);
 
 		doThrow(new IOException("Error!  Error!")).when(remoteEndpoint).sendString(anyString());

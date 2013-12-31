@@ -3,7 +3,6 @@ package com.flightstats.datahub.cluster;
 import com.flightstats.datahub.service.ChannelInsertionPublisher;
 import com.flightstats.datahub.service.eventing.Consumer;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import org.junit.Test;
@@ -20,7 +19,6 @@ public class SubscriptionRosterTest {
 		String channelName = "4chan";
         String key = "54321";
 
-		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		Message message = mock(Message.class);
 		Consumer<String> consumer = mock(Consumer.class);
 		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
@@ -45,7 +43,6 @@ public class SubscriptionRosterTest {
 		//GIVEN
 		String channelName = "4chan";
 
-		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 		Consumer<String> consumer = mock(Consumer.class);
 		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
         String id = "12345";

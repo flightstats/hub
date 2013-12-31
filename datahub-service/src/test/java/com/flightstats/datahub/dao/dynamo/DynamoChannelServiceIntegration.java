@@ -1,5 +1,6 @@
 package com.flightstats.datahub.dao.dynamo;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.flightstats.datahub.dao.ChannelServiceIntegration;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ContentKey;
@@ -12,6 +13,7 @@ import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -59,6 +61,8 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
                 .withName(channelName)
                 .withTtlMillis(36000L)
                 .withType(ChannelConfiguration.ChannelType.TimeSeries)
+                .withPeakRequestRate(100).withRateTimeUnit(TimeUnit.MINUTES)
+                .withContentKiloBytes(16)
                 .build();
     }
 
@@ -108,5 +112,17 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
 
         assertEquals("content", compositeValue.getContentType().get());
         assertEquals("lang", compositeValue.getValue().getContentLanguage().get());
+    }
+
+    @Test
+    public void testChannel() throws Exception {
+        AmazonDynamoDBClient dbClient = injector.getInstance(AmazonDynamoDBClient.class);
+        DynamoUtils dynamoUtils = injector.getInstance(DynamoUtils.class);
+        DynamoChannelMetadataDao channelMetadataDao = new DynamoChannelMetadataDao(dbClient, dynamoUtils);
+        ChannelConfiguration configuration = getChannelConfig();
+        ChannelConfiguration channel = channelMetadataDao.createChannel(configuration);
+        assertNotNull(channel);
+        ChannelConfiguration existing = channelMetadataDao.getChannelConfiguration(configuration.getName());
+        assertEquals(configuration.toString(), existing.toString());
     }
 }

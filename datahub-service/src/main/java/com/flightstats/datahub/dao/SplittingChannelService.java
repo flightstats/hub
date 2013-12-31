@@ -19,6 +19,7 @@ public class SplittingChannelService implements ChannelService {
 
     private final static Logger logger = LoggerFactory.getLogger(SplittingChannelService.class);
 
+    //todo - gfm - 12/30/13 - limit exceptions propagated up the stack
     private final ContentService sequentialDao;
     private final ContentService timeSeriesDao;
     private final ChannelMetadataDao channelMetadataDao;
@@ -134,9 +135,7 @@ public class SplittingChannelService implements ChannelService {
     @Override
     public void delete(String channelName) {
         getChannelDao(channelName).delete(channelName);
-        //todo - gfm - 12/27/13 - remove from channel meta data
         channelMetadataDao.delete(channelName);
-        //todo - gfm - 12/27/13 - delete content
 
     }
 }

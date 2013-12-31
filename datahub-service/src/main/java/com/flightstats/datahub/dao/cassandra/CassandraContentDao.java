@@ -36,7 +36,7 @@ public class CassandraContentDao implements ContentDao {
 
 	@Override
     public ValueInsertionResult write(String channelName, Content columnValue, Optional<Integer> ttlSeconds) {
-        SequenceContentKey key = keyGenerator.newKey(channelName);
+        SequenceContentKey key = (SequenceContentKey) keyGenerator.newKey(channelName);
         String rowKey = buildKey(channelName, key);
 
         Integer ttl = 0;

@@ -2,7 +2,9 @@ package com.flightstats.datahub.util;
 
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
+import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -70,6 +72,11 @@ public class CuratorKeyGenerator implements DataHubKeyGenerator {
 
             logger.warn("unable to seed " + channelName, e);
         }
+    }
+
+    @Override
+    public Optional<ContentKey> parse(String keyString) {
+        return SequenceContentKey.fromString(keyString);
     }
 
     private DistributedAtomicLong getDistributedAtomicLong(String channelName) {

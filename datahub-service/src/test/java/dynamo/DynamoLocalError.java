@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- *
+ * https://aws.amazon.com/support/case?caseId=144620991
  */
 public class DynamoLocalError {
 

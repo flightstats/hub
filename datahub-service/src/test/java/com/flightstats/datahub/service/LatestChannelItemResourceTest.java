@@ -3,7 +3,6 @@ package com.flightstats.datahub.service;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
-import com.flightstats.datahub.util.DataHubKeyRenderer;
 import com.google.common.base.Optional;
 import org.junit.Test;
 
@@ -22,7 +21,6 @@ public class LatestChannelItemResourceTest {
 	public void testGetLatest() throws Exception {
 		String channelName = "fooChan";
 		ContentKey key = new SequenceContentKey(1000);
-		DataHubKeyRenderer keyRenderer = new DataHubKeyRenderer();
 
 		UriInfo uriInfo = mock(UriInfo.class);
 		ChannelService channelService = mock(ChannelService.class);
