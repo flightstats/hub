@@ -39,11 +39,13 @@ public class DynamoUtils {
      * Waits for the table to become ready for use.
      */
     public void createTable(CreateTableRequest request) {
+        String tableName = request.getTableName();
         try {
-            logger.info(dbClient.describeTable(request.getTableName()).toString());
+            waitForTableStatus(tableName, TableStatus.ACTIVE);
         } catch (ResourceNotFoundException e) {
             dbClient.createTable(request);
-            waitForTableToBecomeActive(request.getTableName());
+            logger.info("Creating " + tableName + " ...");
+            waitForTableStatus(tableName, TableStatus.ACTIVE);
         }
     }
 
@@ -57,36 +59,35 @@ public class DynamoUtils {
             logger.info("table " + tableName + " is already at this capacity ");
         }
         dbClient.updateTable(tableName, provisionedThroughput);
-        waitForTableToBecomeActive(tableName);
+        waitForTableStatus(tableName, TableStatus.ACTIVE);
     }
 
-    //todo - gfm - 12/12/13 - make this generic for states for deletion
-    private void waitForTableToBecomeActive(String tableName) {
-        logger.info("Waiting for " + tableName + " to become ACTIVE...");
+    private void waitForTableStatus(String tableName, TableStatus status) {
         long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(tableCreationWaitMinutes);
         while (System.currentTimeMillis() < endTime) {
             try {
                 DescribeTableRequest request = new DescribeTableRequest(tableName);
                 TableDescription tableDescription = dbClient.describeTable(request).getTable();
                 String tableStatus = tableDescription.getTableStatus();
-                logger.debug("  - current state: " + tableStatus);
-                if (tableStatus.equals(TableStatus.ACTIVE.toString())) {
-                    logger.info("table " + tableName + " is active");
+                if (status.equals(TableStatus.fromValue(tableStatus))) {
+                    logger.info("table " + tableName + " is " + status.toString());
                     return;
                 }
             } catch (AmazonServiceException ase) {
                 logger.info("exception creating table " + tableName + " " + ase.getMessage());
-                if (!ase.getErrorCode().equalsIgnoreCase("ResourceNotFoundException")) {
-                    throw ase;
-                }
-                logger.info("retrying for table " + tableName);
+                throw ase;
             }
-            try {
-                Thread.sleep(1000);
-            } catch (Exception e) {
-            }
+            sleep();
         }
         logger.warn("table never went active " + tableName);
         throw new RuntimeException("Table " + tableName + " never went active");
+    }
+
+    private void sleep() {
+        try {
+            Thread.sleep(1000);
+        } catch (Exception e) {
+            //ignore
+        }
     }
 }

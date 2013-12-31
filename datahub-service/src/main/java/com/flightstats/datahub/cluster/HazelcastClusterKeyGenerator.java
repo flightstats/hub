@@ -1,11 +1,12 @@
 package com.flightstats.datahub.cluster;
 
-import com.flightstats.datahub.dao.SequenceRowKeyStrategy;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
-import com.flightstats.datahub.model.DataHubKey;
+import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IAtomicLong;
@@ -20,6 +21,7 @@ import java.util.concurrent.Callable;
 public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
 
     private final static Logger logger = LoggerFactory.getLogger(HazelcastClusterKeyGenerator.class);
+    public static final int STARTING_SEQUENCE = 1000;
 
     private final HazelcastInstance hazelcastInstance;
     private ChannelLockExecutor channelLockExecutor;
@@ -34,55 +36,60 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
     }
 
     @Override
-    public DataHubKey newKey(final String channelName) {
+    public SequenceContentKey newKey(final String channelName) {
 
         try {
-            return metricsTimer.time("keyGen.newKey", new TimedCallback<DataHubKey>() {
+            return metricsTimer.time("keyGen.newKey", new TimedCallback<SequenceContentKey>() {
                 @Override
-                public DataHubKey call() {
+                public SequenceContentKey call() {
                     return nextDataHubKey(channelName);
                 }
             });
         } catch (Exception e) {
-            throw new RuntimeException("Error generating new DataHubKey: " + channelName, e);
+            throw new RuntimeException("Error generating new ContentKey: " + channelName, e);
         }
     }
 
-    private DataHubKey nextDataHubKey(String channelName) {
+    private SequenceContentKey nextDataHubKey(String channelName) {
         long sequence = getAtomicNumber(channelName).getAndAdd(1);
         if (isValidSequence(sequence)) {
-            return new DataHubKey(sequence);
+            return new SequenceContentKey(sequence);
         }
         return handleMissingKey(channelName);
     }
 
-    private DataHubKey handleMissingKey(final String channelName) {
+    private SequenceContentKey handleMissingKey(final String channelName) {
         logger.warn("sequence number for channel " + channelName + " is not found.  this will over write any existing data!");
         try {
-            return channelLockExecutor.execute(channelName, new Callable<DataHubKey>() {
+            return channelLockExecutor.execute(channelName, new Callable<SequenceContentKey>() {
                 @Override
-                public DataHubKey call() throws Exception {
+                public SequenceContentKey call() throws Exception {
                     IAtomicLong sequenceNumber = getAtomicNumber(channelName);
                     if (isValidSequence(sequenceNumber.get())) {
                         return nextDataHubKey(channelName);
                     }
-                    long currentSequence = SequenceRowKeyStrategy.INCREMENT;
+                    long currentSequence = STARTING_SEQUENCE;
                     sequenceNumber.set(currentSequence + 1);
-                    return new DataHubKey(currentSequence);
+                    return new SequenceContentKey(currentSequence);
                 }
 
             });
         } catch (Exception e) {
-            throw new RuntimeException("Error generating new DataHubKey: " + channelName, e);
+            throw new RuntimeException("Error generating new ContentKey: " + channelName, e);
         }
     }
 
     private boolean isValidSequence(long sequence) {
-        return sequence >= SequenceRowKeyStrategy.INCREMENT;
+        return sequence >= STARTING_SEQUENCE;
     }
 
     public void seedChannel(String channelName) {
-        getAtomicNumber(channelName).compareAndSet(0, SequenceRowKeyStrategy.INCREMENT);
+        getAtomicNumber(channelName).compareAndSet(0, STARTING_SEQUENCE);
+    }
+
+    @Override
+    public Optional<ContentKey> parse(String keyString) {
+        return SequenceContentKey.fromString(keyString);
     }
 
     private IAtomicLong getAtomicNumber(String channelName) {

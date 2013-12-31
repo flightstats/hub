@@ -2,14 +2,14 @@ package com.flightstats.datahub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import com.flightstats.datahub.dao.ChannelDao;
+import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.ChannelCreationRequest;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
-import com.google.common.base.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -28,14 +28,16 @@ import java.util.Map;
 @Path("/channel")
 public class ChannelResource {
 
-	private final ChannelDao channelDao;
+    private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
+
+	private final ChannelService channelService;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 	private final UriInfo uriInfo;
     private final CreateChannelValidator createChannelValidator;
 
 	@Inject
-	public ChannelResource(ChannelDao channelDao, ChannelHypermediaLinkBuilder linkBuilder, UriInfo uriInfo, CreateChannelValidator createChannelValidator) {
-		this.channelDao = channelDao;
+	public ChannelResource(ChannelService channelService, ChannelHypermediaLinkBuilder linkBuilder, UriInfo uriInfo, CreateChannelValidator createChannelValidator) {
+		this.channelService = channelService;
 		this.linkBuilder = linkBuilder;
 		this.uriInfo = uriInfo;
         this.createChannelValidator = createChannelValidator;
@@ -46,7 +48,7 @@ public class ChannelResource {
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getChannels() {
-		Iterable<ChannelConfiguration> channels = channelDao.getChannels();
+		Iterable<ChannelConfiguration> channels = channelService.getChannels();
 		Map<String, URI> mappedChannels = new HashMap<>();
 		for (ChannelConfiguration channelConfiguration : channels) {
 			String channelName = channelConfiguration.getName();
@@ -71,12 +73,9 @@ public class ChannelResource {
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createChannel(ChannelCreationRequest channelCreationRequest) throws InvalidRequestException, AlreadyExistsException {
-        createChannelValidator.validate(channelCreationRequest);
-		String channelName = channelCreationRequest.getName().get().trim();
-
-		Optional<Long> ttlMillis = channelCreationRequest.getTtlMillis();
-		ChannelConfiguration channelConfiguration = channelDao.createChannel(channelName, ttlMillis.orNull());
+	public Response createChannel(ChannelConfiguration channelConfiguration) throws InvalidRequestException, AlreadyExistsException {
+        createChannelValidator.validate(channelConfiguration);
+        channelService.createChannel(channelConfiguration);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
 		return Response.created(channelUri).entity(
 			linkBuilder.buildLinkedChannelConfig(channelConfiguration, channelUri, uriInfo))
