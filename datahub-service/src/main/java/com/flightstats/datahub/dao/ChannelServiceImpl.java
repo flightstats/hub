@@ -15,14 +15,12 @@ import java.util.Collections;
 /**
  *
  */
-public class SplittingChannelService implements ChannelService {
-    //todo - gfm - 12/30/13 - would be nice to merge this with SimpleChannelService
+public class ChannelServiceImpl implements ChannelService {
 
-    private final static Logger logger = LoggerFactory.getLogger(SplittingChannelService.class);
+    private final static Logger logger = LoggerFactory.getLogger(ChannelServiceImpl.class);
 
     //todo - gfm - 12/30/13 - limit exceptions propagated up the stack
-    private final ContentService sequentialDao;
-    private final ContentService timeSeriesDao;
+    private final ContentServiceFinder contentServiceFinder;
     private final ChannelMetadataDao channelMetadataDao;
     private final ContentService missingDao = new ContentService() {
         @Override
@@ -57,28 +55,19 @@ public class SplittingChannelService implements ChannelService {
     };
 
     @Inject
-    public SplittingChannelService(@Sequential ContentService sequentialDao,
-                                   @TimeSeries ContentService timeSeriesDao,
-                                   ChannelMetadataDao channelMetadataDao) {
-        this.sequentialDao = sequentialDao;
-        this.timeSeriesDao = timeSeriesDao;
+    public ChannelServiceImpl(ContentServiceFinder contentServiceFinder,
+                              ChannelMetadataDao channelMetadataDao) {
+        this.contentServiceFinder = contentServiceFinder;
         this.channelMetadataDao = channelMetadataDao;
     }
 
-    private ContentService getChannelDao(String channelName){
+    private ContentService getContentService(String channelName){
         ChannelConfiguration channelConfiguration = channelMetadataDao.getChannelConfiguration(channelName);
         if (null == channelConfiguration) {
             logger.info("did not find config for " + channelName);
             return missingDao;
         }
-        return getChannelDao(channelConfiguration);
-    }
-
-    private ContentService getChannelDao(ChannelConfiguration channelConfiguration) {
-        if (channelConfiguration.isSequence()) {
-            return sequentialDao;
-        }
-        return timeSeriesDao;
+        return contentServiceFinder.getContentService(channelConfiguration);
     }
 
     @Override
@@ -88,19 +77,19 @@ public class SplittingChannelService implements ChannelService {
 
     @Override
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
-        getChannelDao(configuration).createChannel(configuration);
+        contentServiceFinder.getContentService(configuration).createChannel(configuration);
         return channelMetadataDao.createChannel(configuration);
     }
 
     @Override
     public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
         ChannelConfiguration configuration = channelMetadataDao.getChannelConfiguration(channelName);
-        return getChannelDao(channelName).insert(configuration, contentType, contentLanguage, data);
+        return getContentService(channelName).insert(configuration, contentType, contentLanguage, data);
     }
 
     @Override
     public Optional<LinkedContent> getValue(String channelName, String id) {
-        return getChannelDao(channelName).getValue(channelName, id);
+        return getContentService(channelName).getValue(channelName, id);
     }
 
     @Override
@@ -115,7 +104,7 @@ public class SplittingChannelService implements ChannelService {
 
     @Override
     public Optional<ContentKey> findLastUpdatedKey(String channelName) {
-        return getChannelDao(channelName).findLastUpdatedKey(channelName);
+        return getContentService(channelName).findLastUpdatedKey(channelName);
     }
 
     @Override
@@ -131,12 +120,12 @@ public class SplittingChannelService implements ChannelService {
     @Override
     public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
         ChannelConfiguration configuration = channelMetadataDao.getChannelConfiguration(channelName);
-        return getChannelDao(channelName).getKeys(configuration, dateTime);
+        return getContentService(channelName).getKeys(configuration, dateTime);
     }
 
     @Override
     public void delete(String channelName) {
-        getChannelDao(channelName).delete(channelName);
+        getContentService(channelName).delete(channelName);
         channelMetadataDao.delete(channelName);
 
     }
