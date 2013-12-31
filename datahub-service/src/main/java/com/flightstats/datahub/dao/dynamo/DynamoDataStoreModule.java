@@ -24,7 +24,8 @@ public class DynamoDataStoreModule extends AbstractModule {
 		bind(DynamoConnectorFactory.class).in(Singleton.class);
 		bindListener(ChannelMetadataInitialization.buildTypeMatcher(), new ChannelMetadataInitialization());
 		bindListener(DataHubValueDaoInitialization.buildTypeMatcher(), new DataHubValueDaoInitialization());
-        bind(ChannelService.class).to(SplittingChannelService.class).asEagerSingleton();
+        bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
+        bind(ContentServiceFinder.class).to(SplittingContentServiceFinder.class).asEagerSingleton();
         bind(ChannelMetadataDao.class).to(TimedChannelMetadataDao.class).in(Singleton.class);
         bind(ChannelMetadataDao.class)
                 .annotatedWith(Names.named(TimedChannelMetadataDao.DELEGATE))
