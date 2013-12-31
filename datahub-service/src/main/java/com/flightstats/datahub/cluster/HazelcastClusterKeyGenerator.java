@@ -2,9 +2,11 @@ package com.flightstats.datahub.cluster;
 
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
+import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IAtomicLong;
@@ -83,6 +85,11 @@ public class HazelcastClusterKeyGenerator implements DataHubKeyGenerator {
 
     public void seedChannel(String channelName) {
         getAtomicNumber(channelName).compareAndSet(0, STARTING_SEQUENCE);
+    }
+
+    @Override
+    public Optional<ContentKey> parse(String keyString) {
+        return SequenceContentKey.fromString(keyString);
     }
 
     private IAtomicLong getAtomicNumber(String channelName) {

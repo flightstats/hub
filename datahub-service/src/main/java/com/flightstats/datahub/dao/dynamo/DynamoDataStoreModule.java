@@ -2,6 +2,9 @@ package com.flightstats.datahub.dao.dynamo;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.flightstats.datahub.dao.*;
+import com.flightstats.datahub.util.CuratorKeyGenerator;
+import com.flightstats.datahub.util.DataHubKeyGenerator;
+import com.flightstats.datahub.util.TimeSeriesKeyGenerator;
 import com.google.inject.*;
 import com.google.inject.name.Names;
 
@@ -40,8 +43,9 @@ public class DynamoDataStoreModule extends AbstractModule {
                 bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
                 bind(ContentDao.class)
                         .annotatedWith(Names.named(TimedContentDao.DELEGATE))
-                        .to(DynamoSequentialContentDao.class);
+                        .to(DynamoContentDao.class);
                 bind(KeyCoordination.class).to(SequenceKeyCoordination.class).in(Singleton.class);
+                bind(DataHubKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
             }
         });
 
@@ -52,11 +56,13 @@ public class DynamoDataStoreModule extends AbstractModule {
                 bind(ContentService.class).annotatedWith(TimeSeries.class).to(ContentServiceImpl.class).in(Singleton.class);
                 expose(ContentService.class).annotatedWith(TimeSeries.class);
 
+                //todo - gfm - 12/30/13 - can this be pulled out?
                 bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
                 bind(ContentDao.class)
                         .annotatedWith(Names.named(TimedContentDao.DELEGATE))
-                        .to(DynamoTimeSeriesContentDao.class);
+                        .to(DynamoContentDao.class);
                 bind(KeyCoordination.class).to(TimeSeriesKeyCoordination.class).in(Singleton.class);
+                bind(DataHubKeyGenerator.class).to(TimeSeriesKeyGenerator.class).in(Singleton.class);
             }
         });
 

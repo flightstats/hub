@@ -87,6 +87,18 @@ public class ChannelConfiguration implements Serializable {
         return (long) Math.ceil(peakRequestRate / (double) TimeUnit.SECONDS.convert(1, rateTimeUnit));
     }
 
+    public int getContentSizeKB() {
+        return contentSizeKB;
+    }
+
+    public int getPeakRequestRate() {
+        return peakRequestRate;
+    }
+
+    public TimeUnit getRateTimeUnit() {
+        return rateTimeUnit;
+    }
+
     public ChannelType getType() {
         return type;
     }

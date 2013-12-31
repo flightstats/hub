@@ -1,6 +1,8 @@
 package com.flightstats.datahub.dao.cassandra;
 
 import com.flightstats.datahub.dao.*;
+import com.flightstats.datahub.util.CuratorKeyGenerator;
+import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -40,6 +42,7 @@ public class CassandraDataStoreModule extends AbstractModule {
         bind(ContentDao.class)
                 .annotatedWith(Names.named(TimedContentDao.DELEGATE))
                 .to(CassandraContentDao.class);
+        bind(DataHubKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
 	}
 
     @Inject

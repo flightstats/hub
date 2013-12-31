@@ -5,6 +5,7 @@ import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.datahub.dao.ContentDao;
 import com.flightstats.datahub.dao.TimeIndexDates;
 import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -17,16 +18,19 @@ import java.util.*;
 /**
  *
  */
-public class DynamoTimeSeriesContentDao implements ContentDao {
+public class DynamoContentDao implements ContentDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(DynamoTimeSeriesContentDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(DynamoContentDao.class);
 
+    private final DataHubKeyGenerator keyGenerator;
     private final AmazonDynamoDBClient dbClient;
     private final DynamoUtils dynamoUtils;
 
     @Inject
-    public DynamoTimeSeriesContentDao(AmazonDynamoDBClient dbClient,
-                                      DynamoUtils dynamoUtils) {
+    public DynamoContentDao(DataHubKeyGenerator keyGenerator,
+                            AmazonDynamoDBClient dbClient,
+                            DynamoUtils dynamoUtils) {
+        this.keyGenerator = keyGenerator;
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
     }
@@ -34,7 +38,7 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
     @Override
     public ValueInsertionResult write(String channelName, Content content, Optional<Integer> ttlSeconds) {
         //todo - gfm - 12/11/13 - this may need to change if we don't want to create unlimited dynamo tables in dev & qa
-        ContentKey key = new TimeSeriesContentKey();
+        ContentKey key = keyGenerator.newKey(channelName);
 
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("key", new AttributeValue().withS(key.keyToString()));
@@ -95,19 +99,9 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
     @Override
     public void initializeChannel(ChannelConfiguration config) {
 
-        /**
-         * The Primary Key should remain a hash key so items are directly retrievable.
-         * To support range queries based on time, we may need some sort of Global Secondary Index
-         * A - we could simply use a small time value (minute?) as a String as the GSI's hash key,
-         * then be able to pull back groups of id's directly.
-         * This time based grouping could cause issues with hot spots under high load.
-         * B - Use a batching mechanism to allow retrieval based on time
-         * This would not be unique to non-sequentials
-         *
-         */
-        //todo - gfm - 12/21/13 - this is option A
         ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
 
+        //todo - gfm - 12/30/13 - make this optional for sequentials
         long indexThroughput = config.getRequestRateInSeconds();
         attributeDefinitions.add(new AttributeDefinition().withAttributeName("hashstamp").withAttributeType("S"));
         GlobalSecondaryIndex secondaryIndex = new GlobalSecondaryIndex()
@@ -135,17 +129,19 @@ public class DynamoTimeSeriesContentDao implements ContentDao {
                 .withProvisionedThroughput(new ProvisionedThroughput(tableThroughput, tableThroughput));
 
         logger.info("creating times series " + tableName + " table with " + tableThroughput + " " + indexThroughput);
+        keyGenerator.seedChannel(config.getName());
         dynamoUtils.createTable(createTableRequest);
     }
 
     @Override
     public Optional<ContentKey> getKey(String id) {
-        return TimeSeriesContentKey.fromString(id);
+        return keyGenerator.parse(id);
     }
 
     @Override
     public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
         //todo see if Parallel Scan is relevant here - http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html
+        //todo - gfm - 12/30/13 - make this optional for sequentials
         List<ContentKey> keys = new ArrayList<>();
         QueryRequest queryRequest = getQueryRequest(channelName, dateTime);
         QueryResult result = dbClient.query(queryRequest);
