@@ -1,8 +1,8 @@
 package com.flightstats.datahub.service.eventing;
 
+import com.flightstats.datahub.cluster.HazelcastSubscriber;
 import com.flightstats.datahub.service.ChannelInsertionPublisher;
 import com.google.inject.Inject;
-import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,14 +20,10 @@ public class SubscriptionRoster {
 		this.channelInsertionPublisher = channelInsertionPublisher;
 	}
 
-	public void subscribe(final String channelName, final Consumer<String> consumer) {
+	public void subscribe(final String channelName, Consumer<String> consumer) {
         logger.info("Adding new message listener for websocket hazelcast queue for channel " + channelName);
-        String registrationId = channelInsertionPublisher.subscribe(channelName, new MessageListener<String>() {
-            @Override
-            public void onMessage(Message<String> message) {
-                consumer.apply(message.getMessageObject());
-            }
-        });
+        MessageListener<String> messageListener = new HazelcastSubscriber(consumer);
+        String registrationId = channelInsertionPublisher.subscribe(channelName, messageListener);
         consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), registrationId );
 	}
 
