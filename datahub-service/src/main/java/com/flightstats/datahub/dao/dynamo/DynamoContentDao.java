@@ -4,7 +4,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.datahub.dao.ContentDao;
 import com.flightstats.datahub.dao.TimeIndexDates;
-import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.Content;
+import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -100,20 +103,6 @@ public class DynamoContentDao implements ContentDao {
     public void initializeChannel(ChannelConfiguration config) {
 
         ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
-
-        //todo - gfm - 12/30/13 - make this optional for sequentials
-        long indexThroughput = config.getRequestRateInSeconds();
-        attributeDefinitions.add(new AttributeDefinition().withAttributeName("hashstamp").withAttributeType("S"));
-        GlobalSecondaryIndex secondaryIndex = new GlobalSecondaryIndex()
-                .withIndexName("TimeIndex")
-                .withProvisionedThroughput(new ProvisionedThroughput(indexThroughput, indexThroughput))
-                .withProjection(new Projection().withProjectionType("KEYS_ONLY"));
-
-        ArrayList<KeySchemaElement> indexKeySchema = new ArrayList<>();
-
-        indexKeySchema.add(new KeySchemaElement().withAttributeName("hashstamp").withKeyType(KeyType.HASH));
-
-        secondaryIndex.setKeySchema(indexKeySchema);
         attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("S"));
 
         ArrayList<KeySchemaElement> tableKeySchema = new ArrayList<>();
@@ -123,10 +112,23 @@ public class DynamoContentDao implements ContentDao {
         String tableName = dynamoUtils.getTableName(config.getName());
         CreateTableRequest createTableRequest = new CreateTableRequest()
                 .withTableName(tableName)
-                .withAttributeDefinitions(attributeDefinitions)
                 .withKeySchema(tableKeySchema)
-                .withGlobalSecondaryIndexes(secondaryIndex)
                 .withProvisionedThroughput(new ProvisionedThroughput(tableThroughput, tableThroughput));
+
+        long indexThroughput = config.getRequestRateInSeconds();
+        if (config.hasTimeIndex()) {
+
+            attributeDefinitions.add(new AttributeDefinition().withAttributeName("hashstamp").withAttributeType("S"));
+            GlobalSecondaryIndex secondaryIndex = new GlobalSecondaryIndex()
+                    .withIndexName("TimeIndex")
+                    .withProvisionedThroughput(new ProvisionedThroughput(indexThroughput, indexThroughput))
+                    .withProjection(new Projection().withProjectionType("KEYS_ONLY"));
+            ArrayList<KeySchemaElement> indexKeySchema = new ArrayList<>();
+            indexKeySchema.add(new KeySchemaElement().withAttributeName("hashstamp").withKeyType(KeyType.HASH));
+            secondaryIndex.setKeySchema(indexKeySchema);
+            createTableRequest.withGlobalSecondaryIndexes(secondaryIndex);
+        }
+        createTableRequest.withAttributeDefinitions(attributeDefinitions);
 
         logger.info("creating times series " + tableName + " table with " + tableThroughput + " " + indexThroughput);
         keyGenerator.seedChannel(config.getName());
@@ -139,11 +141,13 @@ public class DynamoContentDao implements ContentDao {
     }
 
     @Override
-    public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
+    public Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime) {
         //todo see if Parallel Scan is relevant here - http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html
-        //todo - gfm - 12/30/13 - make this optional for sequentials
+        if (!configuration.hasTimeIndex()) {
+            throw new UnsupportedOperationException("this channel does not support get keys " + configuration.getName());
+        }
         List<ContentKey> keys = new ArrayList<>();
-        QueryRequest queryRequest = getQueryRequest(channelName, dateTime);
+        QueryRequest queryRequest = getQueryRequest(configuration.getName(), dateTime);
         QueryResult result = dbClient.query(queryRequest);
         addResults(keys, result);
         while (result.getLastEvaluatedKey() != null) {
@@ -152,20 +156,20 @@ public class DynamoContentDao implements ContentDao {
             addResults(keys, result);
 
         }
-        logger.info("returning " + keys.size() + " keys for " + channelName + " at " + TimeIndexDates.getString(dateTime));
+        logger.info("returning " + keys.size() + " keys for " + configuration + " at " + TimeIndexDates.getString(dateTime));
         return keys;
     }
 
     @Override
     public void delete(String channelName) {
-        dbClient.deleteTable(dynamoUtils.getTableName(channelName));
+        dynamoUtils.deleteChannel(channelName);
     }
 
     private void addResults(List<ContentKey> keys, QueryResult result) {
         for (Map<String, AttributeValue> attribs : result.getItems()) {
             AttributeValue keyValue = attribs.get("key");
             if (keyValue != null) {
-                Optional<ContentKey> keyOptional = TimeSeriesContentKey.fromString(keyValue.getS());
+                Optional<ContentKey> keyOptional = getKey(keyValue.getS());
                 if (keyOptional.isPresent()) {
                     keys.add(keyOptional.get());
                 }

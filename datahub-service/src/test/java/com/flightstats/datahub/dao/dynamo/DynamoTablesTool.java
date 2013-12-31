@@ -31,7 +31,7 @@ public class DynamoTablesTool {
 
         for (int i = 70; i <= 84; i++) {
             String channelName = "test" + i;
-            //deleteTable(dbClient, name);
+            //deleteChannel(dbClient, name);
             ProvisionedThroughput provisionedThroughput = new ProvisionedThroughput()
                     .withReadCapacityUnits(20L)
                     .withWriteCapacityUnits(20L);
