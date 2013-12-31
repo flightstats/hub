@@ -49,6 +49,17 @@ public class DynamoUtils {
         }
     }
 
+    public void deleteChannel(String channelName) {
+        String tableName = getTableName(channelName);
+        try {
+            DescribeTableResult describeTableResult = dbClient.describeTable(tableName);
+            dbClient.deleteTable(tableName);
+            //todo - gfm - 12/30/13 - wait for deletion?
+        } catch (ResourceNotFoundException e) {
+            //do nothing
+        }
+    }
+
     public void changeProvisioning(String channelName, ProvisionedThroughput provisionedThroughput) {
         //todo - gfm - 12/13/13 - this needs to consider relative percent change of provisioning as well as max changes per day
         String tableName = getTableName(channelName);
@@ -66,10 +77,8 @@ public class DynamoUtils {
         long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(tableCreationWaitMinutes);
         while (System.currentTimeMillis() < endTime) {
             try {
-                DescribeTableRequest request = new DescribeTableRequest(tableName);
-                TableDescription tableDescription = dbClient.describeTable(request).getTable();
-                String tableStatus = tableDescription.getTableStatus();
-                if (status.equals(TableStatus.fromValue(tableStatus))) {
+                TableDescription tableDescription = dbClient.describeTable(tableName).getTable();
+                if (status.equals(TableStatus.fromValue(tableDescription.getTableStatus()))) {
                     logger.info("table " + tableName + " is " + status.toString());
                     return;
                 }

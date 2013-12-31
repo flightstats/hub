@@ -12,6 +12,7 @@ import org.joda.time.DateTime;
  *
  */
 public class SimpleChannelService implements ChannelService {
+    //todo - gfm - 12/30/13 - would be nice to merge this with SplittingChannelService
 
     private final ContentService contentService;
     private final ChannelMetadataDao channelMetadataDao;
@@ -71,7 +72,8 @@ public class SimpleChannelService implements ChannelService {
 
     @Override
     public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
-        return contentService.getKeys(channelName, dateTime);
+        ChannelConfiguration configuration = channelMetadataDao.getChannelConfiguration(channelName);
+        return contentService.getKeys(configuration, dateTime);
     }
 
     @Override

@@ -2,8 +2,10 @@ package com.flightstats.datahub.dao.cassandra;
 
 import com.flightstats.datahub.dao.ChannelServiceIntegration;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import java.io.IOException;
 import java.util.Properties;
 
 public class CassandraChannelServiceIntegration extends ChannelServiceIntegration {
@@ -25,5 +27,10 @@ public class CassandraChannelServiceIntegration extends ChannelServiceIntegratio
 
     @Override
     protected void verifyStartup() {
+    }
+
+    @AfterClass
+    public static void teardownClass() throws IOException {
+        tearDown();
     }
 }

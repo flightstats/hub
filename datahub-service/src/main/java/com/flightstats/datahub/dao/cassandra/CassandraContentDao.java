@@ -107,8 +107,8 @@ public class CassandraContentDao implements ContentDao {
     }
 
     @Override
-    public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
-        throw new UnsupportedOperationException("this implementation does not support get keys " + channelName);
+    public Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime) {
+        throw new UnsupportedOperationException("this implementation does not support get keys " + configuration.getName());
     }
 
     @Override
