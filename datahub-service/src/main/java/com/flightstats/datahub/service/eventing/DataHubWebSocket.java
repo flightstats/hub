@@ -45,6 +45,8 @@ public class DataHubWebSocket {
 
 	@OnWebSocketConnect
 	public void onConnect(final Session session) {
+        //todo - gfm - 12/30/13 - should this verify that the channel exists?
+        //todo - gfm - 12/30/13 - we need to handle time series
 		UpgradeRequest upgradeRequest = session.getUpgradeRequest();
 		URI requestUri = upgradeRequest.getRequestURI();
         remoteAddress = session.getRemoteAddress().toString();
