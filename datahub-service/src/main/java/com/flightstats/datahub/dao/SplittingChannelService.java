@@ -16,6 +16,7 @@ import java.util.Collections;
  *
  */
 public class SplittingChannelService implements ChannelService {
+    //todo - gfm - 12/30/13 - would be nice to merge this with SimpleChannelService
 
     private final static Logger logger = LoggerFactory.getLogger(SplittingChannelService.class);
 
@@ -44,7 +45,7 @@ public class SplittingChannelService implements ChannelService {
         }
 
         @Override
-        public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
+        public Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime) {
             return Collections.emptyList();
         }
 
@@ -129,7 +130,8 @@ public class SplittingChannelService implements ChannelService {
 
     @Override
     public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
-        return getChannelDao(channelName).getKeys(channelName, dateTime);
+        ChannelConfiguration configuration = channelMetadataDao.getChannelConfiguration(channelName);
+        return getChannelDao(channelName).getKeys(configuration, dateTime);
     }
 
     @Override

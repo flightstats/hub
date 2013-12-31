@@ -66,7 +66,7 @@ public class SequenceContentKey implements ContentKey {
 
     @Override
     public String toString() {
-        return "ContentKey{" +
+        return "SequenceContentKey{" +
                 " sequence=" + sequence +
                 '}';
     }

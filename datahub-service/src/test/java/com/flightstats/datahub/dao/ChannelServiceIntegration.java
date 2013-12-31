@@ -8,7 +8,6 @@ import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import com.google.inject.Injector;
 import org.apache.curator.test.TestingServer;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -44,8 +43,7 @@ public abstract class ChannelServiceIntegration {
         channelNames.add(channelName);
     }
 
-    @AfterClass
-    public static void teardownClass() throws IOException {
+    public static void tearDown() throws IOException {
         testingServer.stop();
     }
 

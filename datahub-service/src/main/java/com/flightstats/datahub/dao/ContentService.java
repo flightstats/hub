@@ -17,7 +17,7 @@ public interface ContentService {
 
 	Optional<ContentKey> findLastUpdatedKey(String channelName);
 
-    Iterable<ContentKey> getKeys(String channelName, DateTime dateTime);
+    Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime);
 
     void delete(String channelName);
 }
