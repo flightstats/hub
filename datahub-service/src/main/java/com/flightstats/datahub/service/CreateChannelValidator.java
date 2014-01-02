@@ -27,6 +27,20 @@ public class CreateChannelValidator {
         ensureNotAllBlank(channelName);
         checkForInvalidCharacters(channelName);
         validateChannelUniqueness(channelName);
+        validateRate(request);
+        validateContentSize(request);
+    }
+
+    private void validateContentSize(ChannelConfiguration request) throws InvalidRequestException {
+        if (request.getContentSizeKB() <= 0) {
+            throw new InvalidRequestException("{\"error\": \"Content Size must be greater than 0 (zero) \"}");
+        }
+    }
+
+    private void validateRate(ChannelConfiguration request) throws InvalidRequestException {
+        if (request.getPeakRequestRate() <= 0) {
+            throw new InvalidRequestException("{\"error\": \"Peak Request Rate must be greater than 0 (zero) \"}");
+        }
     }
 
     private void validateNameWasGiven(Optional<String> channelName) throws InvalidRequestException {

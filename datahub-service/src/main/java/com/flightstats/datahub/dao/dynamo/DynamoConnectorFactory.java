@@ -1,17 +1,21 @@
 package com.flightstats.datahub.dao.dynamo;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.Protocol;
+import com.amazonaws.*;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.PropertiesCredentials;
+import com.amazonaws.retry.PredefinedRetryPolicies;
+import com.amazonaws.retry.RetryPolicy;
+import com.amazonaws.retry.RetryUtils;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.google.inject.Inject;
-import com.google.inject.Provides;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
@@ -34,7 +38,6 @@ public class DynamoConnectorFactory {
         this.credentials = credentials;
     }
 
-    @Provides
     public AmazonDynamoDBClient getClient() {
         while (true) {
             try {
@@ -46,16 +49,69 @@ public class DynamoConnectorFactory {
         }
     }
 
+    private class ModifiedRetryCondition implements RetryPolicy.RetryCondition {
+
+        @Override
+        public boolean shouldRetry(AmazonWebServiceRequest originalRequest,
+                                   AmazonClientException exception,
+                                   int retriesAttempted) {
+            // Always retry on client exceptions caused by IOException
+            if (exception.getCause() instanceof IOException) return true;
+
+            // Only retry on a subset of service exceptions
+            if (exception instanceof AmazonServiceException) {
+                AmazonServiceException ase = (AmazonServiceException)exception;
+
+                /*
+                 * For 500 internal server errors and 503 service
+                 * unavailable errors, we want to retry, but we need to use
+                 * an exponential back-off strategy so that we don't overload
+                 * a server with a flood of retries.
+                 */
+                if (ase.getStatusCode() == HttpStatus.SC_INTERNAL_SERVER_ERROR
+                        || ase.getStatusCode() == HttpStatus.SC_SERVICE_UNAVAILABLE) {
+                    return true;
+                }
+
+                /*
+                 * Throttling is reported as a 400 error from newer services. To try
+                 * and smooth out an occasional throttling error, we'll pause and
+                 * retry, hoping that the pause is long enough for the request to
+                 * get through the next time.
+                 */
+                if (RetryUtils.isThrottlingException(ase)) {
+                    if (PutItemRequest.class.isAssignableFrom(originalRequest.getClass())) {
+                        PutItemRequest putItemRequest = (PutItemRequest) originalRequest;
+                        logger.info("throttling put in table  " + putItemRequest.getTableName());
+                    } else {
+                        logger.info("throttling exception " + originalRequest);
+                    }
+                    return false;
+                }
+
+                /*
+                 * Clock skew exception. If it is then we will get the time offset
+                 * between the device time and the server time to set the clock skew
+                 * and then retry the request.
+                 */
+                if (RetryUtils.isClockSkewError(ase)) return true;
+            }
+
+            return false;
+        }
+    }
+
     private AmazonDynamoDBClient attemptClient() {
         try {
+            RetryPolicy retryPolicy = new RetryPolicy(new ModifiedRetryCondition(),
+                    PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY, 3, true);
             logger.info("creating for  " + protocol + " " + endpoint);
             //todo - gfm - 12/12/13 - figure out credentials
             //look at com.amazonaws.auth.AWSCredentialsProvider
             AWSCredentials awsCredentials = new PropertiesCredentials(new File(credentials));
             AmazonDynamoDBClient client = new AmazonDynamoDBClient(awsCredentials);
-            //todo - gfm - 12/27/13 - look at exponential backoff & retrys for 400s
             ClientConfiguration configuration = new ClientConfiguration();
-
+            configuration.withRetryPolicy(retryPolicy);
             configuration.setProtocol(Protocol.valueOf(protocol));
             client.setConfiguration(configuration);
             client.setEndpoint(endpoint);
