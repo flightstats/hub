@@ -24,6 +24,9 @@ import java.util.*;
 public class DynamoContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(DynamoContentDao.class);
+    private static final String TIME_INDEX = "TimeIndex";
+    private static final String KEY = "key";
+    private static final String HASHSTAMP = "hashstamp";
 
     private final DataHubKeyGenerator keyGenerator;
     private final AmazonDynamoDBClient dbClient;
@@ -40,13 +43,12 @@ public class DynamoContentDao implements ContentDao {
 
     @Override
     public ValueInsertionResult write(String channelName, Content content, Optional<Integer> ttlSeconds) {
-        //todo - gfm - 12/11/13 - this may need to change if we don't want to create unlimited dynamo tables in dev & qa
         ContentKey key = keyGenerator.newKey(channelName);
 
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put("key", new AttributeValue().withS(key.keyToString()));
+        item.put(KEY, new AttributeValue().withS(key.keyToString()));
         item.put("data", new AttributeValue().withB(ByteBuffer.wrap(content.getData())));
-        item.put("hashstamp", new AttributeValue().withS(TimeIndexDates.getString()));
+        item.put(HASHSTAMP, new AttributeValue().withS(TimeIndexDates.getString()));
         item.put("millis", new AttributeValue().withN(String.valueOf(content.getMillis())));
         if (content.getContentType().isPresent()) {
             item.put("contentType", new AttributeValue(content.getContentType().get()));
@@ -68,7 +70,7 @@ public class DynamoContentDao implements ContentDao {
     public Content read(String channelName, ContentKey key) {
 
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
-        keyMap.put("key", new AttributeValue().withS(key.keyToString()));
+        keyMap.put(KEY, new AttributeValue().withS(key.keyToString()));
 
         GetItemRequest getItemRequest = new GetItemRequest()
                 .withTableName(dynamoUtils.getTableName(channelName))
@@ -103,10 +105,10 @@ public class DynamoContentDao implements ContentDao {
     public void initializeChannel(ChannelConfiguration config) {
 
         ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
-        attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("S"));
+        attributeDefinitions.add(new AttributeDefinition().withAttributeName(KEY).withAttributeType("S"));
 
         ArrayList<KeySchemaElement> tableKeySchema = new ArrayList<>();
-        tableKeySchema.add(new KeySchemaElement().withAttributeName("key").withKeyType(KeyType.HASH));
+        tableKeySchema.add(new KeySchemaElement().withAttributeName(KEY).withKeyType(KeyType.HASH));
 
         long tableThroughput = config.getContentThroughputInSeconds();
         String tableName = dynamoUtils.getTableName(config.getName());
@@ -118,13 +120,13 @@ public class DynamoContentDao implements ContentDao {
         long indexThroughput = config.getRequestRateInSeconds();
         if (config.hasTimeIndex()) {
 
-            attributeDefinitions.add(new AttributeDefinition().withAttributeName("hashstamp").withAttributeType("S"));
+            attributeDefinitions.add(new AttributeDefinition().withAttributeName(HASHSTAMP).withAttributeType("S"));
             GlobalSecondaryIndex secondaryIndex = new GlobalSecondaryIndex()
-                    .withIndexName("TimeIndex")
+                    .withIndexName(TIME_INDEX)
                     .withProvisionedThroughput(new ProvisionedThroughput(indexThroughput, indexThroughput))
-                    .withProjection(new Projection().withProjectionType("KEYS_ONLY"));
+                    .withProjection(new Projection().withProjectionType(ProjectionType.KEYS_ONLY));
             ArrayList<KeySchemaElement> indexKeySchema = new ArrayList<>();
-            indexKeySchema.add(new KeySchemaElement().withAttributeName("hashstamp").withKeyType(KeyType.HASH));
+            indexKeySchema.add(new KeySchemaElement().withAttributeName(HASHSTAMP).withKeyType(KeyType.HASH));
             secondaryIndex.setKeySchema(indexKeySchema);
             createTableRequest.withGlobalSecondaryIndexes(secondaryIndex);
         }
@@ -165,9 +167,43 @@ public class DynamoContentDao implements ContentDao {
         dynamoUtils.deleteChannel(channelName);
     }
 
+    @Override
+    public void updateChannel(ChannelConfiguration configuration) {
+        boolean update = false;
+        String tableName = dynamoUtils.getTableName(configuration.getName());
+        TableDescription table = dbClient.describeTable(tableName).getTable();
+
+        UpdateTableRequest updateTableRequest = new UpdateTableRequest().withTableName(tableName);
+        long tableThroughput = configuration.getContentThroughputInSeconds();
+        if (table.getProvisionedThroughput().getWriteCapacityUnits() != tableThroughput) {
+            update = true;
+            updateTableRequest.withProvisionedThroughput(new ProvisionedThroughput(tableThroughput, tableThroughput));
+        }
+
+        List<GlobalSecondaryIndexDescription> gsis = table.getGlobalSecondaryIndexes();
+        if (null != gsis) {
+            for (GlobalSecondaryIndexDescription gsi : gsis) {
+                if (gsi.getIndexName().equals(TIME_INDEX)) {
+                    long indexThroughput = configuration.getRequestRateInSeconds();
+                    if (gsi.getProvisionedThroughput().getWriteCapacityUnits() != indexThroughput) {
+                        update = true;
+                        UpdateGlobalSecondaryIndexAction indexAction = new UpdateGlobalSecondaryIndexAction()
+                                .withIndexName(TIME_INDEX)
+                                .withProvisionedThroughput(new ProvisionedThroughput(indexThroughput, indexThroughput));
+
+                        updateTableRequest.withGlobalSecondaryIndexUpdates(new GlobalSecondaryIndexUpdate().withUpdate(indexAction));
+                    }
+                }
+            }
+        }
+        if (update) {
+            dbClient.updateTable(updateTableRequest);
+        }
+    }
+
     private void addResults(List<ContentKey> keys, QueryResult result) {
         for (Map<String, AttributeValue> attribs : result.getItems()) {
-            AttributeValue keyValue = attribs.get("key");
+            AttributeValue keyValue = attribs.get(KEY);
             if (keyValue != null) {
                 Optional<ContentKey> keyOptional = getKey(keyValue.getS());
                 if (keyOptional.isPresent()) {
@@ -180,13 +216,13 @@ public class DynamoContentDao implements ContentDao {
     private QueryRequest getQueryRequest(String channelName, DateTime dateTime) {
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(dynamoUtils.getTableName(channelName))
-                .withIndexName("TimeIndex")
+                .withIndexName(TIME_INDEX)
                 .withSelect("ALL_PROJECTED_ATTRIBUTES")
                 .withScanIndexForward(true);
 
         HashMap<String, Condition> keyConditions = new HashMap<>();
 
-        keyConditions.put("hashstamp", new Condition()
+        keyConditions.put(HASHSTAMP, new Condition()
                 .withComparisonOperator(ComparisonOperator.EQ)
                 .withAttributeValueList(new AttributeValue().withS(TimeIndexDates.getString(dateTime))));
 

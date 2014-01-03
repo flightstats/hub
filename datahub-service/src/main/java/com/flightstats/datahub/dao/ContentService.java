@@ -11,6 +11,8 @@ public interface ContentService {
 
 	void createChannel(ChannelConfiguration configuration);
 
+	void updateChannel(ChannelConfiguration configuration);
+
 	ValueInsertionResult insert(ChannelConfiguration configuration, Optional<String> contentType, Optional<String> contentLanguage, byte[] data);
 
 	Optional<LinkedContent> getValue(String channelName, String id);

@@ -146,4 +146,27 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
         ChannelConfiguration existing = channelMetadataDao.getChannelConfiguration(configuration.getName());
         assertEquals(configuration.toString(), existing.toString());
     }
+
+    @Test
+    public void testUpdateChannelNoChange() throws Exception {
+        assertNull(channelService.getChannelConfiguration(channelName));
+        ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
+        ChannelConfiguration createdChannel = channelService.createChannel(configuration);
+        assertEquals(channelName, createdChannel.getName());
+        assertEquals(createdChannel, channelService.getChannelConfiguration(channelName));
+        channelService.updateChannel(configuration);
+    }
+
+    @Test
+    public void testUpdateChannelChange() throws Exception {
+        assertNull(channelService.getChannelConfiguration(channelName));
+        ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
+        ChannelConfiguration createdChannel = channelService.createChannel(configuration);
+        assertEquals(channelName, createdChannel.getName());
+        assertEquals(createdChannel, channelService.getChannelConfiguration(channelName));
+        ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(configuration)
+                .withPeakRequestRate(150)
+                .build();
+        channelService.updateChannel(newConfig);
+    }
 }

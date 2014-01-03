@@ -60,19 +60,6 @@ public class DynamoUtils {
         }
     }
 
-    public void changeProvisioning(String channelName, ProvisionedThroughput provisionedThroughput) {
-        //todo - gfm - 12/13/13 - this needs to consider relative percent change of provisioning as well as max changes per day
-        String tableName = getTableName(channelName);
-        DescribeTableResult describeTableResult = dbClient.describeTable(tableName);
-        ProvisionedThroughputDescription existingThroughput = describeTableResult.getTable().getProvisionedThroughput();
-        if (existingThroughput.getReadCapacityUnits().equals(provisionedThroughput.getReadCapacityUnits())
-                && existingThroughput.getWriteCapacityUnits().equals(provisionedThroughput.getWriteCapacityUnits())) {
-            logger.info("table " + tableName + " is already at this capacity ");
-        }
-        dbClient.updateTable(tableName, provisionedThroughput);
-        waitForTableStatus(tableName, TableStatus.ACTIVE);
-    }
-
     private void waitForTableStatus(String tableName, TableStatus status) {
         long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(tableCreationWaitMinutes);
         while (System.currentTimeMillis() < endTime) {
