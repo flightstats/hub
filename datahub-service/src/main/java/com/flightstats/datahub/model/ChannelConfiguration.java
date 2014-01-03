@@ -20,7 +20,7 @@ public class ChannelConfiguration implements Serializable {
     private final int peakRequestRate;
     private final TimeUnit rateTimeUnit;
 
-    public enum ChannelType { Sequence, TimeSeries, SequenceTimeIndex }
+    public enum ChannelType { Sequence, TimeSeries }
 
     public ChannelConfiguration(String name, Date creationDate, Long ttlMillis, ChannelType type,
                                 int contentSizeKB, int peakRequestRate, TimeUnit rateTimeUnit) {
@@ -76,11 +76,7 @@ public class ChannelConfiguration implements Serializable {
 	}
 
     public boolean isSequence() {
-        return ChannelType.Sequence.equals(type) || ChannelType.SequenceTimeIndex.equals(type);
-    }
-
-    public boolean hasTimeIndex() {
-        return ChannelType.TimeSeries.equals(type) || ChannelType.SequenceTimeIndex.equals(type);
+        return ChannelType.Sequence.equals(type);
     }
 
     public long getContentThroughputInSeconds() {

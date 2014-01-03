@@ -5,7 +5,8 @@ import org.junit.Test;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -26,7 +27,6 @@ public class ChannelConfigurationTest {
         assertTrue(config.isSequence());
         assertEquals(10L, config.getContentThroughputInSeconds());
         assertEquals(1L, config.getRequestRateInSeconds());
-        assertFalse(config.hasTimeIndex());
     }
 
     @Test
@@ -41,27 +41,8 @@ public class ChannelConfigurationTest {
                 .withPeakRequestRate(100).withRateTimeUnit(TimeUnit.MINUTES)
                 .build();
         assertOptions(date, config, false);
-        assertTrue(config.hasTimeIndex());
         ChannelConfiguration copy = ChannelConfiguration.builder().withChannelConfiguration(config).build();
         assertOptions(date, copy, false);
-    }
-
-    @Test
-    public void testSequenceTimeIndex() throws Exception {
-        Date date = new Date(123456L);
-        ChannelConfiguration config = ChannelConfiguration.builder()
-                .withName("options")
-                .withTtlMillis(10L)
-                .withType(ChannelConfiguration.ChannelType.SequenceTimeIndex)
-                .withCreationDate(date)
-                .withContentKiloBytes(100)
-                .withPeakRequestRate(100).withRateTimeUnit(TimeUnit.MINUTES)
-                .build();
-        assertOptions(date, config, true);
-        assertTrue(config.hasTimeIndex());
-        ChannelConfiguration copy = ChannelConfiguration.builder().withChannelConfiguration(config).build();
-        assertOptions(date, copy, true);
-
     }
 
     private void assertOptions(Date date, ChannelConfiguration config, boolean isSequence) {
