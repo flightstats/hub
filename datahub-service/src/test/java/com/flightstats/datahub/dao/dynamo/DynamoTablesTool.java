@@ -35,7 +35,7 @@ public class DynamoTablesTool {
             ProvisionedThroughput provisionedThroughput = new ProvisionedThroughput()
                     .withReadCapacityUnits(20L)
                     .withWriteCapacityUnits(20L);
-            dynamoUtils.changeProvisioning(channelName, provisionedThroughput);
+            //dynamoUtils.changeProvisioning(channelName, provisionedThroughput);
         }
 
     }
