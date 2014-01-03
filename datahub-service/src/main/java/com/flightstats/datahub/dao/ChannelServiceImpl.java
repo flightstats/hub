@@ -24,8 +24,10 @@ public class ChannelServiceImpl implements ChannelService {
     private final ChannelMetadataDao channelMetadataDao;
     private final ContentService missingDao = new ContentService() {
         @Override
-        public void createChannel(ChannelConfiguration configuration) {
-        }
+        public void createChannel(ChannelConfiguration configuration) { }
+
+        @Override
+        public void updateChannel(ChannelConfiguration configuration) { }
 
         @Override
         public ValueInsertionResult insert(ChannelConfiguration configuration, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
@@ -48,9 +50,7 @@ public class ChannelServiceImpl implements ChannelService {
         }
 
         @Override
-        public void delete(String channelName) {
-            //do nothing
-        }
+        public void delete(String channelName) { }
 
     };
 
@@ -113,8 +113,9 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public void updateChannelMetadata(ChannelConfiguration newConfig) {
-        channelMetadataDao.updateChannel(newConfig);
+    public void updateChannel(ChannelConfiguration configuration) {
+        contentServiceFinder.getContentService(configuration).updateChannel(configuration);
+        channelMetadataDao.updateChannel(configuration);
     }
 
     @Override

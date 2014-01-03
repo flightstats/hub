@@ -97,8 +97,17 @@ public class SingleChannelResource {
         if (request.getTtlMillis() != null) {
             builder.withTtlMillis(request.getTtlMillis().isPresent() ? request.getTtlMillis().get() : null);
         }
+        if (request.getPeakRequestRate().isPresent()) {
+            builder.withPeakRequestRate(request.getPeakRequestRate().get());
+        }
+        if (request.getContentKiloBytes().isPresent()) {
+            builder.withContentKiloBytes(request.getContentKiloBytes().get());
+        }
+        if (request.getRateTimeUnit().isPresent()) {
+            builder.withRateTimeUnit(request.getRateTimeUnit().get());
+        }
         ChannelConfiguration newConfig = builder.build();
-        channelService.updateChannelMetadata(newConfig);
+        channelService.updateChannel(newConfig);
         URI channelUri = linkBuilder.buildChannelUri(newConfig, uriInfo);
         return Response.ok(channelUri).entity(
                 linkBuilder.buildLinkedChannelConfig(newConfig, channelUri, uriInfo))

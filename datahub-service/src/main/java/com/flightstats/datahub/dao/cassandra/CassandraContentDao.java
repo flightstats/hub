@@ -116,6 +116,11 @@ public class CassandraContentDao implements ContentDao {
         logger.warn("Cassandra impl doesn't support deleting channels " + channelName);
     }
 
+    @Override
+    public void updateChannel(ChannelConfiguration configuration) {
+        //do nothing
+    }
+
     private static final long INCREMENT = 1000;
 
     private String buildKey(String channelName, SequenceContentKey dataHubKey) {
