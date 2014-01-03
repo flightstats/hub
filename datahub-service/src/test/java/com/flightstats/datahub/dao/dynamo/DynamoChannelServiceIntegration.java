@@ -87,7 +87,7 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
 
     @Test
     public void testSequenceTimeIndexChannelWriteReadDelete() throws Exception {
-        ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.SequenceTimeIndex);
+        ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.Sequence);
         timeIndexWork(configuration);
     }
 
