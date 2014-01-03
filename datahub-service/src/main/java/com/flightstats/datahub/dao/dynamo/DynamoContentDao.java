@@ -118,18 +118,15 @@ public class DynamoContentDao implements ContentDao {
                 .withProvisionedThroughput(new ProvisionedThroughput(tableThroughput, tableThroughput));
 
         long indexThroughput = config.getRequestRateInSeconds();
-        if (config.hasTimeIndex()) {
-
-            attributeDefinitions.add(new AttributeDefinition().withAttributeName(HASHSTAMP).withAttributeType("S"));
-            GlobalSecondaryIndex secondaryIndex = new GlobalSecondaryIndex()
-                    .withIndexName(TIME_INDEX)
-                    .withProvisionedThroughput(new ProvisionedThroughput(indexThroughput, indexThroughput))
-                    .withProjection(new Projection().withProjectionType(ProjectionType.KEYS_ONLY));
-            ArrayList<KeySchemaElement> indexKeySchema = new ArrayList<>();
-            indexKeySchema.add(new KeySchemaElement().withAttributeName(HASHSTAMP).withKeyType(KeyType.HASH));
-            secondaryIndex.setKeySchema(indexKeySchema);
-            createTableRequest.withGlobalSecondaryIndexes(secondaryIndex);
-        }
+        attributeDefinitions.add(new AttributeDefinition().withAttributeName(HASHSTAMP).withAttributeType("S"));
+        GlobalSecondaryIndex secondaryIndex = new GlobalSecondaryIndex()
+                .withIndexName(TIME_INDEX)
+                .withProvisionedThroughput(new ProvisionedThroughput(indexThroughput, indexThroughput))
+                .withProjection(new Projection().withProjectionType(ProjectionType.KEYS_ONLY));
+        ArrayList<KeySchemaElement> indexKeySchema = new ArrayList<>();
+        indexKeySchema.add(new KeySchemaElement().withAttributeName(HASHSTAMP).withKeyType(KeyType.HASH));
+        secondaryIndex.setKeySchema(indexKeySchema);
+        createTableRequest.withGlobalSecondaryIndexes(secondaryIndex);
         createTableRequest.withAttributeDefinitions(attributeDefinitions);
 
         logger.info("creating times series " + tableName + " table with " + tableThroughput + " " + indexThroughput);
@@ -145,9 +142,6 @@ public class DynamoContentDao implements ContentDao {
     @Override
     public Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime) {
         //todo see if Parallel Scan is relevant here - http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html
-        if (!configuration.hasTimeIndex()) {
-            throw new UnsupportedOperationException("this channel does not support get keys " + configuration.getName());
-        }
         List<ContentKey> keys = new ArrayList<>();
         QueryRequest queryRequest = getQueryRequest(configuration.getName(), dateTime);
         QueryResult result = dbClient.query(queryRequest);
@@ -181,18 +175,16 @@ public class DynamoContentDao implements ContentDao {
         }
 
         List<GlobalSecondaryIndexDescription> gsis = table.getGlobalSecondaryIndexes();
-        if (null != gsis) {
-            for (GlobalSecondaryIndexDescription gsi : gsis) {
-                if (gsi.getIndexName().equals(TIME_INDEX)) {
-                    long indexThroughput = configuration.getRequestRateInSeconds();
-                    if (gsi.getProvisionedThroughput().getWriteCapacityUnits() != indexThroughput) {
-                        update = true;
-                        UpdateGlobalSecondaryIndexAction indexAction = new UpdateGlobalSecondaryIndexAction()
-                                .withIndexName(TIME_INDEX)
-                                .withProvisionedThroughput(new ProvisionedThroughput(indexThroughput, indexThroughput));
+        for (GlobalSecondaryIndexDescription gsi : gsis) {
+            if (gsi.getIndexName().equals(TIME_INDEX)) {
+                long indexThroughput = configuration.getRequestRateInSeconds();
+                if (gsi.getProvisionedThroughput().getWriteCapacityUnits() != indexThroughput) {
+                    update = true;
+                    UpdateGlobalSecondaryIndexAction indexAction = new UpdateGlobalSecondaryIndexAction()
+                            .withIndexName(TIME_INDEX)
+                            .withProvisionedThroughput(new ProvisionedThroughput(indexThroughput, indexThroughput));
 
-                        updateTableRequest.withGlobalSecondaryIndexUpdates(new GlobalSecondaryIndexUpdate().withUpdate(indexAction));
-                    }
+                    updateTableRequest.withGlobalSecondaryIndexUpdates(new GlobalSecondaryIndexUpdate().withUpdate(indexAction));
                 }
             }
         }
