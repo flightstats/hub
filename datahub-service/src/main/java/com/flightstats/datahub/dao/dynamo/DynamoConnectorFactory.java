@@ -8,6 +8,8 @@ import com.amazonaws.retry.RetryPolicy;
 import com.amazonaws.retry.RetryUtils;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.google.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
@@ -38,12 +40,17 @@ public class DynamoConnectorFactory {
         this.credentials = credentials;
     }
 
-    public AmazonDynamoDBClient getClient() {
+    public AmazonS3 getS3Client() throws IOException {
+        //todo - gfm - 1/3/14 - anything more needed here?
+        AWSCredentials awsCredentials = new PropertiesCredentials(new File(credentials));
+        return new AmazonS3Client(awsCredentials);
+    }
+
+    public AmazonDynamoDBClient getDynamoClient() {
         while (true) {
             try {
                 return attemptClient();
             } catch (Exception e) {
-                //datastax driver doesn't use a common exception class to handle.
                 logErrorAndWait(e);
             }
         }
