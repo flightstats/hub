@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao.dynamo;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.datahub.dao.*;
 import com.flightstats.datahub.util.CuratorKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
@@ -8,6 +9,7 @@ import com.flightstats.datahub.util.TimeSeriesKeyGenerator;
 import com.google.inject.*;
 import com.google.inject.name.Names;
 
+import java.io.IOException;
 import java.util.Properties;
 
 public class DynamoDataStoreModule extends AbstractModule {
@@ -44,7 +46,7 @@ public class DynamoDataStoreModule extends AbstractModule {
                 bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
                 bind(ContentDao.class)
                         .annotatedWith(Names.named(TimedContentDao.DELEGATE))
-                        .to(DynamoContentDao.class);
+                        .to(S3ContentDao.class);
                 bind(KeyCoordination.class).to(SequenceKeyCoordination.class).in(Singleton.class);
                 bind(DataHubKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
             }
@@ -61,7 +63,7 @@ public class DynamoDataStoreModule extends AbstractModule {
                 bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
                 bind(ContentDao.class)
                         .annotatedWith(Names.named(TimedContentDao.DELEGATE))
-                        .to(DynamoContentDao.class);
+                        .to(S3ContentDao.class);
                 bind(KeyCoordination.class).to(TimeSeriesKeyCoordination.class).in(Singleton.class);
                 bind(DataHubKeyGenerator.class).to(TimeSeriesKeyGenerator.class).in(Singleton.class);
             }
@@ -73,7 +75,14 @@ public class DynamoDataStoreModule extends AbstractModule {
     @Inject
     @Provides
     @Singleton
-    public AmazonDynamoDBClient buildClient(DynamoConnectorFactory factory) {
-        return factory.getClient();
+    public AmazonDynamoDBClient buildDynamoClient(DynamoConnectorFactory factory) {
+        return factory.getDynamoClient();
+    }
+
+    @Inject
+    @Provides
+    @Singleton
+    public AmazonS3 buildS3Client(DynamoConnectorFactory factory) throws IOException {
+        return factory.getS3Client();
     }
 }
