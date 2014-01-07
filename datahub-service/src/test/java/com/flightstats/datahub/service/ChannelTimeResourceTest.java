@@ -1,7 +1,7 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.dao.TimeIndexDates;
+import com.flightstats.datahub.dao.TimeIndex;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.TimeSeriesContentKey;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
@@ -43,8 +43,8 @@ public class ChannelTimeResourceTest {
     @Test
     public void testNormal() throws Exception {
         DateTime dateTime = new DateTime();
-        String hashStamp = TimeIndexDates.getString(dateTime);
-        DateTime expectedDate = TimeIndexDates.parse(hashStamp);
+        String hashStamp = TimeIndex.getHash(dateTime);
+        DateTime expectedDate = TimeIndex.parseHash(hashStamp);
         ContentKey second = new TimeSeriesContentKey();
         ContentKey first = new TimeSeriesContentKey();
         Iterable<ContentKey> contentKeys = Lists.newArrayList(first, second);
@@ -67,8 +67,8 @@ public class ChannelTimeResourceTest {
     @Test
     public void testEmptyResults() throws Exception {
         DateTime dateTime = new DateTime();
-        String hashStamp = TimeIndexDates.getString(dateTime);
-        DateTime expectedDate = TimeIndexDates.parse(hashStamp);
+        String hashStamp = TimeIndex.getHash(dateTime);
+        DateTime expectedDate = TimeIndex.parseHash(hashStamp);
         Iterable<ContentKey> contentKeys = new ArrayList<>();
         when(channelService.getKeys(channelName, expectedDate)).thenReturn(contentKeys);
         Response response = resource.getValue(channelName, hashStamp);

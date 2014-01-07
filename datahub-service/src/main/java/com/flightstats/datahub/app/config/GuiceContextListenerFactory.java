@@ -15,6 +15,7 @@ import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
 import com.flightstats.datahub.service.eventing.MetricsCustomWebSocketCreator;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.flightstats.datahub.service.eventing.WebSocketChannelNameExtractor;
+import com.flightstats.datahub.util.TimeProvider;
 import com.flightstats.jerseyguice.Bindings;
 import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
 import com.flightstats.jerseyguice.metrics.GraphiteConfig;
@@ -59,7 +60,7 @@ public class GuiceContextListenerFactory {
     public static final String CASSANDRA_BACKING_STORE_TAG = "cassandra";
     public static final String DYNAMO_BACKING_STORE_TAG = "dynamo";
     public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
-    private static Properties properties;
+    private static Properties properties = new Properties();
 
     public static DataHubGuiceServletContextListener construct(
             @NotNull final Properties properties) throws ConstraintException {
@@ -124,6 +125,7 @@ public class GuiceContextListenerFactory {
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
             binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
+            binder.bind(TimeProvider.class).in(Singleton.class);
         }
     }
 

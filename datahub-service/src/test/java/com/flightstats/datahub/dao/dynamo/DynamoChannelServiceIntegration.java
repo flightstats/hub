@@ -34,7 +34,7 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
         //properties.put("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
         properties.put("dynamo.endpoint", "localhost:8000");
         properties.put("dynamo.protocol", "HTTP");
-        properties.put("dynamo.environment", "dev");
+        properties.put("dynamo.environment", "test");
         properties.put("dynamo.table.creation.wait.minutes", "5");
         //todo - gfm - 12/13/13 - make this generic
         properties.put("dynamo.credentials", "/Users/gmoulliet/code/datahub/datahub-service/src/conf/datahub/dev/credentials.properties");
