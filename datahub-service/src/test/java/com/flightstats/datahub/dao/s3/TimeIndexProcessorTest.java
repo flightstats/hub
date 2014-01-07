@@ -62,7 +62,7 @@ public class TimeIndexProcessorTest {
         timeProvider = mock(TimeProvider.class);
         dateTime = new DateTime();
         when(timeProvider.getDateTime()).thenReturn(dateTime);
-        processor = new TimeIndexProcessor(curator, channel, indexDao, timeProvider);
+        processor = new TimeIndexProcessor(curator, indexDao, timeProvider);
         startTime = new DateTime(2014, 1, 6, 3, 42, 1);
     }
 
@@ -71,13 +71,13 @@ public class TimeIndexProcessorTest {
         int numMinutes = 10;
         int totalExpected = setupData(numMinutes);
 
-        processor.process();
+        processor.process(channel);
 
         assertEquals(numMinutes, indexDao.indices.size());
         int totalFound = validateData(numMinutes);
         assertEquals(totalExpected, totalFound);
         indexDao.indices.clear();
-        processor.process();
+        processor.process(channel);
         assertEquals(0, indexDao.indices.size());
     }
 
@@ -87,12 +87,12 @@ public class TimeIndexProcessorTest {
         startTime = dateTime.minusMinutes(5);
         setupData(numMinutes);
 
-        processor.process();
+        processor.process(channel);
 
         assertEquals(4, indexDao.indices.size());
         indexDao.indices.clear();
         when(timeProvider.getDateTime()).thenReturn(dateTime.plusMinutes(2));
-        processor.process();
+        processor.process(channel);
         assertEquals(2, indexDao.indices.size());
 
     }

@@ -22,19 +22,19 @@ public class TimeIndexProcessor {
 
     private final static Logger logger = LoggerFactory.getLogger(TimeIndexProcessor.class);
     private final CuratorFramework curator;
-    private final String channel;
+    private String channel;
     private final TimeIndexDao timeIndexDao;
     private final TimeProvider timeProvider;
 
     @Inject
-    public TimeIndexProcessor(CuratorFramework curator, String channel, TimeIndexDao timeIndexDao, TimeProvider timeProvider) {
+    public TimeIndexProcessor(CuratorFramework curator, TimeIndexDao timeIndexDao, TimeProvider timeProvider) {
         this.curator = curator;
-        this.channel = channel;
         this.timeIndexDao = timeIndexDao;
         this.timeProvider = timeProvider;
     }
 
-    public void process() {
+    public void process(String channel) {
+        this.channel = channel;
         InterProcessSemaphoreMutex mutex = new InterProcessSemaphoreMutex(curator, "/TimeIndexLock/" + channel);
         try {
             curator.getConnectionStateListenable().addListener(new ConnectionStateListener() {

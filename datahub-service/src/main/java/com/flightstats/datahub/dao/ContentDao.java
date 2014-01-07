@@ -21,7 +21,7 @@ public interface ContentDao {
 
     Optional<ContentKey> getKey(String id);
 
-    Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime);
+    Iterable<ContentKey> getKeys(String channelName, DateTime dateTime);
 
     void delete(String channelName);
 

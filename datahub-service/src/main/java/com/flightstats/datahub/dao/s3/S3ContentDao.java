@@ -3,6 +3,8 @@ package com.flightstats.datahub.dao.s3;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.dao.ContentDao;
 import com.flightstats.datahub.dao.TimeIndex;
 import com.flightstats.datahub.model.ChannelConfiguration;
@@ -20,9 +22,11 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +42,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     private final AmazonS3 s3Client;
     private final CuratorFramework curator;
     private final String s3BucketName;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public S3ContentDao(DataHubKeyGenerator keyGenerator,
@@ -50,6 +55,22 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         this.s3BucketName = "deihub-" + environment;
     }
 
+    /**
+     * com.amazonaws.services.s3.model.AmazonS3Exception: Status Code: 400, AWS Service: Amazon S3, AWS Request ID: 488F5174E60CA2AF, AWS Error Code: RequestTimeout, AWS Error Message: Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed., S3 Extended Request ID: PUpEDSp3iov/xoJ58ygZxBam5qmoUWcyR5fNEBRI/fPLIc+4RbhynR5cdYDHtGIM
+     at com.amazonaws.http.AmazonHttpClient.handleErrorResponse(AmazonHttpClient.java:767)
+     at com.amazonaws.http.AmazonHttpClient.executeHelper(AmazonHttpClient.java:414)
+     at com.amazonaws.http.AmazonHttpClient.execute(AmazonHttpClient.java:228)
+     at com.amazonaws.services.s3.AmazonS3Client.invoke(AmazonS3Client.java:3214)
+     at com.amazonaws.services.s3.AmazonS3Client.putObject(AmazonS3Client.java:1307)
+     at com.flightstats.datahub.dao.dynamo.S3ContentDao.write(S3ContentDao.java:62)
+     at com.flightstats.datahub.dao.TimedContentDao$1.call(TimedContentDao.java:33)
+     at com.flightstats.datahub.dao.TimedContentDao$1.call(TimedContentDao.java:30)
+     at com.flightstats.datahub.metrics.MetricsTimer.time(MetricsTimer.java:22)
+     at com.flightstats.datahub.dao.TimedContentDao.write(TimedContentDao.java:30)
+     at com.flightstats.datahub.dao.ContentServiceImpl.insert(ContentServiceImpl.java:47)
+     at com.flightstats.datahub.dao.ChannelServiceImpl.insert(ChannelServiceImpl.java:87)
+     at com.flightstats.datahub.service.SingleChannelResource.insertValue(SingleChannelResource.java:135)
+     */
     @Override
     public ValueInsertionResult write(String channelName, Content content, Optional<Integer> ttlSeconds) {
         //todo - gfm - 1/3/14 - what happens if one or the other fails?
@@ -63,8 +84,6 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     public void writeIndex(String channelName, DateTime dateTime, ContentKey key) {
         try {
             String path = TimeIndex.getPath(channelName, dateTime, key);
-            //todo - gfm - 1/6/14 - remove this
-            logger.info("writing " + path);
             curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
         } catch (Exception e) {
             logger.warn("unable to create", e);
@@ -73,7 +92,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     private void writeS3(String channelName, Content content, ContentKey key) {
-        String s3Key = getS3Key(channelName, key);
+        String s3Key = getS3ContentKey(channelName, key);
         InputStream stream = new ByteArrayInputStream(content.getData());
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(content.getData().length);
@@ -94,21 +113,10 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     @Override
-    public void writeIndices(String channelName, String dateTime, List<String> keys) {
-        //todo - gfm - 1/6/14 -
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    private String getS3Key(String channelName, ContentKey key) {
-        return channelName + "/" + key.keyToString();
-    }
-
-    @Override
     public Content read(String channelName, ContentKey key) {
         try {
-            S3Object object = s3Client.getObject(s3BucketName, getS3Key(channelName, key));
-            S3ObjectInputStream objectContent = object.getObjectContent();
-            byte[] bytes = ByteStreams.toByteArray(objectContent);
+            S3Object object = s3Client.getObject(s3BucketName, getS3ContentKey(channelName, key));
+            byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
             String type = userData.get("type");
@@ -132,6 +140,67 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     @Override
+    public void writeIndices(String channelName, String dateTime, List<String> keys) {
+        try {
+            String s3Key = getS3IndexKey(channelName, dateTime);
+            byte[] bytes = mapper.writeValueAsBytes(keys);
+            InputStream stream = new ByteArrayInputStream(bytes);
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(bytes.length);
+            metadata.setContentType(MediaType.APPLICATION_JSON);
+            PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
+            s3Client.putObject(request);
+        } catch (Exception e) {
+            logger.warn("unable to create index " + channelName + dateTime + keys, e);
+        }
+    }
+
+    @Override
+    public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
+        String hashTime = TimeIndex.getHash(dateTime);
+        try {
+            return getKeysS3(channelName, hashTime);
+        } catch (Exception e) {
+            logger.info("unable to find keys in S3 " + channelName + hashTime + e.getMessage());
+        }
+        try {
+            return getKeysZookeeper(channelName, hashTime);
+        } catch (Exception e) {
+            logger.info("unable to find keys in ZK " + channelName + hashTime + e.getMessage());
+        }
+        return null;
+    }
+
+    private Iterable<ContentKey> getKeysZookeeper(String channelName, String hashTime) throws Exception {
+        List<String> ids = curator.getChildren().forPath(TimeIndex.getPath(channelName, hashTime));
+        return convertIds(ids);
+    }
+
+    private Iterable<ContentKey> getKeysS3(String channelName, String hashTime) throws IOException {
+        String s3Key = getS3IndexKey(channelName, hashTime);
+        S3Object object = s3Client.getObject(s3BucketName, s3Key);
+        byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
+        List<String> ids = mapper.readValue(bytes, new TypeReference<List<String>>() { });
+        return convertIds(ids);
+    }
+
+    private Iterable<ContentKey> convertIds(List<String> ids) {
+        List<ContentKey> keys = new ArrayList<>();
+        for (String id : ids) {
+            keys.add(getKey(id).get());
+        }
+        return keys;
+    }
+
+    private String getS3ContentKey(String channelName, ContentKey key) {
+        return channelName + "/content/" + key.keyToString();
+    }
+
+    private String getS3IndexKey(String channelName, String dateTime) {
+        return channelName + "/index/" + dateTime;
+    }
+
+    @Override
     public void initialize() {
         try {
             ListObjectsRequest listObjectsRequest = new ListObjectsRequest().withBucketName(s3BucketName).withMaxKeys(0);
@@ -146,22 +215,13 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public void initializeChannel(ChannelConfiguration config) {
-
         keyGenerator.seedChannel(config.getName());
-
         //todo - gfm - 1/3/14 - how do we set config policies for S3 bucket prefixes?
     }
 
     @Override
     public Optional<ContentKey> getKey(String id) {
         return keyGenerator.parse(id);
-    }
-
-    @Override
-    public Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime) {
-        //todo - gfm - 1/6/14 - first look in S3, then check ZK
-
-        return null;
     }
 
     @Override
