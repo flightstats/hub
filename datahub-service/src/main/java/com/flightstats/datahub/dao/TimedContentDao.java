@@ -67,11 +67,11 @@ public class TimedContentDao implements ContentDao {
     }
 
     @Override
-    public Iterable<ContentKey> getKeys(final ChannelConfiguration configuration, final DateTime dateTime) {
+    public Iterable<ContentKey> getKeys(final String channelName, final DateTime dateTime) {
         return metricsTimer.time("valueDao.getKeys", new TimedCallback<Iterable<ContentKey>>() {
             @Override
             public Iterable<ContentKey> call() {
-                return delegate.getKeys(configuration, dateTime);
+                return delegate.getKeys(channelName, dateTime);
             }
         });
 

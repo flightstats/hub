@@ -144,10 +144,10 @@ public class DynamoContentDao implements ContentDao {
     }
 
     @Override
-    public Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime) {
+    public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
         //todo see if Parallel Scan is relevant here - http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html
         List<ContentKey> keys = new ArrayList<>();
-        QueryRequest queryRequest = getQueryRequest(configuration.getName(), dateTime);
+        QueryRequest queryRequest = getQueryRequest(channelName, dateTime);
         QueryResult result = dbClient.query(queryRequest);
         addResults(keys, result);
         while (result.getLastEvaluatedKey() != null) {
@@ -156,7 +156,7 @@ public class DynamoContentDao implements ContentDao {
             addResults(keys, result);
 
         }
-        logger.info("returning " + keys.size() + " keys for " + configuration + " at " + TimeIndex.getHash(dateTime));
+        logger.info("returning " + keys.size() + " keys for " + channelName + " at " + TimeIndex.getHash(dateTime));
         return keys;
     }
 

@@ -90,7 +90,7 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     public Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime) {
-        return contentDao.getKeys(configuration, dateTime);
+        return contentDao.getKeys(configuration.getName(), dateTime);
     }
 
     @Override
