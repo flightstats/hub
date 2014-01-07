@@ -3,6 +3,7 @@ package com.flightstats.datahub.dao.dynamo;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.datahub.dao.*;
+import com.flightstats.datahub.dao.s3.S3ContentDao;
 import com.flightstats.datahub.util.CuratorKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeSeriesKeyGenerator;
@@ -59,11 +60,10 @@ public class DynamoDataStoreModule extends AbstractModule {
                 bind(ContentService.class).annotatedWith(TimeSeries.class).to(ContentServiceImpl.class).in(Singleton.class);
                 expose(ContentService.class).annotatedWith(TimeSeries.class);
 
-                //todo - gfm - 12/30/13 - can this be pulled out?
                 bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
                 bind(ContentDao.class)
                         .annotatedWith(Names.named(TimedContentDao.DELEGATE))
-                        .to(S3ContentDao.class);
+                        .to(DynamoContentDao.class);
                 bind(KeyCoordination.class).to(TimeSeriesKeyCoordination.class).in(Singleton.class);
                 bind(DataHubKeyGenerator.class).to(TimeSeriesKeyGenerator.class).in(Singleton.class);
             }
