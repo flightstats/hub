@@ -3,13 +3,10 @@ package com.flightstats.datahub.app.config;
 import com.codahale.metrics.MetricRegistry;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
-import com.flightstats.datahub.cluster.ChannelLockFactory;
-import com.flightstats.datahub.cluster.HazelcastChannelLockFactory;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
 import com.flightstats.datahub.dao.dynamo.DynamoDataStoreModule;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ContentKey;
-import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.service.DataHubHealthCheck;
 import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
 import com.flightstats.datahub.service.eventing.MetricsCustomWebSocketCreator;
@@ -119,9 +116,7 @@ public class GuiceContextListenerFactory {
         @Override
         public void bind(Binder binder) {
             binder.bind(MetricRegistry.class).in(Singleton.class);
-            binder.bind(ChannelLockExecutor.class).asEagerSingleton();
             binder.bind(SubscriptionRoster.class).in(Singleton.class);
-            binder.bind(ChannelLockFactory.class).to(HazelcastChannelLockFactory.class).in(Singleton.class);
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
             binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
