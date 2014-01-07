@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This uses S3 for Content and ZooKeeper for TimeIndex
@@ -216,7 +217,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     @Override
     public void initializeChannel(ChannelConfiguration config) {
         keyGenerator.seedChannel(config.getName());
-        //todo - gfm - 1/3/14 - how do we set config policies for S3 bucket prefixes?
+        modifyLifeCycle(config);
     }
 
     @Override
@@ -230,8 +231,43 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     @Override
-    public void updateChannel(ChannelConfiguration configuration) {
-        //todo - gfm - 1/6/14 -
+    public void updateChannel(ChannelConfiguration config) {
+        modifyLifeCycle(config);
+    }
+
+    private void modifyLifeCycle(ChannelConfiguration config) {
+        //todo - gfm - 1/7/14 - this should happen in an system wide lock
+
+        if (config.getTtlMillis() == null) {
+            return;
+        }
+        long days = TimeUnit.DAYS.convert(config.getTtlMillis(), TimeUnit.MILLISECONDS) + 1;
+        BucketLifecycleConfiguration lifecycleConfig = s3Client.getBucketLifecycleConfiguration(s3BucketName);
+        logger.info("found config " + lifecycleConfig);
+        BucketLifecycleConfiguration.Rule newRule = new BucketLifecycleConfiguration.Rule()
+                .withPrefix(config.getName())
+                .withId(config.getName())
+                .withExpirationInDays((int) days)
+                .withStatus(BucketLifecycleConfiguration.ENABLED);
+        if (lifecycleConfig == null) {
+            ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
+            rules.add(newRule);
+            lifecycleConfig = new BucketLifecycleConfiguration(rules);
+        } else {
+            BucketLifecycleConfiguration.Rule toRemove = null;
+            List<BucketLifecycleConfiguration.Rule> rules = lifecycleConfig.getRules();
+            for (BucketLifecycleConfiguration.Rule rule : rules) {
+                if (rule.getPrefix().equals(config.getName())) {
+                    toRemove = rule;
+                }
+            }
+            if (toRemove != null) {
+                rules.remove(toRemove);
+            }
+            rules.add(newRule);
+        }
+
+        s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);
     }
 
 
