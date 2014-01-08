@@ -70,4 +70,14 @@ public class SequenceContentKey implements ContentKey {
                 " sequence=" + sequence +
                 '}';
     }
+
+    @Override
+    public int compareTo(ContentKey o) {
+        if (o instanceof SequenceContentKey) {
+            SequenceContentKey other = (SequenceContentKey) o;
+            return (int) (sequence - other.sequence);
+        } else {
+            return keyToString().compareTo(o.keyToString());
+        }
+    }
 }

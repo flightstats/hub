@@ -199,10 +199,10 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
 
         DateTime dateTime1 = new DateTime(2014, 1, 6, 12, 45);
         DateTime dateTime2 = dateTime1.plusMinutes(1);
-        indexDao.writeIndex(channelName, dateTime1, new SequenceContentKey(1));
-        indexDao.writeIndex(channelName, dateTime1, new SequenceContentKey(2));
-        indexDao.writeIndex(channelName, dateTime2, new SequenceContentKey(3));
-        indexDao.writeIndex(channelName, dateTime2, new SequenceContentKey(4));
+        indexDao.writeIndex(channelName, dateTime1, new SequenceContentKey(999));
+        indexDao.writeIndex(channelName, dateTime1, new SequenceContentKey(1000));
+        indexDao.writeIndex(channelName, dateTime2, new SequenceContentKey(1001));
+        indexDao.writeIndex(channelName, dateTime2, new SequenceContentKey(1002));
         processor.process(channelName);
 
         assertNull(curator.checkExists().forPath(TimeIndex.getPath(channelName, TimeIndex.getHash(dateTime1))));
@@ -210,12 +210,12 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
 
         ArrayList<ContentKey> keyList = Lists.newArrayList(indexDao.getKeys(channelName, dateTime1));
         assertEquals(2, keyList.size());
-        assertTrue(keyList.contains(new SequenceContentKey(1)));
-        assertTrue(keyList.contains(new SequenceContentKey(2)));
+        assertEquals("999", keyList.get(0).keyToString());
+        assertEquals("1000", keyList.get(1).keyToString());
 
         keyList = Lists.newArrayList(indexDao.getKeys(channelName, dateTime2));
         assertEquals(2, keyList.size());
-        assertTrue(keyList.contains(new SequenceContentKey(3)));
-        assertTrue(keyList.contains(new SequenceContentKey(4)));
+        assertTrue(keyList.contains(new SequenceContentKey(1001)));
+        assertTrue(keyList.contains(new SequenceContentKey(1002)));
     }
 }

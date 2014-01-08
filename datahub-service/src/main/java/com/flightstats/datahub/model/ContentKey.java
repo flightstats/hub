@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  *
  */
-public interface ContentKey extends Serializable {
+public interface ContentKey extends Serializable, Comparable<ContentKey> {
     Optional<ContentKey> getNext();
 
     Optional<ContentKey> getPrevious();
