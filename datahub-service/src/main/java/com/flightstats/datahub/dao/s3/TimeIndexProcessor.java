@@ -21,6 +21,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class TimeIndexProcessor {
 
+    /**
+     * todo - gfm - 1/7/14 -
+     * WARN 2014-01-07 19:27:14,701 [pool-3-thread-1] com.flightstats.datahub.dao.s3.TimeIndexProcessor [line 86] - unable to process children testy6
+     org.apache.zookeeper.KeeperException$NoNodeException: KeeperErrorCode = NoNode for /deihub/TimeIndex/testy6
+     at org.apache.zookeeper.KeeperException.create(KeeperException.java:111) ~[zookeeper-3.4.5.jar:3.4.5-1392090]
+     at org.apache.zookeeper.KeeperException.create(KeeperException.java:51) ~[zookeeper-3.4.5.jar:3.4.5-1392090]
+     at org.apache.zookeeper.ZooKeeper.getChildren(ZooKeeper.java:1586) ~[zookeeper-3.4.5.jar:3.4.5-1392090]
+     at org.apache.curator.framework.imps.GetChildrenBuilderImpl$3.call(GetChildrenBuilderImpl.java:214) ~[curator-framework-2.3.0.jar:na]
+     at org.apache.curator.framework.imps.GetChildrenBuilderImpl$3.call(GetChildrenBuilderImpl.java:203) ~[curator-framework-2.3.0.jar:na]
+     at org.apache.curator.RetryLoop.callWithRetry(RetryLoop.java:107) ~[curator-client-2.3.0.jar:na]
+     at org.apache.curator.framework.imps.GetChildrenBuilderImpl.pathInForeground(GetChildrenBuilderImpl.java:199) ~[curator-framework-2.3.0.jar:na]
+     at org.apache.curator.framework.imps.GetChildrenBuilderImpl.forPath(GetChildrenBuilderImpl.java:191) ~[curator-framework-2.3.0.jar:na]
+     at org.apache.curator.framework.imps.GetChildrenBuilderImpl.forPath(GetChildrenBuilderImpl.java:38) ~[curator-framework-2.3.0.jar:na]
+     at com.flightstats.datahub.dao.s3.TimeIndexProcessor.processChannel(TimeIndexProcessor.java:70) [datahub-service-0.1.7.jar:na]
+     at com.flightstats.datahub.dao.s3.TimeIndexProcessor.process(TimeIndexProcessor.java:54) [datahub-service-0.1.7.jar:na]
+     */
     private final static Logger logger = LoggerFactory.getLogger(TimeIndexProcessor.class);
     private final CuratorFramework curator;
     private String channel;
@@ -50,7 +66,7 @@ public class TimeIndexProcessor {
             });
 
             if (mutex.acquire(1, TimeUnit.MINUTES)) {
-                logger.info("acquired " + channel);
+                logger.debug("acquired " + channel);
                 processChannel();
             }
         } catch (Exception e) {
@@ -69,10 +85,10 @@ public class TimeIndexProcessor {
             String path = TimeIndex.getPath(channel);
             List<String> dateHashes = curator.getChildren().forPath(path);
             if (dateHashes.isEmpty()) {
-                logger.info("clearing empty path " + path);
+                logger.debug("clearing empty path " + path);
                 curator.delete().forPath(path);
             } else {
-                logger.info("found " + dateHashes.size() + " for " + channel);
+                logger.debug("found " + dateHashes.size() + " for " + channel);
                 Collections.sort(dateHashes);
                 for (String dateHash : dateHashes) {
                     if (exit.get()) {

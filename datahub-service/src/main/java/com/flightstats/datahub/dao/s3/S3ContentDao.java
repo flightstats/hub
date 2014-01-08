@@ -26,10 +26,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -187,6 +184,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     private Iterable<ContentKey> convertIds(List<String> ids) {
+        Collections.sort(ids);
         List<ContentKey> keys = new ArrayList<>();
         for (String id : ids) {
             keys.add(getKey(id).get());
@@ -248,7 +246,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         BucketLifecycleConfiguration lifecycleConfig = s3Client.getBucketLifecycleConfiguration(s3BucketName);
         logger.info("found config " + lifecycleConfig);
         BucketLifecycleConfiguration.Rule newRule = new BucketLifecycleConfiguration.Rule()
-                .withPrefix(config.getName())
+                .withPrefix(config.getName() + "/")
                 .withId(config.getName())
                 .withExpirationInDays((int) days)
                 .withStatus(BucketLifecycleConfiguration.ENABLED);

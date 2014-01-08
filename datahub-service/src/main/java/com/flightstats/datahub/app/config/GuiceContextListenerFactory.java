@@ -127,14 +127,18 @@ public class GuiceContextListenerFactory {
     public static class DataHubGuiceServletContextListener extends GuiceServletContextListener {
         @NotNull
         private final Module[] modules;
+        private Injector injector;
 
         public DataHubGuiceServletContextListener(@NotNull Module... modules) {
             this.modules = modules;
         }
 
         @Override
-        public Injector getInjector() {
-            return Guice.createInjector(modules);
+        public synchronized Injector getInjector() {
+            if (injector == null) {
+                injector = Guice.createInjector(modules);
+            }
+            return injector;
         }
     }
 
