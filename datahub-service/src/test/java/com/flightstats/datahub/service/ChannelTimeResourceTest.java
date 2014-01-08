@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -47,7 +48,7 @@ public class ChannelTimeResourceTest {
         DateTime expectedDate = TimeIndex.parseHash(hashStamp);
         ContentKey second = new TimeSeriesContentKey();
         ContentKey first = new TimeSeriesContentKey();
-        Iterable<ContentKey> contentKeys = Lists.newArrayList(first, second);
+        Collection<ContentKey> contentKeys = Lists.newArrayList(first, second);
         when(channelService.getKeys(channelName, expectedDate)).thenReturn(contentKeys);
         Response response = resource.getValue(channelName, hashStamp);
         String entity = response.getEntity().toString();
@@ -69,7 +70,7 @@ public class ChannelTimeResourceTest {
         DateTime dateTime = new DateTime();
         String hashStamp = TimeIndex.getHash(dateTime);
         DateTime expectedDate = TimeIndex.parseHash(hashStamp);
-        Iterable<ContentKey> contentKeys = new ArrayList<>();
+        Collection<ContentKey> contentKeys = new ArrayList<>();
         when(channelService.getKeys(channelName, expectedDate)).thenReturn(contentKeys);
         Response response = resource.getValue(channelName, hashStamp);
         String entity = response.getEntity().toString();

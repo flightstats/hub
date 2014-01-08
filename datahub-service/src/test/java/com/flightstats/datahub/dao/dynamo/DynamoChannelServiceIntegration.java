@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -91,16 +92,16 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
     @Test
     public void testTimeSeriesChannelWriteReadDelete() throws Exception {
         ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
-        timeIndexWork(configuration);
+        timeIndexWork(configuration, false);
     }
 
     @Test
     public void testSequenceTimeIndexChannelWriteReadDelete() throws Exception {
         ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.Sequence);
-        timeIndexWork(configuration);
+        timeIndexWork(configuration, true);
     }
 
-    private void timeIndexWork(ChannelConfiguration configuration) {
+    private void timeIndexWork(ChannelConfiguration configuration, boolean callGetKeys) {
         channelService.createChannel(configuration);
 
         byte[] bytes = "some data".getBytes();
@@ -117,10 +118,14 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
         assertFalse(compositeValue.getValue().getContentLanguage().isPresent());
 
         //todo - gfm - 12/23/13 - this fails using DynamoDBLocal
-        /*Iterable<ContentKey> keys = channelService.getKeys(channelName, new DateTime(insert1.getDate()));
-        HashSet<ContentKey> foundKeys = Sets.newHashSet(keys);
-        assertEquals(createdKeys, foundKeys);*/
-        //end
+        if (callGetKeys) {
+            DateTime expectedDate = new DateTime(insert1.getDate());
+            Collection<ContentKey> futureKeys = channelService.getKeys(channelName, expectedDate.plusYears(1));
+            assertEquals(0, futureKeys.size());
+            Collection<ContentKey> keys = channelService.getKeys(channelName, expectedDate);
+            HashSet<ContentKey> foundKeys = Sets.newHashSet(keys);
+            assertEquals(createdKeys, foundKeys);
+        }
 
         channelService.delete(channelName);
         assertNull(channelService.getChannelConfiguration(channelName));
