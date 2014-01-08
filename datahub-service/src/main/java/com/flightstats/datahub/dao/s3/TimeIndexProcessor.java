@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
@@ -25,6 +26,7 @@ public class TimeIndexProcessor {
     private String channel;
     private final TimeIndexDao timeIndexDao;
     private final TimeProvider timeProvider;
+    private final AtomicBoolean exit = new AtomicBoolean(false);
 
     @Inject
     public TimeIndexProcessor(CuratorFramework curator, TimeIndexDao timeIndexDao, TimeProvider timeProvider) {
@@ -40,13 +42,10 @@ public class TimeIndexProcessor {
             curator.getConnectionStateListenable().addListener(new ConnectionStateListener() {
                 @Override
                 public void stateChanged(CuratorFramework client, ConnectionState newState) {
-                    logger.info("state changed " + newState);
-                    /**
-                     * todo - gfm - 1/6/14 - handle
-                     * It is strongly recommended that you add a ConnectionStateListener and watch for SUSPENDED and LOST state changes.
-                     * If a SUSPENDED state is reported you cannot be certain that you still hold the lock unless you subsequently receive a RECONNECTED state.
-                     * If a LOST state is reported it is certain that you no longer hold the lock.
-                     */
+                    if (newState.equals(ConnectionState.LOST) || newState.equals(ConnectionState.SUSPENDED)) {
+                        exit.set(true);
+                        logger.info("setting exit to true" + newState);
+                    }
                 }
             });
 
@@ -67,10 +66,21 @@ public class TimeIndexProcessor {
 
     private void processChannel() {
         try {
-            List<String> dateHashes = curator.getChildren().forPath(TimeIndex.getPath(channel));
-            Collections.sort(dateHashes);
-            for (String dateHash : dateHashes) {
-                processDateTime(dateHash);
+            String path = TimeIndex.getPath(channel);
+            List<String> dateHashes = curator.getChildren().forPath(path);
+            if (dateHashes.isEmpty()) {
+                logger.info("clearing empty path " + path);
+                curator.delete().forPath(path);
+            } else {
+                logger.info("found " + dateHashes.size() + " for " + channel);
+                Collections.sort(dateHashes);
+                for (String dateHash : dateHashes) {
+                    if (exit.get()) {
+                        logger.info("exiting " + channel);
+                        return;
+                    }
+                    processDateTime(dateHash);
+                }
             }
         } catch (Exception e) {
             logger.warn("unable to process children " + channel, e);
