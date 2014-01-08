@@ -66,4 +66,9 @@ public class TimeSeriesContentKey implements ContentKey {
                 "id='" + id + '\'' +
                 '}';
     }
+
+    @Override
+    public int compareTo(ContentKey o) {
+        return id.compareTo(o.keyToString());
+    }
 }

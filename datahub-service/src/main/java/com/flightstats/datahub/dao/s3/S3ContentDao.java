@@ -81,11 +81,12 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     public void writeIndex(String channelName, DateTime dateTime, ContentKey key) {
+        String path = TimeIndex.getPath(channelName, dateTime, key);
         try {
-            String path = TimeIndex.getPath(channelName, dateTime, key);
+            //todo - gfm - 1/8/14 - should this take place in the background?
             curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
         } catch (Exception e) {
-            logger.warn("unable to create", e);
+            logger.warn("unable to create " + path, e);
             throw new RuntimeException(e);
         }
     }
@@ -184,11 +185,11 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     private Collection<ContentKey> convertIds(List<String> ids) {
-        Collections.sort(ids);
         List<ContentKey> keys = new ArrayList<>();
         for (String id : ids) {
             keys.add(getKey(id).get());
         }
+        Collections.sort(keys);
         return keys;
     }
 
