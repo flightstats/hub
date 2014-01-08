@@ -155,7 +155,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     @Override
-    public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
+    public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
         String hashTime = TimeIndex.getHash(dateTime);
         try {
             return getKeysS3(channelName, hashTime);
@@ -167,15 +167,15 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         } catch (Exception e) {
             logger.info("unable to find keys in ZK " + channelName + hashTime + e.getMessage());
         }
-        return null;
+        return Collections.emptyList();
     }
 
-    private Iterable<ContentKey> getKeysZookeeper(String channelName, String hashTime) throws Exception {
+    private Collection<ContentKey> getKeysZookeeper(String channelName, String hashTime) throws Exception {
         List<String> ids = curator.getChildren().forPath(TimeIndex.getPath(channelName, hashTime));
         return convertIds(ids);
     }
 
-    private Iterable<ContentKey> getKeysS3(String channelName, String hashTime) throws IOException {
+    private Collection<ContentKey> getKeysS3(String channelName, String hashTime) throws IOException {
         String s3Key = getS3IndexKey(channelName, hashTime);
         S3Object object = s3Client.getObject(s3BucketName, s3Key);
         byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
@@ -183,7 +183,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         return convertIds(ids);
     }
 
-    private Iterable<ContentKey> convertIds(List<String> ids) {
+    private Collection<ContentKey> convertIds(List<String> ids) {
         Collections.sort(ids);
         List<ContentKey> keys = new ArrayList<>();
         for (String id : ids) {

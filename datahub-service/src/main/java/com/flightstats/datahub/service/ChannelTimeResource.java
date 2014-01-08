@@ -23,6 +23,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Collection;
 
 /**
  * This resource represents groups of items stored in the DataHub
@@ -58,7 +59,7 @@ public class ChannelTimeResource {
             throw new InvalidRequestException("{\"error\": \"Datetime was in the wrong format, required format is "
                     + TimeIndex.PATTERN + "\"}");
         }
-        Iterable<ContentKey> keys = channelService.getKeys(channelName, requestTime);
+        Collection<ContentKey> keys = channelService.getKeys(channelName, requestTime);
 
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");

@@ -16,10 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  *
@@ -144,7 +141,7 @@ public class DynamoContentDao implements ContentDao {
     }
 
     @Override
-    public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
+    public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
         //todo see if Parallel Scan is relevant here - http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html
         List<ContentKey> keys = new ArrayList<>();
         QueryRequest queryRequest = getQueryRequest(channelName, dateTime);
