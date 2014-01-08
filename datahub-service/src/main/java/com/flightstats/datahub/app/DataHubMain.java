@@ -3,10 +3,11 @@ package com.flightstats.datahub.app;
 import com.conducivetech.services.common.util.PropertyConfiguration;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
+import com.flightstats.datahub.dao.s3.TimeIndexCoordinator;
 import com.flightstats.jerseyguice.jetty.JettyConfig;
 import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
 import com.flightstats.jerseyguice.jetty.JettyServer;
-import com.google.inject.servlet.GuiceServletContextListener;
+import com.google.inject.Injector;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Main entry point for the data hub.  This is the main runnable class.
@@ -28,6 +31,7 @@ public class DataHubMain {
         final Properties properties = loadProperties(args);
         logger.info(properties.toString());
 
+        //todo - gfm - 1/7/14 - setup ZK to be it's own process
         startZookeeper(properties);
 
         JettyServer server = startServer(properties);
@@ -51,7 +55,9 @@ public class DataHubMain {
 
                 String zkConfigFile = properties.getProperty("zookeeper.cfg", "");
                 if ("singleNode".equals(zkConfigFile)) {
-                    logger.warn("using single node config file");
+                    logger.warn("**********************************************************");
+                    logger.warn("*** using zookeeper single node config file");
+                    logger.warn("**********************************************************");
                     zkConfigFile = DataHubMain.class.getResource("/zooSingleNode.cfg").getFile();
                 }
                 logger.info("using " + zkConfigFile);
@@ -61,11 +67,14 @@ public class DataHubMain {
     }
 
     public static JettyServer startServer(Properties properties) throws IOException, ConstraintException {
-        final JettyConfig jettyConfig = new JettyConfigImpl(properties);
-        final GuiceServletContextListener guice = GuiceContextListenerFactory.construct(properties);
+        JettyConfig jettyConfig = new JettyConfigImpl(properties);
+        GuiceContextListenerFactory.DataHubGuiceServletContextListener guice = GuiceContextListenerFactory.construct(properties);
         JettyServer server = new JettyServer(jettyConfig, guice);
         server.start();
         logger.info("Jetty server has been started.");
+        Injector injector = guice.getInjector();
+        TimeIndexCoordinator timeIndexCoordinator = injector.getInstance(TimeIndexCoordinator.class);
+        Executors.newScheduledThreadPool(1).scheduleWithFixedDelay(timeIndexCoordinator, 0, 1, TimeUnit.MINUTES);
         return server;
     }
 

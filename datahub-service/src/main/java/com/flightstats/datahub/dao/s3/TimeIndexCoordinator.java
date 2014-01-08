@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao.s3;
 
 import com.flightstats.datahub.dao.TimeIndex;
+import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -12,38 +13,31 @@ import java.util.List;
 /**
  *
  */
-public class TimeIndexCoordinator {
+public class TimeIndexCoordinator implements Runnable {
     private final static Logger logger = LoggerFactory.getLogger(TimeIndexCoordinator.class);
 
     private final CuratorFramework curator;
+    private final TimeIndexDao timeIndexDao;
+    private final TimeProvider timeProvider;
 
     @Inject
-    public TimeIndexCoordinator(CuratorFramework curator) {
+    public TimeIndexCoordinator(CuratorFramework curator, TimeIndexDao timeIndexDao, TimeProvider timeProvider) {
         this.curator = curator;
+        this.timeIndexDao = timeIndexDao;
+        this.timeProvider = timeProvider;
     }
 
-    /**
-     * todo - gfm - 1/6/14 - this should run at a fixed interval
-     *
-     */
-
-
-    public void process() {
+    @Override
+    public void run() {
         try {
-            logger.info("running");
             List<String> channels = curator.getChildren().forPath(TimeIndex.getPath());
-            logger.info("found " + channels.size());
+            logger.info("found " + channels.size() + " channels");
             Collections.shuffle(channels);
             for (String channel : channels) {
-                //todo - gfm - 1/6/14 -
-                //new TimeIndexProcessor(curator, channel).process();
+                new TimeIndexProcessor(curator, timeIndexDao, timeProvider).process(channel);
             }
-            logger.info("completed");
         } catch (Exception e) {
             logger.info("unable to process", e);
         }
     }
-
-
-
 }

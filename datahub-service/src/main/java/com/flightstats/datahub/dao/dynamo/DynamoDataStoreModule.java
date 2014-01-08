@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.datahub.dao.*;
 import com.flightstats.datahub.dao.s3.S3ContentDao;
+import com.flightstats.datahub.dao.s3.TimeIndexDao;
 import com.flightstats.datahub.util.CuratorKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeSeriesKeyGenerator;
@@ -48,6 +49,8 @@ public class DynamoDataStoreModule extends AbstractModule {
                 bind(ContentDao.class)
                         .annotatedWith(Names.named(TimedContentDao.DELEGATE))
                         .to(S3ContentDao.class);
+                bind(TimeIndexDao.class).to(S3ContentDao.class).in(Singleton.class);
+                expose(TimeIndexDao.class);
                 bind(KeyCoordination.class).to(SequenceKeyCoordination.class).in(Singleton.class);
                 bind(DataHubKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
             }

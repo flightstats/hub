@@ -57,6 +57,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     /**
+     * todo - gfm - 1/7/14 - handle this
      * com.amazonaws.services.s3.model.AmazonS3Exception: Status Code: 400, AWS Service: Amazon S3, AWS Request ID: 488F5174E60CA2AF, AWS Error Code: RequestTimeout, AWS Error Message: Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed., S3 Extended Request ID: PUpEDSp3iov/xoJ58ygZxBam5qmoUWcyR5fNEBRI/fPLIc+4RbhynR5cdYDHtGIM
      at com.amazonaws.http.AmazonHttpClient.handleErrorResponse(AmazonHttpClient.java:767)
      at com.amazonaws.http.AmazonHttpClient.executeHelper(AmazonHttpClient.java:414)
@@ -227,7 +228,8 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public void delete(String channelName) {
-        //todo - gfm - 1/6/14 -
+        //todo - gfm - 1/6/14 - remove from S3
+        //todo - gfm - 1/7/14 - remove from ZK
     }
 
     @Override
@@ -236,7 +238,8 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     private void modifyLifeCycle(ChannelConfiguration config) {
-        //todo - gfm - 1/7/14 - this should happen in an system wide lock
+        //todo - gfm - 1/7/14 - this should happen in an system wide lock on ChannelConfig
+        //todo - gfm - 1/7/14 - or it should be triggered occasionally via ChannelMetadata
 
         if (config.getTtlMillis() == null) {
             return;
