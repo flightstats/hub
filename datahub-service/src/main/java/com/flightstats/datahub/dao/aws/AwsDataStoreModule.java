@@ -1,8 +1,11 @@
-package com.flightstats.datahub.dao.dynamo;
+package com.flightstats.datahub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.datahub.dao.*;
+import com.flightstats.datahub.dao.dynamo.DynamoChannelMetadataDao;
+import com.flightstats.datahub.dao.dynamo.DynamoContentDao;
+import com.flightstats.datahub.dao.dynamo.DynamoUtils;
 import com.flightstats.datahub.dao.s3.S3ContentDao;
 import com.flightstats.datahub.dao.s3.TimeIndexDao;
 import com.flightstats.datahub.util.CuratorKeyGenerator;

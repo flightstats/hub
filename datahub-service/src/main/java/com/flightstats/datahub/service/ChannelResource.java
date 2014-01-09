@@ -66,6 +66,14 @@ public class ChannelResource {
 		return Response.ok(result).build();
 	}
 
+    /**
+     * todo - gfm - 1/9/14 -
+     * Caused by: java.lang.NoClassDefFoundError: com/flightstats/datahub/dao/TimedChannelMetadataDao$6
+     at com.flightstats.datahub.dao.TimedChannelMetadataDao.getChannels(TimedChannelMetadataDao.java:82) ~[datahub-service-0.1.7.jar:na]
+     at com.flightstats.datahub.dao.ChannelServiceImpl.getChannels(ChannelServiceImpl.java:104) ~[datahub-service-0.1.7.jar:na]
+     at com.flightstats.datahub.service.ChannelResource.getChannels(ChannelResource.java:51) ~[datahub-service-0.1.7.jar:na]
+     */
+
 	@POST
 	@Timed
     @ExceptionMetered
