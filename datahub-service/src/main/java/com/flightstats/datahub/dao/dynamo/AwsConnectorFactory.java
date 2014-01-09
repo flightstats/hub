@@ -8,6 +8,8 @@ import com.amazonaws.retry.RetryPolicy;
 import com.amazonaws.retry.RetryUtils;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.google.inject.Inject;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
@@ -20,9 +22,9 @@ import java.util.concurrent.TimeUnit;
 
 import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
 
-public class DynamoConnectorFactory {
+public class AwsConnectorFactory {
 
-    private final static Logger logger = LoggerFactory.getLogger(DynamoConnectorFactory.class);
+    private final static Logger logger = LoggerFactory.getLogger(AwsConnectorFactory.class);
 	private static final int SECONDS_BETWEEN_CONNECTION_RETRIES = 5;
 
     private final String endpoint;
@@ -30,20 +32,26 @@ public class DynamoConnectorFactory {
     private final String credentials;
 
     @Inject
-	public DynamoConnectorFactory(@Named("dynamo.endpoint") String endpoint,
-                                  @Named("dynamo.protocol") String protocol,
-                                  @Named("dynamo.credentials") String credentials){
+	public AwsConnectorFactory(@Named("dynamo.endpoint") String endpoint,
+                               @Named("aws.protocol") String protocol,
+                               @Named("aws.credentials") String credentials){
         this.endpoint = endpoint;
         this.protocol = protocol;
         this.credentials = credentials;
     }
 
-    public AmazonDynamoDBClient getClient() {
+    public AmazonS3 getS3Client() throws IOException {
+        //todo - gfm - 1/3/14 - anything more needed here?
+        AWSCredentials awsCredentials = new PropertiesCredentials(new File(credentials));
+        ClientConfiguration configuration = getClientConfiguration();
+        return new AmazonS3Client(awsCredentials, configuration);
+    }
+
+    public AmazonDynamoDBClient getDynamoClient() {
         while (true) {
             try {
                 return attemptClient();
             } catch (Exception e) {
-                //datastax driver doesn't use a common exception class to handle.
                 logErrorAndWait(e);
             }
         }
@@ -103,16 +111,13 @@ public class DynamoConnectorFactory {
 
     private AmazonDynamoDBClient attemptClient() {
         try {
-            RetryPolicy retryPolicy = new RetryPolicy(new ModifiedRetryCondition(),
-                    PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY, 3, true);
+
             logger.info("creating for  " + protocol + " " + endpoint);
             //todo - gfm - 12/12/13 - figure out credentials
             //look at com.amazonaws.auth.AWSCredentialsProvider
             AWSCredentials awsCredentials = new PropertiesCredentials(new File(credentials));
             AmazonDynamoDBClient client = new AmazonDynamoDBClient(awsCredentials);
-            ClientConfiguration configuration = new ClientConfiguration();
-            configuration.withRetryPolicy(retryPolicy);
-            configuration.setProtocol(Protocol.valueOf(protocol));
+            ClientConfiguration configuration = getClientConfiguration();
             client.setConfiguration(configuration);
             client.setEndpoint(endpoint);
             return client;
@@ -120,6 +125,15 @@ public class DynamoConnectorFactory {
             logger.error("unable to load credentials", e);
             throw new RuntimeException(e);
         }
+    }
+
+    private ClientConfiguration getClientConfiguration() {
+        RetryPolicy retryPolicy = new RetryPolicy(new ModifiedRetryCondition(),
+                PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY, 3, true);
+        ClientConfiguration configuration = new ClientConfiguration();
+        configuration.withRetryPolicy(retryPolicy);
+        configuration.setProtocol(Protocol.valueOf(protocol));
+        return configuration;
     }
 
     private void logErrorAndWait(Exception e) {

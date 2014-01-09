@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.Date;
 
 public class CassandraContentDao implements ContentDao {
@@ -107,8 +108,8 @@ public class CassandraContentDao implements ContentDao {
     }
 
     @Override
-    public Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime) {
-        throw new UnsupportedOperationException("this implementation does not support get keys " + configuration.getName());
+    public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
+        throw new UnsupportedOperationException("this implementation does not support get keys " + channelName);
     }
 
     @Override

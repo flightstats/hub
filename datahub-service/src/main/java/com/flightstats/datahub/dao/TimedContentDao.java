@@ -11,6 +11,8 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.joda.time.DateTime;
 
+import java.util.Collection;
+
 /**
  *
  */
@@ -67,11 +69,11 @@ public class TimedContentDao implements ContentDao {
     }
 
     @Override
-    public Iterable<ContentKey> getKeys(final ChannelConfiguration configuration, final DateTime dateTime) {
-        return metricsTimer.time("valueDao.getKeys", new TimedCallback<Iterable<ContentKey>>() {
+    public Collection<ContentKey> getKeys(final String channelName, final DateTime dateTime) {
+        return metricsTimer.time("valueDao.getKeys", new TimedCallback<Collection<ContentKey>>() {
             @Override
-            public Iterable<ContentKey> call() {
-                return delegate.getKeys(configuration, dateTime);
+            public Collection<ContentKey> call() {
+                return delegate.getKeys(channelName, dateTime);
             }
         });
 
