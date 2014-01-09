@@ -78,6 +78,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
+        //todo - gfm - 1/8/14 - this should happen in a channel specific lock
         contentServiceFinder.getContentService(configuration).createChannel(configuration);
         return channelMetadataDao.createChannel(configuration);
     }
