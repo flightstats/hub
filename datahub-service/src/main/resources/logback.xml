@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!--todo - gfm - where should logback.xml live to have different configs *and* be found? -->
+    <!--todo - gfm - this should use compression-->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
         <encoder>
@@ -21,12 +23,12 @@
         </encoder>
     </appender>
 
-    <!--todo seems like syslog.util.pdx.prod shouldn't be here-->
-    <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
+    <!--todo - gfm - seems like syslog.util.pdx.prod shouldn't be here-->
+    <!--<appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
         <syslogHost>syslog.util.pdx.dev</syslogHost>
         <facility>USER</facility>
         <suffixPattern>[%thread] %logger %msg</suffixPattern>
-    </appender>
+    </appender>-->
 
     <root level="info">
         <appender-ref ref="FILE"/>

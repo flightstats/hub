@@ -3,6 +3,7 @@ package com.flightstats.datahub.app.config;
 import com.codahale.metrics.MetricRegistry;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
+import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.aws.AwsDataStoreModule;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
 import com.flightstats.datahub.model.ChannelConfiguration;
@@ -121,6 +122,7 @@ public class GuiceContextListenerFactory {
             binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
             binder.bind(TimeProvider.class).in(Singleton.class);
+            binder.bind(ZooKeeperState.class).in(Singleton.class);
         }
     }
 
@@ -192,12 +194,13 @@ public class GuiceContextListenerFactory {
         @Singleton
         @Provides
         public static CuratorFramework buildCurator(@Named("zookeeper.connection") String zkConnection,
-                                                    RetryPolicy retryPolicy) {
+                                                    RetryPolicy retryPolicy, ZooKeeperState zooKeeperState) {
             logger.info("connecting to zookeeper(s) at " + zkConnection);
             FixedEnsembleProvider ensembleProvider = new FixedEnsembleProvider(zkConnection);
             CuratorFramework curatorFramework = CuratorFrameworkFactory.builder().namespace("deihub")
                     .ensembleProvider(ensembleProvider)
                     .retryPolicy(retryPolicy).build();
+            curatorFramework.getConnectionStateListenable().addListener(zooKeeperState.getStateListener());
             curatorFramework.start();
 
             try {
