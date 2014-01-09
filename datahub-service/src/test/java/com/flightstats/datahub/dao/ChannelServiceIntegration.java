@@ -39,7 +39,7 @@ public abstract class ChannelServiceIntegration {
     public void setUp() throws Exception {
         verifyStartup();
         channelService = injector.getInstance(ChannelService.class);
-        channelName = UUID.randomUUID().toString();
+        channelName = UUID.randomUUID().toString().replaceAll("-", "");
         channelNames.add(channelName);
     }
 

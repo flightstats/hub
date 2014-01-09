@@ -57,7 +57,7 @@ public class CreateChannelValidator {
 
     private void checkForInvalidCharacters(String channelName) throws InvalidRequestException {
         if (!channelName.matches("^[a-zA-Z0-9_]+$")) {
-            throw new InvalidRequestException("{\"error\": \"Channel name must only contain characters a-z, A-Z, and 0-9\"}");
+            throw new InvalidRequestException("{\"error\": \"Channel name " + channelName + "must only contain characters a-z, A-Z, and 0-9\"}");
         }
     }
 

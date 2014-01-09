@@ -33,14 +33,12 @@ public class ChannelResource {
 	private final ChannelService channelService;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 	private final UriInfo uriInfo;
-    private final CreateChannelValidator createChannelValidator;
 
 	@Inject
-	public ChannelResource(ChannelService channelService, ChannelHypermediaLinkBuilder linkBuilder, UriInfo uriInfo, CreateChannelValidator createChannelValidator) {
+	public ChannelResource(ChannelService channelService, ChannelHypermediaLinkBuilder linkBuilder, UriInfo uriInfo) {
 		this.channelService = channelService;
 		this.linkBuilder = linkBuilder;
 		this.uriInfo = uriInfo;
-        this.createChannelValidator = createChannelValidator;
     }
 
 	@GET
@@ -74,7 +72,6 @@ public class ChannelResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createChannel(ChannelConfiguration channelConfiguration) throws InvalidRequestException, AlreadyExistsException {
-        createChannelValidator.validate(channelConfiguration);
         channelService.createChannel(channelConfiguration);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
 		return Response.created(channelUri).entity(
