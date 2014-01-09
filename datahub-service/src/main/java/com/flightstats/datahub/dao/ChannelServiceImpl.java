@@ -4,6 +4,7 @@ import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.LinkedContent;
 import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.service.CreateChannelValidator;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -23,6 +24,7 @@ public class ChannelServiceImpl implements ChannelService {
     //todo - gfm - 12/30/13 - limit exceptions propagated up the stack
     private final ContentServiceFinder contentServiceFinder;
     private final ChannelMetadataDao channelMetadataDao;
+    private final CreateChannelValidator createChannelValidator;
     private final ContentService missingDao = new ContentService() {
         @Override
         public void createChannel(ChannelConfiguration configuration) { }
@@ -57,9 +59,10 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Inject
     public ChannelServiceImpl(ContentServiceFinder contentServiceFinder,
-                              ChannelMetadataDao channelMetadataDao) {
+                              ChannelMetadataDao channelMetadataDao, CreateChannelValidator createChannelValidator) {
         this.contentServiceFinder = contentServiceFinder;
         this.channelMetadataDao = channelMetadataDao;
+        this.createChannelValidator = createChannelValidator;
     }
 
     private ContentService getContentService(String channelName){
@@ -78,6 +81,8 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
+        createChannelValidator.validate(configuration);
+        //todo - gfm - 1/8/14 - this should happen in a channel specific lock
         contentServiceFinder.getContentService(configuration).createChannel(configuration);
         return channelMetadataDao.createChannel(configuration);
     }
