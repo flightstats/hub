@@ -83,7 +83,6 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     public void writeIndex(String channelName, DateTime dateTime, ContentKey key) {
         String path = TimeIndex.getPath(channelName, dateTime, key);
         try {
-            //todo - gfm - 1/8/14 - should this take place in the background?
             curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
         } catch (Exception e) {
             logger.warn("unable to create " + path, e);
@@ -208,6 +207,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
             s3Client.listObjects(listObjectsRequest);
             logger.info("bucket exists " + s3BucketName);
         } catch (AmazonClientException e) {
+            logger.info("creating " + s3BucketName);
             CreateBucketRequest createBucketRequest = new CreateBucketRequest(s3BucketName, Region.US_Standard);
             Bucket bucket = s3Client.createBucket(createBucketRequest);
             logger.info("created " + bucket);
@@ -227,9 +227,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public void delete(String channelName) {
-        //todo - gfm - 1/6/14 - remove from S3
         new Thread(new S3Deleter(channelName, s3BucketName, s3Client)).start();
-        //todo - gfm - 1/7/14 - remove from ZK?
     }
 
     @Override

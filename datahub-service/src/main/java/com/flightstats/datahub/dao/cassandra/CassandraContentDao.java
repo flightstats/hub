@@ -62,7 +62,6 @@ public class CassandraContentDao implements ContentDao {
         PreparedStatement statement = session.prepare("SELECT * FROM values WHERE rowkey = ? and sequence = ?");
         statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
         Row row = session.execute(statement.bind(rowKey, sequenceKey.getSequence())).one();
-        //todo - gfm - 11/22/13 - test null
         if (row == null) {
             return null;
         }
