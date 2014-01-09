@@ -42,7 +42,6 @@ public class ChannelResourceTest {
 				.withLink("ws", wsUri)
 				.build();
 		UriInfo uriInfo = mock(UriInfo.class);
-        CreateChannelValidator createChannelValidator = mock(CreateChannelValidator.class);
 		ChannelService channelService = mock(ChannelService.class);
         ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 
@@ -52,7 +51,7 @@ public class ChannelResourceTest {
 		when(linkBuilder.buildChannelUri(channelConfiguration, uriInfo)).thenReturn(URI.create(channelUri));
 		when(linkBuilder.buildLinkedChannelConfig(channelConfiguration, URI.create(channelUri), uriInfo)).thenReturn(expected);
 
-        ChannelResource testClass = new ChannelResource(channelService, linkBuilder, uriInfo, createChannelValidator);
+        ChannelResource testClass = new ChannelResource(channelService, linkBuilder, uriInfo);
 
 		Response response = testClass.createChannel(channelCreationRequest);
 
@@ -74,11 +73,10 @@ public class ChannelResourceTest {
 		String requestUri = "http://datahüb/channel";
 
 		ChannelService channelService = mock(ChannelService.class);
-        CreateChannelValidator createChannelValidator = mock(CreateChannelValidator.class);
 		UriInfo uriInfo = mock(UriInfo.class);
 		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
 
-		ChannelResource testClass = new ChannelResource(channelService, linkBuilder, uriInfo, createChannelValidator);
+		ChannelResource testClass = new ChannelResource(channelService, linkBuilder, uriInfo);
 
 		//WHEN
 		when(channelService.getChannels()).thenReturn(channels);

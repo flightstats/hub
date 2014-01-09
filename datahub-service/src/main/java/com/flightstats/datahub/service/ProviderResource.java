@@ -18,9 +18,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
- * This resource represents a single channel in the DataHub.
- * we can have an interface /provider, which only supports POST, can get the channel name from headers,
- * create a new channel if needed, and doesn't return links
+ * This is a convenience interface for external data Providers.
+ * It supports automatic channel creation and does not return links they can not access.
  */
 @Path("/provider")
 public class ProviderResource {
@@ -47,7 +46,7 @@ public class ProviderResource {
                                 @HeaderParam("Content-Language") final String contentLanguage,
                                 final byte[] data) throws Exception {
         if (!channelService.channelExists(channelName)) {
-            //todo - gfm - 1/8/14 - create Channel
+            logger.info("creating new Provider channel " + channelName);
             ChannelConfiguration configuration = ChannelConfiguration.builder()
                     .withName(channelName)
                     .withType(ChannelConfiguration.ChannelType.Sequence)
