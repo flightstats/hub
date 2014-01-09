@@ -228,7 +228,8 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     @Override
     public void delete(String channelName) {
         //todo - gfm - 1/6/14 - remove from S3
-        //todo - gfm - 1/7/14 - remove from ZK
+        new Thread(new S3Deleter(channelName, s3BucketName, s3Client)).start();
+        //todo - gfm - 1/7/14 - remove from ZK?
     }
 
     @Override
