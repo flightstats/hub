@@ -8,6 +8,8 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+
 public class ContentServiceImpl implements ContentService {
 
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
@@ -89,8 +91,8 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime) {
-        return contentDao.getKeys(configuration, dateTime);
+    public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
+        return contentDao.getKeys(channelName, dateTime);
     }
 
     @Override

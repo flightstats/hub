@@ -3,7 +3,7 @@ package com.flightstats.datahub.dao.dynamo;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.datahub.dao.ContentDao;
-import com.flightstats.datahub.dao.TimeIndexDates;
+import com.flightstats.datahub.dao.TimeIndex;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.model.ContentKey;
@@ -48,7 +48,8 @@ public class DynamoContentDao implements ContentDao {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put(KEY, new AttributeValue().withS(key.keyToString()));
         item.put("data", new AttributeValue().withB(ByteBuffer.wrap(content.getData())));
-        item.put(HASHSTAMP, new AttributeValue().withS(TimeIndexDates.getString()));
+        DateTime dateTime = new DateTime(content.getMillis());
+        item.put(HASHSTAMP, new AttributeValue().withS(TimeIndex.getHash(dateTime)));
         item.put("millis", new AttributeValue().withN(String.valueOf(content.getMillis())));
         if (content.getContentType().isPresent()) {
             item.put("contentType", new AttributeValue(content.getContentType().get()));
@@ -61,9 +62,9 @@ public class DynamoContentDao implements ContentDao {
                 .withTableName(dynamoUtils.getTableName(channelName))
                 .withItem(item);
         //todo - gfm - 12/13/13 - this needs to handle ProvisionedThroughputExceededException
-        //return a 503 to the client
+        //return a 503 to the client with a suggested retry time
         PutItemResult result = dbClient.putItem(putItemRequest);
-        return new ValueInsertionResult(key, new Date(content.getMillis()));
+        return new ValueInsertionResult(key, dateTime.toDate());
     }
 
     @Override
@@ -129,7 +130,7 @@ public class DynamoContentDao implements ContentDao {
         createTableRequest.withGlobalSecondaryIndexes(secondaryIndex);
         createTableRequest.withAttributeDefinitions(attributeDefinitions);
 
-        logger.info("creating times series " + tableName + " table with " + tableThroughput + " " + indexThroughput);
+        logger.info("creating table " + tableName + " table with " + tableThroughput + " " + indexThroughput);
         keyGenerator.seedChannel(config.getName());
         dynamoUtils.createTable(createTableRequest);
     }
@@ -140,10 +141,10 @@ public class DynamoContentDao implements ContentDao {
     }
 
     @Override
-    public Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime) {
+    public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
         //todo see if Parallel Scan is relevant here - http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html
         List<ContentKey> keys = new ArrayList<>();
-        QueryRequest queryRequest = getQueryRequest(configuration.getName(), dateTime);
+        QueryRequest queryRequest = getQueryRequest(channelName, dateTime);
         QueryResult result = dbClient.query(queryRequest);
         addResults(keys, result);
         while (result.getLastEvaluatedKey() != null) {
@@ -152,7 +153,7 @@ public class DynamoContentDao implements ContentDao {
             addResults(keys, result);
 
         }
-        logger.info("returning " + keys.size() + " keys for " + configuration + " at " + TimeIndexDates.getString(dateTime));
+        logger.info("returning " + keys.size() + " keys for " + channelName + " at " + TimeIndex.getHash(dateTime));
         return keys;
     }
 
@@ -216,7 +217,7 @@ public class DynamoContentDao implements ContentDao {
 
         keyConditions.put(HASHSTAMP, new Condition()
                 .withComparisonOperator(ComparisonOperator.EQ)
-                .withAttributeValueList(new AttributeValue().withS(TimeIndexDates.getString(dateTime))));
+                .withAttributeValueList(new AttributeValue().withS(TimeIndex.getHash(dateTime))));
 
         queryRequest.setKeyConditions(keyConditions);
         return queryRequest;

@@ -7,6 +7,8 @@ import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 
+import java.util.Collection;
+
 public interface ContentService {
 
 	void createChannel(ChannelConfiguration configuration);
@@ -19,7 +21,7 @@ public interface ContentService {
 
 	Optional<ContentKey> findLastUpdatedKey(String channelName);
 
-    Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime);
+    Collection<ContentKey> getKeys(String channelName, DateTime dateTime);
 
     void delete(String channelName);
 }

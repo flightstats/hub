@@ -10,6 +10,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -45,7 +46,7 @@ public class ChannelServiceImpl implements ChannelService {
         }
 
         @Override
-        public Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime) {
+        public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
             return Collections.emptyList();
         }
 
@@ -119,9 +120,8 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Iterable<ContentKey> getKeys(String channelName, DateTime dateTime) {
-        ChannelConfiguration configuration = channelMetadataDao.getChannelConfiguration(channelName);
-        return getContentService(channelName).getKeys(configuration, dateTime);
+    public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
+        return getContentService(channelName).getKeys(channelName, dateTime);
     }
 
     @Override

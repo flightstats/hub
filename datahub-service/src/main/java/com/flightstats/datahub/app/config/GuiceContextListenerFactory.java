@@ -3,18 +3,16 @@ package com.flightstats.datahub.app.config;
 import com.codahale.metrics.MetricRegistry;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
-import com.flightstats.datahub.cluster.ChannelLockFactory;
-import com.flightstats.datahub.cluster.HazelcastChannelLockFactory;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
-import com.flightstats.datahub.dao.dynamo.DynamoDataStoreModule;
+import com.flightstats.datahub.dao.dynamo.AwsDataStoreModule;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ContentKey;
-import com.flightstats.datahub.service.ChannelLockExecutor;
 import com.flightstats.datahub.service.DataHubHealthCheck;
 import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
 import com.flightstats.datahub.service.eventing.MetricsCustomWebSocketCreator;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.flightstats.datahub.service.eventing.WebSocketChannelNameExtractor;
+import com.flightstats.datahub.util.TimeProvider;
 import com.flightstats.jerseyguice.Bindings;
 import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
 import com.flightstats.jerseyguice.metrics.GraphiteConfig;
@@ -57,9 +55,9 @@ public class GuiceContextListenerFactory {
 
     public static final String BACKING_STORE_PROPERTY = "backing.store";
     public static final String CASSANDRA_BACKING_STORE_TAG = "cassandra";
-    public static final String DYNAMO_BACKING_STORE_TAG = "dynamo";
+    public static final String AWS_BACKING_STORE_TAG = "aws";
     public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
-    private static Properties properties;
+    private static Properties properties = new Properties();
 
     public static DataHubGuiceServletContextListener construct(
             @NotNull final Properties properties) throws ConstraintException {
@@ -118,37 +116,40 @@ public class GuiceContextListenerFactory {
         @Override
         public void bind(Binder binder) {
             binder.bind(MetricRegistry.class).in(Singleton.class);
-            binder.bind(ChannelLockExecutor.class).asEagerSingleton();
             binder.bind(SubscriptionRoster.class).in(Singleton.class);
-            binder.bind(ChannelLockFactory.class).to(HazelcastChannelLockFactory.class).in(Singleton.class);
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
             binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
+            binder.bind(TimeProvider.class).in(Singleton.class);
         }
     }
 
     public static class DataHubGuiceServletContextListener extends GuiceServletContextListener {
         @NotNull
         private final Module[] modules;
+        private Injector injector;
 
         public DataHubGuiceServletContextListener(@NotNull Module... modules) {
             this.modules = modules;
         }
 
         @Override
-        public Injector getInjector() {
-            return Guice.createInjector(modules);
+        public synchronized Injector getInjector() {
+            if (injector == null) {
+                injector = Guice.createInjector(modules);
+            }
+            return injector;
         }
     }
 
     private static Module createDataStoreModule(Properties properties) {
-        String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, DYNAMO_BACKING_STORE_TAG);
+        String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, AWS_BACKING_STORE_TAG);
         logger.info("using data store " + backingStoreName);
         switch (backingStoreName) {
             case CASSANDRA_BACKING_STORE_TAG:
                 return new CassandraDataStoreModule(properties);
-            case DYNAMO_BACKING_STORE_TAG:
-                return new DynamoDataStoreModule(properties);
+            case AWS_BACKING_STORE_TAG:
+                return new AwsDataStoreModule(properties);
             default:
                 throw new IllegalStateException(String.format("Unknown backing store specified: %s", backingStoreName));
         }

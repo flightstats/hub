@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.dao.TimeIndexDates;
+import com.flightstats.datahub.dao.TimeIndex;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.google.inject.Inject;
@@ -23,6 +23,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Collection;
 
 /**
  * This resource represents groups of items stored in the DataHub
@@ -52,13 +53,13 @@ public class ChannelTimeResource {
             throws InvalidRequestException {
         DateTime requestTime = null;
         try {
-            requestTime = TimeIndexDates.parse(datetime);
+            requestTime = TimeIndex.parseHash(datetime);
         } catch (Exception e) {
             logger.warn("unable to parse " + datetime + " for channel " + channelName);
             throw new InvalidRequestException("{\"error\": \"Datetime was in the wrong format, required format is "
-                    + TimeIndexDates.PATTERN + "\"}");
+                    + TimeIndex.PATTERN + "\"}");
         }
-        Iterable<ContentKey> keys = channelService.getKeys(channelName, requestTime);
+        Collection<ContentKey> keys = channelService.getKeys(channelName, requestTime);
 
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");

@@ -7,6 +7,8 @@ import com.flightstats.datahub.model.ValueInsertionResult;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 
+import java.util.Collection;
+
 /**
  *
  */
@@ -21,7 +23,7 @@ public interface ContentDao {
 
     Optional<ContentKey> getKey(String id);
 
-    Iterable<ContentKey> getKeys(ChannelConfiguration configuration, DateTime dateTime);
+    Collection<ContentKey> getKeys(String channelName, DateTime dateTime);
 
     void delete(String channelName);
 

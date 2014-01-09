@@ -1,7 +1,7 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.dao.TimeIndexDates;
+import com.flightstats.datahub.dao.TimeIndex;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.TimeSeriesContentKey;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -43,11 +44,11 @@ public class ChannelTimeResourceTest {
     @Test
     public void testNormal() throws Exception {
         DateTime dateTime = new DateTime();
-        String hashStamp = TimeIndexDates.getString(dateTime);
-        DateTime expectedDate = TimeIndexDates.parse(hashStamp);
+        String hashStamp = TimeIndex.getHash(dateTime);
+        DateTime expectedDate = TimeIndex.parseHash(hashStamp);
         ContentKey second = new TimeSeriesContentKey();
         ContentKey first = new TimeSeriesContentKey();
-        Iterable<ContentKey> contentKeys = Lists.newArrayList(first, second);
+        Collection<ContentKey> contentKeys = Lists.newArrayList(first, second);
         when(channelService.getKeys(channelName, expectedDate)).thenReturn(contentKeys);
         Response response = resource.getValue(channelName, hashStamp);
         String entity = response.getEntity().toString();
@@ -67,9 +68,9 @@ public class ChannelTimeResourceTest {
     @Test
     public void testEmptyResults() throws Exception {
         DateTime dateTime = new DateTime();
-        String hashStamp = TimeIndexDates.getString(dateTime);
-        DateTime expectedDate = TimeIndexDates.parse(hashStamp);
-        Iterable<ContentKey> contentKeys = new ArrayList<>();
+        String hashStamp = TimeIndex.getHash(dateTime);
+        DateTime expectedDate = TimeIndex.parseHash(hashStamp);
+        Collection<ContentKey> contentKeys = new ArrayList<>();
         when(channelService.getKeys(channelName, expectedDate)).thenReturn(contentKeys);
         Response response = resource.getValue(channelName, hashStamp);
         String entity = response.getEntity().toString();

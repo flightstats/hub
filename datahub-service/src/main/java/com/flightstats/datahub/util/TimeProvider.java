@@ -1,5 +1,7 @@
 package com.flightstats.datahub.util;
 
+import org.joda.time.DateTime;
+
 import java.util.Date;
 
 /**
@@ -10,6 +12,10 @@ public class TimeProvider {
 
     public Date getDate() {
         return new Date();
+    }
+
+    public DateTime getDateTime() {
+        return new DateTime();
     }
 
     public long getMillis(){
