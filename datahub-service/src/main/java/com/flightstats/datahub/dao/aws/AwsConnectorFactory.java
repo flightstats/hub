@@ -1,4 +1,4 @@
-package com.flightstats.datahub.dao.dynamo;
+package com.flightstats.datahub.dao.aws;
 
 import com.amazonaws.*;
 import com.amazonaws.auth.AWSCredentials;
