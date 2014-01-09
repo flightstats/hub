@@ -4,7 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
-import com.flightstats.datahub.dao.dynamo.DynamoDataStoreModule;
+import com.flightstats.datahub.dao.dynamo.AwsDataStoreModule;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.service.DataHubHealthCheck;
@@ -55,7 +55,7 @@ public class GuiceContextListenerFactory {
 
     public static final String BACKING_STORE_PROPERTY = "backing.store";
     public static final String CASSANDRA_BACKING_STORE_TAG = "cassandra";
-    public static final String DYNAMO_BACKING_STORE_TAG = "dynamo";
+    public static final String AWS_BACKING_STORE_TAG = "aws";
     public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
     private static Properties properties = new Properties();
 
@@ -143,13 +143,13 @@ public class GuiceContextListenerFactory {
     }
 
     private static Module createDataStoreModule(Properties properties) {
-        String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, DYNAMO_BACKING_STORE_TAG);
+        String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, AWS_BACKING_STORE_TAG);
         logger.info("using data store " + backingStoreName);
         switch (backingStoreName) {
             case CASSANDRA_BACKING_STORE_TAG:
                 return new CassandraDataStoreModule(properties);
-            case DYNAMO_BACKING_STORE_TAG:
-                return new DynamoDataStoreModule(properties);
+            case AWS_BACKING_STORE_TAG:
+                return new AwsDataStoreModule(properties);
             default:
                 throw new IllegalStateException(String.format("Unknown backing store specified: %s", backingStoreName));
         }

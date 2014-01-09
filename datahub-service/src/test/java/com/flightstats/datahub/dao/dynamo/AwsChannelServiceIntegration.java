@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
-public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
+public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
 
     @BeforeClass
     public static void setupClass() throws Exception {
@@ -40,14 +40,14 @@ public class DynamoChannelServiceIntegration extends ChannelServiceIntegration {
         //todo - gfm - 12/12/13 - figure out how to run from IDE
         Properties properties = new Properties();
 
-        properties.put("backing.store", "dynamo");
+        properties.put("backing.store", "aws");
         //properties.put("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
         properties.put("dynamo.endpoint", "localhost:8000");
-        properties.put("dynamo.protocol", "HTTP");
+        properties.put("aws.protocol", "HTTP");
         properties.put("dynamo.environment", "test");
         properties.put("dynamo.table.creation.wait.minutes", "5");
         //todo - gfm - 12/13/13 - make this generic
-        properties.put("dynamo.credentials", "/Users/gmoulliet/code/datahub/datahub-service/src/conf/datahub/dev/credentials.properties");
+        properties.put("aws.credentials", "/Users/gmoulliet/code/datahub/datahub-service/src/conf/datahub/dev/credentials.properties");
         properties.put("hazelcast.conf.xml", "");
         finalStartup(properties);
     }
