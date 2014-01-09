@@ -17,12 +17,12 @@ public class DynamoTablesTool {
     public static void main(String[] args) throws ConstraintException {
         Properties properties = new Properties();
 
-        properties.put("backing.store", "dynamo");
-        properties.put("dynamo.protocol", "HTTP");
+        properties.put("backing.store", "aws");
+        properties.put("aws.protocol", "HTTP");
         properties.put("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
         properties.put("dynamo.environment", "dev");
         properties.put("dynamo.table.creation.wait.minutes", "10");
-        properties.put("dynamo.credentials", "/Users/gmoulliet/code/datahub/datahub-service/src/conf/datahub/dev/credentials.properties");
+        properties.put("aws.credentials", "/Users/gmoulliet/code/datahub/datahub-service/src/conf/datahub/dev/credentials.properties");
 
         properties.put("hazelcast.conf.xml", "");
         Injector injector = GuiceContextListenerFactory.construct(properties).getInjector();

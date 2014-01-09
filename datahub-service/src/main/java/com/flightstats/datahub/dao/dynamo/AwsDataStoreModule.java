@@ -14,18 +14,18 @@ import com.google.inject.name.Names;
 import java.io.IOException;
 import java.util.Properties;
 
-public class DynamoDataStoreModule extends AbstractModule {
+public class AwsDataStoreModule extends AbstractModule {
 
 	private final Properties properties;
 
-	public DynamoDataStoreModule(Properties properties) {
+	public AwsDataStoreModule(Properties properties) {
 		this.properties = properties;
 	}
 
 	@Override
 	protected void configure() {
 		Names.bindProperties(binder(), properties);
-		bind(DynamoConnectorFactory.class).in(Singleton.class);
+		bind(AwsConnectorFactory.class).in(Singleton.class);
 		bindListener(ChannelMetadataInitialization.buildTypeMatcher(), new ChannelMetadataInitialization());
 		bindListener(DataHubValueDaoInitialization.buildTypeMatcher(), new DataHubValueDaoInitialization());
         bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
@@ -78,14 +78,14 @@ public class DynamoDataStoreModule extends AbstractModule {
     @Inject
     @Provides
     @Singleton
-    public AmazonDynamoDBClient buildDynamoClient(DynamoConnectorFactory factory) {
+    public AmazonDynamoDBClient buildDynamoClient(AwsConnectorFactory factory) {
         return factory.getDynamoClient();
     }
 
     @Inject
     @Provides
     @Singleton
-    public AmazonS3 buildS3Client(DynamoConnectorFactory factory) throws IOException {
+    public AmazonS3 buildS3Client(AwsConnectorFactory factory) throws IOException {
         return factory.getS3Client();
     }
 }
