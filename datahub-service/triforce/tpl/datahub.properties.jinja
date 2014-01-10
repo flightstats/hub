@@ -1,0 +1,32 @@
+#valid values are currently "aws" and "cassandra"
+backing.store={{ backing['store'] }}
+
+aws.protocol={{ aws['protocol'] }}
+aws.environment={{ aws['dev'] }}
+aws.credentials=/home/deihub/local/datahub/conf/credentials.properties
+
+dynamo.endpoint={{ dynamo['endpoint'] }}
+dynamo.table_creation_wait_minutes={{ dynamo['table_creation_wait_minutes'] }}
+
+zookeeper.connection={{ zookeeper['connection'] }}
+zookeeper.cfg=/home/deihub/local/datahub/conf/zoo.cfg
+
+hazelcast.conf.xml=/home/deihub/local/deihub/conf/hazelcast.conf.xml
+
+cassandra.cluster_name=data hub
+cassandra.hostport={{ cassandra['hostport'] }}
+cassandra.replication_factor= {{ cassandra['replication_factor'] }}
+
+#http.bind_interfaces=lo,en0
+http.bind_port=8080
+http.idle_timeout=30000
+http.bind_ip=0.0.0.0
+
+graphite-emit-metrics=false
+graphite-register-jvm-metrics=true
+graphite-hosts={{ graphite['hosts'] }}
+graphite-metrics-prefix=deihub
+
+sweeper.periodMillis=60000
+
+
