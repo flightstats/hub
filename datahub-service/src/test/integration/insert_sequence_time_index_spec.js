@@ -31,20 +31,34 @@ utils.runInTestChannelJson(channelRequest, function () {
         return hrefs.length == 3;
     }, 5000);
 
+    function verify(result) {
+        var uris = result['_links']['uris'];
+        hrefs.forEach(function (item) {
+            expect(uris.indexOf(item)).not.toBe(-1);
+        })
+        request.del({url: thisChannelResource, headers: {"Content-Type": "text/plain"}, body: ""}, function (err, response, body) {
+            expect(err).toBeNull();
+        });
+    }
+
     runs(function () {
         var format = moment().format("YYYY-MM-DDTHH:mmZ");
-        frisby.create(testName + ': Fetching ids.')
-            .get("http://localhost:8080/channel/" + channelName + "/ids/" + format)
+
+        frisby.create(testName + ': Fetching ids from time.')
+            .get("http://localhost:8080/channel/" + channelName + "/time")
             .expectStatus(200)
             .expectHeader('content-type', 'application/json')
             .afterJSON(function (result) {
-                var uris = result['_links']['uris'];
-                hrefs.forEach(function (item) {
-                    expect(uris.indexOf(item)).not.toBe(-1);
-                })
-                request.del({url: thisChannelResource, headers: {"Content-Type": "text/plain"}, body: ""}, function (err, response, body) {
-                    expect(err).toBeNull();
-                });
+                verify(result);
+            })
+            .toss();
+
+        frisby.create(testName + ': Fetching ids with time.')
+            .get("http://localhost:8080/channel/" + channelName + "/time/" + format)
+            .expectStatus(200)
+            .expectHeader('content-type', 'application/json')
+            .afterJSON(function (result) {
+                verify(result);
             })
             .toss();
 

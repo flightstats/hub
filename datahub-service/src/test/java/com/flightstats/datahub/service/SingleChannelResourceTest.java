@@ -76,7 +76,7 @@ public class SingleChannelResourceTest {
 		MetadataResponse expectedResponse = new MetadataResponse(channelConfig);
 		assertEquals(expectedResponse, result.getObject());
 		HalLink selfLink = result.getHalLinks().getLinks().get(0);
-		HalLink latestLink = result.getHalLinks().getLinks().get(2);
+		HalLink latestLink = result.getHalLinks().getLinks().get(1);
 		assertEquals(new HalLink("self", channelUri), selfLink);
 		assertEquals(new HalLink("latest", URI.create(channelUri.toString() + "/latest")), latestLink);
 	}

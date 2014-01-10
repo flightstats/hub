@@ -25,10 +25,12 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Collection;
 
+import static javax.ws.rs.core.Response.Status.SEE_OTHER;
+
 /**
  * This resource represents groups of items stored in the DataHub
  */
-@Path("/channel/{channelName: .*}/ids/{datetime}")
+@Path("/channel/{channelName: .*}/time")
 public class ChannelTimeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
@@ -44,6 +46,16 @@ public class ChannelTimeResource {
         this.linkBuilder = linkBuilder;
     }
 
+    @GET
+    public Response getLatest() {
+        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
+        String channelUri = uriInfo.getRequestUri().toString();
+        URI uri = URI.create(channelUri + "/" + TimeIndex.getHash(new DateTime()));
+        builder.location(uri);
+        return builder.build();
+    }
+
+    @Path("/{datetime}")
 	@GET
 	@Timed(name = "all-channels.ids")
 	@PerChannelTimed(operationName = "ids", channelNamePathParameter = "channelName")

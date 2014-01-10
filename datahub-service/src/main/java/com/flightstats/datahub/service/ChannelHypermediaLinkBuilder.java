@@ -28,6 +28,10 @@ public class ChannelHypermediaLinkBuilder {
 		return URI.create(uriInfo.getRequestUri() + "/latest");
 	}
 
+    URI buildTimeUri(UriInfo uriInfo) {
+        return URI.create(uriInfo.getRequestUri() + "/time");
+    }
+
 	URI buildLatestUri(String channelName, UriInfo uriInfo) {
 		return URI.create(uriInfo.getRequestUri() + "/" + channelName + "/latest");
 	}
