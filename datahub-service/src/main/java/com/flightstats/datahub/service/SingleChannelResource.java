@@ -56,11 +56,12 @@ public class SingleChannelResource {
         ChannelConfiguration config = channelService.getChannelConfiguration(channelName);
         MetadataResponse response = new MetadataResponse(config);
         Linked.Builder<MetadataResponse> builder = linked(response)
-                .withLink("self", linkBuilder.buildChannelUri(config, uriInfo))
-                .withLink("ws", linkBuilder.buildWsLinkFor(uriInfo));
+                .withLink("self", linkBuilder.buildChannelUri(config, uriInfo));
         if (config.isSequence()) {
             builder.withLink("latest", linkBuilder.buildLatestUri(uriInfo));
         }
+        builder.withLink("ws", linkBuilder.buildWsLinkFor(uriInfo));
+        builder.withLink("time", linkBuilder.buildTimeUri(uriInfo));
         return builder.build();
     }
 
