@@ -1,6 +1,7 @@
 package com.flightstats.datahub.dao.s3;
 
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
+import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.TimeIndex;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
@@ -44,7 +45,7 @@ public class TimeIndexProcessorTest {
         //properties.put("zookeeper.connection", "localhost:2181");
         testingServer = new TestingServer(2181);
         RetryPolicy retryPolicy = GuiceContextListenerFactory.DatahubCommonModule.buildRetryPolicy();
-        curator = GuiceContextListenerFactory.DatahubCommonModule.buildCurator("localhost:2181", retryPolicy);
+        curator = GuiceContextListenerFactory.DatahubCommonModule.buildCurator("localhost:2181", retryPolicy, new ZooKeeperState());
         s3ContentDao = new S3ContentDao(null, null, "", curator);
     }
 

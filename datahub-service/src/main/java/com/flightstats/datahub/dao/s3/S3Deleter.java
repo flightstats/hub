@@ -39,14 +39,14 @@ public class S3Deleter implements Runnable {
         request.withPrefix(channelName);
         ObjectListing listing = s3Client.listObjects(request);
         List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
-        List<S3ObjectSummary> objectSummaries = listing.getObjectSummaries();
-        for (S3ObjectSummary objectSummary : objectSummaries) {
-
+        for (S3ObjectSummary objectSummary : listing.getObjectSummaries()) {
             keys.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
+        }
+        if (keys.isEmpty()) {
+            return false;
         }
         DeleteObjectsRequest multiObjectDeleteRequest = new DeleteObjectsRequest(bucketName);
         multiObjectDeleteRequest.setKeys(keys);
-
         try {
             s3Client.deleteObjects(multiObjectDeleteRequest);
 
