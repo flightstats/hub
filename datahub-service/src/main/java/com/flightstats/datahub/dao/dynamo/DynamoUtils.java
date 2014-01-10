@@ -23,8 +23,8 @@ public class DynamoUtils {
 
     @Inject
     public DynamoUtils(AmazonDynamoDBClient dbClient,
-                       @Named("dynamo.environment") String environment,
-                       @Named("dynamo.table.creation.wait.minutes") int tableCreationWaitMinutes) {
+                       @Named("aws.environment") String environment,
+                       @Named("dynamo.table_creation_wait_minutes") int tableCreationWaitMinutes) {
         this.dbClient = dbClient;
         this.environment = environment;
         this.tableCreationWaitMinutes = tableCreationWaitMinutes;

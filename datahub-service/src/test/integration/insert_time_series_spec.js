@@ -3,7 +3,7 @@ var fs = require('fs');
 //npm install --save moment
 var moment = require('moment');
 var request = require('request');
-var testName = "insert_time_series_text_spec";
+var testName = "insert_time_series_spec";
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
@@ -34,7 +34,7 @@ utils.runInTestChannelJson(channelRequest, function () {
     runs(function () {
         var format = moment().format("YYYY-MM-DDTHH:mmZ");
         frisby.create(testName + ': Fetching ids.')
-            .get("http://localhost:8080/channel/" + channelName + "/ids/" + format)
+            .get("http://localhost:8080/channel/" + channelName + "/time/" + format)
             .expectStatus(200)
             .expectHeader('content-type', 'application/json')
             .afterJSON(function (result) {
