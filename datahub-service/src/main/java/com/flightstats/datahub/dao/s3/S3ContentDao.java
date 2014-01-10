@@ -53,23 +53,6 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         this.s3BucketName = "deihub-" + environment;
     }
 
-    /**
-     * todo - gfm - 1/7/14 - handle this
-     * com.amazonaws.services.s3.model.AmazonS3Exception: Status Code: 400, AWS Service: Amazon S3, AWS Request ID: 488F5174E60CA2AF, AWS Error Code: RequestTimeout, AWS Error Message: Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed., S3 Extended Request ID: PUpEDSp3iov/xoJ58ygZxBam5qmoUWcyR5fNEBRI/fPLIc+4RbhynR5cdYDHtGIM
-     at com.amazonaws.http.AmazonHttpClient.handleErrorResponse(AmazonHttpClient.java:767)
-     at com.amazonaws.http.AmazonHttpClient.executeHelper(AmazonHttpClient.java:414)
-     at com.amazonaws.http.AmazonHttpClient.execute(AmazonHttpClient.java:228)
-     at com.amazonaws.services.s3.AmazonS3Client.invoke(AmazonS3Client.java:3214)
-     at com.amazonaws.services.s3.AmazonS3Client.putObject(AmazonS3Client.java:1307)
-     at com.flightstats.datahub.dao.dynamo.S3ContentDao.write(S3ContentDao.java:62)
-     at com.flightstats.datahub.dao.TimedContentDao$1.call(TimedContentDao.java:33)
-     at com.flightstats.datahub.dao.TimedContentDao$1.call(TimedContentDao.java:30)
-     at com.flightstats.datahub.metrics.MetricsTimer.time(MetricsTimer.java:22)
-     at com.flightstats.datahub.dao.TimedContentDao.write(TimedContentDao.java:30)
-     at com.flightstats.datahub.dao.ContentServiceImpl.insert(ContentServiceImpl.java:47)
-     at com.flightstats.datahub.dao.ChannelServiceImpl.insert(ChannelServiceImpl.java:87)
-     at com.flightstats.datahub.service.SingleChannelResource.insertValue(SingleChannelResource.java:135)
-     */
     @Override
     public ValueInsertionResult write(String channelName, Content content, Optional<Integer> ttlSeconds) {
         //todo - gfm - 1/3/14 - what happens if one or the other fails?
@@ -81,6 +64,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     public void writeIndex(String channelName, DateTime dateTime, ContentKey key) {
+        //todo - gfm - 1/9/14 - add timing
         String path = TimeIndex.getPath(channelName, dateTime, key);
         try {
             curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
@@ -91,7 +75,9 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     private void writeS3(String channelName, Content content, ContentKey key) {
+        //todo - gfm - 1/9/14 - add timing
         String s3Key = getS3ContentKey(channelName, key);
+        //todo - gfm - 1/9/14 - this could use streaming if the content length is specified
         InputStream stream = new ByteArrayInputStream(content.getData());
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(content.getData().length);
@@ -237,7 +223,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     private void modifyLifeCycle(ChannelConfiguration config) {
         //todo - gfm - 1/7/14 - this should happen in an system wide lock on ChannelConfig
-        //todo - gfm - 1/7/14 - or it should be triggered occasionally via ChannelMetadata
+        // or it should be triggered occasionally via ChannelMetadata
 
         if (config.getTtlMillis() == null) {
             return;
