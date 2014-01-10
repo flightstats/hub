@@ -16,9 +16,9 @@ import java.io.IOException;
 /**
 *
 */
-public class NoThrottlingRetryCondition implements RetryPolicy.RetryCondition {
+public class DatahubRetryCondition implements RetryPolicy.RetryCondition {
 
-    private final static Logger logger = LoggerFactory.getLogger(NoThrottlingRetryCondition.class);
+    private final static Logger logger = LoggerFactory.getLogger(DatahubRetryCondition.class);
 
     @Override
     public boolean shouldRetry(AmazonWebServiceRequest originalRequest,

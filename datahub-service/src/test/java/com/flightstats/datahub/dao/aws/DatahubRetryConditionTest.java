@@ -18,14 +18,14 @@ import static org.mockito.Mockito.mock;
  *
  */
 @SuppressWarnings("ThrowableInstanceNeverThrown")
-public class NoThrottlingRetryConditionTest {
+public class DatahubRetryConditionTest {
 
-    private NoThrottlingRetryCondition retryCondition;
+    private DatahubRetryCondition retryCondition;
     private AmazonWebServiceRequest request;
 
     @Before
     public void setUp() throws Exception {
-        retryCondition = new NoThrottlingRetryCondition();
+        retryCondition = new DatahubRetryCondition();
         request = mock(AmazonWebServiceRequest.class);
     }
 
