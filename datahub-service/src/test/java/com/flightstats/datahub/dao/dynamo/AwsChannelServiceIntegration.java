@@ -44,8 +44,8 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         //properties.put("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
         properties.put("dynamo.endpoint", "localhost:8000");
         properties.put("aws.protocol", "HTTP");
-        properties.put("dynamo.environment", "test");
-        properties.put("dynamo.table.creation.wait.minutes", "5");
+        properties.put("aws.environment", "test");
+        properties.put("dynamo.table_creation_wait_minutes", "5");
         properties.put("aws.credentials", "default");
         properties.put("hazelcast.conf.xml", "");
         finalStartup(properties);
