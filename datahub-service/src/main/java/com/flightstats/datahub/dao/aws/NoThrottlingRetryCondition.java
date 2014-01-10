@@ -6,6 +6,7 @@ import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.retry.RetryPolicy;
 import com.amazonaws.retry.RetryUtils;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,12 @@ public class NoThrottlingRetryCondition implements RetryPolicy.RetryCondition {
                     logger.info("throttling exception " + originalRequest);
                 }
                 return false;
+            }
+
+            //com.amazonaws.services.s3.model.AmazonS3Exception: Status Code: 400, AWS Service: Amazon S3, AWS Request ID: 488F5174E60CA2AF,
+            // AWS Error Code: RequestTimeout, AWS Error Message: Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.
+            if (StringUtils.contains(ase.getErrorCode(), "RequestTimeout")) {
+                return true;
             }
 
             /*
