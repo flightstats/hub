@@ -59,7 +59,7 @@ public class AwsConnectorFactory {
     }
 
     private ClientConfiguration getClientConfiguration() {
-        RetryPolicy retryPolicy = new RetryPolicy(new NoThrottlingRetryCondition(),
+        RetryPolicy retryPolicy = new RetryPolicy(new DatahubRetryCondition(),
                 PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY, 3, true);
         ClientConfiguration configuration = new ClientConfiguration();
         configuration.withRetryPolicy(retryPolicy);
