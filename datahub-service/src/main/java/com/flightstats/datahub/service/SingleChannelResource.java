@@ -6,7 +6,10 @@ import com.flightstats.datahub.app.config.PATCH;
 import com.flightstats.datahub.app.config.metrics.PerChannelThroughput;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.ChannelUpdateRequest;
+import com.flightstats.datahub.model.MetadataResponse;
+import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -20,7 +23,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Date;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -52,32 +54,14 @@ public class SingleChannelResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         ChannelConfiguration config = channelService.getChannelConfiguration(channelName);
-        //todo - gfm - 12/27/13 - what should the default date be?
-        Date lastUpdateDate = new Date();
-        try {
-            lastUpdateDate = getLastUpdateDate(channelName);
-        } catch (UnsupportedOperationException e) {
-            logger.info("unable to get last updated " + channelName, e);
-        }
-        MetadataResponse response = new MetadataResponse(config, lastUpdateDate);
-        return linked(response)
+        MetadataResponse response = new MetadataResponse(config);
+        Linked.Builder<MetadataResponse> builder = linked(response)
                 .withLink("self", linkBuilder.buildChannelUri(config, uriInfo))
-                .withLink("latest", linkBuilder.buildLatestUri(uriInfo))
-                .withLink("ws", linkBuilder.buildWsLinkFor(uriInfo))
-                .build();
-    }
-
-    private Date getLastUpdateDate(String channelName) {
-        Optional<ContentKey> latestId = channelService.findLastUpdatedKey(channelName);
-        if (!latestId.isPresent()) {
-            return null;
+                .withLink("ws", linkBuilder.buildWsLinkFor(uriInfo));
+        if (config.isSequence()) {
+            builder.withLink("latest", linkBuilder.buildLatestUri(uriInfo));
         }
-        //todo - gfm - 11/11/13 - is returning last updated date actually useful?
-        Optional<LinkedContent> optionalResult = channelService.getValue(channelName, latestId.get().keyToString());
-        if (!optionalResult.isPresent()) {
-            return null;
-        }
-        return new Date(optionalResult.get().getValue().getMillis());
+        return builder.build();
     }
 
     @PATCH

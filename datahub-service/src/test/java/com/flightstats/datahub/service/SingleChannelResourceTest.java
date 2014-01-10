@@ -73,10 +73,10 @@ public class SingleChannelResourceTest {
 		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 
 		Linked<MetadataResponse> result = testClass.getChannelMetadata(channelName, urlInfo);
-		MetadataResponse expectedResponse = new MetadataResponse(channelConfig, new Date(content.getMillis()));
+		MetadataResponse expectedResponse = new MetadataResponse(channelConfig);
 		assertEquals(expectedResponse, result.getObject());
 		HalLink selfLink = result.getHalLinks().getLinks().get(0);
-		HalLink latestLink = result.getHalLinks().getLinks().get(1);
+		HalLink latestLink = result.getHalLinks().getLinks().get(2);
 		assertEquals(new HalLink("self", channelUri), selfLink);
 		assertEquals(new HalLink("latest", URI.create(channelUri.toString() + "/latest")), latestLink);
 	}

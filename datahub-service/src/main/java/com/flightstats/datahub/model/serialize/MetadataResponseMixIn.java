@@ -10,8 +10,8 @@ import java.util.Date;
 @AbstractMixIn
 public abstract class MetadataResponseMixIn extends MetadataResponse {
 
-    public MetadataResponseMixIn(ChannelConfiguration config, Date lastUpdateDate) {
-        super(config, lastUpdateDate);
+    public MetadataResponseMixIn(ChannelConfiguration config) {
+        super(config);
     }
 
     @JsonProperty("name")
@@ -19,9 +19,6 @@ public abstract class MetadataResponseMixIn extends MetadataResponse {
 
     @JsonProperty("creationDate")
     public abstract Date getCreationDate();
-
-    @JsonProperty("lastUpdateDate")
-    public abstract Date getLastUpdateDate();
 
     @JsonProperty("ttlMillis")
     public abstract Long getTtlMillis();

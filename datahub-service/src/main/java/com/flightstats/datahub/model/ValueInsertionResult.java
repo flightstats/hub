@@ -2,7 +2,6 @@ package com.flightstats.datahub.model;
 
 import java.util.Date;
 
-//todo - gfm - 12/23/13 - wondering how useful this class is.
 public class ValueInsertionResult {
 
     private final ContentKey key;

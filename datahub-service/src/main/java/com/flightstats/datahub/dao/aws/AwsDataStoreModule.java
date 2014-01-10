@@ -81,7 +81,7 @@ public class AwsDataStoreModule extends AbstractModule {
     @Inject
     @Provides
     @Singleton
-    public AmazonDynamoDBClient buildDynamoClient(AwsConnectorFactory factory) {
+    public AmazonDynamoDBClient buildDynamoClient(AwsConnectorFactory factory) throws IOException {
         return factory.getDynamoClient();
     }
 

@@ -30,24 +30,23 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
+/**
+ * This requires DynamoDBLocal to use the dynamo.endpoint localhost:8000
+ * http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
+ * start with java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar
+ */
 public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        //todo - gfm - 12/12/13 - this requires DynamoDBLocal -
-        //  http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
-        //start with java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar
-        //todo - gfm - 12/12/13 - figure out how to run from IDE
         Properties properties = new Properties();
-
         properties.put("backing.store", "aws");
         //properties.put("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
         properties.put("dynamo.endpoint", "localhost:8000");
         properties.put("aws.protocol", "HTTP");
         properties.put("dynamo.environment", "test");
         properties.put("dynamo.table.creation.wait.minutes", "5");
-        //todo - gfm - 12/13/13 - make this generic
-        properties.put("aws.credentials", "/Users/gmoulliet/code/datahub/datahub-service/src/conf/datahub/dev/credentials.properties");
+        properties.put("aws.credentials", "default");
         properties.put("hazelcast.conf.xml", "");
         finalStartup(properties);
     }
@@ -67,7 +66,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         tearDown();
     }
 
-    //todo - gfm - 12/23/13 - time series isn't supported with the cassandra impl, so it's tested here
+    //time series isn't supported with the cassandra impl, so it's tested here
 
     @Test
     public void testTimeSeriesChannelCreation() throws Exception {
@@ -117,7 +116,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         assertFalse(compositeValue.getContentType().isPresent());
         assertFalse(compositeValue.getValue().getContentLanguage().isPresent());
 
-        //todo - gfm - 12/23/13 - this fails using DynamoDBLocal
+        //this fails using DynamoDBLocal
         if (callGetKeys) {
             DateTime expectedDate = new DateTime(insert1.getDate());
             Collection<ContentKey> futureKeys = channelService.getKeys(channelName, expectedDate.plusYears(1));

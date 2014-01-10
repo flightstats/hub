@@ -23,9 +23,8 @@ public class MetadataResponseMixInTest {
 	public void test() throws Exception {
 		ObjectMapper mapper = DataHubObjectMapperFactory.construct();
 		OutputStream out = new ByteArrayOutputStream();
-		Date date = new Date(902103L);
         ChannelConfiguration config = ChannelConfiguration.builder().withName("The Name").withCreationDate(new Date(808)).build();
-		MetadataResponse response = new MetadataResponse(config, date);
+		MetadataResponse response = new MetadataResponse(config);
 		mapper.writeValue(out, response);
 		String result = out.toString();
 		List<String> lines = Arrays.asList(result.split("\n"));
@@ -36,10 +35,9 @@ public class MetadataResponseMixInTest {
 				return input.replaceFirst(",$", "");
 			}
 		});
-		assertEquals(6, lines.size());
+		assertEquals(5, lines.size());
 		assertTrue(lines.contains("{"));
 		assertTrue(lines.contains("  \"creationDate\" : \"1970-01-01T00:00:00.808Z\""));
-		assertTrue(lines.contains("  \"lastUpdateDate\" : \"1970-01-01T00:15:02.103Z\""));
 		assertTrue(lines.contains("  \"name\" : \"The Name\""));
 		assertTrue(lines.contains("}"));
 	}

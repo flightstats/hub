@@ -21,9 +21,6 @@ cluster_name: 'FlightStats Data Hub'
 #
 # If you already have a cluster with 1 token per node, and wish to migrate to 
 # multiple tokens per node, see http://wiki.apache.org/cassandra/Operations
-#todo - gfm - need to figure this out.  would prefer more tokens. When initial_token is set,
-#there is only a single token.  when initial_token is not set, there are 256 tokens per node, but the
-#distribution is random, which is not good for long term data managment.
 #num_tokens: 256
 
 # If you haven't specified num_tokens, or have set it to the default of 1 then

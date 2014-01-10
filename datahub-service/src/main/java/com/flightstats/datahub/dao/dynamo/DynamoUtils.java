@@ -54,7 +54,6 @@ public class DynamoUtils {
         try {
             DescribeTableResult describeTableResult = dbClient.describeTable(tableName);
             dbClient.deleteTable(tableName);
-            //todo - gfm - 12/30/13 - wait for deletion?
         } catch (ResourceNotFoundException e) {
             //do nothing
         }
