@@ -91,7 +91,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
     @Test
     public void testTimeSeriesChannelWriteReadDelete() throws Exception {
         ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
-        timeIndexWork(configuration, false);
+        timeIndexWork(configuration, true);
     }
 
     @Test
