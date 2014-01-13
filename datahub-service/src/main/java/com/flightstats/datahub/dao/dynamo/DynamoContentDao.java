@@ -118,7 +118,7 @@ public class DynamoContentDao implements ContentDao {
                 .withKeySchema(tableKeySchema)
                 .withProvisionedThroughput(new ProvisionedThroughput(tableThroughput, tableThroughput));
 
-        long indexThroughput = config.getRequestRateInSeconds();
+        long indexThroughput = config.getPeakRequestRateSeconds();
         attributeDefinitions.add(new AttributeDefinition().withAttributeName(HASHSTAMP).withAttributeType("S"));
         GlobalSecondaryIndex secondaryIndex = new GlobalSecondaryIndex()
                 .withIndexName(TIME_INDEX)
@@ -178,7 +178,7 @@ public class DynamoContentDao implements ContentDao {
         List<GlobalSecondaryIndexDescription> gsis = table.getGlobalSecondaryIndexes();
         for (GlobalSecondaryIndexDescription gsi : gsis) {
             if (gsi.getIndexName().equals(TIME_INDEX)) {
-                long indexThroughput = configuration.getRequestRateInSeconds();
+                long indexThroughput = configuration.getPeakRequestRateSeconds();
                 if (gsi.getProvisionedThroughput().getWriteCapacityUnits() != indexThroughput) {
                     update = true;
                     UpdateGlobalSecondaryIndexAction indexAction = new UpdateGlobalSecondaryIndexAction()

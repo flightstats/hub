@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -43,8 +42,7 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
             item.put("ttlMillis", new AttributeValue().withN(String.valueOf(config.getTtlMillis())));
         }
         item.put("type", new AttributeValue().withS(config.getType().toString()));
-        item.put("peakRequestRate", new AttributeValue().withN(String.valueOf(config.getPeakRequestRate())));
-        item.put("rateTimeUnit", new AttributeValue().withS(config.getRateTimeUnit().name()));
+        item.put("peakRequestRate", new AttributeValue().withN(String.valueOf(config.getPeakRequestRateSeconds())));
         item.put("contentSizeKB", new AttributeValue().withN(String.valueOf(config.getContentSizeKB())));
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(getTableName())
@@ -113,9 +111,6 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
         }
         if (item.containsKey("peakRequestRate")) {
             builder.withPeakRequestRate(Integer.parseInt(item.get("peakRequestRate").getN()));
-        }
-        if (item.containsKey("rateTimeUnit")) {
-            builder.withRateTimeUnit(TimeUnit.valueOf(item.get("rateTimeUnit").getS()));
         }
         if (item.containsKey("contentSizeKB")) {
             builder.withContentKiloBytes(Integer.parseInt(item.get("contentSizeKB").getN()));

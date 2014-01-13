@@ -27,7 +27,7 @@ class WebsiteTasks(TaskSet):
         self.channel = "testThroughput"
         self.count = 0
         payload = {"name": self.channel, "ttlMillis": "36000000", "type" : "TimeSeries", "contentSizeKB": "1",
-            "peakRequestRate": "1000", "rateTimeUnit": "SECONDS"}
+            "peakRequestRateSeconds": "1000", "rateTimeUnit": "SECONDS"}
         self.client.post("/channel",
                          data=json.dumps(payload),
                          headers={"Content-Type": "application/json"}
