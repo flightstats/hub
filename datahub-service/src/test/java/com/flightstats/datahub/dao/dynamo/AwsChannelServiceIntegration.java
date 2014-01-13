@@ -2,6 +2,7 @@ package com.flightstats.datahub.dao.dynamo;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
+import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.dao.ChannelServiceIntegration;
 import com.flightstats.datahub.dao.TimeIndex;
@@ -194,7 +195,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         RetryPolicy retryPolicy = injector.getInstance(RetryPolicy.class);
         CuratorKeyGenerator keyGenerator = new CuratorKeyGenerator(curator, metricsTimer, retryPolicy);
         S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", curator);
-        TimeIndexProcessor processor = new TimeIndexProcessor(curator, indexDao, new TimeProvider());
+        TimeIndexProcessor processor = new TimeIndexProcessor(curator, indexDao, new TimeProvider(), new ZooKeeperState());
 
         DateTime dateTime1 = new DateTime(2014, 1, 6, 12, 45);
         DateTime dateTime2 = dateTime1.plusMinutes(1);
