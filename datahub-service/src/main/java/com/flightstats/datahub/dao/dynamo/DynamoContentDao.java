@@ -210,6 +210,7 @@ public class DynamoContentDao implements ContentDao {
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(dynamoUtils.getTableName(channelName))
                 .withIndexName(TIME_INDEX)
+                .withConsistentRead(false)
                 .withSelect("ALL_PROJECTED_ATTRIBUTES")
                 .withScanIndexForward(true);
 
