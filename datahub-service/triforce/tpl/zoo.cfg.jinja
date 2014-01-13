@@ -1,14 +1,14 @@
 tickTime=2000
 #dataDir needs to contain myid file
-dataDir=/ebs/zookeeper/
-dataLogDir=/ebs/zookeeper/
+dataDir={{ dataDir }}
+dataLogDir={{ dataLogDir }}
 clientPort=2181
 initLimit=5
 syncLimit=2
 maxClientCnxns=0
-server.1=deihub-01.cloud-east.dev:2888:3888
-server.2=deihub-02.cloud-east.dev:2888:3888
-server.3=deihub-03.cloud-east.dev:2888:3888
+server.1={{ server[1] }}
+server.2={{ server[2] }}
+server.3={{ server[3] }}
 
 autopurge.snapRetainCount=5
 autopurge.purgeInterval=1
