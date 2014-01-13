@@ -26,6 +26,7 @@ public class CreateChannelValidator {
         String channelName = channelNameOptional.get().trim();
         ensureNotAllBlank(channelName);
         checkForInvalidCharacters(channelName);
+        //todo - gfm - 1/13/14 - check for length, max ??
         validateChannelUniqueness(channelName);
         validateRate(request);
         validateContentSize(request);
@@ -38,7 +39,7 @@ public class CreateChannelValidator {
     }
 
     private void validateRate(ChannelConfiguration request) throws InvalidRequestException {
-        if (request.getPeakRequestRate() <= 0) {
+        if (request.getPeakRequestRateSeconds() <= 0) {
             throw new InvalidRequestException("{\"error\": \"Peak Request Rate must be greater than 0 (zero) \"}");
         }
     }

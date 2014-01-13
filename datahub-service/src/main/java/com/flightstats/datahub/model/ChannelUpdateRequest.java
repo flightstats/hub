@@ -11,13 +11,13 @@ public class ChannelUpdateRequest {
 
 	private final Optional<Long> ttlMillis;
     private final Optional<Integer> contentKiloBytes;
-    private final Optional<Integer> peakRequestRate;
+    private final Optional<Integer> peakRequestRateSeconds;
     private final Optional<TimeUnit> rateTimeUnit;
 
 	protected ChannelUpdateRequest(Builder builder) {
 		ttlMillis = builder.ttlMillis;
         contentKiloBytes = builder.contentKiloBytes;
-        peakRequestRate = builder.peakRequestRate;
+        peakRequestRateSeconds = builder.peakRequestRateSeconds;
         rateTimeUnit = builder.rateTimeUnit;
 	}
 
@@ -32,7 +32,7 @@ public class ChannelUpdateRequest {
                 case "contentSizeKB":
                     builder.withContentKiloBytes(Integer.parseInt(entry.getValue()));
                     break;
-                case "peakRequestRate":
+                case "peakRequestRateSeconds":
                     builder.withPeakRequestRate(Integer.parseInt(entry.getValue()));
                     break;
                 case "rateTimeUnit":
@@ -54,7 +54,7 @@ public class ChannelUpdateRequest {
     }
 
     public Optional<Integer> getPeakRequestRate() {
-        return peakRequestRate;
+        return peakRequestRateSeconds;
     }
 
     public Optional<TimeUnit> getRateTimeUnit() {
@@ -66,7 +66,7 @@ public class ChannelUpdateRequest {
         return "ChannelUpdateRequest{" +
                 "ttlMillis=" + ttlMillis +
                 ", contentKiloBytes=" + contentKiloBytes +
-                ", peakRequestRate=" + peakRequestRate +
+                ", peakRequestRateSeconds=" + peakRequestRateSeconds +
                 ", rateTimeUnit=" + rateTimeUnit +
                 '}';
     }
@@ -78,7 +78,7 @@ public class ChannelUpdateRequest {
 	public static class Builder {
 		private Optional<Long> ttlMillis = null;
         private Optional<Integer> contentKiloBytes = Optional.absent();
-        private Optional<Integer> peakRequestRate = Optional.absent();
+        private Optional<Integer> peakRequestRateSeconds = Optional.absent();
         private Optional<TimeUnit> rateTimeUnit = Optional.absent();
 
 		public Builder withTtlMillis(Long ttlMillis) {
@@ -91,8 +91,8 @@ public class ChannelUpdateRequest {
             return this;
         }
 
-        public Builder withPeakRequestRate(int peakRequestRate) {
-            this.peakRequestRate = Optional.of(peakRequestRate);
+        public Builder withPeakRequestRate(int peakRequestRateSeconds) {
+            this.peakRequestRateSeconds = Optional.of(peakRequestRateSeconds);
             return this;
         }
 

@@ -8,7 +8,6 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelUpdateRequest;
-import com.flightstats.datahub.model.MetadataResponse;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
@@ -49,13 +48,12 @@ public class SingleChannelResource {
     @ExceptionMetered
     @PerChannelTimed(operationName = "metadata", channelNamePathParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
-    public Linked<MetadataResponse> getChannelMetadata(@PathParam("channelName") String channelName, @Context UriInfo uriInfo) {
+    public Linked<ChannelConfiguration> getChannelMetadata(@PathParam("channelName") String channelName, @Context UriInfo uriInfo) {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         ChannelConfiguration config = channelService.getChannelConfiguration(channelName);
-        MetadataResponse response = new MetadataResponse(config);
-        Linked.Builder<MetadataResponse> builder = linked(response)
+        Linked.Builder<ChannelConfiguration> builder = linked(config)
                 .withLink("self", linkBuilder.buildChannelUri(config, uriInfo));
         if (config.isSequence()) {
             builder.withLink("latest", linkBuilder.buildLatestUri(uriInfo));
@@ -87,9 +85,6 @@ public class SingleChannelResource {
         }
         if (request.getContentKiloBytes().isPresent()) {
             builder.withContentKiloBytes(request.getContentKiloBytes().get());
-        }
-        if (request.getRateTimeUnit().isPresent()) {
-            builder.withRateTimeUnit(request.getRateTimeUnit().get());
         }
         ChannelConfiguration newConfig = builder.build();
         channelService.updateChannel(newConfig);
