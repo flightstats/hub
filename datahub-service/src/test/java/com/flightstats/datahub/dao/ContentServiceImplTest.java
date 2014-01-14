@@ -14,7 +14,7 @@ public class ContentServiceImplTest {
 
     private ContentDao contentDao;
     private String channelName;
-    private long millis;
+    private long days;
     private ChannelConfiguration channelConfig;
     private TimeProvider timeProvider;
     private ContentServiceImpl testClass;
@@ -24,8 +24,8 @@ public class ContentServiceImplTest {
         contentDao = mock(ContentDao.class);
 
         channelName = "foo";
-        millis = 90210L;
-        channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlMillis(millis).build();
+        days = 90210L;
+        channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlDays(days).build();
         timeProvider = mock(TimeProvider.class);
         KeyCoordination keyCoordination = mock(KeyCoordination.class);
         testClass = new ContentServiceImpl(contentDao, timeProvider, keyCoordination);
@@ -37,12 +37,12 @@ public class ContentServiceImplTest {
         ContentKey key = new SequenceContentKey( 1003);
         byte[] data = "bar".getBytes();
         Optional<String> contentType = Optional.of("text/plain");
-        Content value = new Content(contentType, Optional.<String>absent(), data, millis);
+        Content value = new Content(contentType, Optional.<String>absent(), data, days);
         ValueInsertionResult expected = new ValueInsertionResult(key, null);
 
         // WHEN
-        when(timeProvider.getMillis()).thenReturn(millis);
-        when(contentDao.write(channelName, value, Optional.of((int) millis / 1000))).thenReturn(new ValueInsertionResult(key, null));
+        when(timeProvider.getMillis()).thenReturn(days);
+        when(contentDao.write(channelName, value, days)).thenReturn(new ValueInsertionResult(key, null));
 
         ValueInsertionResult result = testClass.insert(channelConfig, contentType, Optional.<String>absent(), data);
 

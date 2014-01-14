@@ -46,7 +46,7 @@ public class CassandraChannelMetadataDao implements ChannelMetadataDao {
                     "CREATE TABLE channelMetadata (" +
                             "name text PRIMARY KEY," +
                             "creationDate timestamp," +
-                            "ttlMillis bigint" +
+                            "ttlDays bigint" +
                             ");");
             logger.info("created channel metadata table");
         } catch (AlreadyExistsException e) {
@@ -57,10 +57,10 @@ public class CassandraChannelMetadataDao implements ChannelMetadataDao {
     private void insertChannelMetadata(ChannelConfiguration channelConfig) {
 
         PreparedStatement statement = session.prepare("INSERT INTO channelMetadata" +
-                " (name, creationDate, ttlMillis)" +
+                " (name, creationDate, ttlDays)" +
                 "VALUES (?, ?, ?)");
 
-        session.execute(statement.bind(channelConfig.getName(), channelConfig.getCreationDate(), channelConfig.getTtlMillis()));
+        session.execute(statement.bind(channelConfig.getName(), channelConfig.getCreationDate(), channelConfig.getTtlDays()));
     }
 
 	@Override
@@ -106,7 +106,7 @@ public class CassandraChannelMetadataDao implements ChannelMetadataDao {
     private ChannelConfiguration createChannelConfig(Row row) {
         return ChannelConfiguration.builder()
                 .withName(row.getString("name"))
-                .withTtlMillis(row.getLong("ttlMillis"))
+                .withTtlDays(row.getLong("ttlDays"))
                 .withCreationDate(row.getDate("creationDate"))
                 .build();
     }

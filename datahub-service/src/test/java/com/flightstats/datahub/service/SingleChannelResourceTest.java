@@ -1,7 +1,10 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.SequenceContentKey;
+import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
@@ -14,11 +17,9 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Date;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.core.IsCollectionContaining.hasItems;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 public class SingleChannelResourceTest {
@@ -54,73 +55,6 @@ public class SingleChannelResourceTest {
         when(uriInfo.getBaseUri()).thenReturn(URI.create("http://testification.com/"));
 		when(channelService.channelExists(channelName)).thenReturn(true);
 	}
-
-	@Test
-	public void testUpdateChannelMetadataWithNonNullTtl() throws Exception {
-
-		when(channelService.channelExists(anyString())).thenReturn(true);
-		when(channelService.getChannelConfiguration(channelName)).thenReturn(channelConfig);
-
-		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(30000L).build();
-		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(30000L).build();
-		Response expectedResponse = Response.ok().entity(linkBuilder.buildChannelLinks(newConfig, channelUri)).build();
-
-		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
-		Response result = testClass.updateMetadata(request, channelName);
-
-        System.out.println(expectedResponse);
-        assertEquals(expectedResponse.getEntity(), result.getEntity());
-	}
-
-	@Test
-	public void testUpdateChannelMetadataWithNullTtl() throws Exception {
-
-		when(channelService.channelExists(anyString())).thenReturn(true);
-		when(channelService.getChannelConfiguration(channelName)).thenReturn(channelConfig);
-
-		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(null).build();
-		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(null).build();
-		Response expectedResponse = Response.ok().entity(linkBuilder.buildChannelLinks(newConfig, channelUri)).build();
-
-		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
-		Response result = testClass.updateMetadata(request, channelName);
-
-		assertEquals(expectedResponse.getEntity(), result.getEntity());
-	}
-
-	@Test(expected = WebApplicationException.class)
-	public void testUpdateChannelMetadataForUnknownChannel() throws Exception {
-
-		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(30000L).build();
-        when(channelService.channelExists(channelName)).thenReturn(false);
-		SingleChannelResource testClass = new SingleChannelResource(channelService, null, DEFAULT_MAX_PAYLOAD, uriInfo);
-		testClass.updateMetadata(request, channelName);
-	}
-
-    @Test
-    public void testUpdateRate() throws Exception {
-        when(channelService.channelExists(anyString())).thenReturn(true);
-        when(channelService.getChannelConfiguration(channelName)).thenReturn(channelConfig);
-
-        ChannelUpdateRequest request = ChannelUpdateRequest.builder()
-                .withPeakRequestRate(15)
-                .withContentKiloBytes(20)
-                .withRateTimeUnit(TimeUnit.MINUTES)
-                .build();
-        ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig)
-                .withPeakRequestRate(15)
-                .withContentKiloBytes(20)
-                .build();
-        Response expectedResponse = Response.ok().entity(linkBuilder.buildChannelLinks(newConfig, channelUri)).build();
-
-        SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
-        Response result = testClass.updateMetadata(request, channelName);
-        Linked<ChannelConfiguration> entity = (Linked<ChannelConfiguration>) result.getEntity();
-        assertEquals(expectedResponse.getEntity(), entity);
-        ChannelConfiguration entityConfig = entity.getObject();
-        assertEquals(newConfig.getPeakRequestRateSeconds(), entityConfig.getPeakRequestRateSeconds());
-        assertEquals(newConfig.getContentSizeKB(), entityConfig.getContentSizeKB());
-    }
 
 	@Test
 	public void testGetChannelMetadataForUnknownChannel() throws Exception {

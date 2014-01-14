@@ -2,13 +2,15 @@ package com.flightstats.datahub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.app.config.PATCH;
 import com.flightstats.datahub.app.config.metrics.PerChannelThroughput;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.ChannelUpdateRequest;
 import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -21,6 +23,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Map;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -34,6 +37,8 @@ public class SingleChannelResource {
     private final ChannelHypermediaLinkBuilder linkBuilder;
     private final Integer maxPayloadSizeBytes;
     private final UriInfo uriInfo;
+    private static final ObjectMapper mapper = new ObjectMapper();
+
 
     @Inject
     public SingleChannelResource(ChannelService channelService, ChannelHypermediaLinkBuilder linkBuilder,
@@ -66,24 +71,21 @@ public class SingleChannelResource {
     @PerChannelTimed(operationName = "update", channelNamePathParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateMetadata(ChannelUpdateRequest request, @PathParam("channelName") String channelName) throws
-            Exception {
+    public Response updateMetadata( @PathParam("channelName") String channelName, String json) throws Exception {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-
+        Map<String, String> map = mapper.readValue(json, new TypeReference<Map<String, String>>() { });
+        if (map.containsKey("type")) {
+            throw new InvalidRequestException("{\"error\": \"type can not be changed \"}");
+        }
+        map.remove("name");
         ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
-        ChannelConfiguration.Builder builder = ChannelConfiguration.builder().withChannelConfiguration(oldConfig);
-        if (request.getTtlMillis() != null) {
-            builder.withTtlMillis(request.getTtlMillis().isPresent() ? request.getTtlMillis().get() : null);
-        }
-        if (request.getPeakRequestRate().isPresent()) {
-            builder.withPeakRequestRate(request.getPeakRequestRate().get());
-        }
-        if (request.getContentKiloBytes().isPresent()) {
-            builder.withContentKiloBytes(request.getContentKiloBytes().get());
-        }
-        ChannelConfiguration newConfig = builder.build();
+        ChannelConfiguration newConfig = ChannelConfiguration.builder()
+                .withChannelConfiguration(oldConfig)
+                .withMap(map)
+                .build();
+
         channelService.updateChannel(newConfig);
         URI channelUri = linkBuilder.buildChannelUri(newConfig, uriInfo);
         Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(newConfig, channelUri);

@@ -3,6 +3,7 @@ package com.flightstats.datahub.model;
 import org.junit.Test;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -22,7 +23,7 @@ public class ChannelConfigurationTest {
 
     private void assertDefaults(ChannelConfiguration config) {
         assertEquals("defaults", config.getName());
-        assertEquals(10368000000L, config.getTtlMillis().longValue());
+        assertEquals(120, config.getTtlDays());
         assertTrue(config.isSequence());
         assertEquals(100L, config.getContentThroughputInSeconds());
         assertEquals(10L, config.getPeakRequestRateSeconds());
@@ -33,7 +34,7 @@ public class ChannelConfigurationTest {
         Date date = new Date(123456L);
         ChannelConfiguration config = ChannelConfiguration.builder()
                 .withName("options")
-                .withTtlMillis(10L)
+                .withTtlDays(10L)
                 .withType(ChannelConfiguration.ChannelType.TimeSeries)
                 .withCreationDate(date)
                 .withContentKiloBytes(100)
@@ -45,10 +46,28 @@ public class ChannelConfigurationTest {
 
     private void assertOptions(Date date, ChannelConfiguration config, boolean isSequence) {
         assertEquals("options", config.getName());
-        assertEquals((Long) 10L, config.getTtlMillis());
+        assertEquals( 10L, config.getTtlDays());
         assertEquals(isSequence, config.isSequence());
         assertEquals(date, config.getCreationDate());
         assertEquals(10L, config.getPeakRequestRateSeconds());
         assertEquals(1000L, config.getContentThroughputInSeconds());
+    }
+
+    @Test
+    public void testMillis() throws Exception {
+        ChannelConfiguration config = ChannelConfiguration.builder().withName("millis100").withTtlMillis(100L).build();
+        assertEquals(1, config.getTtlDays());
+    }
+
+    @Test
+    public void testMillisTwoDays() throws Exception {
+        ChannelConfiguration config = ChannelConfiguration.builder().withName("millis").withTtlMillis(TimeUnit.DAYS.toMillis(1) + 10).build();
+        assertEquals(2, config.getTtlDays());
+    }
+
+    @Test
+    public void testMillisNull() throws Exception {
+        ChannelConfiguration config = ChannelConfiguration.builder().withName("millisNull").withTtlMillis(null).build();
+        assertEquals(1000 * 365, config.getTtlDays());
     }
 }
