@@ -11,8 +11,8 @@ The FlightStats Data Hub
 * [insert content into channel](#insert-content-into-channel)
 * [fetch content from channel](#fetch-content-from-channel)
 * [fetch latest channel item](#fetch-latest-channel-item)
+* [time interface](#time-interface)
 * [subscribe to events](#subscribe-to-events)
-* [time index](#time-index)
 
 For the purposes of this document, the datahub is at http://deihub.
 
@@ -60,20 +60,17 @@ Content-Type is `application/json`
     
 ## create a channel
 
-todo - gfm - 1/13/14 - info on channel types
-//todo - gfm - 1/13/14 - add other fields from ChannelConfiguration
-
-Channel names _are case sensitive_, are limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
+'name' _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
 Hyphens and underscores are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
 
-type is optional, and defaults to Sequence.  Valid values are Sequence and TimeSeries.
+'type' is optional, and defaults to Sequence.  Valid values are Sequence and TimeSeries.
 
-ttlMillis is optional and should be a positive number. If not specified, a default value (120 days) is used. If specified as null,
+'ttlMillis' is optional and should be a positive number. If not specified, a default value (120 days) is used. If specified as null,
 then the channel has no TTL.
 
-peakRequestRateSeconds and contentSizeKB are optional, and are only used by TimeSeries.  They are used to provision the throughput of the channel per second.
-If the throughput is exceeded, the service will return an error (return code?).
-
+'peakRequestRateSeconds' and 'contentSizeKB' are optional, and are only used by TimeSeries to provision the throughput of the channel per second.
+If the throughput is exceeded, the service will return an error code of ???.
+todo - gfm - 1/13/14 - error code?
 
 `POST http://deihub/channel`
 
@@ -91,7 +88,6 @@ If the throughput is exceeded, the service will return an error (return code?).
 ```
 
 On success:  `HTTP/1.1 201 OK`
-//todo - gfm - 1/13/14 - add other fields from ChannelConfiguration
 
 ```json
 {
@@ -104,11 +100,17 @@ On success:  `HTTP/1.1 201 OK`
         },
         "ws": {
             "href": "ws://deihub/channel/stumptown/ws"
+        },
+        "time": {
+            "href": "http://deihub/channel/stumptown/time"
         }
     },
     "name": "stumptown",
     "creationDate": "2013-04-23T20:25:33.434Z",
     "ttlMillis": 3600000
+    "type" : "Sequence",
+    "contentSizeKB" : 10,
+    "peakRequestRateSeconds" : 10
 }
 ```
 
@@ -121,9 +123,11 @@ curl -i -X POST --header "Content-type: application/json" \
 
 ## update a channel
 
-Some channel metadata can be updated. The update format looks much like the channel create format (currently, only TTL can be updated).
+Some channel metadata can be updated. The update format looks much like the channel create format (currently, only ttlMillis, contentSizeKB and peakRequestRateSeconds can be updated).
+Each of these fields is optional.
+Attempting to change other fields will result in a 400 error.
 
-//todo - gfm - 1/13/14 - add other fields from ChannelConfiguration
+todo - gfm - 1/13/14 - add other fields from ChannelConfiguration
 
 `PATCH http://deihub/channel/channelname`
 
@@ -131,7 +135,9 @@ Some channel metadata can be updated. The update format looks much like the chan
 
 ```json
 {
-   "ttlMillis": "30000" //30 seconds
+   "ttlMillis": "30000",
+   "contentSizeKB" : 20,
+   "peakRequestRateSeconds" : 5
 }
 ```
 
@@ -140,7 +146,7 @@ On success:  `HTTP/1.1 200 OK`, and the new channel metadata is returned (see ex
 Here's how you can do this with curl:
 ```bash
 curl -i -X PATCH --header "Content-type: application/json" \
-    --data '{"ttlMillis": "30000"}'  \
+    --data '{"ttlMillis": "30000", "contentSizeKB" : 20, "peakRequestRateSeconds" : 5}'  \
     http://deihub/channel/stumptown
 ```
 
@@ -150,26 +156,7 @@ To fetch metadata about a channel, do a GET on its `self` link:
 
 `GET http://deihub/channel/stumptown`
 
-On success: `HTTP/1.1 200 OK`
-
-```json
-{
-  "_links" : {
-    "self" : {
-      "href" : "http://deihub/channel/stumptown"
-    },
-    "latest" : {
-      "href" : "http://deihub/channel/stumptown/latest"
-    },
-    "ws" : {
-      "href" : "ws://deihub/channel/stumptown/ws"
-    }
-  },
-  "ttlMillis" : "30000",
-  "name" : "stumptown",
-  "creationDate" : "2013-04-23T20:36:17.885Z"
-}
-```
+On success: `HTTP/1.1 200 OK`  (see example return data from create channel).
 
 Here's how you can do this with curl:
 
@@ -234,10 +221,8 @@ your content here
 ```
 
 Note: The `Content-Type` will match the Content-Type used when inserting the data.  
-Also note that there are two `Link` headers that provide links to the previous and next items in the channel.
+For Sequence channels, there are two `Link` headers that provide links to the previous and next items in the channel.
 If you are fetching the latest item, there will be no next link.
-todo - gfm - 1/13/14 - is this still true?
-Similarly, if you are fetching the first item, there will be no previous link.
 The `Creation-Date` header will correspond to when the data was inserted into the channel.
 
 Here's how you can do this with curl:
@@ -246,9 +231,9 @@ Here's how you can do this with curl:
 
 ## fetch latest channel item
 
-todo - gfm - 1/13/14 - only valid for sequence
-To retrieve the latest item inserted into a channel, issue a HEAD request on the `latest` link returned from the channel
+To retrieve the latest item inserted into a Sequence channel, issue a HEAD or GET request on the `latest` link returned from the channel
 metadata.  The datahub will issue a 303 redirect.
+This feature is not supported by TimeSeries channels.
 
 `HEAD http://deihub/channel/stumptown/latest`
 
@@ -259,15 +244,51 @@ Here is how you can do this with curl:
 
 `curl -I http://deihub/channel/stumptown/latest`
 
+## time interface
+
+The time interface returns all of the URIs of items inserted within the specified minute.
+
+To see the time format, issue a HEAD or GET request on the `time` link returned from the channel metadata.
+The datahub will issue a 303 redirect.
+
+`HEAD http://deihub/channel/stumptown/time`
+
+On success:  `HTTP/1.1 303 See Other`
+`Location: http://deihub/channel/stumptown/time/2014-01-13T18:42-0800`
+
+A GET on the returned URL will return all of the content URIs within that period.
+The time format is ISO 8601 extended format with minute resolution.  In Java it is "yyyy-MM-dd'T'HH:mmZ" and in Javascript using Moment.js it is "YYYY-MM-DDTHH:mmZ"
+
+'GET http://deihub/channel/stumptown/time/2014-01-13T19:13-0800'
+
+On success: `HTTP/1.1 200 OK
+    Content-Type: application/json`
+
+```json
+{
+  "_links" : {
+    "self" : {
+      "href" : "http://deihub/channel/stumptown/time/2014-01-13T19:13-0800"
+    },
+    "uris" : [ "http://deihub/channel/stumptown/1002", "http://deihub/channel/stumptown/1003",
+    "http://deihub/channel/stumptown/1004", "http://deihub/channel/stumptown/1005",
+    "http://deihub/channel/stumptown/1006", "http://deihub/channel/stumptown/1007" ]
+  }
+```
+
+If no items were submitted during that time, 'uris' is an empty array.
+If the time requested is the current minute, 'uri's will reflect all of the items submitted within the minute so far, and may
+change if other items are submitted.
+
 ## subscribe to events
 
-todo - gfm - 1/13/14 - only valid for sequence
-While a common approach to consuming data from the datahub involves traversing next/previous links, clients may 
+While a common approach to consuming data from the datahub involves traversing next/previous links, clients may
 "subscribe" to single channel events by listening on a channel's websocket.  
 In the channel metadata there is a `ws` link, and a websocket aware client may connect to this URL.
 
-Once connected, the line-oriented protocol is simple:  
-Each time data is inserted into the channel, the datahub will send a line to the client with the
+Once connected, the line-oriented protocol is simple:
+
+For Sequence channels, each time data is inserted into the channel, the datahub will send a line to the client with the
 URL for that content.
 
 ```
@@ -275,7 +296,12 @@ http://deihub/channel/stumptown/1000
 http://deihub/channel/stumptown/1001
 http://deihub/channel/stumptown/1002
 ...etc...
+
+For TimeSeries channels, the websocket will return the time URL that is available
+http://deihub/channel/stumptownTime/2014-01-13T18:40-0800
+http://deihub/channel/stumptownTime/2014-01-13T18:41-0800
+http://deihub/channel/stumptownTime/2014-01-13T18:42-0800
+
 ```
 
-## time index
-todo - gfm - 1/13/14 - time index interface
+

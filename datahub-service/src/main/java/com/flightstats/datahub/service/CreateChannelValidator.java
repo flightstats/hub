@@ -25,8 +25,8 @@ public class CreateChannelValidator {
         validateNameWasGiven(channelNameOptional);
         String channelName = channelNameOptional.get().trim();
         ensureNotAllBlank(channelName);
+        ensureSize(channelName);
         checkForInvalidCharacters(channelName);
-        //todo - gfm - 1/13/14 - check for length, max ??
         validateChannelUniqueness(channelName);
         validateRate(request);
         validateContentSize(request);
@@ -47,6 +47,12 @@ public class CreateChannelValidator {
     private void validateNameWasGiven(Optional<String> channelName) throws InvalidRequestException {
         if ((channelName == null) || !channelName.isPresent()) {
             throw new InvalidRequestException("{\"error\": \"Channel name wasn't given\"}");
+        }
+    }
+
+    private void ensureSize(String channelName) throws InvalidRequestException {
+        if (channelName.length() > 48) {
+            throw new InvalidRequestException("{\"error\": \"Channel name is too long " + channelName + "\"}");
         }
     }
 
