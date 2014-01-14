@@ -26,7 +26,7 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
                 type: "Sequence",
                 contentSizeKB: 10,
                 peakRequestRateSeconds: 10,
-                ttlMillis: 10368000000
+                ttlDays: 120
                 //TODO: Date validation
             })
             .afterJSON(function (result) {

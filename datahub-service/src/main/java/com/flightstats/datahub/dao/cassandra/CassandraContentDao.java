@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class CassandraContentDao implements ContentDao {
 
@@ -36,15 +37,11 @@ public class CassandraContentDao implements ContentDao {
     }
 
 	@Override
-    public ValueInsertionResult write(String channelName, Content columnValue, Optional<Integer> ttlSeconds) {
+    public ValueInsertionResult write(String channelName, Content columnValue, long ttlDays) {
         SequenceContentKey key = (SequenceContentKey) keyGenerator.newKey(channelName);
         String rowKey = buildKey(channelName, key);
 
-        Integer ttl = 0;
-        if (ttlSeconds.isPresent())
-        {
-            ttl = ttlSeconds.get();
-        }
+        long ttl = TimeUnit.DAYS.toMillis(ttlDays);
         PreparedStatement statement = session.prepare("INSERT INTO values" +
                 " (rowkey, sequence, data, millis, contentType, contentLanguage)" +
                 "VALUES (?, ?, ?, ?, ?, ?) USING TTL " + ttl);

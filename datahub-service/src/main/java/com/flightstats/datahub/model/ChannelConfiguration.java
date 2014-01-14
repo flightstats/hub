@@ -3,7 +3,7 @@ package com.flightstats.datahub.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import com.flightstats.datahub.model.exception.InvalidRequestException;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -13,29 +13,33 @@ import java.util.concurrent.TimeUnit;
 public class ChannelConfiguration implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static final Long DEFAULT_TTL = TimeUnit.DAYS.toMillis(120);
-	private final String name;
+    private final String name;
 	private final Date creationDate;
-	private final Long ttlMillis;
+	private final long ttlDays;
     private final ChannelType type;
     private final int contentSizeKB;
     private final int peakRequestRateSeconds;
 
     public enum ChannelType { Sequence, TimeSeries }
 
-    public ChannelConfiguration(String name, Date creationDate, Long ttlMillis, ChannelType type,
+    public ChannelConfiguration(String name, Date creationDate, Long ttlDays, ChannelType type,
                                 int contentSizeKB, int peakRequestRateSeconds) {
         this.name = name;
         this.creationDate = creationDate;
-        this.ttlMillis = ttlMillis;
+        this.ttlDays = ttlDays;
         this.type = type;
         this.contentSizeKB = contentSizeKB;
         this.peakRequestRateSeconds = peakRequestRateSeconds;
     }
 
     @JsonCreator
-    protected static ChannelConfiguration create(Map<String, String> props) throws UnrecognizedPropertyException {
+    protected static ChannelConfiguration create(Map<String, String> props) {
         Builder builder = builder();
+        populate(props, builder);
+        return builder.build();
+    }
+
+    public static void populate(Map<String, String> props, Builder builder) {
         for (Map.Entry<String, String> entry : props.entrySet()) {
             switch (entry.getKey()) {
                 case "name":
@@ -43,6 +47,9 @@ public class ChannelConfiguration implements Serializable {
                     break;
                 case "ttlMillis":
                     builder.withTtlMillis(entry.getValue() == null ? null : Long.parseLong(entry.getValue()));
+                    break;
+                case "ttlDays":
+                    builder.withTtlDays(Long.parseLong(entry.getValue()));
                     break;
                 case "type":
                     builder.withType(ChannelType.valueOf(entry.getValue()));
@@ -54,10 +61,9 @@ public class ChannelConfiguration implements Serializable {
                     builder.withPeakRequestRate(Integer.parseInt(entry.getValue()));
                     break;
                 default:
-                    throw new UnrecognizedPropertyException("Unexpected property: " + entry.getKey(), null, ChannelConfiguration.class, entry.getKey(), null);
+                    throw new InvalidRequestException("Unexpected property: " + entry.getKey());
             }
         }
-        return builder.build();
     }
 
     @JsonProperty("name")
@@ -70,9 +76,9 @@ public class ChannelConfiguration implements Serializable {
 		return creationDate;
 	}
 
-    @JsonProperty("ttlMillis")
-	public Long getTtlMillis() {
-		return ttlMillis;
+    @JsonProperty("ttlDays")
+	public long getTtlDays() {
+		return ttlDays;
 	}
 
     @JsonIgnore()
@@ -108,16 +114,13 @@ public class ChannelConfiguration implements Serializable {
 		ChannelConfiguration that = (ChannelConfiguration) o;
 
 		if (name != null ? !name.equals(that.name) : that.name != null) return false;
-		if (ttlMillis != null ? !ttlMillis.equals(that.ttlMillis) : that.ttlMillis != null) return false;
 
 		return true;
 	}
 
 	@Override
 	public int hashCode() {
-		int result = name != null ? name.hashCode() : 0;
-		result = 31 * result + (ttlMillis != null ? ttlMillis.hashCode() : 0);
-		return result;
+        return name != null ? name.hashCode() : 0;
 	}
 
     @Override
@@ -125,7 +128,7 @@ public class ChannelConfiguration implements Serializable {
         return "ChannelConfiguration{" +
                 "name='" + name + '\'' +
                 ", creationDate=" + creationDate +
-                ", ttlMillis=" + ttlMillis +
+                ", ttlDays=" + ttlDays +
                 ", type=" + type +
                 ", contentSizeKB=" + contentSizeKB +
                 ", peakRequestRateSeconds=" + peakRequestRateSeconds +
@@ -139,7 +142,7 @@ public class ChannelConfiguration implements Serializable {
 	public static class Builder {
 		private String name;
 		private Date creationDate = new Date();
-		private Long ttlMillis = DEFAULT_TTL;
+		private long ttlDays = 120;
         private ChannelType type = ChannelType.Sequence;
         private int contentKiloBytes = 10;
         private int peakRequestRateSeconds = 10;
@@ -147,7 +150,7 @@ public class ChannelConfiguration implements Serializable {
 		public Builder withChannelConfiguration(ChannelConfiguration config) {
 			this.name = config.name;
 			this.creationDate = config.creationDate;
-			this.ttlMillis = config.ttlMillis;
+			this.ttlDays = config.ttlDays;
             this.type = config.type;
             this.contentKiloBytes = config.contentSizeKB;
             this.peakRequestRateSeconds = config.peakRequestRateSeconds;
@@ -159,8 +162,17 @@ public class ChannelConfiguration implements Serializable {
 			return this;
 		}
 
-		public Builder withTtlMillis(Long ttlMillis) {
-			this.ttlMillis = ttlMillis;
+        public Builder withTtlMillis(Long ttlMillis) {
+            if (null == ttlMillis) {
+                this.ttlDays = 1000 * 365;
+            } else {
+                this.ttlDays = TimeUnit.MILLISECONDS.toDays(ttlMillis) + 1;
+            }
+            return this;
+        }
+
+		public Builder withTtlDays(long ttlDays) {
+			this.ttlDays = ttlDays;
 			return this;
 		}
 
@@ -184,8 +196,13 @@ public class ChannelConfiguration implements Serializable {
             return this;
         }
 
+        public Builder withMap(Map<String, String> valueMap) {
+            populate(valueMap, this);
+            return this;
+        }
+
 		public ChannelConfiguration build() {
-			return new ChannelConfiguration(name, creationDate, ttlMillis, type, contentKiloBytes, peakRequestRateSeconds);
+			return new ChannelConfiguration(name, creationDate, ttlDays, type, contentKiloBytes, peakRequestRateSeconds);
 		}
 	}
 }

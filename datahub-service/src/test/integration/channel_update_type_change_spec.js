@@ -3,7 +3,7 @@ require('./integration_config.js');
 var channelName = utils.randomChannelName();
 var jsonBody = JSON.stringify({ "name": channelName });
 var channelResource = channelUrl + "/" + channelName;
-var testName = 'channel_update_spec_type_change';
+var testName = 'channel_update_type_change_spec';
 
 utils.configureFrisby();
 
