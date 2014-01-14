@@ -63,7 +63,7 @@ public class TimeIndexProcessorTest {
         timeProvider = mock(TimeProvider.class);
         dateTime = new DateTime();
         when(timeProvider.getDateTime()).thenReturn(dateTime);
-        processor = new TimeIndexProcessor(curator, indexDao, timeProvider);
+        processor = new TimeIndexProcessor(curator, indexDao, timeProvider, new ZooKeeperState());
         startTime = new DateTime(2014, 1, 6, 3, 42, 1);
     }
 
