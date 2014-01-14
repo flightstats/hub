@@ -13,6 +13,7 @@ The FlightStats Data Hub
 * [fetch latest channel item](#fetch-latest-channel-item)
 * [time interface](#time-interface)
 * [subscribe to events](#subscribe-to-events)
+* [provider interface](#provider-interface)
 
 For the purposes of this document, the datahub is at http://deihub.
 
@@ -305,4 +306,14 @@ http://deihub/channel/stumptownTime/2014-01-13T18:42-0800
 ...etc...
 ```
 
+## provider interface
 
+For external data providers, there is a simplified interface suitable for exposing to the authenticated outside world.
+
+`POST http://deihub/provider/`
+
+* it creates a Sequence channel if it doesn't exist
+* it expects a 'channelName' header
+* does not support any other HTTP methods
+* does not return any links
+* access by external data providers is controlled through a proxy maintained by Operations
