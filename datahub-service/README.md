@@ -67,8 +67,8 @@ Hyphens are not allowed in channel names. Surrounding white space is trimmed (e.
 
 `type` is optional, and defaults to Sequence.  Valid values are Sequence and TimeSeries.
 
-`ttlMillis` is optional and should be a positive number. If not specified, a default value (120 days) is used. If specified as null,
-then the channel has no TTL.
+`ttlDays` is optional and should be a positive number. If not specified, a default value of 120 days is used.
+`ttlMillis` is still accepted as an input parameter, and is converted to ttlDays.  A `null` ttlMillis is converted to 1000 years.
 
 `peakRequestRateSeconds` and `contentSizeKB` are optional, and are only used by TimeSeries to provision the throughput of the channel per second.
 If the throughput is exceeded, the service will return an error code of ???.
@@ -82,11 +82,10 @@ todo - gfm - 1/13/14 - error code?
 {
    "name": "stumptown",
    "type": "Sequence",
-   "ttlMillis": "3600000",
-   "peakRequestRateSeconds":1
+   "ttlDays": "14",
+   "peakRequestRateSeconds":1,
    "contentSizeKB":10
 }
-//one hour in millis == 3600000
 ```
 
 On success:  `HTTP/1.1 201 OK`
@@ -109,7 +108,7 @@ On success:  `HTTP/1.1 201 OK`
     },
     "name": "stumptown",
     "creationDate": "2013-04-23T20:25:33.434Z",
-    "ttlMillis": 3600000,
+    "ttlDays": 14,
     "type": "Sequence",
     "contentSizeKB" : 10,
     "peakRequestRateSeconds" : 10
@@ -125,7 +124,7 @@ curl -i -X POST --header "Content-type: application/json" \
 
 ## update a channel
 
-Some channel metadata can be updated. The update format looks much like the channel create format (currently, only `ttlMillis`, `contentSizeKB` and `peakRequestRateSeconds` can be updated).
+Some channel metadata can be updated. The update format looks much like the channel create format (currently, only `ttlDays`, `contentSizeKB` and `peakRequestRateSeconds` can be updated).
 Each of these fields is optional.
 Attempting to change other fields will result in a 400 error.
 
@@ -135,7 +134,7 @@ Attempting to change other fields will result in a 400 error.
 
 ```json
 {
-   "ttlMillis": 30000,
+   "ttlDays": 21,
    "contentSizeKB" : 20,
    "peakRequestRateSeconds" : 5
 }
@@ -146,7 +145,7 @@ On success:  `HTTP/1.1 200 OK`, and the new channel metadata is returned (see ex
 Here's how you can do this with curl:
 ```bash
 curl -i -X PATCH --header "Content-type: application/json" \
-    --data '{"ttlMillis": 30000, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5}'  \
+    --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5}'  \
     http://deihub/channel/stumptown
 ```
 

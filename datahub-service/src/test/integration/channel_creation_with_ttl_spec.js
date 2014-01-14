@@ -21,7 +21,7 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
                     .expectStatus(200)
                     .expectHeader('content-type', 'application/json')
                     .expectJSON({"name": channelName})
-                    .expectJSON({"ttlMillis": 30000})
+                    .expectJSON({"ttlDays": 1})
                     .toss();
             })
             .toss();

@@ -81,7 +81,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
     private ChannelConfiguration getChannelConfig(ChannelConfiguration.ChannelType series) {
         return ChannelConfiguration.builder()
                 .withName(channelName)
-                .withTtlMillis(36000L)
+                .withTtlDays(36000L)
                 .withType(series)
                 .withContentKiloBytes(16)
                 .build();

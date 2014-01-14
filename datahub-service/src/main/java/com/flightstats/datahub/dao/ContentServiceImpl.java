@@ -45,18 +45,9 @@ public class ContentServiceImpl implements ContentService {
         String channelName = configuration.getName();
         logger.debug("inserting {} bytes into channel {} ", data.length, channelName);
         Content value = new Content(contentType, contentLanguage, data, timeProvider.getMillis());
-        Optional<Integer> ttlSeconds = getTtlSeconds(configuration);
-        ValueInsertionResult result = contentDao.write(channelName, value, ttlSeconds);
+        ValueInsertionResult result = contentDao.write(channelName, value, configuration.getTtlDays());
         keyCoordination.insert(channelName, result.getKey());
         return result;
-    }
-
-    private Optional<Integer> getTtlSeconds(ChannelConfiguration channelConfiguration) {
-        if (null == channelConfiguration) {
-            return Optional.absent();
-        }
-        Long ttlMillis = channelConfiguration.getTtlMillis();
-        return ttlMillis == null ? Optional.<Integer>absent() : Optional.of((int) (ttlMillis / 1000));
     }
 
     @Override

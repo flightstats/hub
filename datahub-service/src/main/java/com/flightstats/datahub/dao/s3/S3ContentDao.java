@@ -27,7 +27,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This uses S3 for Content and ZooKeeper for TimeIndex
@@ -54,7 +53,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     @Override
-    public ValueInsertionResult write(String channelName, Content content, Optional<Integer> ttlSeconds) {
+    public ValueInsertionResult write(String channelName, Content content, long ttlDays) {
         //todo - gfm - 1/3/14 - what happens if one or the other fails?
         ContentKey key = keyGenerator.newKey(channelName);
         DateTime dateTime = new DateTime();
@@ -225,17 +224,14 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         //todo - gfm - 1/7/14 - this should happen in an system wide lock on ChannelConfig
         // or it should be triggered occasionally via ChannelMetadata
 
-        if (config.getTtlMillis() == null) {
-            return;
-        }
-        long days = TimeUnit.DAYS.convert(config.getTtlMillis(), TimeUnit.MILLISECONDS) + 1;
+
         BucketLifecycleConfiguration lifecycleConfig = s3Client.getBucketLifecycleConfiguration(s3BucketName);
         logger.info("found config " + lifecycleConfig);
         String namePrefix = config.getName() + "/";
         BucketLifecycleConfiguration.Rule newRule = new BucketLifecycleConfiguration.Rule()
                 .withPrefix(namePrefix)
                 .withId(config.getName())
-                .withExpirationInDays((int) days)
+                .withExpirationInDays((int) config.getTtlDays())
                 .withStatus(BucketLifecycleConfiguration.ENABLED);
         if (lifecycleConfig == null) {
             ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();

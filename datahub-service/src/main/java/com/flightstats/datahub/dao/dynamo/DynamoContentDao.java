@@ -42,7 +42,7 @@ public class DynamoContentDao implements ContentDao {
     }
 
     @Override
-    public ValueInsertionResult write(String channelName, Content content, Optional<Integer> ttlSeconds) {
+    public ValueInsertionResult write(String channelName, Content content, long ttlDays) {
         ContentKey key = keyGenerator.newKey(channelName);
 
         Map<String, AttributeValue> item = new HashMap<>();

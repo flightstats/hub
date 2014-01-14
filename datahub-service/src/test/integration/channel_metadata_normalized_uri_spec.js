@@ -25,7 +25,7 @@ utils.runInTestChannel(channelName, function () {
                     href: thisChannelResource.replace(/^http/, "ws") + '/ws'
                 })
                 .expectJSON({"name": channelName})
-                .expectJSON({"ttlMillis": 10368000000})
+                .expectJSON({"ttlDays": 120})
                 //TODO: Validate creation date and last update date
                 .toss();
         })

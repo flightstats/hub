@@ -36,22 +36,10 @@ utils.runInTestChannelJson(channelRequest, function () {
         hrefs.forEach(function (item) {
             expect(uris.indexOf(item)).not.toBe(-1);
         })
-        request.del({url: thisChannelResource, headers: {"Content-Type": "text/plain"}, body: ""}, function (err, response, body) {
-            expect(err).toBeNull();
-        });
     }
 
     runs(function () {
         var format = moment().format("YYYY-MM-DDTHH:mmZ");
-
-        frisby.create(testName + ': Fetching ids from time.')
-            .get("http://localhost:8080/channel/" + channelName + "/time")
-            .expectStatus(200)
-            .expectHeader('content-type', 'application/json')
-            .afterJSON(function (result) {
-                verify(result);
-            })
-            .toss();
 
         frisby.create(testName + ': Fetching ids with time.')
             .get("http://localhost:8080/channel/" + channelName + "/time/" + format)
@@ -64,7 +52,5 @@ utils.runInTestChannelJson(channelRequest, function () {
 
 
     });
-
-    //delete
 
 });
