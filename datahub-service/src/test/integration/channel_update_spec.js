@@ -16,13 +16,22 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
             .addHeader("Content-Type", "application/json")
             .expectStatus(201)
             .afterJSON(function (result) {
-                var updateBody = {"ttlMillis": 60000};
+                var updateBody = {
+                    "ttlMillis": 60000,
+                    peakRequestRateSeconds: 5,
+                    contentSizeKB: 20
+                };
                 frisby.create(testName + ': Update channel ttlMillis')
                     .patch(channelResource, updateBody, {json:true})
                     .expectStatus(200)
                     .expectHeader('content-type', 'application/json')
-                    .expectJSON({"name": channelName})
-                    .expectJSON({"ttlMillis": 60000})
+                    .expectJSON({
+                        name: channelName,
+                        type: "Sequence",
+                        contentSizeKB: 20,
+                        peakRequestRateSeconds: 5,
+                        ttlMillis: 60000
+                    })
                     .toss()
             })
             .toss()

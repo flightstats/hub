@@ -25,6 +25,7 @@ public class CreateChannelValidator {
         validateNameWasGiven(channelNameOptional);
         String channelName = channelNameOptional.get().trim();
         ensureNotAllBlank(channelName);
+        ensureSize(channelName);
         checkForInvalidCharacters(channelName);
         validateChannelUniqueness(channelName);
         validateRate(request);
@@ -38,7 +39,7 @@ public class CreateChannelValidator {
     }
 
     private void validateRate(ChannelConfiguration request) throws InvalidRequestException {
-        if (request.getPeakRequestRate() <= 0) {
+        if (request.getPeakRequestRateSeconds() <= 0) {
             throw new InvalidRequestException("{\"error\": \"Peak Request Rate must be greater than 0 (zero) \"}");
         }
     }
@@ -46,6 +47,12 @@ public class CreateChannelValidator {
     private void validateNameWasGiven(Optional<String> channelName) throws InvalidRequestException {
         if ((channelName == null) || !channelName.isPresent()) {
             throw new InvalidRequestException("{\"error\": \"Channel name wasn't given\"}");
+        }
+    }
+
+    private void ensureSize(String channelName) throws InvalidRequestException {
+        if (channelName.length() > 48) {
+            throw new InvalidRequestException("{\"error\": \"Channel name is too long " + channelName + "\"}");
         }
     }
 

@@ -3,7 +3,6 @@ package com.flightstats.datahub.model;
 import org.junit.Test;
 
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -25,8 +24,8 @@ public class ChannelConfigurationTest {
         assertEquals("defaults", config.getName());
         assertEquals(10368000000L, config.getTtlMillis().longValue());
         assertTrue(config.isSequence());
-        assertEquals(10L, config.getContentThroughputInSeconds());
-        assertEquals(1L, config.getRequestRateInSeconds());
+        assertEquals(100L, config.getContentThroughputInSeconds());
+        assertEquals(10L, config.getPeakRequestRateSeconds());
     }
 
     @Test
@@ -38,7 +37,6 @@ public class ChannelConfigurationTest {
                 .withType(ChannelConfiguration.ChannelType.TimeSeries)
                 .withCreationDate(date)
                 .withContentKiloBytes(100)
-                .withPeakRequestRate(100).withRateTimeUnit(TimeUnit.MINUTES)
                 .build();
         assertOptions(date, config, false);
         ChannelConfiguration copy = ChannelConfiguration.builder().withChannelConfiguration(config).build();
@@ -50,7 +48,7 @@ public class ChannelConfigurationTest {
         assertEquals((Long) 10L, config.getTtlMillis());
         assertEquals(isSequence, config.isSequence());
         assertEquals(date, config.getCreationDate());
-        assertEquals(2L, config.getRequestRateInSeconds());
-        assertEquals(200L, config.getContentThroughputInSeconds());
+        assertEquals(10L, config.getPeakRequestRateSeconds());
+        assertEquals(1000L, config.getContentThroughputInSeconds());
     }
 }
