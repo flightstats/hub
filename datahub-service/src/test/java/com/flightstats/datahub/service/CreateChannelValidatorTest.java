@@ -61,6 +61,16 @@ public class CreateChannelValidatorTest {
         validator.validate(ChannelConfiguration.builder().withName("my chan").build());
     }
 
+    @Test
+    public void testInvalidUnderscore() throws Exception {
+        validator.validate(ChannelConfiguration.builder().withName("my_chan").build());
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidHyphen() throws Exception {
+        validator.validate(ChannelConfiguration.builder().withName("my-chan").build());
+    }
+
     @Test(expected = InvalidRequestException.class)
     public void testInvalidCharacter() throws Exception {
         validator.validate(ChannelConfiguration.builder().withName("my#chan").build());

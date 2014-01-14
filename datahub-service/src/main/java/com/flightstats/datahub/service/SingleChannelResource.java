@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -34,13 +33,15 @@ public class SingleChannelResource {
     private final ChannelService channelService;
     private final ChannelHypermediaLinkBuilder linkBuilder;
     private final Integer maxPayloadSizeBytes;
+    private final UriInfo uriInfo;
 
     @Inject
     public SingleChannelResource(ChannelService channelService, ChannelHypermediaLinkBuilder linkBuilder,
-                                 @Named("maxPayloadSizeBytes") Integer maxPayloadSizeBytes) {
+                                 @Named("maxPayloadSizeBytes") Integer maxPayloadSizeBytes, UriInfo uriInfo) {
         this.channelService = channelService;
         this.linkBuilder = linkBuilder;
         this.maxPayloadSizeBytes = maxPayloadSizeBytes;
+        this.uriInfo = uriInfo;
     }
 
     @GET
@@ -48,7 +49,7 @@ public class SingleChannelResource {
     @ExceptionMetered
     @PerChannelTimed(operationName = "metadata", channelNamePathParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getChannelMetadata(@PathParam("channelName") String channelName, @Context UriInfo uriInfo) {
+    public Response getChannelMetadata(@PathParam("channelName") String channelName) {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -65,7 +66,7 @@ public class SingleChannelResource {
     @PerChannelTimed(operationName = "update", channelNamePathParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateMetadata(ChannelUpdateRequest request, @PathParam("channelName") String channelName, @Context UriInfo uriInfo) throws
+    public Response updateMetadata(ChannelUpdateRequest request, @PathParam("channelName") String channelName) throws
             Exception {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -97,8 +98,7 @@ public class SingleChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage,
-                                final byte[] data,
-                                @Context UriInfo uriInfo) throws Exception {
+                                final byte[] data) throws Exception {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
