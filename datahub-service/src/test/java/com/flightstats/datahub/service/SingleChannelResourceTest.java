@@ -90,7 +90,7 @@ public class SingleChannelResourceTest {
 
 		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(30000L).build();
 		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(30000L).build();
-		Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri, urlInfo)).build();
+		Response expectedResponse = Response.ok().entity(linkBuilder.buildChannelLinks(newConfig, channelUri)).build();
 
 		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 		Response result = testClass.updateMetadata(request, channelName, urlInfo);
@@ -107,7 +107,7 @@ public class SingleChannelResourceTest {
 
 		ChannelUpdateRequest request = ChannelUpdateRequest.builder().withTtlMillis(null).build();
 		ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(channelConfig).withTtlMillis(null).build();
-		Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri, urlInfo)).build();
+		Response expectedResponse = Response.ok().entity(linkBuilder.buildChannelLinks(newConfig, channelUri)).build();
 
 		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
 		Response result = testClass.updateMetadata(request, channelName, urlInfo);
@@ -138,7 +138,7 @@ public class SingleChannelResourceTest {
                 .withPeakRequestRate(15)
                 .withContentKiloBytes(20)
                 .build();
-        Response expectedResponse = Response.ok().entity(linkBuilder.buildLinkedChannelConfig(newConfig, channelUri, urlInfo)).build();
+        Response expectedResponse = Response.ok().entity(linkBuilder.buildChannelLinks(newConfig, channelUri)).build();
 
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD);
         Response result = testClass.updateMetadata(request, channelName, urlInfo);
