@@ -61,8 +61,7 @@ public class ProviderResource {
         channelService.insert(channelName, Optional.fromNullable(contentType),
                 Optional.fromNullable(contentLanguage), data);
 
-        Response.ResponseBuilder builder = Response.status(Response.Status.OK);
-        return builder.build();
+        return Response.status(Response.Status.OK).build();
     }
 
 
