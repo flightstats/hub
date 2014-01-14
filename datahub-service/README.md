@@ -83,7 +83,7 @@ todo - gfm - 1/13/14 - error code?
    "name": "stumptown",
    "type": "Sequence",
    "ttlDays": "14",
-   "peakRequestRateSeconds":1
+   "peakRequestRateSeconds":1,
    "contentSizeKB":10
 }
 ```
