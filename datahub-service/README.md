@@ -16,21 +16,22 @@ The FlightStats Data Hub
 
 For the purposes of this document, the datahub is at http://deihub.
 
-On your local machine, , it is actually at: http://localhost:8080
-In development, it is actually at: http://deihub.svc.dev.
-In staging, it is actually at: http://deihub.svc.staging.
-In production, it is actually at: http://deihub.svc.prod.
+* On your local machine at: http://localhost:8080
+* In development at: http://deihub.svc.dev.
+* In staging at: http://deihub.svc.staging.
+* In production at: http://deihub.svc.prod.
 
 ## overview
 
 The DataHub is designed to be a fault tolerant, highly available service for data distribution.
 
 It currently supports two types of Channels.
-Sequence channels represent and linked list of data.  Each item added gets a sequential id.  They are traversable, and can support items up to 10 MB.
+
+Sequence channels represent a linked list of data.  Each item added gets a sequential id.  They are traversable, and can support items up to 10 MB.
 Sequence channels are intended for insertation rates up to one item per second.
 
 TimeSeries channels are designed for small, high frequency items with low latency.  Each item added gets a unique id.  They are not traversable, and have a max item size of 60KB.
-TimeSeries can support insertation rates up to 1000 items per second.  TimeSeries is more expensive than Sequence
+TimeSeries can support insertation rates up to 1000 items per second.  TimeSeries is higher throughput than Sequence, as well as slightly more expensive.
 
 ## list channels
 
@@ -60,15 +61,15 @@ Content-Type is `application/json`
     
 ## create a channel
 
-'name' _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
+`name` _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
 Hyphens and underscores are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
 
-'type' is optional, and defaults to Sequence.  Valid values are Sequence and TimeSeries.
+`type` is optional, and defaults to Sequence.  Valid values are Sequence and TimeSeries.
 
-'ttlMillis' is optional and should be a positive number. If not specified, a default value (120 days) is used. If specified as null,
+`ttlMillis` is optional and should be a positive number. If not specified, a default value (120 days) is used. If specified as null,
 then the channel has no TTL.
 
-'peakRequestRateSeconds' and 'contentSizeKB' are optional, and are only used by TimeSeries to provision the throughput of the channel per second.
+`peakRequestRateSeconds` and `contentSizeKB` are optional, and are only used by TimeSeries to provision the throughput of the channel per second.
 If the throughput is exceeded, the service will return an error code of ???.
 todo - gfm - 1/13/14 - error code?
 
@@ -79,7 +80,7 @@ todo - gfm - 1/13/14 - error code?
 ```json
 {
    "name": "stumptown",
-   "type"" "Sequence",
+   "type": "Sequence",
    "ttlMillis": "3600000"
    "peakRequestRateSeconds":1
    "contentSizeKB":10
@@ -108,7 +109,7 @@ On success:  `HTTP/1.1 201 OK`
     "name": "stumptown",
     "creationDate": "2013-04-23T20:25:33.434Z",
     "ttlMillis": 3600000
-    "type" : "Sequence",
+    "type": "Sequence",
     "contentSizeKB" : 10,
     "peakRequestRateSeconds" : 10
 }
@@ -123,11 +124,9 @@ curl -i -X POST --header "Content-type: application/json" \
 
 ## update a channel
 
-Some channel metadata can be updated. The update format looks much like the channel create format (currently, only ttlMillis, contentSizeKB and peakRequestRateSeconds can be updated).
+Some channel metadata can be updated. The update format looks much like the channel create format (currently, only `ttlMillis`, `contentSizeKB` and `peakRequestRateSeconds` can be updated).
 Each of these fields is optional.
 Attempting to change other fields will result in a 400 error.
-
-todo - gfm - 1/13/14 - add other fields from ChannelConfiguration
 
 `PATCH http://deihub/channel/channelname`
 
@@ -249,7 +248,7 @@ Here is how you can do this with curl:
 The time interface returns all of the URIs of items inserted within the specified minute.
 
 To see the time format, issue a HEAD or GET request on the `time` link returned from the channel metadata.
-The datahub will issue a 303 redirect.
+The datahub will issue a 303 redirect for the current time.
 
 `HEAD http://deihub/channel/stumptown/time`
 
@@ -257,12 +256,12 @@ On success:  `HTTP/1.1 303 See Other`
 `Location: http://deihub/channel/stumptown/time/2014-01-13T18:42-0800`
 
 A GET on the returned URL will return all of the content URIs within that period.
-The time format is ISO 8601 extended format with minute resolution.  In Java it is "yyyy-MM-dd'T'HH:mmZ" and in Javascript using Moment.js it is "YYYY-MM-DDTHH:mmZ"
+The time format is the ISO 8601 extended format with minute resolution.  In Java it is "yyyy-MM-dd'T'HH:mmZ" and in Javascript using Moment.js it is "YYYY-MM-DDTHH:mmZ"
 
-'GET http://deihub/channel/stumptown/time/2014-01-13T19:13-0800'
+`GET http://deihub/channel/stumptown/time/2014-01-13T19:13-0800`
 
-On success: `HTTP/1.1 200 OK
-    Content-Type: application/json`
+On success:  `HTTP/1.1 200 OK`
+Content-Type is `application/json`
 
 ```json
 {
@@ -296,12 +295,14 @@ http://deihub/channel/stumptown/1000
 http://deihub/channel/stumptown/1001
 http://deihub/channel/stumptown/1002
 ...etc...
+```
 
 For TimeSeries channels, the websocket will return the time URL that is available
+```
 http://deihub/channel/stumptownTime/2014-01-13T18:40-0800
 http://deihub/channel/stumptownTime/2014-01-13T18:41-0800
 http://deihub/channel/stumptownTime/2014-01-13T18:42-0800
-
+...etc...
 ```
 
 
