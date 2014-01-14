@@ -24,9 +24,14 @@ utils.runInTestChannel(channelName, function () {
                 .expectJSON('_links.ws', {
                     href: thisChannelResource.replace(/^http/, "ws") + '/ws'
                 })
-                .expectJSON({"name": channelName})
-                .expectJSON({"ttlMillis": 10368000000})
-                //TODO: Validate creation date and last update date
+                .expectJSON({
+                    name: channelName,
+                    type: "Sequence",
+                    contentSizeKB: 10,
+                    peakRequestRateSeconds: 10,
+                    ttlMillis: 10368000000
+                })
+                //TODO: Validate creation date
                 .toss();
         })
         .toss();

@@ -3,7 +3,7 @@ require('./integration_config.js');
 var channelName = utils.randomChannelName();
 var jsonBody = JSON.stringify({ "name": channelName});
 var channelResource = channelUrl + "/" + channelName;
-var testName = "channel_creation_basis_spec";
+var testName = "channel_creation_basic_spec";
 utils.configureFrisby();
 
 frisby.create(testName + ': Making sure channel resource does not yet exist.')
@@ -22,7 +22,11 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
                         href: channelResource
                     }
                 },
-                name: channelName
+                name: channelName,
+                type: "Sequence",
+                contentSizeKB: 10,
+                peakRequestRateSeconds: 10,
+                ttlMillis: 10368000000
                 //TODO: Date validation
             })
             .afterJSON(function (result) {

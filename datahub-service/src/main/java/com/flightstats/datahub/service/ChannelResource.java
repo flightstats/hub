@@ -75,7 +75,7 @@ public class ChannelResource {
         channelService.createChannel(channelConfiguration);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
 		return Response.created(channelUri).entity(
-			linkBuilder.buildLinkedChannelConfig(channelConfiguration, channelUri, uriInfo))
+			linkBuilder.buildChannelLinks(channelConfiguration, channelUri))
 			.build();
 	}
 }

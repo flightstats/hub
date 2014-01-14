@@ -95,7 +95,7 @@ public class ChannelConfiguration implements Serializable {
         return peakRequestRateSeconds;
     }
 
-    @JsonIgnore()
+    @JsonProperty("type")
     public ChannelType getType() {
         return type;
     }

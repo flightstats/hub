@@ -49,7 +49,7 @@ public class ChannelResourceTest {
 		when(channelService.channelExists(channelName)).thenReturn(false);
 		when(channelService.createChannel(channelConfiguration)).thenReturn(channelConfiguration);
 		when(linkBuilder.buildChannelUri(channelConfiguration, uriInfo)).thenReturn(URI.create(channelUri));
-		when(linkBuilder.buildLinkedChannelConfig(channelConfiguration, URI.create(channelUri), uriInfo)).thenReturn(expected);
+		when(linkBuilder.buildChannelLinks(channelConfiguration, URI.create(channelUri))).thenReturn(expected);
 
         ChannelResource testClass = new ChannelResource(channelService, linkBuilder, uriInfo);
 
