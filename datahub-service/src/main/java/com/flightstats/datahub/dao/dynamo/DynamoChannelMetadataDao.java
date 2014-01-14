@@ -20,9 +20,7 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
     private final DynamoUtils dynamoUtils;
 
     @Inject
-    public DynamoChannelMetadataDao(AmazonDynamoDBClient dbClient,
-                                    DynamoUtils dynamoUtils) {
-
+    public DynamoChannelMetadataDao(AmazonDynamoDBClient dbClient, DynamoUtils dynamoUtils) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
     }
@@ -38,9 +36,7 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("key", new AttributeValue().withS(config.getName()));
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
-        if (config.getTtlMillis() != null) {
-            item.put("ttlMillis", new AttributeValue().withN(String.valueOf(config.getTtlMillis())));
-        }
+        item.put("ttlDays", new AttributeValue().withN(String.valueOf(config.getTtlDays())));
         item.put("type", new AttributeValue().withS(config.getType().toString()));
         item.put("peakRequestRate", new AttributeValue().withN(String.valueOf(config.getPeakRequestRateSeconds())));
         item.put("contentSizeKB", new AttributeValue().withN(String.valueOf(config.getContentSizeKB())));
@@ -97,15 +93,16 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
     }
 
     private ChannelConfiguration mapItem(Map<String, AttributeValue> item) {
-        Date date = new Date(Long.parseLong(item.get("date").getN()));
-        Long ttlMillis = null;
-        if (item.get("ttlMillis") != null) {
-            ttlMillis = Long.parseLong(item.get("ttlMillis").getN());
-        }
         ChannelConfiguration.Builder builder = ChannelConfiguration.builder()
-                .withCreationDate(date)
-                .withTtlMillis(ttlMillis)
+                .withCreationDate(new Date(Long.parseLong(item.get("date").getN())))
                 .withName(item.get("key").getS());
+        if (item.get("ttlDays") != null) {
+            builder.withTtlDays(Long.parseLong(item.get("ttlDays").getN()));
+        } else if (item.get("ttlMillis") != null) {
+            builder.withTtlMillis(Long.parseLong(item.get("ttlMillis").getN()));
+        } else {
+            builder.withTtlMillis(null);
+        }
         if (item.containsKey("type")) {
             builder.withType(ChannelConfiguration.ChannelType.valueOf(item.get("type").getS()));
         }

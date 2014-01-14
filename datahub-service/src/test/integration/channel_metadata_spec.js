@@ -29,7 +29,7 @@ utils.runInTestChannel(channelName, function () {
                     type: "Sequence",
                     contentSizeKB: 10,
                     peakRequestRateSeconds: 10,
-                    ttlMillis: 10368000000
+                    ttlDays: 120
                 })
                 //TODO: Validate creation date
                 .toss();

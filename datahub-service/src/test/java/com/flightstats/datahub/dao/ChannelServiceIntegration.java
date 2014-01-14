@@ -56,7 +56,7 @@ public abstract class ChannelServiceIntegration {
     public void testChannelCreation() throws Exception {
 
         assertNull(channelService.getChannelConfiguration(channelName));
-        ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlMillis(36000L).build();
+        ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlDays(1L).build();
         ChannelConfiguration createdChannel = channelService.createChannel(configuration);
         assertEquals(channelName, createdChannel.getName());
         assertEquals(createdChannel, channelService.getChannelConfiguration(channelName));
@@ -64,7 +64,7 @@ public abstract class ChannelServiceIntegration {
 
     @Test
     public void testChannelWriteRead() throws Exception {
-        ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlMillis(36000L).build();
+        ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlDays(1L).build();
         channelService.createChannel(configuration);
         assertFalse(channelService.getValue(channelName, new SequenceContentKey(1000).keyToString()).isPresent());
         byte[] bytes = "some data".getBytes();
@@ -82,7 +82,7 @@ public abstract class ChannelServiceIntegration {
     @Test
     public void testChannelOptionals() throws Exception {
 
-        ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlMillis(36000L).build();
+        ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlDays(1L).build();
         channelService.createChannel(configuration);
         byte[] bytes = "testChannelOptionals".getBytes();
         ValueInsertionResult insert = channelService.insert(channelName, Optional.of("content"), Optional.of("lang"), bytes);
