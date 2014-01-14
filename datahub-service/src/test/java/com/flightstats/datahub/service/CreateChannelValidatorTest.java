@@ -4,6 +4,7 @@ import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.exception.AlreadyExistsException;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
+import com.google.common.base.Strings;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,7 +26,12 @@ public class CreateChannelValidatorTest {
 
     @Test
     public void testAllGood() throws Exception {
-        validator.validate(ChannelConfiguration.builder().withName("a_channel").build());
+        validator.validate(ChannelConfiguration.builder().withName(Strings.repeat("A", 48)).build());
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testTooLong() throws Exception {
+        validator.validate(ChannelConfiguration.builder().withName(Strings.repeat("A", 49)).build());
     }
 
     @Test(expected = InvalidRequestException.class)
