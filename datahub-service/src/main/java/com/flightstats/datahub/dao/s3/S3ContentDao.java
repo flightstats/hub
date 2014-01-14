@@ -231,8 +231,9 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         long days = TimeUnit.DAYS.convert(config.getTtlMillis(), TimeUnit.MILLISECONDS) + 1;
         BucketLifecycleConfiguration lifecycleConfig = s3Client.getBucketLifecycleConfiguration(s3BucketName);
         logger.info("found config " + lifecycleConfig);
+        String namePrefix = config.getName() + "/";
         BucketLifecycleConfiguration.Rule newRule = new BucketLifecycleConfiguration.Rule()
-                .withPrefix(config.getName() + "/")
+                .withPrefix(namePrefix)
                 .withId(config.getName())
                 .withExpirationInDays((int) days)
                 .withStatus(BucketLifecycleConfiguration.ENABLED);
@@ -244,11 +245,12 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
             BucketLifecycleConfiguration.Rule toRemove = null;
             List<BucketLifecycleConfiguration.Rule> rules = lifecycleConfig.getRules();
             for (BucketLifecycleConfiguration.Rule rule : rules) {
-                if (rule.getPrefix().equals(config.getName())) {
+                if (rule.getPrefix().equals(namePrefix)) {
                     toRemove = rule;
                 }
             }
             if (toRemove != null) {
+                logger.info("removing rule " + toRemove.getPrefix());
                 rules.remove(toRemove);
             }
             rules.add(newRule);

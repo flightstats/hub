@@ -8,7 +8,6 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ChannelUpdateRequest;
-import com.flightstats.datahub.model.MetadataResponse;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
@@ -18,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -35,13 +33,15 @@ public class SingleChannelResource {
     private final ChannelService channelService;
     private final ChannelHypermediaLinkBuilder linkBuilder;
     private final Integer maxPayloadSizeBytes;
+    private final UriInfo uriInfo;
 
     @Inject
     public SingleChannelResource(ChannelService channelService, ChannelHypermediaLinkBuilder linkBuilder,
-                                 @Named("maxPayloadSizeBytes") Integer maxPayloadSizeBytes) {
+                                 @Named("maxPayloadSizeBytes") Integer maxPayloadSizeBytes, UriInfo uriInfo) {
         this.channelService = channelService;
         this.linkBuilder = linkBuilder;
         this.maxPayloadSizeBytes = maxPayloadSizeBytes;
+        this.uriInfo = uriInfo;
     }
 
     @GET
@@ -49,20 +49,15 @@ public class SingleChannelResource {
     @ExceptionMetered
     @PerChannelTimed(operationName = "metadata", channelNamePathParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
-    public Linked<MetadataResponse> getChannelMetadata(@PathParam("channelName") String channelName, @Context UriInfo uriInfo) {
+    public Response getChannelMetadata(@PathParam("channelName") String channelName) {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         ChannelConfiguration config = channelService.getChannelConfiguration(channelName);
-        MetadataResponse response = new MetadataResponse(config);
-        Linked.Builder<MetadataResponse> builder = linked(response)
-                .withLink("self", linkBuilder.buildChannelUri(config, uriInfo));
-        if (config.isSequence()) {
-            builder.withLink("latest", linkBuilder.buildLatestUri(uriInfo));
-        }
-        builder.withLink("ws", linkBuilder.buildWsLinkFor(uriInfo));
-        builder.withLink("time", linkBuilder.buildTimeUri(uriInfo));
-        return builder.build();
+        URI channelUri = linkBuilder.buildChannelUri(config, uriInfo);
+        Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(config, channelUri);
+
+        return Response.ok(channelUri).entity(linked).build();
     }
 
     @PATCH
@@ -71,7 +66,7 @@ public class SingleChannelResource {
     @PerChannelTimed(operationName = "update", channelNamePathParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateMetadata(ChannelUpdateRequest request, @PathParam("channelName") String channelName, @Context UriInfo uriInfo) throws
+    public Response updateMetadata(ChannelUpdateRequest request, @PathParam("channelName") String channelName) throws
             Exception {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -88,15 +83,11 @@ public class SingleChannelResource {
         if (request.getContentKiloBytes().isPresent()) {
             builder.withContentKiloBytes(request.getContentKiloBytes().get());
         }
-        if (request.getRateTimeUnit().isPresent()) {
-            builder.withRateTimeUnit(request.getRateTimeUnit().get());
-        }
         ChannelConfiguration newConfig = builder.build();
         channelService.updateChannel(newConfig);
         URI channelUri = linkBuilder.buildChannelUri(newConfig, uriInfo);
-        return Response.ok(channelUri).entity(
-                linkBuilder.buildLinkedChannelConfig(newConfig, channelUri, uriInfo))
-                       .build();
+        Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(newConfig, channelUri);
+        return Response.ok(channelUri).entity(linked).build();
     }
 
     @POST
@@ -107,8 +98,7 @@ public class SingleChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage,
-                                final byte[] data,
-                                @Context UriInfo uriInfo) throws Exception {
+                                final byte[] data) throws Exception {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }

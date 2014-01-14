@@ -1,13 +1,17 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.rest.HalLink;
+import com.flightstats.rest.Linked;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -16,68 +20,50 @@ public class ChannelHypermediaLinkBuilderTest {
 	private static final String BASE_URL = "http://path.to:8080/";
 	private static final String CHANNEL_URL = BASE_URL + "channel";
 	private ChannelConfiguration channelConfig;
+    private ChannelHypermediaLinkBuilder linkBuilder;
+    private URI channelUri;
 
-	@Before
+    @Before
 	public void setup() {
 		channelConfig = ChannelConfiguration.builder().withName("spoon").build();
-	}
+        linkBuilder = new ChannelHypermediaLinkBuilder();
+        channelUri = URI.create(CHANNEL_URL + "/spoon");
+    }
 
 	@Test
 	public void testBuildChannelUri() throws Exception {
-		URI expected = URI.create(CHANNEL_URL + "/spoon");
-		UriInfo uriInfo = mock(UriInfo.class);
+        UriInfo uriInfo = mock(UriInfo.class);
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL));
 		when(uriInfo.getBaseUri()).thenReturn(URI.create(BASE_URL));
 
-		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder();
-		URI result = testClass.buildChannelUri(channelConfig, uriInfo);
-		assertEquals(expected, result);
+        URI result = linkBuilder.buildChannelUri(channelConfig, uriInfo);
+		assertEquals(channelUri, result);
 	}
 
-	@Test
-	public void testBuildLatestUri() throws Exception {
-		URI expected = URI.create(CHANNEL_URL + "/spoon/latest");
-		UriInfo uriInfo = mock(UriInfo.class);
+    @Test
+    public void testBuildChannelLinks() throws Exception {
+        Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(channelConfig, channelUri);
+        List<HalLink> halLinks = linked.getHalLinks().getLinks();
+        assertEquals(4, halLinks.size());
+        assertTrue(halLinks.contains(new HalLink("self", channelUri)));
+        assertTrue(halLinks.contains(new HalLink("latest", new URI(channelUri.toString() + "/latest"))));
+        assertTrue(halLinks.contains(new HalLink("ws", new URI("ws://path.to:8080/channel/spoon/ws"))));
+        assertTrue(halLinks.contains(new HalLink("time", new URI(channelUri.toString() + "/time"))));
 
-		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL + "/spoon"));
+    }
 
-		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder();
-		URI result = testClass.buildLatestUri(uriInfo);
-		assertEquals(expected, result);
-	}
+    @Test
+    public void testBuildChannelLinksTImeSeries() throws Exception {
+        channelConfig = ChannelConfiguration.builder().withName("spoon")
+                .withType(ChannelConfiguration.ChannelType.TimeSeries).build();
+        Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(channelConfig, channelUri);
+        List<HalLink> halLinks = linked.getHalLinks().getLinks();
+        assertEquals(3, halLinks.size());
+        assertTrue(halLinks.contains(new HalLink("self", channelUri)));
+        assertTrue(halLinks.contains(new HalLink("ws", new URI("ws://path.to:8080/channel/spoon/ws"))));
+        assertTrue(halLinks.contains(new HalLink("time", new URI(channelUri.toString() + "/time"))));
 
-	@Test
-	public void testBuildLatestUriForChannel() throws Exception {
-		String channelName = "spoon";
-		URI expected = URI.create(CHANNEL_URL + "/spoon/latest");
-		UriInfo uriInfo = mock(UriInfo.class);
+    }
 
-		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL));
-
-		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder();
-		URI result = testClass.buildLatestUri(channelName, uriInfo);
-		assertEquals(expected, result);
-	}
-
-	@Test
-	public void testBuildWsLink() throws Exception {
-		UriInfo uriInfo = mock(UriInfo.class);
-		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL + "/" + channelConfig.getName()));
-		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder();
-		URI result = testClass.buildWsLinkFor(uriInfo);
-		assertEquals(URI.create("ws://path.to:8080/channel" + "/" +
-				channelConfig.getName() + "/ws"), result);
-	}
-
-	@Test
-	public void testBuildWsLinkForChannel() throws Exception {
-		UriInfo uriInfo = mock(UriInfo.class);
-		String channelName = channelConfig.getName();
-		when(uriInfo.getRequestUri()).thenReturn(URI.create(CHANNEL_URL));
-		ChannelHypermediaLinkBuilder testClass = new ChannelHypermediaLinkBuilder();
-		URI result = testClass.buildWsLinkFor(channelName, uriInfo);
-		assertEquals(URI.create("ws://path.to:8080/channel" + "/" +
-				channelName + "/ws"), result);
-	}
 }

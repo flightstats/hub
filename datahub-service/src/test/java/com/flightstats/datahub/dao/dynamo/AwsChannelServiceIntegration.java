@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -83,7 +82,6 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
                 .withName(channelName)
                 .withTtlMillis(36000L)
                 .withType(series)
-                .withPeakRequestRate(100).withRateTimeUnit(TimeUnit.MINUTES)
                 .withContentKiloBytes(16)
                 .build();
     }
@@ -178,7 +176,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         assertEquals(channelName, createdChannel.getName());
         assertEquals(createdChannel, channelService.getChannelConfiguration(channelName));
         ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(configuration)
-                .withPeakRequestRate(150)
+                .withPeakRequestRate(15)
                 .build();
         channelService.updateChannel(newConfig);
     }
