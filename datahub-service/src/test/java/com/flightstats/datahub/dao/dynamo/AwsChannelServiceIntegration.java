@@ -177,7 +177,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         assertEquals(channelName, createdChannel.getName());
         assertEquals(createdChannel, channelService.getChannelConfiguration(channelName));
         ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(configuration)
-                .withPeakRequestRate(15)
+                .withPeakRequestRate(2)
                 .build();
         channelService.updateChannel(newConfig);
     }

@@ -24,8 +24,8 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
                 },
                 name: channelName,
                 type: "Sequence",
-                contentSizeKB: 10,
-                peakRequestRateSeconds: 10,
+                contentSizeKB: 1,
+                peakRequestRateSeconds: 1,
                 ttlDays: 120
                 //TODO: Date validation
             })
