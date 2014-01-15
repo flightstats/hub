@@ -21,7 +21,6 @@ public class ChannelServiceImpl implements ChannelService {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelServiceImpl.class);
 
-    //todo - gfm - 12/30/13 - limit exceptions propagated up the stack
     private final ContentServiceFinder contentServiceFinder;
     private final ChannelMetadataDao channelMetadataDao;
     private final CreateChannelValidator createChannelValidator;
