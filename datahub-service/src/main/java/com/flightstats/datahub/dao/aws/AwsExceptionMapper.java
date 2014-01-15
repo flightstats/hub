@@ -1,7 +1,6 @@
-package com.flightstats.datahub.service.exceptions;
+package com.flightstats.datahub.dao.aws;
 
 import com.amazonaws.AmazonClientException;
-import com.flightstats.datahub.dao.aws.AwsUtils;
 import com.google.inject.Singleton;
 
 import javax.ws.rs.core.Response;
