@@ -7,6 +7,7 @@ import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.uri.UriTemplate;
 import com.sun.jersey.server.impl.application.WebApplicationContext;
 import com.sun.jersey.server.impl.application.WebApplicationImpl;
+import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.dispatch.RequestDispatcher;
 import org.junit.Test;
 
@@ -23,7 +24,6 @@ public class PerChannelTimedRequestDispatcherTest {
 
 	@Test
 	public void testMethodNotAnnotated() throws Exception {
-		//GIVEN
 		Object resource = new Object();
 
 		AnnotatedElement annotatedElement = mock(AnnotatedElement.class);
@@ -35,17 +35,14 @@ public class PerChannelTimedRequestDispatcherTest {
 
 		PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
 
-		//WHEN
 		testClass.dispatch(resource, context);
 
-		//THEN
 		verifyNoMoreInteractions(registry);
 		verify(delegate).dispatch(resource, context);
 	}
 
     @Test
     public void testHappyPath() throws Exception {
-        //GIVEN
         Object resource = new Object();
         String timerName = "per-channel.theSpoon.invert";
         String channelName = "theSpoon";
@@ -62,7 +59,7 @@ public class PerChannelTimedRequestDispatcherTest {
         Timer timer = mock(Timer.class);
 
         when(annotatedElement.getAnnotation(PerChannelTimed.class)).thenReturn(annotation);
-        when(annotation.channelNamePathParameter()).thenReturn("channelName");
+        when(annotation.channelNameParameter()).thenReturn("channelName");
         when(annotation.operationName()).thenReturn("invert");
         when(registry.timer(timerName)).thenReturn(timer);
         when(timer.time()).thenReturn(timerContext);
@@ -73,10 +70,8 @@ public class PerChannelTimedRequestDispatcherTest {
 
         PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
 
-        //WHEN
         testClass.dispatch(resource, context);
 
-        //THEN
         verify(timer).time();
         verify(delegate).dispatch(resource, context);
         verify(timerContext).close();
@@ -102,7 +97,7 @@ public class PerChannelTimedRequestDispatcherTest {
         Timer timer = mock(Timer.class);
 
         when(annotatedElement.getAnnotation(PerChannelTimed.class)).thenReturn(annotation);
-        when(annotation.channelNamePathParameter()).thenReturn("channelName");
+        when(annotation.channelNameParameter()).thenReturn("channelName");
         when(annotation.operationName()).thenReturn("invert");
         when(registry.timer(timerName)).thenReturn(timer);
         when(registry.meter(timerName + ".exceptions")).thenReturn(exceptionMeter);
@@ -115,14 +110,12 @@ public class PerChannelTimedRequestDispatcherTest {
 
         PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
 
-        //WHEN
         try {
             testClass.dispatch(resource, context);
             fail("dispatch() should have thrown an exception");
         } catch ( RuntimeException ignored ) {
         }
 
-        //THEN
         verify(timer).time();
         verify(exceptionMeter).mark();
         verify(delegate).dispatch(resource, context);
@@ -131,7 +124,6 @@ public class PerChannelTimedRequestDispatcherTest {
 
     @Test(expected = IllegalArgumentException.class)
 	public void testCantFindChannelName() throws Exception {
-		//GIVEN
 		Object resource = new Object();
 		String timerName = "per-channel.theSpoon.invert";
 		String channelName = "theSpoon";
@@ -148,7 +140,7 @@ public class PerChannelTimedRequestDispatcherTest {
 		Timer timer = mock(Timer.class);
 
 		when(annotatedElement.getAnnotation(PerChannelTimed.class)).thenReturn(annotation);
-		when(annotation.channelNamePathParameter()).thenReturn("channelName");
+		when(annotation.channelNameParameter()).thenReturn("channelName");
 		when(annotation.operationName()).thenReturn("invert");
 		when(registry.timer(timerName)).thenReturn(timer);
 		when(timer.time()).thenReturn(timerContext);
@@ -159,8 +151,37 @@ public class PerChannelTimedRequestDispatcherTest {
 
 		PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
 
-		//WHEN
-		//THEN
 		testClass.dispatch(resource, context);
 	}
+
+    @Test
+    public void testHeader() throws Exception {
+        Object resource = new Object();
+        String timerName = "per-channel.theSpoon.invert";
+        String channelName = "theSpoon";
+        ContainerRequest request = mock(ContainerRequest.class);
+        when(request.getHeaderValue("channelName")).thenReturn(channelName);
+        WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), request, null);
+
+        AnnotatedElement annotatedElement = mock(AnnotatedElement.class);
+        MetricRegistry registry = mock(MetricRegistry.class);
+        RequestDispatcher delegate = mock(RequestDispatcher.class);
+        PerChannelTimed annotation = mock(PerChannelTimed.class);
+        Timer.Context timerContext = mock(Timer.Context.class);
+        Timer timer = mock(Timer.class);
+
+        when(annotatedElement.getAnnotation(PerChannelTimed.class)).thenReturn(annotation);
+        when(annotation.channelNameParameter()).thenReturn("channelName");
+        when(annotation.operationName()).thenReturn("invert");
+        when(registry.timer(timerName)).thenReturn(timer);
+        when(timer.time()).thenReturn(timerContext);
+
+        PerChannelTimedRequestDispatcher dispatcher = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
+
+        dispatcher.dispatch(resource, context);
+
+        verify(timer).time();
+        verify(delegate).dispatch(resource, context);
+        verify(timerContext).close();
+    }
 }

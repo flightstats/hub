@@ -61,9 +61,7 @@ public class DynamoContentDao implements ContentDao {
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(dynamoUtils.getTableName(channelName))
                 .withItem(item);
-        //todo - gfm - 12/13/13 - this needs to handle ProvisionedThroughputExceededException
-        //return a 503 to the client with a suggested retry time
-        PutItemResult result = dbClient.putItem(putItemRequest);
+        dbClient.putItem(putItemRequest);
         return new ValueInsertionResult(key, dateTime.toDate());
     }
 

@@ -4,12 +4,9 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.sun.jersey.api.core.HttpContext;
-import com.sun.jersey.server.impl.application.WebApplicationContext;
 import com.sun.jersey.spi.dispatch.RequestDispatcher;
 
-import javax.ws.rs.core.MultivaluedMap;
 import java.lang.reflect.AnnotatedElement;
-import java.util.List;
 
 class PerChannelTimedRequestDispatcher implements RequestDispatcher {
     private final MetricRegistry registry;
@@ -46,18 +43,8 @@ class PerChannelTimedRequestDispatcher implements RequestDispatcher {
     }
 
     private String getMetricName(HttpContext context, PerChannelTimed timedAnnotation) {
-        String channelName = getChannelName(context, timedAnnotation);
+        String channelName = ChannelAnnotationUtil.getChannelName(context, timedAnnotation.channelNameParameter());
         return "per-channel." + channelName + "." + timedAnnotation.operationName();
     }
 
-    private String getChannelName(HttpContext context, PerChannelTimed timedAnnotation) {
-        MultivaluedMap<String, String> pathParameters = ((WebApplicationContext) context).getPathParameters(true);
-        String channelNamePathParam = timedAnnotation.channelNamePathParameter();
-        List<String> channelNames = pathParameters.get(channelNamePathParam);
-        if (channelNames == null || channelNames.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Unable to determine channel name for metrics.  There is no parameter named " + channelNamePathParam);
-        }
-        return channelNames.get(0);
-    }
 }

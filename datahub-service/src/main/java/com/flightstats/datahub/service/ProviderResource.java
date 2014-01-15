@@ -2,6 +2,8 @@ package com.flightstats.datahub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.flightstats.datahub.app.config.metrics.PerChannelThroughput;
+import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.google.common.base.Optional;
@@ -37,9 +39,8 @@ public class ProviderResource {
     @POST
     @Timed(name = "provider.insert")
     @ExceptionMetered
-    //todo - gfm - 1/8/14 - how do we do handle per channel stats?
-    //@PerChannelTimed(operationName = "insert", channelNamePathParameter = "channelName")
-    //@PerChannelThroughput(operationName = "insertBytes", channelNamePathParameter = "channelName")
+    @PerChannelTimed(operationName = "insert", channelNameParameter = "channelName")
+    @PerChannelThroughput(operationName = "insertBytes", channelNameParameter = "channelName")
     @Produces(MediaType.TEXT_PLAIN)
     public Response insertValue(@HeaderParam("channelName") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,

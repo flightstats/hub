@@ -192,7 +192,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         MetricsTimer metricsTimer = injector.getInstance(MetricsTimer.class);
         RetryPolicy retryPolicy = injector.getInstance(RetryPolicy.class);
         CuratorKeyGenerator keyGenerator = new CuratorKeyGenerator(curator, metricsTimer, retryPolicy);
-        S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", curator);
+        S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", curator, metricsTimer);
         TimeIndexProcessor processor = new TimeIndexProcessor(curator, indexDao, new TimeProvider(), new ZooKeeperState());
 
         DateTime dateTime1 = new DateTime(2014, 1, 6, 12, 45);
