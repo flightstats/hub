@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="true">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%5p %d{ISO8601} [%t] %c [line %L] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <logger name="com.sun.jersey.server.wadl.generators" level="WARN"/>
+    <logger name="org.apache.zookeeper.server.PrepRequestProcessor" level="WARN"/>
+</configuration>
