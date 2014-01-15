@@ -27,8 +27,8 @@ utils.runInTestChannel(channelName, function () {
                 .expectJSON({
                     name: channelName,
                     type: "Sequence",
-                    contentSizeKB: 10,
-                    peakRequestRateSeconds: 10,
+                    contentSizeKB: 1,
+                    peakRequestRateSeconds: 1,
                     ttlDays: 120
                 })
                 //TODO: Validate creation date
