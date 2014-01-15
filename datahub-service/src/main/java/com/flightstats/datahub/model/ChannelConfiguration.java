@@ -144,8 +144,8 @@ public class ChannelConfiguration implements Serializable {
 		private Date creationDate = new Date();
 		private long ttlDays = 120;
         private ChannelType type = ChannelType.Sequence;
-        private int contentKiloBytes = 10;
-        private int peakRequestRateSeconds = 10;
+        private int contentKiloBytes = 1;
+        private int peakRequestRateSeconds = 1;
 
 		public Builder withChannelConfiguration(ChannelConfiguration config) {
 			this.name = config.name;

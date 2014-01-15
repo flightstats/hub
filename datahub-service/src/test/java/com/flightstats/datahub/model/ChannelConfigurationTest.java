@@ -25,8 +25,8 @@ public class ChannelConfigurationTest {
         assertEquals("defaults", config.getName());
         assertEquals(120, config.getTtlDays());
         assertTrue(config.isSequence());
-        assertEquals(100L, config.getContentThroughputInSeconds());
-        assertEquals(10L, config.getPeakRequestRateSeconds());
+        assertEquals(1L, config.getContentThroughputInSeconds());
+        assertEquals(1L, config.getPeakRequestRateSeconds());
     }
 
     @Test
@@ -49,8 +49,8 @@ public class ChannelConfigurationTest {
         assertEquals( 10L, config.getTtlDays());
         assertEquals(isSequence, config.isSequence());
         assertEquals(date, config.getCreationDate());
-        assertEquals(10L, config.getPeakRequestRateSeconds());
-        assertEquals(1000L, config.getContentThroughputInSeconds());
+        assertEquals(1L, config.getPeakRequestRateSeconds());
+        assertEquals(100L, config.getContentThroughputInSeconds());
     }
 
     @Test
