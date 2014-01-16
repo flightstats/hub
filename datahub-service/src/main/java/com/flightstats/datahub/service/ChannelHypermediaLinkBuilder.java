@@ -40,10 +40,11 @@ public class ChannelHypermediaLinkBuilder {
 	public Linked<ChannelConfiguration> buildChannelLinks(ChannelConfiguration config, URI channelUri) {
         Linked.Builder<ChannelConfiguration> linked = linked(config).withLink("self", channelUri);
         if (config.isSequence()) {
-            linked.withLink("latest", URI.create(channelUri + "/latest"));
+            linked.withLink("latest", URI.create(channelUri + "/latest"))
+                    .withLink("ws", buildWsLinkFor(channelUri));
         }
-        linked.withLink("ws", buildWsLinkFor(channelUri))
-            .withLink("time", URI.create(channelUri + "/time"));
+
+        linked.withLink("time", URI.create(channelUri + "/time"));
         return linked.build();
 	}
 }

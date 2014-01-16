@@ -59,9 +59,8 @@ public class ChannelHypermediaLinkBuilderTest {
                 .withType(ChannelConfiguration.ChannelType.TimeSeries).build();
         Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(channelConfig, channelUri);
         List<HalLink> halLinks = linked.getHalLinks().getLinks();
-        assertEquals(3, halLinks.size());
+        assertEquals(2, halLinks.size());
         assertTrue(halLinks.contains(new HalLink("self", channelUri)));
-        assertTrue(halLinks.contains(new HalLink("ws", new URI("ws://path.to:8080/channel/spoon/ws"))));
         assertTrue(halLinks.contains(new HalLink("time", new URI(channelUri.toString() + "/time"))));
 
     }
