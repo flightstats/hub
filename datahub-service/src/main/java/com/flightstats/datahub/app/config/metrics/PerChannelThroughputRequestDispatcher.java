@@ -4,15 +4,12 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Strings;
 import com.sun.jersey.api.core.HttpContext;
-import com.sun.jersey.server.impl.application.WebApplicationContext;
 import com.sun.jersey.spi.dispatch.RequestDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MultivaluedMap;
 import java.lang.reflect.AnnotatedElement;
-import java.util.List;
 
 class PerChannelThroughputRequestDispatcher implements RequestDispatcher {
     private final static Logger logger = LoggerFactory.getLogger(PerChannelThroughputRequestDispatcher.class);
@@ -48,19 +45,9 @@ class PerChannelThroughputRequestDispatcher implements RequestDispatcher {
         delegate.dispatch(resource, context);
     }
 
-    private String getMetricName(HttpContext context, PerChannelThroughput throughputAnnotation) {
-        String channelName = getChannelName(context, throughputAnnotation);
-        return "per-channel." + channelName + "." + throughputAnnotation.operationName();
+    private String getMetricName(HttpContext context, PerChannelThroughput annotation) {
+        String channelName = ChannelAnnotationUtil.getChannelName(context, annotation.channelNameParameter());
+        return "per-channel." + channelName + "." + annotation.operationName();
     }
 
-    private String getChannelName(HttpContext context, PerChannelThroughput throughputAnnotation) {
-        MultivaluedMap<String, String> pathParameters = ((WebApplicationContext) context).getPathParameters(true);
-        String channelNamePathParam = throughputAnnotation.channelNamePathParameter();
-        List<String> channelNames = pathParameters.get(channelNamePathParam);
-        if (channelNames == null || channelNames.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Unable to determine channel name for metrics.  There is no parameter named " + channelNamePathParam);
-        }
-        return channelNames.get(0);
-    }
 }

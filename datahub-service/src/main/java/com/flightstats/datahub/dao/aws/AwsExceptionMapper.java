@@ -20,7 +20,6 @@ public class AwsExceptionMapper implements ExceptionMapper<AmazonClientException
             return Response.status(Response.Status.SERVICE_UNAVAILABLE)
                     .header("Retry-After", 60).build();
         }
-        //todo - gfm - 1/15/14 - is this what we want to default to?
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
 }

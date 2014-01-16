@@ -71,8 +71,7 @@ Hyphens are not allowed in channel names. Surrounding white space is trimmed (e.
 `ttlMillis` is still accepted as an input parameter, and is converted to ttlDays.  A `null` ttlMillis is converted to 1000 years.
 
 `peakRequestRateSeconds` and `contentSizeKB` are optional, and are only used by TimeSeries to provision the throughput of the channel per second.
-If the throughput is exceeded, the service will return an error code of ???.
-todo - gfm - 1/13/14 - error code?
+If the throughput is exceeded, the service will return an error code of 503 with a `Retry-After` header providing a value in seconds.
 
 `POST http://deihub/channel`
 

@@ -52,7 +52,7 @@ public class SingleChannelResource {
     @GET
     @Timed
     @ExceptionMetered
-    @PerChannelTimed(operationName = "metadata", channelNamePathParameter = "channelName")
+    @PerChannelTimed(operationName = "metadata", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelMetadata(@PathParam("channelName") String channelName) {
         if (noSuchChannel(channelName)) {
@@ -68,14 +68,15 @@ public class SingleChannelResource {
     @PATCH
     @Timed
     @ExceptionMetered
-    @PerChannelTimed(operationName = "update", channelNamePathParameter = "channelName")
+    @PerChannelTimed(operationName = "update", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMetadata( @PathParam("channelName") String channelName, String json) throws Exception {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        Map<String, String> map = mapper.readValue(json, new TypeReference<Map<String, String>>() { });
+        Map<String, String> map = mapper.readValue(json, new TypeReference<Map<String, String>>() {
+        });
         if (map.containsKey("type")) {
             throw new InvalidRequestException("{\"error\": \"type can not be changed \"}");
         }
@@ -95,8 +96,8 @@ public class SingleChannelResource {
     @POST
     @Timed(name = "all-channels.insert")
     @ExceptionMetered
-    @PerChannelTimed(operationName = "insert", channelNamePathParameter = "channelName")
-    @PerChannelThroughput(operationName = "insertBytes", channelNamePathParameter = "channelName")
+    @PerChannelTimed(operationName = "insert", channelNameParameter = "channelName")
+    @PerChannelThroughput(operationName = "insertBytes", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage,

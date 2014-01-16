@@ -23,7 +23,6 @@ public class PerChannelThroughputRequestDispatcherTest {
 
 	@Test
 	public void testMethodNotAnnotated() throws Exception {
-		//GIVEN
 		Object resource = new Object();
 
 		AnnotatedElement annotatedElement = mock(AnnotatedElement.class);
@@ -35,17 +34,14 @@ public class PerChannelThroughputRequestDispatcherTest {
 
 		PerChannelThroughputRequestDispatcher testClass = new PerChannelThroughputRequestDispatcher(registry, annotatedElement, delegate);
 
-		//WHEN
 		testClass.dispatch(resource, context);
 
-		//THEN
 		verifyNoMoreInteractions(registry);
 		verify(delegate).dispatch(resource, context);
 	}
 
     @Test
     public void testHappyPath() throws Exception {
-        //GIVEN
         Object resource = new Object();
         String name = "per-channel.theSpoon.invert";
         String channelName = "theSpoon";
@@ -64,7 +60,7 @@ public class PerChannelThroughputRequestDispatcherTest {
         Meter meter = mock(Meter.class);
 
         when(annotatedElement.getAnnotation(PerChannelThroughput.class)).thenReturn(annotation);
-        when(annotation.channelNamePathParameter()).thenReturn("channelName");
+        when(annotation.channelNameParameter()).thenReturn("channelName");
         when(annotation.operationName()).thenReturn("invert");
         when(registry.meter(name)).thenReturn(meter);
         
@@ -75,17 +71,14 @@ public class PerChannelThroughputRequestDispatcherTest {
 
         PerChannelThroughputRequestDispatcher testClass = new PerChannelThroughputRequestDispatcher(registry, annotatedElement, delegate);
 
-        //WHEN
         testClass.dispatch(resource, context);
 
-        //THEN
         verify(delegate).dispatch(resource, context);
         verify(meter).mark(12345);
     }
 
     @Test
     public void testNullEntity() throws Exception {
-        //GIVEN
         Object resource = new Object();
         String name = "per-channel.theSpoon.invert";
         String channelName = "theSpoon";
@@ -104,7 +97,7 @@ public class PerChannelThroughputRequestDispatcherTest {
         Meter meter = mock(Meter.class);
 
         when(annotatedElement.getAnnotation(PerChannelThroughput.class)).thenReturn(annotation);
-        when(annotation.channelNamePathParameter()).thenReturn("channelName");
+        when(annotation.channelNameParameter()).thenReturn("channelName");
         when(annotation.operationName()).thenReturn("invert");
         when(registry.meter(name)).thenReturn(meter);
 
@@ -115,18 +108,14 @@ public class PerChannelThroughputRequestDispatcherTest {
 
         PerChannelThroughputRequestDispatcher testClass = new PerChannelThroughputRequestDispatcher(registry, annotatedElement, delegate);
 
-        //WHEN
         testClass.dispatch(resource, context);
 
-        //THEN
         verify(delegate).dispatch(resource, context);
     }
 
     @Test(expected = IllegalArgumentException.class)
 	public void testCantFindChannelName() throws Exception {
-		//GIVEN
 		Object resource = new Object();
-		String timerName = "per-channel.theSpoon.invert";
 		String channelName = "theSpoon";
 		List<String> paramNames = Arrays.asList("notTheRightParam", "alsoTheWrongParamter");
 		WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), null, null);
@@ -139,7 +128,7 @@ public class PerChannelThroughputRequestDispatcherTest {
 		PerChannelThroughput annotation = mock(PerChannelThroughput.class);
 
 		when(annotatedElement.getAnnotation(PerChannelThroughput.class)).thenReturn(annotation);
-		when(annotation.channelNamePathParameter()).thenReturn("channelName");
+		when(annotation.channelNameParameter()).thenReturn("channelName");
 		when(annotation.operationName()).thenReturn("invert");
 		when(matchResult.group(anyInt())).thenReturn(channelName);
 
@@ -148,8 +137,36 @@ public class PerChannelThroughputRequestDispatcherTest {
 
 		PerChannelThroughputRequestDispatcher testClass = new PerChannelThroughputRequestDispatcher(registry, annotatedElement, delegate);
 
-		//WHEN
-		//THEN
 		testClass.dispatch(resource, context);
 	}
+
+    @Test
+    public void testHeader() throws Exception {
+        Object resource = new Object();
+        String name = "per-channel.theSpoon.invert";
+        String channelName = "theSpoon";
+
+        ContainerRequest request = mock(ContainerRequest.class);
+        when(request.getHeaderValue(HttpHeaders.CONTENT_LENGTH)).thenReturn("12345");
+        when(request.getHeaderValue("channelName")).thenReturn(channelName);
+        WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), request, null);
+
+        AnnotatedElement annotatedElement = mock(AnnotatedElement.class);
+        MetricRegistry registry = mock(MetricRegistry.class);
+        RequestDispatcher delegate = mock(RequestDispatcher.class);
+        PerChannelThroughput annotation = mock(PerChannelThroughput.class);
+        Meter meter = mock(Meter.class);
+
+        when(annotatedElement.getAnnotation(PerChannelThroughput.class)).thenReturn(annotation);
+        when(annotation.channelNameParameter()).thenReturn("channelName");
+        when(annotation.operationName()).thenReturn("invert");
+        when(registry.meter(name)).thenReturn(meter);
+
+        PerChannelThroughputRequestDispatcher testClass = new PerChannelThroughputRequestDispatcher(registry, annotatedElement, delegate);
+
+        testClass.dispatch(resource, context);
+
+        verify(delegate).dispatch(resource, context);
+        verify(meter).mark(12345);
+    }
 }

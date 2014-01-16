@@ -31,7 +31,7 @@ public class LatestChannelItemResource {
 	}
 
 	@GET
-    @PerChannelTimed(operationName = "latest", channelNamePathParameter = "channelName")
+    @PerChannelTimed(operationName = "latest", channelNameParameter = "channelName")
 	@Timed
     @ExceptionMetered
 	public Response getLatest(@PathParam("channelName") String channelName) {
