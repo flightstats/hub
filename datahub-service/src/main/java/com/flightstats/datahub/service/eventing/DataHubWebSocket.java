@@ -22,6 +22,7 @@ public class DataHubWebSocket {
 	private final SubscriptionRoster subscriptions;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 	private String remoteAddress;
+    //todo - gfm - 1/15/14 - I'm curious about the lifecycle of this
 	private JettyWebSocketEndpointSender endpointSender;
 	private String channelName;
 
@@ -45,8 +46,6 @@ public class DataHubWebSocket {
 
 	@OnWebSocketConnect
 	public void onConnect(final Session session) {
-        //todo - gfm - 12/30/13 - should this verify that the channel exists?
-        //todo - gfm - 12/30/13 - we need to handle time series
 		UpgradeRequest upgradeRequest = session.getUpgradeRequest();
 		URI requestUri = upgradeRequest.getRequestURI();
         remoteAddress = session.getRemoteAddress().toString();

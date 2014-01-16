@@ -284,6 +284,9 @@ While a common approach to consuming data from the datahub involves traversing n
 "subscribe" to single channel events by listening on a channel's websocket.  
 In the channel metadata there is a `ws` link, and a websocket aware client may connect to this URL.
 
+Clients should be aware that websockets are a "best effort" service, and are not stateful.  If the ws connection is lost,
+which will happen on datahub server restarts, the client will need to reconnect, and may have missed items.
+
 Once connected, the line-oriented protocol is simple:
 
 For Sequence channels, each time data is inserted into the channel, the datahub will send a line to the client with the
@@ -296,13 +299,7 @@ http://deihub/channel/stumptown/1002
 ...etc...
 ```
 
-For TimeSeries channels, the websocket will return the time URL that as it is available
-```
-http://deihub/channel/stumptownTime/2014-01-13T18:40-0800
-http://deihub/channel/stumptownTime/2014-01-13T18:41-0800
-http://deihub/channel/stumptownTime/2014-01-13T18:42-0800
-...etc...
-```
+Currently TimeSeries channels do not support websockets.  If this is a desired feature, please discuss it with us.
 
 ## provider interface
 
