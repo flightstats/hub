@@ -28,11 +28,11 @@ public class TimedContentDao implements ContentDao {
     }
 
     @Override
-    public ValueInsertionResult write(final String channelName, final Content columnValue, final long ttlDays) {
+    public ValueInsertionResult write(final String channelName, final Content content, final long ttlDays) {
         return metricsTimer.time("valueDao.write", new TimedCallback<ValueInsertionResult>() {
             @Override
             public ValueInsertionResult call() {
-                return delegate.write(channelName, columnValue, ttlDays);
+                return delegate.write(channelName, content, ttlDays);
             }
         });
     }

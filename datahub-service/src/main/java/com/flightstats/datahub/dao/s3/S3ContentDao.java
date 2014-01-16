@@ -6,7 +6,8 @@ import com.amazonaws.services.s3.model.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.dao.ContentDao;
-import com.flightstats.datahub.dao.TimeIndex;
+import com.flightstats.datahub.dao.timeIndex.TimeIndex;
+import com.flightstats.datahub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
 import com.flightstats.datahub.model.ChannelConfiguration;
@@ -58,8 +59,11 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public ValueInsertionResult write(String channelName, Content content, long ttlDays) {
-        ContentKey key = keyGenerator.newKey(channelName);
-        DateTime dateTime = new DateTime();
+        if (!content.getContentKey().isPresent()) {
+            content.setContentKey(keyGenerator.newKey(channelName));
+        }
+        ContentKey key = content.getContentKey().get();
+        DateTime dateTime = new DateTime(content.getMillis());
         writeS3(channelName, content, key);
         writeIndex(channelName, dateTime, key);
         return new ValueInsertionResult(key, dateTime.toDate());

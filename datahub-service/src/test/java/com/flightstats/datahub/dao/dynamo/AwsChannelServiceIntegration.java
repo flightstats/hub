@@ -103,9 +103,9 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         channelService.createChannel(configuration);
 
         byte[] bytes = "some data".getBytes();
-        ValueInsertionResult insert1 = channelService.insert(channelName, Optional.<String>absent(), Optional.<String>absent(), bytes);
-        ValueInsertionResult insert2 = channelService.insert(channelName, Optional.<String>absent(), Optional.<String>absent(), bytes);
-        ValueInsertionResult insert3 = channelService.insert(channelName, Optional.<String>absent(), Optional.<String>absent(), bytes);
+        ValueInsertionResult insert1 = channelService.insert(channelName, new Content(Optional.<String>absent(), Optional.<String>absent(), bytes));
+        ValueInsertionResult insert2 = channelService.insert(channelName, new Content(Optional.<String>absent(), Optional.<String>absent(), bytes));
+        ValueInsertionResult insert3 = channelService.insert(channelName,  new Content(Optional.<String>absent(), Optional.<String>absent(), bytes));
         HashSet<ContentKey> createdKeys = Sets.newHashSet(insert1.getKey(), insert2.getKey(), insert3.getKey());
         Optional<LinkedContent> value = channelService.getValue(channelName, insert1.getKey().keyToString());
         assertTrue(value.isPresent());
@@ -136,7 +136,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
         channelService.createChannel(configuration);
         byte[] bytes = "testChannelOptionals".getBytes();
-        ValueInsertionResult insert = channelService.insert(channelName, Optional.of("content"), Optional.of("lang"), bytes);
+        ValueInsertionResult insert = channelService.insert(channelName,  new Content(Optional.of("content"), Optional.of("lang"), bytes));
 
         Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());
         assertTrue(value.isPresent());

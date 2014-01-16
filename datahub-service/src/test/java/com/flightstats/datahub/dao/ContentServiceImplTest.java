@@ -43,8 +43,8 @@ public class ContentServiceImplTest {
         // WHEN
         when(timeProvider.getMillis()).thenReturn(days);
         when(contentDao.write(channelName, value, days)).thenReturn(new ValueInsertionResult(key, null));
-
-        ValueInsertionResult result = testClass.insert(channelConfig, contentType, Optional.<String>absent(), data);
+        Content content = new Content(contentType, Optional.<String>absent(), data);
+        ValueInsertionResult result = testClass.insert(channelConfig, content);
 
         // THEN
         assertEquals(expected, result);
