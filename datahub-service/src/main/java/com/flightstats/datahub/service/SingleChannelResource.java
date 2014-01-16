@@ -9,6 +9,7 @@ import com.flightstats.datahub.app.config.metrics.PerChannelThroughput;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.flightstats.rest.Linked;
@@ -110,8 +111,8 @@ public class SingleChannelResource {
             return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
         }
 
-        ValueInsertionResult insertionResult = channelService.insert(channelName, Optional.fromNullable(contentType),
-                Optional.fromNullable(contentLanguage), data);
+        Content content = new Content(Optional.fromNullable(contentType), Optional.fromNullable(contentLanguage), data);
+        ValueInsertionResult insertionResult = channelService.insert(channelName, content);
         URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo.getRequestUri());
         Linked<ValueInsertionResult> linkedResult = linked(insertionResult)
                 .withLink("channel", linkBuilder.buildChannelUri(channelName, uriInfo))

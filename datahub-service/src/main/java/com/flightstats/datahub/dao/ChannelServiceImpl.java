@@ -1,9 +1,6 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.ContentKey;
-import com.flightstats.datahub.model.LinkedContent;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.service.CreateChannelValidator;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -32,7 +29,7 @@ public class ChannelServiceImpl implements ChannelService {
         public void updateChannel(ChannelConfiguration configuration) { }
 
         @Override
-        public ValueInsertionResult insert(ChannelConfiguration configuration, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
+        public ValueInsertionResult insert(ChannelConfiguration configuration, Content content) {
             return null;
         }
 
@@ -87,9 +84,9 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
+    public ValueInsertionResult insert(String channelName, Content content) {
         ChannelConfiguration configuration = channelMetadataDao.getChannelConfiguration(channelName);
-        return getContentService(channelName).insert(configuration, contentType, contentLanguage, data);
+        return getContentService(channelName).insert(configuration, content);
     }
 
     @Override

@@ -12,12 +12,17 @@ public class Content implements Serializable {
     private final Optional<String> contentLanguage;
     private final long millis;
     private final byte[] data;
+    private Optional<ContentKey> contentKey = Optional.absent();
 
     public Content(Optional<String> contentType, Optional<String> contentLanguage, byte[] data, long millis) {
         this.contentType = contentType;
         this.contentLanguage = contentLanguage;
         this.millis = millis;
         this.data = data;
+    }
+
+    public Content(Optional<String> contentType, Optional<String> contentLanguage, byte[] data) {
+        this(contentType, contentLanguage, data, System.currentTimeMillis());
     }
 
     public Optional<String> getContentType() {
@@ -38,6 +43,14 @@ public class Content implements Serializable {
 
     public long getMillis() {
         return millis;
+    }
+
+    public Optional<ContentKey> getContentKey() {
+        return contentKey;
+    }
+
+    public void setContentKey(ContentKey contentKey) {
+        this.contentKey = Optional.of(contentKey);
     }
 
     @Override

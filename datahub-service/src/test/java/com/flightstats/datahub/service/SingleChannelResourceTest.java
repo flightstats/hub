@@ -1,10 +1,7 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.ContentKey;
-import com.flightstats.datahub.model.SequenceContentKey;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.*;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
@@ -77,10 +74,9 @@ public class SingleChannelResourceTest {
 		HalLink channelLink = new HalLink("channel", channelUri);
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(contentKey, null);
 
-		when(channelService.insert(channelName, Optional.of(contentType), Optional.of(contentLanguage), data)).thenReturn(new ValueInsertionResult(contentKey,
-                null));
+		when(channelService.insert(channelName, new Content(Optional.of(contentType), Optional.of(contentLanguage), data))).thenReturn(new ValueInsertionResult(contentKey, null));
 
-		SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
+        SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
 		Response response = testClass.insertValue(channelName, contentType, contentLanguage, data);
 
 		assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
@@ -102,7 +98,7 @@ public class SingleChannelResourceTest {
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
 
         //WHEN
-        when(channelService.insert(channelName, Optional.of(contentType), Optional.of(contentLanguage), data)).thenReturn(result);
+        when(channelService.insert(channelName,  new Content(Optional.of(contentType), Optional.of(contentLanguage), data))).thenReturn(result);
 
         testClass.insertValue(channelName, contentType, contentLanguage, data);
 
@@ -119,7 +115,7 @@ public class SingleChannelResourceTest {
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
 
         //WHEN
-        when(channelService.insert(channelName, Optional.of(contentType), Optional.of(contentLanguage), data)).thenReturn(result);
+        when(channelService.insert(channelName,  new Content(Optional.of(contentType), Optional.of(contentLanguage), data))).thenReturn(result);
 
         testClass.insertValue(channelName, contentType, contentLanguage, data);
     }
