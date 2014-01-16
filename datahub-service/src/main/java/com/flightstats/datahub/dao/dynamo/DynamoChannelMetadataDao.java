@@ -34,10 +34,10 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
     @Override
     public void updateChannel(ChannelConfiguration config) {
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put("key", new AttributeValue().withS(config.getName()));
+        item.put("key", new AttributeValue(config.getName()));
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
         item.put("ttlDays", new AttributeValue().withN(String.valueOf(config.getTtlDays())));
-        item.put("type", new AttributeValue().withS(config.getType().toString()));
+        item.put("type", new AttributeValue(config.getType().toString()));
         item.put("peakRequestRate", new AttributeValue().withN(String.valueOf(config.getPeakRequestRateSeconds())));
         item.put("contentSizeKB", new AttributeValue().withN(String.valueOf(config.getContentSizeKB())));
         PutItemRequest putItemRequest = new PutItemRequest()
@@ -52,21 +52,12 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
     }
 
     private void createTable() {
-        ArrayList<AttributeDefinition> attributeDefinitions= new ArrayList<>();
-        attributeDefinitions.add(new AttributeDefinition().withAttributeName("key").withAttributeType("S"));
-
-        ArrayList<KeySchemaElement> ks = new ArrayList<>();
-        ks.add(new KeySchemaElement().withAttributeName("key").withKeyType(KeyType.HASH));
-
-        ProvisionedThroughput provisionedThroughput = new ProvisionedThroughput()
-                .withReadCapacityUnits(10L)
-                .withWriteCapacityUnits(10L);
 
         CreateTableRequest request = new CreateTableRequest()
                 .withTableName(getTableName())
-                .withAttributeDefinitions(attributeDefinitions)
-                .withKeySchema(ks)
-                .withProvisionedThroughput(provisionedThroughput);
+                .withAttributeDefinitions(new AttributeDefinition("key", ScalarAttributeType.S))
+                .withKeySchema(new KeySchemaElement("key", KeyType.HASH))
+                .withProvisionedThroughput(new ProvisionedThroughput(10L, 10L));
         dynamoUtils.createTable(request);
     }
 
