@@ -1,7 +1,7 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.dao.TimeIndex;
+import com.flightstats.datahub.dao.timeIndex.TimeIndex;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.TimeSeriesContentKey;
 import com.flightstats.datahub.model.exception.InvalidRequestException;

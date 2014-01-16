@@ -2,7 +2,7 @@ package com.flightstats.datahub.dao.s3;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.datahub.dao.TimeIndex;
+import com.flightstats.datahub.dao.timeIndex.TimeIndex;
 import com.sun.jersey.api.client.Client;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
