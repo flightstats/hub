@@ -1,6 +1,8 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.flightstats.datahub.cluster.HazelcastSubscriber;
+import com.flightstats.datahub.cluster.SequenceSubscriber;
+import com.flightstats.datahub.dao.ChannelService;
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.service.ChannelInsertionPublisher;
 import com.google.inject.Inject;
 import com.hazelcast.core.MessageListener;
@@ -13,18 +15,34 @@ public class SubscriptionRoster {
 
 	private final static Logger logger = LoggerFactory.getLogger(SubscriptionRoster.class);
 	private final ChannelInsertionPublisher channelInsertionPublisher;
-	private final ConcurrentHashMap<ChannelConsumer, String> consumerToMessageListener = new ConcurrentHashMap<>();
+    private final ChannelService channelService;
+    private final ConcurrentHashMap<ChannelConsumer, String> consumerToMessageListener = new ConcurrentHashMap<>();
 
 	@Inject
-	public SubscriptionRoster(ChannelInsertionPublisher channelInsertionPublisher) {
+	public SubscriptionRoster(ChannelInsertionPublisher channelInsertionPublisher, ChannelService channelService) {
 		this.channelInsertionPublisher = channelInsertionPublisher;
-	}
+        this.channelService = channelService;
+    }
 
 	public void subscribe(final String channelName, Consumer<String> consumer) {
-        logger.info("Adding new message listener for websocket hazelcast queue for channel " + channelName);
-        MessageListener<String> messageListener = new HazelcastSubscriber(consumer);
-        String registrationId = channelInsertionPublisher.subscribe(channelName, messageListener);
-        consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), registrationId );
+        ChannelConfiguration configuration = channelService.getChannelConfiguration(channelName);
+        if (null == configuration) {
+            //todo - gfm - 1/15/14 - do we need to support websockets before channel creation?
+            configuration = ChannelConfiguration.builder()
+                    .withName(channelName)
+                    .withType(ChannelConfiguration.ChannelType.Sequence)
+                    .build();
+        }
+
+        if (configuration.isSequence()) {
+            logger.info("Adding new message listener for sequence channel " + channelName);
+            MessageListener<String> messageListener = new SequenceSubscriber(consumer);
+            String registrationId = channelInsertionPublisher.subscribe(channelName, messageListener);
+            consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), registrationId );
+        } else {
+            throw new UnsupportedOperationException("TimeSeries channels do not support WebSockets");
+        }
+
 	}
 
     public void unsubscribe(String channelName, Consumer<String> subscription) {
