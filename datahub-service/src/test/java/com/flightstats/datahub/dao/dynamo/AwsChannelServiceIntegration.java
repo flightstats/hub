@@ -5,9 +5,9 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.dao.ChannelServiceIntegration;
-import com.flightstats.datahub.dao.TimeIndex;
 import com.flightstats.datahub.dao.s3.S3ContentDao;
-import com.flightstats.datahub.dao.s3.TimeIndexProcessor;
+import com.flightstats.datahub.dao.timeIndex.TimeIndex;
+import com.flightstats.datahub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.CuratorKeyGenerator;
@@ -196,24 +196,22 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         TimeIndexProcessor processor = new TimeIndexProcessor(curator, indexDao, new TimeProvider(), new ZooKeeperState());
 
         DateTime dateTime1 = new DateTime(2014, 1, 6, 12, 45);
-        DateTime dateTime2 = dateTime1.plusMinutes(1);
         indexDao.writeIndex(channelName, dateTime1, new SequenceContentKey(999));
-        indexDao.writeIndex(channelName, dateTime1, new SequenceContentKey(1000));
-        indexDao.writeIndex(channelName, dateTime2, new SequenceContentKey(1001));
-        indexDao.writeIndex(channelName, dateTime2, new SequenceContentKey(1002));
+        DateTime dateTime2 = dateTime1.plusMinutes(1);
+        indexDao.writeIndex(channelName, dateTime2, new SequenceContentKey(1000));
+        indexDao.writeIndex(channelName, dateTime1.plusMinutes(2), new SequenceContentKey(1001));
+        indexDao.writeIndex(channelName, dateTime1.plusMinutes(3), new SequenceContentKey(1002));
         processor.process(channelName);
 
         assertNull(curator.checkExists().forPath(TimeIndex.getPath(channelName, TimeIndex.getHash(dateTime1))));
         assertNull(curator.checkExists().forPath(TimeIndex.getPath(channelName, TimeIndex.getHash(dateTime2))));
 
         ArrayList<ContentKey> keyList = Lists.newArrayList(indexDao.getKeys(channelName, dateTime1));
-        assertEquals(2, keyList.size());
+        assertEquals(1, keyList.size());
         assertEquals("999", keyList.get(0).keyToString());
-        assertEquals("1000", keyList.get(1).keyToString());
 
         keyList = Lists.newArrayList(indexDao.getKeys(channelName, dateTime2));
-        assertEquals(2, keyList.size());
-        assertTrue(keyList.contains(new SequenceContentKey(1001)));
-        assertTrue(keyList.contains(new SequenceContentKey(1002)));
+        assertEquals(1, keyList.size());
+        assertTrue(keyList.contains(new SequenceContentKey(1000)));
     }
 }

@@ -1,7 +1,6 @@
-package com.flightstats.datahub.dao.s3;
+package com.flightstats.datahub.dao.timeIndex;
 
 import com.flightstats.datahub.cluster.ZooKeeperState;
-import com.flightstats.datahub.dao.TimeIndex;
 import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
