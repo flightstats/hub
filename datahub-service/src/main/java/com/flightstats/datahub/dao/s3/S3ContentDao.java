@@ -232,7 +232,6 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         // or it should be triggered occasionally via ChannelMetadata
         // or create a new bucket per channel
 
-
         BucketLifecycleConfiguration lifecycleConfig = s3Client.getBucketLifecycleConfiguration(s3BucketName);
         logger.info("found config " + lifecycleConfig);
         String namePrefix = config.getName() + "/";
