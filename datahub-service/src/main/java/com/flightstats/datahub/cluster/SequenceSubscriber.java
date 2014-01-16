@@ -11,20 +11,20 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A Hazelcast subscriber that listens for on a specific channel.
- * There is one HazelcastSubscriber for each websocket client.
- * This ensures that all messages are recieved in sequential order.
+ * A subscriber that listens for on a specific channel.
+ * There is one SequenceSubscriber for each websocket client.
+ * This ensures that all messages are received in sequential order.
  */
-public class HazelcastSubscriber implements MessageListener<String> {
+public class SequenceSubscriber implements MessageListener<String> {
 
-    private final static Logger logger = LoggerFactory.getLogger(HazelcastSubscriber.class);
+    private final static Logger logger = LoggerFactory.getLogger(SequenceSubscriber.class);
 
     private final Consumer<String> consumer;
     private final Map<Long, String> futureMessages = new ConcurrentHashMap<>();
     private long nextExpected = -1;
 
 
-    public HazelcastSubscriber(Consumer<String> consumer) {
+    public SequenceSubscriber(Consumer<String> consumer) {
         this.consumer = consumer;
     }
 

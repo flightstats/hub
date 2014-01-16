@@ -10,6 +10,7 @@ import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 
 import java.net.URI;
 
+//todo - gfm - 1/15/14 - I don't think this is getting used
 public class MetricsCustomWebSocketCreator implements WebSocketCreator {
 
 	private final MetricRegistry registry;

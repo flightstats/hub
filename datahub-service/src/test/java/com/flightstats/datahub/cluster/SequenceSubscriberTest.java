@@ -12,14 +12,14 @@ import java.net.URISyntaxException;
 
 import static org.mockito.Mockito.*;
 
-public class HazelcastSubscriberTest {
+public class SequenceSubscriberTest {
 
     @Test
     public void testOneMessageBasic() throws URISyntaxException {
         // GIVEN
         ContentKey key = new SequenceContentKey(1000);
         Consumer<String> consumer = mock(Consumer.class);
-        HazelcastSubscriber testClass = new HazelcastSubscriber(consumer);
+        SequenceSubscriber testClass = new SequenceSubscriber(consumer);
 
         // WHEN
         testClass.onMessage(new Message<>("foo", key.keyToString(), 0L, null));
@@ -37,7 +37,7 @@ public class HazelcastSubscriberTest {
         String stringKey2 = key_2.keyToString();
         Consumer<String> consumer = mock(Consumer.class);
         InOrder messageOrder = inOrder(consumer);
-        HazelcastSubscriber testClass = new HazelcastSubscriber(consumer);
+        SequenceSubscriber testClass = new SequenceSubscriber(consumer);
 
         // WHEN
         testClass.onMessage(new Message<>("foo", stringKey1, 0L, null));
@@ -56,7 +56,7 @@ public class HazelcastSubscriberTest {
         String stringKey1 = key_1.keyToString();
         String stringKey2 = key_2.keyToString();
         Consumer<String> consumer = mock(Consumer.class);
-        HazelcastSubscriber testClass = new HazelcastSubscriber(consumer);
+        SequenceSubscriber testClass = new SequenceSubscriber(consumer);
 
         // WHEN
         testClass.onMessage(new Message<>("foo", stringKey2, 0L, null));
@@ -87,7 +87,7 @@ public class HazelcastSubscriberTest {
         URI uri_5 = new URI("http://mysystem:7898/channel/mychan/" + key5);
         Consumer<String> consumer = mock(Consumer.class);
         InOrder messageOrder = inOrder(consumer);
-        HazelcastSubscriber testClass = new HazelcastSubscriber(consumer);
+        SequenceSubscriber testClass = new SequenceSubscriber(consumer);
 
         // WHEN
         testClass.onMessage(new Message<>("foo", key2, 0L, null)); // first message

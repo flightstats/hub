@@ -1,63 +1,69 @@
 package com.flightstats.datahub.cluster;
 
+import com.flightstats.datahub.dao.ChannelService;
+import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.service.ChannelInsertionPublisher;
 import com.flightstats.datahub.service.eventing.Consumer;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("unchecked")
 public class SubscriptionRosterTest {
 
-	@Test
+    private final String channelName = "4chan";
+    private Consumer<String> consumer;
+    private ChannelInsertionPublisher publisher;
+    private ChannelService channelService;
+    private ChannelConfiguration configuration;
+    private SubscriptionRoster subscriptionRoster;
+    private ArgumentCaptor<MessageListener> messageListenerCaptor;
+
+    @Before
+    public void setUp() throws Exception {
+
+        consumer = mock(Consumer.class);
+        publisher = mock(ChannelInsertionPublisher.class);
+        channelService = mock(ChannelService.class);
+        configuration = ChannelConfiguration.builder().withName(channelName).build();
+        when(channelService.getChannelConfiguration(channelName)).thenReturn(configuration);
+        subscriptionRoster = new SubscriptionRoster(publisher, channelService);
+        messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
+    }
+
+    @Test
 	public void testSubscribe() throws Exception {
-		//GIVEN
-		String channelName = "4chan";
         String key = "54321";
 
 		Message message = mock(Message.class);
-		Consumer<String> consumer = mock(Consumer.class);
-		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
-        when(channelInsertionPublisher.subscribe(any(String.class), any(MessageListener.class))).thenReturn("54321");
-		ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
+        when(publisher.subscribe(any(String.class), any(MessageListener.class))).thenReturn("54321");
 
-		SubscriptionRoster testClass = new SubscriptionRoster(channelInsertionPublisher);
+        when(message.getMessageObject()).thenReturn(key);
 
-		//WHEN
-		when(message.getMessageObject()).thenReturn(key);
+		subscriptionRoster.subscribe(channelName, consumer);
 
-		testClass.subscribe(channelName, consumer);
-
-		//THEN
-		verify(channelInsertionPublisher).subscribe(eq(channelName), messageListenerCaptor.capture());
+		verify(publisher).subscribe(eq(channelName), messageListenerCaptor.capture());
 		messageListenerCaptor.getValue().onMessage(message);
 		verify(consumer).apply(key);
 	}
 
 	@Test
 	public void testUnsubscribe() throws Exception {
-		//GIVEN
-		String channelName = "4chan";
 
-		Consumer<String> consumer = mock(Consumer.class);
-		ChannelInsertionPublisher channelInsertionPublisher = mock(ChannelInsertionPublisher.class);
         String id = "12345";
-        when(channelInsertionPublisher.subscribe(any(String.class), any(MessageListener.class))).thenReturn(id);
-        ArgumentCaptor<MessageListener> messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
+        when(publisher.subscribe(any(String.class), any(MessageListener.class))).thenReturn(id);
 
-		SubscriptionRoster testClass = new SubscriptionRoster(channelInsertionPublisher);
+		subscriptionRoster.subscribe(channelName, consumer);
+		subscriptionRoster.unsubscribe(channelName, consumer);
 
-		//WHEN
-		testClass.subscribe(channelName, consumer);        //Need to subscribe first because this class is stateful
-		testClass.unsubscribe(channelName, consumer);
-
-		//THEN
-		verify(channelInsertionPublisher).subscribe(eq(channelName), messageListenerCaptor.capture());
-		verify(channelInsertionPublisher).unsubscribe(channelName, id);
-		assertEquals(0, testClass.getTotalSubscriberCount());
+		verify(publisher).subscribe(eq(channelName), messageListenerCaptor.capture());
+		verify(publisher).unsubscribe(channelName, id);
+		assertEquals(0, subscriptionRoster.getTotalSubscriberCount());
 	}
 }
