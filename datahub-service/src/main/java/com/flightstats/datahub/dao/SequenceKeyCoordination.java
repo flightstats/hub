@@ -34,7 +34,7 @@ public class SequenceKeyCoordination implements KeyCoordination {
     }
 
     private void setLastUpdateKey(final String channelName, final ContentKey key) {
-        //todo - gfm - 12/24/13 - this is relatively slow with hazelcast and high throughput
+        //this is relatively slow with hazelcast and high throughput
         metricsTimer.time("hazelcast.setLastUpdated", new TimedCallback<Object>() {
             @Override
             public Object call() {

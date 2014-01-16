@@ -44,7 +44,7 @@ public class ChannelContentResource {
 
 	@GET
 	@Timed(name = "all-channels.fetch")
-	@PerChannelTimed(operationName = "fetch", channelNamePathParameter = "channelName")
+	@PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName")
     @ExceptionMetered
 	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id, @HeaderParam("Accept") String accept) {
 		Optional<LinkedContent> optionalResult = channelService.getValue(channelName, id);

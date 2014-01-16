@@ -7,6 +7,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.dao.ContentDao;
 import com.flightstats.datahub.dao.TimeIndex;
+import com.flightstats.datahub.metrics.MetricsTimer;
+import com.flightstats.datahub.metrics.TimedCallback;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.model.ContentKey;
@@ -39,22 +41,23 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     private final AmazonS3 s3Client;
     private final CuratorFramework curator;
     private final String s3BucketName;
+    private final MetricsTimer metricsTimer;
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public S3ContentDao(DataHubKeyGenerator keyGenerator,
                         AmazonS3 s3Client,
                         @Named("aws.environment") String environment,
-                        CuratorFramework curator) {
+                        CuratorFramework curator, MetricsTimer metricsTimer) {
         this.keyGenerator = keyGenerator;
         this.s3Client = s3Client;
         this.curator = curator;
+        this.metricsTimer = metricsTimer;
         this.s3BucketName = "deihub-" + environment;
     }
 
     @Override
     public ValueInsertionResult write(String channelName, Content content, long ttlDays) {
-        //todo - gfm - 1/3/14 - what happens if one or the other fails?
         ContentKey key = keyGenerator.newKey(channelName);
         DateTime dateTime = new DateTime();
         writeS3(channelName, content, key);
@@ -63,18 +66,22 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     public void writeIndex(String channelName, DateTime dateTime, ContentKey key) {
-        //todo - gfm - 1/9/14 - add timing
-        String path = TimeIndex.getPath(channelName, dateTime, key);
-        try {
-            curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
-        } catch (Exception e) {
-            logger.warn("unable to create " + path, e);
-            throw new RuntimeException(e);
-        }
+        final String path = TimeIndex.getPath(channelName, dateTime, key);
+        metricsTimer.time("timeIndex.write", new TimedCallback<Object>() {
+            @Override
+            public Object call() {
+                try {
+                    curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
+                } catch (Exception e) {
+                    logger.warn("unable to create " + path, e);
+                    throw new RuntimeException(e);
+                }
+                return null;
+            }
+        });
     }
 
     private void writeS3(String channelName, Content content, ContentKey key) {
-        //todo - gfm - 1/9/14 - add timing
         String s3Key = getS3ContentKey(channelName, key);
         //todo - gfm - 1/9/14 - this could use streaming if the content length is specified
         InputStream stream = new ByteArrayInputStream(content.getData());
@@ -223,6 +230,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     private void modifyLifeCycle(ChannelConfiguration config) {
         //todo - gfm - 1/7/14 - this should happen in an system wide lock on ChannelConfig
         // or it should be triggered occasionally via ChannelMetadata
+        // or create a new bucket per channel
 
 
         BucketLifecycleConfiguration lifecycleConfig = s3Client.getBucketLifecycleConfiguration(s3BucketName);

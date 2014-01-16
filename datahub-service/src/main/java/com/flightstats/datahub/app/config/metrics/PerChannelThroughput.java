@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface PerChannelThroughput {
 
-	String channelNamePathParameter();
+	String channelNameParameter();
 
 	String operationName();
 }

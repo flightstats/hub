@@ -18,9 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-/**
- * todo - gfm - 12/19/13 - test what happens with no quorum
- */
 public class CuratorKeyGenerator implements DataHubKeyGenerator {
     private final static Logger logger = LoggerFactory.getLogger(CuratorKeyGenerator.class);
 
@@ -52,9 +49,6 @@ public class CuratorKeyGenerator implements DataHubKeyGenerator {
             AtomicValue<Long> value = atomicLong.increment();
             if (value.succeeded()) {
                 return new SequenceContentKey(value.postValue());
-            } else {
-                //todo - gfm - 12/17/13 - do what?
-                logger.warn("not sure what this means " + channelName + " " + value);
             }
         } catch (Exception e) {
             logger.warn("unable to set atomiclong " + channelName, e);

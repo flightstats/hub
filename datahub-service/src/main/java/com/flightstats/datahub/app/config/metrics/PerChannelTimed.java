@@ -9,9 +9,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface PerChannelTimed {
 	/**
-	 * Which path parameter contains the channel name?
+	 * Which path or header parameter contains the channel name?
 	 */
-	String channelNamePathParameter();
+	String channelNameParameter();
 
 	/**
 	 * What is this method doing?  Inserting?  Fetching?  Deleting?  Some other verb...
