@@ -46,10 +46,10 @@ public class DynamoContentDao implements ContentDao {
         ContentKey key = keyGenerator.newKey(channelName);
 
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put(KEY, new AttributeValue().withS(key.keyToString()));
+        item.put(KEY, new AttributeValue(key.keyToString()));
         item.put("data", new AttributeValue().withB(ByteBuffer.wrap(content.getData())));
         DateTime dateTime = new DateTime(content.getMillis());
-        item.put(HASHSTAMP, new AttributeValue().withS(TimeIndex.getHash(dateTime)));
+        item.put(HASHSTAMP, new AttributeValue(TimeIndex.getHash(dateTime)));
         item.put("millis", new AttributeValue().withN(String.valueOf(content.getMillis())));
         if (content.getContentType().isPresent()) {
             item.put("contentType", new AttributeValue(content.getContentType().get()));
@@ -103,30 +103,26 @@ public class DynamoContentDao implements ContentDao {
     @Override
     public void initializeChannel(ChannelConfiguration config) {
 
-        ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
-        attributeDefinitions.add(new AttributeDefinition().withAttributeName(KEY).withAttributeType("S"));
-
-        ArrayList<KeySchemaElement> tableKeySchema = new ArrayList<>();
-        tableKeySchema.add(new KeySchemaElement().withAttributeName(KEY).withKeyType(KeyType.HASH));
-
-        long tableThroughput = config.getContentThroughputInSeconds();
-        String tableName = dynamoUtils.getTableName(config.getName());
-        CreateTableRequest createTableRequest = new CreateTableRequest()
-                .withTableName(tableName)
-                .withKeySchema(tableKeySchema)
-                .withProvisionedThroughput(new ProvisionedThroughput(tableThroughput, tableThroughput));
-
         long indexThroughput = config.getPeakRequestRateSeconds();
-        attributeDefinitions.add(new AttributeDefinition().withAttributeName(HASHSTAMP).withAttributeType("S"));
+
         GlobalSecondaryIndex secondaryIndex = new GlobalSecondaryIndex()
                 .withIndexName(TIME_INDEX)
                 .withProvisionedThroughput(new ProvisionedThroughput(indexThroughput, indexThroughput))
-                .withProjection(new Projection().withProjectionType(ProjectionType.KEYS_ONLY));
-        ArrayList<KeySchemaElement> indexKeySchema = new ArrayList<>();
-        indexKeySchema.add(new KeySchemaElement().withAttributeName(HASHSTAMP).withKeyType(KeyType.HASH));
-        secondaryIndex.setKeySchema(indexKeySchema);
-        createTableRequest.withGlobalSecondaryIndexes(secondaryIndex);
-        createTableRequest.withAttributeDefinitions(attributeDefinitions);
+                .withProjection(new Projection().withProjectionType(ProjectionType.KEYS_ONLY))
+                .withKeySchema(new KeySchemaElement(HASHSTAMP, KeyType.HASH));
+
+        long tableThroughput = config.getContentThroughputInSeconds();
+        String tableName = dynamoUtils.getTableName(config.getName());
+
+        CreateTableRequest createTableRequest = new CreateTableRequest()
+                .withTableName(tableName)
+                .withKeySchema(new KeySchemaElement(KEY, KeyType.HASH))
+                .withProvisionedThroughput(new ProvisionedThroughput(tableThroughput, tableThroughput))
+                .withGlobalSecondaryIndexes(secondaryIndex)
+                .withAttributeDefinitions(
+                        new AttributeDefinition(KEY, ScalarAttributeType.S),
+                        new AttributeDefinition(HASHSTAMP, ScalarAttributeType.S)
+                );
 
         logger.info("creating table " + tableName + " table with " + tableThroughput + " " + indexThroughput);
         keyGenerator.seedChannel(config.getName());
@@ -216,7 +212,7 @@ public class DynamoContentDao implements ContentDao {
 
         keyConditions.put(HASHSTAMP, new Condition()
                 .withComparisonOperator(ComparisonOperator.EQ)
-                .withAttributeValueList(new AttributeValue().withS(TimeIndex.getHash(dateTime))));
+                .withAttributeValueList(new AttributeValue(TimeIndex.getHash(dateTime))));
 
         queryRequest.setKeyConditions(keyConditions);
         return queryRequest;
