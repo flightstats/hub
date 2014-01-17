@@ -7,7 +7,6 @@ import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.aws.AwsDataStoreModule;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.service.DataHubHealthCheck;
 import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
 import com.flightstats.datahub.service.eventing.MetricsCustomWebSocketCreator;
@@ -168,13 +167,6 @@ public class GuiceContextListenerFactory {
                 config = new FileSystemXmlConfig(hazelcastConfigFile);
             }
             return Hazelcast.newHazelcastInstance(config);
-        }
-
-        @Named("LastUpdatePerChannelMap")
-        @Singleton
-        @Provides
-        public static ConcurrentMap<String, ContentKey> buildLastUpdatePerChannelMap(HazelcastInstance hazelcast) throws FileNotFoundException {
-            return hazelcast.getMap("LAST_CHANNEL_UPDATE");
         }
 
         @Named("ChannelConfigurationMap")
