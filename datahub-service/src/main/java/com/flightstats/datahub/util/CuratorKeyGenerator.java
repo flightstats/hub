@@ -61,7 +61,7 @@ public class CuratorKeyGenerator implements DataHubKeyGenerator {
     public void seedChannel(String channelName) {
         DistributedAtomicLong atomicLong = getDistributedAtomicLong(channelName);
         try {
-            atomicLong.trySet(SequenceContentKey.START_VALUE - 1);
+            atomicLong.trySet(SequenceContentKey.START_VALUE);
             logger.info("seeded channel " + channelName);
         } catch (Exception e) {
             logger.warn("unable to seed " + channelName, e);

@@ -112,7 +112,7 @@ public class ChannelContentResourceTest {
         ChannelContentResource testClass = new ChannelContentResource(null, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), null);
 
-        String creationDateString = (String) result.getMetadata().getFirst(CustomHttpHeaders.CREATION_DATE_HEADER.getHeaderName());
+        String creationDateString = (String) result.getMetadata().getFirst(Headers.CREATION_DATE);
         assertEquals("1970-01-12T10:20:54.321Z", creationDateString);
     }
 
