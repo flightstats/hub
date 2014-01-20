@@ -17,6 +17,7 @@ public class S3Deleter implements Runnable {
     private String channelName;
     private String bucketName;
     private AmazonS3 s3Client;
+    private long deleted = 0;
 
     public S3Deleter(String channelName, String bucketName, AmazonS3 s3Client) {
         this.channelName = channelName + "/";
@@ -27,10 +28,10 @@ public class S3Deleter implements Runnable {
     @Override
     public void run() {
         while (delete()) {
-            logger.info("deleting more from " + channelName);
+            logger.debug("deleting more from " + channelName);
         }
         delete();
-        logger.info("completed deletion of " + channelName);
+        logger.info("completed deletion of " + channelName + " deleting " + deleted + " items");
     }
 
     private boolean delete() {
@@ -49,9 +50,10 @@ public class S3Deleter implements Runnable {
         multiObjectDeleteRequest.setKeys(keys);
         try {
             s3Client.deleteObjects(multiObjectDeleteRequest);
-
+            deleted += keys.size();
         } catch (MultiObjectDeleteException e) {
             logger.info("what happened? " + channelName, e);
+            return true;
         }
         return listing.isTruncated();
     }
