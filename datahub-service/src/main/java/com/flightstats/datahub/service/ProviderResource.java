@@ -45,7 +45,7 @@ public class ProviderResource {
     @Produces(MediaType.TEXT_PLAIN)
     public Response insertValue(@HeaderParam("channelName") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,
-                                @HeaderParam("Content-Language") final String contentLanguage,
+                                @HeaderParam(Headers.LANGUAGE) final String contentLanguage,
                                 final byte[] data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             logger.info("creating new Provider channel " + channelName);

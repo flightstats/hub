@@ -23,7 +23,6 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
-import static com.flightstats.datahub.service.CustomHttpHeaders.CREATION_DATE_HEADER;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 /**
@@ -63,10 +62,10 @@ public class ChannelContentResource {
 		Response.ResponseBuilder builder = Response.status(Response.Status.OK)
 												   .type(actualContentType)
 												   .entity(compositeValue.getData())
-												   .header(CREATION_DATE_HEADER.getHeaderName(),
+												   .header(Headers.CREATION_DATE,
 														   dateTimeFormatter.print(new DateTime(compositeValue.getValue().getMillis())));
 
-		addOptionalHeader("Content-Language", compositeValue.getValue().getContentLanguage(), builder);
+		addOptionalHeader(Headers.LANGUAGE, compositeValue.getValue().getContentLanguage(), builder);
 
 		addPreviousLink(compositeValue, builder);
 		addNextLink(compositeValue, builder);
