@@ -14,6 +14,7 @@ The FlightStats Data Hub
 * [time interface](#time-interface)
 * [subscribe to events](#subscribe-to-events)
 * [provider interface](#provider-interface)
+* [delete a channel](#delete-a-channel)
 
 For the purposes of this document, the datahub is at http://deihub.
 
@@ -312,3 +313,14 @@ For external data providers, there is a simplified interface suitable for exposi
 * does not support any other HTTP methods
 * does not return any links
 * access by external data providers is controlled through a proxy maintained by Operations
+
+## delete a channel
+
+To delete a channel when after you no longer need it, simply issue a `DELETE` command to that channel.
+
+ `DELETE http://deihub/channel/stumptown`
+
+Here's how you can do this with curl:
+```bash
+curl -i -X DELETE http://deihub/channel/stumptown
+```

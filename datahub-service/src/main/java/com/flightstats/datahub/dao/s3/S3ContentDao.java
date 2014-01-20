@@ -102,7 +102,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         } else {
             metadata.addUserMetadata("language", "none");
         }
-
+        metadata.addUserMetadata("millis", String.valueOf(content.getMillis()));
         PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
         s3Client.putObject(request);
     }
@@ -124,8 +124,8 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
             if (!language.equals("none")) {
                 contentLang = Optional.of(language);
             }
-            Date lastModified = metadata.getLastModified();
-            return new Content(contentType, contentLang, bytes, lastModified.getTime());
+            Long millis = Long.valueOf(userData.get("millis"));
+            return new Content(contentType, contentLang, bytes, millis);
         } catch (AmazonClientException e) {
             logger.info("unable to get " + channelName + " " + key.keyToString() + " " + e.getMessage());
         } catch (IOException e) {
@@ -223,6 +223,9 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public void delete(String channelName) {
+        //todo - gfm - 1/19/14 - remove LifeCycle config - or do this with the metadata
+        //todo - gfm - 1/19/14 - this could be more sophisticated, making sure the request gets picked up if this server
+        //goes down
         new Thread(new S3Deleter(channelName, s3BucketName, s3Client)).start();
     }
 
