@@ -4,9 +4,15 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -19,17 +25,19 @@ public class ChannelConfiguration implements Serializable {
     private final ChannelType type;
     private final int contentSizeKB;
     private final int peakRequestRateSeconds;
+    private final Long ttlMillis;
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public enum ChannelType { Sequence, TimeSeries }
 
-    public ChannelConfiguration(String name, Date creationDate, Long ttlDays, ChannelType type,
-                                int contentSizeKB, int peakRequestRateSeconds) {
-        this.name = name;
-        this.creationDate = creationDate;
-        this.ttlDays = ttlDays;
-        this.type = type;
-        this.contentSizeKB = contentSizeKB;
-        this.peakRequestRateSeconds = peakRequestRateSeconds;
+    public ChannelConfiguration(Builder builder) {
+        this.name = builder.name;
+        this.creationDate = builder.creationDate;
+        this.ttlDays = builder.ttlDays;
+        this.type = builder.type;
+        this.contentSizeKB = builder.contentSizeKB;
+        this.peakRequestRateSeconds = builder.peakRequestRateSeconds;
+        this.ttlMillis = builder.ttlMillis;
     }
 
     @JsonCreator
@@ -59,6 +67,11 @@ public class ChannelConfiguration implements Serializable {
                     break;
                 case "peakRequestRateSeconds":
                     builder.withPeakRequestRate(Integer.parseInt(entry.getValue()));
+                    break;
+                case "_links":
+                case "lastUpdateDate":
+                case "creationDate":
+                    //todo - gfm - 1/20/14 - do we want creationDate?
                     break;
                 default:
                     throw new InvalidRequestException("Unexpected property: " + entry.getKey());
@@ -106,6 +119,13 @@ public class ChannelConfiguration implements Serializable {
         return type;
     }
 
+    /**
+     * @deprecated this can go away eventually, use ttlDays instead
+     */
+    public Long getTtlMillis() {
+        return ttlMillis;
+    }
+
     @Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -144,15 +164,16 @@ public class ChannelConfiguration implements Serializable {
 		private Date creationDate = new Date();
 		private long ttlDays = 120;
         private ChannelType type = ChannelType.Sequence;
-        private int contentKiloBytes = 1;
+        private int contentSizeKB = 1;
         private int peakRequestRateSeconds = 1;
+        private Long ttlMillis;
 
-		public Builder withChannelConfiguration(ChannelConfiguration config) {
+        public Builder withChannelConfiguration(ChannelConfiguration config) {
 			this.name = config.name;
 			this.creationDate = config.creationDate;
 			this.ttlDays = config.ttlDays;
             this.type = config.type;
-            this.contentKiloBytes = config.contentSizeKB;
+            this.contentSizeKB = config.contentSizeKB;
             this.peakRequestRateSeconds = config.peakRequestRateSeconds;
 			return this;
 		}
@@ -163,6 +184,7 @@ public class ChannelConfiguration implements Serializable {
 		}
 
         public Builder withTtlMillis(Long ttlMillis) {
+            this.ttlMillis = ttlMillis;
             if (null == ttlMillis) {
                 this.ttlDays = 1000 * 365;
             } else {
@@ -187,7 +209,7 @@ public class ChannelConfiguration implements Serializable {
         }
 
         public Builder withContentKiloBytes(int contentKiloBytes) {
-            this.contentKiloBytes = contentKiloBytes;
+            this.contentSizeKB = contentKiloBytes;
             return this;
         }
 
@@ -201,8 +223,19 @@ public class ChannelConfiguration implements Serializable {
             return this;
         }
 
+        public Builder withJson(String json) throws IOException {
+            Map<String, String> map = new HashMap<>();
+            ObjectNode nodes = (ObjectNode) mapper.readTree(json);
+            Iterator<Map.Entry<String,JsonNode>> elements = nodes.getFields();
+            while (elements.hasNext()) {
+                Map.Entry<String, JsonNode> node = elements.next();
+                map.put(node.getKey(), node.getValue().asText());
+            }
+            return withMap(map);
+        }
+
 		public ChannelConfiguration build() {
-			return new ChannelConfiguration(name, creationDate, ttlDays, type, contentKiloBytes, peakRequestRateSeconds);
+			return new ChannelConfiguration(this);
 		}
 	}
 }
