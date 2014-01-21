@@ -76,8 +76,7 @@ public class SingleChannelResource {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        Map<String, String> map = mapper.readValue(json, new TypeReference<Map<String, String>>() {
-        });
+        Map<String, String> map = mapper.readValue(json, new TypeReference<Map<String, String>>() { });
         if (map.containsKey("type")) {
             throw new InvalidRequestException("{\"error\": \"type can not be changed \"}");
         }
