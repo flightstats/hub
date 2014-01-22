@@ -336,8 +336,11 @@ to the DataHub, and wait until the DataHub and the Hub agree on the latest value
 No other changes are needed for data migration.
 
  'GET http://datahub/channel/stumptown/latest'
+
  'GET http://hub/channel/stumptown/latest'
 
 Also, there are a couple of small API changes that clients should be aware of.
+
 `ttlMillis` is deprecated, users should use `ttlDays` instead.  Existing `ttlMillis` values are rounded up to the nearest day.
+
 `lastUpdated` is no longer provided in the channel metadata.  If you need to know the latest value, you can use the `/latest` interface
