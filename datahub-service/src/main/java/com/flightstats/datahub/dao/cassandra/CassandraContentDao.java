@@ -69,8 +69,11 @@ public class CassandraContentDao implements ContentDao {
         byte[] array = new byte[data.remaining()];
         data.get(array);
 
-        return new Content(Optional.fromNullable(contentType),
-                Optional.fromNullable(contentLanguage), array, row.getLong("millis"));
+        return Content.builder().withContentLanguage(contentLanguage)
+                .withContentType(contentType)
+                .withData(array)
+                .withMillis(row.getLong("millis"))
+                .build();
     }
 
     @Override

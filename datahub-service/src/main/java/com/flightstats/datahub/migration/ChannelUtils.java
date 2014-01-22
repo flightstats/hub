@@ -25,7 +25,6 @@ import java.util.Date;
 /**
  *
  */
-//todo - gfm - 1/21/14 - figure out test for this.
 public class ChannelUtils {
 
     public static final int NOT_FOUND = -1;
@@ -44,9 +43,7 @@ public class ChannelUtils {
     }
 
     public Optional<Long> getLatestSequence(String channelUrl) {
-        if (!channelUrl.endsWith("/")) {
-            channelUrl += channelUrl;
-        }
+        channelUrl = appendSlash(channelUrl);
         ClientResponse response = noRedirectsClient.resource(channelUrl + "latest")
                 .accept(MediaType.WILDCARD_TYPE)
                 .get(ClientResponse.class);
@@ -59,11 +56,18 @@ public class ChannelUtils {
         return Optional.of(Long.parseLong(substring));
     }
 
-    public ChannelConfiguration getConfiguration(String channelUrl) throws IOException {
+    private String appendSlash(String channelUrl) {
+        if (!channelUrl.endsWith("/")) {
+            channelUrl += "/";
+        }
+        return channelUrl;
+    }
+
+    public Optional<ChannelConfiguration> getConfiguration(String channelUrl) throws IOException {
         ClientResponse response = followClient.resource(channelUrl).get(ClientResponse.class);
         if (response.getStatus() >= 400) {
             logger.warn("exiting thread - unable to locate remote channel " + response);
-            return null;
+            return Optional.absent();
         }
         String json = response.getEntity(String.class);
         ChannelConfiguration configuration = ChannelConfiguration.builder()
@@ -72,25 +76,29 @@ public class ChannelUtils {
                 .withCreationDate(new Date())
                 .build();
         logger.info("found config " + configuration);
-        return configuration;
+        return Optional.of(configuration);
     }
 
     public Optional<Content> getContent(String channelUrl, long sequence) {
+        channelUrl = appendSlash(channelUrl);
         ClientResponse response = getResponse(channelUrl + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             logger.info("unable to continue " + response);
             return Optional.absent();
         }
-        byte[] data = response.getEntity(byte[].class);
-        Optional<String> type = Optional.fromNullable(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE));
-        Optional<String> language = Optional.fromNullable(response.getHeaders().getFirst(Headers.LANGUAGE));
-        Content content = new Content(type, language, data, getCreationDate(response).getMillis());
+        Content content = Content.builder()
+                .withContentKey(new SequenceContentKey(sequence))
+                .withContentType(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
+                .withContentLanguage(response.getHeaders().getFirst(Headers.LANGUAGE))
+                .withData(response.getEntity(byte[].class))
+                .withMillis(getCreationDate(response).getMillis())
+                .build();
 
-        content.setContentKey(new SequenceContentKey(sequence));
         return Optional.of(content);
     }
 
     public Optional<DateTime> getCreationDate(String channelUrl, long sequence) {
+        channelUrl = appendSlash(channelUrl);
         ClientResponse response = getResponse(channelUrl + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             logger.info("unable to continue " + response);
