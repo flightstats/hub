@@ -13,7 +13,7 @@ The Hub
 * [subscribe to events](#subscribe-to-events)
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
-* [migrate from datahub](migrate-from-datahub)
+* [migrate from datahub](#migrate-from-datahub)
 
 For the purposes of this document, the Hub is at http://hub/.
 
