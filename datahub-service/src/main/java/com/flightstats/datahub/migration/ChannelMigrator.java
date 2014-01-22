@@ -12,8 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class CurrentTimeMigrator implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger(CurrentTimeMigrator.class);
+public class ChannelMigrator implements Runnable {
+    private static final Logger logger = LoggerFactory.getLogger(ChannelMigrator.class);
 
     private final ChannelService channelService;
     private final String channel;
@@ -21,7 +21,7 @@ public class CurrentTimeMigrator implements Runnable {
     private String channelUrl;
     private ChannelConfiguration configuration;
 
-    public CurrentTimeMigrator(ChannelService channelService, String host, String channel, ChannelUtils channelUtils) {
+    public ChannelMigrator(ChannelService channelService, String host, String channel, ChannelUtils channelUtils) {
         this.channelService = channelService;
         this.channel = channel;
         this.channelUtils = channelUtils;
@@ -72,7 +72,6 @@ public class CurrentTimeMigrator implements Runnable {
             sequence++;
             content = channelUtils.getContent(channelUrl, sequence);
         }
-
     }
 
     long getStartingSequence() {

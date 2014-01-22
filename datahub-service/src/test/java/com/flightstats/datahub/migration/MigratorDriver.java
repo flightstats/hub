@@ -34,7 +34,7 @@ public class MigratorDriver {
 
     public void runProd() throws Exception {
 
-        CurrentTimeMigrator migrator = new CurrentTimeMigrator(service, "datahub.svc.prod", "positionAsdiRaw", channelUtils);
+        ChannelMigrator migrator = new ChannelMigrator(service, "datahub.svc.prod", "positionAsdiRaw", channelUtils);
         migrator.run();
     }
 }
