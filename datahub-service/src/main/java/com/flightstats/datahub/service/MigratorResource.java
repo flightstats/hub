@@ -1,6 +1,7 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
+import com.flightstats.datahub.migration.ChannelUtils;
 import com.flightstats.datahub.migration.CurrentTimeMigrator;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -21,11 +22,12 @@ import javax.ws.rs.core.Response;
 public class MigratorResource {
     private final static Logger logger = LoggerFactory.getLogger(MigratorResource.class);
     private final ChannelService channelService;
+    private final ChannelUtils channelUtils;
 
     @Inject
-    public MigratorResource(ChannelService channelService) {
+    public MigratorResource(ChannelService channelService, ChannelUtils channelUtils ) {
         this.channelService = channelService;
-
+        this.channelUtils = channelUtils;
     }
 
     @GET
@@ -33,7 +35,7 @@ public class MigratorResource {
     public Response insertValue(@PathParam("host") final String host,
                                 @PathParam("channel") final String channel) throws Exception {
 
-        CurrentTimeMigrator migrator = new CurrentTimeMigrator(channelService, host, channel);
+        CurrentTimeMigrator migrator = new CurrentTimeMigrator(channelService, host, channel, channelUtils);
         new Thread(migrator, host + "_" + channel).start();
         return Response.status(Response.Status.ACCEPTED).build();
     }
