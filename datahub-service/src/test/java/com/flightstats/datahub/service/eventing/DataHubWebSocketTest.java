@@ -18,7 +18,7 @@ public class DataHubWebSocketTest {
     private Session session;
     private URI requestUri;
     private SubscriptionRoster subscriptionRoster;
-    private WebSocketChannelNameExtractor channelNameExtractor;
+    private ChannelNameExtractor channelNameExtractor;
 	private ChannelHypermediaLinkBuilder linkBuilder;
 
     @Before
@@ -27,7 +27,7 @@ public class DataHubWebSocketTest {
         InetSocketAddress remoteAddress = InetSocketAddress.createUnresolved("superawesome.com", 999);
         RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
         subscriptionRoster = mock( SubscriptionRoster.class );
-        channelNameExtractor = mock( WebSocketChannelNameExtractor.class );
+        channelNameExtractor = mock( ChannelNameExtractor.class );
         session = mock(Session.class);
 		linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
         UpgradeRequest upgradeRequest = mock(UpgradeRequest.class);
@@ -35,7 +35,7 @@ public class DataHubWebSocketTest {
 		when(session.getRemoteAddress()).thenReturn(remoteAddress);
 		when(session.getRemote()).thenReturn(remoteEndpoint);
 		when(session.getUpgradeRequest()).thenReturn(upgradeRequest);
-	    when(channelNameExtractor.extractChannelName(requestUri)).thenReturn(CHANNEL_NAME);
+	    when(channelNameExtractor.extractFromWS(requestUri)).thenReturn(CHANNEL_NAME);
 		when(upgradeRequest.getRequestURI()).thenReturn(requestUri);
 	}
 
@@ -45,7 +45,7 @@ public class DataHubWebSocketTest {
 		testClass.onConnect(session);
 
         verify( subscriptionRoster ).subscribe( eq( CHANNEL_NAME ), any( JettyWebSocketEndpointSender.class ) );
-        verify( channelNameExtractor ).extractChannelName( requestUri );
+        verify( channelNameExtractor ).extractFromWS(requestUri);
 		verify(session).getRemoteAddress();
 	}
 

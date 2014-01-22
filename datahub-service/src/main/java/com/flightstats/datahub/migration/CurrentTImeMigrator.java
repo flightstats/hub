@@ -5,41 +5,28 @@ import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
-import com.flightstats.datahub.service.Headers;
-import com.flightstats.datahub.util.ClientCreator;
 import com.flightstats.datahub.util.Sleeper;
 import com.google.common.base.Optional;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.Date;
 
 public class CurrentTimeMigrator implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(CurrentTimeMigrator.class);
-    private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
-    private static final int NOT_FOUND = -1;
+
 
     private final ChannelService channelService;
-    private final String host;
     private final String channel;
-    private Client client;
+    private final ChannelUtils channelUtils;
     private String channelUrl;
     private ChannelConfiguration configuration;
 
-    public CurrentTimeMigrator(ChannelService channelService, String host, String channel) {
+    public CurrentTimeMigrator(ChannelService channelService, String host, String channel, ChannelUtils channelUtils) {
         this.channelService = channelService;
-        this.host = host;
         this.channel = channel;
-        client = ClientCreator.cached();
+        this.channelUtils = channelUtils;
         channelUrl = "http://" + host + "/channel/" + channel + "/";
     }
 
@@ -57,22 +44,11 @@ public class CurrentTimeMigrator implements Runnable {
     }
 
     private boolean initialize() throws IOException {
-        //todo - gfm - 1/20/14 - this url is clumsy
-        ClientResponse response = client.resource("http://" + host + "/channel/" + channel).get(ClientResponse.class);
-        if (response.getStatus() >= 400) {
-            logger.warn("exiting thread - unable to locate remote channel " + response);
-            return true;
-        }
-        String json = response.getEntity(String.class);
-        configuration = ChannelConfiguration.builder()
-                .withJson(json)
-                .withName(channel)
-                .withCreationDate(new Date())
-                .build();
-        logger.info("found config " + configuration);
+        configuration = channelUtils.getConfiguration(channelUrl);
+        logger.info("found config " + this.configuration);
         //todo - gfm - 1/20/14 - this should verify the TTL hasn't changed
         if (!channelService.channelExists(channel)) {
-            channelService.createChannel(configuration);
+            channelService.createChannel(this.configuration);
         }
         return false;
     }
@@ -80,45 +56,20 @@ public class CurrentTimeMigrator implements Runnable {
     private boolean migrate() {
 
         long sequence = getStartingSequence();
-        if (sequence == NOT_FOUND) {
+        if (sequence == ChannelUtils.NOT_FOUND) {
             return false;
         }
         logger.info("starting " + channelUrl + " migration at " + sequence);
-        //todo - gfm - 1/20/14 - uncomment
-        /*Content content = getContent(sequence);
-        while (content != null) {
-            channelService.insert(channel, content);
+        Optional<Content> content = channelUtils.getContent(channelUrl, sequence);
+        while (content.isPresent()) {
+            channelService.insert(channel, content.get());
             sequence++;
-            content = getContent(sequence);
+            content = channelUtils.getContent(channelUrl, sequence);
         }
 
-        return true;*/
-        return false;
+        return true;
     }
 
-    private Content getContent(long sequence) {
-        ClientResponse response = getResponse(sequence);
-        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            logger.info("unable to continue " + response);
-            return null;
-        }
-        byte[] data = response.getEntity(byte[].class);
-        Optional<String> type = Optional.fromNullable(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE));
-        Optional<String> language = Optional.fromNullable(response.getHeaders().getFirst(Headers.LANGUAGE));
-        Content content = new Content(type, language, data, getCreationDate(response).getMillis());
-
-        content.setContentKey(new SequenceContentKey(sequence));
-        return content;
-    }
-
-    private DateTime getCreationDate(ClientResponse response) {
-        String creationDate = response.getHeaders().getFirst(Headers.CREATION_DATE);
-        return dateTimeFormatter.parseDateTime(creationDate);
-    }
-
-    private ClientResponse getResponse(long sequence) {
-        return client.resource(channelUrl + sequence).accept(MediaType.WILDCARD_TYPE).get(ClientResponse.class);
-    }
 
     private long getStartingSequence() {
         Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel);
@@ -130,17 +81,17 @@ public class CurrentTimeMigrator implements Runnable {
             return contentKey.getSequence() + 1;
         }
         logger.warn("problem getting starting sequence " + channelUrl);
-        return NOT_FOUND;
+        return ChannelUtils.NOT_FOUND;
     }
 
     private long searchForStartingKey() {
         //this may not play well with discontinuous sequences
         logger.info("searching the key space for " + channelUrl);
-
-        long high = getLatest();
-        if (high == NOT_FOUND) {
+        Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
+        if (!latestSequence.isPresent()) {
             return SequenceContentKey.START_VALUE + 1;
         }
+        long high = latestSequence.get();
         //todo - gfm - 1/20/14 - would be useful to pull this out into something that can be rigorously tested
         long low = SequenceContentKey.START_VALUE;
         long lastExists = high;
@@ -163,29 +114,16 @@ public class CurrentTimeMigrator implements Runnable {
      * We want to return a starting id that exists, and isn't going to be expired immediately.
      */
     private boolean existsAndNotYetExpired(long id) {
-        ClientResponse response = getResponse(id);
-        int status = response.getStatus();
-        logger.info("status " + channelUrl + " id=" + id + " status=" + status);
-        if (status >= 400) {
+        Optional<DateTime> creationDate = channelUtils.getCreationDate(channelUrl, id);
+        if (!creationDate.isPresent()) {
             return false;
         }
         if (configuration.getTtlMillis() == null) {
             return true;
         }
         long ttlMillis = configuration.getTtlMillis();
-        DateTime creationDate = getCreationDate(response);
         DateTime tenMinuteOffset = new DateTime().minusMillis((int) ttlMillis).plusMinutes(10);
-        return creationDate.isAfter(tenMinuteOffset);
+        return creationDate.get().isAfter(tenMinuteOffset);
     }
 
-    private long getLatest() {
-        ClientResponse response = client.resource(channelUrl + "latest").accept(MediaType.WILDCARD_TYPE).get(ClientResponse.class);
-        if (response.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-            logger.info("latest not found for " + channelUrl + " " + response);
-            return NOT_FOUND;
-        }
-        String location = response.getLocation().toString();
-        String substring = location.substring(channelUrl.length());
-        return Long.parseLong(substring);
-    }
 }

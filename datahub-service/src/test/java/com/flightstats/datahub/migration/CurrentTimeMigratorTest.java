@@ -18,6 +18,7 @@ public class CurrentTimeMigratorTest {
 
     private static TestingServer testingServer;
     private static ChannelService service;
+    private static ChannelUtils channelUtils;
 
     @BeforeClass
     public static void setupClass() throws Exception {
@@ -33,6 +34,7 @@ public class CurrentTimeMigratorTest {
         testingServer = new TestingServer(2181);
         Injector injector = GuiceContextListenerFactory.construct(properties).getInjector();
         service = injector.getInstance(ChannelService.class);
+        channelUtils = injector.getInstance(ChannelUtils.class);
     }
 
     @AfterClass
@@ -43,7 +45,7 @@ public class CurrentTimeMigratorTest {
     @Test
     public void testProd() throws Exception {
 
-        CurrentTimeMigrator migrator = new CurrentTimeMigrator(service, "datahub.svc.prod", "positionAsdiRaw");
+        CurrentTimeMigrator migrator = new CurrentTimeMigrator(service, "datahub.svc.prod", "positionAsdiRaw", channelUtils);
         migrator.run();
     }
 }

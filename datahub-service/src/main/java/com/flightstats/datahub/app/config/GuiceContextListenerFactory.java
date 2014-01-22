@@ -7,11 +7,12 @@ import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.aws.AwsDataStoreModule;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.rest.RetryClientFilter;
 import com.flightstats.datahub.service.DataHubHealthCheck;
+import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
 import com.flightstats.datahub.service.eventing.MetricsCustomWebSocketCreator;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
-import com.flightstats.datahub.service.eventing.WebSocketChannelNameExtractor;
 import com.flightstats.datahub.util.TimeProvider;
 import com.flightstats.jerseyguice.Bindings;
 import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
@@ -29,6 +30,7 @@ import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;
 import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
@@ -77,7 +79,7 @@ public class GuiceContextListenerFactory {
                 .withObjectMapper(DataHubObjectMapperFactory.construct())
                 .withBindings(new DataHubBindings())
                 .withHealthCheckClass(DataHubHealthCheck.class)
-                .withRegexServe(WebSocketChannelNameExtractor.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
+                .withRegexServe(ChannelNameExtractor.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
                 .withModules(Arrays.asList(module))
                 .build();
 
@@ -212,6 +214,32 @@ public class GuiceContextListenerFactory {
             Integer maxRetries = Integer.valueOf(properties.getProperty("zookeeper.maxRetries", "20"));
 
             return new BoundedExponentialBackoffRetry(baseSleepTimeMs, maxSleepTimeMs, maxRetries);
+        }
+
+        @Singleton
+        @Provides
+        public static Client buildJerseyClient() {
+            return create(true);
+        }
+
+        @Named("NoRedirects")
+        @Singleton
+        @Provides
+        public static Client buildJerseyClientNoRedirects() {
+            return create(false);
+        }
+
+        private static Client create(boolean followRedirects) {
+            //todo - gfm - 1/21/14 - pull these out into properties
+            int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(30);
+            int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(60);
+
+            Client client = Client.create();
+            client.setConnectTimeout(connectTimeoutMillis);
+            client.setReadTimeout(readTimeoutMillis);
+            client.addFilter(new RetryClientFilter());
+            client.setFollowRedirects(followRedirects);
+            return client;
         }
     }
 }
