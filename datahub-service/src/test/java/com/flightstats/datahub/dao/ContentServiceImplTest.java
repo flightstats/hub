@@ -33,20 +33,16 @@ public class ContentServiceImplTest {
 
     @Test
     public void testInsert() throws Exception {
-        // GIVEN
         ContentKey key = new SequenceContentKey( 1003);
         byte[] data = "bar".getBytes();
-        Optional<String> contentType = Optional.of("text/plain");
-        Content value = new Content(contentType, Optional.<String>absent(), data, days);
+        Content content = Content.builder().withData(data).withContentType("text/plain").withMillis(days).build();
         ValueInsertionResult expected = new ValueInsertionResult(key, null);
 
-        // WHEN
         when(timeProvider.getMillis()).thenReturn(days);
-        when(contentDao.write(channelName, value, days)).thenReturn(new ValueInsertionResult(key, null));
-        Content content = new Content(contentType, Optional.<String>absent(), data);
+        when(contentDao.write(channelName, content, days)).thenReturn(expected);
+
         ValueInsertionResult result = testClass.insert(channelConfig, content);
 
-        // THEN
         assertEquals(expected, result);
     }
 
@@ -56,12 +52,12 @@ public class ContentServiceImplTest {
         ContentKey previousKey = new SequenceContentKey( 1000);
         ContentKey nextKey = new SequenceContentKey( 1002);
         byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
-        Content compositeValue = new Content(Optional.of("text/plain"), null, data, 0L);
+        Content content = Content.builder().withData(data).withContentType("text/plain").withMillis(0L).build();
         Optional<ContentKey> previous = Optional.of(previousKey);
         Optional<ContentKey> next = Optional.of(nextKey);
-        LinkedContent expected = new LinkedContent(compositeValue, previous, next);
+        LinkedContent expected = new LinkedContent(content, previous, next);
 
-        when(contentDao.read(channelName, key)).thenReturn(compositeValue);
+        when(contentDao.read(channelName, key)).thenReturn(content);
         when(contentDao.getKey(key.keyToString())).thenReturn(Optional.of(key));
 
 

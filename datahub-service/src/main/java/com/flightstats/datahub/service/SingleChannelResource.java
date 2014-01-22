@@ -13,7 +13,6 @@ import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
 import com.flightstats.rest.Linked;
-import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
@@ -110,7 +109,9 @@ public class SingleChannelResource {
             return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
         }
 
-        Content content = new Content(Optional.fromNullable(contentType), Optional.fromNullable(contentLanguage), data);
+        Content content = Content.builder().withContentLanguage(contentLanguage)
+                .withContentType(contentType)
+                .withData(data).build();
         ValueInsertionResult insertionResult = channelService.insert(channelName, content);
         URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo.getRequestUri());
         Linked<ValueInsertionResult> linkedResult = linked(insertionResult)

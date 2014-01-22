@@ -22,21 +22,21 @@ import static org.mockito.Mockito.when;
 public class ChannelContentResourceTest {
 
     private ChannelService channelService;
+    private Content content;
 
     @Before
     public void setUp() throws Exception {
         channelService = mock(ChannelService.class);
+        content = Content.builder().withData("found it!".getBytes()).withMillis(0).build();
     }
 
     @Test
     public void testGetValue() throws Exception {
         String channelName = "canal4";
         byte[] expected = new byte[]{55, 66, 77, 88};
-        Optional<String> contentType = Optional.of("text/plain");
-        Optional<String> contentLanguage = Optional.of("en");
         ContentKey key = new SequenceContentKey( 1000);
-        Content value = new Content(contentType, contentLanguage, expected, 0L);
-        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(),
+        Content content = Content.builder().withData(expected).withContentType("text/plain").withContentLanguage("en").withMillis(0L).build();
+        LinkedContent linkedValue = new LinkedContent(content, Optional.<ContentKey>absent(),
                 Optional.<ContentKey>absent());
 
         when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedValue));
@@ -54,10 +54,10 @@ public class ChannelContentResourceTest {
         String channelName = "canal4";
         ContentKey key = new SequenceContentKey( 1000);
         byte[] expected = new byte[]{55, 66, 77, 88};
-        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), expected, 0L);
+        Content content = Content.builder().withData(expected).build();
         Optional<ContentKey> previous = Optional.absent();
 
-        when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(new LinkedContent(value, previous, Optional.<ContentKey>absent())));
+        when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(new LinkedContent(content, previous, Optional.<ContentKey>absent())));
 
         ChannelContentResource testClass = new ChannelContentResource(null, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), null);
@@ -71,10 +71,10 @@ public class ChannelContentResourceTest {
         String channelName = "canal4";
         ContentKey key = new SequenceContentKey( 1000);
         byte[] expected = new byte[]{55, 66, 77, 88};
-        Content value = new Content(Optional.of(MediaType.APPLICATION_XML), Optional.<String>absent(), expected, 0L);
+        Content content = Content.builder().withData(expected).withContentType(MediaType.APPLICATION_XML).build();
         Optional<ContentKey> previous = Optional.absent();
 
-        when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(new LinkedContent(value, previous, Optional.<ContentKey>absent())));
+        when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(new LinkedContent(content, previous, Optional.<ContentKey>absent())));
 
         ChannelContentResource testClass = new ChannelContentResource(null, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), MediaType.APPLICATION_JSON);
@@ -103,8 +103,8 @@ public class ChannelContentResourceTest {
     public void testCreationDateHeaderInResponse() throws Exception {
         String channelName = "woo";
         ContentKey key = new SequenceContentKey(  1000);
-        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 987654321);
-        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(),
+        Content content = Content.builder().withData("found it!".getBytes()).withMillis(987654321).build();
+        LinkedContent linkedValue = new LinkedContent(content, Optional.<ContentKey>absent(),
                 Optional.<ContentKey>absent());
 
         when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedValue));
@@ -121,9 +121,8 @@ public class ChannelContentResourceTest {
         String channelName = "woo";
         ContentKey previousKey = new SequenceContentKey(1000);
         ContentKey key = new SequenceContentKey(1001);
-        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
         Optional<ContentKey> previous = Optional.of(previousKey);
-        LinkedContent linkedValue = new LinkedContent(value, previous, Optional.<ContentKey>absent());
+        LinkedContent linkedValue = new LinkedContent(content, previous, Optional.<ContentKey>absent());
 
         UriInfo uriInfo = mock(UriInfo.class);
 
@@ -141,9 +140,8 @@ public class ChannelContentResourceTest {
     public void testPreviousLink_none() throws Exception {
         String channelName = "woo";
         ContentKey key = new SequenceContentKey( 1000);
-        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
         Optional<ContentKey> previous = Optional.absent();
-        LinkedContent linkedValue = new LinkedContent(value, previous, Optional.<ContentKey>absent());
+        LinkedContent linkedValue = new LinkedContent(content, previous, Optional.<ContentKey>absent());
 
         when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedValue));
 
@@ -159,9 +157,8 @@ public class ChannelContentResourceTest {
         String channelName = "nerxt";
         ContentKey nextKey = new SequenceContentKey( 1001);
         ContentKey key = new SequenceContentKey( 1000);
-        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
         Optional<ContentKey> next = Optional.of(nextKey);
-        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(), next);
+        LinkedContent linkedValue = new LinkedContent(content, Optional.<ContentKey>absent(), next);
 
         UriInfo uriInfo = mock(UriInfo.class);
 
@@ -179,8 +176,7 @@ public class ChannelContentResourceTest {
     public void testNextLinkNone() throws Exception {
         String channelName = "nerxt";
         ContentKey key = new SequenceContentKey( 1000);
-        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), "found it!".getBytes(), 0L);
-        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(),
+        LinkedContent linkedValue = new LinkedContent(content, Optional.<ContentKey>absent(),
                 Optional.<ContentKey>absent());
 
 
@@ -197,8 +193,7 @@ public class ChannelContentResourceTest {
     public void testLanguageHeader_missing() throws Exception {
         String channelName = "canal4";
         ContentKey key = new SequenceContentKey( 1000);
-        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), new byte[]{}, 0L);
-        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(),
+        LinkedContent linkedValue = new LinkedContent(content, Optional.<ContentKey>absent(),
                 Optional.<ContentKey>absent());
 
         when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedValue));
@@ -213,8 +208,7 @@ public class ChannelContentResourceTest {
     public void testEncodingHeader_missing() throws Exception {
         String channelName = "canal4";
         ContentKey key = new SequenceContentKey( 1000);
-        Content value = new Content(Optional.<String>absent(), Optional.<String>absent(), new byte[]{}, 0L);
-        LinkedContent linkedValue = new LinkedContent(value, Optional.<ContentKey>absent(),
+        LinkedContent linkedValue = new LinkedContent(content, Optional.<ContentKey>absent(),
                 Optional.<ContentKey>absent());
 
         when(channelService.getValue(channelName, key.keyToString())).thenReturn(Optional.of(linkedValue));

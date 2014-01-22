@@ -5,7 +5,6 @@ import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
-import com.flightstats.datahub.util.Sleeper;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -15,7 +14,6 @@ import java.io.IOException;
 
 public class CurrentTimeMigrator implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(CurrentTimeMigrator.class);
-
 
     private final ChannelService channelService;
     private final String channel;
@@ -32,32 +30,40 @@ public class CurrentTimeMigrator implements Runnable {
 
     @Override
     public void run() {
+        //todo - gfm - 1/22/14 - sleep
+        doWork();
+    }
+
+    public void doWork() {
         try {
-            if (initialize()) return;
+            if (!initialize())  {
+                return;
+            }
         } catch (IOException e) {
             logger.warn("unable to parse json for " + channelUrl, e);
             return;
         }
-        while (migrate()) {
-            Sleeper.sleep(5000);
-        }
+        migrate();
     }
 
-    private boolean initialize() throws IOException {
-        configuration = channelUtils.getConfiguration(channelUrl);
+    boolean initialize() throws IOException {
+        Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channelUrl);
+        if (!optionalConfig.isPresent()) {
+            return false;
+        }
+        configuration = optionalConfig.get();
         logger.info("found config " + this.configuration);
-        //todo - gfm - 1/20/14 - this should verify the TTL hasn't changed
+        //todo - gfm - 1/20/14 - this should verify the config hasn't changed
         if (!channelService.channelExists(channel)) {
             channelService.createChannel(this.configuration);
         }
-        return false;
+        return true;
     }
 
-    private boolean migrate() {
-
+    private void migrate() {
         long sequence = getStartingSequence();
         if (sequence == ChannelUtils.NOT_FOUND) {
-            return false;
+            return;
         }
         logger.info("starting " + channelUrl + " migration at " + sequence);
         Optional<Content> content = channelUtils.getContent(channelUrl, sequence);
@@ -67,11 +73,9 @@ public class CurrentTimeMigrator implements Runnable {
             content = channelUtils.getContent(channelUrl, sequence);
         }
 
-        return true;
     }
 
-
-    private long getStartingSequence() {
+    long getStartingSequence() {
         Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel);
         if (lastUpdatedKey.isPresent()) {
             SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
@@ -84,7 +88,7 @@ public class CurrentTimeMigrator implements Runnable {
         return ChannelUtils.NOT_FOUND;
     }
 
-    private long searchForStartingKey() {
+    long searchForStartingKey() {
         //this may not play well with discontinuous sequences
         logger.info("searching the key space for " + channelUrl);
         Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
@@ -92,19 +96,16 @@ public class CurrentTimeMigrator implements Runnable {
             return SequenceContentKey.START_VALUE + 1;
         }
         long high = latestSequence.get();
-        //todo - gfm - 1/20/14 - would be useful to pull this out into something that can be rigorously tested
         long low = SequenceContentKey.START_VALUE;
         long lastExists = high;
         while (low <= high && (high - low) > 1) {
             long middle = low + (high - low) / 2;
-            //do get on middle
             if (existsAndNotYetExpired(middle)) {
                 high = middle - 1;
                 lastExists = middle;
             } else {
                 low = middle;
             }
-            logger.info("low=" + low + " high=" + high + " middle=" + middle);
         }
         logger.info("returning starting key " + lastExists);
         return lastExists;
@@ -118,6 +119,7 @@ public class CurrentTimeMigrator implements Runnable {
         if (!creationDate.isPresent()) {
             return false;
         }
+        //todo - gfm - 1/22/14 - this will work for beta DataHub, need to change for new
         if (configuration.getTtlMillis() == null) {
             return true;
         }

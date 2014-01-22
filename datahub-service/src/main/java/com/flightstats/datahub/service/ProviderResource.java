@@ -7,7 +7,6 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.Content;
-import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
@@ -60,7 +59,9 @@ public class ProviderResource {
             return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
         }
 
-        Content content = new Content(Optional.fromNullable(contentType), Optional.fromNullable(contentLanguage), data);
+        Content content = Content.builder().withContentLanguage(contentLanguage)
+                .withContentType(contentType)
+                .withData(data).build();
         channelService.insert(channelName, content);
 
         return Response.status(Response.Status.OK).build();

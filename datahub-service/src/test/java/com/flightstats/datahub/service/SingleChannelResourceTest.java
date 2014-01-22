@@ -1,10 +1,12 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.model.*;
+import com.flightstats.datahub.model.Content;
+import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.SequenceContentKey;
+import com.flightstats.datahub.model.ValueInsertionResult;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
-import com.google.common.base.Optional;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,8 +29,7 @@ public class SingleChannelResourceTest {
 	private URI channelUri;
 	private ChannelHypermediaLinkBuilder linkBuilder;
 	public static final Date CREATION_DATE = new Date(12345L);
-	private ChannelConfiguration channelConfig;
-	private ContentKey contentKey;
+    private ContentKey contentKey;
 	private URI itemUri;
 	private UriInfo uriInfo;
 	private ChannelService channelService = mock(ChannelService.class);
@@ -44,7 +45,6 @@ public class SingleChannelResourceTest {
 		URI requestUri = URI.create("http://testification.com/channel/UHF");
 		itemUri = URI.create("http://testification.com/channel/UHF/1200");
 		contentKey = new SequenceContentKey(1200);
-		channelConfig = ChannelConfiguration.builder().withName(channelName).withCreationDate(CREATION_DATE).build();
 		linkBuilder = new ChannelHypermediaLinkBuilder();
 		uriInfo = mock(UriInfo.class);
 
@@ -74,7 +74,12 @@ public class SingleChannelResourceTest {
 		HalLink channelLink = new HalLink("channel", channelUri);
 		ValueInsertionResult expectedResponse = new ValueInsertionResult(contentKey, null);
 
-		when(channelService.insert(channelName, new Content(Optional.of(contentType), Optional.of(contentLanguage), data))).thenReturn(new ValueInsertionResult(contentKey, null));
+        Content content = Content.builder()
+                .withData(data)
+                .withContentLanguage(contentLanguage)
+                .withContentType(contentType)
+                .build();
+        when(channelService.insert(channelName, content)).thenReturn(new ValueInsertionResult(contentKey, null));
 
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
 		Response response = testClass.insertValue(channelName, contentType, contentLanguage, data);
@@ -92,30 +97,27 @@ public class SingleChannelResourceTest {
 
     @Test
     public void testInsert_channelExistenceNotCached() throws Exception {
-        //GIVEN
         ValueInsertionResult result = new ValueInsertionResult(new SequenceContentKey(1000), null);
         byte[] data = "SomeData".getBytes();
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
 
-        //WHEN
-        when(channelService.insert(channelName,  new Content(Optional.of(contentType), Optional.of(contentLanguage), data))).thenReturn(result);
+        Content content = Content.builder().withData(data).withContentLanguage(contentLanguage).withContentType(contentType).build();
+        when(channelService.insert(channelName,  content)).thenReturn(result);
 
         testClass.insertValue(channelName, contentType, contentLanguage, data);
 
-        //THEN
         verify(channelService).channelExists(channelName);
     }
 
     @Test(expected = WebApplicationException.class)
     public void testInsert_channelExistenceNotCached_channelDoesntExist() throws Exception {
-        //GIVEN
         ValueInsertionResult result = new ValueInsertionResult(null, null);
         byte[] data = "SomeData".getBytes();
         when(channelService.channelExists(channelName)).thenReturn(false);
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
 
-        //WHEN
-        when(channelService.insert(channelName,  new Content(Optional.of(contentType), Optional.of(contentLanguage), data))).thenReturn(result);
+        Content content = Content.builder().withData(data).withContentLanguage(contentLanguage).withContentType(contentType).build();
+        when(channelService.insert(channelName,  content)).thenReturn(result);
 
         testClass.insertValue(channelName, contentType, contentLanguage, data);
     }
@@ -123,15 +125,12 @@ public class SingleChannelResourceTest {
 
     @Test
     public void testInsert_payloadSizeGreaterThanMaxSizeReturns413() throws Exception {
-        //GIVEN
         byte[] data = new byte[1025];
         new Random().nextBytes(data);
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, 1024, uriInfo);
 
-        //WHEN
         Response result = testClass.insertValue(channelName, contentType, contentLanguage, data);
 
-        //THEN
         assertEquals(413, result.getStatus());
         assertEquals("Max payload size is 1024 bytes.", result.getEntity().toString());
     }

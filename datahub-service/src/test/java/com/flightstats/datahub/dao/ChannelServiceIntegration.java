@@ -65,7 +65,7 @@ public abstract class ChannelServiceIntegration {
         channelService.createChannel(configuration);
         assertFalse(channelService.getValue(channelName, new SequenceContentKey(1000).keyToString()).isPresent());
         byte[] bytes = "some data".getBytes();
-        Content content = new Content(Optional.<String>absent(), Optional.<String>absent(), bytes);
+        Content content = Content.builder().withData(bytes).build();
         ValueInsertionResult insert = channelService.insert(channelName, content);
 
         Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());
@@ -83,7 +83,7 @@ public abstract class ChannelServiceIntegration {
         ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlDays(1L).build();
         channelService.createChannel(configuration);
         byte[] bytes = "testChannelOptionals".getBytes();
-        Content content = new Content(Optional.of("content"), Optional.of("lang"), bytes);
+        Content content = Content.builder().withData(bytes).withContentLanguage("lang").withContentType("content").build();
         ValueInsertionResult insert = channelService.insert(channelName, content);
 
         Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());

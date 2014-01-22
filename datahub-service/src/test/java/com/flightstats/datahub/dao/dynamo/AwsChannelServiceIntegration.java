@@ -103,9 +103,9 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         channelService.createChannel(configuration);
 
         byte[] bytes = "some data".getBytes();
-        ValueInsertionResult insert1 = channelService.insert(channelName, new Content(Optional.<String>absent(), Optional.<String>absent(), bytes));
-        ValueInsertionResult insert2 = channelService.insert(channelName, new Content(Optional.<String>absent(), Optional.<String>absent(), bytes));
-        ValueInsertionResult insert3 = channelService.insert(channelName,  new Content(Optional.<String>absent(), Optional.<String>absent(), bytes));
+        ValueInsertionResult insert1 = channelService.insert(channelName, Content.builder().withData(bytes).build());
+        ValueInsertionResult insert2 = channelService.insert(channelName, Content.builder().withData(bytes).build());
+        ValueInsertionResult insert3 = channelService.insert(channelName, Content.builder().withData(bytes).build());
         HashSet<ContentKey> createdKeys = Sets.newHashSet(insert1.getKey(), insert2.getKey(), insert3.getKey());
         Optional<LinkedContent> value = channelService.getValue(channelName, insert1.getKey().keyToString());
         assertTrue(value.isPresent());
@@ -136,7 +136,8 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
         channelService.createChannel(configuration);
         byte[] bytes = "testChannelOptionals".getBytes();
-        ValueInsertionResult insert = channelService.insert(channelName,  new Content(Optional.of("content"), Optional.of("lang"), bytes));
+        Content content = Content.builder().withData(bytes).withContentType("content").withContentLanguage("lang").build();
+        ValueInsertionResult insert = channelService.insert(channelName,  content);
 
         Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());
         assertTrue(value.isPresent());

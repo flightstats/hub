@@ -114,18 +114,18 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
+            Content.Builder builder = Content.builder();
             String type = userData.get("type");
-            Optional<String> contentType = Optional.absent();
             if (!type.equals("none")) {
-                contentType = Optional.of(type);
+                builder.withContentType(type);
             }
             String language = userData.get("language");
-            Optional<String> contentLang = Optional.absent();
             if (!language.equals("none")) {
-                contentLang = Optional.of(language);
+                builder.withContentLanguage(language);
             }
             Long millis = Long.valueOf(userData.get("millis"));
-            return new Content(contentType, contentLang, bytes, millis);
+            builder.withData(bytes).withMillis(millis);
+            return builder.build();
         } catch (AmazonClientException e) {
             logger.info("unable to get " + channelName + " " + key.keyToString() + " " + e.getMessage());
         } catch (IOException e) {
