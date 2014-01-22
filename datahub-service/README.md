@@ -326,7 +326,7 @@ Here's how you can do this with curl:
 curl -i -X DELETE http://hub/channel/stumptown
 ```
 
-## migrate from DataHub
+## migrate from datahub
 
 The Hub in Prod will be actively pulling all channels from the Prod DataHub and providing the new time interface.
 Since all current uses of the DataHub are Sequence channels, all of the migrated channels will also be Sequence channels.
