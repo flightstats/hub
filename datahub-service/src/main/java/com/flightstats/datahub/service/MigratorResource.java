@@ -1,8 +1,8 @@
 package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.dao.ChannelService;
+import com.flightstats.datahub.migration.ChannelMigrator;
 import com.flightstats.datahub.migration.ChannelUtils;
-import com.flightstats.datahub.migration.CurrentTimeMigrator;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ public class MigratorResource {
     public Response insertValue(@PathParam("host") final String host,
                                 @PathParam("channel") final String channel) throws Exception {
 
-        CurrentTimeMigrator migrator = new CurrentTimeMigrator(channelService, host, channel, channelUtils);
+        ChannelMigrator migrator = new ChannelMigrator(channelService, host, channel, channelUtils);
         new Thread(migrator, host + "_" + channel).start();
         return Response.status(Response.Status.ACCEPTED).build();
     }

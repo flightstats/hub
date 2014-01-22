@@ -21,13 +21,13 @@ import static org.mockito.Mockito.*;
 /**
  * As much as I dislike Mockito, this is going to be difficult to verify, so it is worth the pain of Mockito.
  */
-public class CurrentTimeMigratorTest {
+public class ChannelMigratorTest {
 
     public static final String URL = "http://nowhere/channel/blast/";
     public static final String CHANNEL = "blast";
     private static ChannelService channelService;
     private static ChannelUtils channelUtils;
-    private CurrentTimeMigrator migrator;
+    private ChannelMigrator migrator;
     private ChannelConfiguration configuration;
 
     @Before
@@ -38,7 +38,7 @@ public class CurrentTimeMigratorTest {
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         when(channelService.channelExists(CHANNEL)).thenReturn(false);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(2000)));
-        migrator = new CurrentTimeMigrator(channelService, "nowhere", CHANNEL, channelUtils);
+        migrator = new ChannelMigrator(channelService, "nowhere", CHANNEL, channelUtils);
     }
 
     @Test
