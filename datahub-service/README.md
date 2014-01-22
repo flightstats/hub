@@ -15,7 +15,7 @@ The Hub
 * [subscribe to events](#subscribe-to-events)
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
-* [migrate from DataHub](migrate-from-DataHub)
+* [migrate from DataHub](migrate-from-datahub)
 
 For the purposes of this document, the Hub is at http://hub/.
 
@@ -34,7 +34,9 @@ Sequence channels represent a linked list of data.  Each item added gets a seque
 Sequence channels are intended for insertation rates up to one item per second.
 
 TimeSeries channels are designed for small, high frequency inserts with low latency.  Each item added gets a unique id.  They are not traversable, and have a max content size of 60KB.
-TimeSeries can support insertation rates up to 1000 items per second.  TimeSeries is higher throughput than Sequence, as well as slightly more expensive.
+TimeSeries can support insertation rates up to 1000 items per second.
+TimeSeries is higher throughput and lower latency than Sequence, as well as slightly more expensive.
+TimeSeries also requires the users to know the frequency and size of inserts.
 
 ## list channels
 
