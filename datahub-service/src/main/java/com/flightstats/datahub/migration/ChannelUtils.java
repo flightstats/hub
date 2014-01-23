@@ -36,15 +36,13 @@ public class ChannelUtils {
 
     private Client noRedirectsClient;
     private final Client followClient;
-    private final ChannelNameExtractor extractor;
     private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
     private static ObjectMapper mapper = new ObjectMapper();
 
     @Inject
-    public ChannelUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient, ChannelNameExtractor extractor) {
+    public ChannelUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient) {
         this.noRedirectsClient = noRedirectsClient;
         this.followClient = followClient;
-        this.extractor = extractor;
     }
 
     public Optional<Long> getLatestSequence(String channelUrl) {
@@ -77,7 +75,7 @@ public class ChannelUtils {
         String json = response.getEntity(String.class);
         ChannelConfiguration configuration = ChannelConfiguration.builder()
                 .withJson(json)
-                .withName(extractor.extractFromChannelUrl(channelUrl))
+                .withName(ChannelNameExtractor.extractFromChannelUrl(channelUrl))
                 .withCreationDate(new Date())
                 .build();
         logger.debug("found config " + configuration);

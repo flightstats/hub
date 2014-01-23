@@ -6,6 +6,8 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchA
 import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.aws.AwsDataStoreModule;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
+import com.flightstats.datahub.migration.ChannelUtils;
+import com.flightstats.datahub.migration.Migrator;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.rest.RetryClientFilter;
 import com.flightstats.datahub.service.DataHubHealthCheck;
@@ -86,31 +88,30 @@ public class GuiceContextListenerFactory {
         return new DataHubGuiceServletContextListener(jerseyModule, createDataStoreModule(properties), new DatahubCommonModule());
     }
 
-    private static Module getMaxPaloadSizeModule(Properties properties) {
-        Logger logger = LoggerFactory.getLogger(GuiceContextListenerFactory.class);
-        String maxPayloadSizeMB = properties.getProperty("service.maxPayloadSizeMB");
-        final int mb;
-        if (maxPayloadSizeMB == null) {
-            logger.info("MAX_PAYLOAD_SIZE not specified, setting to the default 10MB");
-            mb = 10;
-        } else {
-            try {
-                mb = Integer.parseInt(maxPayloadSizeMB);
-
-                logger.info("Setting MAX_PAYLOAD_SIZE to " + maxPayloadSizeMB + "MB");
-            } catch (NumberFormatException e) {
-                throw new RuntimeException("Unable to parse 'service.maxPayloadSizeMB", e);
-            }
-        }
-
-        final Integer maxPayloadSizeBytes = 1024 * 1024 * mb;
+    private static Module getMaxPaloadSizeModule(final Properties properties) {
 
         return new AbstractModule() {
             @Override
             protected void configure() {
-                bind(Integer.class).annotatedWith(Names.named("maxPayloadSizeBytes")).toInstance(maxPayloadSizeBytes);
+                bind(Integer.class)
+                        .annotatedWith(Names.named("maxPayloadSizeBytes"))
+                        .toInstance(getMaxPayloadSize(properties));
+                bind(String.class)
+                        .annotatedWith(Names.named("migration.source.urls"))
+                        .toInstance(properties.getProperty("service.migration.source.urls", ""));
             }
         };
+    }
+
+    private static Integer getMaxPayloadSize(Properties properties) {
+        String maxPayloadSizeMB = properties.getProperty("service.maxPayloadSizeMB", "10");
+        try {
+            int mb = Integer.parseInt(maxPayloadSizeMB);
+            logger.info("Setting MAX_PAYLOAD_SIZE to " + maxPayloadSizeMB + "MB");
+            return 1024 * 1024 * mb;
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Unable to parse 'service.maxPayloadSizeMB", e);
+        }
     }
 
     public static class DataHubBindings implements Bindings {
@@ -124,6 +125,8 @@ public class GuiceContextListenerFactory {
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
             binder.bind(TimeProvider.class).in(Singleton.class);
             binder.bind(ZooKeeperState.class).in(Singleton.class);
+            binder.bind(Migrator.class).in(Singleton.class);
+            binder.bind(ChannelUtils.class).in(Singleton.class);
         }
     }
 
