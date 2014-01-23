@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +77,9 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
             public Object call() {
                 try {
                     curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
+                } catch (KeeperException.NodeExistsException ignore) {
+                    //this can happen with rolling restarts
+                    logger.info("node exits " + path);
                 } catch (Exception e) {
                     logger.warn("unable to create " + path, e);
                     throw new RuntimeException(e);

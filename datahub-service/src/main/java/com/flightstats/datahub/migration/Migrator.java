@@ -93,8 +93,8 @@ public class Migrator {
             }
             //todo - gfm - 1/23/14 - does this need to support channel removal?
             filtered.removeAll(migratingChannels);
-            logger.info("found new channels " + filtered);
             for (String channelUrl : filtered) {
+                logger.info("found new channel " + channelUrl);
                 ChannelMigrator migrator = new ChannelMigrator(channelService, channelUrl, channelUtils, curator);
                 executorService.scheduleWithFixedDelay(migrator, 0, 15, TimeUnit.SECONDS);
                 migratingChannels.add(channelUrl);
