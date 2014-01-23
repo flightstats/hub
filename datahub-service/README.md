@@ -333,11 +333,21 @@ Since all current uses of the DataHub are Sequence channels, all of the migrated
 
 To migrate cleanly and prevent conflicts in the channel sequences, each inserter into the DataHub should stop writing
 to the DataHub, and wait until the DataHub and the Hub agree on the latest value before switching writes to the Hub.
-No other changes are needed for data migration.
+No other changes are needed for data migration.  You can monitor all of the channels calling the migration resource
 
- 'GET http://datahub/channel/stumptown/latest'
+ 'GET http://hub/migration'
 
- 'GET http://hub/channel/stumptown/latest'
+ ```json
+ [ {
+   "source" : "http://datahub.svc.prod/channel/FlightHistoryUpdates",
+   "migrateLatest" : 310491,
+   "sourceLatest" : 310491
+ }, {
+   "source" : "http://datahub.svc.prod/channel/positionAirnavRaw",
+   "migrateLatest" : 184203,
+   "sourceLatest" : 184203
+ } ]
+ ```
 
 Also, there are a couple of small API changes that clients should be aware of.
 
