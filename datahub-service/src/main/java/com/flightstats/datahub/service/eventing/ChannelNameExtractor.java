@@ -11,12 +11,12 @@ public class ChannelNameExtractor {
 		return path.replaceFirst(WEBSOCKET_URL_REGEX, "$1");
 	}
 
-    public String extractFromChannelUrl(URI uri) {
+    public static String extractFromChannelUrl(URI uri) {
         String path = uri.getPath();
         return path.replaceAll("/channel/(\\w+)(/?)", "$1");
     }
 
-    public String extractFromChannelUrl(String fullUrl) {
+    public static String extractFromChannelUrl(String fullUrl) {
         return extractFromChannelUrl(URI.create(fullUrl));
     }
 }

@@ -41,6 +41,8 @@ public class ChannelContentResource {
 		this.channelService = channelService;
 	}
 
+    //todo - gfm - 1/22/14 - would be nice to have a head method, which doesn't fetch the body.
+
 	@GET
 	@Timed(name = "all-channels.fetch")
 	@PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName")

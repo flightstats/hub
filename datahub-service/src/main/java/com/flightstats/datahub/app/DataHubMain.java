@@ -3,15 +3,13 @@ package com.flightstats.datahub.app;
 import com.conducivetech.services.common.util.PropertyConfiguration;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
-import com.flightstats.datahub.dao.timeIndex.TimeIndex;
 import com.flightstats.datahub.dao.timeIndex.TimeIndexCoordinator;
+import com.flightstats.datahub.migration.Migrator;
 import com.flightstats.jerseyguice.jetty.JettyConfig;
 import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
 import com.flightstats.jerseyguice.jetty.JettyServer;
 import com.google.inject.Injector;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
-import org.jetbrains.annotations.NotNull;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,11 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
-import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Main entry point for the data hub.  This is the main runnable class.
@@ -78,16 +72,8 @@ public class DataHubMain {
         server.start();
         logger.info("Jetty server has been started.");
         Injector injector = guice.getInjector();
-        TimeIndexCoordinator timeIndexCoordinator = injector.getInstance(TimeIndexCoordinator.class);
-        int offset = new Random().nextInt(60);
-        Executors.newScheduledThreadPool(1, new ThreadFactory() {
-            @NotNull
-            @Override
-            public Thread newThread(@NotNull Runnable r) {
-                return new Thread(r, "TimeIndex" + TimeIndex.getHash(new DateTime()));
-            }
-
-        }).scheduleWithFixedDelay(timeIndexCoordinator, offset, 60, TimeUnit.SECONDS);
+        injector.getInstance(TimeIndexCoordinator.class).startThread();
+        injector.getInstance(Migrator.class).startThread();
         return server;
     }
 

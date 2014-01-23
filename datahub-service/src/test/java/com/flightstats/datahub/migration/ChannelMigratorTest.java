@@ -38,7 +38,7 @@ public class ChannelMigratorTest {
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         when(channelService.channelExists(CHANNEL)).thenReturn(false);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(2000)));
-        migrator = new ChannelMigrator(channelService, "nowhere", CHANNEL, channelUtils);
+        migrator = new ChannelMigrator(channelService, URL, channelUtils, null);
     }
 
     @Test

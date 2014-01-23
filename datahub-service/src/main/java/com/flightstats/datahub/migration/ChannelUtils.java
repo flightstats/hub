@@ -1,5 +1,7 @@
 package com.flightstats.datahub.migration;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.model.SequenceContentKey;
@@ -21,6 +23,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
@@ -34,6 +38,7 @@ public class ChannelUtils {
     private final Client followClient;
     private final ChannelNameExtractor extractor;
     private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
+    private static ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public ChannelUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient, ChannelNameExtractor extractor) {
@@ -48,7 +53,7 @@ public class ChannelUtils {
                 .accept(MediaType.WILDCARD_TYPE)
                 .get(ClientResponse.class);
         if (response.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-            logger.info("latest not found for " + channelUrl + " " + response);
+            logger.debug("latest not found for " + channelUrl + " " + response);
             return Optional.absent();
         }
         String location = response.getLocation().toString();
@@ -75,7 +80,7 @@ public class ChannelUtils {
                 .withName(extractor.extractFromChannelUrl(channelUrl))
                 .withCreationDate(new Date())
                 .build();
-        logger.info("found config " + configuration);
+        logger.debug("found config " + configuration);
         return Optional.of(configuration);
     }
 
@@ -83,7 +88,7 @@ public class ChannelUtils {
         channelUrl = appendSlash(channelUrl);
         ClientResponse response = getResponse(channelUrl + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            logger.info("unable to continue " + response);
+            logger.debug("unable to get content " + response);
             return Optional.absent();
         }
         Content content = Content.builder()
@@ -101,11 +106,30 @@ public class ChannelUtils {
         channelUrl = appendSlash(channelUrl);
         ClientResponse response = getResponse(channelUrl + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            logger.info("unable to continue " + response);
+            logger.debug("unable to get creation date " + response);
             return Optional.absent();
         }
 
         return Optional.of(getCreationDate(response));
+    }
+
+    public Set<String> getChannels(String url) {
+        Set<String> channels = new HashSet<>();
+        try {
+            ClientResponse response = followClient.resource(url).get(ClientResponse.class);
+            if (response.getStatus() >= 400) {
+                logger.warn("unable to get channels " + response);
+                return channels;
+            }
+            JsonNode rootNode = mapper.readTree(response.getEntity(String.class));
+            JsonNode channelsNode = rootNode.get("_links").get("channels");
+            for (JsonNode channel : channelsNode) {
+                channels.add(channel.get("href").asText());
+            }
+        } catch (Exception e) {
+            logger.warn("unable to get channels " + url, e);
+        }
+        return channels;
     }
 
     private ClientResponse getResponse(String url) {
