@@ -7,6 +7,7 @@ import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.migration.ChannelUtils;
 import com.flightstats.datahub.migration.Migrator;
 import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -37,33 +38,21 @@ public class MigratorResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getStatus() throws Exception {
-        return getResponse(false);
-    }
-
-    @GET
-    @Path("/remote")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getStatusRemote() throws Exception {
-        return getResponse(true);
-    }
-
-    private Response getResponse(boolean includeRemote) {
         ArrayNode rootNode = mapper.createArrayNode();
         for (Migrator.SourceMigrator sourceMigrator : migrator.getMigrators()) {
             for (String channelUrl : sourceMigrator.getSourceChannelUrls()) {
                 ObjectNode channelNode = rootNode.addObject();
-                channelNode.put("url", channelUrl);
+                channelNode.put("source", channelUrl);
                 String name = ChannelNameExtractor.extractFromChannelUrl(channelUrl);
-                channelNode.put("name", name);
                 Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(name);
                 if (lastUpdatedKey.isPresent()) {
-                    channelNode.put("latest", lastUpdatedKey.get().keyToString());
+                    //todo - gfm - 1/23/14 - this will need to change for Replication
+                    SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
+                    channelNode.put("migrateLatest", contentKey.getSequence());
                 }
-                if (includeRemote) {
-                    Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
-                    if (latestSequence.isPresent()) {
-                        channelNode.put("remote", latestSequence.get());
-                    }
+                Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
+                if (latestSequence.isPresent()) {
+                    channelNode.put("sourcesLatest", latestSequence.get());
                 }
             }
         }
