@@ -122,6 +122,7 @@ public class ChannelConfiguration implements Serializable {
     /**
      * @deprecated this can go away eventually, use ttlDays instead
      */
+    @JsonProperty("ttlMillis")
     public Long getTtlMillis() {
         return ttlMillis;
     }
