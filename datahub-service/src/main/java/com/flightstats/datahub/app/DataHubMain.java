@@ -73,7 +73,7 @@ public class DataHubMain {
         logger.info("Jetty server has been started.");
         Injector injector = guice.getInjector();
         injector.getInstance(TimeIndexCoordinator.class).startThread();
-        injector.getInstance(Migrator.class).startThread();
+        injector.getInstance(Migrator.class).startThreads();
         return server;
     }
 

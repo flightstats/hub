@@ -3,7 +3,6 @@ package com.flightstats.datahub.migration;
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.Content;
-import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.google.common.base.Optional;
 import com.sun.jersey.api.client.Client;
 import org.joda.time.DateTime;
@@ -30,8 +29,7 @@ public class ChannelUtilsTest {
     public static void setupClass() throws Exception {
         Client followClient = GuiceContextListenerFactory.DatahubCommonModule.buildJerseyClient();
         Client noRedirectsClient = GuiceContextListenerFactory.DatahubCommonModule.buildJerseyClientNoRedirects();
-        ChannelNameExtractor extractor = new ChannelNameExtractor();
-        channelUtils = new ChannelUtils(noRedirectsClient, followClient, extractor);
+        channelUtils = new ChannelUtils(noRedirectsClient, followClient);
     }
 
     @Test
