@@ -9,7 +9,6 @@ import com.flightstats.datahub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
-import com.flightstats.datahub.util.TimeProvider;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.test.TestingServer;
@@ -26,8 +25,6 @@ import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  *
@@ -66,10 +63,8 @@ public class TimeIndexProcessorTest {
         indexDao = new MockTimeIndexDao();
         channel = UUID.randomUUID().toString();
         key = 100;
-        TimeProvider timeProvider = mock(TimeProvider.class);
         dateTime = new DateTime();
-        when(timeProvider.getDateTime()).thenReturn(dateTime);
-        processor = new TimeIndexProcessor(curator, indexDao, timeProvider, new ZooKeeperState());
+        processor = new TimeIndexProcessor(curator, indexDao, new ZooKeeperState());
         startTime = new DateTime(2014, 1, 6, 3, 42, 1);
     }
 

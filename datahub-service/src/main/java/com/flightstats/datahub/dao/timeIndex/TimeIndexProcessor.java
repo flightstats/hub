@@ -1,7 +1,6 @@
 package com.flightstats.datahub.dao.timeIndex;
 
 import com.flightstats.datahub.cluster.ZooKeeperState;
-import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
@@ -22,15 +21,13 @@ public class TimeIndexProcessor {
     private final CuratorFramework curator;
     private String channel;
     private final TimeIndexDao timeIndexDao;
-    private final TimeProvider timeProvider;
     private final ZooKeeperState zooKeeperState;
 
     @Inject
     public TimeIndexProcessor(CuratorFramework curator, TimeIndexDao timeIndexDao,
-                              TimeProvider timeProvider, ZooKeeperState zooKeeperState) {
+                              ZooKeeperState zooKeeperState) {
         this.curator = curator;
         this.timeIndexDao = timeIndexDao;
-        this.timeProvider = timeProvider;
         this.zooKeeperState = zooKeeperState;
     }
 

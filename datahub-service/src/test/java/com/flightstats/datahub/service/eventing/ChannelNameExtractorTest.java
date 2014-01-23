@@ -30,13 +30,15 @@ public class ChannelNameExtractorTest {
 
     @Test
     public void testExtractChannelUri() throws Exception {
-        assertEquals("foobar", extractor.extractFromChannelUrl(URI.create("http://location:8080/channel/foobar/")));
-        assertEquals("foobar", extractor.extractFromChannelUrl(URI.create("http://location:8080/channel/foobar")));
+        assertEquals("foobar", ChannelNameExtractor.extractFromChannelUrl(URI.create("http://location:8080/channel/foobar/")));
+        assertEquals("foobar", ChannelNameExtractor.extractFromChannelUrl(URI.create("http://location:8080/channel/foobar")));
+        assertEquals("foobar", ChannelNameExtractor.extractFromChannelUrl(URI.create("http://datahub.svc.prod/channel/foobar")));
     }
 
     @Test
     public void testExtractChannelString() throws Exception {
-        assertEquals("foobar", extractor.extractFromChannelUrl("http://location:8080/channel/foobar"));
-        assertEquals("foobar", extractor.extractFromChannelUrl("http://location:8080/channel/foobar/"));
+        assertEquals("foobar", ChannelNameExtractor.extractFromChannelUrl("http://location:8080/channel/foobar"));
+        assertEquals("foobar", ChannelNameExtractor.extractFromChannelUrl("http://location:8080/channel/foobar/"));
+        assertEquals("foobar", ChannelNameExtractor.extractFromChannelUrl("http://datahub.svc.prod/channel/foobar/"));
     }
 }

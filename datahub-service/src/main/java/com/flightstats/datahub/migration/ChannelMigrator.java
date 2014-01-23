@@ -5,12 +5,16 @@ import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
+import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.google.common.base.Optional;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public class ChannelMigrator implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(ChannelMigrator.class);
@@ -19,28 +23,51 @@ public class ChannelMigrator implements Runnable {
     private final String channel;
     private final ChannelUtils channelUtils;
     private String channelUrl;
+    private final CuratorFramework curator;
     private ChannelConfiguration configuration;
 
-    public ChannelMigrator(ChannelService channelService, String host, String channel, ChannelUtils channelUtils) {
+    public ChannelMigrator(ChannelService channelService, String channelUrl, ChannelUtils channelUtils,
+                           CuratorFramework curator) {
         this.channelService = channelService;
-        this.channel = channel;
+        this.channelUrl = channelUrl;
+        this.curator = curator;
+        if (!this.channelUrl.endsWith("/")) {
+            this.channelUrl += "/";
+        }
+        this.channel = ChannelNameExtractor.extractFromChannelUrl(channelUrl);
         this.channelUtils = channelUtils;
-        channelUrl = "http://" + host + "/channel/" + channel + "/";
+
     }
+
+    public String getChannelName() {
+        return channel;
+    }
+
+    //todo - gfm - 1/22/14 - expose start & latest to Resource
 
     @Override
     public void run() {
-        //todo - gfm - 1/22/14 - sleep
-        doWork();
+        //todo - gfm - 1/22/14 - handle ZooKeeperState change as in TimeIndexProcessor
+        //todo - gfm - 1/22/14 - look at pulling this out into common code with TimeIndexProcessor
+        InterProcessSemaphoreMutex mutex = new InterProcessSemaphoreMutex(curator, "/ChannelMigrator/" + channel);
+        try {
+            if (mutex.acquire(1, TimeUnit.SECONDS)) {
+                logger.debug("acquired " + channel);
+                doWork();
+            }
+        } catch (Exception e) {
+            logger.warn("oh no! " + channel, e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                //ignore
+            }
+        }
     }
 
-    public void doWork() {
-        try {
-            if (!initialize())  {
-                return;
-            }
-        } catch (IOException e) {
-            logger.warn("unable to parse json for " + channelUrl, e);
+    public void doWork() throws IOException {
+        if (!initialize())  {
             return;
         }
         migrate();
@@ -52,7 +79,10 @@ public class ChannelMigrator implements Runnable {
             return false;
         }
         configuration = optionalConfig.get();
-        logger.info("found config " + this.configuration);
+        if (!configuration.isSequence()) {
+            logger.warn("Non-Sequence channels are not currently supported " + channelUrl);
+            return false;
+        }
         //todo - gfm - 1/20/14 - this should verify the config hasn't changed
         if (!channelService.channelExists(channel)) {
             channelService.createChannel(this.configuration);
@@ -65,7 +95,7 @@ public class ChannelMigrator implements Runnable {
         if (sequence == ChannelUtils.NOT_FOUND) {
             return;
         }
-        logger.info("starting " + channelUrl + " migration at " + sequence);
+        logger.debug("starting " + channelUrl + " migration at " + sequence);
         Optional<Content> content = channelUtils.getContent(channelUrl, sequence);
         while (content.isPresent()) {
             channelService.insert(channel, content.get());
@@ -89,7 +119,7 @@ public class ChannelMigrator implements Runnable {
 
     long searchForStartingKey() {
         //this may not play well with discontinuous sequences
-        logger.info("searching the key space for " + channelUrl);
+        logger.debug("searching the key space for " + channelUrl);
         Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
         if (!latestSequence.isPresent()) {
             return SequenceContentKey.START_VALUE + 1;
@@ -106,7 +136,7 @@ public class ChannelMigrator implements Runnable {
                 low = middle;
             }
         }
-        logger.info("returning starting key " + lastExists);
+        logger.debug("returning starting key " + lastExists);
         return lastExists;
     }
 
@@ -118,7 +148,7 @@ public class ChannelMigrator implements Runnable {
         if (!creationDate.isPresent()) {
             return false;
         }
-        //todo - gfm - 1/22/14 - this will work for beta DataHub, need to change for new
+        //todo - gfm - 1/22/14 - this will work for beta DataHub, need to change to ttlDays for new
         if (configuration.getTtlMillis() == null) {
             return true;
         }

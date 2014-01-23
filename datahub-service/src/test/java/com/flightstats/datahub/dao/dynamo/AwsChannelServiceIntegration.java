@@ -11,7 +11,6 @@ import com.flightstats.datahub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.model.*;
 import com.flightstats.datahub.util.CuratorKeyGenerator;
-import com.flightstats.datahub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -194,7 +193,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         RetryPolicy retryPolicy = injector.getInstance(RetryPolicy.class);
         CuratorKeyGenerator keyGenerator = new CuratorKeyGenerator(curator, metricsTimer, retryPolicy);
         S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", curator, metricsTimer);
-        TimeIndexProcessor processor = new TimeIndexProcessor(curator, indexDao, new TimeProvider(), new ZooKeeperState());
+        TimeIndexProcessor processor = new TimeIndexProcessor(curator, indexDao, new ZooKeeperState());
 
         DateTime dateTime1 = new DateTime(2014, 1, 6, 12, 45);
         indexDao.writeIndex(channelName, dateTime1, new SequenceContentKey(999));

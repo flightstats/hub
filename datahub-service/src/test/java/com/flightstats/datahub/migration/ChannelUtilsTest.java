@@ -10,6 +10,8 @@ import org.joda.time.DateTime;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Set;
+
 import static org.junit.Assert.*;
 
 /**
@@ -19,8 +21,9 @@ import static org.junit.Assert.*;
  */
 public class ChannelUtilsTest {
 
-    private static final String CHANNEL_URL = "http://datahub.svc.prod/channel/positionAsdiRaw";
-    private static final String NON_CHANNEL_URL = "http://datahub.svc.prod/channel/blahFoobar";
+    private static final String ROOT_URL = "http://datahub.svc.prod/channel";
+    private static final String CHANNEL_URL = ROOT_URL + "/positionAsdiRaw";
+    private static final String NON_CHANNEL_URL = ROOT_URL + "/blahFoobar";
     private static ChannelUtils channelUtils;
 
     @BeforeClass
@@ -76,4 +79,27 @@ public class ChannelUtilsTest {
         DateTime dateTime = optionalDate.get();
         assertTrue(dateTime.isAfter(new DateTime().minusMinutes(5)));
     }
+
+    @Test
+    public void testGetChannels() throws Exception {
+        Set<String> channels = channelUtils.getChannels(ROOT_URL);
+        assertNotNull(channels);
+        assertTrue(channels.size() > 10);
+        assertTrue(channels.contains("http://datahub.svc.prod/channel/positionAsdiRaw"));
+    }
+
+    @Test
+    public void testGetChannelsSlash() throws Exception {
+        Set<String> channels = channelUtils.getChannels(ROOT_URL + "/");
+        assertNotNull(channels);
+        assertTrue(channels.size() > 10);
+    }
+
+    @Test
+    public void testNoChannels() throws Exception {
+        Set<String> channels = channelUtils.getChannels("http://dh.svc.prod/channel");
+        assertNotNull(channels);
+        assertTrue(channels.isEmpty());
+    }
+
 }
