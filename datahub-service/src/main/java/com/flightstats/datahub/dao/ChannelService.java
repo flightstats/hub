@@ -24,7 +24,7 @@ public interface ChannelService {
 
     boolean isHealthy();
 
-	void updateChannel(ChannelConfiguration configuration);
+    ChannelConfiguration updateChannel(ChannelConfiguration configuration);
 
     Collection<ContentKey> getKeys(String channelName, DateTime dateTime);
 

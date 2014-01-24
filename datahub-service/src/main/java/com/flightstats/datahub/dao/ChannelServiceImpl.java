@@ -78,6 +78,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
         createChannelValidator.validate(configuration);
+        configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
         //todo - gfm - 1/8/14 - this should happen in a channel specific lock
         contentServiceFinder.getContentService(configuration).createChannel(configuration);
         return channelMetadataDao.createChannel(configuration);
@@ -115,9 +116,11 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public void updateChannel(ChannelConfiguration configuration) {
+    public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
+        configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
         contentServiceFinder.getContentService(configuration).updateChannel(configuration);
         channelMetadataDao.updateChannel(configuration);
+        return configuration;
     }
 
     @Override
