@@ -6,13 +6,15 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchA
 import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.aws.AwsDataStoreModule;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
+import com.flightstats.datahub.migration.ChannelUtils;
+import com.flightstats.datahub.migration.Migrator;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.rest.RetryClientFilter;
 import com.flightstats.datahub.service.DataHubHealthCheck;
+import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.flightstats.datahub.service.eventing.JettyWebSocketServlet;
 import com.flightstats.datahub.service.eventing.MetricsCustomWebSocketCreator;
 import com.flightstats.datahub.service.eventing.SubscriptionRoster;
-import com.flightstats.datahub.service.eventing.WebSocketChannelNameExtractor;
 import com.flightstats.datahub.util.TimeProvider;
 import com.flightstats.jerseyguice.Bindings;
 import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
@@ -30,6 +32,7 @@ import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;
 import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
@@ -78,38 +81,37 @@ public class GuiceContextListenerFactory {
                 .withObjectMapper(DataHubObjectMapperFactory.construct())
                 .withBindings(new DataHubBindings())
                 .withHealthCheckClass(DataHubHealthCheck.class)
-                .withRegexServe(WebSocketChannelNameExtractor.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
+                .withRegexServe(ChannelNameExtractor.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
                 .withModules(Arrays.asList(module))
                 .build();
 
         return new DataHubGuiceServletContextListener(jerseyModule, createDataStoreModule(properties), new DatahubCommonModule());
     }
 
-    private static Module getMaxPaloadSizeModule(Properties properties) {
-        Logger logger = LoggerFactory.getLogger(GuiceContextListenerFactory.class);
-        String maxPayloadSizeMB = properties.getProperty("service.maxPayloadSizeMB");
-        final int mb;
-        if (maxPayloadSizeMB == null) {
-            logger.info("MAX_PAYLOAD_SIZE not specified, setting to the default 10MB");
-            mb = 10;
-        } else {
-            try {
-                mb = Integer.parseInt(maxPayloadSizeMB);
-
-                logger.info("Setting MAX_PAYLOAD_SIZE to " + maxPayloadSizeMB + "MB");
-            } catch (NumberFormatException e) {
-                throw new RuntimeException("Unable to parse 'service.maxPayloadSizeMB", e);
-            }
-        }
-
-        final Integer maxPayloadSizeBytes = 1024 * 1024 * mb;
+    private static Module getMaxPaloadSizeModule(final Properties properties) {
 
         return new AbstractModule() {
             @Override
             protected void configure() {
-                bind(Integer.class).annotatedWith(Names.named("maxPayloadSizeBytes")).toInstance(maxPayloadSizeBytes);
+                bind(Integer.class)
+                        .annotatedWith(Names.named("maxPayloadSizeBytes"))
+                        .toInstance(getMaxPayloadSize(properties));
+                bind(String.class)
+                        .annotatedWith(Names.named("migration.source.urls"))
+                        .toInstance(properties.getProperty("service.migration.source.urls", ""));
             }
         };
+    }
+
+    private static Integer getMaxPayloadSize(Properties properties) {
+        String maxPayloadSizeMB = properties.getProperty("service.maxPayloadSizeMB", "10");
+        try {
+            int mb = Integer.parseInt(maxPayloadSizeMB);
+            logger.info("Setting MAX_PAYLOAD_SIZE to " + maxPayloadSizeMB + "MB");
+            return 1024 * 1024 * mb;
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Unable to parse 'service.maxPayloadSizeMB", e);
+        }
     }
 
     public static class DataHubBindings implements Bindings {
@@ -123,6 +125,8 @@ public class GuiceContextListenerFactory {
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
             binder.bind(TimeProvider.class).in(Singleton.class);
             binder.bind(ZooKeeperState.class).in(Singleton.class);
+            binder.bind(Migrator.class).in(Singleton.class);
+            binder.bind(ChannelUtils.class).in(Singleton.class);
         }
     }
 
@@ -170,13 +174,6 @@ public class GuiceContextListenerFactory {
             return Hazelcast.newHazelcastInstance(config);
         }
 
-        @Named("LastUpdatePerChannelMap")
-        @Singleton
-        @Provides
-        public static ConcurrentMap<String, ContentKey> buildLastUpdatePerChannelMap(HazelcastInstance hazelcast) throws FileNotFoundException {
-            return hazelcast.getMap("LAST_CHANNEL_UPDATE");
-        }
-
         @Named("ChannelConfigurationMap")
         @Singleton
         @Provides
@@ -220,6 +217,32 @@ public class GuiceContextListenerFactory {
             Integer maxRetries = Integer.valueOf(properties.getProperty("zookeeper.maxRetries", "20"));
 
             return new BoundedExponentialBackoffRetry(baseSleepTimeMs, maxSleepTimeMs, maxRetries);
+        }
+
+        @Singleton
+        @Provides
+        public static Client buildJerseyClient() {
+            return create(true);
+        }
+
+        @Named("NoRedirects")
+        @Singleton
+        @Provides
+        public static Client buildJerseyClientNoRedirects() {
+            return create(false);
+        }
+
+        private static Client create(boolean followRedirects) {
+            //todo - gfm - 1/21/14 - pull these out into properties
+            int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(30);
+            int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(60);
+
+            Client client = Client.create();
+            client.setConnectTimeout(connectTimeoutMillis);
+            client.setReadTimeout(readTimeoutMillis);
+            client.addFilter(new RetryClientFilter());
+            client.setFollowRedirects(followRedirects);
+            return client;
         }
     }
 }

@@ -37,7 +37,7 @@ public class CassandraContentDao implements ContentDao {
     }
 
 	@Override
-    public ValueInsertionResult write(String channelName, Content columnValue, long ttlDays) {
+    public ValueInsertionResult write(String channelName, Content content, long ttlDays) {
         SequenceContentKey key = (SequenceContentKey) keyGenerator.newKey(channelName);
         String rowKey = buildKey(channelName, key);
 
@@ -46,9 +46,9 @@ public class CassandraContentDao implements ContentDao {
                 " (rowkey, sequence, data, millis, contentType, contentLanguage)" +
                 "VALUES (?, ?, ?, ?, ?, ?) USING TTL " + ttl);
         statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
-        session.execute(statement.bind(rowKey, key.getSequence(), ByteBuffer.wrap(columnValue.getData()), columnValue.getMillis(),
-                columnValue.getContentType().orNull(), columnValue.getContentLanguage().orNull()));
-		return new ValueInsertionResult(key, new Date(columnValue.getMillis()));
+        session.execute(statement.bind(rowKey, key.getSequence(), ByteBuffer.wrap(content.getData()), content.getMillis(),
+                content.getContentType().orNull(), content.getContentLanguage().orNull()));
+		return new ValueInsertionResult(key, new Date(content.getMillis()));
 	}
 
     @Override
@@ -69,8 +69,11 @@ public class CassandraContentDao implements ContentDao {
         byte[] array = new byte[data.remaining()];
         data.get(array);
 
-        return new Content(Optional.fromNullable(contentType),
-                Optional.fromNullable(contentLanguage), array, row.getLong("millis"));
+        return Content.builder().withContentLanguage(contentLanguage)
+                .withContentType(contentType)
+                .withData(array)
+                .withMillis(row.getLong("millis"))
+                .build();
     }
 
     @Override

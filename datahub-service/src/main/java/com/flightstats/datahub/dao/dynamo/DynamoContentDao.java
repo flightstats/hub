@@ -3,7 +3,7 @@ package com.flightstats.datahub.dao.dynamo;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.datahub.dao.ContentDao;
-import com.flightstats.datahub.dao.TimeIndex;
+import com.flightstats.datahub.dao.timeIndex.TimeIndex;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.model.ContentKey;
@@ -80,19 +80,19 @@ public class DynamoContentDao implements ContentDao {
             return null;
         }
         Map<String, AttributeValue> item = result.getItem();
-        Optional<String> contentType = Optional.absent();
+        Content.Builder builder = Content.builder();
         AttributeValue contentTypeAttribute = item.get("contentType");
         if (null != contentTypeAttribute) {
-            contentType = Optional.of(contentTypeAttribute.getS());
+            builder.withContentType(contentTypeAttribute.getS());
         }
-        Optional<String> contentLanguage = Optional.absent();
         AttributeValue contentLanguageAttribute = item.get("contentLanguage");
         if (null != contentLanguageAttribute) {
-            contentLanguage = Optional.of(contentLanguageAttribute.getS());
+            builder.withContentLanguage(contentLanguageAttribute.getS());
         }
         long millis = Long.parseLong(item.get("millis").getN());
         ByteBuffer byteBuffer = item.get("data").getB();
-        return new Content(contentType, contentLanguage, byteBuffer.array() , millis);
+        builder.withData(byteBuffer.array()).withMillis(millis);
+        return builder.build();
     }
 
     @Override

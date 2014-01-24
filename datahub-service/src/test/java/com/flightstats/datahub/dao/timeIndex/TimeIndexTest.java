@@ -1,4 +1,4 @@
-package com.flightstats.datahub.dao;
+package com.flightstats.datahub.dao.timeIndex;
 
 import com.flightstats.datahub.model.SequenceContentKey;
 import org.joda.time.DateTime;

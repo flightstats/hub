@@ -1,13 +1,10 @@
-package com.flightstats.datahub.dao.s3;
+package com.flightstats.datahub.dao.timeIndex;
 
 import com.flightstats.datahub.cluster.ZooKeeperState;
-import com.flightstats.datahub.dao.TimeIndex;
-import com.flightstats.datahub.util.TimeProvider;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 import org.apache.zookeeper.KeeperException;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,15 +21,13 @@ public class TimeIndexProcessor {
     private final CuratorFramework curator;
     private String channel;
     private final TimeIndexDao timeIndexDao;
-    private final TimeProvider timeProvider;
     private final ZooKeeperState zooKeeperState;
 
     @Inject
     public TimeIndexProcessor(CuratorFramework curator, TimeIndexDao timeIndexDao,
-                              TimeProvider timeProvider, ZooKeeperState zooKeeperState) {
+                              ZooKeeperState zooKeeperState) {
         this.curator = curator;
         this.timeIndexDao = timeIndexDao;
-        this.timeProvider = timeProvider;
         this.zooKeeperState = zooKeeperState;
     }
 
@@ -61,13 +56,15 @@ public class TimeIndexProcessor {
             List<String> dateHashes = curator.getChildren().forPath(path);
             if (dateHashes.isEmpty()) {
                 logger.debug("clearing empty path " + path);
+                //this will fail if a new record has already been written.
                 curator.delete().forPath(path);
-            } else {
-                logger.debug("found " + dateHashes.size() + " for " + channel);
+            } else if (dateHashes.size() > 2) {
+                logger.debug("found {} for {}", dateHashes.size(), channel);
                 Collections.sort(dateHashes);
+                dateHashes = dateHashes.subList(0, dateHashes.size() - 2);
                 for (String dateHash : dateHashes) {
                     if (zooKeeperState.shouldStopWorking()) {
-                        logger.info("exiting " + channel);
+                        logger.info("exiting {}" + channel);
                         return;
                     }
                     processDateTime(dateHash);
@@ -82,11 +79,6 @@ public class TimeIndexProcessor {
 
     private void processDateTime(String dateHash) {
         try {
-            DateTime dateTime = TimeIndex.parseHash(dateHash);
-            DateTime compare = timeProvider.getDateTime().minusMinutes(2);
-            if (!dateTime.isBefore(compare)) {
-                return;
-            }
             String path = TimeIndex.getPath(channel, dateHash);
             List<String> keys = curator.getChildren().forPath(path);
             timeIndexDao.writeIndices(channel, dateHash, keys);

@@ -3,28 +3,38 @@ package com.flightstats.datahub.dao;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
 import com.flightstats.datahub.model.ContentKey;
+import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.service.ChannelInsertionPublisher;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-
-import java.util.concurrent.ConcurrentMap;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.shared.SharedValue;
 
 /**
  *
  */
 public class SequenceKeyCoordination implements KeyCoordination {
-
-    private final ConcurrentMap<String, ContentKey> lastUpdatedPerChannel;
     private final ChannelInsertionPublisher channelInsertionPublisher;
     private final MetricsTimer metricsTimer;
+    private final LoadingCache<String, SharedValue> cache;
 
     @Inject
-    public SequenceKeyCoordination(@Named("LastUpdatePerChannelMap") ConcurrentMap<String, ContentKey> lastUpdatedPerChannel,
-                                   ChannelInsertionPublisher channelInsertionPublisher,
+    public SequenceKeyCoordination(ChannelInsertionPublisher channelInsertionPublisher,
+                                   final CuratorFramework curator,
                                    MetricsTimer metricsTimer) {
-        this.lastUpdatedPerChannel = lastUpdatedPerChannel;
         this.channelInsertionPublisher = channelInsertionPublisher;
         this.metricsTimer = metricsTimer;
+        cache = CacheBuilder.newBuilder().build(new CacheLoader<String, SharedValue>() {
+            @Override
+            public SharedValue load(String key) throws Exception {
+                SharedValue sharedValue = new SharedValue(curator, key, Longs.toByteArray(SequenceContentKey.START_VALUE));
+                sharedValue.start();
+                return sharedValue;
+            }
+        });
     }
 
     @Override
@@ -34,11 +44,17 @@ public class SequenceKeyCoordination implements KeyCoordination {
     }
 
     private void setLastUpdateKey(final String channelName, final ContentKey key) {
-        //this is relatively slow with hazelcast and high throughput
-        metricsTimer.time("hazelcast.setLastUpdated", new TimedCallback<Object>() {
+
+        final SequenceContentKey sequence = (SequenceContentKey) key;
+        metricsTimer.time("sequence.setLastUpdated", new TimedCallback<Object>() {
             @Override
             public Object call() {
-                lastUpdatedPerChannel.put(channelName, key);
+                try {
+                    byte[] bytes = Longs.toByteArray(sequence.getSequence());
+                    cache.getUnchecked(getKey(channelName)).setValue(bytes);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
                 return null;
             }
         });
@@ -46,11 +62,17 @@ public class SequenceKeyCoordination implements KeyCoordination {
 
     @Override
     public ContentKey getLastUpdated(final String channelName) {
-        return metricsTimer.time("hazelcast.getLastUpdated", new TimedCallback<ContentKey>() {
+        return metricsTimer.time("sequence.getLastUpdated", new TimedCallback<ContentKey>() {
             @Override
             public ContentKey call() {
-                return lastUpdatedPerChannel.get(channelName);
+                byte[] value = cache.getUnchecked(getKey(channelName)).getValue();
+                return new SequenceContentKey(Longs.fromByteArray(value));
             }
         });
     }
+
+    private String getKey(String channelName) {
+        return "/lastUpdated/" + channelName;
+    }
+
 }

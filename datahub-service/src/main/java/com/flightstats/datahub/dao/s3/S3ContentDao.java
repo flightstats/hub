@@ -6,7 +6,8 @@ import com.amazonaws.services.s3.model.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.datahub.dao.ContentDao;
-import com.flightstats.datahub.dao.TimeIndex;
+import com.flightstats.datahub.dao.timeIndex.TimeIndex;
+import com.flightstats.datahub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.datahub.metrics.MetricsTimer;
 import com.flightstats.datahub.metrics.TimedCallback;
 import com.flightstats.datahub.model.ChannelConfiguration;
@@ -20,6 +21,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,8 +60,11 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public ValueInsertionResult write(String channelName, Content content, long ttlDays) {
-        ContentKey key = keyGenerator.newKey(channelName);
-        DateTime dateTime = new DateTime();
+        if (!content.getContentKey().isPresent()) {
+            content.setContentKey(keyGenerator.newKey(channelName));
+        }
+        ContentKey key = content.getContentKey().get();
+        DateTime dateTime = new DateTime(content.getMillis());
         writeS3(channelName, content, key);
         writeIndex(channelName, dateTime, key);
         return new ValueInsertionResult(key, dateTime.toDate());
@@ -72,6 +77,9 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
             public Object call() {
                 try {
                     curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
+                } catch (KeeperException.NodeExistsException ignore) {
+                    //this can happen with rolling restarts
+                    logger.info("node exits " + path);
                 } catch (Exception e) {
                     logger.warn("unable to create " + path, e);
                     throw new RuntimeException(e);
@@ -98,7 +106,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         } else {
             metadata.addUserMetadata("language", "none");
         }
-
+        metadata.addUserMetadata("millis", String.valueOf(content.getMillis()));
         PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
         s3Client.putObject(request);
     }
@@ -110,18 +118,18 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
+            Content.Builder builder = Content.builder();
             String type = userData.get("type");
-            Optional<String> contentType = Optional.absent();
             if (!type.equals("none")) {
-                contentType = Optional.of(type);
+                builder.withContentType(type);
             }
             String language = userData.get("language");
-            Optional<String> contentLang = Optional.absent();
             if (!language.equals("none")) {
-                contentLang = Optional.of(language);
+                builder.withContentLanguage(language);
             }
-            Date lastModified = metadata.getLastModified();
-            return new Content(contentType, contentLang, bytes, lastModified.getTime());
+            Long millis = Long.valueOf(userData.get("millis"));
+            builder.withData(bytes).withMillis(millis);
+            return builder.build();
         } catch (AmazonClientException e) {
             logger.info("unable to get " + channelName + " " + key.keyToString() + " " + e.getMessage());
         } catch (IOException e) {
@@ -219,6 +227,9 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public void delete(String channelName) {
+        //todo - gfm - 1/19/14 - remove LifeCycle config - or do this with the metadata
+        //todo - gfm - 1/19/14 - this could be more sophisticated, making sure the request gets picked up if this server
+        //goes down
         new Thread(new S3Deleter(channelName, s3BucketName, s3Client)).start();
     }
 

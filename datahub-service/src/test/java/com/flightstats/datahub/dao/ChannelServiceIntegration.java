@@ -1,10 +1,7 @@
 package com.flightstats.datahub.dao;
 
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.LinkedContent;
-import com.flightstats.datahub.model.SequenceContentKey;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.*;
 import com.google.common.base.Optional;
 import com.google.inject.Injector;
 import org.apache.curator.test.TestingServer;
@@ -68,7 +65,8 @@ public abstract class ChannelServiceIntegration {
         channelService.createChannel(configuration);
         assertFalse(channelService.getValue(channelName, new SequenceContentKey(1000).keyToString()).isPresent());
         byte[] bytes = "some data".getBytes();
-        ValueInsertionResult insert = channelService.insert(channelName, Optional.<String>absent(), Optional.<String>absent(), bytes);
+        Content content = Content.builder().withData(bytes).build();
+        ValueInsertionResult insert = channelService.insert(channelName, content);
 
         Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());
         assertTrue(value.isPresent());
@@ -85,7 +83,8 @@ public abstract class ChannelServiceIntegration {
         ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlDays(1L).build();
         channelService.createChannel(configuration);
         byte[] bytes = "testChannelOptionals".getBytes();
-        ValueInsertionResult insert = channelService.insert(channelName, Optional.of("content"), Optional.of("lang"), bytes);
+        Content content = Content.builder().withData(bytes).withContentLanguage("lang").withContentType("content").build();
+        ValueInsertionResult insert = channelService.insert(channelName, content);
 
         Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());
         assertTrue(value.isPresent());

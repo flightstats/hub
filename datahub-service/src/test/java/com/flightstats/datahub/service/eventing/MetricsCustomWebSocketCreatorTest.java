@@ -19,7 +19,7 @@ public class MetricsCustomWebSocketCreatorTest {
 	@Test
 	public void testCreateWebSocket() throws Exception {
 		//GIVEN
-		WebSocketChannelNameExtractor channelNameExtractor = new WebSocketChannelNameExtractor();
+		ChannelNameExtractor channelNameExtractor = new ChannelNameExtractor();
 		int threadCt = 50;
 		String meterName = "websocket-clients.channels.ubuibi";
 		URI requestUri = URI.create("/channel/ubuibi/ws");

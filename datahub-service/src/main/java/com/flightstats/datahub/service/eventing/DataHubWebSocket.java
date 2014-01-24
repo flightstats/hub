@@ -18,7 +18,7 @@ public class DataHubWebSocket {
 
 	private final static Logger logger = LoggerFactory.getLogger(DataHubWebSocket.class);
 	private final Runnable afterDisconnectCallback;
-	private final WebSocketChannelNameExtractor channelNameExtractor;
+	private final ChannelNameExtractor channelNameExtractor;
 	private final SubscriptionRoster subscriptions;
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 	private String remoteAddress;
@@ -27,7 +27,7 @@ public class DataHubWebSocket {
 	private String channelName;
 
 	@Inject
-	public DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder) {
+	public DataHubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder) {
 		this(subscriptions, channelNameExtractor, linkBuilder, new Runnable() {
 			@Override
 			public void run() {
@@ -36,7 +36,7 @@ public class DataHubWebSocket {
 		});
 	}
 
-	DataHubWebSocket(SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder,
+	DataHubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder,
 					Runnable afterDisconnectCallback) {
 		this.linkBuilder = linkBuilder;
 		this.afterDisconnectCallback = afterDisconnectCallback;
@@ -51,7 +51,7 @@ public class DataHubWebSocket {
         remoteAddress = session.getRemoteAddress().toString();
         logger.info("New client connection: " + remoteAddress + " for " + requestUri);
 		String host = upgradeRequest.getHeader("Host");
-        channelName = channelNameExtractor.extractChannelName(requestUri);
+        channelName = channelNameExtractor.extractFromWS(requestUri);
 		//this is totally hacky.
         String channelUri = "http://" + host + "/channel/" + channelName;
 		try {
