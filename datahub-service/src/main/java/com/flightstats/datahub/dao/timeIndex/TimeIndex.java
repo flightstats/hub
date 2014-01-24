@@ -13,7 +13,7 @@ public class TimeIndex {
 
     public static final String PATTERN = "yyyy-MM-dd'T'HH:mmZ";
     private static final DateTimeFormatter formatter = DateTimeFormat.forPattern(PATTERN);
-    private static final DateTimeZone timeZone = DateTimeZone.forID("America/Los_Angeles");
+    private static final DateTimeZone timeZone = DateTimeZone.forID("UTC");
     private static final String TIME_INDEX = "/TimeIndex";
 
     public static String getHash(DateTime dateTime) {

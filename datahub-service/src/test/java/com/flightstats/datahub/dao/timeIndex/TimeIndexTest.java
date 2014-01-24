@@ -22,7 +22,7 @@ public class TimeIndexTest {
     @Test
     public void testHashstamp() throws Exception {
         String hashStamp = TimeIndex.getHash(dateTime);
-        assertEquals("2013-12-26T12:59-0800", hashStamp);
+        assertEquals("2013-12-26T20:59+0000", hashStamp);
     }
 
     @Test
@@ -43,15 +43,15 @@ public class TimeIndexTest {
 
     @Test
     public void testDaylightSavingsTime() throws Exception {
-        assertEquals("2014-11-02T00:30-0700", TimeIndex.getHash(TimeIndex.parseHash("2014-11-02T00:30-0700")));
-        assertEquals("2014-11-02T01:30-0700", TimeIndex.getHash(TimeIndex.parseHash("2014-11-02T01:30-0700")));
-        assertEquals("2014-11-02T01:30-0800", TimeIndex.getHash(TimeIndex.parseHash("2014-11-02T02:30-0700")));
-        assertEquals("2014-11-02T02:30-0800", TimeIndex.getHash(TimeIndex.parseHash("2014-11-02T02:30-0800")));
+        assertEquals("2014-11-02T07:30+0000", TimeIndex.getHash(TimeIndex.parseHash("2014-11-02T00:30-0700")));
+        assertEquals("2014-11-02T08:30+0000", TimeIndex.getHash(TimeIndex.parseHash("2014-11-02T01:30-0700")));
+        assertEquals("2014-11-02T09:30+0000", TimeIndex.getHash(TimeIndex.parseHash("2014-11-02T02:30-0700")));
+        assertEquals("2014-11-02T10:30+0000", TimeIndex.getHash(TimeIndex.parseHash("2014-11-02T02:30-0800")));
     }
 
     @Test
     public void testTImeZones() throws Exception {
-        assertEquals("2014-10-02T05:30-0700", TimeIndex.getHash(TimeIndex.parseHash("2014-10-02T12:30-0000")));
+        assertEquals("2014-10-02T12:30+0000", TimeIndex.getHash(TimeIndex.parseHash("2014-10-02T12:30-0000")));
     }
 
     @Test
@@ -71,7 +71,7 @@ public class TimeIndexTest {
 
     @Test
     public void testPathFull() throws Exception {
-        assertEquals("/TimeIndex/someChannel/2013-12-26T12:59-0800/999", TimeIndex.getPath("someChannel", dateTime, new SequenceContentKey(999)));
+        assertEquals("/TimeIndex/someChannel/2013-12-26T20:59+0000/999", TimeIndex.getPath("someChannel", dateTime, new SequenceContentKey(999)));
     }
 
 
