@@ -193,7 +193,10 @@ public class ChannelConfiguration implements Serializable {
             if (null == ttlMillis) {
                 this.ttlDays = 1000 * 365;
             } else {
-                this.ttlDays = TimeUnit.MILLISECONDS.toDays(ttlMillis) + 1;
+                this.ttlDays = TimeUnit.MILLISECONDS.toDays(ttlMillis);
+                if (ttlMillis % TimeUnit.DAYS.toMillis(1) > 0) {
+                    this.ttlDays += 1;
+                }
             }
             return this;
         }
