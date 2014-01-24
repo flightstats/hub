@@ -15,12 +15,12 @@ public class MetricsCustomWebSocketCreator implements WebSocketCreator {
 
 	private final MetricRegistry registry;
     private final SubscriptionRoster subscriptions;
-    private final WebSocketChannelNameExtractor channelNameExtractor;
+    private final ChannelNameExtractor channelNameExtractor;
 	private final Object mutex = new Object();
 	private final ChannelHypermediaLinkBuilder linkBuilder;
 
 	@Inject
-	public MetricsCustomWebSocketCreator(MetricRegistry registry, SubscriptionRoster subscriptions, WebSocketChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder) {
+	public MetricsCustomWebSocketCreator(MetricRegistry registry, SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder) {
 		this.registry = registry;
         this.subscriptions = subscriptions;
         this.channelNameExtractor = channelNameExtractor;
@@ -30,7 +30,7 @@ public class MetricsCustomWebSocketCreator implements WebSocketCreator {
 	@Override
 	public Object createWebSocket(UpgradeRequest req, UpgradeResponse resp) {
 		URI requestUri = req.getRequestURI();
-		final String channelName = channelNameExtractor.extractChannelName(requestUri);
+		final String channelName = channelNameExtractor.extractFromWS(requestUri);
 		final String meterName = "websocket-clients.channels." + channelName;
 
 		synchronized (mutex) {

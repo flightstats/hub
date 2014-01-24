@@ -7,7 +7,7 @@ import com.flightstats.datahub.dao.dynamo.DynamoChannelMetadataDao;
 import com.flightstats.datahub.dao.dynamo.DynamoContentDao;
 import com.flightstats.datahub.dao.dynamo.DynamoUtils;
 import com.flightstats.datahub.dao.s3.S3ContentDao;
-import com.flightstats.datahub.dao.s3.TimeIndexDao;
+import com.flightstats.datahub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.datahub.util.CuratorKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeSeriesKeyGenerator;

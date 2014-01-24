@@ -6,7 +6,7 @@ import com.flightstats.datahub.app.config.metrics.PerChannelThroughput;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimed;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.google.common.base.Optional;
+import com.flightstats.datahub.model.Content;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
@@ -44,7 +44,7 @@ public class ProviderResource {
     @Produces(MediaType.TEXT_PLAIN)
     public Response insertValue(@HeaderParam("channelName") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,
-                                @HeaderParam("Content-Language") final String contentLanguage,
+                                @HeaderParam(Headers.LANGUAGE) final String contentLanguage,
                                 final byte[] data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             logger.info("creating new Provider channel " + channelName);
@@ -59,8 +59,10 @@ public class ProviderResource {
             return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
         }
 
-        channelService.insert(channelName, Optional.fromNullable(contentType),
-                Optional.fromNullable(contentLanguage), data);
+        Content content = Content.builder().withContentLanguage(contentLanguage)
+                .withContentType(contentType)
+                .withData(data).build();
+        channelService.insert(channelName, content);
 
         return Response.status(Response.Status.OK).build();
     }

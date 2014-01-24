@@ -21,14 +21,15 @@ import java.util.concurrent.TimeUnit;
 public class CuratorKeyGenerator implements DataHubKeyGenerator {
     private final static Logger logger = LoggerFactory.getLogger(CuratorKeyGenerator.class);
 
-    private final CuratorFramework client;
+    private final CuratorFramework curator;
     private final MetricsTimer metricsTimer;
     private final RetryPolicy retryPolicy;
+    //todo - gfm - 1/17/14 - change this to use CacheBuilder
     private ConcurrentMap<String, DistributedAtomicLong> channelToLongMap = new ConcurrentHashMap<>();
 
     @Inject
-    public CuratorKeyGenerator(CuratorFramework client, MetricsTimer metricsTimer, RetryPolicy retryPolicy) {
-        this.client = client;
+    public CuratorKeyGenerator(CuratorFramework curator, MetricsTimer metricsTimer, RetryPolicy retryPolicy) {
+        this.curator = curator;
         this.metricsTimer = metricsTimer;
         this.retryPolicy = retryPolicy;
     }
@@ -60,7 +61,7 @@ public class CuratorKeyGenerator implements DataHubKeyGenerator {
     public void seedChannel(String channelName) {
         DistributedAtomicLong atomicLong = getDistributedAtomicLong(channelName);
         try {
-            atomicLong.trySet(999L);
+            atomicLong.trySet(SequenceContentKey.START_VALUE);
             logger.info("seeded channel " + channelName);
         } catch (Exception e) {
             logger.warn("unable to seed " + channelName, e);
@@ -78,8 +79,8 @@ public class CuratorKeyGenerator implements DataHubKeyGenerator {
             String path = "/keyGenerator/" + channelName;
             PromotedToLock lock = PromotedToLock.builder().lockPath(path + "/lock")
                     .retryPolicy(retryPolicy).timeout(1000, TimeUnit.SECONDS).build();
-            atomicLong = new DistributedAtomicLong(client, path, retryPolicy, lock);
-            DistributedAtomicLong previousLong = channelToLongMap.putIfAbsent(path, atomicLong);
+            atomicLong = new DistributedAtomicLong(curator, path, retryPolicy, lock);
+            DistributedAtomicLong previousLong = channelToLongMap.putIfAbsent(channelName, atomicLong);
             if (previousLong != null) {
                 atomicLong = previousLong;
             }

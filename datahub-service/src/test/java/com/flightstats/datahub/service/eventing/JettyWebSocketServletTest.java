@@ -24,7 +24,7 @@ public class JettyWebSocketServletTest {
 	private String requestUriString;
 	private URI requestUri;
 	private WebSocketCreator wsCreator;
-	private WebSocketChannelNameExtractor channelNameExtractor;
+	private ChannelNameExtractor channelNameExtractor;
 	private HttpServletRequest httpRequest;
 	private HttpServletResponse httpResponse;
 	private ChannelService channelService;
@@ -36,7 +36,7 @@ public class JettyWebSocketServletTest {
 		requestUriString = "/channel/spoon/ws";
 		requestUri = URI.create(requestUriString);
 		wsCreator = mock(WebSocketCreator.class);
-		channelNameExtractor = mock(WebSocketChannelNameExtractor.class);
+		channelNameExtractor = mock(ChannelNameExtractor.class);
 		httpRequest = mock(HttpServletRequest.class);
 		httpResponse = mock(HttpServletResponse.class);
 		channelService = mock(ChannelService.class);
@@ -58,7 +58,7 @@ public class JettyWebSocketServletTest {
 		//GIVEN
 		final AtomicBoolean superWasInvoked = new AtomicBoolean(false);
 
-		when(channelNameExtractor.extractChannelName(requestUri)).thenReturn(channelName);
+		when(channelNameExtractor.extractFromWS(requestUri)).thenReturn(channelName);
 		when(httpRequest.getRequestURI()).thenReturn(requestUriString);
 		when(channelService.channelExists(channelName)).thenReturn(true);
 
@@ -82,7 +82,7 @@ public class JettyWebSocketServletTest {
 		//GIVEN
 		final AtomicBoolean superWasInvoked = new AtomicBoolean(false);
 
-		when(channelNameExtractor.extractChannelName(requestUri)).thenReturn(channelName);
+		when(channelNameExtractor.extractFromWS(requestUri)).thenReturn(channelName);
 		when(httpRequest.getRequestURI()).thenReturn(requestUriString);
 		when(channelService.channelExists(channelName)).thenReturn(false);        //NOPE!
 

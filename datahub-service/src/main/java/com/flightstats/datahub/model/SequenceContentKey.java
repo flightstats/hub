@@ -6,6 +6,7 @@ import com.google.common.base.Optional;
 public class SequenceContentKey implements ContentKey {
     private static final long serialVersionUID = 1L;
     private final long sequence;
+    public static final long START_VALUE = 999;
 
     public SequenceContentKey(long sequence) {
         this.sequence = sequence;

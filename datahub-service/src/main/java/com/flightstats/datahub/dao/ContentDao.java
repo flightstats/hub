@@ -13,7 +13,7 @@ import java.util.Collection;
  *
  */
 public interface ContentDao {
-    ValueInsertionResult write(String channelName, Content columnValue, long ttlDays);
+    ValueInsertionResult write(String channelName, Content content, long ttlDays);
 
     Content read(String channelName, ContentKey key);
 

@@ -12,12 +12,14 @@ public class Content implements Serializable {
     private final Optional<String> contentLanguage;
     private final long millis;
     private final byte[] data;
+    private Optional<ContentKey> contentKey = Optional.absent();
 
-    public Content(Optional<String> contentType, Optional<String> contentLanguage, byte[] data, long millis) {
-        this.contentType = contentType;
-        this.contentLanguage = contentLanguage;
-        this.millis = millis;
-        this.data = data;
+    private Content(Builder builder) {
+        contentKey = builder.contentKey;
+        contentLanguage = builder.contentLanguage;
+        contentType = builder.contentType;
+        millis = builder.millis;
+        data = builder.data;
     }
 
     public Optional<String> getContentType() {
@@ -38,6 +40,56 @@ public class Content implements Serializable {
 
     public long getMillis() {
         return millis;
+    }
+
+    public Optional<ContentKey> getContentKey() {
+        return contentKey;
+    }
+
+    public void setContentKey(ContentKey contentKey) {
+        this.contentKey = Optional.of(contentKey);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private Optional<String> contentType = Optional.absent();
+        private Optional<String> contentLanguage = Optional.absent();
+        private long millis = System.currentTimeMillis();
+        private Optional<ContentKey> contentKey = Optional.absent();
+        private byte[] data;
+
+        public Builder withData(byte[] data) {
+            this.data = data;
+            return this;
+        }
+
+        public Builder withContentType(String contentType) {
+            this.contentType = Optional.fromNullable(contentType);
+            return this;
+        }
+
+        public Builder withContentLanguage(String contentLanguage) {
+            this.contentLanguage = Optional.fromNullable(contentLanguage);
+            return this;
+        }
+
+        public Builder withMillis(long millis) {
+            this.millis = millis;
+            return this;
+        }
+
+        public Builder withContentKey(ContentKey contentKey) {
+            this.contentKey = Optional.fromNullable(contentKey);
+            return this;
+        }
+
+        public Content build() {
+            return new Content(this);
+        }
+
     }
 
     @Override

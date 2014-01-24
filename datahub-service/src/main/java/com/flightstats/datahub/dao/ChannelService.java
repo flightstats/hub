@@ -1,9 +1,6 @@
 package com.flightstats.datahub.dao;
 
-import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.ContentKey;
-import com.flightstats.datahub.model.LinkedContent;
-import com.flightstats.datahub.model.ValueInsertionResult;
+import com.flightstats.datahub.model.*;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 
@@ -15,7 +12,7 @@ public interface ChannelService {
 
 	ChannelConfiguration createChannel(ChannelConfiguration configuration);
 
-	ValueInsertionResult insert(String channelName, Optional<String> contentType, Optional<String> contentLanguage, byte[] data);
+	ValueInsertionResult insert(String channelName, Content content);
 
 	Optional<LinkedContent> getValue(String channelName, String id);
 

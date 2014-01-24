@@ -19,11 +19,11 @@ public class JettyWebSocketServlet extends WebSocketServlet {
 
 	private static final Logger logger = LoggerFactory.getLogger(JettyWebSocketServlet.class);
 	private final WebSocketCreator creator;
-	private final WebSocketChannelNameExtractor channelNameExtractor;
+	private final ChannelNameExtractor channelNameExtractor;
 	private final ChannelService channelService;
 
 	@Inject
-	public JettyWebSocketServlet(WebSocketCreator webSocketCreator, WebSocketChannelNameExtractor channelNameExtractor, ChannelService channelService) {
+	public JettyWebSocketServlet(WebSocketCreator webSocketCreator, ChannelNameExtractor channelNameExtractor, ChannelService channelService) {
 		this.channelService = channelService;
 		this.creator = webSocketCreator;
 		this.channelNameExtractor = channelNameExtractor;
@@ -33,7 +33,7 @@ public class JettyWebSocketServlet extends WebSocketServlet {
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String requestUriString = request.getRequestURI();
 		URI requestUri = URI.create(requestUriString);
-		String channelName = channelNameExtractor.extractChannelName(requestUri);
+		String channelName = channelNameExtractor.extractFromWS(requestUri);
 		if (!channelService.channelExists(channelName)) {
 			logger.warn("No such channel '" + channelName + "', refusing websocket upgrade request.");
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
