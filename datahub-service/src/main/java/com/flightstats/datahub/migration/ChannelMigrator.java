@@ -43,8 +43,6 @@ public class ChannelMigrator implements Runnable {
         return channel;
     }
 
-    //todo - gfm - 1/22/14 - expose start & latest to Resource
-
     @Override
     public void run() {
         //todo - gfm - 1/22/14 - handle ZooKeeperState change as in TimeIndexProcessor
@@ -122,6 +120,7 @@ public class ChannelMigrator implements Runnable {
         logger.debug("searching the key space for " + channelUrl);
         Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
         if (!latestSequence.isPresent()) {
+            //todo - gfm - 1/23/14 - this should check that the existing latestSequence is still viable
             return SequenceContentKey.START_VALUE + 1;
         }
         long high = latestSequence.get();
