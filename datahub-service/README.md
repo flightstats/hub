@@ -29,7 +29,8 @@ The Hub is designed to be a fault tolerant, highly available service for data di
 It currently supports two types of Channels, Sequence and TimeSeries.
 
 Sequence channels represent a linked list of data.  Each item added gets a sequential id.  They are traversable, and can support items up to 10 MB.
-Sequence channels are intended for insertation rates up to one item per second.
+Sequence channels are intended for insertation rates less than five items per second.
+Users should note that with high frequency inserts, the clients view of insertion order may not be maintained.
 
 TimeSeries channels are designed for small, high frequency inserts with low latency.  Each item added gets a unique id.  They are not traversable, and have a max content size of 60KB.
 TimeSeries can support insertation rates up to 1000 items per second.
@@ -310,7 +311,7 @@ For external data providers, there is a simplified interface suitable for exposi
 `POST http://hub/provider/`
 
 * it creates a Sequence channel if it doesn't exist
-* it expects a 'channelName' header
+* it expects a `channelName` header
 * does not support any other HTTP methods
 * does not return any links
 * access by external data providers is controlled through a proxy maintained by Operations
@@ -335,7 +336,7 @@ To migrate cleanly and prevent conflicts in the channel sequences, each inserter
 to the DataHub, and wait until the DataHub and the Hub agree on the latest value before switching writes to the Hub.
 No other changes are needed for data migration.  You can monitor all of the channels calling the migration resource
 
- 'GET http://hub/migration'
+ `GET http://hub/migration`
 
  ```json
  [ {
