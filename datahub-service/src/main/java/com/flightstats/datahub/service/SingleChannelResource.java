@@ -85,8 +85,8 @@ public class SingleChannelResource {
                 .withChannelConfiguration(oldConfig)
                 .withMap(map)
                 .build();
+        newConfig = channelService.updateChannel(newConfig);
 
-        channelService.updateChannel(newConfig);
         URI channelUri = linkBuilder.buildChannelUri(newConfig, uriInfo);
         Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(newConfig, channelUri);
         return Response.ok(channelUri).entity(linked).build();

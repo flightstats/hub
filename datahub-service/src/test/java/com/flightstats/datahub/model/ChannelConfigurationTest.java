@@ -56,18 +56,28 @@ public class ChannelConfigurationTest {
     @Test
     public void testMillis() throws Exception {
         ChannelConfiguration config = ChannelConfiguration.builder().withName("millis100").withTtlMillis(100L).build();
+        assertEquals(100L, (long)config.getTtlMillis());
+        assertEquals(1, config.getTtlDays());
+    }
+
+    @Test
+    public void testMillisOneDay() throws Exception {
+        ChannelConfiguration config = ChannelConfiguration.builder().withName("millisOne").withTtlMillis(TimeUnit.DAYS.toMillis(1)).build();
+        assertEquals(86400000L, (long)config.getTtlMillis());
         assertEquals(1, config.getTtlDays());
     }
 
     @Test
     public void testMillisTwoDays() throws Exception {
         ChannelConfiguration config = ChannelConfiguration.builder().withName("millis").withTtlMillis(TimeUnit.DAYS.toMillis(1) + 10).build();
+        assertEquals(86400010L, (long)config.getTtlMillis());
         assertEquals(2, config.getTtlDays());
     }
 
     @Test
     public void testMillisNull() throws Exception {
         ChannelConfiguration config = ChannelConfiguration.builder().withName("millisNull").withTtlMillis(null).build();
+        assertEquals(31536000000000L, (long)config.getTtlMillis());
         assertEquals(1000 * 365, config.getTtlDays());
     }
 }
