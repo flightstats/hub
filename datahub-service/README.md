@@ -249,18 +249,18 @@ Here is how you can do this with curl:
 
 The time interface returns all of the URIs of items inserted within the specified minute.
 
-To see the time format, issue a HEAD or GET request on the `time` link returned from the channel metadata.
+To see the time format, issue a GET request on the `time` link returned from the channel metadata.
 The Hub will issue a 303 redirect for the current time.
 
 `HEAD http://hub/channel/stumptown/time`
 
 On success:  `HTTP/1.1 303 See Other`
-`Location: http://hub/channel/stumptown/time/2014-01-13T18:42-0800`
+`Location: http://hub/channel/stumptown/time/2014-01-13T10:42+0000`
 
 A GET on the returned URI will return all of the content URIs within that period.
 The time format is the ISO 8601 extended format with minute resolution.  In Java it is "yyyy-MM-dd'T'HH:mmZ" and in Javascript using Moment.js it is "YYYY-MM-DDTHH:mmZ"
 
-`GET http://hub/channel/stumptown/time/2014-01-13T19:13-0800`
+`GET http://hub/channel/stumptown/time/2014-01-13T12:42-0800`
 
 On success:  `HTTP/1.1 200 OK`
 Content-Type is `application/json`
@@ -269,7 +269,7 @@ Content-Type is `application/json`
 {
   "_links" : {
     "self" : {
-      "href" : "http://hub/channel/stumptown/time/2014-01-13T19:13-0800"
+      "href" : "http://hub/channel/stumptown/time/2014-01-13T12:42-0800"
     },
     "uris" : [ "http://hub/channel/stumptown/1002", "http://hub/channel/stumptown/1003",
     "http://hub/channel/stumptown/1004", "http://hub/channel/stumptown/1005",
@@ -278,8 +278,8 @@ Content-Type is `application/json`
 ```
 
 If no items were submitted during that time, 'uris' is an empty array.
-If the time requested is the current minute, 'uri's will reflect all of the items submitted within the minute so far, and may
-change if other items are submitted.
+If the time requested is the current minute, 'uri's will reflect all of the items inserted within the minute so far, and will
+change as other items are inserted.
 
 ## subscribe to events
 
