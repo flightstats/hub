@@ -33,11 +33,15 @@ public class ChannelConfiguration implements Serializable {
     public ChannelConfiguration(Builder builder) {
         this.name = builder.name;
         this.creationDate = builder.creationDate;
-        this.ttlDays = builder.ttlDays;
         this.type = builder.type;
         this.contentSizeKB = builder.contentSizeKB;
         this.peakRequestRateSeconds = builder.peakRequestRateSeconds;
-        this.ttlMillis = builder.ttlMillis;
+        this.ttlDays = builder.ttlDays;
+        if (builder.ttlMillis == null) {
+            this.ttlMillis = TimeUnit.DAYS.toMillis(ttlDays);
+        } else {
+            this.ttlMillis = builder.ttlMillis;
+        }
     }
 
     @JsonCreator
