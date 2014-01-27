@@ -6,9 +6,9 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchA
 import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.aws.AwsDataStoreModule;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
-import com.flightstats.datahub.migration.ChannelUtils;
-import com.flightstats.datahub.migration.Migrator;
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.replication.ChannelUtils;
+import com.flightstats.datahub.replication.Replicator;
 import com.flightstats.datahub.rest.RetryClientFilter;
 import com.flightstats.datahub.service.DataHubHealthCheck;
 import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
@@ -125,7 +125,7 @@ public class GuiceContextListenerFactory {
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
             binder.bind(TimeProvider.class).in(Singleton.class);
             binder.bind(ZooKeeperState.class).in(Singleton.class);
-            binder.bind(Migrator.class).in(Singleton.class);
+            binder.bind(Replicator.class).in(Singleton.class);
             binder.bind(ChannelUtils.class).in(Singleton.class);
         }
     }

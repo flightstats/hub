@@ -1,4 +1,4 @@
-package com.flightstats.datahub.migration;
+package com.flightstats.datahub.replication;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

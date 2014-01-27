@@ -1,7 +1,6 @@
 package com.flightstats.datahub.replication;
 
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
-import com.flightstats.datahub.migration.ChannelUtils;
 import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.util.Sleeper;
 import com.sun.jersey.api.client.Client;

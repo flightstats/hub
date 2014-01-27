@@ -1,10 +1,9 @@
-package com.flightstats.datahub.migration;
+package com.flightstats.datahub.replication;
 
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
-import com.flightstats.datahub.replication.SequenceIterator;
 import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.google.common.base.Optional;
 import org.apache.curator.framework.CuratorFramework;
@@ -16,8 +15,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class ChannelMigrator implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger(ChannelMigrator.class);
+public class ChannelReplicator implements Runnable {
+    private static final Logger logger = LoggerFactory.getLogger(ChannelReplicator.class);
 
     private final ChannelService channelService;
     private final String channel;
@@ -26,8 +25,8 @@ public class ChannelMigrator implements Runnable {
     private final CuratorFramework curator;
     private ChannelConfiguration configuration;
 
-    public ChannelMigrator(ChannelService channelService, String channelUrl, ChannelUtils channelUtils,
-                           CuratorFramework curator) {
+    public ChannelReplicator(ChannelService channelService, String channelUrl, ChannelUtils channelUtils,
+                             CuratorFramework curator) {
         this.channelService = channelService;
         this.channelUrl = channelUrl;
         this.curator = curator;

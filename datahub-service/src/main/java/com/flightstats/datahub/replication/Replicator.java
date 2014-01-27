@@ -1,4 +1,4 @@
-package com.flightstats.datahub.migration;
+package com.flightstats.datahub.replication;
 
 import com.flightstats.datahub.dao.ChannelService;
 import com.google.common.base.Splitter;
@@ -15,31 +15,28 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Migration is moving from the beta DataHub w/o Time Index to TheHub
- * in Migration, we will presume we are moving forward in time, starting with (nearly) the oldest Item
+ * Replication is moving from one Hub into another Hub
+ * in Replication, we will presume we are moving forward in time, starting with (nearly) the oldest Item
  * <p/>
  * Secnario:
- * Producers are inserting Items into a DataHub channel
- * TheHub is setup to Migrate a channel from DataHub
- * Migration starts at nearly the oldest Item, and gradually progresses forward to the current item
- * Migration stays up to date, with some amount of lag
- * <p/>
- * At some point after Migration is current with the Source, the Producers want to switch to inserting into the DeiHub.
- * This should not require any changes to TheHub.
+ * Producers are inserting Items into a Hub channel
+ * TheHub is setup to Replicate a channel from DataHub
+ * Replication starts at nearly the oldest Item, and gradually progresses forward to the current item
+ * Replication stays up to date, with some minimal amount of lag
  */
-public class Migrator {
-    private final static Logger logger = LoggerFactory.getLogger(Migrator.class);
+public class Replicator {
+    private final static Logger logger = LoggerFactory.getLogger(Replicator.class);
 
     private final ChannelUtils channelUtils;
     private final String sourceUrls;
     private final ChannelService channelService;
     private final CuratorFramework curator;
     private final ScheduledExecutorService executorService;
-    private final List<SourceMigrator> migrators = new ArrayList<>();
+    private final List<SourceReplicator> replicators = new ArrayList<>();
 
     @Inject
-    public Migrator(ChannelUtils channelUtils, @Named("migration.source.urls") String sourceUrls,
-                    ChannelService channelService, CuratorFramework curator) {
+    public Replicator(ChannelUtils channelUtils, @Named("migration.source.urls") String sourceUrls,
+                      ChannelService channelService, CuratorFramework curator) {
         this.channelUtils = channelUtils;
         this.sourceUrls = sourceUrls;
         this.channelService = channelService;
@@ -56,17 +53,17 @@ public class Migrator {
         Set<String> targetSet = Sets.newHashSet(iterable);
         for (String target : targetSet) {
             logger.info("starting migration of " + target);
-            SourceMigrator migrator = new SourceMigrator(target);
-            migrators.add(migrator);
-            executorService.scheduleWithFixedDelay(migrator, 0, 1, TimeUnit.MINUTES);
+            SourceReplicator replicator = new SourceReplicator(target);
+            replicators.add(replicator);
+            executorService.scheduleWithFixedDelay(replicator, 0, 1, TimeUnit.MINUTES);
         }
     }
 
-    public List<SourceMigrator> getMigrators() {
-        return Collections.unmodifiableList(migrators);
+    public List<SourceReplicator> getReplicators() {
+        return Collections.unmodifiableList(replicators);
     }
 
-    public class SourceMigrator implements Runnable {
+    public class SourceReplicator implements Runnable {
         private final String sourceUrl;
         private final Set<String> migratingChannels = new HashSet<>();
 
@@ -74,7 +71,7 @@ public class Migrator {
             return Collections.unmodifiableSet(migratingChannels);
         }
 
-        private SourceMigrator(String sourceUrl) {
+        private SourceReplicator(String sourceUrl) {
             this.sourceUrl = sourceUrl;
         }
 
@@ -95,7 +92,7 @@ public class Migrator {
             filtered.removeAll(migratingChannels);
             for (String channelUrl : filtered) {
                 logger.info("found new channel " + channelUrl);
-                ChannelMigrator migrator = new ChannelMigrator(channelService, channelUrl, channelUtils, curator);
+                ChannelReplicator migrator = new ChannelReplicator(channelService, channelUrl, channelUtils, curator);
                 executorService.scheduleWithFixedDelay(migrator, 0, 15, TimeUnit.SECONDS);
                 migratingChannels.add(channelUrl);
             }
