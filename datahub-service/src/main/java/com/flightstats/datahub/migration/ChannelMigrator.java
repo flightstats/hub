@@ -2,9 +2,9 @@ package com.flightstats.datahub.migration;
 
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
-import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
+import com.flightstats.datahub.replication.SequenceIterator;
 import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.google.common.base.Optional;
 import org.apache.curator.framework.CuratorFramework;
@@ -50,7 +50,7 @@ public class ChannelMigrator implements Runnable {
         InterProcessSemaphoreMutex mutex = new InterProcessSemaphoreMutex(curator, "/ChannelMigrator/" + channel);
         try {
             if (mutex.acquire(1, TimeUnit.SECONDS)) {
-                logger.debug("acquired " + channel);
+                logger.debug("acquired lock " + channel);
                 doWork();
             }
         } catch (Exception e) {
@@ -94,11 +94,9 @@ public class ChannelMigrator implements Runnable {
             return;
         }
         logger.debug("starting " + channelUrl + " migration at " + sequence);
-        Optional<Content> content = channelUtils.getContent(channelUrl, sequence);
-        while (content.isPresent()) {
-            channelService.insert(channel, content.get());
-            sequence++;
-            content = channelUtils.getContent(channelUrl, sequence);
+        SequenceIterator iterator = new SequenceIterator(sequence, channelUtils, channelUrl);
+        while (iterator.hasNext()) {
+            channelService.insert(channel, iterator.next());
         }
     }
 
@@ -147,7 +145,7 @@ public class ChannelMigrator implements Runnable {
         if (!creationDate.isPresent()) {
             return false;
         }
-        //todo - gfm - 1/22/14 - this will work for beta DataHub, need to change to ttlDays for new
+        //can change this when migration goes away.
         if (configuration.getTtlMillis() == null) {
             return true;
         }

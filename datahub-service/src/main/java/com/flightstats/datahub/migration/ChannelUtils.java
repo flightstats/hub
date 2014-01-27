@@ -82,6 +82,7 @@ public class ChannelUtils {
         return Optional.of(configuration);
     }
 
+    //todo - gfm - 1/25/14 - use compression for content
     public Optional<Content> getContent(String channelUrl, long sequence) {
         channelUrl = appendSlash(channelUrl);
         ClientResponse response = getResponse(channelUrl + sequence);
