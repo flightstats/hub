@@ -32,7 +32,7 @@ public class ChannelHypermediaLinkBuilder {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
-	private URI buildWsLinkFor(URI channelUri) {
+	public static URI buildWsLinkFor(URI channelUri) {
 		String requestUri = channelUri.toString().replaceFirst("^http", "ws");
 		return URI.create(requestUri + "/ws");
 	}
