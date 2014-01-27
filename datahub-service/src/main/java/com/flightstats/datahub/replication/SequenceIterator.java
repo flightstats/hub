@@ -1,6 +1,5 @@
 package com.flightstats.datahub.replication;
 
-import com.flightstats.datahub.migration.ChannelUtils;
 import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
 import com.flightstats.datahub.util.RuntimeInterruptedException;

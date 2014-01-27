@@ -1,4 +1,4 @@
-package com.flightstats.datahub.migration;
+package com.flightstats.datahub.replication;
 
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
 import com.flightstats.datahub.model.ChannelConfiguration;

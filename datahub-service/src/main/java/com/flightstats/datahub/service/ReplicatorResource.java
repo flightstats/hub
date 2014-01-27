@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.migration.ChannelUtils;
-import com.flightstats.datahub.migration.Migrator;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
+import com.flightstats.datahub.replication.ChannelUtils;
+import com.flightstats.datahub.replication.Replicator;
 import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -21,16 +21,16 @@ import javax.ws.rs.core.Response;
 /**
  *
  */
-@Path("/migration")
-public class MigratorResource {
-    private final Migrator migrator;
+@Path("/replication")
+public class ReplicatorResource {
+    private final Replicator replicator;
     private final ChannelService channelService;
     private final ChannelUtils channelUtils;
     private static ObjectMapper mapper = new ObjectMapper();
 
     @Inject
-    public MigratorResource(Migrator migrator, ChannelService channelService, ChannelUtils channelUtils) {
-        this.migrator = migrator;
+    public ReplicatorResource(Replicator replicator, ChannelService channelService, ChannelUtils channelUtils) {
+        this.replicator = replicator;
         this.channelService = channelService;
         this.channelUtils = channelUtils;
     }
@@ -39,14 +39,14 @@ public class MigratorResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getStatus() throws Exception {
         ArrayNode rootNode = mapper.createArrayNode();
-        for (Migrator.SourceMigrator sourceMigrator : migrator.getMigrators()) {
-            for (String channelUrl : sourceMigrator.getSourceChannelUrls()) {
+        for (Replicator.SourceReplicator sourceReplicator : replicator.getReplicators()) {
+            for (String channelUrl : sourceReplicator.getSourceChannelUrls()) {
                 ObjectNode channelNode = rootNode.addObject();
                 channelNode.put("source", channelUrl);
                 String name = ChannelNameExtractor.extractFromChannelUrl(channelUrl);
                 Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(name);
                 if (lastUpdatedKey.isPresent()) {
-                    //todo - gfm - 1/23/14 - this will need to change for Replication
+                    //todo - gfm - 1/23/14 - this will need to change to support TimeSeries
                     SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
                     channelNode.put("migrateLatest", contentKey.getSequence());
                 }

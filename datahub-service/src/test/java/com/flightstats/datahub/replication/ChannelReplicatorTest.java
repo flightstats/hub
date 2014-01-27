@@ -1,4 +1,4 @@
-package com.flightstats.datahub.migration;
+package com.flightstats.datahub.replication;
 
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
@@ -21,13 +21,13 @@ import static org.mockito.Mockito.*;
 /**
  * As much as I dislike Mockito, this is going to be difficult to verify, so it is worth the pain of Mockito.
  */
-public class ChannelMigratorTest {
+public class ChannelReplicatorTest {
 
     public static final String URL = "http://nowhere/channel/blast/";
     public static final String CHANNEL = "blast";
     private static ChannelService channelService;
     private static ChannelUtils channelUtils;
-    private ChannelMigrator migrator;
+    private ChannelReplicator replicator;
     private ChannelConfiguration configuration;
 
     @Before
@@ -38,7 +38,7 @@ public class ChannelMigratorTest {
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         when(channelService.channelExists(CHANNEL)).thenReturn(false);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(2000)));
-        migrator = new ChannelMigrator(channelService, URL, channelUtils, null);
+        replicator = new ChannelReplicator(channelService, URL, channelUtils, null);
     }
 
     @Test
@@ -47,7 +47,7 @@ public class ChannelMigratorTest {
         when(channelUtils.getContent(URL, 2001)).thenReturn(optional);
         when(channelUtils.getContent(URL, 2002)).thenReturn(optional);
         when(channelUtils.getContent(URL, 2003)).thenReturn(Optional.<Content>absent());
-        migrator.doWork();
+        replicator.doWork();
         verify(channelService).createChannel(configuration);
         verify(channelService, new Times(2)).insert(CHANNEL, optional.get());
     }
@@ -55,25 +55,25 @@ public class ChannelMigratorTest {
     @Test
     public void testCreateChannelAbsent() throws Exception {
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.<ChannelConfiguration>absent());
-        migrator.doWork();
+        replicator.doWork();
         verify(channelService, never()).createChannel(any(ChannelConfiguration.class));
     }
 
     @Test
     public void testStartingSequenceMissing() throws Exception {
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.<ContentKey>absent());
-        assertEquals(-1, migrator.getStartingSequence());
+        assertEquals(-1, replicator.getStartingSequence());
     }
 
     @Test
     public void testStartingSequenceExisting() throws Exception {
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(3000)));
-        assertEquals(3001, migrator.getStartingSequence());
+        assertEquals(3001, replicator.getStartingSequence());
     }
 
     @Test
     public void testStartingSequenceNew() throws Exception {
-        migrator.initialize();
+        replicator.initialize();
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
@@ -86,7 +86,7 @@ public class ChannelMigratorTest {
                 return Optional.absent();
             }
         });
-        assertEquals(1501, migrator.getStartingSequence());
+        assertEquals(1501, replicator.getStartingSequence());
     }
 
 }
