@@ -48,7 +48,7 @@ public class Replicator {
 
     public void startThreads() {
         if (sourceUrls.isEmpty()) {
-            logger.info("nothing to migrate");
+            logger.info("nothing to replicate");
             return;
         }
         Iterable<String> iterable = Splitter.on("|").omitEmptyStrings().trimResults().split(sourceUrls);
@@ -81,7 +81,7 @@ public class Replicator {
         public void run() {
             Set<String> rawChannels = channelUtils.getChannels(sourceUrl);
             if (rawChannels.isEmpty()) {
-                logger.warn("did not find any channels to migrate at " + sourceUrl);
+                logger.warn("did not find any channels to replicate at " + sourceUrl);
                 return;
             }
             Set<String> filtered = new HashSet<>();

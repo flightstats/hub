@@ -70,7 +70,7 @@ public class ChannelReplicator implements Runnable {
         if (!initialize())  {
             return;
         }
-        migrate();
+        replicate();
     }
 
     boolean initialize() throws IOException {
@@ -90,7 +90,7 @@ public class ChannelReplicator implements Runnable {
         return true;
     }
 
-    private void migrate() {
+    private void replicate() {
         long sequence = getStartingSequence();
         if (sequence == ChannelUtils.NOT_FOUND) {
             return;
