@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class ChannelReplicator implements Runnable {
+    //todo - gfm - 1/27/14 - this should push stats into graphite - lag time and number
     private static final Logger logger = LoggerFactory.getLogger(ChannelReplicator.class);
 
     private final ChannelService channelService;
@@ -23,13 +24,15 @@ public class ChannelReplicator implements Runnable {
     private final ChannelUtils channelUtils;
     private String channelUrl;
     private final CuratorFramework curator;
+    private final SequenceIteratorFactory sequenceIteratorFactory;
     private ChannelConfiguration configuration;
 
     public ChannelReplicator(ChannelService channelService, String channelUrl, ChannelUtils channelUtils,
-                             CuratorFramework curator) {
+                             CuratorFramework curator, SequenceIteratorFactory sequenceIteratorFactory) {
         this.channelService = channelService;
         this.channelUrl = channelUrl;
         this.curator = curator;
+        this.sequenceIteratorFactory = sequenceIteratorFactory;
         if (!this.channelUrl.endsWith("/")) {
             this.channelUrl += "/";
         }
@@ -93,7 +96,7 @@ public class ChannelReplicator implements Runnable {
             return;
         }
         logger.debug("starting " + channelUrl + " migration at " + sequence);
-        SequenceIterator iterator = new SequenceIterator(sequence, channelUtils, channelUrl);
+        SequenceIterator iterator = sequenceIteratorFactory.create(sequence, channelUtils, channelUrl);
         while (iterator.hasNext()) {
             channelService.insert(channel, iterator.next());
         }

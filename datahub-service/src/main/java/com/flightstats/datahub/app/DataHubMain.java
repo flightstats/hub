@@ -72,6 +72,7 @@ public class DataHubMain {
         server.start();
         logger.info("Jetty server has been started.");
         Injector injector = guice.getInjector();
+        //todo - gfm - 1/27/14 - does it make sense to pull these into TypeListeners via Guice?
         injector.getInstance(TimeIndexCoordinator.class).startThread();
         injector.getInstance(Replicator.class).startThreads();
         return server;

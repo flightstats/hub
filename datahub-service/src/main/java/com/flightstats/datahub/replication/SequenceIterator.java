@@ -70,7 +70,6 @@ public class SequenceIterator implements Iterator<Content> {
 
     @Override
     public Content next() {
-        //todo - gfm - 1/25/14 - still wondering about this logic
         Optional<Content> optional = channelUtils.getContent(channelUrl, current);
         while (!optional.isPresent()) {
             //todo - gfm - 1/25/14 - seems like this missing records should be logged somewhere, perhaps to a missing records channel
@@ -124,7 +123,6 @@ public class SequenceIterator implements Iterator<Content> {
         //todo - gfm - 1/26/14 - does this need to do anything with errors?
         logger.info("message {}", msg);
         long sequence = Long.parseLong(StringUtils.substringAfterLast(msg, "/"));
-        //todo - gfm - 1/25/14 - presumes this is called in a single threaded event loop
         if (sequence > latest.get()) {
             latest.set(sequence);
         }

@@ -29,6 +29,7 @@ public class ChannelReplicatorTest {
     private static ChannelUtils channelUtils;
     private ChannelReplicator replicator;
     private ChannelConfiguration configuration;
+    private SequenceIterator sequenceIterator;
 
     @Before
     public void setupClass() throws Exception {
@@ -38,18 +39,20 @@ public class ChannelReplicatorTest {
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         when(channelService.channelExists(CHANNEL)).thenReturn(false);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(2000)));
-        replicator = new ChannelReplicator(channelService, URL, channelUtils, null);
+        SequenceIteratorFactory factory = mock(SequenceIteratorFactory.class);
+        sequenceIterator = mock(SequenceIterator.class);
+        when(factory.create(anyLong(), any(ChannelUtils.class), anyString())).thenReturn(sequenceIterator);
+        replicator = new ChannelReplicator(channelService, URL, channelUtils, null, factory);
     }
 
     @Test
     public void testLifeCycleNew() throws Exception {
-        Optional<Content> optional = Optional.of(mock(Content.class));
-        when(channelUtils.getContent(URL, 2001)).thenReturn(optional);
-        when(channelUtils.getContent(URL, 2002)).thenReturn(optional);
-        when(channelUtils.getContent(URL, 2003)).thenReturn(Optional.<Content>absent());
+        Content content = mock(Content.class);
+        when(sequenceIterator.hasNext()).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(sequenceIterator.next()).thenReturn(content).thenReturn(content).thenReturn(null);
         replicator.doWork();
         verify(channelService).createChannel(configuration);
-        verify(channelService, new Times(2)).insert(CHANNEL, optional.get());
+        verify(channelService, new Times(2)).insert(CHANNEL, content);
     }
 
     @Test
