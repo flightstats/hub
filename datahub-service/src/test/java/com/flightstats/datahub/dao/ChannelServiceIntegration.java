@@ -26,7 +26,6 @@ public abstract class ChannelServiceIntegration {
 
 
     public static void finalStartup(Properties properties) throws Exception {
-        properties.put("zookeeper.connection", "localhost:2181");
         testingServer = new TestingServer(2181);
         injector = GuiceContextListenerFactory.construct(properties).getInjector();
         channelNames.clear();

@@ -2,6 +2,7 @@ package com.flightstats.datahub.dao.dynamo;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
+import com.flightstats.datahub.app.DataHubMain;
 import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.dao.ChannelServiceIntegration;
@@ -38,23 +39,13 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        Properties properties = new Properties();
+        Properties properties = DataHubMain.loadProperties("useDefault");
         properties.put("backing.store", "aws");
-        //properties.put("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
-        properties.put("dynamo.endpoint", "localhost:8000");
-        properties.put("aws.protocol", "HTTP");
-        properties.put("aws.environment", "test");
-        properties.put("dynamo.table_creation_wait_minutes", "5");
-        properties.put("aws.credentials", "default");
-        properties.put("hazelcast.conf.xml", "");
         finalStartup(properties);
     }
 
-
     @Override
-    protected void verifyStartup() {
-
-    }
+    protected void verifyStartup() { }
 
     @AfterClass
     public static void teardownClass() throws IOException {
