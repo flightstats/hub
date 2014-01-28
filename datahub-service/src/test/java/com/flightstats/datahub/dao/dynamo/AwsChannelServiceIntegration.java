@@ -21,6 +21,8 @@ import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,6 +38,7 @@ import static org.junit.Assert.*;
  * start with java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar
  */
 public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
+    private final static Logger logger = LoggerFactory.getLogger(AwsChannelServiceIntegration.class);
 
     @BeforeClass
     public static void setupClass() throws Exception {
@@ -51,7 +54,11 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
     public static void teardownClass() throws IOException {
         ChannelService service = injector.getInstance(ChannelService.class);
         for (String channelName : channelNames) {
-            service.delete(channelName);
+            try {
+                service.delete(channelName);
+            } catch (Exception e) {
+                logger.warn("unable to delete " + channelName, e);
+            }
         }
         tearDown();
     }
