@@ -13,7 +13,7 @@ The Hub
 * [subscribe to events](#subscribe-to-events)
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
-* [migrate from datahub](#migrate-from-datahub)
+* [replicate another hub](#replicate-another-hub)
 
 For the purposes of this document, the Hub is at http://hub/.
 
@@ -327,25 +327,21 @@ Here's how you can do this with curl:
 curl -i -X DELETE http://hub/channel/stumptown
 ```
 
-## migrate from datahub
+## replicate another hub
 
-The Hub in Prod will be actively pulling all channels from the Prod DataHub and providing the new time interface.
-Since all current uses of the DataHub are Sequence channels, all of the migrated channels will also be Sequence channels.
+The Hub in Prod will be actively pull channels from another Hub instance.
+todo include details on using interface
 
-To migrate cleanly and prevent conflicts in the channel sequences, each inserter into the DataHub should stop writing
-to the DataHub, and wait until the DataHub and the Hub agree on the latest value before switching writes to the Hub.
-No other changes are needed for data migration.  You can monitor all of the channels calling the migration resource
-
- `GET http://hub/migration`
+ `GET http://hub/replication`
 
  ```json
  [ {
-   "source" : "http://datahub.svc.prod/channel/FlightHistoryUpdates",
-   "migrateLatest" : 310491,
+   "source" : "http://hub.svc.prod/channel/FlightHistoryUpdates",
+   "replicationLatest" : 310491,
    "sourceLatest" : 310491
  }, {
-   "source" : "http://datahub.svc.prod/channel/positionAirnavRaw",
-   "migrateLatest" : 184203,
+   "source" : "http://hub.svc.prod/channel/positionAirnavRaw",
+   "replicationLatest" : 184203,
    "sourceLatest" : 184203
  } ]
  ```
