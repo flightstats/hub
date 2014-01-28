@@ -43,7 +43,7 @@ public class ChannelResourceTest {
 				.build();
 		UriInfo uriInfo = mock(UriInfo.class);
 		ChannelService channelService = mock(ChannelService.class);
-        ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
+        ChannelLinkBuilder linkBuilder = mock(ChannelLinkBuilder.class);
 
 		when(uriInfo.getRequestUri()).thenReturn(URI.create("http://path/to"));
 		when(channelService.channelExists(channelName)).thenReturn(false);
@@ -74,7 +74,7 @@ public class ChannelResourceTest {
 
 		ChannelService channelService = mock(ChannelService.class);
 		UriInfo uriInfo = mock(UriInfo.class);
-		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
+		ChannelLinkBuilder linkBuilder = mock(ChannelLinkBuilder.class);
 
 		ChannelResource testClass = new ChannelResource(channelService, linkBuilder, uriInfo);
 
