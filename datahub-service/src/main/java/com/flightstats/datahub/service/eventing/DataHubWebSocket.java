@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
+import com.flightstats.datahub.service.ChannelLinkBuilder;
 import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
@@ -20,14 +20,14 @@ public class DataHubWebSocket {
 	private final Runnable afterDisconnectCallback;
 	private final ChannelNameExtractor channelNameExtractor;
 	private final SubscriptionRoster subscriptions;
-	private final ChannelHypermediaLinkBuilder linkBuilder;
+	private final ChannelLinkBuilder linkBuilder;
 	private String remoteAddress;
     //todo - gfm - 1/15/14 - I'm curious about the lifecycle of this
 	private JettyWebSocketEndpointSender endpointSender;
 	private String channelName;
 
 	@Inject
-	public DataHubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder) {
+	public DataHubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelLinkBuilder linkBuilder) {
 		this(subscriptions, channelNameExtractor, linkBuilder, new Runnable() {
 			@Override
 			public void run() {
@@ -36,7 +36,7 @@ public class DataHubWebSocket {
 		});
 	}
 
-	DataHubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder,
+	DataHubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelLinkBuilder linkBuilder,
 					Runnable afterDisconnectCallback) {
 		this.linkBuilder = linkBuilder;
 		this.afterDisconnectCallback = afterDisconnectCallback;

@@ -27,7 +27,7 @@ public class SingleChannelResourceTest {
 	private String contentType;
 	private String contentLanguage;
 	private URI channelUri;
-	private ChannelHypermediaLinkBuilder linkBuilder;
+	private ChannelLinkBuilder linkBuilder;
 	public static final Date CREATION_DATE = new Date(12345L);
     private ContentKey contentKey;
 	private URI itemUri;
@@ -45,7 +45,7 @@ public class SingleChannelResourceTest {
 		URI requestUri = URI.create("http://testification.com/channel/UHF");
 		itemUri = URI.create("http://testification.com/channel/UHF/1200");
 		contentKey = new SequenceContentKey(1200);
-		linkBuilder = new ChannelHypermediaLinkBuilder();
+		linkBuilder = new ChannelLinkBuilder();
 		uriInfo = mock(UriInfo.class);
 
 		when(uriInfo.getRequestUri()).thenReturn(requestUri);

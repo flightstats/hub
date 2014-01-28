@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
+import com.flightstats.datahub.service.ChannelLinkBuilder;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
@@ -19,7 +19,7 @@ public class DataHubWebSocketTest {
     private URI requestUri;
     private SubscriptionRoster subscriptionRoster;
     private ChannelNameExtractor channelNameExtractor;
-	private ChannelHypermediaLinkBuilder linkBuilder;
+	private ChannelLinkBuilder linkBuilder;
 
     @Before
 	public void setup() {
@@ -29,7 +29,7 @@ public class DataHubWebSocketTest {
         subscriptionRoster = mock( SubscriptionRoster.class );
         channelNameExtractor = mock( ChannelNameExtractor.class );
         session = mock(Session.class);
-		linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
+		linkBuilder = mock(ChannelLinkBuilder.class);
         UpgradeRequest upgradeRequest = mock(UpgradeRequest.class);
 
 		when(session.getRemoteAddress()).thenReturn(remoteAddress);

@@ -2,7 +2,7 @@ package com.flightstats.datahub.service.eventing;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
-import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
+import com.flightstats.datahub.service.ChannelLinkBuilder;
 import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
 import org.eclipse.jetty.websocket.api.UpgradeResponse;
@@ -17,10 +17,10 @@ public class MetricsCustomWebSocketCreator implements WebSocketCreator {
     private final SubscriptionRoster subscriptions;
     private final ChannelNameExtractor channelNameExtractor;
 	private final Object mutex = new Object();
-	private final ChannelHypermediaLinkBuilder linkBuilder;
+	private final ChannelLinkBuilder linkBuilder;
 
 	@Inject
-	public MetricsCustomWebSocketCreator(MetricRegistry registry, SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder) {
+	public MetricsCustomWebSocketCreator(MetricRegistry registry, SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelLinkBuilder linkBuilder) {
 		this.registry = registry;
         this.subscriptions = subscriptions;
         this.channelNameExtractor = channelNameExtractor;

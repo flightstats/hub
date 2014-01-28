@@ -1,7 +1,7 @@
 package com.flightstats.datahub.replication;
 
 import com.flightstats.datahub.model.Content;
-import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
+import com.flightstats.datahub.service.ChannelLinkBuilder;
 import com.flightstats.datahub.util.RuntimeInterruptedException;
 import com.google.common.base.Optional;
 import org.apache.commons.lang.StringUtils;
@@ -86,7 +86,7 @@ public class SequenceIterator implements Iterator<Content> {
             logger.warn("unable to get latest for channel " + channelUrl);
             return;
         }
-        URI wsUri = ChannelHypermediaLinkBuilder.buildWsLinkFor(URI.create(channelUrl));
+        URI wsUri = ChannelLinkBuilder.buildWsLinkFor(URI.create(channelUrl));
         latest = new AtomicLong(latestSequence.get());
         startWebSocket(wsUri);
     }

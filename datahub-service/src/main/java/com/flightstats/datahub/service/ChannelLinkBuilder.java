@@ -10,10 +10,10 @@ import java.net.URI;
 
 import static com.flightstats.rest.Linked.linked;
 
-public class ChannelHypermediaLinkBuilder {
+public class ChannelLinkBuilder {
 
 	@Inject
-	public ChannelHypermediaLinkBuilder() {
+	public ChannelLinkBuilder() {
 	}
 
 	URI buildChannelUri(ChannelConfiguration channelConfiguration, UriInfo uriInfo) {
