@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * Secnario:
  * Producers are inserting Items into a Hub channel
- * TheHub is setup to Replicate a channel from DataHub
+ * The Hub is setup to Replicate a channel from DataHub
  * Replication starts at nearly the oldest Item, and gradually progresses forward to the current item
  * Replication stays up to date, with some minimal amount of lag
  */
@@ -31,16 +31,18 @@ public class Replicator {
     private final String sourceUrls;
     private final ChannelService channelService;
     private final CuratorFramework curator;
+    private final SequenceIteratorFactory sequenceIteratorFactory;
     private final ScheduledExecutorService executorService;
     private final List<SourceReplicator> replicators = new ArrayList<>();
 
     @Inject
     public Replicator(ChannelUtils channelUtils, @Named("migration.source.urls") String sourceUrls,
-                      ChannelService channelService, CuratorFramework curator) {
+                      ChannelService channelService, CuratorFramework curator, SequenceIteratorFactory sequenceIteratorFactory) {
         this.channelUtils = channelUtils;
         this.sourceUrls = sourceUrls;
         this.channelService = channelService;
         this.curator = curator;
+        this.sequenceIteratorFactory = sequenceIteratorFactory;
         executorService = Executors.newScheduledThreadPool(10);
     }
 
@@ -92,7 +94,7 @@ public class Replicator {
             filtered.removeAll(migratingChannels);
             for (String channelUrl : filtered) {
                 logger.info("found new channel " + channelUrl);
-                ChannelReplicator migrator = new ChannelReplicator(channelService, channelUrl, channelUtils, curator);
+                ChannelReplicator migrator = new ChannelReplicator(channelService, channelUrl, channelUtils, curator, sequenceIteratorFactory);
                 executorService.scheduleWithFixedDelay(migrator, 0, 15, TimeUnit.SECONDS);
                 migratingChannels.add(channelUrl);
             }

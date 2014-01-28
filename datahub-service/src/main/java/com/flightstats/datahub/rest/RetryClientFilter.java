@@ -32,8 +32,8 @@ public class RetryClientFilter extends ClientFilter
             {
                 ClientResponse response = getNext().handle(clientRequest);
                 if (response.getStatus() >= 500) {
-                    //todo - gfm - 1/26/14 - look at retry header
-                    logger.info("500 level response {}  attempt={}", clientRequest.getURI().toString(), i);
+                    //todo - gfm - 1/26/14 - look at Retry-After header
+                    logger.info("500 level response {}  attempt={}", response, i);
                     if (i >= maxRetries) {
                         return response;
                     }

@@ -21,6 +21,7 @@ public class CassandraDataStoreModule extends AbstractModule {
 
 	@Override
 	protected void configure() {
+        //todo - gfm - 1/27/14 - this has fallen behind.  If needed, start by looking at AwsDataStoreModule.
 		Names.bindProperties(binder(), properties);
 		bind(ContentServiceImpl.class).asEagerSingleton();
 		bind(CassandraConnectorFactory.class).in(Singleton.class);

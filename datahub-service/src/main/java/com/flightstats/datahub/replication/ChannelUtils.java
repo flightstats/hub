@@ -49,7 +49,7 @@ public class ChannelUtils {
         channelUrl = appendSlash(channelUrl);
         ClientResponse response = noRedirectsClient.resource(channelUrl + "latest")
                 .accept(MediaType.WILDCARD_TYPE)
-                .get(ClientResponse.class);
+                .head();
         if (response.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
             logger.debug("latest not found for " + channelUrl + " " + response);
             return Optional.absent();
@@ -132,6 +132,10 @@ public class ChannelUtils {
     }
 
     private ClientResponse getResponse(String url) {
+        /**
+         * this uses no redirects because I don't think we want to follow redirects for content,
+         * as it could end up in an infinite loop.
+         */
         return noRedirectsClient.resource(url).accept(MediaType.WILDCARD_TYPE).get(ClientResponse.class);
     }
 
