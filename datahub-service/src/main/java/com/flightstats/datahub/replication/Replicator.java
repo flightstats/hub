@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,6 +40,7 @@ public class Replicator {
         this.replicatorProvider = replicatorProvider;
         this.replicationService = replicationService;
         this.curator = curator;
+        //todo - gfm - 1/29/14 - should this number be configurable?  does it matter?
         executorService = Executors.newScheduledThreadPool(10);
     }
 
@@ -96,7 +98,8 @@ public class Replicator {
                 logger.info("found new channel " + channelUrl);
                 ChannelReplicator channelReplicator = replicatorProvider.get();
                 channelReplicator.setChannelUrl(channelUrl);
-                executorService.scheduleWithFixedDelay(channelReplicator, 0, 15, TimeUnit.SECONDS);
+                //todo - gfm - 1/29/14 - need to keep track of these
+                ScheduledFuture<?> future = executorService.scheduleWithFixedDelay(channelReplicator, 0, 15, TimeUnit.SECONDS);
                 migratingChannels.add(channelUrl);
             }
         }

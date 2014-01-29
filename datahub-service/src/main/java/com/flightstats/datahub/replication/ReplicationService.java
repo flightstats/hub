@@ -41,7 +41,7 @@ public class ReplicationService {
     }
 
     public void create(final String domain, final ReplicationConfig config) {
-        if (!config.getIncludeExcept().isEmpty() && !config.getExcludeExcept().isEmpty()) {
+        if (!config.isValid()) {
             throw new InvalidRequestException("only one of includeExcept and excludeExcept can be populated");
         }
         curatorLock.runWithLock(new Lockable() {
