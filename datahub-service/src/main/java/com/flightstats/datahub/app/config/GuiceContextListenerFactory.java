@@ -84,6 +84,7 @@ public class GuiceContextListenerFactory {
                 .withObjectMapper(DataHubObjectMapperFactory.construct())
                 .withBindings(new DataHubBindings())
                 .withHealthCheckClass(DataHubHealthCheck.class)
+                //this could be more precise
                 .withRegexServe(ChannelNameExtractor.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
                 .withModules(Arrays.asList(module))
                 .build();

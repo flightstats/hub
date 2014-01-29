@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+//todo - gfm - 1/29/14 - change this to use javax.websocket
 @WebSocket(maxTextMessageSize = 1024 * 10)    //10k
 public class DataHubWebSocket {
 
