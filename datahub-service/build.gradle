@@ -87,15 +87,16 @@ task integrationTests() << {
 }
 
 dependencies {
-    compile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.0.6.v20130930'
-    compile group: 'org.eclipse.jetty', name: 'jetty-webapp', version: '9.0.6.v20130930'
-    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: '9.0.6.v20130930'
-    compile group: 'org.eclipse.jetty', name: 'jetty-util', version: '9.0.6.v20130930'
-    compile group: 'org.eclipse.jetty', name: 'jetty-http', version: '9.0.6.v20130930'
-    compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.0.6.v20130930'
-    compile group: 'org.eclipse.jetty', name: 'jetty-security', version: '9.0.6.v20130930'
-    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-server', version: '9.0.6.v20130930'
-    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-common', version: '9.0.6.v20130930'
+    compile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-webapp', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-util', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-http', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-security', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-server', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-common', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty.websocket', name: 'javax-websocket-client-impl', version: '9.1.1.v20140108'
     //todo upgrade these to latest jersey from glassfish
     compile group: 'com.sun.jersey', name: 'jersey-core', version: '1.17.1'
     compile group: 'com.sun.jersey', name: 'jersey-json', version: '1.17.1'

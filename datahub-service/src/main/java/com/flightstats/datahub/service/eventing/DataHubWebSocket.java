@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-@WebSocket(maxMessageSize = 1024 * 10)    //10k
+@WebSocket(maxTextMessageSize = 1024 * 10)    //10k
 public class DataHubWebSocket {
 
 	private final static Logger logger = LoggerFactory.getLogger(DataHubWebSocket.class);
