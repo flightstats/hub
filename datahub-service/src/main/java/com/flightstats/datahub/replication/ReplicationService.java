@@ -18,7 +18,6 @@ import java.util.Collection;
 public class ReplicationService {
 
     //todo - gfm - 1/27/14 - do all the modifying methods need global locks?
-
     private Replicator replicator;
     private final DynamoReplicationDao replicationDao;
     private final ChannelService channelService;
