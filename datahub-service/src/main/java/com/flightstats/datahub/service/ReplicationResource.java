@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service;
 
-import com.flightstats.datahub.replication.ReplicationConfig;
+import com.flightstats.datahub.replication.ReplicationDomain;
 import com.flightstats.datahub.replication.ReplicationService;
 import com.flightstats.datahub.replication.ReplicationStatus;
 import com.google.common.base.Optional;
@@ -43,17 +43,17 @@ public class ReplicationResource {
     @Path("/{domain}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response putDomain(@PathParam("domain") String domain, ReplicationConfig replicationConfig) {
-        logger.info("creating domain " + domain + " replicationConfig " + replicationConfig);
-        replicationService.create(domain, replicationConfig);
-        return Response.created(uriInfo.getRequestUri()).entity(replicationConfig).build();
+    public Response putDomain(@PathParam("domain") String domain, ReplicationDomain replicationDomain) {
+        logger.info("creating domain " + domain + " replicationConfig " + replicationDomain);
+        replicationService.create(domain, replicationDomain);
+        return Response.created(uriInfo.getRequestUri()).entity(replicationDomain).build();
     }
 
     @GET
     @Path("/{domain}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDomain(@PathParam("domain") String domain) {
-        Optional<ReplicationConfig> replicationConfig = replicationService.get(domain);
+        Optional<ReplicationDomain> replicationConfig = replicationService.get(domain);
         if (!replicationConfig.isPresent()) {
             Response.status(Response.Status.NOT_FOUND).build();
         }

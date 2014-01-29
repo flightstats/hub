@@ -25,7 +25,7 @@ public class DynamoReplicationDao {
         this.dynamoUtils = dynamoUtils;
     }
 
-    public void upsert(ReplicationConfig config) {
+    public void upsert(ReplicationDomain config) {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("domain", new AttributeValue(config.getDomain()));
         item.put("historicalDays", new AttributeValue().withN(String.valueOf(config.getHistoricalDays())));
@@ -42,7 +42,7 @@ public class DynamoReplicationDao {
         dbClient.putItem(putItemRequest);
     }
 
-    public Optional<ReplicationConfig> get(String domain) {
+    public Optional<ReplicationDomain> get(String domain) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("domain", new AttributeValue().withS(domain));
         GetItemRequest getItemRequest = new GetItemRequest().withTableName(getTableName()).withKey(keyMap);
@@ -62,8 +62,8 @@ public class DynamoReplicationDao {
         //todo - gfm - 1/27/14 - delete
     }
 
-    public Collection<ReplicationConfig> getConfigs() {
-        List<ReplicationConfig> configs = new ArrayList<>();
+    public Collection<ReplicationDomain> getConfigs() {
+        List<ReplicationDomain> configs = new ArrayList<>();
         //todo - gfm - 1/27/14 -
 
         return configs;
@@ -78,8 +78,8 @@ public class DynamoReplicationDao {
         dynamoUtils.createTable(request);
     }
 
-    private ReplicationConfig mapItem(Map<String, AttributeValue> item) {
-        ReplicationConfig.Builder builder = ReplicationConfig.builder()
+    private ReplicationDomain mapItem(Map<String, AttributeValue> item) {
+        ReplicationDomain.Builder builder = ReplicationDomain.builder()
                 .withDomain(item.get("domain").getS());
         if (item.containsKey("historicalDays")) {
             builder.withHistoricalDays(Long.parseLong(item.get("historicalDays").getN()));

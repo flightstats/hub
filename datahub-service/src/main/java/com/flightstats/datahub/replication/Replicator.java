@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  * Replication stays up to date, with some minimal amount of lag
  */
 public class Replicator {
-    public static final String REPLICATOR_WATCHER = "/replicator/watcher";
+    public static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
     private final static Logger logger = LoggerFactory.getLogger(Replicator.class);
 
     private final ChannelUtils channelUtils;
@@ -44,15 +44,16 @@ public class Replicator {
         executorService = Executors.newScheduledThreadPool(10);
     }
 
+    //todo - gfm - 1/29/14 - figure out startup scenario for this, should probably be done thru guice
     public void startThreads() {
         //todo - gfm - 1/28/14 - figure out watcher semantics
         try {
-            curator.getData().watched().inBackground().forPath(REPLICATOR_WATCHER);
+            curator.getData().watched().inBackground().forPath(REPLICATOR_WATCHER_PATH);
         } catch (Exception e) {
             logger.warn("unable to start watcher", e);
         }
-        Collection<ReplicationConfig> configs = replicationService.getConfigs();
-        for (ReplicationConfig config : configs) {
+        Collection<ReplicationDomain> configs = replicationService.getConfigs();
+        for (ReplicationDomain config : configs) {
 
             logger.info("starting repication of " + config.getDomain());
             SourceReplicator replicator = new SourceReplicator(config);
@@ -67,13 +68,13 @@ public class Replicator {
 
     public class SourceReplicator implements Runnable {
         private final Set<String> migratingChannels = new HashSet<>();
-        private final ReplicationConfig config;
+        private final ReplicationDomain config;
 
         public Set<String> getSourceChannelUrls() {
             return Collections.unmodifiableSet(migratingChannels);
         }
 
-        private SourceReplicator(ReplicationConfig config) {
+        private SourceReplicator(ReplicationDomain config) {
             this.config = config;
         }
 

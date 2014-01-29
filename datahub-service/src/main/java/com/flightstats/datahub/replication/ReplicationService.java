@@ -40,7 +40,7 @@ public class ReplicationService {
         this.curator = curator;
     }
 
-    public void create(final String domain, final ReplicationConfig config) {
+    public void create(final String domain, final ReplicationDomain config) {
         if (!config.isValid()) {
             throw new InvalidRequestException("only one of includeExcept and excludeExcept can be populated");
         }
@@ -56,13 +56,13 @@ public class ReplicationService {
 
     private void notifyWatchers() {
         try {
-            curator.setData().forPath(Replicator.REPLICATOR_WATCHER, Longs.toByteArray(System.currentTimeMillis()));
+            curator.setData().forPath(Replicator.REPLICATOR_WATCHER_PATH, Longs.toByteArray(System.currentTimeMillis()));
         } catch (Exception e) {
             logger.warn("unable to set watcher path", e);
         }
     }
 
-    public Optional<ReplicationConfig> get(String domain) {
+    public Optional<ReplicationDomain> get(String domain) {
         return replicationDao.get(domain);
     }
 
@@ -76,7 +76,7 @@ public class ReplicationService {
         notifyWatchers();
     }
 
-    public Collection<ReplicationConfig> getConfigs() {
+    public Collection<ReplicationDomain> getConfigs() {
         return replicationDao.getConfigs();
     }
 
