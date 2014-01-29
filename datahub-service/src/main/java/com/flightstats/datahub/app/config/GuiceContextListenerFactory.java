@@ -3,6 +3,7 @@ package com.flightstats.datahub.app.config;
 import com.codahale.metrics.MetricRegistry;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
+import com.flightstats.datahub.cluster.CuratorLock;
 import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.aws.AwsDataStoreModule;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
@@ -127,6 +128,7 @@ public class GuiceContextListenerFactory {
             binder.bind(ZooKeeperState.class).in(Singleton.class);
             binder.bind(Replicator.class).in(Singleton.class);
             binder.bind(ChannelUtils.class).in(Singleton.class);
+            binder.bind(CuratorLock.class).in(Singleton.class);
         }
     }
 

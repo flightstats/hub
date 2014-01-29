@@ -1,9 +1,9 @@
 package com.flightstats.datahub.dao.timeIndex;
 
-import com.flightstats.datahub.cluster.ZooKeeperState;
+import com.flightstats.datahub.cluster.CuratorLock;
+import com.flightstats.datahub.cluster.Lockable;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,42 +15,28 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class TimeIndexProcessor {
+public class TimeIndexProcessor implements Lockable {
 
     private final static Logger logger = LoggerFactory.getLogger(TimeIndexProcessor.class);
-    private final CuratorFramework curator;
+    private final CuratorLock curatorLock;
     private String channel;
     private final TimeIndexDao timeIndexDao;
-    private final ZooKeeperState zooKeeperState;
+    private final CuratorFramework curator;
 
     @Inject
-    public TimeIndexProcessor(CuratorFramework curator, TimeIndexDao timeIndexDao,
-                              ZooKeeperState zooKeeperState) {
-        this.curator = curator;
+    public TimeIndexProcessor(CuratorLock curatorLock, TimeIndexDao timeIndexDao, CuratorFramework curator) {
+        this.curatorLock = curatorLock;
         this.timeIndexDao = timeIndexDao;
-        this.zooKeeperState = zooKeeperState;
+        this.curator = curator;
     }
 
     public void process(String channel) {
         this.channel = channel;
-        InterProcessSemaphoreMutex mutex = new InterProcessSemaphoreMutex(curator, "/TimeIndexLock/" + channel);
-        try {
-            if (mutex.acquire(1, TimeUnit.MINUTES)) {
-                logger.debug("acquired " + channel);
-                processChannel();
-            }
-        } catch (Exception e) {
-            logger.warn("oh no! " + channel, e);
-        } finally {
-            try {
-                mutex.release();
-            } catch (Exception e) {
-                //ignore
-            }
-        }
+        curatorLock.runWithLock(this);
     }
 
-    private void processChannel() {
+    @Override
+    public void runWithLock() {
         try {
             String path = TimeIndex.getPath(channel);
             List<String> dateHashes = curator.getChildren().forPath(path);
@@ -63,7 +49,7 @@ public class TimeIndexProcessor {
                 Collections.sort(dateHashes);
                 dateHashes = dateHashes.subList(0, dateHashes.size() - 2);
                 for (String dateHash : dateHashes) {
-                    if (zooKeeperState.shouldStopWorking()) {
+                    if (curatorLock.shouldStopWorking()) {
                         logger.info("exiting {}" + channel);
                         return;
                     }
@@ -86,5 +72,20 @@ public class TimeIndexProcessor {
         } catch (Exception e) {
             logger.warn("unable to process " + channel + " " + dateHash, e);
         }
+    }
+
+    @Override
+    public String getLockPath() {
+        return "/TimeIndexLock/" + channel;
+    }
+
+    @Override
+    public long getAcquireTime() {
+        return 1;
+    }
+
+    @Override
+    public TimeUnit getAcquireUnit() {
+        return TimeUnit.SECONDS;
     }
 }
