@@ -128,7 +128,7 @@ public class SequenceIterator implements Iterator<Content> {
         exit();
     }
 
-    private void exit() {
+    public void exit() {
         shouldExit.set(true);
         signal();
     }

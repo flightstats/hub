@@ -7,14 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Replication is moving from one Hub into another Hub
- * in Replication, we will presume we are moving forward in time, starting with (nearly) the oldest Item
+ * in Replication, we will presume we are moving forward in time, starting with configurable item age.
  * <p/>
  * Secnario:
  * Producers are inserting Items into a Hub channel
@@ -26,22 +22,19 @@ public class Replicator {
     public static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
     private final static Logger logger = LoggerFactory.getLogger(Replicator.class);
 
-    private final ChannelUtils channelUtils;
-    private final Provider<ChannelReplicator> replicatorProvider;
     private final ReplicationService replicationService;
     private final CuratorFramework curator;
-    private final ScheduledExecutorService executorService;
-    private final List<SourceReplicator> replicators = new ArrayList<>();
+    private final Provider<DomainReplicator> domainReplicatorProvider;
+    //todo - gfm - 1/29/14 - domainReplicators should probably be replaced by replicatorMap
+    private final List<DomainReplicator> domainReplicators = new ArrayList<>();
+    private final Map<String, DomainReplicator> replicatorMap = new HashMap<>();
 
     @Inject
-    public Replicator(ChannelUtils channelUtils, Provider<ChannelReplicator> replicatorProvider,
-                      ReplicationService replicationService, CuratorFramework curator) {
-        this.channelUtils = channelUtils;
-        this.replicatorProvider = replicatorProvider;
+    public Replicator(ReplicationService replicationService, CuratorFramework curator,
+                      Provider<DomainReplicator> domainReplicatorProvider) {
         this.replicationService = replicationService;
         this.curator = curator;
-        //todo - gfm - 1/29/14 - should this number be configurable?  does it matter?
-        executorService = Executors.newScheduledThreadPool(10);
+        this.domainReplicatorProvider = domainReplicatorProvider;
     }
 
     //todo - gfm - 1/29/14 - figure out startup scenario for this, should probably be done thru guice
@@ -52,58 +45,35 @@ public class Replicator {
         } catch (Exception e) {
             logger.warn("unable to start watcher", e);
         }
-        Collection<ReplicationDomain> configs = replicationService.getConfigs();
-        for (ReplicationDomain config : configs) {
-
-            logger.info("starting repication of " + config.getDomain());
-            SourceReplicator replicator = new SourceReplicator(config);
-            replicators.add(replicator);
-            executorService.scheduleWithFixedDelay(replicator, 0, 1, TimeUnit.MINUTES);
-        }
+        //todo - gfm - 1/29/14 - this code should get triggered when the replication config changes, aka by REPLICATOR_WATCHER_PATH
+        replicateDomains();
     }
 
-    public List<SourceReplicator> getReplicators() {
-        return Collections.unmodifiableList(replicators);
-    }
-
-    public class SourceReplicator implements Runnable {
-        private final Set<String> migratingChannels = new HashSet<>();
-        private final ReplicationDomain config;
-
-        public Set<String> getSourceChannelUrls() {
-            return Collections.unmodifiableSet(migratingChannels);
-        }
-
-        private SourceReplicator(ReplicationDomain config) {
-            this.config = config;
-        }
-
-        @Override
-        public void run() {
-            String sourceUrl = "http://" + config.getDomain() +"/channel/";
-            Set <String> rawChannels = channelUtils.getChannels(sourceUrl);
-            if (rawChannels.isEmpty()) {
-                logger.warn("did not find any channels to replicate at " + sourceUrl);
-                return;
-            }
-            //todo - gfm - 1/28/14 - filter inclusion & excelusion sets
-            Set<String> filtered = new HashSet<>();
-            for (String channel : rawChannels) {
-                if (channel.startsWith(sourceUrl)) {
-                    filtered.add(channel);
+    private synchronized void replicateDomains() {
+        Collection<ReplicationDomain> domains = replicationService.getDomains();
+        for (ReplicationDomain domain : domains) {
+            if (replicatorMap.containsKey(domain.getDomain())) {
+                DomainReplicator domainReplicator = replicatorMap.get(domain.getDomain());
+                if (domainReplicator.isDifferent(domain)) {
+                    domainReplicator.exit();
+                    startReplication(domain);
                 }
-            }
-            //todo - gfm - 1/23/14 - does this need to support channel removal?
-            filtered.removeAll(migratingChannels);
-            for (String channelUrl : filtered) {
-                logger.info("found new channel " + channelUrl);
-                ChannelReplicator channelReplicator = replicatorProvider.get();
-                channelReplicator.setChannelUrl(channelUrl);
-                //todo - gfm - 1/29/14 - need to keep track of these
-                ScheduledFuture<?> future = executorService.scheduleWithFixedDelay(channelReplicator, 0, 15, TimeUnit.SECONDS);
-                migratingChannels.add(channelUrl);
+            } else {
+                startReplication(domain);
             }
         }
+    }
+
+    private void startReplication(ReplicationDomain domain) {
+        logger.info("starting replication of " + domain.getDomain());
+        DomainReplicator domainReplicator = domainReplicatorProvider.get();
+        domainReplicator.start(domain);
+        domainReplicators.add(domainReplicator);
+        replicatorMap.put(domain.getDomain(), domainReplicator);
+    }
+
+    public List<DomainReplicator> getDomainReplicators() {
+        return Collections.unmodifiableList(domainReplicators);
     }
 
 }

@@ -28,6 +28,7 @@ public class ChannelReplicator implements Runnable, Lockable {
 
     private String channelUrl;
     private String channel;
+    private SequenceIterator iterator;
 
     @Inject
     public ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
@@ -38,6 +39,7 @@ public class ChannelReplicator implements Runnable, Lockable {
         this.channelUtils = channelUtils;
     }
 
+    //todo - gfm - 1/29/14 - this needs to take in histrocialDays
     public void setChannelUrl(String channelUrl) {
         if (!channelUrl.endsWith("/")) {
             channelUrl += "/";
@@ -63,6 +65,12 @@ public class ChannelReplicator implements Runnable, Lockable {
         replicate();
     }
 
+    public void exit() {
+        if (iterator != null) {
+            iterator.exit();
+        }
+    }
+
     boolean initialize() throws IOException {
         Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channelUrl);
         if (!optionalConfig.isPresent()) {
@@ -86,7 +94,7 @@ public class ChannelReplicator implements Runnable, Lockable {
             return;
         }
         logger.debug("starting " + channelUrl + " migration at " + sequence);
-        SequenceIterator iterator = sequenceIteratorFactory.create(sequence, channelUrl);
+        iterator = sequenceIteratorFactory.create(sequence, channelUrl);
         while (iterator.hasNext() && curatorLock.shouldKeepWorking()) {
             channelService.insert(channel, iterator.next());
         }
