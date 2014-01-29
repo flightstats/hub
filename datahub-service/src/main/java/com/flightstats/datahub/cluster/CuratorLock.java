@@ -6,6 +6,8 @@ import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
 public class CuratorLock {
     private final static Logger logger = LoggerFactory.getLogger(CuratorLock.class);
 
@@ -20,12 +22,14 @@ public class CuratorLock {
 
     /**
      * When you use this method, be sure to check shouldStopWorking to see if you've lost the lock.
+     * runWithLock will not throw an exception up the stack.
+     * todo - gfm - 1/28/14 - is this true?
      */
-    public void runWithLock(Lockable lockable) {
-        String lockPath = lockable.getLockPath();
+    public void runWithLock(Lockable lockable, String lockPath, long time, TimeUnit timeUnit) {
+
         InterProcessSemaphoreMutex mutex = new InterProcessSemaphoreMutex(curator, lockPath);
         try {
-            if (mutex.acquire(lockable.getAcquireTime(), lockable.getAcquireUnit())) {
+            if (mutex.acquire(time, timeUnit)) {
                 logger.debug("acquired {}", lockPath);
                 lockable.runWithLock();
             }
@@ -45,6 +49,10 @@ public class CuratorLock {
      */
     public boolean shouldStopWorking() {
         return zooKeeperState.shouldStopWorking();
+    }
+
+    public boolean shouldKeepWorking() {
+        return !shouldStopWorking();
     }
 
 }

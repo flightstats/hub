@@ -18,7 +18,8 @@ public class SequenceIteratorDriver {
         Client follows = GuiceContextListenerFactory.DatahubCommonModule.buildJerseyClient();
 
         ChannelUtils channelUtils = new ChannelUtils(noRedirects, follows);
-        SequenceIterator iterator = new SequenceIterator(161090, channelUtils, "http://hub.svc.dev/channel/testy10");
+        SequenceIterator iterator = new SequenceIterator(122747, channelUtils, "http://hub.svc.dev/channel/positionsAsdi");
+        //SequenceIterator iterator = new SequenceIterator(276511, channelUtils, "http://hub.svc.dev/channel/testy10");
 
         while (iterator.hasNext()) {
             Content next = iterator.next();

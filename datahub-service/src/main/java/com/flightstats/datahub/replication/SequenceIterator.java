@@ -73,7 +73,7 @@ public class SequenceIterator implements Iterator<Content> {
         Optional<Content> optional = channelUtils.getContent(channelUrl, current);
         while (!optional.isPresent()) {
             //todo - gfm - 1/25/14 - seems like this missing records should be logged somewhere, perhaps to a missing records channel
-            logger.warn("unable to get record " + channelUrl + " " + current);
+            logger.warn("unable to get record " + channelUrl + current);
             current++;
             optional = channelUtils.getContent(channelUrl, current);
         }

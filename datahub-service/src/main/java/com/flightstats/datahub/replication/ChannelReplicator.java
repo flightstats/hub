@@ -1,13 +1,14 @@
 package com.flightstats.datahub.replication;
 
+import com.flightstats.datahub.cluster.CuratorLock;
+import com.flightstats.datahub.cluster.Lockable;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.google.common.base.Optional;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
+import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,30 +16,36 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class ChannelReplicator implements Runnable {
+public class ChannelReplicator implements Runnable, Lockable {
     //todo - gfm - 1/27/14 - this should push stats into graphite - lag time and number
     private static final Logger logger = LoggerFactory.getLogger(ChannelReplicator.class);
 
     private final ChannelService channelService;
-    private final String channel;
     private final ChannelUtils channelUtils;
-    private String channelUrl;
-    private final CuratorFramework curator;
+    private final CuratorLock curatorLock;
     private final SequenceIteratorFactory sequenceIteratorFactory;
     private ChannelConfiguration configuration;
 
-    public ChannelReplicator(ChannelService channelService, String channelUrl, ChannelUtils channelUtils,
-                             CuratorFramework curator, SequenceIteratorFactory sequenceIteratorFactory) {
-        this.channelService = channelService;
-        this.channelUrl = channelUrl;
-        this.curator = curator;
-        this.sequenceIteratorFactory = sequenceIteratorFactory;
-        if (!this.channelUrl.endsWith("/")) {
-            this.channelUrl += "/";
-        }
-        this.channel = ChannelNameExtractor.extractFromChannelUrl(channelUrl);
-        this.channelUtils = channelUtils;
+    private String channelUrl;
+    private String channel;
 
+    @Inject
+    public ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
+                             CuratorLock curatorLock, SequenceIteratorFactory sequenceIteratorFactory) {
+        this.channelService = channelService;
+
+        this.curatorLock = curatorLock;
+        this.sequenceIteratorFactory = sequenceIteratorFactory;
+
+        this.channelUtils = channelUtils;
+    }
+
+    public void setChannelUrl(String channelUrl) {
+        if (!channelUrl.endsWith("/")) {
+            channelUrl += "/";
+        }
+        this.channelUrl = channelUrl;
+        this.channel = ChannelNameExtractor.extractFromChannelUrl(channelUrl);
     }
 
     public String getChannelName() {
@@ -47,26 +54,11 @@ public class ChannelReplicator implements Runnable {
 
     @Override
     public void run() {
-        //todo - gfm - 1/22/14 - handle ZooKeeperState change as in TimeIndexProcessor
-        //todo - gfm - 1/22/14 - look at pulling this out into common code with TimeIndexProcessor
-        InterProcessSemaphoreMutex mutex = new InterProcessSemaphoreMutex(curator, "/ChannelMigrator/" + channel);
-        try {
-            if (mutex.acquire(1, TimeUnit.SECONDS)) {
-                logger.debug("acquired lock " + channel);
-                doWork();
-            }
-        } catch (Exception e) {
-            logger.warn("oh no! " + channel, e);
-        } finally {
-            try {
-                mutex.release();
-            } catch (Exception e) {
-                //ignore
-            }
-        }
+        curatorLock.runWithLock(this, "/ChannelMigrator/" + channel, 1, TimeUnit.SECONDS);
     }
 
-    public void doWork() throws IOException {
+    @Override
+    public void runWithLock() throws IOException {
         if (!initialize())  {
             return;
         }
@@ -97,7 +89,7 @@ public class ChannelReplicator implements Runnable {
         }
         logger.debug("starting " + channelUrl + " migration at " + sequence);
         SequenceIterator iterator = sequenceIteratorFactory.create(sequence, channelUtils, channelUrl);
-        while (iterator.hasNext()) {
+        while (iterator.hasNext() && curatorLock.shouldKeepWorking()) {
             channelService.insert(channel, iterator.next());
         }
     }

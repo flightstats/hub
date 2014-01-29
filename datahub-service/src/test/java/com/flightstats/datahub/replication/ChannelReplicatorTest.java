@@ -1,5 +1,6 @@
 package com.flightstats.datahub.replication;
 
+import com.flightstats.datahub.cluster.CuratorLock;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.Content;
@@ -30,6 +31,7 @@ public class ChannelReplicatorTest {
     private ChannelReplicator replicator;
     private ChannelConfiguration configuration;
     private SequenceIterator sequenceIterator;
+    private SequenceIteratorFactory factory;
 
     @Before
     public void setupClass() throws Exception {
@@ -39,10 +41,13 @@ public class ChannelReplicatorTest {
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         when(channelService.channelExists(CHANNEL)).thenReturn(false);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(2000)));
-        SequenceIteratorFactory factory = mock(SequenceIteratorFactory.class);
+        factory = mock(SequenceIteratorFactory.class);
         sequenceIterator = mock(SequenceIterator.class);
         when(factory.create(anyLong(), any(ChannelUtils.class), anyString())).thenReturn(sequenceIterator);
-        replicator = new ChannelReplicator(channelService, URL, channelUtils, null, factory);
+        CuratorLock curatorLock = mock(CuratorLock.class);
+        when(curatorLock.shouldKeepWorking()).thenReturn(true);
+        replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory);
+        replicator.setChannelUrl(URL);
     }
 
     @Test
@@ -50,7 +55,7 @@ public class ChannelReplicatorTest {
         Content content = mock(Content.class);
         when(sequenceIterator.hasNext()).thenReturn(true).thenReturn(true).thenReturn(false);
         when(sequenceIterator.next()).thenReturn(content).thenReturn(content).thenReturn(null);
-        replicator.doWork();
+        replicator.runWithLock();
         verify(channelService).createChannel(configuration);
         verify(channelService, new Times(2)).insert(CHANNEL, content);
     }
@@ -58,7 +63,7 @@ public class ChannelReplicatorTest {
     @Test
     public void testCreateChannelAbsent() throws Exception {
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.<ChannelConfiguration>absent());
-        replicator.doWork();
+        replicator.runWithLock();
         verify(channelService, never()).createChannel(any(ChannelConfiguration.class));
     }
 
@@ -90,6 +95,16 @@ public class ChannelReplicatorTest {
             }
         });
         assertEquals(1501, replicator.getStartingSequence());
+    }
+
+    @Test
+    public void testLostLock() throws Exception {
+        CuratorLock curatorLock = mock(CuratorLock.class);
+        when(curatorLock.shouldKeepWorking()).thenReturn(false);
+        replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory);
+        replicator.setChannelUrl(URL);
+        replicator.runWithLock();
+        verify(channelService, never()).insert(anyString(), any(Content.class));
     }
 
 }
