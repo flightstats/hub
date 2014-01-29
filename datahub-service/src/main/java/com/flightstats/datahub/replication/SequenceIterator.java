@@ -5,12 +5,10 @@ import com.flightstats.datahub.service.ChannelLinkBuilder;
 import com.flightstats.datahub.util.RuntimeInterruptedException;
 import com.google.common.base.Optional;
 import org.apache.commons.lang.StringUtils;
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.*;
-import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.websocket.*;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -23,24 +21,26 @@ import java.util.concurrent.atomic.AtomicLong;
  * SequenceIterator is not thread safe, and should only be used from a single thread.
  *
  */
-@WebSocket(maxTextMessageSize = 1024)
+@ClientEndpoint()
 public class SequenceIterator implements Iterator<Content> {
-
-    //todo - gfm - 1/26/14 - look at using Java WebSocket client
 
     private final static Logger logger = LoggerFactory.getLogger(SequenceIterator.class);
     private final ChannelUtils channelUtils;
+    private final WebSocketContainer container;
     private final String channelUrl;
     private final Object lock = new Object();
 
     private AtomicLong latest;
     private long current;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
-    private WebSocketClient client;
 
-    public SequenceIterator(long startSequence, ChannelUtils channelUtils, String channelUrl) {
+    public SequenceIterator(long startSequence, ChannelUtils channelUtils, String channelUrl, WebSocketContainer container) {
         this.current = startSequence;
         this.channelUtils = channelUtils;
+        this.container = container;
+        if (channelUrl.endsWith("/")) {
+            channelUrl = channelUrl.substring(0, channelUrl.length() - 1);
+        }
         this.channelUrl = channelUrl;
         startSocket();
     }
@@ -59,11 +59,6 @@ public class SequenceIterator implements Iterator<Content> {
                     throw new RuntimeInterruptedException(e);
                 }
             }
-        }
-        try {
-            client.stop();
-        } catch (Exception e) {
-            logger.warn("issue trying to stop ", e);
         }
         return false;
     }
@@ -93,9 +88,7 @@ public class SequenceIterator implements Iterator<Content> {
 
     private void startWebSocket(URI channelWsUrl) {
         try {
-            client = new WebSocketClient();
-            client.start();
-            client.connect(this, channelWsUrl);
+            container.connectToServer(this, channelWsUrl);
         } catch (Exception e) {
             logger.warn("unable to start ", e);
             throw new RuntimeException("unable to start socket", e);
@@ -107,30 +100,30 @@ public class SequenceIterator implements Iterator<Content> {
         throw new UnsupportedOperationException("don't call this");
     }
 
-    @OnWebSocketClose
-    public void onClose(int statusCode, String reason) {
-        logger.info("Connection closed: " + statusCode + " " + reason);
+    @OnClose
+    public void onClose(CloseReason reason) {
+        logger.info("Connection closed: " + reason);
         exit();
     }
 
-    @OnWebSocketConnect
-    public void onConnect(Session session) {
-        logger.info("connected");
+    @OnOpen
+    public void onOpen() {
+        logger.info("connected " + channelUrl);
     }
 
-    @OnWebSocketMessage
-    public void onMessage(String msg) {
-        //todo - gfm - 1/26/14 - does this need to do anything with errors?
-        logger.info("message {}", msg);
-        long sequence = Long.parseLong(StringUtils.substringAfterLast(msg, "/"));
+    @OnMessage
+    public void onMessage(String message) {
+        //todo - gfm - 1/26/14 - does this need to do anything with parsing errors?
+        logger.info("message {}", message);
+        long sequence = Long.parseLong(StringUtils.substringAfterLast(message, "/"));
         if (sequence > latest.get()) {
             latest.set(sequence);
         }
         signal();
     }
 
-    @OnWebSocketError
-    public void onError(Session session, Throwable throwable) {
+    @OnError
+    public void onError(Throwable throwable) {
         logger.warn("unexpected WS error " + channelUrl, throwable);
         exit();
     }
