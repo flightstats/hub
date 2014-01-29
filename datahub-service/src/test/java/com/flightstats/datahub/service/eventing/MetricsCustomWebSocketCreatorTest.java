@@ -4,7 +4,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.datahub.service.ChannelLinkBuilder;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.UpgradeRequest;
+import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -31,7 +31,7 @@ public class MetricsCustomWebSocketCreatorTest {
 		final CountDownLatch allFinished = new CountDownLatch(threadCt);
 
 		MetricRegistry registry = mock(MetricRegistry.class);
-		final UpgradeRequest request = mock(UpgradeRequest.class);
+		final ServletUpgradeRequest request = mock(ServletUpgradeRequest.class);
 		final Session session = mock(Session.class);
 		Counter counter = spy(new Counter());
 		SubscriptionRoster subscriptionRoster = mock(SubscriptionRoster.class);

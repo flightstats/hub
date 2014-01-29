@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * SequenceIterator is not thread safe, and should only be used from a single thread.
  *
  */
-@WebSocket(maxMessageSize = 1024)
+@WebSocket(maxTextMessageSize = 1024)
 public class SequenceIterator implements Iterator<Content> {
 
     //todo - gfm - 1/26/14 - look at using Java WebSocket client
@@ -73,7 +73,7 @@ public class SequenceIterator implements Iterator<Content> {
         Optional<Content> optional = channelUtils.getContent(channelUrl, current);
         while (!optional.isPresent()) {
             //todo - gfm - 1/25/14 - seems like this missing records should be logged somewhere, perhaps to a missing records channel
-            logger.warn("unable to get record " + channelUrl + current);
+            logger.warn("unable to get content " + channelUrl + current);
             current++;
             optional = channelUtils.getContent(channelUrl, current);
         }

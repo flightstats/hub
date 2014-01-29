@@ -3,10 +3,7 @@ package com.flightstats.datahub.replication;
 import com.flightstats.datahub.cluster.CuratorLock;
 import com.flightstats.datahub.cluster.Lockable;
 import com.flightstats.datahub.dao.ChannelService;
-import com.flightstats.datahub.model.ContentKey;
-import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
-import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
@@ -26,7 +23,6 @@ public class ReplicationService {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationService.class);
     private static final String LOCK_PATH = "/ReplicationService/";
 
-    private final Replicator replicator;
     private final DynamoReplicationDao replicationDao;
     private final ChannelService channelService;
     private final ChannelUtils channelUtils;
@@ -34,10 +30,9 @@ public class ReplicationService {
     private final CuratorFramework curator;
 
     @Inject
-    public ReplicationService(Replicator replicator, DynamoReplicationDao replicationDao,
+    public ReplicationService(DynamoReplicationDao replicationDao,
                               ChannelService channelService, ChannelUtils channelUtils,
                               CuratorLock curatorLock, CuratorFramework curator) {
-        this.replicator = replicator;
         this.replicationDao = replicationDao;
         this.channelService = channelService;
         this.channelUtils = channelUtils;
@@ -87,7 +82,8 @@ public class ReplicationService {
 
     public Collection<ReplicationStatus> getStatus() {
         ArrayList<ReplicationStatus> statuses = Lists.newArrayList();
-        for (Replicator.SourceReplicator sourceReplicator : replicator.getReplicators()) {
+        //todo - gfm - 1/29/14 - figure out this circular reference
+        /*for (Replicator.SourceReplicator sourceReplicator : replicator.getReplicators()) {
             for (String url : sourceReplicator.getSourceChannelUrls()) {
                 ReplicationStatus status = new ReplicationStatus();
                 status.setUrl(url);
@@ -105,7 +101,7 @@ public class ReplicationService {
                 }
             }
 
-        }
+        }*/
 
         return statuses;
     }
