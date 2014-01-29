@@ -2,6 +2,7 @@ package com.flightstats.datahub.dao.s3;
 
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
+import com.flightstats.datahub.cluster.CuratorLock;
 import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.timeIndex.TimeIndex;
 import com.flightstats.datahub.dao.timeIndex.TimeIndexDao;
@@ -43,6 +44,7 @@ public class TimeIndexProcessorTest {
     private int key;
     private String channel;
     private DateTime dateTime;
+    private CuratorLock curatorLock;
 
     @BeforeClass
     public static void setupClass() throws Exception {
@@ -64,7 +66,8 @@ public class TimeIndexProcessorTest {
         channel = UUID.randomUUID().toString();
         key = 100;
         dateTime = new DateTime();
-        processor = new TimeIndexProcessor(curator, indexDao, new ZooKeeperState());
+        curatorLock = new CuratorLock(curator, new ZooKeeperState());
+        processor = new TimeIndexProcessor(curatorLock, indexDao, curator);
         startTime = new DateTime(2014, 1, 6, 3, 42, 1);
     }
 
