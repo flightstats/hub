@@ -2,6 +2,7 @@ package com.flightstats.datahub.dao.dynamo;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
+import com.flightstats.datahub.app.DataHubMain;
 import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.dao.ChannelServiceIntegration;
@@ -20,6 +21,8 @@ import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,32 +38,27 @@ import static org.junit.Assert.*;
  * start with java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar
  */
 public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
+    private final static Logger logger = LoggerFactory.getLogger(AwsChannelServiceIntegration.class);
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        Properties properties = new Properties();
+        Properties properties = DataHubMain.loadProperties("useDefault");
         properties.put("backing.store", "aws");
-        //properties.put("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
-        properties.put("dynamo.endpoint", "localhost:8000");
-        properties.put("aws.protocol", "HTTP");
-        properties.put("aws.environment", "test");
-        properties.put("dynamo.table_creation_wait_minutes", "5");
-        properties.put("aws.credentials", "default");
-        properties.put("hazelcast.conf.xml", "");
         finalStartup(properties);
     }
 
-
     @Override
-    protected void verifyStartup() {
-
-    }
+    protected void verifyStartup() { }
 
     @AfterClass
     public static void teardownClass() throws IOException {
         ChannelService service = injector.getInstance(ChannelService.class);
         for (String channelName : channelNames) {
-            service.delete(channelName);
+            try {
+                service.delete(channelName);
+            } catch (Exception e) {
+                logger.warn("unable to delete " + channelName, e);
+            }
         }
         tearDown();
     }

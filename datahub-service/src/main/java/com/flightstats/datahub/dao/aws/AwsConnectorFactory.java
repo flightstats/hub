@@ -53,8 +53,13 @@ public class AwsConnectorFactory {
         try {
             return new PropertiesCredentials(new File(credentials));
         } catch (IOException e) {
-            return new PropertiesCredentials(new File(
-                    AwsConnectorFactory.class.getResource("test_credentials.properties").getFile()));
+            try {
+                return new PropertiesCredentials(new File(
+                        AwsConnectorFactory.class.getResource("/test_credentials.properties").getFile()));
+            } catch (Exception e1) {
+                logger.warn("unable to load test_credentials", e1);
+                throw e;
+            }
         }
     }
 
