@@ -33,10 +33,8 @@ public class ChannelReplicator implements Runnable, Lockable {
     public ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
                              CuratorLock curatorLock, SequenceIteratorFactory sequenceIteratorFactory) {
         this.channelService = channelService;
-
         this.curatorLock = curatorLock;
         this.sequenceIteratorFactory = sequenceIteratorFactory;
-
         this.channelUtils = channelUtils;
     }
 
@@ -54,7 +52,7 @@ public class ChannelReplicator implements Runnable, Lockable {
 
     @Override
     public void run() {
-        curatorLock.runWithLock(this, "/ChannelMigrator/" + channel, 1, TimeUnit.SECONDS);
+        curatorLock.runWithLock(this, "/ChannelReplicator/" + channel, 1, TimeUnit.SECONDS);
     }
 
     @Override

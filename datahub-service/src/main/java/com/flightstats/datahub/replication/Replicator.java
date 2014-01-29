@@ -1,10 +1,8 @@
 package com.flightstats.datahub.replication;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.name.Named;
+import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,33 +22,38 @@ import java.util.concurrent.TimeUnit;
  * Replication stays up to date, with some minimal amount of lag
  */
 public class Replicator {
+    public static final String REPLICATOR_WATCHER = "/replicator/watcher";
     private final static Logger logger = LoggerFactory.getLogger(Replicator.class);
 
     private final ChannelUtils channelUtils;
-    private final String sourceUrls;
     private final Provider<ChannelReplicator> replicatorProvider;
+    private final ReplicationService replicationService;
+    private final CuratorFramework curator;
     private final ScheduledExecutorService executorService;
     private final List<SourceReplicator> replicators = new ArrayList<>();
 
     @Inject
-    public Replicator(ChannelUtils channelUtils, @Named("migration.source.urls") String sourceUrls,
-                      Provider<ChannelReplicator> replicatorProvider) {
+    public Replicator(ChannelUtils channelUtils, Provider<ChannelReplicator> replicatorProvider,
+                      ReplicationService replicationService, CuratorFramework curator) {
         this.channelUtils = channelUtils;
-        this.sourceUrls = sourceUrls;
         this.replicatorProvider = replicatorProvider;
+        this.replicationService = replicationService;
+        this.curator = curator;
         executorService = Executors.newScheduledThreadPool(10);
     }
 
     public void startThreads() {
-        if (sourceUrls.isEmpty()) {
-            logger.info("nothing to replicate");
-            return;
+        //todo - gfm - 1/28/14 - figure out watcher semantics
+        try {
+            curator.getData().watched().inBackground().forPath(REPLICATOR_WATCHER);
+        } catch (Exception e) {
+            logger.warn("unable to start watcher", e);
         }
-        Iterable<String> iterable = Splitter.on("|").omitEmptyStrings().trimResults().split(sourceUrls);
-        Set<String> targetSet = Sets.newHashSet(iterable);
-        for (String target : targetSet) {
-            logger.info("starting repication of " + target);
-            SourceReplicator replicator = new SourceReplicator(target);
+        Collection<ReplicationConfig> configs = replicationService.getConfigs();
+        for (ReplicationConfig config : configs) {
+
+            logger.info("starting repication of " + config.getDomain());
+            SourceReplicator replicator = new SourceReplicator(config);
             replicators.add(replicator);
             executorService.scheduleWithFixedDelay(replicator, 0, 1, TimeUnit.MINUTES);
         }
@@ -61,24 +64,26 @@ public class Replicator {
     }
 
     public class SourceReplicator implements Runnable {
-        private final String sourceUrl;
         private final Set<String> migratingChannels = new HashSet<>();
+        private final ReplicationConfig config;
 
         public Set<String> getSourceChannelUrls() {
             return Collections.unmodifiableSet(migratingChannels);
         }
 
-        private SourceReplicator(String sourceUrl) {
-            this.sourceUrl = sourceUrl;
+        private SourceReplicator(ReplicationConfig config) {
+            this.config = config;
         }
 
         @Override
         public void run() {
-            Set<String> rawChannels = channelUtils.getChannels(sourceUrl);
+            String sourceUrl = "http://" + config.getDomain() +"/channel/";
+            Set <String> rawChannels = channelUtils.getChannels(sourceUrl);
             if (rawChannels.isEmpty()) {
                 logger.warn("did not find any channels to replicate at " + sourceUrl);
                 return;
             }
+            //todo - gfm - 1/28/14 - filter inclusion & excelusion sets
             Set<String> filtered = new HashSet<>();
             for (String channel : rawChannels) {
                 if (channel.startsWith(sourceUrl)) {
