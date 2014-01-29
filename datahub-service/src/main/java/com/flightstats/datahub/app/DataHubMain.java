@@ -1,5 +1,6 @@
 package com.flightstats.datahub.app;
 
+import com.amazonaws.services.cloudfront.model.InvalidArgumentException;
 import com.conducivetech.services.common.util.PropertyConfiguration;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
@@ -27,7 +28,10 @@ public class DataHubMain {
     private static final Logger logger = LoggerFactory.getLogger(DataHubMain.class);
 
     public static void main(String[] args) throws Exception {
-        final Properties properties = loadProperties(args);
+        if (args.length == 0) {
+            throw new InvalidArgumentException("DataHubMain requires a property filename, or 'useDefault'");
+        }
+        final Properties properties = loadProperties(args[0]);
         logger.info(properties.toString());
 
         //todo - gfm - 1/7/14 - setup ZK to be it's own process
@@ -51,18 +55,21 @@ public class DataHubMain {
         new Thread(new Runnable() {
             @Override
             public void run() {
-
                 String zkConfigFile = properties.getProperty("zookeeper.cfg", "");
                 if ("singleNode".equals(zkConfigFile)) {
-                    logger.warn("**********************************************************");
-                    logger.warn("*** using zookeeper single node config file");
-                    logger.warn("**********************************************************");
+                    warn("using zookeeper single node config file");
                     zkConfigFile = DataHubMain.class.getResource("/zooSingleNode.cfg").getFile();
                 }
                 logger.info("using " + zkConfigFile);
                 QuorumPeerMain.main(new String[]{zkConfigFile});
             }
         }).start();
+    }
+
+    private static void warn(String message) {
+        logger.warn("**********************************************************");
+        logger.warn("*** " + message);
+        logger.warn("**********************************************************");
     }
 
     public static JettyServer startServer(Properties properties) throws IOException, ConstraintException {
@@ -78,11 +85,12 @@ public class DataHubMain {
         return server;
     }
 
-    private static Properties loadProperties(String[] args) throws IOException {
-        if (args.length > 0) {
-            return PropertyConfiguration.loadProperties(new File(args[0]), true, logger);
+    public  static Properties loadProperties(String fileName) throws IOException {
+        if (fileName.equals("useDefault")) {
+            warn("using default properties file");
+            URL resource = DataHubMain.class.getResource("/default.properties");
+            return PropertyConfiguration.loadProperties(resource, true, logger);
         }
-        URL resource = DataHubMain.class.getResource("/default.properties");
-        return PropertyConfiguration.loadProperties(resource, true, logger);
+        return PropertyConfiguration.loadProperties(new File(fileName), true, logger);
     }
 }
