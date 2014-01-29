@@ -20,11 +20,18 @@ public class ReplicationConfig {
     private final Set<String> includeExcept;
     private final Set<String> excludeExcept;
 
-    public ReplicationConfig(Builder builder) {
+    private ReplicationConfig(Builder builder) {
         domain = builder.domain;
         historicalDays = builder.historicalDays;
         includeExcept = Collections.unmodifiableSet(new TreeSet<>(builder.includedExcept));
         excludeExcept = Collections.unmodifiableSet(new TreeSet<>(builder.excludedExcept));
+    }
+
+    public boolean isValid() {
+        if (includeExcept.isEmpty()) {
+            return !excludeExcept.isEmpty();
+        }
+        return excludeExcept.isEmpty() && !includeExcept.isEmpty();
     }
 
     @JsonCreator
@@ -93,6 +100,30 @@ public class ReplicationConfig {
                 ", includeExcept=" + includeExcept +
                 ", excludeExcept=" + excludeExcept +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ReplicationConfig that = (ReplicationConfig) o;
+
+        if (historicalDays != that.historicalDays) return false;
+        if (!domain.equals(that.domain)) return false;
+        if (!excludeExcept.equals(that.excludeExcept)) return false;
+        if (!includeExcept.equals(that.includeExcept)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = domain.hashCode();
+        result = 31 * result + (int) (historicalDays ^ (historicalDays >>> 32));
+        result = 31 * result + includeExcept.hashCode();
+        result = 31 * result + excludeExcept.hashCode();
+        return result;
     }
 
     public static Builder builder() {
