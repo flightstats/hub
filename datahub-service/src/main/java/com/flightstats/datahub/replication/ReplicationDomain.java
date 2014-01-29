@@ -12,15 +12,15 @@ import java.util.*;
 /**
  *
  */
-public class ReplicationConfig {
-    private final static Logger logger = LoggerFactory.getLogger(ReplicationConfig.class);
+public class ReplicationDomain {
+    private final static Logger logger = LoggerFactory.getLogger(ReplicationDomain.class);
 
     private String domain;
     private final long historicalDays;
     private final Set<String> includeExcept;
     private final Set<String> excludeExcept;
 
-    private ReplicationConfig(Builder builder) {
+    private ReplicationDomain(Builder builder) {
         domain = builder.domain;
         historicalDays = builder.historicalDays;
         includeExcept = Collections.unmodifiableSet(new TreeSet<>(builder.includedExcept));
@@ -34,8 +34,11 @@ public class ReplicationConfig {
         return excludeExcept.isEmpty() && !includeExcept.isEmpty();
     }
 
+    public boolean isInclusive() {
+        return !includeExcept.isEmpty();
+    }
     @JsonCreator
-    protected static ReplicationConfig create(Map<String, JsonNode> props) {
+    protected static ReplicationDomain create(Map<String, JsonNode> props) {
         Builder builder = builder();
         for (Map.Entry<String, JsonNode> entry : props.entrySet()) {
             switch (entry.getKey()) {
@@ -107,7 +110,7 @@ public class ReplicationConfig {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ReplicationConfig that = (ReplicationConfig) o;
+        ReplicationDomain that = (ReplicationDomain) o;
 
         if (historicalDays != that.historicalDays) return false;
         if (!domain.equals(that.domain)) return false;
@@ -156,8 +159,8 @@ public class ReplicationConfig {
             return this;
         }
 
-        public ReplicationConfig build() {
-            return new ReplicationConfig(this);
+        public ReplicationDomain build() {
+            return new ReplicationDomain(this);
         }
     }
 }
