@@ -1,8 +1,12 @@
 package com.flightstats.datahub.replication;
 
+import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.api.CuratorEvent;
+import org.apache.curator.framework.api.CuratorListener;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,19 +41,47 @@ public class Replicator {
         this.domainReplicatorProvider = domainReplicatorProvider;
     }
 
-    //todo - gfm - 1/29/14 - figure out startup scenario for this, should probably be done thru guice
-    public void startThreads() {
-        //todo - gfm - 1/28/14 - figure out watcher semantics
-        try {
-            curator.getData().watched().inBackground().forPath(REPLICATOR_WATCHER_PATH);
-        } catch (Exception e) {
-            logger.warn("unable to start watcher", e);
-        }
-        //todo - gfm - 1/29/14 - this code should get triggered when the replication config changes, aka by REPLICATOR_WATCHER_PATH
+    public void start() {
+        logger.info("starting replicator");
+        createNode();
+        addListener();
+        addWatcher();
         replicateDomains();
     }
 
+    private void addListener() {
+        curator.getCuratorListenable().addListener(new CuratorListener() {
+            @Override
+            public void eventReceived(CuratorFramework client, CuratorEvent event) throws Exception {
+                if (REPLICATOR_WATCHER_PATH.equals(event.getPath())) {
+                    //todo - gfm - 1/29/14 - replicateDomains should probably happen in a separate thread.
+                    replicateDomains();
+                    addWatcher();
+                }
+            }
+        });
+    }
+
+    private void addWatcher() {
+        try {
+            curator.getData().watched().forPath(REPLICATOR_WATCHER_PATH);
+        } catch (Exception e) {
+            logger.warn("unable to start watcher", e);
+        }
+    }
+
+    private void createNode() {
+        try {
+            curator.create().creatingParentsIfNeeded().forPath(REPLICATOR_WATCHER_PATH, Longs.toByteArray(System.currentTimeMillis()));
+        } catch (KeeperException.NodeExistsException ignore ) {
+            //this will typically happen, except the first time
+        } catch (Exception e) {
+            logger.warn("unable to create node", e);
+        }
+    }
+
     private synchronized void replicateDomains() {
+        logger.info("replicating domains");
         Collection<ReplicationDomain> domains = replicationService.getDomains();
         for (ReplicationDomain domain : domains) {
             if (replicatorMap.containsKey(domain.getDomain())) {
