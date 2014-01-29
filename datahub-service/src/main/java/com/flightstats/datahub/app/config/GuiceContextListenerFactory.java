@@ -44,11 +44,13 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.BoundedExponentialBackoffRetry;
 import org.apache.zookeeper.data.Stat;
+import org.eclipse.jetty.websocket.jsr356.ClientContainer;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.websocket.WebSocketContainer;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Properties;
@@ -245,6 +247,14 @@ public class GuiceContextListenerFactory {
             client.addFilter(new RetryClientFilter());
             client.setFollowRedirects(followRedirects);
             return client;
+        }
+
+        @Singleton
+        @Provides
+        public static WebSocketContainer buildWebSocketContainer() throws Exception {
+            ClientContainer container = new ClientContainer();
+            container.start();
+            return container;
         }
     }
 }

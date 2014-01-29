@@ -86,7 +86,7 @@ public class ChannelReplicator implements Runnable, Lockable {
             return;
         }
         logger.debug("starting " + channelUrl + " migration at " + sequence);
-        SequenceIterator iterator = sequenceIteratorFactory.create(sequence, channelUtils, channelUrl);
+        SequenceIterator iterator = sequenceIteratorFactory.create(sequence, channelUrl);
         while (iterator.hasNext() && curatorLock.shouldKeepWorking()) {
             channelService.insert(channel, iterator.next());
         }
