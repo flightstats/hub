@@ -32,7 +32,7 @@ public class TimeIndexProcessor implements Lockable {
 
     public void process(String channel) {
         this.channel = channel;
-        curatorLock.runWithLock(this);
+        curatorLock.runWithLock(this, "/TimeIndexLock/" + channel, 1, TimeUnit.SECONDS);
     }
 
     @Override
@@ -74,18 +74,4 @@ public class TimeIndexProcessor implements Lockable {
         }
     }
 
-    @Override
-    public String getLockPath() {
-        return "/TimeIndexLock/" + channel;
-    }
-
-    @Override
-    public long getAcquireTime() {
-        return 1;
-    }
-
-    @Override
-    public TimeUnit getAcquireUnit() {
-        return TimeUnit.SECONDS;
-    }
 }
