@@ -62,7 +62,7 @@ public class DynamoReplicationDao {
         //todo - gfm - 1/27/14 - delete
     }
 
-    public Collection<ReplicationDomain> getConfigs() {
+    public Collection<ReplicationDomain> getDomains() {
         List<ReplicationDomain> configs = new ArrayList<>();
         //todo - gfm - 1/27/14 -
 

@@ -76,14 +76,14 @@ public class ReplicationService {
         notifyWatchers();
     }
 
-    public Collection<ReplicationDomain> getConfigs() {
-        return replicationDao.getConfigs();
+    public Collection<ReplicationDomain> getDomains() {
+        return replicationDao.getDomains();
     }
 
     public Collection<ReplicationStatus> getStatus() {
         ArrayList<ReplicationStatus> statuses = Lists.newArrayList();
         //todo - gfm - 1/29/14 - figure out this circular reference
-        /*for (Replicator.SourceReplicator sourceReplicator : replicator.getReplicators()) {
+        /*for (Replicator.SourceReplicator sourceReplicator : replicator.getDomainReplicators()) {
             for (String url : sourceReplicator.getSourceChannelUrls()) {
                 ReplicationStatus status = new ReplicationStatus();
                 status.setUrl(url);
