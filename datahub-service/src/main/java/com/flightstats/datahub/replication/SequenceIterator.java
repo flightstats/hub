@@ -113,13 +113,16 @@ public class SequenceIterator implements Iterator<Content> {
 
     @OnMessage
     public void onMessage(String message) {
-        //todo - gfm - 1/26/14 - does this need to do anything with parsing errors?
-        logger.info("message {}", message);
-        long sequence = Long.parseLong(StringUtils.substringAfterLast(message, "/"));
-        if (sequence > latest.get()) {
-            latest.set(sequence);
+        logger.debug("message {}", message);
+        try {
+            long sequence = Long.parseLong(StringUtils.substringAfterLast(message, "/"));
+            if (sequence > latest.get()) {
+                latest.set(sequence);
+            }
+            signal();
+        } catch (Exception e) {
+            logger.warn("unexpected error parsing " + message + " for " + channelUrl, e);
         }
-        signal();
     }
 
     @OnError

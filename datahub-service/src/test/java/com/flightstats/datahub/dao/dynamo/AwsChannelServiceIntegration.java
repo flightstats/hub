@@ -42,6 +42,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
 
     @BeforeClass
     public static void setupClass() throws Exception {
+        //todo - gfm - 1/29/14 - consolidate Integration Test startup
         Properties properties = DataHubMain.loadProperties("useDefault");
         properties.put("backing.store", "aws");
         finalStartup(properties);

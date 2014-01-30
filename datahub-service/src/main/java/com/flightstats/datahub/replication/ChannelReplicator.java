@@ -52,13 +52,22 @@ public class ChannelReplicator implements Runnable, Lockable {
         return channel;
     }
 
+    public String getChannelUrl() {
+        return channelUrl;
+    }
+
     @Override
     public void run() {
-        curatorLock.runWithLock(this, "/ChannelReplicator/" + channel, 1, TimeUnit.SECONDS);
+        logger.info("starting run " + channelUrl);
+        Thread.currentThread().setName("ChannelReplicator" + channelUrl);
+        //todo - gfm - 1/29/14 - not sure why this is taking a minute to finally acquire the lock on local machine
+        curatorLock.runWithLock(this, "/ChannelReplicator/" + channel, 5, TimeUnit.SECONDS);
+        Thread.currentThread().setName("EmptyChannelReplicator");
     }
 
     @Override
     public void runWithLock() throws IOException {
+        logger.info("run with lock " + channelUrl);
         if (!initialize())  {
             return;
         }
@@ -74,6 +83,7 @@ public class ChannelReplicator implements Runnable, Lockable {
     boolean initialize() throws IOException {
         Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channelUrl);
         if (!optionalConfig.isPresent()) {
+            logger.warn("remote channel missing for " + channelUrl);
             return false;
         }
         configuration = optionalConfig.get();
@@ -82,8 +92,9 @@ public class ChannelReplicator implements Runnable, Lockable {
             return false;
         }
         //todo - gfm - 1/20/14 - this should verify the config hasn't changed
-        if (!channelService.channelExists(channel)) {
-            channelService.createChannel(this.configuration);
+        if (!channelService.channelExists(configuration.getName())) {
+            logger.info("creating channel for " + channelUrl);
+            channelService.createChannel(configuration);
         }
         return true;
     }
@@ -93,7 +104,7 @@ public class ChannelReplicator implements Runnable, Lockable {
         if (sequence == ChannelUtils.NOT_FOUND) {
             return;
         }
-        logger.debug("starting " + channelUrl + " migration at " + sequence);
+        logger.info("starting " + channelUrl + " migration at " + sequence);
         iterator = sequenceIteratorFactory.create(sequence, channelUrl);
         while (iterator.hasNext() && curatorLock.shouldKeepWorking()) {
             channelService.insert(channel, iterator.next());

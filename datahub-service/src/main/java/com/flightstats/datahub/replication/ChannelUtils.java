@@ -112,6 +112,7 @@ public class ChannelUtils {
         return Optional.of(getCreationDate(response));
     }
 
+    //todo - gfm - 1/29/14 - might make sense to create a Channel class with name & url
     public Set<String> getChannels(String url) {
         Set<String> channels = new HashSet<>();
         try {
@@ -126,7 +127,8 @@ public class ChannelUtils {
                 channels.add(channel.get("href").asText());
             }
         } catch (Exception e) {
-            logger.warn("unable to get channels " + url, e);
+            logger.warn("unable to get channels " + url + " " + e.getMessage());
+            logger.debug("unable to get channels " + url, e);
         }
         return channels;
     }

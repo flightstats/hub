@@ -34,7 +34,9 @@ public class DomainReplicator implements Runnable {
     public DomainReplicator(ChannelUtils channelUtils, Provider<ChannelReplicator> replicatorProvider) {
         this.channelUtils = channelUtils;
         this.replicatorProvider = replicatorProvider;
-        executorService = Executors.newScheduledThreadPool(1);
+        //todo - gfm - 1/29/14 - This number is acting like a hard limit.  I expected the pool to grow.
+        executorService = Executors.newScheduledThreadPool(10);
+
     }
 
     public void start(ReplicationDomain config) {
@@ -42,9 +44,13 @@ public class DomainReplicator implements Runnable {
         future = executorService.scheduleWithFixedDelay(this, 0, 1, TimeUnit.MINUTES);
     }
 
-    /*public Set<String> getSourceChannelUrls() {
-        return Collections.unmodifiableSet(replicatingChannels);
-    }*/
+    public Set<String> getSourceChannelUrls() {
+        Set<String> actives = new HashSet<>();
+        for (ChannelReplicator channelReplicator : channelReplicators) {
+            actives.add(channelReplicator.getChannelUrl());
+        }
+        return actives;
+    }
 
     public boolean isDifferent(ReplicationDomain newDomain) {
         return !domain.equals(newDomain);
@@ -70,6 +76,7 @@ public class DomainReplicator implements Runnable {
 
     @Override
     public void run() {
+        Thread.currentThread().setName("DomainReplicator" + domain.getDomain());
         String domainUrl = "http://" + domain.getDomain() + "/channel/";
         Set<String> rawChannels = channelUtils.getChannels(domainUrl);
         if (rawChannels.isEmpty()) {
@@ -93,13 +100,15 @@ public class DomainReplicator implements Runnable {
                 }
             }
         }
+        Thread.currentThread().setName("EmptyDomainReplicator");
     }
 
     private void startChannelReplication(String channelUrl) {
         logger.info("found new channel to replicate " + channelUrl);
         ChannelReplicator channelReplicator = replicatorProvider.get();
         channelReplicator.setChannelUrl(channelUrl);
-        executorService.scheduleWithFixedDelay(channelReplicator, 0, 1, TimeUnit.MINUTES);
+        //todo - gfm - 1/29/14 - we may want the delay to be different.  put it in the config?
+        executorService.scheduleWithFixedDelay(channelReplicator, 0, 15, TimeUnit.SECONDS);
         channelReplicators.add(channelReplicator);
     }
 

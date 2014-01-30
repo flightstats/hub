@@ -63,10 +63,24 @@ public class DynamoReplicationDao {
     }
 
     public Collection<ReplicationDomain> getDomains() {
-        List<ReplicationDomain> configs = new ArrayList<>();
-        //todo - gfm - 1/27/14 -
+        List<ReplicationDomain> domains = new ArrayList<>();
+        ScanRequest scanRequest = new ScanRequest()
+                .withTableName(getTableName());
 
-        return configs;
+        ScanResult result = dbClient.scan(scanRequest);
+        mapItems(domains, result);
+        while (result.getLastEvaluatedKey() != null) {
+            scanRequest.setExclusiveStartKey(result.getLastEvaluatedKey());
+            result = dbClient.scan(scanRequest);
+            mapItems(domains, result);
+        }
+        return domains;
+    }
+
+    private void mapItems(List<ReplicationDomain> configurations, ScanResult result) {
+        for (Map<String, AttributeValue> item : result.getItems()){
+            configurations.add(mapItem(item));
+        }
     }
 
     public void initialize() {

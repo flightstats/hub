@@ -15,10 +15,10 @@ public class ReplicatorInitialization implements TypeListener {
 
 	private final static Logger logger = LoggerFactory.getLogger(ReplicatorInitialization.class);
 
-	private final ApplyOnce<Replicator, Void> initOnce = new ApplyOnce<>(
-			new Function<Replicator, Void>() {
+	private final ApplyOnce<ReplicatorImpl, Void> initOnce = new ApplyOnce<>(
+			new Function<ReplicatorImpl, Void>() {
 				@Override
-				public Void apply(Replicator replicator) {
+				public Void apply(ReplicatorImpl replicator) {
 					logger.info("Initializing Replicator");
                     replicator.start();
 					return null;
@@ -30,7 +30,7 @@ public class ReplicatorInitialization implements TypeListener {
 		encounter.register(new InjectionListener<I>() {
 			@Override
 			public void afterInjection(Object instance) {
-                initOnce.apply((Replicator) instance);
+                initOnce.apply((ReplicatorImpl) instance);
 			}
 		});
 
@@ -40,7 +40,7 @@ public class ReplicatorInitialization implements TypeListener {
 		return new AbstractMatcher<TypeLiteral<?>>() {
 			@Override
 			public boolean matches(TypeLiteral<?> typeLiteral) {
-				return Replicator.class.isAssignableFrom(typeLiteral.getRawType());
+				return ReplicatorImpl.class.isAssignableFrom(typeLiteral.getRawType());
 			}
 		};
 	}

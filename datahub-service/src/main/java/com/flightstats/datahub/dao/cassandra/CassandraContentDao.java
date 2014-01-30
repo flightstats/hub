@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+//todo - gfm - 1/29/14 - kill Cassandra code for now, not up to date.
 public class CassandraContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(CassandraContentDao.class);
