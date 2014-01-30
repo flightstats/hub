@@ -4,7 +4,7 @@ import com.flightstats.datahub.model.Content;
 import com.flightstats.datahub.service.ChannelLinkBuilder;
 import com.flightstats.datahub.util.RuntimeInterruptedException;
 import com.google.common.base.Optional;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
