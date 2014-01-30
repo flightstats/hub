@@ -6,7 +6,6 @@ import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
-import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -26,8 +25,7 @@ public class ChannelReplicator implements Runnable, Lockable {
     private final SequenceIteratorFactory sequenceIteratorFactory;
     private ChannelConfiguration configuration;
 
-    private String channelUrl;
-    private String channel;
+    private Channel channel;
     private SequenceIterator iterator;
     private long historicalDays;
 
@@ -40,38 +38,30 @@ public class ChannelReplicator implements Runnable, Lockable {
         this.channelUtils = channelUtils;
     }
 
-    public void setChannelUrl(String channelUrl) {
-        if (!channelUrl.endsWith("/")) {
-            channelUrl += "/";
-        }
-        this.channelUrl = channelUrl;
-        this.channel = ChannelNameExtractor.extractFromChannelUrl(channelUrl);
+    public void setChannel(Channel channel) {
+        this.channel = channel;
     }
 
     public void setHistoricalDays(long historicalDays) {
         this.historicalDays = historicalDays;
     }
 
-    public String getChannelName() {
+    public Channel getChannel() {
         return channel;
-    }
-
-    public String getChannelUrl() {
-        return channelUrl;
     }
 
     @Override
     public void run() {
-        logger.debug("starting run " + channelUrl);
-        Thread.currentThread().setName("ChannelReplicator-" + channelUrl);
+        logger.debug("starting run " + channel);
+        Thread.currentThread().setName("ChannelReplicator-" + channel.getUrl());
         //todo - gfm - 1/29/14 - not sure why this is taking a minute to finally acquire the lock on local machine
-        curatorLock.runWithLock(this, "/ChannelReplicator/" + channel, 5, TimeUnit.SECONDS);
+        curatorLock.runWithLock(this, "/ChannelReplicator/" + channel.getName(), 5, TimeUnit.SECONDS);
         Thread.currentThread().setName("Empty");
     }
 
     @Override
     public void runWithLock() throws IOException {
-        logger.info("run with lock " + channelUrl);
+        logger.info("run with lock " + channel.getUrl());
         if (!initialize())  {
             return;
         }
@@ -85,19 +75,19 @@ public class ChannelReplicator implements Runnable, Lockable {
     }
 
     boolean initialize() throws IOException {
-        Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channelUrl);
+        Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channel.getUrl());
         if (!optionalConfig.isPresent()) {
-            logger.warn("remote channel missing for " + channelUrl);
+            logger.warn("remote channel missing for " + channel.getUrl());
             return false;
         }
         configuration = optionalConfig.get();
         if (!configuration.isSequence()) {
-            logger.warn("Non-Sequence channels are not currently supported " + channelUrl);
+            logger.warn("Non-Sequence channels are not currently supported " + channel.getUrl());
             return false;
         }
         //todo - gfm - 1/20/14 - this should verify the config hasn't changed
         if (!channelService.channelExists(configuration.getName())) {
-            logger.info("creating channel for " + channelUrl);
+            logger.info("creating channel for " + channel.getUrl());
             channelService.createChannel(configuration);
         }
         return true;
@@ -108,15 +98,15 @@ public class ChannelReplicator implements Runnable, Lockable {
         if (sequence == ChannelUtils.NOT_FOUND) {
             return;
         }
-        logger.info("starting " + channelUrl + " migration at " + sequence);
-        iterator = sequenceIteratorFactory.create(sequence, channelUrl);
+        logger.info("starting " + channel.getUrl() + " migration at " + sequence);
+        iterator = sequenceIteratorFactory.create(sequence, channel.getUrl());
         while (iterator.hasNext() && curatorLock.shouldKeepWorking()) {
-            channelService.insert(channel, iterator.next());
+            channelService.insert(channel.getName(), iterator.next());
         }
     }
 
     long getStartingSequence() {
-        Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel);
+        Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
         if (lastUpdatedKey.isPresent()) {
             SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
             if (contentKey.getSequence() == SequenceContentKey.START_VALUE) {
@@ -124,14 +114,14 @@ public class ChannelReplicator implements Runnable, Lockable {
             }
             return searchForStartingKey(contentKey.getSequence() + 1, historicalDays + 1);
         }
-        logger.warn("problem getting starting sequence " + channelUrl);
+        logger.warn("problem getting starting sequence " + channel.getUrl());
         return ChannelUtils.NOT_FOUND;
     }
 
     long searchForStartingKey(long startValue, long daysToUse) {
         //this may not play well with discontinuous sequences
-        logger.debug("searching the key space for " + channelUrl);
-        Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
+        logger.debug("searching the key space for " + channel.getUrl());
+        Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getUrl());
         if (!latestSequence.isPresent()) {
             return SequenceContentKey.START_VALUE + 1;
         }
@@ -155,7 +145,7 @@ public class ChannelReplicator implements Runnable, Lockable {
      * We want to return a starting id that exists, and isn't going to be expired immediately.
      */
     private boolean existsAndNotYetExpired(long id, long daysToUse) {
-        Optional<DateTime> creationDate = channelUtils.getCreationDate(channelUrl, id);
+        Optional<DateTime> creationDate = channelUtils.getCreationDate(channel.getUrl(), id);
         if (!creationDate.isPresent()) {
             return false;
         }

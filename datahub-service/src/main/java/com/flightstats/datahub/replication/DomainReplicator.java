@@ -1,6 +1,5 @@
 package com.flightstats.datahub.replication;
 
-import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.slf4j.Logger;
@@ -43,10 +42,10 @@ public class DomainReplicator implements Runnable {
         future = executorService.scheduleWithFixedDelay(this, 0, 1, TimeUnit.MINUTES);
     }
 
-    public Set<String> getSourceChannelUrls() {
-        Set<String> actives = new HashSet<>();
+    public Set<Channel> getChannels() {
+        Set<Channel> actives = new HashSet<>();
         for (ChannelReplicator channelReplicator : channelReplicators) {
-            actives.add(channelReplicator.getChannelUrl());
+            actives.add(channelReplicator.getChannel());
         }
         return actives;
     }
@@ -59,7 +58,7 @@ public class DomainReplicator implements Runnable {
         logger.info("exiting " + domain.getDomain());
         future.cancel(true);
         for (ChannelReplicator replicator : channelReplicators) {
-            logger.info("exiting " + replicator.getChannelName());
+            logger.info("exiting " + replicator.getChannel().getName());
             replicator.exit();
         }
         executorService.shutdown();
@@ -68,7 +67,7 @@ public class DomainReplicator implements Runnable {
     private Set<String> getActiveReplicators() {
         Set<String> actives = new HashSet<>();
         for (ChannelReplicator channelReplicator : channelReplicators) {
-            actives.add(channelReplicator.getChannelName());
+            actives.add(channelReplicator.getChannel().getName());
         }
         return actives;
     }
@@ -77,35 +76,33 @@ public class DomainReplicator implements Runnable {
     public void run() {
         Thread.currentThread().setName("DomainReplicator" + domain.getDomain());
         String domainUrl = "http://" + domain.getDomain() + "/channel/";
-        Set<String> rawChannels = channelUtils.getChannels(domainUrl);
-        if (rawChannels.isEmpty()) {
+        Set<Channel> channels = channelUtils.getChannels(domainUrl);
+        if (channels.isEmpty()) {
             logger.warn("did not find any channels to replicate at " + domainUrl);
             return;
         }
         //todo - gfm - 1/29/14 - test this
         Set<String> activeReplicators = getActiveReplicators();
         if (domain.isInclusive()) {
-            for (String rawChannel : rawChannels) {
-                String channel = ChannelNameExtractor.extractFromChannelUrl(rawChannel);
-                if (!domain.getIncludeExcept().contains(channel) && !activeReplicators.contains(channel)) {
-                    startChannelReplication(rawChannel, domain);
+            for (Channel channel : channels) {
+                if (!domain.getIncludeExcept().contains(channel.getName()) && !activeReplicators.contains(channel.getName())) {
+                    startChannelReplication(channel, domain);
                 }
             }
         } else {
-            for (String rawChannel : rawChannels) {
-                String channel = ChannelNameExtractor.extractFromChannelUrl(rawChannel);
-                if (domain.getExcludeExcept().contains(channel) && !activeReplicators.contains(channel)) {
-                    startChannelReplication(rawChannel, domain);
+            for (Channel channel : channels) {
+                if (domain.getExcludeExcept().contains(channel.getName()) && !activeReplicators.contains(channel.getName())) {
+                    startChannelReplication(channel, domain);
                 }
             }
         }
         Thread.currentThread().setName("EmptyDomainReplicator");
     }
 
-    private void startChannelReplication(String channelUrl, ReplicationDomain domain) {
-        logger.info("found new channel to replicate " + channelUrl);
+    private void startChannelReplication(Channel channel, ReplicationDomain domain) {
+        logger.info("found new channel to replicate " + channel);
         ChannelReplicator channelReplicator = replicatorProvider.get();
-        channelReplicator.setChannelUrl(channelUrl);
+        channelReplicator.setChannel(channel);
         channelReplicator.setHistoricalDays(domain.getHistoricalDays());
         //todo - gfm - 1/29/14 - we may want the delay to be different.  put it in the config?
         executorService.scheduleWithFixedDelay(channelReplicator, 0, 60, TimeUnit.SECONDS);
