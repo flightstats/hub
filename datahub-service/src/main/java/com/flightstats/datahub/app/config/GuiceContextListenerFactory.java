@@ -241,9 +241,10 @@ public class GuiceContextListenerFactory {
         }
 
         private static Client create(boolean followRedirects) {
-            //todo - gfm - 1/21/14 - pull these out into properties
-            int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(30);
-            int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(60);
+            Integer connectTimeoutSeconds = Integer.valueOf(properties.getProperty("http.connect.timeout.seconds", "30"));
+            Integer readTimeoutSeconds = Integer.valueOf(properties.getProperty("http.read.timeout.seconds", "60"));
+            int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(connectTimeoutSeconds);
+            int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(readTimeoutSeconds);
 
             Client client = Client.create();
             client.setConnectTimeout(connectTimeoutMillis);

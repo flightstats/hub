@@ -33,7 +33,7 @@ public class ReplicationStatus {
         this.sourceLatest = sourceLatest;
     }
 
-    public long getDelta() {
+    public long getDeltaLatest() {
         return getSourceLatest() - getReplicationLatest();
     }
 }
