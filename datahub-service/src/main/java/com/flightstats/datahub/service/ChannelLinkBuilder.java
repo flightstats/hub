@@ -10,10 +10,10 @@ import java.net.URI;
 
 import static com.flightstats.rest.Linked.linked;
 
-public class ChannelHypermediaLinkBuilder {
+public class ChannelLinkBuilder {
 
 	@Inject
-	public ChannelHypermediaLinkBuilder() {
+	public ChannelLinkBuilder() {
 	}
 
 	URI buildChannelUri(ChannelConfiguration channelConfiguration, UriInfo uriInfo) {
@@ -32,7 +32,7 @@ public class ChannelHypermediaLinkBuilder {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
-	private URI buildWsLinkFor(URI channelUri) {
+	public static URI buildWsLinkFor(URI channelUri) {
 		String requestUri = channelUri.toString().replaceFirst("^http", "ws");
 		return URI.create(requestUri + "/ws");
 	}

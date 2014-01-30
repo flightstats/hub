@@ -19,8 +19,7 @@ public class AwsUtils {
         if (exception instanceof AmazonServiceException) {
             AmazonServiceException ase = (AmazonServiceException)exception;
 
-            if (ase.getStatusCode() == HttpStatus.SC_INTERNAL_SERVER_ERROR
-                    || ase.getStatusCode() == HttpStatus.SC_SERVICE_UNAVAILABLE) {
+            if (ase.getStatusCode() >= HttpStatus.SC_INTERNAL_SERVER_ERROR) {
                 return true;
             }
 

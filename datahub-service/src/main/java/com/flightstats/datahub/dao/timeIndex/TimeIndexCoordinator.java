@@ -1,6 +1,6 @@
 package com.flightstats.datahub.dao.timeIndex;
 
-import com.flightstats.datahub.cluster.ZooKeeperState;
+import com.flightstats.datahub.cluster.CuratorLock;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -24,14 +24,14 @@ public class TimeIndexCoordinator implements Runnable {
 
     private final CuratorFramework curator;
     private final TimeIndexDao timeIndexDao;
-    private final ZooKeeperState zooKeeperState;
+    private final CuratorLock curatorLock;
 
     @Inject
     public TimeIndexCoordinator(CuratorFramework curator, TimeIndexDao timeIndexDao,
-                                ZooKeeperState zooKeeperState) {
+                                CuratorLock curatorLock) {
         this.curator = curator;
         this.timeIndexDao = timeIndexDao;
-        this.zooKeeperState = zooKeeperState;
+        this.curatorLock = curatorLock;
     }
 
     @Override
@@ -41,7 +41,7 @@ public class TimeIndexCoordinator implements Runnable {
             logger.debug("found " + channels.size() + " channels");
             Collections.shuffle(channels);
             for (String channel : channels) {
-                new TimeIndexProcessor(curator, timeIndexDao, zooKeeperState).process(channel);
+                new TimeIndexProcessor(curatorLock, timeIndexDao, curator).process(channel);
             }
         } catch (KeeperException.NoNodeException e) {
             logger.info("no node exception " + e.getMessage());

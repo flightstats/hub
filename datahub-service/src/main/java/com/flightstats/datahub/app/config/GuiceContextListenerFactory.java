@@ -3,12 +3,15 @@ package com.flightstats.datahub.app.config;
 import com.codahale.metrics.MetricRegistry;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
+import com.flightstats.datahub.cluster.CuratorLock;
 import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.aws.AwsDataStoreModule;
 import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
-import com.flightstats.datahub.migration.ChannelUtils;
-import com.flightstats.datahub.migration.Migrator;
 import com.flightstats.datahub.model.ChannelConfiguration;
+import com.flightstats.datahub.replication.ChannelUtils;
+import com.flightstats.datahub.replication.Replicator;
+import com.flightstats.datahub.replication.ReplicatorImpl;
+import com.flightstats.datahub.replication.ReplicatorInitialization;
 import com.flightstats.datahub.rest.RetryClientFilter;
 import com.flightstats.datahub.service.DataHubHealthCheck;
 import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
@@ -43,11 +46,13 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.BoundedExponentialBackoffRetry;
 import org.apache.zookeeper.data.Stat;
+import org.eclipse.jetty.websocket.jsr356.ClientContainer;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.websocket.WebSocketContainer;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Properties;
@@ -81,6 +86,7 @@ public class GuiceContextListenerFactory {
                 .withObjectMapper(DataHubObjectMapperFactory.construct())
                 .withBindings(new DataHubBindings())
                 .withHealthCheckClass(DataHubHealthCheck.class)
+                //this could be more precise
                 .withRegexServe(ChannelNameExtractor.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
                 .withModules(Arrays.asList(module))
                 .build();
@@ -125,8 +131,10 @@ public class GuiceContextListenerFactory {
             binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
             binder.bind(TimeProvider.class).in(Singleton.class);
             binder.bind(ZooKeeperState.class).in(Singleton.class);
-            binder.bind(Migrator.class).in(Singleton.class);
+            binder.bindListener(ReplicatorInitialization.buildTypeMatcher(), new ReplicatorInitialization());
+            binder.bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
             binder.bind(ChannelUtils.class).in(Singleton.class);
+            binder.bind(CuratorLock.class).in(Singleton.class);
         }
     }
 
@@ -233,9 +241,10 @@ public class GuiceContextListenerFactory {
         }
 
         private static Client create(boolean followRedirects) {
-            //todo - gfm - 1/21/14 - pull these out into properties
-            int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(30);
-            int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(60);
+            Integer connectTimeoutSeconds = Integer.valueOf(properties.getProperty("http.connect.timeout.seconds", "30"));
+            Integer readTimeoutSeconds = Integer.valueOf(properties.getProperty("http.read.timeout.seconds", "60"));
+            int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(connectTimeoutSeconds);
+            int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(readTimeoutSeconds);
 
             Client client = Client.create();
             client.setConnectTimeout(connectTimeoutMillis);
@@ -243,6 +252,14 @@ public class GuiceContextListenerFactory {
             client.addFilter(new RetryClientFilter());
             client.setFollowRedirects(followRedirects);
             return client;
+        }
+
+        @Singleton
+        @Provides
+        public static WebSocketContainer buildWebSocketContainer() throws Exception {
+            ClientContainer container = new ClientContainer();
+            container.start();
+            return container;
         }
     }
 }

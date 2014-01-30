@@ -8,6 +8,8 @@ import com.flightstats.datahub.dao.dynamo.DynamoContentDao;
 import com.flightstats.datahub.dao.dynamo.DynamoUtils;
 import com.flightstats.datahub.dao.s3.S3ContentDao;
 import com.flightstats.datahub.dao.timeIndex.TimeIndexDao;
+import com.flightstats.datahub.replication.DynamoReplicationDao;
+import com.flightstats.datahub.replication.ReplicationInitialization;
 import com.flightstats.datahub.util.CuratorKeyGenerator;
 import com.flightstats.datahub.util.DataHubKeyGenerator;
 import com.flightstats.datahub.util.TimeSeriesKeyGenerator;
@@ -31,6 +33,8 @@ public class AwsDataStoreModule extends AbstractModule {
 		bind(AwsConnectorFactory.class).in(Singleton.class);
 		bindListener(ChannelMetadataInitialization.buildTypeMatcher(), new ChannelMetadataInitialization());
 		bindListener(DataHubValueDaoInitialization.buildTypeMatcher(), new DataHubValueDaoInitialization());
+        bindListener(ReplicationInitialization.buildTypeMatcher(), new ReplicationInitialization());
+        bind(DynamoReplicationDao.class).asEagerSingleton();
         bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
         bind(ContentServiceFinder.class).to(SplittingContentServiceFinder.class).asEagerSingleton();
         bind(ChannelMetadataDao.class).to(TimedChannelMetadataDao.class).in(Singleton.class);

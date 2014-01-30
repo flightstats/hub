@@ -35,7 +35,7 @@ public class ChannelTimeResourceTest {
         channelName = "keyTime";
         UriInfo uriInfo = mock(UriInfo.class);
         channelService = mock(ChannelService.class);
-        ChannelHypermediaLinkBuilder linkBuilder = new ChannelHypermediaLinkBuilder();
+        ChannelLinkBuilder linkBuilder = new ChannelLinkBuilder();
         resource = new ChannelTimeResource(uriInfo, channelService, linkBuilder);
         when(uriInfo.getBaseUri()).thenReturn(new URI(BASE_URL));
         when(uriInfo.getRequestUri()).thenReturn(new URI(BASE_URL + "channel/" + channelName + "/ids/2013-12-27T11:50-0800"));

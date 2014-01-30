@@ -36,11 +36,11 @@ public class ChannelTimeResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
 	private final UriInfo uriInfo;
 	private final ChannelService channelService;
-    private final ChannelHypermediaLinkBuilder linkBuilder;
+    private final ChannelLinkBuilder linkBuilder;
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
-	public ChannelTimeResource(UriInfo uriInfo, ChannelService channelService, ChannelHypermediaLinkBuilder linkBuilder) {
+	public ChannelTimeResource(UriInfo uriInfo, ChannelService channelService, ChannelLinkBuilder linkBuilder) {
 		this.uriInfo = uriInfo;
 		this.channelService = channelService;
         this.linkBuilder = linkBuilder;

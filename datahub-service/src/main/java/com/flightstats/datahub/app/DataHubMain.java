@@ -5,7 +5,6 @@ import com.conducivetech.services.common.util.PropertyConfiguration;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.datahub.app.config.GuiceContextListenerFactory;
 import com.flightstats.datahub.dao.timeIndex.TimeIndexCoordinator;
-import com.flightstats.datahub.migration.Migrator;
 import com.flightstats.jerseyguice.jetty.JettyConfig;
 import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
 import com.flightstats.jerseyguice.jetty.JettyServer;
@@ -79,8 +78,8 @@ public class DataHubMain {
         server.start();
         logger.info("Jetty server has been started.");
         Injector injector = guice.getInjector();
+        //todo - gfm - 1/27/14 - does it make sense to pull these into TypeListeners via Guice?
         injector.getInstance(TimeIndexCoordinator.class).startThread();
-        injector.getInstance(Migrator.class).startThreads();
         return server;
     }
 

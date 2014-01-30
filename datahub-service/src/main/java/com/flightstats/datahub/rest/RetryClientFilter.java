@@ -19,8 +19,8 @@ public class RetryClientFilter extends ClientFilter
 
     public ClientResponse handle(ClientRequest clientRequest) throws ClientHandlerException
     {
-        //todo - gfm - 1/19/14 - can this handle 500 or 503?
         int i = 0;
+        //todo - gfm - 1/26/14 - add these to config
         int maxRetries = 3;
         int sleep = 1000;
         ClientHandlerException lastCause = null;
@@ -30,7 +30,16 @@ public class RetryClientFilter extends ClientFilter
             i++;
             try
             {
-                return getNext().handle(clientRequest);
+                ClientResponse response = getNext().handle(clientRequest);
+                if (response.getStatus() >= 500) {
+                    //todo - gfm - 1/26/14 - look at Retry-After header
+                    logger.info("500 level response {}  attempt={}", response, i);
+                    if (i >= maxRetries) {
+                        return response;
+                    }
+                } else  {
+                    return response;
+                }
             }
             catch (ClientHandlerException e)
             {
