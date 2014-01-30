@@ -80,22 +80,22 @@ public class ChannelUtilsTest {
 
     @Test
     public void testGetChannels() throws Exception {
-        Set<String> channels = channelUtils.getChannels(ROOT_URL);
+        Set<Channel> channels = channelUtils.getChannels(ROOT_URL);
         assertNotNull(channels);
         assertTrue(channels.size() > 10);
-        assertTrue(channels.contains("http://hub.svc.dev/channel/testy10"));
+        assertTrue(channels.contains(new Channel("testy10", "http://hub.svc.dev/channel/testy10")));
     }
 
     @Test
     public void testGetChannelsSlash() throws Exception {
-        Set<String> channels = channelUtils.getChannels(ROOT_URL + "/");
+        Set<Channel> channels = channelUtils.getChannels(ROOT_URL + "/");
         assertNotNull(channels);
         assertTrue(channels.size() > 10);
     }
 
     @Test
     public void testNoChannels() throws Exception {
-        Set<String> channels = channelUtils.getChannels("http://nothing.svc.dev/channel");
+        Set<Channel> channels = channelUtils.getChannels("http://nothing.svc.dev/channel");
         assertNotNull(channels);
         assertTrue(channels.isEmpty());
     }
