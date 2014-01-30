@@ -32,6 +32,7 @@ public class ChannelReplicatorTest {
     private ChannelConfiguration configuration;
     private SequenceIterator sequenceIterator;
     private SequenceIteratorFactory factory;
+    private Channel channel;
 
     @Before
     public void setupClass() throws Exception {
@@ -47,7 +48,8 @@ public class ChannelReplicatorTest {
         CuratorLock curatorLock = mock(CuratorLock.class);
         when(curatorLock.shouldKeepWorking()).thenReturn(true);
         replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory);
-        replicator.setChannelUrl(URL);
+        channel = new Channel(CHANNEL, URL);
+        replicator.setChannel(channel);
     }
 
     @Test
@@ -252,7 +254,7 @@ public class ChannelReplicatorTest {
         when(curatorLock.shouldKeepWorking()).thenReturn(false);
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.<Long>absent());
         replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory);
-        replicator.setChannelUrl(URL);
+        replicator.setChannel(channel);
         replicator.runWithLock();
         verify(channelService, never()).insert(anyString(), any(Content.class));
     }

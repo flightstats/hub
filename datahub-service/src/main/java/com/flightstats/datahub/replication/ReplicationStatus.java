@@ -5,16 +5,20 @@ package com.flightstats.datahub.replication;
  */
 public class ReplicationStatus {
 
-    private String url;
     private long replicationLatest;
     private long sourceLatest;
+    private Channel channel;
 
     public String getUrl() {
-        return url;
+        return channel.getUrl();
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public String getName() {
+        return channel.getName();
+    }
+
+    public void setChannel(Channel channel) {
+        this.channel = channel;
     }
 
     public long getReplicationLatest() {

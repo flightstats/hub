@@ -112,9 +112,8 @@ public class ChannelUtils {
         return Optional.of(getCreationDate(response));
     }
 
-    //todo - gfm - 1/29/14 - might make sense to create a Channel class with name & url
-    public Set<String> getChannels(String url) {
-        Set<String> channels = new HashSet<>();
+    public Set<Channel> getChannels(String url) {
+        Set<Channel> channels = new HashSet<>();
         try {
             ClientResponse response = followClient.resource(url).get(ClientResponse.class);
             if (response.getStatus() >= 400) {
@@ -124,7 +123,7 @@ public class ChannelUtils {
             JsonNode rootNode = mapper.readTree(response.getEntity(String.class));
             JsonNode channelsNode = rootNode.get("_links").get("channels");
             for (JsonNode channel : channelsNode) {
-                channels.add(channel.get("href").asText());
+                channels.add(new Channel(channel.get("name").asText(), channel.get("href").asText()));
             }
         } catch (Exception e) {
             logger.warn("unable to get channels " + url + " " + e.getMessage());
