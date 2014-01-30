@@ -8,7 +8,6 @@ public class ReplicationStatus {
     private String url;
     private long replicationLatest;
     private long sourceLatest;
-    //todo - gfm - 1/27/14 - add dates?
 
     public String getUrl() {
         return url;
@@ -32,5 +31,9 @@ public class ReplicationStatus {
 
     public void setSourceLatest(long sourceLatest) {
         this.sourceLatest = sourceLatest;
+    }
+
+    public long getDelta() {
+        return getSourceLatest() - getReplicationLatest();
     }
 }
