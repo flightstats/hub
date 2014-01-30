@@ -6,7 +6,6 @@ import com.flightstats.datahub.app.config.metrics.PerChannelTimedMethodDispatchA
 import com.flightstats.datahub.cluster.CuratorLock;
 import com.flightstats.datahub.cluster.ZooKeeperState;
 import com.flightstats.datahub.dao.aws.AwsDataStoreModule;
-import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.replication.ChannelUtils;
 import com.flightstats.datahub.replication.Replicator;
@@ -63,7 +62,6 @@ public class GuiceContextListenerFactory {
     private final static Logger logger = LoggerFactory.getLogger(GuiceContextListenerFactory.class);
 
     public static final String BACKING_STORE_PROPERTY = "backing.store";
-    public static final String CASSANDRA_BACKING_STORE_TAG = "cassandra";
     public static final String AWS_BACKING_STORE_TAG = "aws";
     public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
     private static Properties properties = new Properties();
@@ -160,8 +158,6 @@ public class GuiceContextListenerFactory {
         String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, AWS_BACKING_STORE_TAG);
         logger.info("using data store " + backingStoreName);
         switch (backingStoreName) {
-            case CASSANDRA_BACKING_STORE_TAG:
-                return new CassandraDataStoreModule(properties);
             case AWS_BACKING_STORE_TAG:
                 return new AwsDataStoreModule(properties);
             default:
