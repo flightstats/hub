@@ -81,7 +81,9 @@ public class ReplicatorImpl implements Replicator {
     private synchronized void replicateDomains() {
         logger.info("replicating domains");
         Collection<ReplicationDomain> domains = replicationService.getDomains();
+        List<String> currentDomains = new ArrayList<>();
         for (ReplicationDomain domain : domains) {
+            currentDomains.add(domain.getDomain());
             logger.info("domain " + domain);
             if (replicatorMap.containsKey(domain.getDomain())) {
                 DomainReplicator domainReplicator = replicatorMap.get(domain.getDomain());
@@ -92,6 +94,14 @@ public class ReplicatorImpl implements Replicator {
             } else {
                 startReplication(domain);
             }
+        }
+        logger.info("current domains " + currentDomains);
+        Set<String> keys = new HashSet<>(replicatorMap.keySet());
+        keys.removeAll(currentDomains);
+        for (String key : keys) {
+            logger.info("removing " + key);
+            replicatorMap.get(key).exit();
+            replicatorMap.remove(key);
         }
     }
 
