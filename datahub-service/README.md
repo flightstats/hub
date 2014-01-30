@@ -14,6 +14,7 @@ The Hub
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
 * [replicate another hub](#replicate-another-hub)
+* [api updates](#api-updates)
 
 For the purposes of this document, the Hub is at http://hub/.
 
@@ -345,6 +346,8 @@ todo include details on using interface
    "sourceLatest" : 184203
  } ]
  ```
+
+## api updates
 
 Also, there are a couple of small API changes that clients should be aware of.
 

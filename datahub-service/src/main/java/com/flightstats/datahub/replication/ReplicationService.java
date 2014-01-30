@@ -85,7 +85,11 @@ public class ReplicationService {
         return replicationDao.getDomains();
     }
 
-    public Collection<ReplicationStatus> getStatus() {
+    public ReplicationBean getReplicationBean() {
+        return new ReplicationBean(getDomains(), getStatus());
+    }
+
+    private Collection<ReplicationStatus> getStatus() {
         ArrayList<ReplicationStatus> statuses = Lists.newArrayList();
         for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
             for (String url : domainReplicator.getSourceChannelUrls()) {

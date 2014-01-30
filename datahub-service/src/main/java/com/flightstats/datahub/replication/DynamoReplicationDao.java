@@ -59,7 +59,9 @@ public class DynamoReplicationDao {
     }
 
     public void delete(String domain) {
-        //todo - gfm - 1/27/14 - delete
+        Map<String, AttributeValue> key = new HashMap<>();
+        key.put("domain", new AttributeValue().withS(domain));
+        dbClient.deleteItem(new DeleteItemRequest(getTableName(), key));
     }
 
     public Collection<ReplicationDomain> getDomains() {

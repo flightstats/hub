@@ -2,7 +2,6 @@ package com.flightstats.datahub.service;
 
 import com.flightstats.datahub.replication.ReplicationDomain;
 import com.flightstats.datahub.replication.ReplicationService;
-import com.flightstats.datahub.replication.ReplicationStatus;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -12,14 +11,13 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.Collection;
 
 /**
  *
  */
 @Path("/replication")
 public class ReplicationResource {
-    //todo - gfm - 1/27/14 - ad more integration tests
+    //todo - gfm - 1/27/14 - add more integration tests
     private final static Logger logger = LoggerFactory.getLogger(ReplicationResource.class);
 
     private final ReplicationService replicationService;
@@ -35,8 +33,7 @@ public class ReplicationResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getStatus() throws Exception {
-        Collection<ReplicationStatus> status = replicationService.getStatus();
-        return Response.ok(status).build();
+        return Response.ok(replicationService.getReplicationBean()).build();
     }
 
     @PUT

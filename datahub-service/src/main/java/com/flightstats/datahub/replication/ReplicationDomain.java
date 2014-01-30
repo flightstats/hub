@@ -1,7 +1,7 @@
 package com.flightstats.datahub.replication;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
@@ -27,6 +27,7 @@ public class ReplicationDomain {
         excludeExcept = Collections.unmodifiableSet(new TreeSet<>(builder.excludedExcept));
     }
 
+    @JsonIgnore()
     public boolean isValid() {
         if (includeExcept.isEmpty()) {
             return !excludeExcept.isEmpty();
@@ -34,6 +35,7 @@ public class ReplicationDomain {
         return excludeExcept.isEmpty() && !includeExcept.isEmpty();
     }
 
+    @JsonIgnore()
     public boolean isInclusive() {
         return !includeExcept.isEmpty();
     }
@@ -80,17 +82,14 @@ public class ReplicationDomain {
         this.domain = domain;
     }
 
-    @JsonProperty("historicalDays")
     public long getHistoricalDays() {
         return historicalDays;
     }
 
-    @JsonProperty("includeExcept")
     public Set<String> getIncludeExcept() {
         return includeExcept;
     }
 
-    @JsonProperty("excludeExcept")
     public Set<String> getExcludeExcept() {
         return excludeExcept;
     }

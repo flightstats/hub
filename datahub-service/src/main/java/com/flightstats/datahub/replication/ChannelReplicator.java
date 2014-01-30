@@ -63,10 +63,10 @@ public class ChannelReplicator implements Runnable, Lockable {
     @Override
     public void run() {
         logger.info("starting run " + channelUrl);
-        Thread.currentThread().setName("ChannelReplicator" + channelUrl);
+        Thread.currentThread().setName("ChannelReplicator-" + channelUrl);
         //todo - gfm - 1/29/14 - not sure why this is taking a minute to finally acquire the lock on local machine
         curatorLock.runWithLock(this, "/ChannelReplicator/" + channel, 5, TimeUnit.SECONDS);
-        Thread.currentThread().setName("EmptyChannelReplicator");
+        Thread.currentThread().setName("Empty");
     }
 
     @Override
@@ -116,6 +116,8 @@ public class ChannelReplicator implements Runnable, Lockable {
     }
 
     long getStartingSequence() {
+        //todo - gfm - 1/29/14 - should this compare historicalDays versus the existing sequence?
+        //todo - gfm - 1/29/14 - maybe just always do searchForStartingKey ?
         Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel);
         if (lastUpdatedKey.isPresent()) {
             SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
