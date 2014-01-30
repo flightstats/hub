@@ -65,5 +65,7 @@ public class ReplicationResource {
         return Response.ok().build();
     }
 
+    //todo - gfm - 1/30/14 - add ability to reset a channel?
+
 
 }
