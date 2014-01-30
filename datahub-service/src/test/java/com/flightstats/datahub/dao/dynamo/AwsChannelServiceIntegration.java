@@ -3,7 +3,7 @@ package com.flightstats.datahub.dao.dynamo;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.datahub.app.DataHubMain;
-import com.flightstats.datahub.cluster.ZooKeeperState;
+import com.flightstats.datahub.cluster.CuratorLock;
 import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.dao.ChannelServiceIntegration;
 import com.flightstats.datahub.dao.s3.S3ContentDao;
@@ -42,6 +42,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
 
     @BeforeClass
     public static void setupClass() throws Exception {
+        //todo - gfm - 1/29/14 - consolidate Integration Test startup
         Properties properties = DataHubMain.loadProperties("useDefault");
         properties.put("backing.store", "aws");
         finalStartup(properties);
@@ -191,7 +192,8 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         RetryPolicy retryPolicy = injector.getInstance(RetryPolicy.class);
         CuratorKeyGenerator keyGenerator = new CuratorKeyGenerator(curator, metricsTimer, retryPolicy);
         S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", curator, metricsTimer);
-        TimeIndexProcessor processor = new TimeIndexProcessor(curator, indexDao, new ZooKeeperState());
+        CuratorLock curatorLock = injector.getInstance(CuratorLock.class);
+        TimeIndexProcessor processor = new TimeIndexProcessor(curatorLock, indexDao, curator);
 
         DateTime dateTime1 = new DateTime(2014, 1, 6, 12, 45);
         indexDao.writeIndex(channelName, dateTime1, new SequenceContentKey(999));

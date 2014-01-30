@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
+import com.flightstats.datahub.service.ChannelLinkBuilder;
 import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
@@ -13,21 +13,22 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-@WebSocket(maxMessageSize = 1024 * 10)    //10k
+//todo - gfm - 1/29/14 - change this to use javax.websocket
+@WebSocket(maxTextMessageSize = 1024 * 10)    //10k
 public class DataHubWebSocket {
 
 	private final static Logger logger = LoggerFactory.getLogger(DataHubWebSocket.class);
 	private final Runnable afterDisconnectCallback;
 	private final ChannelNameExtractor channelNameExtractor;
 	private final SubscriptionRoster subscriptions;
-	private final ChannelHypermediaLinkBuilder linkBuilder;
+	private final ChannelLinkBuilder linkBuilder;
 	private String remoteAddress;
     //todo - gfm - 1/15/14 - I'm curious about the lifecycle of this
 	private JettyWebSocketEndpointSender endpointSender;
 	private String channelName;
 
 	@Inject
-	public DataHubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder) {
+	public DataHubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelLinkBuilder linkBuilder) {
 		this(subscriptions, channelNameExtractor, linkBuilder, new Runnable() {
 			@Override
 			public void run() {
@@ -36,7 +37,7 @@ public class DataHubWebSocket {
 		});
 	}
 
-	DataHubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelHypermediaLinkBuilder linkBuilder,
+	DataHubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelLinkBuilder linkBuilder,
 					Runnable afterDisconnectCallback) {
 		this.linkBuilder = linkBuilder;
 		this.afterDisconnectCallback = afterDisconnectCallback;

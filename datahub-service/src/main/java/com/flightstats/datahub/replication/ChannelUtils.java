@@ -1,4 +1,4 @@
-package com.flightstats.datahub.migration;
+package com.flightstats.datahub.replication;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,7 +49,7 @@ public class ChannelUtils {
         channelUrl = appendSlash(channelUrl);
         ClientResponse response = noRedirectsClient.resource(channelUrl + "latest")
                 .accept(MediaType.WILDCARD_TYPE)
-                .get(ClientResponse.class);
+                .head();
         if (response.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
             logger.debug("latest not found for " + channelUrl + " " + response);
             return Optional.absent();
@@ -82,6 +82,7 @@ public class ChannelUtils {
         return Optional.of(configuration);
     }
 
+    //todo - gfm - 1/25/14 - use compression for content
     public Optional<Content> getContent(String channelUrl, long sequence) {
         channelUrl = appendSlash(channelUrl);
         ClientResponse response = getResponse(channelUrl + sequence);
@@ -111,6 +112,7 @@ public class ChannelUtils {
         return Optional.of(getCreationDate(response));
     }
 
+    //todo - gfm - 1/29/14 - might make sense to create a Channel class with name & url
     public Set<String> getChannels(String url) {
         Set<String> channels = new HashSet<>();
         try {
@@ -125,12 +127,17 @@ public class ChannelUtils {
                 channels.add(channel.get("href").asText());
             }
         } catch (Exception e) {
-            logger.warn("unable to get channels " + url, e);
+            logger.warn("unable to get channels " + url + " " + e.getMessage());
+            logger.debug("unable to get channels " + url, e);
         }
         return channels;
     }
 
     private ClientResponse getResponse(String url) {
+        /**
+         * this uses no redirects because I don't think we want to follow redirects for content,
+         * as it could end up in an infinite loop.
+         */
         return noRedirectsClient.resource(url).accept(MediaType.WILDCARD_TYPE).get(ClientResponse.class);
     }
 

@@ -13,7 +13,10 @@ The Hub
 * [subscribe to events](#subscribe-to-events)
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
-* [migrate from datahub](#migrate-from-datahub)
+* [configure replication](#configure-replication)
+* [replication status](#replication-status)
+* [stop replication](#stop-replication)
+* [api updates](#api-updates)
 
 For the purposes of this document, the Hub is at http://hub/.
 
@@ -327,28 +330,70 @@ Here's how you can do this with curl:
 curl -i -X DELETE http://hub/channel/stumptown
 ```
 
-## migrate from datahub
+## configure replication
 
-The Hub in Prod will be actively pulling all channels from the Prod DataHub and providing the new time interface.
-Since all current uses of the DataHub are Sequence channels, all of the migrated channels will also be Sequence channels.
+The Hub can replicate Sequence channels from another Hub instance.  TimeSeries replication is not yet supported.
 
-To migrate cleanly and prevent conflicts in the channel sequences, each inserter into the DataHub should stop writing
-to the DataHub, and wait until the DataHub and the Hub agree on the latest value before switching writes to the Hub.
-No other changes are needed for data migration.  You can monitor all of the channels calling the migration resource
+To configure new or modify existing replication of channels in the domain 'hub.other':
 
- `GET http://hub/migration`
+`PUT http://hub/replication/hub.other`
+
+* Content-type: application/json
+
+```json
+{
+   "historicalDays" : 10,
+   "excludeExcept" : [ "stumptown", "pdx" ]
+}
+```
+* Modifications to existing replication configuration take effect immediately.
+* `excludeExcept` means "Exclude all of the channels, Except the ones specified".
+* `includeExcept` means "Include all of the channels, Except the ones specified".  This will pick up new channels which aren't in the except list.
+* `includeExcept` and `excludeExcept` are mutually exclusive.  Attempts to set both will result in a 400 response code.
+* `historicalDays` tells the replicator how far back in time to start. Zero means "only get new values".
+* If http://hub.other/channel/stumptown `ttlDays` is 10, and `historicalDays` is 5, only items from the last 5 days will be replicated.
+* If a channel's `historicalDays` is 0 and the ongoing replication is restarted, replication will continue with the existing sequence if it is up to `historicalDays` + 1 old.
+
+As an example, the replicating cluster is going into a maintenance window, and a domain has `historicalDays` of zero.  The entire cluster is stopped at noon.
+Maintenance takes longer than expected and the cluster resumes at 11 AM the next day.  Replication will pick up where it left off, and will eventually catch up to the current position.
+If, instead, the cluster didn't start until 1 PM the next day, one hour's worth will not be replicated.
+
+## replication status
+
+You can get the status of the current replication processes at:
+
+ `GET http://hub/replication`
 
  ```json
- [ {
-   "source" : "http://datahub.svc.prod/channel/FlightHistoryUpdates",
-   "migrateLatest" : 310491,
-   "sourceLatest" : 310491
- }, {
-   "source" : "http://datahub.svc.prod/channel/positionAirnavRaw",
-   "migrateLatest" : 184203,
-   "sourceLatest" : 184203
- } ]
+ {
+   "domains" : [ {
+     "domain" : "hub.other",
+     "historicalDays" : 10,
+     "includeExcept" : [ ],
+     "excludeExcept" : [ "stumptown", "pdx" ]
+   } ],
+  "status" : [ {
+       "url" : "http://hub.other/channel/stumptown",
+       "replicationLatest" : 310491,
+       "sourceLatest" : 310491,
+       "delta" : 0
+     }, {
+       "url" : "http://hub.other/channel/pdx",
+       "replicationLatest" : 170203,
+       "sourceLatest" : 184203,
+       "delta" : 14000
+     } ]
+ }
  ```
+
+## stop replication
+
+Stop replication of the entire domain `hub.other`, issue a `DELETE` command.
+
+`DELETE http://hub/replication/hub.other`
+
+
+## api updates
 
 Also, there are a couple of small API changes that clients should be aware of.
 

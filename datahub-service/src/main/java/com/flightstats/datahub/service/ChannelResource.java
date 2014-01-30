@@ -31,11 +31,11 @@ public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
 
 	private final ChannelService channelService;
-	private final ChannelHypermediaLinkBuilder linkBuilder;
+	private final ChannelLinkBuilder linkBuilder;
 	private final UriInfo uriInfo;
 
 	@Inject
-	public ChannelResource(ChannelService channelService, ChannelHypermediaLinkBuilder linkBuilder, UriInfo uriInfo) {
+	public ChannelResource(ChannelService channelService, ChannelLinkBuilder linkBuilder, UriInfo uriInfo) {
 		this.channelService = channelService;
 		this.linkBuilder = linkBuilder;
 		this.uriInfo = uriInfo;

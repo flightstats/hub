@@ -15,18 +15,18 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ChannelHypermediaLinkBuilderTest {
+public class ChannelLinkBuilderTest {
 
 	private static final String BASE_URL = "http://path.to:8080/";
 	private static final String CHANNEL_URL = BASE_URL + "channel";
 	private ChannelConfiguration channelConfig;
-    private ChannelHypermediaLinkBuilder linkBuilder;
+    private ChannelLinkBuilder linkBuilder;
     private URI channelUri;
 
     @Before
 	public void setup() {
 		channelConfig = ChannelConfiguration.builder().withName("spoon").build();
-        linkBuilder = new ChannelHypermediaLinkBuilder();
+        linkBuilder = new ChannelLinkBuilder();
         channelUri = URI.create(CHANNEL_URL + "/spoon");
     }
 

@@ -2,7 +2,7 @@ package com.flightstats.datahub.service.eventing;
 
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
-import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
+import com.flightstats.datahub.service.ChannelLinkBuilder;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.junit.Test;
 
@@ -23,7 +23,7 @@ public class JettyWebSocketEndpointSenderTest {
 
 		RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
 
-		JettyWebSocketEndpointSender testClass = new JettyWebSocketEndpointSender(address, remoteEndpoint, new ChannelHypermediaLinkBuilder(), requestUri);
+		JettyWebSocketEndpointSender testClass = new JettyWebSocketEndpointSender(address, remoteEndpoint, new ChannelLinkBuilder(), requestUri);
 		testClass.apply(itemKey);
 
 		verify(remoteEndpoint).sendString(requestUri.toString() + "/" + itemKey);
@@ -38,7 +38,7 @@ public class JettyWebSocketEndpointSenderTest {
 		ContentKey contentKey = new SequenceContentKey((short) 5000);
 
 		RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
-		ChannelHypermediaLinkBuilder linkBuilder = mock(ChannelHypermediaLinkBuilder.class);
+		ChannelLinkBuilder linkBuilder = mock(ChannelLinkBuilder.class);
 
 		when(linkBuilder.buildItemUri(contentKey, requestUri)).thenReturn(itemUri);
 

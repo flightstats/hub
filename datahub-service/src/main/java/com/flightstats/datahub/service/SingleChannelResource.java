@@ -34,14 +34,14 @@ import static com.flightstats.rest.Linked.linked;
 public class SingleChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(SingleChannelResource.class);
     private final ChannelService channelService;
-    private final ChannelHypermediaLinkBuilder linkBuilder;
+    private final ChannelLinkBuilder linkBuilder;
     private final Integer maxPayloadSizeBytes;
     private final UriInfo uriInfo;
     private static final ObjectMapper mapper = new ObjectMapper();
 
 
     @Inject
-    public SingleChannelResource(ChannelService channelService, ChannelHypermediaLinkBuilder linkBuilder,
+    public SingleChannelResource(ChannelService channelService, ChannelLinkBuilder linkBuilder,
                                  @Named("maxPayloadSizeBytes") Integer maxPayloadSizeBytes, UriInfo uriInfo) {
         this.channelService = channelService;
         this.linkBuilder = linkBuilder;

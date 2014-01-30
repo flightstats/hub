@@ -1,6 +1,6 @@
 package com.flightstats.datahub.service.eventing;
 
-import com.flightstats.datahub.service.ChannelHypermediaLinkBuilder;
+import com.flightstats.datahub.service.ChannelLinkBuilder;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 
 import java.io.IOException;
@@ -10,10 +10,10 @@ class JettyWebSocketEndpointSender implements Consumer<String> {
 
 	private final RemoteEndpoint remoteEndpoint;
 	private final String remoteAddress;
-	private final ChannelHypermediaLinkBuilder linkBuilder;
+	private final ChannelLinkBuilder linkBuilder;
 	private final URI channelUri;
 
-	public JettyWebSocketEndpointSender(String remoteAddress, RemoteEndpoint remoteEndpoint, ChannelHypermediaLinkBuilder linkBuilder, URI channelUri) {
+	public JettyWebSocketEndpointSender(String remoteAddress, RemoteEndpoint remoteEndpoint, ChannelLinkBuilder linkBuilder, URI channelUri) {
 		this.remoteAddress = remoteAddress;
 		this.remoteEndpoint = remoteEndpoint;
 		this.linkBuilder = linkBuilder;
