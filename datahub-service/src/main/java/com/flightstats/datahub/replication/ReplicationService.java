@@ -6,7 +6,6 @@ import com.flightstats.datahub.dao.ChannelService;
 import com.flightstats.datahub.model.ContentKey;
 import com.flightstats.datahub.model.SequenceContentKey;
 import com.flightstats.datahub.model.exception.InvalidRequestException;
-import com.flightstats.datahub.service.eventing.ChannelNameExtractor;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
@@ -92,18 +91,17 @@ public class ReplicationService {
     private Collection<ReplicationStatus> getStatus() {
         ArrayList<ReplicationStatus> statuses = Lists.newArrayList();
         for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
-            for (String url : domainReplicator.getSourceChannelUrls()) {
+            for (Channel channel : domainReplicator.getChannels()) {
                 ReplicationStatus status = new ReplicationStatus();
-                status.setUrl(url);
+                status.setChannel(channel);
                 statuses.add(status);
-                String name = ChannelNameExtractor.extractFromChannelUrl(url);
-                Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(name);
+                Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
                 if (lastUpdatedKey.isPresent()) {
                     //todo - gfm - 1/23/14 - this will need to change to support TimeSeries
                     SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
                     status.setReplicationLatest(contentKey.getSequence());
                 }
-                Optional<Long> latestSequence = channelUtils.getLatestSequence(url);
+                Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getUrl());
                 if (latestSequence.isPresent()) {
                     status.setSourceLatest(latestSequence.get());
                 }
