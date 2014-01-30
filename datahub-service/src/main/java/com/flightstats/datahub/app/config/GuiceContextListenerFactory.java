@@ -10,6 +10,7 @@ import com.flightstats.datahub.dao.cassandra.CassandraDataStoreModule;
 import com.flightstats.datahub.model.ChannelConfiguration;
 import com.flightstats.datahub.replication.ChannelUtils;
 import com.flightstats.datahub.replication.Replicator;
+import com.flightstats.datahub.replication.ReplicatorImpl;
 import com.flightstats.datahub.replication.ReplicatorInitialization;
 import com.flightstats.datahub.rest.RetryClientFilter;
 import com.flightstats.datahub.service.DataHubHealthCheck;
@@ -131,7 +132,7 @@ public class GuiceContextListenerFactory {
             binder.bind(TimeProvider.class).in(Singleton.class);
             binder.bind(ZooKeeperState.class).in(Singleton.class);
             binder.bindListener(ReplicatorInitialization.buildTypeMatcher(), new ReplicatorInitialization());
-            binder.bind(Replicator.class).asEagerSingleton();
+            binder.bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
             binder.bind(ChannelUtils.class).in(Singleton.class);
             binder.bind(CuratorLock.class).in(Singleton.class);
         }
