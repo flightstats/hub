@@ -34,8 +34,7 @@ public class DomainReplicator implements Runnable {
     public DomainReplicator(ChannelUtils channelUtils, Provider<ChannelReplicator> replicatorProvider) {
         this.channelUtils = channelUtils;
         this.replicatorProvider = replicatorProvider;
-        //todo - gfm - 1/29/14 - This number is acting like a hard limit.  I expected the pool to grow.
-        executorService = Executors.newScheduledThreadPool(10);
+        executorService = Executors.newScheduledThreadPool(25);
 
     }
 
@@ -89,26 +88,27 @@ public class DomainReplicator implements Runnable {
             for (String rawChannel : rawChannels) {
                 String channel = ChannelNameExtractor.extractFromChannelUrl(rawChannel);
                 if (!domain.getIncludeExcept().contains(channel) && !activeReplicators.contains(channel)) {
-                    startChannelReplication(rawChannel);
+                    startChannelReplication(rawChannel, domain);
                 }
             }
         } else {
             for (String rawChannel : rawChannels) {
                 String channel = ChannelNameExtractor.extractFromChannelUrl(rawChannel);
                 if (domain.getExcludeExcept().contains(channel) && !activeReplicators.contains(channel)) {
-                    startChannelReplication(rawChannel);
+                    startChannelReplication(rawChannel, domain);
                 }
             }
         }
         Thread.currentThread().setName("EmptyDomainReplicator");
     }
 
-    private void startChannelReplication(String channelUrl) {
+    private void startChannelReplication(String channelUrl, ReplicationDomain domain) {
         logger.info("found new channel to replicate " + channelUrl);
         ChannelReplicator channelReplicator = replicatorProvider.get();
         channelReplicator.setChannelUrl(channelUrl);
+        channelReplicator.setHistoricalDays(domain.getHistoricalDays());
         //todo - gfm - 1/29/14 - we may want the delay to be different.  put it in the config?
-        executorService.scheduleWithFixedDelay(channelReplicator, 0, 15, TimeUnit.SECONDS);
+        executorService.scheduleWithFixedDelay(channelReplicator, 0, 60, TimeUnit.SECONDS);
         channelReplicators.add(channelReplicator);
     }
 

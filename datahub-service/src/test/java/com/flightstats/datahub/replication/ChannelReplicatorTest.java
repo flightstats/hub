@@ -81,6 +81,7 @@ public class ChannelReplicatorTest {
 
     @Test
     public void testStartingSequenceNew() throws Exception {
+        replicator.setHistoricalDays(20);
         replicator.initialize();
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
@@ -89,12 +90,43 @@ public class ChannelReplicatorTest {
             public Optional<DateTime> answer(InvocationOnMock invocation) throws Throwable {
                 long aLong = (long) invocation.getArguments()[1];
                 if (aLong > 1500) {
-                    return Optional.of(new DateTime());
+                    return Optional.of(new DateTime().minusDays(9));
                 }
-                return Optional.absent();
+                return Optional.of(new DateTime().minusDays(11));
             }
         });
         assertEquals(1501, replicator.getStartingSequence());
+    }
+
+    @Test
+    public void testStartingSequenceHistorical() throws Exception {
+        replicator.setHistoricalDays(2);
+        replicator.initialize();
+
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
+        when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
+        when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
+            @Override
+            public Optional<DateTime> answer(InvocationOnMock invocation) throws Throwable {
+                long aLong = (long) invocation.getArguments()[1];
+                if (aLong > 2000) {
+                    return Optional.of(new DateTime().minusDays(1));
+                }
+                return Optional.of(new DateTime().minusDays(3));
+            }
+        });
+        assertEquals(2001, replicator.getStartingSequence());
+    }
+
+    @Test
+    public void testStartingSequenceLatest() throws Exception {
+        replicator.setHistoricalDays(0);
+        replicator.initialize();
+
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
+        when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
+        when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusMinutes(1)));
+        assertEquals(6000, replicator.getStartingSequence());
     }
 
     @Test
