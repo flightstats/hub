@@ -29,6 +29,7 @@ public class ChannelReplicator implements Runnable, Lockable {
     private String channelUrl;
     private String channel;
     private SequenceIterator iterator;
+    private long historicalDays;
 
     @Inject
     public ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
@@ -39,13 +40,16 @@ public class ChannelReplicator implements Runnable, Lockable {
         this.channelUtils = channelUtils;
     }
 
-    //todo - gfm - 1/29/14 - this needs to take in histrocialDays
     public void setChannelUrl(String channelUrl) {
         if (!channelUrl.endsWith("/")) {
             channelUrl += "/";
         }
         this.channelUrl = channelUrl;
         this.channel = ChannelNameExtractor.extractFromChannelUrl(channelUrl);
+    }
+
+    public void setHistoricalDays(long historicalDays) {
+        this.historicalDays = historicalDays;
     }
 
     public String getChannelName() {
@@ -129,7 +133,6 @@ public class ChannelReplicator implements Runnable, Lockable {
         logger.debug("searching the key space for " + channelUrl);
         Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
         if (!latestSequence.isPresent()) {
-            //todo - gfm - 1/23/14 - this should check that the existing latestSequence is still viable
             return SequenceContentKey.START_VALUE + 1;
         }
         long high = latestSequence.get();
@@ -160,8 +163,8 @@ public class ChannelReplicator implements Runnable, Lockable {
         if (configuration.getTtlMillis() == null) {
             return true;
         }
-        long ttlMillis = configuration.getTtlMillis();
-        DateTime tenMinuteOffset = new DateTime().minusMillis((int) ttlMillis).plusMinutes(10);
+        long millis = Math.min(TimeUnit.DAYS.toMillis(historicalDays), configuration.getTtlMillis());
+        DateTime tenMinuteOffset = new DateTime().minusMillis((int) millis).plusMinutes(10);
         return creationDate.get().isAfter(tenMinuteOffset);
     }
 
