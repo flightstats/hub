@@ -27,11 +27,6 @@ conf/hub.properties :
 
     graphite :
         hosts : "svcsmon.cloud-east.dev:2003"
-
-    cassandra :
-        hostport : "none"
-        replication_factor : 0
-
     zookeeper :
         connection : "deihub-01.cloud-east.dev:2181,deihub-02.cloud-east.dev:2181,deihub-03.cloud-east.dev:2181"
 
