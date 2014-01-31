@@ -8,27 +8,16 @@ sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
 project.ext.jenkinsBuildNumber = "$System.env.BUILD_NUMBER"
-project.ext.jenkinsJobName = "$System.env.JOB_NAME"
+project.ext.jenkinsJobName = "hub"
 
 group = 'com.flightstats'
 
 version = new File("${projectDir}/version.txt").text
 
-def snapshotVersion = version + "-SNAPSHOT"
-
 project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
 
 apply from: 'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-1.0.1.gradle'
 
-/*
-todo - this is temp to prevent wrong build version
-if (project.ext.isDevBuild) {
-    def buildNumber = "dev";
-    if (System.env.BUILD_NUMBER != null) {
-        buildNumber = System.env.BUILD_NUMBER
-    }
-    version = snapshotVersion + "-" + buildNumber
-}*/
 println "Building version: ${version}"
 
 buildDir = 'build'
