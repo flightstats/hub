@@ -1,8 +1,39 @@
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'application'
+apply plugin: 'jacoco'
+apply from: 'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-utils-1.0.1.gradle'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
+
+project.ext.jenkinsBuildNumber = "$System.env.BUILD_NUMBER"
+project.ext.jenkinsJobName = "$System.env.JOB_NAME"
+
+group = 'com.flightstats'
+
+version = new File("${projectDir}/version.txt").text
+
+def snapshotVersion = version + "-SNAPSHOT"
+
+project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
+
+apply from: 'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-1.0.1.gradle'
+
+/*
+todo - this is temp to prevent wrong build version
+if (project.ext.isDevBuild) {
+    def buildNumber = "dev";
+    if (System.env.BUILD_NUMBER != null) {
+        buildNumber = System.env.BUILD_NUMBER
+    }
+    version = snapshotVersion + "-" + buildNumber
+}*/
+println "Building version: ${version}"
+
+buildDir = 'build'
+
+mainClassName = "com.flightstats.hub.app.HubMain"
 
 buildscript {
     repositories {
@@ -12,5 +43,121 @@ buildscript {
 
     dependencies {  //Required to pick up the artifactory plugin
         classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.16')
+    }
+}
+
+task versionDHBackup(type: Copy) {
+    from "${projectDir}/util/dhbackup"
+    into "${buildDir}/dhbackup-${version}"
+}
+
+task tarDHBackup(dependsOn: 'versionDHBackup', type: Tar) {
+    inputs.dir new File("${buildDir}/dhbackup-${version}")
+    baseName = "dhbackup"
+    compression = Compression.GZIP
+    from("${buildDir}")
+    include("dhbackup-${version}/**")
+}
+
+configurations {
+    all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
+    publish
+    publishDev
+    integrationTests
+    deployStaging
+    deployProduction
+}
+
+artifacts {
+    publishDev jar
+    publishDev distTar
+    publishDev tarDHBackup
+
+    publish jar
+    publish distTar
+    publish tarDHBackup
+}
+
+task integrationTests() << {
+    def testdir = "${projectDir}/src/test/integration"
+    def reportsdir = "${projectDir}/build/reports/integration/"
+    println "Making " + reportsdir
+    new File(reportsdir).mkdirs()
+    runExternal("jasmine-node --junitreport --output ${reportsdir} ${testdir}")
+}
+
+dependencies {
+    compile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-webapp', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-util', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-http', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty', name: 'jetty-security', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-server', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-common', version: '9.1.1.v20140108'
+    compile group: 'org.eclipse.jetty.websocket', name: 'javax-websocket-client-impl', version: '9.1.1.v20140108'
+    //todo upgrade these to latest jersey from glassfish
+    compile group: 'com.sun.jersey', name: 'jersey-core', version: '1.17.1'
+    compile group: 'com.sun.jersey', name: 'jersey-json', version: '1.17.1'
+    compile group: 'com.sun.jersey', name: 'jersey-servlet', version: '1.17.1'
+    compile group: 'com.sun.jersey', name: 'jersey-server', version: '1.17.1'
+    compile group: 'com.sun.jersey.contribs', name: 'jersey-guice', version: '1.17'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.2.+'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.2.+'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.2.+'
+    compile group: 'com.fasterxml.jackson.jaxrs', name: 'jackson-jaxrs-json-provider', version: '2.2.+'
+    compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: '2.2.+'
+    compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.0.1'
+    compile group: 'javax.ws.rs', name: 'jsr311-api', version: '1.1.1'
+    compile group: 'asm', name: 'asm', version: '3.3.1'
+    compile group: 'commons-codec', name: 'commons-codec', version: '1.8'
+    compile group: 'org.glassfish', name: 'javax.servlet', version: '3.0'
+    compile group: 'com.google.inject', name: 'guice', version: '3.0'
+    compile group: 'com.google.inject.extensions', name: 'guice-servlet', version: '3.0'
+    compile group: 'com.google.guava', name: 'guava', version: '13.0'
+    compile group: 'joda-time', name: 'joda-time', version: '2.1'
+    compile group: "org.hamcrest", name: "hamcrest-core", version: "1.3"
+    compile group: "ch.qos.logback", name: "logback-core", version: "1.0.13"
+    compile group: "ch.qos.logback", name: "logback-classic", version: "1.0.13"
+    compile group: "org.slf4j", name: "slf4j-api", version: "1.7.2"
+    compile group: "org.slf4j", name: "jul-to-slf4j", version: "1.7.2"
+    compile group: "com.codahale.metrics", name: "metrics-core", version: "3.0.1"
+    compile group: "com.codahale.metrics", name: "metrics-graphite", version: "3.0.1"
+    compile group: "com.codahale.metrics", name: "metrics-servlets", version: "3.0.1"
+    compile group: "com.codahale.metrics", name: "metrics-jersey", version: "3.0.1"
+    compile group: "com.codahale.metrics", name: "metrics-logback", version: "3.0.1"
+    compile group: "com.codahale.metrics", name: "metrics-jvm", version: "3.0.1"
+    compile 'com.codahale.metrics:metrics-jetty9:3.0.1'
+    compile group: "com.hazelcast", name: "hazelcast", version: "3.1.1"
+    compile group: "com.hazelcast", name: "hazelcast-client", version: "3.1.1"
+    compile group: "com.flightstats.common", name: "util", version: "3.+"
+    compile group: "com.flightstats.common", name: "jaxb", version: "3.+"
+    compile group: "com.flightstats.common", name: "rest", version: "3.+"
+    compile group: "com.flightstats.common", name: "jerseyguice", version: "3.+"
+    compile group: 'com.intellij', name: 'annotations', version: '7.0.3'
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
+    compile 'com.amazonaws:aws-java-sdk:1.6.12'
+    compile 'org.apache.curator:curator-recipes:2.3.0'
+    compile 'org.apache.commons:commons-lang3:3.2.1'
+
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+    testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
+    //this version of snappy is to fix a bug in startup of cassandraunit
+    testCompile group: 'org.xerial.snappy', name: 'snappy-java', version: '1.0.5'
+    compile group: 'com.sun.jersey', name: 'jersey-client', version: '1.17.1'
+    testCompile 'org.apache.curator:curator-test:2.3.0'
+
+    //integrationTests group: 'com.flightstats', name: 'hub-service', version: snapshotVersion + '+', transitive: false, configuration: 'publishDev'
+}
+
+distTar {
+    compression = Compression.GZIP
+}
+
+startScripts {
+    ext.jvmOpts = "-Xmx256m"
+    doLast {
+        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"$ext.jvmOpts\"")
     }
 }

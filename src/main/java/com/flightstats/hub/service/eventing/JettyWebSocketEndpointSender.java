@@ -1,0 +1,55 @@
+package com.flightstats.hub.service.eventing;
+
+import com.flightstats.hub.service.ChannelLinkBuilder;
+import org.eclipse.jetty.websocket.api.RemoteEndpoint;
+
+import java.io.IOException;
+import java.net.URI;
+
+class JettyWebSocketEndpointSender implements Consumer<String> {
+
+	private final RemoteEndpoint remoteEndpoint;
+	private final String remoteAddress;
+	private final ChannelLinkBuilder linkBuilder;
+	private final URI channelUri;
+
+	public JettyWebSocketEndpointSender(String remoteAddress, RemoteEndpoint remoteEndpoint, ChannelLinkBuilder linkBuilder, URI channelUri) {
+		this.remoteAddress = remoteAddress;
+		this.remoteEndpoint = remoteEndpoint;
+		this.linkBuilder = linkBuilder;
+		this.channelUri = channelUri;
+	}
+
+	@Override
+	public void apply(String stringKey) {
+		try {
+            URI itemUri = linkBuilder.buildItemUri(stringKey, channelUri);
+            remoteEndpoint.sendString(itemUri.toString());
+		} catch (IOException e) {
+			throw new RuntimeException("Error replying to client: ", e);
+		}
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+
+		JettyWebSocketEndpointSender that = (JettyWebSocketEndpointSender) o;
+
+		if (!remoteAddress.equals(that.remoteAddress)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		return remoteAddress.hashCode();
+	}
+}
