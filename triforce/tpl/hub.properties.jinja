@@ -1,4 +1,4 @@
-#valid values are currently "aws" and "cassandra"
+#valid values are currently "aws"
 backing.store={{ backing['store'] }}
 
 aws.protocol={{ aws['protocol'] }}
@@ -12,10 +12,6 @@ zookeeper.connection={{ zookeeper['connection'] }}
 zookeeper.cfg=/home/hub/local/hub/conf/zoo.cfg
 
 hazelcast.conf.xml=/home/hub/local/hub/conf/hazelcast.conf.xml
-
-cassandra.cluster_name=data hub
-cassandra.hostport={{ cassandra['hostport'] }}
-cassandra.replication_factor= {{ cassandra['replication_factor'] }}
 
 #http.bind_interfaces=lo,en0
 http.bind_port=8080

@@ -28,10 +28,6 @@ conf/hub.properties :
     graphite :
         hosts : "svcsmon.cloud-east.staging:2003"
 
-    cassandra :
-        hostport : "none"
-        replication_factor : 0
-
     zookeeper :
         connection : "deihub-01.cloud-east.staging:2181,deihub-02.cloud-east.staging:2181,deihub-03.cloud-east.staging:2181"
 
