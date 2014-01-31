@@ -1,0 +1,54 @@
+## This file holds the context data for the DEV environment to fill template files.
+## The syntax is:
+##
+## relative/path/to/file :
+##     _tpl: tplFile.jinja
+##     parameter_name : parameter_value
+##     parameter2 :
+##         - item1
+##         - item2
+##
+## The file should be in yaml syntax, with one top-level array for each template file.
+## There should be a corresponding template file in triforce/tpl/ written in the Jinja templating language
+## for each top-level item.
+##
+conf/hub.properties :
+    _tpl : hub.properties.jinja
+    backing :
+        store : "aws"
+
+    aws :
+        protocol : "HTTP"
+        environment : "staging"
+
+    dynamo :
+        endpoint : "dynamodb.us-east-1.amazonaws.com"
+        table_creation_wait_minutes : 10
+
+    graphite :
+        hosts : "svcsmon.cloud-east.staging:2003"
+
+    cassandra :
+        hostport : "none"
+        replication_factor : 0
+
+    zookeeper :
+        connection : "deihub-01.cloud-east.staging:2181,deihub-02.cloud-east.staging:2181,deihub-03.cloud-east.staging:2181"
+
+
+conf/hazelcast.conf.xml :
+    _tpl : hazelcast.conf.xml.jinja
+    cluster_hosts :
+        - "deihub-01.cloud-east.staging"
+        - "deihub-02.cloud-east.staging"
+        - "deihub-03.cloud-east.staging"
+
+conf/zoo.cfg :
+    _tpl : zoo.cfg.jinja
+    dataDir : "/ebs/zookeeper/"
+    dataLogDir : "/ebs/zookeeper/"
+    server :
+      1 : "deihub-01.cloud-east.staging:2888:3888"
+      2 : "deihub-02.cloud-east.staging:2888:3888"
+      3 : "deihub-03.cloud-east.staging:2888:3888"
+
