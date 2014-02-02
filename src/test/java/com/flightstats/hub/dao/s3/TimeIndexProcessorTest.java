@@ -10,9 +10,9 @@ import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
+import com.flightstats.hub.test.Integration;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.test.TestingServer;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -34,7 +34,6 @@ public class TimeIndexProcessorTest {
 
     private final static Logger logger = LoggerFactory.getLogger(TimeIndexProcessorTest.class);
 
-    private static TestingServer testingServer;
     private static CuratorFramework curator;
     private static S3ContentDao s3ContentDao;
     private Map<String,Set<String>> expected;
@@ -48,7 +47,7 @@ public class TimeIndexProcessorTest {
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        testingServer = new TestingServer(2181);
+        Integration.startZooKeeper();
         RetryPolicy retryPolicy = GuiceContext.HubCommonModule.buildRetryPolicy();
         curator = GuiceContext.HubCommonModule.buildCurator("localhost:2181", retryPolicy, new ZooKeeperState());
         s3ContentDao = new S3ContentDao(null, null, "", curator, new MetricsTimer(new MetricRegistry()));
@@ -56,7 +55,6 @@ public class TimeIndexProcessorTest {
 
     @AfterClass
     public static void teardownClass() throws IOException {
-        testingServer.stop();
     }
 
     @Before
