@@ -2,9 +2,9 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.test.Integration;
 import com.google.common.base.Optional;
 import com.google.inject.Injector;
-import org.apache.curator.test.TestingServer;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -22,11 +22,10 @@ public abstract class ChannelServiceIntegration {
     protected ChannelService channelService;
     protected String channelName;
     protected static List<String> channelNames = new ArrayList<>();
-    private static TestingServer testingServer;
 
 
     public static void finalStartup(Properties properties) throws Exception {
-        testingServer = new TestingServer(2181);
+        Integration.startZooKeeper();
         injector = GuiceContext.construct(properties).getInjector();
         channelNames.clear();
     }
@@ -40,7 +39,6 @@ public abstract class ChannelServiceIntegration {
     }
 
     public static void tearDown() throws IOException {
-        testingServer.stop();
     }
 
     /**
