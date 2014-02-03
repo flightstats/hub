@@ -35,36 +35,11 @@ buildscript {
     }
 }
 
-task versionDHBackup(type: Copy) {
-    from "${projectDir}/util/dhbackup"
-    into "${buildDir}/dhbackup-${version}"
-}
-
-task tarDHBackup(dependsOn: 'versionDHBackup', type: Tar) {
-    inputs.dir new File("${buildDir}/dhbackup-${version}")
-    baseName = "dhbackup"
-    compression = Compression.GZIP
-    from("${buildDir}")
-    include("dhbackup-${version}/**")
-}
-
 configurations {
     all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
     publish
     publishDev
     integrationTests
-    deployStaging
-    deployProduction
-}
-
-artifacts {
-    publishDev jar
-    publishDev distTar
-    publishDev tarDHBackup
-
-    publish jar
-    publish distTar
-    publish tarDHBackup
 }
 
 task integrationTests() << {
@@ -144,9 +119,11 @@ distTar {
     compression = Compression.GZIP
 }
 
-startScripts {
-    ext.jvmOpts = "-Xmx256m"
-    doLast {
-        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"$ext.jvmOpts\"")
-    }
+applicationDistribution.from('README.md') {
+    into "doc"
 }
+
+applicationDistribution.from('triforce') {
+    into "triforce"
+}
+
