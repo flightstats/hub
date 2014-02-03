@@ -1,4 +1,4 @@
-package com.flightstats.hub.replication;
+package com.flightstats.hub.dao.timeIndex;
 
 import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.AbstractMatcher;
@@ -10,21 +10,20 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This is a guice binding via TypeListener.  It provides a means for the
- * ReplicationDao to initialize.
+ * TimeIndexCoordinator to initialize.
  *
  */
-public class ReplicationInitialization implements TypeListener {
+public class TimeIndexInitialization implements TypeListener {
 
-    private final static Logger logger = LoggerFactory.getLogger(ReplicationInitialization.class);
+    private final static Logger logger = LoggerFactory.getLogger(TimeIndexInitialization.class);
 
     @Override
     public <I> void hear(TypeLiteral<I> type, TypeEncounter<I> encounter) {
         encounter.register(new InjectionListener<I>() {
             @Override
             public void afterInjection(Object instance) {
-                //todo - gfm - 1/27/14 - could expand this to start other replication bits.
                 logger.info("Bootstrapping Replication...");
-                ((DynamoReplicationDao)instance).initialize();
+                ((TimeIndexCoordinator)instance).startThread();
             }
         });
     }
@@ -33,7 +32,7 @@ public class ReplicationInitialization implements TypeListener {
         return new AbstractMatcher<TypeLiteral<?>>() {
             @Override
             public boolean matches(TypeLiteral<?> typeLiteral) {
-                return DynamoReplicationDao.class.isAssignableFrom(typeLiteral.getRawType());
+                return TimeIndexCoordinator.class.isAssignableFrom(typeLiteral.getRawType());
             }
         };
     }
