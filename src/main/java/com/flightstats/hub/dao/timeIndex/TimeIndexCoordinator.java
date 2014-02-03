@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.timeIndex;
 
 import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.util.Started;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 public class TimeIndexCoordinator implements Runnable {
     private final static Logger logger = LoggerFactory.getLogger(TimeIndexCoordinator.class);
 
+    private static final Started started = new Started();
     private final CuratorFramework curator;
     private final TimeIndexDao timeIndexDao;
     private final CuratorLock curatorLock;
@@ -51,6 +53,9 @@ public class TimeIndexCoordinator implements Runnable {
     }
 
     public void startThread() {
+        if (started.isStarted()) {
+            return;
+        }
         int offset = new Random().nextInt(60);
         Executors.newScheduledThreadPool(1, new ThreadFactory() {
             @NotNull
