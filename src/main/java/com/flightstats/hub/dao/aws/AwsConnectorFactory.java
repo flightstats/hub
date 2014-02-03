@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.retry.RetryPolicy;
@@ -34,12 +35,25 @@ public class AwsConnectorFactory {
     }
 
     public AmazonS3 getS3Client() throws IOException {
-        return new AmazonS3Client(getCredentials(), getClientConfiguration());
+        AmazonS3Client amazonS3Client = null;
+        try {
+            amazonS3Client = new AmazonS3Client(new InstanceProfileCredentialsProvider(), getClientConfiguration());
+        } catch (Exception e) {
+            logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
+            amazonS3Client = new AmazonS3Client(getPropertiesCredentials(), getClientConfiguration());
+        }
+        return amazonS3Client;
     }
 
     public AmazonDynamoDBClient getDynamoClient() throws IOException {
         logger.info("creating for  " + protocol + " " + endpoint);
-        AmazonDynamoDBClient client = new AmazonDynamoDBClient(getCredentials());
+        AmazonDynamoDBClient client = null;
+        try {
+            client = new AmazonDynamoDBClient(new InstanceProfileCredentialsProvider());
+        } catch (Exception e) {
+            logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
+            client = new AmazonDynamoDBClient(getPropertiesCredentials());
+        }
         ClientConfiguration configuration = getClientConfiguration();
         client.setConfiguration(configuration);
         client.setEndpoint(endpoint);
@@ -47,9 +61,7 @@ public class AwsConnectorFactory {
 
     }
 
-    private PropertiesCredentials getCredentials() throws IOException {
-        //todo - gfm - 12/12/13 - figure out credentials
-        //look at com.amazonaws.auth.AWSCredentialsProvider
+    private PropertiesCredentials getPropertiesCredentials()  {
         try {
             return new PropertiesCredentials(new File(credentials));
         } catch (IOException e) {
@@ -58,7 +70,7 @@ public class AwsConnectorFactory {
                         AwsConnectorFactory.class.getResource("/test_credentials.properties").getFile()));
             } catch (Exception e1) {
                 logger.warn("unable to load test_credentials", e1);
-                throw e;
+                throw new RuntimeException(e1);
             }
         }
     }
