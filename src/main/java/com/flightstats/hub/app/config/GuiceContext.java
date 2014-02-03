@@ -6,6 +6,8 @@ import com.flightstats.hub.app.config.metrics.PerChannelTimedMethodDispatchAdapt
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.aws.AwsDataStoreModule;
+import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
+import com.flightstats.hub.dao.timeIndex.TimeIndexInitialization;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.replication.ChannelUtils;
 import com.flightstats.hub.replication.Replicator;
@@ -122,6 +124,7 @@ public class GuiceContext {
 
         @Override
         public void bind(Binder binder) {
+            //todo - gfm - 2/3/14 - look at changing scopes - https://code.google.com/p/google-guice/wiki/Scopes
             binder.bind(MetricRegistry.class).in(Singleton.class);
             binder.bind(SubscriptionRoster.class).in(Singleton.class);
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
@@ -131,6 +134,8 @@ public class GuiceContext {
             binder.bind(ZooKeeperState.class).in(Singleton.class);
             binder.bindListener(ReplicatorInitialization.buildTypeMatcher(), new ReplicatorInitialization());
             binder.bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
+            binder.bindListener(TimeIndexInitialization.buildTypeMatcher(), new TimeIndexInitialization());
+            binder.bind(TimeIndexCoordinator.class).asEagerSingleton();
             binder.bind(ChannelUtils.class).in(Singleton.class);
             binder.bind(CuratorLock.class).in(Singleton.class);
         }
