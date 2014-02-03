@@ -4,11 +4,9 @@ import com.amazonaws.services.cloudfront.model.InvalidArgumentException;
 import com.conducivetech.services.common.util.PropertyConfiguration;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.hub.app.config.GuiceContext;
-import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
 import com.flightstats.jerseyguice.jetty.JettyConfig;
 import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
 import com.flightstats.jerseyguice.jetty.JettyServer;
-import com.google.inject.Injector;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,9 +75,6 @@ public class HubMain {
         JettyServer server = new JettyServer(jettyConfig, guice);
         server.start();
         logger.info("Jetty server has been started.");
-        Injector injector = guice.getInjector();
-        //todo - gfm - 1/27/14 - does it make sense to pull these into TypeListeners via Guice?
-        injector.getInstance(TimeIndexCoordinator.class).startThread();
         return server;
     }
 
