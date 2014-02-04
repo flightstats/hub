@@ -202,16 +202,14 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public void initialize() {
-        try {
-            ListObjectsRequest listObjectsRequest = new ListObjectsRequest().withBucketName(s3BucketName).withMaxKeys(0);
-            s3Client.listObjects(listObjectsRequest);
+        if (s3Client.doesBucketExist(s3BucketName)) {
             logger.info("bucket exists " + s3BucketName);
-        } catch (AmazonClientException e) {
-            logger.info("creating " + s3BucketName);
-            CreateBucketRequest createBucketRequest = new CreateBucketRequest(s3BucketName, Region.US_Standard);
-            Bucket bucket = s3Client.createBucket(createBucketRequest);
-            logger.info("created " + bucket);
+            return;
         }
+        logger.info("creating " + s3BucketName);
+        CreateBucketRequest createBucketRequest = new CreateBucketRequest(s3BucketName, Region.US_Standard);
+        Bucket bucket = s3Client.createBucket(createBucketRequest);
+        logger.info("created " + bucket);
     }
 
     @Override
