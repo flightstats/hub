@@ -37,7 +37,9 @@ public class AwsConnectorFactory {
     public AmazonS3 getS3Client() throws IOException {
         AmazonS3Client amazonS3Client = null;
         try {
-            amazonS3Client = new AmazonS3Client(new InstanceProfileCredentialsProvider(), getClientConfiguration());
+            InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
+            credentialsProvider.getCredentials();
+            amazonS3Client = new AmazonS3Client(credentialsProvider, getClientConfiguration());
         } catch (Exception e) {
             logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
             amazonS3Client = new AmazonS3Client(getPropertiesCredentials(), getClientConfiguration());
@@ -49,7 +51,9 @@ public class AwsConnectorFactory {
         logger.info("creating for  " + protocol + " " + endpoint);
         AmazonDynamoDBClient client = null;
         try {
-            client = new AmazonDynamoDBClient(new InstanceProfileCredentialsProvider());
+            InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
+            credentialsProvider.getCredentials();
+            client = new AmazonDynamoDBClient(credentialsProvider);
         } catch (Exception e) {
             logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
             client = new AmazonDynamoDBClient(getPropertiesCredentials());
