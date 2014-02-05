@@ -17,7 +17,6 @@ import javax.ws.rs.core.UriInfo;
  */
 @Path("/replication")
 public class ReplicationResource {
-    //todo - gfm - 1/27/14 - add more integration tests
     private final static Logger logger = LoggerFactory.getLogger(ReplicationResource.class);
 
     private final ReplicationService replicationService;
@@ -64,8 +63,5 @@ public class ReplicationResource {
         replicationService.delete(domain);
         return Response.ok().build();
     }
-
-    //todo - gfm - 1/30/14 - add ability to reset a channel?
-
 
 }

@@ -124,20 +124,19 @@ public class GuiceContext {
 
         @Override
         public void bind(Binder binder) {
-            //todo - gfm - 2/3/14 - look at changing scopes - https://code.google.com/p/google-guice/wiki/Scopes
-            binder.bind(MetricRegistry.class).in(Singleton.class);
-            binder.bind(SubscriptionRoster.class).in(Singleton.class);
+            binder.bind(MetricRegistry.class).asEagerSingleton();
+            binder.bind(SubscriptionRoster.class).asEagerSingleton();
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
-            binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).in(Singleton.class);
-            binder.bind(JettyWebSocketServlet.class).in(Singleton.class);
-            binder.bind(TimeProvider.class).in(Singleton.class);
-            binder.bind(ZooKeeperState.class).in(Singleton.class);
+            binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).asEagerSingleton();
+            binder.bind(JettyWebSocketServlet.class).asEagerSingleton();
+            binder.bind(TimeProvider.class).asEagerSingleton();
+            binder.bind(ZooKeeperState.class).asEagerSingleton();
             binder.bindListener(ReplicatorInitialization.buildTypeMatcher(), new ReplicatorInitialization());
             binder.bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
             binder.bindListener(TimeIndexInitialization.buildTypeMatcher(), new TimeIndexInitialization());
             binder.bind(TimeIndexCoordinator.class).asEagerSingleton();
-            binder.bind(ChannelUtils.class).in(Singleton.class);
-            binder.bind(CuratorLock.class).in(Singleton.class);
+            binder.bind(ChannelUtils.class).asEagerSingleton();
+            binder.bind(CuratorLock.class).asEagerSingleton();
         }
     }
 

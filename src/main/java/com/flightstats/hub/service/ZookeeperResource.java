@@ -70,7 +70,6 @@ public class ZookeeperResource
             for (String child : children) {
                 ids.add(href + "/" +child);
             }
-            //todo - gfm - 1/12/14 - include data for path?
             return Response.ok(root).build();
         } catch (Exception e) {
             logger.warn("unable to get path " + path, e);
