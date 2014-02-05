@@ -5,3 +5,5 @@ hub.iml
 build/
 .gradle/
 out/
+default_local.properties
+integration_config_local.js
