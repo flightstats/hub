@@ -2,7 +2,7 @@
 ## The syntax is:
 ##
 ## relative/path/to/file :
-##     _tpl: tplFile.jinja
+##     _template: tplFile.jinja
 ##     parameter_name : parameter_value
 ##     parameter2 :
 ##         - item1
@@ -13,7 +13,7 @@
 ## for each top-level item.
 ##
 conf/hub.properties :
-    _tpl : hub.properties.jinja
+    _template : hub.properties.jinja
     backing :
         store : "aws"
 
@@ -27,19 +27,20 @@ conf/hub.properties :
 
     graphite :
         hosts : "svcsmon.cloud-east.dev:2003"
+
     zookeeper :
         connection : "hub-01.cloud-east.dev:2181,hub-02.cloud-east.dev:2181,hub-03.cloud-east.dev:2181"
 
 
 conf/hazelcast.conf.xml :
-    _tpl : hazelcast.conf.xml.jinja
+    _template : hazelcast.conf.xml.jinja
     cluster_hosts :
         - "hub-01.cloud-east.dev"
         - "hub-02.cloud-east.dev"
         - "hub-03.cloud-east.dev"
 
 conf/zoo.cfg :
-    _tpl : zoo.cfg.jinja
+    _template : zoo.cfg.jinja
     dataDir : "/home/hub/hub/mnt/zookeeper/"
     dataLogDir : "/home/hub/hub/mnt/zookeeper/"
     server :
