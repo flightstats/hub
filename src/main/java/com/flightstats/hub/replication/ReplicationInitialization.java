@@ -22,7 +22,6 @@ public class ReplicationInitialization implements TypeListener {
         encounter.register(new InjectionListener<I>() {
             @Override
             public void afterInjection(Object instance) {
-                //todo - gfm - 1/27/14 - could expand this to start other replication bits.
                 logger.info("Bootstrapping Replication...");
                 ((DynamoReplicationDao)instance).initialize();
             }
