@@ -17,8 +17,8 @@ import java.net.URI;
 import java.util.Date;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class SingleChannelResourceTest {
@@ -88,8 +88,7 @@ public class SingleChannelResourceTest {
 
 		Linked<ValueInsertionResult> result = (Linked<ValueInsertionResult>) response.getEntity();
 
-        //todo - gfm - 1/31/14 - java.lang.NoSuchMethodError: org.hamcrest.Matcher.describeMismatch(Ljava/lang/Object;Lorg/hamcrest/Description;)V
-//        assertThat(result.getHalLinks().getLinks(), hasItems(selfLink, channelLink));
+        assertThat(result.getHalLinks().getLinks(), hasItems(selfLink, channelLink));
 		ValueInsertionResult insertionResult = result.getObject();
 
 		assertEquals(expectedResponse, insertionResult);

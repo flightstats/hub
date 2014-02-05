@@ -24,7 +24,6 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
     private final CuratorFramework curator;
     private final MetricsTimer metricsTimer;
     private final RetryPolicy retryPolicy;
-    //todo - gfm - 1/17/14 - change this to use CacheBuilder
     private ConcurrentMap<String, DistributedAtomicLong> channelToLongMap = new ConcurrentHashMap<>();
 
     @Inject

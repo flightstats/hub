@@ -8,7 +8,6 @@ import re
 import httplib
 import mimetypes
 import time
-import readline # Leave this if you like history
 
 
 def usage():
