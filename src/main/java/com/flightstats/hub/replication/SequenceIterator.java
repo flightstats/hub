@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.*;
+import java.io.EOFException;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -129,7 +131,12 @@ public class SequenceIterator implements Iterator<Content> {
 
     @OnError
     public void onError(Throwable throwable) {
-        logger.warn("unexpected WS error " + channelUrl, throwable);
+        if (throwable.getClass().isAssignableFrom(SocketTimeoutException.class)
+                || throwable.getClass().isAssignableFrom(EOFException.class)) {
+            logger.info("disconnected " + channelUrl + " " + throwable.getMessage());
+        } else {
+            logger.warn("unexpected WS error " + channelUrl, throwable);
+        }
         exit();
     }
 
