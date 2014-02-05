@@ -81,9 +81,21 @@ public class HubMain {
     public  static Properties loadProperties(String fileName) throws IOException {
         if (fileName.equals("useDefault")) {
             warn("using default properties file");
-            URL resource = HubMain.class.getResource("/default.properties");
-            return PropertyConfiguration.loadProperties(resource, true, logger);
+            Properties defaultProperties = getProperties("/default.properties", true);
+            Properties localProperties = getProperties("/default_local.properties", false);
+            for (String localKey : localProperties.stringPropertyNames()) {
+                String newVal = localProperties.getProperty(localKey);
+                logger.info("overriding " + localKey + " using '" + newVal +
+                        "' instead of '" + defaultProperties.getProperty(localKey, "") + "'");
+                defaultProperties.setProperty(localKey, newVal);
+            }
+            return defaultProperties;
         }
         return PropertyConfiguration.loadProperties(new File(fileName), true, logger);
+    }
+
+    private static Properties getProperties(String name, boolean required) throws IOException {
+        URL resource = HubMain.class.getResource(name);
+        return PropertyConfiguration.loadProperties(resource, required, logger);
     }
 }
