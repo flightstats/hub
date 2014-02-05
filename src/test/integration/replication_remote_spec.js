@@ -99,7 +99,7 @@ describe("replication_remote_spec", function () {
                 expect(response.statusCode).toBe(200);
                 callback(body);
             });
-    };
+    }
 
     function addItem(done) {
         done = done || function () { };
