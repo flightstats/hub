@@ -44,7 +44,7 @@ public class SequenceKeyCoordination implements KeyCoordination {
     }
 
     private void setLastUpdateKey(final String channelName, final ContentKey key) {
-
+        //todo - gfm - 2/4/14 - this might not be accurate when multiple items are added at the same time.
         final SequenceContentKey sequence = (SequenceContentKey) key;
         metricsTimer.time("sequence.setLastUpdated", new TimedCallback<Object>() {
             @Override

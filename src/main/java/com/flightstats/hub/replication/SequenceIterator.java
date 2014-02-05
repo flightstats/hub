@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.*;
+import java.io.EOFException;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +35,7 @@ public class SequenceIterator implements Iterator<Content> {
     private AtomicLong latest;
     private long current;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
+    private boolean connected = false;
 
     public SequenceIterator(long startSequence, ChannelUtils channelUtils, String channelUrl, WebSocketContainer container) {
         this.current = startSequence;
@@ -108,6 +111,7 @@ public class SequenceIterator implements Iterator<Content> {
 
     @OnOpen
     public void onOpen() {
+        connected = true;
         logger.info("connected " + channelUrl);
     }
 
@@ -127,13 +131,19 @@ public class SequenceIterator implements Iterator<Content> {
 
     @OnError
     public void onError(Throwable throwable) {
-        logger.warn("unexpected WS error " + channelUrl, throwable);
+        if (throwable.getClass().isAssignableFrom(SocketTimeoutException.class)
+                || throwable.getClass().isAssignableFrom(EOFException.class)) {
+            logger.info("disconnected " + channelUrl + " " + throwable.getMessage());
+        } else {
+            logger.warn("unexpected WS error " + channelUrl, throwable);
+        }
         exit();
     }
 
     public void exit() {
         shouldExit.set(true);
         signal();
+        connected = false;
     }
 
     private void signal() {
@@ -142,5 +152,7 @@ public class SequenceIterator implements Iterator<Content> {
         }
     }
 
-
+    public boolean isConnected() {
+        return connected;
+    }
 }
