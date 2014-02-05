@@ -1,6 +1,11 @@
 require('./integration_config.js');
 var request = require('request');
 
+if(typeof remoteDomain === 'undefined'){
+    console.info("remoteDomain is not defined, skipping replication_remote_spec");
+    return;
+}
+
 /**
  * This test could be fragile relative to time.  If a remote server is running slowly, this may fail.
  */
