@@ -5,10 +5,7 @@ import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -42,12 +39,8 @@ public class DomainReplicator implements Runnable {
         future = executorService.scheduleWithFixedDelay(this, 0, 1, TimeUnit.MINUTES);
     }
 
-    public Set<Channel> getChannels() {
-        Set<Channel> actives = new HashSet<>();
-        for (ChannelReplicator channelReplicator : channelReplicators) {
-            actives.add(channelReplicator.getChannel());
-        }
-        return actives;
+    public Collection<ChannelReplicator> getChannels() {
+        return Collections.unmodifiableCollection(channelReplicators);
     }
 
     public boolean isDifferent(ReplicationDomain newDomain) {

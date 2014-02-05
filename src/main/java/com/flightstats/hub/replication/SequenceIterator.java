@@ -33,6 +33,7 @@ public class SequenceIterator implements Iterator<Content> {
     private AtomicLong latest;
     private long current;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
+    private boolean connected = false;
 
     public SequenceIterator(long startSequence, ChannelUtils channelUtils, String channelUrl, WebSocketContainer container) {
         this.current = startSequence;
@@ -108,6 +109,7 @@ public class SequenceIterator implements Iterator<Content> {
 
     @OnOpen
     public void onOpen() {
+        connected = true;
         logger.info("connected " + channelUrl);
     }
 
@@ -134,6 +136,7 @@ public class SequenceIterator implements Iterator<Content> {
     public void exit() {
         shouldExit.set(true);
         signal();
+        connected = false;
     }
 
     private void signal() {
@@ -142,5 +145,7 @@ public class SequenceIterator implements Iterator<Content> {
         }
     }
 
-
+    public boolean isConnected() {
+        return connected;
+    }
 }
