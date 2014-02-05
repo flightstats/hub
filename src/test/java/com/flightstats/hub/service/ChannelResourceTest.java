@@ -6,6 +6,7 @@ import com.flightstats.rest.HalLink;
 import com.flightstats.rest.HalLinks;
 import com.flightstats.rest.Linked;
 import com.google.common.collect.Multimap;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +16,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class ChannelResourceTest {
@@ -97,9 +97,8 @@ public class ChannelResourceTest {
 		assertEquals(1, resultMultiLinks.keySet().size());
 		assertEquals(2, resultMultiLinks.size());
 		Collection<HalLink> resultChannelLinks = resultMultiLinks.asMap().get("channels");
-        //todo - gfm - 1/31/14 - fix compile error with lib
-		/*assertThat(resultChannelLinks, CoreMatchers.hasItems(new HalLink(channel1.getName(), URI.create(channel1Uri)),
-				new HalLink(channel2.getName(), URI.create(channel2Uri))));*/
+		assertThat(resultChannelLinks, CoreMatchers.hasItems(new HalLink(channel1.getName(), URI.create(channel1Uri)),
+                new HalLink(channel2.getName(), URI.create(channel2Uri))));
 	}
 
 }

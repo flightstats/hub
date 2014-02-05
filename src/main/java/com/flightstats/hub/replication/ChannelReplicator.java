@@ -85,7 +85,6 @@ public class ChannelReplicator implements Runnable, Lockable {
             logger.warn("Non-Sequence channels are not currently supported " + channel.getUrl());
             return false;
         }
-        //todo - gfm - 1/20/14 - this should verify the config hasn't changed
         if (!channelService.channelExists(configuration.getName())) {
             logger.info("creating channel for " + channel.getUrl());
             channelService.createChannel(configuration);
