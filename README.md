@@ -413,10 +413,13 @@ To run Java based tests and jasmine-node tests locally, you will most likely wan
 Install from http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
 and then start it running.
 
-Once it's running, hijack src/main/resources/default.properties and make the following changes
+Once it's running, hijack src/main/resources/default.properties and make the following changes to src/main/resources/default.properties
+(hijack means don't check them back in :)
 
+```
 #dynamo.endpoint=dynamodb.us-east-1.amazonaws.com
 dynamo.endpoint=localhost:8000
+```
 
 To run the jasmine-node based integration tests:
 jasmine-node .
