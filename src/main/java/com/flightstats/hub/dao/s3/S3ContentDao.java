@@ -241,7 +241,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         // or it should be triggered occasionally via ChannelMetadata
         // or create a new bucket per channel
 
-        BucketLifecycleConfiguration lifecycleConfig = s3Client.getBucketLifecycleConfiguration(s3BucketName);
+        /*BucketLifecycleConfiguration lifecycleConfig = s3Client.getBucketLifecycleConfiguration(s3BucketName);
         logger.info("found config " + lifecycleConfig);
         String namePrefix = config.getName() + "/";
         BucketLifecycleConfiguration.Rule newRule = new BucketLifecycleConfiguration.Rule()
@@ -268,7 +268,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
             rules.add(newRule);
         }
 
-        s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);
+        s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);*/
     }
 
 
