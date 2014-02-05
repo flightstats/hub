@@ -2,7 +2,7 @@ package com.flightstats.hub.dao.dynamo;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
-import com.flightstats.hub.dao.ChannelMetadataDao;
+import com.flightstats.hub.dao.ChannelConfigurationDao;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -13,14 +13,14 @@ import java.util.*;
 /**
  *
  */
-public class DynamoChannelMetadataDao implements ChannelMetadataDao {
-    private final static Logger logger = LoggerFactory.getLogger(DynamoChannelMetadataDao.class);
+public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
+    private final static Logger logger = LoggerFactory.getLogger(DynamoChannelConfigurationDao.class);
 
     private final AmazonDynamoDBClient dbClient;
     private final DynamoUtils dynamoUtils;
 
     @Inject
-    public DynamoChannelMetadataDao(AmazonDynamoDBClient dbClient, DynamoUtils dynamoUtils) {
+    public DynamoChannelConfigurationDao(AmazonDynamoDBClient dbClient, DynamoUtils dynamoUtils) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
     }
@@ -47,7 +47,7 @@ public class DynamoChannelMetadataDao implements ChannelMetadataDao {
     }
 
     @Override
-    public void initializeMetadata() {
+    public void initialize() {
         createTable();
     }
 

@@ -19,7 +19,7 @@ public class ChannelServiceImpl implements ChannelService {
     private final static Logger logger = LoggerFactory.getLogger(ChannelServiceImpl.class);
 
     private final ContentServiceFinder contentServiceFinder;
-    private final ChannelMetadataDao channelMetadataDao;
+    private final ChannelConfigurationDao channelConfigurationDao;
     private final CreateChannelValidator createChannelValidator;
     private final ContentService missingDao = new ContentService() {
         @Override
@@ -55,14 +55,14 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Inject
     public ChannelServiceImpl(ContentServiceFinder contentServiceFinder,
-                              ChannelMetadataDao channelMetadataDao, CreateChannelValidator createChannelValidator) {
+                              ChannelConfigurationDao channelConfigurationDao, CreateChannelValidator createChannelValidator) {
         this.contentServiceFinder = contentServiceFinder;
-        this.channelMetadataDao = channelMetadataDao;
+        this.channelConfigurationDao = channelConfigurationDao;
         this.createChannelValidator = createChannelValidator;
     }
 
     private ContentService getContentService(String channelName){
-        ChannelConfiguration channelConfiguration = channelMetadataDao.getChannelConfiguration(channelName);
+        ChannelConfiguration channelConfiguration = channelConfigurationDao.getChannelConfiguration(channelName);
         if (null == channelConfiguration) {
             logger.info("did not find config for " + channelName);
             return missingDao;
@@ -72,7 +72,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public boolean channelExists(String channelName) {
-        return channelMetadataDao.channelExists(channelName);
+        return channelConfigurationDao.channelExists(channelName);
     }
 
     @Override
@@ -81,12 +81,12 @@ public class ChannelServiceImpl implements ChannelService {
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
         //todo - gfm - 1/8/14 - this should happen in a channel specific lock
         contentServiceFinder.getContentService(configuration).createChannel(configuration);
-        return channelMetadataDao.createChannel(configuration);
+        return channelConfigurationDao.createChannel(configuration);
     }
 
     @Override
     public ValueInsertionResult insert(String channelName, Content content) {
-        ChannelConfiguration configuration = channelMetadataDao.getChannelConfiguration(channelName);
+        ChannelConfiguration configuration = channelConfigurationDao.getChannelConfiguration(channelName);
         return getContentService(channelName).insert(configuration, content);
     }
 
@@ -97,12 +97,12 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfiguration getChannelConfiguration(String channelName) {
-        return channelMetadataDao.getChannelConfiguration(channelName);
+        return channelConfigurationDao.getChannelConfiguration(channelName);
     }
 
     @Override
     public Iterable<ChannelConfiguration> getChannels() {
-        return channelMetadataDao.getChannels();
+        return channelConfigurationDao.getChannels();
     }
 
     @Override
@@ -112,14 +112,14 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public boolean isHealthy() {
-        return channelMetadataDao.isHealthy();
+        return channelConfigurationDao.isHealthy();
     }
 
     @Override
     public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
         contentServiceFinder.getContentService(configuration).updateChannel(configuration);
-        channelMetadataDao.updateChannel(configuration);
+        channelConfigurationDao.updateChannel(configuration);
         return configuration;
     }
 
@@ -131,7 +131,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public void delete(String channelName) {
         getContentService(channelName).delete(channelName);
-        channelMetadataDao.delete(channelName);
+        channelConfigurationDao.delete(channelName);
 
     }
 }

@@ -149,7 +149,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
     public void testChannelCreationUncached() throws Exception {
         AmazonDynamoDBClient dbClient = injector.getInstance(AmazonDynamoDBClient.class);
         DynamoUtils dynamoUtils = injector.getInstance(DynamoUtils.class);
-        DynamoChannelMetadataDao channelMetadataDao = new DynamoChannelMetadataDao(dbClient, dynamoUtils);
+        DynamoChannelConfigurationDao channelMetadataDao = new DynamoChannelConfigurationDao(dbClient, dynamoUtils);
         ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
         ChannelConfiguration channel = channelMetadataDao.createChannel(configuration);
         assertNotNull(channel);
