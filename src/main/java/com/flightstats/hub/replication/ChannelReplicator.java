@@ -156,4 +156,11 @@ public class ChannelReplicator implements Runnable, Lockable {
         return creationDate.get().isAfter(tenMinuteOffset);
     }
 
+    public boolean isConnected() {
+        if (null == iterator) {
+            return false;
+        }
+        return iterator.isConnected();
+    }
+
 }

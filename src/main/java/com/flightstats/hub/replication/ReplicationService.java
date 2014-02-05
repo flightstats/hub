@@ -91,9 +91,11 @@ public class ReplicationService {
     private Collection<ReplicationStatus> getStatus() {
         ArrayList<ReplicationStatus> statuses = Lists.newArrayList();
         for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
-            for (Channel channel : domainReplicator.getChannels()) {
+            for (ChannelReplicator channelReplicator : domainReplicator.getChannels()) {
                 ReplicationStatus status = new ReplicationStatus();
+                Channel channel = channelReplicator.getChannel();
                 status.setChannel(channel);
+                status.setConnected(channelReplicator.isConnected());
                 statuses.add(status);
                 Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
                 if (lastUpdatedKey.isPresent()) {
