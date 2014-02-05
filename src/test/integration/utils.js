@@ -8,7 +8,7 @@ function runInTestChannel(channelName, functionToExecute) {
 }
 
 function runInTestChannelJson(jsonBody, functionToExecute) {
-    frisby.create('Ensuring that the test channel exists.')
+    frisby.create('Ensuring that the test channel exists. ' + jsonBody)
         .post(channelUrl, null, { body: jsonBody})
         .addHeader("Content-Type", "application/json")
         .expectStatus(201)

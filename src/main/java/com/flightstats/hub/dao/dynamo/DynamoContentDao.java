@@ -147,7 +147,7 @@ public class DynamoContentDao implements ContentDao {
             addResults(keys, result);
 
         }
-        logger.info("returning " + keys.size() + " keys for " + channelName + " at " + TimeIndex.getHash(dateTime));
+        logger.debug("returning " + keys.size() + " keys for " + channelName + " at " + TimeIndex.getHash(dateTime));
         return keys;
     }
 
