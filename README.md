@@ -17,6 +17,7 @@ The Hub
 * [replication status](#replication-status)
 * [stop replication](#stop-replication)
 * [api updates](#api-updates)
+* [development](#development)
 
 For the purposes of this document, the Hub is at http://hub/.
 
@@ -400,3 +401,25 @@ Also, there are a couple of small API changes that clients should be aware of.
 `ttlMillis` is deprecated, users should use `ttlDays` instead.  Existing `ttlMillis` values are rounded up to the nearest day.
 
 `lastUpdated` is no longer provided in the channel metadata.  If you need to know the latest value, you can use the `/latest` interface
+
+## development
+
+The Hub is a work in progress.  If you'd like to contribute, let us know.
+
+The latest builds are in Jenkins - http://ops-jenkins01.util.pdx.office/job/hub/
+
+To run Java based tests and jasmine-node tests locally, you will most likely want to use DynamoDB Local.
+
+Install from http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
+and then start it running.
+
+Once it's running, hijack src/main/resources/default.properties and make the following changes to src/main/resources/default.properties
+(hijack means don't check them back in :)
+
+```
+#dynamo.endpoint=dynamodb.us-east-1.amazonaws.com
+dynamo.endpoint=localhost:8000
+```
+
+To run the jasmine-node based integration tests:
+jasmine-node .
