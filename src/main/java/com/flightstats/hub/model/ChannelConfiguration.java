@@ -75,7 +75,6 @@ public class ChannelConfiguration implements Serializable {
                 case "_links":
                 case "lastUpdateDate":
                 case "creationDate":
-                    //todo - gfm - 1/20/14 - do we want creationDate?
                     break;
                 default:
                     throw new InvalidRequestException("Unexpected property: " + entry.getKey());
