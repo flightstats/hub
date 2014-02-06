@@ -1,22 +1,7 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.app.config.GuiceContext;
-import com.flightstats.hub.model.*;
-import com.flightstats.hub.test.Integration;
-import com.google.common.base.Optional;
-import com.google.inject.Injector;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.*;
-
-import static org.junit.Assert.*;
-
 public abstract class ChannelServiceIntegration {
-    private final static Logger logger = LoggerFactory.getLogger(ChannelServiceIntegration.class);
+    /*private final static Logger logger = LoggerFactory.getLogger(ChannelServiceIntegration.class);
 
     protected static Injector injector;
     protected ChannelService channelService;
@@ -41,9 +26,9 @@ public abstract class ChannelServiceIntegration {
     public static void tearDown() throws IOException {
     }
 
-    /**
+    *//**
      * Do any additional verification here
-     */
+     *//*
     protected abstract void verifyStartup();
 
     @Test
@@ -108,6 +93,6 @@ public abstract class ChannelServiceIntegration {
         assertTrue(found.containsAll(existing));
 
         assertTrue(channelService.isHealthy());
-    }
+    }*/
 
 }
