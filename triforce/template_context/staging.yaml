@@ -17,13 +17,13 @@ conf/hub.properties :
 
     app :
         name : "hub"
+        environment : "staging"
 
     backing :
         store : "aws"
 
     aws :
         protocol : "HTTP"
-        environment : "staging"
 
     dynamo :
         endpoint : "dynamodb.us-east-1.amazonaws.com"
@@ -32,8 +32,9 @@ conf/hub.properties :
     graphite :
         hosts : "svcsmon.cloud-east.staging:2003"
 
+    ## This is temporary
     zookeeper :
-        connection : "hub-01.cloud-east.staging:2181,hub-02.cloud-east.staging:2181,hub-03.cloud-east.staging:2181"
+        connection : "deihub-01.cloud-east.dev:2181,deihub-02.cloud-east.dev:2181,deihub-03.cloud-east.dev:2181"
 
 
 conf/hazelcast.conf.xml :

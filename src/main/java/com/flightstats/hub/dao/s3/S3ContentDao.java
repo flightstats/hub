@@ -48,7 +48,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Inject
     public S3ContentDao(ContentKeyGenerator keyGenerator, AmazonS3 s3Client,
-                        @Named("aws.environment") String environment, @Named("app.name") String appName,
+                        @Named("app.environment") String environment, @Named("app.name") String appName,
                         CuratorFramework curator, MetricsTimer metricsTimer) {
         this.keyGenerator = keyGenerator;
         this.s3Client = s3Client;
