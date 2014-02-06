@@ -24,7 +24,7 @@ public class DynamoUtils {
 
     @Inject
     public DynamoUtils(AmazonDynamoDBClient dbClient,
-                       @Named("aws.environment") String environment, @Named("app.name") String appName,
+                       @Named("app.environment") String environment, @Named("app.name") String appName,
                        @Named("dynamo.table_creation_wait_minutes") int tableCreationWaitMinutes) {
         this.dbClient = dbClient;
         this.environment = environment;
@@ -33,7 +33,7 @@ public class DynamoUtils {
     }
 
     public String getTableName(String channelName) {
-        return appName + "_" + environment + "_" + channelName;
+        return appName + "-" + environment + "-" + channelName;
     }
 
     /**
