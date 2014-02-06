@@ -1,23 +1,52 @@
 package com.flightstats.hub.dao.dynamo;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.s3.AmazonS3;
+import com.flightstats.hub.app.HubMain;
+import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.dao.ChannelConfigurationDao;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ChannelServiceIntegration;
+import com.flightstats.hub.dao.s3.S3Config;
+import com.flightstats.hub.dao.s3.S3ContentDao;
+import com.flightstats.hub.dao.timeIndex.TimeIndex;
+import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
+import com.flightstats.hub.metrics.MetricsTimer;
+import com.flightstats.hub.model.*;
+import com.flightstats.hub.util.CuratorKeyGenerator;
+import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.joda.time.DateTime;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Properties;
+
+import static org.junit.Assert.*;
+
 /**
- * This requires DynamoDBLocal to use the dynamo.endpoint localhost:8000
+ * Any test in this class will cause a channel to be expected in ChannelServiceIntegration.testChannels
+ * If the test doesn't create a channel, call channelNames.remove(channelName);
+ *
+ * AwsChannelServiceIntegration can use DynamoDBLocal to speed up running tests locally.
+ * To use it, set dynamo.endpoint=localhost:8000 in src/main/resources/default_local.properties
  * http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
  * start with java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar
  */
 public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
     private final static Logger logger = LoggerFactory.getLogger(AwsChannelServiceIntegration.class);
 
-    @Test
-    public void test() throws Exception {
-
-    }
-   /* @BeforeClass
+    @BeforeClass
     public static void setupClass() throws Exception {
         Properties properties = HubMain.loadProperties("useDefault");
         properties.put("backing.store", "aws");
@@ -207,5 +236,5 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         assertTrue(s3Config.isStarted());
 
         assertEquals(sequenceCount, s3Config.doWork());
-    }*/
+    }
 }
