@@ -4,8 +4,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.dao.ChannelConfigurationDao;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ChannelServiceIntegration;
+import com.flightstats.hub.dao.s3.S3Config;
 import com.flightstats.hub.dao.s3.S3ContentDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
@@ -149,7 +151,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
     public void testChannelCreationUncached() throws Exception {
         AmazonDynamoDBClient dbClient = injector.getInstance(AmazonDynamoDBClient.class);
         DynamoUtils dynamoUtils = injector.getInstance(DynamoUtils.class);
-        DynamoChannelMetadataDao channelMetadataDao = new DynamoChannelMetadataDao(dbClient, dynamoUtils);
+        DynamoChannelConfigurationDao channelMetadataDao = new DynamoChannelConfigurationDao(dbClient, dynamoUtils);
         ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
         ChannelConfiguration channel = channelMetadataDao.createChannel(configuration);
         assertNotNull(channel);
@@ -190,7 +192,7 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         MetricsTimer metricsTimer = injector.getInstance(MetricsTimer.class);
         RetryPolicy retryPolicy = injector.getInstance(RetryPolicy.class);
         CuratorKeyGenerator keyGenerator = new CuratorKeyGenerator(curator, metricsTimer, retryPolicy);
-        S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", curator, metricsTimer);
+        S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", "deihub", curator, metricsTimer);
         CuratorLock curatorLock = injector.getInstance(CuratorLock.class);
         TimeIndexProcessor processor = new TimeIndexProcessor(curatorLock, indexDao, curator);
 
@@ -212,5 +214,23 @@ public class AwsChannelServiceIntegration extends ChannelServiceIntegration {
         keyList = Lists.newArrayList(indexDao.getKeys(channelName, dateTime2));
         assertEquals(1, keyList.size());
         assertTrue(keyList.contains(new SequenceContentKey(1000)));
+    }
+
+    @Test
+    public void testAsynchS3Config() throws Exception {
+        channelNames.remove(channelName);
+
+        ChannelConfigurationDao configurationDao = injector.getInstance(ChannelConfigurationDao.class);
+        Iterable<ChannelConfiguration> channels = configurationDao.getChannels();
+        int sequenceCount = 0;
+        for (ChannelConfiguration channel : channels) {
+            if (channel.isSequence()) {
+                sequenceCount++;
+            }
+        }
+        S3Config s3Config = injector.getInstance(S3Config.class);
+        assertTrue(s3Config.isStarted());
+
+        assertEquals(sequenceCount, s3Config.doWork());
     }
 }
