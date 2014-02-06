@@ -79,7 +79,6 @@ public class ChannelServiceImpl implements ChannelService {
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
         createChannelValidator.validate(configuration);
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
-        //todo - gfm - 1/8/14 - this should happen in a channel specific lock
         contentServiceFinder.getContentService(configuration).createChannel(configuration);
         return channelConfigurationDao.createChannel(configuration);
     }
