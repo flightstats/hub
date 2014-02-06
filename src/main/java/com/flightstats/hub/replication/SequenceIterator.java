@@ -80,10 +80,7 @@ public class SequenceIterator implements Iterator<Content> {
     }
 
     private void startMetrics() {
-        //todo - gfm - 2/6/14 - add domain from url
-        String host = URI.create(channelUrl).getHost();
-        String name = "Replication." + host + "." + channel.getName() + ".delta";
-        logger.info("starting metrics " + name);
+        String name = "Replication." + URI.create(channelUrl).getHost() + "." + channel.getName() + ".delta";
         metricRegistry.register(name, new Gauge<Long>() {
             @Override
             public Long getValue() {
