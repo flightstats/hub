@@ -87,7 +87,7 @@ public class ChannelReplicatorTest {
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
             public Optional<DateTime> answer(InvocationOnMock invocation) throws Throwable {
-                long aLong = (long) invocation.getArguments()[1];
+                long aLong = (Long) invocation.getArguments()[1];
                 if (aLong > 1500) {
                     return Optional.of(new DateTime().minusDays(9));
                 }
@@ -108,7 +108,7 @@ public class ChannelReplicatorTest {
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
             public Optional<DateTime> answer(InvocationOnMock invocation) throws Throwable {
-                long aLong = (long) invocation.getArguments()[1];
+                long aLong = (Long) invocation.getArguments()[1];
                 if (aLong > 1500) {
                     return Optional.of(new DateTime().minusDays(9));
                 }
@@ -131,7 +131,7 @@ public class ChannelReplicatorTest {
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
             public Optional<DateTime> answer(InvocationOnMock invocation) throws Throwable {
-                long aLong = (long) invocation.getArguments()[1];
+                long aLong = (Long) invocation.getArguments()[1];
                 if (aLong > 5511) {
                     return Optional.of(new DateTime().minusDays(9));
                 }
@@ -167,7 +167,7 @@ public class ChannelReplicatorTest {
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
             public Optional<DateTime> answer(InvocationOnMock invocation) throws Throwable {
-                long aLong = (long) invocation.getArguments()[1];
+                long aLong = (Long) invocation.getArguments()[1];
                 if (aLong > 5511) {
                     return Optional.of(new DateTime().minusDays(9));
                 }
@@ -203,7 +203,7 @@ public class ChannelReplicatorTest {
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
             public Optional<DateTime> answer(InvocationOnMock invocation) throws Throwable {
-                long aLong = (long) invocation.getArguments()[1];
+                long aLong = (Long) invocation.getArguments()[1];
                 if (aLong > 5511) {
                     return Optional.of(new DateTime().minusDays(9));
                 }
@@ -227,7 +227,7 @@ public class ChannelReplicatorTest {
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
             public Optional<DateTime> answer(InvocationOnMock invocation) throws Throwable {
-                long aLong = (long) invocation.getArguments()[1];
+                long aLong = (Long) invocation.getArguments()[1];
                 if (aLong > 2000) {
                     return Optional.of(new DateTime().minusDays(1));
                 }
