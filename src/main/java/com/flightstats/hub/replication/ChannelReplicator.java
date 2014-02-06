@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class ChannelReplicator implements Runnable, Lockable {
-    //todo - gfm - 1/27/14 - this should push delta into graphite
     private static final Logger logger = LoggerFactory.getLogger(ChannelReplicator.class);
 
     private final ChannelService channelService;
@@ -54,7 +53,6 @@ public class ChannelReplicator implements Runnable, Lockable {
     public void run() {
         logger.debug("starting run " + channel);
         Thread.currentThread().setName("ChannelReplicator-" + channel.getUrl());
-        //todo - gfm - 1/29/14 - not sure why this is taking a minute to finally acquire the lock on local machine
         curatorLock.runWithLock(this, "/ChannelReplicator/" + channel.getName(), 5, TimeUnit.SECONDS);
         Thread.currentThread().setName("Empty");
     }
@@ -98,7 +96,7 @@ public class ChannelReplicator implements Runnable, Lockable {
             return;
         }
         logger.info("starting " + channel.getUrl() + " migration at " + sequence);
-        iterator = sequenceIteratorFactory.create(sequence, channel.getUrl());
+        iterator = sequenceIteratorFactory.create(sequence, channel);
         while (iterator.hasNext() && curatorLock.shouldKeepWorking()) {
             channelService.insert(channel.getName(), iterator.next());
         }
@@ -150,8 +148,7 @@ public class ChannelReplicator implements Runnable, Lockable {
         }
         //we can change to use ttlDays after we know there are no Hubs to migrate.
         long millis = Math.min(TimeUnit.DAYS.toMillis(daysToUse), configuration.getTtlMillis());
-        //todo - gfm - 1/30/14 - do we still need this offset?
-        DateTime tenMinuteOffset = new DateTime().minusMillis((int) millis).plusMinutes(10);
+        DateTime tenMinuteOffset = new DateTime().minusMillis((int) millis);
         return creationDate.get().isAfter(tenMinuteOffset);
     }
 

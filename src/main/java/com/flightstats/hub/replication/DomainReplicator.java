@@ -97,7 +97,6 @@ public class DomainReplicator implements Runnable {
         ChannelReplicator channelReplicator = replicatorProvider.get();
         channelReplicator.setChannel(channel);
         channelReplicator.setHistoricalDays(domain.getHistoricalDays());
-        //todo - gfm - 1/29/14 - we may want the delay to be different.  put it in the config?
         executorService.scheduleWithFixedDelay(channelReplicator, 0, 60, TimeUnit.SECONDS);
         channelReplicators.add(channelReplicator);
     }
