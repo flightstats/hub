@@ -32,7 +32,7 @@ public class S3Config implements Runnable {
     private final String s3BucketName;
 
     @Inject
-    public S3Config(AmazonS3 s3Client, @Named("aws.environment") String environment, @Named("app.name") String appName,
+    public S3Config(AmazonS3 s3Client, @Named("app.environment") String environment, @Named("app.name") String appName,
                     CuratorLock curatorLock, ChannelConfigurationDao channelConfigurationDao) {
         this.s3Client = s3Client;
         this.curatorLock = curatorLock;

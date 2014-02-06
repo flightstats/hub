@@ -31,8 +31,7 @@ public class HubMain {
         final Properties properties = loadProperties(args[0]);
         logger.info(properties.toString());
 
-        //todo - gfm - 1/7/14 - setup ZK to be it's own process
-        startZookeeper(properties);
+        startZookeeperIfDefault(properties);
 
         JettyServer server = startServer(properties);
 
@@ -48,7 +47,7 @@ public class HubMain {
         logger.info("Server shutdown complete.  Exiting application.");
     }
 
-    private static void startZookeeper(final Properties properties) {
+    private static void startZookeeperIfDefault(final Properties properties) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -56,9 +55,9 @@ public class HubMain {
                 if ("singleNode".equals(zkConfigFile)) {
                     warn("using zookeeper single node config file");
                     zkConfigFile = HubMain.class.getResource("/zooSingleNode.cfg").getFile();
+                    logger.info("using " + zkConfigFile);
+                    QuorumPeerMain.main(new String[]{zkConfigFile});
                 }
-                logger.info("using " + zkConfigFile);
-                QuorumPeerMain.main(new String[]{zkConfigFile});
             }
         }).start();
     }

@@ -202,12 +202,12 @@ public class GuiceContext {
 
         @Singleton
         @Provides
-        public static CuratorFramework buildCurator(@Named("app.name") String appName,
+        public static CuratorFramework buildCurator(@Named("app.name") String appName, @Named("app.environment") String environment,
                                                     @Named("zookeeper.connection") String zkConnection,
                                                     RetryPolicy retryPolicy, ZooKeeperState zooKeeperState) {
             logger.info("connecting to zookeeper(s) at " + zkConnection);
             FixedEnsembleProvider ensembleProvider = new FixedEnsembleProvider(zkConnection);
-            CuratorFramework curatorFramework = CuratorFrameworkFactory.builder().namespace(appName)
+            CuratorFramework curatorFramework = CuratorFrameworkFactory.builder().namespace(appName + "-" + environment)
                     .ensembleProvider(ensembleProvider)
                     .retryPolicy(retryPolicy).build();
             curatorFramework.getConnectionStateListenable().addListener(zooKeeperState.getStateListener());
