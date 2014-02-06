@@ -23,7 +23,6 @@ public class CuratorLock {
     /**
      * When you use this method, be sure to check shouldStopWorking to see if you've lost the lock.
      * runWithLock will not throw an exception up the stack.
-     * todo - gfm - 1/28/14 - is the above statement true?
      */
     public void runWithLock(Lockable lockable, String lockPath, long time, TimeUnit timeUnit) {
 

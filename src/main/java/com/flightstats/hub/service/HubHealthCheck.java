@@ -5,7 +5,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.jerseyguice.jetty.health.HealthCheck;
 import com.google.inject.Inject;
 
-//todo - gfm - 1/9/14 - see if we can mod this to use 404 vs 500
+//todo - gfm - 1/9/14 - see if we can mod this to use 404 vs 500, if needed.
 public class HubHealthCheck implements HealthCheck {
 
 	private final ChannelService channelService;
