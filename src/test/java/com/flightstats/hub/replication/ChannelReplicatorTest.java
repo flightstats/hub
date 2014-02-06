@@ -44,7 +44,7 @@ public class ChannelReplicatorTest {
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(2000)));
         factory = mock(SequenceIteratorFactory.class);
         sequenceIterator = mock(SequenceIterator.class);
-        when(factory.create(anyLong(), anyString())).thenReturn(sequenceIterator);
+        when(factory.create(anyLong(), any(Channel.class))).thenReturn(sequenceIterator);
         CuratorLock curatorLock = mock(CuratorLock.class);
         when(curatorLock.shouldKeepWorking()).thenReturn(true);
         replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory);
