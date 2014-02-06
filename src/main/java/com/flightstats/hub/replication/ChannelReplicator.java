@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class ChannelReplicator implements Runnable, Lockable {
-    //todo - gfm - 1/27/14 - this should push delta into graphite
     private static final Logger logger = LoggerFactory.getLogger(ChannelReplicator.class);
 
     private final ChannelService channelService;
@@ -97,7 +96,7 @@ public class ChannelReplicator implements Runnable, Lockable {
             return;
         }
         logger.info("starting " + channel.getUrl() + " migration at " + sequence);
-        iterator = sequenceIteratorFactory.create(sequence, channel.getUrl());
+        iterator = sequenceIteratorFactory.create(sequence, channel);
         while (iterator.hasNext() && curatorLock.shouldKeepWorking()) {
             channelService.insert(channel.getName(), iterator.next());
         }
