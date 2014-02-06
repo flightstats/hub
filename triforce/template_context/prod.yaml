@@ -17,13 +17,13 @@ conf/hub.properties :
 
     app :
         name : "hub"
+        environment : "prod"
 
     backing :
         store : "aws"
 
     aws :
         protocol : "HTTP"
-        environment : "prod"
 
     dynamo :
         endpoint : "dynamodb.us-east-1.amazonaws.com"
