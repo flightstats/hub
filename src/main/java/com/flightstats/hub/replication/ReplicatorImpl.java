@@ -42,7 +42,7 @@ public class ReplicatorImpl implements Replicator {
     }
 
     public void start() {
-        if (started.isStarted()) {
+        if (started.start()) {
             return;
         }
         logger.info("starting replicator");

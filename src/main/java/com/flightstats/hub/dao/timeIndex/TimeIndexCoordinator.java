@@ -53,7 +53,7 @@ public class TimeIndexCoordinator implements Runnable {
     }
 
     public void startThread() {
-        if (started.isStarted()) {
+        if (started.start()) {
             return;
         }
         int offset = new Random().nextInt(60);
