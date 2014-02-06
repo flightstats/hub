@@ -6,6 +6,8 @@ import com.flightstats.hub.app.config.metrics.PerChannelTimedMethodDispatchAdapt
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.aws.AwsDataStoreModule;
+import com.flightstats.hub.dao.s3.S3Config;
+import com.flightstats.hub.dao.s3.S3ConfigInitialization;
 import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
 import com.flightstats.hub.dao.timeIndex.TimeIndexInitialization;
 import com.flightstats.hub.model.ChannelConfiguration;
@@ -137,6 +139,8 @@ public class GuiceContext {
             binder.bind(TimeIndexCoordinator.class).asEagerSingleton();
             binder.bind(ChannelUtils.class).asEagerSingleton();
             binder.bind(CuratorLock.class).asEagerSingleton();
+            binder.bindListener(S3ConfigInitialization.buildTypeMatcher(), new S3ConfigInitialization());
+            binder.bind(S3Config.class).asEagerSingleton();
         }
     }
 
@@ -198,11 +202,12 @@ public class GuiceContext {
 
         @Singleton
         @Provides
-        public static CuratorFramework buildCurator(@Named("zookeeper.connection") String zkConnection,
+        public static CuratorFramework buildCurator(@Named("app.name") String appName,
+                                                    @Named("zookeeper.connection") String zkConnection,
                                                     RetryPolicy retryPolicy, ZooKeeperState zooKeeperState) {
             logger.info("connecting to zookeeper(s) at " + zkConnection);
             FixedEnsembleProvider ensembleProvider = new FixedEnsembleProvider(zkConnection);
-            CuratorFramework curatorFramework = CuratorFrameworkFactory.builder().namespace("deihub")
+            CuratorFramework curatorFramework = CuratorFrameworkFactory.builder().namespace(appName)
                     .ensembleProvider(ensembleProvider)
                     .retryPolicy(retryPolicy).build();
             curatorFramework.getConnectionStateListenable().addListener(zooKeeperState.getStateListener());

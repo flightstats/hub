@@ -13,8 +13,8 @@ public class StartedTest {
     @Test
     public void test() throws Exception {
         Started started = new Started();
-        assertFalse(started.isStarted());
-        assertTrue(started.isStarted());
-        assertTrue(started.isStarted());
+        assertFalse(started.start());
+        assertTrue(started.start());
+        assertTrue(started.start());
     }
 }

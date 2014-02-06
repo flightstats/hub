@@ -49,8 +49,8 @@ public class TimeIndexProcessorTest {
     public static void setupClass() throws Exception {
         Integration.startZooKeeper();
         RetryPolicy retryPolicy = GuiceContext.HubCommonModule.buildRetryPolicy();
-        curator = GuiceContext.HubCommonModule.buildCurator("localhost:2181", retryPolicy, new ZooKeeperState());
-        s3ContentDao = new S3ContentDao(null, null, "", curator, new MetricsTimer(new MetricRegistry()));
+        curator = GuiceContext.HubCommonModule.buildCurator("hub", "localhost:2181", retryPolicy, new ZooKeeperState());
+        s3ContentDao = new S3ContentDao(null, null, "", "hub", curator, new MetricsTimer(new MetricRegistry()));
     }
 
     @AfterClass
