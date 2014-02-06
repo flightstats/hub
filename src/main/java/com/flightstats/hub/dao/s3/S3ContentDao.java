@@ -47,15 +47,14 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
-    public S3ContentDao(ContentKeyGenerator keyGenerator,
-                        AmazonS3 s3Client,
-                        @Named("aws.environment") String environment,
+    public S3ContentDao(ContentKeyGenerator keyGenerator, AmazonS3 s3Client,
+                        @Named("aws.environment") String environment, @Named("app.name") String appName,
                         CuratorFramework curator, MetricsTimer metricsTimer) {
         this.keyGenerator = keyGenerator;
         this.s3Client = s3Client;
         this.curator = curator;
         this.metricsTimer = metricsTimer;
-        this.s3BucketName = "deihub-" + environment;
+        this.s3BucketName = appName + "-" + environment;
     }
 
     @Override
@@ -215,7 +214,6 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     @Override
     public void initializeChannel(ChannelConfiguration config) {
         keyGenerator.seedChannel(config.getName());
-        modifyLifeCycle(config);
     }
 
     @Override
@@ -225,7 +223,6 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public void delete(String channelName) {
-        //todo - gfm - 1/19/14 - remove LifeCycle config - or do this with the metadata
         //todo - gfm - 1/19/14 - this could be more sophisticated, making sure the request gets picked up if this server
         //goes down
         new Thread(new S3Deleter(channelName, s3BucketName, s3Client)).start();
@@ -233,43 +230,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public void updateChannel(ChannelConfiguration config) {
-        modifyLifeCycle(config);
+        //no-op
     }
-
-    private void modifyLifeCycle(ChannelConfiguration config) {
-        //todo - gfm - 1/7/14 - this should happen in an system wide lock on ChannelConfig
-        // or it should be triggered occasionally via ChannelMetadata
-        // or create a new bucket per channel
-
-        /*BucketLifecycleConfiguration lifecycleConfig = s3Client.getBucketLifecycleConfiguration(s3BucketName);
-        logger.info("found config " + lifecycleConfig);
-        String namePrefix = config.getName() + "/";
-        BucketLifecycleConfiguration.Rule newRule = new BucketLifecycleConfiguration.Rule()
-                .withPrefix(namePrefix)
-                .withId(config.getName())
-                .withExpirationInDays((int) config.getTtlDays())
-                .withStatus(BucketLifecycleConfiguration.ENABLED);
-        if (lifecycleConfig == null) {
-            ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
-            rules.add(newRule);
-            lifecycleConfig = new BucketLifecycleConfiguration(rules);
-        } else {
-            BucketLifecycleConfiguration.Rule toRemove = null;
-            List<BucketLifecycleConfiguration.Rule> rules = lifecycleConfig.getRules();
-            for (BucketLifecycleConfiguration.Rule rule : rules) {
-                if (rule.getPrefix().equals(namePrefix)) {
-                    toRemove = rule;
-                }
-            }
-            if (toRemove != null) {
-                logger.info("removing rule " + toRemove.getPrefix());
-                rules.remove(toRemove);
-            }
-            rules.add(newRule);
-        }
-
-        s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);*/
-    }
-
 
 }

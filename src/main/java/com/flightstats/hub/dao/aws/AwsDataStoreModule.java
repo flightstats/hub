@@ -3,7 +3,7 @@ package com.flightstats.hub.dao.aws;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.dao.*;
-import com.flightstats.hub.dao.dynamo.DynamoChannelMetadataDao;
+import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
 import com.flightstats.hub.dao.dynamo.DynamoContentDao;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
 import com.flightstats.hub.dao.s3.S3ContentDao;
@@ -31,19 +31,19 @@ public class AwsDataStoreModule extends AbstractModule {
 	protected void configure() {
 		Names.bindProperties(binder(), properties);
 		bind(AwsConnectorFactory.class).in(Singleton.class);
-		bindListener(ChannelMetadataInitialization.buildTypeMatcher(), new ChannelMetadataInitialization());
+		bindListener(ChannelConfigurationInitialization.buildTypeMatcher(), new ChannelConfigurationInitialization());
 		bindListener(ContentDaoInitialization.buildTypeMatcher(), new ContentDaoInitialization());
         bindListener(ReplicationInitialization.buildTypeMatcher(), new ReplicationInitialization());
         bind(DynamoReplicationDao.class).asEagerSingleton();
         bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
         bind(ContentServiceFinder.class).to(SplittingContentServiceFinder.class).asEagerSingleton();
-        bind(ChannelMetadataDao.class).to(TimedChannelMetadataDao.class).in(Singleton.class);
-        bind(ChannelMetadataDao.class)
-                .annotatedWith(Names.named(TimedChannelMetadataDao.DELEGATE))
-                .to(CachedChannelMetadataDao.class);
-        bind(ChannelMetadataDao.class)
-                .annotatedWith(Names.named(CachedChannelMetadataDao.DELEGATE))
-                .to(DynamoChannelMetadataDao.class);
+        bind(ChannelConfigurationDao.class).to(TimedChannelConfigurationDao.class).in(Singleton.class);
+        bind(ChannelConfigurationDao.class)
+                .annotatedWith(Names.named(TimedChannelConfigurationDao.DELEGATE))
+                .to(CachedChannelConfigurationDao.class);
+        bind(ChannelConfigurationDao.class)
+                .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))
+                .to(DynamoChannelConfigurationDao.class);
 
         install(new PrivateModule() {
             @Override

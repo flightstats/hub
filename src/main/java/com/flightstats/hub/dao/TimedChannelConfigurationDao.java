@@ -9,14 +9,14 @@ import com.google.inject.name.Named;
 /**
  *
  */
-public class TimedChannelMetadataDao implements ChannelMetadataDao {
+public class TimedChannelConfigurationDao implements ChannelConfigurationDao {
 
     public static final String DELEGATE = "TimedChannelMetadataDao.DELEGATE";
-    private ChannelMetadataDao delegate;
+    private ChannelConfigurationDao delegate;
     private final MetricsTimer metricsTimer;
 
     @Inject
-    public TimedChannelMetadataDao(@Named(DELEGATE) ChannelMetadataDao delegate, MetricsTimer metricsTimer) {
+    public TimedChannelConfigurationDao(@Named(DELEGATE) ChannelConfigurationDao delegate, MetricsTimer metricsTimer) {
         this.delegate = delegate;
         this.metricsTimer = metricsTimer;
     }
@@ -53,8 +53,8 @@ public class TimedChannelMetadataDao implements ChannelMetadataDao {
     }
 
     @Override
-    public void initializeMetadata() {
-        delegate.initializeMetadata();
+    public void initialize() {
+        delegate.initialize();
     }
 
     @Override

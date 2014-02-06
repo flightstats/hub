@@ -17,7 +17,7 @@ import java.util.Iterator;
  */
 public class TimeIndexCoordinatorVerifier {
     private final static Logger logger = LoggerFactory.getLogger(TimeIndexCoordinatorVerifier.class);
-    public static final String BASE_URL = "http://deihub.svc.dev/channel/testy";
+    public static final String BASE_URL = "http://hub.svc.dev/channel/testy";
     private static ObjectMapper mapper;
     private static Client client;
 
