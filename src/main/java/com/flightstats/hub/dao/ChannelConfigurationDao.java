@@ -5,14 +5,14 @@ import com.flightstats.hub.model.ChannelConfiguration;
 /**
  *
  */
-public interface ChannelMetadataDao {
+public interface ChannelConfigurationDao {
     ChannelConfiguration createChannel(ChannelConfiguration configuration);
 
     void updateChannel(ChannelConfiguration newConfig);
 
     boolean isHealthy();
 
-    void initializeMetadata();
+    void initialize();
 
     boolean channelExists(String channelName);
 
