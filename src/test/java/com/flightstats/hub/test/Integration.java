@@ -16,6 +16,7 @@ public class Integration {
     private final static Logger logger = LoggerFactory.getLogger(Integration.class);
     private static TestingServer testingServer;
     private static Injector injector;
+    private static Properties properties;
 
     public static synchronized void startZooKeeper() throws Exception {
         if (testingServer == null) {
@@ -31,7 +32,7 @@ public class Integration {
             return injector;
         }
         startZooKeeper();
-        Properties properties = HubMain.loadProperties("useDefault");
+        properties = HubMain.loadProperties("useDefault");
         HubMain.startServer(properties);
         injector = HubMain.getInjector();
         return injector;
@@ -39,5 +40,9 @@ public class Integration {
 
     public static String getRandomChannel() {
         return UUID.randomUUID().toString().replaceAll("-", "");
+    }
+
+    public static Properties getProperties() {
+        return properties;
     }
 }
