@@ -7,6 +7,7 @@ import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.jerseyguice.jetty.JettyConfig;
 import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
 import com.flightstats.jerseyguice.jetty.JettyServer;
+import com.google.inject.Injector;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 public class HubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(HubMain.class);
+    private static Injector injector;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -71,6 +73,7 @@ public class HubMain {
     public static JettyServer startServer(Properties properties) throws IOException, ConstraintException {
         JettyConfig jettyConfig = new JettyConfigImpl(properties);
         GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties);
+        injector = guice.getInjector();
         JettyServer server = new JettyServer(jettyConfig, guice);
         server.start();
         logger.info("Jetty server has been started.");
@@ -96,5 +99,12 @@ public class HubMain {
     private static Properties getProperties(String name, boolean required) throws IOException {
         URL resource = HubMain.class.getResource(name);
         return PropertyConfiguration.loadProperties(resource, required, logger);
+    }
+
+    /**
+     * This should really only be used for Integration Tests.
+     */
+    public static Injector getInjector() {
+        return injector;
     }
 }
