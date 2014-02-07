@@ -49,7 +49,6 @@ public class AwsChannelServiceIntegration {
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        Integration.startZooKeeper();
         injector = Integration.startHub();
         channelNames = new ArrayList<>();
     }
@@ -69,7 +68,7 @@ public class AwsChannelServiceIntegration {
     @Before
     public void setUp() throws Exception {
         channelService = injector.getInstance(ChannelService.class);
-        channelName = UUID.randomUUID().toString().replaceAll("-", "");
+        channelName = Integration.getRandomChannel();
         channelNames.add(channelName);
     }
 
