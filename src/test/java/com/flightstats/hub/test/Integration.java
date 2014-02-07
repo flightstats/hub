@@ -1,13 +1,13 @@
 package com.flightstats.hub.test;
 
 import com.flightstats.hub.app.HubMain;
-import com.flightstats.jerseyguice.jetty.JettyServer;
 import com.google.inject.Injector;
 import org.apache.curator.test.TestingServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
+import java.util.UUID;
 
 /**
  *
@@ -30,10 +30,14 @@ public class Integration {
         if (injector != null) {
             return injector;
         }
-        //todo - gfm - 2/6/14 - check if it is started
+        startZooKeeper();
         Properties properties = HubMain.loadProperties("useDefault");
-        JettyServer jettyServer = HubMain.startServer(properties);
+        HubMain.startServer(properties);
         injector = HubMain.getInjector();
         return injector;
+    }
+
+    public static String getRandomChannel() {
+        return UUID.randomUUID().toString().replaceAll("-", "");
     }
 }
