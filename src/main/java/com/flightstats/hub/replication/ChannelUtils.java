@@ -34,7 +34,7 @@ public class ChannelUtils {
     public static final int NOT_FOUND = -1;
     private final static Logger logger = LoggerFactory.getLogger(ChannelUtils.class);
 
-    private Client noRedirectsClient;
+    private final Client noRedirectsClient;
     private final Client followClient;
     private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
     private static ObjectMapper mapper = new ObjectMapper();
@@ -131,7 +131,7 @@ public class ChannelUtils {
 
     private ClientResponse getResponse(String url) {
         /**
-         * this uses no redirects because I don't think we want to follow redirects for content,
+         * this uses noRedirectsClient because I don't think we want to follow redirects for content,
          * as it could end up in an infinite loop.
          */
         return noRedirectsClient.resource(url)
