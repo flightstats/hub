@@ -90,11 +90,10 @@ public class S3Config implements Runnable {
                     rules.add(configRule);
                 }
             }
-
+            logger.info("updating " + rules.size());
             BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
             s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);
             size = rules.size();
-            logger.info("updated " + size);
         }
     }
 
