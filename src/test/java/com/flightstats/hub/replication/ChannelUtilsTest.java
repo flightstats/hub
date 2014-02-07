@@ -89,6 +89,15 @@ public class ChannelUtilsTest {
     }
 
     @Test
+    public void testGetFirstContent() throws Exception {
+        Optional<Content> optionalContent = channelUtils.getContent(channelUrl, 1000);
+        assertTrue(optionalContent.isPresent());
+        Content content = optionalContent.get();
+        assertArrayEquals("data1".getBytes(), content.getData());
+        assertTrue(new DateTime(content.getMillis()).isAfter(new DateTime().minusMinutes(5)));
+    }
+
+    @Test
     public void testGetContent() throws Exception {
         Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
         Optional<Content> optionalContent = channelUtils.getContent(channelUrl, latestSequence.get());

@@ -34,7 +34,7 @@ public class ChannelUtils {
     public static final int NOT_FOUND = -1;
     private final static Logger logger = LoggerFactory.getLogger(ChannelUtils.class);
 
-    private Client noRedirectsClient;
+    private final Client noRedirectsClient;
     private final Client followClient;
     private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
     private static ObjectMapper mapper = new ObjectMapper();
@@ -82,10 +82,8 @@ public class ChannelUtils {
         return Optional.of(configuration);
     }
 
-    //todo - gfm - 1/25/14 - use compression for content
     public Optional<Content> getContent(String channelUrl, long sequence) {
-        channelUrl = appendSlash(channelUrl);
-        ClientResponse response = getResponse(channelUrl + sequence);
+        ClientResponse response = getResponse(appendSlash(channelUrl) + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             logger.debug("unable to get content " + response);
             return Optional.absent();
@@ -102,8 +100,7 @@ public class ChannelUtils {
     }
 
     public Optional<DateTime> getCreationDate(String channelUrl, long sequence) {
-        channelUrl = appendSlash(channelUrl);
-        ClientResponse response = getResponse(channelUrl + sequence);
+        ClientResponse response = getResponse(appendSlash(channelUrl) + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             logger.debug("unable to get creation date " + response);
             return Optional.absent();
@@ -134,10 +131,13 @@ public class ChannelUtils {
 
     private ClientResponse getResponse(String url) {
         /**
-         * this uses no redirects because I don't think we want to follow redirects for content,
+         * this uses noRedirectsClient because I don't think we want to follow redirects for content,
          * as it could end up in an infinite loop.
          */
-        return noRedirectsClient.resource(url).accept(MediaType.WILDCARD_TYPE).get(ClientResponse.class);
+        return noRedirectsClient.resource(url)
+                .accept(MediaType.WILDCARD_TYPE)
+                .header(HttpHeaders.ACCEPT_ENCODING, "gzip")
+                .get(ClientResponse.class);
     }
 
     private DateTime getCreationDate(ClientResponse response) {
