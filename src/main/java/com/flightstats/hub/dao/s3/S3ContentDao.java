@@ -223,8 +223,6 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public void delete(String channelName) {
-        //todo - gfm - 1/19/14 - this could be more sophisticated, making sure the request gets picked up if this server
-        //goes down
         new Thread(new S3Deleter(channelName, s3BucketName, s3Client)).start();
     }
 

@@ -1,6 +1,20 @@
 package com.flightstats.hub.replication;
 
+import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.test.Integration;
+import com.google.common.base.Optional;
+import com.google.inject.Injector;
+import org.joda.time.DateTime;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.*;
 
 /**
  * This is an integration test that relies on http://hub.svc.dev/channel/testy1 being actively updated.
@@ -8,28 +22,39 @@ import org.junit.Test;
  */
 public class ChannelUtilsTest {
 
-    @Test
-    public void testNothing() throws Exception {
-
-    }
-   /* private static final String ROOT_URL = "http://hub.svc.dev/channel";
-    private static final String CHANNEL_URL = ROOT_URL + "/testy1";
+    private static final String ROOT_URL = "http://localhost:8080/channel";
+    private static String channelUrl = ROOT_URL + "/";
     private static final String NON_CHANNEL_URL = ROOT_URL + "/blahFoobar";
     private static ChannelUtils channelUtils;
+    private static String channel;
+    private static ChannelService channelService;
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        Client followClient = GuiceContext.HubCommonModule.buildJerseyClient();
-        Client noRedirectsClient = GuiceContext.HubCommonModule.buildJerseyClientNoRedirects();
-        channelUtils = new ChannelUtils(noRedirectsClient, followClient);
+
+        Injector injector = Integration.startHub();
+        channelUtils = injector.getInstance(ChannelUtils.class);
+        channel = Integration.getRandomChannel();
+        channelUrl = ROOT_URL + "/" + channel;
+
+        channelService = injector.getInstance(ChannelService.class);
+        ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channel).build();
+        channelService.createChannel(configuration);
+        channelService.insert(channel, Content.builder().withData("data1".getBytes()).build());
+        channelService.insert(channel, Content.builder().withData("data2".getBytes()).build());
+    }
+
+    @AfterClass
+    public static void teardownClass() throws Exception {
+        channelService.delete(channel);
     }
 
     @Test
     public void testGetLatestSequence() throws Exception {
-        Optional<Long> latestSequence = channelUtils.getLatestSequence(CHANNEL_URL);
+        Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
         assertTrue(latestSequence.isPresent());
         System.out.println("latest " + latestSequence.get());
-        assertTrue(latestSequence.get() > 213320);
+        assertTrue(latestSequence.get() > 1000);
     }
 
     @Test
@@ -40,10 +65,13 @@ public class ChannelUtilsTest {
 
     @Test
     public void testGetConfiguration() throws Exception {
-        Optional<ChannelConfiguration> configuration = channelUtils.getConfiguration(CHANNEL_URL);
+        Optional<ChannelConfiguration> configuration = channelUtils.getConfiguration(channelUrl);
         assertTrue(configuration.isPresent());
-        assertEquals("testy1", configuration.get().getName());
-        assertEquals(86400000L, (long) configuration.get().getTtlMillis());
+        ChannelConfiguration config = configuration.get();
+        assertEquals(channel, config.getName());
+        assertEquals(TimeUnit.DAYS.toMillis(120), (long) config.getTtlMillis());
+        assertEquals(120, config.getTtlDays());
+        assertTrue(config.isSequence());
     }
 
     @Test
@@ -54,8 +82,8 @@ public class ChannelUtilsTest {
 
     @Test
     public void testGetContent() throws Exception {
-        Optional<Long> latestSequence = channelUtils.getLatestSequence(CHANNEL_URL);
-        Optional<Content> optionalContent = channelUtils.getContent(CHANNEL_URL, latestSequence.get());
+        Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
+        Optional<Content> optionalContent = channelUtils.getContent(channelUrl, latestSequence.get());
         assertTrue(optionalContent.isPresent());
         Content content = optionalContent.get();
         assertTrue(content.getData().length > 0);
@@ -64,8 +92,8 @@ public class ChannelUtilsTest {
 
     @Test
     public void testGetCreationDate() throws Exception {
-        Optional<Long> latestSequence = channelUtils.getLatestSequence(CHANNEL_URL);
-        Optional<DateTime> optionalDate = channelUtils.getCreationDate(CHANNEL_URL, latestSequence.get());
+        Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
+        Optional<DateTime> optionalDate = channelUtils.getCreationDate(channelUrl, latestSequence.get());
         assertTrue(optionalDate.isPresent());
         DateTime dateTime = optionalDate.get();
         assertTrue(dateTime.isAfter(new DateTime().minusMinutes(5)));
@@ -75,15 +103,15 @@ public class ChannelUtilsTest {
     public void testGetChannels() throws Exception {
         Set<Channel> channels = channelUtils.getChannels(ROOT_URL);
         assertNotNull(channels);
-        assertTrue(channels.size() > 10);
-        assertTrue(channels.contains(new Channel("testy10", "http://hub.svc.dev/channel/testy10")));
+        assertTrue(channels.size() > 0);
+        assertTrue(channels.contains(new Channel(channel, channelUrl)));
     }
 
     @Test
     public void testGetChannelsSlash() throws Exception {
         Set<Channel> channels = channelUtils.getChannels(ROOT_URL + "/");
         assertNotNull(channels);
-        assertTrue(channels.size() > 10);
+        assertTrue(channels.size() > 0);
     }
 
     @Test
@@ -91,6 +119,6 @@ public class ChannelUtilsTest {
         Set<Channel> channels = channelUtils.getChannels("http://nothing.svc.dev/channel");
         assertNotNull(channels);
         assertTrue(channels.isEmpty());
-    }*/
+    }
 
 }
