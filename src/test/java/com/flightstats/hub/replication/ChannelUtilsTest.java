@@ -10,6 +10,8 @@ import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -22,9 +24,11 @@ import static org.junit.Assert.*;
  */
 public class ChannelUtilsTest {
 
-    private static final String ROOT_URL = "http://localhost:8080/channel";
-    private static String channelUrl = ROOT_URL + "/";
-    private static final String NON_CHANNEL_URL = ROOT_URL + "/blahFoobar";
+    private final static Logger logger = LoggerFactory.getLogger(ChannelUtilsTest.class);
+
+    private static String rootUrl;
+    private static String channelUrl;
+    private static String nonChannelUrl;
     private static ChannelUtils channelUtils;
     private static String channel;
     private static ChannelService channelService;
@@ -33,9 +37,13 @@ public class ChannelUtilsTest {
     public static void setupClass() throws Exception {
 
         Injector injector = Integration.startHub();
+        String bindPort = Integration.getProperties().getProperty("http.bind_port", "8080");
         channelUtils = injector.getInstance(ChannelUtils.class);
         channel = Integration.getRandomChannel();
-        channelUrl = ROOT_URL + "/" + channel;
+        rootUrl = "http://localhost:" + bindPort + "/channel";
+        logger.info("using rootUrl " + rootUrl);
+        channelUrl = rootUrl + "/" + channel;
+        nonChannelUrl = rootUrl + "/blahFoobar";
 
         channelService = injector.getInstance(ChannelService.class);
         ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channel).build();
@@ -59,7 +67,7 @@ public class ChannelUtilsTest {
 
     @Test
     public void testGetLatestSequenceNoChannel() throws Exception {
-        Optional<Long> latestSequence = channelUtils.getLatestSequence(NON_CHANNEL_URL);
+        Optional<Long> latestSequence = channelUtils.getLatestSequence(nonChannelUrl);
         assertFalse(latestSequence.isPresent());
     }
 
@@ -76,7 +84,7 @@ public class ChannelUtilsTest {
 
     @Test
     public void testGetConfigurationMissing() throws Exception {
-        Optional<ChannelConfiguration> configuration = channelUtils.getConfiguration(NON_CHANNEL_URL);
+        Optional<ChannelConfiguration> configuration = channelUtils.getConfiguration(nonChannelUrl);
         assertFalse(configuration.isPresent());
     }
 
@@ -101,7 +109,7 @@ public class ChannelUtilsTest {
 
     @Test
     public void testGetChannels() throws Exception {
-        Set<Channel> channels = channelUtils.getChannels(ROOT_URL);
+        Set<Channel> channels = channelUtils.getChannels(rootUrl);
         assertNotNull(channels);
         assertTrue(channels.size() > 0);
         assertTrue(channels.contains(new Channel(channel, channelUrl)));
@@ -109,7 +117,7 @@ public class ChannelUtilsTest {
 
     @Test
     public void testGetChannelsSlash() throws Exception {
-        Set<Channel> channels = channelUtils.getChannels(ROOT_URL + "/");
+        Set<Channel> channels = channelUtils.getChannels(rootUrl + "/");
         assertNotNull(channels);
         assertTrue(channels.size() > 0);
     }
