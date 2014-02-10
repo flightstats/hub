@@ -12,7 +12,7 @@ public interface ChannelService {
 
 	ChannelConfiguration createChannel(ChannelConfiguration configuration);
 
-	ValueInsertionResult insert(String channelName, Content content);
+	InsertedContentKey insert(String channelName, Content content);
 
 	Optional<LinkedContent> getValue(String channelName, String id);
 
