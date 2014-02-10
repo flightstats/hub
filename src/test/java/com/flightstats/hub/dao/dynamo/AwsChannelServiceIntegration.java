@@ -49,7 +49,7 @@ public class AwsChannelServiceIntegration {
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        injector = Integration.startHub();
+        injector = Integration.startRealHub();
         channelNames = new ArrayList<>();
     }
 
@@ -89,7 +89,7 @@ public class AwsChannelServiceIntegration {
         assertFalse(channelService.getValue(channelName, new SequenceContentKey(1000).keyToString()).isPresent());
         byte[] bytes = "some data".getBytes();
         Content content = Content.builder().withData(bytes).build();
-        ValueInsertionResult insert = channelService.insert(channelName, content);
+        InsertedContentKey insert = channelService.insert(channelName, content);
 
         Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());
         assertTrue(value.isPresent());
@@ -107,7 +107,7 @@ public class AwsChannelServiceIntegration {
         channelService.createChannel(configuration);
         byte[] bytes = "testChannelOptionals".getBytes();
         Content content = Content.builder().withData(bytes).withContentLanguage("lang").withContentType("content").build();
-        ValueInsertionResult insert = channelService.insert(channelName, content);
+        InsertedContentKey insert = channelService.insert(channelName, content);
 
         Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());
         assertTrue(value.isPresent());
@@ -195,9 +195,9 @@ public class AwsChannelServiceIntegration {
         channelService.createChannel(configuration);
 
         byte[] bytes = "some data".getBytes();
-        ValueInsertionResult insert1 = channelService.insert(channelName, Content.builder().withData(bytes).build());
-        ValueInsertionResult insert2 = channelService.insert(channelName, Content.builder().withData(bytes).build());
-        ValueInsertionResult insert3 = channelService.insert(channelName, Content.builder().withData(bytes).build());
+        InsertedContentKey insert1 = channelService.insert(channelName, Content.builder().withData(bytes).build());
+        InsertedContentKey insert2 = channelService.insert(channelName, Content.builder().withData(bytes).build());
+        InsertedContentKey insert3 = channelService.insert(channelName, Content.builder().withData(bytes).build());
         HashSet<ContentKey> createdKeys = Sets.newHashSet(insert1.getKey(), insert2.getKey(), insert3.getKey());
         Optional<LinkedContent> value = channelService.getValue(channelName, insert1.getKey().keyToString());
         assertTrue(value.isPresent());
@@ -229,7 +229,7 @@ public class AwsChannelServiceIntegration {
         channelService.createChannel(configuration);
         byte[] bytes = "testChannelOptionals".getBytes();
         Content content = Content.builder().withData(bytes).withContentType("content").withContentLanguage("lang").build();
-        ValueInsertionResult insert = channelService.insert(channelName,  content);
+        InsertedContentKey insert = channelService.insert(channelName,  content);
 
         Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());
         assertTrue(value.isPresent());

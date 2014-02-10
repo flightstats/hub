@@ -13,15 +13,13 @@ public class SequenceContentKey implements ContentKey {
     }
 
     @Override
-    public Optional<ContentKey> getNext() {
-        Optional<? extends ContentKey> optional = Optional.of(new SequenceContentKey(sequence + 1));
-        return (Optional<ContentKey>) optional;
+    public ContentKey getNext() {
+        return new SequenceContentKey(sequence + 1);
     }
 
     @Override
-    public Optional<ContentKey> getPrevious() {
-        Optional<? extends ContentKey> optional = Optional.of(new SequenceContentKey(sequence - 1));
-        return (Optional<ContentKey>) optional;
+    public ContentKey getPrevious() {
+        return new SequenceContentKey(sequence - 1);
     }
 
     public long getSequence() {

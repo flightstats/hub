@@ -3,8 +3,8 @@ package com.flightstats.hub.service;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
-import com.flightstats.hub.model.ValueInsertionResult;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
 import org.junit.Before;
@@ -14,7 +14,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Date;
 import java.util.Random;
 
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -28,7 +27,6 @@ public class SingleChannelResourceTest {
 	private String contentLanguage;
 	private URI channelUri;
 	private ChannelLinkBuilder linkBuilder;
-	public static final Date CREATION_DATE = new Date(12345L);
     private ContentKey contentKey;
 	private URI itemUri;
 	private UriInfo uriInfo;
@@ -72,32 +70,32 @@ public class SingleChannelResourceTest {
 
 		HalLink selfLink = new HalLink("self", itemUri);
 		HalLink channelLink = new HalLink("channel", channelUri);
-		ValueInsertionResult expectedResponse = new ValueInsertionResult(contentKey, null);
+		InsertedContentKey expectedResponse = new InsertedContentKey(contentKey, null);
 
         Content content = Content.builder()
                 .withData(data)
                 .withContentLanguage(contentLanguage)
                 .withContentType(contentType)
                 .build();
-        when(channelService.insert(channelName, content)).thenReturn(new ValueInsertionResult(contentKey, null));
+        when(channelService.insert(channelName, content)).thenReturn(new InsertedContentKey(contentKey, null));
 
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
 		Response response = testClass.insertValue(channelName, contentType, contentLanguage, data);
 
 		assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
 
-		Linked<ValueInsertionResult> result = (Linked<ValueInsertionResult>) response.getEntity();
+		Linked<InsertedContentKey> result = (Linked<InsertedContentKey>) response.getEntity();
 
         assertThat(result.getHalLinks().getLinks(), hasItems(selfLink, channelLink));
-		ValueInsertionResult insertionResult = result.getObject();
+		InsertedContentKey insertionResult = result.getObject();
 
-		assertEquals(expectedResponse, insertionResult);
+		assertEquals(expectedResponse.getKey(), insertionResult.getKey());
 		assertEquals(itemUri, response.getMetadata().getFirst("Location"));
 	}
 
     @Test
     public void testInsert_channelExistenceNotCached() throws Exception {
-        ValueInsertionResult result = new ValueInsertionResult(new SequenceContentKey(1000), null);
+        InsertedContentKey result = new InsertedContentKey(new SequenceContentKey(1000), null);
         byte[] data = "SomeData".getBytes();
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
 
@@ -111,7 +109,7 @@ public class SingleChannelResourceTest {
 
     @Test(expected = WebApplicationException.class)
     public void testInsert_channelExistenceNotCached_channelDoesntExist() throws Exception {
-        ValueInsertionResult result = new ValueInsertionResult(null, null);
+        InsertedContentKey result = new InsertedContentKey(null, null);
         byte[] data = "SomeData".getBytes();
         when(channelService.channelExists(channelName)).thenReturn(false);
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
