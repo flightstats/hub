@@ -1,7 +1,6 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.util.Started;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -29,7 +28,6 @@ public class ReplicatorImpl implements Replicator {
     public static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
     private final static Logger logger = LoggerFactory.getLogger(ReplicatorImpl.class);
 
-    private static final Started started = new Started();
     private final ReplicationService replicationService;
     private final CuratorFramework curator;
     private final Provider<DomainReplicator> domainReplicatorProvider;
@@ -48,7 +46,8 @@ public class ReplicatorImpl implements Replicator {
 
         @Override
         protected void startUp() throws Exception {
-            start();
+            logger.info("startup");
+            startReplicator();
         }
 
         @Override
@@ -57,10 +56,7 @@ public class ReplicatorImpl implements Replicator {
 
     }
 
-    public void start() {
-        if (started.start()) {
-            return;
-        }
+    public void startReplicator() {
         logger.info("starting replicator");
         createNode();
         addListener();

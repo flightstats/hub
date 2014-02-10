@@ -1,6 +1,7 @@
-package com.flightstats.hub.service.eventing;
+package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.service.ChannelLinkBuilder;
+import com.flightstats.hub.util.ChannelNameExtractor;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
@@ -17,7 +18,7 @@ public class HubWebSocketTest {
 	public static final String CHANNEL_NAME = "tumbleweed";
     private Session session;
     private URI requestUri;
-    private SubscriptionRoster subscriptionRoster;
+    private WebsocketSubscribers websocketSubscribers;
     private ChannelNameExtractor channelNameExtractor;
 	private ChannelLinkBuilder linkBuilder;
 
@@ -26,7 +27,7 @@ public class HubWebSocketTest {
         requestUri = URI.create("http://path.to.site.com:999/channel/" + CHANNEL_NAME + "/ws");
         InetSocketAddress remoteAddress = InetSocketAddress.createUnresolved("superawesome.com", 999);
         RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
-        subscriptionRoster = mock( SubscriptionRoster.class );
+        websocketSubscribers = mock( WebsocketSubscribers.class );
         channelNameExtractor = mock( ChannelNameExtractor.class );
         session = mock(Session.class);
 		linkBuilder = mock(ChannelLinkBuilder.class);
@@ -41,10 +42,10 @@ public class HubWebSocketTest {
 
 	@Test
 	public void testOnConnect() throws Exception {
-		HubWebSocket testClass = new HubWebSocket( subscriptionRoster, channelNameExtractor, linkBuilder);
+		HubWebSocket testClass = new HubWebSocket(websocketSubscribers, channelNameExtractor, linkBuilder);
 		testClass.onConnect(session);
 
-        verify( subscriptionRoster ).subscribe( eq( CHANNEL_NAME ), any( JettyWebSocketEndpointSender.class ) );
+        verify(websocketSubscribers).subscribe( eq( CHANNEL_NAME ), any( WebsocketConsumer.class ) );
         verify( channelNameExtractor ).extractFromWS(requestUri);
 		verify(session).getRemoteAddress();
 	}
@@ -53,10 +54,10 @@ public class HubWebSocketTest {
 	public void testOnDisconnect() throws Exception {
 
 		Runnable disconnectCallback = mock( Runnable.class );
-		HubWebSocket testClass = new HubWebSocket( subscriptionRoster, channelNameExtractor, linkBuilder, disconnectCallback );
+		HubWebSocket testClass = new HubWebSocket(websocketSubscribers, channelNameExtractor, linkBuilder, disconnectCallback );
 		testClass.onConnect(session);
 		testClass.onDisconnect(99, "spoon");
 		verify(disconnectCallback).run();
-		verify(subscriptionRoster).unsubscribe( eq(CHANNEL_NAME), any( JettyWebSocketEndpointSender.class ) );
+		verify(websocketSubscribers).unsubscribe( eq(CHANNEL_NAME), any( WebsocketConsumer.class ) );
 	}
 }

@@ -6,7 +6,7 @@ import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.flightstats.hub.service.Headers;
-import com.flightstats.hub.service.eventing.ChannelNameExtractor;
+import com.flightstats.hub.util.ChannelNameExtractor;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;

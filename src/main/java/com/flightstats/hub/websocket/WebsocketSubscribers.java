@@ -1,9 +1,7 @@
-package com.flightstats.hub.service.eventing;
+package com.flightstats.hub.websocket;
 
-import com.flightstats.hub.cluster.SequenceSubscriber;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.service.ChannelInsertionPublisher;
 import com.google.inject.Inject;
 import com.hazelcast.core.MessageListener;
 import org.slf4j.Logger;
@@ -11,16 +9,16 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SubscriptionRoster {
+public class WebsocketSubscribers {
 
-	private final static Logger logger = LoggerFactory.getLogger(SubscriptionRoster.class);
-	private final ChannelInsertionPublisher channelInsertionPublisher;
+	private final static Logger logger = LoggerFactory.getLogger(WebsocketSubscribers.class);
+	private final WebsocketPublisher websocketPublisher;
     private final ChannelService channelService;
     private final ConcurrentHashMap<ChannelConsumer, String> consumerToMessageListener = new ConcurrentHashMap<>();
 
 	@Inject
-	public SubscriptionRoster(ChannelInsertionPublisher channelInsertionPublisher, ChannelService channelService) {
-		this.channelInsertionPublisher = channelInsertionPublisher;
+	public WebsocketSubscribers(WebsocketPublisher websocketPublisher, ChannelService channelService) {
+		this.websocketPublisher = websocketPublisher;
         this.channelService = channelService;
     }
 
@@ -37,7 +35,7 @@ public class SubscriptionRoster {
         if (configuration.isSequence()) {
             logger.info("Adding new message listener for sequence channel " + channelName);
             MessageListener<String> messageListener = new SequenceSubscriber(consumer);
-            String registrationId = channelInsertionPublisher.subscribe(channelName, messageListener);
+            String registrationId = websocketPublisher.subscribe(channelName, messageListener);
             consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), registrationId );
         } else {
             throw new UnsupportedOperationException("TimeSeries channels do not support WebSockets");
@@ -48,7 +46,7 @@ public class SubscriptionRoster {
     public void unsubscribe(String channelName, Consumer<String> subscription) {
 		String registrationId = consumerToMessageListener.remove(new ChannelConsumer(channelName, subscription));
 		logger.info("Removing message listener for websocket hazelcast queue for channel " + channelName);
-		channelInsertionPublisher.unsubscribe(channelName, registrationId);
+		websocketPublisher.unsubscribe(channelName, registrationId);
 	}
 
 	public int getTotalSubscriberCount() {

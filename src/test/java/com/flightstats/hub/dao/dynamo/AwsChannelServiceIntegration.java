@@ -49,7 +49,7 @@ public class AwsChannelServiceIntegration {
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        injector = Integration.startHub();
+        injector = Integration.startRealHub();
         channelNames = new ArrayList<>();
     }
 

@@ -1,4 +1,4 @@
-package com.flightstats.hub.service.eventing;
+package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.service.ChannelLinkBuilder;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
@@ -6,14 +6,14 @@ import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import java.io.IOException;
 import java.net.URI;
 
-class JettyWebSocketEndpointSender implements Consumer<String> {
+class WebsocketConsumer implements Consumer<String> {
 
 	private final RemoteEndpoint remoteEndpoint;
 	private final String remoteAddress;
 	private final ChannelLinkBuilder linkBuilder;
 	private final URI channelUri;
 
-	public JettyWebSocketEndpointSender(String remoteAddress, RemoteEndpoint remoteEndpoint, ChannelLinkBuilder linkBuilder, URI channelUri) {
+	public WebsocketConsumer(String remoteAddress, RemoteEndpoint remoteEndpoint, ChannelLinkBuilder linkBuilder, URI channelUri) {
 		this.remoteAddress = remoteAddress;
 		this.remoteEndpoint = remoteEndpoint;
 		this.linkBuilder = linkBuilder;
@@ -39,7 +39,7 @@ class JettyWebSocketEndpointSender implements Consumer<String> {
 			return false;
 		}
 
-		JettyWebSocketEndpointSender that = (JettyWebSocketEndpointSender) o;
+		WebsocketConsumer that = (WebsocketConsumer) o;
 
 		if (!remoteAddress.equals(that.remoteAddress)) {
 			return false;

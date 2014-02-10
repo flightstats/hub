@@ -1,7 +1,6 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -15,16 +14,13 @@ public class ContentServiceImpl implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
     private final ContentDao contentDao;
-    private final TimeProvider timeProvider;
     private final KeyCoordination keyCoordination;
 
     @Inject
     public ContentServiceImpl(
             ContentDao contentDao,
-            TimeProvider timeProvider,
             KeyCoordination keyCoordination) {
         this.contentDao = contentDao;
-        this.timeProvider = timeProvider;
         this.keyCoordination = keyCoordination;
     }
 

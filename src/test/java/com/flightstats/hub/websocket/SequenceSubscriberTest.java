@@ -1,8 +1,7 @@
-package com.flightstats.hub.cluster;
+package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
-import com.flightstats.hub.service.eventing.Consumer;
 import com.hazelcast.core.Message;
 import org.junit.Test;
 import org.mockito.InOrder;
