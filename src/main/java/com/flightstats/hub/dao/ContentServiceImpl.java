@@ -37,11 +37,11 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public ValueInsertionResult insert(ChannelConfiguration configuration, Content content) {
+    public InsertedContentKey insert(ChannelConfiguration configuration, Content content) {
         String channelName = configuration.getName();
         logger.debug("inserting {} bytes into channel {} ", content.getData().length, channelName);
 
-        ValueInsertionResult result = contentDao.write(channelName, content, configuration.getTtlDays());
+        InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());
         keyCoordination.insert(channelName, result.getKey());
         return result;
     }

@@ -14,7 +14,7 @@ import com.flightstats.hub.metrics.TimedCallback;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ValueInsertionResult;
+import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.hub.util.ContentKeyGenerator;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
@@ -72,7 +72,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     @Override
-    public ValueInsertionResult write(String channelName, Content content, long ttlDays) {
+    public InsertedContentKey write(String channelName, Content content, long ttlDays) {
         if (!content.getContentKey().isPresent()) {
             content.setContentKey(keyGenerator.newKey(channelName));
         }
@@ -80,7 +80,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         DateTime dateTime = new DateTime(content.getMillis());
         writeS3(channelName, content, key);
         writeIndex(channelName, dateTime, key);
-        return new ValueInsertionResult(key, dateTime.toDate());
+        return new InsertedContentKey(key, dateTime.toDate());
     }
 
     public void writeIndex(String channelName, DateTime dateTime, ContentKey key) {

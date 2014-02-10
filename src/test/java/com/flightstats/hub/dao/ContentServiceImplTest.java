@@ -36,12 +36,12 @@ public class ContentServiceImplTest {
         ContentKey key = new SequenceContentKey( 1003);
         byte[] data = "bar".getBytes();
         Content content = Content.builder().withData(data).withContentType("text/plain").withMillis(days).build();
-        ValueInsertionResult expected = new ValueInsertionResult(key, null);
+        InsertedContentKey expected = new InsertedContentKey(key, null);
 
         when(timeProvider.getMillis()).thenReturn(days);
         when(contentDao.write(channelName, content, days)).thenReturn(expected);
 
-        ValueInsertionResult result = testClass.insert(channelConfig, content);
+        InsertedContentKey result = testClass.insert(channelConfig, content);
 
         assertEquals(expected, result);
     }

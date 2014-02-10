@@ -20,7 +20,7 @@ public class MemoryContentDao implements ContentDao {
     private Map<String, SequenceContentKey> contentKeyMap = new HashMap<>();
 
     @Override
-    public synchronized ValueInsertionResult write(String channelName, Content content, long ttlDays) {
+    public synchronized InsertedContentKey write(String channelName, Content content, long ttlDays) {
 
         List<Content> contentList = contentListMultimap.get(channelName);
         SequenceContentKey existing = contentKeyMap.get(channelName);
@@ -29,7 +29,7 @@ public class MemoryContentDao implements ContentDao {
         content.setContentKey(key);
         contentList.add(content);
         contentKeyMap.put(channelName, key);
-        return new ValueInsertionResult(key, new Date(content.getMillis()));
+        return new InsertedContentKey(key, new Date(content.getMillis()));
     }
 
     @Override
