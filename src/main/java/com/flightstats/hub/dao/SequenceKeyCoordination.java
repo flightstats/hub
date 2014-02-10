@@ -4,7 +4,7 @@ import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.metrics.TimedCallback;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
-import com.flightstats.hub.service.ChannelInsertionPublisher;
+import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -17,15 +17,15 @@ import org.apache.curator.framework.recipes.shared.SharedValue;
  *
  */
 public class SequenceKeyCoordination implements KeyCoordination {
-    private final ChannelInsertionPublisher channelInsertionPublisher;
+    private final WebsocketPublisher websocketPublisher;
     private final MetricsTimer metricsTimer;
     private final LoadingCache<String, SharedValue> cache;
 
     @Inject
-    public SequenceKeyCoordination(ChannelInsertionPublisher channelInsertionPublisher,
+    public SequenceKeyCoordination(WebsocketPublisher websocketPublisher,
                                    final CuratorFramework curator,
                                    MetricsTimer metricsTimer) {
-        this.channelInsertionPublisher = channelInsertionPublisher;
+        this.websocketPublisher = websocketPublisher;
         this.metricsTimer = metricsTimer;
         cache = CacheBuilder.newBuilder().build(new CacheLoader<String, SharedValue>() {
             @Override
@@ -40,7 +40,7 @@ public class SequenceKeyCoordination implements KeyCoordination {
     @Override
     public void insert(String channelName, ContentKey key) {
         setLastUpdateKey(channelName, key);
-        channelInsertionPublisher.publish(channelName, key);
+        websocketPublisher.publish(channelName, key);
     }
 
     private void setLastUpdateKey(final String channelName, final ContentKey key) {

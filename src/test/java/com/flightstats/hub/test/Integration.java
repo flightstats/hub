@@ -1,6 +1,8 @@
 package com.flightstats.hub.test;
 
 import com.flightstats.hub.app.HubMain;
+import com.flightstats.hub.dao.aws.AwsModule;
+import com.flightstats.hub.dao.memory.MemoryModule;
 import com.google.inject.Injector;
 import org.apache.curator.test.TestingServer;
 import org.slf4j.Logger;
@@ -17,6 +19,7 @@ public class Integration {
     private static TestingServer testingServer;
     private static Injector injector;
     private static Properties properties;
+    private static boolean memoryStarted = false;
 
     public static synchronized void startZooKeeper() throws Exception {
         if (testingServer == null) {
@@ -27,15 +30,26 @@ public class Integration {
         }
     }
 
-    public static synchronized Injector startHub() throws Exception {
+    public static synchronized Injector startRealHub() throws Exception {
         if (injector != null) {
             return injector;
         }
         startZooKeeper();
         properties = HubMain.loadProperties("useDefault");
-        HubMain.startServer(properties);
+        HubMain.startServer(properties, new AwsModule(properties));
         injector = HubMain.getInjector();
         return injector;
+    }
+
+    public static synchronized void startMemoryHub() throws Exception {
+        if (memoryStarted) {
+            return;
+        }
+        memoryStarted = true;
+        logger.info("starting up memoryHub");
+        Properties properties = HubMain.loadProperties("useDefault");
+        properties.setProperty("http.bind_port", "9999");
+        HubMain.startServer(properties, new MemoryModule(properties));
     }
 
     public static String getRandomChannel() {

@@ -14,14 +14,12 @@ import com.flightstats.hub.test.Integration;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -51,10 +49,6 @@ public class TimeIndexProcessorTest {
         RetryPolicy retryPolicy = GuiceContext.HubCommonModule.buildRetryPolicy();
         curator = GuiceContext.HubCommonModule.buildCurator("hub", "test", "localhost:2181", retryPolicy, new ZooKeeperState());
         s3ContentDao = new S3ContentDao(null, null, "", "hub", curator, new MetricsTimer(new MetricRegistry()));
-    }
-
-    @AfterClass
-    public static void teardownClass() throws IOException {
     }
 
     @Before

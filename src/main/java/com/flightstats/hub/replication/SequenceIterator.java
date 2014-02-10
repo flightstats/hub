@@ -142,9 +142,9 @@ public class SequenceIterator implements Iterator<Content> {
 
     @OnMessage
     public void onMessage(String message) {
-        logger.debug("message {}", message);
         try {
             long sequence = Long.parseLong(StringUtils.substringAfterLast(message, "/"));
+            logger.debug("message {}", sequence);
             if (sequence > latest.get()) {
                 latest.set(sequence);
             }

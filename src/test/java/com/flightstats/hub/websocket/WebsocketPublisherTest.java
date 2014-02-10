@@ -1,4 +1,4 @@
-package com.flightstats.hub.service;
+package com.flightstats.hub.websocket;
 
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.metrics.MetricsTimer;
@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import static org.mockito.Mockito.*;
 
-public class ChannelInsertionPublisherTest {
+public class WebsocketPublisherTest {
 
     private MetricsTimer metricsTimer;
 
@@ -30,7 +30,7 @@ public class ChannelInsertionPublisherTest {
 
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, metricsTimer);
+		WebsocketPublisher testClass = new WebsocketPublisherImpl(hazelcastInstance, metricsTimer);
 
 		testClass.publish("channelName", contentKey);
 
@@ -45,7 +45,7 @@ public class ChannelInsertionPublisherTest {
 
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, metricsTimer);
+		WebsocketPublisher testClass = new WebsocketPublisherImpl(hazelcastInstance, metricsTimer);
 
 		testClass.subscribe("channelName", messageListener);
 		verify(iTopic).addMessageListener(messageListener);
@@ -58,7 +58,7 @@ public class ChannelInsertionPublisherTest {
 
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		ChannelInsertionPublisher testClass = new ChannelInsertionPublisher(hazelcastInstance, metricsTimer);
+		WebsocketPublisher testClass = new WebsocketPublisherImpl(hazelcastInstance, metricsTimer);
 
 		testClass.unsubscribe("channelName", "todo");
 		verify(iTopic).removeMessageListener("todo");
