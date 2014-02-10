@@ -1,29 +1,25 @@
 package com.flightstats.hub.dao.timeIndex;
 
+import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLock;
-import com.flightstats.hub.util.Started;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
-import org.jetbrains.annotations.NotNull;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
-public class TimeIndexCoordinator implements Runnable {
+public class TimeIndexCoordinator {
     private final static Logger logger = LoggerFactory.getLogger(TimeIndexCoordinator.class);
 
-    private static final Started started = new Started();
     private final CuratorFramework curator;
     private final TimeIndexDao timeIndexDao;
     private final CuratorLock curatorLock;
@@ -34,9 +30,22 @@ public class TimeIndexCoordinator implements Runnable {
         this.curator = curator;
         this.timeIndexDao = timeIndexDao;
         this.curatorLock = curatorLock;
+        HubServices.register(new TimeIndexCoordinatorService());
     }
 
-    @Override
+    private class TimeIndexCoordinatorService extends AbstractScheduledService {
+
+        @Override
+        protected void runOneIteration() throws Exception {
+            run();
+        }
+
+        @Override
+        protected Scheduler scheduler() {
+            return Scheduler.newFixedDelaySchedule(new Random().nextInt(60), 60, TimeUnit.SECONDS);
+        }
+    }
+
     public void run() {
         try {
             List<String> channels = curator.getChildren().forPath(TimeIndex.getPath());
@@ -52,18 +61,4 @@ public class TimeIndexCoordinator implements Runnable {
         }
     }
 
-    public void startThread() {
-        if (started.start()) {
-            return;
-        }
-        int offset = new Random().nextInt(60);
-        Executors.newScheduledThreadPool(1, new ThreadFactory() {
-            @NotNull
-            @Override
-            public Thread newThread(@NotNull Runnable r) {
-                return new Thread(r, "TimeIndex" + TimeIndex.getHash(new DateTime()));
-            }
-
-        }).scheduleWithFixedDelay(this, offset, 60, TimeUnit.SECONDS);
-    }
 }

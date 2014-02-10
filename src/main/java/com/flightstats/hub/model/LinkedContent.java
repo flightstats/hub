@@ -8,11 +8,15 @@ public class LinkedContent {
 	private final Optional<ContentKey> previous;
 	private final Optional<ContentKey> next;
 
-	public LinkedContent(Content value, Optional<ContentKey> previous, Optional<ContentKey> next) {
-		this.value = value;
-		this.previous = previous;
-		this.next = next;
-	}
+    public LinkedContent(Content value, ContentKey previous, ContentKey next) {
+        this.value = value;
+        this.previous = Optional.fromNullable(previous);
+        this.next = Optional.fromNullable(next);
+    }
+
+    public LinkedContent(Content value) {
+        this(value, null, null);
+    }
 
 	public Content getValue() {
 		return value;

@@ -20,13 +20,13 @@ public class TimeSeriesContentKey implements ContentKey {
     }
 
     @Override
-    public Optional<ContentKey> getNext() {
-        return Optional.absent();
+    public ContentKey getNext() {
+        return null;
     }
 
     @Override
-    public Optional<ContentKey> getPrevious() {
-        return Optional.absent();
+    public ContentKey getPrevious() {
+        return null;
     }
 
     @Override

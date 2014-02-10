@@ -28,7 +28,7 @@ public class ContentServiceImplTest {
         channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlDays(days).build();
         timeProvider = mock(TimeProvider.class);
         KeyCoordination keyCoordination = mock(KeyCoordination.class);
-        testClass = new ContentServiceImpl(contentDao, timeProvider, keyCoordination);
+        testClass = new ContentServiceImpl(contentDao, keyCoordination);
     }
 
     @Test
@@ -36,12 +36,12 @@ public class ContentServiceImplTest {
         ContentKey key = new SequenceContentKey( 1003);
         byte[] data = "bar".getBytes();
         Content content = Content.builder().withData(data).withContentType("text/plain").withMillis(days).build();
-        ValueInsertionResult expected = new ValueInsertionResult(key, null);
+        InsertedContentKey expected = new InsertedContentKey(key, null);
 
         when(timeProvider.getMillis()).thenReturn(days);
         when(contentDao.write(channelName, content, days)).thenReturn(expected);
 
-        ValueInsertionResult result = testClass.insert(channelConfig, content);
+        InsertedContentKey result = testClass.insert(channelConfig, content);
 
         assertEquals(expected, result);
     }
@@ -53,9 +53,7 @@ public class ContentServiceImplTest {
         ContentKey nextKey = new SequenceContentKey( 1002);
         byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
         Content content = Content.builder().withData(data).withContentType("text/plain").withMillis(0L).build();
-        Optional<ContentKey> previous = Optional.of(previousKey);
-        Optional<ContentKey> next = Optional.of(nextKey);
-        LinkedContent expected = new LinkedContent(content, previous, next);
+        LinkedContent expected = new LinkedContent(content, previousKey, nextKey);
 
         when(contentDao.read(channelName, key)).thenReturn(content);
         when(contentDao.getKey(key.keyToString())).thenReturn(Optional.of(key));

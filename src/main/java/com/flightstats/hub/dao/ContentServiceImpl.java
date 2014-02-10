@@ -1,7 +1,6 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.util.TimeProvider;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -15,16 +14,13 @@ public class ContentServiceImpl implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
     private final ContentDao contentDao;
-    private final TimeProvider timeProvider;
     private final KeyCoordination keyCoordination;
 
     @Inject
     public ContentServiceImpl(
             ContentDao contentDao,
-            TimeProvider timeProvider,
             KeyCoordination keyCoordination) {
         this.contentDao = contentDao;
-        this.timeProvider = timeProvider;
         this.keyCoordination = keyCoordination;
     }
 
@@ -41,11 +37,11 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public ValueInsertionResult insert(ChannelConfiguration configuration, Content content) {
+    public InsertedContentKey insert(ChannelConfiguration configuration, Content content) {
         String channelName = configuration.getName();
         logger.debug("inserting {} bytes into channel {} ", content.getData().length, channelName);
 
-        ValueInsertionResult result = contentDao.write(channelName, content, configuration.getTtlDays());
+        InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());
         keyCoordination.insert(channelName, result.getKey());
         return result;
     }
@@ -62,13 +58,13 @@ public class ContentServiceImpl implements ContentService {
         if (value == null) {
             return Optional.absent();
         }
-        Optional<ContentKey> previous = key.getPrevious();
-        Optional<ContentKey> next = key.getNext();
-        if (next.isPresent()) {
+        ContentKey previous = key.getPrevious();
+        ContentKey next = key.getNext();
+        if (next != null) {
             Optional<ContentKey> lastUpdatedKey = findLastUpdatedKey(channelName);
             if (lastUpdatedKey.isPresent()) {
                 if (lastUpdatedKey.get().equals(key)) {
-                    next = Optional.absent();
+                    next = null;
                 }
             }
         }

@@ -5,7 +5,7 @@ import com.flightstats.hub.metrics.TimedCallback;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ValueInsertionResult;
+import com.flightstats.hub.model.InsertedContentKey;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -28,10 +28,10 @@ public class TimedContentDao implements ContentDao {
     }
 
     @Override
-    public ValueInsertionResult write(final String channelName, final Content content, final long ttlDays) {
-        return metricsTimer.time("valueDao.write", new TimedCallback<ValueInsertionResult>() {
+    public InsertedContentKey write(final String channelName, final Content content, final long ttlDays) {
+        return metricsTimer.time("valueDao.write", new TimedCallback<InsertedContentKey>() {
             @Override
-            public ValueInsertionResult call() {
+            public InsertedContentKey call() {
                 return delegate.write(channelName, content, ttlDays);
             }
         });
@@ -45,11 +45,6 @@ public class TimedContentDao implements ContentDao {
                 return delegate.read(channelName, key);
             }
         });
-    }
-
-    @Override
-    public void initialize() {
-        delegate.initialize();
     }
 
     @Override
