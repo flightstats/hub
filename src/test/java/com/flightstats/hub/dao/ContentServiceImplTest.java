@@ -53,9 +53,7 @@ public class ContentServiceImplTest {
         ContentKey nextKey = new SequenceContentKey( 1002);
         byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
         Content content = Content.builder().withData(data).withContentType("text/plain").withMillis(0L).build();
-        Optional<ContentKey> previous = Optional.of(previousKey);
-        Optional<ContentKey> next = Optional.of(nextKey);
-        LinkedContent expected = new LinkedContent(content, previous, next);
+        LinkedContent expected = new LinkedContent(content, previousKey, nextKey);
 
         when(contentDao.read(channelName, key)).thenReturn(content);
         when(contentDao.getKey(key.keyToString())).thenReturn(Optional.of(key));
