@@ -24,7 +24,7 @@ public class MemoryWebsocketPublisher implements WebsocketPublisher {
         if (listener == null) {
             return;
         }
-        //todo - gfm - 2/10/14 - messages sent to the WebSocket need to be single threaded.
+        //messages sent to the WebSocket need to be single threaded.
         threadPoolExecutor.execute(new Runnable() {
             @Override
             public void run() {
