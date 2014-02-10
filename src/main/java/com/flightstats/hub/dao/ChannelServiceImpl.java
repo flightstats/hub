@@ -29,7 +29,7 @@ public class ChannelServiceImpl implements ChannelService {
         public void updateChannel(ChannelConfiguration configuration) { }
 
         @Override
-        public ValueInsertionResult insert(ChannelConfiguration configuration, Content content) {
+        public InsertedContentKey insert(ChannelConfiguration configuration, Content content) {
             return null;
         }
 
@@ -84,7 +84,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public ValueInsertionResult insert(String channelName, Content content) {
+    public InsertedContentKey insert(String channelName, Content content) {
         ChannelConfiguration configuration = channelConfigurationDao.getChannelConfiguration(channelName);
         return getContentService(channelName).insert(configuration, content);
     }

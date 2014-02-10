@@ -36,7 +36,7 @@ public class ChannelUtilsTest {
     @BeforeClass
     public static void setupClass() throws Exception {
 
-        Injector injector = Integration.startHub();
+        Injector injector = Integration.startRealHub();
         String bindPort = Integration.getProperties().getProperty("http.bind_port", "8080");
         channelUtils = injector.getInstance(ChannelUtils.class);
         channel = Integration.getRandomChannel();

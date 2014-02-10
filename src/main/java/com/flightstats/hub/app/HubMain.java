@@ -4,10 +4,13 @@ import com.amazonaws.services.cloudfront.model.InvalidArgumentException;
 import com.conducivetech.services.common.util.PropertyConfiguration;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.hub.app.config.GuiceContext;
+import com.flightstats.hub.dao.aws.AwsModule;
 import com.flightstats.jerseyguice.jetty.JettyConfig;
 import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
 import com.flightstats.jerseyguice.jetty.JettyServer;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +38,7 @@ public class HubMain {
 
         startZookeeperIfDefault(properties);
 
-        JettyServer server = startServer(properties);
+        JettyServer server = startServer(properties, new AwsModule(properties));
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -70,11 +73,12 @@ public class HubMain {
         logger.warn("**********************************************************");
     }
 
-    public static JettyServer startServer(Properties properties) throws IOException, ConstraintException {
+    public static JettyServer startServer(Properties properties, Module module) throws IOException, ConstraintException {
         JettyConfig jettyConfig = new JettyConfigImpl(properties);
-        GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties);
+        GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties, module);
         injector = guice.getInjector();
         JettyServer server = new JettyServer(jettyConfig, guice);
+        HubServices.startAll();
         server.start();
         logger.info("Jetty server has been started.");
         return server;
@@ -101,9 +105,7 @@ public class HubMain {
         return PropertyConfiguration.loadProperties(resource, required, logger);
     }
 
-    /**
-     * This should really only be used for Integration Tests.
-     */
+    @VisibleForTesting
     public static Injector getInjector() {
         return injector;
     }

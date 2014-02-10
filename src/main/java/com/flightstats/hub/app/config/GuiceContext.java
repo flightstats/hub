@@ -3,25 +3,15 @@ package com.flightstats.hub.app.config;
 import com.codahale.metrics.MetricRegistry;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.hub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
-import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.ZooKeeperState;
-import com.flightstats.hub.dao.aws.AwsDataStoreModule;
-import com.flightstats.hub.dao.s3.S3Config;
-import com.flightstats.hub.dao.s3.S3ConfigInitialization;
-import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
-import com.flightstats.hub.dao.timeIndex.TimeIndexInitialization;
 import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.replication.ChannelUtils;
-import com.flightstats.hub.replication.Replicator;
-import com.flightstats.hub.replication.ReplicatorImpl;
-import com.flightstats.hub.replication.ReplicatorInitialization;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.service.HubHealthCheck;
-import com.flightstats.hub.service.eventing.ChannelNameExtractor;
-import com.flightstats.hub.service.eventing.JettyWebSocketServlet;
-import com.flightstats.hub.service.eventing.MetricsCustomWebSocketCreator;
-import com.flightstats.hub.service.eventing.SubscriptionRoster;
+import com.flightstats.hub.util.ChannelNameExtractor;
 import com.flightstats.hub.util.TimeProvider;
+import com.flightstats.hub.websocket.JettyWebSocketServlet;
+import com.flightstats.hub.websocket.MetricsWebSocketCreator;
+import com.flightstats.hub.websocket.WebsocketSubscribers;
 import com.flightstats.jerseyguice.Bindings;
 import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
 import com.flightstats.jerseyguice.metrics.GraphiteConfig;
@@ -65,13 +55,11 @@ import java.util.concurrent.TimeUnit;
 public class GuiceContext {
     private final static Logger logger = LoggerFactory.getLogger(GuiceContext.class);
 
-    public static final String BACKING_STORE_PROPERTY = "backing.store";
-    public static final String AWS_BACKING_STORE_TAG = "aws";
     public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
     private static Properties properties = new Properties();
 
     public static HubGuiceServlet construct(
-            @NotNull final Properties properties) throws ConstraintException {
+            @NotNull final Properties properties, Module appModule) throws ConstraintException {
         GuiceContext.properties = properties;
         GraphiteConfig graphiteConfig = new GraphiteConfigImpl(properties);
 
@@ -93,7 +81,7 @@ public class GuiceContext {
                 .withModules(Arrays.asList(module))
                 .build();
 
-        return new HubGuiceServlet(jerseyModule, createDataStoreModule(properties), new HubCommonModule());
+        return new HubGuiceServlet(jerseyModule, appModule, new HubCommonModule());
     }
 
     private static Module getMaxPaloadSizeModule(final Properties properties) {
@@ -127,20 +115,11 @@ public class GuiceContext {
         @Override
         public void bind(Binder binder) {
             binder.bind(MetricRegistry.class).asEagerSingleton();
-            binder.bind(SubscriptionRoster.class).asEagerSingleton();
+            binder.bind(WebsocketSubscribers.class).asEagerSingleton();
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
-            binder.bind(WebSocketCreator.class).to(MetricsCustomWebSocketCreator.class).asEagerSingleton();
+            binder.bind(WebSocketCreator.class).to(MetricsWebSocketCreator.class).asEagerSingleton();
             binder.bind(JettyWebSocketServlet.class).asEagerSingleton();
             binder.bind(TimeProvider.class).asEagerSingleton();
-            binder.bind(ZooKeeperState.class).asEagerSingleton();
-            binder.bindListener(ReplicatorInitialization.buildTypeMatcher(), new ReplicatorInitialization());
-            binder.bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
-            binder.bindListener(TimeIndexInitialization.buildTypeMatcher(), new TimeIndexInitialization());
-            binder.bind(TimeIndexCoordinator.class).asEagerSingleton();
-            binder.bind(ChannelUtils.class).asEagerSingleton();
-            binder.bind(CuratorLock.class).asEagerSingleton();
-            binder.bindListener(S3ConfigInitialization.buildTypeMatcher(), new S3ConfigInitialization());
-            binder.bind(S3Config.class).asEagerSingleton();
         }
     }
 
@@ -159,17 +138,6 @@ public class GuiceContext {
                 injector = Guice.createInjector(modules);
             }
             return injector;
-        }
-    }
-
-    private static Module createDataStoreModule(Properties properties) {
-        String backingStoreName = properties.getProperty(BACKING_STORE_PROPERTY, AWS_BACKING_STORE_TAG);
-        logger.info("using data store " + backingStoreName);
-        switch (backingStoreName) {
-            case AWS_BACKING_STORE_TAG:
-                return new AwsDataStoreModule(properties);
-            default:
-                throw new IllegalStateException(String.format("Unknown backing store specified: %s", backingStoreName));
         }
     }
 

@@ -2,11 +2,12 @@ package com.flightstats.hub.dao.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
+import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelConfigurationDao;
 import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.util.Started;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
@@ -14,18 +15,15 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
  * We want to update S3Configurations asynchronously, primarily to prevent collisions during integration tests,
  * which could also happen in the real world.  This also speeds up Sequence channel creation.
  */
-public class S3Config implements Runnable {
+public class S3Config {
     private final static Logger logger = LoggerFactory.getLogger(S3Config.class);
 
-    private static final Started started = new Started();
     private final AmazonS3 s3Client;
     private final CuratorLock curatorLock;
     private final ChannelConfigurationDao channelConfigurationDao;
@@ -38,21 +36,26 @@ public class S3Config implements Runnable {
         this.curatorLock = curatorLock;
         this.channelConfigurationDao = channelConfigurationDao;
         this.s3BucketName = appName + "-" + environment;
+        HubServices.register(new S3ConfigInit());
     }
 
-    public void initialize() {
-        if (started.start()) {
-            return;
+    private class S3ConfigInit extends AbstractScheduledService {
+        @Override
+        protected void runOneIteration() throws Exception {
+            run();
         }
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-        long delayMinutes = TimeUnit.DAYS.toMinutes(1);
-        Random random = new Random();
-        long offsetMinutes = random.nextInt((int) (delayMinutes / 2)) + TimeUnit.HOURS.toMinutes(1);
-        logger.info("scheduling S3Config with offsetMinutes=" + offsetMinutes);
-        executor.scheduleWithFixedDelay(this, offsetMinutes, delayMinutes, TimeUnit.MINUTES);
+
+        @Override
+        protected Scheduler scheduler() {
+            long delayMinutes = TimeUnit.DAYS.toMinutes(1);
+            Random random = new Random();
+            long offsetMinutes = random.nextInt((int) (delayMinutes / 2)) + TimeUnit.HOURS.toMinutes(1);
+            logger.info("scheduling S3Config with offsetMinutes=" + offsetMinutes);
+            return Scheduler.newFixedDelaySchedule(offsetMinutes, delayMinutes, TimeUnit.MINUTES);
+        }
+
     }
 
-    @Override
     public void run() {
         try {
             doWork();
@@ -97,7 +100,4 @@ public class S3Config implements Runnable {
         }
     }
 
-    public boolean isStarted() {
-        return started.isStarted();
-    }
 }

@@ -2,8 +2,10 @@ package com.flightstats.hub.replication;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
 import com.google.common.base.Optional;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +25,20 @@ public class DynamoReplicationDao {
     public DynamoReplicationDao(AmazonDynamoDBClient dbClient, DynamoUtils dynamoUtils) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
+        HubServices.register(new DynamoReplicationDaoInit());
     }
+
+    private class DynamoReplicationDaoInit extends AbstractIdleService {
+        @Override
+        protected void startUp() throws Exception {
+            initialize();
+        }
+
+        @Override
+        protected void shutDown() throws Exception { }
+
+    }
+
 
     public void upsert(ReplicationDomain config) {
         Map<String, AttributeValue> item = new HashMap<>();
