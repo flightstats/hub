@@ -9,6 +9,7 @@ public class ReplicationStatus {
     private long sourceLatest;
     private Channel channel;
     private boolean connected;
+    private String message;
 
     public String getUrl() {
         return channel.getUrl();
@@ -48,5 +49,13 @@ public class ReplicationStatus {
 
     public void setConnected(boolean connected) {
         this.connected = connected;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

@@ -98,22 +98,24 @@ public class ReplicationServiceImpl implements ReplicationService {
         for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
             for (ChannelReplicator channelReplicator : domainReplicator.getChannels()) {
                 ReplicationStatus status = new ReplicationStatus();
+                statuses.add(status);
                 Channel channel = channelReplicator.getChannel();
                 status.setChannel(channel);
-                status.setConnected(channelReplicator.isConnected());
-                statuses.add(status);
-                Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
-                if (lastUpdatedKey.isPresent()) {
-                    //todo - gfm - 1/23/14 - this will need to change to support TimeSeries
-                    SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
-                    status.setReplicationLatest(contentKey.getSequence());
-                }
-                Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getUrl());
-                if (latestSequence.isPresent()) {
-                    status.setSourceLatest(latestSequence.get());
+                if (channelReplicator.isValid()) {
+                    status.setConnected( channelReplicator.isConnected());
+                    Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
+                    if (lastUpdatedKey.isPresent()) {
+                        SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
+                        status.setReplicationLatest(contentKey.getSequence());
+                    }
+                    Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getUrl());
+                    if (latestSequence.isPresent()) {
+                        status.setSourceLatest(latestSequence.get());
+                    }
+                } else {
+                    status.setMessage(channelReplicator.getMessage());
                 }
             }
-
         }
 
         return statuses;
