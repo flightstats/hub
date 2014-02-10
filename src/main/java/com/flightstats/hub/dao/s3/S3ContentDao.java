@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
@@ -17,6 +18,7 @@ import com.flightstats.hub.model.ValueInsertionResult;
 import com.flightstats.hub.util.ContentKeyGenerator;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
@@ -55,6 +57,18 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         this.curator = curator;
         this.metricsTimer = metricsTimer;
         this.s3BucketName = appName + "-" + environment;
+        HubServices.register(new S3ContentDaoInit());
+    }
+
+    private class S3ContentDaoInit extends AbstractIdleService {
+        @Override
+        protected void startUp() throws Exception {
+            initialize();
+        }
+
+        @Override
+        protected void shutDown() throws Exception { }
+
     }
 
     @Override
@@ -199,8 +213,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         return channelName + "/index/" + dateTime;
     }
 
-    @Override
-    public void initialize() {
+    private void initialize() {
         if (s3Client.doesBucketExist(s3BucketName)) {
             logger.info("bucket exists " + s3BucketName);
             return;

@@ -17,8 +17,6 @@ public interface ContentDao {
 
     Content read(String channelName, ContentKey key);
 
-    void initialize();
-
     void initializeChannel(ChannelConfiguration configuration);
 
     Optional<ContentKey> getKey(String id);

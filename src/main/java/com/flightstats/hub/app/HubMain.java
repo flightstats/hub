@@ -75,6 +75,7 @@ public class HubMain {
         GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties);
         injector = guice.getInjector();
         JettyServer server = new JettyServer(jettyConfig, guice);
+        HubServices.startAll();
         server.start();
         logger.info("Jetty server has been started.");
         return server;

@@ -9,7 +9,6 @@ import com.flightstats.hub.dao.dynamo.DynamoUtils;
 import com.flightstats.hub.dao.s3.S3ContentDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.hub.replication.DynamoReplicationDao;
-import com.flightstats.hub.replication.ReplicationInitialization;
 import com.flightstats.hub.util.ContentKeyGenerator;
 import com.flightstats.hub.util.CuratorKeyGenerator;
 import com.flightstats.hub.util.TimeSeriesKeyGenerator;
@@ -19,11 +18,11 @@ import com.google.inject.name.Names;
 import java.io.IOException;
 import java.util.Properties;
 
-public class AwsDataStoreModule extends AbstractModule {
+public class AwsModule extends AbstractModule {
 
 	private final Properties properties;
 
-	public AwsDataStoreModule(Properties properties) {
+	public AwsModule(Properties properties) {
 		this.properties = properties;
 	}
 
@@ -31,9 +30,6 @@ public class AwsDataStoreModule extends AbstractModule {
 	protected void configure() {
 		Names.bindProperties(binder(), properties);
 		bind(AwsConnectorFactory.class).in(Singleton.class);
-		bindListener(ChannelConfigurationInitialization.buildTypeMatcher(), new ChannelConfigurationInitialization());
-		bindListener(ContentDaoInitialization.buildTypeMatcher(), new ContentDaoInitialization());
-        bindListener(ReplicationInitialization.buildTypeMatcher(), new ReplicationInitialization());
         bind(DynamoReplicationDao.class).asEagerSingleton();
         bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
         bind(ContentServiceFinder.class).to(SplittingContentServiceFinder.class).asEagerSingleton();
