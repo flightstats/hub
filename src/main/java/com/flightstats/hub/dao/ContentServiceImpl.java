@@ -58,13 +58,13 @@ public class ContentServiceImpl implements ContentService {
         if (value == null) {
             return Optional.absent();
         }
-        Optional<ContentKey> previous = key.getPrevious();
-        Optional<ContentKey> next = key.getNext();
-        if (next.isPresent()) {
+        ContentKey previous = key.getPrevious();
+        ContentKey next = key.getNext();
+        if (next != null) {
             Optional<ContentKey> lastUpdatedKey = findLastUpdatedKey(channelName);
             if (lastUpdatedKey.isPresent()) {
                 if (lastUpdatedKey.get().equals(key)) {
-                    next = Optional.absent();
+                    next = null;
                 }
             }
         }
