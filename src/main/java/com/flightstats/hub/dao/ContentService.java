@@ -12,7 +12,7 @@ public interface ContentService {
 
 	void updateChannel(ChannelConfiguration configuration);
 
-	ValueInsertionResult insert(ChannelConfiguration configuration, Content content);
+	InsertedContentKey insert(ChannelConfiguration configuration, Content content);
 
 	Optional<LinkedContent> getValue(String channelName, String id);
 

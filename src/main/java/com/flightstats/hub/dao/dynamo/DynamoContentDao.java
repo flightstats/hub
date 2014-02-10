@@ -7,7 +7,7 @@ import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ValueInsertionResult;
+import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.hub.util.ContentKeyGenerator;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -42,7 +42,7 @@ public class DynamoContentDao implements ContentDao {
     }
 
     @Override
-    public ValueInsertionResult write(String channelName, Content content, long ttlDays) {
+    public InsertedContentKey write(String channelName, Content content, long ttlDays) {
         ContentKey key = keyGenerator.newKey(channelName);
 
         Map<String, AttributeValue> item = new HashMap<>();
@@ -62,7 +62,7 @@ public class DynamoContentDao implements ContentDao {
                 .withTableName(dynamoUtils.getTableName(channelName))
                 .withItem(item);
         dbClient.putItem(putItemRequest);
-        return new ValueInsertionResult(key, dateTime.toDate());
+        return new InsertedContentKey(key, dateTime.toDate());
     }
 
     @Override
