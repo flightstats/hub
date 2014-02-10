@@ -27,6 +27,8 @@ public class ChannelReplicator implements Runnable, Lockable {
     private Channel channel;
     private SequenceIterator iterator;
     private long historicalDays;
+    private boolean valid = false;
+    private String message = "";
 
     @Inject
     public ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
@@ -49,12 +51,26 @@ public class ChannelReplicator implements Runnable, Lockable {
         return channel;
     }
 
+    public boolean isValid() {
+        return valid;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
     @Override
     public void run() {
-        logger.debug("starting run " + channel);
-        Thread.currentThread().setName("ChannelReplicator-" + channel.getUrl());
-        curatorLock.runWithLock(this, "/ChannelReplicator/" + channel.getName(), 5, TimeUnit.SECONDS);
-        Thread.currentThread().setName("Empty");
+        try {
+            logger.debug("starting run " + channel);
+            Thread.currentThread().setName("ChannelReplicator-" + channel.getUrl());
+            if (!loadData()) {
+                return;
+            }
+            curatorLock.runWithLock(this, "/ChannelReplicator/" + channel.getName(), 5, TimeUnit.SECONDS);
+        } finally {
+            Thread.currentThread().setName("Empty");
+        }
     }
 
     @Override
@@ -72,17 +88,30 @@ public class ChannelReplicator implements Runnable, Lockable {
         }
     }
 
+    public boolean loadData() {
+        try {
+            Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channel.getUrl());
+            if (!optionalConfig.isPresent()) {
+                message = "remote channel missing for " + channel.getUrl();
+                logger.warn(message);
+                valid = false;
+            }
+            configuration = optionalConfig.get();
+            if (!configuration.isSequence()) {
+                valid = false;
+                message = "Non-Sequence channels are not currently supported " + channel.getUrl();
+                logger.warn(message);
+            }
+            valid = true;
+        } catch (IOException e) {
+            message = "IOException " + channel.getUrl() + " " + e.getMessage();
+            logger.warn(message);
+            valid = false;
+        }
+        return valid;
+    }
+
     boolean initialize() throws IOException {
-        Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channel.getUrl());
-        if (!optionalConfig.isPresent()) {
-            logger.warn("remote channel missing for " + channel.getUrl());
-            return false;
-        }
-        configuration = optionalConfig.get();
-        if (!configuration.isSequence()) {
-            logger.warn("Non-Sequence channels are not currently supported " + channel.getUrl());
-            return false;
-        }
         if (!channelService.channelExists(configuration.getName())) {
             logger.info("creating channel for " + channel.getUrl());
             channelService.createChannel(configuration);

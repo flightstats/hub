@@ -74,7 +74,6 @@ public class DomainReplicator implements Runnable {
             logger.warn("did not find any channels to replicate at " + domainUrl);
             return;
         }
-        //todo - gfm - 1/29/14 - test this
         Set<String> activeReplicators = getActiveReplicators();
         if (domain.isInclusive()) {
             for (Channel channel : channels) {
