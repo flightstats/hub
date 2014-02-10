@@ -1,10 +1,7 @@
-package com.flightstats.hub.cluster;
+package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.service.ChannelInsertionPublisher;
-import com.flightstats.hub.service.eventing.Consumer;
-import com.flightstats.hub.service.eventing.SubscriptionRoster;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import org.junit.Before;
@@ -15,25 +12,25 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 @SuppressWarnings("unchecked")
-public class SubscriptionRosterTest {
+public class WebsocketSubscribersTest {
 
     private final String channelName = "4chan";
     private Consumer<String> consumer;
-    private ChannelInsertionPublisher publisher;
+    private WebsocketPublisher publisher;
     private ChannelService channelService;
     private ChannelConfiguration configuration;
-    private SubscriptionRoster subscriptionRoster;
+    private WebsocketSubscribers websocketSubscribers;
     private ArgumentCaptor<MessageListener> messageListenerCaptor;
 
     @Before
     public void setUp() throws Exception {
 
         consumer = mock(Consumer.class);
-        publisher = mock(ChannelInsertionPublisher.class);
+        publisher = mock(WebsocketPublisherImpl.class);
         channelService = mock(ChannelService.class);
         configuration = ChannelConfiguration.builder().withName(channelName).build();
         when(channelService.getChannelConfiguration(channelName)).thenReturn(configuration);
-        subscriptionRoster = new SubscriptionRoster(publisher, channelService);
+        websocketSubscribers = new WebsocketSubscribers(publisher, channelService);
         messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
     }
 
@@ -46,7 +43,7 @@ public class SubscriptionRosterTest {
 
         when(message.getMessageObject()).thenReturn(key);
 
-		subscriptionRoster.subscribe(channelName, consumer);
+		websocketSubscribers.subscribe(channelName, consumer);
 
 		verify(publisher).subscribe(eq(channelName), messageListenerCaptor.capture());
 		messageListenerCaptor.getValue().onMessage(message);
@@ -59,11 +56,11 @@ public class SubscriptionRosterTest {
         String id = "12345";
         when(publisher.subscribe(any(String.class), any(MessageListener.class))).thenReturn(id);
 
-		subscriptionRoster.subscribe(channelName, consumer);
-		subscriptionRoster.unsubscribe(channelName, consumer);
+		websocketSubscribers.subscribe(channelName, consumer);
+		websocketSubscribers.unsubscribe(channelName, consumer);
 
 		verify(publisher).subscribe(eq(channelName), messageListenerCaptor.capture());
 		verify(publisher).unsubscribe(channelName, id);
-		assertEquals(0, subscriptionRoster.getTotalSubscriberCount());
+		assertEquals(0, websocketSubscribers.getTotalSubscriberCount());
 	}
 }

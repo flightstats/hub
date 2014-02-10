@@ -1,8 +1,9 @@
-package com.flightstats.hub.service.eventing;
+package com.flightstats.hub.websocket;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.service.ChannelLinkBuilder;
+import com.flightstats.hub.util.ChannelNameExtractor;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.junit.Test;
@@ -14,7 +15,7 @@ import java.util.concurrent.CountDownLatch;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
-public class MetricsCustomWebSocketCreatorTest {
+public class MetricsWebSocketCreatorTest {
 
 	@Test
 	public void testCreateWebSocket() throws Exception {
@@ -34,7 +35,7 @@ public class MetricsCustomWebSocketCreatorTest {
 		final ServletUpgradeRequest request = mock(ServletUpgradeRequest.class);
 		final Session session = mock(Session.class);
 		Counter counter = spy(new Counter());
-		SubscriptionRoster subscriptionRoster = mock(SubscriptionRoster.class);
+		WebsocketSubscribers websocketSubscribers = mock(WebsocketSubscribers.class);
 
 
 		when(request.getRequestURI()).thenReturn(requestUri);
@@ -43,7 +44,7 @@ public class MetricsCustomWebSocketCreatorTest {
 		when(session.getUpgradeRequest()).thenReturn(request);
 		when(registry.counter(meterName)).thenReturn(counter);
 
-		final MetricsCustomWebSocketCreator testClass = new MetricsCustomWebSocketCreator(registry, subscriptionRoster, channelNameExtractor, mock(ChannelLinkBuilder.class));
+		final MetricsWebSocketCreator testClass = new MetricsWebSocketCreator(registry, websocketSubscribers, channelNameExtractor, mock(ChannelLinkBuilder.class));
 
 		//WHEN
 		for (int i = 0; i < threadCt; i++) {

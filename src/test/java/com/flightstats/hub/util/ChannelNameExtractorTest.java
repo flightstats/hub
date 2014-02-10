@@ -1,4 +1,4 @@
-package com.flightstats.hub.service.eventing;
+package com.flightstats.hub.util;
 
 import org.junit.Before;
 import org.junit.Test;

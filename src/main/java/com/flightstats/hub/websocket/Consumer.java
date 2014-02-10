@@ -1,4 +1,4 @@
-package com.flightstats.hub.service.eventing;
+package com.flightstats.hub.websocket;
 
 public interface Consumer<T> {
 

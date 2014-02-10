@@ -1,4 +1,4 @@
-package com.flightstats.hub.service.eventing;
+package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
@@ -12,7 +12,7 @@ import java.net.URI;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
-public class JettyWebSocketEndpointSenderTest {
+public class WebsocketConsumerTest {
 
 	@Test
 	public void testSink() throws Exception {
@@ -23,7 +23,7 @@ public class JettyWebSocketEndpointSenderTest {
 
 		RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
 
-		JettyWebSocketEndpointSender testClass = new JettyWebSocketEndpointSender(address, remoteEndpoint, new ChannelLinkBuilder(), requestUri);
+		WebsocketConsumer testClass = new WebsocketConsumer(address, remoteEndpoint, new ChannelLinkBuilder(), requestUri);
 		testClass.apply(itemKey);
 
 		verify(remoteEndpoint).sendString(requestUri.toString() + "/" + itemKey);
@@ -43,7 +43,7 @@ public class JettyWebSocketEndpointSenderTest {
 		when(linkBuilder.buildItemUri(contentKey, requestUri)).thenReturn(itemUri);
 
 		doThrow(new IOException("Error!  Error!")).when(remoteEndpoint).sendString(anyString());
-		JettyWebSocketEndpointSender testClass = new JettyWebSocketEndpointSender(address, remoteEndpoint, linkBuilder, requestUri);
+		WebsocketConsumer testClass = new WebsocketConsumer(address, remoteEndpoint, linkBuilder, requestUri);
 
 		testClass.apply(itemKey);
 	}

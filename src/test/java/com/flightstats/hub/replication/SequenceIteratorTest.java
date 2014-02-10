@@ -19,9 +19,7 @@ import static org.junit.Assert.*;
 public class SequenceIteratorTest {
     private final static Logger logger = LoggerFactory.getLogger(SequenceIteratorTest.class);
 
-    private static ChannelUtils channelUtils;
     private static String channelName;
-    private static String rootUrl;
     private static String channelUrl;
     private static ChannelService channelService;
     private static SequenceIteratorFactory factory;
@@ -29,11 +27,10 @@ public class SequenceIteratorTest {
     @BeforeClass
     public static void setupClass() throws Exception {
 
-        Injector injector = Integration.startHub();
+        Injector injector = Integration.startRealHub();
         String bindPort = Integration.getProperties().getProperty("http.bind_port", "8080");
-        channelUtils = injector.getInstance(ChannelUtils.class);
         channelName = Integration.getRandomChannel();
-        rootUrl = "http://localhost:" + bindPort + "/channel";
+        String rootUrl = "http://localhost:" + bindPort + "/channel";
         logger.info("using rootUrl " + rootUrl);
         channelUrl = rootUrl + "/" + channelName;
 

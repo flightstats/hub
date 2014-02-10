@@ -1,6 +1,7 @@
-package com.flightstats.hub.service.eventing;
+package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.util.ChannelNameExtractor;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.junit.Before;

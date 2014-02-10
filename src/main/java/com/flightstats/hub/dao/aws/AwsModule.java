@@ -2,16 +2,22 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
+import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
 import com.flightstats.hub.dao.dynamo.DynamoContentDao;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
+import com.flightstats.hub.dao.s3.S3Config;
 import com.flightstats.hub.dao.s3.S3ContentDao;
+import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
-import com.flightstats.hub.replication.DynamoReplicationDao;
+import com.flightstats.hub.replication.*;
 import com.flightstats.hub.util.ContentKeyGenerator;
 import com.flightstats.hub.util.CuratorKeyGenerator;
 import com.flightstats.hub.util.TimeSeriesKeyGenerator;
+import com.flightstats.hub.websocket.WebsocketPublisher;
+import com.flightstats.hub.websocket.WebsocketPublisherImpl;
 import com.google.inject.*;
 import com.google.inject.name.Names;
 
@@ -29,6 +35,13 @@ public class AwsModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		Names.bindProperties(binder(), properties);
+        bind(ZooKeeperState.class).asEagerSingleton();
+        bind(ReplicationService.class).to(ReplicationServiceImpl.class).asEagerSingleton();
+        bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
+        bind(TimeIndexCoordinator.class).asEagerSingleton();
+        bind(ChannelUtils.class).asEagerSingleton();
+        bind(CuratorLock.class).asEagerSingleton();
+        bind(S3Config.class).asEagerSingleton();
 		bind(AwsConnectorFactory.class).in(Singleton.class);
         bind(DynamoReplicationDao.class).asEagerSingleton();
         bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
@@ -40,6 +53,7 @@ public class AwsModule extends AbstractModule {
         bind(ChannelConfigurationDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))
                 .to(DynamoChannelConfigurationDao.class);
+        bind(WebsocketPublisher.class).to(WebsocketPublisherImpl.class).asEagerSingleton();
 
         install(new PrivateModule() {
             @Override

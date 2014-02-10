@@ -1,6 +1,7 @@
-package com.flightstats.hub.service.eventing;
+package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.service.ChannelLinkBuilder;
+import com.flightstats.hub.util.ChannelNameExtractor;
 import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
@@ -20,15 +21,15 @@ public class HubWebSocket {
 	private final static Logger logger = LoggerFactory.getLogger(HubWebSocket.class);
 	private final Runnable afterDisconnectCallback;
 	private final ChannelNameExtractor channelNameExtractor;
-	private final SubscriptionRoster subscriptions;
+	private final WebsocketSubscribers subscriptions;
 	private final ChannelLinkBuilder linkBuilder;
 	private String remoteAddress;
     //todo - gfm - 1/15/14 - I'm curious about the lifecycle of this
-	private JettyWebSocketEndpointSender endpointSender;
+	private WebsocketConsumer endpointSender;
 	private String channelName;
 
 	@Inject
-	public HubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelLinkBuilder linkBuilder) {
+	public HubWebSocket(WebsocketSubscribers subscriptions, ChannelNameExtractor channelNameExtractor, ChannelLinkBuilder linkBuilder) {
 		this(subscriptions, channelNameExtractor, linkBuilder, new Runnable() {
 			@Override
 			public void run() {
@@ -37,7 +38,7 @@ public class HubWebSocket {
 		});
 	}
 
-	HubWebSocket(SubscriptionRoster subscriptions, ChannelNameExtractor channelNameExtractor, ChannelLinkBuilder linkBuilder,
+	HubWebSocket(WebsocketSubscribers subscriptions, ChannelNameExtractor channelNameExtractor, ChannelLinkBuilder linkBuilder,
                  Runnable afterDisconnectCallback) {
 		this.linkBuilder = linkBuilder;
 		this.afterDisconnectCallback = afterDisconnectCallback;
@@ -56,7 +57,7 @@ public class HubWebSocket {
 		//this is totally hacky.
         String channelUri = "http://" + host + "/channel/" + channelName;
 		try {
-			endpointSender = new JettyWebSocketEndpointSender(remoteAddress, session.getRemote(), linkBuilder, new URI(channelUri));
+			endpointSender = new WebsocketConsumer(remoteAddress, session.getRemote(), linkBuilder, new URI(channelUri));
 		} catch (URISyntaxException e) {
 			//this should really never happen.  stupid checked exceptions!
 			throw new RuntimeException(e);

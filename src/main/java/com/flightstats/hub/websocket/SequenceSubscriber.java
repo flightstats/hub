@@ -1,7 +1,6 @@
-package com.flightstats.hub.cluster;
+package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.model.SequenceContentKey;
-import com.flightstats.hub.service.eventing.Consumer;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package com.flightstats.hub.service;
+package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.metrics.TimedCallback;
@@ -8,17 +8,18 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
 
-public class ChannelInsertionPublisher {
+public class WebsocketPublisherImpl implements WebsocketPublisher {
 	private final HazelcastInstance hazelcast;
     private final MetricsTimer metricsTimer;
 
     @Inject
-	public ChannelInsertionPublisher(HazelcastInstance hazelcast, MetricsTimer metricsTimer) {
+	public WebsocketPublisherImpl(HazelcastInstance hazelcast, MetricsTimer metricsTimer) {
 		this.hazelcast = hazelcast;
         this.metricsTimer = metricsTimer;
     }
 
-	public void publish(final String channelName, final ContentKey key) {
+	@Override
+    public void publish(final String channelName, final ContentKey key) {
         metricsTimer.time("hazelcast.publish", new TimedCallback<Object>() {
             @Override
             public Object call() {
@@ -28,11 +29,13 @@ public class ChannelInsertionPublisher {
         });
 	}
 
-	public String subscribe(String channelName, MessageListener<String> messageListener) {
+	@Override
+    public String subscribe(String channelName, MessageListener<String> messageListener) {
         return getTopicForChannel(channelName).addMessageListener(messageListener);
     }
 
-	public void unsubscribe(String channelName, String registrationId) {
+	@Override
+    public void unsubscribe(String channelName, String registrationId) {
 		getTopicForChannel(channelName).removeMessageListener(registrationId);
 	}
 
