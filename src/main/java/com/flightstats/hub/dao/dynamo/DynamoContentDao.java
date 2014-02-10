@@ -96,11 +96,6 @@ public class DynamoContentDao implements ContentDao {
     }
 
     @Override
-    public void initialize() {
-        //do nothing
-    }
-
-    @Override
     public void initializeChannel(ChannelConfiguration config) {
 
         long indexThroughput = config.getPeakRequestRateSeconds();

@@ -5,16 +5,13 @@ import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.hub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.ZooKeeperState;
-import com.flightstats.hub.dao.aws.AwsDataStoreModule;
+import com.flightstats.hub.dao.aws.AwsModule;
 import com.flightstats.hub.dao.s3.S3Config;
-import com.flightstats.hub.dao.s3.S3ConfigInitialization;
 import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
-import com.flightstats.hub.dao.timeIndex.TimeIndexInitialization;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.replication.ChannelUtils;
 import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.replication.ReplicatorImpl;
-import com.flightstats.hub.replication.ReplicatorInitialization;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.service.HubHealthCheck;
 import com.flightstats.hub.service.eventing.ChannelNameExtractor;
@@ -133,13 +130,10 @@ public class GuiceContext {
             binder.bind(JettyWebSocketServlet.class).asEagerSingleton();
             binder.bind(TimeProvider.class).asEagerSingleton();
             binder.bind(ZooKeeperState.class).asEagerSingleton();
-            binder.bindListener(ReplicatorInitialization.buildTypeMatcher(), new ReplicatorInitialization());
             binder.bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
-            binder.bindListener(TimeIndexInitialization.buildTypeMatcher(), new TimeIndexInitialization());
             binder.bind(TimeIndexCoordinator.class).asEagerSingleton();
             binder.bind(ChannelUtils.class).asEagerSingleton();
             binder.bind(CuratorLock.class).asEagerSingleton();
-            binder.bindListener(S3ConfigInitialization.buildTypeMatcher(), new S3ConfigInitialization());
             binder.bind(S3Config.class).asEagerSingleton();
         }
     }
@@ -167,7 +161,7 @@ public class GuiceContext {
         logger.info("using data store " + backingStoreName);
         switch (backingStoreName) {
             case AWS_BACKING_STORE_TAG:
-                return new AwsDataStoreModule(properties);
+                return new AwsModule(properties);
             default:
                 throw new IllegalStateException(String.format("Unknown backing store specified: %s", backingStoreName));
         }

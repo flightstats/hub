@@ -48,11 +48,6 @@ public class TimedContentDao implements ContentDao {
     }
 
     @Override
-    public void initialize() {
-        delegate.initialize();
-    }
-
-    @Override
     public void initializeChannel(final ChannelConfiguration configuration) {
         metricsTimer.time("valueDao.initializeChannel", new TimedCallback<Object>() {
             @Override

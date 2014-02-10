@@ -1,7 +1,9 @@
 package com.flightstats.hub.replication;
 
+import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.util.Started;
 import com.google.common.primitives.Longs;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.curator.framework.CuratorFramework;
@@ -39,6 +41,20 @@ public class ReplicatorImpl implements Replicator {
         this.replicationService = replicationService;
         this.curator = curator;
         this.domainReplicatorProvider = domainReplicatorProvider;
+        HubServices.register(new ReplicatorImplService());
+    }
+
+    private class ReplicatorImplService extends AbstractIdleService {
+
+        @Override
+        protected void startUp() throws Exception {
+            start();
+        }
+
+        @Override
+        protected void shutDown() throws Exception { }
+
+
     }
 
     public void start() {
