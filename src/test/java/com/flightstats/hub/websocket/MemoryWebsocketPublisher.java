@@ -5,14 +5,18 @@ import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public class MemoryWebsocketPublisher implements WebsocketPublisher {
 
-    private Map<String, MessageListener<String>> messageListenerMap = new ConcurrentHashMap<>();
+    private final Map<String, MessageListener<String>> messageListenerMap = new ConcurrentHashMap<>();
+    private final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(1000));
 
     @Override
     public void publish(final String channelName, final ContentKey key) {
@@ -20,13 +24,14 @@ public class MemoryWebsocketPublisher implements WebsocketPublisher {
         if (listener == null) {
             return;
         }
-        new Thread(new Runnable() {
+        //messages sent to the WebSocket need to be single threaded.
+        threadPoolExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 Message<String> message = new Message<>(channelName, key.keyToString(), System.currentTimeMillis(), null);
                 listener.onMessage(message);
             }
-        }).start();
+        });
     }
 
     @Override
