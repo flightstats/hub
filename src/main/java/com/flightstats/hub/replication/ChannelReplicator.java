@@ -6,6 +6,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -64,7 +65,8 @@ public class ChannelReplicator implements Runnable, Lockable {
         try {
             logger.debug("starting run " + channel);
             Thread.currentThread().setName("ChannelReplicator-" + channel.getUrl());
-            if (!loadData()) {
+            valid = verifyRemoteChannel();
+            if (!valid) {
                 return;
             }
             curatorLock.runWithLock(this, "/ChannelReplicator/" + channel.getName(), 5, TimeUnit.SECONDS);
@@ -76,9 +78,7 @@ public class ChannelReplicator implements Runnable, Lockable {
     @Override
     public void runWithLock() throws IOException {
         logger.info("run with lock " + channel.getUrl());
-        if (!initialize())  {
-            return;
-        }
+        initialize();
         replicate();
     }
 
@@ -88,35 +88,35 @@ public class ChannelReplicator implements Runnable, Lockable {
         }
     }
 
-    public boolean loadData() {
+    @VisibleForTesting
+    boolean verifyRemoteChannel() {
         try {
             Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channel.getUrl());
             if (!optionalConfig.isPresent()) {
                 message = "remote channel missing for " + channel.getUrl();
                 logger.warn(message);
-                valid = false;
+                return false;
             }
             configuration = optionalConfig.get();
             if (!configuration.isSequence()) {
-                valid = false;
                 message = "Non-Sequence channels are not currently supported " + channel.getUrl();
                 logger.warn(message);
+                return false;
             }
-            valid = true;
+            return true;
         } catch (IOException e) {
             message = "IOException " + channel.getUrl() + " " + e.getMessage();
             logger.warn(message);
-            valid = false;
+            return false;
         }
-        return valid;
     }
 
-    boolean initialize() throws IOException {
+    @VisibleForTesting
+    void initialize() throws IOException {
         if (!channelService.channelExists(configuration.getName())) {
             logger.info("creating channel for " + channel.getUrl());
             channelService.createChannel(configuration);
         }
-        return true;
     }
 
     private void replicate() {
