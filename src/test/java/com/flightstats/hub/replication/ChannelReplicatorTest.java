@@ -14,9 +14,10 @@ import org.mockito.internal.verification.Times;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -58,6 +59,7 @@ public class ChannelReplicatorTest {
         when(sequenceIterator.hasNext()).thenReturn(true).thenReturn(true).thenReturn(false);
         when(sequenceIterator.next()).thenReturn(content).thenReturn(content).thenReturn(null);
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.<Long>absent());
+        replicator.verifyRemoteChannel();
         replicator.runWithLock();
         verify(channelService).createChannel(configuration);
         verify(channelService, new Times(2)).insert(CHANNEL, content);
@@ -66,7 +68,8 @@ public class ChannelReplicatorTest {
     @Test
     public void testCreateChannelAbsent() throws Exception {
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.<ChannelConfiguration>absent());
-        replicator.runWithLock();
+        replicator.run();
+        assertFalse(replicator.isValid());
         verify(channelService, never()).createChannel(any(ChannelConfiguration.class));
     }
 
@@ -77,11 +80,20 @@ public class ChannelReplicatorTest {
     }
 
     @Test
+    public void testTimeSeries() throws Exception {
+        ChannelConfiguration timeSeries = ChannelConfiguration.builder().withName("TS").withType(ChannelConfiguration.ChannelType.TimeSeries).build();
+        when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(timeSeries));
+        replicator.run();
+
+        assertFalse(replicator.isValid());
+        verify(channelService, never()).createChannel(any(ChannelConfiguration.class));
+    }
+
+    @Test
     public void testStartingSequenceNewTtl() throws Exception {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(10)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
-        replicator.setHistoricalDays(20);
-        replicator.initialize();
+        init(20);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
@@ -101,8 +113,7 @@ public class ChannelReplicatorTest {
     public void testStartingSequenceNewHistorical() throws Exception {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(20)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
-        replicator.setHistoricalDays(10);
-        replicator.initialize();
+        init(10);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
@@ -124,8 +135,7 @@ public class ChannelReplicatorTest {
         // the sequence is older than the ttl, so we need to pick up with a gap
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(10)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
-        replicator.setHistoricalDays(20);
-        replicator.initialize();
+        init(20);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
@@ -147,8 +157,7 @@ public class ChannelReplicatorTest {
         //this is the case when replication stopped, and we need to pick back up, the sequence is not older than the ttl
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(10)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
-        replicator.setHistoricalDays(20);
-        replicator.initialize();
+        init(20);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusDays(9)));
@@ -160,8 +169,7 @@ public class ChannelReplicatorTest {
         //this is the case when replication stopped, and we need to pick back up, the sequence is older than HistoricalDays
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(20)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
-        replicator.setHistoricalDays(10);
-        replicator.initialize();
+        init(10);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
@@ -182,8 +190,7 @@ public class ChannelReplicatorTest {
         //this is the case when replication stopped, and we need to pick back up, the sequence is not older than HistoricalDays
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(20)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
-        replicator.setHistoricalDays(10);
-        replicator.initialize();
+        init(10);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusDays(9)));
@@ -196,8 +203,7 @@ public class ChannelReplicatorTest {
         // the sequence is slighty older than HistoricalDays, but not as old as HistoricalDays + 1
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(20)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
-        replicator.setHistoricalDays(10);
-        replicator.initialize();
+        init(10);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
@@ -219,8 +225,7 @@ public class ChannelReplicatorTest {
 
     @Test
     public void testStartingSequenceHistorical() throws Exception {
-        replicator.setHistoricalDays(2);
-        replicator.initialize();
+        init(2);
 
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
@@ -239,13 +244,18 @@ public class ChannelReplicatorTest {
 
     @Test
     public void testStartingSequenceLatest() throws Exception {
-        replicator.setHistoricalDays(0);
-        replicator.initialize();
+        init(0);
 
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusMinutes(1)));
         assertEquals(6000, replicator.getStartingSequence());
+    }
+
+    private void init(int historicalDays) throws IOException {
+        replicator.setHistoricalDays(historicalDays);
+        assertTrue(replicator.verifyRemoteChannel());
+        replicator.initialize();
     }
 
     @Test
@@ -255,6 +265,7 @@ public class ChannelReplicatorTest {
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.<Long>absent());
         replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory);
         replicator.setChannel(channel);
+        replicator.verifyRemoteChannel();
         replicator.runWithLock();
         verify(channelService, never()).insert(anyString(), any(Content.class));
     }
