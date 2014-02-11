@@ -14,7 +14,6 @@ describe("replication_remote_spec", function () {
     var channelName = utils.randomChannelName();
     var remoteUrl = "http://" + remoteDomain + "/channel";
     it("creates remote channel", function (done) {
-        console.info(channelName);
         request.post({url: remoteUrl,
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({ "name": channelName})},
