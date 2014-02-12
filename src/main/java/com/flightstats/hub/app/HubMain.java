@@ -1,6 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.amazonaws.services.cloudfront.model.InvalidArgumentException;
 import com.conducivetech.services.common.util.PropertyConfiguration;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.hub.app.config.GuiceContext;
@@ -31,7 +30,7 @@ public class HubMain {
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
-            throw new InvalidArgumentException("HubMain requires a property filename, or 'useDefault'");
+            throw new UnsupportedOperationException("HubMain requires a property filename, or 'useDefault'");
         }
         final Properties properties = loadProperties(args[0]);
         logger.info(properties.toString());
