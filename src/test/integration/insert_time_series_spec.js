@@ -34,7 +34,7 @@ utils.runInTestChannelJson(channelRequest, function () {
     runs(function () {
         var format = moment().format("YYYY-MM-DDTHH:mmZ");
         frisby.create(testName + ': Fetching ids.')
-            .get("http://localhost:8080/channel/" + channelName + "/time/" + format)
+            .get(hubUrlBase + "/channel/" + channelName + "/time/" + format)
             .expectStatus(200)
             .expectHeader('content-type', 'application/json')
             .afterJSON(function (result) {
