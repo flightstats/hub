@@ -12,13 +12,17 @@ import com.flightstats.jerseyguice.jetty.health.HealthCheck;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import org.apache.zookeeper.server.quorum.QuorumPeerMain;
+import org.apache.zookeeper.server.ServerConfig;
+import org.apache.zookeeper.server.ZooKeeperServerMain;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -37,7 +41,7 @@ public class HubMain {
         final Properties properties = loadProperties(args[0]);
         logger.info(properties.toString());
 
-        startZookeeperIfDefault(properties);
+        startZookeeperIfSingle(properties);
 
         JettyServer server = startServer(properties, new AwsModule(properties), HubHealthCheck.class);
 
@@ -53,16 +57,37 @@ public class HubMain {
         logger.info("Server shutdown complete.  Exiting application.");
     }
 
-    private static void startZookeeperIfDefault(final Properties properties) {
+    private static void startZookeeperIfSingle(final Properties properties) {
         new Thread(new Runnable() {
             @Override
             public void run() {
+
                 String zkConfigFile = properties.getProperty("zookeeper.cfg", "");
                 if ("singleNode".equals(zkConfigFile)) {
+                    startSingleZookeeper();
+                }
+            }
+
+            private void startSingleZookeeper() {
+                try {
                     warn("using zookeeper single node config file");
-                    zkConfigFile = HubMain.class.getResource("/zooSingleNode.cfg").getFile();
-                    logger.info("using " + zkConfigFile);
-                    QuorumPeerMain.main(new String[]{zkConfigFile});
+                    QuorumPeerConfig config = new QuorumPeerConfig();
+                    Properties zkProperties = new Properties();
+                    zkProperties.setProperty("clientPort", "2181");
+                    zkProperties.setProperty("initLimit", "5");
+                    zkProperties.setProperty("syncLimit", "2");
+                    zkProperties.setProperty("maxClientCnxns", "0");
+                    zkProperties.setProperty("tickTime", "2000");
+                    Path tempZookeeper = Files.createTempDirectory("zookeeper_");
+                    zkProperties.setProperty("dataDir", tempZookeeper.toString());
+                    zkProperties.setProperty("dataLogDir", tempZookeeper.toString());
+                    config.parseProperties(zkProperties);
+                    ServerConfig serverConfig = new ServerConfig();
+                    serverConfig.readFrom(config);
+
+                    new ZooKeeperServerMain().runFromConfig(serverConfig);
+                } catch (Exception e) {
+                    logger.warn("unable to start zookeeper", e);
                 }
             }
         }).start();
