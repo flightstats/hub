@@ -21,7 +21,7 @@ The Hub
 
 For the purposes of this document, the Hub is at http://hub/.
 
-* On your local machine it is at: http://localhost:8080/
+* On your local machine it is at: http://localhost:9080/
 * In development: http://hub.svc.dev/
 * In staging: http://hub.svc.staging/
 * In production: http://hub.svc.prod/
@@ -409,9 +409,8 @@ The Hub is a work in progress.  If you'd like to contribute, let us know.
 The latest builds are in Jenkins - http://ops-jenkins01.util.pdx.office/job/hub/
 
 To run Java based tests and jasmine-node tests locally, you will most likely want to use DynamoDB Local.
-
-Install from http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
-and then start it running.
+Install it from http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
+and then start it running with `java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar`
 
 Once DynamoDBLocal is running, create src/main/resources/default_local.properties and add the following value:
 
@@ -420,4 +419,11 @@ dynamo.endpoint=localhost:8000
 ```
 
 To run the jasmine-node based integration tests:
+```
 jasmine-node .
+```
+
+You can also run all of the integration tests from gradle with:
+```
+gradle integrationTests
+```
