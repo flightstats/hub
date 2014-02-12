@@ -6,7 +6,6 @@ import com.flightstats.hub.app.config.metrics.PerChannelTimedMethodDispatchAdapt
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.rest.RetryClientFilter;
-import com.flightstats.hub.service.HubHealthCheck;
 import com.flightstats.hub.util.ChannelNameExtractor;
 import com.flightstats.hub.util.TimeProvider;
 import com.flightstats.hub.websocket.JettyWebSocketServlet;
@@ -14,6 +13,7 @@ import com.flightstats.hub.websocket.MetricsWebSocketCreator;
 import com.flightstats.hub.websocket.WebsocketSubscribers;
 import com.flightstats.jerseyguice.Bindings;
 import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
+import com.flightstats.jerseyguice.jetty.health.HealthCheck;
 import com.flightstats.jerseyguice.metrics.GraphiteConfig;
 import com.flightstats.jerseyguice.metrics.GraphiteConfigImpl;
 import com.google.common.base.Strings;
@@ -59,7 +59,7 @@ public class GuiceContext {
     private static Properties properties = new Properties();
 
     public static HubGuiceServlet construct(
-            @NotNull final Properties properties, Module appModule) throws ConstraintException {
+            @NotNull final Properties properties, Module appModule, Class<? extends HealthCheck> healthCheckClass) throws ConstraintException {
         GuiceContext.properties = properties;
         GraphiteConfig graphiteConfig = new GraphiteConfigImpl(properties);
 
@@ -75,7 +75,7 @@ public class GuiceContext {
                 .withGraphiteConfig(graphiteConfig)
                 .withObjectMapper(HubObjectMapperFactory.construct())
                 .withBindings(new HubBindings())
-                .withHealthCheckClass(HubHealthCheck.class)
+                .withHealthCheckClass(healthCheckClass)
                 //this could be more precise
                 .withRegexServe(ChannelNameExtractor.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
                 .withModules(Arrays.asList(module))
