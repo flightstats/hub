@@ -9,7 +9,7 @@ var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 var channelRequest = JSON.stringify({ "name": channelName, "type": "TimeSeries"});
 
-utils.configureFrisby();
+utils.configureFrisby(5 * 60 * 1000);
 
 utils.runInTestChannelJson(channelRequest, function () {
     var hrefs = [];
