@@ -43,6 +43,11 @@ conf/hazelcast.conf.xml :
         - "hub-02.cloud-east.prod"
         - "hub-03.cloud-east.prod"
 
+conf/start.sh :
+  max_heap : "450m"
+  min_heap : "256m"
+  min_new : "100m"
+
 conf/zoo.cfg :
     _template : zoo.cfg.jinja
     dataDir : "/home/hub/hub/mnt/zookeeper/"
