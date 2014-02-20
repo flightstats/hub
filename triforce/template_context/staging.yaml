@@ -32,9 +32,8 @@ conf/hub.properties :
     graphite :
         hosts : "svcsmon.cloud-east.staging:2003"
 
-    ## This is temporary
     zookeeper :
-        connection : "deihub-01.cloud-east.dev:2181,deihub-02.cloud-east.dev:2181,deihub-03.cloud-east.dev:2181"
+        connection : "hub-zk-01.cloud-east.staging:2181,hub-zk-02.cloud-east.staging:2181,hub-zk-03.cloud-east.staging:2181"
 
 
 conf/hazelcast.conf.xml :
@@ -54,7 +53,7 @@ conf/zoo.cfg :
     dataDir : "/home/hub/hub/mnt/zookeeper/"
     dataLogDir : "/home/hub/hub/mnt/zookeeper/"
     server :
-      1 : "hub-01.cloud-east.staging:2888:3888"
-      2 : "hub-02.cloud-east.staging:2888:3888"
-      3 : "hub-03.cloud-east.staging:2888:3888"
+      1 : "hub-zk-01.cloud-east.staging:2888:3888"
+      2 : "hub-zk-02.cloud-east.staging:2888:3888"
+      3 : "hub-zk-03.cloud-east.staging:2888:3888"
 
