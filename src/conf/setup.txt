@@ -3,9 +3,9 @@ deihub-01.cloud-east.dev
 mkdir local
 cd local
 
-wget http://download.oracle.com/otn-pub/java/jdk/7u45-b18/server-jre-7u45-linux-x64.tar.gz
-tar zxvf server-jre-7u45-linux-x64.gz
-ln -s ./jdk1.7.0_45/ java
+wget http://download.oracle.com/otn-pub/java/jdk/7u51-b13/jdk-7u51-linux-x64.tar.gz
+tar zxvf jdk-7u51-linux-x64.tar.gz
+ln -s ./jdk1.7.0_51/ java
 
 .bash_profile
 export JAVA_HOME=/home/ubuntu/local/java
