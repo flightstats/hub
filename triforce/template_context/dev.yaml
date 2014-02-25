@@ -44,7 +44,8 @@ conf/hazelcast.conf.xml :
         - "hub-02.cloud-east.dev"
         - "hub-03.cloud-east.dev"
 
-conf/start.sh :
+bin/start.sh :
+  _template : start.sh.jinja
   max_heap : "450m"
   min_heap : "256m"
   min_new : "100m"
