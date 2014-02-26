@@ -51,7 +51,7 @@ public class ChannelUtils {
                 .accept(MediaType.WILDCARD_TYPE)
                 .head();
         if (response.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-            logger.debug("latest not found for " + channelUrl + " " + response);
+            logger.info("latest not found for " + channelUrl + " " + response);
             return Optional.absent();
         }
         String location = response.getLocation().toString();
@@ -102,7 +102,7 @@ public class ChannelUtils {
     public Optional<DateTime> getCreationDate(String channelUrl, long sequence) {
         ClientResponse response = getResponse(appendSlash(channelUrl) + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            logger.debug("unable to get creation date " + response);
+            logger.info("unable to get creation date " + response);
             return Optional.absent();
         }
 
