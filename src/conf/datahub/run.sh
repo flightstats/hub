@@ -21,6 +21,7 @@ JAVA_OPTS="
  -XX:NewSize=$MIN_NEW
  -XX:+UseG1GC
  -XX:MaxGCPauseMillis=100
+ -javaagent:/home/ubuntu/local/newrelic/newrelic.jar
  -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n"
 
 # add this for jmxremote/jconsole access
