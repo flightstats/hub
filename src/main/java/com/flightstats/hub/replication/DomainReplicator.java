@@ -92,7 +92,7 @@ public class DomainReplicator implements Runnable {
     }
 
     private void startChannelReplication(Channel channel, ReplicationDomain domain) {
-        logger.info("found new channel to replicate " + channel);
+        logger.info("found channel to replicate " + channel);
         ChannelReplicator channelReplicator = replicatorProvider.get();
         channelReplicator.setChannel(channel);
         channelReplicator.setHistoricalDays(domain.getHistoricalDays());
