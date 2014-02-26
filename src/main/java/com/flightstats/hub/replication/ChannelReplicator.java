@@ -98,6 +98,7 @@ public class ChannelReplicator implements Runnable, Lockable {
                 return false;
             }
             configuration = optionalConfig.get();
+            logger.debug("configuration " + configuration);
             if (!configuration.isSequence()) {
                 message = "Non-Sequence channels are not currently supported " + channel.getUrl();
                 logger.warn(message);

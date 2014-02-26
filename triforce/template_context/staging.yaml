@@ -51,8 +51,8 @@ bin/start.sh :
 
 conf/zoo.cfg :
     _template : zoo.cfg.jinja
-    dataDir : "/home/hub/hub/mnt/zookeeper/"
-    dataLogDir : "/home/hub/hub/mnt/zookeeper/"
+    dataDir : "/ebs/zookeeper/"
+    dataLogDir : "/ebs/zookeeper/"
     server :
       1 : "hub-zk-01.cloud-east.staging:2888:3888"
       2 : "hub-zk-02.cloud-east.staging:2888:3888"
