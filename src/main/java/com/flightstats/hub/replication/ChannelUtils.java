@@ -85,7 +85,7 @@ public class ChannelUtils {
     public Optional<Content> getContent(String channelUrl, long sequence) {
         ClientResponse response = getResponse(appendSlash(channelUrl) + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            logger.debug("unable to get content " + response);
+            logger.info("unable to get content " + response);
             return Optional.absent();
         }
         Content content = Content.builder()
@@ -130,11 +130,7 @@ public class ChannelUtils {
     }
 
     private ClientResponse getResponse(String url) {
-        /**
-         * this uses noRedirectsClient because I don't think we want to follow redirects for content,
-         * as it could end up in an infinite loop.
-         */
-        return noRedirectsClient.resource(url)
+        return followClient.resource(url)
                 .accept(MediaType.WILDCARD_TYPE)
                 .header(HttpHeaders.ACCEPT_ENCODING, "gzip")
                 .get(ClientResponse.class);
