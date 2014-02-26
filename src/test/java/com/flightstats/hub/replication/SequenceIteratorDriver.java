@@ -3,7 +3,6 @@ package com.flightstats.hub.replication;
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.app.config.GuiceContext;
-import com.flightstats.hub.model.Content;
 import com.sun.jersey.api.client.Client;
 import org.eclipse.jetty.websocket.jsr356.ClientContainer;
 import org.slf4j.Logger;
@@ -31,7 +30,7 @@ public class SequenceIteratorDriver {
         SequenceIterator iterator = new SequenceIterator(700457, channelUtils, testy10, container, metricRegistry);
 
         while (iterator.hasNext()) {
-            Content next = iterator.next();
+            //Content next = iterator.next();
             //logger.info("next " + next.getContentKey().get().keyToString());
         }
         logger.info("exited ");
