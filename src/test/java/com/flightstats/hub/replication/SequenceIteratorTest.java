@@ -58,19 +58,26 @@ public class SequenceIteratorTest {
         SequenceIterator iterator = factory.create(999, channel);
         check(iterator, "data1");
         check(iterator, "data2");
-        for (int i = 3; i < 10; i++) {
+        int end = insertAndCheck(iterator, 3);
+        iterator.exit();
+        iterator = factory.create(iterator.getCurrent() , channel);
+        insertAndCheck(iterator, end );
+    }
+
+    private int insertAndCheck(SequenceIterator iterator, int start) {
+        int end = start + 10;
+        for (int i = start; i < end; i++) {
             String data = "data" + i;
             insert(data);
             check(iterator, data);
         }
-
+        return end;
     }
-
-    //todo - gfm - 2/6/14 - how to simulate blocking and failure?
 
     private void check(SequenceIterator iterator, String data) {
         assertTrue(iterator.hasNext());
         Content content = iterator.next();
+        logger.debug("content.getData() " + new String(content.getData()) + " " + content.getContentKey().get());
         assertNotNull(content);
         assertArrayEquals(data.getBytes(), content.getData());
     }
