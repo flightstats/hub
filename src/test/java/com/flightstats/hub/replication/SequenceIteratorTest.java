@@ -76,7 +76,7 @@ public class SequenceIteratorTest {
 
     private void check(SequenceIterator iterator, String data) {
         assertTrue(iterator.hasNext());
-        Content content = iterator.next();
+        Content content = iterator.next().get();
         logger.debug("content.getData() " + new String(content.getData()) + " " + content.getContentKey().get());
         assertNotNull(content);
         assertArrayEquals(data.getBytes(), content.getData());
