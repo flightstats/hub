@@ -5,6 +5,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.service.ChannelLinkBuilder;
 import com.flightstats.hub.util.RuntimeInterruptedException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -180,5 +181,10 @@ public class SequenceIterator implements Iterator<Content> {
 
     public boolean isConnected() {
         return connected;
+    }
+
+    @VisibleForTesting
+    long getCurrent() {
+        return current;
     }
 }
