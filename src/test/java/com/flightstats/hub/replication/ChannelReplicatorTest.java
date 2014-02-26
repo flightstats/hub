@@ -56,8 +56,9 @@ public class ChannelReplicatorTest {
     @Test
     public void testLifeCycleNew() throws Exception {
         Content content = mock(Content.class);
+        Optional<Content> optional = Optional.of(content);
         when(sequenceIterator.hasNext()).thenReturn(true).thenReturn(true).thenReturn(false);
-        when(sequenceIterator.next()).thenReturn(content).thenReturn(content).thenReturn(null);
+        when(sequenceIterator.next()).thenReturn(optional).thenReturn(optional).thenReturn(null);
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.<Long>absent());
         replicator.verifyRemoteChannel();
         replicator.runWithLock();

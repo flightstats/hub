@@ -4,6 +4,7 @@ import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.annotations.VisibleForTesting;
@@ -128,7 +129,10 @@ public class ChannelReplicator implements Runnable, Lockable {
         logger.info("starting " + channel.getUrl() + " migration at " + sequence);
         iterator = sequenceIteratorFactory.create(sequence, channel);
         while (iterator.hasNext() && curatorLock.shouldKeepWorking()) {
-            channelService.insert(channel.getName(), iterator.next());
+            Optional<Content> optionalContent = iterator.next();
+            if (optionalContent.isPresent()) {
+                channelService.insert(channel.getName(), optionalContent.get());
+            }
         }
     }
 

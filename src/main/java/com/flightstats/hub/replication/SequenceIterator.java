@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  */
 @ClientEndpoint()
-public class SequenceIterator implements Iterator<Content> {
+public class SequenceIterator implements Iterator<Optional<Content>> {
 
     private final static Logger logger = LoggerFactory.getLogger(SequenceIterator.class);
     private final ChannelUtils channelUtils;
@@ -94,15 +94,15 @@ public class SequenceIterator implements Iterator<Content> {
     }
 
     @Override
-    public Content next() {
+    public Optional<Content> next() {
         Optional<Content> optional = channelUtils.getContent(channelUrl, current);
-        while (!optional.isPresent()) {
+        if (!optional.isPresent()) {
             //todo - gfm - 1/25/14 - seems like this missing records should be logged somewhere, perhaps to a missing records channel
             logger.warn("unable to get content " + channelUrl + "/" + current);
-            current++;
+            //once more, with feeling
             optional = channelUtils.getContent(channelUrl, current);
         }
-        return optional.get();
+        return optional;
     }
 
     private void startSocket() {
@@ -132,7 +132,7 @@ public class SequenceIterator implements Iterator<Content> {
 
     @OnClose
     public void onClose(CloseReason reason) {
-        logger.info("Connection closed: " + reason);
+        logger.info("Connection closed: " + reason + " channel " + channel);
         exit();
     }
 
@@ -146,13 +146,13 @@ public class SequenceIterator implements Iterator<Content> {
     public void onMessage(String message) {
         try {
             long sequence = Long.parseLong(StringUtils.substringAfterLast(message, "/"));
-            logger.debug("message {}", sequence);
+            logger.debug("message {} {}", channel, sequence);
             if (sequence > latest.get()) {
                 latest.set(sequence);
+                signal();
             }
-            signal();
         } catch (Exception e) {
-            logger.warn("unexpected error parsing " + message + " for " + channelUrl, e);
+            logger.warn("unexpected error parsing " + message + " for " + channel, e);
         }
     }
 
@@ -160,9 +160,9 @@ public class SequenceIterator implements Iterator<Content> {
     public void onError(Throwable throwable) {
         if (throwable.getClass().isAssignableFrom(SocketTimeoutException.class)
                 || throwable.getClass().isAssignableFrom(EOFException.class)) {
-            logger.info("disconnected " + channelUrl + " " + throwable.getMessage());
+            logger.info("disconnected " + channel + " " + throwable.getMessage());
         } else {
-            logger.warn("unexpected WS error " + channelUrl, throwable);
+            logger.warn("unexpected WS error " + channel, throwable);
         }
         exit();
     }
