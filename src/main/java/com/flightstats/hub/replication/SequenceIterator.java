@@ -81,6 +81,7 @@ public class SequenceIterator implements Iterator<Content> {
 
     private void startMetrics() {
         String name = "Replication." + URI.create(channelUrl).getHost() + "." + channel.getName() + ".delta";
+        metricRegistry.remove(name);
         metricRegistry.register(name, new Gauge<Long>() {
             @Override
             public Long getValue() {
@@ -96,7 +97,7 @@ public class SequenceIterator implements Iterator<Content> {
         Optional<Content> optional = channelUtils.getContent(channelUrl, current);
         while (!optional.isPresent()) {
             //todo - gfm - 1/25/14 - seems like this missing records should be logged somewhere, perhaps to a missing records channel
-            logger.warn("unable to get content " + channelUrl + current);
+            logger.warn("unable to get content " + channelUrl + "/" + current);
             current++;
             optional = channelUtils.getContent(channelUrl, current);
         }
