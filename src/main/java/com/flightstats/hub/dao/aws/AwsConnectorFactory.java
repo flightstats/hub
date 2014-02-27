@@ -44,6 +44,8 @@ public class AwsConnectorFactory {
             logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
             amazonS3Client = new AmazonS3Client(getPropertiesCredentials(), getClientConfiguration());
         }
+        //todo - gfm - 2/27/14 - pull this into config
+        amazonS3Client.setEndpoint("s3-external-1.amazonaws.com");
         return amazonS3Client;
     }
 
