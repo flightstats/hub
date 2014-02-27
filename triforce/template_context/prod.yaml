@@ -49,12 +49,7 @@ bin/start.sh :
   min_heap : "256m"
   min_new : "100m"
 
-conf/zoo.cfg :
-    _template : zoo.cfg.jinja
-    dataDir : "/home/hub/hub/mnt/zookeeper/"
-    dataLogDir : "/home/hub/hub/mnt/zookeeper/"
-    server :
-      1 : "hub-01.cloud-east.prod:2888:3888"
-      2 : "hub-02.cloud-east.prod:2888:3888"
-      3 : "hub-03.cloud-east.prod:2888:3888"
+conf/logback.xml :
+    _template : logback.xml.jinja
+
 
