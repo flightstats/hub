@@ -29,6 +29,10 @@ conf/hub.properties :
         endpoint : "dynamodb.us-east-1.amazonaws.com"
         table_creation_wait_minutes : 10
 
+    s3 :
+      content_backoff_wait : 1000
+      content_backoff_times : 6
+
     graphite :
         hosts : "svcsmon.cloud-east.staging:2003"
 
