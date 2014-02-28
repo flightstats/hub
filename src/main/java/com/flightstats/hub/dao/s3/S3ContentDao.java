@@ -16,7 +16,10 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.hub.util.ContentKeyGenerator;
+import com.github.rholder.retry.*;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -28,11 +31,15 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This uses S3 for Content and ZooKeeper for TimeIndex
@@ -47,16 +54,24 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     private final String s3BucketName;
     private final MetricsTimer metricsTimer;
     private final ObjectMapper mapper = new ObjectMapper();
+    private final Retryer<Content> contentRetryer;
 
     @Inject
     public S3ContentDao(ContentKeyGenerator keyGenerator, AmazonS3 s3Client,
                         @Named("app.environment") String environment, @Named("app.name") String appName,
+                        @Named("s3.content_backoff_wait") int content_backoff_wait, @Named("s3.content_backoff_times") int content_backoff_times,
                         CuratorFramework curator, MetricsTimer metricsTimer) {
         this.keyGenerator = keyGenerator;
         this.s3Client = s3Client;
         this.curator = curator;
         this.metricsTimer = metricsTimer;
         this.s3BucketName = appName + "-" + environment;
+        /**
+         * 1000 ms and 6 times should give behavior of calls after 2s, 4s, 8s, 16s and 32s
+         * This weights us towards returning sooner if we do get a result.
+         * The total max wait time is 62s
+         */
+        contentRetryer = buildRetryer(content_backoff_wait, content_backoff_times);
         HubServices.register(new S3ContentDaoInit());
     }
 
@@ -69,6 +84,27 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         @Override
         protected void shutDown() throws Exception { }
 
+    }
+
+    @VisibleForTesting
+    static Retryer<Content> buildRetryer(int multiplier, int attempts) {
+        return RetryerBuilder.<Content>newBuilder()
+                .retryIfException(new Predicate<Throwable>() {
+                    @Override
+                    public boolean apply(@Nullable Throwable input) {
+                        logger.info("exception! " + input);
+                        if (input == null) return false;
+                        if (AmazonS3Exception.class.isAssignableFrom(input.getClass())) {
+                            logger.info("isAssignableFrom! " + input);
+                            AmazonS3Exception s3Exception = (AmazonS3Exception) input;
+                            return s3Exception.getStatusCode() == 404;
+                        }
+                        return false;
+                    }
+                })
+                .withWaitStrategy(WaitStrategies.exponentialWait(multiplier, 1, TimeUnit.MINUTES))
+                .withStopStrategy(StopStrategies.stopAfterAttempt(attempts))
+                .build();
     }
 
     @Override
@@ -125,28 +161,37 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     @Override
-    public Content read(String channelName, ContentKey key) {
+    public Content read(final String channelName, final ContentKey key) {
         try {
-            S3Object object = s3Client.getObject(s3BucketName, getS3ContentKey(channelName, key));
-            byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
-            ObjectMetadata metadata = object.getObjectMetadata();
-            Map<String, String> userData = metadata.getUserMetadata();
-            Content.Builder builder = Content.builder();
-            String type = userData.get("type");
-            if (!type.equals("none")) {
-                builder.withContentType(type);
+            return contentRetryer.call(new Callable<Content>() {
+                @Override
+                public Content call() throws Exception {
+                    S3Object object = s3Client.getObject(s3BucketName, getS3ContentKey(channelName, key));
+                    byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
+                    ObjectMetadata metadata = object.getObjectMetadata();
+                    Map<String, String> userData = metadata.getUserMetadata();
+                    Content.Builder builder = Content.builder();
+                    String type = userData.get("type");
+                    if (!type.equals("none")) {
+                        builder.withContentType(type);
+                    }
+                    String language = userData.get("language");
+                    if (!language.equals("none")) {
+                        builder.withContentLanguage(language);
+                    }
+                    Long millis = Long.valueOf(userData.get("millis"));
+                    builder.withData(bytes).withMillis(millis);
+                    return builder.build();
+                }
+            });
+        } catch (ExecutionException e) {
+            if (AmazonClientException.class.isAssignableFrom(e.getCause().getClass())) {
+                logger.info("unable to get " + channelName + " " + key.keyToString() + " " + e.getMessage());
+            } else {
+                logger.warn("unable to get " + channelName + " " + key.keyToString(), e);
             }
-            String language = userData.get("language");
-            if (!language.equals("none")) {
-                builder.withContentLanguage(language);
-            }
-            Long millis = Long.valueOf(userData.get("millis"));
-            builder.withData(bytes).withMillis(millis);
-            return builder.build();
-        } catch (AmazonClientException e) {
-            logger.info("unable to get " + channelName + " " + key.keyToString() + " " + e.getMessage());
-        } catch (IOException e) {
-            logger.warn("unable to get " + channelName + " " + key.keyToString(), e);
+        } catch (RetryException e) {
+            logger.warn("retried max times for " + channelName + " " + key.keyToString());
         }
         return null;
     }
@@ -169,6 +214,11 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
+        /**
+         * The TimeIndex is written to ZK, then TimeIndexProcessor write the data to S3, then deletes the keys.
+         * We try reading from S3 first, because the ZK cache may be partial if it is already written to S3.
+         * There is a bit of a race condition here, especially with S3 eventual consistency.
+         */
         String hashTime = TimeIndex.getHash(dateTime);
         try {
             return getKeysS3(channelName, hashTime);
