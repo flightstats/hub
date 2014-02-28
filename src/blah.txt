@@ -1,5 +1,0 @@
-sudo stop hub
-sudo rm -rf /home/hub/hub
-sudo salt-call triforce.deploy_s3 triforce_builds hub/hub-0.2.0.tgz staging
-sudo chmod +x /home/hub/hub/bin/start.sh
-sudo start hub
