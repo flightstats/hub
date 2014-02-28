@@ -3,6 +3,7 @@ package com.flightstats.hub.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
@@ -60,16 +61,13 @@ public class ZookeeperResource
             if (curator.checkExists().forPath(path) == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
-            List<String> children = curator.getChildren().forPath(path);
+
             ObjectNode root = mapper.createObjectNode();
             ObjectNode links = root.putObject("_links");
             ObjectNode self = links.putObject("self");
-            String href = uriInfo.getRequestUri().toString();
-            self.put("href", href);
-            ArrayNode ids = links.putArray("children");
-            for (String child : children) {
-                ids.add(href + "/" +child);
-            }
+            self.put("href", uriInfo.getRequestUri().toString());
+            handleData(path, root);
+            handleChildren(path, root);
             return Response.ok(root).build();
         } catch (Exception e) {
             logger.warn("unable to get path " + path, e);
@@ -78,7 +76,25 @@ public class ZookeeperResource
 
     }
 
+    private void handleData(String path, ObjectNode root) {
+        try {
+            byte[] bytes = curator.getData().forPath(path);
+            root.put("bytes", bytes);
+            root.put("string", new String(bytes));
+            root.put("long", Longs.fromByteArray(bytes));
+        } catch (Exception e) {
+            logger.info("unable to convert to string ", path);
+        }
+    }
 
+    private void handleChildren(String path, ObjectNode root) throws Exception {
+        List<String> children = curator.getChildren().forPath(path);
+
+        ArrayNode ids = root.putArray("children");
+        for (String child : children) {
+            ids.add(uriInfo.getRequestUri().toString() + "/" +child);
+        }
+    }
 
 
 }

@@ -29,12 +29,15 @@ conf/hub.properties :
         endpoint : "dynamodb.us-east-1.amazonaws.com"
         table_creation_wait_minutes : 10
 
+    s3 :
+      content_backoff_wait : 1000
+      content_backoff_times : 6
+
     graphite :
         hosts : "svcsmon.cloud-east.dev:2003"
 
-    ## This is temporary
     zookeeper :
-        connection : "deihub-01.cloud-east.dev:2181,deihub-02.cloud-east.dev:2181,deihub-03.cloud-east.dev:2181"
+        connection : "hub-zk-01.cloud-east.dev:2181,hub-zk-02.cloud-east.dev:2181,hub-zk-03.cloud-east.dev:2181"
 
 
 conf/hazelcast.conf.xml :

@@ -1,14 +1,15 @@
 # locust.py
 
 import json
-import uuid
-from locust import Locust, TaskSet, task
-import websocket
-import httplib2
 import time
 import thread
 import string
 import random
+
+from locust import Locust, TaskSet, task
+import websocket
+import httplib2
+
 
 
 # Usage:
@@ -25,12 +26,12 @@ class WebsiteTasks(TaskSet):
     def on_start(self):
         WebsiteTasks.channelNum += 1
         #todo make byte size this a command line var
-        self.number = WebsiteTasks.channelNum * 100
+        self.number = WebsiteTasks.channelNum * 2000
         self.payload = self.payload_generator(self.number)
         print("payload size " + str(self.payload.__sizeof__()))
-        self.channel = "testy" + str(WebsiteTasks.channelNum)
+        self.channel = "testx" + str(WebsiteTasks.channelNum)
         self.count = 0
-        payload = {"name": self.channel, "ttlMillis": "36000000"}
+        payload = {"name": self.channel, "ttlDays": "30"}
         self.client.post("/channel",
                          data=json.dumps(payload),
                          headers={"Content-Type": "application/json"}
