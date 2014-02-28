@@ -8,10 +8,10 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${HOME}/log/hub.log</file>
+        <file>/home/hub/log/hub.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>${HOME}/log/hub_%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <fileNamePattern>/home/hub/log/hub_%d{yyyy-MM-dd}.log.gz</fileNamePattern>
             <!-- keep 14 days -->
             <maxHistory>14</maxHistory>
         </rollingPolicy>
