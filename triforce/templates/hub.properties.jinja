@@ -10,6 +10,9 @@ dynamo.table_creation_wait_minutes={{ dynamo['table_creation_wait_minutes'] }}
 app.name={{ app['name'] }}
 app.environment={{ app['environment'] }}
 
+s3.content_backoff_wait= {{ s3['content_backoff_wait'] }}
+s3.content_backoff_times= {{ s3['content_backoff_times'] }}
+
 zookeeper.connection={{ zookeeper['connection'] }}
 zookeeper.cfg=/home/hub/hub/conf/zoo.cfg
 
