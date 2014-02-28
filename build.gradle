@@ -1,5 +1,4 @@
 import groovyx.net.http.RESTClient
-import static groovyx.net.http.ContentType.*
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -99,9 +98,10 @@ dependencies {
     compile group: "com.flightstats.common", name: "jerseyguice", version: "3.+"
     compile group: 'com.intellij', name: 'annotations', version: '7.0.3'
     compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
-    compile 'com.amazonaws:aws-java-sdk:1.6.12'
+    compile 'com.amazonaws:aws-java-sdk:1.7.1'
     compile 'org.apache.curator:curator-recipes:2.3.0'
     compile 'org.apache.commons:commons-lang3:3.2.1'
+    compile 'com.github.rholder:guava-retrying:1.0.5'
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"

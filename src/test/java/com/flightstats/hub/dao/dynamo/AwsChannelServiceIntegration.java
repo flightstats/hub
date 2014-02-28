@@ -285,7 +285,7 @@ public class AwsChannelServiceIntegration {
         MetricsTimer metricsTimer = injector.getInstance(MetricsTimer.class);
         RetryPolicy retryPolicy = injector.getInstance(RetryPolicy.class);
         CuratorKeyGenerator keyGenerator = new CuratorKeyGenerator(curator, metricsTimer, retryPolicy);
-        S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", "deihub", curator, metricsTimer);
+        S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", "deihub", 1, 1, curator, metricsTimer);
         CuratorLock curatorLock = injector.getInstance(CuratorLock.class);
         TimeIndexProcessor processor = new TimeIndexProcessor(curatorLock, indexDao, curator);
 
