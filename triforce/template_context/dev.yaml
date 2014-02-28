@@ -32,9 +32,8 @@ conf/hub.properties :
     graphite :
         hosts : "svcsmon.cloud-east.dev:2003"
 
-    ## This is temporary
     zookeeper :
-        connection : "deihub-01.cloud-east.dev:2181,deihub-02.cloud-east.dev:2181,deihub-03.cloud-east.dev:2181"
+        connection : "hub-zk-01.cloud-east.dev:2181,hub-zk-02.cloud-east.dev:2181,hub-zk-03.cloud-east.dev:2181"
 
 
 conf/hazelcast.conf.xml :
