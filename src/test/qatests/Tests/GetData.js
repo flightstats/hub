@@ -45,6 +45,9 @@ var domain = (arguments.length > 1) ? theDomain : DOMAIN,
 }
 
 describe('GET data:', function() {
+
+    this.timeout(70000);
+
     var randomPayload = null,
         channelName,
         cnDatahubUri,
