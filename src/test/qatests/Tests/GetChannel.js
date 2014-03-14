@@ -56,6 +56,22 @@ describe('GET Channel metadata:', function() {
         it('metadata structure is correct', function() {
             var body = getCnResponse.body;
 
+//            expect(body.hasOwnProperty('_links')).to.be.true;
+//            expect(body._links.hasOwnProperty('self')).to.be.true;
+//            expect(body._links.self.hasOwnProperty('href')).to.be.true;
+//            expect(body._links.hasOwnProperty('latest')).to.be.true;
+//            expect(body._links.latest.hasOwnProperty('href')).to.be.true;
+//            expect(body._links.hasOwnProperty('ws')).to.be.true;
+//            expect(body._links.ws.hasOwnProperty('href')).to.be.true;
+//            expect(body.hasOwnProperty('lastUpdateDate')).to.be.true;
+//            expect(body.hasOwnProperty('name')).to.be.true;
+//            expect(body.hasOwnProperty('creationDate')).to.be.true;
+//            expect(body.hasOwnProperty('ttlMillis')).to.be.true;
+//
+//            expect(lodash.keys(body).length).to.equal(5);
+//            expect(lodash.keys(body._links).length).to.equal(3);
+//
+
             expect(body.hasOwnProperty('_links')).to.be.true;
             expect(body._links.hasOwnProperty('self')).to.be.true;
             expect(body._links.self.hasOwnProperty('href')).to.be.true;
@@ -63,13 +79,16 @@ describe('GET Channel metadata:', function() {
             expect(body._links.latest.hasOwnProperty('href')).to.be.true;
             expect(body._links.hasOwnProperty('ws')).to.be.true;
             expect(body._links.ws.hasOwnProperty('href')).to.be.true;
-            expect(body.hasOwnProperty('lastUpdateDate')).to.be.true;
             expect(body.hasOwnProperty('name')).to.be.true;
             expect(body.hasOwnProperty('creationDate')).to.be.true;
+            expect(body.hasOwnProperty('ttlDays')).to.be.true;
+            expect(body.hasOwnProperty('type')).to.be.true;
+            expect(body.hasOwnProperty('contentSizeKB')).to.be.true;
+            expect(body.hasOwnProperty('peakRequestRateSeconds')).to.be.true;
             expect(body.hasOwnProperty('ttlMillis')).to.be.true;
 
-            expect(lodash.keys(body).length).to.equal(5);
-            expect(lodash.keys(body._links).length).to.equal(3);
+            expect(lodash.keys(body).length).to.equal(8);
+            expect(lodash.keys(body._links).length).to.equal(4);
         });
 
         it('returns correct channel uri', function() {
