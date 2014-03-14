@@ -39,10 +39,14 @@ describe('Create Channel: ', function(){
         expect(body._links.ws.hasOwnProperty('href')).to.be.true;
         expect(body.hasOwnProperty('name')).to.be.true;
         expect(body.hasOwnProperty('creationDate')).to.be.true;
+        expect(body.hasOwnProperty('ttlDays')).to.be.true;
+        expect(body.hasOwnProperty('type')).to.be.true;
+        expect(body.hasOwnProperty('contentSizeKB')).to.be.true;
+        expect(body.hasOwnProperty('peakRequestRateSeconds')).to.be.true;
         expect(body.hasOwnProperty('ttlMillis')).to.be.true;
 
-        expect(lodash.keys(body).length).to.equal(4);
-        expect(lodash.keys(body._links).length).to.equal(3);
+        expect(lodash.keys(body).length).to.equal(8);
+        expect(lodash.keys(body._links).length).to.equal(4);
     }
 
     before(function(myCallback){
@@ -134,7 +138,7 @@ describe('Create Channel: ', function(){
 
             acceptName = dhh.getRandomChannelName();
 
-            dhh.createChannel({name: acceptName, ttlMillis: acceptTTL, domain: DOMAIN}, function(res, uri) {
+            dhh.createChannel({name: acceptName, ttlDays: acceptTTL, domain: DOMAIN}, function(res, uri) {
                 createRes = res;
                 channelUri = uri;
 
@@ -174,11 +178,11 @@ describe('Create Channel: ', function(){
         describe('TTL', function() {
 
             // BUG: https://www.pivotaltracker.com/story/show/52425747
-            it('may be null - results in no ttlMillis property being returned', function(done) {
+            it('may be null - results in no ttlDays property being returned', function(done) {
                 var name = dhh.getRandomChannelName();
 
-                dhh.createChannel({name: name, ttlMillis: null, debug: true, domain: DOMAIN}, function(res) {
-                    expect(res.body.hasOwnProperty('ttlMillis')).to.be.false;
+                dhh.createChannel({name: name, ttlDays: null, debug: true, domain: DOMAIN}, function(res) {
+                    expect(res.body.hasOwnProperty('ttlDays')).to.be.false;
 
                     done();
                 })

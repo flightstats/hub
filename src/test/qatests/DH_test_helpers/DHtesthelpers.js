@@ -213,6 +213,10 @@ var createChannel = function(params, myCallback) {
         payload['ttlMillis'] = params.ttlMillis;
     }
 
+    if (params.hasOwnProperty('ttlDays')) {
+        payload['ttlDays'] = params.ttlDays;
+    }
+
     if (VERBOSE) {
         gu.debugLog('createChannel.uri: '+ uri);
         gu.debugLog('createChannel.payload: ');
@@ -273,7 +277,7 @@ function channelMetadata(responseBody) {
     }
 
     this.getTTL = function() {
-        return responseBody.ttlMillis;
+        return responseBody.ttlDays;
     }
 
     this.getCreationDate = function() {

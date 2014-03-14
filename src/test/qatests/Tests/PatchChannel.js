@@ -25,7 +25,7 @@ var DEBUG = true;
         deleted when its TTL has been met. That is covered in the TTLDeletion.js file.
  */
 
-describe('Patch Channel', function() {
+describe.skip('SKIP - update TTL - Patch Channel', function() {
 
     /**
      * Creates a new channel and makes a PATCH call to it.
