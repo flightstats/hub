@@ -254,7 +254,7 @@ exports.createChannel = createChannel;
 var getRandomChannelName = function(length) {
     var cnLength = (undefined === length) ? (5 + ranU.randomNum(26)) : length;
 
-    return ranU.randomString(cnLength, ranU.limitedRandomChar);
+    return 'test'+ ranU.randomString(cnLength, ranU.limitedRandomChar);
 }
 exports.getRandomChannelName = getRandomChannelName;
 
