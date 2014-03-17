@@ -12,12 +12,17 @@ import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.shared.SharedValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class SequenceKeyCoordination implements KeyCoordination {
+    private final static Logger logger = LoggerFactory.getLogger(SequenceKeyCoordination.class);
+
     private final WebsocketPublisher websocketPublisher;
+    private final CuratorFramework curator;
     private final MetricsTimer metricsTimer;
     private final LoadingCache<String, SharedValue> cache;
 
@@ -26,6 +31,7 @@ public class SequenceKeyCoordination implements KeyCoordination {
                                    final CuratorFramework curator,
                                    MetricsTimer metricsTimer) {
         this.websocketPublisher = websocketPublisher;
+        this.curator = curator;
         this.metricsTimer = metricsTimer;
         cache = CacheBuilder.newBuilder().build(new CacheLoader<String, SharedValue>() {
             @Override
@@ -69,6 +75,17 @@ public class SequenceKeyCoordination implements KeyCoordination {
                 return new SequenceContentKey(Longs.fromByteArray(value));
             }
         });
+    }
+
+    @Override
+    public void delete(String channelName) {
+        String key = getKey(channelName);
+        try {
+            cache.invalidate(key);
+            curator.delete().deletingChildrenIfNeeded().forPath(key);
+        } catch (Exception e) {
+            logger.warn("unable to delete key " + channelName);
+        }
     }
 
     private String getKey(String channelName) {
