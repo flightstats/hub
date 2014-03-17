@@ -459,6 +459,8 @@ describe('Channel Subscription:', function() {
         });
     });
 
+    // TODO: sequence channels only guarantee order preservation with five posts per second...do we need to add a
+    //      setTimeout() here?
     it('Multiple nigh-simultaneous updates are sent with order preserved.', function(done) {
         var actualResponseQueue = [], expectedResponseQueue = [], endWait, i;
         var numUpdates = 10,
@@ -466,14 +468,14 @@ describe('Channel Subscription:', function() {
         this.timeout((numUpdates * WAIT_FOR_CHANNEL_RESPONSE_MS) + 45000);
 
         var mainTest = function() {
-            async.times(numUpdates, function(n, next) {
-                dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
-                    gu.debugLog('Posted data #'+ n, DEBUG);
-                    next(null, uri);
+                async.times(numUpdates, function(n, next) {
+                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
+                        gu.debugLog('Posted data #'+ n, DEBUG);
+                        next(null, uri);
+                    });
+                }, function(err, uris) {
+                    // pass
                 });
-            }, function(err, uris) {
-                // pass
-            });
         };
 
         // Confirms order of responses and then calls confirmAllRelativeLinks(), which ends test
