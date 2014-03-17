@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -15,13 +16,13 @@ public class ContentServiceImpl implements ContentService {
 
     private final ContentDao contentDao;
     private final KeyCoordination keyCoordination;
+    private final TimeIndexProcessor timeIndexProcessor;
 
     @Inject
-    public ContentServiceImpl(
-            ContentDao contentDao,
-            KeyCoordination keyCoordination) {
+    public ContentServiceImpl(ContentDao contentDao, KeyCoordination keyCoordination, TimeIndexProcessor timeIndexProcessor) {
         this.contentDao = contentDao;
         this.keyCoordination = keyCoordination;
+        this.timeIndexProcessor = timeIndexProcessor;
     }
 
     @Override
@@ -88,6 +89,7 @@ public class ContentServiceImpl implements ContentService {
         //todo - gfm - 3/17/14 - what else does this need to do?
         contentDao.delete(channelName);
         keyCoordination.delete(channelName);
+        timeIndexProcessor.delete(channelName);
     }
 
 
