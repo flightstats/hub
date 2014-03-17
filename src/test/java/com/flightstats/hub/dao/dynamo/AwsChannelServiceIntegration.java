@@ -46,6 +46,7 @@ public class AwsChannelServiceIntegration {
     protected ChannelService channelService;
     protected String channelName;
     protected static List<String> channelNames = new ArrayList<>();
+    private CuratorFramework curator;
 
     @BeforeClass
     public static void setupClass() throws Exception {
@@ -70,20 +71,31 @@ public class AwsChannelServiceIntegration {
         channelService = injector.getInstance(ChannelService.class);
         channelName = Integration.getRandomChannel();
         channelNames.add(channelName);
+        curator = injector.getInstance(CuratorFramework.class);
     }
 
     @Test
-    public void testChannelCreation() throws Exception {
-
+    public void testChannelCreateDelete() throws Exception {
+        channelNames.remove(channelName);
         assertNull(channelService.getChannelConfiguration(channelName));
         ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlDays(1L).build();
         ChannelConfiguration createdChannel = channelService.createChannel(configuration);
         assertEquals(channelName, createdChannel.getName());
         assertEquals(createdChannel, channelService.getChannelConfiguration(channelName));
+
+        /**
+         * todo - gfm - 3/17/14 - verify that ZK state is gone.
+         * todo - gfm - 3/17/14 - what to do about these? , TimeIndex and replication.
+         *
+         */
+        assertNotNull(curator.checkExists().forPath("/keyGenerator/" + channelName));
+        channelService.delete(channelName);
+        assertNull(curator.checkExists().forPath("/keyGenerator/" + channelName));
     }
 
     @Test
-    public void testChannelWriteRead() throws Exception {
+    public void testChannelWriteReadDelete() throws Exception {
+        channelNames.remove(channelName);
         ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlDays(1L).build();
         channelService.createChannel(configuration);
         assertFalse(channelService.getValue(channelName, new SequenceContentKey(1000).keyToString()).isPresent());
@@ -98,6 +110,12 @@ public class AwsChannelServiceIntegration {
 
         assertFalse(compositeValue.getContentType().isPresent());
         assertFalse(compositeValue.getValue().getContentLanguage().isPresent());
+
+        assertNotNull(curator.checkExists().forPath("/keyGenerator/" + channelName));
+        assertNotNull(curator.checkExists().forPath("/lastUpdated/" + channelName));
+        channelService.delete(channelName);
+        assertNull(curator.checkExists().forPath("/keyGenerator/" + channelName));
+        assertNull(curator.checkExists().forPath("/lastUpdated/" + channelName));
     }
 
     @Test

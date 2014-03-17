@@ -85,7 +85,9 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public void delete(String channelName) {
         logger.info("deleting channel " + channelName);
+        //todo - gfm - 3/17/14 - what else does this need to do?
         contentDao.delete(channelName);
+        keyCoordination.delete(channelName);
     }
 
 
