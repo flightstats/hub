@@ -287,6 +287,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     @Override
     public void delete(String channelName) {
         new Thread(new S3Deleter(channelName, s3BucketName, s3Client)).start();
+        keyGenerator.delete(channelName);
     }
 
     @Override
