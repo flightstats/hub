@@ -22,4 +22,9 @@ public class TimeSeriesKeyGenerator implements ContentKeyGenerator {
     public Optional<ContentKey> parse(String keyString) {
         return TimeSeriesContentKey.fromString(keyString);
     }
+
+    @Override
+    public void delete(String channelName) {
+        //do nothing
+    }
 }
