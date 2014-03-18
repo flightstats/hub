@@ -9,4 +9,6 @@ public interface KeyCoordination {
     void insert(String channelName, ContentKey key);
 
     ContentKey getLastUpdated(String channelName);
+
+    void delete(String channelName);
 }

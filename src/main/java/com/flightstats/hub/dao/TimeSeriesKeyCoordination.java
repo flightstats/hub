@@ -15,4 +15,9 @@ public class TimeSeriesKeyCoordination implements KeyCoordination {
     public ContentKey getLastUpdated(String channelName) {
         throw new UnsupportedOperationException("last isn't supported " + channelName);
     }
+
+    @Override
+    public void delete(String channelName) {
+        //do nothing
+    }
 }

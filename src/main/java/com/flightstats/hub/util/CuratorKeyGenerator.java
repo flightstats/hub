@@ -72,10 +72,22 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
         return SequenceContentKey.fromString(keyString);
     }
 
+    @Override
+    public void delete(String channelName) {
+        String path = getPath(channelName);
+        try {
+            curator.delete().deletingChildrenIfNeeded().forPath(path);
+            channelToLongMap.remove(channelName);
+        } catch (Exception e) {
+            logger.warn("unable to delete " + channelName, e);
+        }
+
+    }
+
     private DistributedAtomicLong getDistributedAtomicLong(String channelName) {
         DistributedAtomicLong atomicLong = channelToLongMap.get(channelName);
         if (null == atomicLong) {
-            String path = "/keyGenerator/" + channelName;
+            String path = getPath(channelName);
             PromotedToLock lock = PromotedToLock.builder().lockPath(path + "/lock")
                     .retryPolicy(retryPolicy).timeout(1000, TimeUnit.SECONDS).build();
             atomicLong = new DistributedAtomicLong(curator, path, retryPolicy, lock);
@@ -85,5 +97,9 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
             }
         }
         return atomicLong;
+    }
+
+    private String getPath(String channelName) {
+        return "/keyGenerator/" + channelName;
     }
 }
