@@ -70,10 +70,14 @@ public class ChannelReplicator implements Runnable, Lockable {
             if (!valid) {
                 return;
             }
-            curatorLock.runWithLock(this, "/ChannelReplicator/" + channel.getName(), 5, TimeUnit.SECONDS);
+            curatorLock.runWithLock(this, getLockPath(channel.getName()), 5, TimeUnit.SECONDS);
         } finally {
             Thread.currentThread().setName("Empty");
         }
+    }
+
+    private String getLockPath(String channelName) {
+        return "/ChannelReplicator/" + channelName;
     }
 
     @Override
@@ -87,6 +91,10 @@ public class ChannelReplicator implements Runnable, Lockable {
         if (iterator != null) {
             iterator.exit();
         }
+    }
+
+    public void delete(String channelName) {
+        curatorLock.delete(getLockPath(channelName));
     }
 
     @VisibleForTesting
