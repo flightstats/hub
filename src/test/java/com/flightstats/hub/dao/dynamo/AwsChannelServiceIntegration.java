@@ -90,8 +90,8 @@ public class AwsChannelServiceIntegration {
     @Test
     public void testChannelWriteReadDelete() throws Exception {
         channelNames.remove(channelName);
-        curator.create().creatingParentsIfNeeded().forPath("/TimeIndexLock/" + channelName + "/locks");
-        curator.create().creatingParentsIfNeeded().forPath("/TimeIndexLock/" + channelName + "/leases");
+        createLocksPath("/TimeIndexLock/");
+        createLocksPath("/ChannelReplicator/");
         ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlDays(1L).build();
         channelService.createChannel(configuration);
         assertFalse(channelService.getValue(channelName, new SequenceContentKey(1000).keyToString()).isPresent());
@@ -107,17 +107,22 @@ public class AwsChannelServiceIntegration {
         assertFalse(compositeValue.getContentType().isPresent());
         assertFalse(compositeValue.getValue().getContentLanguage().isPresent());
 
-        //todo - gfm - 3/17/14 - what else needs to be deleted?
-
         assertNotNull(curator.checkExists().forPath("/keyGenerator/" + channelName));
         assertNotNull(curator.checkExists().forPath("/lastUpdated/" + channelName));
         assertNotNull(curator.checkExists().forPath("/TimeIndex/" + channelName));
         assertNotNull(curator.checkExists().forPath("/TimeIndexLock/" + channelName));
+        assertNotNull(curator.checkExists().forPath("/ChannelReplicator/" + channelName));
         channelService.delete(channelName);
         assertNull(curator.checkExists().forPath("/keyGenerator/" + channelName));
         assertNull(curator.checkExists().forPath("/lastUpdated/" + channelName));
         assertNull(curator.checkExists().forPath("/TimeIndex/" + channelName));
         assertNull(curator.checkExists().forPath("/TimeIndexLock/" + channelName));
+        assertNull(curator.checkExists().forPath("/ChannelReplicator/" + channelName));
+    }
+
+    private void createLocksPath(String root) throws Exception {
+        curator.create().creatingParentsIfNeeded().forPath(root + channelName + "/locks");
+        curator.create().creatingParentsIfNeeded().forPath(root + channelName + "/leases");
     }
 
     @Test
