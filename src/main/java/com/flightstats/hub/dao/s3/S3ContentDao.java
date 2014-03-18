@@ -92,10 +92,9 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
                 .retryIfException(new Predicate<Throwable>() {
                     @Override
                     public boolean apply(@Nullable Throwable input) {
-                        logger.info("exception! " + input);
+                        logger.debug("exception! " + input);
                         if (input == null) return false;
                         if (AmazonS3Exception.class.isAssignableFrom(input.getClass())) {
-                            logger.info("isAssignableFrom! " + input);
                             AmazonS3Exception s3Exception = (AmazonS3Exception) input;
                             return s3Exception.getStatusCode() == 404;
                         }
@@ -287,6 +286,13 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     @Override
     public void delete(String channelName) {
         new Thread(new S3Deleter(channelName, s3BucketName, s3Client)).start();
+        keyGenerator.delete(channelName);
+        String path = TimeIndex.getPath(channelName);
+        try {
+            curator.delete().deletingChildrenIfNeeded().forPath(path);
+        } catch (Exception e) {
+            logger.warn("unable to delete path " + path, e);
+        }
     }
 
     @Override
