@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.memory;
 
 import com.flightstats.hub.dao.*;
+import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.hub.replication.NoOpReplicationService;
 import com.flightstats.hub.replication.ReplicationService;
 import com.flightstats.hub.websocket.MemoryWebsocketPublisher;
@@ -29,6 +30,7 @@ public class MemoryModule extends AbstractModule {
         bind(KeyCoordination.class).to(MemoryKeyCoordination.class).asEagerSingleton();
         bind(WebsocketPublisher.class).to(MemoryWebsocketPublisher.class).asEagerSingleton();
         bind(ReplicationService.class).to(NoOpReplicationService.class).asEagerSingleton();
+        bind(TimeIndexDao.class).to(MemoryContentDao.class).asEagerSingleton();
 	}
 
 }
