@@ -17,9 +17,7 @@ public class ContentServiceImpl implements ContentService {
     private final KeyCoordination keyCoordination;
 
     @Inject
-    public ContentServiceImpl(
-            ContentDao contentDao,
-            KeyCoordination keyCoordination) {
+    public ContentServiceImpl(ContentDao contentDao, KeyCoordination keyCoordination) {
         this.contentDao = contentDao;
         this.keyCoordination = keyCoordination;
     }
@@ -86,6 +84,7 @@ public class ContentServiceImpl implements ContentService {
     public void delete(String channelName) {
         logger.info("deleting channel " + channelName);
         contentDao.delete(channelName);
+        keyCoordination.delete(channelName);
     }
 
 
