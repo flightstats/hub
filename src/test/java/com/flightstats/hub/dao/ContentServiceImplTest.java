@@ -28,7 +28,7 @@ public class ContentServiceImplTest {
         channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlDays(days).build();
         timeProvider = mock(TimeProvider.class);
         KeyCoordination keyCoordination = mock(KeyCoordination.class);
-        testClass = new ContentServiceImpl(contentDao, keyCoordination, null);
+        testClass = new ContentServiceImpl(contentDao, keyCoordination);
     }
 
     @Test
