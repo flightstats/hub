@@ -1,6 +1,8 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.service.CreateChannelValidator;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -21,6 +23,8 @@ public class ChannelServiceImpl implements ChannelService {
     private final ContentServiceFinder contentServiceFinder;
     private final ChannelConfigurationDao channelConfigurationDao;
     private final CreateChannelValidator createChannelValidator;
+    private final TimeIndexProcessor timeIndexProcessor;
+    private final ChannelReplicator channelReplicator;
     private final ContentService missingDao = new ContentService() {
         @Override
         public void createChannel(ChannelConfiguration configuration) { }
@@ -54,11 +58,14 @@ public class ChannelServiceImpl implements ChannelService {
     };
 
     @Inject
-    public ChannelServiceImpl(ContentServiceFinder contentServiceFinder,
-                              ChannelConfigurationDao channelConfigurationDao, CreateChannelValidator createChannelValidator) {
+    public ChannelServiceImpl(ContentServiceFinder contentServiceFinder, ChannelConfigurationDao channelConfigurationDao,
+                              CreateChannelValidator createChannelValidator, TimeIndexProcessor timeIndexProcessor,
+                              ChannelReplicator channelReplicator) {
         this.contentServiceFinder = contentServiceFinder;
         this.channelConfigurationDao = channelConfigurationDao;
         this.createChannelValidator = createChannelValidator;
+        this.timeIndexProcessor = timeIndexProcessor;
+        this.channelReplicator = channelReplicator;
     }
 
     private ContentService getContentService(String channelName){
@@ -131,6 +138,7 @@ public class ChannelServiceImpl implements ChannelService {
     public void delete(String channelName) {
         getContentService(channelName).delete(channelName);
         channelConfigurationDao.delete(channelName);
-
+        timeIndexProcessor.delete(channelName);
+        channelReplicator.delete(channelName);
     }
 }
