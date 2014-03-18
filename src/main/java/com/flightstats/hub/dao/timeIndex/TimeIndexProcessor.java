@@ -40,13 +40,7 @@ public class TimeIndexProcessor implements Lockable {
     }
 
     public void delete(String channel) {
-        final String lockPath = getLockPath(channel);
-        curatorLock.runWithLock(new Lockable() {
-            @Override
-            public void runWithLock() throws Exception {
-                curator.delete().deletingChildrenIfNeeded().forPath(lockPath);
-            }
-        }, lockPath, 1, TimeUnit.SECONDS);
+        curatorLock.delete(getLockPath(channel));
     }
 
     @Override
