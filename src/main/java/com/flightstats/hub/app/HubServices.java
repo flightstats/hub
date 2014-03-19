@@ -23,9 +23,16 @@ public class HubServices {
     }
 
     public static void startAll() {
-        for (Service service : services) {
-            Service.State state = service.startAndWait();
-            logger.info("service " + service.getClass().getName() + " " + state);
+        try {
+            for (Service service : services) {
+                logger.info("starting service " + service.getClass().getName());
+                service.startAsync();
+                service.awaitRunning();
+                logger.info("running service " + service.getClass().getName());
+            }
+        } catch (Exception e) {
+            logger.error("unable to start services, exiting", e);
+            System.exit(-1);
         }
     }
 

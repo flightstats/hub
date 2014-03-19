@@ -17,6 +17,7 @@ conf/hub.properties :
 
     app :
         name : "hub"
+        ## todo - does this need to be changed?
         environment : "dev"
 
     backing :
