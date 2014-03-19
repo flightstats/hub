@@ -2,7 +2,10 @@ package com.flightstats.hub.dao.s3;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubServices;
@@ -65,6 +68,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         this.s3Client = s3Client;
         this.curator = curator;
         this.metricsTimer = metricsTimer;
+        //todo - gfm - 3/19/14 - change this to the new standard.
         this.s3BucketName = appName + "-" + environment;
         /**
          * 1000 ms and 6 times should give behavior of calls after 2s, 4s, 8s, 16s and 32s
@@ -263,14 +267,13 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     private void initialize() {
+        logger.info("checking if bucket exists " + s3BucketName);
         if (s3Client.doesBucketExist(s3BucketName)) {
             logger.info("bucket exists " + s3BucketName);
             return;
         }
-        logger.info("creating " + s3BucketName);
-        CreateBucketRequest createBucketRequest = new CreateBucketRequest(s3BucketName, Region.US_Standard);
-        Bucket bucket = s3Client.createBucket(createBucketRequest);
-        logger.info("created " + bucket);
+        logger.error("EXITING! unable to find bucket " + s3BucketName);
+        throw new RuntimeException("unable to find bucket " + s3BucketName);
     }
 
     @Override
