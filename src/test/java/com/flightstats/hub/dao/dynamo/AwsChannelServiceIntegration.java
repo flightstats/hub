@@ -113,6 +113,7 @@ public class AwsChannelServiceIntegration {
         assertNotNull(curator.checkExists().forPath("/TimeIndexLock/" + channelName));
         assertNotNull(curator.checkExists().forPath("/ChannelReplicator/" + channelName));
         channelService.delete(channelName);
+        assertNull(channelService.getChannelConfiguration(channelName));
         assertNull(curator.checkExists().forPath("/keyGenerator/" + channelName));
         assertNull(curator.checkExists().forPath("/lastUpdated/" + channelName));
         assertNull(curator.checkExists().forPath("/TimeIndex/" + channelName));
