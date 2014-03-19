@@ -159,7 +159,7 @@ public class GuiceContext {
         @Provides
         public static ConcurrentMap<String, ChannelConfiguration> buildChannelConfigurationMap() throws FileNotFoundException {
             Cache<String, ChannelConfiguration> cache = CacheBuilder.newBuilder()
-                    .expireAfterAccess(15L, TimeUnit.MINUTES)
+                    .expireAfterWrite(15L, TimeUnit.MINUTES)
                     .build();
             return cache.asMap();
         }
