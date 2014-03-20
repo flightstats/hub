@@ -215,7 +215,7 @@ public class GuiceContext {
 
         private static Client create(boolean followRedirects) {
             Integer connectTimeoutSeconds = Integer.valueOf(properties.getProperty("http.connect.timeout.seconds", "30"));
-            Integer readTimeoutSeconds = Integer.valueOf(properties.getProperty("http.read.timeout.seconds", "60"));
+            Integer readTimeoutSeconds = Integer.valueOf(properties.getProperty("http.read.timeout.seconds", "120"));
             int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(connectTimeoutSeconds);
             int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(readTimeoutSeconds);
 
