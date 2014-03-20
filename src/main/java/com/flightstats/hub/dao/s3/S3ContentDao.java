@@ -2,7 +2,10 @@ package com.flightstats.hub.dao.s3;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubServices;
@@ -58,7 +61,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Inject
     public S3ContentDao(ContentKeyGenerator keyGenerator, AmazonS3 s3Client,
-                        @Named("app.environment") String environment, @Named("app.name") String appName,
+                        @Named("s3.environment") String environment, @Named("app.name") String appName,
                         @Named("s3.content_backoff_wait") int content_backoff_wait, @Named("s3.content_backoff_times") int content_backoff_times,
                         CuratorFramework curator, MetricsTimer metricsTimer) {
         this.keyGenerator = keyGenerator;
@@ -263,14 +266,13 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     }
 
     private void initialize() {
+        logger.info("checking if bucket exists " + s3BucketName);
         if (s3Client.doesBucketExist(s3BucketName)) {
             logger.info("bucket exists " + s3BucketName);
             return;
         }
-        logger.info("creating " + s3BucketName);
-        CreateBucketRequest createBucketRequest = new CreateBucketRequest(s3BucketName, Region.US_Standard);
-        Bucket bucket = s3Client.createBucket(createBucketRequest);
-        logger.info("created " + bucket);
+        logger.error("EXITING! unable to find bucket " + s3BucketName);
+        throw new RuntimeException("unable to find bucket " + s3BucketName);
     }
 
     @Override
