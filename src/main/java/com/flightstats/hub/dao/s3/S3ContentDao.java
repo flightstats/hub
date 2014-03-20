@@ -61,14 +61,13 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Inject
     public S3ContentDao(ContentKeyGenerator keyGenerator, AmazonS3 s3Client,
-                        @Named("app.environment") String environment, @Named("app.name") String appName,
+                        @Named("s3.environment") String environment, @Named("app.name") String appName,
                         @Named("s3.content_backoff_wait") int content_backoff_wait, @Named("s3.content_backoff_times") int content_backoff_times,
                         CuratorFramework curator, MetricsTimer metricsTimer) {
         this.keyGenerator = keyGenerator;
         this.s3Client = s3Client;
         this.curator = curator;
         this.metricsTimer = metricsTimer;
-        //todo - gfm - 3/19/14 - change this to the new standard.
         this.s3BucketName = appName + "-" + environment;
         /**
          * 1000 ms and 6 times should give behavior of calls after 2s, 4s, 8s, 16s and 32s

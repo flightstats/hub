@@ -33,7 +33,6 @@ public class DynamoUtils {
     }
 
     public String getTableName(String channelName) {
-        //todo - gfm - 3/19/14 - change this to the new standard.
         return appName + "-" + environment + "-" + channelName;
     }
 
