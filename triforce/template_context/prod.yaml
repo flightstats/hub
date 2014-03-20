@@ -32,6 +32,7 @@ conf/hub.properties :
     s3 :
       content_backoff_wait : 1000
       content_backoff_times : 6
+      environment : "prod-east1.flightstats.com"
 
     graphite :
         hosts : "svcsmon.cloud-east.prod:2003"
