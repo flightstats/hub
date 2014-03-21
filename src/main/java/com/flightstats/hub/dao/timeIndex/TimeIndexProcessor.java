@@ -32,7 +32,15 @@ public class TimeIndexProcessor implements Lockable {
 
     public void process(String channel) {
         this.channel = channel;
-        curatorLock.runWithLock(this, "/TimeIndexLock/" + channel, 1, TimeUnit.SECONDS);
+        curatorLock.runWithLock(this, getLockPath(channel), 1, TimeUnit.SECONDS);
+    }
+
+    private String getLockPath(String channel) {
+        return "/TimeIndexLock/" + channel;
+    }
+
+    public void delete(String channel) {
+        curatorLock.delete(getLockPath(channel));
     }
 
     @Override

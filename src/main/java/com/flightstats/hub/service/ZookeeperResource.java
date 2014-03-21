@@ -7,6 +7,8 @@ import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.zookeeper.data.Stat;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,14 +78,23 @@ public class ZookeeperResource
 
     }
 
-    private void handleData(String path, ObjectNode root) {
+    private void handleData(String path, ObjectNode root) throws Exception {
+        Stat stat = new Stat();
+        byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
+        ObjectNode data = root.putObject("data");
         try {
-            byte[] bytes = curator.getData().forPath(path);
-            root.put("bytes", bytes);
-            root.put("string", new String(bytes));
-            root.put("long", Longs.fromByteArray(bytes));
+            data.put("bytes", bytes);
+            data.put("string", new String(bytes));
+            data.put("long", Longs.fromByteArray(bytes));
         } catch (Exception e) {
             logger.info("unable to convert to string ", path);
+        }
+        ObjectNode stats = root.putObject("stats");
+        stats.put("created", new DateTime(stat.getCtime()).toString());
+        stats.put("modified", new DateTime(stat.getMtime()).toString());
+        stats.put("changes", stat.getVersion());
+        if (stat.getEphemeralOwner() != 0) {
+            stats.put("sessionId", stat.getEphemeralOwner());
         }
     }
 

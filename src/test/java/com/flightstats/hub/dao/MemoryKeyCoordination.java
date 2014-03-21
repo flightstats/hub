@@ -34,4 +34,9 @@ public class MemoryKeyCoordination implements KeyCoordination {
     public ContentKey getLastUpdated(String channelName) {
         return contentKeyMap.get(channelName);
     }
+
+    @Override
+    public void delete(String channelName) {
+        contentKeyMap.remove(channelName);
+    }
 }

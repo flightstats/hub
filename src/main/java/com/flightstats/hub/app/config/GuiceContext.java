@@ -75,6 +75,7 @@ public class GuiceContext {
                 .withGraphiteConfig(graphiteConfig)
                 .withObjectMapper(HubObjectMapperFactory.construct())
                 .withBindings(new HubBindings())
+                .withJerseyGuiceResources(false)
                 .withHealthCheckClass(healthCheckClass)
                 //this could be more precise
                 .withRegexServe(ChannelNameExtractor.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
@@ -159,7 +160,7 @@ public class GuiceContext {
         @Provides
         public static ConcurrentMap<String, ChannelConfiguration> buildChannelConfigurationMap() throws FileNotFoundException {
             Cache<String, ChannelConfiguration> cache = CacheBuilder.newBuilder()
-                    .expireAfterAccess(15L, TimeUnit.MINUTES)
+                    .expireAfterWrite(5L, TimeUnit.MINUTES)
                     .build();
             return cache.asMap();
         }
@@ -215,7 +216,7 @@ public class GuiceContext {
 
         private static Client create(boolean followRedirects) {
             Integer connectTimeoutSeconds = Integer.valueOf(properties.getProperty("http.connect.timeout.seconds", "30"));
-            Integer readTimeoutSeconds = Integer.valueOf(properties.getProperty("http.read.timeout.seconds", "60"));
+            Integer readTimeoutSeconds = Integer.valueOf(properties.getProperty("http.read.timeout.seconds", "120"));
             int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(connectTimeoutSeconds);
             int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(readTimeoutSeconds);
 
