@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Hack
-if [ -z "${JAVA_HOME}"] ; then
-  export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64/jre
+if [ -z "${JAVA_HOME}" ] ; then
+  JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64/jre
   echo "Using Java Home Hack, KILL ME WITH FIRE"
 fi
 
@@ -13,19 +13,19 @@ set -e
 APP_NAME="hub"
 
 # Let's check some assumptions!
-APP_HOME=~${APP_NAME}/${APP_NAME}/
-APP_LOGS=~${APP_NAME}/log/
-APP_STATE=~${APP_NAME}/run/
+APP_HOME=${HOME}/${APP_NAME}/
+APP_LOGS=${HOME}/{$APP_NAME}/log/
+APP_STATE=${HOME}/${APP_NAME}/run/
 
 # Should be running as the app-name user
-if [ "$(whoami)" != "${APP_NAME}"] ; then
+if [ "$(whoami)" != "${APP_NAME}" ] ; then
   echo "Application should be running as '${APP_NAME}', aborting for safety"
-  exit 1
+  exit 2
 fi
 
 if [ ! -d ${APP_HOME} ] ; then
   echo "Application home not present : ${APP_HOME}"
-  exit 2
+  exit 3
 fi
 
 if [ ! -d ${APP_LOGS} ] ; then
@@ -34,6 +34,7 @@ if [ ! -d ${APP_LOGS} ] ; then
 fi
 
 if [ ! -d ${APP_STATE} ] ; then
+  echo "Applicaion state directory not present : ${APP_STATE} / Creating!"
   mkdir -p ${APP_STATE}
 fi
 
@@ -72,11 +73,12 @@ cat > ${JAVA_OPTS_FILE} <<JAVA_OPTS
  -Xloggc:${APP_LOGS}/hub_gc.log-${ID}-$(date -u '+%Y-%m-%d-%H-%M-%S')
 JAVA_OPTS
 
-export JAVA_OPTS="$(cat ${JAVA_OPTS_FILE})"
+JAVA_OPTS="$(cat ${JAVA_OPTS_FILE})"
 
 MAIN_CLASS="com.flightstats.hub.app.HubMain"
 
-CLI=${JAVA_HOME}/bin/java -cp ${APP_HOME}/lib ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties
+CLI="${JAVA_HOME}/bin/java -cp ${APP_HOME}lib/ ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties"
 
+set -f
 echo "Running : ${CLI}"
 ${CLI}
