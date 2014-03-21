@@ -39,6 +39,7 @@ public class TimedContentDao implements ContentDao {
 
     @Override
     public Content read(final String channelName, final ContentKey key) {
+        //todo - gfm - 3/1/14 - is it possible to have this ignore nulls?
         return metricsTimer.time("valueDao.read", new TimedCallback<Content>() {
             @Override
             public Content call() {

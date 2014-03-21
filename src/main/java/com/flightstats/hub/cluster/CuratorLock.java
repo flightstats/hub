@@ -21,7 +21,7 @@ public class CuratorLock {
     }
 
     /**
-     * When you use this method, be sure to check shouldStopWorking to see if you've lost the lock.
+     * Long running processes need to check shouldStopWorking to see if you've lost the lock.
      * runWithLock will not throw an exception up the stack.
      */
     public void runWithLock(Lockable lockable, String lockPath, long time, TimeUnit timeUnit) {
@@ -44,6 +44,16 @@ public class CuratorLock {
                 //ignore
             }
         }
+    }
+
+    public void delete(final String lockPath) {
+        //deleting the path within a lock will cause Curator to log an error 'Lease already released', which can be ignored.
+        runWithLock(new Lockable() {
+            @Override
+            public void runWithLock() throws Exception {
+                curator.delete().deletingChildrenIfNeeded().forPath(lockPath);
+            }
+        }, lockPath, 1, TimeUnit.SECONDS);
     }
 
     /**

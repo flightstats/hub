@@ -71,7 +71,7 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
                 .withTableName(getTableName())
                 .withAttributeDefinitions(new AttributeDefinition("key", ScalarAttributeType.S))
                 .withKeySchema(new KeySchemaElement("key", KeyType.HASH))
-                .withProvisionedThroughput(new ProvisionedThroughput(10L, 10L));
+                .withProvisionedThroughput(new ProvisionedThroughput(50L, 10L));
         dynamoUtils.createTable(request);
     }
 

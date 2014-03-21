@@ -70,10 +70,14 @@ public class ChannelReplicator implements Runnable, Lockable {
             if (!valid) {
                 return;
             }
-            curatorLock.runWithLock(this, "/ChannelReplicator/" + channel.getName(), 5, TimeUnit.SECONDS);
+            curatorLock.runWithLock(this, getLockPath(channel.getName()), 5, TimeUnit.SECONDS);
         } finally {
             Thread.currentThread().setName("Empty");
         }
+    }
+
+    private String getLockPath(String channelName) {
+        return "/ChannelReplicator/" + channelName;
     }
 
     @Override
@@ -87,6 +91,10 @@ public class ChannelReplicator implements Runnable, Lockable {
         if (iterator != null) {
             iterator.exit();
         }
+    }
+
+    public void delete(String channelName) {
+        curatorLock.delete(getLockPath(channelName));
     }
 
     @VisibleForTesting
@@ -141,7 +149,7 @@ public class ChannelReplicator implements Runnable, Lockable {
         if (lastUpdatedKey.isPresent()) {
             SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
             if (contentKey.getSequence() == SequenceContentKey.START_VALUE) {
-                return searchForStartingKey(SequenceContentKey.START_VALUE, historicalDays);
+                return searchForStartingKey(getMinimumValue(), historicalDays);
             }
             return searchForStartingKey(contentKey.getSequence() + 1, historicalDays + 1);
         }
@@ -154,7 +162,7 @@ public class ChannelReplicator implements Runnable, Lockable {
         logger.debug("searching the key space for " + channel.getUrl());
         Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getUrl());
         if (!latestSequence.isPresent()) {
-            return SequenceContentKey.START_VALUE + 1;
+            return getMinimumValue();
         }
         long high = latestSequence.get();
         long low = startValue;
@@ -170,6 +178,10 @@ public class ChannelReplicator implements Runnable, Lockable {
         }
         logger.debug("returning starting key " + lastExists);
         return lastExists;
+    }
+
+    private long getMinimumValue() {
+        return SequenceContentKey.START_VALUE + 1;
     }
 
     /**
