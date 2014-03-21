@@ -27,7 +27,7 @@ describe('RESTful Scenarios', function() {
             totalActions: 0
         },    // Stats aggregated by action
         start = null,
-        mainChannelName = 'ActiveChannel21';
+        mainChannelName = 'testActiveChannel21';
 
 
     var reportStats = function(theStats) {

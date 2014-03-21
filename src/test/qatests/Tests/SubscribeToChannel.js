@@ -459,24 +459,26 @@ describe('Channel Subscription:', function() {
         });
     });
 
-    // TODO: sequence channels only guarantee order preservation with five posts per second...do we need to add a
-    //      setTimeout() here?
+    // NOTE: in the new Hub, we only guarantee sequence preservation at 5 calls / second max, so this test cannot
+    //  post more than 5 items. There is a known issue where a new websocket needs to be primed or we can miss the
+    //  first one or two items if a bunch are sent in at once.
     it('Multiple nigh-simultaneous updates are sent with order preserved.', function(done) {
         var actualResponseQueue = [], expectedResponseQueue = [], endWait, i;
-        var numUpdates = 10,
+        var numUpdates = 6,
             VERBOSE = true;
         this.timeout((numUpdates * WAIT_FOR_CHANNEL_RESPONSE_MS) + 45000);
 
         var mainTest = function() {
-                async.times(numUpdates, function(n, next) {
-                    dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
-                        gu.debugLog('Posted data #'+ n, DEBUG);
-                        next(null, uri);
-                    });
-                }, function(err, uris) {
-                    // pass
+            async.times(numUpdates - 1, function(n, next) {
+                dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
+                    gu.debugLog('Posted data #'+ n, DEBUG);
+                    next(null, uri);
                 });
+            }, function(err, uris) {
+                // pass
+            });
         };
+
 
         // Confirms order of responses and then calls confirmAllRelativeLinks(), which ends test
         var confirmOrderOfResponses = function() {
@@ -493,8 +495,9 @@ describe('Channel Subscription:', function() {
 
                 for (i = 0; i < numUpdates; i += 1) {
                     //expect(actualResponseQueue[i]).to.equal(expectedResponseQueue[i]);
+                    gu.debugLog('Attempting to match queue number '+ i, DEBUG)
                     expect(doUrlsMatch({urlA: actualResponseQueue[i], urlB: expectedResponseQueue[i]})).to.be.true;
-                    gu.debugLog('Matched queue number '+ i, DEBUG);
+//                    gu.debugLog('Matched queue number '+ i, DEBUG);
                 }
 
                 confirmAllRelativeLinks();
@@ -513,6 +516,106 @@ describe('Channel Subscription:', function() {
                 }
 
                 ws.close();
+                done();
+            })
+        }
+
+        var onOpen = function() {
+            gu.debugLog('Open event fired!', DEBUG);
+            gu.debugLog('Readystate: '+ ws.readyState, DEBUG);
+
+            dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function() {
+                gu.debugLog('Posted initial item (to prime websocket) ', DEBUG);
+            });
+
+//            mainTest();
+        };
+
+        var ws = dhh.createWebSocket(wsUri, onOpen);
+
+        ws.on('message', function(data, flags) {
+
+            actualResponseQueue.push(data);
+            gu.debugLog('Received message: '+ data, DEBUG);
+            gu.debugLog('Response queue length: '+ actualResponseQueue.length, DEBUG);
+
+            if (1 == actualResponseQueue.length) {
+                // This was the first item, so websocket is primed and ready.
+                mainTest();
+            } else if (actualResponseQueue.length == numUpdates) {
+                confirmOrderOfResponses();
+            }
+        });
+    });
+
+    // SKIP - this should be run on demand, not automatically
+    it.skip('Continuous updates at 1 per 200 ms are sent with order preserved.', function(done) {
+        var actualResponseQueue = [], expectedResponseQueue = [], endWait, i;
+        var numUpdates = 500,
+            waitBetween = 200,
+            first_post_time = null,
+            last_post_time = null,
+            time_to_post_all = null,
+            VERBOSE = true;
+        this.timeout((numUpdates * WAIT_FOR_CHANNEL_RESPONSE_MS) + 45000);
+
+        var mainTest = function() {
+            first_post_time = moment();
+            async.timesSeries(numUpdates, function(n, next) {
+                dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
+                    gu.debugLog('Posted data #'+ n, DEBUG);
+                    setTimeout(function() {
+                        next(null, uri);
+                    }, waitBetween);
+                });
+            }, function(err, uris) {
+                // pass
+            });
+        };
+
+        // Confirms order of responses and then calls confirmAllRelativeLinks(), which ends test
+        var confirmOrderOfResponses = function() {
+            last_post_time = moment();
+            time_to_post_all = last_post_time.diff(first_post_time, 'seconds');
+            gu.debugLog('Post time for '+ numUpdates +' items: '+ time_to_post_all +' seconds.')
+
+            gu.debugLog('...entering confirmOrderOfResponses()');
+
+            dhh.getListOfLatestUrisFromChannel({numItems: numUpdates, channelUri: channelUri}, function(allUris) {
+                expectedResponseQueue = allUris;
+                gu.debugLog('Expected response queue length: '+ expectedResponseQueue.length, DEBUG);
+
+                expect(actualResponseQueue.length).to.equal(numUpdates);
+                expect(expectedResponseQueue.length).to.equal(numUpdates);
+
+                gu.debugLog('Expected and Actual queues are full. Comparing queues...', DEBUG);
+
+                for (i = 0; i < numUpdates; i += 1) {
+                    //expect(actualResponseQueue[i]).to.equal(expectedResponseQueue[i]);
+                    expect(doUrlsMatch({urlA: actualResponseQueue[i], urlB: expectedResponseQueue[i]})).to.be.true;
+                    gu.debugLog('Matched queue number '+ i, DEBUG);
+                }
+
+                confirmAllRelativeLinks();
+
+            });
+        }
+
+        // Test next/prev for each uri, as well as latest for channel. Then end test.
+        var confirmAllRelativeLinks = function() {
+            gu.debugLog('...entering confirmAllRelativeLinks()');
+
+            dhh.testRelativeLinkInformation({channelUri: channelUri, numItems: numUpdates, debug: VERBOSE}, function(err) {
+                if (null != err) {
+
+                    gu.debugLog('Error in relative links test: '+ err);
+                    expect(err).to.be.null;
+                }
+
+                ws.close();
+
+                gu.debugLog('Post time for '+ numUpdates +' items: '+ time_to_post_all +' seconds.')
+
                 done();
             })
         }
@@ -644,6 +747,7 @@ describe('Channel Subscription:', function() {
             sockets[i] = socket;
         }
     });
+
 
     it('Disconnecting and then adding a new agent on same channel works.', function(done) {
         var socket1, socket2, uri1, uri2;
