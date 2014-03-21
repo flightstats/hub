@@ -9,13 +9,11 @@ apply from: 'http://artifactory.office/artifactory/simple/services-dev/com.fligh
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
-//todo - gfm - 3/20/14 - not sure these are currently used
 project.ext.jenkinsBuildNumber = "$System.env.VERSION_NUMBER"
 project.ext.jenkinsJobName = "hub"
 
 group = 'com.flightstats'
 
-//todo - gfm - 3/20/14 - get this from jenkins
 version = project.ext.jenkinsBuildNumber
 //todo - gfm - 3/20/14 - have the local build just use local-full time stamp
 
