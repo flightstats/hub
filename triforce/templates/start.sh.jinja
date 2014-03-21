@@ -1,11 +1,53 @@
 #!/bin/bash
 
+# Hack
+if [ -z "${JAVA_HOME}"] ; then
+  export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64/jre
+  echo "Using Java Home Hack, KILL ME WITH FIRE"
+fi
+
 # Exit on any error
 #
-exec >/tmp/debug
 set -e
 
-cat > /tmp/javaopts <<JAVA_OPTS
+APP_NAME="hub"
+
+# Let's check some assumptions!
+APP_HOME=~${APP_NAME}/${APP_NAME}/
+APP_LOGS=~${APP_NAME}/log/
+APP_STATE=~${APP_NAME}/run/
+
+# Should be running as the app-name user
+if [ "$(whoami)" != "${APP_NAME}"] ; then
+  echo "Application should be running as '${APP_NAME}', aborting for safety"
+  exit 1
+fi
+
+if [ ! -d ${APP_HOME} ] ; then
+  echo "Application home not present : ${APP_HOME}"
+  exit 2
+fi
+
+if [ ! -d ${APP_LOGS} ] ; then
+  echo "Applicaion log directory not present : ${APP_LOGS} / Creating!"
+  mkdir -p ${APP_LOGS}
+fi
+
+if [ ! -d ${APP_STATE} ] ; then
+  mkdir -p ${APP_STATE}
+fi
+
+pushd ${APP_HOME}
+
+# Use the parent PID as our "ID"
+ID=$$
+JAVA_OPTS_FILE=${APP_STATE}/javaopts-${ID}
+
+# Redirect output to a debug file for now
+exec >${APP_STATE}/upstart-debug-${ID}
+
+# TODO These should be implemented differently, long-term
+cat > ${JAVA_OPTS_FILE} <<JAVA_OPTS
  -d64
  -server
  -Xmx450m
@@ -19,7 +61,7 @@ cat > /tmp/javaopts <<JAVA_OPTS
  -Dcom.sun.management.jmxremote.port=8888
  -Dcom.sun.management.jmxremote.ssl=false
  -Dcom.sun.management.jmxremote.authenticate=false
- -Dlogback.configurationFile=$DEPLOYED_DIR/conf/logback.xml
+ -Dlogback.configurationFile=${APP_HOME}/conf/logback.xml
 
  -XX:+PrintGCDetails
  -XX:+PrintTenuringDistribution
@@ -27,17 +69,14 @@ cat > /tmp/javaopts <<JAVA_OPTS
 
  -Dsun.net.inetaddr.ttl=0
 
- -Xloggc:~/log/hub_gc.log-$(date -u '+%Y-%m-%d-%H-%M-%S')
+ -Xloggc:${APP_LOGS}/hub_gc.log-${ID}-$(date -u '+%Y-%m-%d-%H-%M-%S')
 JAVA_OPTS
 
-export JAVA_OPTS="$(cat /tmp/javaopts)"
-export JAVA_HOME="${JAVA_HOME}"
+export JAVA_OPTS="$(cat ${JAVA_OPTS_FILE})"
 
 MAIN_CLASS="com.flightstats.hub.app.HubMain"
 
-if [ -e ${DEPLOYED_DIR}/conf/hub.properties ] ; then
-    HUB_PROPS=${DEPLOYED_DIR}/conf/hub.properties
-fi
+CLI=${JAVA_HOME}/bin/java -cp ${APP_HOME}/lib ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties
 
-echo ${JAVA_HOME}/bin/java -cp "${DEPLOYED_DIR}/lib/*" ${JAVA_OPTS} ${MAIN_CLASS} ${HUB_PROPS}
-${JAVA_HOME}/bin/java -cp "${DEPLOYED_DIR}/lib/*" ${JAVA_OPTS} ${MAIN_CLASS} ${HUB_PROPS}
+echo "Running : ${CLI}"
+${CLI}
