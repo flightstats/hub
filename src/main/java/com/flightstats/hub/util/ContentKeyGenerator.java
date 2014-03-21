@@ -10,4 +10,6 @@ public interface ContentKeyGenerator {
     void seedChannel(String channelName);
 
     Optional<ContentKey> parse(String keyString);
+
+    void delete(String channelName);
 }

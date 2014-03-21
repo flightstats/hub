@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 import com.google.common.collect.ArrayListMultimap;
@@ -13,7 +14,7 @@ import java.util.*;
 /**
  *
  */
-public class MemoryContentDao implements ContentDao {
+public class MemoryContentDao implements ContentDao, TimeIndexDao {
     private final static Logger logger = LoggerFactory.getLogger(MemoryContentDao.class);
 
     private ListMultimap<String, Content> contentListMultimap = ArrayListMultimap.create();
@@ -70,4 +71,13 @@ public class MemoryContentDao implements ContentDao {
     public void updateChannel(ChannelConfiguration configuration) { }
 
 
+    @Override
+    public void writeIndex(String channelName, DateTime dateTime, ContentKey key) {
+
+    }
+
+    @Override
+    public void writeIndices(String channelName, String dateTime, List<String> keys) {
+
+    }
 }
