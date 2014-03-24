@@ -98,8 +98,8 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
                         logger.debug("exception! " + input);
                         if (input == null) return false;
                         if (AmazonS3Exception.class.isAssignableFrom(input.getClass())) {
-                            AmazonS3Exception s3Exception = (AmazonS3Exception) input;
-                            return s3Exception.getStatusCode() == 404;
+                            int statusCode = ((AmazonS3Exception) input).getStatusCode();
+                            return statusCode == 404 || statusCode == 403;
                         }
                         return false;
                     }
