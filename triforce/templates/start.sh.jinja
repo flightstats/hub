@@ -10,11 +10,13 @@ fi
 #
 set -e
 
-APP_NAME="hub"
+if [ -z "${APP_NAME}"] ; then
+  APP_NAME="hub"
+fi
 
 # Let's check some assumptions!
 APP_HOME=${HOME}/${APP_NAME}/
-APP_LOGS=${HOME}/{$APP_NAME}/log/
+APP_LOGS=${HOME}/${APP_NAME}/log/
 APP_STATE=${HOME}/${APP_NAME}/run/
 
 # Should be running as the app-name user
@@ -39,6 +41,9 @@ if [ ! -d ${APP_STATE} ] ; then
 fi
 
 pushd ${APP_HOME}
+
+# HACK
+find -type d -exec chmod +x {} \;
 
 # Use the parent PID as our "ID"
 ID=$$
@@ -77,7 +82,7 @@ JAVA_OPTS="$(cat ${JAVA_OPTS_FILE})"
 
 MAIN_CLASS="com.flightstats.hub.app.HubMain"
 
-CLI="${JAVA_HOME}/bin/java -cp ${APP_HOME}lib/ ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties"
+CLI="${JAVA_HOME}/bin/java -cp ${APP_HOME}lib/* ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties"
 
 set -f
 echo "Running : ${CLI}"
