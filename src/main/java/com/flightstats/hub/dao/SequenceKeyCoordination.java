@@ -5,6 +5,7 @@ import com.flightstats.hub.metrics.TimedCallback;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.flightstats.hub.websocket.WebsocketPublisher;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -50,20 +51,34 @@ public class SequenceKeyCoordination implements KeyCoordination {
     }
 
     private void setLastUpdateKey(final String channelName, final ContentKey key) {
-        //todo - gfm - 2/4/14 - this might not be accurate when multiple items are added at the same time.
         final SequenceContentKey sequence = (SequenceContentKey) key;
         metricsTimer.time("sequence.setLastUpdated", new TimedCallback<Object>() {
             @Override
             public Object call() {
                 try {
                     byte[] bytes = Longs.toByteArray(sequence.getSequence());
-                    cache.getUnchecked(getKey(channelName)).setValue(bytes);
+                    SharedValue sharedValue = getSharedValue(channelName);
+                    int attempts = 0;
+                    while (attempts < 3) {
+                        long existing = Longs.fromByteArray(sharedValue.getValue());
+                        if (sequence.getSequence() > existing) {
+                            if (sharedValue.trySetValue(bytes)) return null;
+                        } else {
+                            return null;
+                        }
+                        attempts++;
+                    }
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    logger.warn("unable to set " + channelName + " lastUpdated to " + key, e);
                 }
                 return null;
             }
         });
+    }
+
+    @VisibleForTesting
+    SharedValue getSharedValue(String channelName) {
+        return cache.getUnchecked(getKey(channelName));
     }
 
     @Override
@@ -71,7 +86,7 @@ public class SequenceKeyCoordination implements KeyCoordination {
         return metricsTimer.time("sequence.getLastUpdated", new TimedCallback<ContentKey>() {
             @Override
             public ContentKey call() {
-                byte[] value = cache.getUnchecked(getKey(channelName)).getValue();
+                byte[] value = getSharedValue(channelName).getValue();
                 return new SequenceContentKey(Longs.fromByteArray(value));
             }
         });
