@@ -22,7 +22,7 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
     DOMAIN = dhh.DOMAIN,
 //    DOMAIN = 'hub-02.cloud-east.staging:8080',
     FAKE_SOCKET_URI = ['ws:/', dhh.DOMAIN, 'channel', 'sQODTvsYlLOLWTFPWNBBQ', 'ws'].join('/'),
-    LOAD_BALANCER_HOSTNAME = 'hub.svc.staging',
+    LOAD_BALANCER_HOSTNAME = dhh.DOMAIN,
     DEBUG = true;
 
 
