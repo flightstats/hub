@@ -71,6 +71,7 @@ Content-Type is `application/json`
 
 `name` _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
 Hyphens are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
+Channels starting with `test` will automatically be deleted in the dev and staging environments every night using this Jenkins task - http://ops-jenkins01.util.pdx.office/job/hub-cleanup/
 
 `type` is optional, and defaults to Sequence.  Valid values are Sequence and TimeSeries.
 
@@ -335,7 +336,27 @@ curl -i -X DELETE http://hub/channel/stumptown
 
 The Hub can replicate Sequence channels from another Hub instance.  TimeSeries replication is not yet supported.
 
-To configure new or modify existing replication of channels in the domain 'hub.other':
+The Source Hub has the channel(s) you want replicated.
+The Target Hub is where you want those channel(s).
+Replication is configured on the Target Hub, and does not have any requirements on the Source Hub, other than it must
+implement the standard Hub API for Sequence channels.
+
+For example, if you want to replicate the channel `pdx` from Source: http://hub.svc.prod/ to Target: http://hub.svc.staging/
+
+GET the existing configuration for replication:
+
+`GET http://hub.svc.staging/replication/hub.svc.prod`
+
+* Content-type: application/json
+
+```json
+{
+   "historicalDays" : 10,
+   "excludeExcept" : [ "stumptown" ]
+}
+```
+
+Modify the existing replication configuration to include `pdx`:
 
 `PUT http://hub/replication/hub.other`
 
