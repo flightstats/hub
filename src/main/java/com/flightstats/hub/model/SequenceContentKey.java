@@ -33,7 +33,11 @@ public class SequenceContentKey implements ContentKey {
 
     public static Optional<ContentKey> fromString(String key) {
         try {
-            Optional<? extends ContentKey> optional = Optional.of(new SequenceContentKey(Long.parseLong(key)));
+            long keySequence = Long.parseLong(key);
+            if (keySequence <= START_VALUE) {
+                return Optional.absent();
+            }
+            Optional<? extends ContentKey> optional = Optional.of(new SequenceContentKey(keySequence));
             return (Optional<ContentKey>) optional;
         } catch (Exception e) {
             return Optional.absent();

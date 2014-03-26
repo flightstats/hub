@@ -316,7 +316,7 @@ public class AwsChannelServiceIntegration {
         TimeIndexProcessor processor = new TimeIndexProcessor(curatorLock, indexDao, curator);
 
         DateTime dateTime1 = new DateTime(2014, 1, 6, 12, 45);
-        indexDao.writeIndex(channelName, dateTime1, new SequenceContentKey(999));
+        indexDao.writeIndex(channelName, dateTime1, new SequenceContentKey(1999));
         DateTime dateTime2 = dateTime1.plusMinutes(1);
         indexDao.writeIndex(channelName, dateTime2, new SequenceContentKey(1000));
         indexDao.writeIndex(channelName, dateTime1.plusMinutes(2), new SequenceContentKey(1001));
@@ -328,7 +328,7 @@ public class AwsChannelServiceIntegration {
 
         ArrayList<ContentKey> keyList = Lists.newArrayList(indexDao.getKeys(channelName, dateTime1));
         assertEquals(1, keyList.size());
-        assertEquals("999", keyList.get(0).keyToString());
+        assertEquals("1999", keyList.get(0).keyToString());
 
         keyList = Lists.newArrayList(indexDao.getKeys(channelName, dateTime2));
         assertEquals(1, keyList.size());
