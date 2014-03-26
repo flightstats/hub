@@ -19,6 +19,7 @@ public class SequenceContentKey implements ContentKey {
 
     @Override
     public ContentKey getPrevious() {
+        //todo - gfm - 3/26/14 - should this return absent for <= 999 ?
         return new SequenceContentKey(sequence - 1);
     }
 
