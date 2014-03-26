@@ -3,5 +3,7 @@
 ## There's not much here yet, this file may be redundant..
 application:
     name : hub
+    init_template_source : s3://triforce/templates/upstart/upstart_template-0.1.5a.jinja
+
 
 
