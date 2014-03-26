@@ -56,7 +56,6 @@ public class ContentServiceImpl implements ContentService {
         if (value == null) {
             return Optional.absent();
         }
-        ContentKey previous = key.getPrevious();
         ContentKey next = key.getNext();
         if (next != null) {
             Optional<ContentKey> lastUpdatedKey = findLastUpdatedKey(channelName);
@@ -67,7 +66,7 @@ public class ContentServiceImpl implements ContentService {
             }
         }
 
-        return Optional.of(new LinkedContent(value, previous, next));
+        return Optional.of(new LinkedContent(value, key.getPrevious(), next));
     }
 
     @Override

@@ -19,6 +19,7 @@ public class SequenceContentKey implements ContentKey {
 
     @Override
     public ContentKey getPrevious() {
+        //todo - gfm - 3/26/14 - should this return absent for <= 999 ?
         return new SequenceContentKey(sequence - 1);
     }
 
@@ -33,7 +34,11 @@ public class SequenceContentKey implements ContentKey {
 
     public static Optional<ContentKey> fromString(String key) {
         try {
-            Optional<? extends ContentKey> optional = Optional.of(new SequenceContentKey(Long.parseLong(key)));
+            long keySequence = Long.parseLong(key);
+            if (keySequence <= START_VALUE) {
+                return Optional.absent();
+            }
+            Optional<? extends ContentKey> optional = Optional.of(new SequenceContentKey(keySequence));
             return (Optional<ContentKey>) optional;
         } catch (Exception e) {
             return Optional.absent();
