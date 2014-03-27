@@ -29,11 +29,15 @@ public class S3Deleter implements Runnable {
 
     @Override
     public void run() {
-        while (delete()) {
-            logger.debug("deleting more from " + channelName);
+        try {
+            while (delete()) {
+                logger.info("deleting more from " + channelName + " deleted " + deleted);
+            }
+            delete();
+            logger.info("completed deletion of " + channelName + " deleted " + deleted + " items");
+        } catch (Exception e) {
+            logger.warn("unable to delete " + channelName + " in " + bucketName, e);
         }
-        delete();
-        logger.info("completed deletion of " + channelName + " deleting " + deleted + " items");
     }
 
     private boolean delete() {
