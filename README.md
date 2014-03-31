@@ -339,6 +339,8 @@ curl -i -X DELETE http://hub/channel/stumptown
 
 ## configure replication
 
+**Support for Replication is currently in Alpha.**
+
 **Replication Configuration will be access controlled in in Staging and Prod environments**
 
 The Hub can replicate Sequence channels from another Hub instance.  TimeSeries replication is not yet supported.
