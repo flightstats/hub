@@ -16,6 +16,7 @@ The Hub
 * [configure replication](#configure-replication)
 * [replication status](#replication-status)
 * [stop replication](#stop-replication)
+* [health check](#health-check)
 * [api updates](#api-updates)
 * [development](#development)
 
@@ -414,6 +415,23 @@ Stop replication of the entire domain `hub.other`, issue a `DELETE` command.
 
 `DELETE http://hub/replication/hub.other`
 
+## health check
+
+The Health Check returns a 200 status code when the server can connect to each data store.
+If the server can not access a data store, it will return a 500 status code.
+
+Responding to http connections is the last step on startup, so the health check will be unresponsive until startup is complete.
+On shutdown, the server immediately stops responding to new http connections, so there are no separate codes for startup and shutdown.
+
+`GET http://hub/health`
+
+```json
+{
+  "healthy" : true,
+  "description" : "OK",
+  "version" : "2014-03-26.126"
+}
+```
 
 ## api updates
 
