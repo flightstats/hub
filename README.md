@@ -17,6 +17,7 @@ The Hub
 * [replication status](#replication-status)
 * [stop replication](#stop-replication)
 * [health check](#health-check)
+* [access control](#access-control)
 * [api updates](#api-updates)
 * [development](#development)
 
@@ -37,6 +38,7 @@ Sequence channels represent a linked list of data.  Each item added gets a seque
 Sequence channels are intended for insertation rates less than five items per second.
 Users should note that with high frequency inserts, the clients view of insertion order may not be maintained.
 
+**Support for TimeSeries channels is currently in Alpha.  If you'd like to use one, please come talk to us.**
 TimeSeries channels are designed for small, high frequency inserts with low latency.  Each item added gets a unique id.  They are not traversable, and have a max content size of 60KB.
 TimeSeries can support insertation rates up to 1000 items per second.
 TimeSeries is higher throughput and lower latency than Sequence, as well as slightly more expensive.
@@ -324,6 +326,8 @@ For external data providers, there is a simplified interface suitable for exposi
 
 ## delete a channel
 
+**Channel Deletion will be access controlled in Staging and Prod environments**
+
 To delete a channel when after you no longer need it, simply issue a `DELETE` command to that channel.
 
  `DELETE http://hub/channel/stumptown`
@@ -334,6 +338,8 @@ curl -i -X DELETE http://hub/channel/stumptown
 ```
 
 ## configure replication
+
+**Replication Configuration will be access controlled in in Staging and Prod environments**
 
 The Hub can replicate Sequence channels from another Hub instance.  TimeSeries replication is not yet supported.
 
@@ -411,6 +417,8 @@ You can get the status of the current replication processes at:
 
 ## stop replication
 
+**Stopping Replication will be access controlled in in Staging and Prod environments**
+
 Stop replication of the entire domain `hub.other`, issue a `DELETE` command.
 
 `DELETE http://hub/replication/hub.other`
@@ -432,6 +440,12 @@ On shutdown, the server immediately stops responding to new http connections, so
   "version" : "2014-03-26.126"
 }
 ```
+
+## access control
+
+Currently, all access to the Hub is uncontrolled, and does not require authentication.
+Over time, access control will be added to some of the API, starting with Channel Deletion and Replication Management.
+To request a change to a controlled API, or to request access, please use the [hub-discuss forum](https://groups.google.com/a/conducivetech.com/forum/#!forum/hub-discuss)
 
 ## api updates
 
