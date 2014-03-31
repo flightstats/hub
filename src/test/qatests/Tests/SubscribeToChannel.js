@@ -19,6 +19,7 @@ var dhh = require('../DH_test_helpers/DHtesthelpers.js'),
 var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
     WAIT_FOR_SOCKET_CLOSURE_MS = 10 * 1000,
     URL_ROOT = dhh.URL_ROOT,
+    MY_8MB_FILE = './artifacts/Iam8Mb.txt',
     DOMAIN = dhh.DOMAIN,
 //    DOMAIN = 'hub-02.cloud-east.staging:8080',
     FAKE_SOCKET_URI = ['ws:/', dhh.DOMAIN, 'channel', 'sQODTvsYlLOLWTFPWNBBQ', 'ws'].join('/'),
@@ -568,6 +569,114 @@ describe('Channel Subscription:', function() {
                         next(null, uri);
                     }, waitBetween);
                 });
+            }, function(err, uris) {
+                // pass
+            });
+        };
+
+        // Confirms order of responses and then calls confirmAllRelativeLinks(), which ends test
+        var confirmOrderOfResponses = function() {
+            last_post_time = moment();
+            time_to_post_all = last_post_time.diff(first_post_time, 'seconds');
+            gu.debugLog('Post time for '+ numUpdates +' items: '+ time_to_post_all +' seconds.')
+
+            gu.debugLog('...entering confirmOrderOfResponses()');
+
+            dhh.getListOfLatestUrisFromChannel({numItems: numUpdates, channelUri: channelUri}, function(allUris) {
+                expectedResponseQueue = allUris;
+                gu.debugLog('Expected response queue length: '+ expectedResponseQueue.length, DEBUG);
+
+                expect(actualResponseQueue.length).to.equal(numUpdates);
+                expect(expectedResponseQueue.length).to.equal(numUpdates);
+
+                gu.debugLog('Expected and Actual queues are full. Comparing queues...', DEBUG);
+
+                for (i = 0; i < numUpdates; i += 1) {
+                    //expect(actualResponseQueue[i]).to.equal(expectedResponseQueue[i]);
+                    expect(doUrlsMatch({urlA: actualResponseQueue[i], urlB: expectedResponseQueue[i]})).to.be.true;
+                    gu.debugLog('Matched queue number '+ i, DEBUG);
+                }
+
+                confirmAllRelativeLinks();
+
+            });
+        }
+
+        // Test next/prev for each uri, as well as latest for channel. Then end test.
+        var confirmAllRelativeLinks = function() {
+            gu.debugLog('...entering confirmAllRelativeLinks()');
+
+            dhh.testRelativeLinkInformation({channelUri: channelUri, numItems: numUpdates, debug: VERBOSE}, function(err) {
+                if (null != err) {
+
+                    gu.debugLog('Error in relative links test: '+ err);
+                    expect(err).to.be.null;
+                }
+
+                ws.close();
+
+                gu.debugLog('Post time for '+ numUpdates +' items: '+ time_to_post_all +' seconds.')
+
+                done();
+            })
+        }
+
+        var onOpen = function() {
+            gu.debugLog('Open event fired!', DEBUG);
+            gu.debugLog('Readystate: '+ ws.readyState, DEBUG);
+            mainTest();
+        };
+
+        var ws = dhh.createWebSocket(wsUri, onOpen);
+
+        ws.on('message', function(data, flags) {
+            actualResponseQueue.push(data);
+            gu.debugLog('Received message: '+ data, DEBUG);
+            gu.debugLog('Response queue length: '+ actualResponseQueue.length, DEBUG);
+
+            if (actualResponseQueue.length == numUpdates) {
+                confirmOrderOfResponses();
+            }
+        });
+    });
+
+    // SKIP - this should be run on demand, not automatically
+    it.skip('Continuous updates of 8MB at 1 per minute are sent with order preserved.', function(done) {
+        var actualResponseQueue = [], expectedResponseQueue = [], endWait, i;
+        var numUpdates = 20,
+            waitBetween = 60 * 1000,
+            first_post_time = null,
+            last_post_time = null,
+            time_to_post_all = null,
+            VERBOSE = true;
+        this.timeout((numUpdates * (WAIT_FOR_CHANNEL_RESPONSE_MS + waitBetween)) + 45000);
+
+        var mainTest = function() {
+            var payload = fs.readFileSync(MY_8MB_FILE, "utf8");
+
+            first_post_time = moment();
+
+            async.timesSeries(numUpdates, function(n, next) {
+                dhh.postData({channelUri: channelUri, data: payload}, function(res, uri) {
+                    expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+
+                    dhh.confirmExpectedData(uri, payload, function(didMatch) {
+                        expect(didMatch).to.be.true;
+
+                        setTimeout(function() {
+                            next(null, uri);
+                        }, waitBetween);
+                    });
+                });
+
+                /*
+                dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
+                    gu.debugLog('Posted data #'+ n, DEBUG);
+                    setTimeout(function() {
+                        next(null, uri);
+                    }, waitBetween);
+                });
+                */
             }, function(err, uris) {
                 // pass
             });
