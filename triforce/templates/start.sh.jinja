@@ -5,7 +5,7 @@
 
 # Redirect output to a debug file for now
 exec > ${APP_STATE}/upstart-debug-${ID}.stdout
-exec > ${APP_STATE}/upstart-debug-${ID}.stderr
+exec 2> ${APP_STATE}/upstart-debug-${ID}.stderr
 
 # Hack
 if [ -z "${JAVA_HOME}" ] ; then
