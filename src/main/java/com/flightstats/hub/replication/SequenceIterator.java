@@ -42,9 +42,9 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private boolean connected = false;
 
-    public SequenceIterator(long startSequence, ChannelUtils channelUtils, Channel channel,
+    public SequenceIterator(long lastCompleted, ChannelUtils channelUtils, Channel channel,
                             WebSocketContainer container, MetricRegistry metricRegistry) {
-        this.current = startSequence;
+        this.current = lastCompleted;
         this.channelUtils = channelUtils;
         this.channel = channel;
         this.container = container;
@@ -87,7 +87,7 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
             @Override
             public Long getValue() {
                 long delta = getDelta();
-                logger.info("delta is " + delta);
+                logger.info("delta is " + delta + " for " + channel.getUrl());
                 return delta;
             }
         });
