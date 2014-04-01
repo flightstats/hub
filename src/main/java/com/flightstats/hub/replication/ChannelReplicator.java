@@ -161,7 +161,7 @@ public class ChannelReplicator implements Runnable, Lockable {
 
     long searchForStartingKey(long lastUpdated, long daysToUse) {
         //this may not play well with discontinuous sequences
-        logger.debug("searching the key space for " + channel.getUrl());
+        logger.debug("searching the key space with lastUpdated {}", lastUpdated);
         Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getUrl());
         if (!latestSequence.isPresent()) {
             return SequenceContentKey.START_VALUE;
@@ -178,7 +178,8 @@ public class ChannelReplicator implements Runnable, Lockable {
                 low = middle + 1;
             }
         }
-        logger.debug("returning starting key " + lastExists);
+        lastExists -= 1;
+        logger.debug("returning lastExists {} ", lastExists);
         return lastExists;
     }
 
@@ -186,6 +187,7 @@ public class ChannelReplicator implements Runnable, Lockable {
      * We want to return a starting id that exists, and isn't going to be expired immediately.
      */
     private boolean existsAndNotYetExpired(long id, long daysToUse) {
+        logger.debug("id = {} daysToUse = {} ", id,  daysToUse);
         Optional<DateTime> creationDate = channelUtils.getCreationDate(channel.getUrl(), id);
         if (!creationDate.isPresent()) {
             return false;
