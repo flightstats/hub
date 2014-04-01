@@ -643,7 +643,7 @@ describe('Channel Subscription:', function() {
     // SKIP - this should be run on demand, not automatically
     it.skip('Continuous updates of 8MB at 1 per minute are sent with order preserved.', function(done) {
         var actualResponseQueue = [], expectedResponseQueue = [], endWait, i;
-        var numUpdates = 20,
+        var numUpdates = 300,
             waitBetween = 60 * 1000,
             first_post_time = null,
             last_post_time = null,
@@ -751,16 +751,18 @@ describe('Channel Subscription:', function() {
     it('Multiple agents on a channel can be supported.', function(done) {
         // Channel created
         // create twelve agents that subscribe to the channel
-        // channel pumps out three bits of data
+        // channel pumps out two bits of data
         // each channel receives data in correct order
         var sockets = [],
             numAgents = 12,
-            numReadySockets = 0,
+            numOpenSockets = 0,
+            numPrimedSockets = 0,
             uri1,   // remember, the numbers do NOT necessarily reflect the order of creation
             uri2;
 
+
         // Called from newSocketIsReady() if all sockets are ready
-        var mainTest = function() {
+        var postItemsToChannel = function() {
             // Post TWO messages to channel
             async.parallel([
                 function(callback){
@@ -785,6 +787,14 @@ describe('Channel Subscription:', function() {
                     // pass  (rewrote the stuff below and moved it out into testAllSockets() )
                 });
         };
+
+        // initial post for priming sockets
+        var primeSockets = function() {
+            dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
+                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                gu.debugLog('Posted priming value ', DEBUG);
+            });
+        }
 
         // Called from afterOnMessage() if all sockets have received messages
         var testAllSockets = function() {
@@ -814,11 +824,11 @@ describe('Channel Subscription:', function() {
             });
         }
 
-        // Called when each socket is ready.
-        var newSocketIsReady = function() {
-            numReadySockets += 1;
-            if (numAgents === numReadySockets) {
-                mainTest();
+        // Called when each socket is opened -- if all are opened, then prime them.
+        var newSocketIsOpen = function() {
+            numOpenSockets += 1;
+            if (numAgents === numOpenSockets) {
+                primeSockets();
             }
         };
 
@@ -835,8 +845,29 @@ describe('Channel Subscription:', function() {
             return full;
         }
 
-        // called when a socket's onMessage() is done
+        // Called when a socket's onMessage() is done
+        // Hacky: would be ideal to check which socket is primed, but for now just counting total number.
         var afterOnMessage = function() {
+
+            // If the last socket waiting to be primed is primed, then post the "real" items
+            if (numPrimedSockets < numAgents) {
+                numPrimedSockets += 1;
+//                gu.debugLog(numPrimedSockets.toString() +' sockets are now primed (waiting for all '+ numAgents +').')
+
+                if (numAgents == numPrimedSockets) {
+//                    gu.debugLog('OK. All sockets are primed. Clearing their responseQueues...')
+
+                    // Clear out each socket's responseQueue (since the item posted was just to prime it)
+                    for (var i = 0; i < sockets.length; i += 1) {
+                        sockets[i].responseQueue = [];
+                    }
+
+//                    gu.debugLog('All responseQueues cleared. Now calling the function to post the items.')
+
+                    postItemsToChannel();
+                }
+            }
+
             if (numFullSockets() == numAgents) {
                 testAllSockets();
             }
@@ -848,7 +879,7 @@ describe('Channel Subscription:', function() {
                 'domain': DOMAIN,
                 'uri': wsUri,
                 'socketName': 'ws_'+ i,
-                'onOpenCB': newSocketIsReady,
+                'onOpenCB': newSocketIsOpen,
                 'onMessageCB': afterOnMessage
             });
 
