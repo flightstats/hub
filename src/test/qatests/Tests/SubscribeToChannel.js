@@ -140,6 +140,13 @@ describe('Channel Subscription:', function() {
             uriB;
 
         var afterOpen = function() {
+            dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
+                expect(gu.isHTTPSuccess(res.status)).to.equal(true);
+                gu.debugLog('Posted priming value ', DEBUG);
+            })
+        };
+
+        var postMainItems = function() {
             async.parallel([
                 function(callback){
                     dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
@@ -157,15 +164,22 @@ describe('Channel Subscription:', function() {
                         callback(null, null);
                     });
                 }
-            ])};
+            ])
+        };
+
 
         var afterMessage = function() {
-            if (DEBUG) {
-                gu.debugLog('MESSAGE RECEIVED: ' + socket.responseQueue[socket.responseQueue.length - 1]);
+            if (1 == socket.responseQueue.length) {
+                postMainItems();
             }
+            else {
+                if (DEBUG) {
+                    gu.debugLog('MESSAGE RECEIVED: ' + socket.responseQueue[socket.responseQueue.length - 1]);
+                }
 
-            if (socket.responseQueue.length == 2)  {
-                confirmSocketData();
+                if (socket.responseQueue.length == 3)  {
+                    confirmSocketData();
+                }
             }
         };
 
@@ -173,13 +187,14 @@ describe('Channel Subscription:', function() {
             dhh.getLatestUri(channelUri, function(latestUri) {
                 var firstUri = (latestUri == uriA) ? uriB : uriA;
 
-                expect(socket.responseQueue.length).to.equal(2);
+                // Updated length to include priming message
+                expect(socket.responseQueue.length).to.equal(3);
 
                 //expect(socket.responseQueue[0]).to.equal(firstUri);
                 //expect(socket.responseQueue[1]).to.equal(latestUri);
 
-                expect(doUrlsMatch({urlA: socket.responseQueue[0], urlB: firstUri})).to.be.true;
-                expect(doUrlsMatch({urlA: socket.responseQueue[1], urlB: latestUri})).to.be.true;
+                expect(doUrlsMatch({urlA: socket.responseQueue[1], urlB: firstUri})).to.be.true;
+                expect(doUrlsMatch({urlA: socket.responseQueue[2], urlB: latestUri})).to.be.true;
 
                 gu.debugLog('final socket state is '+ socket.ws.readyState, DEBUG);
 
@@ -649,6 +664,7 @@ describe('Channel Subscription:', function() {
             last_post_time = null,
             time_to_post_all = null,
             VERBOSE = true;
+
         this.timeout((numUpdates * (WAIT_FOR_CHANNEL_RESPONSE_MS + waitBetween)) + 45000);
 
         var mainTest = function() {
@@ -662,6 +678,8 @@ describe('Channel Subscription:', function() {
 
                     dhh.confirmExpectedData(uri, payload, function(didMatch) {
                         expect(didMatch).to.be.true;
+
+                        gu.debugLog('Confirmed data post number '+ (n + 1) +' after '+ moment().diff(first_post_time, 'minutes') +' minutes');
 
                         setTimeout(function() {
                             next(null, uri);
