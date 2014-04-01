@@ -86,7 +86,10 @@ JAVA_OPTS="$(cat ${JAVA_OPTS_FILE})"
 
 MAIN_CLASS="com.flightstats.hub.app.HubMain"
 
-CLI="${JAVA_HOME}/bin/java -cp ${APP_HOME}lib/* ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties"
+#HACK
+
+
+CLI="${JAVA_HOME}/bin/java -cp $(ls ${APP_HOME}lib/hub-*):${APP_HOME}lib/* ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties"
 
 set -f
 echo "Running : ${CLI}"
