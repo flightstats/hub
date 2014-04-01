@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#exec > temp.stdout
+#exec 2> temp.stderr
+
+# Redirect output to a debug file for now
+exec > ${APP_STATE}/upstart-debug-${ID}.stdout
+exec 2> ${APP_STATE}/upstart-debug-${ID}.stderr
+
 # Hack
 if [ -z "${JAVA_HOME}" ] ; then
   JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64/jre
@@ -49,9 +56,6 @@ find -type d -exec chmod +x {} \;
 ID=$$
 JAVA_OPTS_FILE=${APP_STATE}/javaopts-${ID}
 
-# Redirect output to a debug file for now
-exec >${APP_STATE}/upstart-debug-${ID}
-
 # TODO These should be implemented differently, long-term
 cat > ${JAVA_OPTS_FILE} <<JAVA_OPTS
  -d64
@@ -82,7 +86,10 @@ JAVA_OPTS="$(cat ${JAVA_OPTS_FILE})"
 
 MAIN_CLASS="com.flightstats.hub.app.HubMain"
 
-CLI="${JAVA_HOME}/bin/java -cp ${APP_HOME}lib/* ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties"
+#HACK
+
+
+CLI="${JAVA_HOME}/bin/java -cp $(ls ${APP_HOME}lib/hub-*):${APP_HOME}lib/* ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties"
 
 set -f
 echo "Running : ${CLI}"
