@@ -140,6 +140,8 @@ public class ChannelReplicator implements Runnable, Lockable {
             Optional<Content> optionalContent = iterator.next();
             if (optionalContent.isPresent()) {
                 channelService.insert(channel.getName(), optionalContent.get());
+            } else {
+                logger.warn("missing content for " + channel.getUrl());
             }
         }
     }
@@ -149,23 +151,23 @@ public class ChannelReplicator implements Runnable, Lockable {
         if (lastUpdatedKey.isPresent()) {
             SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
             if (contentKey.getSequence() == SequenceContentKey.START_VALUE) {
-                return searchForStartingKey(getMinimumValue(), historicalDays);
+                return searchForStartingKey(SequenceContentKey.START_VALUE, historicalDays);
             }
-            return searchForStartingKey(contentKey.getSequence() + 1, historicalDays + 1);
+            return searchForStartingKey(contentKey.getSequence(), historicalDays + 1);
         }
         logger.warn("problem getting starting sequence " + channel.getUrl());
         return ChannelUtils.NOT_FOUND;
     }
 
-    long searchForStartingKey(long startValue, long daysToUse) {
+    long searchForStartingKey(long lastUpdated, long daysToUse) {
         //this may not play well with discontinuous sequences
         logger.debug("searching the key space for " + channel.getUrl());
         Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getUrl());
         if (!latestSequence.isPresent()) {
-            return getMinimumValue();
+            return SequenceContentKey.START_VALUE;
         }
         long high = latestSequence.get();
-        long low = startValue;
+        long low = lastUpdated;
         long lastExists = high;
         while (low <= high) {
             long middle = low + (high - low) / 2;
@@ -178,10 +180,6 @@ public class ChannelReplicator implements Runnable, Lockable {
         }
         logger.debug("returning starting key " + lastExists);
         return lastExists;
-    }
-
-    private long getMinimumValue() {
-        return SequenceContentKey.START_VALUE + 1;
     }
 
     /**
