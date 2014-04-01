@@ -150,7 +150,18 @@ public class ChannelReplicatorTest {
             }
         });
         assertEquals(5512, replicator.getStartingSequence());
+    }
 
+    @Test
+    public void testStartingSequenceNewReplication() throws Exception {
+        //this is the case when a new replication channel is created
+        configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(10)).build();
+        when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
+        init(20);
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(999)));
+        when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
+        when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusDays(9)));
+        assertEquals(999, replicator.getStartingSequence());
     }
 
     @Test
@@ -162,7 +173,7 @@ public class ChannelReplicatorTest {
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusDays(9)));
-        assertEquals(5001, replicator.getStartingSequence());
+        assertEquals(5000, replicator.getStartingSequence());
     }
 
     @Test
@@ -195,7 +206,7 @@ public class ChannelReplicatorTest {
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusDays(9)));
-        assertEquals(5001, replicator.getStartingSequence());
+        assertEquals(5000, replicator.getStartingSequence());
     }
 
     @Test
@@ -222,7 +233,6 @@ public class ChannelReplicatorTest {
         });
         assertEquals(5201, replicator.getStartingSequence());
     }
-
 
     @Test
     public void testStartingSequenceHistorical() throws Exception {
