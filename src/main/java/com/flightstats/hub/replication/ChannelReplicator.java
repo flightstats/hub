@@ -5,6 +5,8 @@ import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -131,7 +133,7 @@ public class ChannelReplicator implements Runnable, Lockable {
     }
 
     private void replicate() {
-        long sequence = sequenceFinder.getLastUpdated(channel, historicalDays);
+        long sequence = getLastUpdated();
         if (sequence == ChannelUtils.NOT_FOUND) {
             return;
         }
@@ -145,6 +147,19 @@ public class ChannelReplicator implements Runnable, Lockable {
                 logger.warn("missing content for " + channel.getUrl());
             }
         }
+    }
+
+    public long getLastUpdated() {
+        Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
+        if (lastUpdatedKey.isPresent()) {
+            SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
+            if (contentKey.getSequence() == SequenceContentKey.START_VALUE) {
+                return sequenceFinder.searchForLastUpdated(channel, SequenceContentKey.START_VALUE, historicalDays, TimeUnit.DAYS);
+            }
+            return sequenceFinder.searchForLastUpdated(channel, contentKey.getSequence(), historicalDays + 1, TimeUnit.DAYS);
+        }
+        logger.warn("problem getting starting sequence " + channel.getUrl());
+        return ChannelUtils.NOT_FOUND;
     }
 
     public boolean isConnected() {
