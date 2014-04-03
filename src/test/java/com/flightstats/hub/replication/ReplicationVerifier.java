@@ -57,17 +57,19 @@ public class ReplicationVerifier {
 
         }
         int missing = 0;
-        int checked = 0;
+        int sequences = 0;
+        int payloads = 0;
         List<Future<VerifierResult>> futures = executor.invokeAll(verifiers);
         for (Future<VerifierResult> future : futures) {
             VerifierResult result = future.get();
             logger.info(result.toString());
             missing += result.getMissingSequences().size();
             missing += result.getInvalidPayloads().size();
-            checked += result.getPayloadsChecked();
-            checked += result.getSequencesChecked();
+            payloads += result.getPayloadsChecked();
+            sequences += result.getSequencesChecked();
         }
-        logger.info("total checked " + checked);
+        logger.info("total sequences checked " + sequences);
+        logger.info("total payloads checked " + payloads);
         logger.info("returning missing count " + missing);
         executor.shutdown();
 
