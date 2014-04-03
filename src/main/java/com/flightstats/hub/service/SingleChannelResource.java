@@ -128,7 +128,7 @@ public class SingleChannelResource {
     @DELETE
     public Response delete(@PathParam("channelName") final String channelName) throws Exception {
         channelService.delete(channelName);
-        return Response.ok().build();
+        return Response.status(Response.Status.ACCEPTED).build();
     }
 
     private boolean noSuchChannel(final String channelName) {
