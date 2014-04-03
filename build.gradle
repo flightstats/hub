@@ -182,6 +182,8 @@ jasmineTests.mustRunAfter startHubAsync
 jasmineTests.mustRunAfter startMemoryHubAsync
 
 task startReplicationVerifierStaging (dependsOn: testClasses ) << {
+    //todo - gfm - 4/3/14 - may want to pass in args via JZ comment here -
+    // http://forums.gradle.org/gradle/topics/how_can_i_provide_command_line_args_to_application_started_with_gradle_run
     verifierExec.args = ["http://hub.svc.staging/", "1", "10"].toList()
     verifierExec.execute()
 }
