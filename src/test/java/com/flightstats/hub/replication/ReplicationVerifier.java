@@ -20,7 +20,7 @@ import java.util.concurrent.Future;
  * The replication verifier should get kicked off every N hours.
  * It should pull down the replication config for each source domain on system X.
  * For each replicated channel, it should verify that:
- *  - Since the last run, the sequence is continous
+ *  - The sequence is continous for the last N hours
  *  - For a certain percentage, M, verify that the source payload matches the replicated payload
  */
 public class ReplicationVerifier {
@@ -34,11 +34,11 @@ public class ReplicationVerifier {
             logger.warn("Usage: com.flightstats.hub.replication.ReplicationVerifier replicationDomain frequencyHours verificationPercent");
             logger.warn("replicationDomain is the full uri of where replication is - http://hub.svc.staging/");
             logger.warn("frequencyHours is how far back in time this process should look for data - 1");
-            logger.warn("verificationPercent is what percentage of the payloads from the replication source should be verified as matching.  This will put for more on the source system. 0-100");
+            logger.warn("payloadPercent is what percentage of the payloads from the replication source should be verified as matching.  This will put for more on the source system. 0-100");
         }
         String replicationUri = args[0];
         int frequencyHours = Integer.parseInt(args[1]);
-        int verificationPercent = Integer.parseInt(args[2]);
+        int payloadPercent = Integer.parseInt(args[2]);
         ChannelUtils channelUtils = new ChannelUtils(GuiceContext.HubCommonModule.buildJerseyClientNoRedirects(), client);
         SequenceFinder sequenceFinder = new SequenceFinder(channelUtils);
         ClientResponse replication = client.resource(replicationUri + "replication").accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
@@ -53,7 +53,7 @@ public class ReplicationVerifier {
         Collection<ChannelVerifier> verifiers = new ArrayList<>();
         for (JsonNode stati : status) {
             logger.info(stati.toString());
-            verifiers.add(new ChannelVerifier(stati, replicationUri, frequencyHours, verificationPercent, sequenceFinder, channelUtils));
+            verifiers.add(new ChannelVerifier(stati, replicationUri, frequencyHours, payloadPercent, sequenceFinder, channelUtils));
 
         }
         int missing = 0;
