@@ -42,7 +42,7 @@ public class SequenceFinder {
             }
         }
         lastExists -= 1;
-        logger.info("returning lastExists {} ", lastExists);
+        logger.info("returning lastExists {} {}", lastExists, channel);
         return lastExists;
     }
 
