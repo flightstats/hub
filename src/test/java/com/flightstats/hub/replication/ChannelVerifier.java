@@ -48,7 +48,7 @@ public class ChannelVerifier implements Callable<VerifierResult> {
             if (!content.isPresent()) {
                 result.addMissingSequence(String.valueOf(sequence));
             }
-            sequence+=100;
+            sequence+=1;
         }
         logger.info("completed " + channelUri + " " + result);
         return result;
