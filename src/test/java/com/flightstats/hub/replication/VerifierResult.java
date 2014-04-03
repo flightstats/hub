@@ -8,10 +8,15 @@ import java.util.List;
  */
 public class VerifierResult {
 
+    private String uri;
     private List<String> missingSequences = new ArrayList<>();
     private List<String> invalidPayloads = new ArrayList<>();
     private int sequencesChecked;
     private int payloadsChecked;
+
+    public VerifierResult(String uri) {
+        this.uri = uri;
+    }
 
     public List<String> getMissingSequences() {
         return missingSequences;
@@ -48,7 +53,8 @@ public class VerifierResult {
     @Override
     public String toString() {
         return "VerifierResult{" +
-                "missingSequences=" + missingSequences +
+                "uri='" + uri + '\'' +
+                ", missingSequences=" + missingSequences +
                 ", invalidPayloads=" + invalidPayloads +
                 ", sequencesChecked=" + sequencesChecked +
                 ", payloadsChecked=" + payloadsChecked +
