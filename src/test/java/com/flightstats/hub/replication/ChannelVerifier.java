@@ -68,7 +68,7 @@ public class ChannelVerifier implements Callable<VerifierResult> {
     }
 
     private boolean shouldVerifyPayload() {
-        return random.nextInt(100) < payloadPercent;
+        return random.nextInt(100) + 1 < payloadPercent;
     }
 
     private long getStartSequence() {
