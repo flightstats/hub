@@ -56,10 +56,21 @@ public class ReplicationVerifier {
             verifiers.add(new ChannelVerifier(stati, replicationUri, frequencyHours, verificationPercent, sequenceFinder, channelUtils));
 
         }
+        int missing = 0;
+        int checked = 0;
         List<Future<VerifierResult>> futures = executor.invokeAll(verifiers);
         for (Future<VerifierResult> future : futures) {
-            logger.info(future.get().toString());
+            VerifierResult result = future.get();
+            logger.info(result.toString());
+            missing += result.getMissingSequences().size();
+            missing += result.getInvalidPayloads().size();
+            checked += result.getPayloadsChecked();
+            checked += result.getSequencesChecked();
         }
+        logger.info("total checked " + checked);
+        logger.info("returning missing count " + missing);
         executor.shutdown();
+
+        System.exit(missing);
     }
 }
