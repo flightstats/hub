@@ -181,3 +181,17 @@ task integrationTests (dependsOn: [startHubAsync, startMemoryHubAsync, jasmineTe
 jasmineTests.mustRunAfter startHubAsync
 jasmineTests.mustRunAfter startMemoryHubAsync
 
+task startReplicationVerifierStaging (dependsOn: testClasses ) << {
+    if ( project.hasProperty("appArgs") ) {
+        verifierExec.args = Eval.me(appArgs)
+    } else {
+        verifierExec.args = ["http://hub.svc.staging/", "1", "10"].toList()
+    }
+    verifierExec.execute()
+}
+
+task verifierExec (type: JavaExec ) {
+    main = 'com.flightstats.hub.replication.ReplicationVerifier'
+    classpath = sourceSets.test.runtimeClasspath
+}
+
