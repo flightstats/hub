@@ -22,8 +22,9 @@ public class ZooKeeperState {
             @Override
             public void stateChanged(CuratorFramework client, ConnectionState newState) {
                 connectionState = newState;
-                stopWorking.set(!isHealthy());
-                logger.info("state change from " + connectionState + " to " + newState);
+                boolean healthy = isHealthy();
+                stopWorking.set(!healthy);
+                logger.info("state change from " + connectionState + " to " + newState + " healthy" + healthy);
             }
         };
     }

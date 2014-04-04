@@ -139,6 +139,7 @@ public class ChannelReplicator implements Runnable, Lockable {
         }
         logger.info("starting " + channel.getUrl() + " migration at " + sequence);
         iterator = sequenceIteratorFactory.create(sequence, channel);
+        //todo - gfm - 4/4/14 - maybe the ordering here is backwards?
         while (iterator.hasNext() && curatorLock.shouldKeepWorking()) {
             Optional<Content> optionalContent = iterator.next();
             if (optionalContent.isPresent()) {
@@ -147,6 +148,7 @@ public class ChannelReplicator implements Runnable, Lockable {
                 logger.warn("missing content for " + channel.getUrl());
             }
         }
+        logger.info("stopping" + channel.getUrl() + " migration " + curatorLock.shouldKeepWorking());
     }
 
     public long getLastUpdated() {
