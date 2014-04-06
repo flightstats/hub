@@ -7,20 +7,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * CuratorLeader calls ElectedLeader when it gets leadership.
+ * CuratorLeader calls Leader when it gets leadership.
+ * Use a Leader when you have a long running task which needs to be canceled if the ZooKeeper connection is lost.
+ * A Leader is useful when you always want a process with leadership.
+ * Brief processes which don't always run can use a CuratorLock.
  */
 public class CuratorLeader {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorLeader.class);
 
     private String leaderPath;
-    private ElectedLeader electedLeader;
+    private Leader leader;
     private final CuratorFramework curator;
     private LeaderSelector leaderSelector;
 
-    public CuratorLeader(String leaderPath, ElectedLeader electedLeader, CuratorFramework curator) {
+    public CuratorLeader(String leaderPath, Leader leader, CuratorFramework curator) {
         this.leaderPath = leaderPath;
-        this.electedLeader = electedLeader;
+        this.leader = leader;
         this.curator = curator;
     }
 
@@ -39,7 +42,7 @@ public class CuratorLeader {
         public void takeLeadership(final CuratorFramework client) throws Exception {
             logger.info("have leadership for " + leaderPath);
             try {
-                electedLeader.doWork();
+                leader.takeLeadership();
             } catch (Exception e) {
                 logger.warn("exception thrown from ElectedLeader " + leaderPath, e);
             }

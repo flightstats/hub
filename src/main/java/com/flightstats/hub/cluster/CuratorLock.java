@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The CuratorLock should be used for short (<10s) running processes which need a global lock across all instances.
+ * The CuratorLock should be used for short running processes which need a global lock across all instances.
  * Longer running processes should use CuratorLeader.
  */
 public class CuratorLock {

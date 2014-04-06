@@ -35,7 +35,7 @@ public class CuratorLeaderIntegrationTest {
         count = new AtomicInteger();
         countDownLatch = new CountDownLatch(1);
         CuratorLeader curatorLeader = new CuratorLeader("/CuratorLeaderIntegrationTest/testElection",
-                new MockElectedLeader(), curator);
+                new MockLeader(), curator);
 
         curatorLeader.start();
         assertTrue(countDownLatch.await(5000, TimeUnit.MILLISECONDS));
@@ -47,9 +47,9 @@ public class CuratorLeaderIntegrationTest {
         count = new AtomicInteger();
         countDownLatch = new CountDownLatch(3);
         String leaderPath = "/CuratorLeaderIntegrationTest/testMultipleLeaders";
-        CuratorLeader curatorLeader1 = new CuratorLeader(leaderPath, new MockElectedLeader(), curator);
-        CuratorLeader curatorLeader2 = new CuratorLeader(leaderPath, new MockElectedLeader(), curator);
-        CuratorLeader curatorLeader3 = new CuratorLeader(leaderPath, new MockElectedLeader(), curator);
+        CuratorLeader curatorLeader1 = new CuratorLeader(leaderPath, new MockLeader(), curator);
+        CuratorLeader curatorLeader2 = new CuratorLeader(leaderPath, new MockLeader(), curator);
+        CuratorLeader curatorLeader3 = new CuratorLeader(leaderPath, new MockLeader(), curator);
 
         curatorLeader1.start();
         curatorLeader2.start();
@@ -60,10 +60,10 @@ public class CuratorLeaderIntegrationTest {
         assertEquals(3, count.get());
     }
 
-    private class MockElectedLeader implements ElectedLeader {
+    private class MockLeader implements Leader {
 
         @Override
-        public void doWork() {
+        public void takeLeadership() {
             logger.info("do Work");
             Sleeper.sleep(20);
             countDownLatch.countDown();
