@@ -41,10 +41,10 @@ public class CuratorLeaderFailureIntegrationTest {
         assertTrue(count.get() >= 3);
     }
 
-    private class LostSleepLeader implements ElectedLeader {
+    private class LostSleepLeader implements Leader {
 
         @Override
-        public void doWork() {
+        public void takeLeadership() {
             while (true) {
                 count.incrementAndGet();
                 Sleeper.sleep(5);
@@ -64,10 +64,10 @@ public class CuratorLeaderFailureIntegrationTest {
         assertTrue(count.get() >= 1);
     }
 
-    private class LostConnectionLeader implements ElectedLeader {
+    private class LostConnectionLeader implements Leader {
 
         @Override
-        public void doWork() {
+        public void takeLeadership() {
             logger.info("starting work!");
             try {
                 Client client = GuiceContext.HubCommonModule.buildJerseyClient();
