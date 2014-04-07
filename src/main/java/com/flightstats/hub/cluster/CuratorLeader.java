@@ -28,13 +28,17 @@ public class CuratorLeader {
     }
 
     /**
-     * Attempt leadership. This attempt is done in the background - i.e. this method returns
-     * immediately.
-     * The ElectedLeader will be called from an ExecutorService.
+     * Attempt leadership. This method returns immediately, and is re-entrant.
+     * The Leader will be called from an ExecutorService.
      */
     public void start() {
-        leaderSelector = new LeaderSelector(curator, leaderPath, new CuratorLeaderSelectionListener());
-        leaderSelector.start();
+        if (leaderSelector == null) {
+            leaderSelector = new LeaderSelector(curator, leaderPath, new CuratorLeaderSelectionListener());
+            leaderSelector.autoRequeue();
+            leaderSelector.start();
+        } else {
+            leaderSelector.requeue();
+        }
     }
 
     private class CuratorLeaderSelectionListener extends LeaderSelectorListenerAdapter {
@@ -46,8 +50,13 @@ public class CuratorLeader {
             } catch (Exception e) {
                 logger.warn("exception thrown from ElectedLeader " + leaderPath, e);
             }
-            leaderSelector.close();
             logger.info("lost leadership " + leaderPath);
+        }
+    }
+
+    public void close() {
+        if (leaderSelector != null) {
+            leaderSelector.close();
         }
     }
 

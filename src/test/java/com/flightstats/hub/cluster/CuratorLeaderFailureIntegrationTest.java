@@ -39,6 +39,7 @@ public class CuratorLeaderFailureIntegrationTest {
         Integration.stopZooKeeper();
         logger.info("count " + count.get());
         assertTrue(count.get() >= 3);
+        curatorLeader.close();
     }
 
     private class LostSleepLeader implements Leader {
@@ -62,6 +63,7 @@ public class CuratorLeaderFailureIntegrationTest {
         Integration.stopZooKeeper();
         logger.info("count " + count.get());
         assertTrue(count.get() >= 1);
+        curatorLeader.close();
     }
 
     private class LostConnectionLeader implements Leader {
