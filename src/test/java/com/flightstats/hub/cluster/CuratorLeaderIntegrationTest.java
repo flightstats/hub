@@ -55,13 +55,14 @@ public class CuratorLeaderIntegrationTest {
         curatorLeader1.start();
         curatorLeader2.start();
         curatorLeader3.start();
-        curatorLeader1.close();
-        curatorLeader2.close();
-        curatorLeader3.close();
+
 
         assertTrue(countDownLatch.await(5000, TimeUnit.MILLISECONDS));
 
         assertEquals(3, count.get());
+        curatorLeader1.close();
+        curatorLeader2.close();
+        curatorLeader3.close();
     }
 
     private class MockLeader implements Leader {
