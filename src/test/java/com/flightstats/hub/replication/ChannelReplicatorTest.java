@@ -1,16 +1,24 @@
 package com.flightstats.hub.replication;
 
+import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
+import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.util.Sleeper;
 import com.google.common.base.Optional;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.internal.verification.Times;
+import org.mockito.internal.verification.AtLeast;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -35,9 +43,17 @@ public class ChannelReplicatorTest {
     private SequenceIteratorFactory factory;
     private Channel channel;
     private SequenceFinder sequenceFinder;
+    private static CuratorFramework curator;
+
+    @BeforeClass
+    public static void setupClass() throws Exception {
+        Integration.startZooKeeper();
+        RetryPolicy retryPolicy = GuiceContext.HubCommonModule.buildRetryPolicy();
+        curator = GuiceContext.HubCommonModule.buildCurator("hub", "test", "localhost:2181", retryPolicy, new ZooKeeperState());
+    }
 
     @Before
-    public void setupClass() throws Exception {
+    public void setup() throws Exception {
         channelService = mock(ChannelService.class);
         channelUtils = mock(ChannelUtils.class);
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(10)).build();
@@ -47,31 +63,35 @@ public class ChannelReplicatorTest {
         factory = mock(SequenceIteratorFactory.class);
         sequenceIterator = mock(SequenceIterator.class);
         when(factory.create(anyLong(), any(Channel.class))).thenReturn(sequenceIterator);
-        CuratorLock curatorLock = mock(CuratorLock.class);
-        when(curatorLock.shouldKeepWorking()).thenReturn(true);
         sequenceFinder = new SequenceFinder(channelUtils);
-        replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory, sequenceFinder);
+        replicator = new ChannelReplicator(channelService, channelUtils, factory, sequenceFinder, curator);
         channel = new Channel(CHANNEL, URL);
         replicator.setChannel(channel);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        replicator.exit();
     }
 
     @Test
     public void testLifeCycleNew() throws Exception {
         Content content = mock(Content.class);
         Optional<Content> optional = Optional.of(content);
-        when(sequenceIterator.hasNext()).thenReturn(true).thenReturn(true).thenReturn(false);
-        when(sequenceIterator.next()).thenReturn(optional).thenReturn(optional).thenReturn(null);
+        when(sequenceIterator.hasNext()).thenReturn(true);
+        when(sequenceIterator.next()).thenReturn(optional);
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.<Long>absent());
         replicator.verifyRemoteChannel();
-        replicator.runWithLock();
-        verify(channelService).createChannel(configuration);
-        verify(channelService, new Times(2)).insert(CHANNEL, content);
+        replicator.tryLeadership();
+        Sleeper.sleep(50);
+        verify(channelService, new AtLeast(1)).createChannel(configuration);
+        verify(channelService, new AtLeast(2)).insert(CHANNEL, content);
     }
 
     @Test
     public void testCreateChannelAbsent() throws Exception {
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.<ChannelConfiguration>absent());
-        replicator.run();
+        assertFalse(replicator.tryLeadership());
         assertFalse(replicator.isValid());
         verify(channelService, never()).createChannel(any(ChannelConfiguration.class));
     }
@@ -86,7 +106,7 @@ public class ChannelReplicatorTest {
     public void testTimeSeries() throws Exception {
         ChannelConfiguration timeSeries = ChannelConfiguration.builder().withName("TS").withType(ChannelConfiguration.ChannelType.TimeSeries).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(timeSeries));
-        replicator.run();
+        assertFalse(replicator.tryLeadership());
 
         assertFalse(replicator.isValid());
         verify(channelService, never()).createChannel(any(ChannelConfiguration.class));
@@ -285,11 +305,11 @@ public class ChannelReplicatorTest {
         CuratorLock curatorLock = mock(CuratorLock.class);
         when(curatorLock.shouldKeepWorking()).thenReturn(false);
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.<Long>absent());
-        replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory, sequenceFinder);
+        replicator = new ChannelReplicator(channelService, channelUtils, factory, sequenceFinder, curator);
         replicator.setChannel(channel);
         replicator.verifyRemoteChannel();
-        replicator.runWithLock();
+        replicator.tryLeadership();
+        Sleeper.sleep(20);
         verify(channelService, never()).insert(anyString(), any(Content.class));
     }
-
 }

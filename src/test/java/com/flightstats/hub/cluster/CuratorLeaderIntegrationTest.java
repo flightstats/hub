@@ -40,6 +40,7 @@ public class CuratorLeaderIntegrationTest {
         curatorLeader.start();
         assertTrue(countDownLatch.await(5000, TimeUnit.MILLISECONDS));
         assertEquals(1, count.get());
+        curatorLeader.close();
     }
 
     @Test
@@ -54,6 +55,9 @@ public class CuratorLeaderIntegrationTest {
         curatorLeader1.start();
         curatorLeader2.start();
         curatorLeader3.start();
+        curatorLeader1.close();
+        curatorLeader2.close();
+        curatorLeader3.close();
 
         assertTrue(countDownLatch.await(5000, TimeUnit.MILLISECONDS));
 
@@ -65,11 +69,25 @@ public class CuratorLeaderIntegrationTest {
         @Override
         public void takeLeadership() {
             logger.info("do Work");
-            Sleeper.sleep(20);
+            Sleeper.sleep(5);
             countDownLatch.countDown();
             count.incrementAndGet();
         }
+    }
 
+    @Test
+    public void testMultipleStarts() throws Exception {
+        count = new AtomicInteger();
+        countDownLatch = new CountDownLatch(5);
+
+        CuratorLeader curatorLeader = new CuratorLeader("/CuratorLeaderIntegrationTest/testMultipleStarts", new MockLeader(), curator);
+        for (int i = 0; i < 5; i++) {
+            curatorLeader.start();
+        }
+        assertTrue(countDownLatch.await(5000, TimeUnit.MILLISECONDS));
+
+        assertEquals(5, count.get());
+        curatorLeader.close();
     }
 
 }

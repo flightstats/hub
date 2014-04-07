@@ -30,7 +30,7 @@ public class DomainReplicator implements Runnable {
     public DomainReplicator(ChannelUtils channelUtils, Provider<ChannelReplicator> replicatorProvider) {
         this.channelUtils = channelUtils;
         this.replicatorProvider = replicatorProvider;
-        executorService = Executors.newScheduledThreadPool(25);
+        executorService = Executors.newScheduledThreadPool(1);
 
     }
 
@@ -96,8 +96,9 @@ public class DomainReplicator implements Runnable {
         ChannelReplicator channelReplicator = replicatorProvider.get();
         channelReplicator.setChannel(channel);
         channelReplicator.setHistoricalDays(domain.getHistoricalDays());
-        executorService.scheduleWithFixedDelay(channelReplicator, 0, 60, TimeUnit.SECONDS);
-        channelReplicators.add(channelReplicator);
+        if (channelReplicator.tryLeadership()) {
+            channelReplicators.add(channelReplicator);
+        }
     }
 
 
