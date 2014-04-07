@@ -39,7 +39,6 @@ public class CuratorLeaderFailureIntegrationTest {
         Integration.stopZooKeeper();
         logger.info("count " + count.get());
         assertTrue(count.get() >= 3);
-        curatorLeader.close();
     }
 
     private class LostSleepLeader implements Leader {
@@ -63,7 +62,6 @@ public class CuratorLeaderFailureIntegrationTest {
         Integration.stopZooKeeper();
         logger.info("count " + count.get());
         assertTrue(count.get() >= 1);
-        curatorLeader.close();
     }
 
     private class LostConnectionLeader implements Leader {
@@ -79,6 +77,7 @@ public class CuratorLeaderFailureIntegrationTest {
                     ClientResponse response = client.resource("http://www.google.com/").get(ClientResponse.class);
                     logger.info("got response " + response);
                     assertEquals(200, response.getStatus());
+                    Thread.sleep(10);
                 }
             } catch (Exception e) {
                 logger.info("caught exception ", e);
