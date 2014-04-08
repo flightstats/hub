@@ -30,7 +30,7 @@ public class S3Config {
     private final String s3BucketName;
 
     @Inject
-    public S3Config(AmazonS3 s3Client, @Named("app.environment") String environment, @Named("app.name") String appName,
+    public S3Config(AmazonS3 s3Client, @Named("s3.environment") String environment, @Named("app.name") String appName,
                     CuratorLock curatorLock, ChannelConfigurationDao channelConfigurationDao) {
         this.s3Client = s3Client;
         this.curatorLock = curatorLock;
@@ -65,9 +65,10 @@ public class S3Config {
     }
 
     public int doWork() {
+        logger.info("starting work");
         Iterable<ChannelConfiguration> channels = channelConfigurationDao.getChannels();
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
-        curatorLock.runWithLock(lockable, "/S3ConfigLock/", 1, TimeUnit.SECONDS);
+        curatorLock.runWithLock(lockable, "/S3ConfigLock/", 1, TimeUnit.MINUTES);
         return lockable.size;
     }
 
@@ -81,6 +82,7 @@ public class S3Config {
 
         @Override
         public void runWithLock() throws Exception {
+            logger.info("running with lock");
             ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
             for (ChannelConfiguration config : configurations) {
                 if (config.isSequence()) {

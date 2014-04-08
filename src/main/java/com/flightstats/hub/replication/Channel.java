@@ -1,8 +1,11 @@
 package com.flightstats.hub.replication;
 
+import com.flightstats.hub.model.ChannelConfiguration;
+
 public class Channel {
     private final String name;
     private final String url;
+    private ChannelConfiguration configuration;
 
     public Channel(String name, String url) {
         this.name = name;
@@ -18,6 +21,14 @@ public class Channel {
 
     public String getUrl() {
         return url;
+    }
+
+    public ChannelConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(ChannelConfiguration configuration) {
+        this.configuration = configuration;
     }
 
     @Override

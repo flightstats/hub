@@ -21,7 +21,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 /**
- * As much as I dislike Mockito, this is going to be difficult to verify, so it is worth the pain of Mockito.
+ *
  */
 public class ChannelReplicatorTest {
 
@@ -34,6 +34,7 @@ public class ChannelReplicatorTest {
     private SequenceIterator sequenceIterator;
     private SequenceIteratorFactory factory;
     private Channel channel;
+    private SequenceFinder sequenceFinder;
 
     @Before
     public void setupClass() throws Exception {
@@ -48,7 +49,8 @@ public class ChannelReplicatorTest {
         when(factory.create(anyLong(), any(Channel.class))).thenReturn(sequenceIterator);
         CuratorLock curatorLock = mock(CuratorLock.class);
         when(curatorLock.shouldKeepWorking()).thenReturn(true);
-        replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory);
+        sequenceFinder = new SequenceFinder(channelUtils);
+        replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory, sequenceFinder);
         channel = new Channel(CHANNEL, URL);
         replicator.setChannel(channel);
     }
@@ -77,7 +79,7 @@ public class ChannelReplicatorTest {
     @Test
     public void testStartingSequenceMissing() throws Exception {
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.<ContentKey>absent());
-        assertEquals(-1, replicator.getStartingSequence());
+        assertEquals(-1, replicator.getLastUpdated());
     }
 
     @Test
@@ -107,7 +109,7 @@ public class ChannelReplicatorTest {
                 return Optional.of(new DateTime().minusDays(11));
             }
         });
-        assertEquals(1501, replicator.getStartingSequence());
+        assertEquals(1500, replicator.getLastUpdated());
     }
 
     @Test
@@ -127,7 +129,7 @@ public class ChannelReplicatorTest {
                 return Optional.of(new DateTime().minusDays(11));
             }
         });
-        assertEquals(1501, replicator.getStartingSequence());
+        assertEquals(1500, replicator.getLastUpdated());
     }
 
     @Test
@@ -149,7 +151,7 @@ public class ChannelReplicatorTest {
                 return Optional.of(new DateTime().minusDays(11));
             }
         });
-        assertEquals(5512, replicator.getStartingSequence());
+        assertEquals(5511, replicator.getLastUpdated());
     }
 
     @Test
@@ -160,8 +162,17 @@ public class ChannelReplicatorTest {
         init(20);
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(999)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
-        when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusDays(9)));
-        assertEquals(999, replicator.getStartingSequence());
+        when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
+            @Override
+            public Optional<DateTime> answer(InvocationOnMock invocation) throws Throwable {
+                long aLong = (Long) invocation.getArguments()[1];
+                if (aLong >= 1000) {
+                    return Optional.of(new DateTime().minusDays(9));
+                }
+                return Optional.absent();
+            }
+        });
+        assertEquals(999, replicator.getLastUpdated());
     }
 
     @Test
@@ -173,7 +184,7 @@ public class ChannelReplicatorTest {
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusDays(9)));
-        assertEquals(5000, replicator.getStartingSequence());
+        assertEquals(4999, replicator.getLastUpdated());
     }
 
     @Test
@@ -194,7 +205,7 @@ public class ChannelReplicatorTest {
                 return Optional.of(new DateTime().minusDays(12));
             }
         });
-        assertEquals(5512, replicator.getStartingSequence());
+        assertEquals(5511, replicator.getLastUpdated());
     }
 
     @Test
@@ -206,7 +217,7 @@ public class ChannelReplicatorTest {
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusDays(9)));
-        assertEquals(5000, replicator.getStartingSequence());
+        assertEquals(4999, replicator.getLastUpdated());
     }
 
     @Test
@@ -231,7 +242,7 @@ public class ChannelReplicatorTest {
                 return Optional.of(new DateTime().minusDays(12));
             }
         });
-        assertEquals(5201, replicator.getStartingSequence());
+        assertEquals(5200, replicator.getLastUpdated());
     }
 
     @Test
@@ -250,7 +261,7 @@ public class ChannelReplicatorTest {
                 return Optional.of(new DateTime().minusDays(3));
             }
         });
-        assertEquals(2001, replicator.getStartingSequence());
+        assertEquals(2000, replicator.getLastUpdated());
     }
 
     @Test
@@ -260,7 +271,7 @@ public class ChannelReplicatorTest {
         when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusMinutes(1)));
-        assertEquals(6000, replicator.getStartingSequence());
+        assertEquals(5999, replicator.getLastUpdated());
     }
 
     private void init(int historicalDays) throws IOException {
@@ -274,7 +285,7 @@ public class ChannelReplicatorTest {
         CuratorLock curatorLock = mock(CuratorLock.class);
         when(curatorLock.shouldKeepWorking()).thenReturn(false);
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.<Long>absent());
-        replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory);
+        replicator = new ChannelReplicator(channelService, channelUtils, curatorLock, factory, sequenceFinder);
         replicator.setChannel(channel);
         replicator.verifyRemoteChannel();
         replicator.runWithLock();
