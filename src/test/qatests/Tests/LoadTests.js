@@ -365,7 +365,7 @@ describe('Load tests - POST data:', function(){
                 },
                 function(err) {
                     if (null != err) {
-                        gu.debugLog(err);
+                        gu.debugLog(err.message);
                     }
                     expect(err).to.be.null;
                     reportResults(allStats);
