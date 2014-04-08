@@ -364,6 +364,9 @@ describe('Load tests - POST data:', function(){
                     })
                 },
                 function(err) {
+                    if (null != err) {
+                        gu.debugLog(err);
+                    }
                     expect(err).to.be.null;
                     reportResults(allStats);
                     gu.debugLog('Posted for '+ timeToPostSec +' seconds on '+ numChannels +' new channels.');
