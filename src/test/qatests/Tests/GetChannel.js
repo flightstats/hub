@@ -101,7 +101,7 @@ describe('GET Channel metadata:', function() {
             expect(returnedCreationDate.add('minutes', 5).isAfter(moment())).to.be.true;
         })
 
-        it('returns correct lastUpdateDate', function() {
+        it.skip('lastUpdateDate NO LONGER GIVEN - returns correct lastUpdateDate', function() {
             var returnedCreationDate = moment(cnMetadata.getCreationDate()),
                 returnedLastUpdateDate = moment(cnMetadata.getLastUpdateDate());
 
