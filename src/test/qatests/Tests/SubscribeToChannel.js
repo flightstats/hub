@@ -113,7 +113,7 @@ describe('Channel Subscription:', function() {
         */
 
 
-        channelName = dhh.getRandomChannelName();     
+        channelName = dhh.getRandomChannelName();
 //        channelName = 'gabe_'+ dhh.getRandomChannelName();
 
 
