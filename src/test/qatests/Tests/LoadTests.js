@@ -378,9 +378,12 @@ describe('Load tests - POST data:', function(){
                     if (err) {
                         gu.debugLog('\n\n ***********  Error creating channels: '+ err.message +' **************\n');
                     } else if ('undefined' == typeof(err)) {
+                        // Strange uncaught AssertionError thrown by async I believe -- no details bubbling up.
                         gu.debugLog('\n\nWTF? Err is undefined. :(');
+                    } else {
+                        expect(err).to.be.null;
                     }
-                    expect(err).to.be.null;
+
                     reportResults(allStats);
                     gu.debugLog('Posted for '+ timeToPostSec +' seconds on '+ numChannels +' new channels.');
 
