@@ -75,7 +75,7 @@ public class GuiceContext {
                 .withGraphiteConfig(graphiteConfig)
                 .withObjectMapper(HubObjectMapperFactory.construct())
                 .withBindings(new HubBindings())
-                .withJerseyGuiceResources(false)
+                .withJerseyGuiceResourcesDisabled()
                 .withHealthCheckClass(healthCheckClass)
                 //this could be more precise
                 .withRegexServe(ChannelNameExtractor.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
