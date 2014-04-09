@@ -17,7 +17,7 @@ request.get({url: hubUrlBase + "/channel", headers: {"Content-Type": "applicatio
         for (var i = 0; i < channels.length; i++) {
             var channel = channels[i];
 
-            if (channel.name.substring(0, 4) === "test" ) {
+            if (channel.name.substring(0, 4) === "test" || channel.name.substring(0, 5) === "gtest") {
                 console.info("deleting " + JSON.stringify(channel));
                 request.del({url: channel.href},
                     function (err, response, body) {
