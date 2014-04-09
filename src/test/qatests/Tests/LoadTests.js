@@ -380,7 +380,7 @@ describe('Load tests - POST data:', function(){
                     } else if ('undefined' == typeof(err)) {
                         gu.debugLog('\n\nWTF? Err is undefined. :(');
                     }
-                    expect(err).to.not.be.null;
+                    expect(err).to.be.null;
                     reportResults(allStats);
                     gu.debugLog('Posted for '+ timeToPostSec +' seconds on '+ numChannels +' new channels.');
 
