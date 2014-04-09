@@ -365,7 +365,7 @@ describe('Load tests - POST data:', function(){
                 },
                 function(err) {
                     if (null != err) {
-                        gu.debugLog(err.message);
+                        gu.debugLog('\n\n ***********  Error creating channels: '+ err.message +' **************\n');
                     }
                     expect(err).to.be.null;
                     reportResults(allStats);
