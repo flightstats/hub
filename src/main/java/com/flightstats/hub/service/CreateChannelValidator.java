@@ -39,6 +39,7 @@ public class CreateChannelValidator {
         }
     }
 
+
     private void validateContentSize(ChannelConfiguration request) throws InvalidRequestException {
         if (request.getContentSizeKB() <= 0) {
             throw new InvalidRequestException("{\"error\": \"Content Size must be greater than 0 (zero) \"}");
