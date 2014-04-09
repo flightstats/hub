@@ -96,48 +96,58 @@ describe('Load tests - POST data:', function(){
         }
         */
 
-        async.whilst(
-            function() {
-                if (isTimed) {
-                    return moment().isBefore(expiration);
-                }
-                else {
-                    return statistics.total < numPosts;
-                }
-            },
-            function(cb) {
-                //gu.debugLog('Going to wait '+ postWaitTime +' milliseconds to post next', VERBOSE);
-                setTimeout(function() {
-                    //gu.debugLog('Calling postAndConfirm()...', VERBOSE);
-                    postAndConfirm({cnUri: cnUri, debug: VERBOSE}, function(result) {
+        gu.debugLog('   * Entering multiplePostAndConfirm for channel: '+ cnUri +'...');
 
-                        // Update stats
-                        if (result) {
-                            statistics.passes += 1;
-                        }
-                        else {
-                            statistics.failures += 1;
-                        }
-                        statistics.total += 1;
+        try {
+            async.whilst(
+                function() {
+                    if (isTimed) {
+                        return moment().isBefore(expiration);
+                    }
+                    else {
+                        return statistics.total < numPosts;
+                    }
+                },
+                function(cb) {
+                    //gu.debugLog('Going to wait '+ postWaitTime +' milliseconds to post next', VERBOSE);
+                    setTimeout(function() {
+                        //gu.debugLog('Calling postAndConfirm()...', VERBOSE);
+                        postAndConfirm({cnUri: cnUri, debug: VERBOSE}, function(result) {
 
-                        // Callback with result
-                        if (doBailOnError && !result) {
-                            cb('Failed; see output.');
-                        }
-                        else {
-                            cb();
-                        }
-                    });
-                }, postWaitTime);
-            },
-            function(err) {
-                if (err) {
-                    gu.debugLog(err);
+                            // Update stats
+                            if (result) {
+                                statistics.passes += 1;
+                            }
+                            else {
+                                statistics.failures += 1;
+                            }
+                            statistics.total += 1;
+
+                            // Callback with result
+                            if (doBailOnError && !result) {
+                                cb('Failed; see output.');
+                            }
+                            else {
+                                cb();
+                            }
+                        });
+                    }, postWaitTime);
+                },
+                function(err) {
+                    if (err) {
+                        gu.debugLog(err);
+                    }
+
+                    gu.debugLog('...leaving multiplePostAndConfirm for channel: '+ cnUri);
+
+                    callback(statistics);
                 }
-
-                callback(statistics);
+            )
+        } catch (error) {
+            if (error instanceof AssertionError) {
+                gu.debugLog('Assertion Error in multiplePostAndConfirm for channel: '+ cnUri);
             }
-        )
+        }
     }
 
     // returns true if post and confirm passed, else false
@@ -286,6 +296,7 @@ describe('Load tests - POST data:', function(){
                 },
                 doBailOnError = false,
                 VERBOSE = true;
+
 
             this.timeout(calculatedTimeout);
             gu.debugLog('Timeout will be '+ calculatedTimeout +' milliseconds.');
