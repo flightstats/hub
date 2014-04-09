@@ -30,6 +30,13 @@ public class CreateChannelValidator {
         validateChannelUniqueness(channelName);
         validateRate(request);
         validateContentSize(request);
+        validateTTL(request);
+    }
+
+    private void validateTTL(ChannelConfiguration request) throws InvalidRequestException {
+        if (request.getTtlDays() <= 0) {
+            throw new InvalidRequestException("{\"error\": \"TTL must be greater than 0 (zero) \"}");
+        }
     }
 
 

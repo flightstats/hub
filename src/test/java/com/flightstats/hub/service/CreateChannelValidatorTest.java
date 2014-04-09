@@ -85,4 +85,9 @@ public class CreateChannelValidatorTest {
     public void testInvalidRequestRate() throws Exception {
         validator.validate(ChannelConfiguration.builder().withName("mychan").withPeakRequestRate(0).build());
     }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidChannelTtl() throws Exception {
+        validator.validate(ChannelConfiguration.builder().withName("mychan").withTtlDays(0).build());
+    }
 }
