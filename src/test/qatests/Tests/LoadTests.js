@@ -377,8 +377,10 @@ describe('Load tests - POST data:', function(){
                 function(err) {
                     if (err) {
                         gu.debugLog('\n\n ***********  Error creating channels: '+ err.message +' **************\n');
+                    } else if ('undefined' == typeof(err)) {
+                        gu.debugLog('\n\nWTF? Err is undefined. :(');
                     }
-                    expect(err).to.be.null;
+                    expect(err).to.not.be.null;
                     reportResults(allStats);
                     gu.debugLog('Posted for '+ timeToPostSec +' seconds on '+ numChannels +' new channels.');
 
