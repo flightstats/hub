@@ -2,6 +2,7 @@ The Hub
 =======
 
 * [overview](#overview)
+* [error handling](#error-handling)
 * [list channels](#list-channels)
 * [create a channel](#create-a-channel)
 * [update a channel](#update-a-channel)
@@ -43,6 +44,12 @@ TimeSeries channels are designed for small, high frequency inserts with low late
 TimeSeries can support insertation rates up to 1000 items per second.
 TimeSeries is higher throughput and lower latency than Sequence, as well as slightly more expensive.
 TimeSeries also requires the users to know the frequency and size of inserts.
+
+## error handling
+
+Clients should consider handling transient server errors (500 level return codes) with retry logic.  This helps to ensure that transient issues (networking, etc)
+  do not prevent the client from entering data. For Java clients, this framework provides many options - https://github.com/rholder/guava-retrying
+The Hub team recommends clients use exponential backoff.
 
 ## list channels
 
