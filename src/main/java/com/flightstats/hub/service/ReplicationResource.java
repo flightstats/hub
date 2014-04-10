@@ -39,8 +39,12 @@ public class ReplicationResource {
     @Path("/{domain}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response putDomain(@PathParam("domain") String domain, ReplicationDomain replicationDomain) {
-        logger.info("creating domain " + domain + " replicationConfig " + replicationDomain);
+    public Response putDomain(@PathParam("domain") String domain, ReplicationDomain replicationDomain,
+                              @HeaderParam("Host") String host) {
+        logger.info("creating domain " + domain + " replicationConfig " + replicationDomain + " host " + host);
+        if (domain.equalsIgnoreCase(host)) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("The domain must be different than the host").build();
+        }
         replicationService.create(domain, replicationDomain);
         return Response.created(uriInfo.getRequestUri()).entity(replicationDomain).build();
     }
