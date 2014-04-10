@@ -381,7 +381,7 @@ Modify the existing replication configuration to include `pdx`:
 * `excludeExcept` means "Exclude all of the channels, Except the ones specified".
 * `includeExcept` means "Include all of the channels, Except the ones specified".  This will pick up new channels which aren't in the except list.
 * `includeExcept` and `excludeExcept` are mutually exclusive.  Attempts to set both will result in a 400 response code.
-* `historicalDays` tells the replicator how far back in time to start. Zero means "only get new values".
+* `historicalDays` tells the replicator how far back in time to start. Zero (the default) means "only get new values".
 * If http://hub.other/channel/stumptown `ttlDays` is 10, and `historicalDays` is 5, only items from the last 5 days will be replicated.
 * If a channel's `historicalDays` is 0 and the ongoing replication is restarted, replication will continue with the existing sequence if it is up to `historicalDays` + 1 old.
 
@@ -389,31 +389,54 @@ As an example, the replicating cluster is going into a maintenance window, and a
 Maintenance takes longer than expected and the cluster resumes at 11 AM the next day.  Replication will pick up where it left off, and will eventually catch up to the current position.
 If, instead, the cluster didn't start until 1 PM the next day, one hour's worth will not be replicated.
 
+You can see the configuration for a single domain at:
+
+ `GET http://hub/replication/hub.other`
+
+  ```json
+  {
+    "domain" : "hub.other",
+    "historicalDays" : 10,
+    "includeExcept" : [ ],
+    "excludeExcept" : [ "stumptown", "pdx" ]
+  }
+  ```
+
 ## replication status
 
-You can get the status of the current replication processes at:
+You can get the status of all current replication domains at:
 
  `GET http://hub/replication`
 
  ```json
  {
    "domains" : [ {
-     "domain" : "hub.other",
+     "domain" : "datahub.svc.staging",
+     "historicalDays" : 0,
+     "includeExcept" : [ ],
+     "excludeExcept" : [ "positionsSynthetic" ]
+   }, {
+     "domain" : "hub.svc.prod",
      "historicalDays" : 10,
      "includeExcept" : [ ],
-     "excludeExcept" : [ "stumptown", "pdx" ]
+     "excludeExcept" : [ "provider_icelandair" ]
    } ],
-  "status" : [ {
-       "url" : "http://hub.other/channel/stumptown",
-       "replicationLatest" : 310491,
-       "sourceLatest" : 310491,
-       "delta" : 0
-     }, {
-       "url" : "http://hub.other/channel/pdx",
-       "replicationLatest" : 170203,
-       "sourceLatest" : 184203,
-       "delta" : 14000
-     } ]
+   "status" : [ {
+     "replicationLatest" : 6187114,
+     "sourceLatest" : 6187114,
+     "connected" : true,
+     "deltaLatest" : 0,
+     "name" : "positionsSynthetic",
+     "url" : "http://datahub.svc.staging/channel/positionsSynthetic/"
+   }, {
+     "replicationLatest" : 3717,
+     "sourceLatest" : 3717,
+     "connected" : false,
+     "deltaLatest" : 0,
+     "name" : "provider_icelandair",
+     "url" : "http://hub.svc.prod/channel/provider_icelandair/"
+   }
+   ]
  }
  ```
 
