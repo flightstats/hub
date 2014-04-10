@@ -6,7 +6,8 @@
 frisby = require('frisby');
 utils = require('./utils.js');
 
-hubUrlBase = 'http://localhost:9080';
+hubDomain = 'localhost:9080';
+hubUrlBase = 'http://' + hubDomain;
 //This presumes you have MemoryHubMain running locally
 //remoteDomain = 'localhost:9999';
 
