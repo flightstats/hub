@@ -5,10 +5,15 @@ import com.flightstats.hub.metrics.TimedCallback;
 import com.flightstats.hub.model.ContentKey;
 import com.google.inject.Inject;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WebsocketPublisherImpl implements WebsocketPublisher {
+    private final static Logger logger = LoggerFactory.getLogger(WebsocketPublisherImpl.class);
+
 	private final HazelcastInstance hazelcast;
     private final MetricsTimer metricsTimer;
 
@@ -23,7 +28,13 @@ public class WebsocketPublisherImpl implements WebsocketPublisher {
         metricsTimer.time("hazelcast.publish", new TimedCallback<Object>() {
             @Override
             public Object call() {
-                getTopicForChannel(channelName).publish(key.keyToString());
+                try {
+                    getTopicForChannel(channelName).publish(key.keyToString());
+                } catch (HazelcastInstanceNotActiveException e) {
+                    logger.warn("unable to publish to hazelcast due to server shutdown {} {}", channelName, key.keyToString());
+                } catch (Exception e) {
+                    logger.warn("unable to publish to hazelcast " + channelName + " " + key.keyToString(), e);
+                }
                 return null;
             }
         });
