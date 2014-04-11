@@ -46,6 +46,7 @@ class Hub(object):
         print("  previous            : Fetch the previous item")
         print("  next                : Fetch the next item")
         print("  list                : List all channel names")
+        print("  health              : Perform a server health check")
         print("  ? or help           : Show this screen")
         print("  quit                : Quit or exit")
 
@@ -90,6 +91,8 @@ class Hub(object):
         elif line.startswith("head"):
             identifier = re.sub(r'^head\s*', '', line)
             return self._do_head(identifier)
+        elif line.startswith("health"):
+            return self._do_health()
         elif line.startswith("pr"):
             return self._get_previous()
         elif line.startswith("ne"):
@@ -120,10 +123,14 @@ class Hub(object):
         except IOError as e:
             print("Unable to open/read file: %s", e)
 
-    def _do_get(self, identifier):
+    def _http_get(self, uri):
         conn = httplib.HTTPConnection(self._server)
-        conn.request("GET", "/channel/%s/%s" % (self._channel, identifier), None, dict())
-        response = conn.getresponse()
+        conn.request("GET", uri, None, dict())
+        return conn.getresponse()
+
+
+    def _do_get(self, identifier):
+        response = self._http_get("/channel/%s/%s" % (self._channel, identifier))
         print(response.status, response.reason)
         self._show_response_if_text(response)
 
@@ -135,10 +142,14 @@ class Hub(object):
         for header in response.getheaders():
             print "%s: %s" % (header[0], header[1])
 
+    def _do_health(self):
+        response = self._http_get("/health")
+        print(response.status, response.reason)
+        self._show_response_if_text(response)
+        
+
     def _get_file(self, identifier, filename):
-        conn = httplib.HTTPConnection(self._server)
-        conn.request("GET", "/channel/%s/%s" % (self._channel, identifier), None, dict())
-        response = conn.getresponse()
+        response = self._http_get("/channel/%s/%s" % (self._channel, identifier))
         self._save_response_to_file(response, filename)
 
     def _save_response_to_file(self, response, filename):
@@ -153,18 +164,14 @@ class Hub(object):
             print("No previous available.")
             return
         print("Fetching previous item: %s" % self._prev)
-        conn = httplib.HTTPConnection(self._server)
-        conn.request("GET", self._prev, None, dict())
-        response = conn.getresponse()
+        response = self._http_get(self._prev)
         self._prev = self._extract_link(self._find_prev_link(response))
         self._next = self._extract_link(self._find_next_link(response))
         print(response.status, response.reason)
         self._show_response_if_text(response)
 
     def _list_channels(self):
-        conn = httplib.HTTPConnection(self._server)
-        conn.request("GET", "/channel", None, dict())
-        response = conn.getresponse()
+        response = self._http_get("/channel")
         print(response.status, response.reason)
         self._show_response_if_text(response)
 
@@ -173,9 +180,7 @@ class Hub(object):
             print("No next available.")
             return
         print("Fetching next item: %s" % self._next)
-        conn = httplib.HTTPConnection(self._server)
-        conn.request("GET", self._next, None, dict())
-        response = conn.getresponse()
+        response = self._http_get(self._next)
         self._prev = self._extract_link(self._find_prev_link(response))
         self._next = self._extract_link(self._find_next_link(response))
         print(response.status, response.reason)
@@ -183,17 +188,14 @@ class Hub(object):
 
     def _get_latest(self, filename=None):
         conn = httplib.HTTPConnection(self._server)
-        conn.request("GET", "/channel/%s/latest" % self._channel, None, dict())
-        response = conn.getresponse()
+        response = self._http_get("/channel/%s/latest" % self._channel)
         print(response.status, response.reason)
         if response.status == 404:
             print("Not found (channel is empty or nonexistent)")
         elif response.status == 303:
             location = self._find_header(response, 'location')
             print("Fetching latest: %s" % location)
-            conn = httplib.HTTPConnection(self._server)
-            conn.request("GET", location, None, dict())
-            response = conn.getresponse()
+            response = self._http_get(location)
             self._prev = self._extract_link(self._find_prev_link(response))
             self._next = self._extract_link(self._find_next_link(response))
             if filename:
@@ -274,9 +276,7 @@ class Hub(object):
         print(response.read())
 
     def _show_metadata(self):
-        conn = httplib.HTTPConnection(self._server)
-        conn.request("GET", "/channel/%s" % self._channel, None, dict())
-        response = conn.getresponse()
+        response = self._http_get("/channel/%s" % self._channel)
         print(response.status, response.reason)
         print(response.read())
 
