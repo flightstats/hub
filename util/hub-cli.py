@@ -42,6 +42,7 @@ class Hub(object):
         print("  getfile <id> <file> : Save id item into a file")
         print("  latest              : Fetch the latest item from the current channel")
         print("  latestfile <file>   : Save the latest item into a file")
+        print("  head <id>           : Fetch the HEAD info (metadata) for an item by id")
         print("  previous            : Fetch the previous item")
         print("  next                : Fetch the next item")
         print("  list                : List all channel names")
@@ -86,6 +87,9 @@ class Hub(object):
             return self._get_latest(filename)
         elif line.startswith("late"):
             return self._get_latest()
+        elif line.startswith("head"):
+            identifier = re.sub(r'^head\s*', '', line)
+            return self._do_head(identifier)
         elif line.startswith("pr"):
             return self._get_previous()
         elif line.startswith("ne"):
@@ -122,6 +126,14 @@ class Hub(object):
         response = conn.getresponse()
         print(response.status, response.reason)
         self._show_response_if_text(response)
+
+    def _do_head(self, identifier):
+        conn = httplib.HTTPConnection(self._server)
+        conn.request("HEAD", "/channel/%s/%s" % (self._channel, identifier), None, dict())
+        response = conn.getresponse()
+        print(response.status, response.reason)
+        for header in response.getheaders():
+            print "%s: %s" % (header[0], header[1])
 
     def _get_file(self, identifier, filename):
         conn = httplib.HTTPConnection(self._server)
