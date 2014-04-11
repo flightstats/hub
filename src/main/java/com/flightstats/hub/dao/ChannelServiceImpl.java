@@ -135,10 +135,14 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public void delete(String channelName) {
+    public boolean delete(String channelName) {
+        if (!channelConfigurationDao.channelExists(channelName)) {
+            return false;
+        }
         getContentService(channelName).delete(channelName);
         channelConfigurationDao.delete(channelName);
         timeIndexProcessor.delete(channelName);
         channelReplicator.delete(channelName);
+        return true;
     }
 }
