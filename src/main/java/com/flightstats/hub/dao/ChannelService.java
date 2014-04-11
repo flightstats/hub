@@ -28,5 +28,5 @@ public interface ChannelService {
 
     Collection<ContentKey> getKeys(String channelName, DateTime dateTime);
 
-    void delete(String channelName);
+    boolean delete(String channelName);
 }
