@@ -55,7 +55,7 @@ public class ReplicationResource {
     public Response getDomain(@PathParam("domain") String domain) {
         Optional<ReplicationDomain> replicationConfig = replicationService.get(domain);
         if (!replicationConfig.isPresent()) {
-            Response.status(Response.Status.NOT_FOUND).build();
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
         return Response.ok(replicationConfig.get()).build();
     }
