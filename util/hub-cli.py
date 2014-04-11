@@ -14,7 +14,7 @@ def usage():
     print("Usage: hub-cli.py --server <host[:port]>")
 
 
-class DataHub(object):
+class Hub(object):
     def __init__(self, server):
         self._server = server
         self._done = False
@@ -25,7 +25,7 @@ class DataHub(object):
     def run(self):
         while not self._done:
             try:
-                line = raw_input('DataHub@%s> ' % self._server)
+                line = raw_input('Hub@%s> ' % self._server)
             except EOFError:
                 print("\nSee ya!")
                 break
@@ -295,8 +295,8 @@ def main(argv):
     if not server:
         usage()
         sys.exit(2)
-    print("Ok, we'll talk to the DataHub server at %s" % server)
-    return DataHub(server).run()
+    print("Ok, we'll talk to the Hub server at %s" % server)
+    return Hub(server).run()
 
 
 if __name__ == "__main__":
