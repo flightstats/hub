@@ -46,9 +46,9 @@ public class ReplicationDomain {
         for (Map.Entry<String, JsonNode> entry : props.entrySet()) {
             switch (entry.getKey()) {
                 case "historicalDays":
-                    long historicalDaysValue = entry.getValue().asLong();
+                    long historicalDaysValue = entry.getValue().asLong(-1);
                     if (historicalDaysValue < 0) {
-                        throw new InvalidRequestException("historical days must be zero or greater.");
+                        throw new InvalidRequestException("historicalDays must be a number, zero or greater.");
                     }
                     builder.withHistoricalDays(historicalDaysValue);
                     break;
