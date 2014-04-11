@@ -455,6 +455,9 @@ Stop replication of the entire domain `hub.other`, issue a `DELETE` command.
 
 `DELETE http://hub/replication/hub.other`
 
+On success: `HTTP/1.1 202 Accepted`. This is Accepted because the replication may be on another server, which should
+be notified within seconds.  The user should verify that replication is stopped.
+
 ## health check
 
 The Health Check returns a 200 status code when the server can connect to each data store.
