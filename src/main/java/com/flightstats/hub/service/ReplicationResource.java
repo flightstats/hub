@@ -64,8 +64,11 @@ public class ReplicationResource {
     @Path("/{domain}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteDomain(@PathParam("domain") String domain) {
-        replicationService.delete(domain);
-        return Response.ok().build();
+        if (replicationService.delete(domain)) {
+            return Response.status(Response.Status.ACCEPTED).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).entity("Replication Domain " + domain + " not found").build();
+        }
     }
 
 }
