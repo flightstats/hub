@@ -14,14 +14,14 @@ import static org.mockito.Mockito.when;
 
 public class CreateChannelValidatorTest {
 
-    private ChannelService dao;
+    private ChannelService channelService;
     private CreateChannelValidator validator;
 
     @Before
     public void setUp() throws Exception {
-        dao = mock(ChannelService.class);
-        validator = new CreateChannelValidator(dao);
-        when(dao.channelExists(any(String.class))).thenReturn(false);
+        channelService = mock(ChannelService.class);
+        validator = new CreateChannelValidator(channelService);
+        when(channelService.channelExists(any(String.class))).thenReturn(false);
     }
 
     @Test
@@ -52,7 +52,7 @@ public class CreateChannelValidatorTest {
     @Test(expected = AlreadyExistsException.class)
     public void testChannelExists() throws Exception {
         String channelName = "achannel";
-        when(dao.channelExists(channelName)).thenReturn(true);
+        when(channelService.channelExists(channelName)).thenReturn(true);
         validator.validate(ChannelConfiguration.builder().withName(channelName).build());
     }
 
@@ -90,4 +90,15 @@ public class CreateChannelValidatorTest {
     public void testInvalidChannelTtl() throws Exception {
         validator.validate(ChannelConfiguration.builder().withName("mychan").withTtlDays(0).build());
     }
+
+    @Test
+    public void testDescription1024() throws Exception {
+        validator.validate(ChannelConfiguration.builder().withName("desc").withDescription(Strings.repeat("A", 1024)).build());
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testDescriptionTooBig() throws Exception {
+        validator.validate(ChannelConfiguration.builder().withName("toobig").withDescription(Strings.repeat("A", 1025)).build());
+    }
+
 }
