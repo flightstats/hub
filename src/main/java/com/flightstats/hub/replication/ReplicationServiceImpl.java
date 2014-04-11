@@ -73,7 +73,11 @@ public class ReplicationServiceImpl implements ReplicationService {
     }
 
     @Override
-    public void delete(final String domain) {
+    public boolean delete(final String domain) {
+        Optional<ReplicationDomain> optionalDomain = replicationDao.get(domain);
+        if (!optionalDomain.isPresent()) {
+            return false;
+        }
         curatorLock.runWithLock(new Lockable() {
             @Override
             public void runWithLock() throws Exception {
@@ -81,6 +85,7 @@ public class ReplicationServiceImpl implements ReplicationService {
             }
         }, LOCK_PATH, 1, TimeUnit.MINUTES);
         notifyWatchers();
+        return true;
     }
 
     @Override
