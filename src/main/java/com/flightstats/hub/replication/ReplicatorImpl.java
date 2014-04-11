@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Replication is moving from one Hub into another Hub
@@ -32,6 +34,7 @@ public class ReplicatorImpl implements Replicator {
     private final CuratorFramework curator;
     private final Provider<DomainReplicator> domainReplicatorProvider;
     private final Map<String, DomainReplicator> replicatorMap = new HashMap<>();
+    private final ExecutorService executorService;
 
     @Inject
     public ReplicatorImpl(ReplicationService replicationService, CuratorFramework curator,
@@ -39,6 +42,7 @@ public class ReplicatorImpl implements Replicator {
         this.replicationService = replicationService;
         this.curator = curator;
         this.domainReplicatorProvider = domainReplicatorProvider;
+        executorService = Executors.newSingleThreadExecutor();
         HubServices.register(new ReplicatorImplService());
     }
 
@@ -69,9 +73,24 @@ public class ReplicatorImpl implements Replicator {
             @Override
             public void eventReceived(CuratorFramework client, CuratorEvent event) throws Exception {
                 if (REPLICATOR_WATCHER_PATH.equals(event.getPath())) {
-                    //todo - gfm - 1/29/14 - replicateDomains should probably happen in a separate thread.
-                    replicateDomains();
+                    replicateDomainsAsynch();
                     addWatcher();
+                }
+            }
+        });
+    }
+
+    private void replicateDomainsAsynch() {
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.currentThread().setName("ReplicateDomainsActive");
+                    replicateDomains();
+                } catch (Exception e) {
+                    logger.warn("error replicating domains", e);
+                } finally {
+                    Thread.currentThread().setName("ReplicateDomainsDormant");
                 }
             }
         });
