@@ -18,7 +18,9 @@ public class NoOpReplicationService implements ReplicationService {
     }
 
     @Override
-    public void delete(String domain) { }
+    public boolean delete(String domain) {
+        return false;
+    }
 
     @Override
     public Collection<ReplicationDomain> getDomains() {
