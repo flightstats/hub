@@ -91,6 +91,8 @@ Channels starting with `test` will automatically be deleted in the dev and stagi
 `peakRequestRateSeconds` and `contentSizeKB` are optional, and are only used by TimeSeries to provision the throughput of the channel per second.
 If the throughput is exceeded, the service will return an error code of 503 with a `Retry-After` header providing a value in seconds.
 
+`description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
+
 `POST http://hub/channel`
 
 * Content-type: application/json
@@ -101,7 +103,8 @@ If the throughput is exceeded, the service will return an error code of 503 with
    "type": "Sequence",
    "ttlDays": "14",
    "peakRequestRateSeconds":1,
-   "contentSizeKB":10
+   "contentSizeKB":10,
+   "description": "a sequence of all the coffee orders from stumptown"
 }
 ```
 
@@ -128,7 +131,8 @@ On success:  `HTTP/1.1 201 OK`
     "ttlDays": 14,
     "type": "Sequence",
     "contentSizeKB" : 10,
-    "peakRequestRateSeconds" : 10
+    "peakRequestRateSeconds" : 10,
+    "description": "a sequence of all the coffee orders from stumptown"
 }
 ```
 
@@ -141,7 +145,8 @@ curl -i -X POST --header "Content-type: application/json" \
 
 ## update a channel
 
-Some channel metadata can be updated. The update format looks much like the channel create format (currently, only `ttlDays`, `contentSizeKB` and `peakRequestRateSeconds` can be updated).
+Some channel metadata can be updated. The update format looks much like the channel create format
+(currently, only `ttlDays`, `description`, `contentSizeKB` and `peakRequestRateSeconds` can be updated).
 Each of these fields is optional.
 Attempting to change other fields will result in a 400 error.
 
@@ -153,7 +158,8 @@ Attempting to change other fields will result in a 400 error.
 {
    "ttlDays": 21,
    "contentSizeKB" : 20,
-   "peakRequestRateSeconds" : 5
+   "peakRequestRateSeconds" : 5,
+   "description": "the sequence of all coffee orders from stumptown pdx"
 }
 ```
 
@@ -162,7 +168,7 @@ On success:  `HTTP/1.1 200 OK`, and the new channel metadata is returned (see ex
 Here's how you can do this with curl:
 ```bash
 curl -i -X PATCH --header "Content-type: application/json" \
-    --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5}'  \
+    --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5, "description": "the sequence of all coffee orders from stumptown pdx"}'  \
     http://hub/channel/stumptown
 ```
 

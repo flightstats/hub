@@ -74,6 +74,9 @@ public class ChannelConfiguration implements Serializable {
                 case "peakRequestRateSeconds":
                     builder.withPeakRequestRate(Integer.parseInt(entry.getValue()));
                     break;
+                case "description":
+                    builder.withDescription(entry.getValue());
+                    break;
                 case "_links":
                 case "lastUpdateDate":
                 case "creationDate":
@@ -163,10 +166,11 @@ public class ChannelConfiguration implements Serializable {
                 ", type=" + type +
                 ", contentSizeKB=" + contentSizeKB +
                 ", peakRequestRateSeconds=" + peakRequestRateSeconds +
+                ", description='" + description + '\'' +
                 '}';
     }
 
-	public static Builder builder() {
+    public static Builder builder() {
 		return new Builder();
 	}
 
