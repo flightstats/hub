@@ -214,7 +214,7 @@ On success: `HTTP/1.1 201 Created`
 Here's how you could do this with curl:
 
 ```bash
-curl -i -X POST --header "Content-type: text/plain" \
+curl -Li -X POST --header "Content-type: text/plain" \
     --data "your content here" \
     http://hub/channel/stumptown
 ```
