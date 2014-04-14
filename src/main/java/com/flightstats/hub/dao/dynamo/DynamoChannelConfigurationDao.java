@@ -7,6 +7,7 @@ import com.flightstats.hub.dao.ChannelConfigurationDao;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +55,9 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         item.put("type", new AttributeValue(config.getType().toString()));
         item.put("peakRequestRate", new AttributeValue().withN(String.valueOf(config.getPeakRequestRateSeconds())));
         item.put("contentSizeKB", new AttributeValue().withN(String.valueOf(config.getContentSizeKB())));
+        if (StringUtils.isNotEmpty(config.getDescription())) {
+            item.put("description", new AttributeValue(config.getDescription()));
+        }
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(getTableName())
                 .withItem(item);
@@ -117,7 +121,9 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         if (item.containsKey("contentSizeKB")) {
             builder.withContentKiloBytes(Integer.parseInt(item.get("contentSizeKB").getN()));
         }
-
+        if (item.containsKey("description")) {
+            builder.withDescription(item.get("description").getS());
+        }
         return builder.build();
     }
 

@@ -181,29 +181,9 @@ public class AwsChannelServiceIntegration {
                 .withTtlDays(36000L)
                 .withType(series)
                 .withContentKiloBytes(16)
+                .withDescription("descriptive")
                 .build();
     }
-
-    /*
-    todo - gfm - 2/6/14 - this is failing, not sure why
-    @Test
-    public void testAsynchS3Config() throws Exception {
-        channelNames.remove(channelName);
-
-        ChannelConfigurationDao configurationDao = injector.getInstance(ChannelConfigurationDao.class);
-        Iterable<ChannelConfiguration> channels = configurationDao.getChannels();
-        int sequenceCount = 0;
-        for (ChannelConfiguration channel : channels) {
-            if (channel.isSequence()) {
-                logger.info("found sequence " + channel.getName());
-                sequenceCount++;
-            }
-        }
-        S3Config s3Config = injector.getInstance(S3Config.class);
-        assertTrue(s3Config.isStarted());
-
-        assertEquals(sequenceCount, s3Config.doWork());
-    }*/
 
     @Test
     public void testTimeSeriesChannelWriteReadDelete() throws Exception {
