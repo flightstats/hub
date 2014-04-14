@@ -31,6 +31,13 @@ public class CreateChannelValidator {
         validateRate(request);
         validateContentSize(request);
         validateTTL(request);
+        validateDescription(request);
+    }
+
+    private void validateDescription(ChannelConfiguration request) {
+        if (request.getDescription().length() > 1024) {
+            throw new InvalidRequestException("{\"error\": \"Description must be less than 1024 bytes. \"}");
+        }
     }
 
     private void validateTTL(ChannelConfiguration request) throws InvalidRequestException {
