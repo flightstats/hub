@@ -390,7 +390,11 @@ Modify the existing replication configuration to include `pdx`:
    "excludeExcept" : [ "stumptown", "pdx" ]
 }
 ```
+
+**Replication Details**
+
 * Modifications to existing replication configuration take effect immediately.
+* If you are replicating into HubB from HubA, and you are **also** inserting data into HubB, you will get undefined results.  Don't do that.
 * `excludeExcept` means "Exclude all of the channels, Except the ones specified".
 * `includeExcept` means "Include all of the channels, Except the ones specified".  This will pick up new channels which aren't in the except list.
 * `includeExcept` and `excludeExcept` are mutually exclusive.  Attempts to set both will result in a 400 response code.
