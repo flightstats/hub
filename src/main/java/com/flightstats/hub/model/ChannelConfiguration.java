@@ -26,6 +26,7 @@ public class ChannelConfiguration implements Serializable {
     private final int contentSizeKB;
     private final int peakRequestRateSeconds;
     private final Long ttlMillis;
+    private final String description;
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public enum ChannelType { Sequence, TimeSeries }
@@ -42,6 +43,7 @@ public class ChannelConfiguration implements Serializable {
         } else {
             this.ttlMillis = builder.ttlMillis;
         }
+        this.description = builder.description;
     }
 
     @JsonCreator
@@ -71,6 +73,9 @@ public class ChannelConfiguration implements Serializable {
                     break;
                 case "peakRequestRateSeconds":
                     builder.withPeakRequestRate(Integer.parseInt(entry.getValue()));
+                    break;
+                case "description":
+                    builder.withDescription(entry.getValue());
                     break;
                 case "_links":
                 case "lastUpdateDate":
@@ -130,6 +135,11 @@ public class ChannelConfiguration implements Serializable {
         return ttlMillis;
     }
 
+    @JsonProperty("description")
+    public String getDescription() {
+        return description;
+    }
+
     @Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -156,10 +166,11 @@ public class ChannelConfiguration implements Serializable {
                 ", type=" + type +
                 ", contentSizeKB=" + contentSizeKB +
                 ", peakRequestRateSeconds=" + peakRequestRateSeconds +
+                ", description='" + description + '\'' +
                 '}';
     }
 
-	public static Builder builder() {
+    public static Builder builder() {
 		return new Builder();
 	}
 
@@ -171,6 +182,7 @@ public class ChannelConfiguration implements Serializable {
         private int contentSizeKB = 1;
         private int peakRequestRateSeconds = 1;
         private Long ttlMillis;
+        private String description = "";
 
         public Builder withChannelConfiguration(ChannelConfiguration config) {
 			this.name = config.name;
@@ -179,6 +191,7 @@ public class ChannelConfiguration implements Serializable {
             this.type = config.type;
             this.contentSizeKB = config.contentSizeKB;
             this.peakRequestRateSeconds = config.peakRequestRateSeconds;
+            this.description = config.description;
 			return this;
 		}
 
@@ -244,5 +257,10 @@ public class ChannelConfiguration implements Serializable {
 		public ChannelConfiguration build() {
 			return new ChannelConfiguration(this);
 		}
-	}
+
+        public Builder withDescription(String description) {
+            this.description = description;
+            return this;
+        }
+    }
 }
