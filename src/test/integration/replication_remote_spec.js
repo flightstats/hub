@@ -19,7 +19,7 @@ describe("replication_remote_spec", function () {
     it("creates remote channel", function (done) {
         request.post({url: remoteUrl,
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ "name": channelName})},
+                body: JSON.stringify({ "name": channelName, "description": "re-moat channel"})},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
@@ -97,6 +97,27 @@ describe("replication_remote_spec", function () {
     });
 
     //todo - gfm - 2/4/14 - this could also verify that the remote sequence is the same as the local, may need to span times
+
+    it("verifies local copy of the channel", function() {
+        var verified = false;
+
+        runs(function() {
+            request.get({url: hubUrlBase + "/channel/" + channelName,
+                    headers: {"Content-Type": "application/json"}},
+                function (err, response, body) {
+                    expect(err).toBeNull();
+                    expect(response.statusCode).toBe(200);
+                    jsonBody = JSON.parse(body);
+                    expect(jsonBody['description']).toBe("re-moat channel");
+                    verified = true;
+                });
+        });
+
+        waitsFor(function() {
+            return verified;
+        }, 10000);
+
+    });
 
     function getReplication(callback) {
         request.get({url: hubUrlBase + "/replication",
