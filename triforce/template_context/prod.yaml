@@ -50,11 +50,13 @@ conf/hazelcast.conf.xml :
 
 bin/start.sh :
   _template : start.sh.jinja
-  max_heap : "450m"
+  max_heap : "800m"
   min_heap : "256m"
   min_new : "100m"
+  environment : "prod"
 
 conf/logback.xml :
     _template : logback.xml.jinja
 
-
+lib/newrelic.yml :
+  _template : newrelic.yml.jinja
