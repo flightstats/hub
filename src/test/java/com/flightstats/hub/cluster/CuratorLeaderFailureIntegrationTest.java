@@ -12,6 +12,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
@@ -21,6 +24,7 @@ public class CuratorLeaderFailureIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(CuratorLeaderFailureIntegrationTest.class);
     private static CuratorFramework curator;
     private AtomicInteger count;
+    private CountDownLatch countDownLatch;
 
     @Before
     public void setUp() throws Exception {
@@ -44,8 +48,8 @@ public class CuratorLeaderFailureIntegrationTest {
     private class LostSleepLeader implements Leader {
 
         @Override
-        public void takeLeadership() {
-            while (true) {
+        public void takeLeadership(AtomicBoolean hasLeadership) {
+            while (hasLeadership.get()) {
                 count.incrementAndGet();
                 Sleeper.sleep(5);
             }
@@ -55,6 +59,7 @@ public class CuratorLeaderFailureIntegrationTest {
     @Test
     public void testLostLeaderConnection() throws Exception {
         count = new AtomicInteger();
+        countDownLatch = new CountDownLatch(1);
         CuratorLeader curatorLeader = new CuratorLeader("/CuratorLeaderFailureIntegrationTest/testLostLeaderConnection",
                 new LostConnectionLeader(), curator);
         curatorLeader.start();
@@ -62,27 +67,29 @@ public class CuratorLeaderFailureIntegrationTest {
         Integration.stopZooKeeper();
         logger.info("count " + count.get());
         assertTrue(count.get() >= 1);
+        assertTrue(countDownLatch.await(5000, TimeUnit.MILLISECONDS));
+        curatorLeader.close();
     }
 
     private class LostConnectionLeader implements Leader {
 
         @Override
-        public void takeLeadership() {
+        public void takeLeadership(AtomicBoolean hasLeadership) {
             logger.info("starting work!");
             try {
                 Client client = GuiceContext.HubCommonModule.buildJerseyClient();
-                while (true) {
+                while (hasLeadership.get()) {
                     count.incrementAndGet();
                     logger.info("calling google " + count.get());
                     ClientResponse response = client.resource("http://www.google.com/").get(ClientResponse.class);
                     logger.info("got response " + response);
                     assertEquals(200, response.getStatus());
-                    Thread.sleep(10);
                 }
             } catch (Exception e) {
                 logger.info("caught exception ", e);
                 throw new RuntimeException(e);
             }
+            countDownLatch.countDown();
         }
 
     }

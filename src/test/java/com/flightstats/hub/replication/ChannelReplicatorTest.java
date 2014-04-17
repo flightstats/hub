@@ -83,7 +83,8 @@ public class ChannelReplicatorTest {
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.<Long>absent());
         replicator.verifyRemoteChannel();
         replicator.tryLeadership();
-        Sleeper.sleep(50);
+        //todo - gfm - 4/16/14 - would like a better way to handle this
+        Sleeper.sleep(200);
         verify(channelService, new AtLeast(1)).createChannel(configuration);
         verify(channelService, new AtLeast(2)).insert(CHANNEL, content);
     }
