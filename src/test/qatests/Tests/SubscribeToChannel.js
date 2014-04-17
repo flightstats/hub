@@ -114,6 +114,8 @@ describe('Channel Subscription:', function() {
 
 
         channelName = dhh.getRandomChannelName();
+//        channelName = 'gabe_'+ dhh.getRandomChannelName();
+
 
         dhh.createChannel({name: channelName, domain: DOMAIN }, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
@@ -658,14 +660,15 @@ describe('Channel Subscription:', function() {
     // SKIP - this should be run on demand, not automatically
     it.skip('Continuous updates of 8MB at 1 per minute are sent with order preserved.', function(done) {
         var actualResponseQueue = [], expectedResponseQueue = [], endWait, i;
-        var numUpdates = 300,
+        var numUpdates = 500,
             waitBetween = 60 * 1000,
             first_post_time = null,
             last_post_time = null,
             time_to_post_all = null,
+            est_time_to_process_each_item = 30 * 1000,
             VERBOSE = true;
 
-        this.timeout((numUpdates * (WAIT_FOR_CHANNEL_RESPONSE_MS + waitBetween)) + 45000);
+        this.timeout((numUpdates * (WAIT_FOR_CHANNEL_RESPONSE_MS + waitBetween + est_time_to_process_each_item)) + 45000);
 
         var mainTest = function() {
             var payload = fs.readFileSync(MY_8MB_FILE, "utf8");
@@ -685,7 +688,7 @@ describe('Channel Subscription:', function() {
                             next(null, uri);
                         }, waitBetween);
                     });
-                });
+                })
 
                 /*
                 dhh.postData({channelUri: channelUri, data: dhh.getRandomPayload()}, function(res, uri) {
@@ -754,6 +757,7 @@ describe('Channel Subscription:', function() {
         };
 
         var ws = dhh.createWebSocket(wsUri, onOpen);
+        gu.debugLog('  -- Using channel: '+ wsUri)
 
         ws.on('message', function(data, flags) {
             actualResponseQueue.push(data);
@@ -905,7 +909,6 @@ describe('Channel Subscription:', function() {
             sockets[i] = socket;
         }
     });
-
 
     it('Disconnecting and then adding a new agent on same channel works.', function(done) {
         var socket1, socket2, uri1, uri2;

@@ -44,8 +44,9 @@ describe('Create Channel: ', function(){
         expect(body.hasOwnProperty('contentSizeKB')).to.be.true;
         expect(body.hasOwnProperty('peakRequestRateSeconds')).to.be.true;
         expect(body.hasOwnProperty('ttlMillis')).to.be.true;
+        expect(body.hasOwnProperty('description')).to.be.true;
 
-        expect(lodash.keys(body).length).to.equal(8);
+        expect(lodash.keys(body).length).to.equal(9);
         expect(lodash.keys(body._links).length).to.equal(4);
     }
 

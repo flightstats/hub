@@ -12,7 +12,7 @@ public interface ReplicationService {
 
     Optional<ReplicationDomain> get(String domain);
 
-    void delete(String domain);
+    boolean delete(String domain);
 
     Collection<ReplicationDomain> getDomains();
 
