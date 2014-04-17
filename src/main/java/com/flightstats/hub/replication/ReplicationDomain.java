@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.flightstats.hub.model.exception.InvalidRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,11 @@ public class ReplicationDomain {
         for (Map.Entry<String, JsonNode> entry : props.entrySet()) {
             switch (entry.getKey()) {
                 case "historicalDays":
-                    builder.withHistoricalDays(entry.getValue().asLong());
+                    long historicalDaysValue = entry.getValue().asLong(-1);
+                    if (historicalDaysValue < 0) {
+                        throw new InvalidRequestException("historicalDays must be a number, zero or greater.");
+                    }
+                    builder.withHistoricalDays(historicalDaysValue);
                     break;
                 case "excludeExcept":
                     builder.withExcludedExcept(convert(entry.getValue()));

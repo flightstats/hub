@@ -12,6 +12,7 @@ import httplib2
 
 
 
+
 # Usage:
 # locust -f read-write.py -H http://hub.svc.prod
 
@@ -26,12 +27,12 @@ class WebsiteTasks(TaskSet):
     def on_start(self):
         WebsiteTasks.channelNum += 1
         #todo make byte size this a command line var
-        self.number = WebsiteTasks.channelNum * 2000
+        self.number = WebsiteTasks.channelNum * 4000
         self.payload = self.payload_generator(self.number)
         print("payload size " + str(self.payload.__sizeof__()))
-        self.channel = "testx" + str(WebsiteTasks.channelNum)
+        self.channel = "zk_test_" + str(WebsiteTasks.channelNum)
         self.count = 0
-        payload = {"name": self.channel, "ttlDays": "30"}
+        payload = {"name": self.channel, "ttlDays": "1"}
         self.client.post("/channel",
                          data=json.dumps(payload),
                          headers={"Content-Type": "application/json"}
@@ -72,5 +73,5 @@ class WebsiteTasks(TaskSet):
 
 class WebsiteUser(Locust):
     task_set = WebsiteTasks
-    min_wait = 1000
-    max_wait = 2000
+    min_wait = 500
+    max_wait = 1000

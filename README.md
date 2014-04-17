@@ -2,6 +2,7 @@ The Hub
 =======
 
 * [overview](#overview)
+* [error handling](#error-handling)
 * [list channels](#list-channels)
 * [create a channel](#create-a-channel)
 * [update a channel](#update-a-channel)
@@ -44,6 +45,12 @@ TimeSeries can support insertation rates up to 1000 items per second.
 TimeSeries is higher throughput and lower latency than Sequence, as well as slightly more expensive.
 TimeSeries also requires the users to know the frequency and size of inserts.
 
+## error handling
+
+Clients should consider handling transient server errors (500 level return codes) with retry logic.  This helps to ensure that transient issues (networking, etc)
+  do not prevent the client from entering data. For Java clients, this framework provides many options - https://github.com/rholder/guava-retrying
+The Hub team recommends clients use exponential backoff.
+
 ## list channels
 
 To obtain the list of channels:
@@ -84,6 +91,8 @@ Channels starting with `test` will automatically be deleted in the dev and stagi
 `peakRequestRateSeconds` and `contentSizeKB` are optional, and are only used by TimeSeries to provision the throughput of the channel per second.
 If the throughput is exceeded, the service will return an error code of 503 with a `Retry-After` header providing a value in seconds.
 
+`description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
+
 `POST http://hub/channel`
 
 * Content-type: application/json
@@ -94,7 +103,8 @@ If the throughput is exceeded, the service will return an error code of 503 with
    "type": "Sequence",
    "ttlDays": "14",
    "peakRequestRateSeconds":1,
-   "contentSizeKB":10
+   "contentSizeKB":10,
+   "description": "a sequence of all the coffee orders from stumptown"
 }
 ```
 
@@ -121,7 +131,8 @@ On success:  `HTTP/1.1 201 OK`
     "ttlDays": 14,
     "type": "Sequence",
     "contentSizeKB" : 10,
-    "peakRequestRateSeconds" : 10
+    "peakRequestRateSeconds" : 10,
+    "description": "a sequence of all the coffee orders from stumptown"
 }
 ```
 
@@ -134,7 +145,8 @@ curl -i -X POST --header "Content-type: application/json" \
 
 ## update a channel
 
-Some channel metadata can be updated. The update format looks much like the channel create format (currently, only `ttlDays`, `contentSizeKB` and `peakRequestRateSeconds` can be updated).
+Some channel metadata can be updated. The update format looks much like the channel create format
+(currently, only `ttlDays`, `description`, `contentSizeKB` and `peakRequestRateSeconds` can be updated).
 Each of these fields is optional.
 Attempting to change other fields will result in a 400 error.
 
@@ -146,7 +158,8 @@ Attempting to change other fields will result in a 400 error.
 {
    "ttlDays": 21,
    "contentSizeKB" : 20,
-   "peakRequestRateSeconds" : 5
+   "peakRequestRateSeconds" : 5,
+   "description": "the sequence of all coffee orders from stumptown pdx"
 }
 ```
 
@@ -155,7 +168,7 @@ On success:  `HTTP/1.1 200 OK`, and the new channel metadata is returned (see ex
 Here's how you can do this with curl:
 ```bash
 curl -i -X PATCH --header "Content-type: application/json" \
-    --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5}'  \
+    --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5, "description": "the sequence of all coffee orders from stumptown pdx"}'  \
     http://hub/channel/stumptown
 ```
 
@@ -207,7 +220,7 @@ On success: `HTTP/1.1 201 Created`
 Here's how you could do this with curl:
 
 ```bash
-curl -i -X POST --header "Content-type: text/plain" \
+curl -Li -X POST --header "Content-type: text/plain" \
     --data "your content here" \
     http://hub/channel/stumptown
 ```
@@ -377,11 +390,15 @@ Modify the existing replication configuration to include `pdx`:
    "excludeExcept" : [ "stumptown", "pdx" ]
 }
 ```
+
+**Replication Details**
+
 * Modifications to existing replication configuration take effect immediately.
+* If you are replicating into HubB from HubA, and you are **also** inserting data into HubB, you will get undefined results.  Don't do that.
 * `excludeExcept` means "Exclude all of the channels, Except the ones specified".
 * `includeExcept` means "Include all of the channels, Except the ones specified".  This will pick up new channels which aren't in the except list.
 * `includeExcept` and `excludeExcept` are mutually exclusive.  Attempts to set both will result in a 400 response code.
-* `historicalDays` tells the replicator how far back in time to start. Zero means "only get new values".
+* `historicalDays` tells the replicator how far back in time to start. Zero (the default) means "only get new values".
 * If http://hub.other/channel/stumptown `ttlDays` is 10, and `historicalDays` is 5, only items from the last 5 days will be replicated.
 * If a channel's `historicalDays` is 0 and the ongoing replication is restarted, replication will continue with the existing sequence if it is up to `historicalDays` + 1 old.
 
@@ -389,31 +406,54 @@ As an example, the replicating cluster is going into a maintenance window, and a
 Maintenance takes longer than expected and the cluster resumes at 11 AM the next day.  Replication will pick up where it left off, and will eventually catch up to the current position.
 If, instead, the cluster didn't start until 1 PM the next day, one hour's worth will not be replicated.
 
+You can see the configuration for a single domain at:
+
+ `GET http://hub/replication/hub.other`
+
+  ```json
+  {
+    "domain" : "hub.other",
+    "historicalDays" : 10,
+    "includeExcept" : [ ],
+    "excludeExcept" : [ "stumptown", "pdx" ]
+  }
+  ```
+
 ## replication status
 
-You can get the status of the current replication processes at:
+You can get the status of all current replication domains at:
 
  `GET http://hub/replication`
 
  ```json
  {
    "domains" : [ {
-     "domain" : "hub.other",
+     "domain" : "datahub.svc.staging",
+     "historicalDays" : 0,
+     "includeExcept" : [ ],
+     "excludeExcept" : [ "positionsSynthetic" ]
+   }, {
+     "domain" : "hub.svc.prod",
      "historicalDays" : 10,
      "includeExcept" : [ ],
-     "excludeExcept" : [ "stumptown", "pdx" ]
+     "excludeExcept" : [ "provider_icelandair" ]
    } ],
-  "status" : [ {
-       "url" : "http://hub.other/channel/stumptown",
-       "replicationLatest" : 310491,
-       "sourceLatest" : 310491,
-       "delta" : 0
-     }, {
-       "url" : "http://hub.other/channel/pdx",
-       "replicationLatest" : 170203,
-       "sourceLatest" : 184203,
-       "delta" : 14000
-     } ]
+   "status" : [ {
+     "replicationLatest" : 6187114,
+     "sourceLatest" : 6187114,
+     "connected" : true,
+     "deltaLatest" : 0,
+     "name" : "positionsSynthetic",
+     "url" : "http://datahub.svc.staging/channel/positionsSynthetic/"
+   }, {
+     "replicationLatest" : 3717,
+     "sourceLatest" : 3717,
+     "connected" : false,
+     "deltaLatest" : 0,
+     "name" : "provider_icelandair",
+     "url" : "http://hub.svc.prod/channel/provider_icelandair/"
+   }
+   ]
  }
  ```
 
@@ -424,6 +464,9 @@ You can get the status of the current replication processes at:
 Stop replication of the entire domain `hub.other`, issue a `DELETE` command.
 
 `DELETE http://hub/replication/hub.other`
+
+On success: `HTTP/1.1 202 Accepted`. This is Accepted because the replication may be on another server, which should
+be notified within seconds.  The user should verify that replication is stopped.
 
 ## health check
 

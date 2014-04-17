@@ -284,9 +284,14 @@ function channelMetadata(responseBody) {
         return responseBody.creationDate;
     }
 
+
+    // No longer given.
+    /*
     this.getLastUpdateDate = function() {
         return responseBody.lastUpdateDate;
     }
+    */
+
 }
 exports.channelMetadata = channelMetadata;
 
