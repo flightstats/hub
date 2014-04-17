@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChannelReplicator implements Leader {
     private static final Logger logger = LoggerFactory.getLogger(ChannelReplicator.class);
@@ -33,6 +34,7 @@ public class ChannelReplicator implements Leader {
     private boolean valid = false;
     private String message = "";
     private CuratorLeader curatorLeader;
+    private AtomicBoolean hasLeadership;
 
     @Inject
     public ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
@@ -83,7 +85,8 @@ public class ChannelReplicator implements Leader {
     }
 
     @Override
-    public void takeLeadership() {
+    public void takeLeadership(AtomicBoolean hasLeadership) {
+        this.hasLeadership = hasLeadership;
         try {
             Thread.currentThread().setName("ChannelReplicator-" + channel.getUrl());
             logger.info("takeLeadership " + channel.getUrl());
@@ -95,19 +98,23 @@ public class ChannelReplicator implements Leader {
     }
 
     public void exit() {
-        try {
-            if (iterator != null) {
-                iterator.exit();
-            }
-        } catch (Exception e) {
-            logger.warn("unable to close iterator", e);
-        }
+        closeIterator();
         try {
             if (curatorLeader != null) {
                 curatorLeader.close();
             }
         } catch (Exception e) {
             logger.warn("unable to close curatorLeader", e);
+        }
+    }
+
+    private void closeIterator() {
+        try {
+            if (iterator != null) {
+                iterator.exit();
+            }
+        } catch (Exception e) {
+            logger.warn("unable to close iterator", e);
         }
     }
 
@@ -156,15 +163,20 @@ public class ChannelReplicator implements Leader {
         }
         logger.info("starting " + channel.getUrl() + " migration at " + sequence);
         iterator = sequenceIteratorFactory.create(sequence, channel);
-        while (iterator.hasNext()) {
-            Optional<Content> optionalContent = iterator.next();
-            if (optionalContent.isPresent()) {
-                channelService.insert(channel.getName(), optionalContent.get());
-            } else {
-                logger.warn("missing content for " + channel.getUrl());
+        try {
+            while (iterator.hasNext() && hasLeadership.get()) {
+                Optional<Content> optionalContent = iterator.next();
+                if (optionalContent.isPresent()) {
+                    channelService.insert(channel.getName(), optionalContent.get());
+                } else {
+                    logger.warn("missing content for " + channel.getUrl());
+                }
             }
+
+        } finally {
+            logger.info("stopping " + channel.getUrl() + " migration ");
+            closeIterator();
         }
-        logger.info("stopping " + channel.getUrl() + " migration ");
     }
 
     public long getLastUpdated() {
