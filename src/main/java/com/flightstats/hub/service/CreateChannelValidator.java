@@ -30,7 +30,22 @@ public class CreateChannelValidator {
         validateChannelUniqueness(channelName);
         validateRate(request);
         validateContentSize(request);
+        validateTTL(request);
+        validateDescription(request);
     }
+
+    private void validateDescription(ChannelConfiguration request) {
+        if (request.getDescription().length() > 1024) {
+            throw new InvalidRequestException("{\"error\": \"Description must be less than 1024 bytes. \"}");
+        }
+    }
+
+    private void validateTTL(ChannelConfiguration request) throws InvalidRequestException {
+        if (request.getTtlDays() <= 0) {
+            throw new InvalidRequestException("{\"error\": \"TTL must be greater than 0 (zero) \"}");
+        }
+    }
+
 
     private void validateContentSize(ChannelConfiguration request) throws InvalidRequestException {
         if (request.getContentSizeKB() <= 0) {

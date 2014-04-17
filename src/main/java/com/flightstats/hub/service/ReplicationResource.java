@@ -39,8 +39,12 @@ public class ReplicationResource {
     @Path("/{domain}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response putDomain(@PathParam("domain") String domain, ReplicationDomain replicationDomain) {
-        logger.info("creating domain " + domain + " replicationConfig " + replicationDomain);
+    public Response putDomain(@PathParam("domain") String domain, ReplicationDomain replicationDomain,
+                              @HeaderParam("Host") String host) {
+        logger.info("creating domain " + domain + " replicationConfig " + replicationDomain + " host " + host);
+        if (domain.equalsIgnoreCase(host)) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("The domain must be different than the host").build();
+        }
         replicationService.create(domain, replicationDomain);
         return Response.created(uriInfo.getRequestUri()).entity(replicationDomain).build();
     }
@@ -51,7 +55,7 @@ public class ReplicationResource {
     public Response getDomain(@PathParam("domain") String domain) {
         Optional<ReplicationDomain> replicationConfig = replicationService.get(domain);
         if (!replicationConfig.isPresent()) {
-            Response.status(Response.Status.NOT_FOUND).build();
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
         return Response.ok(replicationConfig.get()).build();
     }
@@ -60,8 +64,11 @@ public class ReplicationResource {
     @Path("/{domain}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteDomain(@PathParam("domain") String domain) {
-        replicationService.delete(domain);
-        return Response.ok().build();
+        if (replicationService.delete(domain)) {
+            return Response.status(Response.Status.ACCEPTED).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).entity("Replication Domain " + domain + " not found").build();
+        }
     }
 
 }

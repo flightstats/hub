@@ -27,6 +27,7 @@ public class ChannelConfigurationTest {
         assertTrue(config.isSequence());
         assertEquals(1L, config.getContentThroughputInSeconds());
         assertEquals(1L, config.getPeakRequestRateSeconds());
+        assertEquals("", config.getDescription());
     }
 
     @Test
@@ -80,4 +81,18 @@ public class ChannelConfigurationTest {
         assertEquals(31536000000000L, (long)config.getTtlMillis());
         assertEquals(1000 * 365, config.getTtlDays());
     }
+
+    @Test
+    public void testDescription() throws Exception {
+        ChannelConfiguration config = ChannelConfiguration.builder().withDescription("some thing").build();
+        assertEquals("some thing", config.getDescription());
+    }
+
+    @Test
+    public void testDescriptionCopy() throws Exception {
+        ChannelConfiguration config = ChannelConfiguration.builder().withDescription("some copy").build();
+        ChannelConfiguration copy = ChannelConfiguration.builder().withChannelConfiguration(config).build();
+        assertEquals("some copy", copy.getDescription());
+    }
+
 }

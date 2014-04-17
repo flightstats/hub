@@ -5,7 +5,8 @@
  */
 var request = require('request');
 var hubUrlBase = process.argv[2] || 'http://hub.svc.dev';
-console.info("deleting test channels from " + hubUrlBase);
+var nameStart = process.argv[3] || 'test';
+console.info("deleting channels from " + hubUrlBase + " starting with name '" + nameStart + "'");
 
 request.get({url: hubUrlBase + "/channel", headers: {"Content-Type": "application/json"}},
     function (err, response, body) {
@@ -17,11 +18,11 @@ request.get({url: hubUrlBase + "/channel", headers: {"Content-Type": "applicatio
         for (var i = 0; i < channels.length; i++) {
             var channel = channels[i];
 
-            if (channel.name.substring(0, 4) === "test" ) {
+            if (channel.name.substring(0, nameStart.length) === "test") {
                 console.info("deleting " + JSON.stringify(channel));
                 request.del({url: channel.href},
                     function (err, response, body) {
-                        if (response.statusCode !== 200) {
+                        if (response.statusCode !== 202) {
                             console.info("unable to delete " + response);
                         }
                     })

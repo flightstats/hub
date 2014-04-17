@@ -86,8 +86,9 @@ describe('GET Channel metadata:', function() {
             expect(body.hasOwnProperty('contentSizeKB')).to.be.true;
             expect(body.hasOwnProperty('peakRequestRateSeconds')).to.be.true;
             expect(body.hasOwnProperty('ttlMillis')).to.be.true;
+            expect(body.hasOwnProperty('description')).to.be.true;
 
-            expect(lodash.keys(body).length).to.equal(8);
+            expect(lodash.keys(body).length).to.equal(9);
             expect(lodash.keys(body._links).length).to.equal(4);
         });
 
@@ -101,7 +102,7 @@ describe('GET Channel metadata:', function() {
             expect(returnedCreationDate.add('minutes', 5).isAfter(moment())).to.be.true;
         })
 
-        it('returns correct lastUpdateDate', function() {
+        it.skip('lastUpdateDate NO LONGER GIVEN - returns correct lastUpdateDate', function() {
             var returnedCreationDate = moment(cnMetadata.getCreationDate()),
                 returnedLastUpdateDate = moment(cnMetadata.getLastUpdateDate());
 
