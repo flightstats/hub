@@ -34,7 +34,6 @@ public class ChannelReplicator implements Leader {
     private boolean valid = false;
     private String message = "";
     private CuratorLeader curatorLeader;
-    private AtomicBoolean hasLeadership;
 
     @Inject
     public ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
@@ -73,9 +72,7 @@ public class ChannelReplicator implements Leader {
         if (!valid) {
             return false;
         }
-        if (null == curatorLeader) {
-            curatorLeader = new CuratorLeader(getLeaderPath(channel.getName()), this, curator);
-        }
+        curatorLeader = new CuratorLeader(getLeaderPath(channel.getName()), this, curator);
         curatorLeader.start();
         return true;
     }
@@ -86,12 +83,11 @@ public class ChannelReplicator implements Leader {
 
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
-        this.hasLeadership = hasLeadership;
         try {
             Thread.currentThread().setName("ChannelReplicator-" + channel.getUrl());
-            logger.info("takeLeadership " + channel.getUrl());
+            logger.info("takeLeadership");
             initialize();
-            replicate();
+            replicate(hasLeadership);
         } finally {
             Thread.currentThread().setName("Empty");
         }
@@ -118,7 +114,7 @@ public class ChannelReplicator implements Leader {
         }
     }
 
-    //todo - gfm - 4/7/14 - this should be moved to a higher level
+    //todo - gfm - 4/7/14 - this should be moved to a higher level - (not sure what this means...)
     public void delete(String channelName) {
         exit();
     }
@@ -156,7 +152,7 @@ public class ChannelReplicator implements Leader {
         }
     }
 
-    private void replicate() {
+    private void replicate(AtomicBoolean hasLeadership) {
         long sequence = getLastUpdated();
         if (sequence == ChannelUtils.NOT_FOUND) {
             return;
