@@ -15,6 +15,7 @@ import com.google.inject.Module;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ public class HubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(HubMain.class);
     private static Injector injector;
+    private static final DateTime startTime = new DateTime();
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -134,5 +136,9 @@ public class HubMain {
     @VisibleForTesting
     public static Injector getInjector() {
         return injector;
+    }
+
+    public static DateTime getStartTime() {
+        return startTime;
     }
 }
