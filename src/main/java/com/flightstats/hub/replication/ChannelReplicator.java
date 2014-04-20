@@ -1,7 +1,7 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.cluster.CuratorLock;
-import com.flightstats.hub.cluster.Lockable;
+import com.flightstats.hub.cluster.CuratorLeader;
+import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
@@ -10,19 +10,21 @@ import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ChannelReplicator implements Runnable, Lockable {
+public class ChannelReplicator implements Leader {
     private static final Logger logger = LoggerFactory.getLogger(ChannelReplicator.class);
 
     private final ChannelService channelService;
     private final ChannelUtils channelUtils;
     private final SequenceFinder sequenceFinder;
-    private final CuratorLock curatorLock;
+    private final CuratorFramework curator;
     private final SequenceIteratorFactory sequenceIteratorFactory;
     private ChannelConfiguration configuration;
 
@@ -31,16 +33,17 @@ public class ChannelReplicator implements Runnable, Lockable {
     private long historicalDays;
     private boolean valid = false;
     private String message = "";
+    private CuratorLeader curatorLeader;
 
     @Inject
     public ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
-                             CuratorLock curatorLock, SequenceIteratorFactory sequenceIteratorFactory,
-                             SequenceFinder sequenceFinder) {
+                             SequenceIteratorFactory sequenceIteratorFactory,
+                             SequenceFinder sequenceFinder, CuratorFramework curator) {
         this.channelService = channelService;
-        this.curatorLock = curatorLock;
         this.sequenceIteratorFactory = sequenceIteratorFactory;
         this.channelUtils = channelUtils;
         this.sequenceFinder = sequenceFinder;
+        this.curator = curator;
     }
 
     public void setChannel(Channel channel) {
@@ -63,40 +66,57 @@ public class ChannelReplicator implements Runnable, Lockable {
         return message;
     }
 
+    public boolean tryLeadership() {
+        logger.debug("starting run " + channel);
+        valid = verifyRemoteChannel();
+        if (!valid) {
+            return false;
+        }
+        curatorLeader = new CuratorLeader(getLeaderPath(channel.getName()), this, curator);
+        curatorLeader.start();
+        return true;
+    }
+
+    private String getLeaderPath(String channelName) {
+        return "/ChannelReplicator/" + channelName;
+    }
+
     @Override
-    public void run() {
+    public void takeLeadership(AtomicBoolean hasLeadership) {
         try {
-            logger.debug("starting run " + channel);
             Thread.currentThread().setName("ChannelReplicator-" + channel.getUrl());
-            valid = verifyRemoteChannel();
-            if (!valid) {
-                return;
-            }
-            curatorLock.runWithLock(this, getLockPath(channel.getName()), 5, TimeUnit.SECONDS);
+            logger.info("takeLeadership");
+            initialize();
+            replicate(hasLeadership);
         } finally {
             Thread.currentThread().setName("Empty");
         }
     }
 
-    private String getLockPath(String channelName) {
-        return "/ChannelReplicator/" + channelName;
-    }
-
-    @Override
-    public void runWithLock() throws IOException {
-        logger.info("run with lock " + channel.getUrl());
-        initialize();
-        replicate();
-    }
-
     public void exit() {
-        if (iterator != null) {
-            iterator.exit();
+        closeIterator();
+        try {
+            if (curatorLeader != null) {
+                curatorLeader.close();
+            }
+        } catch (Exception e) {
+            logger.warn("unable to close curatorLeader", e);
         }
     }
 
+    private void closeIterator() {
+        try {
+            if (iterator != null) {
+                iterator.exit();
+            }
+        } catch (Exception e) {
+            logger.warn("unable to close iterator", e);
+        }
+    }
+
+    //todo - gfm - 4/7/14 - this should be moved to a higher level - (not sure what this means...)
     public void delete(String channelName) {
-        curatorLock.delete(getLockPath(channelName));
+        exit();
     }
 
     @VisibleForTesting
@@ -125,27 +145,33 @@ public class ChannelReplicator implements Runnable, Lockable {
     }
 
     @VisibleForTesting
-    void initialize() throws IOException {
+    void initialize()  {
         if (!channelService.channelExists(configuration.getName())) {
             logger.info("creating channel for " + channel.getUrl());
             channelService.createChannel(configuration);
         }
     }
 
-    private void replicate() {
+    private void replicate(AtomicBoolean hasLeadership) {
         long sequence = getLastUpdated();
         if (sequence == ChannelUtils.NOT_FOUND) {
             return;
         }
         logger.info("starting " + channel.getUrl() + " migration at " + sequence);
         iterator = sequenceIteratorFactory.create(sequence, channel);
-        while (iterator.hasNext() && curatorLock.shouldKeepWorking()) {
-            Optional<Content> optionalContent = iterator.next();
-            if (optionalContent.isPresent()) {
-                channelService.insert(channel.getName(), optionalContent.get());
-            } else {
-                logger.warn("missing content for " + channel.getUrl());
+        try {
+            while (iterator.hasNext() && hasLeadership.get()) {
+                Optional<Content> optionalContent = iterator.next();
+                if (optionalContent.isPresent()) {
+                    channelService.insert(channel.getName(), optionalContent.get());
+                } else {
+                    logger.warn("missing content for " + channel.getUrl());
+                }
             }
+
+        } finally {
+            logger.info("stopping " + channel.getUrl() + " migration ");
+            closeIterator();
         }
     }
 
