@@ -2,6 +2,7 @@ package com.flightstats.hub.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubMain;
 import com.flightstats.jerseyguice.jetty.health.HealthCheck;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -39,6 +40,7 @@ public class HealthResource {
         rootNode.put("healthy", healthy);
         rootNode.put("description", healthy ? "OK" : "ERROR");
         rootNode.put("version", getVersion());
+        rootNode.put("startTime", HubMain.getStartTime().toString());
 
         if (healthy) {
             return Response.ok(rootNode).build();
