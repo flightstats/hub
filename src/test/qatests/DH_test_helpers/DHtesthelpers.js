@@ -861,6 +861,84 @@ var patchChannel = function(params, callback) {
 exports.patchChannel = patchChannel;
 
 /**
+ * Update a replication config on .target hub, replicating from .source hub.
+ *
+ * @param params: .source, .target, .historicalDays (optional), .excludeExcept (optional), .includeExcept (optional),
+ *  .debug=true (optional).
+*  @param callback: response, body
+ */
+var updateReplicationConfig = function(params, callback) {
+    var payload = {},
+        source = params.source,
+        target = params.target,
+        uri = ['http:/', target, 'replication', source].join('/'),
+        VERBOSE = (undefined !== params.debug) ? params.debug : true;
+
+    if ('undefined' != typeof params.historicalDays) {
+        payload['historicalDays'] = params.historicalDays;
+    }
+
+    if ('undefined' != typeof params.excludeExcept) {
+        payload['excludeExcept'] = params.excludeExcept;
+    }
+
+    if ('undefined' != typeof params.includeExcept) {
+        payload['includeExcept'] = params.includeExcept;
+    }
+
+    if (VERBOSE) {
+        gu.debugLog('update Replication URI: '+ uri);
+        gu.debugLog('Payload dump: ');
+        console.dir(payload);
+    }
+
+    superagent.agent().patch(uri)
+        .send(payload)
+        .end(function(err, res) {
+            if (!gu.isHTTPSuccess(res.status)) {
+                gu.debugLog('Update replication config did not return success: '+ res.status);
+            }
+            else {
+                gu.debugLog('Update replication config succeeded.', VERBOSE);
+            }
+
+            callback(res, res.body);
+        });
+}
+exports.updateReplicationConfig = updateReplicationConfig;
+
+
+/** Get the replication config
+ *
+ * @param .target (hub), .source (hub) (OPTIONAL), .debug=true (OPTIONAL)
+ * @param callback: response, body
+ */
+var getReplicationConfig = function(params, callback) {
+    var target = params.target,
+        uri = ['http:/', target, 'replication'].join('/'),
+        VERBOSE = (undefined !== params.debug) ? params.debug : true;
+
+    if ('undefined' != typeof params.source) {
+        uri += '/'+ params.source;
+    }
+
+    if (VERBOSE) {
+        gu.debugLog('Get Replication config UIR: '+ uri);
+    }
+
+    superagent.agent().get(uri)
+        .end(function(err,res) {
+            if (err) {
+                throw err
+            };
+
+            callback(res, res.body);
+        });
+}
+exports.getReplicationConfig = getReplicationConfig;
+
+
+/**
  * Calls the TTL reaper and waits for a response -- the reaper will not return errors (current plan, anyway).
  * @param params: .domain=dhh.DOMAIN, .debug=false
  * @param callback: response (200/OK or 409/Conflict if reaper was already running are the expected responses) or null
