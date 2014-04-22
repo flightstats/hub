@@ -20,6 +20,7 @@ The Hub
 * [health check](#health-check)
 * [access control](#access-control)
 * [api updates](#api-updates)
+* [monitoring](#monitoring)
 * [development](#development)
 
 For the purposes of this document, the Hub is at http://hub/.
@@ -499,6 +500,14 @@ Also, there are a couple of small API changes that clients should be aware of.
 `ttlMillis` is deprecated, users should use `ttlDays` instead.  Existing `ttlMillis` values are rounded up to the nearest day.
 
 `lastUpdated` is no longer provided in the channel metadata.  If you need to know the latest value, you can use the `/latest` interface
+
+## monitoring
+
+The Hub has monitoring available in:
+* [New Relic](https://rpm.newrelic.com/accounts/565031/applications#filter=hub)
+* [Graphite Prod](http://svcsmon.cloud-east.prod/dashboard/#hub)
+* [Graphite Staging](http://svcsmon.cloud-east.staging/dashboard/#hub)
+* [Graphite Dev](http://svcsmon.cloud-east.dev/dashboard/#hub)
 
 ## development
 
