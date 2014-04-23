@@ -102,6 +102,7 @@ dependencies {
     compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
     compile 'com.amazonaws:aws-java-sdk:1.7.6'
     compile 'org.apache.curator:curator-recipes:2.4.1'
+    testCompile 'org.apache.curator:curator-test:2.4.1'
     compile 'org.apache.commons:commons-lang3:3.2'
     compile 'com.github.rholder:guava-retrying:1.0.6'
     compile(group: 'newrelic', name: 'newrelic_agent', version: '3.5.1')
