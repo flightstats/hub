@@ -22,6 +22,7 @@ The Hub
 * [api updates](#api-updates)
 * [monitoring](#monitoring)
 * [development](#development)
+* [deployments](#deployments)
 
 For the purposes of this document, the Hub is at http://hub/.
 
@@ -392,6 +393,23 @@ Modify the existing replication configuration to include `pdx`:
 }
 ```
 
+To remove a single channel from Replication, use PUT without that channel.  To remove `stumptown`:
+
+`PUT http://hub/replication/hub.other`
+
+* Content-type: application/json
+
+```json
+{
+   "historicalDays" : 10,
+   "excludeExcept" : [ "pdx" ]
+}
+```
+
+To delete Replication for an entire domain, use DELETE:
+
+`DELETE http://hub/replication/hub.other`
+
 **Replication Details**
 
 * Modifications to existing replication configuration take effect immediately.
@@ -513,7 +531,7 @@ The Hub has monitoring available in:
 
 The Hub is a work in progress.  If you'd like to contribute, let us know.
 
-The latest builds are in Jenkins - http://ops-jenkins01.util.pdx.office/job/hub/
+The latest builds are in [Jenkins](http://ops-jenkins01.util.pdx.office/job/hub/)
 
 To run Java based tests and jasmine-node tests locally, you will most likely want to use DynamoDB Local.
 Install it from http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
@@ -533,4 +551,15 @@ jasmine-node .
 You can also run all of the integration tests from gradle with:
 ```
 gradle integrationTests
+```
+
+## deployments
+
+The Hub is deployed to [Dev](http://hub.svc.dev/health) after each successful build in [Jenkins](http://ops-jenkins01.util.pdx.office/job/hub/)
+
+Deployments to Staging can be manually run from [Hub Tasks](http://ops-jenkins01.util.pdx.office/job/hub/batchTasks/)
+
+Releases to Prod currently must be manually kicked off from each machine using the version number from Jenkins.
+```
+sudo salt-call triforce.deploy s3://triforce_builds/hub/hub-<version>.tgz prod
 ```
