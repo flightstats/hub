@@ -23,7 +23,7 @@ public class NoOpReplicationService implements ReplicationService {
     }
 
     @Override
-    public Collection<ReplicationDomain> getDomains() {
+    public Collection<ReplicationDomain> getDomains(boolean refreshCache) {
         return Collections.emptyList();
     }
 
