@@ -923,7 +923,7 @@ var getReplicationConfig = function(params, callback) {
     }
 
     if (VERBOSE) {
-        gu.debugLog('Get Replication config UIR: '+ uri);
+        gu.debugLog('Get Replication config URI: '+ uri);
     }
 
     superagent.agent().get(uri)
