@@ -54,9 +54,9 @@ public class AwsModule extends AbstractModule {
                 .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))
                 .to(DynamoChannelConfigurationDao.class);
         bind(WebsocketPublisher.class).to(WebsocketPublisherImpl.class).asEagerSingleton();
-        bind(ReplicationDao.class).to(ReplicationCacheDao.class).in(Singleton.class);
+        bind(ReplicationDao.class).to(CachedReplicationDao.class).in(Singleton.class);
         bind(ReplicationDao.class)
-                .annotatedWith(Names.named(ReplicationCacheDao.DELEGATE))
+                .annotatedWith(Names.named(CachedReplicationDao.DELEGATE))
                 .to(DynamoReplicationDao.class);
 
         install(new PrivateModule() {

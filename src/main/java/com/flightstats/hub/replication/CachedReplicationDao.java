@@ -9,15 +9,14 @@ import java.util.Collection;
 /**
  *
  */
-//todo - gfm - 4/24/14 - test this
-public class ReplicationCacheDao implements ReplicationDao {
+public class CachedReplicationDao implements ReplicationDao {
 
     public static final String DELEGATE = "ReplicationCacheDao.DELEGATE";
     private Collection<ReplicationDomain> domains;
     private final ReplicationDao replicationDao;
 
     @Inject
-    public ReplicationCacheDao(@Named(DELEGATE) ReplicationDao replicationDao) {
+    public CachedReplicationDao(@Named(DELEGATE) ReplicationDao replicationDao) {
         this.replicationDao = replicationDao;
     }
 
