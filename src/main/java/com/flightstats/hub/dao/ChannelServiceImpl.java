@@ -92,6 +92,9 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public InsertedContentKey insert(String channelName, Content content) {
+        //todo - gfm - 4/23/14 - this is the common point for Replication and Post
+        //todo - gfm - 4/23/14 - if this is replicating, do not allow Post
+        //todo - gfm - 4/24/14 - where should we get a list of channels replicating?
         ChannelConfiguration configuration = channelConfigurationDao.getChannelConfiguration(channelName);
         return getContentService(channelName).insert(configuration, content);
     }

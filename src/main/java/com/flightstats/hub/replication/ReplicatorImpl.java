@@ -86,6 +86,7 @@ public class ReplicatorImpl implements Replicator {
             public void run() {
                 try {
                     Thread.currentThread().setName("ReplicateDomainsActive");
+                    replicationService.getDomains(true);
                     replicateDomains();
                 } catch (Exception e) {
                     logger.warn("error replicating domains", e);
@@ -116,7 +117,7 @@ public class ReplicatorImpl implements Replicator {
 
     private synchronized void replicateDomains() {
         logger.info("replicating domains");
-        Collection<ReplicationDomain> domains = replicationService.getDomains();
+        Collection<ReplicationDomain> domains = replicationService.getDomains(false);
         List<String> currentDomains = new ArrayList<>();
         for (ReplicationDomain domain : domains) {
             currentDomains.add(domain.getDomain());
