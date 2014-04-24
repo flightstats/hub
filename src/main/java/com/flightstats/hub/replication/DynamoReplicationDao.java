@@ -15,7 +15,7 @@ import java.util.*;
 /**
  *
  */
-public class DynamoReplicationDao {
+public class DynamoReplicationDao implements ReplicationDao {
     private final static Logger logger = LoggerFactory.getLogger(DynamoReplicationDao.class);
 
     private final AmazonDynamoDBClient dbClient;
@@ -40,6 +40,7 @@ public class DynamoReplicationDao {
     }
 
 
+    @Override
     public void upsert(ReplicationDomain config) {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("domain", new AttributeValue(config.getDomain()));
@@ -57,6 +58,7 @@ public class DynamoReplicationDao {
         dbClient.putItem(putItemRequest);
     }
 
+    @Override
     public Optional<ReplicationDomain> get(String domain) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("domain", new AttributeValue().withS(domain));
@@ -73,13 +75,15 @@ public class DynamoReplicationDao {
         return Optional.absent();
     }
 
+    @Override
     public void delete(String domain) {
         Map<String, AttributeValue> key = new HashMap<>();
         key.put("domain", new AttributeValue().withS(domain));
         dbClient.deleteItem(new DeleteItemRequest(getTableName(), key));
     }
 
-    public Collection<ReplicationDomain> getDomains() {
+    @Override
+    public Collection<ReplicationDomain> getDomains(boolean refreshCache) {
         List<ReplicationDomain> domains = new ArrayList<>();
         ScanRequest scanRequest = new ScanRequest()
                 .withTableName(getTableName());
@@ -100,7 +104,7 @@ public class DynamoReplicationDao {
         }
     }
 
-    public void initialize() {
+    private void initialize() {
         CreateTableRequest request = new CreateTableRequest()
                 .withTableName(getTableName())
                 .withAttributeDefinitions(new AttributeDefinition("domain", ScalarAttributeType.S))
@@ -124,7 +128,7 @@ public class DynamoReplicationDao {
         return builder.build();
     }
 
-    public String getTableName() {
+    private String getTableName() {
         return dynamoUtils.getTableName("replicationConfig");
     }
 }
