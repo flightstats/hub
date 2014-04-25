@@ -34,12 +34,29 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
 
 describe('Replication', function() {
 
-    var INITIAL_SOURCE_CONFIG = null;      // The rep config for SOURCE_DOMAIN
+    var INITIAL_SOURCE_CONFIG = null,       // The rep config for SOURCE_DOMAIN
+        INITIAL_FULL_CONFIG = null;         // Full rep config (for all domains)
+
 
     describe('Get Replication config', function() {
 
-        var defaultChannelName = dhh.getRandomChannelName();
+        var defaultChannelName = null;
 
+        var getDefaultChannel = function(cb) {
+            dhh.getAllChannels({'domain': SOURCE_DOMAIN, 'debug': DEBUG},
+                function(res, all_channels) {
+                    expect(gu.isHTTPSuccess(res.status)).to.be.true;
+                    expect(all_channels.length).to.be.at.least(1);
+
+                    var selectedChannel = all_channels[lodash.random(0, all_channels.length -1)];
+
+                    cb(selectedChannel['name']);
+                })
+        }
+
+
+
+        // Called to create a replication config from defaultChannelName if a config doesn't already exist on SOURCE
         var createBasicConfigEntry = function(cb) {
 
             dhh.createChannel({'name': defaultChannelName, 'domain': SOURCE_DOMAIN, 'debug': DEBUG},
@@ -62,58 +79,66 @@ describe('Replication', function() {
 
         }
 
-        // If target_domain's config is empty for source_domain, create an entry.
+        /*
+            Ensure that:
+            1) a defaultChannelName is chosen from SOURCE_DOMAIN
+            2) a replication config exists on TARGET_DOMAIN for SOURCE_DOMAIN (if not, we create one)
+         */
         before(function(done) {
 
-            dhh.getReplicationConfig({'target': TARGET_DOMAIN, 'source': SOURCE_DOMAIN, 'debug': true},
-                function(res, body) {
+            getDefaultChannel(function(selectedChannelName) {
+                defaultChannelName = selectedChannelName;
 
-                    if (gu.HTTPresponses.Not_Found == res.status) {
-                        gu.debugLog('No config found for target '+ TARGET_DOMAIN +' and source '+ SOURCE_DOMAIN);
+                dhh.getReplicationConfig({'target': TARGET_DOMAIN, 'source': SOURCE_DOMAIN, 'debug': true},
+                    function(res, body) {
 
-                        createBasicConfigEntry(done);
-                    } else {
-                        gu.debugLog('Config entry found.')
-                    }
+                        if (gu.HTTPresponses.Not_Found == res.status) {
+                            gu.debugLog('No config found for target '+ TARGET_DOMAIN +' and source '+ SOURCE_DOMAIN);
 
-                    expect(res.status).to.equal(gu.HTTPresponses.OK);
+                            createBasicConfigEntry(done);
+                        } else {
+                            gu.debugLog('Config entry found.')
+                        }
 
-                    // This is for getting config without specifying source:
-                    /*
+                        expect(res.status).to.equal(gu.HTTPresponses.OK);
 
-                    expect(body.hasOwnProperty('domains')).to.be.true;
-                    expect(body.hasOwnProperty('status')).to.be.true;
+                        // This is for getting config without specifying source:
+                        /*
 
-                    lodash.forEach(body['domains'], function(domain) {
-                        expect(lodash.keys(domain).length).to.equal(4);
+                         expect(body.hasOwnProperty('domains')).to.be.true;
+                         expect(body.hasOwnProperty('status')).to.be.true;
 
-                        lodash.forEach(['domain', 'historicalDays', 'includeExcept', 'excludeExcept'], function(domKey) {
-                            expect(domain.hasOwnProperty(domKey));
-                        })
-                        expect(domain['domain']).to.not.be.null;
-                        expect(domain['historicalDays']).to.not.be.null;
+                         lodash.forEach(body['domains'], function(domain) {
+                         expect(lodash.keys(domain).length).to.equal(4);
+
+                         lodash.forEach(['domain', 'historicalDays', 'includeExcept', 'excludeExcept'], function(domKey) {
+                         expect(domain.hasOwnProperty(domKey));
+                         })
+                         expect(domain['domain']).to.not.be.null;
+                         expect(domain['historicalDays']).to.not.be.null;
+                         })
+
+                         lodash.forEach(body['status'], function(status) {
+                         expect(lodash.keys(status).length).to.equal(6);
+
+                         lodash.forEach(['replicationLatest', 'sourceLatest', 'connected', 'deltaLatest', 'name', 'url'],
+                         function(statusKey) {
+                         expect(status.hasOwnProperty(statusKey));
+                         })
+
+                         })
+                         */
+
+                        gu.debugLog('Body: ');
+                        console.log(body);
+
+
+                        INITIAL_SOURCE_CONFIG = body;
+
+                        done();
                     })
-
-                    lodash.forEach(body['status'], function(status) {
-                        expect(lodash.keys(status).length).to.equal(6);
-
-                        lodash.forEach(['replicationLatest', 'sourceLatest', 'connected', 'deltaLatest', 'name', 'url'],
-                            function(statusKey) {
-                                expect(status.hasOwnProperty(statusKey));
-                        })
-
-                    })
-                    */
-
-                    gu.debugLog('Body: ');
-                    console.log(body);
-
-//                    expect(body._links.hasOwnProperty('self')).to.be.true;
-
-                    INITIAL_SOURCE_CONFIG = body;
-
-                done();
             })
+
 
         })
 
