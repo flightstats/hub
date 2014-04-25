@@ -99,33 +99,6 @@ describe('Replication', function() {
 
                         expect(res.status).to.equal(gu.HTTPresponses.OK);
 
-                        // This is for getting config without specifying source:
-                        /*
-
-                         expect(body.hasOwnProperty('domains')).to.be.true;
-                         expect(body.hasOwnProperty('status')).to.be.true;
-
-                         lodash.forEach(body['domains'], function(domain) {
-                         expect(lodash.keys(domain).length).to.equal(4);
-
-                         lodash.forEach(['domain', 'historicalDays', 'includeExcept', 'excludeExcept'], function(domKey) {
-                         expect(domain.hasOwnProperty(domKey));
-                         })
-                         expect(domain['domain']).to.not.be.null;
-                         expect(domain['historicalDays']).to.not.be.null;
-                         })
-
-                         lodash.forEach(body['status'], function(status) {
-                         expect(lodash.keys(status).length).to.equal(6);
-
-                         lodash.forEach(['replicationLatest', 'sourceLatest', 'connected', 'deltaLatest', 'name', 'url'],
-                         function(statusKey) {
-                         expect(status.hasOwnProperty(statusKey));
-                         })
-
-                         })
-                         */
-
                         gu.debugLog('Body: ');
                         console.log(body);
 
@@ -143,26 +116,13 @@ describe('Replication', function() {
 
             expect(INITIAL_SOURCE_CONFIG).to.not.be.null;
 
-            expect(lodash.keys(INITIAL_SOURCE_CONFIG).length).to.equal(4);
+            expect(lodash.keys(INITIAL_SOURCE_CONFIG).length).to.equal(3);
 
             expect(INITIAL_SOURCE_CONFIG.hasOwnProperty('domain')).to.be.true;
             expect(INITIAL_SOURCE_CONFIG.hasOwnProperty('historicalDays')).to.be.true;
             expect(isNaN(INITIAL_SOURCE_CONFIG['historicalDays'])).to.be.false;
 
-            expect(INITIAL_SOURCE_CONFIG.hasOwnProperty('includeExcept')).to.be.true;
             expect(INITIAL_SOURCE_CONFIG.hasOwnProperty('excludeExcept')).to.be.true;
-
-            // Either the exclude or include list must be empty, but not both.
-            var incl = INITIAL_SOURCE_CONFIG['includeExcept'],
-                excl = INITIAL_SOURCE_CONFIG['excludeExcept'];
-
-            if (incl.length > 0) {
-                expect(excl.length).to.equal(0);
-            }
-            else {
-                expect(incl.length).to.equal(0);
-            }
-
 
             done();
         })
@@ -206,22 +166,14 @@ describe('Replication', function() {
              expect(body.hasOwnProperty('status')).to.be.true;
 
              lodash.forEach(body['domains'], function(domain) {
-                expect(lodash.keys(domain).length).to.equal(4);
+                expect(lodash.keys(domain).length).to.equal(3);
 
-                 lodash.forEach(['domain', 'historicalDays', 'includeExcept', 'excludeExcept'], function(domKey) {
+                 lodash.forEach(['domain', 'historicalDays', 'excludeExcept'], function(domKey) {
                     expect(domain.hasOwnProperty(domKey));
                  })
 
                  expect(domain['domain']).to.not.be.null;
                  expect(domain['historicalDays']).to.not.be.null;
-                 var incl = domain['includeExcept'],
-                     excl = domain['excludeExcept'];
-
-                 if (incl.length > 0) {
-                     expect(excl.length).to.equal(0);
-                 } else {
-                     expect(excl.length).to.be.at.least(1);
-                 }
              })
 
              lodash.forEach(body['status'], function(status) {
