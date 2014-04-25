@@ -35,49 +35,46 @@ var WAIT_FOR_CHANNEL_RESPONSE_MS = 10 * 1000,
 describe('Replication', function() {
 
     var INITIAL_SOURCE_CONFIG = null,       // The rep config for SOURCE_DOMAIN
-        INITIAL_FULL_CONFIG = null;         // Full rep config (for all domains)
+        INITIAL_FULL_CONFIG = null,
+        defaultChannelName = null;
 
+    var getDefaultChannel = function(cb) {
+        dhh.getAllChannels({'domain': SOURCE_DOMAIN, 'debug': DEBUG},
+            function(res, all_channels) {
+                expect(gu.isHTTPSuccess(res.status)).to.be.true;
+                expect(all_channels.length).to.be.at.least(1);
 
-    describe('Get Replication config', function() {
+                var selectedChannel = all_channels[lodash.random(0, all_channels.length -1)];
 
-        var defaultChannelName = null;
+                cb(selectedChannel['name']);
+            })
+    }
 
-        var getDefaultChannel = function(cb) {
-            dhh.getAllChannels({'domain': SOURCE_DOMAIN, 'debug': DEBUG},
-                function(res, all_channels) {
+    // Called to create a replication config from defaultChannelName if a config doesn't already exist on SOURCE
+    var createBasicConfigEntry = function(cb) {
+
+        dhh.createChannel({'name': defaultChannelName, 'domain': SOURCE_DOMAIN, 'debug': DEBUG},
+            function(res, channelUri) {
+                expect(gu.isHTTPSuccess(res.status)).to.be.true;
+
+                dhh.updateReplicationConfig({
+                    'source': SOURCE_DOMAIN,
+                    'target': TARGET_DOMAIN,
+                    'excludeExcept': defaultChannelName,
+                    'historicalDays': 20
+                }, function(res, body) {
                     expect(gu.isHTTPSuccess(res.status)).to.be.true;
-                    expect(all_channels.length).to.be.at.least(1);
+                    gu.debugLog('Created default channel with name '+ defaultChannelName);
 
-                    var selectedChannel = all_channels[lodash.random(0, all_channels.length -1)];
-
-                    cb(selectedChannel['name']);
+                    cb();
                 })
-        }
-
-
-
-        // Called to create a replication config from defaultChannelName if a config doesn't already exist on SOURCE
-        var createBasicConfigEntry = function(cb) {
-
-            dhh.createChannel({'name': defaultChannelName, 'domain': SOURCE_DOMAIN, 'debug': DEBUG},
-                function(res, channelUri) {
-                    expect(gu.isHTTPSuccess(res.status)).to.be.true;
-
-                    dhh.updateReplicationConfig({
-                        'source': SOURCE_DOMAIN,
-                        'target': TARGET_DOMAIN,
-                        'excludeExcept': defaultChannelName,
-                        'historicalDays': 20
-                    }, function(res, body) {
-                        expect(gu.isHTTPSuccess(res.status)).to.be.true;
-                        gu.debugLog('Created default channel with name '+ defaultChannelName);
-
-                        cb();
-                    })
             })
 
+    }
 
-        }
+
+    describe('Source-specific Replication config tests', function() {
+
 
         /*
             Ensure that:
@@ -142,7 +139,7 @@ describe('Replication', function() {
 
         })
 
-        it('has a legal config', function(done) {
+        it('Source config is legal format', function(done) {
 
             expect(INITIAL_SOURCE_CONFIG).to.not.be.null;
 
@@ -170,7 +167,77 @@ describe('Replication', function() {
             done();
         })
 
+
+
     });
+
+    describe('Full config (not source-specific) tests', function() {
+
+        before(function(done) {
+            dhh.getReplicationConfig({'target': TARGET_DOMAIN, 'debug': true},
+                function(res, body) {
+
+                    if (gu.HTTPresponses.Not_Found == res.status) {
+                        gu.debugLog('No config found for target '+ TARGET_DOMAIN);
+
+                        createBasicConfigEntry(done);
+
+                    } else {
+                        gu.debugLog('Config entry found.')
+                    }
+
+                    expect(res.status).to.equal(gu.HTTPresponses.OK);
+
+
+                    gu.debugLog('Body: ');
+                    console.log(body);
+
+
+                    INITIAL_FULL_CONFIG = body;
+
+                    done();
+                })
+        })
+
+        it('Full config is legal format', function(done) {
+            var body = INITIAL_FULL_CONFIG;
+
+             expect(body.hasOwnProperty('domains')).to.be.true;
+             expect(body.hasOwnProperty('status')).to.be.true;
+
+             lodash.forEach(body['domains'], function(domain) {
+                expect(lodash.keys(domain).length).to.equal(4);
+
+                 lodash.forEach(['domain', 'historicalDays', 'includeExcept', 'excludeExcept'], function(domKey) {
+                    expect(domain.hasOwnProperty(domKey));
+                 })
+
+                 expect(domain['domain']).to.not.be.null;
+                 expect(domain['historicalDays']).to.not.be.null;
+                 var incl = domain['includeExcept'],
+                     excl = domain['excludeExcept'];
+
+                 if (incl.length > 0) {
+                     expect(excl.length).to.equal(0);
+                 } else {
+                     expect(excl.length).to.be.at.least(1);
+                 }
+             })
+
+             lodash.forEach(body['status'], function(status) {
+             expect(lodash.keys(status).length).to.equal(6);
+
+             lodash.forEach(['replicationLatest', 'sourceLatest', 'connected', 'deltaLatest', 'name', 'url'],
+                function(statusKey) {
+                    expect(status.hasOwnProperty(statusKey));
+                })
+
+             })
+
+            done();
+
+        })
+    })
 
 
 });

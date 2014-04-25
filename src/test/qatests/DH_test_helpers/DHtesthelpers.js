@@ -198,7 +198,8 @@ exports.WSWrapper = WSWrapper;
  *
  * @param params: .name,
  *  .ttlMillis=null,
- *  .domain=DOMAIN
+ *  .domain=DOMAIN,
+ *  .description=null,
  *  .debug (optional)
  * @param myCallback: response || error, channelUri || null (if error)
  */
@@ -215,6 +216,10 @@ var createChannel = function(params, myCallback) {
 
     if (params.hasOwnProperty('ttlDays')) {
         payload['ttlDays'] = params.ttlDays;
+    }
+
+    if (params.hasOwnProperty('description')) {
+        payload['description'] = params.description;
     }
 
     if (VERBOSE) {
@@ -258,6 +263,19 @@ var getRandomChannelName = function(length) {
 }
 exports.getRandomChannelName = getRandomChannelName;
 
+
+var getRandomChannelDescription = function(length) {
+    var descLength = ('undefined' == typeof length) ? (50 + ranU.randomNum(50)): length;
+
+    if (descLength > 1000) {
+        descLength = 1000;
+    }
+
+    return 'test _ '+ ranU.randomString(descLength, ranU.simulatedTextChar);
+}
+exports.getRandomChannelDescription = getRandomChannelDescription;
+
+
 //     Current metadata structure for GET on a channel:
 function channelMetadata(responseBody) {
     this.getChannelUri = function() {
@@ -282,6 +300,10 @@ function channelMetadata(responseBody) {
 
     this.getCreationDate = function() {
         return responseBody.creationDate;
+    }
+
+    this.getDescription = function() {
+        return responseBody.hasOwnProperty('description') ? responseBody.description : null;
     }
 
 
