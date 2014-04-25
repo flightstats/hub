@@ -3,6 +3,7 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ChannelReplicator;
+import com.flightstats.hub.replication.ReplicationDao;
 import com.flightstats.hub.service.CreateChannelValidator;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -25,6 +26,7 @@ public class ChannelServiceImpl implements ChannelService {
     private final CreateChannelValidator createChannelValidator;
     private final TimeIndexProcessor timeIndexProcessor;
     private final ChannelReplicator channelReplicator;
+    private final ReplicationDao replicationDao;
     private final ContentService missingDao = new ContentService() {
         @Override
         public void createChannel(ChannelConfiguration configuration) { }
@@ -60,12 +62,13 @@ public class ChannelServiceImpl implements ChannelService {
     @Inject
     public ChannelServiceImpl(ContentServiceFinder contentServiceFinder, ChannelConfigurationDao channelConfigurationDao,
                               CreateChannelValidator createChannelValidator, TimeIndexProcessor timeIndexProcessor,
-                              ChannelReplicator channelReplicator) {
+                              ChannelReplicator channelReplicator, ReplicationDao replicationDao) {
         this.contentServiceFinder = contentServiceFinder;
         this.channelConfigurationDao = channelConfigurationDao;
         this.createChannelValidator = createChannelValidator;
         this.timeIndexProcessor = timeIndexProcessor;
         this.channelReplicator = channelReplicator;
+        this.replicationDao = replicationDao;
     }
 
     private ContentService getContentService(String channelName){
@@ -95,6 +98,8 @@ public class ChannelServiceImpl implements ChannelService {
         //todo - gfm - 4/23/14 - this is the common point for Replication and Post
         //todo - gfm - 4/23/14 - if this is replicating, do not allow Post
         //todo - gfm - 4/24/14 - where should we get a list of channels replicating?
+        //Collection<ReplicationDomain> domains = replicationDao.getDomains(false);
+
         ChannelConfiguration configuration = channelConfigurationDao.getChannelConfiguration(channelName);
         return getContentService(channelName).insert(configuration, content);
     }
