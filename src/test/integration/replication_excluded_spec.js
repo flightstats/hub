@@ -17,8 +17,7 @@ frisby.create(testName + ': check for replication')
     .expectJSON({
         domain: "excludedDomain",
         historicalDays: 5,
-        excludeExcept: ["3", "one", "two"],
-        includeExcept: []
+        excludeExcept: ["3", "one", "two"]
     })
     .afterJSON(function (result) {
         frisby.create(testName + ': Making sure replication exists.')
