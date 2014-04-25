@@ -3,7 +3,7 @@ require('./integration_config.js');
 var channelName = utils.randomChannelName();
 var jsonBody = JSON.stringify({ "name": channelName, "description": "starting"});
 var channelResource = channelUrl + "/" + channelName;
-var testName = 'channel_update_description_spec';
+var testName = 'channel_patch_null_description_spec';
 utils.configureFrisby();
 
 frisby.create(testName + ': Making sure channel resource does not yet exist.')
@@ -16,13 +16,12 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
             .expectStatus(201)
             .expectJSON({"description": "starting"})
             .afterJSON(function (result) {
-                var updateBody = {"description": "next description"};
                 frisby.create(testName + ': Update channel description')
-                    .patch(channelResource, updateBody, {json:true})
+                    .patch(channelResource, {"description": null}, {json:true})
                     .expectStatus(200)
                     .expectHeader('content-type', 'application/json')
                     .expectJSON({"name": channelName})
-                    .expectJSON({"description": "next description"})
+                    .expectJSON({"description": ""})
                     .toss()
             })
             .toss()
