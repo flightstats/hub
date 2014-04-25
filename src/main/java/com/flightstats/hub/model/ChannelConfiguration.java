@@ -43,7 +43,11 @@ public class ChannelConfiguration implements Serializable {
         } else {
             this.ttlMillis = builder.ttlMillis;
         }
-        this.description = builder.description;
+        if (builder.description == null) {
+            this.description = "";
+        } else {
+            this.description = builder.description;
+        }
     }
 
     @JsonCreator
