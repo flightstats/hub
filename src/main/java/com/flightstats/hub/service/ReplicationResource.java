@@ -45,7 +45,8 @@ public class ReplicationResource {
         if (domain.equalsIgnoreCase(host)) {
             return Response.status(Response.Status.BAD_REQUEST).entity("The domain must be different than the host").build();
         }
-        replicationService.create(domain, replicationDomain);
+        replicationDomain.setDomain(domain);
+        replicationService.create(replicationDomain);
         return Response.created(uriInfo.getRequestUri()).entity(replicationDomain).build();
     }
 
