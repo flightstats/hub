@@ -27,7 +27,8 @@ var DOMAIN = dhh.DOMAIN,
 
 describe('Create Channel: ', function(){
 
-    var channelName;
+    var channelName,
+        channelDesc;
 
     var checkChannelBodyStructure = function(body) {
         expect(body.hasOwnProperty('_links')).to.be.true;
@@ -52,7 +53,9 @@ describe('Create Channel: ', function(){
 
     before(function(myCallback){
         channelName = dhh.getRandomChannelName();
-        dhh.createChannel({name: channelName, domain: DOMAIN}, function(res){
+        channelDesc = dhh.getRandomChannelDescription();
+
+        dhh.createChannel({name: channelName, domain: DOMAIN, description: channelDesc}, function(res){
             if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
                 //console.log('bad things');
                 throw new Error(res.error);
@@ -66,13 +69,15 @@ describe('Create Channel: ', function(){
 
         var createRes,
             channelUri,
-            acceptName;
+            acceptName,
+            acceptDesc;
 
         before(function(done) {
 
             acceptName = dhh.getRandomChannelName();
+            acceptDesc = dhh.getRandomChannelDescription();
 
-            dhh.createChannel({name: acceptName, debug: false, domain: DOMAIN}, function(res, uri) {
+            dhh.createChannel({name: acceptName, debug: false, domain: DOMAIN, description: acceptDesc}, function(res, uri) {
                 createRes = res;
                 channelUri = uri;
                 gu.debugLog('create result status: '+ createRes.status);
@@ -127,23 +132,30 @@ describe('Create Channel: ', function(){
         it('TTL defaults to 120 days', function() {
             expect(createRes.body.ttlMillis).to.equal(10368000000);
         })
+
+        it('Description is correct', function() {
+            expect(createRes.body.description).to.equal(acceptDesc);
+        })
     })
 
     describe('Acceptance with TTL set', function() {
         var createRes,
             channelUri,
             acceptName,
+            acceptDesc,
             acceptTTL = 100;
 
         before(function(done) {
 
             acceptName = dhh.getRandomChannelName();
+            acceptDesc = dhh.getRandomChannelDescription();
 
-            dhh.createChannel({name: acceptName, ttlDays: acceptTTL, domain: DOMAIN}, function(res, uri) {
-                createRes = res;
-                channelUri = uri;
+            dhh.createChannel({name: acceptName, ttlDays: acceptTTL, domain: DOMAIN, description: acceptDesc},
+                function(res, uri) {
+                    createRes = res;
+                    channelUri = uri;
 
-                done();
+                    done();
             });
         })
 
@@ -159,6 +171,23 @@ describe('Create Channel: ', function(){
             var cnMetadata = new dhh.channelMetadata(createRes.body),
                 actualTTL = cnMetadata.getTTL();
             expect(actualTTL).to.equal(acceptTTL);
+        })
+
+        it('has correct description', function() {
+            expect(createRes.body.description).to.equal(acceptDesc);
+        })
+    })
+
+    describe('Description is optional', function() {
+
+        it('Has no description', function(done) {
+            dhh.createChannel({name: dhh.getRandomChannelName(), domain: DOMAIN}, function(res) {
+                expect(res.status).to.equal(gu.HTTPresponses.Created);
+                expect(res.body.hasOwnProperty('description')).to.be.true;
+                expect(res.body.description).to.equal("");
+
+                done();
+            })
         })
     })
 
@@ -312,6 +341,7 @@ describe('Create Channel: ', function(){
                     done();
                 });
         });
+
 
         describe('channel names must be unique', function() {
 
