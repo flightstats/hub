@@ -18,28 +18,19 @@ public class ReplicationDomain {
 
     private String domain;
     private final long historicalDays;
-    private final Set<String> includeExcept;
     private final Set<String> excludeExcept;
 
     private ReplicationDomain(Builder builder) {
         domain = builder.domain;
         historicalDays = builder.historicalDays;
-        includeExcept = Collections.unmodifiableSet(new TreeSet<>(builder.includedExcept));
         excludeExcept = Collections.unmodifiableSet(new TreeSet<>(builder.excludedExcept));
     }
 
     @JsonIgnore()
     public boolean isValid() {
-        if (includeExcept.isEmpty()) {
-            return !excludeExcept.isEmpty();
-        }
-        return excludeExcept.isEmpty() && !includeExcept.isEmpty();
+        return !excludeExcept.isEmpty();
     }
 
-    @JsonIgnore()
-    public boolean isInclusive() {
-        return !includeExcept.isEmpty();
-    }
     @JsonCreator
     protected static ReplicationDomain create(Map<String, JsonNode> props) {
         Builder builder = builder();
@@ -56,8 +47,7 @@ public class ReplicationDomain {
                     builder.withExcludedExcept(convert(entry.getValue()));
                     break;
                 case "includeExcept":
-                    builder.withIncludedExcept(convert(entry.getValue()));
-                    break;
+                    throw new InvalidRequestException("includeExcept is no longer supported");
                 default:
                     logger.info("unexpected key " + entry.getKey() + " " + entry.getValue());
                     break;
@@ -91,9 +81,6 @@ public class ReplicationDomain {
         return historicalDays;
     }
 
-    public Set<String> getIncludeExcept() {
-        return includeExcept;
-    }
 
     public Set<String> getExcludeExcept() {
         return excludeExcept;
@@ -104,7 +91,6 @@ public class ReplicationDomain {
         return "ReplicationConfig{" +
                 "domain='" + domain + '\'' +
                 ", historicalDays=" + historicalDays +
-                ", includeExcept=" + includeExcept +
                 ", excludeExcept=" + excludeExcept +
                 '}';
     }
@@ -119,7 +105,6 @@ public class ReplicationDomain {
         if (historicalDays != that.historicalDays) return false;
         if (!domain.equals(that.domain)) return false;
         if (!excludeExcept.equals(that.excludeExcept)) return false;
-        if (!includeExcept.equals(that.includeExcept)) return false;
 
         return true;
     }
@@ -128,7 +113,6 @@ public class ReplicationDomain {
     public int hashCode() {
         int result = domain.hashCode();
         result = 31 * result + (int) (historicalDays ^ (historicalDays >>> 32));
-        result = 31 * result + includeExcept.hashCode();
         result = 31 * result + excludeExcept.hashCode();
         return result;
     }
@@ -140,16 +124,10 @@ public class ReplicationDomain {
     public static class Builder {
         private String domain;
         private long historicalDays = 0;
-        private Set<String> includedExcept = new HashSet<>();
         private Set<String> excludedExcept = new HashSet<>();
 
         public Builder withHistoricalDays(long historicalDays) {
             this.historicalDays = historicalDays;
-            return this;
-        }
-
-        public Builder withIncludedExcept(Collection<String> included) {
-            this.includedExcept.addAll(included);
             return this;
         }
 
