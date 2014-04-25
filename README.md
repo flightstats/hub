@@ -415,8 +415,6 @@ To delete Replication for an entire domain, use DELETE:
 * Modifications to existing replication configuration take effect immediately.
 * If you are replicating into HubB from HubA, and you are **also** inserting data into HubB, you will get undefined results.  Don't do that.
 * `excludeExcept` means "Exclude all of the channels, Except the ones specified".
-* `includeExcept` means "Include all of the channels, Except the ones specified".  This will pick up new channels which aren't in the except list.
-* `includeExcept` and `excludeExcept` are mutually exclusive.  Attempts to set both will result in a 400 response code.
 * `historicalDays` tells the replicator how far back in time to start. Zero (the default) means "only get new values".
 * If http://hub.other/channel/stumptown `ttlDays` is 10, and `historicalDays` is 5, only items from the last 5 days will be replicated.
 * If a channel's `historicalDays` is 0 and the ongoing replication is restarted, replication will continue with the existing sequence if it is up to `historicalDays` + 1 old.
@@ -433,7 +431,6 @@ You can see the configuration for a single domain at:
   {
     "domain" : "hub.other",
     "historicalDays" : 10,
-    "includeExcept" : [ ],
     "excludeExcept" : [ "stumptown", "pdx" ]
   }
   ```
@@ -449,12 +446,10 @@ You can get the status of all current replication domains at:
    "domains" : [ {
      "domain" : "datahub.svc.staging",
      "historicalDays" : 0,
-     "includeExcept" : [ ],
      "excludeExcept" : [ "positionsSynthetic" ]
    }, {
      "domain" : "hub.svc.prod",
      "historicalDays" : 10,
-     "includeExcept" : [ ],
      "excludeExcept" : [ "provider_icelandair" ]
    } ],
    "status" : [ {
