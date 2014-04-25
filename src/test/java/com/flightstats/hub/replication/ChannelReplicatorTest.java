@@ -23,6 +23,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
@@ -81,10 +82,18 @@ public class ChannelReplicatorTest {
         when(sequenceIterator.hasNext()).thenReturn(true);
         when(sequenceIterator.next()).thenReturn(optional);
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.<Long>absent());
+        final CountDownLatch countDownLatch = new CountDownLatch(2);
+        when(channelService.insert(CHANNEL, content)).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                countDownLatch.countDown();
+                return null;
+            }
+        });
         replicator.verifyRemoteChannel();
         replicator.tryLeadership();
-        //todo - gfm - 4/16/14 - would like a better way to handle this
-        Sleeper.sleep(200);
+
+        assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
         verify(channelService, new AtLeast(1)).createChannel(configuration);
         verify(channelService, new AtLeast(2)).insert(CHANNEL, content);
     }

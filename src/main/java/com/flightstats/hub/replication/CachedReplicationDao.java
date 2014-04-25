@@ -28,8 +28,8 @@ public class CachedReplicationDao implements ReplicationDao {
     }
 
     @Override
-    public void upsert(ReplicationDomain config) {
-        replicationDao.upsert(config);
+    public void upsert(ReplicationDomain domain) {
+        replicationDao.upsert(domain);
     }
 
     @Override

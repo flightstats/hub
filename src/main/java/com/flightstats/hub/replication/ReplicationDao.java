@@ -5,7 +5,7 @@ import com.google.common.base.Optional;
 import java.util.Collection;
 
 public interface ReplicationDao {
-    void upsert(ReplicationDomain config);
+    void upsert(ReplicationDomain domain);
 
     Optional<ReplicationDomain> get(String domain);
 
