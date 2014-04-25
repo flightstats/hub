@@ -2,8 +2,10 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.exception.ReplicatingChannelException;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.replication.ReplicationDao;
+import com.flightstats.hub.replication.ReplicationDomain;
 import com.flightstats.hub.service.CreateChannelValidator;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -95,10 +97,14 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public InsertedContentKey insert(String channelName, Content content) {
-        //todo - gfm - 4/23/14 - this is the common point for Replication and Post
-        //todo - gfm - 4/23/14 - if this is replicating, do not allow Post
-        //todo - gfm - 4/24/14 - where should we get a list of channels replicating?
-        //Collection<ReplicationDomain> domains = replicationDao.getDomains(false);
+        if (!content.getContentKey().isPresent()) {
+            Collection<ReplicationDomain> domains = replicationDao.getDomains(false);
+            for (ReplicationDomain domain : domains) {
+                if (domain.getExcludeExcept().contains(channelName)) {
+                    throw new ReplicatingChannelException(channelName + " cannot have data inserted while it is replicating");
+                }
+            }
+        }
 
         ChannelConfiguration configuration = channelConfigurationDao.getChannelConfiguration(channelName);
         return getContentService(channelName).insert(configuration, content);
