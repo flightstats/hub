@@ -8,7 +8,7 @@ import java.util.Collection;
  *
  */
 public interface ReplicationService {
-    void create(String domain, ReplicationDomain config);
+    void create(ReplicationDomain domain);
 
     Optional<ReplicationDomain> get(String domain);
 
