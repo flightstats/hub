@@ -47,7 +47,7 @@ public class ReplicationServiceImpl implements ReplicationService {
     @Override
     public void create(final String domain, final ReplicationDomain config) {
         if (!config.isValid()) {
-            throw new InvalidRequestException("Invalid request. Either includeExcept or excludeExcept must be populated.");
+            throw new InvalidRequestException("Invalid request. excludeExcept must be populated.");
         }
         curatorLock.runWithLock(new Lockable() {
             @Override
