@@ -14,59 +14,34 @@ public class ReplicationDomainTest {
 
     private List<String> list = Lists.newArrayList("one", "two", "three");
 
-    @Test
-    public void testInclude() throws Exception {
-        ReplicationDomain config = getIncluded();
-        assertEquals("incl", config.getDomain());
-        assertEquals(0, config.getHistoricalDays());
-        assertTrue(config.getIncludeExcept().containsAll(list));
-        assertTrue(config.getExcludeExcept().isEmpty());
-        assertTrue(config.isValid());
-        assertTrue(config.isInclusive());
-    }
-
-    private ReplicationDomain getIncluded() {
-        return ReplicationDomain.builder().withDomain("incl")
-                    .withIncludedExcept(list)
-                    .build();
+    private ReplicationDomain getExcluded() {
+        return ReplicationDomain.builder().withDomain("exclude")
+                .withExcludedExcept(list)
+                .withHistoricalDays(10)
+                .build();
     }
 
     @Test
     public void testExclude() throws Exception {
-        ReplicationDomain config = ReplicationDomain.builder().withDomain("exclude")
-                .withHistoricalDays(10)
-                .withExcludedExcept(list)
-                .build();
-        assertEquals("exclude", config.getDomain());
-        assertEquals(10, config.getHistoricalDays());
-        assertTrue(config.getExcludeExcept().containsAll(list));
-        assertTrue(config.getIncludeExcept().isEmpty());
-        assertTrue(config.isValid());
-        assertFalse(config.equals(getIncluded()));
-        assertFalse(config.isInclusive());
-    }
-
-    @Test
-    public void testInvalid() throws Exception {
-        ReplicationDomain config = ReplicationDomain.builder().withDomain("exclude")
-                .withExcludedExcept(list)
-                .withIncludedExcept(list)
-                .build();
-        assertFalse(config.equals(getIncluded()));
-        assertFalse(config.isValid());
+        ReplicationDomain domain = getExcluded();
+        assertEquals("exclude", domain.getDomain());
+        assertEquals(10, domain.getHistoricalDays());
+        assertTrue(domain.getExcludeExcept().containsAll(list));
+        assertTrue(domain.isValid());
     }
 
     @Test
     public void testNone() throws Exception {
-        ReplicationDomain config = ReplicationDomain.builder().withDomain("exclude").build();
-        assertFalse(config.equals(getIncluded()));
-        assertFalse(config.isValid());
+        ReplicationDomain domain = ReplicationDomain.builder().withDomain("exclude").build();
+        assertFalse(domain.equals(getExcluded()));
+        assertFalse(domain.isValid());
+        assertEquals(0, domain.getHistoricalDays());
     }
 
     @Test
     public void testEquals() throws Exception {
-        ReplicationDomain included1 = getIncluded();
-        ReplicationDomain included2 = getIncluded();
+        ReplicationDomain included1 = getExcluded();
+        ReplicationDomain included2 = getExcluded();
         assertTrue(included1.equals(included2));
         assertTrue(included2.equals(included1));
     }
