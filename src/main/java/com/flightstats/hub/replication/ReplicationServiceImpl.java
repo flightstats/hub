@@ -25,7 +25,7 @@ public class ReplicationServiceImpl implements ReplicationService {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationServiceImpl.class);
     private static final String LOCK_PATH = "/ReplicationService/";
 
-    private final DynamoReplicationDao replicationDao;
+    private final ReplicationDao replicationDao;
     private final ChannelService channelService;
     private final ChannelUtils channelUtils;
     private final CuratorLock curatorLock;
@@ -33,7 +33,7 @@ public class ReplicationServiceImpl implements ReplicationService {
     private final Replicator replicator;
 
     @Inject
-    public ReplicationServiceImpl(DynamoReplicationDao replicationDao,
+    public ReplicationServiceImpl(ReplicationDao replicationDao,
                                   ChannelService channelService, ChannelUtils channelUtils,
                                   CuratorLock curatorLock, CuratorFramework curator, Replicator replicator) {
         this.replicationDao = replicationDao;
@@ -89,13 +89,13 @@ public class ReplicationServiceImpl implements ReplicationService {
     }
 
     @Override
-    public Collection<ReplicationDomain> getDomains() {
-        return replicationDao.getDomains();
+    public Collection<ReplicationDomain> getDomains(boolean refreshCache) {
+        return replicationDao.getDomains(refreshCache);
     }
 
     @Override
     public ReplicationBean getReplicationBean() {
-        return new ReplicationBean(getDomains(), getStatus());
+        return new ReplicationBean(getDomains(false), getStatus());
     }
 
     private Collection<ReplicationStatus> getStatus() {

@@ -15,7 +15,7 @@ import java.util.*;
 /**
  *
  */
-public class DynamoReplicationDao {
+public class DynamoReplicationDao implements ReplicationDao {
     private final static Logger logger = LoggerFactory.getLogger(DynamoReplicationDao.class);
 
     private final AmazonDynamoDBClient dbClient;
@@ -40,23 +40,21 @@ public class DynamoReplicationDao {
     }
 
 
-    public void upsert(ReplicationDomain config) {
+    @Override
+    public void upsert(ReplicationDomain domain) {
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put("domain", new AttributeValue(config.getDomain()));
-        item.put("historicalDays", new AttributeValue().withN(String.valueOf(config.getHistoricalDays())));
-        if (!config.getExcludeExcept().isEmpty()) {
-            item.put("excludeExcept", new AttributeValue().withSS(config.getExcludeExcept()));
+        item.put("domain", new AttributeValue(domain.getDomain()));
+        item.put("historicalDays", new AttributeValue().withN(String.valueOf(domain.getHistoricalDays())));
+        if (!domain.getExcludeExcept().isEmpty()) {
+            item.put("excludeExcept", new AttributeValue().withSS(domain.getExcludeExcept()));
         }
-        if (!config.getIncludeExcept().isEmpty()) {
-            item.put("includeExcept", new AttributeValue().withSS(config.getIncludeExcept()));
-        }
-
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(getTableName())
                 .withItem(item);
         dbClient.putItem(putItemRequest);
     }
 
+    @Override
     public Optional<ReplicationDomain> get(String domain) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("domain", new AttributeValue().withS(domain));
@@ -73,13 +71,15 @@ public class DynamoReplicationDao {
         return Optional.absent();
     }
 
+    @Override
     public void delete(String domain) {
         Map<String, AttributeValue> key = new HashMap<>();
         key.put("domain", new AttributeValue().withS(domain));
         dbClient.deleteItem(new DeleteItemRequest(getTableName(), key));
     }
 
-    public Collection<ReplicationDomain> getDomains() {
+    @Override
+    public Collection<ReplicationDomain> getDomains(boolean refreshCache) {
         List<ReplicationDomain> domains = new ArrayList<>();
         ScanRequest scanRequest = new ScanRequest()
                 .withTableName(getTableName());
@@ -100,7 +100,7 @@ public class DynamoReplicationDao {
         }
     }
 
-    public void initialize() {
+    private void initialize() {
         CreateTableRequest request = new CreateTableRequest()
                 .withTableName(getTableName())
                 .withAttributeDefinitions(new AttributeDefinition("domain", ScalarAttributeType.S))
@@ -118,13 +118,10 @@ public class DynamoReplicationDao {
         if (item.containsKey("excludeExcept")) {
             builder.withExcludedExcept(item.get("excludeExcept").getSS());
         }
-        if (item.containsKey("includeExcept")) {
-            builder.withIncludedExcept(item.get("includeExcept").getSS());
-        }
         return builder.build();
     }
 
-    public String getTableName() {
+    private String getTableName() {
         return dynamoUtils.getTableName("replicationConfig");
     }
 }

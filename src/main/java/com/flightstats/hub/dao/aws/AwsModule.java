@@ -43,7 +43,6 @@ public class AwsModule extends AbstractModule {
         bind(CuratorLock.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
 		bind(AwsConnectorFactory.class).in(Singleton.class);
-        bind(DynamoReplicationDao.class).asEagerSingleton();
         bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
         bind(ContentServiceFinder.class).to(SplittingContentServiceFinder.class).asEagerSingleton();
         bind(ChannelConfigurationDao.class).to(TimedChannelConfigurationDao.class).in(Singleton.class);
@@ -54,6 +53,10 @@ public class AwsModule extends AbstractModule {
                 .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))
                 .to(DynamoChannelConfigurationDao.class);
         bind(WebsocketPublisher.class).to(WebsocketPublisherImpl.class).asEagerSingleton();
+        bind(ReplicationDao.class).to(CachedReplicationDao.class).in(Singleton.class);
+        bind(ReplicationDao.class)
+                .annotatedWith(Names.named(CachedReplicationDao.DELEGATE))
+                .to(DynamoReplicationDao.class);
 
         install(new PrivateModule() {
             @Override
