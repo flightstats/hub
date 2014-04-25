@@ -846,7 +846,7 @@ exports.getAllChannels = getAllChannels;
  * Update a channel via PATCH. Currently, code only supports changing .ttlMillis property but this function will
  *  pass along the .name property if given for testing.
  *
- * @param params: .channelUri, .name (optional), .ttlMillis (optional), .debug (optional).
+ * @param params: .channelUri, .name (optional), .ttlMillis (optional), .description (optional), .debug (optional).
  * @param callback: response
  */
 var patchChannel = function(params, callback) {
@@ -859,6 +859,10 @@ var patchChannel = function(params, callback) {
     }
     if (typeof params.ttlMillis != 'undefined') {
         payload['ttlMillis'] = params.ttlMillis;
+    }
+
+    if (typeof params.description != 'undefined') {
+        payload['description'] = params.description;
     }
 
     if (VERBOSE) {
