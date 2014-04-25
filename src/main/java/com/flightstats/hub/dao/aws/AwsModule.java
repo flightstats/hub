@@ -43,7 +43,6 @@ public class AwsModule extends AbstractModule {
         bind(CuratorLock.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
 		bind(AwsConnectorFactory.class).in(Singleton.class);
-        bind(DynamoReplicationDao.class).asEagerSingleton();
         bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
         bind(ContentServiceFinder.class).to(SplittingContentServiceFinder.class).asEagerSingleton();
         bind(ChannelConfigurationDao.class).to(TimedChannelConfigurationDao.class).in(Singleton.class);

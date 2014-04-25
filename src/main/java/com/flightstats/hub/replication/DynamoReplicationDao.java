@@ -41,12 +41,12 @@ public class DynamoReplicationDao implements ReplicationDao {
 
 
     @Override
-    public void upsert(ReplicationDomain config) {
+    public void upsert(ReplicationDomain domain) {
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put("domain", new AttributeValue(config.getDomain()));
-        item.put("historicalDays", new AttributeValue().withN(String.valueOf(config.getHistoricalDays())));
-        if (!config.getExcludeExcept().isEmpty()) {
-            item.put("excludeExcept", new AttributeValue().withSS(config.getExcludeExcept()));
+        item.put("domain", new AttributeValue(domain.getDomain()));
+        item.put("historicalDays", new AttributeValue().withN(String.valueOf(domain.getHistoricalDays())));
+        if (!domain.getExcludeExcept().isEmpty()) {
+            item.put("excludeExcept", new AttributeValue().withSS(domain.getExcludeExcept()));
         }
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(getTableName())
