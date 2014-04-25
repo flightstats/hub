@@ -48,10 +48,6 @@ public class DynamoReplicationDao implements ReplicationDao {
         if (!config.getExcludeExcept().isEmpty()) {
             item.put("excludeExcept", new AttributeValue().withSS(config.getExcludeExcept()));
         }
-        if (!config.getIncludeExcept().isEmpty()) {
-            item.put("includeExcept", new AttributeValue().withSS(config.getIncludeExcept()));
-        }
-
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(getTableName())
                 .withItem(item);
@@ -121,9 +117,6 @@ public class DynamoReplicationDao implements ReplicationDao {
         }
         if (item.containsKey("excludeExcept")) {
             builder.withExcludedExcept(item.get("excludeExcept").getSS());
-        }
-        if (item.containsKey("includeExcept")) {
-            builder.withIncludedExcept(item.get("includeExcept").getSS());
         }
         return builder.build();
     }
