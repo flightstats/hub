@@ -75,17 +75,9 @@ public class DomainReplicator implements Runnable {
             return;
         }
         Set<String> activeReplicators = getActiveReplicators();
-        if (domain.isInclusive()) {
-            for (Channel channel : channels) {
-                if (!domain.getIncludeExcept().contains(channel.getName()) && !activeReplicators.contains(channel.getName())) {
-                    startChannelReplication(channel, domain);
-                }
-            }
-        } else {
-            for (Channel channel : channels) {
-                if (domain.getExcludeExcept().contains(channel.getName()) && !activeReplicators.contains(channel.getName())) {
-                    startChannelReplication(channel, domain);
-                }
+        for (Channel channel : channels) {
+            if (domain.getExcludeExcept().contains(channel.getName()) && !activeReplicators.contains(channel.getName())) {
+                startChannelReplication(channel, domain);
             }
         }
         Thread.currentThread().setName("EmptyDomainReplicator");
