@@ -10,7 +10,7 @@ import java.util.Collections;
  */
 public class NoOpReplicationService implements ReplicationService {
     @Override
-    public void create(String domain, ReplicationDomain config) { }
+    public void create(ReplicationDomain domain) { }
 
     @Override
     public Optional<ReplicationDomain> get(String domain) {

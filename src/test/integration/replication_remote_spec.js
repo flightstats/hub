@@ -43,6 +43,17 @@ describe("replication_remote_spec", function () {
             });
     });
 
+    it("tries to replicate duplicate channel", function (done) {
+        request.put({url: hubUrlBase + "/replication/duper" ,
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ historicalDays: 1, excludeExcept: [channelName] })},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(403);
+                done();
+            });
+    });
+
     it("waits for connection to remote server", function () {
         var connected = false;
 
@@ -96,7 +107,7 @@ describe("replication_remote_spec", function () {
 
     });
 
-    //todo - gfm - 2/4/14 - this could also verify that the remote sequence is the same as the local, may need to span times
+
 
     it("verifies local copy of the channel", function() {
         var verified = false;
