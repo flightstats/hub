@@ -5,7 +5,6 @@ import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
-import com.flightstats.hub.model.exception.InvalidRequestException;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
@@ -31,29 +30,29 @@ public class ReplicationServiceImpl implements ReplicationService {
     private final CuratorLock curatorLock;
     private final CuratorFramework curator;
     private final Replicator replicator;
+    private final ReplicationValidator replicationValidator;
 
     @Inject
-    public ReplicationServiceImpl(ReplicationDao replicationDao,
-                                  ChannelService channelService, ChannelUtils channelUtils,
-                                  CuratorLock curatorLock, CuratorFramework curator, Replicator replicator) {
+    public ReplicationServiceImpl(ReplicationDao replicationDao, ChannelService channelService, ChannelUtils channelUtils,
+                                  CuratorLock curatorLock, CuratorFramework curator, Replicator replicator,
+                                  ReplicationValidator replicationValidator) {
         this.replicationDao = replicationDao;
         this.channelService = channelService;
         this.channelUtils = channelUtils;
         this.curatorLock = curatorLock;
         this.curator = curator;
         this.replicator = replicator;
+        this.replicationValidator = replicationValidator;
     }
 
     @Override
-    public void create(final String domain, final ReplicationDomain config) {
-        if (!config.isValid()) {
-            throw new InvalidRequestException("Invalid request. excludeExcept must be populated.");
-        }
+    public void create(final ReplicationDomain domain) {
+        replicationValidator.validateDomain(domain);
+
         curatorLock.runWithLock(new Lockable() {
             @Override
             public void runWithLock() throws Exception {
-                config.setDomain(domain);
-                replicationDao.upsert(config);
+                replicationDao.upsert(domain);
             }
         }, LOCK_PATH, 1, TimeUnit.MINUTES);
         notifyWatchers();
