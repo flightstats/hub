@@ -72,124 +72,139 @@ describe('Replication', function() {
 
     }
 
+    describe('GET config', function() {
 
-    describe('Source-specific Replication config tests', function() {
+        describe('Source-specific Replication config tests', function() {
 
 
-        /*
-            Ensure that:
-            1) a defaultChannelName is chosen from SOURCE_DOMAIN
-            2) a replication config exists on TARGET_DOMAIN for SOURCE_DOMAIN (if not, we create one)
-         */
-        before(function(done) {
+            /*
+             Ensure that:
+             1) a defaultChannelName is chosen from SOURCE_DOMAIN
+             2) a replication config exists on TARGET_DOMAIN for SOURCE_DOMAIN (if not, we create one)
+             */
+            before(function(done) {
 
-            getDefaultChannel(function(selectedChannelName) {
-                defaultChannelName = selectedChannelName;
+                getDefaultChannel(function(selectedChannelName) {
+                    defaultChannelName = selectedChannelName;
 
-                dhh.getReplicationConfig({'target': TARGET_DOMAIN, 'source': SOURCE_DOMAIN, 'debug': true},
+                    dhh.getReplicationConfig({'target': TARGET_DOMAIN, 'source': SOURCE_DOMAIN, 'debug': true},
+                        function(res, body) {
+
+                            if (gu.HTTPresponses.Not_Found == res.status) {
+                                gu.debugLog('No config found for target '+ TARGET_DOMAIN +' and source '+ SOURCE_DOMAIN);
+
+                                createBasicConfigEntry(done);
+                            } else {
+                                gu.debugLog('Config entry found.')
+                            }
+
+                            expect(res.status).to.equal(gu.HTTPresponses.OK);
+
+                            gu.debugLog('Body: ');
+                            console.log(body);
+
+
+                            INITIAL_SOURCE_CONFIG = body;
+
+                            done();
+                        })
+                })
+
+
+            })
+
+            it('Source config is legal format', function(done) {
+
+                expect(INITIAL_SOURCE_CONFIG).to.not.be.null;
+
+                expect(lodash.keys(INITIAL_SOURCE_CONFIG).length).to.equal(3);
+
+                expect(INITIAL_SOURCE_CONFIG.hasOwnProperty('domain')).to.be.true;
+                expect(INITIAL_SOURCE_CONFIG.hasOwnProperty('historicalDays')).to.be.true;
+                expect(isNaN(INITIAL_SOURCE_CONFIG['historicalDays'])).to.be.false;
+
+                expect(INITIAL_SOURCE_CONFIG.hasOwnProperty('excludeExcept')).to.be.true;
+
+                done();
+            })
+
+            it('Bad source host returns 404', function(done) {
+
+                dhh.getReplicationConfig({'target': TARGET_DOMAIN, 'source': 'fake.server.here', 'debug': true},
+                    function(res, body) {
+                        expect(res.status).to.equal(gu.HTTPresponses.Not_Found);
+
+                        done();
+
+                    })
+            })
+
+        });
+
+        describe('Full config (not source-specific) tests', function() {
+
+            before(function(done) {
+                dhh.getReplicationConfig({'target': TARGET_DOMAIN, 'debug': true},
                     function(res, body) {
 
                         if (gu.HTTPresponses.Not_Found == res.status) {
-                            gu.debugLog('No config found for target '+ TARGET_DOMAIN +' and source '+ SOURCE_DOMAIN);
+                            gu.debugLog('No config found for target '+ TARGET_DOMAIN);
 
                             createBasicConfigEntry(done);
+
                         } else {
                             gu.debugLog('Config entry found.')
                         }
 
                         expect(res.status).to.equal(gu.HTTPresponses.OK);
 
+
                         gu.debugLog('Body: ');
                         console.log(body);
 
 
-                        INITIAL_SOURCE_CONFIG = body;
+                        INITIAL_FULL_CONFIG = body;
 
                         done();
                     })
             })
 
+            it('Full config is legal format', function(done) {
+                var body = INITIAL_FULL_CONFIG;
 
-        })
+                expect(body.hasOwnProperty('domains')).to.be.true;
+                expect(body.hasOwnProperty('status')).to.be.true;
 
-        it('Source config is legal format', function(done) {
+                lodash.forEach(body['domains'], function(domain) {
+                    expect(lodash.keys(domain).length).to.equal(3);
 
-            expect(INITIAL_SOURCE_CONFIG).to.not.be.null;
+                    lodash.forEach(['domain', 'historicalDays', 'excludeExcept'], function(domKey) {
+                        expect(domain.hasOwnProperty(domKey));
+                    })
 
-            expect(lodash.keys(INITIAL_SOURCE_CONFIG).length).to.equal(3);
-
-            expect(INITIAL_SOURCE_CONFIG.hasOwnProperty('domain')).to.be.true;
-            expect(INITIAL_SOURCE_CONFIG.hasOwnProperty('historicalDays')).to.be.true;
-            expect(isNaN(INITIAL_SOURCE_CONFIG['historicalDays'])).to.be.false;
-
-            expect(INITIAL_SOURCE_CONFIG.hasOwnProperty('excludeExcept')).to.be.true;
-
-            done();
-        })
-
-
-
-    });
-
-    describe('Full config (not source-specific) tests', function() {
-
-        before(function(done) {
-            dhh.getReplicationConfig({'target': TARGET_DOMAIN, 'debug': true},
-                function(res, body) {
-
-                    if (gu.HTTPresponses.Not_Found == res.status) {
-                        gu.debugLog('No config found for target '+ TARGET_DOMAIN);
-
-                        createBasicConfigEntry(done);
-
-                    } else {
-                        gu.debugLog('Config entry found.')
-                    }
-
-                    expect(res.status).to.equal(gu.HTTPresponses.OK);
-
-
-                    gu.debugLog('Body: ');
-                    console.log(body);
-
-
-                    INITIAL_FULL_CONFIG = body;
-
-                    done();
-                })
-        })
-
-        it('Full config is legal format', function(done) {
-            var body = INITIAL_FULL_CONFIG;
-
-             expect(body.hasOwnProperty('domains')).to.be.true;
-             expect(body.hasOwnProperty('status')).to.be.true;
-
-             lodash.forEach(body['domains'], function(domain) {
-                expect(lodash.keys(domain).length).to.equal(3);
-
-                 lodash.forEach(['domain', 'historicalDays', 'excludeExcept'], function(domKey) {
-                    expect(domain.hasOwnProperty(domKey));
-                 })
-
-                 expect(domain['domain']).to.not.be.null;
-                 expect(domain['historicalDays']).to.not.be.null;
-             })
-
-             lodash.forEach(body['status'], function(status) {
-             expect(lodash.keys(status).length).to.equal(6);
-
-             lodash.forEach(['replicationLatest', 'sourceLatest', 'connected', 'deltaLatest', 'name', 'url'],
-                function(statusKey) {
-                    expect(status.hasOwnProperty(statusKey));
+                    expect(domain['domain']).to.not.be.null;
+                    expect(domain['historicalDays']).to.not.be.null;
                 })
 
-             })
+                lodash.forEach(body['status'], function(status) {
+                    expect(lodash.keys(status).length).to.equal(6);
 
-            done();
+                    lodash.forEach(['replicationLatest', 'sourceLatest', 'connected', 'deltaLatest', 'name', 'url'],
+                        function(statusKey) {
+                            expect(status.hasOwnProperty(statusKey));
+                        })
 
+                })
+
+                done();
+
+            })
         })
+
+
     })
+
+
 
 
 });
