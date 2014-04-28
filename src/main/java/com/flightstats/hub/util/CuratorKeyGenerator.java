@@ -84,6 +84,17 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
 
     }
 
+    @Override
+    public void setLatest(String channelName, ContentKey contentKey) {
+        DistributedAtomicLong atomicLong = getDistributedAtomicLong(channelName);
+        SequenceContentKey sequenceContentKey = (SequenceContentKey) contentKey;
+        try {
+            atomicLong.forceSet(sequenceContentKey.getSequence());
+        } catch (Exception e) {
+            logger.warn("unable to set content key sequence", e);
+        }
+    }
+
     private DistributedAtomicLong getDistributedAtomicLong(String channelName) {
         DistributedAtomicLong atomicLong = channelToLongMap.get(channelName);
         if (null == atomicLong) {
