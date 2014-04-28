@@ -12,4 +12,6 @@ public interface ContentKeyGenerator {
     Optional<ContentKey> parse(String keyString);
 
     void delete(String channelName);
+
+    void setLatest(String channelName, ContentKey contentKey);
 }

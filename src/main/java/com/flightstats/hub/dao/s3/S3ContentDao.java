@@ -111,7 +111,9 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public InsertedContentKey write(String channelName, Content content, long ttlDays) {
-        if (!content.getContentKey().isPresent()) {
+        if (content.getContentKey().isPresent()) {
+            keyGenerator.setLatest(channelName, content.getContentKey().get());
+        } else {
             content.setContentKey(keyGenerator.newKey(channelName));
         }
         ContentKey key = content.getContentKey().get();

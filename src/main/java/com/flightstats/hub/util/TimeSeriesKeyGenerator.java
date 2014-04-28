@@ -27,4 +27,9 @@ public class TimeSeriesKeyGenerator implements ContentKeyGenerator {
     public void delete(String channelName) {
         //do nothing
     }
+
+    @Override
+    public void setLatest(String channelName, ContentKey contentKey) {
+        //do nothing
+    }
 }
