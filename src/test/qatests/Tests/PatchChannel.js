@@ -28,6 +28,7 @@ var DOMAIN = dhh.DOMAIN,
 
 describe('Update description', function() {
     var descChannelURI = null,
+        altDescChannelURI = null,
         noDescChannelURI = null;
 
     // calls back with body of GET channel
@@ -45,6 +46,7 @@ describe('Update description', function() {
 
     before(function(done) {
         var channelWithDescName = dhh.getRandomChannelName(),
+        altChannelWithDescName = dhh.getRandomChannelName(),
         channelWODescName = dhh.getRandomChannelName();
 
         dhh.createChannel({'name': channelWithDescName, 'description': dhh.getRandomChannelDescription(),
@@ -57,7 +59,15 @@ describe('Update description', function() {
                         expect(secondRes.status).to.equal(gu.HTTPresponses.Created);
                         noDescChannelURI = secondUri;
 
-                        done();
+                        dhh.createChannel({'name': altChannelWithDescName,
+                                'description': dhh.getRandomChannelDescription(), 'domain': DOMAIN, 'debug': DEBUG},
+                            function(thirdRes, thirdUri) {
+                                expect(thirdRes.status).to.equal(gu.HTTPresponses.Created);
+                                altDescChannelURI = thirdUri;
+
+                                done();
+                            })
+
                 })
         })
     })
@@ -75,6 +85,14 @@ describe('Update description', function() {
 
         patchAndGetChannel({'channelUri': noDescChannelURI, 'description': newDesc}, function(body) {
             expect(body.description).to.equal(newDesc);
+
+            done();
+        })
+    })
+
+    it('Channel with description updated to null results in desc of empty string', function(done) {
+        patchAndGetChannel({'channelUri': altDescChannelURI, 'description': null}, function(body) {
+            expect(body.description).to.equal('');
 
             done();
         })
