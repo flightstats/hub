@@ -2,10 +2,8 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.model.exception.ReplicatingChannelException;
 import com.flightstats.hub.replication.ChannelReplicator;
-import com.flightstats.hub.replication.ReplicationDao;
-import com.flightstats.hub.replication.ReplicationDomain;
+import com.flightstats.hub.replication.ReplicationValidator;
 import com.flightstats.hub.service.CreateChannelValidator;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -28,7 +26,7 @@ public class ChannelServiceImpl implements ChannelService {
     private final CreateChannelValidator createChannelValidator;
     private final TimeIndexProcessor timeIndexProcessor;
     private final ChannelReplicator channelReplicator;
-    private final ReplicationDao replicationDao;
+    private final ReplicationValidator replicationValidator;
     private final ContentService missingDao = new ContentService() {
         @Override
         public void createChannel(ChannelConfiguration configuration) { }
@@ -64,13 +62,13 @@ public class ChannelServiceImpl implements ChannelService {
     @Inject
     public ChannelServiceImpl(ContentServiceFinder contentServiceFinder, ChannelConfigurationDao channelConfigurationDao,
                               CreateChannelValidator createChannelValidator, TimeIndexProcessor timeIndexProcessor,
-                              ChannelReplicator channelReplicator, ReplicationDao replicationDao) {
+                              ChannelReplicator channelReplicator, ReplicationValidator replicationValidator) {
         this.contentServiceFinder = contentServiceFinder;
         this.channelConfigurationDao = channelConfigurationDao;
         this.createChannelValidator = createChannelValidator;
         this.timeIndexProcessor = timeIndexProcessor;
         this.channelReplicator = channelReplicator;
-        this.replicationDao = replicationDao;
+        this.replicationValidator = replicationValidator;
     }
 
     private ContentService getContentService(String channelName){
@@ -98,14 +96,8 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public InsertedContentKey insert(String channelName, Content content) {
         if (!content.getContentKey().isPresent()) {
-            Collection<ReplicationDomain> domains = replicationDao.getDomains(false);
-            for (ReplicationDomain domain : domains) {
-                if (domain.getExcludeExcept().contains(channelName)) {
-                    throw new ReplicatingChannelException(channelName + " cannot have data inserted while it is replicating");
-                }
-            }
+            replicationValidator.checkIfReplicating(channelName);
         }
-
         ChannelConfiguration configuration = channelConfigurationDao.getChannelConfiguration(channelName);
         return getContentService(channelName).insert(configuration, content);
     }
