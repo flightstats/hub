@@ -15,9 +15,11 @@ if(typeof remoteDomain === 'undefined'){
 describe("replication_remote_spec", function () {
 
     var channelName = utils.randomChannelName();
-    var remoteUrl = "http://" + remoteDomain + "/channel";
+    var remoteChannelUrl = "http://" + remoteDomain + "/channel";
+    var localChannelUrl = hubUrlBase + "/channel";
+    var localReplicationUrl = hubUrlBase + "/replication/";
     it("creates remote channel", function (done) {
-        request.post({url: remoteUrl,
+        request.post({url: remoteChannelUrl,
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({ "name": channelName, "description": "re-moat channel"})},
             function (err, response, body) {
@@ -28,12 +30,12 @@ describe("replication_remote_spec", function () {
     });
 
     it("adds remote items", function (done) {
-        addItem();
-        addItem(done);
+        addItem(remoteChannelUrl);
+        addItem(remoteChannelUrl, done);
     });
 
     it("creates local replication config", function (done) {
-        request.put({url: hubUrlBase + "/replication/" + remoteDomain,
+        request.put({url: localReplicationUrl + remoteDomain,
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({ historicalDays: 1, excludeExcept: [channelName] })},
             function (err, response, body) {
@@ -44,7 +46,7 @@ describe("replication_remote_spec", function () {
     });
 
     it("tries to replicate duplicate channel", function (done) {
-        request.put({url: hubUrlBase + "/replication/duper" ,
+        request.put({url: localReplicationUrl + "duper" ,
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({ historicalDays: 1, excludeExcept: [channelName] })},
             function (err, response, body) {
@@ -81,8 +83,8 @@ describe("replication_remote_spec", function () {
     });
 
     it("adds more remote items", function (done) {
-        addItem();
-        addItem(done);
+        addItem(remoteChannelUrl);
+        addItem(remoteChannelUrl, done);
     });
 
     it("verifies replication progress", function () {
@@ -107,13 +109,11 @@ describe("replication_remote_spec", function () {
 
     });
 
-
-
     it("verifies local copy of the channel", function() {
         var verified = false;
 
         runs(function() {
-            request.get({url: hubUrlBase + "/channel/" + channelName,
+            request.get({url: localChannelUrl + "/" + channelName,
                     headers: {"Content-Type": "application/json"}},
                 function (err, response, body) {
                     expect(err).toBeNull();
@@ -130,8 +130,52 @@ describe("replication_remote_spec", function () {
 
     });
 
+    it("stops replication ", function (done) {
+        request.del({url: localReplicationUrl + remoteDomain },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(202);
+
+                done();
+            });
+    });
+
+
+    it("adds local items to " + channelName, function (done) {
+        var channelUrl = localChannelUrl + "/" + channelName;
+        request.get({url: channelUrl + "/1003"},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+            });
+        addItem(localChannelUrl);
+        addItem(localChannelUrl, done);
+    });
+
+    it("verifies last item in " + channelName, function (done) {
+        var channelUrl = localChannelUrl + "/" + channelName;
+        request.get({url: channelUrl + "/1005"},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                done();
+            });
+    });
+
+    it("verifies latest item in " + channelName, function (done) {
+        var channelUrl = localChannelUrl + "/" + channelName;
+        request.get({url: channelUrl + "/latest", followRedirect:false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(303);
+                expect(response.headers.location).toBe(channelUrl + "/1005");
+                done();
+            });
+    });
+    
+    
     function getReplication(callback) {
-        request.get({url: hubUrlBase + "/replication",
+        request.get({url: localReplicationUrl,
                 headers: {"Content-Type": "application/json"}},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -140,9 +184,9 @@ describe("replication_remote_spec", function () {
             });
     }
 
-    function addItem(done) {
+    function addItem(url, done) {
         done = done || function () { };
-        request.post({url: remoteUrl + "/" + channelName,
+        request.post({url: url + "/" + channelName,
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({ "data": Date.now()})},
             function (err, response, body) {
