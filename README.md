@@ -140,9 +140,7 @@ On success:  `HTTP/1.1 201 OK`
 
 Here's how you can do this with curl:
 ```bash
-curl -i -X POST --header "Content-type: application/json" \
-    --data '{"name": "stumptown"}'  \
-    http://hub/channel
+curl -i -X POST --header "Content-type: application/json" --data '{"name": "stumptown"}' http://hub/channel
 ```
 
 ## update a channel
@@ -169,9 +167,7 @@ On success:  `HTTP/1.1 200 OK`, and the new channel metadata is returned (see ex
 
 Here's how you can do this with curl:
 ```bash
-curl -i -X PATCH --header "Content-type: application/json" \
-    --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5, "description": "the sequence of all coffee orders from stumptown pdx"}'  \
-    http://hub/channel/stumptown
+curl -i -X PATCH --header "Content-type: application/json" --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5, "description": "the sequence of all coffee orders from stumptown pdx"}' http://hub/channel/stumptown
 ```
 
 ## fetch channel metadata
@@ -222,9 +218,7 @@ On success: `HTTP/1.1 201 Created`
 Here's how you could do this with curl:
 
 ```bash
-curl -Li -X POST --header "Content-type: text/plain" \
-    --data "your content here" \
-    http://hub/channel/stumptown
+curl -i -X POST --header "Content-type: text/plain" --data 'your content here' http://hub/channel/stumptown
 ```
 
 ## fetch content from channel
