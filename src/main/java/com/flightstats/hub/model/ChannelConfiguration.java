@@ -4,19 +4,20 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.flightstats.hub.model.exception.InvalidRequestException;
+import com.google.common.base.Splitter;
+import com.google.gson.Gson;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class ChannelConfiguration implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private final String name;
@@ -27,27 +28,37 @@ public class ChannelConfiguration implements Serializable {
     private final int peakRequestRateSeconds;
     private final Long ttlMillis;
     private final String description;
+    private final Set<String> tags = new TreeSet<>();
+    //todo - gfm - 4/29/14 - can we remove this?
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final Gson gson = new Gson();
 
     public enum ChannelType { Sequence, TimeSeries }
 
     public ChannelConfiguration(Builder builder) {
-        this.name = builder.name;
+        this.name = StringUtils.trim(builder.name);
         this.creationDate = builder.creationDate;
         this.type = builder.type;
         this.contentSizeKB = builder.contentSizeKB;
         this.peakRequestRateSeconds = builder.peakRequestRateSeconds;
-        this.ttlDays = builder.ttlDays;
-        if (builder.ttlMillis == null) {
+        if (null == builder.ttlMillis) {
+            this.ttlDays = builder.ttlDays;
             this.ttlMillis = TimeUnit.DAYS.toMillis(ttlDays);
         } else {
+            int extraDay = 0;
+            if (builder.ttlMillis % TimeUnit.DAYS.toMillis(1) > 0) {
+                extraDay = 1;
+            }
+            this.ttlDays = TimeUnit.MILLISECONDS.toDays(builder.ttlMillis) + extraDay;
             this.ttlMillis = builder.ttlMillis;
         }
+
         if (builder.description == null) {
             this.description = "";
         } else {
             this.description = builder.description;
         }
+        this.tags.addAll(builder.tags);
     }
 
     @JsonCreator
@@ -57,6 +68,7 @@ public class ChannelConfiguration implements Serializable {
         return builder.build();
     }
 
+    //todo - gfm - 4/29/14 - can we kill this?
     public static void populate(Map<String, String> props, Builder builder) {
         for (Map.Entry<String, String> entry : props.entrySet()) {
             switch (entry.getKey()) {
@@ -81,6 +93,7 @@ public class ChannelConfiguration implements Serializable {
                 case "description":
                     builder.withDescription(entry.getValue());
                     break;
+                case "tags":
                 case "_links":
                 case "lastUpdateDate":
                 case "creationDate":
@@ -91,6 +104,7 @@ public class ChannelConfiguration implements Serializable {
         }
     }
 
+    //todo - gfm - 4/29/14 - can we remove these annotations?
     @JsonProperty("name")
     public String getName() {
 		return name;
@@ -144,6 +158,11 @@ public class ChannelConfiguration implements Serializable {
         return description;
     }
 
+    @JsonProperty("tags")
+    public Set<String> getTags() {
+        return tags;
+    }
+
     @Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -170,8 +189,17 @@ public class ChannelConfiguration implements Serializable {
                 ", type=" + type +
                 ", contentSizeKB=" + contentSizeKB +
                 ", peakRequestRateSeconds=" + peakRequestRateSeconds +
+                ", ttlMillis=" + ttlMillis +
                 ", description='" + description + '\'' +
+                ", tags=" + tags +
                 '}';
+    }
+
+    public static ChannelConfiguration fromJson(String json) {
+        if (StringUtils.isEmpty(json)) {
+            throw new InvalidRequestException("this method requires at least a json name");
+        }
+        return gson.fromJson(json, ChannelConfiguration.Builder.class).build();
     }
 
     public static Builder builder() {
@@ -187,6 +215,10 @@ public class ChannelConfiguration implements Serializable {
         private int peakRequestRateSeconds = 1;
         private Long ttlMillis;
         private String description = "";
+        private Set<String> tags = new HashSet<>();
+
+        public Builder() {
+        }
 
         public Builder withChannelConfiguration(ChannelConfiguration config) {
 			this.name = config.name;
@@ -196,9 +228,11 @@ public class ChannelConfiguration implements Serializable {
             this.contentSizeKB = config.contentSizeKB;
             this.peakRequestRateSeconds = config.peakRequestRateSeconds;
             this.description = config.description;
+            this.tags.addAll(config.getTags());
 			return this;
 		}
 
+        //todo - gfm - 4/29/14 - can some of these go away?
 		public Builder withName(String name) {
 			this.name = name;
 			return this;
@@ -258,6 +292,10 @@ public class ChannelConfiguration implements Serializable {
             return withMap(map);
         }
 
+        public Builder withTags(String tagString) {
+            tags.addAll(Splitter.on(",").trimResults().splitToList(tagString));
+            return this;
+        }
 		public ChannelConfiguration build() {
 			return new ChannelConfiguration(this);
 		}
