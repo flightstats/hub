@@ -71,7 +71,8 @@ public class ChannelResource {
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createChannel(ChannelConfiguration channelConfiguration) throws InvalidRequestException, AlreadyExistsException {
+	public Response createChannel(String json) throws InvalidRequestException, AlreadyExistsException {
+        ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json);
         channelConfiguration = channelService.createChannel(channelConfiguration);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
 		return Response.created(channelUri).entity(

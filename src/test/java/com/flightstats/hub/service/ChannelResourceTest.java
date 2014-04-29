@@ -14,16 +14,21 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ChannelResourceTest {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelResourceTest.class);
 
-	@Test
+    //todo - gfm - 4/29/14 - useful?
+	/*@Test
 	public void testChannelCreation() throws Exception {
 		String channelName = "UHF";
 
@@ -58,7 +63,7 @@ public class ChannelResourceTest {
 		assertEquals(201, response.getStatus());
 		assertEquals(new URI(channelUri), response.getMetadata().getFirst("location"));
 		assertEquals(expected, response.getEntity());
-	}
+	}*/
 
 	@Test
 	public void testGetChannels() throws Exception {
