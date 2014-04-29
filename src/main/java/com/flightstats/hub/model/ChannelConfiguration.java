@@ -1,17 +1,12 @@
 package com.flightstats.hub.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.flightstats.hub.model.exception.InvalidRequestException;
-import com.google.common.base.Splitter;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -29,9 +24,8 @@ public class ChannelConfiguration implements Serializable {
     private final Long ttlMillis;
     private final String description;
     private final Set<String> tags = new TreeSet<>();
-    //todo - gfm - 4/29/14 - can we remove this?
-    private static final ObjectMapper mapper = new ObjectMapper();
-    private static final Gson gson = new Gson();
+
+    private static final Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new HubDateTypeAdapter()).create();
 
     public enum ChannelType { Sequence, TimeSeries }
 
@@ -52,7 +46,6 @@ public class ChannelConfiguration implements Serializable {
             this.ttlDays = TimeUnit.MILLISECONDS.toDays(builder.ttlMillis) + extraDay;
             this.ttlMillis = builder.ttlMillis;
         }
-
         if (builder.description == null) {
             this.description = "";
         } else {
@@ -61,50 +54,6 @@ public class ChannelConfiguration implements Serializable {
         this.tags.addAll(builder.tags);
     }
 
-    @JsonCreator
-    protected static ChannelConfiguration create(Map<String, String> props) {
-        Builder builder = builder();
-        populate(props, builder);
-        return builder.build();
-    }
-
-    //todo - gfm - 4/29/14 - can we kill this?
-    public static void populate(Map<String, String> props, Builder builder) {
-        for (Map.Entry<String, String> entry : props.entrySet()) {
-            switch (entry.getKey()) {
-                case "name":
-                    builder.withName(entry.getValue().trim());
-                    break;
-                case "ttlMillis":
-                    builder.withTtlMillis(entry.getValue() == null ? null : Long.parseLong(entry.getValue()));
-                    break;
-                case "ttlDays":
-                    builder.withTtlDays(Long.parseLong(entry.getValue()));
-                    break;
-                case "type":
-                    builder.withType(ChannelType.valueOf(entry.getValue()));
-                    break;
-                case "contentSizeKB":
-                    builder.withContentKiloBytes(Integer.parseInt(entry.getValue()));
-                    break;
-                case "peakRequestRateSeconds":
-                    builder.withPeakRequestRate(Integer.parseInt(entry.getValue()));
-                    break;
-                case "description":
-                    builder.withDescription(entry.getValue());
-                    break;
-                case "tags":
-                case "_links":
-                case "lastUpdateDate":
-                case "creationDate":
-                    break;
-                default:
-                    throw new InvalidRequestException("Unexpected property: " + entry.getKey());
-            }
-        }
-    }
-
-    //todo - gfm - 4/29/14 - can we remove these annotations?
     @JsonProperty("name")
     public String getName() {
 		return name;
@@ -232,7 +181,15 @@ public class ChannelConfiguration implements Serializable {
 			return this;
 		}
 
-        //todo - gfm - 4/29/14 - can some of these go away?
+        public Builder withUpdateConfig(ChannelConfiguration config) {
+            this.ttlDays = config.ttlDays;
+            this.contentSizeKB = config.contentSizeKB;
+            this.peakRequestRateSeconds = config.peakRequestRateSeconds;
+            this.description = config.description;
+            this.tags.addAll(config.getTags());
+            return this;
+        }
+
 		public Builder withName(String name) {
 			this.name = name;
 			return this;
@@ -240,14 +197,6 @@ public class ChannelConfiguration implements Serializable {
 
         public Builder withTtlMillis(Long ttlMillis) {
             this.ttlMillis = ttlMillis;
-            if (null == ttlMillis) {
-                this.ttlDays = 1000 * 365;
-            } else {
-                this.ttlDays = TimeUnit.MILLISECONDS.toDays(ttlMillis);
-                if (ttlMillis % TimeUnit.DAYS.toMillis(1) > 0) {
-                    this.ttlDays += 1;
-                }
-            }
             return this;
         }
 
@@ -276,24 +225,8 @@ public class ChannelConfiguration implements Serializable {
             return this;
         }
 
-        public Builder withMap(Map<String, String> valueMap) {
-            populate(valueMap, this);
-            return this;
-        }
-
-        public Builder withJson(String json) throws IOException {
-            Map<String, String> map = new HashMap<>();
-            ObjectNode nodes = (ObjectNode) mapper.readTree(json);
-            Iterator<Map.Entry<String,JsonNode>> elements = nodes.getFields();
-            while (elements.hasNext()) {
-                Map.Entry<String, JsonNode> node = elements.next();
-                map.put(node.getKey(), node.getValue().asText());
-            }
-            return withMap(map);
-        }
-
-        public Builder withTags(String tagString) {
-            tags.addAll(Splitter.on(",").trimResults().splitToList(tagString));
+        public Builder withTags(Collection<String> tags) {
+            this.tags.addAll(tags);
             return this;
         }
 		public ChannelConfiguration build() {
