@@ -88,7 +88,7 @@ Channels starting with `test` will automatically be deleted in the dev and stagi
 `type` is optional, and defaults to Sequence.  Valid values are Sequence and TimeSeries.
 
 `ttlDays` is optional and should be a positive number. If not specified, a default value of 120 days is used.
-`ttlMillis` is still accepted as an input parameter, and is converted to ttlDays.  A `null` ttlMillis is converted to 1000 years.
+`ttlMillis` is still accepted as an input parameter, and is converted to ttlDays.  A `null` ttlMillis is converted to the default 120 days.
 
 `peakRequestRateSeconds` and `contentSizeKB` are optional, and are only used by TimeSeries to provision the throughput of the channel per second.
 If the throughput is exceeded, the service will return an error code of 503 with a `Retry-After` header providing a value in seconds.

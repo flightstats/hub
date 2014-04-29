@@ -74,7 +74,7 @@ public class ChannelUtils {
         }
         String json = response.getEntity(String.class);
         ChannelConfiguration configuration = ChannelConfiguration.builder()
-                .withJson(json)
+                .withChannelConfiguration(ChannelConfiguration.fromJson(json))
                 .withName(ChannelNameExtractor.extractFromChannelUrl(channelUrl))
                 .withCreationDate(new Date())
                 .build();
