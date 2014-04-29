@@ -2,6 +2,7 @@ package com.flightstats.hub.model;
 
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +22,11 @@ public class ChannelConfigurationTest {
         assertDefaults(copy);
     }
 
+    @Test
+    public void testJsonDefaults() throws Exception {
+        assertDefaults(ChannelConfiguration.fromJson("{\"name\": \"defaults\"}"));
+    }
+
     private void assertDefaults(ChannelConfiguration config) {
         assertEquals("defaults", config.getName());
         assertEquals(120, config.getTtlDays());
@@ -28,6 +34,7 @@ public class ChannelConfigurationTest {
         assertEquals(1L, config.getContentThroughputInSeconds());
         assertEquals(1L, config.getPeakRequestRateSeconds());
         assertEquals("", config.getDescription());
+        assertTrue(config.getTags().isEmpty());
     }
 
     @Test
@@ -95,4 +102,18 @@ public class ChannelConfigurationTest {
         assertEquals("some copy", copy.getDescription());
     }
 
+    @Test
+    public void testTags() throws Exception {
+        //todo - gfm - 4/28/14 - add some tags to a config
+        ChannelConfiguration config = ChannelConfiguration.builder().withTags("one,two , three, 4 four").build();
+        assertEquals(4, config.getTags().size());
+        assertTrue(config.getTags().containsAll(Arrays.asList("one", "two", "three", "4 four")));
+    }
+
+    @Test
+    public void testTagsCopy() throws Exception {
+        ChannelConfiguration config = ChannelConfiguration.builder().withTags("one,two , three, 4 four").build();
+        ChannelConfiguration copy = ChannelConfiguration.builder().withChannelConfiguration(config).build();
+        assertTrue(copy.getTags().containsAll(config.getTags()));
+    }
 }
