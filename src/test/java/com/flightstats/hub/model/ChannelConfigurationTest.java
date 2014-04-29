@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -85,8 +86,8 @@ public class ChannelConfigurationTest {
     @Test
     public void testMillisNull() throws Exception {
         ChannelConfiguration config = ChannelConfiguration.builder().withName("millisNull").withTtlMillis(null).build();
-        assertEquals(31536000000000L, (long)config.getTtlMillis());
-        assertEquals(1000 * 365, config.getTtlDays());
+        assertEquals(10368000000L, (long)config.getTtlMillis());
+        assertEquals(120, config.getTtlDays());
     }
 
     @Test
@@ -104,15 +105,16 @@ public class ChannelConfigurationTest {
 
     @Test
     public void testTags() throws Exception {
-        //todo - gfm - 4/28/14 - add some tags to a config
-        ChannelConfiguration config = ChannelConfiguration.builder().withTags("one,two , three, 4 four").build();
+        List<String> tags = Arrays.asList("one", "two", "three", "4 four");
+        ChannelConfiguration config = ChannelConfiguration.builder().withTags(tags).build();
         assertEquals(4, config.getTags().size());
-        assertTrue(config.getTags().containsAll(Arrays.asList("one", "two", "three", "4 four")));
+        assertTrue(config.getTags().containsAll(tags));
     }
 
     @Test
     public void testTagsCopy() throws Exception {
-        ChannelConfiguration config = ChannelConfiguration.builder().withTags("one,two , three, 4 four").build();
+        List<String> tags = Arrays.asList("one", "two", "three", "4 four");
+        ChannelConfiguration config = ChannelConfiguration.builder().withTags(tags).build();
         ChannelConfiguration copy = ChannelConfiguration.builder().withChannelConfiguration(config).build();
         assertTrue(copy.getTags().containsAll(config.getTags()));
     }
