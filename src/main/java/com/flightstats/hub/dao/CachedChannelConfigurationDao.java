@@ -3,6 +3,8 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -10,6 +12,8 @@ import java.util.concurrent.ConcurrentMap;
  *
  */
 public class CachedChannelConfigurationDao implements ChannelConfigurationDao {
+
+    private final static Logger logger = LoggerFactory.getLogger(CachedChannelConfigurationDao.class);
 
     public static final String DELEGATE = "CachedChannelMetadataDao.DELEGATE";
     private final ChannelConfigurationDao delegate;
@@ -20,6 +24,8 @@ public class CachedChannelConfigurationDao implements ChannelConfigurationDao {
                                          @Named("ChannelConfigurationMap") ConcurrentMap<String, ChannelConfiguration> channelConfigurationMap) {
         this.delegate = delegate;
         this.channelConfigurationMap = channelConfigurationMap;
+        logger.info("clearing channelConfigurationMap");
+        channelConfigurationMap.clear();
     }
 
     @Override
