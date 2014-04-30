@@ -20,6 +20,10 @@ public interface ChannelService {
 
 	Iterable<ChannelConfiguration> getChannels();
 
+    Iterable<ChannelConfiguration> getChannels(String tag);
+
+    Iterable<String> getTags();
+
 	Optional<ContentKey> findLastUpdatedKey(String channelName);
 
     boolean isHealthy();

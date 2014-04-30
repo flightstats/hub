@@ -1,22 +1,18 @@
 package com.flightstats.hub.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.flightstats.hub.model.exception.InvalidRequestException;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class ChannelConfiguration implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private final String name;
@@ -27,20 +23,27 @@ public class ChannelConfiguration implements Serializable {
     private final int peakRequestRateSeconds;
     private final Long ttlMillis;
     private final String description;
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private final Set<String> tags = new TreeSet<>();
+
+    private static final Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new HubDateTypeAdapter()).create();
 
     public enum ChannelType { Sequence, TimeSeries }
 
     public ChannelConfiguration(Builder builder) {
-        this.name = builder.name;
+        this.name = StringUtils.trim(builder.name);
         this.creationDate = builder.creationDate;
         this.type = builder.type;
         this.contentSizeKB = builder.contentSizeKB;
         this.peakRequestRateSeconds = builder.peakRequestRateSeconds;
-        this.ttlDays = builder.ttlDays;
-        if (builder.ttlMillis == null) {
+        if (null == builder.ttlMillis) {
+            this.ttlDays = builder.ttlDays;
             this.ttlMillis = TimeUnit.DAYS.toMillis(ttlDays);
         } else {
+            int extraDay = 0;
+            if (builder.ttlMillis % TimeUnit.DAYS.toMillis(1) > 0) {
+                extraDay = 1;
+            }
+            this.ttlDays = TimeUnit.MILLISECONDS.toDays(builder.ttlMillis) + extraDay;
             this.ttlMillis = builder.ttlMillis;
         }
         if (builder.description == null) {
@@ -48,47 +51,7 @@ public class ChannelConfiguration implements Serializable {
         } else {
             this.description = builder.description;
         }
-    }
-
-    @JsonCreator
-    protected static ChannelConfiguration create(Map<String, String> props) {
-        Builder builder = builder();
-        populate(props, builder);
-        return builder.build();
-    }
-
-    public static void populate(Map<String, String> props, Builder builder) {
-        for (Map.Entry<String, String> entry : props.entrySet()) {
-            switch (entry.getKey()) {
-                case "name":
-                    builder.withName(entry.getValue().trim());
-                    break;
-                case "ttlMillis":
-                    builder.withTtlMillis(entry.getValue() == null ? null : Long.parseLong(entry.getValue()));
-                    break;
-                case "ttlDays":
-                    builder.withTtlDays(Long.parseLong(entry.getValue()));
-                    break;
-                case "type":
-                    builder.withType(ChannelType.valueOf(entry.getValue()));
-                    break;
-                case "contentSizeKB":
-                    builder.withContentKiloBytes(Integer.parseInt(entry.getValue()));
-                    break;
-                case "peakRequestRateSeconds":
-                    builder.withPeakRequestRate(Integer.parseInt(entry.getValue()));
-                    break;
-                case "description":
-                    builder.withDescription(entry.getValue());
-                    break;
-                case "_links":
-                case "lastUpdateDate":
-                case "creationDate":
-                    break;
-                default:
-                    throw new InvalidRequestException("Unexpected property: " + entry.getKey());
-            }
-        }
+        this.tags.addAll(builder.tags);
     }
 
     @JsonProperty("name")
@@ -144,6 +107,11 @@ public class ChannelConfiguration implements Serializable {
         return description;
     }
 
+    @JsonProperty("tags")
+    public Set<String> getTags() {
+        return tags;
+    }
+
     @Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -170,8 +138,17 @@ public class ChannelConfiguration implements Serializable {
                 ", type=" + type +
                 ", contentSizeKB=" + contentSizeKB +
                 ", peakRequestRateSeconds=" + peakRequestRateSeconds +
+                ", ttlMillis=" + ttlMillis +
                 ", description='" + description + '\'' +
+                ", tags=" + tags +
                 '}';
+    }
+
+    public static ChannelConfiguration fromJson(String json) {
+        if (StringUtils.isEmpty(json)) {
+            throw new InvalidRequestException("this method requires at least a json name");
+        }
+        return gson.fromJson(json, ChannelConfiguration.Builder.class).build();
     }
 
     public static Builder builder() {
@@ -187,6 +164,10 @@ public class ChannelConfiguration implements Serializable {
         private int peakRequestRateSeconds = 1;
         private Long ttlMillis;
         private String description = "";
+        private Set<String> tags = new HashSet<>();
+
+        public Builder() {
+        }
 
         public Builder withChannelConfiguration(ChannelConfiguration config) {
 			this.name = config.name;
@@ -196,8 +177,18 @@ public class ChannelConfiguration implements Serializable {
             this.contentSizeKB = config.contentSizeKB;
             this.peakRequestRateSeconds = config.peakRequestRateSeconds;
             this.description = config.description;
+            this.tags.addAll(config.getTags());
 			return this;
 		}
+
+        public Builder withUpdateConfig(ChannelConfiguration config) {
+            this.ttlDays = config.ttlDays;
+            this.contentSizeKB = config.contentSizeKB;
+            this.peakRequestRateSeconds = config.peakRequestRateSeconds;
+            this.description = config.description;
+            this.tags.addAll(config.getTags());
+            return this;
+        }
 
 		public Builder withName(String name) {
 			this.name = name;
@@ -206,14 +197,6 @@ public class ChannelConfiguration implements Serializable {
 
         public Builder withTtlMillis(Long ttlMillis) {
             this.ttlMillis = ttlMillis;
-            if (null == ttlMillis) {
-                this.ttlDays = 1000 * 365;
-            } else {
-                this.ttlDays = TimeUnit.MILLISECONDS.toDays(ttlMillis);
-                if (ttlMillis % TimeUnit.DAYS.toMillis(1) > 0) {
-                    this.ttlDays += 1;
-                }
-            }
             return this;
         }
 
@@ -242,22 +225,10 @@ public class ChannelConfiguration implements Serializable {
             return this;
         }
 
-        public Builder withMap(Map<String, String> valueMap) {
-            populate(valueMap, this);
+        public Builder withTags(Collection<String> tags) {
+            this.tags.addAll(tags);
             return this;
         }
-
-        public Builder withJson(String json) throws IOException {
-            Map<String, String> map = new HashMap<>();
-            ObjectNode nodes = (ObjectNode) mapper.readTree(json);
-            Iterator<Map.Entry<String,JsonNode>> elements = nodes.getFields();
-            while (elements.hasNext()) {
-                Map.Entry<String, JsonNode> node = elements.next();
-                map.put(node.getKey(), node.getValue().asText());
-            }
-            return withMap(map);
-        }
-
 		public ChannelConfiguration build() {
 			return new ChannelConfiguration(this);
 		}
