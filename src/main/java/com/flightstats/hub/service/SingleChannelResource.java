@@ -2,7 +2,6 @@ package com.flightstats.hub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.config.PATCH;
 import com.flightstats.hub.app.config.metrics.PerChannelThroughput;
@@ -11,7 +10,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.InsertedContentKey;
-import com.flightstats.hub.model.exception.InvalidRequestException;
 import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -23,7 +21,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Map;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -75,15 +72,11 @@ public class SingleChannelResource {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        Map<String, String> map = mapper.readValue(json, new TypeReference<Map<String, String>>() { });
-        if (map.containsKey("type")) {
-            throw new InvalidRequestException("{\"error\": \"type can not be changed \"}");
-        }
-        map.remove("name");
+
         ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
         ChannelConfiguration newConfig = ChannelConfiguration.builder()
                 .withChannelConfiguration(oldConfig)
-                .withMap(map)
+                .withUpdateConfig(ChannelConfiguration.fromJson(json))
                 .build();
         newConfig = channelService.updateChannel(newConfig);
 
