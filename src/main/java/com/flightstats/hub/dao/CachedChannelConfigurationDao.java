@@ -50,6 +50,9 @@ public class CachedChannelConfigurationDao implements ChannelConfigurationDao {
 
     @Override
     public ChannelConfiguration getChannelConfiguration(String channelName) {
+        /**
+         * It is very important to use caching here, as getChannelConfiguration is called for every read and write.
+         */
         ChannelConfiguration configuration = channelConfigurationMap.get(channelName);
         if (configuration != null) {
             return configuration;
@@ -63,6 +66,11 @@ public class CachedChannelConfigurationDao implements ChannelConfigurationDao {
 
     @Override
     public Iterable<ChannelConfiguration> getChannels() {
+        /**
+         * Using the Hazelcast backed Map is useful when we can directly query the delegate if requested data is missing.
+         * However, there is no way to know if we have all of the channels (priamry fear is split-brain Hazelcast, most
+         * likely due to misconfiguration), so the safest way is to query the delegate every time.
+         */
         return delegate.getChannels();
     }
 
