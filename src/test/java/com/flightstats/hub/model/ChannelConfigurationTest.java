@@ -2,7 +2,9 @@ package com.flightstats.hub.model;
 
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -21,6 +23,11 @@ public class ChannelConfigurationTest {
         assertDefaults(copy);
     }
 
+    @Test
+    public void testJsonDefaults() throws Exception {
+        assertDefaults(ChannelConfiguration.fromJson("{\"name\": \"defaults\"}"));
+    }
+
     private void assertDefaults(ChannelConfiguration config) {
         assertEquals("defaults", config.getName());
         assertEquals(120, config.getTtlDays());
@@ -28,6 +35,7 @@ public class ChannelConfigurationTest {
         assertEquals(1L, config.getContentThroughputInSeconds());
         assertEquals(1L, config.getPeakRequestRateSeconds());
         assertEquals("", config.getDescription());
+        assertTrue(config.getTags().isEmpty());
     }
 
     @Test
@@ -78,8 +86,8 @@ public class ChannelConfigurationTest {
     @Test
     public void testMillisNull() throws Exception {
         ChannelConfiguration config = ChannelConfiguration.builder().withName("millisNull").withTtlMillis(null).build();
-        assertEquals(31536000000000L, (long)config.getTtlMillis());
-        assertEquals(1000 * 365, config.getTtlDays());
+        assertEquals(10368000000L, (long)config.getTtlMillis());
+        assertEquals(120, config.getTtlDays());
     }
 
     @Test
@@ -95,4 +103,19 @@ public class ChannelConfigurationTest {
         assertEquals("some copy", copy.getDescription());
     }
 
+    @Test
+    public void testTags() throws Exception {
+        List<String> tags = Arrays.asList("one", "two", "three", "4 four");
+        ChannelConfiguration config = ChannelConfiguration.builder().withTags(tags).build();
+        assertEquals(4, config.getTags().size());
+        assertTrue(config.getTags().containsAll(tags));
+    }
+
+    @Test
+    public void testTagsCopy() throws Exception {
+        List<String> tags = Arrays.asList("one", "two", "three", "4 four");
+        ChannelConfiguration config = ChannelConfiguration.builder().withTags(tags).build();
+        ChannelConfiguration copy = ChannelConfiguration.builder().withChannelConfiguration(config).build();
+        assertTrue(copy.getTags().containsAll(config.getTags()));
+    }
 }

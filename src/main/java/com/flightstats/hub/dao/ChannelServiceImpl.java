@@ -11,8 +11,10 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 
 /**
  *
@@ -115,6 +117,28 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public Iterable<ChannelConfiguration> getChannels() {
         return channelConfigurationDao.getChannels();
+    }
+
+    @Override
+    public Iterable<ChannelConfiguration> getChannels(String tag) {
+        Collection<ChannelConfiguration> matchingChannels = new ArrayList<>();
+        Iterable<ChannelConfiguration> channels = getChannels();
+        for (ChannelConfiguration channel : channels) {
+            if (channel.getTags().contains(tag)) {
+                matchingChannels.add(channel);
+            }
+        }
+        return matchingChannels;
+    }
+
+    @Override
+    public Iterable<String> getTags() {
+        Collection<String> matchingChannels = new HashSet<>();
+        Iterable<ChannelConfiguration> channels = getChannels();
+        for (ChannelConfiguration channel : channels) {
+            matchingChannels.addAll(channel.getTags());
+        }
+        return matchingChannels;
     }
 
     @Override

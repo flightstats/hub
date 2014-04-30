@@ -55,6 +55,9 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         item.put("type", new AttributeValue(config.getType().toString()));
         item.put("peakRequestRate", new AttributeValue().withN(String.valueOf(config.getPeakRequestRateSeconds())));
         item.put("contentSizeKB", new AttributeValue().withN(String.valueOf(config.getContentSizeKB())));
+        if (!config.getTags().isEmpty()) {
+            item.put("tags", new AttributeValue().withSS(config.getTags()));
+        }
         if (StringUtils.isNotEmpty(config.getDescription())) {
             item.put("description", new AttributeValue(config.getDescription()));
         }
@@ -123,6 +126,9 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         }
         if (item.containsKey("description")) {
             builder.withDescription(item.get("description").getS());
+        }
+        if (item.containsKey("tags")) {
+            builder.withTags(item.get("tags").getSS());
         }
         return builder.build();
     }
