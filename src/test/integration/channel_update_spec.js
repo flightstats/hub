@@ -2,6 +2,15 @@ require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
 var jsonBody = JSON.stringify({ "name": channelName, "ttlMillis": null});
+var expectedBody = {
+    name: channelName,
+    type: "Sequence",
+    contentSizeKB: 20,
+    peakRequestRateSeconds: 5,
+    ttlDays: 1,
+    ttlMillis : 86400000,
+    "tags": [ "bar", "foo", "tagz"]
+};
 var channelResource = channelUrl + "/" + channelName;
 var testName = 'channel_update_spec';
 
@@ -19,21 +28,23 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
                 var updateBody = {
                     "ttlMillis": 60000,
                     peakRequestRateSeconds: 5,
-                    contentSizeKB: 20
+                    contentSizeKB: 20,
+                    "tags": ["foo", "bar", "tagz"]
                 };
                 frisby.create(testName + ': Update channel ttlMillis')
                     .patch(channelResource, updateBody, {json:true})
                     .expectStatus(200)
                     .expectHeader('content-type', 'application/json')
-                    .expectJSON({
-                        name: channelName,
-                        type: "Sequence",
-                        contentSizeKB: 20,
-                        peakRequestRateSeconds: 5,
-                        ttlDays: 1,
-                        ttlMillis : 86400000
-                    })
+                    .expectJSON(expectedBody)
+                    .toss();
+
+                frisby.create(testName + ': Update channel ttlMillis')
+                    .get(channelResource)
+                    .expectStatus(200)
+                    .expectHeader('content-type', 'application/json')
+                    .expectJSON(expectedBody)
                     .toss()
+
             })
             .toss()
     })

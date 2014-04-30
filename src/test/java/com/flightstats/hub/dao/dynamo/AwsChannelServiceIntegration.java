@@ -183,6 +183,7 @@ public class AwsChannelServiceIntegration {
                 .withType(series)
                 .withContentKiloBytes(16)
                 .withDescription("descriptive")
+                .withTags(Arrays.asList("one", "two", "three"))
                 .build();
     }
 
