@@ -91,12 +91,14 @@ describe("replication_remote_spec", function () {
         var verified = false;
 
         function replicationCallback(body) {
-            var status = JSON.parse(body)['status'][0];
-            if (status['name'] === channelName && status['replicationLatest'] === 1003) {
-                verified = true;
-            } else {
-                getReplication(replicationCallback);
-            }
+            var allStatus = JSON.parse(body)['status'];
+            allStatus.forEach(function (channel) {
+                if (channel['name'] === channelName && channel['replicationLatest'] === 1003) {
+                    verified = true;
+                } else {
+                    getReplication(replicationCallback);
+                }
+            });
         }
 
         runs(function() {

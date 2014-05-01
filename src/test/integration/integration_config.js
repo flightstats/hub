@@ -6,10 +6,11 @@
 frisby = require('frisby');
 utils = require('./utils.js');
 
-hubDomain = 'localhost:9080';
+//hubDomain = 'localhost:9080';
+hubDomain = 'hub.svc.dev';
 hubUrlBase = 'http://' + hubDomain;
 //This presumes you have MemoryHubMain running locally
-remoteDomain = 'localhost:9999';
+remoteDomain = 'hub.svc.staging';
 
 // Try to load a local file if it exists. Allows folks to trump default values defined above.
 try {
