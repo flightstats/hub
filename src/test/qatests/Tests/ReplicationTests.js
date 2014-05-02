@@ -187,7 +187,9 @@ describe('Replication', function() {
                 })
 
                 lodash.forEach(body['status'], function(status) {
-                    expect(lodash.keys(status).length).to.equal(6);
+                    //there is an optional message property
+                    expect(lodash.keys(status).length).to.be.at.least(6);
+                    expect(lodash.keys(status).length).to.be.at.most(7);
 
                     lodash.forEach(['replicationLatest', 'sourceLatest', 'connected', 'deltaLatest', 'name', 'url'],
                         function(statusKey) {
