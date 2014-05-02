@@ -13,9 +13,11 @@ public class Content implements Serializable {
     private final long millis;
     private final byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
+    private final boolean isNew;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
+        isNew = !getContentKey().isPresent();
         contentLanguage = builder.contentLanguage;
         contentType = builder.contentType;
         millis = builder.millis;
@@ -48,6 +50,13 @@ public class Content implements Serializable {
 
     public void setContentKey(ContentKey contentKey) {
         this.contentKey = Optional.of(contentKey);
+    }
+
+    /**
+     * @return true if this Content is new, false if it has been inserted elsewhere and is a replica.
+     */
+    public boolean isNewContent() {
+        return isNew;
     }
 
     public static Builder builder() {

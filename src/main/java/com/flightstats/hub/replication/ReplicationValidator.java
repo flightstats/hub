@@ -16,7 +16,7 @@ public class ReplicationValidator {
         this.replicationDao = replicationDao;
     }
 
-    public void checkIfReplicating(String channelName) {
+    public void preventInsertIfReplicating(String channelName) {
         Collection<ReplicationDomain> domains = replicationDao.getDomains(false);
         for (ReplicationDomain domain : domains) {
             if (domain.getExcludeExcept().contains(channelName)) {
