@@ -195,3 +195,7 @@ task verifierExec (type: JavaExec ) {
     classpath = sourceSets.test.runtimeClasspath
 }
 
+test {
+    jvmArgs '-Xmx2G'
+}
+
