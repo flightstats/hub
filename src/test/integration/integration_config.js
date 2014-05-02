@@ -8,7 +8,6 @@ utils = require('./utils.js');
 
 //hubDomain = 'localhost:9080';
 hubDomain = 'hub.svc.dev';
-hubUrlBase = 'http://' + hubDomain;
 //This presumes you have MemoryHubMain running locally
 remoteDomain = 'hub.svc.staging';
 
@@ -17,5 +16,7 @@ try {
 	require('./integration_config_local.js');
 }
 catch ( err ){}
+
+hubUrlBase = 'http://' + hubDomain;
 
 channelUrl = hubUrlBase + '/channel';
