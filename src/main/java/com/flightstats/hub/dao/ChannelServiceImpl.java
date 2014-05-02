@@ -97,8 +97,8 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public InsertedContentKey insert(String channelName, Content content) {
-        if (!content.getContentKey().isPresent()) {
-            replicationValidator.checkIfReplicating(channelName);
+        if (content.isNewContent()) {
+            replicationValidator.preventInsertIfReplicating(channelName);
         }
         ChannelConfiguration configuration = channelConfigurationDao.getChannelConfiguration(channelName);
         return getContentService(channelName).insert(configuration, content);
