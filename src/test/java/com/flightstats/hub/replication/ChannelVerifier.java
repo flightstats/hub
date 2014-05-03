@@ -44,6 +44,9 @@ public class ChannelVerifier implements Callable<VerifierResult> {
         String sourceUrl = getSourceUrl();
         String channelUri = replicationUri + "channel/" + getName() + "/";
         VerifierResult result = new VerifierResult(channelUri);
+        if (sourceLatest <= 999) {
+            return result;
+        }
         logger.info("verifying {} from {} to {}, {} items", channelUri, sequence, sourceLatest, sourceLatest - sequence);
         while (sequence <= sourceLatest) {
             Optional<Content> replicatedContent = channelUtils.getContent(channelUri, sequence);
