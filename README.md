@@ -338,6 +338,7 @@ For external data providers, there is a simplified interface suitable for exposi
 **Channel Deletion will be access controlled in Staging and Prod environments**
 
 To delete a channel when after you no longer need it, simply issue a `DELETE` command to that channel.
+Delete returns a 202, indicating that the request has been accepted, and will take an indeterminate time to process.
 
  `DELETE http://hub/channel/stumptown`
 

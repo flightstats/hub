@@ -5,6 +5,9 @@ import com.flightstats.hub.metrics.TimedCallback;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.base.Optional;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -14,8 +17,6 @@ import org.apache.curator.framework.recipes.atomic.PromotedToLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 public class CuratorKeyGenerator implements ContentKeyGenerator {
@@ -23,14 +24,23 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
 
     private final CuratorFramework curator;
     private final MetricsTimer metricsTimer;
-    private final RetryPolicy retryPolicy;
-    private ConcurrentMap<String, DistributedAtomicLong> channelToLongMap = new ConcurrentHashMap<>();
+    private LoadingCache<String, DistributedAtomicLong> atomicLongCache;
 
     @Inject
-    public CuratorKeyGenerator(CuratorFramework curator, MetricsTimer metricsTimer, RetryPolicy retryPolicy) {
+    public CuratorKeyGenerator(final CuratorFramework curator, MetricsTimer metricsTimer, final RetryPolicy retryPolicy) {
         this.curator = curator;
         this.metricsTimer = metricsTimer;
-        this.retryPolicy = retryPolicy;
+        atomicLongCache = CacheBuilder.newBuilder()
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .build(new CacheLoader<String, DistributedAtomicLong>() {
+                    @Override
+                    public DistributedAtomicLong load(String channelName) throws Exception {
+                        String path = getPath(channelName);
+                        PromotedToLock lock = PromotedToLock.builder().lockPath(path + "/lock")
+                                .retryPolicy(retryPolicy).timeout(1000, TimeUnit.SECONDS).build();
+                        return new DistributedAtomicLong(curator, path, retryPolicy, lock);
+                    }
+                });
     }
 
     @Override
@@ -76,12 +86,11 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
     public void delete(String channelName) {
         String path = getPath(channelName);
         try {
+            atomicLongCache.invalidate(channelName);
             curator.delete().deletingChildrenIfNeeded().forPath(path);
-            channelToLongMap.remove(channelName);
         } catch (Exception e) {
             logger.warn("unable to delete " + channelName, e);
         }
-
     }
 
     @Override
@@ -96,18 +105,7 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
     }
 
     private DistributedAtomicLong getDistributedAtomicLong(String channelName) {
-        DistributedAtomicLong atomicLong = channelToLongMap.get(channelName);
-        if (null == atomicLong) {
-            String path = getPath(channelName);
-            PromotedToLock lock = PromotedToLock.builder().lockPath(path + "/lock")
-                    .retryPolicy(retryPolicy).timeout(1000, TimeUnit.SECONDS).build();
-            atomicLong = new DistributedAtomicLong(curator, path, retryPolicy, lock);
-            DistributedAtomicLong previousLong = channelToLongMap.putIfAbsent(channelName, atomicLong);
-            if (previousLong != null) {
-                atomicLong = previousLong;
-            }
-        }
-        return atomicLong;
+        return atomicLongCache.getUnchecked(channelName);
     }
 
     private String getPath(String channelName) {
