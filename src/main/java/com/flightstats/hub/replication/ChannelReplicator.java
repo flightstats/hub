@@ -114,7 +114,6 @@ public class ChannelReplicator implements Leader {
         }
     }
 
-    //todo - gfm - 4/7/14 - this should be moved to a higher level - (not sure what this means...)
     public void delete(String channelName) {
         exit();
     }
