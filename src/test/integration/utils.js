@@ -2,6 +2,7 @@ require('./integration_config.js');
 var frisby = require('frisby');
 var http = require('http');
 var fs = require('fs');
+var request = require('request');
 
 function runInTestChannel(channelName, functionToExecute) {
     runInTestChannelJson(JSON.stringify({ "name": channelName}), functionToExecute);
@@ -42,8 +43,40 @@ function configureFrisby(timeout) {
     });
 }
 
+function createChannel(channelName, url) {
+    url = url || channelUrl;
+    it("creates channel " + channelName + " at " + url, function (done) {
+        request.post({url: url,
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ "name": channelName })},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(201);
+                done();
+            });
+    });
+
+}
+
+function addItem(url, responseCode) {
+    responseCode = responseCode || 201;
+    it("adds item to " + url, function (done) {
+        request.post({url: url,
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ "data": Date.now()})},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(responseCode);
+                done();
+            });
+    });
+}
+
 exports.runInTestChannel = runInTestChannel;
 exports.download = download;
 exports.randomChannelName = randomChannelName;
 exports.configureFrisby = configureFrisby;
 exports.runInTestChannelJson = runInTestChannelJson;
+exports.createChannel = createChannel;
+exports.addItem = addItem;
+
