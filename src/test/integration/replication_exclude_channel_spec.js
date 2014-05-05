@@ -2,7 +2,7 @@ require('./integration_config.js');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
-var thisChannelResource = channelUrl + "/" + channelName;
+var channelResource = channelUrl + "/" + channelName;
 var remoteUrl = "http://" + remoteDomain + "/channel";
 var testName = "replication_exclude_channel_spec";
 
@@ -22,28 +22,9 @@ if (typeof remoteDomain === 'undefined') {
  * 4 - wait for replication of channel to start
  * 5 - attempt to POST to channel
  */
-describe("replication_exclude_channel_spec", function () {
-    it("creates channel", function (done) {
-        request.post({url: channelUrl,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ "name": channelName })},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
-                done();
-            });
-    });
-
-    it("creates remote channel", function (done) {
-        request.post({url: remoteUrl,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ "name": channelName })},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
-                done();
-            });
-    });
+describe(testName, function () {
+    utils.createChannel(channelName);
+    utils.createChannel(channelName, remoteUrl);
 
     it("creates replication config", function (done) {
         request.put({url: hubUrlBase + "/replication/" + remoteDomain,
@@ -82,16 +63,7 @@ describe("replication_exclude_channel_spec", function () {
 
     });
 
-    it("add local item", function (done) {
-        request.post({url: thisChannelResource,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ "data": Date.now()})},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(403);
-                done();
-            });
-    });
+    utils.addItem(channelResource, 403);
 
     function getReplication(callback) {
         request.get({url: hubUrlBase + "/replication",
