@@ -173,7 +173,10 @@ On success:  `HTTP/1.1 200 OK`, and the new channel metadata is returned (see ex
 
 Here's how you can do this with curl:
 ```bash
-curl -i -X PATCH --header "Content-type: application/json" --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5, "description": "the sequence of all coffee orders from stumptown pdx", "tags": ["coffee", "orders"]}' http://hub/channel/stumptown
+curl -i -X PATCH --header "Content-type: application/json" \
+    --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5, \
+    "description": "the sequence of all coffee orders from stumptown pdx", "tags": ["coffee", "orders"]}' \
+    http://hub/channel/stumptown
 ```
 
 ## fetch channel metadata
