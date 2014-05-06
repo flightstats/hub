@@ -84,7 +84,7 @@ Content-Type is `application/json`
 
 `name` _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
 Hyphens are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
-Channels starting with `test` will automatically be deleted in the dev and staging environments every night using this Jenkins task - http://ops-jenkins01.util.pdx.office/job/hub-cleanup/
+Channels starting with `test` will automatically be deleted in the dev and staging environments every hour using [Jenkins](http://ops-jenkins01.cloud-east.dev/job/hub-cleanup-hourly/)
 
 `type` is optional, and defaults to Sequence.  Valid values are Sequence and TimeSeries.
 
@@ -96,7 +96,7 @@ If the throughput is exceeded, the service will return an error code of 503 with
 
 `description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
 
-`tags` is an optional array of string values.
+`tags` is an optional array of string values.  Tag values are limited to 48 characters, and may only contain `a-z`, `A-Z` and `0-9`.
 
 `POST http://hub/channel`
 
@@ -576,7 +576,7 @@ The Hub has monitoring available in:
 
 The Hub is a work in progress.  If you'd like to contribute, let us know.
 
-The latest builds are in [Jenkins](http://ops-jenkins01.util.pdx.office/job/hub/)
+The latest builds are in [Jenkins](http://ops-jenkins01.cloud-east.dev/job/hub/)
 
 To run Java based tests and jasmine-node tests locally, you will most likely want to use DynamoDB Local.
 Install it from http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
@@ -600,9 +600,9 @@ gradle integrationTests
 
 ## deployments
 
-The Hub is deployed to [Dev](http://hub.svc.dev/health) after each successful build in [Jenkins](http://ops-jenkins01.util.pdx.office/job/hub/)
+The Hub is deployed to [Dev](http://hub.svc.dev/health) after each successful build in [Jenkins](http://ops-jenkins01.cloud-east.dev/job/hub/)
 
-Deployments to Staging can be manually run from [Hub Tasks](http://ops-jenkins01.util.pdx.office/job/hub/batchTasks/)
+Deployments to Staging can be manually run from [Hub Tasks](http://ops-jenkins01.cloud-east.dev/job/hub/batchTasks/)
 
 Releases to Prod currently must be manually kicked off from each machine using the version number from Jenkins.
 ```
