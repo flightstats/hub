@@ -32,6 +32,15 @@ public class CreateChannelValidator {
         validateContentSize(request);
         validateTTL(request);
         validateDescription(request);
+        validateTags(request);
+    }
+
+    private void validateTags(ChannelConfiguration request) {
+        for (String tag : request.getTags()) {
+            if (!tag.matches("^[a-zA-Z0-9]+$")) {
+                throw new InvalidRequestException("{\"error\": \"Tags must only contain characters a-z, A-Z, and 0-9\"}");
+            }
+        }
     }
 
     private void validateDescription(ChannelConfiguration request) {
