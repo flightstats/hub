@@ -36,6 +36,9 @@ public class CreateChannelValidator {
     }
 
     private void validateTags(ChannelConfiguration request) {
+        if (request.getTags().size() > 20) {
+            throw new InvalidRequestException("{\"error\": \"Channels are limited to 20 tags\"}");
+        }
         for (String tag : request.getTags()) {
             if (!tag.matches("^[a-zA-Z0-9]+$")) {
                 throw new InvalidRequestException("{\"error\": \"Tags must only contain characters a-z, A-Z, and 0-9\"}");
