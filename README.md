@@ -97,6 +97,7 @@ If the throughput is exceeded, the service will return an error code of 503 with
 `description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
 
 `tags` is an optional array of string values.  Tag values are limited to 48 characters, and may only contain `a-z`, `A-Z` and `0-9`.
+A channel may have at most 20 tags.
 
 `POST http://hub/channel`
 
