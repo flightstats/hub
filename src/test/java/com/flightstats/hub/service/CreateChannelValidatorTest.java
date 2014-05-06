@@ -115,8 +115,13 @@ public class CreateChannelValidatorTest {
 
     @Test
     public void testTagValid() throws Exception {
-        validator.validate(ChannelConfiguration.builder().withName("valie")
-                .withTags(Arrays.asList("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")).build());
+        validator.validate(ChannelConfiguration.builder().withName("valid1").withTags(Arrays.asList("abcdefghijklmnopqrstuvwxyz")).build());
+        validator.validate(ChannelConfiguration.builder().withName("valid2").withTags(Arrays.asList("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")).build());
     }
 
+    @Test(expected = InvalidRequestException.class)
+    public void testTagTooLong() throws Exception {
+        validator.validate(ChannelConfiguration.builder().withName("tooLongTag")
+                .withTags(Arrays.asList(Strings.repeat("A", 49))).build());
+    }
 }
