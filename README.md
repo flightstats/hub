@@ -10,6 +10,7 @@ The Hub
 * [insert content into channel](#insert-content-into-channel)
 * [fetch content from channel](#fetch-content-from-channel)
 * [fetch latest channel item](#fetch-latest-channel-item)
+* [tag interface](#tag-interface)
 * [time interface](#time-interface)
 * [subscribe to events](#subscribe-to-events)
 * [provider interface](#provider-interface)
@@ -95,6 +96,8 @@ If the throughput is exceeded, the service will return an error code of 503 with
 
 `description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
 
+`tags` is an optional array of string values.
+
 `POST http://hub/channel`
 
 * Content-type: application/json
@@ -106,7 +109,8 @@ If the throughput is exceeded, the service will return an error code of 503 with
    "ttlDays": "14",
    "peakRequestRateSeconds":1,
    "contentSizeKB":10,
-   "description": "a sequence of all the coffee orders from stumptown"
+   "description": "a sequence of all the coffee orders from stumptown",
+   "tags": ["coffee"]
 }
 ```
 
@@ -134,7 +138,8 @@ On success:  `HTTP/1.1 201 OK`
     "type": "Sequence",
     "contentSizeKB" : 10,
     "peakRequestRateSeconds" : 10,
-    "description": "a sequence of all the coffee orders from stumptown"
+    "description": "a sequence of all the coffee orders from stumptown",
+    "tags": ["coffee"]
 }
 ```
 
@@ -146,7 +151,7 @@ curl -i -X POST --header "Content-type: application/json" --data '{"name": "stum
 ## update a channel
 
 Some channel metadata can be updated. The update format looks much like the channel create format
-(currently, only `ttlDays`, `description`, `contentSizeKB` and `peakRequestRateSeconds` can be updated).
+(currently, only `ttlDays`, `description`, `contentSizeKB`, `peakRequestRateSeconds` and `tags` can be updated).
 Each of these fields is optional.
 Attempting to change other fields will result in a 400 error.
 
@@ -159,7 +164,8 @@ Attempting to change other fields will result in a 400 error.
    "ttlDays": 21,
    "contentSizeKB" : 20,
    "peakRequestRateSeconds" : 5,
-   "description": "the sequence of all coffee orders from stumptown pdx"
+   "description": "the sequence of all coffee orders from stumptown pdx",
+   "tags": ["coffee", "orders"]
 }
 ```
 
@@ -167,7 +173,7 @@ On success:  `HTTP/1.1 200 OK`, and the new channel metadata is returned (see ex
 
 Here's how you can do this with curl:
 ```bash
-curl -i -X PATCH --header "Content-type: application/json" --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5, "description": "the sequence of all coffee orders from stumptown pdx"}' http://hub/channel/stumptown
+curl -i -X PATCH --header "Content-type: application/json" --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5, "description": "the sequence of all coffee orders from stumptown pdx", "tags": ["coffee", "orders"]}' http://hub/channel/stumptown
 ```
 
 ## fetch channel metadata
@@ -261,6 +267,52 @@ On success:  `HTTP/1.1 303 See Other`
 Here is how you can do this with curl:
 
 `curl -I http://hub/channel/stumptown/latest`
+
+## tag interface
+
+To retrieve all of the tags in the Hub:
+
+`GET http://hub/tag`
+
+On success: `HTTP/1.1 200 OK`
+```json
+{
+  "_links" : {
+    "self" : {
+      "href" : "http://hub/tag"
+    },
+    "tags" : [ {
+      "name" : "orders",
+      "href" : "http://hub/tag/orders"
+    }, {
+      "name" : "coffee",
+      "href" : "http://hub/tag/coffee"
+    } ]
+  }
+}
+```
+
+Any of the returned tag links can be followed to see all of the channels with that tag:
+
+`GET http://hub/tag/coffee`
+
+On success: `HTTP/1.1 200 OK`
+```json
+{
+  "_links" : {
+    "self" : {
+      "href" : "http://hub/tag/coffee"
+    },
+    "channels" : [ {
+      "name" : "stumptown",
+      "href" : "http://hub/channel/stumptown"
+    }, {
+      "name" : "spella",
+      "href" : "http://hub/channel/spella"
+    } ]
+  }
+}
+```
 
 ## time interface
 
