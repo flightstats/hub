@@ -8,7 +8,9 @@ import com.google.common.base.Strings;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -123,5 +125,15 @@ public class CreateChannelValidatorTest {
     public void testTagTooLong() throws Exception {
         validator.validate(ChannelConfiguration.builder().withName("tooLongTag")
                 .withTags(Arrays.asList(Strings.repeat("A", 49))).build());
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testTooManyTags() throws Exception {
+        List<String> tags = new ArrayList<>();
+        for (int i = 0; i < 21; i++) {
+            tags.add("" + i);
+        }
+        validator.validate(ChannelConfiguration.builder().withName("tooManyTags")
+                .withTags(tags).build());
     }
 }
