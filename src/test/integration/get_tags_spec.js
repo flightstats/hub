@@ -1,7 +1,7 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var tag = Math.random().toString();
+var tag = Math.random().toString().replace(".", "A");
 var jsonBody = JSON.stringify({ "name": channelName, "tags": [ tag]});
 var channelResource = channelUrl + "/" + channelName;
 var tagUrl = hubUrlBase + "/tag";
@@ -10,7 +10,7 @@ var foundTagHref = "";
 
 utils.configureFrisby();
 
-frisby.create(testName + 'Test tag resources for new channel')
+frisby.create(testName + ' Test tag resources for new channel')
     .post(channelUrl, null, { body: jsonBody})
     .addHeader("Content-Type", "application/json")
     .expectStatus(201)
