@@ -8,6 +8,8 @@ import com.google.common.base.Strings;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -101,4 +103,25 @@ public class CreateChannelValidatorTest {
         validator.validate(ChannelConfiguration.builder().withName("toobig").withDescription(Strings.repeat("A", 1025)).build());
     }
 
+    @Test(expected = InvalidRequestException.class)
+    public void testTagSpace() throws Exception {
+        validator.validate(ChannelConfiguration.builder().withName("space").withTags(Arrays.asList("s p a c e")).build());
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testTagUnderscore() throws Exception {
+        validator.validate(ChannelConfiguration.builder().withName("underscore").withTags(Arrays.asList("under_score")).build());
+    }
+
+    @Test
+    public void testTagValid() throws Exception {
+        validator.validate(ChannelConfiguration.builder().withName("valid1").withTags(Arrays.asList("abcdefghijklmnopqrstuvwxyz")).build());
+        validator.validate(ChannelConfiguration.builder().withName("valid2").withTags(Arrays.asList("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")).build());
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testTagTooLong() throws Exception {
+        validator.validate(ChannelConfiguration.builder().withName("tooLongTag")
+                .withTags(Arrays.asList(Strings.repeat("A", 49))).build());
+    }
 }
