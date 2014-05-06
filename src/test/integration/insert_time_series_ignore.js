@@ -31,6 +31,7 @@ utils.runInTestChannelJson(channelRequest, function () {
         return hrefs.length == 3;
     }, 5000);
 
+    //todo - gfm - 5/2/14 - this is failing intermittently against dev
     runs(function () {
         var format = moment().format("YYYY-MM-DDTHH:mmZ");
         frisby.create(testName + ': Fetching ids.')
