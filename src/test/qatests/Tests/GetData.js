@@ -343,36 +343,43 @@ describe('GET data:', function() {
 
             async.waterfall([
                 function(callback){
-                    dhh.postData({channelUri: channelUriForLatestTests, data: payload1}, function(myRes, myUri) {
+                    dhh.postData({channelUri: channelUriForLatestTests, data: payload1}, function (myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(channelUriForLatestTests, function(myData) {
-                            expect(myData).to.equal(payload1);
+                        setTimeout(function () {
+                            dhh.getLatestDataFromChannel(channelUriForLatestTests, function (myData) {
+                                expect(myData).to.equal(payload1);
 
-                            callback(null);
-                        });
+                                callback(null);
+                            });
+                        }, 1000);
                     });
+
                 },
                 function(callback){
                     dhh.postData({channelUri: channelUriForLatestTests, data: payload2}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(channelUriForLatestTests, function(myData) {
-                            expect(myData).to.equal(payload2);
+                        setTimeout(function () {
+                            dhh.getLatestDataFromChannel(channelUriForLatestTests, function(myData) {
+                                expect(myData).to.equal(payload2);
 
-                            callback(null);
-                        });
+                                callback(null);
+                            });
+                        }, 1000);
                     });
                 },
                 function(callback){
                     dhh.postData({channelUri: channelUriForLatestTests, data: payload3}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(channelUriForLatestTests, function(myData) {
-                            expect(myData).to.equal(payload3);
+                        setTimeout(function () {
+                            dhh.getLatestDataFromChannel(channelUriForLatestTests, function(myData) {
+                                expect(myData).to.equal(payload3);
 
-                            callback(null);
-                        });
+                                callback(null);
+                            });
+                        }, 1000);
                     });
                 }
             ], function (err) {
@@ -429,20 +436,24 @@ describe('GET data:', function() {
                     dhh.postData({channelUri: channelUriForLatestTests, data: payload}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(channelUriForLatestTests, function(myData) {
-                            expect(myData).to.equal(payload);
-                            callback(null);
-                        });
+                        setTimeout(function () {
+                            dhh.getLatestDataFromChannel(channelUriForLatestTests, function(myData) {
+                                expect(myData).to.equal(payload);
+                                callback(null);
+                            });
+                        }, 1000);
                     });
                 },
                 function(callback){
                     dhh.postData({channelUri: channelUriForLatestTests, data: ''}, function(myRes, myUri) {
                         expect(gu.isHTTPSuccess(myRes.status)).to.equal(true);
 
-                        dhh.getLatestDataFromChannel(channelUriForLatestTests, function(myData) {
-                            expect(myData).to.equal('');
-                            callback(null);
-                        });
+                        setTimeout(function () {
+                            dhh.getLatestDataFromChannel(channelUriForLatestTests, function(myData) {
+                                expect(myData).to.equal('');
+                                callback(null);
+                            });
+                        }, 1000);
                     });
                 }
             ], function (err) {
