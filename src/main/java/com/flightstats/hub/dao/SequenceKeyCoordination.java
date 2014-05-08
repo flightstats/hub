@@ -16,8 +16,6 @@ import org.apache.curator.framework.recipes.shared.SharedValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  *
  */
@@ -36,15 +34,14 @@ public class SequenceKeyCoordination implements KeyCoordination {
         this.websocketPublisher = websocketPublisher;
         this.curator = curator;
         this.metricsTimer = metricsTimer;
-        cache = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.MINUTES)
-                .build(new CacheLoader<String, SharedValue>() {
-                    @Override
-                    public SharedValue load(String key) throws Exception {
-                        SharedValue sharedValue = new SharedValue(curator, key, Longs.toByteArray(SequenceContentKey.START_VALUE));
-                        sharedValue.start();
-                        return sharedValue;
-                    }
-                });
+        cache = CacheBuilder.newBuilder().build(new CacheLoader<String, SharedValue>() {
+            @Override
+            public SharedValue load(String key) throws Exception {
+                SharedValue sharedValue = new SharedValue(curator, key, Longs.toByteArray(SequenceContentKey.START_VALUE));
+                sharedValue.start();
+                return sharedValue;
+            }
+        });
     }
 
     @Override
