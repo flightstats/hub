@@ -196,6 +196,6 @@ task verifierExec (type: JavaExec ) {
 }
 
 test {
-    jvmArgs '-Xmx2G'
+    jvmArgs '-Xmx3G'
 }
 
