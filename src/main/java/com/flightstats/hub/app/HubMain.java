@@ -114,18 +114,24 @@ public class HubMain {
 
     public  static Properties loadProperties(String fileName) throws IOException {
         if (fileName.equals("useDefault")) {
-            warn("using default properties file");
-            Properties defaultProperties = getProperties("/default.properties", true);
-            Properties localProperties = getProperties("/default_local.properties", false);
-            for (String localKey : localProperties.stringPropertyNames()) {
-                String newVal = localProperties.getProperty(localKey);
-                logger.info("overriding " + localKey + " using '" + newVal +
-                        "' instead of '" + defaultProperties.getProperty(localKey, "") + "'");
-                defaultProperties.setProperty(localKey, newVal);
-            }
-            return defaultProperties;
+            return getLocalProperties("default");
+        } else if (fileName.equals("useEncryptedDefault")) {
+            return getLocalProperties("defaultEncrypted");
         }
         return PropertyConfiguration.loadProperties(new File(fileName), true, logger);
+    }
+
+    private static Properties getLocalProperties(String fileNameRoot) throws IOException {
+        warn("using " + fileNameRoot + " properties file");
+        Properties defaultProperties = getProperties("/" + fileNameRoot + ".properties", true);
+        Properties localProperties = getProperties("/" + fileNameRoot + "_local.properties", false);
+        for (String localKey : localProperties.stringPropertyNames()) {
+            String newVal = localProperties.getProperty(localKey);
+            logger.info("overriding " + localKey + " using '" + newVal +
+                    "' instead of '" + defaultProperties.getProperty(localKey, "") + "'");
+            defaultProperties.setProperty(localKey, newVal);
+        }
+        return defaultProperties;
     }
 
     private static Properties getProperties(String name, boolean required) throws IOException {
