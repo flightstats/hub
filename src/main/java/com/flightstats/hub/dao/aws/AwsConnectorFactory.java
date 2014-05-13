@@ -71,14 +71,10 @@ public class AwsConnectorFactory {
     }
 
     private PropertiesCredentials getPropertiesCredentials()  {
-        try {
-            return new PropertiesCredentials(new File(credentials));
-        } catch (IOException e) {
-            if (useEncrypted) {
-                return loadTestCredentials("/encrypted_test_credentials.properties");
-            }
-            return loadTestCredentials("/test_credentials.properties");
+        if (useEncrypted) {
+            return loadTestCredentials("/encrypted_test_credentials.properties");
         }
+        return loadTestCredentials("/test_credentials.properties");
     }
 
     private PropertiesCredentials loadTestCredentials(String fileName) {
