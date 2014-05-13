@@ -24,14 +24,17 @@ public class AwsConnectorFactory {
     private final String endpoint;
     private final String protocol;
     private final String credentials;
+    private final boolean useEncrypted;
 
     @Inject
 	public AwsConnectorFactory(@Named("dynamo.endpoint") String endpoint,
                                @Named("aws.protocol") String protocol,
-                               @Named("aws.credentials") String credentials){
+                               @Named("aws.credentials") String credentials,
+                               @Named("app.encrypted") boolean useEncrypted){
         this.endpoint = endpoint;
         this.protocol = protocol;
         this.credentials = credentials;
+        this.useEncrypted = useEncrypted;
     }
 
     public AmazonS3 getS3Client() throws IOException {
@@ -71,13 +74,21 @@ public class AwsConnectorFactory {
         try {
             return new PropertiesCredentials(new File(credentials));
         } catch (IOException e) {
-            try {
-                return new PropertiesCredentials(new File(
-                        AwsConnectorFactory.class.getResource("/test_credentials.properties").getFile()));
-            } catch (Exception e1) {
-                logger.warn("unable to load test_credentials", e1);
-                throw new RuntimeException(e1);
+            if (useEncrypted) {
+                return loadTestCredentials("/encrypted_test_credentials.properties");
             }
+            return loadTestCredentials("/test_credentials.properties");
+        }
+    }
+
+    private PropertiesCredentials loadTestCredentials(String fileName) {
+        logger.info("loading test credentials " + fileName);
+        try {
+            return new PropertiesCredentials(new File(
+                    AwsConnectorFactory.class.getResource(fileName).getFile()));
+        } catch (Exception e1) {
+            logger.warn("unable to load test_credentials", e1);
+            throw new RuntimeException(e1);
         }
     }
 
