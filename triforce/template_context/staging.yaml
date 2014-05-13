@@ -18,6 +18,7 @@ conf/hub.properties :
     app :
         name : "hub"
         environment : "staging"
+        encrypted : false
 
     backing :
         store : "aws"

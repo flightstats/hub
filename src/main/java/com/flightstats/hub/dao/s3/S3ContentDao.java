@@ -53,6 +53,7 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     private final ContentKeyGenerator keyGenerator;
     private final AmazonS3 s3Client;
+    private final boolean useEncrypted;
     private final CuratorFramework curator;
     private final String s3BucketName;
     private final MetricsTimer metricsTimer;
@@ -62,10 +63,13 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     @Inject
     public S3ContentDao(ContentKeyGenerator keyGenerator, AmazonS3 s3Client,
                         @Named("s3.environment") String environment, @Named("app.name") String appName,
-                        @Named("s3.content_backoff_wait") int content_backoff_wait, @Named("s3.content_backoff_times") int content_backoff_times,
+                        @Named("s3.content_backoff_wait") int content_backoff_wait,
+                        @Named("s3.content_backoff_times") int content_backoff_times,
+                        @Named("app.encrypted") boolean useEncrypted,
                         CuratorFramework curator, MetricsTimer metricsTimer) {
         this.keyGenerator = keyGenerator;
         this.s3Client = s3Client;
+        this.useEncrypted = useEncrypted;
         this.curator = curator;
         this.metricsTimer = metricsTimer;
         this.s3BucketName = appName + "-" + environment;
@@ -160,6 +164,9 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
             metadata.addUserMetadata("language", "none");
         }
         metadata.addUserMetadata("millis", String.valueOf(content.getMillis()));
+        if (useEncrypted) {
+            metadata.setServerSideEncryption(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+        }
         PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
         s3Client.putObject(request);
     }
