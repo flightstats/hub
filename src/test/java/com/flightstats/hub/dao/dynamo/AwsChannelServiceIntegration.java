@@ -215,15 +215,15 @@ public class AwsChannelServiceIntegration {
         assertFalse(compositeValue.getContentType().isPresent());
         assertFalse(compositeValue.getValue().getContentLanguage().isPresent());
 
+        HashSet<ContentKey> foundKeys = Sets.newHashSet();
         //this fails using DynamoDBLocal
         if (callGetKeys) {
             DateTime expectedDate = new DateTime(insert1.getDate());
-            Collection<ContentKey> futureKeys = channelService.getKeys(channelName, expectedDate.plusYears(1));
-            assertEquals(0, futureKeys.size());
-            Collection<ContentKey> keys = channelService.getKeys(channelName, expectedDate);
-            HashSet<ContentKey> foundKeys = Sets.newHashSet(keys);
-            assertEquals(createdKeys, foundKeys);
+            foundKeys.addAll(channelService.getKeys(channelName, expectedDate));
+            foundKeys.addAll(channelService.getKeys(channelName, expectedDate.plusMinutes(1)));
         }
+
+        assertEquals(createdKeys, foundKeys);
 
         channelService.delete(channelName);
         assertNull(channelService.getChannelConfiguration(channelName));
