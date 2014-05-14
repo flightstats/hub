@@ -7,7 +7,6 @@ import com.google.common.base.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +57,7 @@ public class ChannelVerifier implements Callable<VerifierResult> {
                     Optional<Content> sourceContent = channelUtils.getContent(sourceUrl, sequence);
                     if (sourceContent.isPresent()) {
                         result.incrementPayloadsChecked();
-                        if (!Arrays.equals(replicatedContent.get().getData(), sourceContent.get().getData())) {
+                        if (!sourceContent.get().equals(replicatedContent.get())) {
                             result.addMissingSequence(String.valueOf(sequence));
                         }
                     }
