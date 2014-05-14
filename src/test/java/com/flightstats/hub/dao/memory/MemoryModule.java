@@ -27,7 +27,6 @@ public class MemoryModule extends AbstractModule {
 		Names.bindProperties(binder(), properties);
         bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
         bind(ChannelConfigurationDao.class).to(MemoryChannelConfigurationDao.class).asEagerSingleton();
-        bind(ContentServiceFinder.class).to(SingleContentServiceFinder.class).asEagerSingleton();
         bind(ContentService.class).to(ContentServiceImpl.class).asEagerSingleton();
         bind(ContentDao.class).to(MemoryContentDao.class).asEagerSingleton();
         bind(KeyCoordination.class).to(MemoryKeyCoordination.class).asEagerSingleton();
