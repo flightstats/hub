@@ -113,16 +113,6 @@ public class ChannelReplicatorTest {
     }
 
     @Test
-    public void testTimeSeries() throws Exception {
-        ChannelConfiguration timeSeries = ChannelConfiguration.builder().withName("TS").withType(ChannelConfiguration.ChannelType.TimeSeries).build();
-        when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(timeSeries));
-        assertFalse(replicator.tryLeadership());
-
-        assertFalse(replicator.isValid());
-        verify(channelService, never()).createChannel(any(ChannelConfiguration.class));
-    }
-
-    @Test
     public void testStartingSequenceNewTtl() throws Exception {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(10)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));

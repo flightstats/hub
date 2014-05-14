@@ -3,7 +3,6 @@ package com.flightstats.hub.model;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -36,30 +35,6 @@ public class ChannelConfigurationTest {
         assertEquals(1L, config.getPeakRequestRateSeconds());
         assertEquals("", config.getDescription());
         assertTrue(config.getTags().isEmpty());
-    }
-
-    @Test
-    public void testTimeSequence() throws Exception {
-        Date date = new Date(123456L);
-        ChannelConfiguration config = ChannelConfiguration.builder()
-                .withName("options")
-                .withTtlDays(10L)
-                .withType(ChannelConfiguration.ChannelType.TimeSeries)
-                .withCreationDate(date)
-                .withContentKiloBytes(100)
-                .build();
-        assertOptions(date, config, false);
-        ChannelConfiguration copy = ChannelConfiguration.builder().withChannelConfiguration(config).build();
-        assertOptions(date, copy, false);
-    }
-
-    private void assertOptions(Date date, ChannelConfiguration config, boolean isSequence) {
-        assertEquals("options", config.getName());
-        assertEquals( 10L, config.getTtlDays());
-        assertEquals(isSequence, config.isSequence());
-        assertEquals(date, config.getCreationDate());
-        assertEquals(1L, config.getPeakRequestRateSeconds());
-        assertEquals(100L, config.getContentThroughputInSeconds());
     }
 
     @Test

@@ -27,7 +27,7 @@ public class ChannelConfiguration implements Serializable {
 
     private static final Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new HubDateTypeAdapter()).create();
 
-    public enum ChannelType { Sequence, TimeSeries }
+    public enum ChannelType { Sequence }
 
     public ChannelConfiguration(Builder builder) {
         this.name = StringUtils.trim(builder.name);
