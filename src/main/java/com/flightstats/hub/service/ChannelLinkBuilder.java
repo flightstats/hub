@@ -4,8 +4,10 @@ import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
@@ -74,5 +76,11 @@ public class ChannelLinkBuilder {
         }
         responseBuilder.withLinks("channels", channelLinks);
         return responseBuilder.build();
+    }
+
+    public static void addOptionalHeader(String headerName, Optional<String> headerValue, Response.ResponseBuilder builder) {
+        if(headerValue.isPresent()){
+            builder.header(headerName, headerValue.get());
+        }
     }
 }

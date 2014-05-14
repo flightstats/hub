@@ -163,6 +163,9 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         } else {
             metadata.addUserMetadata("language", "none");
         }
+        if (content.getUser().isPresent()) {
+            metadata.addUserMetadata("user", content.getUser().get());
+        }
         metadata.addUserMetadata("millis", String.valueOf(content.getMillis()));
         if (useEncrypted) {
             metadata.setServerSideEncryption(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
@@ -189,6 +192,9 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
                     String language = userData.get("language");
                     if (!language.equals("none")) {
                         builder.withContentLanguage(language);
+                    }
+                    if (userData.containsKey("user")) {
+                        builder.withUser(userData.get("user"));
                     }
                     Long millis = Long.valueOf(userData.get("millis"));
                     builder.withData(bytes).withMillis(millis);
