@@ -92,6 +92,7 @@ public class ChannelUtils {
                 .withContentKey(new SequenceContentKey(sequence))
                 .withContentType(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
                 .withContentLanguage(response.getHeaders().getFirst(Headers.LANGUAGE))
+                .withUser(response.getHeaders().getFirst(Headers.USER))
                 .withData(response.getEntity(byte[].class))
                 .withMillis(getCreationDate(response).getMillis())
                 .build();
