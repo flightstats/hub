@@ -11,8 +11,10 @@ utils.runInTestChannel(channelName, function () {
     frisby.create(testName + ': Inserting a value into a channel.')
         .post(thisChannelResource, null, { body: messageText})
         .addHeader("Content-Type", "text/plain")
+        .addHeader("User", "someone")
         .expectStatus(201)
         .expectHeader('content-type', 'application/json')
+        .expectHeader('User', 'someone')
         .expectJSON('_links', {
             channel: {
                 href: thisChannelResource
@@ -30,10 +32,8 @@ utils.runInTestChannel(channelName, function () {
                 .get(valueUrl)
                 .expectStatus(200)
                 .expectHeader('content-type', 'text/plain')
+                .expectHeader('User', 'someone')
                 .expectBodyContains(messageText)
-                .after(function (err, res, body) {
-                    expect(res.headers['user']).toBeUndefined();
-                })
                 .toss();
         })
         .toss();
