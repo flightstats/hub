@@ -53,16 +53,4 @@ public class ChannelLinkBuilderTest {
 
     }
 
-    @Test
-    public void testBuildChannelLinksTImeSeries() throws Exception {
-        channelConfig = ChannelConfiguration.builder().withName("spoon")
-                .withType(ChannelConfiguration.ChannelType.TimeSeries).build();
-        Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(channelConfig, channelUri);
-        List<HalLink> halLinks = linked.getHalLinks().getLinks();
-        assertEquals(2, halLinks.size());
-        assertTrue(halLinks.contains(new HalLink("self", channelUri)));
-        assertTrue(halLinks.contains(new HalLink("time", new URI(channelUri.toString() + "/time"))));
-
-    }
-
 }

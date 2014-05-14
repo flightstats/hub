@@ -36,17 +36,11 @@ For the purposes of this document, the Hub is at http://hub/.
 
 The Hub is designed to be a fault tolerant, highly available service for data distribution.
 
-It currently supports two types of Channels, Sequence and TimeSeries.
+It currently only supports Sequence channels.
 
 Sequence channels represent a linked list of data.  Each item added gets a sequential id.  They are traversable, and can support items up to 10 MB.
 Sequence channels are intended for insertation rates less than five items per second.
 Users should note that with high frequency inserts, the clients view of insertion order may not be maintained.
-
-**Support for TimeSeries channels is currently in Alpha.  If you'd like to use one, please come talk to us.**
-TimeSeries channels are designed for small, high frequency inserts with low latency.  Each item added gets a unique id.  They are not traversable, and have a max content size of 60KB.
-TimeSeries can support insertation rates up to 1000 items per second.
-TimeSeries is higher throughput and lower latency than Sequence, as well as slightly more expensive.
-TimeSeries also requires the users to know the frequency and size of inserts.
 
 ## error handling
 
@@ -86,13 +80,12 @@ Content-Type is `application/json`
 Hyphens are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
 Channels starting with `test` will automatically be deleted in the dev and staging environments every hour using [Jenkins](http://ops-jenkins01.cloud-east.dev/job/hub-cleanup-hourly/)
 
-`type` is optional, and defaults to Sequence.  Valid values are Sequence and TimeSeries.
+`type` is optional, and defaults to Sequence.  Only `Sequence` is a valid value.
 
 `ttlDays` is optional and should be a positive number. If not specified, a default value of 120 days is used.
 `ttlMillis` is still accepted as an input parameter, and is converted to ttlDays.  A `null` ttlMillis is converted to the default 120 days.
 
-`peakRequestRateSeconds` and `contentSizeKB` are optional, and are only used by TimeSeries to provision the throughput of the channel per second.
-If the throughput is exceeded, the service will return an error code of 503 with a `Retry-After` header providing a value in seconds.
+`peakRequestRateSeconds` and `contentSizeKB` are optional.
 
 `description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
 
@@ -261,7 +254,6 @@ Here's how you can do this with curl:
 
 To retrieve the latest item inserted into a Sequence channel, issue a HEAD or GET request on the `latest` link returned from the channel
 metadata.  The Hub will issue a 303 redirect.
-This feature is not supported by TimeSeries channels.
 
 `HEAD http://hub/channel/stumptown/latest`
 
@@ -375,7 +367,6 @@ http://hub/channel/stumptown/1002
 ...etc...
 ```
 
-Currently TimeSeries channels do not support websockets.  If this is a desired feature, please discuss it with us.
 
 ## provider interface
 
@@ -409,7 +400,7 @@ curl -i -X DELETE http://hub/channel/stumptown
 
 **Replication Configuration will be access controlled in in Staging and Prod environments**
 
-The Hub can replicate Sequence channels from another Hub instance.  TimeSeries replication is not yet supported.
+The Hub can replicate Sequence channels from another Hub instance. 
 
 The Source Hub has the channel(s) you want replicated.
 The Target Hub is where you want those channel(s).

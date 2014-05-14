@@ -66,12 +66,6 @@ public class ChannelUtilsTest {
     }
 
     @Test
-    public void testGetLatestSequenceNoChannel() throws Exception {
-        Optional<Long> latestSequence = channelUtils.getLatestSequence(nonChannelUrl);
-        assertFalse(latestSequence.isPresent());
-    }
-
-    @Test
     public void testGetConfiguration() throws Exception {
         Optional<ChannelConfiguration> configuration = channelUtils.getConfiguration(channelUrl);
         assertTrue(configuration.isPresent());
