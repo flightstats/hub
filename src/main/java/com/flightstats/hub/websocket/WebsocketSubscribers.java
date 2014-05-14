@@ -38,7 +38,7 @@ public class WebsocketSubscribers {
             String registrationId = websocketPublisher.subscribe(channelName, messageListener);
             consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), registrationId );
         } else {
-            throw new UnsupportedOperationException("TimeSeries channels do not support WebSockets");
+            throw new UnsupportedOperationException("Channel Type does not support WebSockets");
         }
 
 	}

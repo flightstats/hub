@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao.dynamo;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.dao.ChannelService;
@@ -166,16 +165,6 @@ public class AwsChannelServiceIntegration {
         assertTrue(channelService.isHealthy());
     }
 
-    @Test
-    public void testTimeSeriesChannelCreation() throws Exception {
-
-        assertNull(channelService.getChannelConfiguration(channelName));
-        ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
-        ChannelConfiguration createdChannel = channelService.createChannel(configuration);
-        assertEquals(channelName, createdChannel.getName());
-        assertEquals(createdChannel, channelService.getChannelConfiguration(channelName));
-    }
-
     private ChannelConfiguration getChannelConfig(ChannelConfiguration.ChannelType series) {
         return ChannelConfiguration.builder()
                 .withName(channelName)
@@ -185,12 +174,6 @@ public class AwsChannelServiceIntegration {
                 .withDescription("descriptive")
                 .withTags(Arrays.asList("one", "two", "three"))
                 .build();
-    }
-
-    @Test
-    public void testTimeSeriesChannelWriteReadDelete() throws Exception {
-        ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
-        timeIndexWork(configuration, true);
     }
 
     @Test
@@ -228,59 +211,6 @@ public class AwsChannelServiceIntegration {
         channelService.delete(channelName);
         assertNull(channelService.getChannelConfiguration(channelName));
         channelNames.remove(channelName);
-    }
-
-    @Test
-    public void testTimeSeriesChannelOptionals() throws Exception {
-
-        ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
-        channelService.createChannel(configuration);
-        byte[] bytes = "testChannelOptionals".getBytes();
-        Content content = Content.builder().withData(bytes).withContentType("content").withContentLanguage("lang").build();
-        InsertedContentKey insert = channelService.insert(channelName,  content);
-
-        Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());
-        assertTrue(value.isPresent());
-        LinkedContent compositeValue = value.get();
-        assertArrayEquals(bytes, compositeValue.getData());
-
-        assertEquals("content", compositeValue.getContentType().get());
-        assertEquals("lang", compositeValue.getValue().getContentLanguage().get());
-    }
-
-    @Test
-    public void testChannelCreationUncached() throws Exception {
-        AmazonDynamoDBClient dbClient = injector.getInstance(AmazonDynamoDBClient.class);
-        DynamoUtils dynamoUtils = injector.getInstance(DynamoUtils.class);
-        DynamoChannelConfigurationDao channelMetadataDao = new DynamoChannelConfigurationDao(dbClient, dynamoUtils);
-        ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
-        ChannelConfiguration channel = channelMetadataDao.createChannel(configuration);
-        assertNotNull(channel);
-        ChannelConfiguration existing = channelMetadataDao.getChannelConfiguration(configuration.getName());
-        assertEquals(configuration.toString(), existing.toString());
-    }
-
-    @Test
-    public void testUpdateChannelNoChange() throws Exception {
-        assertNull(channelService.getChannelConfiguration(channelName));
-        ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
-        ChannelConfiguration createdChannel = channelService.createChannel(configuration);
-        assertEquals(channelName, createdChannel.getName());
-        assertEquals(createdChannel, channelService.getChannelConfiguration(channelName));
-        channelService.updateChannel(configuration);
-    }
-
-    @Test
-    public void testUpdateChannelChange() throws Exception {
-        assertNull(channelService.getChannelConfiguration(channelName));
-        ChannelConfiguration configuration = getChannelConfig(ChannelConfiguration.ChannelType.TimeSeries);
-        ChannelConfiguration createdChannel = channelService.createChannel(configuration);
-        assertEquals(channelName, createdChannel.getName());
-        assertEquals(createdChannel, channelService.getChannelConfiguration(channelName));
-        ChannelConfiguration newConfig = ChannelConfiguration.builder().withChannelConfiguration(configuration)
-                .withPeakRequestRate(2)
-                .build();
-        channelService.updateChannel(newConfig);
     }
 
     @Test
