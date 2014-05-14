@@ -13,6 +13,7 @@ utils.configureFrisby();
 
 utils.runInTestChannelJson(channelRequest, function () {
     var hrefs = [];
+    var foundHrefs = [];
     function insert() {
         request.post({url: thisChannelResource, headers: {"Content-Type": "text/plain"}, body: messageText}, function (err, response, body) {
             expect(err).toBeNull();
@@ -25,32 +26,39 @@ utils.runInTestChannelJson(channelRequest, function () {
         insert();
         insert();
         insert();
-    })
+    });
 
     waitsFor(function () {
         return hrefs.length == 3;
     }, 5000);
 
-    function verify(result) {
-        var uris = result['_links']['uris'];
-        hrefs.forEach(function (item) {
-            expect(uris.indexOf(item)).not.toBe(-1);
-        })
+    function getHrefs(format) {
+        request.get({url: hubUrlBase + "/channel/" + channelName + "/time/" + format},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                resultObj = JSON.parse(body);
+                resultObj._links.uris.forEach(function (item) {
+                    foundHrefs.push(item);
+                });
+            });
     }
 
     runs(function () {
-        var format = moment().format("YYYY-MM-DDTHH:mmZ");
+        var now = moment().add('minutes', -1);
+        var format = 'YYYY-MM-DDTHH:mmZ';
+        getHrefs(now.format(format));
+        getHrefs(now.add('minutes', 1).format(format));
+        getHrefs(now.add('minutes', 1).format(format));
+    });
 
-        frisby.create(testName + ': Fetching ids with time.')
-            .get(hubUrlBase + "/channel/" + channelName + "/time/" + format)
-            .expectStatus(200)
-            .expectHeader('content-type', 'application/json')
-            .afterJSON(function (result) {
-                verify(result);
-            })
-            .toss();
+    waitsFor(function () {
+        return foundHrefs.length == 3;
+    }, 10000);
 
-
+    runs(function () {
+        hrefs.forEach(function (item) {
+            expect(foundHrefs.indexOf(item)).not.toBe(-1);
+        })
     });
 
 });
