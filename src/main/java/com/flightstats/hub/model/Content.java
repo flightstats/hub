@@ -12,6 +12,7 @@ public class Content implements Serializable {
     private final Optional<String> contentLanguage;
     private final long millis;
     private final byte[] data;
+    private final Optional<String> user;
     private Optional<ContentKey> contentKey = Optional.absent();
     private final boolean isNew;
 
@@ -22,6 +23,7 @@ public class Content implements Serializable {
         contentType = builder.contentType;
         millis = builder.millis;
         data = builder.data;
+        user = builder.user;
     }
 
     public Optional<String> getContentType() {
@@ -52,6 +54,10 @@ public class Content implements Serializable {
         this.contentKey = Optional.of(contentKey);
     }
 
+    public Optional<String> getUser() {
+        return user;
+    }
+
     /**
      * @return true if this Content is new, false if it has been inserted elsewhere and is a replica.
      */
@@ -69,6 +75,7 @@ public class Content implements Serializable {
         private long millis = System.currentTimeMillis();
         private Optional<ContentKey> contentKey = Optional.absent();
         private byte[] data;
+        private Optional<String> user = Optional.absent();
 
         public Builder withData(byte[] data) {
             this.data = data;
@@ -92,6 +99,11 @@ public class Content implements Serializable {
 
         public Builder withContentKey(ContentKey contentKey) {
             this.contentKey = Optional.fromNullable(contentKey);
+            return this;
+        }
+
+        public Builder withUser(String user) {
+            this.user = Optional.fromNullable(user);
             return this;
         }
 
