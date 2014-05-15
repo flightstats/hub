@@ -7,6 +7,8 @@ import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
+import com.flightstats.hub.dao.encryption.AuditChannelService;
+import com.flightstats.hub.dao.encryption.BasicChannelService;
 import com.flightstats.hub.dao.s3.S3Config;
 import com.flightstats.hub.dao.s3.S3ContentDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
@@ -21,11 +23,14 @@ import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Properties;
 
 public class AwsModule extends AbstractModule {
+    private final static Logger logger = LoggerFactory.getLogger(AwsModule.class);
 
 	private final Properties properties;
 
@@ -44,7 +49,15 @@ public class AwsModule extends AbstractModule {
         bind(CuratorLock.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
 		bind(AwsConnectorFactory.class).in(Singleton.class);
-        bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
+
+        if (Boolean.parseBoolean(properties.getProperty("app.encrypted"))) {
+            logger.info("using encrypted hub");
+            bind(ChannelService.class).annotatedWith(BasicChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
+            bind(ChannelService.class).to(AuditChannelService.class).asEagerSingleton();
+        } else {
+            logger.info("using normal hub");
+            bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
+        }
         bind(ChannelConfigurationDao.class).to(TimedChannelConfigurationDao.class).in(Singleton.class);
         bind(ChannelConfigurationDao.class)
                 .annotatedWith(Names.named(TimedChannelConfigurationDao.DELEGATE))

@@ -93,12 +93,12 @@ public class AwsChannelServiceIntegration {
         createLocksPath("/ChannelReplicator/");
         ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlDays(1L).build();
         channelService.createChannel(configuration);
-        assertFalse(channelService.getValue(channelName, new SequenceContentKey(1000).keyToString()).isPresent());
+        assertFalse(channelService.getValue(channelName, new SequenceContentKey(1000).keyToString(), "").isPresent());
         byte[] bytes = "some data".getBytes();
         Content content = Content.builder().withData(bytes).build();
         InsertedContentKey insert = channelService.insert(channelName, content);
 
-        Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());
+        Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString(), "");
         assertTrue(value.isPresent());
         LinkedContent compositeValue = value.get();
         assertArrayEquals(bytes, compositeValue.getData());
@@ -135,7 +135,7 @@ public class AwsChannelServiceIntegration {
         Content content = Content.builder().withData(bytes).withContentLanguage("lang").withContentType("content").build();
         InsertedContentKey insert = channelService.insert(channelName, content);
 
-        Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString());
+        Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString(), "");
         assertTrue(value.isPresent());
         LinkedContent compositeValue = value.get();
         assertArrayEquals(bytes, compositeValue.getData());
@@ -190,7 +190,7 @@ public class AwsChannelServiceIntegration {
         InsertedContentKey insert2 = channelService.insert(channelName, Content.builder().withData(bytes).build());
         InsertedContentKey insert3 = channelService.insert(channelName, Content.builder().withData(bytes).build());
         HashSet<ContentKey> createdKeys = Sets.newHashSet(insert1.getKey(), insert2.getKey(), insert3.getKey());
-        Optional<LinkedContent> value = channelService.getValue(channelName, insert1.getKey().keyToString());
+        Optional<LinkedContent> value = channelService.getValue(channelName, insert1.getKey().keyToString(), "");
         assertTrue(value.isPresent());
         LinkedContent compositeValue = value.get();
         assertArrayEquals(bytes, compositeValue.getData());

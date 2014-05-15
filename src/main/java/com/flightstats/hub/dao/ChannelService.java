@@ -14,7 +14,10 @@ public interface ChannelService {
 
 	InsertedContentKey insert(String channelName, Content content);
 
-	Optional<LinkedContent> getValue(String channelName, String id);
+    //todo - gfm - 5/15/14 - remove this
+	Optional<LinkedContent> getValue(String channelName, String id, String user);
+
+    Optional<LinkedContent> getValue(Request request);
 
 	ChannelConfiguration getChannelConfiguration(String channelName);
 

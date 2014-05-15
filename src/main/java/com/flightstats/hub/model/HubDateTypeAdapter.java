@@ -71,7 +71,7 @@ public final class HubDateTypeAdapter extends TypeAdapter<Date> {
             out.nullValue();
             return;
         }
-        String dateFormatAsString = enUsFormat.format(value);
+        String dateFormatAsString = iso8601Format.format(value);
         out.value(dateFormatAsString);
     }
 }
