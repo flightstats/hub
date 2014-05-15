@@ -258,7 +258,7 @@ metadata.  The Hub will issue a 303 redirect.
 `HEAD http://hub/channel/stumptown/latest`
 
 On success:  `HTTP/1.1 303 See Other`
-`Location: http://hub/channel/stumptown/00002FHSQESAS000`
+`Location: http://hub/channel/stumptown/1010`
 
 Here is how you can do this with curl:
 
@@ -455,7 +455,7 @@ To delete Replication for an entire domain, use DELETE:
 **Replication Details**
 
 * Modifications to existing replication configuration take effect immediately.
-* If you are replicating into HubB from HubA, and you are **also** inserting data into HubB, you will get undefined results.  Don't do that.
+* If you are replicating a channel into HubB from HubA, and you will be prevnted from inserting data into that channel on HubB.
 * `excludeExcept` means "Exclude all of the channels, Except the ones specified".
 * `historicalDays` tells the replicator how far back in time to start. Zero (the default) means "only get new values".
 * If http://hub.other/channel/stumptown `ttlDays` is 10, and `historicalDays` is 5, only items from the last 5 days will be replicated.
