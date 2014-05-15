@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.app.config.metrics.PerChannelTimed;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.LinkedContent;
@@ -48,8 +49,16 @@ public class ChannelContentResource {
 	@Timed(name = "all-channels.fetch")
 	@PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName")
     @ExceptionMetered
-	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id, @HeaderParam("Accept") String accept) {
-		Optional<LinkedContent> optionalResult = channelService.getValue(channelName, id);
+	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id,
+                             @HeaderParam("Accept") String accept, @HeaderParam("User") String user
+    ) {
+        Request request = Request.builder()
+                .channel(channelName)
+                .id(id)
+                .user(user)
+                .uri(uriInfo.getRequestUri().toString())
+                .build();
+        Optional<LinkedContent> optionalResult = channelService.getValue(request);
 
 		if (!optionalResult.isPresent()) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);

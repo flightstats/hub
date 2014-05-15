@@ -62,7 +62,7 @@ function addItem(url, responseCode) {
     responseCode = responseCode || 201;
     it("adds item to " + url, function (done) {
         request.post({url: url,
-                headers: {"Content-Type": "application/json"},
+                headers: {"Content-Type": "application/json", user: 'somebody' },
                 body: JSON.stringify({ "data": Date.now()})},
             function (err, response, body) {
                 expect(err).toBeNull();

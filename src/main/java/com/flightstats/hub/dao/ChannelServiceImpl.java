@@ -64,8 +64,14 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Optional<LinkedContent> getValue(String channelName, String id) {
-        return contentService.getValue(channelName, id);
+    public Optional<LinkedContent> getValue(String channelName, String id, String user) {
+        return getValue(Request.builder().channel(channelName).user(user).id(id).build());
+
+    }
+
+    @Override
+    public Optional<LinkedContent> getValue(Request request) {
+        return contentService.getValue(request.getChannel(), request.getId());
     }
 
     @Override
