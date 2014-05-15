@@ -33,9 +33,9 @@ public class AuditChannelService implements ChannelService {
     @Override
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
         //todo - gfm - 5/15/14 - prevent new channels ending in _auditing
-        if (isAuditChannel(configuration.getName())) {
+        //if (isAuditChannel(configuration.getName())) {
             //todo - gfm - 5/15/14 - throw an exception - 403
-        }
+        //}
 
         Set<String> tags = new HashSet<>(configuration.getTags());
         tags.add("audit");

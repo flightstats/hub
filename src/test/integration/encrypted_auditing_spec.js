@@ -6,7 +6,9 @@ var channelResource = channelUrl + "/" + channelName;
 var auditChannelResource = channelResource + '_audit';
 var testName = __filename;
 var user = 'nobody';
-var foundAudits = []
+var foundAudits = [];
+
+if (!runEncrypted) return;
 
 /**
  * //todo - gfm - 5/15/14 - prevent this from running in the normal Hub
