@@ -1,7 +1,7 @@
 package com.flightstats.hub.replication;
 
+import com.flightstats.hub.model.exception.ForbiddenRequestException;
 import com.flightstats.hub.model.exception.InvalidRequestException;
-import com.flightstats.hub.model.exception.ReplicatingChannelException;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 
@@ -20,7 +20,7 @@ public class ReplicationValidator {
         Collection<ReplicationDomain> domains = replicationDao.getDomains(false);
         for (ReplicationDomain domain : domains) {
             if (domain.getExcludeExcept().contains(channelName)) {
-                throw new ReplicatingChannelException(channelName + " cannot have data inserted while it is replicating");
+                throw new ForbiddenRequestException(channelName + " cannot have data inserted while it is replicating");
             }
         }
     }
@@ -34,7 +34,7 @@ public class ReplicationValidator {
             if (!domain.getDomain().equals(replicationDomain.getDomain())) {
                 Sets.SetView<String> intersection = Sets.intersection(replicationDomain.getExcludeExcept(), domain.getExcludeExcept());
                 if (!intersection.isEmpty()) {
-                    throw new ReplicatingChannelException(domain.getDomain() + " has channels already being replicated " + intersection);
+                    throw new ForbiddenRequestException(domain.getDomain() + " has channels already being replicated " + intersection);
                 }
             }
         }
