@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.dynamo;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.dao.s3.S3ContentDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
@@ -93,12 +94,13 @@ public class AwsChannelServiceIntegration {
         createLocksPath("/ChannelReplicator/");
         ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlDays(1L).build();
         channelService.createChannel(configuration);
-        assertFalse(channelService.getValue(channelName, new SequenceContentKey(1000).keyToString(), "").isPresent());
+        Request request = Request.builder().channel(channelName).id(new SequenceContentKey(1000).keyToString()).build();
+        assertFalse(channelService.getValue(request).isPresent());
         byte[] bytes = "some data".getBytes();
         Content content = Content.builder().withData(bytes).build();
         InsertedContentKey insert = channelService.insert(channelName, content);
-
-        Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString(), "");
+        Request request2 = Request.builder().channel(channelName).id(insert.getKey().keyToString()).build();
+        Optional<LinkedContent> value = channelService.getValue(request2);
         assertTrue(value.isPresent());
         LinkedContent compositeValue = value.get();
         assertArrayEquals(bytes, compositeValue.getData());
@@ -135,7 +137,8 @@ public class AwsChannelServiceIntegration {
         Content content = Content.builder().withData(bytes).withContentLanguage("lang").withContentType("content").build();
         InsertedContentKey insert = channelService.insert(channelName, content);
 
-        Optional<LinkedContent> value = channelService.getValue(channelName, insert.getKey().keyToString(), "");
+        Request request = Request.builder().channel(channelName).id(insert.getKey().keyToString()).build();
+        Optional<LinkedContent> value = channelService.getValue(request);
         assertTrue(value.isPresent());
         LinkedContent compositeValue = value.get();
         assertArrayEquals(bytes, compositeValue.getData());
@@ -190,7 +193,8 @@ public class AwsChannelServiceIntegration {
         InsertedContentKey insert2 = channelService.insert(channelName, Content.builder().withData(bytes).build());
         InsertedContentKey insert3 = channelService.insert(channelName, Content.builder().withData(bytes).build());
         HashSet<ContentKey> createdKeys = Sets.newHashSet(insert1.getKey(), insert2.getKey(), insert3.getKey());
-        Optional<LinkedContent> value = channelService.getValue(channelName, insert1.getKey().keyToString(), "");
+        Request request = Request.builder().channel(channelName).id(insert1.getKey().keyToString()).build();
+        Optional<LinkedContent> value = channelService.getValue(request);
         assertTrue(value.isPresent());
         LinkedContent compositeValue = value.get();
         assertArrayEquals(bytes, compositeValue.getData());
