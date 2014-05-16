@@ -62,12 +62,6 @@ public class AuditChannelService implements ChannelService {
         return channelService.insert(channelName, content);
     }
 
-    //todo - gfm - 5/15/14 - send in a request object
-    @Override
-    public Optional<LinkedContent> getValue(String channelName, String id, String user) {
-        return null;
-    }
-
     @Override
     public Optional<LinkedContent> getValue(Request request) {
         Optional<LinkedContent> optional = channelService.getValue(request);
