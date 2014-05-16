@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class AuditTest {
 
@@ -30,8 +31,11 @@ public class AuditTest {
     public void testJson() throws Exception {
         DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-        assertEquals("{\"user\":\"somebody\",\"date\":\"" + formatter.format(audit.getDate()) +
-                "\",\"uri\":\"http://hub/channel/blah/1\"}", audit.toJson());
+
+        String json = audit.toJson();
+        assertTrue(json.contains("\"user\":\"somebody\""));
+        assertTrue(json.contains("\"uri\":\"http://hub/channel/blah/1\""));
+        assertTrue(json.contains("\"date\":\"" + formatter.format(audit.getDate()) ));
     }
 
 }
