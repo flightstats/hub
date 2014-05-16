@@ -186,6 +186,7 @@ public class ChannelConfiguration implements Serializable {
             this.contentSizeKB = config.contentSizeKB;
             this.peakRequestRateSeconds = config.peakRequestRateSeconds;
             this.description = config.description;
+            this.tags.clear();
             this.tags.addAll(config.getTags());
             return this;
         }
