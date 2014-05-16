@@ -11,8 +11,6 @@ var foundAudits = [];
 if (!runEncrypted) return;
 
 /**
- * //todo - gfm - 5/15/14 - prevent this from running in the normal Hub
- *
  * This should:
  * 1 - create a channel in the encrypted hub
  * 2 - insert two records into the channel
@@ -54,12 +52,6 @@ describe(testName, function () {
         expect(foundAudits).toContain(channelResource + '/1001anybody');
         expect(foundAudits).toContain(channelResource + '/1000anybody');
     });
-
-    //todo - gfm - 5/15/14 - verify auditing channel isn't audited itself
-
-    //todo - gfm - 5/15/14 - prevent inserts to audited channels
-
-    //todo - gfm - 5/15/14 - test creating channel ending in _audit
 
     function verifyAuditing(id) {
         var url = auditChannelResource + '/' + id;

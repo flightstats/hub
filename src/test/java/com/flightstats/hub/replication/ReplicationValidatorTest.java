@@ -1,6 +1,6 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.model.exception.ReplicatingChannelException;
+import com.flightstats.hub.model.exception.ForbiddenRequestException;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class ReplicationValidatorTest {
         validator.validateDomain(domain);
     }
 
-    @Test(expected = ReplicatingChannelException.class)
+    @Test(expected = ForbiddenRequestException.class)
     public void testValidateDomainExistingChannels() throws Exception {
         ReplicationDomain domain = ReplicationDomain.builder().withDomain("D")
                 .withExcludedExcept(Lists.newArrayList("three")).build();

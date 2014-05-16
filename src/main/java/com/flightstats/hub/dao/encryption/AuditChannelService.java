@@ -3,8 +3,10 @@ package com.flightstats.hub.dao.encryption;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.exception.ForbiddenRequestException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +34,9 @@ public class AuditChannelService implements ChannelService {
 
     @Override
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
-        //todo - gfm - 5/15/14 - prevent new channels ending in _auditing
-        //if (isAuditChannel(configuration.getName())) {
-            //todo - gfm - 5/15/14 - throw an exception - 403
-        //}
+        if (isAuditChannel(configuration.getName())) {
+            throw new ForbiddenRequestException("Audit Channels can not be created");
+        }
 
         Set<String> tags = new HashSet<>(configuration.getTags());
         tags.add("audit");
@@ -56,7 +57,7 @@ public class AuditChannelService implements ChannelService {
     @Override
     public InsertedContentKey insert(String channelName, Content content) {
         if (isAuditChannel(channelName)) {
-            //todo - gfm - 5/15/14 - throw an exception - 403
+            throw new ForbiddenRequestException("Audit Channels do not allow inserts");
         }
         return channelService.insert(channelName, content);
     }
@@ -117,6 +118,9 @@ public class AuditChannelService implements ChannelService {
 
     @Override
     public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
+        if (isAuditChannel(configuration.getName())) {
+            configuration.getTags().add("audit");
+        }
         return channelService.updateChannel(configuration);
     }
 
@@ -132,6 +136,6 @@ public class AuditChannelService implements ChannelService {
     }
 
     public static boolean isAuditChannel(String name) {
-        return name.endsWith(AuditChannelService.AUDIT);
+        return StringUtils.endsWith(name, AUDIT);
     }
 }
