@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.timeIndex;
 
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.dao.s3.S3IndexDao;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
@@ -21,14 +22,14 @@ public class TimeIndexCoordinator {
     private final static Logger logger = LoggerFactory.getLogger(TimeIndexCoordinator.class);
 
     private final CuratorFramework curator;
-    private final TimeIndexDao timeIndexDao;
+    private final S3IndexDao s3IndexDao;
     private final CuratorLock curatorLock;
 
     @Inject
-    public TimeIndexCoordinator(CuratorFramework curator, TimeIndexDao timeIndexDao,
+    public TimeIndexCoordinator(CuratorFramework curator, S3IndexDao s3IndexDao,
                                 CuratorLock curatorLock) {
         this.curator = curator;
-        this.timeIndexDao = timeIndexDao;
+        this.s3IndexDao = s3IndexDao;
         this.curatorLock = curatorLock;
         HubServices.register(new TimeIndexCoordinatorService());
     }
@@ -52,7 +53,7 @@ public class TimeIndexCoordinator {
             logger.debug("found " + channels.size() + " channels");
             Collections.shuffle(channels);
             for (String channel : channels) {
-                new TimeIndexProcessor(curatorLock, timeIndexDao, curator).process(channel);
+                new TimeIndexProcessor(curatorLock, s3IndexDao, curator).process(channel);
             }
         } catch (KeeperException.NoNodeException e) {
             logger.info("no node exception " + e.getMessage());
