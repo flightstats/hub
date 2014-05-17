@@ -1,7 +1,5 @@
 package com.flightstats.hub.replication;
 
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.service.ChannelLinkBuilder;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -32,7 +30,6 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
 
     private final static Logger logger = LoggerFactory.getLogger(SequenceIterator.class);
     private final ChannelUtils channelUtils;
-    private final MetricRegistry metricRegistry;
     private final Channel channel;
     private final WebSocketContainer container;
     private final String channelUrl;
@@ -44,19 +41,17 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
     private boolean connected = false;
 
     public SequenceIterator(long lastCompleted, ChannelUtils channelUtils, Channel channel,
-                            WebSocketContainer container, MetricRegistry metricRegistry) {
+                            WebSocketContainer container) {
         this.current = lastCompleted;
         this.channelUtils = channelUtils;
         this.channel = channel;
         this.container = container;
-        this.metricRegistry = metricRegistry;
         String url = channel.getUrl();
         if (url.endsWith("/")) {
             url = url.substring(0, url.length() - 1);
         }
         this.channelUrl = url;
         startSocket();
-        startMetrics();
     }
 
     @Override
@@ -75,23 +70,6 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
             }
         }
         return false;
-    }
-
-    private long getDelta() {
-        return latest.get() - current;
-    }
-
-    private void startMetrics() {
-        String name = "Replication." + URI.create(channelUrl).getHost() + "." + channel.getName() + ".delta";
-        metricRegistry.remove(name);
-        metricRegistry.register(name, new Gauge<Long>() {
-            @Override
-            public Long getValue() {
-                long delta = getDelta();
-                logger.info("delta is " + delta + " for " + channel.getUrl());
-                return delta;
-            }
-        });
     }
 
     @Override
