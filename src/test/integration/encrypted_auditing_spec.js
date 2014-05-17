@@ -40,6 +40,8 @@ describe(testName, function () {
     getItem(1001, 'nobody');
     getItem(1000, 'anybody');
 
+    //todo - gfm - 5/16/14 - this has a race condition since auditing is async
+
     verifyAuditing(1000);
     verifyAuditing(1001);
     verifyAuditing(1002);
