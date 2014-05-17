@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * This uses S3 for Content and ZooKeeper for TimeIndex
+ * todo - gfm - 5/17/14 - split up this class
  */
 public class S3ContentDao implements ContentDao, TimeIndexDao {
 
