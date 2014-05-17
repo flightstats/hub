@@ -1,7 +1,5 @@
 package com.flightstats.hub.websocket;
 
-import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ChannelConfiguration;
 import com.google.inject.Inject;
 import com.hazelcast.core.MessageListener;
 import org.slf4j.Logger;
@@ -13,34 +11,18 @@ public class WebsocketSubscribers {
 
 	private final static Logger logger = LoggerFactory.getLogger(WebsocketSubscribers.class);
 	private final WebsocketPublisher websocketPublisher;
-    private final ChannelService channelService;
     private final ConcurrentHashMap<ChannelConsumer, String> consumerToMessageListener = new ConcurrentHashMap<>();
 
 	@Inject
-	public WebsocketSubscribers(WebsocketPublisher websocketPublisher, ChannelService channelService) {
+	public WebsocketSubscribers(WebsocketPublisher websocketPublisher) {
 		this.websocketPublisher = websocketPublisher;
-        this.channelService = channelService;
     }
 
 	public void subscribe(final String channelName, Consumer<String> consumer) {
-        ChannelConfiguration configuration = channelService.getChannelConfiguration(channelName);
-        if (null == configuration) {
-            //todo - gfm - 1/15/14 - do we need to support websockets before channel creation?
-            configuration = ChannelConfiguration.builder()
-                    .withName(channelName)
-                    .withType(ChannelConfiguration.ChannelType.Sequence)
-                    .build();
-        }
-
-        if (configuration.isSequence()) {
-            logger.info("Adding new message listener for sequence channel " + channelName);
-            MessageListener<String> messageListener = new SequenceSubscriber(consumer);
-            String registrationId = websocketPublisher.subscribe(channelName, messageListener);
-            consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), registrationId );
-        } else {
-            throw new UnsupportedOperationException("Channel Type does not support WebSockets");
-        }
-
+        logger.info("Adding new message listener for sequence channel " + channelName);
+        MessageListener<String> messageListener = new SequenceSubscriber(consumer);
+        String registrationId = websocketPublisher.subscribe(channelName, messageListener);
+        consumerToMessageListener.put( new ChannelConsumer( channelName, consumer ), registrationId );
 	}
 
     public void unsubscribe(String channelName, Consumer<String> subscription) {
