@@ -6,6 +6,7 @@ import com.flightstats.hub.model.*;
 import com.flightstats.hub.model.exception.ForbiddenRequestException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -15,16 +16,21 @@ import javax.ws.rs.core.MediaType;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.*;
 
 public class AuditChannelService implements ChannelService {
     private final static Logger logger = LoggerFactory.getLogger(AuditChannelService.class);
     public static final String AUDIT = "_audit";
     private final ChannelService channelService;
+    private final ExecutorService executorService;
 
     @Inject
-    public AuditChannelService(@BasicChannelService ChannelService channelService) {
+    public AuditChannelService(@BasicChannelService ChannelService channelService,
+                               @Named("audit.threads") int auditThreads, @Named("audit.queue") int auditQueue) {
         logger.info("got class " + channelService.getClass());
         this.channelService = channelService;
+        executorService = new ThreadPoolExecutor(1, auditThreads, 60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(auditQueue));
     }
 
     @Override
@@ -66,18 +72,42 @@ public class AuditChannelService implements ChannelService {
     public Optional<LinkedContent> getValue(Request request) {
         Optional<LinkedContent> optional = channelService.getValue(request);
         if (optional.isPresent() && !isAuditChannel(request.getChannel())) {
-            Audit audit = Audit.builder()
-                    .user(request.getUser())
-                    .uri(request.getUri())
-                    .build();
-            Content content = Content.builder()
-                    .withContentType(MediaType.APPLICATION_JSON)
-                    .withData(audit.toJson().getBytes())
-                    .build();
-            //todo - gfm - 5/15/14 - make this async
-            channelService.insert(request.getChannel() + AUDIT, content);
+            try {
+                audit(request);
+            } catch (RejectedExecutionException e) {
+                logger.warn("auditing queue is full", e);
+            }
         }
         return optional;
+    }
+
+    private void audit(Request request) {
+        final Audit audit = Audit.builder()
+                .user(request.getUser())
+                .uri(request.getUri())
+                .build();
+        final Content content = Content.builder()
+                .withContentType(MediaType.APPLICATION_JSON)
+                .withData(audit.toJson().getBytes())
+                .build();
+        try {
+            submit(request, audit, content);
+        } catch (RejectedExecutionException e) {
+            logger.warn("auditing queue is full " + audit);
+        }
+    }
+
+    private void submit(final Request request, final Audit audit, final Content content) {
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    channelService.insert(request.getChannel() + AUDIT, content);
+                } catch (Exception e) {
+                    logger.warn("unable to audit " + audit, e);
+                }
+            }
+        });
     }
 
     @Override
