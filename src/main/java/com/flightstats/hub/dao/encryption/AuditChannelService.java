@@ -84,7 +84,7 @@ public class AuditChannelService implements ChannelService {
     private void audit(Request request) {
         final Audit audit = Audit.builder()
                 .user(request.getUser())
-                .uri(request.getUri())
+                .uri(request.getUri().toString())
                 .build();
         final Content content = Content.builder()
                 .withContentType(MediaType.APPLICATION_JSON)
