@@ -21,15 +21,18 @@ public class AwsConnectorFactory {
 
     private final static Logger logger = LoggerFactory.getLogger(AwsConnectorFactory.class);
 
-    private final String endpoint;
+    private final String dynamoEndpoint;
+    private final String s3Endpoint;
     private final String protocol;
     private final boolean useEncrypted;
 
     @Inject
-	public AwsConnectorFactory(@Named("dynamo.endpoint") String endpoint,
+	public AwsConnectorFactory(@Named("dynamo.endpoint") String dynamoEndpoint,
+                               @Named("s3.endpoint") String s3Endpoint,
                                @Named("aws.protocol") String protocol,
                                @Named("app.encrypted") boolean useEncrypted){
-        this.endpoint = endpoint;
+        this.dynamoEndpoint = dynamoEndpoint;
+        this.s3Endpoint = s3Endpoint;
         this.protocol = protocol;
         this.useEncrypted = useEncrypted;
     }
@@ -44,13 +47,12 @@ public class AwsConnectorFactory {
             logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
             amazonS3Client = new AmazonS3Client(getPropertiesCredentials(), getClientConfiguration());
         }
-        //todo - gfm - 2/27/14 - pull this into config
-        amazonS3Client.setEndpoint("s3-external-1.amazonaws.com");
+        amazonS3Client.setEndpoint(s3Endpoint);
         return amazonS3Client;
     }
 
     public AmazonDynamoDBClient getDynamoClient() throws IOException {
-        logger.info("creating for  " + protocol + " " + endpoint);
+        logger.info("creating for  " + protocol + " " + dynamoEndpoint);
         AmazonDynamoDBClient client = null;
         try {
             InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
@@ -62,7 +64,7 @@ public class AwsConnectorFactory {
         }
         ClientConfiguration configuration = getClientConfiguration();
         client.setConfiguration(configuration);
-        client.setEndpoint(endpoint);
+        client.setEndpoint(dynamoEndpoint);
         return client;
 
     }
