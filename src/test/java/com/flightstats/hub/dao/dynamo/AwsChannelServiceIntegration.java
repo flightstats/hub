@@ -1,20 +1,12 @@
 package com.flightstats.hub.dao.dynamo;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
-import com.flightstats.hub.dao.s3.S3ContentDao;
-import com.flightstats.hub.dao.timeIndex.TimeIndex;
-import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.test.Integration;
-import com.flightstats.hub.util.CuratorKeyGenerator;
 import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
-import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -213,39 +205,5 @@ public class AwsChannelServiceIntegration {
         assertNull(channelService.getChannelConfiguration(channelName));
         channelNames.remove(channelName);
     }
-
-    @Test
-    public void testAsynchIndices() throws Exception {
-        channelNames.remove(channelName);
-
-        //guice private module hate filled
-        AmazonS3 s3Client = injector.getInstance(AmazonS3.class);
-        CuratorFramework curator = injector.getInstance(CuratorFramework.class);
-        RetryPolicy retryPolicy = injector.getInstance(RetryPolicy.class);
-        CuratorKeyGenerator keyGenerator = new CuratorKeyGenerator(curator, retryPolicy);
-        S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", "deihub", 1, 1, false, curator);
-        CuratorLock curatorLock = injector.getInstance(CuratorLock.class);
-        TimeIndexProcessor processor = new TimeIndexProcessor(curatorLock, indexDao, curator);
-
-        DateTime dateTime1 = new DateTime(2014, 1, 6, 12, 45);
-        indexDao.writeIndex(channelName, dateTime1, new SequenceContentKey(1999));
-        DateTime dateTime2 = dateTime1.plusMinutes(1);
-        indexDao.writeIndex(channelName, dateTime2, new SequenceContentKey(1000));
-        indexDao.writeIndex(channelName, dateTime1.plusMinutes(2), new SequenceContentKey(1001));
-        indexDao.writeIndex(channelName, dateTime1.plusMinutes(3), new SequenceContentKey(1002));
-        processor.process(channelName);
-
-        assertNull(curator.checkExists().forPath(TimeIndex.getPath(channelName, TimeIndex.getHash(dateTime1))));
-        assertNull(curator.checkExists().forPath(TimeIndex.getPath(channelName, TimeIndex.getHash(dateTime2))));
-
-        ArrayList<ContentKey> keyList = Lists.newArrayList(indexDao.getKeys(channelName, dateTime1));
-        assertEquals(1, keyList.size());
-        assertEquals("1999", keyList.get(0).keyToString());
-
-        keyList = Lists.newArrayList(indexDao.getKeys(channelName, dateTime2));
-        assertEquals(1, keyList.size());
-        assertTrue(keyList.contains(new SequenceContentKey(1000)));
-    }
-
 
 }
