@@ -35,6 +35,10 @@ conf/hub.properties :
       content_backoff_times : 6
       environment : "dev-east1.flightstats.com"
 
+    audit :
+      threads: 10
+      queue: 1000
+
     graphite :
         hosts : "svcsmon.cloud-east.dev:2003"
 
