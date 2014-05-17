@@ -1,23 +1,38 @@
 package com.flightstats.hub.service;
 
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.LinkedContent;
+import com.flightstats.hub.model.SequenceContentKey;
+import com.google.common.base.Optional;
+import org.junit.Before;
 import org.junit.Test;
+
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ChannelContentResourceTest {
 
     private ChannelService channelService;
     private Content content;
+    private UriInfo uriInfo;
 
-    @Test
-    public void test() throws Exception {
-        //todo - gfm - 5/15/14 - figure out what to do with all this...
-    }
-
-   /* @Before
+    @Before
     public void setUp() throws Exception {
         channelService = mock(ChannelService.class);
+        uriInfo = mock(UriInfo.class);
+        when(uriInfo.getRequestUri()).thenReturn(null);
         content = Content.builder().withData("found it!".getBytes()).withMillis(0).build();
+
     }
 
     @Test
@@ -31,7 +46,7 @@ public class ChannelContentResourceTest {
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.of(linkedValue));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, channelService);
+        ChannelContentResource testClass = new ChannelContentResource(uriInfo, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), null, "");
 
         assertEquals(MediaType.TEXT_PLAIN_TYPE, result.getMetadata().getFirst("Content-Type"));
@@ -48,7 +63,7 @@ public class ChannelContentResourceTest {
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.of(new LinkedContent(content)));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, channelService);
+        ChannelContentResource testClass = new ChannelContentResource(uriInfo, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), null, "");
 
         assertEquals(MediaType.APPLICATION_OCTET_STREAM_TYPE, result.getMetadata().getFirst("Content-Type"));      //null, and the framework defaults to application/octet-stream
@@ -64,7 +79,7 @@ public class ChannelContentResourceTest {
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.of(new LinkedContent(content)));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, channelService);
+        ChannelContentResource testClass = new ChannelContentResource(uriInfo, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), MediaType.APPLICATION_JSON, "");
 
         assertEquals(406, result.getStatus());
@@ -78,7 +93,7 @@ public class ChannelContentResourceTest {
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.<LinkedContent>absent());
 
-        ChannelContentResource testClass = new ChannelContentResource(null, channelService);
+        ChannelContentResource testClass = new ChannelContentResource(uriInfo, channelService);
         try {
             testClass.getValue(channelName, key.keyToString(), null, "");
             fail("Should have thrown exception.");
@@ -96,7 +111,7 @@ public class ChannelContentResourceTest {
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.of(linkedValue));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, channelService);
+        ChannelContentResource testClass = new ChannelContentResource(uriInfo, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), null, "");
 
         String creationDateString = (String) result.getMetadata().getFirst(Headers.CREATION_DATE);
@@ -132,7 +147,7 @@ public class ChannelContentResourceTest {
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.of(linkedValue));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, channelService);
+        ChannelContentResource testClass = new ChannelContentResource(uriInfo, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), null, "");
 
         String link = (String) result.getMetadata().getFirst("Link");
@@ -166,7 +181,7 @@ public class ChannelContentResourceTest {
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.of(linkedValue));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, channelService);
+        ChannelContentResource testClass = new ChannelContentResource(uriInfo, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), null, "");
 
         String link = (String) result.getMetadata().getFirst("Link");
@@ -181,7 +196,7 @@ public class ChannelContentResourceTest {
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.of(linkedValue));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, channelService);
+        ChannelContentResource testClass = new ChannelContentResource(uriInfo, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), null, "");
 
         assertNull(result.getMetadata().getFirst("Content-Language"));
@@ -196,9 +211,9 @@ public class ChannelContentResourceTest {
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.of(linkedValue));
 
-        ChannelContentResource testClass = new ChannelContentResource(null, channelService);
+        ChannelContentResource testClass = new ChannelContentResource(uriInfo, channelService);
         Response result = testClass.getValue(channelName, key.keyToString(), null, "");
 
         assertNull(result.getMetadata().getFirst("Content-Encoding"));
-    }*/
+    }
 }
