@@ -148,7 +148,6 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
 
     private void writeS3(String channelName, Content content, ContentKey key) {
         String s3Key = getS3ContentKey(channelName, key);
-        //todo - gfm - 1/9/14 - this could use streaming if the content length is specified
         InputStream stream = new ByteArrayInputStream(content.getData());
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(content.getData().length);
