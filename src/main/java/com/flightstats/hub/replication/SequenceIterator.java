@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * It is designed to skip over missing sequences, should they occur.
  * SequenceIterator is not thread safe, and should only be used from a single thread.
  *
+ * todo - gfm - 5/17/14 - split up this class
  */
 @ClientEndpoint()
 public class SequenceIterator implements Iterator<Optional<Content>> {
