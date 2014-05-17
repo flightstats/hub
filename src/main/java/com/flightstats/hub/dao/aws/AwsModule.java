@@ -58,10 +58,7 @@ public class AwsModule extends AbstractModule {
             logger.info("using normal hub");
             bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
         }
-        bind(ChannelConfigurationDao.class).to(TimedChannelConfigurationDao.class).in(Singleton.class);
-        bind(ChannelConfigurationDao.class)
-                .annotatedWith(Names.named(TimedChannelConfigurationDao.DELEGATE))
-                .to(CachedChannelConfigurationDao.class);
+        bind(ChannelConfigurationDao.class).to(CachedChannelConfigurationDao.class).in(Singleton.class);
         bind(ChannelConfigurationDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))
                 .to(DynamoChannelConfigurationDao.class);
