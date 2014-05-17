@@ -23,17 +23,14 @@ public class AwsConnectorFactory {
 
     private final String endpoint;
     private final String protocol;
-    private final String credentials;
     private final boolean useEncrypted;
 
     @Inject
 	public AwsConnectorFactory(@Named("dynamo.endpoint") String endpoint,
                                @Named("aws.protocol") String protocol,
-                               @Named("aws.credentials") String credentials,
                                @Named("app.encrypted") boolean useEncrypted){
         this.endpoint = endpoint;
         this.protocol = protocol;
-        this.credentials = credentials;
         this.useEncrypted = useEncrypted;
     }
 
