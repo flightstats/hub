@@ -171,7 +171,7 @@ def startTaskAndWait = { startTask, url ->
         }
     }
     while (health() != 200) {
-        //todo - gfm - 2/11/14 - fail this if it happens too many times
+        //fail this if it happens too many times
         sleep 1000
     }
     println('hub started!')
