@@ -224,7 +224,7 @@ public class AwsChannelServiceIntegration {
         CuratorFramework curator = injector.getInstance(CuratorFramework.class);
         MetricsTimer metricsTimer = injector.getInstance(MetricsTimer.class);
         RetryPolicy retryPolicy = injector.getInstance(RetryPolicy.class);
-        CuratorKeyGenerator keyGenerator = new CuratorKeyGenerator(curator, metricsTimer, retryPolicy);
+        CuratorKeyGenerator keyGenerator = new CuratorKeyGenerator(curator, retryPolicy);
         S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", "deihub", 1, 1, false, curator);
         CuratorLock curatorLock = injector.getInstance(CuratorLock.class);
         TimeIndexProcessor processor = new TimeIndexProcessor(curatorLock, indexDao, curator);
