@@ -1,7 +1,6 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.metrics.MetricsTimer;
-import com.flightstats.hub.metrics.TimedCallback;
+import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.flightstats.hub.websocket.WebsocketPublisher;
@@ -24,16 +23,13 @@ public class SequenceKeyCoordination implements KeyCoordination {
 
     private final WebsocketPublisher websocketPublisher;
     private final CuratorFramework curator;
-    private final MetricsTimer metricsTimer;
     private final LoadingCache<String, SharedValue> cache;
 
     @Inject
     public SequenceKeyCoordination(WebsocketPublisher websocketPublisher,
-                                   final CuratorFramework curator,
-                                   MetricsTimer metricsTimer) {
+                                   final CuratorFramework curator) {
         this.websocketPublisher = websocketPublisher;
         this.curator = curator;
-        this.metricsTimer = metricsTimer;
         cache = CacheBuilder.newBuilder().build(new CacheLoader<String, SharedValue>() {
             @Override
             public SharedValue load(String key) throws Exception {
@@ -50,30 +46,25 @@ public class SequenceKeyCoordination implements KeyCoordination {
         websocketPublisher.publish(channelName, key);
     }
 
+    @Timed(name = "sequence.setLastUpdated")
     private void setLastUpdateKey(final String channelName, final ContentKey key) {
         final SequenceContentKey sequence = (SequenceContentKey) key;
-        metricsTimer.time("sequence.setLastUpdated", new TimedCallback<Object>() {
-            @Override
-            public Object call() {
-                try {
-                    byte[] bytes = Longs.toByteArray(sequence.getSequence());
-                    SharedValue sharedValue = getSharedValue(channelName);
-                    int attempts = 0;
-                    while (attempts < 3) {
-                        long existing = Longs.fromByteArray(sharedValue.getValue());
-                        if (sequence.getSequence() > existing) {
-                            if (sharedValue.trySetValue(bytes)) return null;
-                        } else {
-                            return null;
-                        }
-                        attempts++;
-                    }
-                } catch (Exception e) {
-                    logger.warn("unable to set " + channelName + " lastUpdated to " + key, e);
+        try {
+            byte[] bytes = Longs.toByteArray(sequence.getSequence());
+            SharedValue sharedValue = getSharedValue(channelName);
+            int attempts = 0;
+            while (attempts < 3) {
+                long existing = Longs.fromByteArray(sharedValue.getValue());
+                if (sequence.getSequence() > existing) {
+                    if (sharedValue.trySetValue(bytes)) return;
+                } else {
+                    return;
                 }
-                return null;
+                attempts++;
             }
-        });
+        } catch (Exception e) {
+            logger.warn("unable to set " + channelName + " lastUpdated to " + key, e);
+        }
     }
 
     @VisibleForTesting
@@ -82,14 +73,10 @@ public class SequenceKeyCoordination implements KeyCoordination {
     }
 
     @Override
+    @Timed(name = "sequence.getLastUpdated")
     public ContentKey getLastUpdated(final String channelName) {
-        return metricsTimer.time("sequence.getLastUpdated", new TimedCallback<ContentKey>() {
-            @Override
-            public ContentKey call() {
-                byte[] value = getSharedValue(channelName).getValue();
-                return new SequenceContentKey(Longs.fromByteArray(value));
-            }
-        });
+        byte[] value = getSharedValue(channelName).getValue();
+        return new SequenceContentKey(Longs.fromByteArray(value));
     }
 
     @Override

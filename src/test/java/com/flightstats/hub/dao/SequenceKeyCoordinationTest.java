@@ -22,7 +22,7 @@ public class SequenceKeyCoordinationTest {
         CuratorFramework curator = mock(CuratorFramework.class);
         MetricsTimer metricsTimer = new MetricsTimer(new MetricRegistry());
         sharedValue = mock(SharedValue.class);
-        keyCoordination = new SequenceKeyCoordination(publisher, curator, metricsTimer) {
+        keyCoordination = new SequenceKeyCoordination(publisher, curator) {
             @Override
             SharedValue getSharedValue(String channelName) {
                 return sharedValue;
