@@ -1,7 +1,5 @@
 package com.flightstats.hub.dao;
 
-import com.codahale.metrics.MetricRegistry;
-import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.google.common.primitives.Longs;
@@ -20,7 +18,6 @@ public class SequenceKeyCoordinationTest {
     public void setUp() throws Exception {
         WebsocketPublisher publisher = mock(WebsocketPublisher.class);
         CuratorFramework curator = mock(CuratorFramework.class);
-        MetricsTimer metricsTimer = new MetricsTimer(new MetricRegistry());
         sharedValue = mock(SharedValue.class);
         keyCoordination = new SequenceKeyCoordination(publisher, curator) {
             @Override
