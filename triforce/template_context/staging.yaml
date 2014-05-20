@@ -41,6 +41,7 @@ conf/hub.properties :
       queue: 0
 
     graphite :
+        enable: true
         hosts : "svcsmon.cloud-east.staging:2003"
 
     zookeeper :
