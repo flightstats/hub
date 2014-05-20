@@ -72,21 +72,17 @@ public class AuditChannelService implements ChannelService {
     public Optional<LinkedContent> getValue(Request request) {
         Optional<LinkedContent> optional = channelService.getValue(request);
         if (optional.isPresent() && !isAuditChannel(request.getChannel())) {
-            try {
-                audit(request);
-            } catch (RejectedExecutionException e) {
-                logger.warn("auditing queue is full", e);
-            }
+            audit(request);
         }
         return optional;
     }
 
     private void audit(Request request) {
-        final Audit audit = Audit.builder()
+        Audit audit = Audit.builder()
                 .user(request.getUser())
                 .uri(request.getUri())
                 .build();
-        final Content content = Content.builder()
+        Content content = Content.builder()
                 .withContentType(MediaType.APPLICATION_JSON)
                 .withData(audit.toJson().getBytes())
                 .build();
