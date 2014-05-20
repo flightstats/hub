@@ -1,6 +1,7 @@
 package com.flightstats.hub.service;
 
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.encryption.AuditChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.exception.AlreadyExistsException;
 import com.flightstats.hub.model.exception.InvalidRequestException;
@@ -80,9 +81,13 @@ public class CreateChannelValidator {
         }
     }
 
-    private void ensureSize(String channelName) throws InvalidRequestException {
-        if (channelName.length() > 48) {
-            throw new InvalidRequestException("{\"error\": \"Channel name is too long " + channelName + "\"}");
+    private void ensureSize(String name) throws InvalidRequestException {
+        int maxLength = 48;
+        if (AuditChannelService.isAuditChannel(name)) {
+            maxLength += AuditChannelService.AUDIT.length();
+        }
+        if (name.length() > maxLength) {
+            throw new InvalidRequestException("{\"error\": \"Channel name is too long " + name + "\"}");
         }
     }
 
