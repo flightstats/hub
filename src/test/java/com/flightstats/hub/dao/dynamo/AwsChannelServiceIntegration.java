@@ -7,7 +7,6 @@ import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.dao.s3.S3ContentDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
-import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.CuratorKeyGenerator;
@@ -222,10 +221,9 @@ public class AwsChannelServiceIntegration {
         //guice private module hate filled
         AmazonS3 s3Client = injector.getInstance(AmazonS3.class);
         CuratorFramework curator = injector.getInstance(CuratorFramework.class);
-        MetricsTimer metricsTimer = injector.getInstance(MetricsTimer.class);
         RetryPolicy retryPolicy = injector.getInstance(RetryPolicy.class);
-        CuratorKeyGenerator keyGenerator = new CuratorKeyGenerator(curator, metricsTimer, retryPolicy);
-        S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", "deihub", 1, 1, false, curator, metricsTimer);
+        CuratorKeyGenerator keyGenerator = new CuratorKeyGenerator(curator, retryPolicy);
+        S3ContentDao indexDao = new S3ContentDao(keyGenerator, s3Client, "test", "deihub", 1, 1, false, curator);
         CuratorLock curatorLock = injector.getInstance(CuratorLock.class);
         TimeIndexProcessor processor = new TimeIndexProcessor(curatorLock, indexDao, curator);
 

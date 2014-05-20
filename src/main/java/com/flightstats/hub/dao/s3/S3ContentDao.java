@@ -6,14 +6,13 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
-import com.flightstats.hub.metrics.MetricsTimer;
-import com.flightstats.hub.metrics.TimedCallback;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -57,7 +56,6 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
     private final boolean useEncrypted;
     private final CuratorFramework curator;
     private final String s3BucketName;
-    private final MetricsTimer metricsTimer;
     private final ObjectMapper mapper = new ObjectMapper();
     private final Retryer<Content> contentRetryer;
 
@@ -67,12 +65,11 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
                         @Named("s3.content_backoff_wait") int content_backoff_wait,
                         @Named("s3.content_backoff_times") int content_backoff_times,
                         @Named("app.encrypted") boolean useEncrypted,
-                        CuratorFramework curator, MetricsTimer metricsTimer) {
+                        CuratorFramework curator) {
         this.keyGenerator = keyGenerator;
         this.s3Client = s3Client;
         this.useEncrypted = useEncrypted;
         this.curator = curator;
-        this.metricsTimer = metricsTimer;
         this.s3BucketName = appName + "-" + environment;
         /**
          * 1000 ms and 6 times should give behavior of calls after 2s, 4s, 8s, 16s and 32s
@@ -128,23 +125,18 @@ public class S3ContentDao implements ContentDao, TimeIndexDao {
         return new InsertedContentKey(key, dateTime.toDate());
     }
 
+    @Timed
     public void writeIndex(String channelName, DateTime dateTime, ContentKey key) {
         final String path = TimeIndex.getPath(channelName, dateTime, key);
-        metricsTimer.time("timeIndex.write", new TimedCallback<Object>() {
-            @Override
-            public Object call() {
-                try {
-                    curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
-                } catch (KeeperException.NodeExistsException ignore) {
-                    //this can happen with rolling restarts
-                    logger.info("node exits " + path);
-                } catch (Exception e) {
-                    logger.warn("unable to create " + path, e);
-                    throw new RuntimeException(e);
-                }
-                return null;
-            }
-        });
+        try {
+            curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
+        } catch (KeeperException.NodeExistsException ignore) {
+            //this can happen with rolling restarts
+            logger.info("node exists " + path);
+        } catch (Exception e) {
+            logger.warn("unable to create " + path, e);
+            throw new RuntimeException(e);
+        }
     }
 
     private void writeS3(String channelName, Content content, ContentKey key) {
