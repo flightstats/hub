@@ -113,7 +113,6 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
-        contentService.updateChannel(configuration);
         channelConfigurationDao.updateChannel(configuration);
         return configuration;
     }

@@ -10,8 +10,6 @@ public interface ContentService {
 
 	void createChannel(ChannelConfiguration configuration);
 
-	void updateChannel(ChannelConfiguration configuration);
-
 	InsertedContentKey insert(ChannelConfiguration configuration, Content content);
 
 	Optional<LinkedContent> getValue(String channelName, String id);
