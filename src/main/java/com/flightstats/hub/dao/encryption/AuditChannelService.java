@@ -27,7 +27,6 @@ public class AuditChannelService implements ChannelService {
     @Inject
     public AuditChannelService(@BasicChannelService ChannelService channelService,
                                @Named("audit.threads") int auditThreads, @Named("audit.queue") int auditQueue) {
-        logger.info("got class " + channelService.getClass());
         this.channelService = channelService;
         executorService = new ThreadPoolExecutor(1, auditThreads, 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(auditQueue));
