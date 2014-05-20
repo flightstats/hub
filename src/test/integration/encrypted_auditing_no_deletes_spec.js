@@ -18,7 +18,7 @@ describe(testName, function () {
         request.del({url: auditChannelResource },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(404);
+                expect(response.statusCode).toBe(403);
                 done();
             });
     });
