@@ -4,6 +4,8 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.app.config.metrics.PerChannelTimed;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.LinkedContent;
 import com.google.common.base.Optional;
@@ -47,38 +49,44 @@ public class ChannelContentResource {
 	@Timed(name = "all-channels.fetch")
 	@PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName")
     @ExceptionMetered
-	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id, @HeaderParam("Accept") String accept) {
-		Optional<LinkedContent> optionalResult = channelService.getValue(channelName, id);
+	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id,
+                             @HeaderParam("Accept") String accept, @HeaderParam("User") String user
+    ) {
+        Request request = Request.builder()
+                .channel(channelName)
+                .id(id)
+                .user(user)
+                .uri(uriInfo.getRequestUri().toString())
+                .build();
+        Optional<LinkedContent> optionalResult = channelService.getValue(request);
 
 		if (!optionalResult.isPresent()) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
-		LinkedContent compositeValue = optionalResult.get();
+		LinkedContent linkedContent = optionalResult.get();
 
-		MediaType actualContentType = getContentType(compositeValue);
+		MediaType actualContentType = getContentType(linkedContent);
 
 		if (contentTypeIsNotCompatible(accept, actualContentType)) {
 			return Responses.notAcceptable().build();
 		}
 
-		Response.ResponseBuilder builder = Response.status(Response.Status.OK)
+        Content content = linkedContent.getValue();
+        Response.ResponseBuilder builder = Response.status(Response.Status.OK)
 												   .type(actualContentType)
-												   .entity(compositeValue.getData())
+												   .entity(linkedContent.getData())
 												   .header(Headers.CREATION_DATE,
-														   dateTimeFormatter.print(new DateTime(compositeValue.getValue().getMillis())));
+                                                           dateTimeFormatter.print(new DateTime(content.getMillis())));
 
-		addOptionalHeader(Headers.LANGUAGE, compositeValue.getValue().getContentLanguage(), builder);
+        ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
+        ChannelLinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
 
-		addPreviousLink(compositeValue, builder);
-		addNextLink(compositeValue, builder);
+		addPreviousLink(linkedContent, builder);
+		addNextLink(linkedContent, builder);
 		return builder.build();
 	}
 
-	private void addOptionalHeader(String headerName, Optional<String> headerValue, Response.ResponseBuilder builder) {
-		if(headerValue.isPresent()){
-			builder.header(headerName, headerValue.get());
-		}
-	}
+
 
 	private MediaType getContentType(LinkedContent compositeValue) {
 		Optional<String> contentType = compositeValue.getContentType();

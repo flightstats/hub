@@ -14,7 +14,7 @@ public interface ChannelService {
 
 	InsertedContentKey insert(String channelName, Content content);
 
-	Optional<LinkedContent> getValue(String channelName, String id);
+    Optional<LinkedContent> getValue(Request request);
 
 	ChannelConfiguration getChannelConfiguration(String channelName);
 
