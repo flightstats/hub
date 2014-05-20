@@ -19,8 +19,8 @@ import static org.mockito.Mockito.*;
 /**
  *
  */
-public class S3ContentDaoTest {
-    private final static Logger logger = LoggerFactory.getLogger(S3ContentDaoTest.class);
+public class ContentDaoImplTest {
+    private final static Logger logger = LoggerFactory.getLogger(ContentDaoImplTest.class);
 
     @Test
     public void testRetryerNull() throws Exception {
