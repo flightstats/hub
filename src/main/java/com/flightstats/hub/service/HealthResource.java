@@ -54,7 +54,6 @@ public class HealthResource {
         if (version != null) {
             return version;
         }
-        //todo - gfm - 3/20/14 - pull out as env var
         try {
             File libDir = new File(libPath);
             File[] files = libDir.listFiles(new FilenameFilter() {

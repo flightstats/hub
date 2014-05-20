@@ -24,7 +24,6 @@ public class AwsExceptionMapper implements ExceptionMapper<AmazonClientException
             return Response.status(Response.Status.SERVICE_UNAVAILABLE)
                     .header("Retry-After", 60).build();
         }
-        //todo - gfm - 1/27/14 - is this really what we want to return?
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
 }

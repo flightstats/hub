@@ -56,7 +56,7 @@ public class ChannelContentResource {
                 .channel(channelName)
                 .id(id)
                 .user(user)
-                .uri(uriInfo.getRequestUri().toString())
+                .uri(uriInfo.getRequestUri())
                 .build();
         Optional<LinkedContent> optionalResult = channelService.getValue(request);
 

@@ -80,7 +80,7 @@ public class AuditChannelService implements ChannelService {
     private void audit(Request request) {
         Audit audit = Audit.builder()
                 .user(request.getUser())
-                .uri(request.getUri())
+                .uri(request.getUri().toString())
                 .build();
         Content content = Content.builder()
                 .withContentType(MediaType.APPLICATION_JSON)
@@ -151,7 +151,9 @@ public class AuditChannelService implements ChannelService {
 
     @Override
     public boolean delete(String channelName) {
-        //todo - gfm - 5/15/14 - prevent deletion of _audit ?
+        if (isAuditChannel(channelName)) {
+            throw new ForbiddenRequestException("Audit Channels can not be deleted.");
+        }
         return channelService.delete(channelName);
     }
 
