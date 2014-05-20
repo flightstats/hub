@@ -1,13 +1,11 @@
 package com.flightstats.hub.dao.s3;
 
-import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
-import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.flightstats.hub.test.Integration;
@@ -48,7 +46,7 @@ public class TimeIndexProcessorTest {
         Integration.startZooKeeper();
         RetryPolicy retryPolicy = GuiceContext.HubCommonModule.buildRetryPolicy();
         curator = GuiceContext.HubCommonModule.buildCurator("hub", "test", "localhost:2181", retryPolicy, new ZooKeeperState());
-        s3ContentDao = new S3ContentDao(null, null, "", "hub", 1, 1, false, curator, new MetricsTimer(new MetricRegistry()));
+        s3ContentDao = new S3ContentDao(null, null, "", "hub", 1, 1, false, curator);
     }
 
     @Before
