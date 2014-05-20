@@ -2,7 +2,6 @@
 backing.store={{ backing['store'] }}
 
 aws.protocol={{ aws['protocol'] }}
-aws.credentials=testing_only
 
 dynamo.endpoint={{ dynamo['endpoint'] }}
 dynamo.table_creation_wait_minutes={{ dynamo['table_creation_wait_minutes'] }}
@@ -15,6 +14,7 @@ app.lib_path=/home/hub/hub/lib/
 s3.content_backoff_wait= {{ s3['content_backoff_wait'] }}
 s3.content_backoff_times= {{ s3['content_backoff_times'] }}
 s3.environment={{ s3['environment'] }}
+s3.endpoint={{ s3['endpoint'] }}
 
 audit.threads={{ audit['threads'] }}
 audit.queue={{ audit['queue'] }}

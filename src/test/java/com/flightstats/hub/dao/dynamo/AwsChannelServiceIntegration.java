@@ -119,8 +119,6 @@ public class AwsChannelServiceIntegration {
         assertNull(curator.checkExists().forPath("/lastUpdated/" + channelName));
         assertNull(curator.checkExists().forPath("/TimeIndex/" + channelName));
         assertNull(curator.checkExists().forPath("/TimeIndexLock/" + channelName));
-        //todo - gfm - 4/7/14 - is this still relevant?
-        //assertNull(curator.checkExists().forPath("/ChannelReplicator/" + channelName));
     }
 
     private void createLocksPath(String root) throws Exception {

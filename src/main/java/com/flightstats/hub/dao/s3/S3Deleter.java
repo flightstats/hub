@@ -10,8 +10,6 @@ import java.util.List;
 
 /**
  * This is a first go, does not handle restarts
- * todo - gfm - 1/21/14 - handle restarts
- * todo - gfm - 1/21/14 - this does not seem to delete all of the data.
  */
 public class S3Deleter implements Runnable {
     private final static Logger logger = LoggerFactory.getLogger(S3Deleter.class);
