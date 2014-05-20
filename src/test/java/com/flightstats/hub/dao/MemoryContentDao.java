@@ -68,15 +68,6 @@ public class MemoryContentDao implements ContentDao, TimeIndexDao {
     }
 
     @Override
-    public void updateChannel(ChannelConfiguration configuration) { }
-
-
-    @Override
-    public void writeIndex(String channelName, DateTime dateTime, ContentKey key) {
-
-    }
-
-    @Override
     public void writeIndices(String channelName, String dateTime, List<String> keys) {
 
     }

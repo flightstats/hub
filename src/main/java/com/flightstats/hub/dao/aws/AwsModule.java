@@ -9,8 +9,9 @@ import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
 import com.flightstats.hub.dao.encryption.AuditChannelService;
 import com.flightstats.hub.dao.encryption.BasicChannelService;
+import com.flightstats.hub.dao.s3.ContentDaoImpl;
 import com.flightstats.hub.dao.s3.S3Config;
-import com.flightstats.hub.dao.s3.S3ContentDao;
+import com.flightstats.hub.dao.s3.S3IndexDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.hub.replication.*;
@@ -69,8 +70,8 @@ public class AwsModule extends AbstractModule {
                 .to(DynamoReplicationDao.class);
 
         bind(ContentService.class).to(ContentServiceImpl.class).in(Singleton.class);
-        bind(ContentDao.class).to(S3ContentDao.class).in(Singleton.class);
-        bind(TimeIndexDao.class).to(S3ContentDao.class).in(Singleton.class);
+        bind(ContentDao.class).to(ContentDaoImpl.class).in(Singleton.class);
+        bind(TimeIndexDao.class).to(S3IndexDao.class).in(Singleton.class);
         bind(KeyCoordination.class).to(SequenceKeyCoordination.class).in(Singleton.class);
         bind(ContentKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
 

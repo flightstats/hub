@@ -29,12 +29,6 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public void updateChannel(ChannelConfiguration configuration) {
-        logger.info("Updating channel " + configuration);
-        contentDao.updateChannel(configuration);
-    }
-
-    @Override
     public InsertedContentKey insert(ChannelConfiguration configuration, Content content) {
         String channelName = configuration.getName();
         logger.debug("inserting {} bytes into channel {} ", content.getData().length, channelName);
