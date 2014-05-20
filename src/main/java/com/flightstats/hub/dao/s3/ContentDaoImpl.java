@@ -55,10 +55,10 @@ public class ContentDaoImpl implements ContentDao {
 
     @Override
     public InsertedContentKey write(String channelName, Content content, long ttlDays) {
-        if (content.getContentKey().isPresent()) {
-            keyGenerator.setLatest(channelName, content.getContentKey().get());
-        } else {
+        if (content.isNewContent()) {
             content.setContentKey(keyGenerator.newKey(channelName));
+        } else {
+            keyGenerator.setLatest(channelName, content.getContentKey().get());
         }
         ContentKey key = content.getContentKey().get();
         DateTime dateTime = new DateTime(content.getMillis());
@@ -83,12 +83,12 @@ public class ContentDaoImpl implements ContentDao {
         try {
             return s3IndexDao.getKeys(channelName, hashTime);
         } catch (Exception e) {
-            logger.info("unable to find keys in S3 " + channelName + hashTime + e.getMessage());
+            logger.debug("unable to find keys in S3 " + channelName + hashTime + e.getMessage());
         }
         try {
             return zooKeeperIndexDao.getKeys(channelName, hashTime);
         } catch (Exception e) {
-            logger.info("unable to find keys in ZK " + channelName + hashTime + e.getMessage());
+            logger.debug("unable to find keys in ZK " + channelName + hashTime + e.getMessage());
         }
         return Collections.emptyList();
     }
