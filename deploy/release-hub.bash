@@ -9,8 +9,23 @@ VER_NUM=${VER_NUM1%.tgz}
 
 echo "Deploying to ${ENV} : ${VERSION}"
 case ${ENV} in 
-	dev) DOM=".cloud-east.dev" ;;
-	staging) DOM=".cloud-east.staging" ;;
+	dev)
+	    DOM=".cloud-east.dev"
+	    PREFIX="hub"
+	     ;;
+	encrypted-dev)
+	    DOM=".cloud-east.dev"
+	    PREFIX="encrypted-hub"
+	     ;;
+	staging)
+	    DOM=".cloud-east.staging"
+	    PREFIX="hub"
+	     ;;
+    encrypted-staging)
+	    DOM=".cloud-east.staging"
+	    PREFIX="encrypted-hub"
+	     ;;
+
 #	prod) DOM=".cloud-east.prod" ;;
 	*) 
 		echo "No env specified or bad env ${ENV}" ; exit ;;
@@ -22,7 +37,7 @@ function node_out {
 }
 
 for n in {1..3}; do
-	SERVER="hub-0${n}${DOM}"
+	SERVER="${PREFIX}-0${n}${DOM}"
 
 	# send salt-call (or ssh to salt master) to deploy
 	salt_output=$(ssh utility@saltmaster01.util.pdx.office "sudo salt '${SERVER}' triforce.deploy s3://triforce_builds/hub/${VERSION} ${ENV}")
