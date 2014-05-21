@@ -57,7 +57,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public InsertedContentKey insert(String channelName, Content content) {
         if (content.isNewContent()) {
-            replicationValidator.preventInsertIfReplicating(channelName);
+            replicationValidator.throwExceptionIfReplicating(channelName);
         }
         ChannelConfiguration configuration = channelConfigurationDao.getChannelConfiguration(channelName);
         return contentService.insert(configuration, content);
@@ -127,6 +127,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (!channelConfigurationDao.channelExists(channelName)) {
             return false;
         }
+        replicationValidator.throwExceptionIfReplicating(channelName);
         contentService.delete(channelName);
         channelConfigurationDao.delete(channelName);
         timeIndexProcessor.delete(channelName);
