@@ -293,21 +293,26 @@ class Hub(object):
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv, "s:", ["server="])
+        opts, args = getopt.getopt(argv, "s:c:", ["server=", "channel="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
     server = ''
+    channel = ''
     for opt, arg in opts:
         if opt == ('-?', '--help'):
             usage()
             sys.exit(2)
         elif opt in '-s' '--server':
             server = arg
+        elif opt in '-c' '--channel':
+            channel = arg
     if not server:
         usage()
         sys.exit(2)
     print("Ok, we'll talk to the Hub server at %s" % server)
+    if channel:
+        print("Joining channel %s" % channel)
     return Hub(server).run()
 
 
