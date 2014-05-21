@@ -16,7 +16,7 @@ conf/hub.properties :
     _template : hub.properties.jinja
 
     app :
-        name : "encyrpted-hub"
+        name : "encrypted-hub"
         environment : "dev"
         encrypted : true
 
