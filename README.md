@@ -2,6 +2,7 @@ The Hub
 =======
 
 * [overview](#overview)
+* [clients](#clients)
 * [error handling](#error-handling)
 * [list channels](#list-channels)
 * [create a channel](#create-a-channel)
@@ -34,13 +35,23 @@ For the purposes of this document, the Hub is at http://hub/.
 
 ## overview
 
-The Hub is designed to be a fault tolerant, highly available service for data distribution.
+The Hub is designed to be a fault tolerant, highly available service for data distribution.  Most features are available via a REST API.
 
 It currently only supports Sequence channels.
 
 Sequence channels represent a linked list of data.  Each item added gets a sequential id.  They are traversable, and can support items up to 10 MB.
 Sequence channels are intended for insertation rates less than five items per second.
 Users should note that with high frequency inserts, the clients view of insertion order may not be maintained.
+
+## clients
+
+Since the Hub provides an http interface, most tools which support http can access the Hub.
+Examples on this page are in curl, most GETs will work in a browser.
+
+In addition, some more sophisticated clients exist:
+* [Java](https://github.com/flightstats/datahub-client/)
+* [Javascript](https://github.com/flightstats/edge-lib/tree/master/datahub)
+* [Utilities](https://github.com/flightstats/hub-utilities)
 
 ## error handling
 
