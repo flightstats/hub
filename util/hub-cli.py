@@ -18,9 +18,9 @@ class Hub(object):
     def __init__(self, server, channel):
         self._server = server
         self._done = False
-        self._channel = channel
         self._prev = None
         self._next = None
+        self._join_channel(channel)
 
     def run(self):
         while not self._done:
@@ -63,10 +63,7 @@ class Hub(object):
         elif line.startswith("chan"):
             parts = re.split("\s+", line)
             if len(parts) > 1:
-                self._channel = parts[1]
-                self._prev = None
-                self._next = None
-            print("The current channel is '%s'" % self._channel)
+                self._join_channel(parts[1])
             return
         elif line.startswith("meta"):
             return self._show_metadata()
@@ -79,10 +76,14 @@ class Hub(object):
             return
         elif line.startswith("mkchan"):
             channel_name = re.sub(r'^mkchan\s*', '', line)
-            ttlMillis = None
-            if (re.match(".*\s+\w+$", channel_name)):
-                [channel_name, ttlMillis] = re.split("\s*", channel_name)
-            return self._create_channel(channel_name, ttlMillis)
+            if (self._channel_exists(channel_name)):
+                print("Channel '%s' already exists.  Enter 'channel %s' to switch to it." % (channel_name, channel_name))
+                return
+            else:
+                ttlMillis = None
+                if (re.match(".*\s+\w+$", channel_name)):
+                    [channel_name, ttlMillis] = re.split("\s*", channel_name)
+                return self._create_channel(channel_name, ttlMillis)
         elif line.startswith("latefile"):
             filename = re.sub(r'^latefile\s*', '', line)
             return self._get_latest(filename)
@@ -137,6 +138,19 @@ class Hub(object):
         self._update_links(response)
         print(response.status, response.reason)
         self._show_response_if_text(response)
+
+    def _channel_exists(self, channel_name):
+        response = self._http_get("/channel/%s" % channel_name)
+        return response.status == 200
+
+    def _join_channel(self, channel):
+        if self._channel_exists(channel):
+            self._channel = channel
+            self._prev = None
+            self._next = None
+            print("The current channel is '%s'" % channel)
+        else:
+            print("The channel '%s' doesn't exist.  Use mkchan to create." % channel)
 
     def _do_head(self, identifier):
         conn = httplib.HTTPConnection(self._server)
