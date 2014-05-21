@@ -15,10 +15,10 @@ def usage():
 
 
 class Hub(object):
-    def __init__(self, server):
+    def __init__(self, server, channel):
         self._server = server
         self._done = False
-        self._channel = None
+        self._channel = channel
         self._prev = None
         self._next = None
 
@@ -128,9 +128,13 @@ class Hub(object):
         conn.request("GET", uri, None, dict())
         return conn.getresponse()
 
+    def _update_links(self, response):
+        self._prev = self._extract_link(self._find_prev_link(response))
+        self._next = self._extract_link(self._find_next_link(response))
 
     def _do_get(self, identifier):
         response = self._http_get("/channel/%s/%s" % (self._channel, identifier))
+        self._update_links(response)
         print(response.status, response.reason)
         self._show_response_if_text(response)
 
@@ -138,6 +142,7 @@ class Hub(object):
         conn = httplib.HTTPConnection(self._server)
         conn.request("HEAD", "/channel/%s/%s" % (self._channel, identifier), None, dict())
         response = conn.getresponse()
+        self._update_links(response)
         print(response.status, response.reason)
         for header in response.getheaders():
             print "%s: %s" % (header[0], header[1])
@@ -150,6 +155,7 @@ class Hub(object):
 
     def _get_file(self, identifier, filename):
         response = self._http_get("/channel/%s/%s" % (self._channel, identifier))
+        self._update_links(response)
         self._save_response_to_file(response, filename)
 
     def _save_response_to_file(self, response, filename):
@@ -165,8 +171,7 @@ class Hub(object):
             return
         print("Fetching previous item: %s" % self._prev)
         response = self._http_get(self._prev)
-        self._prev = self._extract_link(self._find_prev_link(response))
-        self._next = self._extract_link(self._find_next_link(response))
+        self._update_links(response)
         print(response.status, response.reason)
         self._show_response_if_text(response)
 
@@ -181,14 +186,14 @@ class Hub(object):
             return
         print("Fetching next item: %s" % self._next)
         response = self._http_get(self._next)
-        self._prev = self._extract_link(self._find_prev_link(response))
-        self._next = self._extract_link(self._find_next_link(response))
+        self._update_links(response)
         print(response.status, response.reason)
         self._show_response_if_text(response)
 
     def _get_latest(self, filename=None):
         conn = httplib.HTTPConnection(self._server)
         response = self._http_get("/channel/%s/latest" % self._channel)
+        self._update_links(response)
         print(response.status, response.reason)
         if response.status == 404:
             print("Not found (channel is empty or nonexistent)")
@@ -298,7 +303,7 @@ def main(argv):
         usage()
         sys.exit(2)
     server = ''
-    channel = ''
+    channel = None
     for opt, arg in opts:
         if opt == ('-?', '--help'):
             usage()
@@ -313,7 +318,7 @@ def main(argv):
     print("Ok, we'll talk to the Hub server at %s" % server)
     if channel:
         print("Joining channel %s" % channel)
-    return Hub(server).run()
+    return Hub(server, channel).run()
 
 
 if __name__ == "__main__":
