@@ -150,10 +150,14 @@ public class AuditChannelService implements ChannelService {
 
     @Override
     public boolean delete(String channelName) {
-        if (isAuditChannel(channelName)) {
+        if (isAuditChannel(channelName) && isNotTestChannel(channelName)) {
             throw new ForbiddenRequestException("Audit Channels can not be deleted.");
         }
         return channelService.delete(channelName);
+    }
+
+    private boolean isNotTestChannel(String channelName) {
+        return !channelName.startsWith("test_");
     }
 
     public static boolean isAuditChannel(String name) {
