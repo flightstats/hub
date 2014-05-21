@@ -113,6 +113,7 @@ public class Content implements Serializable {
 
     }
 
+    // equals and hashCode are only used for testing.
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -120,8 +121,6 @@ public class Content implements Serializable {
 
         Content content = (Content) o;
 
-        if (millis != content.millis) return false;
-        if (!contentKey.equals(content.contentKey)) return false;
         if (!contentLanguage.equals(content.contentLanguage)) return false;
         if (!contentType.equals(content.contentType)) return false;
         if (!Arrays.equals(data, content.data)) return false;
@@ -134,10 +133,8 @@ public class Content implements Serializable {
     public int hashCode() {
         int result = contentType.hashCode();
         result = 31 * result + contentLanguage.hashCode();
-        result = 31 * result + (int) (millis ^ (millis >>> 32));
         result = 31 * result + (data != null ? Arrays.hashCode(data) : 0);
         result = 31 * result + user.hashCode();
-        result = 31 * result + contentKey.hashCode();
         return result;
     }
 }
