@@ -16,11 +16,11 @@ public class ReplicationValidator {
         this.replicationDao = replicationDao;
     }
 
-    public void preventInsertIfReplicating(String channelName) {
+    public void throwExceptionIfReplicating(String channelName) {
         Collection<ReplicationDomain> domains = replicationDao.getDomains(false);
         for (ReplicationDomain domain : domains) {
             if (domain.getExcludeExcept().contains(channelName)) {
-                throw new ForbiddenRequestException(channelName + " cannot have data inserted while it is replicating");
+                throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
             }
         }
     }
