@@ -1,9 +1,9 @@
 require('./integration_config.js');
 var request = require('request');
 
-if(typeof remoteDomain === 'undefined'){
-    xdescribe("remoteDomain is not defined, skipping replication_remote_spec", function() {
-        console.info("remoteDomain is not defined, skipping replication_remote_spec");
+if(typeof replicationDomain === 'undefined'){
+    xdescribe("replicationDomain is not defined, skipping replication_remote_spec", function() {
+        console.info("replicationDomain is not defined, skipping replication_remote_spec");
         xit("is just a function, so it can contain any code", function() { });
     });
     return;
@@ -15,7 +15,7 @@ if(typeof remoteDomain === 'undefined'){
 describe("replication_remote_spec", function () {
 
     var channelName = utils.randomChannelName();
-    var remoteChannelUrl = "http://" + remoteDomain + "/channel";
+    var remoteChannelUrl = "http://" + replicationDomain + "/channel";
     var localChannelUrl = hubUrlBase + "/channel";
     var localReplicationUrl = hubUrlBase + "/replication/";
     it("creates remote channel", function (done) {
@@ -35,7 +35,7 @@ describe("replication_remote_spec", function () {
     });
 
     it("creates local replication config", function (done) {
-        request.put({url: localReplicationUrl + remoteDomain,
+        request.put({url: localReplicationUrl + replicationDomain,
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({ historicalDays: 1, excludeExcept: [channelName] })},
             function (err, response, body) {
@@ -133,7 +133,7 @@ describe("replication_remote_spec", function () {
     });
 
     it("stops replication ", function (done) {
-        request.del({url: localReplicationUrl + remoteDomain },
+        request.del({url: localReplicationUrl + replicationDomain },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(202);
