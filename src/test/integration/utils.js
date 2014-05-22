@@ -72,6 +72,20 @@ function addItem(url, responseCode) {
     });
 }
 
+function sleep(millis) {
+    runs(function() {
+        flag = false;
+
+        setTimeout(function() {
+            flag = true;
+        }, millis);
+    });
+
+    waitsFor(function() {
+        return flag;
+    }, millis + 1000);
+}
+
 exports.runInTestChannel = runInTestChannel;
 exports.download = download;
 exports.randomChannelName = randomChannelName;
@@ -79,4 +93,5 @@ exports.configureFrisby = configureFrisby;
 exports.runInTestChannelJson = runInTestChannelJson;
 exports.createChannel = createChannel;
 exports.addItem = addItem;
+exports.sleep = sleep;
 
