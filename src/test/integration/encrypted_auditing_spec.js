@@ -40,7 +40,8 @@ describe(testName, function () {
     getItem(1001, 'nobody');
     getItem(1000, 'anybody');
 
-    //todo - gfm - 5/16/14 - this has a race condition since auditing is async
+    //this has a race condition since auditing is async
+    utils.sleep(1000);
 
     verifyAuditing(1000);
     verifyAuditing(1001);
@@ -64,6 +65,7 @@ describe(testName, function () {
                     expect(response.statusCode).toBe(200);
                     var parse = JSON.parse(body);
                     foundAudits.push(parse.uri + parse.user);
+                    expect(parse.date).toBeDefined();
                     done();
                 });
         });
