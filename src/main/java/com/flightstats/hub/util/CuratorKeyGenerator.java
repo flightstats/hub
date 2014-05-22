@@ -1,7 +1,6 @@
 package com.flightstats.hub.util;
 
-import com.flightstats.hub.metrics.MetricsTimer;
-import com.flightstats.hub.metrics.TimedCallback;
+import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.base.Optional;
@@ -22,25 +21,19 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
     private final static Logger logger = LoggerFactory.getLogger(CuratorKeyGenerator.class);
 
     private final CuratorFramework curator;
-    private final MetricsTimer metricsTimer;
     private final RetryPolicy retryPolicy;
     private ConcurrentMap<String, DistributedAtomicLong> channelToLongMap = new ConcurrentHashMap<>();
 
     @Inject
-    public CuratorKeyGenerator(CuratorFramework curator, MetricsTimer metricsTimer, RetryPolicy retryPolicy) {
+    public CuratorKeyGenerator(CuratorFramework curator, RetryPolicy retryPolicy) {
         this.curator = curator;
-        this.metricsTimer = metricsTimer;
         this.retryPolicy = retryPolicy;
     }
 
     @Override
+    @Timed(name = "keyGen.newKey")
     public SequenceContentKey newKey(final String channelName) {
-        return metricsTimer.time("keyGen.newKey", new TimedCallback<SequenceContentKey>() {
-            @Override
-            public SequenceContentKey call() {
-                return getContentKey(channelName);
-            }
-        });
+        return getContentKey(channelName);
     }
 
     private SequenceContentKey getContentKey(String channelName) {
@@ -82,6 +75,17 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
             logger.warn("unable to delete " + channelName, e);
         }
 
+    }
+
+    @Override
+    public void setLatest(String channelName, ContentKey contentKey) {
+        DistributedAtomicLong atomicLong = getDistributedAtomicLong(channelName);
+        SequenceContentKey sequenceContentKey = (SequenceContentKey) contentKey;
+        try {
+            atomicLong.forceSet(sequenceContentKey.getSequence());
+        } catch (Exception e) {
+            logger.warn("unable to set content key sequence", e);
+        }
     }
 
     private DistributedAtomicLong getDistributedAtomicLong(String channelName) {

@@ -1,7 +1,5 @@
 package com.flightstats.hub.websocket;
 
-import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ChannelConfiguration;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import org.junit.Before;
@@ -17,8 +15,6 @@ public class WebsocketSubscribersTest {
     private final String channelName = "4chan";
     private Consumer<String> consumer;
     private WebsocketPublisher publisher;
-    private ChannelService channelService;
-    private ChannelConfiguration configuration;
     private WebsocketSubscribers websocketSubscribers;
     private ArgumentCaptor<MessageListener> messageListenerCaptor;
 
@@ -27,10 +23,7 @@ public class WebsocketSubscribersTest {
 
         consumer = mock(Consumer.class);
         publisher = mock(WebsocketPublisherImpl.class);
-        channelService = mock(ChannelService.class);
-        configuration = ChannelConfiguration.builder().withName(channelName).build();
-        when(channelService.getChannelConfiguration(channelName)).thenReturn(configuration);
-        websocketSubscribers = new WebsocketSubscribers(publisher, channelService);
+        websocketSubscribers = new WebsocketSubscribers(publisher);
         messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
     }
 

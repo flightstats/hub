@@ -17,7 +17,6 @@ public class HubServices {
 
 
     public static void register(Service service) {
-        //todo - gfm - 2/10/14 - should this limit duplicate scheduling?
         logger.info("registering " + service.getClass().getName());
         services.add(service);
     }

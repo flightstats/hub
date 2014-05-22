@@ -9,7 +9,6 @@ import com.flightstats.hub.dao.ChannelConfigurationDao;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,12 +29,12 @@ public class S3Config {
     private final String s3BucketName;
 
     @Inject
-    public S3Config(AmazonS3 s3Client, @Named("s3.environment") String environment, @Named("app.name") String appName,
+    public S3Config(AmazonS3 s3Client, S3BucketName s3BucketName,
                     CuratorLock curatorLock, ChannelConfigurationDao channelConfigurationDao) {
         this.s3Client = s3Client;
         this.curatorLock = curatorLock;
         this.channelConfigurationDao = channelConfigurationDao;
-        this.s3BucketName = appName + "-" + environment;
+        this.s3BucketName = s3BucketName.getS3BucketName();
         HubServices.register(new S3ConfigInit());
     }
 

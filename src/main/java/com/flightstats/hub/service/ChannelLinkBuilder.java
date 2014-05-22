@@ -2,11 +2,18 @@ package com.flightstats.hub.service;
 
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -23,6 +30,10 @@ public class ChannelLinkBuilder {
 	URI buildChannelUri(String channelName, UriInfo uriInfo) {
 		return URI.create(uriInfo.getBaseUri() + "channel/" + channelName);
 	}
+
+    URI buildTagUri(String tag, UriInfo uriInfo) {
+        return URI.create(uriInfo.getBaseUri() + "tag/" + tag);
+    }
 
     public URI buildItemUri(ContentKey key, URI channelUri) {
         return buildItemUri(key.keyToString(), channelUri);
@@ -47,4 +58,29 @@ public class ChannelLinkBuilder {
         linked.withLink("time", URI.create(channelUri + "/time"));
         return linked.build();
 	}
+
+    public Linked<?> build(Iterable<ChannelConfiguration> channels, UriInfo uriInfo) {
+        Map<String, URI> mappedChannels = new HashMap<>();
+        for (ChannelConfiguration channelConfiguration : channels) {
+            String channelName = channelConfiguration.getName();
+            mappedChannels.put(channelName, buildChannelUri(channelName, uriInfo));
+        }
+
+        Linked.Builder responseBuilder = Linked.justLinks();
+        responseBuilder.withLink("self", uriInfo.getRequestUri());
+
+        List<HalLink> channelLinks = new ArrayList<>(mappedChannels.size());
+        for (Map.Entry<String, URI> entry : mappedChannels.entrySet()) {
+            HalLink link = new HalLink(entry.getKey(), entry.getValue());
+            channelLinks.add(link);
+        }
+        responseBuilder.withLinks("channels", channelLinks);
+        return responseBuilder.build();
+    }
+
+    public static void addOptionalHeader(String headerName, Optional<String> headerValue, Response.ResponseBuilder builder) {
+        if(headerValue.isPresent()){
+            builder.header(headerName, headerValue.get());
+        }
+    }
 }

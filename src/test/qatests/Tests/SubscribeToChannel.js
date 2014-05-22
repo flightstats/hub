@@ -819,6 +819,8 @@ describe('Channel Subscription:', function() {
         }
 
         // Called from afterOnMessage() if all sockets have received messages
+        //todo - gfm - 5/7/14 - something in here (not sure exactly what) fails occasionally
+        //more debugging would be helpful, could be an eventual consistency issue with /latest
         var testAllSockets = function() {
             dhh.getLatestUri(channelUri, function(latestUri) {
                 var firstUri = (latestUri == uri1) ? uri2 : uri1;

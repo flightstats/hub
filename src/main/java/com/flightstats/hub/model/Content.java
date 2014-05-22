@@ -12,14 +12,18 @@ public class Content implements Serializable {
     private final Optional<String> contentLanguage;
     private final long millis;
     private final byte[] data;
+    private final Optional<String> user;
     private Optional<ContentKey> contentKey = Optional.absent();
+    private final boolean isNew;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
+        isNew = !getContentKey().isPresent();
         contentLanguage = builder.contentLanguage;
         contentType = builder.contentType;
         millis = builder.millis;
         data = builder.data;
+        user = builder.user;
     }
 
     public Optional<String> getContentType() {
@@ -50,6 +54,17 @@ public class Content implements Serializable {
         this.contentKey = Optional.of(contentKey);
     }
 
+    public Optional<String> getUser() {
+        return user;
+    }
+
+    /**
+     * @return true if this Content is new, false if it has been inserted elsewhere and is a replica.
+     */
+    public boolean isNewContent() {
+        return isNew;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -60,6 +75,7 @@ public class Content implements Serializable {
         private long millis = System.currentTimeMillis();
         private Optional<ContentKey> contentKey = Optional.absent();
         private byte[] data;
+        private Optional<String> user = Optional.absent();
 
         public Builder withData(byte[] data) {
             this.data = data;
@@ -86,41 +102,39 @@ public class Content implements Serializable {
             return this;
         }
 
+        public Builder withUser(String user) {
+            this.user = Optional.fromNullable(user);
+            return this;
+        }
+
         public Content build() {
             return new Content(this);
         }
 
     }
 
+    // equals and hashCode are only used for testing.
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-        Content that = (Content) o;
+        Content content = (Content) o;
 
-        if (!contentLanguage.equals(that.contentLanguage)) {
-            return false;
-        }
-        if (!contentType.equals(that.contentType)) {
-            return false;
-        }
-        if (!Arrays.equals(data, that.data)) {
-            return false;
-        }
+        if (!contentLanguage.equals(content.contentLanguage)) return false;
+        if (!contentType.equals(content.contentType)) return false;
+        if (!Arrays.equals(data, content.data)) return false;
+        if (!user.equals(content.user)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = contentType != null ? contentType.hashCode() : 0;
-        result = 31 * result + (contentLanguage != null ? contentLanguage.hashCode() : 0);
+        int result = contentType.hashCode();
+        result = 31 * result + contentLanguage.hashCode();
         result = 31 * result + (data != null ? Arrays.hashCode(data) : 0);
+        result = 31 * result + user.hashCode();
         return result;
     }
 }

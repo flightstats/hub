@@ -6,7 +6,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.exception.AlreadyExistsException;
 import com.flightstats.hub.model.exception.InvalidRequestException;
-import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +16,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * This resource represents the collection of all channels in the Hub.
@@ -47,22 +42,7 @@ public class ChannelResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getChannels() {
 		Iterable<ChannelConfiguration> channels = channelService.getChannels();
-		Map<String, URI> mappedChannels = new HashMap<>();
-		for (ChannelConfiguration channelConfiguration : channels) {
-			String channelName = channelConfiguration.getName();
-			mappedChannels.put(channelName, linkBuilder.buildChannelUri(channelName, uriInfo));
-		}
-
-		Linked.Builder<?> responseBuilder = Linked.justLinks();
-		responseBuilder.withLink("self", uriInfo.getRequestUri());
-
-		List<HalLink> channelLinks = new ArrayList<>(mappedChannels.size());
-		for (Map.Entry<String, URI> entry : mappedChannels.entrySet()) {
-			HalLink link = new HalLink(entry.getKey(), entry.getValue());
-			channelLinks.add(link);
-		}
-		responseBuilder.withLinks("channels", channelLinks);
-		Linked<?> result = responseBuilder.build();
+		Linked<?> result = linkBuilder.build(channels, uriInfo);
 		return Response.ok(result).build();
 	}
 
@@ -71,7 +51,8 @@ public class ChannelResource {
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createChannel(ChannelConfiguration channelConfiguration) throws InvalidRequestException, AlreadyExistsException {
+	public Response createChannel(String json) throws InvalidRequestException, AlreadyExistsException {
+        ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json);
         channelConfiguration = channelService.createChannel(channelConfiguration);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
 		return Response.created(channelUri).entity(

@@ -105,17 +105,17 @@ public class ReplicationServiceImpl implements ReplicationService {
                 statuses.add(status);
                 Channel channel = channelReplicator.getChannel();
                 status.setChannel(channel);
-                if (channelReplicator.isValid()) {
+                Optional<Long> sourceLatest = channelUtils.getLatestSequence(channel.getUrl());
+                if (channelReplicator.isValid() && sourceLatest.isPresent()) {
                     status.setConnected( channelReplicator.isConnected());
                     Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
                     if (lastUpdatedKey.isPresent()) {
                         SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
                         status.setReplicationLatest(contentKey.getSequence());
                     }
-                    Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getUrl());
-                    if (latestSequence.isPresent()) {
-                        status.setSourceLatest(latestSequence.get());
-                    }
+                    status.setSourceLatest(sourceLatest.get());
+                } else if (!sourceLatest.isPresent()) {
+                    status.setMessage("source channel not present");
                 } else {
                     status.setMessage(channelReplicator.getMessage());
                 }

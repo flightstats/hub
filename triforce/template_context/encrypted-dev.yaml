@@ -1,0 +1,71 @@
+## This file holds the context data for the DEV environment to fill template files.
+## The syntax is:
+##
+## relative/path/to/file :
+##     _template: tplFile.jinja
+##     parameter_name : parameter_value
+##     parameter2 :
+##         - item1
+##         - item2
+##
+## The file should be in yaml syntax, with one top-level array for each template file.
+## There should be a corresponding template file in triforce/tpl/ written in the Jinja templating language
+## for each top-level item.
+##
+conf/hub.properties :
+    _template : hub.properties.jinja
+
+    app :
+        name : "encrypted-hub"
+        environment : "dev"
+        encrypted : true
+
+    backing :
+        store : "aws"
+
+    aws :
+        protocol : "HTTPS"
+
+    dynamo :
+        endpoint : "dynamodb.us-east-1.amazonaws.com"
+        table_creation_wait_minutes : 10
+
+    s3 :
+      content_backoff_wait : 1000
+      content_backoff_times : 6
+      environment : "dev-east1.flightstats.com"
+      endpoint : "s3-external-1.amazonaws.com"
+
+    audit :
+      threads: 10
+      queue: 1000
+
+    graphite :
+        enable: false
+        hosts : "svcsmon.cloud-east.dev:2003"
+
+    zookeeper :
+        connection : "hub-zk-01.cloud-east.dev:2181,hub-zk-02.cloud-east.dev:2181,hub-zk-03.cloud-east.dev:2181"
+
+
+conf/hazelcast.conf.xml :
+    _template : hazelcast.conf.xml.jinja
+    cluster_hosts :
+        - "encrypted-hub-01.cloud-east.dev"
+        - "encrypted-hub-02.cloud-east.dev"
+        - "encrypted-hub-03.cloud-east.dev"
+
+bin/start.sh :
+  _template : start.sh.jinja
+  max_heap : "800m"
+  min_heap : "256m"
+  min_new : "100m"
+  environment : "encrypted-dev"
+
+conf/logback.xml :
+    _template : logback.xml.jinja
+
+lib/newrelic.yml :
+  _template : newrelic.yml.jinja
+
+

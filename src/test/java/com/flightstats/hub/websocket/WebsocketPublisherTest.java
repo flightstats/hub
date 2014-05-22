@@ -1,25 +1,15 @@
 package com.flightstats.hub.websocket;
 
-import com.codahale.metrics.MetricRegistry;
-import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.mockito.Mockito.*;
 
 public class WebsocketPublisherTest {
-
-    private MetricsTimer metricsTimer;
-
-    @Before
-    public void setUp() throws Exception {
-        metricsTimer = new MetricsTimer(new MetricRegistry());
-    }
 
     @Test
 	public void testPublish() throws Exception {
@@ -30,7 +20,7 @@ public class WebsocketPublisherTest {
 
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		WebsocketPublisher testClass = new WebsocketPublisherImpl(hazelcastInstance, metricsTimer);
+		WebsocketPublisher testClass = new WebsocketPublisherImpl(hazelcastInstance);
 
 		testClass.publish("channelName", contentKey);
 
@@ -45,7 +35,7 @@ public class WebsocketPublisherTest {
 
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		WebsocketPublisher testClass = new WebsocketPublisherImpl(hazelcastInstance, metricsTimer);
+		WebsocketPublisher testClass = new WebsocketPublisherImpl(hazelcastInstance);
 
 		testClass.subscribe("channelName", messageListener);
 		verify(iTopic).addMessageListener(messageListener);
@@ -58,7 +48,7 @@ public class WebsocketPublisherTest {
 
 		when(hazelcastInstance.getTopic("ws:channelName")).thenReturn(iTopic);
 
-		WebsocketPublisher testClass = new WebsocketPublisherImpl(hazelcastInstance, metricsTimer);
+		WebsocketPublisher testClass = new WebsocketPublisherImpl(hazelcastInstance);
 
 		testClass.unsubscribe("channelName", "todo");
 		verify(iTopic).removeMessageListener("todo");
