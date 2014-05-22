@@ -204,7 +204,18 @@ describe('Replication', function() {
 
     })
 
+    describe('PUT config', function() {
 
+        // Error cases: Target wrong, source wrong = 404
+        // Missing excludeExcept = 400
+        // non-numeric value for historicalDays = 400
+        // Fake params?
+        // Source = target yields 400
+        // Channel exists
+        // Channel doesn't exist (allowed)
+        // Multiple channels
+        // Change channels
+    })
 
 
 });
