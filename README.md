@@ -21,6 +21,7 @@ The Hub
 * [stop replication](#stop-replication)
 * [health check](#health-check)
 * [access control](#access-control)
+* [encrypted-hub](#encrypted-hub)
 * [api updates](#api-updates)
 * [monitoring](#monitoring)
 * [development](#development)
@@ -42,6 +43,9 @@ It currently only supports Sequence channels.
 Sequence channels represent a linked list of data.  Each item added gets a sequential id.  They are traversable, and can support items up to 10 MB.
 Sequence channels are intended for insertation rates less than five items per second.
 Users should note that with high frequency inserts, the clients view of insertion order may not be maintained.
+
+The [encrypted-hub](#encrypted-hub) (EH) is a separate installation of the Hub.
+The features and API of the EH are mostly the same as the Hub, with a few additions.
 
 ## clients
 
@@ -558,6 +562,39 @@ On shutdown, the server immediately stops responding to new http connections, so
 Currently, all access to the Hub is uncontrolled, and does not require authentication.
 Over time, access control will be added to some of the API, starting with Channel Deletion and Replication Management.
 To request a change to a controlled API, or to request access, please use the [hub-discuss forum](https://groups.google.com/a/conducivetech.com/forum/#!forum/hub-discuss)
+
+## encrypted-hub
+
+The Encrypted Hub (EH) is a separate installation of the Hub.
+The features and API of the EH are nearly identical, with a few additions.
+EH also has some additional features to the normal Hub:
+
+* All channel items are encrypted at rest
+* All channel items are encrypted in flight (soon!)
+* All access to channel items (reads and writes) require authentication and are access controlled (soon!)
+* All access to channel items is audited
+
+Channel inserts can be audited by a GET or HEAD to each channel item.  The creator of the record is returned in a `User` header.
+
+All Channel reads are logged to a new channel <channel>_audit.   The auditing channel is automatically created for each channel in the EH.
+Since it is a channel, you can perform the standard operations on it, however clients are not allowed to create or delete auditing channels.
+All audit channels have an `audit` tag, which can not be modified by clients.
+
+`GET http://hub/channel/stumptown_encrypted_audit/1007`
+
+```json
+{
+  "user": "somebody",
+  "uri": "http://hub/channel/stumptown_encrypted/1005",
+  "date": "2014-05-22T20:56:08.739Z"
+}
+```
+
+The EH is available at:
+
+* In development: http://encrypted-hub.svc.dev/
+* In staging: http://encrypted-hub.svc.staging/ (soon!)
+* In production: http://encrypted-hub.svc.prod/ (soon!)
 
 ## api updates
 

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -80,6 +81,7 @@ public class AuditChannelService implements ChannelService {
         Audit audit = Audit.builder()
                 .user(request.getUser())
                 .uri(request.getUri().toString())
+                .date(new Date())
                 .build();
         Content content = Content.builder()
                 .withContentType(MediaType.APPLICATION_JSON)
