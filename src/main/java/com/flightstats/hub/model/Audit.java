@@ -15,7 +15,7 @@ public class Audit {
 
     private final String user;
     private final String uri;
-    private Date date = new Date();
+    private final Date date;
 
     private static final Gson gson = new GsonBuilder()
             .registerTypeAdapter(Date.class, new HubDateTypeAdapter())
