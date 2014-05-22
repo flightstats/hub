@@ -80,7 +80,7 @@ public class SingleChannelResourceTest {
         when(channelService.insert(channelName, content)).thenReturn(new InsertedContentKey(contentKey, null));
 
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
-		Response response = testClass.insertValue(channelName, contentType, contentLanguage, data);
+		Response response = testClass.insertValue(channelName, contentType, contentLanguage, null, data);
 
 		assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
 
@@ -102,7 +102,7 @@ public class SingleChannelResourceTest {
         Content content = Content.builder().withData(data).withContentLanguage(contentLanguage).withContentType(contentType).build();
         when(channelService.insert(channelName,  content)).thenReturn(result);
 
-        testClass.insertValue(channelName, contentType, contentLanguage, data);
+        testClass.insertValue(channelName, contentType, contentLanguage, null, data);
 
         verify(channelService).channelExists(channelName);
     }
@@ -117,7 +117,7 @@ public class SingleChannelResourceTest {
         Content content = Content.builder().withData(data).withContentLanguage(contentLanguage).withContentType(contentType).build();
         when(channelService.insert(channelName,  content)).thenReturn(result);
 
-        testClass.insertValue(channelName, contentType, contentLanguage, data);
+        testClass.insertValue(channelName, contentType, contentLanguage, null, data);
     }
 
 
@@ -127,7 +127,7 @@ public class SingleChannelResourceTest {
         new Random().nextBytes(data);
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, 1024, uriInfo);
 
-        Response result = testClass.insertValue(channelName, contentType, contentLanguage, data);
+        Response result = testClass.insertValue(channelName, contentType, contentLanguage, null, data);
 
         assertEquals(413, result.getStatus());
         assertEquals("Max payload size is 1024 bytes.", result.getEntity().toString());

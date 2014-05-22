@@ -31,6 +31,9 @@ utils.runInTestChannel(channelName, function () {
                 .expectStatus(200)
                 .expectHeader('content-type', 'text/plain')
                 .expectBodyContains(messageText)
+                .after(function (err, res, body) {
+                    expect(res.headers['user']).toBeUndefined();
+                })
                 .toss();
         })
         .toss();

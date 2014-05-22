@@ -21,17 +21,20 @@ public class AwsConnectorFactory {
 
     private final static Logger logger = LoggerFactory.getLogger(AwsConnectorFactory.class);
 
-    private final String endpoint;
+    private final String dynamoEndpoint;
+    private final String s3Endpoint;
     private final String protocol;
-    private final String credentials;
+    private final boolean useEncrypted;
 
     @Inject
-	public AwsConnectorFactory(@Named("dynamo.endpoint") String endpoint,
+	public AwsConnectorFactory(@Named("dynamo.endpoint") String dynamoEndpoint,
+                               @Named("s3.endpoint") String s3Endpoint,
                                @Named("aws.protocol") String protocol,
-                               @Named("aws.credentials") String credentials){
-        this.endpoint = endpoint;
+                               @Named("app.encrypted") boolean useEncrypted){
+        this.dynamoEndpoint = dynamoEndpoint;
+        this.s3Endpoint = s3Endpoint;
         this.protocol = protocol;
-        this.credentials = credentials;
+        this.useEncrypted = useEncrypted;
     }
 
     public AmazonS3 getS3Client() throws IOException {
@@ -44,13 +47,12 @@ public class AwsConnectorFactory {
             logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
             amazonS3Client = new AmazonS3Client(getPropertiesCredentials(), getClientConfiguration());
         }
-        //todo - gfm - 2/27/14 - pull this into config
-        amazonS3Client.setEndpoint("s3-external-1.amazonaws.com");
+        amazonS3Client.setEndpoint(s3Endpoint);
         return amazonS3Client;
     }
 
     public AmazonDynamoDBClient getDynamoClient() throws IOException {
-        logger.info("creating for  " + protocol + " " + endpoint);
+        logger.info("creating for  " + protocol + " " + dynamoEndpoint);
         AmazonDynamoDBClient client = null;
         try {
             InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
@@ -62,22 +64,26 @@ public class AwsConnectorFactory {
         }
         ClientConfiguration configuration = getClientConfiguration();
         client.setConfiguration(configuration);
-        client.setEndpoint(endpoint);
+        client.setEndpoint(dynamoEndpoint);
         return client;
 
     }
 
     private PropertiesCredentials getPropertiesCredentials()  {
+        if (useEncrypted) {
+            return loadTestCredentials("/encrypted_test_credentials.properties");
+        }
+        return loadTestCredentials("/test_credentials.properties");
+    }
+
+    private PropertiesCredentials loadTestCredentials(String fileName) {
+        logger.info("loading test credentials " + fileName);
         try {
-            return new PropertiesCredentials(new File(credentials));
-        } catch (IOException e) {
-            try {
-                return new PropertiesCredentials(new File(
-                        AwsConnectorFactory.class.getResource("/test_credentials.properties").getFile()));
-            } catch (Exception e1) {
-                logger.warn("unable to load test_credentials", e1);
-                throw new RuntimeException(e1);
-            }
+            return new PropertiesCredentials(new File(
+                    AwsConnectorFactory.class.getResource(fileName).getFile()));
+        } catch (Exception e1) {
+            logger.warn("unable to load test_credentials", e1);
+            throw new RuntimeException(e1);
         }
     }
 

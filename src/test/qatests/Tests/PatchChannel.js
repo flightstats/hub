@@ -72,7 +72,7 @@ describe('Update description', function() {
         })
     })
 
-    it.skip('BUGGED - Channel with description updated to empty desc', function(done) {
+    it('Channel with description updated to empty desc', function(done) {
         patchAndGetChannel({'channelUri': descChannelURI, 'description':''}, function(body) {
             expect(body.description).to.equal('');
 

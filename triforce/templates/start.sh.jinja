@@ -4,8 +4,8 @@
 #exec 2> temp.stderr
 
 # Redirect output to a debug file for now
-exec > ${APP_STATE}/upstart-debug-${ID}.stdout
-exec 2> ${APP_STATE}/upstart-debug-${ID}.stderr
+#exec > ${APP_STATE}/upstart-debug-${ID}.stdout
+#exec 2> ${APP_STATE}/upstart-debug-${ID}.stderr
 
 # Hack
 if [ -z "${JAVA_HOME}" ] ; then
@@ -25,6 +25,10 @@ fi
 APP_HOME=${HOME}/${APP_NAME}/
 APP_LOGS=${HOME}/${APP_NAME}/log/
 APP_STATE=${HOME}/${APP_NAME}/run/
+
+# Start logging after the variables are all set
+# Merge stdout and stderr
+exec >> ${APP_LOGS}/${APP_NAME}.log 2>&1
 
 # Should be running as the app-name user
 if [ "$(whoami)" != "${APP_NAME}" ] ; then

@@ -14,11 +14,15 @@ public interface ChannelService {
 
 	InsertedContentKey insert(String channelName, Content content);
 
-	Optional<LinkedContent> getValue(String channelName, String id);
+    Optional<LinkedContent> getValue(Request request);
 
 	ChannelConfiguration getChannelConfiguration(String channelName);
 
 	Iterable<ChannelConfiguration> getChannels();
+
+    Iterable<ChannelConfiguration> getChannels(String tag);
+
+    Iterable<String> getTags();
 
 	Optional<ContentKey> findLastUpdatedKey(String channelName);
 

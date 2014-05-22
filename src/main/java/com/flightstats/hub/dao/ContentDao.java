@@ -25,5 +25,4 @@ public interface ContentDao {
 
     void delete(String channelName);
 
-    void updateChannel(ChannelConfiguration configuration);
 }

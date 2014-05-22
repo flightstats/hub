@@ -17,8 +17,6 @@ import com.flightstats.jerseyguice.jetty.health.HealthCheck;
 import com.flightstats.jerseyguice.metrics.GraphiteConfig;
 import com.flightstats.jerseyguice.metrics.GraphiteConfigImpl;
 import com.google.common.base.Strings;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.inject.*;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -158,11 +156,8 @@ public class GuiceContext {
         @Named("ChannelConfigurationMap")
         @Singleton
         @Provides
-        public static ConcurrentMap<String, ChannelConfiguration> buildChannelConfigurationMap() throws FileNotFoundException {
-            Cache<String, ChannelConfiguration> cache = CacheBuilder.newBuilder()
-                    .expireAfterWrite(5L, TimeUnit.MINUTES)
-                    .build();
-            return cache.asMap();
+        public static ConcurrentMap<String, ChannelConfiguration> buildChannelConfigurationMap(HazelcastInstance hazelcast) throws FileNotFoundException {
+            return hazelcast.getMap("ChannelConfigurationMap");
         }
 
         @Override
