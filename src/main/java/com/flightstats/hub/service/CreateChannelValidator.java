@@ -1,6 +1,7 @@
 package com.flightstats.hub.service;
 
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.encryption.AuditChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.exception.AlreadyExistsException;
 import com.flightstats.hub.model.exception.InvalidRequestException;
@@ -32,6 +33,21 @@ public class CreateChannelValidator {
         validateContentSize(request);
         validateTTL(request);
         validateDescription(request);
+        validateTags(request);
+    }
+
+    private void validateTags(ChannelConfiguration request) {
+        if (request.getTags().size() > 20) {
+            throw new InvalidRequestException("{\"error\": \"Channels are limited to 20 tags\"}");
+        }
+        for (String tag : request.getTags()) {
+            if (!tag.matches("^[a-zA-Z0-9]+$")) {
+                throw new InvalidRequestException("{\"error\": \"Tags must only contain characters a-z, A-Z, and 0-9\"}");
+            }
+            if (tag.length() > 48) {
+                throw new InvalidRequestException("{\"error\": \"Tags must be less than 48 bytes. \"}");
+            }
+        }
     }
 
     private void validateDescription(ChannelConfiguration request) {
@@ -65,9 +81,13 @@ public class CreateChannelValidator {
         }
     }
 
-    private void ensureSize(String channelName) throws InvalidRequestException {
-        if (channelName.length() > 48) {
-            throw new InvalidRequestException("{\"error\": \"Channel name is too long " + channelName + "\"}");
+    private void ensureSize(String name) throws InvalidRequestException {
+        int maxLength = 48;
+        if (AuditChannelService.isAuditChannel(name)) {
+            maxLength += AuditChannelService.AUDIT.length();
+        }
+        if (name.length() > maxLength) {
+            throw new InvalidRequestException("{\"error\": \"Channel name is too long " + name + "\"}");
         }
     }
 

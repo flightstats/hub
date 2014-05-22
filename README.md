@@ -2,6 +2,7 @@ The Hub
 =======
 
 * [overview](#overview)
+* [clients](#clients)
 * [error handling](#error-handling)
 * [list channels](#list-channels)
 * [create a channel](#create-a-channel)
@@ -10,6 +11,7 @@ The Hub
 * [insert content into channel](#insert-content-into-channel)
 * [fetch content from channel](#fetch-content-from-channel)
 * [fetch latest channel item](#fetch-latest-channel-item)
+* [tag interface](#tag-interface)
 * [time interface](#time-interface)
 * [subscribe to events](#subscribe-to-events)
 * [provider interface](#provider-interface)
@@ -33,19 +35,23 @@ For the purposes of this document, the Hub is at http://hub/.
 
 ## overview
 
-The Hub is designed to be a fault tolerant, highly available service for data distribution.
+The Hub is designed to be a fault tolerant, highly available service for data distribution.  Most features are available via a REST API.
 
-It currently supports two types of Channels, Sequence and TimeSeries.
+It currently only supports Sequence channels.
 
 Sequence channels represent a linked list of data.  Each item added gets a sequential id.  They are traversable, and can support items up to 10 MB.
 Sequence channels are intended for insertation rates less than five items per second.
 Users should note that with high frequency inserts, the clients view of insertion order may not be maintained.
 
-**Support for TimeSeries channels is currently in Alpha.  If you'd like to use one, please come talk to us.**
-TimeSeries channels are designed for small, high frequency inserts with low latency.  Each item added gets a unique id.  They are not traversable, and have a max content size of 60KB.
-TimeSeries can support insertation rates up to 1000 items per second.
-TimeSeries is higher throughput and lower latency than Sequence, as well as slightly more expensive.
-TimeSeries also requires the users to know the frequency and size of inserts.
+## clients
+
+Since the Hub provides an http interface, most tools which support http can access the Hub.
+Examples on this page are in curl, most GETs will work in a browser.
+
+In addition, some more sophisticated clients exist:
+* [Java](https://github.com/flightstats/datahub-client/)
+* [Javascript](https://github.com/flightstats/edge-lib/tree/master/datahub)
+* [Utilities](https://github.com/flightstats/hub-utilities)
 
 ## error handling
 
@@ -83,17 +89,19 @@ Content-Type is `application/json`
 
 `name` _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
 Hyphens are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
-Channels starting with `test` will automatically be deleted in the dev and staging environments every night using this Jenkins task - http://ops-jenkins01.util.pdx.office/job/hub-cleanup/
+Channels starting with `test` will automatically be deleted in the dev and staging environments every hour using [Jenkins](http://ops-jenkins01.cloud-east.dev/job/hub-cleanup-hourly/)
 
-`type` is optional, and defaults to Sequence.  Valid values are Sequence and TimeSeries.
+`type` is optional, and defaults to Sequence.  Only `Sequence` is a valid value.
 
 `ttlDays` is optional and should be a positive number. If not specified, a default value of 120 days is used.
-`ttlMillis` is still accepted as an input parameter, and is converted to ttlDays.  A `null` ttlMillis is converted to 1000 years.
+`ttlMillis` is still accepted as an input parameter, and is converted to ttlDays.  A `null` ttlMillis is converted to the default 120 days.
 
-`peakRequestRateSeconds` and `contentSizeKB` are optional, and are only used by TimeSeries to provision the throughput of the channel per second.
-If the throughput is exceeded, the service will return an error code of 503 with a `Retry-After` header providing a value in seconds.
+`peakRequestRateSeconds` and `contentSizeKB` are optional.
 
 `description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
+
+`tags` is an optional array of string values.  Tag values are limited to 48 characters, and may only contain `a-z`, `A-Z` and `0-9`.
+A channel may have at most 20 tags.
 
 `POST http://hub/channel`
 
@@ -106,7 +114,8 @@ If the throughput is exceeded, the service will return an error code of 503 with
    "ttlDays": "14",
    "peakRequestRateSeconds":1,
    "contentSizeKB":10,
-   "description": "a sequence of all the coffee orders from stumptown"
+   "description": "a sequence of all the coffee orders from stumptown",
+   "tags": ["coffee"]
 }
 ```
 
@@ -134,21 +143,20 @@ On success:  `HTTP/1.1 201 OK`
     "type": "Sequence",
     "contentSizeKB" : 10,
     "peakRequestRateSeconds" : 10,
-    "description": "a sequence of all the coffee orders from stumptown"
+    "description": "a sequence of all the coffee orders from stumptown",
+    "tags": ["coffee"]
 }
 ```
 
 Here's how you can do this with curl:
 ```bash
-curl -i -X POST --header "Content-type: application/json" \
-    --data '{"name": "stumptown"}'  \
-    http://hub/channel
+curl -i -X POST --header "Content-type: application/json" --data '{"name": "stumptown"}' http://hub/channel
 ```
 
 ## update a channel
 
 Some channel metadata can be updated. The update format looks much like the channel create format
-(currently, only `ttlDays`, `description`, `contentSizeKB` and `peakRequestRateSeconds` can be updated).
+(currently, only `ttlDays`, `description`, `contentSizeKB`, `peakRequestRateSeconds` and `tags` can be updated).
 Each of these fields is optional.
 Attempting to change other fields will result in a 400 error.
 
@@ -161,7 +169,8 @@ Attempting to change other fields will result in a 400 error.
    "ttlDays": 21,
    "contentSizeKB" : 20,
    "peakRequestRateSeconds" : 5,
-   "description": "the sequence of all coffee orders from stumptown pdx"
+   "description": "the sequence of all coffee orders from stumptown pdx",
+   "tags": ["coffee", "orders"]
 }
 ```
 
@@ -170,7 +179,8 @@ On success:  `HTTP/1.1 200 OK`, and the new channel metadata is returned (see ex
 Here's how you can do this with curl:
 ```bash
 curl -i -X PATCH --header "Content-type: application/json" \
-    --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5, "description": "the sequence of all coffee orders from stumptown pdx"}'  \
+    --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5, \
+    "description": "the sequence of all coffee orders from stumptown pdx", "tags": ["coffee", "orders"]}' \
     http://hub/channel/stumptown
 ```
 
@@ -222,9 +232,7 @@ On success: `HTTP/1.1 201 Created`
 Here's how you could do this with curl:
 
 ```bash
-curl -Li -X POST --header "Content-type: text/plain" \
-    --data "your content here" \
-    http://hub/channel/stumptown
+curl -i -X POST --header "Content-type: text/plain" --data 'your content here' http://hub/channel/stumptown
 ```
 
 ## fetch content from channel
@@ -257,16 +265,61 @@ Here's how you can do this with curl:
 
 To retrieve the latest item inserted into a Sequence channel, issue a HEAD or GET request on the `latest` link returned from the channel
 metadata.  The Hub will issue a 303 redirect.
-This feature is not supported by TimeSeries channels.
 
 `HEAD http://hub/channel/stumptown/latest`
 
 On success:  `HTTP/1.1 303 See Other`
-`Location: http://hub/channel/stumptown/00002FHSQESAS000`
+`Location: http://hub/channel/stumptown/1010`
 
 Here is how you can do this with curl:
 
 `curl -I http://hub/channel/stumptown/latest`
+
+## tag interface
+
+To retrieve all of the tags in the Hub:
+
+`GET http://hub/tag`
+
+On success: `HTTP/1.1 200 OK`
+```json
+{
+  "_links" : {
+    "self" : {
+      "href" : "http://hub/tag"
+    },
+    "tags" : [ {
+      "name" : "orders",
+      "href" : "http://hub/tag/orders"
+    }, {
+      "name" : "coffee",
+      "href" : "http://hub/tag/coffee"
+    } ]
+  }
+}
+```
+
+Any of the returned tag links can be followed to see all of the channels with that tag:
+
+`GET http://hub/tag/coffee`
+
+On success: `HTTP/1.1 200 OK`
+```json
+{
+  "_links" : {
+    "self" : {
+      "href" : "http://hub/tag/coffee"
+    },
+    "channels" : [ {
+      "name" : "stumptown",
+      "href" : "http://hub/channel/stumptown"
+    }, {
+      "name" : "spella",
+      "href" : "http://hub/channel/spella"
+    } ]
+  }
+}
+```
 
 ## time interface
 
@@ -325,7 +378,6 @@ http://hub/channel/stumptown/1002
 ...etc...
 ```
 
-Currently TimeSeries channels do not support websockets.  If this is a desired feature, please discuss it with us.
 
 ## provider interface
 
@@ -344,6 +396,7 @@ For external data providers, there is a simplified interface suitable for exposi
 **Channel Deletion will be access controlled in Staging and Prod environments**
 
 To delete a channel when after you no longer need it, simply issue a `DELETE` command to that channel.
+Delete returns a 202, indicating that the request has been accepted, and will take an indeterminate time to process.
 
  `DELETE http://hub/channel/stumptown`
 
@@ -358,7 +411,7 @@ curl -i -X DELETE http://hub/channel/stumptown
 
 **Replication Configuration will be access controlled in in Staging and Prod environments**
 
-The Hub can replicate Sequence channels from another Hub instance.  TimeSeries replication is not yet supported.
+The Hub can replicate Sequence channels from another Hub instance. 
 
 The Source Hub has the channel(s) you want replicated.
 The Target Hub is where you want those channel(s).
@@ -413,7 +466,7 @@ To delete Replication for an entire domain, use DELETE:
 **Replication Details**
 
 * Modifications to existing replication configuration take effect immediately.
-* If you are replicating into HubB from HubA, and you are **also** inserting data into HubB, you will get undefined results.  Don't do that.
+* If you are replicating a channel into HubB from HubA, and you will be prevnted from inserting data into that channel on HubB.
 * `excludeExcept` means "Exclude all of the channels, Except the ones specified".
 * `historicalDays` tells the replicator how far back in time to start. Zero (the default) means "only get new values".
 * If http://hub.other/channel/stumptown `ttlDays` is 10, and `historicalDays` is 5, only items from the last 5 days will be replicated.
@@ -526,7 +579,7 @@ The Hub has monitoring available in:
 
 The Hub is a work in progress.  If you'd like to contribute, let us know.
 
-The latest builds are in [Jenkins](http://ops-jenkins01.util.pdx.office/job/hub/)
+The latest builds are in [Jenkins](http://ops-jenkins01.cloud-east.dev/job/hub/)
 
 To run Java based tests and jasmine-node tests locally, you will most likely want to use DynamoDB Local.
 Install it from http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
@@ -550,9 +603,9 @@ gradle integrationTests
 
 ## deployments
 
-The Hub is deployed to [Dev](http://hub.svc.dev/health) after each successful build in [Jenkins](http://ops-jenkins01.util.pdx.office/job/hub/)
+The Hub is deployed to [Dev](http://hub.svc.dev/health) after each successful build in [Jenkins](http://ops-jenkins01.cloud-east.dev/job/hub/)
 
-Deployments to Staging can be manually run from [Hub Tasks](http://ops-jenkins01.util.pdx.office/job/hub/batchTasks/)
+Deployments to Staging can be manually run from [Hub Tasks](http://ops-jenkins01.cloud-east.dev/job/hub/batchTasks/)
 
 Releases to Prod currently must be manually kicked off from each machine using the version number from Jenkins.
 ```

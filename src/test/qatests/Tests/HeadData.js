@@ -91,28 +91,30 @@ describe('HEAD on data tests:', function() {
             headHeaders,
             VERBOSE = true;
 
-        superagent.agent().get(secondValueUri)
-            .set('Accept-Encoding', 'identity')
-            .end(function(err, res) {
-                getHeaders = res.headers;
+        setTimeout(function () {
+            superagent.agent().get(secondValueUri)
+                .set('Accept-Encoding', 'identity')
+                .end(function(err, res) {
+                    getHeaders = res.headers;
 
-                superagent.agent().head(secondValueUri)
-                    .set('Accept-Encoding', 'identity')
-                    .end(function(err2, res2) {
-                        headHeaders = res2.headers;
+                    superagent.agent().head(secondValueUri)
+                        .set('Accept-Encoding', 'identity')
+                        .end(function(err2, res2) {
+                            headHeaders = res2.headers;
 
-                        if ((!gu.dictCompare(getHeaders, headHeaders)) || (VERBOSE)) {
-                            gu.debugLog('Dump of getHeaders, headHeaders.\ngetHeaders: ');
-                            console.dir(getHeaders);
-                            gu.debugLog('headHeaders: ');
-                            console.dir(headHeaders);
-                        }
+                            if ((!gu.dictCompare(getHeaders, headHeaders)) || (VERBOSE)) {
+                                gu.debugLog('Dump of getHeaders, headHeaders.\ngetHeaders: ');
+                                console.dir(getHeaders);
+                                gu.debugLog('headHeaders: ');
+                                console.dir(headHeaders);
+                            }
 
-                        expect(gu.dictCompare(getHeaders, headHeaders)).to.be.true;
+                            expect(gu.dictCompare(getHeaders, headHeaders)).to.be.true;
 
-                        done();
-                    });
-            });
+                            done();
+                        });
+                });
+        }, 1000);
     });
 
     it('HEAD does not return a message body', function(done) {

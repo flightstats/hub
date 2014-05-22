@@ -101,11 +101,13 @@ dependencies {
     compile group: 'com.intellij', name: 'annotations', version: '7.0.3'
     compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
     compile 'com.amazonaws:aws-java-sdk:1.7.6'
-    compile 'org.apache.curator:curator-recipes:2.4.1'
-    testCompile 'org.apache.curator:curator-test:2.4.1'
+    compile 'org.apache.curator:curator-recipes:2.4.2'
+    testCompile 'org.apache.curator:curator-test:2.4.2'
     compile 'org.apache.commons:commons-lang3:3.2'
     compile 'com.github.rholder:guava-retrying:1.0.6'
+    compile 'com.google.code.gson:gson:2.2.4'
     compile(group: 'newrelic', name: 'newrelic_agent', version: '3.5.1')
+    compile 'org.projectlombok:lombok:1.12.6'
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.5"
@@ -132,6 +134,15 @@ task jasmineTests << {
     println "Making " + reportsdir
     new File(reportsdir).mkdirs()
     runExternal("jasmine-node --forceexit --captureExceptions --junitreport --output ${reportsdir} ${testdir}")
+}
+
+task jasmineEncryptedTests << {
+    def testdir = "${projectDir}/src/test/integration"
+    def reportsdir = "${projectDir}/build/reports/integration/"
+    println "Making " + reportsdir
+    new File(reportsdir).mkdirs()
+    //todo - gfm - 5/21/14 - change this once the load balancer is in place
+    runExternal("jasmine-node --forceexit --captureExceptions --config runEncrypted true --config hubDomain encrypted-hub-01.cloud-east.dev:8080 --junitreport --output ${reportsdir} ${testdir}")
 }
 
 task startHub (type: JavaExec) {
@@ -161,7 +172,7 @@ def startTaskAndWait = { startTask, url ->
         }
     }
     while (health() != 200) {
-        //todo - gfm - 2/11/14 - fail this if it happens too many times
+        //fail this if it happens too many times
         sleep 1000
     }
     println('hub started!')
@@ -192,5 +203,9 @@ task startReplicationVerifierStaging (dependsOn: testClasses ) << {
 task verifierExec (type: JavaExec ) {
     main = 'com.flightstats.hub.replication.ReplicationVerifier'
     classpath = sourceSets.test.runtimeClasspath
+}
+
+test {
+    jvmArgs '-Xmx3G'
 }
 

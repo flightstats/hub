@@ -1,6 +1,5 @@
 package com.flightstats.hub.replication;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
 
 import javax.websocket.WebSocketContainer;
@@ -12,16 +11,14 @@ public class SequenceIteratorFactory {
 
     private final ChannelUtils channelUtils;
     private final WebSocketContainer container;
-    private final MetricRegistry metricRegistry;
 
     @Inject
-    public SequenceIteratorFactory(ChannelUtils channelUtils, WebSocketContainer container, MetricRegistry metricRegistry) {
+    public SequenceIteratorFactory(ChannelUtils channelUtils, WebSocketContainer container) {
         this.channelUtils = channelUtils;
         this.container = container;
-        this.metricRegistry = metricRegistry;
     }
 
     public SequenceIterator create(long startSequence, Channel channel) {
-        return new SequenceIterator(startSequence, channelUtils, channel, container, metricRegistry);
+        return new SequenceIterator(startSequence, channelUtils, channel, container);
     }
 }

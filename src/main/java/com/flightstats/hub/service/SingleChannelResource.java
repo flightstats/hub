@@ -2,8 +2,6 @@ package com.flightstats.hub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.config.PATCH;
 import com.flightstats.hub.app.config.metrics.PerChannelThroughput;
 import com.flightstats.hub.app.config.metrics.PerChannelTimed;
@@ -11,7 +9,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.InsertedContentKey;
-import com.flightstats.hub.model.exception.InvalidRequestException;
 import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -23,7 +20,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Map;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -37,8 +33,6 @@ public class SingleChannelResource {
     private final ChannelLinkBuilder linkBuilder;
     private final Integer maxPayloadSizeBytes;
     private final UriInfo uriInfo;
-    private static final ObjectMapper mapper = new ObjectMapper();
-
 
     @Inject
     public SingleChannelResource(ChannelService channelService, ChannelLinkBuilder linkBuilder,
@@ -75,15 +69,11 @@ public class SingleChannelResource {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        Map<String, String> map = mapper.readValue(json, new TypeReference<Map<String, String>>() { });
-        if (map.containsKey("type")) {
-            throw new InvalidRequestException("{\"error\": \"type can not be changed \"}");
-        }
-        map.remove("name");
+
         ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
         ChannelConfiguration newConfig = ChannelConfiguration.builder()
                 .withChannelConfiguration(oldConfig)
-                .withMap(map)
+                .withUpdateConfig(ChannelConfiguration.fromJson(json))
                 .build();
         newConfig = channelService.updateChannel(newConfig);
 
@@ -99,7 +89,7 @@ public class SingleChannelResource {
     @PerChannelThroughput(operationName = "insertBytes", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
-                                @HeaderParam("Content-Language") final String contentLanguage,
+                                @HeaderParam("Content-Language") final String contentLanguage, @HeaderParam("User") final String user,
                                 final byte[] data) throws Exception {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -108,10 +98,11 @@ public class SingleChannelResource {
         if (data.length > maxPayloadSizeBytes) {
             return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
         }
-
         Content content = Content.builder().withContentLanguage(contentLanguage)
                 .withContentType(contentType)
-                .withData(data).build();
+                .withData(data)
+                .withUser(user)
+                .build();
         InsertedContentKey insertionResult = channelService.insert(channelName, content);
         URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo.getRequestUri());
         Linked<InsertedContentKey> linkedResult = linked(insertionResult)
@@ -122,6 +113,7 @@ public class SingleChannelResource {
         Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
         builder.entity(linkedResult);
         builder.location(payloadUri);
+        ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
         return builder.build();
     }
 

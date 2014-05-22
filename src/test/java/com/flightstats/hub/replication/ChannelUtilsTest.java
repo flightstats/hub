@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -49,7 +50,13 @@ public class ChannelUtilsTest {
         ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channel).build();
         channelService.createChannel(configuration);
         channelService.insert(channel, Content.builder().withData("data1".getBytes()).build());
-        channelService.insert(channel, Content.builder().withData("data2".getBytes()).build());
+        Content content = Content.builder()
+                .withData("data2".getBytes())
+                .withContentLanguage("lang")
+                .withContentType(MediaType.APPLICATION_JSON)
+                .withUser("root")
+                .build();
+        channelService.insert(channel, content);
     }
 
     @AfterClass
@@ -63,12 +70,6 @@ public class ChannelUtilsTest {
         assertTrue(latestSequence.isPresent());
         System.out.println("latest " + latestSequence.get());
         assertTrue(latestSequence.get() > 1000);
-    }
-
-    @Test
-    public void testGetLatestSequenceNoChannel() throws Exception {
-        Optional<Long> latestSequence = channelUtils.getLatestSequence(nonChannelUrl);
-        assertFalse(latestSequence.isPresent());
     }
 
     @Test
@@ -95,6 +96,21 @@ public class ChannelUtilsTest {
         Content content = optionalContent.get();
         assertArrayEquals("data1".getBytes(), content.getData());
         assertTrue(new DateTime(content.getMillis()).isAfter(new DateTime().minusMinutes(5)));
+        assertFalse(content.getContentLanguage().isPresent());
+        assertFalse(content.getUser().isPresent());
+        assertEquals(content.getContentType().get(), MediaType.APPLICATION_OCTET_STREAM);
+    }
+
+    @Test
+    public void testGetContentHeaders() throws Exception {
+        Optional<Content> optionalContent = channelUtils.getContent(channelUrl, 1001);
+        assertTrue(optionalContent.isPresent());
+        Content content = optionalContent.get();
+        assertArrayEquals("data2".getBytes(), content.getData());
+        assertTrue(new DateTime(content.getMillis()).isAfter(new DateTime().minusMinutes(5)));
+        assertEquals(content.getContentType().get(), MediaType.APPLICATION_JSON);
+        assertEquals(content.getContentLanguage().get(), "lang");
+        assertEquals(content.getUser().get(), "root");
     }
 
     @Test

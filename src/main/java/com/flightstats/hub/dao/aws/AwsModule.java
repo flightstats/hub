@@ -6,25 +6,32 @@ import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
-import com.flightstats.hub.dao.dynamo.DynamoContentDao;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
+import com.flightstats.hub.dao.encryption.AuditChannelService;
+import com.flightstats.hub.dao.encryption.BasicChannelService;
+import com.flightstats.hub.dao.s3.ContentDaoImpl;
 import com.flightstats.hub.dao.s3.S3Config;
-import com.flightstats.hub.dao.s3.S3ContentDao;
+import com.flightstats.hub.dao.s3.S3IndexDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.hub.replication.*;
 import com.flightstats.hub.util.ContentKeyGenerator;
 import com.flightstats.hub.util.CuratorKeyGenerator;
-import com.flightstats.hub.util.TimeSeriesKeyGenerator;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisherImpl;
-import com.google.inject.*;
+import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Properties;
 
 public class AwsModule extends AbstractModule {
+    private final static Logger logger = LoggerFactory.getLogger(AwsModule.class);
 
 	private final Properties properties;
 
@@ -43,12 +50,16 @@ public class AwsModule extends AbstractModule {
         bind(CuratorLock.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
 		bind(AwsConnectorFactory.class).in(Singleton.class);
-        bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
-        bind(ContentServiceFinder.class).to(SplittingContentServiceFinder.class).asEagerSingleton();
-        bind(ChannelConfigurationDao.class).to(TimedChannelConfigurationDao.class).in(Singleton.class);
-        bind(ChannelConfigurationDao.class)
-                .annotatedWith(Names.named(TimedChannelConfigurationDao.DELEGATE))
-                .to(CachedChannelConfigurationDao.class);
+
+        if (Boolean.parseBoolean(properties.getProperty("app.encrypted"))) {
+            logger.info("using encrypted hub");
+            bind(ChannelService.class).annotatedWith(BasicChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
+            bind(ChannelService.class).to(AuditChannelService.class).asEagerSingleton();
+        } else {
+            logger.info("using normal hub");
+            bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
+        }
+        bind(ChannelConfigurationDao.class).to(CachedChannelConfigurationDao.class).in(Singleton.class);
         bind(ChannelConfigurationDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))
                 .to(DynamoChannelConfigurationDao.class);
@@ -58,39 +69,11 @@ public class AwsModule extends AbstractModule {
                 .annotatedWith(Names.named(CachedReplicationDao.DELEGATE))
                 .to(DynamoReplicationDao.class);
 
-        install(new PrivateModule() {
-            @Override
-            protected void configure() {
-
-                bind(ContentService.class).annotatedWith(Sequential.class).to(ContentServiceImpl.class).in(Singleton.class);
-                expose(ContentService.class).annotatedWith(Sequential.class);
-
-                bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
-                bind(ContentDao.class)
-                        .annotatedWith(Names.named(TimedContentDao.DELEGATE))
-                        .to(S3ContentDao.class);
-                bind(TimeIndexDao.class).to(S3ContentDao.class).in(Singleton.class);
-                expose(TimeIndexDao.class);
-                bind(KeyCoordination.class).to(SequenceKeyCoordination.class).in(Singleton.class);
-                bind(ContentKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
-            }
-        });
-
-        install(new PrivateModule() {
-            @Override
-            protected void configure() {
-
-                bind(ContentService.class).annotatedWith(TimeSeries.class).to(ContentServiceImpl.class).in(Singleton.class);
-                expose(ContentService.class).annotatedWith(TimeSeries.class);
-
-                bind(ContentDao.class).to(TimedContentDao.class).in(Singleton.class);
-                bind(ContentDao.class)
-                        .annotatedWith(Names.named(TimedContentDao.DELEGATE))
-                        .to(DynamoContentDao.class);
-                bind(KeyCoordination.class).to(TimeSeriesKeyCoordination.class).in(Singleton.class);
-                bind(ContentKeyGenerator.class).to(TimeSeriesKeyGenerator.class).in(Singleton.class);
-            }
-        });
+        bind(ContentService.class).to(ContentServiceImpl.class).in(Singleton.class);
+        bind(ContentDao.class).to(ContentDaoImpl.class).in(Singleton.class);
+        bind(TimeIndexDao.class).to(S3IndexDao.class).in(Singleton.class);
+        bind(KeyCoordination.class).to(SequenceKeyCoordination.class).in(Singleton.class);
+        bind(ContentKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
 
         bind(DynamoUtils.class).in(Singleton.class);
 	}

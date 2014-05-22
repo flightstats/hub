@@ -1,14 +1,11 @@
 package com.flightstats.hub.dao.s3;
 
-import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
-import com.flightstats.hub.metrics.MetricsTimer;
-import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.RetryPolicy;
@@ -33,7 +30,7 @@ public class TimeIndexProcessorTest {
     private final static Logger logger = LoggerFactory.getLogger(TimeIndexProcessorTest.class);
 
     private static CuratorFramework curator;
-    private static S3ContentDao s3ContentDao;
+    private static ZooKeeperIndexDao zooKeeperIndexDao;
     private Map<String,Set<String>> expected;
     private MockTimeIndexDao indexDao;
     private TimeIndexProcessor processor;
@@ -48,7 +45,7 @@ public class TimeIndexProcessorTest {
         Integration.startZooKeeper();
         RetryPolicy retryPolicy = GuiceContext.HubCommonModule.buildRetryPolicy();
         curator = GuiceContext.HubCommonModule.buildCurator("hub", "test", "localhost:2181", retryPolicy, new ZooKeeperState());
-        s3ContentDao = new S3ContentDao(null, null, "", "hub", 1, 1, curator, new MetricsTimer(new MetricRegistry()));
+        zooKeeperIndexDao = new ZooKeeperIndexDao(curator);
     }
 
     @Before
@@ -120,7 +117,7 @@ public class TimeIndexProcessorTest {
             for (int keys = 0; keys < minutes + 1; keys++) {
                 total++;
                 SequenceContentKey contentKey = new SequenceContentKey(key++);
-                s3ContentDao.writeIndex(channel, dateTime, contentKey);
+                zooKeeperIndexDao.writeIndex(channel, dateTime, contentKey);
                 set.add(contentKey.keyToString());
             }
         }
@@ -129,11 +126,6 @@ public class TimeIndexProcessorTest {
 
     private class MockTimeIndexDao implements TimeIndexDao {
         Map<String, List<String>> indices = new HashMap<>();
-
-        @Override
-        public void writeIndex(String channelName, DateTime dateTime, ContentKey key) {
-            //not needed
-        }
 
         @Override
         public void writeIndices(String channelName, String dateTime, List<String> keys) {

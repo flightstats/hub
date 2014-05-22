@@ -1,12 +1,10 @@
 # locust.py
 
 import json
-import uuid
 from locust import Locust, TaskSet, task
 import websocket
 import httplib2
 import time
-import thread
 import string
 import random
 
@@ -26,7 +24,7 @@ class WebsiteTasks(TaskSet):
         print("payload size " + str(self.payload.__sizeof__()))
         self.channel = "testThroughput"
         self.count = 0
-        payload = {"name": self.channel, "ttlMillis": "36000000", "type" : "TimeSeries", "contentSizeKB": "1",
+        payload = {"name": self.channel, "ttlMillis": "36000000", "type" : "Sequence", "contentSizeKB": "1",
             "peakRequestRateSeconds": "1000", "rateTimeUnit": "SECONDS"}
         self.client.post("/channel",
                          data=json.dumps(payload),
