@@ -101,7 +101,7 @@ public class SequenceKeyCoordination implements KeyCoordination {
         return "/lastUpdated/" + channelName;
     }
 
-    private class LastUpdated {
+    class LastUpdated {
         long value;
         int version;
 

@@ -1,8 +1,6 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.cluster.CuratorLock;
-import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
@@ -11,7 +9,6 @@ import com.flightstats.hub.model.SequenceContentKey;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.base.Optional;
-import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.junit.After;
@@ -48,9 +45,7 @@ public class ChannelReplicatorTest {
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        Integration.startZooKeeper();
-        RetryPolicy retryPolicy = GuiceContext.HubCommonModule.buildRetryPolicy();
-        curator = GuiceContext.HubCommonModule.buildCurator("hub", "test", "localhost:2181", retryPolicy, new ZooKeeperState());
+        curator = Integration.startZooKeeper();
     }
 
     @Before
