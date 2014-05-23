@@ -68,7 +68,7 @@ public class ChannelReplicator implements Leader {
 
     public boolean tryLeadership() {
         logger.debug("starting run " + channel);
-        valid = verifyRemoteChannel();
+        valid = validateRemoteChannel();
         if (!valid) {
             return false;
         }
@@ -86,7 +86,12 @@ public class ChannelReplicator implements Leader {
         try {
             Thread.currentThread().setName("ChannelReplicator-" + channel.getUrl());
             logger.info("takeLeadership");
-            initialize();
+            valid = validateRemoteChannel();
+            if (!valid) {
+                exit();
+                return;
+            }
+            createLocalChannel();
             replicate(hasLeadership);
         } finally {
             Thread.currentThread().setName("Empty");
@@ -119,7 +124,7 @@ public class ChannelReplicator implements Leader {
     }
 
     @VisibleForTesting
-    boolean verifyRemoteChannel() {
+    boolean validateRemoteChannel() {
         try {
             Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channel.getUrl());
             if (!optionalConfig.isPresent()) {
@@ -144,7 +149,7 @@ public class ChannelReplicator implements Leader {
     }
 
     @VisibleForTesting
-    void initialize()  {
+    void createLocalChannel()  {
         if (!channelService.channelExists(configuration.getName())) {
             logger.info("creating channel for " + channel.getUrl());
             channelService.createChannel(configuration);
