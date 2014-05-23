@@ -1,10 +1,13 @@
 package com.flightstats.hub.model;
 
 import com.google.common.base.Optional;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
+@Getter
+@EqualsAndHashCode(of = {"data", "contentType", "contentLanguage", "user"})
 public class Content implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -26,40 +29,16 @@ public class Content implements Serializable {
         user = builder.user;
     }
 
-    public Optional<String> getContentType() {
-        return contentType;
-    }
-
-    public byte[] getData() {
-        return data;
-    }
-
     public int getDataLength() {
         return data == null ? 0 : data.length;
-    }
-
-    public Optional<String> getContentLanguage() {
-        return contentLanguage;
-    }
-
-    public long getMillis() {
-        return millis;
-    }
-
-    public Optional<ContentKey> getContentKey() {
-        return contentKey;
     }
 
     public void setContentKey(ContentKey contentKey) {
         this.contentKey = Optional.of(contentKey);
     }
 
-    public Optional<String> getUser() {
-        return user;
-    }
-
     /**
-     * @return true if this Content is new, false if it has been inserted elsewhere and is a replica.
+     * @return true if this Content is new, false if it has been inserted elsewhere and is a replicant.
      */
     public boolean isNewContent() {
         return isNew;
@@ -111,30 +90,5 @@ public class Content implements Serializable {
             return new Content(this);
         }
 
-    }
-
-    // equals and hashCode are only used for testing.
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Content content = (Content) o;
-
-        if (!contentLanguage.equals(content.contentLanguage)) return false;
-        if (!contentType.equals(content.contentType)) return false;
-        if (!Arrays.equals(data, content.data)) return false;
-        if (!user.equals(content.user)) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = contentType.hashCode();
-        result = 31 * result + contentLanguage.hashCode();
-        result = 31 * result + (data != null ? Arrays.hashCode(data) : 0);
-        result = 31 * result + user.hashCode();
-        return result;
     }
 }
