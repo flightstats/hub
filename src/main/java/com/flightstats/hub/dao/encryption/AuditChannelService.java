@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.encryption;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.exception.AlreadyExistsException;
 import com.flightstats.hub.model.exception.ForbiddenRequestException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -48,14 +49,18 @@ public class AuditChannelService implements ChannelService {
         tags.add("audit");
         ChannelConfiguration channel = channelService.createChannel(configuration);
 
-        ChannelConfiguration audit = ChannelConfiguration.builder()
+        ChannelConfiguration auditConfig = ChannelConfiguration.builder()
                 .withChannelConfiguration(configuration)
                 .withName(configuration.getName() + AUDIT)
                 .withDescription("auditing channel for " + configuration.getName())
                 .withTags(tags)
                 .build();
 
-        channelService.createChannel(audit);
+        try {
+            channelService.createChannel(auditConfig);
+        } catch (AlreadyExistsException e) {
+            logger.info("auditing channel already exists " + auditConfig.getName());
+        }
 
         return channel;
     }
