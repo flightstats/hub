@@ -25,17 +25,15 @@ public class DomainReplicator implements Runnable {
     private ScheduledExecutorService executorService;
     private ScheduledFuture<?> future;
 
-
     @Inject
     public DomainReplicator(ChannelUtils channelUtils, Provider<ChannelReplicator> replicatorProvider) {
         this.channelUtils = channelUtils;
         this.replicatorProvider = replicatorProvider;
         executorService = Executors.newScheduledThreadPool(1);
-
     }
 
-    public void start(ReplicationDomain config) {
-        this.domain = config;
+    public void start(ReplicationDomain domain) {
+        this.domain = domain;
         future = executorService.scheduleWithFixedDelay(this, 0, 1, TimeUnit.MINUTES);
     }
 
@@ -57,26 +55,26 @@ public class DomainReplicator implements Runnable {
         executorService.shutdown();
     }
 
-    private Set<String> getActiveReplicators() {
-        Set<String> actives = new HashSet<>();
-        for (ChannelReplicator channelReplicator : channelReplicators) {
-            actives.add(channelReplicator.getChannel().getName());
-        }
-        return actives;
-    }
-
     @Override
     public void run() {
         Thread.currentThread().setName("DomainReplicator" + domain.getDomain());
         String domainUrl = "http://" + domain.getDomain() + "/channel/";
-        Set<Channel> channels = channelUtils.getChannels(domainUrl);
-        if (channels.isEmpty()) {
+        Set<Channel> remoteChannels = channelUtils.getChannels(domainUrl);
+        if (remoteChannels.isEmpty()) {
             logger.warn("did not find any channels to replicate at " + domainUrl);
             return;
         }
-        Set<String> activeReplicators = getActiveReplicators();
-        for (Channel channel : channels) {
-            if (domain.getExcludeExcept().contains(channel.getName()) && !activeReplicators.contains(channel.getName())) {
+        Set<ChannelReplicator> activeReplicators = new HashSet<>();
+        Set<String> replicatorNames = new HashSet<>();
+        for (ChannelReplicator channelReplicator : channelReplicators) {
+            if (channelReplicator.isValid()) {
+                activeReplicators.add(channelReplicator);
+                replicatorNames.add(channelReplicator.getChannel().getName());
+            }
+        }
+        channelReplicators.retainAll(activeReplicators);
+        for (Channel channel : remoteChannels) {
+            if (domain.getExcludeExcept().contains(channel.getName()) && !replicatorNames.contains(channel.getName())) {
                 startChannelReplication(channel, domain);
             }
         }
