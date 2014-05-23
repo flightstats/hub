@@ -612,6 +612,14 @@ The Hub has monitoring available in:
 * [Graphite Staging](http://svcsmon.cloud-east.staging/dashboard/#hub)
 * [Graphite Dev](http://svcsmon.cloud-east.dev/dashboard/#hub)
 
+Hub Servers:
+* Prod - hub-0<1-3>.cloud-east.prod
+* Staging - hub-0<1-3>.cloud-east.staging
+* Dev - hub-0<1-3>.cloud-east.dev
+
+Encrypted Hub Servers:
+* Dev - encrypted-hub-0<1-3>.cloud-east.dev
+
 ## development
 
 The Hub is a work in progress.  If you'd like to contribute, let us know.
