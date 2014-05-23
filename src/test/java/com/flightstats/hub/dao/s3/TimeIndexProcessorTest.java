@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao.s3;
 
-import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
@@ -8,7 +7,6 @@ import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.flightstats.hub.test.Integration;
-import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -42,9 +40,7 @@ public class TimeIndexProcessorTest {
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        Integration.startZooKeeper();
-        RetryPolicy retryPolicy = GuiceContext.HubCommonModule.buildRetryPolicy();
-        curator = GuiceContext.HubCommonModule.buildCurator("hub", "test", "localhost:2181", retryPolicy, new ZooKeeperState());
+        curator = Integration.startZooKeeper();
         zooKeeperIndexDao = new ZooKeeperIndexDao(curator);
     }
 
