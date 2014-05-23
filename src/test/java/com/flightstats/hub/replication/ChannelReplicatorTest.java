@@ -90,7 +90,7 @@ public class ChannelReplicatorTest {
                 return null;
             }
         });
-        replicator.verifyRemoteChannel();
+        replicator.validateRemoteChannel();
         replicator.tryLeadership();
 
         assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
@@ -296,8 +296,8 @@ public class ChannelReplicatorTest {
 
     private void init(int historicalDays) throws IOException {
         replicator.setHistoricalDays(historicalDays);
-        assertTrue(replicator.verifyRemoteChannel());
-        replicator.initialize();
+        assertTrue(replicator.validateRemoteChannel());
+        replicator.createLocalChannel();
     }
 
     @Test
@@ -307,7 +307,7 @@ public class ChannelReplicatorTest {
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.<Long>absent());
         replicator = new ChannelReplicator(channelService, channelUtils, factory, sequenceFinder, curator);
         replicator.setChannel(channel);
-        replicator.verifyRemoteChannel();
+        replicator.validateRemoteChannel();
         replicator.tryLeadership();
         Sleeper.sleep(20);
         verify(channelService, never()).insert(anyString(), any(Content.class));

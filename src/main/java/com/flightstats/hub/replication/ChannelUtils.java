@@ -69,7 +69,7 @@ public class ChannelUtils {
     public Optional<ChannelConfiguration> getConfiguration(String channelUrl) throws IOException {
         ClientResponse response = followClient.resource(channelUrl).get(ClientResponse.class);
         if (response.getStatus() >= 400) {
-            logger.warn("exiting thread - unable to locate remote channel " + response);
+            logger.info("unable to locate remote channel " + response);
             return Optional.absent();
         }
         String json = response.getEntity(String.class);
