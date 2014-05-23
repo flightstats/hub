@@ -5,12 +5,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.flightstats.hub.model.exception.InvalidRequestException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+@ToString
+@EqualsAndHashCode(of = {"name"})
 public class ChannelConfiguration implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -110,38 +114,6 @@ public class ChannelConfiguration implements Serializable {
     @JsonProperty("tags")
     public Set<String> getTags() {
         return tags;
-    }
-
-    @Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (!(o instanceof ChannelConfiguration)) return false;
-
-		ChannelConfiguration that = (ChannelConfiguration) o;
-
-		if (name != null ? !name.equals(that.name) : that.name != null) return false;
-
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-        return name != null ? name.hashCode() : 0;
-	}
-
-    @Override
-    public String toString() {
-        return "ChannelConfiguration{" +
-                "name='" + name + '\'' +
-                ", creationDate=" + creationDate +
-                ", ttlDays=" + ttlDays +
-                ", type=" + type +
-                ", contentSizeKB=" + contentSizeKB +
-                ", peakRequestRateSeconds=" + peakRequestRateSeconds +
-                ", ttlMillis=" + ttlMillis +
-                ", description='" + description + '\'' +
-                ", tags=" + tags +
-                '}';
     }
 
     public static ChannelConfiguration fromJson(String json) {
