@@ -1,74 +1,47 @@
 package com.flightstats.hub.dao;
 
-import org.apache.curator.framework.recipes.shared.SharedValue;
+import com.flightstats.hub.model.SequenceContentKey;
+import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.websocket.WebsocketPublisher;
+import org.apache.curator.framework.CuratorFramework;
+import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+
 public class SequenceKeyCoordinationTest {
-    private SharedValue sharedValue;
     private SequenceKeyCoordination keyCoordination;
 
-    //todo - gfm - 5/23/14 - figure these out
-    @Test
-    public void test() throws Exception {
-
-    }
-    /*@Before
+    @Before
     public void setUp() throws Exception {
+        CuratorFramework curator = Integration.startZooKeeper();
         WebsocketPublisher publisher = mock(WebsocketPublisher.class);
-        CuratorFramework curator = mock(CuratorFramework.class);
-        sharedValue = mock(SharedValue.class);
-        keyCoordination = new SequenceKeyCoordination(publisher, curator) {
-            @Override
-            SharedValue getSharedValue(String channelName) {
-                return sharedValue;
-            }
-        };
+        keyCoordination = new SequenceKeyCoordination(publisher, curator);
     }
 
     @Test
     public void testLow() throws Exception {
-        when(sharedValue.getValue()).thenReturn(Longs.toByteArray(2000));
-        keyCoordination.insert("blah", new SequenceContentKey(1999));
-        verify(sharedValue, never()).trySetValue((byte[]) any());
+        keyCoordination.insert("testlow", new SequenceContentKey(2000));
+        keyCoordination.insert("testlow", new SequenceContentKey(1999));
+        assertEquals(2000, keyCoordination.getLongValue("testlow").value);
     }
 
     @Test
     public void testSame() throws Exception {
-        when(sharedValue.getValue()).thenReturn(Longs.toByteArray(2000));
-        keyCoordination.insert("blah", new SequenceContentKey(2000));
-        verify(sharedValue, never()).trySetValue((byte[]) any());
+        keyCoordination.insert("testSame", new SequenceContentKey(2000));
+        keyCoordination.insert("testSame", new SequenceContentKey(2000));
+        assertEquals(2000, keyCoordination.getLongValue("testSame").value);
     }
 
     @Test
     public void testHigh() throws Exception {
-        when(sharedValue.getValue()).thenReturn(Longs.toByteArray(2000));
-        when(sharedValue.trySetValue((byte[]) any())).thenReturn(true);
-        keyCoordination.insert("blah", new SequenceContentKey(2001));
-        verify(sharedValue, times(1)).trySetValue(Longs.toByteArray(2001));
+
+        keyCoordination.insert("testHigh", new SequenceContentKey(2000));
+        keyCoordination.insert("testHigh", new SequenceContentKey(2001));
+        assertEquals(2001, keyCoordination.getLongValue("testHigh").value);
     }
 
-    @Test
-    public void testTrySetFail() throws Exception {
-        when(sharedValue.getValue()).thenReturn(Longs.toByteArray(2000));
-        when(sharedValue.trySetValue((byte[]) any())).thenReturn(false);
-        keyCoordination.insert("blah", new SequenceContentKey(2001));
-        verify(sharedValue, times(3)).trySetValue(Longs.toByteArray(2001));
-    }
 
-    @Test
-    public void testTrySetSucceed() throws Exception {
-        when(sharedValue.getValue()).thenReturn(Longs.toByteArray(2000));
-        when(sharedValue.trySetValue((byte[]) any())).thenReturn(false).thenReturn(true);
-        keyCoordination.insert("blah", new SequenceContentKey(2001));
-        verify(sharedValue, times(2)).trySetValue(Longs.toByteArray(2001));
-    }
-
-    @Test
-    public void testTrySetChanged() throws Exception {
-        when(sharedValue.getValue()).thenReturn(Longs.toByteArray(2000)).thenReturn(Longs.toByteArray(2002));
-        when(sharedValue.trySetValue((byte[]) any())).thenReturn(false);
-        keyCoordination.insert("blah", new SequenceContentKey(2001));
-        verify(sharedValue, times(1)).trySetValue(Longs.toByteArray(2001));
-    }*/
 
 }
