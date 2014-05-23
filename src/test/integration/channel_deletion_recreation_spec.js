@@ -44,7 +44,6 @@ describe(testName + ' ' + channelName, function () {
         request.get({url: channelResource + '/latest'},
             function (err, response, body) {
                 expect(err).toBeNull();
-                console.log(response.request.href);
                 expect(response.statusCode).toBe(200);
                 expect(response.request.href).toBe(channelResource + '/1000');
                 done();
