@@ -72,6 +72,29 @@ function addItem(url, responseCode) {
     });
 }
 
+function putGroup(groupName, groupConfig) {
+    var groupResource = groupUrl + "/" + groupName;
+    it('creates a group ' + groupName, function (done) {
+        request.put({url : groupResource,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify(groupConfig)},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(201);
+                expect(response.headers.location).toBe(groupResource);
+                if (typeof groupConfig !== "undefined") {
+                    var parse = JSON.parse(body);
+                    expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
+                    expect(parse.channelUrl).toBe(groupConfig.channelUrl);
+                    expect(parse.transactional).toBe(groupConfig.transactional);
+                    expect(parse.name).toBe(groupName);
+                }
+                done();
+            });
+    });
+    return groupResource;
+}
+
 function sleep(millis) {
     runs(function() {
         flag = false;
@@ -94,4 +117,5 @@ exports.runInTestChannelJson = runInTestChannelJson;
 exports.createChannel = createChannel;
 exports.addItem = addItem;
 exports.sleep = sleep;
+exports.putGroup = putGroup;
 
