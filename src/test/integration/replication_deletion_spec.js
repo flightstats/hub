@@ -24,6 +24,8 @@ describe(testName, function () {
             });
     });
 
+    utils.sleep(1000);
+
     it('tries to delete channel', function (done) {
         request.del({url: localChannelUrl },
             function (err, response, body) {
