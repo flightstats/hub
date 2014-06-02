@@ -2,7 +2,7 @@ package com.flightstats.hub.service;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.model.exception.AlreadyExistsException;
+import com.flightstats.hub.model.exception.ConflictException;
 import com.flightstats.hub.model.exception.InvalidRequestException;
 import com.google.common.base.Strings;
 import org.junit.Before;
@@ -53,7 +53,7 @@ public class CreateChannelValidatorTest {
         validator.validate(ChannelConfiguration.builder().withName("  ").build());
     }
 
-    @Test(expected = AlreadyExistsException.class)
+    @Test(expected = ConflictException.class)
     public void testChannelExists() throws Exception {
         String channelName = "achannel";
         when(channelService.channelExists(channelName)).thenReturn(true);
