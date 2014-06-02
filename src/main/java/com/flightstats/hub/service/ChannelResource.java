@@ -4,7 +4,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.model.exception.AlreadyExistsException;
+import com.flightstats.hub.model.exception.ConflictException;
 import com.flightstats.hub.model.exception.InvalidRequestException;
 import com.flightstats.rest.Linked;
 import org.slf4j.Logger;
@@ -51,7 +51,7 @@ public class ChannelResource {
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createChannel(String json) throws InvalidRequestException, AlreadyExistsException {
+	public Response createChannel(String json) throws InvalidRequestException, ConflictException {
         ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json);
         channelConfiguration = channelService.createChannel(channelConfiguration);
 		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);

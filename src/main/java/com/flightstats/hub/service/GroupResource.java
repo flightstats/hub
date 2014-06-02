@@ -6,6 +6,7 @@ import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
 import javax.ws.rs.*;
@@ -37,15 +38,15 @@ public class GroupResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroups() {
         Iterable<Group> groups = groupService.getGroups();
-        Linked.Builder linkedBuilder = Linked.justLinks();
-        linkedBuilder.withLink("self", uriInfo.getRequestUri());
+        Linked.Builder builder = Linked.justLinks();
+        builder.withLink("self", uriInfo.getRequestUri());
         List<HalLink> halLinks = new ArrayList<>();
         for (Group group : groups) {
             String name = group.getName();
             halLinks.add(new HalLink(name, URI.create(uriInfo.getBaseUri() + "group/" + name)));
         }
-        linkedBuilder.withLinks("groups", halLinks);
-        return Response.ok(linkedBuilder.build()).build();
+        builder.withLinks("groups", halLinks);
+        return Response.ok(builder.build()).build();
     }
 
     @Path("/{name}")
@@ -54,10 +55,17 @@ public class GroupResource {
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroup(@PathParam("name") String name) {
-        //todo - gfm - 5/30/14 - handle null case
-        Group group = groupService.getGroup(name);
-        //todo - gfm - 5/30/14 - include self link?
-        return Response.ok(group.toJson()).build();
+        Optional<Group> optionalGroup = groupService.getGroup(name);
+        if (!optionalGroup.isPresent()) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(getLinkedGroup(optionalGroup.get())).build();
+    }
+
+    private Linked<Group> getLinkedGroup(Group group) {
+        Linked.Builder<Group> builder = Linked.linked(group);
+        builder.withLink("self", uriInfo.getRequestUri());
+        return builder.build();
     }
 
     @Path("/{name}")
@@ -68,10 +76,12 @@ public class GroupResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsertGroup(@PathParam("name") String name, String body) {
         Group group = Group.fromJson(body).withName(name);
-        Group upsertGroup = groupService.upsertGroup(group);
-        //todo - gfm - 6/1/14 - if existing group, return 200 rather than 201
-        //todo - gfm - 5/30/14 - include self link?
-        return Response.created(uriInfo.getRequestUri()).entity(upsertGroup.toJson()).build();
+        Optional<Group> upsertGroup = groupService.upsertGroup(group);
+        if (upsertGroup.isPresent()) {
+            return Response.ok(getLinkedGroup(group)).build();
+        } else {
+            return Response.created(uriInfo.getRequestUri()).entity(getLinkedGroup(group)).build();
+        }
     }
 
     @Path("/{name}")

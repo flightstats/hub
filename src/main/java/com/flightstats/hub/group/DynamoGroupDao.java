@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
+import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -56,18 +57,18 @@ public class DynamoGroupDao {
         return group;
     }
 
-    public Group getGroup(String name) {
+    public Optional<Group> getGroup(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("name", new AttributeValue(name));
         try {
             GetItemResult result = dbClient.getItem(getTableName(), keyMap);
             if (result.getItem() == null) {
-                return null;
+                return Optional.absent();
             }
-            return mapItem(result.getItem());
+            return Optional.of(mapItem(result.getItem()));
         } catch (ResourceNotFoundException e) {
             logger.info("group not found " + name + " " + e.getMessage());
-            return null;
+            return Optional.absent();
         }
     }
 
