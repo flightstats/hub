@@ -15,7 +15,9 @@ import com.flightstats.hub.dao.s3.S3IndexDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.hub.group.DynamoGroupDao;
+import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.replication.*;
+import com.flightstats.hub.service.CreateChannelValidator;
 import com.flightstats.hub.util.ContentKeyGenerator;
 import com.flightstats.hub.util.CuratorKeyGenerator;
 import com.flightstats.hub.websocket.WebsocketPublisher;
@@ -79,6 +81,8 @@ public class AwsModule extends AbstractModule {
 
         bind(DynamoUtils.class).asEagerSingleton();
         bind(DynamoGroupDao.class).asEagerSingleton();
+        bind(CreateChannelValidator.class).asEagerSingleton();
+        bind(GroupValidator.class).asEagerSingleton();
 	}
 
     @Inject

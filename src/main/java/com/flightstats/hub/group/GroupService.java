@@ -10,14 +10,17 @@ public class GroupService {
     private final static Logger logger = LoggerFactory.getLogger(GroupService.class);
 
     private final DynamoGroupDao dynamoGroupDao;
+    private final GroupValidator groupValidator;
 
     @Inject
-    public GroupService(DynamoGroupDao dynamoGroupDao) {
+    public GroupService(DynamoGroupDao dynamoGroupDao, GroupValidator groupValidator) {
         this.dynamoGroupDao = dynamoGroupDao;
+        this.groupValidator = groupValidator;
     }
 
     public Optional<Group> upsertGroup(Group group) {
         logger.info("upsert group " + group);
+        groupValidator.validate(group);
         Optional<Group> existingGroup = getGroup(group.getName());
         if (existingGroup.isPresent()) {
             if (!existingGroup.get().getChannelUrl().equals(group.getChannelUrl())) {
