@@ -1,5 +1,7 @@
 package com.flightstats.hub.group;
 
+import com.flightstats.hub.model.exception.ConflictException;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,18 +16,19 @@ public class GroupService {
         this.dynamoGroupDao = dynamoGroupDao;
     }
 
-    public Group upsertGroup(Group group) {
-        logger.info("creating group " + group);
-        //todo - gfm - 5/30/14 - check that the group exists
-        //todo - gfm - 5/30/14 - make sure the channel hasn't changed
-        //todo - gfm - 5/30/14 - save in Dynamo
-        //todo - gfm - 5/30/14 - update Group with latest value
+    public Optional<Group> upsertGroup(Group group) {
+        logger.info("upsert group " + group);
+        Optional<Group> existingGroup = getGroup(group.getName());
+        if (existingGroup.isPresent()) {
+            if (!existingGroup.get().getChannelUrl().equals(group.getChannelUrl())) {
+                throw new ConflictException("{\"error\": \"channelUrl may not change\"}");
+            }
+        }
         dynamoGroupDao.upsertGroup(group);
-
-        return group;
+        return existingGroup;
     }
 
-    public Group getGroup(String name) {
+    public Optional<Group> getGroup(String name) {
         return dynamoGroupDao.getGroup(name);
     }
 
@@ -34,6 +37,7 @@ public class GroupService {
     }
 
     public void delete(String name) {
+        logger.info("deleting group " + name);
         dynamoGroupDao.delete(name);
     }
 

@@ -20,7 +20,10 @@ var groupConfig = {
  */
 describe(testName, function () {
 
-    var groupHrefs = [utils.putGroup(groupName1, groupConfig), utils.putGroup(groupName2, groupConfig)];
+    var groupHrefs = [
+        utils.putGroup(groupName1, groupConfig, 201),
+        utils.putGroup(groupName2, groupConfig, 201)
+    ];
     var foundGroupHrefs = [];
 
     it('gets the groups ', function () {
@@ -29,9 +32,7 @@ describe(testName, function () {
                 function (err, response, body) {
                     expect(err).toBeNull();
                     expect(response.statusCode).toBe(200);
-                    console.log(body);
                     var parse = JSON.parse(body);
-                    console.log(parse);
                     expect(parse._links.self.href).toBe(groupUrl);
                     var groups = parse._links.groups;
                     groups.forEach(function (item) {
@@ -53,6 +54,9 @@ describe(testName, function () {
         });
 
     });
+
+    utils.deleteGroup(groupName1);
+    utils.deleteGroup(groupName2);
 
 });
 
