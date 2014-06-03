@@ -23,7 +23,7 @@ import java.util.*;
  * Replication stays up to date, with some minimal amount of lag
  */
 public class ReplicatorImpl implements Replicator {
-    public static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
+    private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
     private final static Logger logger = LoggerFactory.getLogger(ReplicatorImpl.class);
 
     private final ReplicationService replicationService;
@@ -106,6 +106,11 @@ public class ReplicatorImpl implements Replicator {
     @Override
     public List<DomainReplicator> getDomainReplicators() {
         return Collections.unmodifiableList(new ArrayList<>(replicatorMap.values()));
+    }
+
+    @Override
+    public void notifyWatchers() {
+        watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
     }
 
 }
