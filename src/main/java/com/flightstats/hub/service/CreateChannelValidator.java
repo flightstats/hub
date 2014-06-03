@@ -3,7 +3,7 @@ package com.flightstats.hub.service;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.encryption.AuditChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.model.exception.AlreadyExistsException;
+import com.flightstats.hub.model.exception.ConflictException;
 import com.flightstats.hub.model.exception.InvalidRequestException;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -17,7 +17,7 @@ public class CreateChannelValidator {
         this.channelService = channelService;
     }
 
-    public void validate(ChannelConfiguration request) throws InvalidRequestException, AlreadyExistsException {
+    public void validate(ChannelConfiguration request) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional =  Optional.absent();
         if (request != null) {
             channelNameOptional = Optional.fromNullable(request.getName());
@@ -103,9 +103,9 @@ public class CreateChannelValidator {
         }
     }
 
-    private void validateChannelUniqueness(String channelName) throws AlreadyExistsException {
+    private void validateChannelUniqueness(String channelName) throws ConflictException {
         if (channelService.channelExists(channelName)) {
-            throw new AlreadyExistsException("{\"error\": \"Channel name " + channelName + " already exists\"}");
+            throw new ConflictException("{\"error\": \"Channel name " + channelName + " already exists\"}");
         }
     }
 }

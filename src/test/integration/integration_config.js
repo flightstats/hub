@@ -1,7 +1,6 @@
 frisby = require('frisby');
 utils = require('./utils.js');
 
-//todo - gfm - 5/21/14 - might be nice to pull all the config into an object
 hubDomain = process.env.hubDomain || 'hub.svc.dev';
 replicationDomain = process.env.replicationDomain || 'hub.svc.staging';
 runEncrypted = process.env.runEncrypted || false;
@@ -19,3 +18,4 @@ console.log("runEncrypted " + runEncrypted);
 hubUrlBase = 'http://' + hubDomain;
 
 channelUrl = hubUrlBase + '/channel';
+groupUrl = hubUrlBase + '/group';
