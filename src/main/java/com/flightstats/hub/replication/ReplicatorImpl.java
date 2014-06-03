@@ -1,20 +1,16 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.app.HubServices;
-import com.google.common.primitives.Longs;
+import com.flightstats.hub.cluster.WatchManager;
+import com.flightstats.hub.cluster.Watcher;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.CuratorEvent;
-import org.apache.curator.framework.api.CuratorListener;
-import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Replication is moving from one Hub into another Hub
@@ -31,18 +27,16 @@ public class ReplicatorImpl implements Replicator {
     private final static Logger logger = LoggerFactory.getLogger(ReplicatorImpl.class);
 
     private final ReplicationService replicationService;
-    private final CuratorFramework curator;
     private final Provider<DomainReplicator> domainReplicatorProvider;
+    private final WatchManager watchManager;
     private final Map<String, DomainReplicator> replicatorMap = new HashMap<>();
-    private final ExecutorService executorService;
 
     @Inject
-    public ReplicatorImpl(ReplicationService replicationService, CuratorFramework curator,
-                          Provider<DomainReplicator> domainReplicatorProvider) {
+    public ReplicatorImpl(ReplicationService replicationService,
+                          Provider<DomainReplicator> domainReplicatorProvider, WatchManager watchManager) {
         this.replicationService = replicationService;
-        this.curator = curator;
         this.domainReplicatorProvider = domainReplicatorProvider;
-        executorService = Executors.newSingleThreadExecutor();
+        this.watchManager = watchManager;
         HubServices.register(new ReplicatorImplService());
     }
 
@@ -57,61 +51,22 @@ public class ReplicatorImpl implements Replicator {
         @Override
         protected void shutDown() throws Exception { }
 
-
     }
 
     public void startReplicator() {
         logger.info("starting replicator");
-        createNode();
-        addListener();
-        addWatcher();
+        watchManager.register(new Watcher() {
+            @Override
+            public void callback(CuratorEvent event) {
+                replicateDomains();
+            }
+
+            @Override
+            public String getPath() {
+                return REPLICATOR_WATCHER_PATH;
+            }
+        });
         replicateDomains();
-    }
-
-    private void addListener() {
-        curator.getCuratorListenable().addListener(new CuratorListener() {
-            @Override
-            public void eventReceived(CuratorFramework client, CuratorEvent event) throws Exception {
-                if (REPLICATOR_WATCHER_PATH.equals(event.getPath())) {
-                    replicateDomainsAsynch();
-                    addWatcher();
-                }
-            }
-        });
-    }
-
-    private void replicateDomainsAsynch() {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.currentThread().setName("ReplicateDomainsActive");
-                    replicateDomains();
-                } catch (Exception e) {
-                    logger.warn("error replicating domains", e);
-                } finally {
-                    Thread.currentThread().setName("ReplicateDomainsDormant");
-                }
-            }
-        });
-    }
-
-    private void addWatcher() {
-        try {
-            curator.getData().watched().forPath(REPLICATOR_WATCHER_PATH);
-        } catch (Exception e) {
-            logger.warn("unable to start watcher", e);
-        }
-    }
-
-    private void createNode() {
-        try {
-            curator.create().creatingParentsIfNeeded().forPath(REPLICATOR_WATCHER_PATH, Longs.toByteArray(System.currentTimeMillis()));
-        } catch (KeeperException.NodeExistsException ignore ) {
-            //this will typically happen, except the first time
-        } catch (Exception e) {
-            logger.warn("unable to create node", e);
-        }
     }
 
     private synchronized void replicateDomains() {
