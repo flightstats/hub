@@ -68,6 +68,14 @@ public class WatchManager {
         addWatch(path);
     }
 
+    public void notifyWatcher(String path) {
+        try {
+            curator.setData().forPath(path, Longs.toByteArray(System.currentTimeMillis()));
+        } catch (Exception e) {
+            logger.warn("unable to set watcher path", e);
+        }
+    }
+
     private void createNode(String path) {
         try {
             curator.create().creatingParentsIfNeeded().forPath(path, Longs.toByteArray(System.currentTimeMillis()));
