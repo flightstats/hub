@@ -72,6 +72,66 @@ function addItem(url, responseCode) {
     });
 }
 
+function putGroup(groupName, groupConfig, status) {
+    status = status || 201;
+    var groupResource = groupUrl + "/" + groupName;
+    it('creates group ' + groupName, function (done) {
+        request.put({url : groupResource,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify(groupConfig)},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(status);
+                if (status === 201) {
+                    expect(response.headers.location).toBe(groupResource);
+                }
+                if (typeof groupConfig !== "undefined" && status < 400) {
+                    var parse = JSON.parse(body);
+                    expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
+                    expect(parse.channelUrl).toBe(groupConfig.channelUrl);
+                    expect(parse.transactional).toBe(groupConfig.transactional);
+                    expect(parse.name).toBe(groupName);
+                }
+                done();
+            });
+    });
+    return groupResource;
+}
+
+function getGroup(groupName, groupConfig) {
+    var groupResource = groupUrl + "/" + groupName;
+    it('gets group ' + groupName, function (done) {
+        request.get({url : groupResource,
+                headers : {"Content-Type" : "application/json"} },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parse = JSON.parse(body);
+                expect(parse._links.self.href).toBe(groupResource);
+                if (typeof groupConfig !== "undefined") {
+                    expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
+                    expect(parse.channelUrl).toBe(groupConfig.channelUrl);
+                    expect(parse.transactional).toBe(groupConfig.transactional);
+                    expect(parse.name).toBe(groupName);
+                }
+                done();
+            });
+    });
+    return groupResource;
+}
+
+function deleteGroup(groupName) {
+    var groupResource = groupUrl + "/" + groupName;
+    it('deletes the group ' + groupName, function (done) {
+        request.del({url: groupResource },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(202);
+                done();
+            });
+    });
+}
+
 function sleep(millis) {
     runs(function() {
         flag = false;
@@ -94,4 +154,7 @@ exports.runInTestChannelJson = runInTestChannelJson;
 exports.createChannel = createChannel;
 exports.addItem = addItem;
 exports.sleep = sleep;
+exports.putGroup = putGroup;
+exports.getGroup = getGroup;
+exports.deleteGroup = deleteGroup;
 
