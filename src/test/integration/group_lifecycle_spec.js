@@ -17,40 +17,45 @@ var groupConfig = {
  *
  * 1 - create a channel
  * 2 - create a group on that channel
- *      make sure there is a listener at the endpoint
- * 3 - get the group
- * 4 - insert records into the channel
+ * 3 - start a server at the endpoint
+ * 4 - post items into the channel
  * 5 - verify that the records are returned within delta time
- * 6 - delete the group
  */
 describe(testName, function () {
     utils.createChannel(channelName);
 
-    utils.sleep(500);
-
     utils.putGroup(groupName, groupConfig);
 
+    function postItem() {
+        request.post({url : channelResource,
+                headers : {"Content-Type" : "application/json", user : 'somebody' },
+                body : JSON.stringify({ "data" : Date.now()})},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(201);
+            });
+    }
+
     it('runs callback server', function () {
+        var items = [];
         var started = false;
-        var called = false;
         var server;
         var closed = false;
 
         runs(function () {
             server = http.createServer(function (request, response) {
-                console.info('got request');
-                //console.info(request);
+                request.on('data', function(chunk) {
+                    items.push(chunk.toString());
+                });
                 response.writeHead(200);
                 response.end();
-                called = true;
             });
 
             server.on('connection', function(socket) {
-                socket.setTimeout(2000);
+                socket.setTimeout(1000);
             });
 
             server.listen(8888, function () {
-                console.info('Express server listening on port 8888');
                 started = true;
             });
         });
@@ -60,26 +65,25 @@ describe(testName, function () {
         }, 11000);
 
         runs(function () {
-            //todo - gfm - 6/4/14 - post more items
-            request.post({url: channelResource,
-                    headers: {"Content-Type": "application/json", user: 'somebody' },
-                    body: JSON.stringify({ "data": Date.now()})},
-                function (err, response, body) {
-                    expect(err).toBeNull();
-                    expect(response.statusCode).toBe(201);
-                });
+            postItem();
+            postItem();
+            postItem();
+            postItem();
         });
 
         waitsFor(function() {
-            //todo - gfm - 6/4/14 - make this a list with length
-            return called;
+            return items.length == 4;
         }, 12000);
 
         runs(function () {
             server.close(function () {
-                console.info('closed!');
                 closed = true;
             });
+
+            for (var i = 0; i < items.length; i++) {
+                var parse = JSON.parse(items[i]);
+                expect(parse.uris[0]).toBe(channelResource + '/100' + i);
+            }
         });
 
         waitsFor(function() {
@@ -87,16 +91,6 @@ describe(testName, function () {
         }, 9000);
 
     });
-
-
-
-    //
-    //utils.addItem(channelResource);
-
-
-
-
-
 
 });
 

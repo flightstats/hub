@@ -48,7 +48,7 @@ public class GroupCaller implements Leader {
         long start = getLastCompleted();
         this.client = createClient();
 
-        logger.info("last completed at " + start);
+        logger.debug("last completed at " + start);
         try (CallbackIterator iterator = iteratorProvider.get()) {
             iterator.start(start, group);
             while (iterator.hasNext() && hasLeadership.get()) {
@@ -76,11 +76,14 @@ public class GroupCaller implements Leader {
 
     private void sendTransactional(long next) {
         logger.debug("sending ", next);
-        ClientResponse response = client.resource(group.getCallbackUrl()).post(ClientResponse.class, "" + next);
+        //todo - gfm - 6/4/14 - set content type
+        GroupResponse groupResponse = new GroupResponse();
+        groupResponse.add(group.getChannelUrl() + "/" + next);
+        ClientResponse response = client.resource(group.getCallbackUrl()).post(ClientResponse.class, groupResponse.toJson());
         if (response.getStatus() == 200) {
             //todo - gfm - 6/3/14 - this will skip items if we get a non-200 response code
             updateLatest(next);
-            logger.info("set " + next);
+            logger.debug("set " + next);
         }
     }
 

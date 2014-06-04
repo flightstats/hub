@@ -90,7 +90,6 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
 
     private void signal() {
         synchronized (lock) {
-            logger.info("signalling lock");
             lock.notify();
         }
     }
