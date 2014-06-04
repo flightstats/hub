@@ -32,8 +32,8 @@ public class DynamoUtils {
         this.tableCreationWaitMinutes = tableCreationWaitMinutes;
     }
 
-    public String getTableName(String channelName) {
-        return appName + "-" + environment + "-" + channelName;
+    public String getTableName(String baseTableName) {
+        return appName + "-" + environment + "-" + baseTableName;
     }
 
     /**

@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.s3;
 
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.KeyCoordination;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
@@ -29,16 +30,19 @@ public class ContentDaoImpl implements ContentDao {
     private final ZooKeeperIndexDao zooKeeperIndexDao;
     private final S3ContentDao s3ContentDao;
     private final S3IndexDao s3IndexDao;
+    private final KeyCoordination keyCoordination;
 
     @Inject
     public ContentDaoImpl(ContentKeyGenerator keyGenerator,
                           ZooKeeperIndexDao zooKeeperIndexDao,
                           S3ContentDao s3ContentDao,
-                          S3IndexDao s3IndexDao) {
+                          S3IndexDao s3IndexDao,
+                          KeyCoordination keyCoordination) {
         this.keyGenerator = keyGenerator;
         this.s3ContentDao = s3ContentDao;
         this.zooKeeperIndexDao = zooKeeperIndexDao;
         this.s3IndexDao = s3IndexDao;
+        this.keyCoordination = keyCoordination;
         HubServices.register(new S3ContentDaoInit());
     }
 
@@ -96,6 +100,7 @@ public class ContentDaoImpl implements ContentDao {
     @Override
     public void initializeChannel(ChannelConfiguration config) {
         keyGenerator.seedChannel(config.getName());
+        keyCoordination.seedLatest(config.getName());
     }
 
     @Override
