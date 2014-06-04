@@ -4,4 +4,6 @@ import java.util.List;
 
 public interface Replicator {
     List<DomainReplicator> getDomainReplicators();
+
+    void notifyWatchers();
 }

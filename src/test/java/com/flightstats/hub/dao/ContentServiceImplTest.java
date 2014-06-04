@@ -2,6 +2,7 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeProvider;
+import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.google.common.base.Optional;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +29,8 @@ public class ContentServiceImplTest {
         channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlDays(days).build();
         timeProvider = mock(TimeProvider.class);
         KeyCoordination keyCoordination = mock(KeyCoordination.class);
-        testClass = new ContentServiceImpl(contentDao, keyCoordination);
+        WebsocketPublisher publisher = mock(WebsocketPublisher.class);
+        testClass = new ContentServiceImpl(contentDao, keyCoordination, publisher);
     }
 
     @Test

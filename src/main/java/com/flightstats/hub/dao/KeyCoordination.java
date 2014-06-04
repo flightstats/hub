@@ -11,4 +11,6 @@ public interface KeyCoordination {
     ContentKey getLastUpdated(String channelName);
 
     void delete(String channelName);
+
+    void seedLatest(String channelName);
 }

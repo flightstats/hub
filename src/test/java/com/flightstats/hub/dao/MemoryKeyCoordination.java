@@ -39,4 +39,9 @@ public class MemoryKeyCoordination implements KeyCoordination {
     public void delete(String channelName) {
         contentKeyMap.remove(channelName);
     }
+
+    @Override
+    public void seedLatest(String channelName) {
+
+    }
 }
