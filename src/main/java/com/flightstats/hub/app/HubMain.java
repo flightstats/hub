@@ -56,6 +56,7 @@ public class HubMain {
         });
         latch.await();
         server.halt();
+        HubServices.stopAll();
         logger.info("Server shutdown complete.  Exiting application.");
     }
 

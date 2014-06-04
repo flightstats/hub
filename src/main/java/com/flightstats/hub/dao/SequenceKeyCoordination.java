@@ -3,33 +3,42 @@ package com.flightstats.hub.dao;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
-import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//todo - gfm - 5/23/14 - clean this up
+//todo - gfm - 5/23/14 - rename this to LastUpdatedDao
 public class SequenceKeyCoordination implements KeyCoordination {
     private final static Logger logger = LoggerFactory.getLogger(SequenceKeyCoordination.class);
 
-    private final WebsocketPublisher websocketPublisher;
     private final CuratorFramework curator;
 
     @Inject
-    public SequenceKeyCoordination(WebsocketPublisher websocketPublisher,
-                                      final CuratorFramework curator) {
-        this.websocketPublisher = websocketPublisher;
+    public SequenceKeyCoordination(CuratorFramework curator) {
         this.curator = curator;
     }
 
     @Override
     public void insert(String channelName, ContentKey key) {
         setLastUpdateKey(channelName, key);
-        websocketPublisher.publish(channelName, key);
+    }
+
+    public void seedLatest(String channelName) {
+        logger.info("setting value for " + channelName);
+        try {
+            byte[] data = Longs.toByteArray(SequenceContentKey.START_VALUE);
+            curator.create().creatingParentsIfNeeded().forPath(getPath(channelName), data);
+        } catch (KeeperException.NodeExistsException ingore) {
+            //ignore this
+        } catch (Exception e) {
+            logger.warn("unable to seed " + channelName, e);
+        }
+        logger.info("set value for " + channelName);
     }
 
     @Timed(name = "sequence.setLastUpdated")
@@ -40,7 +49,7 @@ public class SequenceKeyCoordination implements KeyCoordination {
             String path = getPath(channelName);
             int attempts = 0;
             while (attempts < 3) {
-                LastUpdated existing = getLongValue(channelName);
+                LastUpdated existing = getFromZK(channelName);
                 if (sequence.getSequence() > existing.value) {
                     if (setValue(path, bytes, existing)) {
                         return;
@@ -70,21 +79,25 @@ public class SequenceKeyCoordination implements KeyCoordination {
     }
 
     @VisibleForTesting
-    LastUpdated getLongValue(String channelName) {
+    LastUpdated getFromZK(String channelName) {
         try {
             Stat stat = new Stat();
             byte[] bytes = curator.getData().storingStatIn(stat).forPath(getPath(channelName));
             return new LastUpdated(Longs.fromByteArray(bytes), stat.getVersion());
         } catch (Exception e) {
-            logger.info("unable to get value " + channelName + " " + e.getMessage());
+            logger.info("unable to get value " + channelName + " " + e.getMessage(), e);
             return new LastUpdated(SequenceContentKey.START_VALUE, -1);
         }
     }
 
     @Override
-    @Timed(name = "sequence.getLastUpdated")
     public ContentKey getLastUpdated(final String channelName) {
-        return new SequenceContentKey(getLongValue(channelName).value);
+        return new SequenceContentKey(getLongValue(channelName));
+    }
+
+    @Timed(name = "sequence.getLastUpdated")
+    public long getLongValue(String channelName) {
+        return getFromZK(channelName).value;
     }
 
     @Override
@@ -97,7 +110,7 @@ public class SequenceKeyCoordination implements KeyCoordination {
         }
     }
 
-    private String getPath(String channelName) {
+    public String getPath(String channelName) {
         return "/lastUpdated/" + channelName;
     }
 
