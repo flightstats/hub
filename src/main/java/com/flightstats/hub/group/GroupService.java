@@ -11,16 +11,19 @@ public class GroupService {
 
     private final DynamoGroupDao dynamoGroupDao;
     private final GroupValidator groupValidator;
+    private final GroupCallback groupCallback;
 
     @Inject
-    public GroupService(DynamoGroupDao dynamoGroupDao, GroupValidator groupValidator) {
+    public GroupService(DynamoGroupDao dynamoGroupDao, GroupValidator groupValidator, GroupCallback groupCallback) {
         this.dynamoGroupDao = dynamoGroupDao;
         this.groupValidator = groupValidator;
+        this.groupCallback = groupCallback;
     }
 
     public Optional<Group> upsertGroup(Group group) {
         logger.info("upsert group " + group);
         groupValidator.validate(group);
+        //todo - gfm - 6/3/14 - should this validate that the server url is correct and the channel is correct?
         Optional<Group> existingGroup = getGroup(group.getName());
         if (existingGroup.isPresent()) {
             if (!existingGroup.get().getChannelUrl().equals(group.getChannelUrl())) {
@@ -28,6 +31,7 @@ public class GroupService {
             }
         }
         dynamoGroupDao.upsertGroup(group);
+        groupCallback.notifyWatchers();
         return existingGroup;
     }
 
@@ -42,6 +46,7 @@ public class GroupService {
     public void delete(String name) {
         logger.info("deleting group " + name);
         dynamoGroupDao.delete(name);
+        groupCallback.notifyWatchers();
     }
 
 }
