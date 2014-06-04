@@ -7,9 +7,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
-import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,19 +26,17 @@ public class ReplicationServiceImpl implements ReplicationService {
     private final ChannelService channelService;
     private final ChannelUtils channelUtils;
     private final CuratorLock curatorLock;
-    private final CuratorFramework curator;
     private final Replicator replicator;
     private final ReplicationValidator replicationValidator;
 
     @Inject
     public ReplicationServiceImpl(ReplicationDao replicationDao, ChannelService channelService, ChannelUtils channelUtils,
-                                  CuratorLock curatorLock, CuratorFramework curator, Replicator replicator,
+                                  CuratorLock curatorLock, Replicator replicator,
                                   ReplicationValidator replicationValidator) {
         this.replicationDao = replicationDao;
         this.channelService = channelService;
         this.channelUtils = channelUtils;
         this.curatorLock = curatorLock;
-        this.curator = curator;
         this.replicator = replicator;
         this.replicationValidator = replicationValidator;
     }
@@ -59,11 +55,7 @@ public class ReplicationServiceImpl implements ReplicationService {
     }
 
     private void notifyWatchers() {
-        try {
-            curator.setData().forPath(ReplicatorImpl.REPLICATOR_WATCHER_PATH, Longs.toByteArray(System.currentTimeMillis()));
-        } catch (Exception e) {
-            logger.warn("unable to set watcher path", e);
-        }
+        replicator.notifyWatchers();
     }
 
     @Override

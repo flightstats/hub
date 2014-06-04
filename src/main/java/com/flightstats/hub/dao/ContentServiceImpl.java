@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -15,11 +16,13 @@ public class ContentServiceImpl implements ContentService {
 
     private final ContentDao contentDao;
     private final KeyCoordination keyCoordination;
+    private final WebsocketPublisher websocketPublisher;
 
     @Inject
-    public ContentServiceImpl(ContentDao contentDao, KeyCoordination keyCoordination) {
+    public ContentServiceImpl(ContentDao contentDao, KeyCoordination keyCoordination, WebsocketPublisher websocketPublisher) {
         this.contentDao = contentDao;
         this.keyCoordination = keyCoordination;
+        this.websocketPublisher = websocketPublisher;
     }
 
     @Override
@@ -35,6 +38,7 @@ public class ContentServiceImpl implements ContentService {
 
         InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());
         keyCoordination.insert(channelName, result.getKey());
+        websocketPublisher.publish(channelName, result.getKey());
         return result;
     }
 
