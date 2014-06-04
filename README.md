@@ -14,6 +14,7 @@ The Hub
 * [tag interface](#tag-interface)
 * [time interface](#time-interface)
 * [subscribe to events](#subscribe-to-events)
+* [group callback interface](#group-callback)
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
 * [configure replication](#configure-replication)
@@ -382,6 +383,43 @@ http://hub/channel/stumptown/1002
 ...etc...
 ```
 
+## group callback interface
+
+The Group Callback mechanism is an alternative to WebSockets for consuming events.  These push notifications use HTTP instead of WS, and 
+the Hub server keeps track of the Group's state.
+
+`name` is used in the url for the callback.  Names are limited to 48 characters and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
+`callbackUrl` is the fully qualified location to receive callbacks from the server.
+`channelUrl` is the fully qualified channel location to monitor.  Immutable once created.
+`transactional` is optional, defaults to false.  Is false, the server does not wait for a response.  
+If `transactional` is true, the server will wait for a response.  200 is considered a successful response.
+Anything else is considered an error, and will cause the server to retry.
+
+Retries will use an exponential backoff up to one minute, and the server will continue to retry at one minute intervals indefinitely.
+
+To see all existing group callbacks:
+
+`GET http://hub/group`
+ 
+To create a new group callback, or modify an existing one:
+
+`PUT http://hub/group/{name}`
+
+``` json
+{
+  "callbackUrl" : "http://client/path/callback",
+  "channelUrl" : "http://hub/channel/stumptown",
+  "transactional: : false
+}
+```
+
+To see the current state of a group callback:
+
+`GET http://hub/group/{name}`
+
+To delete a group callback:
+
+`DELETE http://hub/group/{name}`
 
 ## provider interface
 
