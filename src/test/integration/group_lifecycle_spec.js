@@ -2,12 +2,13 @@ require('./integration_config.js');
 
 var request = require('request');
 var http = require('http');
+var ip = require('ip');
 var channelName = utils.randomChannelName();
 var groupName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 var groupConfig = {
-    callbackUrl : 'http://localhost:8888/',
+    callbackUrl : 'http://' + ip.address() + ':8888/',
     channelUrl: channelResource,
     transactional: true
 };
@@ -22,6 +23,7 @@ var groupConfig = {
  * 5 - verify that the records are returned within delta time
  */
 describe(testName, function () {
+    console.log('using ' + groupConfig.callbackUrl);
     utils.createChannel(channelName);
 
     utils.putGroup(groupName, groupConfig);
