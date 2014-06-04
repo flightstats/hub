@@ -1,6 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubServices;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -34,7 +35,6 @@ public class WatchManager {
 
         @Override
         protected void startUp() throws Exception {
-            logger.info("startup");
             addCuratorListener();
         }
 
@@ -43,10 +43,12 @@ public class WatchManager {
 
     }
 
-    private void addCuratorListener() {
+    @VisibleForTesting
+    void addCuratorListener() {
         curator.getCuratorListenable().addListener(new CuratorListener() {
             @Override
             public void eventReceived(CuratorFramework client, final CuratorEvent event) throws Exception {
+                logger.debug("event {}", event);
                 final Watcher watcher = watcherMap.get(event.getPath());
                 if (watcher != null) {
                     executorService.submit(new Runnable() {
@@ -63,22 +65,25 @@ public class WatchManager {
 
     public void register(Watcher watcher) {
         String path = watcher.getPath();
-        createNode(path);
+        createNode(watcher);
         watcherMap.put(path, watcher);
         addWatch(path);
     }
 
     public void notifyWatcher(String path) {
-        try {
-            curator.setData().forPath(path, Longs.toByteArray(System.currentTimeMillis()));
-        } catch (Exception e) {
-            logger.warn("unable to set watcher path", e);
+        Watcher watcher = watcherMap.get(path);
+        if (watcher != null) {
+            try {
+                curator.setData().forPath(path, Longs.toByteArray(System.currentTimeMillis()));
+            } catch (Exception e) {
+                logger.warn("unable to set watcher path", e);
+            }
         }
     }
 
-    private void createNode(String path) {
+    private void createNode(Watcher watcher) {
         try {
-            curator.create().creatingParentsIfNeeded().forPath(path, Longs.toByteArray(System.currentTimeMillis()));
+            curator.create().creatingParentsIfNeeded().forPath(watcher.getPath(), Longs.toByteArray(System.currentTimeMillis()));
         } catch (KeeperException.NodeExistsException ignore ) {
             //this will typically happen, except the first time
         } catch (Exception e) {

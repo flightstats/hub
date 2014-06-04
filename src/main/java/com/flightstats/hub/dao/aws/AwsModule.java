@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.aws;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
@@ -15,6 +16,8 @@ import com.flightstats.hub.dao.s3.S3IndexDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.hub.group.DynamoGroupDao;
+import com.flightstats.hub.group.GroupCallback;
+import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.CreateChannelValidator;
@@ -83,6 +86,8 @@ public class AwsModule extends AbstractModule {
         bind(DynamoGroupDao.class).asEagerSingleton();
         bind(CreateChannelValidator.class).asEagerSingleton();
         bind(GroupValidator.class).asEagerSingleton();
+        bind(GroupCallback.class).to(GroupCallbackImpl.class).asEagerSingleton();
+        bind(WatchManager.class).asEagerSingleton();
 	}
 
     @Inject

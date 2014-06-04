@@ -36,6 +36,15 @@ public class HubServices {
     }
 
     public static void stopAll() {
-        //todo - gfm - 2/10/14 - what do we need to do here?
+        try {
+            for (Service service : services) {
+                logger.info("stopping service " + service.getClass().getName());
+                service.stopAsync();
+                service.awaitTerminated();
+                logger.info("stopped service " + service.getClass().getName());
+            }
+        } catch (Exception e) {
+            logger.error("unable to stop services, exiting", e);
+        }
     }
 }

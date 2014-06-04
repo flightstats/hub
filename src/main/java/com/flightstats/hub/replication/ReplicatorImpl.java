@@ -44,7 +44,6 @@ public class ReplicatorImpl implements Replicator {
 
         @Override
         protected void startUp() throws Exception {
-            logger.info("startup");
             startReplicator();
         }
 
@@ -54,7 +53,7 @@ public class ReplicatorImpl implements Replicator {
     }
 
     public void startReplicator() {
-        logger.info("starting replicator");
+        logger.info("starting");
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
