@@ -69,6 +69,8 @@ public class SequenceLastUpdatedDao implements LastUpdatedDao {
                 curator.setData().withVersion(existing.version).forPath(path, bytes);
             }
             return true;
+        } catch (KeeperException.BadVersionException e) {
+            return false;
         } catch (Exception e) {
             logger.info("what happened? " + path, e);
             return false;
