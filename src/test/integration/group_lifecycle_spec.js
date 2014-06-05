@@ -25,7 +25,7 @@ var groupConfig = {
  * 5 - verify that the records are returned within delta time
  */
 describe(testName, function () {
-    console.log('using ' + groupConfig.callbackUrl);
+    console.log('using ' + groupConfig.callbackUrl + ' for group ' + groupName);
     utils.createChannel(channelName);
 
     utils.putGroup(groupName, groupConfig);
