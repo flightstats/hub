@@ -80,7 +80,6 @@ public class GroupCallbackImpl implements GroupCallback {
 
     }
 
-    //todo - gfm - 6/3/14 - should this get called when channels are created also?
     @Override
     public void notifyWatchers() {
         watchManager.notifyWatcher(WATCHER_PATH);
