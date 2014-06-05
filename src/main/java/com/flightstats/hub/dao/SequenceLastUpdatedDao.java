@@ -12,24 +12,22 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//todo - gfm - 5/23/14 - rename this to LastUpdatedDao
-public class SequenceKeyCoordination implements KeyCoordination {
-    private final static Logger logger = LoggerFactory.getLogger(SequenceKeyCoordination.class);
+public class SequenceLastUpdatedDao implements LastUpdatedDao {
+    private final static Logger logger = LoggerFactory.getLogger(SequenceLastUpdatedDao.class);
 
     private final CuratorFramework curator;
 
     @Inject
-    public SequenceKeyCoordination(CuratorFramework curator) {
+    public SequenceLastUpdatedDao(CuratorFramework curator) {
         this.curator = curator;
     }
 
     @Override
-    public void insert(String channelName, ContentKey key) {
+    public void update(String channelName, ContentKey key) {
         setLastUpdateKey(channelName, key);
     }
 
-    public void seedLatest(String channelName) {
-        logger.info("setting value for " + channelName);
+    public void initialize(String channelName) {
         try {
             byte[] data = Longs.toByteArray(SequenceContentKey.START_VALUE);
             curator.create().creatingParentsIfNeeded().forPath(getPath(channelName), data);
@@ -38,7 +36,6 @@ public class SequenceKeyCoordination implements KeyCoordination {
         } catch (Exception e) {
             logger.warn("unable to seed " + channelName, e);
         }
-        logger.info("set value for " + channelName);
     }
 
     @Timed(name = "sequence.setLastUpdated")

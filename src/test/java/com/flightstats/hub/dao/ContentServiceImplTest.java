@@ -28,9 +28,9 @@ public class ContentServiceImplTest {
         days = 90210L;
         channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlDays(days).build();
         timeProvider = mock(TimeProvider.class);
-        KeyCoordination keyCoordination = mock(KeyCoordination.class);
+        LastUpdatedDao lastUpdatedDao = mock(LastUpdatedDao.class);
         WebsocketPublisher publisher = mock(WebsocketPublisher.class);
-        testClass = new ContentServiceImpl(contentDao, keyCoordination, publisher);
+        testClass = new ContentServiceImpl(contentDao, lastUpdatedDao, publisher);
     }
 
     @Test
