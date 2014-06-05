@@ -83,8 +83,8 @@ public class GroupCaller implements Leader {
     }
 
     private void sendTransactional(long next) {
-        logger.debug("sending ", next);
         try {
+            logger.debug("sending {} to {}", next, group.getName());
             final GroupResponse groupResponse = new GroupResponse();
             groupResponse.add(group.getChannelUrl() + "/" + next);
             retryer.call(new Callable<ClientResponse>() {
@@ -96,7 +96,7 @@ public class GroupCaller implements Leader {
                 }
             });
             lastCompleted.update(next);
-            logger.info("completed " + next + "call to " + group);
+            logger.debug("completed " + next + "call to " + group);
         } catch (Exception e) {
             //todo - gfm - 6/5/14 - can we ever get here?
             logger.warn("unable to send " + next + " to " + group, e);
