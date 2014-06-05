@@ -69,8 +69,8 @@ public class GroupCaller implements Leader {
     private void sendAsynch(long next) {
         //todo - gfm - 6/3/14 - should this drop missed calls, or retry?  retries could back up if the service is down
         //todo - gfm - 6/3/14 - maybe set the threadpool limit on the Client, or use a Semaphore
-        client.asyncResource(group.getCallbackUrl()).post("" + next);
-        lastCompleted.update(next);
+        /*client.asyncResource(group.getCallbackUrl()).post("" + next);
+        lastCompleted.update(next);*/
     }
 
     private void sendTransactional(long next) {
@@ -82,7 +82,8 @@ public class GroupCaller implements Leader {
         if (response.getStatus() == 200) {
             //todo - gfm - 6/3/14 - this will skip items if we get a non-200 response code
             lastCompleted.update(next);
-            logger.debug("set " + next);
+        } else {
+            logger.warn("unable to send {} to {}", response, group);
         }
     }
 
