@@ -5,7 +5,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.SequenceContentKey;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.base.Optional;
@@ -53,7 +52,7 @@ public class ChannelReplicatorTest {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(10)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         when(channelService.channelExists(CHANNEL)).thenReturn(false);
-        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(2000)));
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new ContentKey(2000)));
         factory = mock(SequenceIteratorFactory.class);
         sequenceIterator = mock(SequenceIterator.class);
         when(factory.create(anyLong(), any(Channel.class))).thenReturn(sequenceIterator);
@@ -112,7 +111,7 @@ public class ChannelReplicatorTest {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(10)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         init(20);
-        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new ContentKey(ContentKey.START_VALUE)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
@@ -132,7 +131,7 @@ public class ChannelReplicatorTest {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(20)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         init(10);
-        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new ContentKey(ContentKey.START_VALUE)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
@@ -154,7 +153,7 @@ public class ChannelReplicatorTest {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(10)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         init(20);
-        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new ContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
@@ -175,7 +174,7 @@ public class ChannelReplicatorTest {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(10)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         init(20);
-        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(999)));
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new ContentKey(999)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
@@ -196,7 +195,7 @@ public class ChannelReplicatorTest {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(10)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         init(20);
-        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new ContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusDays(9)));
         assertEquals(4999, replicator.getLastUpdated());
@@ -208,7 +207,7 @@ public class ChannelReplicatorTest {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(20)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         init(10);
-        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new ContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
@@ -229,7 +228,7 @@ public class ChannelReplicatorTest {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(20)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         init(10);
-        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new ContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusDays(9)));
         assertEquals(4999, replicator.getLastUpdated());
@@ -242,7 +241,7 @@ public class ChannelReplicatorTest {
         configuration = ChannelConfiguration.builder().withName(CHANNEL).withTtlMillis(TimeUnit.DAYS.toMillis(20)).build();
         when(channelUtils.getConfiguration(URL)).thenReturn(Optional.of(configuration));
         init(10);
-        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(5000)));
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new ContentKey(5000)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
@@ -264,7 +263,7 @@ public class ChannelReplicatorTest {
     public void testStartingSequenceHistorical() throws Exception {
         init(2);
 
-        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new ContentKey(ContentKey.START_VALUE)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).then(new Answer<Optional<DateTime>>() {
             @Override
@@ -283,7 +282,7 @@ public class ChannelReplicatorTest {
     public void testStartingSequenceLatest() throws Exception {
         init(0);
 
-        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new SequenceContentKey(SequenceContentKey.START_VALUE)));
+        when(channelService.findLastUpdatedKey(CHANNEL)).thenReturn(Optional.of((ContentKey) new ContentKey(ContentKey.START_VALUE)));
         when(channelUtils.getLatestSequence(URL)).thenReturn(Optional.of(6000L));
         when(channelUtils.getCreationDate(anyString(), anyLong())).thenReturn(Optional.of(new DateTime().minusMinutes(1)));
         assertEquals(5999, replicator.getLastUpdated());
