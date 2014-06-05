@@ -61,6 +61,8 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
         this.current = lastCompleted;
         this.group = group;
         addWatcher();
+        setLatest(GroupUtil.getChannelName(group));
+
     }
 
     private void addWatcher() {
@@ -68,12 +70,7 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
         singleWatcher.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
-                long sequence = sequenceKey.getLongValue(channelName);
-                logger.debug("latest sequence {} {}", sequence, group.getName());
-                if (sequence > latest.get()) {
-                    latest.set(sequence);
-                    signal();
-                }
+                setLatest(channelName);
             }
 
             @Override
@@ -81,6 +78,15 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
                 return sequenceKey.getPath(channelName);
             }
         });
+    }
+
+    private void setLatest(String channelName) {
+        long sequence = sequenceKey.getLongValue(channelName);
+        logger.debug("latest sequence {} {}", sequence, group.getName());
+        if (sequence > latest.get()) {
+            latest.set(sequence);
+            signal();
+        }
     }
 
     @Override
