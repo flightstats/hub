@@ -36,13 +36,20 @@ public class GroupService {
     }
 
     public Optional<Group> getGroup(String name) {
-        Optional<Group> group = dynamoGroupDao.getGroup(name);
-        //todo - gfm - 6/5/14 - add latest completed and current
-        return group;
+        return dynamoGroupDao.getGroup(name);
     }
 
     public Iterable<Group> getGroups() {
         return dynamoGroupDao.getGroups();
+    }
+
+    public GroupBean getGroupBean() {
+        Iterable<Group> groups = getGroups();
+        GroupStatus.GroupStatusBuilder builder = GroupStatus.builder();
+        //todo - gfm - 6/5/14 -
+        //builder.channelLatest()
+
+        return new GroupBean(groups, null);
     }
 
     public void delete(String name) {
