@@ -2,7 +2,7 @@ package com.flightstats.hub.group;
 
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
-import com.flightstats.hub.model.SequenceContentKey;
+import com.flightstats.hub.model.ContentKey;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -112,13 +112,13 @@ public class GroupCaller implements Leader {
             return Longs.fromByteArray(curator.getData().forPath(getValuePath()));
         } catch (Exception e) {
             logger.warn("unable to get node" + e.getMessage());
-            return SequenceContentKey.START_VALUE;
+            return ContentKey.START_VALUE;
         }
     }
 
     private void createNode() {
         try {
-            curator.create().creatingParentsIfNeeded().forPath(getValuePath(), Longs.toByteArray(SequenceContentKey.START_VALUE));
+            curator.create().creatingParentsIfNeeded().forPath(getValuePath(), Longs.toByteArray(ContentKey.START_VALUE));
         } catch (KeeperException.NodeExistsException ignore ) {
             //this will typically happen, except the first time
         } catch (Exception e) {

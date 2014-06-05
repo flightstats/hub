@@ -2,7 +2,6 @@ package com.flightstats.hub.dao;
 
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
@@ -29,7 +28,7 @@ public class SequenceLastUpdatedDao implements LastUpdatedDao {
 
     public void initialize(String channelName) {
         try {
-            byte[] data = Longs.toByteArray(SequenceContentKey.START_VALUE);
+            byte[] data = Longs.toByteArray(ContentKey.START_VALUE);
             curator.create().creatingParentsIfNeeded().forPath(getPath(channelName), data);
         } catch (KeeperException.NodeExistsException ingore) {
             //ignore this
@@ -41,13 +40,13 @@ public class SequenceLastUpdatedDao implements LastUpdatedDao {
     @Timed(name = "sequence.setLastUpdated")
     private void setLastUpdateKey(String channelName, ContentKey key) {
         try {
-            SequenceContentKey sequence = (SequenceContentKey) key;
-            byte[] bytes = Longs.toByteArray(sequence.getSequence());
+
+            byte[] bytes = Longs.toByteArray(key.getSequence());
             String path = getPath(channelName);
             int attempts = 0;
             while (attempts < 3) {
                 LastUpdated existing = getFromZK(channelName);
-                if (sequence.getSequence() > existing.value) {
+                if (key.getSequence() > existing.value) {
                     if (setValue(path, bytes, existing)) {
                         return;
                     }
@@ -83,13 +82,13 @@ public class SequenceLastUpdatedDao implements LastUpdatedDao {
             return new LastUpdated(Longs.fromByteArray(bytes), stat.getVersion());
         } catch (Exception e) {
             logger.info("unable to get value " + channelName + " " + e.getMessage(), e);
-            return new LastUpdated(SequenceContentKey.START_VALUE, -1);
+            return new LastUpdated(ContentKey.START_VALUE, -1);
         }
     }
 
     @Override
     public ContentKey getLastUpdated(final String channelName) {
-        return new SequenceContentKey(getLongValue(channelName));
+        return new ContentKey(getLongValue(channelName));
     }
 
     @Timed(name = "sequence.getLastUpdated")

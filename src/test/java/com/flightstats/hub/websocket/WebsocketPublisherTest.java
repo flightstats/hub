@@ -1,7 +1,6 @@
 package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.SequenceContentKey;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.MessageListener;
@@ -13,7 +12,7 @@ public class WebsocketPublisherTest {
 
     @Test
 	public void testPublish() throws Exception {
-		ContentKey contentKey = new SequenceContentKey((short) 1000);
+		ContentKey contentKey = new ContentKey((short) 1000);
 
 		HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 		ITopic iTopic = mock(ITopic.class);

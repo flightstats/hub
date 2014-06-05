@@ -2,7 +2,6 @@ package com.flightstats.hub.service;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.base.Optional;
 import org.junit.Test;
 
@@ -20,7 +19,7 @@ public class LatestChannelItemResourceTest {
 	@Test
 	public void testGetLatest() throws Exception {
 		String channelName = "fooChan";
-		ContentKey key = new SequenceContentKey(1000);
+		ContentKey key = new ContentKey(1000);
 
 		UriInfo uriInfo = mock(UriInfo.class);
 		ChannelService channelService = mock(ChannelService.class);

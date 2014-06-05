@@ -35,7 +35,7 @@ public class ContentServiceImplTest {
 
     @Test
     public void testInsert() throws Exception {
-        ContentKey key = new SequenceContentKey( 1003);
+        ContentKey key = new ContentKey( 1003);
         byte[] data = "bar".getBytes();
         Content content = Content.builder().withData(data).withContentType("text/plain").withMillis(days).build();
         InsertedContentKey expected = new InsertedContentKey(key, null);
@@ -50,9 +50,9 @@ public class ContentServiceImplTest {
 
     @Test
     public void testGetValue() throws Exception {
-        ContentKey key = new SequenceContentKey( 1001);
-        ContentKey previousKey = new SequenceContentKey( 1000);
-        ContentKey nextKey = new SequenceContentKey( 1002);
+        ContentKey key = new ContentKey( 1001);
+        ContentKey previousKey = new ContentKey( 1000);
+        ContentKey nextKey = new ContentKey( 1002);
         byte[] data = new byte[]{8, 7, 6, 5, 4, 3, 2, 1};
         Content content = Content.builder().withData(data).withContentType("text/plain").withMillis(0L).build();
         LinkedContent expected = new LinkedContent(content, previousKey, nextKey);

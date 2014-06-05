@@ -2,7 +2,6 @@ package com.flightstats.hub.util;
 
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.apache.curator.RetryPolicy;
@@ -32,16 +31,16 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
 
     @Override
     @Timed(name = "keyGen.newKey")
-    public SequenceContentKey newKey(final String channelName) {
+    public ContentKey newKey(final String channelName) {
         return getContentKey(channelName);
     }
 
-    private SequenceContentKey getContentKey(String channelName) {
+    private ContentKey getContentKey(String channelName) {
         DistributedAtomicLong atomicLong = getDistributedAtomicLong(channelName);
         try {
             AtomicValue<Long> value = atomicLong.increment();
             if (value.succeeded()) {
-                return new SequenceContentKey(value.postValue());
+                return new ContentKey(value.postValue());
             }
         } catch (Exception e) {
             logger.warn("unable to set atomiclong " + channelName, e);
@@ -53,7 +52,7 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
     public void seedChannel(String channelName) {
         DistributedAtomicLong atomicLong = getDistributedAtomicLong(channelName);
         try {
-            atomicLong.trySet(SequenceContentKey.START_VALUE);
+            atomicLong.trySet(ContentKey.START_VALUE);
             logger.info("seeded channel " + channelName);
         } catch (Exception e) {
             logger.warn("unable to seed " + channelName, e);
@@ -62,7 +61,7 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
 
     @Override
     public Optional<ContentKey> parse(String keyString) {
-        return SequenceContentKey.fromString(keyString);
+        return ContentKey.fromString(keyString);
     }
 
     @Override
@@ -80,9 +79,8 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
     @Override
     public void setLatest(String channelName, ContentKey contentKey) {
         DistributedAtomicLong atomicLong = getDistributedAtomicLong(channelName);
-        SequenceContentKey sequenceContentKey = (SequenceContentKey) contentKey;
         try {
-            atomicLong.forceSet(sequenceContentKey.getSequence());
+            atomicLong.forceSet(contentKey.getSequence());
         } catch (Exception e) {
             logger.warn("unable to set content key sequence", e);
         }

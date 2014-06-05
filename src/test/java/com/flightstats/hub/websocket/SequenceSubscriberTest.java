@@ -1,7 +1,6 @@
 package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.SequenceContentKey;
 import com.hazelcast.core.Message;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -16,7 +15,7 @@ public class SequenceSubscriberTest {
     @Test
     public void testOneMessageBasic() throws URISyntaxException {
         // GIVEN
-        ContentKey key = new SequenceContentKey(1000);
+        ContentKey key = new ContentKey(1000);
         Consumer<String> consumer = mock(Consumer.class);
         SequenceSubscriber testClass = new SequenceSubscriber(consumer);
 
@@ -30,8 +29,8 @@ public class SequenceSubscriberTest {
     @Test
     public void testTwoMessageInOrder() throws URISyntaxException {
         // GIVEN
-        ContentKey key_1 = new SequenceContentKey(1000);
-        ContentKey key_2 = new SequenceContentKey(1001);
+        ContentKey key_1 = new ContentKey(1000);
+        ContentKey key_2 = new ContentKey(1001);
         String stringKey1 = key_1.keyToString();
         String stringKey2 = key_2.keyToString();
         Consumer<String> consumer = mock(Consumer.class);
@@ -50,8 +49,8 @@ public class SequenceSubscriberTest {
     @Test
     public void testTwoMessageOutOfOrder() throws URISyntaxException {
         // GIVEN
-        ContentKey key_1 = new SequenceContentKey(1000);
-        ContentKey key_2 = new SequenceContentKey(1001);
+        ContentKey key_1 = new ContentKey(1000);
+        ContentKey key_2 = new ContentKey(1001);
         String stringKey1 = key_1.keyToString();
         String stringKey2 = key_2.keyToString();
         Consumer<String> consumer = mock(Consumer.class);
@@ -69,11 +68,11 @@ public class SequenceSubscriberTest {
     @Test
     public void testMessagesFromTheFutureAndPastAndRollover() throws URISyntaxException {
         // GIVEN
-        ContentKey key_1 = new SequenceContentKey((Short.MAX_VALUE - 2));
-        ContentKey key_2 = new SequenceContentKey((Short.MAX_VALUE - 1));
-        ContentKey key_3 = new SequenceContentKey(Short.MAX_VALUE);
-        ContentKey key_4 = new SequenceContentKey(Short.MAX_VALUE + 1);
-        ContentKey key_5 = new SequenceContentKey(Short.MAX_VALUE + 2);
+        ContentKey key_1 = new ContentKey((Short.MAX_VALUE - 2));
+        ContentKey key_2 = new ContentKey((Short.MAX_VALUE - 1));
+        ContentKey key_3 = new ContentKey(Short.MAX_VALUE);
+        ContentKey key_4 = new ContentKey(Short.MAX_VALUE + 1);
+        ContentKey key_5 = new ContentKey(Short.MAX_VALUE + 2);
         String key1 = key_1.keyToString();
         URI uri_1 = new URI("http://mysystem:7898/channel/mychan/" + key1);
         String key2 = key_2.keyToString();

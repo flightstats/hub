@@ -1,6 +1,6 @@
 package com.flightstats.hub.websocket;
 
-import com.flightstats.hub.model.SequenceContentKey;
+import com.flightstats.hub.model.ContentKey;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import org.slf4j.Logger;
@@ -73,7 +73,7 @@ public class SequenceSubscriber implements MessageListener<String> {
         return current + 1;
     }
 
-    private SequenceContentKey getKeyFromUri(String stringKey) {
-        return (SequenceContentKey) SequenceContentKey.fromString(stringKey).get();
+    private ContentKey getKeyFromUri(String stringKey) {
+        return ContentKey.fromString(stringKey).get();
     }
 }
