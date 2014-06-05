@@ -8,7 +8,9 @@ var groupName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 var groupConfig = {
-    callbackUrl : 'http://' + ip.address() + ':8888/',
+    //todo - gfm - 6/5/14 - this does not report the correct ip address when connected via the vpn
+    //should return 10.250.255.0/24 , instead returns 192.168.x.x
+    callbackUrl : 'http://' + ip.address() + ':' + callbackPort + '/',
     channelUrl: channelResource,
     transactional: true
 };
@@ -57,7 +59,7 @@ describe(testName, function () {
                 socket.setTimeout(1000);
             });
 
-            server.listen(8888, function () {
+            server.listen(callbackPort, function () {
                 started = true;
             });
         });

@@ -51,13 +51,13 @@ public class WatchManager {
                 logger.debug("event {}", event);
                 final Watcher watcher = watcherMap.get(event.getPath());
                 if (watcher != null) {
+                    addWatch(watcher.getPath());
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
                             watcher.callback(event);
                         }
                     });
-                    addWatch(watcher.getPath());
                 }
             }
         });
