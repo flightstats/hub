@@ -12,19 +12,19 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  *
  */
-public class MemoryKeyCoordination implements KeyCoordination {
-    private final static Logger logger = LoggerFactory.getLogger(MemoryKeyCoordination.class);
+public class MemoryLastUpdatedDao implements LastUpdatedDao {
+    private final static Logger logger = LoggerFactory.getLogger(MemoryLastUpdatedDao.class);
 
     private final WebsocketPublisher websocketPublisher;
     private Map<String, ContentKey> contentKeyMap = new ConcurrentHashMap<>();
 
     @Inject
-    public MemoryKeyCoordination(WebsocketPublisher websocketPublisher) {
+    public MemoryLastUpdatedDao(WebsocketPublisher websocketPublisher) {
         this.websocketPublisher = websocketPublisher;
     }
 
     @Override
-    public void insert(String channelName, ContentKey key) {
+    public void update(String channelName, ContentKey key) {
         logger.info("inserting " + key.keyToString());
         contentKeyMap.put(channelName, key);
         websocketPublisher.publish(channelName, key);
@@ -41,7 +41,7 @@ public class MemoryKeyCoordination implements KeyCoordination {
     }
 
     @Override
-    public void seedLatest(String channelName) {
+    public void initialize(String channelName) {
 
     }
 }

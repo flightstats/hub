@@ -2,7 +2,7 @@ package com.flightstats.hub.group;
 
 import com.flightstats.hub.cluster.SingleWatcher;
 import com.flightstats.hub.cluster.Watcher;
-import com.flightstats.hub.dao.SequenceKeyCoordination;
+import com.flightstats.hub.dao.SequenceLastUpdatedDao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
@@ -25,11 +25,11 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
     private long current;
     private Group group;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
-    private final SequenceKeyCoordination sequenceKey;
+    private final SequenceLastUpdatedDao sequenceKey;
     private final SingleWatcher singleWatcher;
 
     @Inject
-    public CallbackIterator(SequenceKeyCoordination sequenceKey, SingleWatcher singleWatcher) {
+    public CallbackIterator(SequenceLastUpdatedDao sequenceKey, SingleWatcher singleWatcher) {
         this.sequenceKey = sequenceKey;
         this.singleWatcher = singleWatcher;
     }
