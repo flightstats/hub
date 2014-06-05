@@ -25,6 +25,7 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
     private long current;
     private Group group;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
+    //todo - gfm - 6/5/14 - should this use the interface instead?
     private final SequenceLastUpdatedDao sequenceKey;
     private final SingleWatcher singleWatcher;
 

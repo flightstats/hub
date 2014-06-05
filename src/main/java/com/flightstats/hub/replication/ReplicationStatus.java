@@ -1,8 +1,6 @@
 package com.flightstats.hub.replication;
 
-/**
- *
- */
+//todo - gfm - 6/5/14 - add lombok
 public class ReplicationStatus {
 
     private long replicationLatest;
