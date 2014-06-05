@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 //todo - gfm - 6/5/14 - change this to use LongValue
 public class SequenceLastUpdatedDao implements LastUpdatedDao {
     private final static Logger logger = LoggerFactory.getLogger(SequenceLastUpdatedDao.class);
+    private static final int NEW_NODE = -1;
 
     private final CuratorFramework curator;
 
@@ -47,6 +48,7 @@ public class SequenceLastUpdatedDao implements LastUpdatedDao {
             int attempts = 0;
             while (attempts < 3) {
                 LastUpdated existing = getFromZK(channelName);
+                logger.debug("lastUpdated {} for {}", key.getSequence(), channelName);
                 if (key.getSequence() > existing.value) {
                     if (setValue(path, bytes, existing)) {
                         return;
@@ -63,13 +65,14 @@ public class SequenceLastUpdatedDao implements LastUpdatedDao {
 
     private boolean setValue(String path, byte[] bytes, LastUpdated existing) throws Exception {
         try {
-            if (existing.version == -1) {
+            if (existing.version == NEW_NODE) {
                 curator.create().creatingParentsIfNeeded().forPath(path, bytes);
             } else {
                 curator.setData().withVersion(existing.version).forPath(path, bytes);
             }
             return true;
         } catch (KeeperException.BadVersionException e) {
+            logger.info("bad version " + path + " " + e.getMessage());
             return false;
         } catch (Exception e) {
             logger.info("what happened? " + path, e);
@@ -85,10 +88,10 @@ public class SequenceLastUpdatedDao implements LastUpdatedDao {
             return new LastUpdated(Longs.fromByteArray(bytes), stat.getVersion());
         } catch (KeeperException.NoNodeException e) {
             logger.info("unable to get value " + channelName + " " + e.getMessage());
-            return new LastUpdated(ContentKey.START_VALUE, -1);
+            return new LastUpdated(ContentKey.START_VALUE, NEW_NODE);
         } catch (Exception e) {
             logger.info("unable to get value " + channelName + " " + e.getMessage(), e);
-            return new LastUpdated(ContentKey.START_VALUE, -1);
+            return new LastUpdated(ContentKey.START_VALUE, NEW_NODE);
         }
     }
 
