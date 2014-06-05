@@ -85,7 +85,7 @@ public class AwsChannelServiceIntegration {
         createLocksPath("/ChannelReplicator/");
         ChannelConfiguration configuration = ChannelConfiguration.builder().withName(channelName).withTtlDays(1L).build();
         channelService.createChannel(configuration);
-        Request request = Request.builder().channel(channelName).id(new SequenceContentKey(1000).keyToString()).build();
+        Request request = Request.builder().channel(channelName).id(new ContentKey(1000).keyToString()).build();
         assertFalse(channelService.getValue(request).isPresent());
         byte[] bytes = "some data".getBytes();
         Content content = Content.builder().withData(bytes).build();

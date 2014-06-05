@@ -5,7 +5,6 @@ import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.LinkedContent;
-import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.base.Optional;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +38,7 @@ public class ChannelContentResourceTest {
     public void testGetValue() throws Exception {
         String channelName = "canal4";
         byte[] expected = new byte[]{55, 66, 77, 88};
-        ContentKey key = new SequenceContentKey( 1000);
+        ContentKey key = new ContentKey( 1000);
         Content content = Content.builder().withData(expected).withContentType("text/plain").withContentLanguage("en").withMillis(0L).build();
         LinkedContent linkedValue = new LinkedContent(content);
 
@@ -57,7 +56,7 @@ public class ChannelContentResourceTest {
     @Test
     public void testGetValueNoContentTypeSpecified() throws Exception {
         String channelName = "canal4";
-        ContentKey key = new SequenceContentKey( 1000);
+        ContentKey key = new ContentKey( 1000);
         byte[] expected = new byte[]{55, 66, 77, 88};
         Content content = Content.builder().withData(expected).build();
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
@@ -73,7 +72,7 @@ public class ChannelContentResourceTest {
     @Test
     public void testGetValueContentMismatch() throws Exception {
         String channelName = "canal4";
-        ContentKey key = new SequenceContentKey( 1000);
+        ContentKey key = new ContentKey( 1000);
         byte[] expected = new byte[]{55, 66, 77, 88};
         Content content = Content.builder().withData(expected).withContentType(MediaType.APPLICATION_XML).build();
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
@@ -89,7 +88,7 @@ public class ChannelContentResourceTest {
     public void testGetValueNotFound() throws Exception {
 
         String channelName = "canal4";
-        ContentKey key = new SequenceContentKey( 1000);
+        ContentKey key = new ContentKey( 1000);
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.<LinkedContent>absent());
 
@@ -105,7 +104,7 @@ public class ChannelContentResourceTest {
     @Test
     public void testCreationDateHeaderInResponse() throws Exception {
         String channelName = "woo";
-        ContentKey key = new SequenceContentKey(  1000);
+        ContentKey key = new ContentKey(  1000);
         Content content = Content.builder().withData("found it!".getBytes()).withMillis(987654321).build();
         LinkedContent linkedValue = new LinkedContent(content);
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
@@ -121,8 +120,8 @@ public class ChannelContentResourceTest {
     @Test
     public void testPreviousLink() throws Exception {
         String channelName = "woo";
-        ContentKey previousKey = new SequenceContentKey(1000);
-        ContentKey key = new SequenceContentKey(1001);
+        ContentKey previousKey = new ContentKey(1000);
+        ContentKey key = new ContentKey(1001);
         LinkedContent linkedValue = new LinkedContent(content, previousKey, null);
 
         UriInfo uriInfo = mock(UriInfo.class);
@@ -141,7 +140,7 @@ public class ChannelContentResourceTest {
     @Test
     public void testPreviousLink_none() throws Exception {
         String channelName = "woo";
-        ContentKey key = new SequenceContentKey( 1000);
+        ContentKey key = new ContentKey( 1000);
         LinkedContent linkedValue = new LinkedContent(content);
 
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
@@ -157,8 +156,8 @@ public class ChannelContentResourceTest {
     @Test
     public void testNextLink() throws Exception {
         String channelName = "nerxt";
-        ContentKey nextKey = new SequenceContentKey( 1001);
-        ContentKey key = new SequenceContentKey( 1000);
+        ContentKey nextKey = new ContentKey( 1001);
+        ContentKey key = new ContentKey( 1000);
         LinkedContent linkedValue = new LinkedContent(content, null, nextKey);
 
         UriInfo uriInfo = mock(UriInfo.class);
@@ -176,7 +175,7 @@ public class ChannelContentResourceTest {
     @Test
     public void testNextLinkNone() throws Exception {
         String channelName = "nerxt";
-        ContentKey key = new SequenceContentKey( 1000);
+        ContentKey key = new ContentKey( 1000);
         LinkedContent linkedValue = new LinkedContent(content);
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.of(linkedValue));
@@ -191,7 +190,7 @@ public class ChannelContentResourceTest {
     @Test
     public void testLanguageHeader_missing() throws Exception {
         String channelName = "canal4";
-        ContentKey key = new SequenceContentKey( 1000);
+        ContentKey key = new ContentKey( 1000);
         LinkedContent linkedValue = new LinkedContent(content);
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();
         when(channelService.getValue(request)).thenReturn(Optional.of(linkedValue));
@@ -205,7 +204,7 @@ public class ChannelContentResourceTest {
     @Test
     public void testEncodingHeader_missing() throws Exception {
         String channelName = "canal4";
-        ContentKey key = new SequenceContentKey( 1000);
+        ContentKey key = new ContentKey( 1000);
         LinkedContent linkedValue = new LinkedContent(content);
 
         Request request = Request.builder().channel(channelName).id(key.keyToString()).build();

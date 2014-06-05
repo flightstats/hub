@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.SequenceContentKey;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.service.Headers;
 import com.flightstats.hub.util.ChannelNameExtractor;
 import com.google.common.base.Optional;
@@ -89,7 +89,7 @@ public class ChannelUtils {
             return Optional.absent();
         }
         Content content = Content.builder()
-                .withContentKey(new SequenceContentKey(sequence))
+                .withContentKey(new ContentKey(sequence))
                 .withContentType(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
                 .withContentLanguage(response.getHeaders().getFirst(Headers.LANGUAGE))
                 .withUser(response.getHeaders().getFirst(Headers.USER))
