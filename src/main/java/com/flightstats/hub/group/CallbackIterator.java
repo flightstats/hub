@@ -69,7 +69,7 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
             @Override
             public void callback(CuratorEvent event) {
                 long sequence = sequenceKey.getLongValue(channelName);
-                logger.debug("latest sequence {}", sequence);
+                logger.debug("latest sequence {} {}", sequence, group.getName());
                 if (sequence > latest.get()) {
                     latest.set(sequence);
                     signal();

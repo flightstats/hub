@@ -57,7 +57,7 @@ public class GroupCaller implements Leader {
         long start = lastCompleted.get();
         this.client = createClient();
 
-        logger.debug("last completed at " + start);
+        logger.debug("last completed at " + start + " " + group.getName());
         try (CallbackIterator iterator = iteratorProvider.get()) {
             iterator.start(start, group);
             while (iterator.hasNext() && hasLeadership.get()) {
@@ -96,7 +96,7 @@ public class GroupCaller implements Leader {
                 }
             });
             lastCompleted.update(next);
-            logger.debug("completed " + next + "call to " + group);
+            logger.debug("completed {} call to {} ", next, group.getName());
         } catch (Exception e) {
             //todo - gfm - 6/5/14 - can we ever get here?
             logger.warn("unable to send " + next + " to " + group, e);
