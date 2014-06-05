@@ -19,3 +19,7 @@ hubUrlBase = 'http://' + hubDomain;
 
 channelUrl = hubUrlBase + '/channel';
 groupUrl = hubUrlBase + '/group';
+callbackPort = 8888;
+if (runEncrypted) {
+    callbackPort = 8899;
+}

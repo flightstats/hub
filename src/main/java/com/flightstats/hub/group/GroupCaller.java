@@ -97,6 +97,8 @@ public class GroupCaller implements Leader {
 
     //todo - gfm - 6/3/14 - exit
 
+    //todo - gfm - 6/5/14 - make sure ZK values are deleted when Group is deleted.
+
     private String getLeaderPath() {
         return "/GroupLeader/" + group.getName();
     }

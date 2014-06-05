@@ -36,7 +36,9 @@ public class GroupService {
     }
 
     public Optional<Group> getGroup(String name) {
-        return dynamoGroupDao.getGroup(name);
+        Optional<Group> group = dynamoGroupDao.getGroup(name);
+        //todo - gfm - 6/5/14 - add latest completed and current
+        return group;
     }
 
     public Iterable<Group> getGroups() {
