@@ -79,7 +79,7 @@ public class AwsModule extends AbstractModule {
         bind(ContentService.class).to(ContentServiceImpl.class).in(Singleton.class);
         bind(ContentDao.class).to(ContentDaoImpl.class).in(Singleton.class);
         bind(TimeIndexDao.class).to(S3IndexDao.class).in(Singleton.class);
-        bind(KeyCoordination.class).to(SequenceKeyCoordination.class).in(Singleton.class);
+        bind(LastUpdatedDao.class).to(SequenceLastUpdatedDao.class).in(Singleton.class);
         bind(ContentKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
 
         bind(DynamoUtils.class).asEagerSingleton();
