@@ -11,6 +11,7 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//todo - gfm - 6/5/14 - change this to use LongValue
 public class SequenceLastUpdatedDao implements LastUpdatedDao {
     private final static Logger logger = LoggerFactory.getLogger(SequenceLastUpdatedDao.class);
 
@@ -80,6 +81,9 @@ public class SequenceLastUpdatedDao implements LastUpdatedDao {
             Stat stat = new Stat();
             byte[] bytes = curator.getData().storingStatIn(stat).forPath(getPath(channelName));
             return new LastUpdated(Longs.fromByteArray(bytes), stat.getVersion());
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("unable to get value " + channelName + " " + e.getMessage());
+            return new LastUpdated(ContentKey.START_VALUE, -1);
         } catch (Exception e) {
             logger.info("unable to get value " + channelName + " " + e.getMessage(), e);
             return new LastUpdated(ContentKey.START_VALUE, -1);

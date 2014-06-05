@@ -6,7 +6,6 @@ import com.flightstats.hub.dao.SequenceLastUpdatedDao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +64,7 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
     }
 
     private void addWatcher() {
-        final String channelName = StringUtils.substringAfter(group.getChannelUrl(), "/channel/");
+        final String channelName = GroupUtil.getChannelName(group);
         singleWatcher.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
