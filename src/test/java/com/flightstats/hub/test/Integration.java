@@ -28,6 +28,10 @@ public class Integration {
     private static boolean memoryStarted = false;
     private static CuratorFramework curator;
 
+    public static void main(String[] args) throws Exception {
+        startZooKeeper();
+    }
+
     public static synchronized CuratorFramework startZooKeeper() throws Exception {
         if (testingServer == null) {
             logger.info("starting zookeeper");

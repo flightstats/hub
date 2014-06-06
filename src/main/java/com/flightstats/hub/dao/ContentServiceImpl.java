@@ -15,13 +15,13 @@ public class ContentServiceImpl implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
     private final ContentDao contentDao;
-    private final KeyCoordination keyCoordination;
+    private final LastUpdatedDao lastUpdatedDao;
     private final WebsocketPublisher websocketPublisher;
 
     @Inject
-    public ContentServiceImpl(ContentDao contentDao, KeyCoordination keyCoordination, WebsocketPublisher websocketPublisher) {
+    public ContentServiceImpl(ContentDao contentDao, LastUpdatedDao lastUpdatedDao, WebsocketPublisher websocketPublisher) {
         this.contentDao = contentDao;
-        this.keyCoordination = keyCoordination;
+        this.lastUpdatedDao = lastUpdatedDao;
         this.websocketPublisher = websocketPublisher;
     }
 
@@ -37,7 +37,7 @@ public class ContentServiceImpl implements ContentService {
         logger.debug("inserting {} bytes into channel {} ", content.getData().length, channelName);
 
         InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());
-        keyCoordination.insert(channelName, result.getKey());
+        lastUpdatedDao.update(channelName, result.getKey());
         websocketPublisher.publish(channelName, result.getKey());
         return result;
     }
@@ -69,7 +69,7 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     public Optional<ContentKey> findLastUpdatedKey(String channelName) {
-        return Optional.fromNullable(keyCoordination.getLastUpdated(channelName));
+        return Optional.fromNullable(lastUpdatedDao.getLastUpdated(channelName));
     }
 
     @Override
@@ -81,7 +81,7 @@ public class ContentServiceImpl implements ContentService {
     public void delete(String channelName) {
         logger.info("deleting channel " + channelName);
         contentDao.delete(channelName);
-        keyCoordination.delete(channelName);
+        lastUpdatedDao.delete(channelName);
     }
 
 

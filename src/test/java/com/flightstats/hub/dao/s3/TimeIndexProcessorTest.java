@@ -5,7 +5,7 @@ import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
-import com.flightstats.hub.model.SequenceContentKey;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
@@ -112,7 +112,7 @@ public class TimeIndexProcessorTest {
             expected.put(channel + TimeIndex.getHash(dateTime), set);
             for (int keys = 0; keys < minutes + 1; keys++) {
                 total++;
-                SequenceContentKey contentKey = new SequenceContentKey(key++);
+                ContentKey contentKey = new ContentKey(key++);
                 zooKeeperIndexDao.writeIndex(channel, dateTime, contentKey);
                 set.add(contentKey.keyToString());
             }

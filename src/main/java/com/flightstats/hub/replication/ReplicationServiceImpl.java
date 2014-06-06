@@ -4,7 +4,6 @@ import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -102,8 +101,7 @@ public class ReplicationServiceImpl implements ReplicationService {
                     status.setConnected( channelReplicator.isConnected());
                     Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
                     if (lastUpdatedKey.isPresent()) {
-                        SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
-                        status.setReplicationLatest(contentKey.getSequence());
+                        status.setReplicationLatest(lastUpdatedKey.get().getSequence());
                     }
                     status.setSourceLatest(sourceLatest.get());
                 } else if (!sourceLatest.isPresent()) {

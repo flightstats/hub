@@ -4,7 +4,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
-import com.flightstats.hub.model.SequenceContentKey;
 import com.flightstats.rest.HalLink;
 import com.flightstats.rest.Linked;
 import org.junit.Before;
@@ -42,7 +41,7 @@ public class SingleChannelResourceTest {
 		channelUri = URI.create("http://testification.com/channel/UHF");
 		URI requestUri = URI.create("http://testification.com/channel/UHF");
 		itemUri = URI.create("http://testification.com/channel/UHF/1200");
-		contentKey = new SequenceContentKey(1200);
+		contentKey = new ContentKey(1200);
 		linkBuilder = new ChannelLinkBuilder();
 		uriInfo = mock(UriInfo.class);
 
@@ -95,7 +94,7 @@ public class SingleChannelResourceTest {
 
     @Test
     public void testInsert_channelExistenceNotCached() throws Exception {
-        InsertedContentKey result = new InsertedContentKey(new SequenceContentKey(1000), null);
+        InsertedContentKey result = new InsertedContentKey(new ContentKey(1000), null);
         byte[] data = "SomeData".getBytes();
         SingleChannelResource testClass = new SingleChannelResource(channelService, linkBuilder, DEFAULT_MAX_PAYLOAD, uriInfo);
 

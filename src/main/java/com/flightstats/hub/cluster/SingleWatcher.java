@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
@@ -10,11 +11,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * SingleWatcher asynchronously calls the Watcher in a single thread.
  */
-//todo - gfm - 6/3/14 - test this
 public class SingleWatcher {
     private final static Logger logger = LoggerFactory.getLogger(SingleWatcher.class);
 
@@ -34,19 +35,14 @@ public class SingleWatcher {
         listener = new CuratorListener() {
             @Override
             public void eventReceived(CuratorFramework client, final CuratorEvent event) throws Exception {
-                logger.debug("event {}", event);
                 if (watcher.getPath().equals(event.getPath())) {
-                    executorService.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            addWatch(watcher.getPath());
-                            watcher.callback(event);
-                        }
-                    });
+                    logger.debug("event path {}", event.getPath());
+                    addWatch(watcher.getPath());
+                    watcher.callback(event);
                 }
             }
         };
-        curator.getCuratorListenable().addListener(listener);
+        curator.getCuratorListenable().addListener(listener, executorService);
     }
 
     public void register(Watcher watcher) {
@@ -57,6 +53,12 @@ public class SingleWatcher {
 
     public void unregister() {
         curator.getCuratorListenable().removeListener(listener);
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(1, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            throw new RuntimeInterruptedException(e);
+        }
     }
 
     private void addWatch(String path) {

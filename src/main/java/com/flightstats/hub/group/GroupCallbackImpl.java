@@ -80,10 +80,16 @@ public class GroupCallbackImpl implements GroupCallback {
 
     }
 
-    //todo - gfm - 6/3/14 - should this get called when channels are created also?
     @Override
     public void notifyWatchers() {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
 
+    public long getLastCompleted(Group group) {
+        GroupCaller groupCaller = activeGroups.get(group.getName());
+        if (groupCaller != null) {
+            return groupCaller.getLastCompleted();
+        }
+        return 0;
+    }
 }
