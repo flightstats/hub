@@ -29,7 +29,7 @@ public class MemoryModule extends AbstractModule {
         bind(ChannelConfigurationDao.class).to(MemoryChannelConfigurationDao.class).asEagerSingleton();
         bind(ContentService.class).to(ContentServiceImpl.class).asEagerSingleton();
         bind(ContentDao.class).to(MemoryContentDao.class).asEagerSingleton();
-        bind(KeyCoordination.class).to(MemoryKeyCoordination.class).asEagerSingleton();
+        bind(LastUpdatedDao.class).to(MemoryLastUpdatedDao.class).asEagerSingleton();
         bind(WebsocketPublisher.class).to(MemoryWebsocketPublisher.class).asEagerSingleton();
         bind(ReplicationService.class).to(NoOpReplicationService.class).asEagerSingleton();
         bind(TimeIndexDao.class).to(MemoryContentDao.class).asEagerSingleton();

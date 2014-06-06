@@ -1,7 +1,6 @@
 package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.SequenceContentKey;
 import com.flightstats.hub.service.ChannelLinkBuilder;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.junit.Test;
@@ -35,7 +34,7 @@ public class WebsocketConsumerTest {
 		URI requestUri = URI.create("http://dorkbot.org");
 		URI itemUri = URI.create("http://flightstats.com/hub/channel/itemKey");
 		String itemKey = "itemKey";
-		ContentKey contentKey = new SequenceContentKey((short) 5000);
+		ContentKey contentKey = new ContentKey((short) 5000);
 
 		RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
 		ChannelLinkBuilder linkBuilder = mock(ChannelLinkBuilder.class);

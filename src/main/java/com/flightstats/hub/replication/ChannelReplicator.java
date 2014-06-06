@@ -6,7 +6,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.SequenceContentKey;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -182,11 +181,10 @@ public class ChannelReplicator implements Leader {
     public long getLastUpdated() {
         Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
         if (lastUpdatedKey.isPresent()) {
-            SequenceContentKey contentKey = (SequenceContentKey) lastUpdatedKey.get();
-            if (contentKey.getSequence() == SequenceContentKey.START_VALUE) {
-                return sequenceFinder.searchForLastUpdated(channel, SequenceContentKey.START_VALUE, historicalDays, TimeUnit.DAYS);
+            if (lastUpdatedKey.get().getSequence() == ContentKey.START_VALUE) {
+                return sequenceFinder.searchForLastUpdated(channel, ContentKey.START_VALUE, historicalDays, TimeUnit.DAYS);
             }
-            return sequenceFinder.searchForLastUpdated(channel, contentKey.getSequence(), historicalDays + 1, TimeUnit.DAYS);
+            return sequenceFinder.searchForLastUpdated(channel, lastUpdatedKey.get().getSequence(), historicalDays + 1, TimeUnit.DAYS);
         }
         logger.warn("problem getting starting sequence " + channel.getUrl());
         return ChannelUtils.NOT_FOUND;

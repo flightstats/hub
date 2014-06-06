@@ -1,7 +1,10 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.InsertedContentKey;
 import com.google.common.base.Optional;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -18,14 +21,14 @@ public class MemoryContentDao implements ContentDao, TimeIndexDao {
     private final static Logger logger = LoggerFactory.getLogger(MemoryContentDao.class);
 
     private ListMultimap<String, Content> contentListMultimap = ArrayListMultimap.create();
-    private Map<String, SequenceContentKey> contentKeyMap = new HashMap<>();
+    private Map<String, ContentKey> contentKeyMap = new HashMap<>();
 
     @Override
     public synchronized InsertedContentKey write(String channelName, Content content, long ttlDays) {
 
         List<Content> contentList = contentListMultimap.get(channelName);
-        SequenceContentKey existing = contentKeyMap.get(channelName);
-        SequenceContentKey key = new SequenceContentKey(existing.getSequence() + 1);
+        ContentKey existing = contentKeyMap.get(channelName);
+        ContentKey key = new ContentKey(existing.getSequence() + 1);
         logger.info("writing " + key.keyToString());
         content.setContentKey(key);
         contentList.add(content);
@@ -48,12 +51,12 @@ public class MemoryContentDao implements ContentDao, TimeIndexDao {
 
     @Override
     public void initializeChannel(ChannelConfiguration configuration) {
-        contentKeyMap.put(configuration.getName(), new SequenceContentKey(SequenceContentKey.START_VALUE));
+        contentKeyMap.put(configuration.getName(), new ContentKey(ContentKey.START_VALUE));
     }
 
     @Override
     public Optional<ContentKey> getKey(String id) {
-        return SequenceContentKey.fromString(id);
+        return ContentKey.fromString(id);
     }
 
     @Override
