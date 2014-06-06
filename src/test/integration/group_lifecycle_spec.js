@@ -2,15 +2,14 @@ require('./integration_config.js');
 
 var request = require('request');
 var http = require('http');
-var ip = require('ip');
 var channelName = utils.randomChannelName();
 var groupName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 var groupConfig = {
     //todo - gfm - 6/5/14 - this does not report the correct ip address when connected via the vpn
-    //should return 10.250.255.0/24 , instead returns 192.168.x.x
-    callbackUrl : 'http://' + ip.address() + ':' + callbackPort + '/',
+    //override ipAddress in integration_config_local.js
+    callbackUrl : 'http://' + ipAddress + ':' + callbackPort + '/',
     channelUrl: channelResource,
     transactional: true
 };
