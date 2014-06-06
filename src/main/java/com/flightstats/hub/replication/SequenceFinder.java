@@ -1,6 +1,6 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.model.SequenceContentKey;
+import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -27,7 +27,7 @@ public class SequenceFinder {
         logger.debug("searching the key space with lastUpdated {}", lastUpdated);
         Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getUrl());
         if (!latestSequence.isPresent()) {
-            return SequenceContentKey.START_VALUE;
+            return ContentKey.START_VALUE;
         }
         long high = latestSequence.get();
         long low = lastUpdated;

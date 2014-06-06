@@ -2,11 +2,10 @@ package com.flightstats.hub.group;
 
 import com.flightstats.hub.cluster.SingleWatcher;
 import com.flightstats.hub.cluster.Watcher;
-import com.flightstats.hub.dao.SequenceKeyCoordination;
+import com.flightstats.hub.dao.SequenceLastUpdatedDao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,11 +24,12 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
     private long current;
     private Group group;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
-    private final SequenceKeyCoordination sequenceKey;
+    //todo - gfm - 6/5/14 - should this use the interface instead?
+    private final SequenceLastUpdatedDao sequenceKey;
     private final SingleWatcher singleWatcher;
 
     @Inject
-    public CallbackIterator(SequenceKeyCoordination sequenceKey, SingleWatcher singleWatcher) {
+    public CallbackIterator(SequenceLastUpdatedDao sequenceKey, SingleWatcher singleWatcher) {
         this.sequenceKey = sequenceKey;
         this.singleWatcher = singleWatcher;
     }
@@ -61,19 +61,16 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
         this.current = lastCompleted;
         this.group = group;
         addWatcher();
+        setLatest(GroupUtil.getChannelName(group));
+
     }
 
     private void addWatcher() {
-        final String channelName = StringUtils.substringAfter(group.getChannelUrl(), "/channel/");
+        final String channelName = GroupUtil.getChannelName(group);
         singleWatcher.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
-                long sequence = sequenceKey.getLongValue(channelName);
-                logger.debug("latest sequence {}", sequence);
-                if (sequence > latest.get()) {
-                    latest.set(sequence);
-                    signal();
-                }
+                setLatest(channelName);
             }
 
             @Override
@@ -81,6 +78,15 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
                 return sequenceKey.getPath(channelName);
             }
         });
+    }
+
+    private void setLatest(String channelName) {
+        long sequence = sequenceKey.getLongValue(channelName);
+        logger.debug("latest sequence {} {}", sequence, group.getName());
+        if (sequence > latest.get()) {
+            latest.set(sequence);
+            signal();
+        }
     }
 
     @Override

@@ -65,5 +65,7 @@ bin/start.sh :
 conf/logback.xml :
     _template : logback.xml.jinja
 
+    verbosity : "INFO"
+
 lib/newrelic.yml :
   _template : newrelic.yml.jinja
