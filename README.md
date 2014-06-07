@@ -14,7 +14,7 @@ The Hub
 * [tag interface](#tag-interface)
 * [time interface](#time-interface)
 * [subscribe to events](#subscribe-to-events)
-* [group callback interface](#group-callback)
+* [group callback interface](#group-callback-interface)
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
 * [configure replication](#configure-replication)
@@ -409,7 +409,7 @@ To create a new group callback, or modify an existing one:
 {
   "callbackUrl" : "http://client/path/callback",
   "channelUrl" : "http://hub/channel/stumptown",
-  "transactional: : false
+  "transactional" : false
 }
 ```
 
