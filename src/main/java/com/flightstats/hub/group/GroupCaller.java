@@ -1,5 +1,8 @@
 package com.flightstats.hub.group;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.LongValue;
@@ -30,11 +33,12 @@ public class GroupCaller implements Leader {
 
     private Group group;
     private CuratorLeader curatorLeader;
-    private final CuratorFramework curator;
-    private final Provider<CallbackIterator> iteratorProvider;
     private Client client;
     private LongValue lastCompleted;
+    private final CuratorFramework curator;
+    private final Provider<CallbackIterator> iteratorProvider;
     private final Retryer<ClientResponse> retryer;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider) {
@@ -85,14 +89,17 @@ public class GroupCaller implements Leader {
     private void sendTransactional(long next) {
         try {
             logger.debug("sending {} to {}", next, group.getName());
-            final GroupResponse groupResponse = new GroupResponse();
-            groupResponse.add(group.getChannelUrl() + "/" + next);
+            final ObjectNode response = mapper.createObjectNode();
+            response.put("name", group.getName());
+            ArrayNode uris = response.putArray("uris");
+            uris.add(group.getChannelUrl() + "/" + next);
+
             retryer.call(new Callable<ClientResponse>() {
                 @Override
                 public ClientResponse call() throws Exception {
                     return client.resource(group.getCallbackUrl())
                             .type(MediaType.APPLICATION_JSON_TYPE)
-                            .post(ClientResponse.class, groupResponse.toJson());
+                            .post(ClientResponse.class, response.toString());
                 }
             });
             lastCompleted.update(next);
@@ -103,7 +110,9 @@ public class GroupCaller implements Leader {
         }
     }
 
-    //todo - gfm - 6/3/14 - exit
+    public void exit() {
+        curatorLeader.close();
+    }
 
     //todo - gfm - 6/5/14 - make sure ZK values are deleted when Group is deleted.
 
