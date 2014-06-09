@@ -11,7 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class GroupCallbackImpl implements GroupCallback {
     private final static Logger logger = LoggerFactory.getLogger(GroupCallbackImpl.class);
@@ -40,7 +42,7 @@ public class GroupCallbackImpl implements GroupCallback {
 
         @Override
         protected void shutDown() throws Exception {
-            //todo - gfm - 6/3/14 - implement this
+            stop(new HashSet<>(activeGroups.keySet()));
         }
 
     }
@@ -50,7 +52,7 @@ public class GroupCallbackImpl implements GroupCallback {
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
-                startGroups();
+                manageGroups();
             }
 
             @Override
@@ -59,18 +61,27 @@ public class GroupCallbackImpl implements GroupCallback {
             }
 
         });
-        startGroups();
+        manageGroups();
     }
 
-    private synchronized void startGroups() {
+    private synchronized void manageGroups() {
+        Set<String> groupsToStop = new HashSet<>(activeGroups.keySet());
         Iterable<Group> groups = groupService.getGroups();
         for (Group group : groups) {
+            groupsToStop.remove(group.getName());
             if (!activeGroups.containsKey(group.getName())) {
                 startGroup(group);
             }
         }
-        //todo - gfm - 6/3/14 - this should stop active groups after deletion.
+        stop(groupsToStop);
+    }
 
+    private void stop(Set<String> groupsToStop) {
+        for (String groupToStop : groupsToStop) {
+            logger.info("stopping " + groupToStop);
+            GroupCaller groupCaller = activeGroups.remove(groupToStop);
+            groupCaller.exit();
+        }
     }
 
     private void startGroup(Group group) {

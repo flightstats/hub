@@ -2,9 +2,12 @@ package com.flightstats.hub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
-import com.flightstats.rest.HalLink;
+import com.flightstats.hub.group.GroupStatus;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -13,8 +16,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,6 +26,7 @@ public class GroupResource {
 
     private final UriInfo uriInfo;
     private final GroupService groupService;
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public GroupResource(UriInfo uriInfo, GroupService groupService) {
@@ -37,16 +39,26 @@ public class GroupResource {
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroups() {
+        ObjectNode root = mapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
+        self.put("href", uriInfo.getRequestUri().toString());
+        ArrayNode groupsNode = links.putArray("groups");
         Iterable<Group> groups = groupService.getGroups();
-        Linked.Builder builder = Linked.justLinks();
-        builder.withLink("self", uriInfo.getRequestUri());
-        List<HalLink> halLinks = new ArrayList<>();
         for (Group group : groups) {
-            String name = group.getName();
-            halLinks.add(new HalLink(name, URI.create(uriInfo.getBaseUri() + "group/" + name)));
+            ObjectNode groupObject = groupsNode.addObject();
+            groupObject.put("name", group.getName());
+            groupObject.put("href", uriInfo.getBaseUri() + "group/" + group.getName());
         }
-        builder.withLinks("groups", halLinks);
-        return Response.ok(builder.build()).build();
+        ArrayNode status = root.putArray("status");
+        List<GroupStatus> groupStatus = groupService.getGroupStatus();
+        for (GroupStatus groupStat : groupStatus) {
+            ObjectNode object = status.addObject();
+            object.put("name", groupStat.getName());
+            object.put("lastCompleted", groupStat.getLastCompleted());
+            object.put("channelLatest", groupStat.getChannelLatest());
+        }
+        return Response.ok(root).build();
     }
 
     @Path("/{name}")
