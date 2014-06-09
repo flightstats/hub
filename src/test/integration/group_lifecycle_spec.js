@@ -86,6 +86,7 @@ describe(testName, function () {
             for (var i = 0; i < items.length; i++) {
                 var parse = JSON.parse(items[i]);
                 expect(parse.uris[0]).toBe(channelResource + '/100' + i);
+                expect(parse.name).toBe(groupName);
             }
         });
 
