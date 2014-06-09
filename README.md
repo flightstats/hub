@@ -421,6 +421,17 @@ To delete a group callback:
 
 `DELETE http://hub/group/{name}`
 
+The group listening to the `callbackUrl` will get a payload POSTed to it for every item in the channel, 
+starting at the time the group is created.
+
+``` json
+{
+  "name" : "stumptownCallback",
+  "uris" : [ "http://hub/channel/stumptown/2008" ]
+}
+```
+ 
+
 ## provider interface
 
 For external data providers, there is a simplified interface suitable for exposing to the authenticated outside world.
