@@ -2,6 +2,7 @@ package com.flightstats.rest;
 
 import java.net.URI;
 
+//todo - gfm - 6/9/14 - lombok
 public class HalLink {
     private final String name;
     private final URI uri;
