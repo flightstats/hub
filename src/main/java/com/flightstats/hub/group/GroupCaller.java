@@ -7,6 +7,7 @@ import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.LongValue;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
@@ -72,7 +73,8 @@ public class GroupCaller implements Leader {
                     sendAsynch(next);
                 }
             }
-
+        } catch (RuntimeInterruptedException e) {
+            logger.info("saw runtime exception for " + group.getName());
         } finally {
             logger.info("stopping " + group);
         }
