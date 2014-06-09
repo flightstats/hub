@@ -20,7 +20,4 @@ public class GroupStatus {
         return group.getName();
     }
 
-    public String getChannel() {
-        return group.getChannelUrl();
-    }
 }

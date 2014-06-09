@@ -64,6 +64,9 @@ public class SingleWatcher {
     private void addWatch(String path) {
         try {
             curator.getData().watched().forPath(path);
+        } catch (InterruptedException ie) {
+            logger.info("interrupted on path " + path);
+            throw new RuntimeInterruptedException(ie);
         } catch (Exception e) {
             logger.warn("unable to start watcher", e);
         }
