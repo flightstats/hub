@@ -25,12 +25,12 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
     private Group group;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     //todo - gfm - 6/5/14 - should this use the interface instead?
-    private final SequenceLastUpdatedDao sequenceKey;
+    private final SequenceLastUpdatedDao sequenceDao;
     private final SingleWatcher singleWatcher;
 
     @Inject
-    public CallbackIterator(SequenceLastUpdatedDao sequenceKey, SingleWatcher singleWatcher) {
-        this.sequenceKey = sequenceKey;
+    public CallbackIterator(SequenceLastUpdatedDao sequenceDao, SingleWatcher singleWatcher) {
+        this.sequenceDao = sequenceDao;
         this.singleWatcher = singleWatcher;
     }
 
@@ -75,13 +75,13 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
 
             @Override
             public String getPath() {
-                return sequenceKey.getPath(channelName);
+                return sequenceDao.getPath(channelName);
             }
         });
     }
 
     private void setLatest(String channelName) {
-        long sequence = sequenceKey.getLongValue(channelName);
+        long sequence = sequenceDao.getLongValue(channelName);
         logger.debug("latest sequence {} {}", sequence, group.getName());
         if (sequence > latest.get()) {
             latest.set(sequence);
