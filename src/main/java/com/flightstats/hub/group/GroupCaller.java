@@ -16,6 +16,7 @@ import com.google.common.base.Predicate;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -59,10 +60,11 @@ public class GroupCaller implements Leader {
 
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
+        //todo - gfm - 6/9/14 - the start value should be the latest on the channel
         long start = lastCompleted.get();
         this.client = createClient();
 
-        logger.debug("last completed at " + start + " " + group.getName());
+        logger.debug("last completed at {} {}", start, group.getName());
         try (CallbackIterator iterator = iteratorProvider.get()) {
             iterator.start(start, group);
             while (iterator.hasNext() && hasLeadership.get()) {
@@ -74,7 +76,7 @@ public class GroupCaller implements Leader {
                 }
             }
         } catch (RuntimeInterruptedException e) {
-            logger.info("saw runtime exception for " + group.getName());
+            logger.info("saw RuntimeInterruptedException for " + group.getName());
         } finally {
             logger.info("stopping " + group);
         }
@@ -99,6 +101,7 @@ public class GroupCaller implements Leader {
             retryer.call(new Callable<ClientResponse>() {
                 @Override
                 public ClientResponse call() throws Exception {
+                    logger.debug("calling {}", group.getCallbackUrl());
                     return client.resource(group.getCallbackUrl())
                             .type(MediaType.APPLICATION_JSON_TYPE)
                             .post(ClientResponse.class, response.toString());
@@ -115,8 +118,6 @@ public class GroupCaller implements Leader {
     public void exit() {
         curatorLeader.close();
     }
-
-    //todo - gfm - 6/5/14 - make sure ZK values are deleted when Group is deleted.
 
     private String getLeaderPath() {
         return "/GroupLeader/" + group.getName();
@@ -141,6 +142,10 @@ public class GroupCaller implements Leader {
         return lastCompleted.get();
     }
 
+    public void delete() {
+        lastCompleted.delete();
+    }
+
     //todo - gfm - 6/5/14 - test this (how)?
     static Retryer<ClientResponse> buildRetryer(int multiplier) {
         return RetryerBuilder.<ClientResponse>newBuilder()
@@ -148,7 +153,11 @@ public class GroupCaller implements Leader {
                     @Override
                     public boolean apply(@Nullable Throwable throwable) {
                         if (throwable != null) {
-                            logger.info("got throwable trying to call client back ", throwable);
+                            if (throwable.getClass().isAssignableFrom(ClientHandlerException.class)) {
+                                logger.info("got ClientHandlerException trying to call client back " + throwable.getMessage());
+                            } else {
+                                logger.info("got throwable trying to call client back ", throwable);
+                            }
                         }
                         return throwable != null;
                     }
