@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.LongValue;
+import com.flightstats.hub.dao.SequenceLastUpdatedDao;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.github.rholder.retry.Retryer;
@@ -39,20 +40,21 @@ public class GroupCaller implements Leader {
     private LongValue lastCompleted;
     private final CuratorFramework curator;
     private final Provider<CallbackIterator> iteratorProvider;
+    private final SequenceLastUpdatedDao sequenceDao;
     private final Retryer<ClientResponse> retryer;
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
-    public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider) {
+    public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider, SequenceLastUpdatedDao sequenceDao) {
         this.curator = curator;
         this.iteratorProvider = iteratorProvider;
+        this.sequenceDao = sequenceDao;
         retryer = buildRetryer(1000);
     }
 
     public boolean tryLeadership(Group group) {
         logger.debug("starting group: " + group);
         this.group = group;
-        lastCompleted = new LongValue(getValuePath(), ContentKey.START_VALUE, curator);
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
         curatorLeader.start();
         return true;
@@ -60,7 +62,8 @@ public class GroupCaller implements Leader {
 
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
-        //todo - gfm - 6/9/14 - the start value should be the latest on the channel
+        ContentKey lastUpdated = sequenceDao.getLastUpdated(GroupUtil.getChannelName(group));
+        lastCompleted = new LongValue(getValuePath(), lastUpdated.getSequence(), curator);
         long start = lastCompleted.get();
         this.client = createClient();
 
