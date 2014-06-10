@@ -70,7 +70,7 @@ public class GroupService {
     public void delete(String name) {
         logger.info("deleting group " + name);
         dynamoGroupDao.delete(name);
-        groupCallback.notifyWatchers();
+        groupCallback.delete(name);
     }
 
 }
