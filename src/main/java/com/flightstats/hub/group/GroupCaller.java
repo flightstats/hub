@@ -55,6 +55,8 @@ public class GroupCaller implements Leader {
     public boolean tryLeadership(Group group) {
         logger.debug("starting group: " + group);
         this.group = group;
+        ContentKey lastUpdated = sequenceDao.getLastUpdated(GroupUtil.getChannelName(group));
+        lastCompleted = new LongValue(getValuePath(), lastUpdated.getSequence(), curator);
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
         curatorLeader.start();
         return true;
@@ -146,7 +148,7 @@ public class GroupCaller implements Leader {
     }
 
     public void delete() {
-        lastCompleted.delete();
+        LongValue.delete(getValuePath(), curator);
     }
 
     //todo - gfm - 6/5/14 - test this (how)?
