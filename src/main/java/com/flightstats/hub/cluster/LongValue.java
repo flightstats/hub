@@ -48,7 +48,7 @@ public class LongValue {
     }
 
 
-    public void delete()  {
+    public static void delete(String path, CuratorFramework curator)  {
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (Exception e) {
