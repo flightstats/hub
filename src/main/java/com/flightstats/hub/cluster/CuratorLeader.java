@@ -34,7 +34,7 @@ public class CuratorLeader {
 
     /**
      * Attempt leadership. This method returns immediately, and is re-entrant.
-     * The Leader will be called from an ExecutorService.
+     * The Leader.takeLeadership() will be called from an ExecutorService.
      */
     public void start() {
         if (leaderSelector == null) {
@@ -72,6 +72,7 @@ public class CuratorLeader {
     }
 
     public void close() {
+        hasLeadership.set(false);
         if (leaderSelector != null) {
             leaderSelector.close();
         }
