@@ -73,6 +73,7 @@ public class GroupCallbackImpl implements GroupCallback {
                 startGroup(group);
             }
         }
+        //todo - gfm - 6/9/14 - look for changed groups?
         stop(groupsToStop);
     }
 
@@ -89,6 +90,15 @@ public class GroupCallbackImpl implements GroupCallback {
         groupCaller.tryLeadership(group);
         activeGroups.put(group.getName(), groupCaller);
 
+    }
+
+    @Override
+    public void delete(String name) {
+        GroupCaller groupCaller = activeGroups.get(name);
+        if (groupCaller != null) {
+            groupCaller.delete();
+        }
+        notifyWatchers();
     }
 
     @Override
