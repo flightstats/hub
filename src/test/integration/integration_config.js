@@ -9,6 +9,8 @@ callbackPort = 8888;
 if (runEncrypted) {
     callbackPort = 8899;
 }
+//todo - gfm - 6/5/14 - this does not report the correct ip address when connected via the vpn
+//override ipAddress in integration_config_local.js
 ipAddress = ip.address();
 
 // Try to load a local file if it exists. Allows folks to trump default values defined above.
@@ -17,11 +19,13 @@ try {
 }
 catch ( err ){}
 
-console.log("hubDomain " + hubDomain);
-console.log("replicationDomain " + replicationDomain);
-console.log("runEncrypted " + runEncrypted);
-
 hubUrlBase = 'http://' + hubDomain;
 
 channelUrl = hubUrlBase + '/channel';
 groupUrl = hubUrlBase + '/group';
+callbackDomain = 'http://' + ipAddress;
+
+console.log("hubDomain " + hubDomain);
+console.log("replicationDomain " + replicationDomain);
+console.log("runEncrypted " + runEncrypted);
+console.log("callbackDomain " + callbackDomain);
