@@ -146,7 +146,7 @@ public class GroupCaller implements Leader {
     }
 
     public void delete() {
-        lastCompleted.delete();
+        LongValue.delete(getValuePath(), curator);
     }
 
     //todo - gfm - 6/5/14 - test this (how)?
