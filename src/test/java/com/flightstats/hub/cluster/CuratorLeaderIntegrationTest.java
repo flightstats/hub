@@ -1,12 +1,22 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.config.GuiceContext;
+import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.util.Sleeper;
+import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class CuratorLeaderIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(CuratorLeaderIntegrationTest.class);
@@ -18,7 +28,7 @@ public class CuratorLeaderIntegrationTest {
     public void testNothing() throws Exception {
 
     }
-    /*@BeforeClass
+    @BeforeClass
     public static void setUpClass() throws Exception {
         Integration.startZooKeeper();
         RetryPolicy retryPolicy = GuiceContext.HubCommonModule.buildRetryPolicy();
@@ -85,5 +95,36 @@ public class CuratorLeaderIntegrationTest {
         assertEquals(5, count.get());
         curatorLeader.close();
     }
-*/
+
+    @Test
+    public void testClose() throws Exception {
+        count = new AtomicInteger();
+        countDownLatch = new CountDownLatch(1);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CuratorLeader curatorLeader = new CuratorLeader("/testClose", new CloseLeader(startLatch), curator);
+
+        curatorLeader.start();
+        assertTrue(startLatch.await(2000, TimeUnit.MILLISECONDS));
+        curatorLeader.close();
+        assertTrue(countDownLatch.await(2000, TimeUnit.MILLISECONDS));
+    }
+
+    private class CloseLeader implements Leader {
+
+        private final CountDownLatch startLatch;
+
+        public CloseLeader(CountDownLatch startLatch) {
+
+            this.startLatch = startLatch;
+        }
+
+        @Override
+        public void takeLeadership(AtomicBoolean hasLeadership) {
+            startLatch.countDown();
+            while (hasLeadership.get()) {
+                Sleeper.sleepQuietly(5);
+            }
+            countDownLatch.countDown();
+        }
+    }
 }
