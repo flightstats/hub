@@ -62,7 +62,6 @@ public class GroupCaller implements Leader {
 
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
-        //todo - gfm - 6/9/14 - create an integration test for this!
         ContentKey lastUpdated = sequenceDao.getLastUpdated(GroupUtil.getChannelName(group));
         lastCompleted = new LongValue(getValuePath(), lastUpdated.getSequence(), curator);
         long start = lastCompleted.get();
