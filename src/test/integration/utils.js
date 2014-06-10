@@ -59,17 +59,22 @@ function createChannel(channelName, url) {
 }
 
 function addItem(url, responseCode) {
-    responseCode = responseCode || 201;
     it("adds item to " + url, function (done) {
-        request.post({url: url,
-                headers: {"Content-Type": "application/json", user: 'somebody' },
-                body: JSON.stringify({ "data": Date.now()})},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(responseCode);
-                done();
-            });
+        postItem(url, responseCode, done);
     });
+}
+
+function postItem(url, responseCode, completed) {
+    responseCode = responseCode || 201;
+    completed = completed || function () {};
+    request.post({url : url,
+            headers : {"Content-Type" : "application/json", user : 'somebody' },
+            body : JSON.stringify({ "data" : Date.now()})},
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(responseCode);
+            completed();
+        });
 }
 
 function putGroup(groupName, groupConfig, status) {
@@ -146,6 +151,48 @@ function sleep(millis) {
     }, millis + 1000);
 }
 
+function startServer(port, callback) {
+    callback = callback || function () {};
+    var started = false;
+    runs(function () {
+        server = http.createServer(function (request, response) {
+            request.on('data', function(chunk) {
+                callback(chunk.toString());
+            });
+            response.writeHead(200);
+            response.end();
+        });
+
+        server.on('connection', function(socket) {
+            socket.setTimeout(1000);
+        });
+
+        server.listen(port, function () {
+            started = true;
+        });
+    });
+
+    waitsFor(function() {
+        return started;
+    }, 11000);
+}
+
+function closeServer(callback) {
+    callback = callback || function () {};
+    var closed = false;
+    runs(function () {
+        server.close(function () {
+            closed = true;
+        });
+
+        callback();
+    });
+
+    waitsFor(function() {
+        return closed;
+    }, 13000);
+}
+
 exports.runInTestChannel = runInTestChannel;
 exports.download = download;
 exports.randomChannelName = randomChannelName;
@@ -157,4 +204,7 @@ exports.sleep = sleep;
 exports.putGroup = putGroup;
 exports.getGroup = getGroup;
 exports.deleteGroup = deleteGroup;
+exports.postItem = postItem;
+exports.startServer = startServer;
+exports.closeServer = closeServer;
 
