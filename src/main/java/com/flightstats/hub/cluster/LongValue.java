@@ -34,7 +34,7 @@ public class LongValue {
         try {
             return Longs.fromByteArray(curator.getData().forPath(path));
         } catch (Exception e) {
-            logger.warn("unable to get node" + e.getMessage());
+            logger.warn("unable to get node " + e.getMessage());
             return defaultValue;
         }
     }
@@ -52,7 +52,7 @@ public class LongValue {
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (Exception e) {
-            logger.warn("unable to delete {}", path);
+            logger.warn("unable to delete {} {}", path, e.getMessage());
         }
     }
 }
