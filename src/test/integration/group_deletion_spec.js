@@ -56,7 +56,7 @@ describe(testName, function () {
 
     utils.putGroup(groupName, groupConfig);
 
-    it('waits for item', function () {
+    it('waits for item group ' + groupName + ' channel ' + channelName, function () {
         runs(function () {
             utils.postItem(channelResource);
         });
