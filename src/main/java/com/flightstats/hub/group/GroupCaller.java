@@ -64,8 +64,6 @@ public class GroupCaller implements Leader {
 
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
-        ContentKey lastUpdated = sequenceDao.getLastUpdated(GroupUtil.getChannelName(group));
-        lastCompleted = new LongValue(getValuePath(), lastUpdated.getSequence(), curator);
         long start = lastCompleted.get();
         this.client = createClient();
 
@@ -106,7 +104,7 @@ public class GroupCaller implements Leader {
             retryer.call(new Callable<ClientResponse>() {
                 @Override
                 public ClientResponse call() throws Exception {
-                    logger.debug("calling {}", group.getCallbackUrl());
+                    logger.debug("calling {} {}", group.getCallbackUrl(), group.getName());
                     return client.resource(group.getCallbackUrl())
                             .type(MediaType.APPLICATION_JSON_TYPE)
                             .post(ClientResponse.class, response.toString());
