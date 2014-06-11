@@ -42,7 +42,7 @@ public class GroupCallbackImpl implements GroupCallback {
 
         @Override
         protected void shutDown() throws Exception {
-            stop(new HashSet<>(activeGroups.keySet()));
+            stop(new HashSet<>(activeGroups.keySet()), false);
         }
 
     }
@@ -74,14 +74,17 @@ public class GroupCallbackImpl implements GroupCallback {
             }
         }
         //todo - gfm - 6/9/14 - look for changed groups?
-        stop(groupsToStop);
+        stop(groupsToStop, true);
     }
 
-    private void stop(Set<String> groupsToStop) {
+    private void stop(Set<String> groupsToStop, boolean delete) {
         for (String groupToStop : groupsToStop) {
             logger.info("stopping " + groupToStop);
             GroupCaller groupCaller = activeGroups.remove(groupToStop);
             groupCaller.exit();
+            if (delete) {
+                groupCaller.delete();
+            }
         }
     }
 
@@ -94,10 +97,6 @@ public class GroupCallbackImpl implements GroupCallback {
 
     @Override
     public void delete(String name) {
-        GroupCaller groupCaller = activeGroups.get(name);
-        if (groupCaller != null) {
-            groupCaller.delete();
-        }
         notifyWatchers();
     }
 
