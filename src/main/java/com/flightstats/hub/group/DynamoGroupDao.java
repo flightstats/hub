@@ -52,7 +52,6 @@ public class DynamoGroupDao {
         item.put("name", new AttributeValue(group.getName()));
         item.put("callbackUrl", new AttributeValue(group.getCallbackUrl()));
         item.put("channelUrl", new AttributeValue(group.getChannelUrl()));
-        item.put("transactional", new AttributeValue(Boolean.toString(group.isTransactional())));
         dbClient.putItem(getTableName(), item);
         return group;
     }
@@ -77,7 +76,6 @@ public class DynamoGroupDao {
                 .name(item.get("name").getS())
                 .callbackUrl(item.get("callbackUrl").getS())
                 .channelUrl(item.get("channelUrl").getS())
-                .transactional(Boolean.parseBoolean(item.get("transactional").getS()))
                 .build();
     }
 
