@@ -392,7 +392,7 @@ the Hub server keeps track of the Group's state.
 `callbackUrl` is the fully qualified location to receive callbacks from the server.  
 `channelUrl` is the fully qualified channel location to monitor.  
 
-Once a Group is created, it can not be changed, only deleted.
+
 
 To see all existing group callbacks and status:
 
@@ -409,6 +409,9 @@ To create a new group callback:
 }
 ```
 
+Once a Group is created, it can not be changed, only deleted.  Put may be safely called multiple times with the same 
+ configuration.
+
 To see the current configuration of a group callback:
 
 `GET http://hub/group/{name}`
@@ -416,6 +419,8 @@ To see the current configuration of a group callback:
 To delete a group callback:
 
 `DELETE http://hub/group/{name}`
+
+Delete will return a 202, and it may take up to a minute to properly stop a group from servicing the callback.
 
 #### Behavior
 
