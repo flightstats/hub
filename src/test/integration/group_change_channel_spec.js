@@ -6,8 +6,7 @@ var groupName = utils.randomChannelName();
 var testName = __filename;
 var groupConfig = {
     callbackUrl : 'http://nothing/callback',
-    channelUrl: 'http://nothing/channel/notHere',
-    transactional: false
+    channelUrl: 'http://nothing/channel/notHere'
 };
 
 describe(testName, function () {
@@ -16,8 +15,7 @@ describe(testName, function () {
 
     var groupConfig2 = {
         callbackUrl : 'http://nothing/callback2',
-        channelUrl: 'http://different/channel/notHere',
-        transactional: true
+        channelUrl: 'http://different/channel/notHere'
     };
 
     utils.putGroup(groupName, groupConfig2, 409);

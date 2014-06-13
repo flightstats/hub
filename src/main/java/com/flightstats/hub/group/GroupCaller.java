@@ -26,8 +26,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
 import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -72,11 +70,7 @@ public class GroupCaller implements Leader {
             iterator.start(start, group);
             while (iterator.hasNext() && hasLeadership.get()) {
                 long next = iterator.next();
-                if (group.isTransactional()) {
-                    sendTransactional(next);
-                } else {
-                    sendAsynch(next);
-                }
+                send(next);
             }
         } catch (RuntimeInterruptedException e) {
             logger.info("saw RuntimeInterruptedException for " + group.getName());
@@ -85,15 +79,7 @@ public class GroupCaller implements Leader {
         }
     }
 
-    private void sendAsynch(long next) {
-        //todo - gfm - 6/3/14 - add in retry behavior
-        //todo - gfm - 6/3/14 - should this drop missed calls, or retry?  retries could back up if the service is down
-        //todo - gfm - 6/3/14 - maybe set the threadpool limit on the Client, or use a Semaphore
-        /*client.asyncResource(group.getCallbackUrl()).post("" + next);
-        lastCompleted.update(next);*/
-    }
-
-    private void sendTransactional(long next) {
+    private void send(long next) {
         try {
             logger.debug("sending {} to {}", next, group.getName());
             final ObjectNode response = mapper.createObjectNode();
@@ -135,9 +121,6 @@ public class GroupCaller implements Leader {
         client.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(30));
         client.setReadTimeout((int) TimeUnit.SECONDS.toMillis(120));
         client.setFollowRedirects(true);
-        if (!group.isTransactional()) {
-            client.setExecutorService(new ThreadPoolExecutor(0, 5, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>()));
-        }
         return client;
     }
 
