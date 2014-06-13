@@ -103,21 +103,24 @@ function putGroup(groupName, groupConfig, status) {
     return groupResource;
 }
 
-function getGroup(groupName, groupConfig) {
+function getGroup(groupName, groupConfig, status) {
     var groupResource = groupUrl + "/" + groupName;
+    status = status || 200;
     it('gets group ' + groupName, function (done) {
         request.get({url : groupResource,
                 headers : {"Content-Type" : "application/json"} },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                var parse = JSON.parse(body);
-                expect(parse._links.self.href).toBe(groupResource);
-                if (typeof groupConfig !== "undefined") {
-                    expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
-                    expect(parse.channelUrl).toBe(groupConfig.channelUrl);
-                    expect(parse.transactional).toBe(groupConfig.transactional);
-                    expect(parse.name).toBe(groupName);
+                expect(response.statusCode).toBe(status);
+                if (status < 400) {
+                    var parse = JSON.parse(body);
+                    expect(parse._links.self.href).toBe(groupResource);
+                    if (typeof groupConfig !== "undefined") {
+                        expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
+                        expect(parse.channelUrl).toBe(groupConfig.channelUrl);
+                        expect(parse.transactional).toBe(groupConfig.transactional);
+                        expect(parse.name).toBe(groupName);
+                    }
                 }
                 done();
             });
