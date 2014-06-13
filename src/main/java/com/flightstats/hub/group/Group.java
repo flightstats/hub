@@ -9,6 +9,7 @@ import lombok.experimental.Wither;
 @Builder
 @Getter
 @ToString
+@EqualsAndHashCode
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Group {
 
