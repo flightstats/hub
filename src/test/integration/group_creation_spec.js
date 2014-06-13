@@ -6,14 +6,12 @@ var groupName = utils.randomChannelName();
 var testName = __filename;
 var groupConfig = {
     callbackUrl : 'http://nothing/callback',
-    channelUrl: 'http://nothing/channel/notHere',
-    transactional: false
+    channelUrl: 'http://nothing/channel/notHere'
 };
 
 var groupConfig2 = {
     callbackUrl : 'http://different/callback2',
-    channelUrl: 'http://nothing/channel/notHere',
-    transactional: true
+    channelUrl: 'http://nothing/channel/notHere'
 };
 
 describe(testName, function () {

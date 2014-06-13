@@ -385,35 +385,31 @@ http://hub/channel/stumptown/1002
 
 ## group callback interface
 
-The Group Callback mechanism is an alternative to WebSockets for consuming events.  These push notifications use HTTP instead of WS, and 
+The Group Callback mechanism is an alternative to WebSockets for consuming events.  These push notifications use HTTP, and 
 the Hub server keeps track of the Group's state.
 
 `name` is used in the url for the callback.  Names are limited to 48 characters and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
-`callbackUrl` is the fully qualified location to receive callbacks from the server.
-`channelUrl` is the fully qualified channel location to monitor.  Immutable once created.
-`transactional` is optional, defaults to false.  Is false, the server does not wait for a response.  
-If `transactional` is true, the server will wait for a response.  200 is considered a successful response.
-Anything else is considered an error, and will cause the server to retry.
+`callbackUrl` is the fully qualified location to receive callbacks from the server.  
+`channelUrl` is the fully qualified channel location to monitor.  
 
-Retries will use an exponential backoff up to one minute, and the server will continue to retry at one minute intervals indefinitely.
+Once a Group is created, it can not be changed, only deleted.
 
-To see all existing group callbacks:
+To see all existing group callbacks and status:
 
 `GET http://hub/group`
  
-To create a new group callback, or modify an existing one:
+To create a new group callback:
 
 `PUT http://hub/group/{name}`
 
 ``` json
 {
   "callbackUrl" : "http://client/path/callback",
-  "channelUrl" : "http://hub/channel/stumptown",
-  "transactional" : false
+  "channelUrl" : "http://hub/channel/stumptown"
 }
 ```
 
-To see the current state of a group callback:
+To see the current configuration of a group callback:
 
 `GET http://hub/group/{name}`
 
@@ -421,8 +417,11 @@ To delete a group callback:
 
 `DELETE http://hub/group/{name}`
 
-The group listening to the `callbackUrl` will get a payload POSTed to it for every item in the channel, 
-starting at the time the group is created.
+#### Behavior
+
+The group listening to the `callbackUrl` will get a payload POSTed to it for every new item in the channel, starting at the time the group is created.  
+200 is considered a successful response.  Any other response is considered an error, and will cause the server to retry.   Redirects are allowed.                                        
+Retries will use an exponential backoff up to one minute, and the server will continue to retry at one minute intervals indefinitely.
 
 ``` json
 {
@@ -430,7 +429,9 @@ starting at the time the group is created.
   "uris" : [ "http://hub/channel/stumptown/2008" ]
 }
 ```
- 
+
+Within EC2, channel rates have been tested up to 15 per second.  
+If a client is running in Sungard, latency may limit throughput to ~3 per second.
 
 ## provider interface
 
