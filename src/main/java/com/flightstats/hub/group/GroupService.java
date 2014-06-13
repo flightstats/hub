@@ -34,10 +34,10 @@ public class GroupService {
         //todo - gfm - 6/3/14 - should this validate that the server url is correct and the channel is correct?
         Optional<Group> existingGroup = getGroup(group.getName());
         if (existingGroup.isPresent()) {
-            //todo - gfm - 6/7/14 - prevent changes to existing groups
-            if (!existingGroup.get().getChannelUrl().equals(group.getChannelUrl())) {
-                throw new ConflictException("{\"error\": \"channelUrl may not change\"}");
+            if (existingGroup.get().equals(group)) {
+                return existingGroup;
             }
+            throw new ConflictException("{\"error\": \"Groups are immutable\"}");
         }
         dynamoGroupDao.upsertGroup(group);
         groupCallback.notifyWatchers();

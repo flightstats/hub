@@ -6,14 +6,7 @@ var groupName = utils.randomChannelName();
 var testName = __filename;
 var groupConfig = {
     callbackUrl : 'http://nothing/callback',
-    channelUrl: 'http://nothing/channel/notHere',
-    transactional: false
-};
-
-var groupConfig2 = {
-    callbackUrl : 'http://different/callback2',
-    channelUrl: 'http://nothing/channel/notHere',
-    transactional: true
+    channelUrl: 'http://nothing/channel/notHere'
 };
 
 describe(testName, function () {
@@ -22,11 +15,10 @@ describe(testName, function () {
 
     utils.getGroup(groupName, groupConfig);
 
-    utils.putGroup(groupName, groupConfig2, 200);
-
-    utils.getGroup(groupName, groupConfig2);
+    utils.putGroup(groupName, groupConfig, 200);
 
     utils.deleteGroup(groupName);
 
+    utils.getGroup(groupName, groupConfig, 404);
 });
 
