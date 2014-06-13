@@ -10,8 +10,7 @@ var port = callbackPort + 1;
 var callbackUrl = callbackDomain + ':' + port + '/';
 var groupConfig = {
     callbackUrl : callbackUrl,
-    channelUrl : channelResource,
-    transactional : true
+    channelUrl : channelResource
 };
 
 /**

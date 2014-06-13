@@ -14,7 +14,6 @@ public class Group {
 
     @NonNull private final String callbackUrl;
     @NonNull private final String channelUrl;
-    private final boolean transactional;
     @Wither
     private final String name;
 

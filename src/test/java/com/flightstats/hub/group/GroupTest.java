@@ -11,7 +11,7 @@ public class GroupTest {
     @Before
     public void setUp() throws Exception {
         groupName = Group.builder()
-                .channelUrl("url").callbackUrl("end").transactional(true).build();
+                .channelUrl("url").callbackUrl("end").build();
     }
 
     @Test
@@ -19,7 +19,6 @@ public class GroupTest {
         Group group = Group.fromJson(groupName.toJson());
         Assert.assertEquals("end", group.getCallbackUrl());
         Assert.assertEquals("url", group.getChannelUrl());
-        Assert.assertTrue(group.isTransactional());
         Assert.assertNull(group.getName());
     }
 
@@ -29,7 +28,6 @@ public class GroupTest {
         group = Group.fromJson(group.toJson());
         Assert.assertEquals("end", group.getCallbackUrl());
         Assert.assertEquals("url", group.getChannelUrl());
-        Assert.assertTrue(group.isTransactional());
         Assert.assertEquals("wither", group.getName());
     }
 
@@ -43,9 +41,4 @@ public class GroupTest {
         Group.builder().callbackUrl("end").build();
     }
 
-    @Test
-    public void testDefault() throws Exception {
-        Group group = Group.builder().channelUrl("url").callbackUrl("end").build();
-        Assert.assertFalse(group.isTransactional());
-    }
 }
