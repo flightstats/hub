@@ -8,8 +8,7 @@ var groupResource = groupUrl + "/" + groupName1;
 var testName = __filename;
 var groupConfig = {
     callbackUrl : 'http://nothing/callback',
-    channelUrl : 'http://nothing/channel/notHere',
-    transactional : false
+    channelUrl : 'http://nothing/channel/notHere'
 };
 
 /**
