@@ -43,6 +43,7 @@ public class GroupCaller implements Leader {
     private final GroupService groupService;
     private final Retryer<ClientResponse> retryer;
     private final ObjectMapper mapper = new ObjectMapper();
+    private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider,
@@ -85,6 +86,9 @@ public class GroupCaller implements Leader {
             logger.info("saw RuntimeInterruptedException for " + group.getName());
         } finally {
             logger.info("stopping " + group);
+            if (deleteOnExit.get()) {
+                delete();
+            }
         }
     }
 
@@ -113,7 +117,8 @@ public class GroupCaller implements Leader {
         }
     }
 
-    public void exit() {
+    public void exit(boolean delete) {
+        deleteOnExit.set(delete);
         curatorLeader.close();
     }
 
@@ -137,8 +142,14 @@ public class GroupCaller implements Leader {
         return lastCompleted.get();
     }
 
-    public void delete() {
+    private void delete() {
+        logger.info("deleting " + group.getName());
         LongValue.delete(getValuePath(), curator);
+        try {
+            curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
+        } catch (Exception e) {
+            logger.warn("unable to delete leader path", e);
+        }
     }
 
     //todo - gfm - 6/5/14 - test this (how)?

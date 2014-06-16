@@ -73,7 +73,6 @@ public class GroupCallbackImpl implements GroupCallback {
                 startGroup(group);
             }
         }
-        //todo - gfm - 6/9/14 - look for changed groups?
         stop(groupsToStop, true);
     }
 
@@ -81,10 +80,7 @@ public class GroupCallbackImpl implements GroupCallback {
         for (String groupToStop : groupsToStop) {
             logger.info("stopping " + groupToStop);
             GroupCaller groupCaller = activeGroups.remove(groupToStop);
-            groupCaller.exit();
-            if (delete) {
-                groupCaller.delete();
-            }
+            groupCaller.exit(delete);
         }
     }
 
