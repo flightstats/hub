@@ -1,5 +1,7 @@
 package com.flightstats.hub.group;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -99,10 +101,7 @@ public class GroupCaller implements Leader {
             retryer.call(new Callable<ClientResponse>() {
                 @Override
                 public ClientResponse call() throws Exception {
-                    logger.debug("calling {} {}", group.getCallbackUrl(), group.getName());
-                    return client.resource(group.getCallbackUrl())
-                            .type(MediaType.APPLICATION_JSON_TYPE)
-                            .post(ClientResponse.class, response.toString());
+                    return getClientResponse(response);
                 }
             });
             lastCompleted.update(next);
@@ -111,6 +110,15 @@ public class GroupCaller implements Leader {
             //todo - gfm - 6/5/14 - can we ever get here?
             logger.warn("unable to send " + next + " to " + group, e);
         }
+    }
+
+    @Timed(name = "all-groups.post")
+    @ExceptionMetered
+    private ClientResponse getClientResponse(ObjectNode response) {
+        logger.debug("calling {} {}", group.getCallbackUrl(), group.getName());
+        return client.resource(group.getCallbackUrl())
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .post(ClientResponse.class, response.toString());
     }
 
     public void exit() {
