@@ -6,7 +6,7 @@ import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.service.Headers;
-import com.flightstats.hub.util.ChannelNameExtractor;
+import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -75,7 +75,7 @@ public class ChannelUtils {
         String json = response.getEntity(String.class);
         ChannelConfiguration configuration = ChannelConfiguration.builder()
                 .withChannelConfiguration(ChannelConfiguration.fromJson(json))
-                .withName(ChannelNameExtractor.extractFromChannelUrl(channelUrl))
+                .withName(ChannelNameUtils.extractFromChannelUrl(channelUrl))
                 .withCreationDate(new Date())
                 .build();
         logger.debug("found config " + configuration);
