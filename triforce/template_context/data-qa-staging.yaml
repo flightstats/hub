@@ -16,7 +16,7 @@ conf/hub.properties :
     _template : hub.properties.jinja
 
     app :
-        name : "data-qa-hub"
+        name : "hub-data-qa"
         environment : "staging"
         encrypted : false
 
