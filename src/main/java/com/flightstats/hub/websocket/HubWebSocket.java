@@ -1,7 +1,7 @@
 package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.service.ChannelLinkBuilder;
-import com.flightstats.hub.util.ChannelNameExtractor;
+import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.inject.Inject;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
@@ -20,7 +20,7 @@ public class HubWebSocket {
 
 	private final static Logger logger = LoggerFactory.getLogger(HubWebSocket.class);
 	private final Runnable afterDisconnectCallback;
-	private final ChannelNameExtractor channelNameExtractor;
+	private final ChannelNameUtils channelNameUtils;
 	private final WebsocketSubscribers subscriptions;
 	private final ChannelLinkBuilder linkBuilder;
 	private String remoteAddress;
@@ -29,8 +29,8 @@ public class HubWebSocket {
 	private String channelName;
 
 	@Inject
-	public HubWebSocket(WebsocketSubscribers subscriptions, ChannelNameExtractor channelNameExtractor, ChannelLinkBuilder linkBuilder) {
-		this(subscriptions, channelNameExtractor, linkBuilder, new Runnable() {
+	public HubWebSocket(WebsocketSubscribers subscriptions, ChannelNameUtils channelNameUtils, ChannelLinkBuilder linkBuilder) {
+		this(subscriptions, channelNameUtils, linkBuilder, new Runnable() {
 			@Override
 			public void run() {
 				//nop
@@ -38,11 +38,11 @@ public class HubWebSocket {
 		});
 	}
 
-	HubWebSocket(WebsocketSubscribers subscriptions, ChannelNameExtractor channelNameExtractor, ChannelLinkBuilder linkBuilder,
+	HubWebSocket(WebsocketSubscribers subscriptions, ChannelNameUtils channelNameUtils, ChannelLinkBuilder linkBuilder,
                  Runnable afterDisconnectCallback) {
 		this.linkBuilder = linkBuilder;
 		this.afterDisconnectCallback = afterDisconnectCallback;
-		this.channelNameExtractor = channelNameExtractor;
+		this.channelNameUtils = channelNameUtils;
 		this.subscriptions = subscriptions;
 	}
 
@@ -53,7 +53,7 @@ public class HubWebSocket {
         remoteAddress = session.getRemoteAddress().toString();
         logger.info("New client connection: " + remoteAddress + " for " + requestUri);
 		String host = upgradeRequest.getHeader("Host");
-        channelName = channelNameExtractor.extractFromWS(requestUri);
+        channelName = channelNameUtils.extractFromWS(requestUri);
 		//this is totally hacky.
         String channelUri = "http://" + host + "/channel/" + channelName;
 		try {

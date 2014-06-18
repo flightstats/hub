@@ -6,8 +6,7 @@ import com.flightstats.hub.app.config.metrics.PerChannelTimedMethodDispatchAdapt
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.rest.RetryClientFilter;
-import com.flightstats.hub.util.ChannelNameExtractor;
-import com.flightstats.hub.util.TimeProvider;
+import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.websocket.JettyWebSocketServlet;
 import com.flightstats.hub.websocket.MetricsWebSocketCreator;
 import com.flightstats.hub.websocket.WebsocketSubscribers;
@@ -76,7 +75,7 @@ public class GuiceContext {
                 .withJerseyGuiceResourcesDisabled()
                 .withHealthCheckClass(healthCheckClass)
                 //this could be more precise
-                .withRegexServe(ChannelNameExtractor.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
+                .withRegexServe(ChannelNameUtils.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
                 .withModules(Arrays.asList(module))
                 .build();
 
@@ -118,7 +117,6 @@ public class GuiceContext {
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
             binder.bind(WebSocketCreator.class).to(MetricsWebSocketCreator.class).asEagerSingleton();
             binder.bind(JettyWebSocketServlet.class).asEagerSingleton();
-            binder.bind(TimeProvider.class).asEagerSingleton();
         }
     }
 

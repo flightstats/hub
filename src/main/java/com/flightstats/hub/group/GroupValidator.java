@@ -1,6 +1,7 @@
 package com.flightstats.hub.group;
 
 import com.flightstats.hub.model.exception.InvalidRequestException;
+import com.flightstats.hub.util.ChannelNameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
@@ -24,11 +25,11 @@ public class GroupValidator {
         } catch (URISyntaxException e) {
             throw new InvalidRequestException("{\"error\": \"Invalid callbackUrl\"}");
         }
-        try {
-            new URI(group.getChannelUrl());
-        } catch (URISyntaxException e) {
+        if (!ChannelNameUtils.isValidChannelUrl(group.getChannelUrl())) {
             throw new InvalidRequestException("{\"error\": \"Invalid channelUrl\"}");
         }
+
         //todo - gfm - 6/3/14 - should this enforce channel url's format, or silently change it?
+
     }
 }

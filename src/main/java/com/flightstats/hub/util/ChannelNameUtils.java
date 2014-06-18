@@ -1,8 +1,9 @@
 package com.flightstats.hub.util;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
-public class ChannelNameExtractor {
+public class ChannelNameUtils {
 
 	public static final String WEBSOCKET_URL_REGEX = "^/channel/(\\w+)/ws$";
 
@@ -18,5 +19,14 @@ public class ChannelNameExtractor {
 
     public static String extractFromChannelUrl(String fullUrl) {
         return extractFromChannelUrl(URI.create(fullUrl));
+    }
+
+    public static boolean isValidChannelUrl(String url) {
+        try {
+            URI uri = new URI(url);
+            return uri.getPath().contains("/channel/");
+        } catch (URISyntaxException e) {
+            return false;
+        }
     }
 }

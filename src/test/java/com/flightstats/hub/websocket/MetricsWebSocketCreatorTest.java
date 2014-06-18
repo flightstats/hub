@@ -3,7 +3,7 @@ package com.flightstats.hub.websocket;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.service.ChannelLinkBuilder;
-import com.flightstats.hub.util.ChannelNameExtractor;
+import com.flightstats.hub.util.ChannelNameUtils;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.junit.Test;
@@ -20,7 +20,7 @@ public class MetricsWebSocketCreatorTest {
 	@Test
 	public void testCreateWebSocket() throws Exception {
 		//GIVEN
-		ChannelNameExtractor channelNameExtractor = new ChannelNameExtractor();
+		ChannelNameUtils channelNameUtils = new ChannelNameUtils();
 		int threadCt = 50;
 		String meterName = "websocket-clients.channels.ubuibi";
 		URI requestUri = URI.create("/channel/ubuibi/ws");
@@ -44,7 +44,7 @@ public class MetricsWebSocketCreatorTest {
 		when(session.getUpgradeRequest()).thenReturn(request);
 		when(registry.counter(meterName)).thenReturn(counter);
 
-		final MetricsWebSocketCreator testClass = new MetricsWebSocketCreator(registry, websocketSubscribers, channelNameExtractor, mock(ChannelLinkBuilder.class));
+		final MetricsWebSocketCreator testClass = new MetricsWebSocketCreator(registry, websocketSubscribers, channelNameUtils, mock(ChannelLinkBuilder.class));
 
 		//WHEN
 		for (int i = 0; i < threadCt; i++) {

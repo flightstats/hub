@@ -40,7 +40,7 @@ public class GroupValidatorTest {
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testInvalidChannelUrl() throws Exception {
+    public void testNonChannelUrl() throws Exception {
         groupValidator.validate(Group.builder()
                 .callbackUrl("http:/client/url")
                 .channelUrl("http:\\hub/channel/channelName")
@@ -54,6 +54,15 @@ public class GroupValidatorTest {
                 .callbackUrl("not a url")
                 .channelUrl("http://hub/channel/channelName")
                 .name("nothing")
+                .build());
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidChannelUrl() throws Exception {
+        groupValidator.validate(Group.builder()
+                .callbackUrl("http:/client/url")
+                .channelUrl("http://hub/channe/channelName")
+                .name("testInvalidChannelUrl")
                 .build());
     }
 }

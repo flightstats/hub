@@ -1,7 +1,6 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.util.TimeProvider;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.google.common.base.Optional;
 import org.junit.Before;
@@ -17,7 +16,6 @@ public class ContentServiceImplTest {
     private String channelName;
     private long days;
     private ChannelConfiguration channelConfig;
-    private TimeProvider timeProvider;
     private ContentServiceImpl testClass;
 
     @Before
@@ -27,7 +25,6 @@ public class ContentServiceImplTest {
         channelName = "foo";
         days = 90210L;
         channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlDays(days).build();
-        timeProvider = mock(TimeProvider.class);
         LastUpdatedDao lastUpdatedDao = mock(LastUpdatedDao.class);
         WebsocketPublisher publisher = mock(WebsocketPublisher.class);
         testClass = new ContentServiceImpl(contentDao, lastUpdatedDao, publisher);
@@ -40,7 +37,6 @@ public class ContentServiceImplTest {
         Content content = Content.builder().withData(data).withContentType("text/plain").withMillis(days).build();
         InsertedContentKey expected = new InsertedContentKey(key, null);
 
-        when(timeProvider.getMillis()).thenReturn(days);
         when(contentDao.write(channelName, content, days)).thenReturn(expected);
 
         InsertedContentKey result = testClass.insert(channelConfig, content);
