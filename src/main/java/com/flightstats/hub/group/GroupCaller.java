@@ -111,7 +111,7 @@ public class GroupCaller implements Leader {
             lastCompleted.update(next);
             logger.debug("completed {} call to {} ", next, group.getName());
         } catch (Exception e) {
-            //todo - gfm - 6/5/14 - can we ever get here?
+            //don't think we can get here
             logger.warn("unable to send " + next + " to " + group, e);
         }
     }
@@ -160,7 +160,6 @@ public class GroupCaller implements Leader {
         }
     }
 
-    //todo - gfm - 6/5/14 - test this (how)?
     static Retryer<ClientResponse> buildRetryer(int multiplier) {
         return RetryerBuilder.<ClientResponse>newBuilder()
                 .retryIfException(new Predicate<Throwable>() {
