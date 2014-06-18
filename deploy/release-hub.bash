@@ -44,7 +44,7 @@ function node_out {
 	ssh utility@saltmaster01.util.pdx.office 'sudo salt '${SERVER}' cmd.run "cat /tmp/triforce/\$(ls -t /tmp/triforce/ | head -1)"'
 }
 
-for n in $(seq 1  ${SERVERS) ; do
+for n in $( seq 1 ${SERVERS} ) ; do
 	SERVER="${PREFIX}-0${n}${DOM}"
 	echo "Calling ${SERVER}"
 
