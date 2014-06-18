@@ -1,7 +1,7 @@
 package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.util.ChannelNameExtractor;
+import com.flightstats.hub.util.ChannelNameUtils;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.junit.Before;
@@ -25,7 +25,7 @@ public class JettyWebSocketServletTest {
 	private String requestUriString;
 	private URI requestUri;
 	private WebSocketCreator wsCreator;
-	private ChannelNameExtractor channelNameExtractor;
+	private ChannelNameUtils channelNameUtils;
 	private HttpServletRequest httpRequest;
 	private HttpServletResponse httpResponse;
 	private ChannelService channelService;
@@ -37,7 +37,7 @@ public class JettyWebSocketServletTest {
 		requestUriString = "/channel/spoon/ws";
 		requestUri = URI.create(requestUriString);
 		wsCreator = mock(WebSocketCreator.class);
-		channelNameExtractor = mock(ChannelNameExtractor.class);
+		channelNameUtils = mock(ChannelNameUtils.class);
 		httpRequest = mock(HttpServletRequest.class);
 		httpResponse = mock(HttpServletResponse.class);
 		channelService = mock(ChannelService.class);
@@ -59,11 +59,11 @@ public class JettyWebSocketServletTest {
 		//GIVEN
 		final AtomicBoolean superWasInvoked = new AtomicBoolean(false);
 
-		when(channelNameExtractor.extractFromWS(requestUri)).thenReturn(channelName);
+		when(channelNameUtils.extractFromWS(requestUri)).thenReturn(channelName);
 		when(httpRequest.getRequestURI()).thenReturn(requestUriString);
 		when(channelService.channelExists(channelName)).thenReturn(true);
 
-		JettyWebSocketServlet testClass = new JettyWebSocketServlet(wsCreator, channelNameExtractor, channelService) {
+		JettyWebSocketServlet testClass = new JettyWebSocketServlet(wsCreator, channelNameUtils, channelService) {
 			@Override
 			protected void invokeSuper(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 				superWasInvoked.set(true);
@@ -83,11 +83,11 @@ public class JettyWebSocketServletTest {
 		//GIVEN
 		final AtomicBoolean superWasInvoked = new AtomicBoolean(false);
 
-		when(channelNameExtractor.extractFromWS(requestUri)).thenReturn(channelName);
+		when(channelNameUtils.extractFromWS(requestUri)).thenReturn(channelName);
 		when(httpRequest.getRequestURI()).thenReturn(requestUriString);
 		when(channelService.channelExists(channelName)).thenReturn(false);        //NOPE!
 
-		JettyWebSocketServlet testClass = new JettyWebSocketServlet(wsCreator, channelNameExtractor, channelService) {
+		JettyWebSocketServlet testClass = new JettyWebSocketServlet(wsCreator, channelNameUtils, channelService) {
 			@Override
 			protected void invokeSuper(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 				superWasInvoked.set(true);

@@ -3,6 +3,7 @@ package com.flightstats.hub.group;
 import com.flightstats.hub.cluster.SingleWatcher;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.SequenceLastUpdatedDao;
+import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
@@ -60,12 +61,12 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
         this.current = lastCompleted;
         this.group = group;
         addWatcher();
-        setLatest(GroupUtil.getChannelName(group));
+        setLatest(ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl()));
 
     }
 
     private void addWatcher() {
-        final String channelName = GroupUtil.getChannelName(group);
+        final String channelName = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         singleWatcher.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {

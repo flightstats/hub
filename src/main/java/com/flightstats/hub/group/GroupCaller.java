@@ -10,6 +10,7 @@ import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.LongValue;
 import com.flightstats.hub.dao.SequenceLastUpdatedDao;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
@@ -60,7 +61,7 @@ public class GroupCaller implements Leader {
     public boolean tryLeadership(Group group) {
         logger.debug("starting group: " + group);
         this.group = group;
-        ContentKey lastUpdated = sequenceDao.getLastUpdated(GroupUtil.getChannelName(group));
+        ContentKey lastUpdated = sequenceDao.getLastUpdated(ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl()));
         lastCompleted = new LongValue(getValuePath(), lastUpdated.getSequence(), curator);
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
         curatorLeader.start();
