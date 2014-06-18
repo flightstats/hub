@@ -46,6 +46,7 @@ function node_out {
 
 for n in {1..${SERVERS}}; do
 	SERVER="${PREFIX}-0${n}${DOM}"
+	echo "Calling ${SERVER}"
 
 	# send salt-call (or ssh to salt master) to deploy
 	salt_output=$(ssh utility@saltmaster01.util.pdx.office "sudo salt '${SERVER}' triforce.deploy s3://triforce_builds/hub/${VERSION} ${ENV}")
