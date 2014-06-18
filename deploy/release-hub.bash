@@ -6,6 +6,7 @@ VERSION="hub-${2}.tgz"
 ENV=${1:-dev}
 VER_NUM1=${VERSION:4}
 VER_NUM=${VER_NUM1%.tgz}
+SERVERS=3
 
 echo "Deploying to ${ENV} : ${VERSION}"
 case ${ENV} in 
@@ -25,8 +26,15 @@ case ${ENV} in
 	    DOM=".cloud-east.staging"
 	    PREFIX="encrypted-hub"
 	     ;;
-
-#	prod) DOM=".cloud-east.prod" ;;
+	prod)
+	    DOM=".cloud-east.prod"
+	    PREFIX="hub"
+	    ;;
+	data-qa-staging)
+	    DOM=".cloud-east.staging"
+	    PREFIX="hub-data-qa"
+	    SERVERS=2
+	    ;;
 	*) 
 		echo "No env specified or bad env ${ENV}" ; exit ;;
 esac
@@ -36,7 +44,7 @@ function node_out {
 	ssh utility@saltmaster01.util.pdx.office 'sudo salt '${SERVER}' cmd.run "cat /tmp/triforce/\$(ls -t /tmp/triforce/ | head -1)"'
 }
 
-for n in {1..3}; do
+for n in {1..${SERVERS}}; do
 	SERVER="${PREFIX}-0${n}${DOM}"
 
 	# send salt-call (or ssh to salt master) to deploy
