@@ -1,7 +1,7 @@
 package com.flightstats.hub.websocket;
 
 import com.flightstats.hub.service.ChannelLinkBuilder;
-import com.flightstats.hub.util.ChannelNameExtractor;
+import com.flightstats.hub.util.ChannelNameUtils;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
@@ -19,7 +19,7 @@ public class HubWebSocketTest {
     private Session session;
     private URI requestUri;
     private WebsocketSubscribers websocketSubscribers;
-    private ChannelNameExtractor channelNameExtractor;
+    private ChannelNameUtils channelNameUtils;
 	private ChannelLinkBuilder linkBuilder;
 
     @Before
@@ -28,7 +28,7 @@ public class HubWebSocketTest {
         InetSocketAddress remoteAddress = InetSocketAddress.createUnresolved("superawesome.com", 999);
         RemoteEndpoint remoteEndpoint = mock(RemoteEndpoint.class);
         websocketSubscribers = mock( WebsocketSubscribers.class );
-        channelNameExtractor = mock( ChannelNameExtractor.class );
+        channelNameUtils = mock( ChannelNameUtils.class );
         session = mock(Session.class);
 		linkBuilder = mock(ChannelLinkBuilder.class);
         UpgradeRequest upgradeRequest = mock(UpgradeRequest.class);
@@ -36,17 +36,17 @@ public class HubWebSocketTest {
 		when(session.getRemoteAddress()).thenReturn(remoteAddress);
 		when(session.getRemote()).thenReturn(remoteEndpoint);
 		when(session.getUpgradeRequest()).thenReturn(upgradeRequest);
-	    when(channelNameExtractor.extractFromWS(requestUri)).thenReturn(CHANNEL_NAME);
+	    when(channelNameUtils.extractFromWS(requestUri)).thenReturn(CHANNEL_NAME);
 		when(upgradeRequest.getRequestURI()).thenReturn(requestUri);
 	}
 
 	@Test
 	public void testOnConnect() throws Exception {
-		HubWebSocket testClass = new HubWebSocket(websocketSubscribers, channelNameExtractor, linkBuilder);
+		HubWebSocket testClass = new HubWebSocket(websocketSubscribers, channelNameUtils, linkBuilder);
 		testClass.onConnect(session);
 
         verify(websocketSubscribers).subscribe( eq( CHANNEL_NAME ), any( WebsocketConsumer.class ) );
-        verify( channelNameExtractor ).extractFromWS(requestUri);
+        verify(channelNameUtils).extractFromWS(requestUri);
 		verify(session).getRemoteAddress();
 	}
 
@@ -54,7 +54,7 @@ public class HubWebSocketTest {
 	public void testOnDisconnect() throws Exception {
 
 		Runnable disconnectCallback = mock( Runnable.class );
-		HubWebSocket testClass = new HubWebSocket(websocketSubscribers, channelNameExtractor, linkBuilder, disconnectCallback );
+		HubWebSocket testClass = new HubWebSocket(websocketSubscribers, channelNameUtils, linkBuilder, disconnectCallback );
 		testClass.onConnect(session);
 		testClass.onDisconnect(99, "spoon");
 		verify(disconnectCallback).run();
