@@ -55,8 +55,7 @@ public class AwsModule extends AbstractModule {
         bind(ChannelUtils.class).asEagerSingleton();
         bind(CuratorLock.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
-        //todo - gfm - 5/30/14 - should all singletons be eager?
-		bind(AwsConnectorFactory.class).in(Singleton.class);
+		bind(AwsConnectorFactory.class).asEagerSingleton();
 
         if (Boolean.parseBoolean(properties.getProperty("app.encrypted"))) {
             logger.info("using encrypted hub");
@@ -66,21 +65,21 @@ public class AwsModule extends AbstractModule {
             logger.info("using normal hub");
             bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
         }
-        bind(ChannelConfigurationDao.class).to(CachedChannelConfigurationDao.class).in(Singleton.class);
+        bind(ChannelConfigurationDao.class).to(CachedChannelConfigurationDao.class).asEagerSingleton();
         bind(ChannelConfigurationDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))
                 .to(DynamoChannelConfigurationDao.class);
         bind(WebsocketPublisher.class).to(WebsocketPublisherImpl.class).asEagerSingleton();
-        bind(ReplicationDao.class).to(CachedReplicationDao.class).in(Singleton.class);
+        bind(ReplicationDao.class).to(CachedReplicationDao.class).asEagerSingleton();
         bind(ReplicationDao.class)
                 .annotatedWith(Names.named(CachedReplicationDao.DELEGATE))
                 .to(DynamoReplicationDao.class);
 
-        bind(ContentService.class).to(ContentServiceImpl.class).in(Singleton.class);
-        bind(ContentDao.class).to(ContentDaoImpl.class).in(Singleton.class);
-        bind(TimeIndexDao.class).to(S3IndexDao.class).in(Singleton.class);
-        bind(LastUpdatedDao.class).to(SequenceLastUpdatedDao.class).in(Singleton.class);
-        bind(ContentKeyGenerator.class).to(CuratorKeyGenerator.class).in(Singleton.class);
+        bind(ContentService.class).to(ContentServiceImpl.class).asEagerSingleton();
+        bind(ContentDao.class).to(ContentDaoImpl.class).asEagerSingleton();
+        bind(TimeIndexDao.class).to(S3IndexDao.class).asEagerSingleton();
+        bind(LastUpdatedDao.class).to(SequenceLastUpdatedDao.class).asEagerSingleton();
+        bind(ContentKeyGenerator.class).to(CuratorKeyGenerator.class).asEagerSingleton();
 
         bind(DynamoUtils.class).asEagerSingleton();
         bind(DynamoGroupDao.class).asEagerSingleton();
