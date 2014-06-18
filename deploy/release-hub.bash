@@ -2,7 +2,7 @@
 
 # Temporary rolling-deploy script until triforce.deploy can handle multiple targets and return debug/warn/info to jenkins
 
-VERSION=$(basename $(ls /var/lib/jenkins/jobs/hub/workspace/build/distributions/*.tgz))
+VERSION="hub-${2}.tgz"
 ENV=${1:-dev}
 VER_NUM1=${VERSION:4}
 VER_NUM=${VER_NUM1%.tgz}
