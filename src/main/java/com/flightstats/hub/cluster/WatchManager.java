@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class WatchManager {
     private final static Logger logger = LoggerFactory.getLogger(WatchManager.class);
@@ -39,7 +40,9 @@ public class WatchManager {
         }
 
         @Override
-        protected void shutDown() throws Exception { }
+        protected void shutDown() throws Exception {
+            executorService.awaitTermination(1, TimeUnit.MINUTES);
+        }
 
     }
 
