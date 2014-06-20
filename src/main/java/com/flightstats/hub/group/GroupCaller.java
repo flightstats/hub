@@ -118,7 +118,7 @@ public class GroupCaller implements Leader {
                     @Override
                     public Object call() throws ExecutionException, RetryException {
                         makeCall(response);
-                        return null;clechan
+                        return null;
                     }
                 });
             }
