@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao;
 
-import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
@@ -39,7 +38,6 @@ public class SequenceLastUpdatedDao implements LastUpdatedDao {
         }
     }
 
-    @Timed(name = "sequence.setLastUpdated")
     private void setLastUpdateKey(String channelName, ContentKey key) {
         try {
 
@@ -100,7 +98,6 @@ public class SequenceLastUpdatedDao implements LastUpdatedDao {
         return new ContentKey(getLongValue(channelName));
     }
 
-    @Timed(name = "sequence.getLastUpdated")
     public long getLongValue(String channelName) {
         return getFromZK(channelName).value;
     }
