@@ -52,6 +52,7 @@ public class DynamoGroupDao {
         item.put("name", new AttributeValue(group.getName()));
         item.put("callbackUrl", new AttributeValue(group.getCallbackUrl()));
         item.put("channelUrl", new AttributeValue(group.getChannelUrl()));
+        item.put("parallelCalls", new AttributeValue().withN(String.valueOf(group.getParallelCalls())));
         dbClient.putItem(getTableName(), item);
         return group;
     }
@@ -72,11 +73,14 @@ public class DynamoGroupDao {
     }
 
     private Group mapItem(Map<String, AttributeValue> item) {
-        return Group.builder()
+        Group.GroupBuilder groupBuilder = Group.builder()
                 .name(item.get("name").getS())
                 .callbackUrl(item.get("callbackUrl").getS())
-                .channelUrl(item.get("channelUrl").getS())
-                .build();
+                .channelUrl(item.get("channelUrl").getS());
+        if (item.containsKey("parallelCalls")) {
+            groupBuilder.parallelCalls(Integer.valueOf(item.get("parallelCalls").getN()));
+        }
+        return groupBuilder.build().withDefaults();
     }
 
     public Iterable<Group> getGroups() {
