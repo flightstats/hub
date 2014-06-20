@@ -1,7 +1,5 @@
 package com.flightstats.hub.group;
 
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -9,6 +7,8 @@ import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.LongValue;
 import com.flightstats.hub.dao.SequenceLastUpdatedDao;
+import com.flightstats.hub.metrics.MetricsTimer;
+import com.flightstats.hub.metrics.TimedCallback;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -44,17 +44,19 @@ public class GroupCaller implements Leader {
     private final Provider<CallbackIterator> iteratorProvider;
     private final SequenceLastUpdatedDao sequenceDao;
     private final GroupService groupService;
+    private final MetricsTimer metricsTimer;
     private final Retryer<ClientResponse> retryer;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider,
-                       SequenceLastUpdatedDao sequenceDao, GroupService groupService) {
+                       SequenceLastUpdatedDao sequenceDao, GroupService groupService, MetricsTimer metricsTimer) {
         this.curator = curator;
         this.iteratorProvider = iteratorProvider;
         this.sequenceDao = sequenceDao;
         this.groupService = groupService;
+        this.metricsTimer = metricsTimer;
         retryer = buildRetryer(1000);
     }
 
@@ -106,7 +108,7 @@ public class GroupCaller implements Leader {
             retryer.call(new Callable<ClientResponse>() {
                 @Override
                 public ClientResponse call() throws Exception {
-                    return getClientResponse(response);
+                    return getTimedResponse(response);
                 }
             });
             lastCompleted.update(next);
@@ -117,15 +119,28 @@ public class GroupCaller implements Leader {
         }
     }
 
-    @Timed(name = "all-groups.post")
-    @ExceptionMetered
-    private ClientResponse getClientResponse(ObjectNode response) {
+    private ClientResponse getTimedResponse(final ObjectNode response) {
+        return metricsTimer.time("group." + group.getName() + ".post", new TimedCallback<ClientResponse>() {
+            @Override
+            public ClientResponse call() {
+                return metricsTimer.time("all-groups.post", new TimedCallback<ClientResponse>() {
+                    @Override
+                    public ClientResponse call() {
+                        return getResponse(response);
+                    }
+                });
+            }
+        });
+
+    }
+
+    private ClientResponse getResponse(ObjectNode response) {
         logger.debug("calling {} {}", group.getCallbackUrl(), group.getName());
         return client.resource(group.getCallbackUrl())
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .post(ClientResponse.class, response.toString());
     }
-    
+
     public void exit(boolean delete) {
         deleteOnExit.set(delete);
         curatorLeader.close();

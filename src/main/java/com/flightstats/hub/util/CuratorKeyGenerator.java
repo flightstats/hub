@@ -1,6 +1,5 @@
 package com.flightstats.hub.util;
 
-import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -30,7 +29,6 @@ public class CuratorKeyGenerator implements ContentKeyGenerator {
     }
 
     @Override
-    @Timed(name = "keyGen.newKey")
     public ContentKey newKey(final String channelName) {
         return getContentKey(channelName);
     }
