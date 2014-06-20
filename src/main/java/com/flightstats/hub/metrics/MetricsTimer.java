@@ -4,6 +4,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.google.inject.Inject;
 
+import java.util.concurrent.Callable;
+
 public class MetricsTimer {
     private final MetricRegistry registry;
 
@@ -12,11 +14,11 @@ public class MetricsTimer {
         this.registry = registry;
     }
 
-    public <T> T time(String name, TimedCallback<T> timedCallback) {
+    public <T> T time(String name, Callable<T> callable) throws Exception {
         Timer timer = registry.timer(name);
         Timer.Context context = timer.time();
         try {
-            return timedCallback.call();
+            return callable.call();
         } finally {
             context.stop();
         }
