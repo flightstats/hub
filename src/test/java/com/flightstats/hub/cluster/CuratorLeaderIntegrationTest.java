@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class CuratorLeaderIntegrationTest {
@@ -34,8 +35,7 @@ public class CuratorLeaderIntegrationTest {
         curator = GuiceContext.HubCommonModule.buildCurator("hub", "test", "localhost:2181", retryPolicy, new ZooKeeperState());
     }
 
-    //todo - gfm - 6/18/14 - fix this!
-    /*@Test
+    @Test
     public void testElection() throws Exception {
         count = new AtomicInteger();
         countDownLatch = new CountDownLatch(1);
@@ -76,8 +76,8 @@ public class CuratorLeaderIntegrationTest {
         public void takeLeadership(AtomicBoolean hasLeadership) {
             logger.info("do Work");
             Sleeper.sleep(5);
-            countDownLatch.countDown();
             count.incrementAndGet();
+            countDownLatch.countDown();
         }
     }
 
@@ -95,7 +95,6 @@ public class CuratorLeaderIntegrationTest {
         assertEquals(5, count.get());
         curatorLeader.close();
     }
-*/
     @Test
     public void testClose() throws Exception {
         count = new AtomicInteger();
