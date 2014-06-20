@@ -8,14 +8,10 @@ import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.LongValue;
 import com.flightstats.hub.dao.SequenceLastUpdatedDao;
 import com.flightstats.hub.metrics.MetricsTimer;
-import com.flightstats.hub.metrics.TimedCallback;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
-import com.github.rholder.retry.Retryer;
-import com.github.rholder.retry.RetryerBuilder;
-import com.github.rholder.retry.StopStrategies;
-import com.github.rholder.retry.WaitStrategies;
+import com.github.rholder.retry.*;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.inject.Inject;
@@ -30,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -100,45 +97,44 @@ public class GroupCaller implements Leader {
     private void send(long next) {
         try {
             logger.debug("sending {} to {}", next, group.getName());
-            final ObjectNode response = mapper.createObjectNode();
+            ObjectNode response = mapper.createObjectNode();
             response.put("name", group.getName());
             ArrayNode uris = response.putArray("uris");
             uris.add(group.getChannelUrl() + "/" + next);
 
-            retryer.call(new Callable<ClientResponse>() {
-                @Override
-                public ClientResponse call() throws Exception {
-                    return getTimedResponse(response);
-                }
-            });
+            makeTimedCall(response);
             lastCompleted.update(next);
             logger.debug("completed {} call to {} ", next, group.getName());
         } catch (Exception e) {
-            //don't think we can get here
             logger.warn("unable to send " + next + " to " + group, e);
         }
     }
 
-    private ClientResponse getTimedResponse(final ObjectNode response) {
-        return metricsTimer.time("group." + group.getName() + ".post", new TimedCallback<ClientResponse>() {
+    private void makeTimedCall(final ObjectNode response) throws Exception {
+        metricsTimer.time("group." + group.getName() + ".post", new Callable<Object>() {
             @Override
-            public ClientResponse call() {
-                return metricsTimer.time("all-groups.post", new TimedCallback<ClientResponse>() {
+            public Object call() throws Exception {
+                return metricsTimer.time("all-groups.post", new Callable<Object>() {
                     @Override
-                    public ClientResponse call() {
-                        return getResponse(response);
+                    public Object call() throws ExecutionException, RetryException {
+                        makeCall(response);
+                        return null;clechan
                     }
                 });
             }
         });
-
     }
 
-    private ClientResponse getResponse(ObjectNode response) {
+    private void makeCall(final ObjectNode response) throws ExecutionException, RetryException {
         logger.debug("calling {} {}", group.getCallbackUrl(), group.getName());
-        return client.resource(group.getCallbackUrl())
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .post(ClientResponse.class, response.toString());
+        retryer.call(new Callable<ClientResponse>() {
+            @Override
+            public ClientResponse call() throws Exception {
+                return client.resource(group.getCallbackUrl())
+                        .type(MediaType.APPLICATION_JSON_TYPE)
+                        .post(ClientResponse.class, response.toString());
+            }
+        });
     }
 
     public void exit(boolean delete) {
