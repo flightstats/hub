@@ -1,6 +1,5 @@
 package com.flightstats.hub.websocket;
 
-import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.model.ContentKey;
 import com.google.inject.Inject;
 import com.hazelcast.core.HazelcastInstance;
@@ -21,7 +20,6 @@ public class WebsocketPublisherImpl implements WebsocketPublisher {
     }
 
 	@Override
-    @Timed(name = "hazelcast.publish")
     public void publish(final String channelName, final ContentKey key) {
         try {
             getTopicForChannel(channelName).publish(key.keyToString());
