@@ -385,6 +385,8 @@ http://hub/channel/stumptown/1002
 
 ## group callback interface
 
+### Group Callback is in Beta.
+
 The Group Callback mechanism is an alternative to WebSockets for consuming events.  These push notifications use HTTP, and 
 the Hub server keeps track of the Group's state.
 
@@ -465,8 +467,6 @@ curl -i -X DELETE http://hub/channel/stumptown
 ```
 
 ## configure replication
-
-**Support for Replication is currently in Alpha.**
 
 **Replication Configuration will be access controlled in in Staging and Prod environments**
 
