@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
+import com.flightstats.hub.cluster.LongSet;
 import com.flightstats.hub.cluster.LongValue;
 import com.flightstats.hub.dao.SequenceLastUpdatedDao;
 import com.flightstats.hub.metrics.MetricsTimer;
@@ -25,18 +26,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GroupCaller implements Leader {
     private final static Logger logger = LoggerFactory.getLogger(GroupCaller.class);
 
-    private Group group;
-    private CuratorLeader curatorLeader;
-    private Client client;
-    private LongValue lastCompleted;
     private final CuratorFramework curator;
     private final Provider<CallbackIterator> iteratorProvider;
     private final SequenceLastUpdatedDao sequenceDao;
@@ -45,6 +41,14 @@ public class GroupCaller implements Leader {
     private final Retryer<ClientResponse> retryer;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
+
+    private Group group;
+    private CuratorLeader curatorLeader;
+    private Client client;
+    private LongValue lastCompleted;
+    private ExecutorService executorService;
+    private Semaphore semaphore;
+    private LongSet inFlight;
 
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider,
@@ -61,7 +65,10 @@ public class GroupCaller implements Leader {
         logger.debug("starting group: " + group);
         this.group = group;
         ContentKey lastUpdated = sequenceDao.getLastUpdated(ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl()));
+        executorService = Executors.newCachedThreadPool();
+        semaphore = new Semaphore(group.getParallelCalls());
         lastCompleted = new LongValue(getValuePath(), lastUpdated.getSequence(), curator);
+        inFlight = new LongSet(getInFlightPath(), curator);
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
         curatorLeader.start();
         return true;
@@ -74,15 +81,16 @@ public class GroupCaller implements Leader {
             logger.info("group is missing, exiting " + group.getName());
             return;
         }
-        long start = lastCompleted.get();
         this.client = createClient();
 
-        logger.debug("last completed at {} {}", start, group.getName());
         try (CallbackIterator iterator = iteratorProvider.get()) {
+            sendInFlight();
+            long start = lastCompleted.get();
+
+            logger.debug("last completed at {} {}", start, group.getName());
             iterator.start(start, group);
             while (iterator.hasNext() && hasLeadership.get()) {
-                long next = iterator.next();
-                send(next);
+                send(iterator.next());
             }
         } catch (RuntimeInterruptedException e) {
             logger.info("saw RuntimeInterruptedException for " + group.getName());
@@ -91,23 +99,49 @@ public class GroupCaller implements Leader {
             if (deleteOnExit.get()) {
                 delete();
             }
+            //todo - gfm - 6/26/14 - does this need to stop the executorService?
         }
     }
 
-    private void send(long next) {
+    private void sendInFlight() {
+        Set<Long> inFlightSet = inFlight.getSet();
+        logger.debug("sending in flight {}", inFlightSet);
+        for (Long inFlight : inFlightSet) {
+            send(inFlight);
+        }
+    }
+
+    private void send(final long next) {
         try {
             logger.debug("sending {} to {}", next, group.getName());
-            ObjectNode response = mapper.createObjectNode();
-            response.put("name", group.getName());
-            ArrayNode uris = response.putArray("uris");
-            uris.add(group.getChannelUrl() + "/" + next);
+            //todo - gfm - 6/26/14 - should this InterruptedException propagate up?
+            semaphore.acquire();
+            executorService.submit(new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                    inFlight.add(next);
+                    makeTimedCall(createResponse(next));
+                    //todo - gfm - 6/22/14 - make sure lastCompleted only increases the value
+                    lastCompleted.update(next);
+                    inFlight.remove(next);
+                    semaphore.release();
+                    return null;
+                }
+            });
 
-            makeTimedCall(response);
-            lastCompleted.update(next);
             logger.debug("completed {} call to {} ", next, group.getName());
         } catch (Exception e) {
+            //todo - gfm - 6/26/14 - can we get here?
             logger.warn("unable to send " + next + " to " + group, e);
         }
+    }
+
+    private ObjectNode createResponse(long next) {
+        ObjectNode response = mapper.createObjectNode();
+        response.put("name", group.getName());
+        ArrayNode uris = response.putArray("uris");
+        uris.add(group.getChannelUrl() + "/" + next);
+        return response;
     }
 
     private void makeTimedCall(final ObjectNode response) throws Exception {
@@ -140,6 +174,11 @@ public class GroupCaller implements Leader {
     public void exit(boolean delete) {
         deleteOnExit.set(delete);
         curatorLeader.close();
+        try {
+            executorService.awaitTermination(1, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            logger.warn("unable to stop?", e);
+        }
     }
 
     private String getLeaderPath() {
@@ -148,6 +187,10 @@ public class GroupCaller implements Leader {
 
     private String getValuePath() {
         return "/GroupLastCompleted/" + group.getName();
+    }
+
+    private String getInFlightPath() {
+        return "/GroupInFlight/" + group.getName();
     }
 
     private Client createClient() {
@@ -164,6 +207,7 @@ public class GroupCaller implements Leader {
 
     private void delete() {
         logger.info("deleting " + group.getName());
+        LongSet.delete(getInFlightPath(), curator);
         LongValue.delete(getValuePath(), curator);
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
@@ -177,6 +221,7 @@ public class GroupCaller implements Leader {
                 .retryIfException(new Predicate<Throwable>() {
                     @Override
                     public boolean apply(@Nullable Throwable throwable) {
+                        //todo - gfm - 6/22/14 - should this handle InterruptedException separately?
                         if (throwable != null) {
                             if (throwable.getClass().isAssignableFrom(ClientHandlerException.class)) {
                                 logger.info("got ClientHandlerException trying to call client back " + throwable.getMessage());
