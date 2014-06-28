@@ -58,6 +58,7 @@ public class GroupCaller implements Leader {
         this.sequenceDao = sequenceDao;
         this.groupService = groupService;
         this.metricsTimer = metricsTimer;
+        lastCompleted = new LongValue(curator);
         retryer = buildRetryer(1000);
     }
 
@@ -67,7 +68,7 @@ public class GroupCaller implements Leader {
         ContentKey lastUpdated = sequenceDao.getLastUpdated(ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl()));
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(group.getParallelCalls());
-        lastCompleted = new LongValue(getValuePath(), lastUpdated.getSequence(), curator);
+        lastCompleted.initialize(getValuePath(), lastUpdated.getSequence());
         inFlight = new LongSet(getInFlightPath(), curator);
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
         curatorLeader.start();
@@ -85,7 +86,8 @@ public class GroupCaller implements Leader {
 
         try (CallbackIterator iterator = iteratorProvider.get()) {
             sendInFlight();
-            long start = lastCompleted.get();
+            //todo - gfm - 6/27/14 - what should this default be?
+            long start = lastCompleted.get(getValuePath(), 0);
 
             logger.debug("last completed at {} {}", start, group.getName());
             iterator.start(start, group);
@@ -122,7 +124,7 @@ public class GroupCaller implements Leader {
                     inFlight.add(next);
                     makeTimedCall(createResponse(next));
                     //todo - gfm - 6/22/14 - make sure lastCompleted only increases the value
-                    lastCompleted.update(next);
+                    lastCompleted.update(next, getValuePath());
                     inFlight.remove(next);
                     semaphore.release();
                     return null;
@@ -175,6 +177,8 @@ public class GroupCaller implements Leader {
         deleteOnExit.set(delete);
         curatorLeader.close();
         try {
+            executorService.shutdown();
+            //todo - gfm - 6/27/14 - should this wait here?
             executorService.awaitTermination(1, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
             logger.warn("unable to stop?", e);
@@ -202,13 +206,13 @@ public class GroupCaller implements Leader {
     }
 
     public long getLastCompleted() {
-        return lastCompleted.get();
+        return lastCompleted.get(getValuePath(), 0);
     }
 
     private void delete() {
         logger.info("deleting " + group.getName());
         LongSet.delete(getInFlightPath(), curator);
-        LongValue.delete(getValuePath(), curator);
+        lastCompleted.delete(getValuePath());
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
         } catch (Exception e) {
