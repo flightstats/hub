@@ -393,8 +393,8 @@ the Hub server keeps track of the Group's state.
 `name` is used in the url for the callback.  Names are limited to 48 characters and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
 `callbackUrl` is the fully qualified location to receive callbacks from the server.  
 `channelUrl` is the fully qualified channel location to monitor.  
-
-
+`parallelCalls` is the optional number of callbacks to make in parallel.  The default value is `1`.  
+If parallelCalls is higher than one, callback ordering is not gauranteed.
 
 To see all existing group callbacks and status:
 
@@ -407,7 +407,8 @@ To create a new group callback:
 ``` json
 {
   "callbackUrl" : "http://client/path/callback",
-  "channelUrl" : "http://hub/channel/stumptown"
+  "channelUrl" : "http://hub/channel/stumptown",
+  "parallelCalls" : 2
 }
 ```
 
