@@ -8,7 +8,6 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//todo - gfm - 6/27/14 - test this
 public class LongValue {
     private final static Logger logger = LoggerFactory.getLogger(LongValue.class);
 
@@ -31,11 +30,19 @@ public class LongValue {
 
     public long get(String path, long defaultValue) {
         try {
-            return Longs.fromByteArray(curator.getData().forPath(path));
+            return get(path);
+        } catch (KeeperException.NoNodeException e) {
+            logger.warn("missing value for {}", path);
+            initialize(path, defaultValue);
+            return get(path, defaultValue);
         } catch (Exception e) {
             logger.warn("unable to get node " + e.getMessage());
             return defaultValue;
         }
+    }
+
+    private long get(String path) throws Exception {
+        return Longs.fromByteArray(curator.getData().forPath(path));
     }
 
     public void update(long next, String path)  {
