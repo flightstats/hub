@@ -65,18 +65,22 @@ public class GroupCaller implements Leader {
     public boolean tryLeadership(Group group) {
         logger.debug("starting group: " + group);
         this.group = group;
-        ContentKey lastUpdated = sequenceDao.getLastUpdated(ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl()));
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(group.getParallelCalls());
-        lastCompleted.initialize(getValuePath(), lastUpdated.getSequence());
+        lastCompleted.initialize(getValuePath(), getLastUpdated(group).getSequence());
         inFlight = new LongSet(getInFlightPath(), curator);
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
         curatorLeader.start();
         return true;
     }
 
+    private ContentKey getLastUpdated(Group group) {
+        return sequenceDao.getLastUpdated(ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl()));
+    }
+
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
+        logger.info("taking leadership " + group);
         Optional<Group> foundGroup = groupService.getGroup(group.getName());
         if (!foundGroup.isPresent()) {
             logger.info("group is missing, exiting " + group.getName());
@@ -86,8 +90,7 @@ public class GroupCaller implements Leader {
 
         try (CallbackIterator iterator = iteratorProvider.get()) {
             sendInFlight();
-            //todo - gfm - 6/27/14 - what should this default be?
-            long start = lastCompleted.get(getValuePath(), 0);
+            long start = lastCompleted.get(getValuePath(), getLastUpdated(group).getSequence());
 
             logger.debug("last completed at {} {}", start, group.getName());
             iterator.start(start, group);
@@ -174,6 +177,7 @@ public class GroupCaller implements Leader {
     }
 
     public void exit(boolean delete) {
+        logger.info("deleting group " + group);
         deleteOnExit.set(delete);
         curatorLeader.close();
         try {
