@@ -133,7 +133,7 @@ task jasmineTests << {
     def reportsdir = "${projectDir}/build/reports/integration/"
     println "Making " + reportsdir
     new File(reportsdir).mkdirs()
-    runExternal("jasmine-node --forceexit --captureExceptions --junitreport --output ${reportsdir} ${testdir}")
+    runExternal("jasmine-node --forceexit --captureExceptions ${testdir}")
 }
 
 task jasmineEncryptedTests << {
