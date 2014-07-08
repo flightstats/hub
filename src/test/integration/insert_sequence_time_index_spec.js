@@ -3,7 +3,7 @@ var fs = require('fs');
 //npm install --save moment
 var moment = require('moment');
 var request = require('request');
-var testName = "insert_sequence_time_index_spec";
+var testName = __filename;
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
@@ -11,11 +11,11 @@ var channelRequest = JSON.stringify({ "name": channelName });
 
 utils.configureFrisby();
 
-utils.runInTestChannelJson(channelRequest, function () {
+utils.runInTestChannelJson(testName, channelRequest, function () {
     var hrefs = [];
     var foundHrefs = [];
     function insert() {
-        request.post({url: thisChannelResource, headers: {"Content-Type": "text/plain"}, body: messageText}, function (err, response, body) {
+        request.post({url : thisChannelResource, headers : {"Content-Type" : "text/plain"}, body : messageText}, function (err, response, body) {
             expect(err).toBeNull();
             resultObj = JSON.parse(body);
             hrefs.push(resultObj['_links']['self']['href']);
@@ -33,7 +33,7 @@ utils.runInTestChannelJson(channelRequest, function () {
     }, 5000);
 
     function getHrefs(format) {
-        request.get({url: hubUrlBase + "/channel/" + channelName + "/time/" + format},
+        request.get({url : hubUrlBase + "/channel/" + channelName + "/time/" + format},
             function (err, response, body) {
                 expect(err).toBeNull();
                 resultObj = JSON.parse(body);
@@ -53,7 +53,7 @@ utils.runInTestChannelJson(channelRequest, function () {
 
     waitsFor(function () {
         return foundHrefs.length == 3;
-    }, 10000);
+    }, 'waiting for hrefs ' + testName, 30000);
 
     runs(function () {
         hrefs.forEach(function (item) {

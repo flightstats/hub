@@ -128,7 +128,7 @@ describe("replication_remote_spec", function () {
 
         waitsFor(function() {
             return verified;
-        }, 10000);
+        }, 'waiting for verified ' + testName, 30000);
 
     });
 
