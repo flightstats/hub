@@ -3,12 +3,12 @@ require('./integration_config.js');
 var WebSocket = require('ws');
 
 var channelName = utils.randomChannelName();
-var testName = "websocket_spec";
+var testName = __filename;
 var request = require('request');
 
 utils.configureFrisby();
 
-utils.runInTestChannel(channelName, function (channelResponse) {
+utils.runInTestChannel(testName, channelName, function (channelResponse) {
 
     var channelUrl = channelResponse['_links']['self']['href'];
     var wsUrl = channelResponse['_links']['ws']['href'];
@@ -32,7 +32,7 @@ utils.runInTestChannel(channelName, function (channelResponse) {
         connectionClosed = true;
     }
 
-    waitsFor(function(){
+    waitsFor(function () {
         return connectionOpened;
     }, 5000);
 
@@ -40,8 +40,8 @@ utils.runInTestChannel(channelName, function (channelResponse) {
     //post data
     var firstPostUrl = null;
     var error = null;
-    runs(function(){
-        request.post({url: channelUrl, headers: {"Content-Type": "text/plain"}, body: "blahblahblah"}, function (err, response, body) {
+    runs(function () {
+        request.post({url : channelUrl, headers : {"Content-Type" : "text/plain"}, body : "blahblahblah"}, function (err, response, body) {
             error = err;
             resultObj = JSON.parse(body);
             firstPostUrl = resultObj['_links']['self']['href'];
@@ -49,11 +49,11 @@ utils.runInTestChannel(channelName, function (channelResponse) {
         });
     });
 
-    waitsFor(function(){
+    waitsFor(function () {
         return firstDataReceived && firstPostCompleted;
     }, 5000);
 
-    runs(function(){
+    runs(function () {
         expect(error).toBeNull();
         expect(messagedUrl).toEqual(firstPostUrl)
 
@@ -62,15 +62,15 @@ utils.runInTestChannel(channelName, function (channelResponse) {
     });
 
 
-    waitsFor(function(){
+    waitsFor(function () {
         return connectionClosed;
     }, 5000);
 
     var secondPostUrl = null;
     var secondPostCompleted = false;
     //post new data, verify not received
-    runs(function(){
-        request.post({url: channelUrl, headers: {"Content-Type": "text/plain"}, body: "blahblahblah"}, function (err, response, body) {
+    runs(function () {
+        request.post({url : channelUrl, headers : {"Content-Type" : "text/plain"}, body : "blahblahblah"}, function (err, response, body) {
             error = err;
             resultObj = JSON.parse(body);
             secondPostUrl = resultObj['_links']['self']['href'];
@@ -78,12 +78,12 @@ utils.runInTestChannel(channelName, function (channelResponse) {
         });
     });
 
-    waitsFor(function(){
+    waitsFor(function () {
         return secondPostCompleted;
     }, 5000);
 
 
-    runs(function(){
+    runs(function () {
         expect(error).toBeNull();
         expect(messagedUrl).toEqual('nothing')
         expect(secondPostUrl).toEqual(channelUrl + '/1001')

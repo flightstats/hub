@@ -3,25 +3,25 @@ require('./integration_config.js');
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
-var testName = "insert_and_fetch_round_trip_text_spec";
+var testName = __filename;
 
 utils.configureFrisby();
 
-utils.runInTestChannel(channelName, function () {
+utils.runInTestChannel(testName, channelName, function () {
     frisby.create(testName + ': Inserting a value into a channel.')
-        .post(thisChannelResource, null, { body: messageText})
+        .post(thisChannelResource, null, { body : messageText})
         .addHeader("Content-Type", "text/plain")
         .addHeader("User", "someone")
         .expectStatus(201)
         .expectHeader('content-type', 'application/json')
         .expectHeader('User', 'someone')
         .expectJSON('_links', {
-            channel: {
-                href: thisChannelResource
+            channel : {
+                href : thisChannelResource
             }
         })
         .expectJSON('_links.self', {
-            href: function (value) {
+            href : function (value) {
                 var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/1000");
                 expect(value).toMatch(regex);
             }

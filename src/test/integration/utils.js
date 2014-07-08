@@ -4,12 +4,13 @@ var http = require('http');
 var fs = require('fs');
 var request = require('request');
 
-function runInTestChannel(channelName, functionToExecute) {
-    runInTestChannelJson(JSON.stringify({ "name": channelName}), functionToExecute);
+function runInTestChannel(testName, channelName, functionToExecute) {
+    testName = testName || '';
+    runInTestChannelJson(testName, JSON.stringify({ "name" : channelName}), functionToExecute);
 }
 
-function runInTestChannelJson(jsonBody, functionToExecute) {
-    frisby.create('Ensuring that the test channel exists. ' + jsonBody)
+function runInTestChannelJson(testName, jsonBody, functionToExecute) {
+    frisby.create('Creating channel ' + testName + ' ' + jsonBody)
         .post(channelUrl, null, { body: jsonBody})
         .addHeader("Content-Type", "application/json")
         .expectStatus(201)
@@ -37,7 +38,7 @@ function download(url, completionHandler) {
 }
 
 function configureFrisby(timeout) {
-    timeout = typeof timeout !== 'undefined' ? timeout : 10000
+    timeout = typeof timeout !== 'undefined' ? timeout : 30000;
     frisby.globalSetup({
         timeout: timeout
     });
