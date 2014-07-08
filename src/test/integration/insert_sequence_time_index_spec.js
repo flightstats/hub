@@ -53,7 +53,7 @@ utils.runInTestChannelJson(testName, channelRequest, function () {
 
     waitsFor(function () {
         return foundHrefs.length == 3;
-    }, 10000);
+    }, 'waiting for hrefs ' + testName, 30000);
 
     runs(function () {
         hrefs.forEach(function (item) {
