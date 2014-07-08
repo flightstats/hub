@@ -3,20 +3,20 @@ require('./integration_config.js');
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "";
-var testName = "insert_empty_payload_spec";
+var testName = __filename;
 
 utils.configureFrisby();
 
-utils.runInTestChannel(channelName, function () {
+utils.runInTestChannel(testName, channelName, function () {
     frisby.create(testName + ': Inserting a value into a channel.')
-        .post(thisChannelResource, null, { body: messageText})
+        .post(thisChannelResource, null, { body : messageText})
         .addHeader("Content-Type", "text/plain")
         .expectStatus(201)
         .expectHeader('content-type', 'application/json')
         .expectJSON({
-            _links: {
-                channel: {
-                    href: thisChannelResource
+            _links : {
+                channel : {
+                    href : thisChannelResource
                 }
                 //TOOD: Validate the value "self" url
             }
