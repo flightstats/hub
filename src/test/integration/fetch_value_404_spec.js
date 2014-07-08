@@ -2,11 +2,11 @@ require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
 var badValueUrl = channelUrl + "/" + channelName + "/foooo" + Math.random().toString();
-var testName = "fetch_value_404_spec";
+var testName = __filename;
 
 utils.configureFrisby();
 
-utils.runInTestChannel(channelName, function () {
+utils.runInTestChannel(testName, channelName, function () {
     frisby.create(testName + ': Fetching a nonexistent value.')
         .get(badValueUrl)
         .expectStatus(404)

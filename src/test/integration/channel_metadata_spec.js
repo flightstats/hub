@@ -3,13 +3,13 @@ require('./integration_config.js');
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
-var testName = "channel_metadata_spec";
+var testName = __filename;
 
 utils.configureFrisby();
 
-utils.runInTestChannel(channelName, function () {
+utils.runInTestChannel(testName, channelName, function () {
     frisby.create(testName + ': Inserting a value into a channel.')
-        .post(thisChannelResource, null, { body: messageText})
+        .post(thisChannelResource, null, { body : messageText})
         .addHeader("Content-Type", "text/plain")
         .expectStatus(201)
         .afterJSON(function (result) {
@@ -19,17 +19,17 @@ utils.runInTestChannel(channelName, function () {
                 .expectStatus(200)
                 .expectHeader('content-type', 'application/json')
                 .expectJSON('_links.latest', {
-                    href: thisChannelResource + '/latest'
+                    href : thisChannelResource + '/latest'
                 })
                 .expectJSON('_links.ws', {
-                    href: thisChannelResource.replace(/^http/, "ws") + '/ws'
+                    href : thisChannelResource.replace(/^http/, "ws") + '/ws'
                 })
                 .expectJSON({
-                    name: channelName,
-                    type: "Sequence",
-                    contentSizeKB: 1,
-                    peakRequestRateSeconds: 1,
-                    ttlDays: 120
+                    name : channelName,
+                    type : "Sequence",
+                    contentSizeKB : 1,
+                    peakRequestRateSeconds : 1,
+                    ttlDays : 120
                 })
                 //TODO: Validate creation date
                 .toss();

@@ -1,14 +1,14 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var testName = "next_link_header_spec";
+var testName = __filename;
 
 utils.configureFrisby();
 
-utils.runInTestChannel(channelName, function (channelResponse) {
+utils.runInTestChannel(testName, channelName, function (channelResponse) {
     var channelResource = channelResponse['_links']['self']['href'];
     frisby.create(testName + ': Inserting a first item')
-        .post(channelResource, null, { body: "FIRST ITEM"})
+        .post(channelResource, null, { body : "FIRST ITEM"})
         .addHeader("Content-Type", "text/plain")
         .expectStatus(201)
         .afterJSON(function (response) {
@@ -23,7 +23,7 @@ utils.runInTestChannel(channelName, function (channelResponse) {
                         }
                     }
                     frisby.create(testName + ": Inserting a second item")
-                        .post(channelResource, null, {body: "SECOND ITEM"})
+                        .post(channelResource, null, {body : "SECOND ITEM"})
                         .addHeader("Content-Type", "text/plain")
                         .expectStatus(201)
                         .afterJSON(function (response) {
