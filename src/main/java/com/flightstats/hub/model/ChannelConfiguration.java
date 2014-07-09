@@ -165,7 +165,13 @@ public class ChannelConfiguration implements Serializable {
             if (rootNode.has("ttlDays")) {
                 withTtlDays(rootNode.get("ttlDays").asLong());
             } else if (rootNode.has("ttlMillis")) {
-                withTtlMillis(rootNode.get("ttlMillis").asLong());
+                JsonNode millisNode = rootNode.get("ttlMillis");
+                //filled with hate for null
+                if (millisNode.asText().equals("null")) {
+                    withTtlDays(120);
+                } else {
+                    withTtlMillis(millisNode.asLong());
+                }
             }
             if (rootNode.has("contentSizeKB")) {
                 withContentKiloBytes(rootNode.get("contentSizeKB").asInt());
