@@ -7,7 +7,8 @@ var testName = __filename;
 
 function verifyOptionals(parse) {
     expect(parse.description).toBe('describe me');
-    expect(parse.ttlDays).toBe(9);
+    expect(parse.tags).toContain('one');
+    expect(parse.tags).toContain('two');
     expect(parse.contentSizeKB).toBe(3);
     expect(parse.peakRequestRateSeconds).toBe(2);
 }
@@ -19,7 +20,7 @@ describe(testName, function () {
                 body: JSON.stringify({
                     name: channelName,
                     description: 'describe me',
-                    ttlDays: 9,
+                    ttlDays: 10,
                     contentSizeKB: 3,
                     peakRequestRateSeconds: 2,
                     tags: ['one', 'two']
@@ -28,8 +29,7 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
                 var parse = JSON.parse(body);
-                expect(parse.tags).toContain('one');
-                expect(parse.tags).toContain('two');
+                expect(parse.ttlDays).toBe(10);
                 done();
             });
     });
@@ -40,8 +40,7 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parse = JSON.parse(body);
-                expect(parse.tags).toContain('one');
-                expect(parse.tags).toContain('two');
+                expect(parse.ttlDays).toBe(10);
                 verifyOptionals(parse);
                 done();
             });
@@ -50,28 +49,24 @@ describe(testName, function () {
     it("patches channel " + channelResource, function (done) {
         request.patch({url: channelResource,
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ tags: ['one', 'three'] })},
+                body: JSON.stringify({ ttlDays: 12 })},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parse = JSON.parse(body);
-                expect(parse.tags).toContain('one');
-                expect(parse.tags).toContain('three');
-                expect(parse.tags).not.toContain('two');
+                expect(parse.ttlDays).toBe(12);
                 verifyOptionals(parse);
                 done();
             });
     });
 
-    it("verifies channel exists with correct tags " + channelResource, function (done) {
+    it("verifies channel exists with correct ttl " + channelResource, function (done) {
         request.get({url: channelResource },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parse = JSON.parse(body);
-                expect(parse.tags).toContain('one');
-                expect(parse.tags).toContain('three');
-                expect(parse.tags).not.toContain('two');
+                expect(parse.ttlDays).toBe(12);
                 verifyOptionals(parse);
                 done();
             });
