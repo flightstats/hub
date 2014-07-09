@@ -73,7 +73,8 @@ public class SingleChannelResource {
         ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
         ChannelConfiguration newConfig = ChannelConfiguration.builder()
                 .withChannelConfiguration(oldConfig)
-                .withUpdateJson(json).build();
+                .withUpdateJson(json)
+                .build();
 
         newConfig = channelService.updateChannel(newConfig);
 
