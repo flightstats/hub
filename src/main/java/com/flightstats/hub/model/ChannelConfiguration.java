@@ -2,6 +2,8 @@ package com.flightstats.hub.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.model.exception.InvalidRequestException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -9,6 +11,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -137,6 +140,7 @@ public class ChannelConfiguration implements Serializable {
         private Long ttlMillis;
         private String description = "";
         private Set<String> tags = new HashSet<>();
+        private static final ObjectMapper mapper = new ObjectMapper();
 
         public Builder() {
         }
@@ -153,13 +157,29 @@ public class ChannelConfiguration implements Serializable {
 			return this;
 		}
 
-        public Builder withUpdateConfig(ChannelConfiguration config) {
-            this.ttlDays = config.ttlDays;
-            this.contentSizeKB = config.contentSizeKB;
-            this.peakRequestRateSeconds = config.peakRequestRateSeconds;
-            this.description = config.description;
-            this.tags.clear();
-            this.tags.addAll(config.getTags());
+        public Builder withUpdateJson(String json) throws IOException {
+            JsonNode rootNode = mapper.readTree(json);
+            if (rootNode.has("description")) {
+                withDescription(rootNode.get("description").asText());
+            }
+            if (rootNode.has("ttlDays")) {
+                withTtlDays(rootNode.get("ttlDays").asLong());
+            } else if (rootNode.has("ttlMillis")) {
+                withTtlMillis(rootNode.get("ttlMillis").asLong());
+            }
+            if (rootNode.has("contentSizeKB")) {
+                withContentKiloBytes(rootNode.get("contentSizeKB").asInt());
+            }
+            if (rootNode.has("peakRequestRateSeconds")) {
+                withPeakRequestRate(rootNode.get("peakRequestRateSeconds").asInt());
+            }
+            if (rootNode.has("tags")) {
+                tags.clear();
+                JsonNode tagsNode = rootNode.get("tags");
+                for (JsonNode tagNode : tagsNode) {
+                    tags.add(tagNode.asText());
+                }
+            }
             return this;
         }
 

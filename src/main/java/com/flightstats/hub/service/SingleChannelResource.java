@@ -73,8 +73,8 @@ public class SingleChannelResource {
         ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
         ChannelConfiguration newConfig = ChannelConfiguration.builder()
                 .withChannelConfiguration(oldConfig)
-                .withUpdateConfig(ChannelConfiguration.fromJson(json))
-                .build();
+                .withUpdateJson(json).build();
+
         newConfig = channelService.updateChannel(newConfig);
 
         URI channelUri = linkBuilder.buildChannelUri(newConfig, uriInfo);

@@ -17,7 +17,7 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
             .expectJSON({"description": "starting"})
             .afterJSON(function (result) {
                 frisby.create(testName + ': Update channel description')
-                    .patch(channelResource, {"description": null}, {json:true})
+                    .patch(channelResource, {"description": ''}, {json:true})
                     .expectStatus(200)
                     .expectHeader('content-type', 'application/json')
                     .expectJSON({"name": channelName})
