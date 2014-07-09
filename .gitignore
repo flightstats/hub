@@ -1,7 +1,7 @@
 datahub-service.iws
 datahub-service.ipr
 datahub-service.iml
-hub.iml
+*.iml
 build/
 .gradle/
 out/
