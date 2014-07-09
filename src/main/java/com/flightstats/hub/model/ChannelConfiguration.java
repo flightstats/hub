@@ -160,7 +160,11 @@ public class ChannelConfiguration implements Serializable {
         public Builder withUpdateJson(String json) throws IOException {
             JsonNode rootNode = mapper.readTree(json);
             if (rootNode.has("description")) {
-                withDescription(rootNode.get("description").asText());
+                String desc = rootNode.get("description").asText();
+                if (desc.equals("null")) {
+                    desc = "";
+                }
+                withDescription(desc);
             }
             if (rootNode.has("ttlDays")) {
                 withTtlDays(rootNode.get("ttlDays").asLong());
