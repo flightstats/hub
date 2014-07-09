@@ -20,7 +20,7 @@ import com.flightstats.hub.group.GroupCallback;
 import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.replication.*;
-import com.flightstats.hub.service.CreateChannelValidator;
+import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.util.ContentKeyGenerator;
 import com.flightstats.hub.util.CuratorKeyGenerator;
 import com.flightstats.hub.websocket.WebsocketPublisher;
@@ -83,7 +83,7 @@ public class AwsModule extends AbstractModule {
 
         bind(DynamoUtils.class).asEagerSingleton();
         bind(DynamoGroupDao.class).asEagerSingleton();
-        bind(CreateChannelValidator.class).asEagerSingleton();
+        bind(ChannelValidator.class).asEagerSingleton();
         bind(GroupValidator.class).asEagerSingleton();
         bind(GroupCallback.class).to(GroupCallbackImpl.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();

@@ -12,7 +12,7 @@ var expectedBody = {
     "tags": [ "bar", "foo", "tagz"]
 };
 var channelResource = channelUrl + "/" + channelName;
-var testName = 'channel_update_spec';
+var testName = __filename;
 
 utils.configureFrisby();
 
