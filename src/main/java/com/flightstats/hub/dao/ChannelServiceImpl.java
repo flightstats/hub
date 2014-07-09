@@ -4,7 +4,7 @@ import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.replication.ReplicationValidator;
-import com.flightstats.hub.service.CreateChannelValidator;
+import com.flightstats.hub.service.ChannelValidator;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -24,18 +24,18 @@ public class ChannelServiceImpl implements ChannelService {
 
     private final ContentService contentService;
     private final ChannelConfigurationDao channelConfigurationDao;
-    private final CreateChannelValidator createChannelValidator;
+    private final ChannelValidator channelValidator;
     private final TimeIndexProcessor timeIndexProcessor;
     private final ChannelReplicator channelReplicator;
     private final ReplicationValidator replicationValidator;
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigurationDao channelConfigurationDao,
-                              CreateChannelValidator createChannelValidator, TimeIndexProcessor timeIndexProcessor,
+                              ChannelValidator channelValidator, TimeIndexProcessor timeIndexProcessor,
                               ChannelReplicator channelReplicator, ReplicationValidator replicationValidator) {
         this.contentService = contentService;
         this.channelConfigurationDao = channelConfigurationDao;
-        this.createChannelValidator = createChannelValidator;
+        this.channelValidator = channelValidator;
         this.timeIndexProcessor = timeIndexProcessor;
         this.channelReplicator = channelReplicator;
         this.replicationValidator = replicationValidator;
@@ -48,7 +48,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
-        createChannelValidator.validate(configuration);
+        channelValidator.validate(configuration, true);
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
         contentService.createChannel(configuration);
         return channelConfigurationDao.createChannel(configuration);
@@ -112,7 +112,9 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
+        //this line exists to get around ttlMillis fuckery
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
+        channelValidator.validate(configuration, false);
         channelConfigurationDao.updateChannel(configuration);
         return configuration;
     }

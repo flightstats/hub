@@ -9,15 +9,15 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
-public class CreateChannelValidator {
+public class ChannelValidator {
     private final ChannelService channelService;
 
     @Inject
-    public CreateChannelValidator(ChannelService channelService) {
+    public ChannelValidator(ChannelService channelService) {
         this.channelService = channelService;
     }
 
-    public void validate(ChannelConfiguration request) throws InvalidRequestException, ConflictException {
+    public void validate(ChannelConfiguration request, boolean isCreation) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional =  Optional.absent();
         if (request != null) {
             channelNameOptional = Optional.fromNullable(request.getName());
@@ -28,7 +28,9 @@ public class CreateChannelValidator {
         ensureNotAllBlank(channelName);
         ensureSize(channelName);
         checkForInvalidCharacters(channelName);
-        validateChannelUniqueness(channelName);
+        if (isCreation) {
+            validateChannelUniqueness(channelName);
+        }
         validateRate(request);
         validateContentSize(request);
         validateTTL(request);
@@ -41,7 +43,7 @@ public class CreateChannelValidator {
             throw new InvalidRequestException("{\"error\": \"Channels are limited to 20 tags\"}");
         }
         for (String tag : request.getTags()) {
-            if (!tag.matches("^[a-zA-Z0-9]+$")) {
+            if (!tag.matches("^[a-zA-Z0-9\\:\\-]+$")) {
                 throw new InvalidRequestException("{\"error\": \"Tags must only contain characters a-z, A-Z, and 0-9\"}");
             }
             if (tag.length() > 48) {

@@ -3,7 +3,7 @@ require('./integration_config.js');
 var channelName = utils.randomChannelName();
 var jsonBody = JSON.stringify({ "name": channelName, "ttlMillis": null});
 var channelResource = channelUrl + "/" + channelName;
-var testName = 'channel_update_ttl_null_spec';
+var testName = __filename;
 
 utils.configureFrisby();
 
