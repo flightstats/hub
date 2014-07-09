@@ -199,6 +199,7 @@ public class ChannelConfiguration implements Serializable {
         }
 
         public Builder withTags(Collection<String> tags) {
+            this.tags.clear();
             this.tags.addAll(tags);
             return this;
         }
