@@ -2,8 +2,6 @@ package com.flightstats.hub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.config.PATCH;
 import com.flightstats.hub.app.config.metrics.PerChannelThroughput;
 import com.flightstats.hub.app.config.metrics.PerChannelTimed;
@@ -22,8 +20,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
 
 import static com.flightstats.rest.Linked.linked;
 
@@ -37,7 +33,6 @@ public class SingleChannelResource {
     private final ChannelLinkBuilder linkBuilder;
     private final Integer maxPayloadSizeBytes;
     private final UriInfo uriInfo;
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public SingleChannelResource(ChannelService channelService, ChannelLinkBuilder linkBuilder,
@@ -76,33 +71,10 @@ public class SingleChannelResource {
         }
 
         ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
-        ChannelConfiguration.Builder builder = ChannelConfiguration.builder()
-                .withChannelConfiguration(oldConfig);
-        JsonNode rootNode = mapper.readTree(json);
-        if (rootNode.has("description")) {
-            builder.withDescription(rootNode.get("description").asText());
-        }
-        if (rootNode.has("ttlDays")) {
-            builder.withTtlDays(rootNode.get("ttlDays").asLong());
-        } else if (rootNode.has("ttlMillis")) {
-            builder.withTtlMillis(rootNode.get("ttlMillis").asLong());
-        }
-        if (rootNode.has("contentSizeKB")) {
-            builder.withContentKiloBytes(rootNode.get("contentSizeKB").asInt());
-        }
-        if (rootNode.has("peakRequestRateSeconds")) {
-            builder.withPeakRequestRate(rootNode.get("peakRequestRateSeconds").asInt());
-        }
-        if (rootNode.has("tags")) {
-            Set<String> tags = new HashSet<>();
-            JsonNode tagsNode = rootNode.get("tags");
-            for (JsonNode tagNode : tagsNode) {
-                tags.add(tagNode.asText());
-            }
-            builder.withTags(tags);
-        }
+        ChannelConfiguration newConfig = ChannelConfiguration.builder()
+                .withChannelConfiguration(oldConfig)
+                .withUpdateJson(json).build();
 
-        ChannelConfiguration newConfig = builder.build();
         newConfig = channelService.updateChannel(newConfig);
 
         URI channelUri = linkBuilder.buildChannelUri(newConfig, uriInfo);
