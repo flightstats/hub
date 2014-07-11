@@ -69,9 +69,7 @@ The DDT team recommends clients use exponential backoff.
 
 * Why does the Hub take 62 seconds to respond with a 404?
 
-  The Hub services deployed in AWS US-East use S3 in US Standard.  Unlike all other regions, US Standard does not  
-provide read after write consistency.  To prevent returning a 404 for data just inserted, the Hub retries for up to 62 seconds.  
-If this delay is problematic for your application, please talk to us, and we can discuss options.
+  The Hub services deployed in AWS US-East use S3 in US Standard.  Unlike all other regions, US Standard does not provide read after write consistency.  To prevent returning a 404 for data just inserted, the Hub retries for up to 62 seconds. If this delay is problematic for your application, please talk to us, and we can discuss options.
 
 * Why does /latest redirect to an item which returns a 404?
 
