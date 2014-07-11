@@ -691,7 +691,7 @@ Encrypted Hub Servers:
 
 The Hub is a work in progress.  If you'd like to contribute, let us know.
 
-The latest builds are in [Jenkins](http://ops-jenkins01.cloud-east.dev/job/hub/)
+The latest builds are in [Jenkins](http://ops-jenkins01.cloud-east.dev/view/hub/)
 
 To run Java based tests and jasmine-node tests locally, you will most likely want to use DynamoDB Local.
 Install it from http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
@@ -712,6 +712,14 @@ You can also run all of the integration tests from gradle with:
 ```
 gradle integrationTests
 ```
+
+The Hub uses the Client Team's [Develop-Master branching strategy](http://wiki.office/wiki/Client_Team_Operational_Documentation#Git_Usage_Diagram).
+Rules:
+* Only pull from master
+* merge feature branches to develop, which [builds and deploys](http://ops-jenkins01.cloud-east.dev/job/hub-develop/) to dev with version `DEVELOP.mm-dd.#`
+* after testing in dev, create a pull request from the feature branch to master
+* every merge to master kicks off [build and deploy](http://ops-jenkins01.cloud-east.dev/job/hub-staging/) to staging with version ``
+* develop is reset to master every day at 6 AM [hub-develop-daily-reset](http://ops-jenkins01.cloud-east.dev/job/hub-develop-daily-reset/)
 
 ## deployments
 
