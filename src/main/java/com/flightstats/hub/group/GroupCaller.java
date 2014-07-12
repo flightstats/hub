@@ -86,7 +86,7 @@ public class GroupCaller implements Leader {
             logger.info("group is missing, exiting " + group.getName());
             return;
         }
-        this.client = createClient();
+        this.client = GroupClient.createClient();
 
         try (CallbackIterator iterator = iteratorProvider.get()) {
             sendInFlight();
@@ -199,14 +199,6 @@ public class GroupCaller implements Leader {
 
     private String getInFlightPath() {
         return "/GroupInFlight/" + group.getName();
-    }
-
-    private Client createClient() {
-        Client client = Client.create();
-        client.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(30));
-        client.setReadTimeout((int) TimeUnit.SECONDS.toMillis(120));
-        client.setFollowRedirects(true);
-        return client;
     }
 
     public long getLastCompleted() {
