@@ -1,6 +1,7 @@
 require('./integration_config.js');
 var frisby = require('frisby');
 var http = require('http');
+var https = require('https');
 var fs = require('fs');
 var request = require('request');
 
@@ -181,6 +182,33 @@ function startServer(port, callback) {
     }, 11000);
 }
 
+function startHttpsServer(port, callback, done) {
+
+    var options = {
+        key: fs.readFileSync('localhost.key'),
+        cert: fs.readFileSync('localhost.cert')
+    };
+
+    callback = callback || function () {};
+    var server = https.createServer(options, function (request, response) {
+        request.on('data', function(chunk) {
+            callback(chunk.toString());
+        });
+        response.writeHead(200);
+        response.end();
+    });
+
+    server.on('connection', function(socket) {
+        socket.setTimeout(1000);
+    });
+
+    server.listen(port, function () {
+        done();
+    });
+
+    return server;
+}
+
 function closeServer(callback) {
     callback = callback || function () {};
     var closed = false;
@@ -210,5 +238,6 @@ exports.getGroup = getGroup;
 exports.deleteGroup = deleteGroup;
 exports.postItem = postItem;
 exports.startServer = startServer;
+exports.startHttpsServer = startHttpsServer;
 exports.closeServer = closeServer;
 
