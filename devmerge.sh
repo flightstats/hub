@@ -6,3 +6,4 @@ echo "about to merge"
 git merge --no-edit ${FEATURE_BRANCH}
 git push origin develop
 git checkout ${FEATURE_BRANCH}
+#adding line
