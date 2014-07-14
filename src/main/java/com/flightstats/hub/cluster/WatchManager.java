@@ -41,6 +41,7 @@ public class WatchManager {
 
         @Override
         protected void shutDown() throws Exception {
+            executorService.shutdown();
             executorService.awaitTermination(1, TimeUnit.MINUTES);
         }
 
