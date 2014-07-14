@@ -185,8 +185,8 @@ function startServer(port, callback) {
 function startHttpsServer(port, callback, done) {
 
     var options = {
-        key: fs.readFileSync('localhost.key'),
-        cert: fs.readFileSync('localhost.cert')
+        key: fs.readFileSync(integrationTestPath + 'localhost.key'),
+        cert: fs.readFileSync(integrationTestPath + 'localhost.cert')
     };
 
     callback = callback || function () {};

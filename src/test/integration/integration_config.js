@@ -5,6 +5,7 @@ ip = require('ip');
 hubDomain = process.env.hubDomain || 'hub.svc.dev';
 replicationDomain = process.env.replicationDomain || 'hub.svc.staging';
 runEncrypted = process.env.runEncrypted || false;
+integrationTestPath = process.env.integrationTestPath || 'src/test/integration/';
 callbackPort = 8888;
 if (runEncrypted) {
     callbackPort = 8899;
