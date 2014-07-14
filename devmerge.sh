@@ -1,5 +1,5 @@
 #!/bin/sh
-FEATURE_BRANCH=git rev-parse --abbrev-ref HEAD
+FEATURE_BRANCH=`git rev-parse --abbrev-ref HEAD`
 git checkout develop
 git pull origin develop
 echo "about to merge"
