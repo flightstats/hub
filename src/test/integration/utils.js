@@ -157,15 +157,10 @@ function sleep(millis) {
 }
 
 function startServer(port, callback) {
-    callback = callback || function () {};
     var started = false;
     runs(function () {
         server = http.createServer(function (request, response) {
-            request.on('data', function(chunk) {
-                callback(chunk.toString());
-            });
-            response.writeHead(200);
-            response.end();
+            serverResponse(request, response, callback);
         });
 
         server.on('connection', function(socket) {
@@ -182,6 +177,19 @@ function startServer(port, callback) {
     }, 11000);
 }
 
+function serverResponse(request, response, callback) {
+    callback = callback || function () {};
+    var payload = '';
+    request.on('data', function(chunk) {
+        payload += chunk.toString();
+    });
+    request.on('end', function() {
+        callback(payload);
+    });
+    response.writeHead(200);
+    response.end();
+}
+
 function startHttpsServer(port, callback, done) {
 
     var options = {
@@ -189,13 +197,8 @@ function startHttpsServer(port, callback, done) {
         cert: fs.readFileSync(integrationTestPath + 'localhost.cert')
     };
 
-    callback = callback || function () {};
     var server = https.createServer(options, function (request, response) {
-        request.on('data', function(chunk) {
-            callback(chunk.toString());
-        });
-        response.writeHead(200);
-        response.end();
+        serverResponse(request, response, callback);
     });
 
     server.on('connection', function(socket) {
