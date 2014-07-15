@@ -177,13 +177,14 @@ public class GroupCaller implements Leader {
     }
 
     public void exit(boolean delete) {
-        logger.info("deleting group " + group);
+        logger.info("exiting group " + group);
         deleteOnExit.set(delete);
         curatorLeader.close();
         try {
             executorService.shutdown();
             //todo - gfm - 6/27/14 - should this wait here?
             executorService.awaitTermination(1, TimeUnit.MINUTES);
+            logger.info("stopped group " + group);
         } catch (InterruptedException e) {
             logger.warn("unable to stop?", e);
         }
