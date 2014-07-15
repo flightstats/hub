@@ -1,20 +1,13 @@
 package com.flightstats.hub.service;
 
-import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.jerseyguice.jetty.health.HealthCheck;
-import com.google.inject.Inject;
+import com.flightstats.hub.model.HealthStatus;
 
-public class HubHealthCheck implements HealthCheck {
+/**
+ *
+ */
+public interface HubHealthCheck {
 
-	private final ChannelService channelService;
+    HealthStatus getStatus();
 
-    @Inject
-	public HubHealthCheck(ChannelService channelService) {
-		this.channelService = channelService;
-    }
-
-    @Override
-    public boolean isHealthy() {
-        return channelService.isHealthy();
-    }
+    void shutdown();
 }
