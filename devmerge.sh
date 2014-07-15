@@ -7,4 +7,3 @@ git merge --no-edit ${FEATURE_BRANCH}
 git push origin develop
 git branch -d develop
 git checkout ${FEATURE_BRANCH}
-#todo delete develop local branch
