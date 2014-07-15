@@ -4,6 +4,6 @@ git branch -d develop
 git checkout develop
 git pull origin develop
 git merge --no-edit -X theirs ${FEATURE_BRANCH}
-git push origin develop --force
+git push origin develop
 git checkout ${FEATURE_BRANCH}
 git branch -d develop
