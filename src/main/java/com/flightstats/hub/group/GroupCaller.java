@@ -48,7 +48,7 @@ public class GroupCaller implements Leader {
     private LongValue lastCompleted;
     private ExecutorService executorService;
     private Semaphore semaphore;
-    private LongSet inFlight;
+    private LongSet inProcess;
 
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider,
@@ -68,7 +68,7 @@ public class GroupCaller implements Leader {
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(group.getParallelCalls());
         lastCompleted.initialize(getValuePath(), getLastUpdated(group).getSequence());
-        inFlight = new LongSet(getInFlightPath(), curator);
+        inProcess = new LongSet(getInFlightPath(), curator);
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
         curatorLeader.start();
         return true;
@@ -89,7 +89,7 @@ public class GroupCaller implements Leader {
         this.client = GroupClient.createClient();
 
         try (CallbackIterator iterator = iteratorProvider.get()) {
-            sendInFlight();
+            sendInProcess();
             long start = lastCompleted.get(getValuePath(), getLastUpdated(group).getSequence());
 
             logger.debug("last completed at {} {}", start, group.getName());
@@ -108,9 +108,9 @@ public class GroupCaller implements Leader {
         }
     }
 
-    private void sendInFlight() {
-        Set<Long> inFlightSet = inFlight.getSet();
-        logger.debug("sending in flight {}", inFlightSet);
+    private void sendInProcess() {
+        Set<Long> inFlightSet = inProcess.getSet();
+        logger.debug("sending in flight {} to {}", inFlightSet, group.getName());
         for (Long inFlight : inFlightSet) {
             send(inFlight);
         }
@@ -124,17 +124,17 @@ public class GroupCaller implements Leader {
             executorService.submit(new Callable<Object>() {
                 @Override
                 public Object call() throws Exception {
-                    inFlight.add(next);
+                    inProcess.add(next);
+                    //todo - gfm - 7/14/14 - get a pass/fail response from makeTimedCall
                     makeTimedCall(createResponse(next));
-                    //todo - gfm - 6/22/14 - make sure lastCompleted only increases the value
                     lastCompleted.update(next, getValuePath());
-                    inFlight.remove(next);
+                    inProcess.remove(next);
                     semaphore.release();
+                    logger.debug("completed {} call to {} ", next, group.getName());
                     return null;
                 }
             });
 
-            logger.debug("completed {} call to {} ", next, group.getName());
         } catch (Exception e) {
             //todo - gfm - 6/26/14 - can we get here?
             logger.warn("unable to send " + next + " to " + group, e);
@@ -165,7 +165,8 @@ public class GroupCaller implements Leader {
     }
 
     private void makeCall(final ObjectNode response) throws ExecutionException, RetryException {
-        logger.debug("calling {} {}", group.getCallbackUrl(), group.getName());
+        logger.debug("calling {} {} {}", group.getCallbackUrl(), group.getName(), response);
+        //todo - gfm - 7/14/14 - should not retry indefinitely during shutdown mode.
         retryer.call(new Callable<ClientResponse>() {
             @Override
             public ClientResponse call() throws Exception {
@@ -177,13 +178,17 @@ public class GroupCaller implements Leader {
     }
 
     public void exit(boolean delete) {
-        logger.info("deleting group " + group);
+        logger.info("exiting group " + group + " deleting " + delete);
         deleteOnExit.set(delete);
         curatorLeader.close();
         try {
             executorService.shutdown();
             //todo - gfm - 6/27/14 - should this wait here?
+            //todo - gfm - 7/14/14 - is 1 minute long enough?
+            logger.info("awating termination " + group);
             executorService.awaitTermination(1, TimeUnit.MINUTES);
+            logger.info("terminated " + group);
+
         } catch (InterruptedException e) {
             logger.warn("unable to stop?", e);
         }

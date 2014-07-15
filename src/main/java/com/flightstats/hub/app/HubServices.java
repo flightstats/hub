@@ -39,6 +39,7 @@ public class HubServices {
         try {
             for (Service service : services) {
                 logger.info("stopping service " + service.getClass().getName());
+                //todo - gfm - 7/14/14 - not being executed for Group
                 service.stopAsync();
                 service.awaitTerminated();
                 logger.info("stopped service " + service.getClass().getName());
