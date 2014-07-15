@@ -30,7 +30,7 @@ public class GroupCallbackImpl implements GroupCallback {
         this.watchManager = watchManager;
         this.groupService = groupService;
         this.callerProvider = callerProvider;
-        HubServices.register(new GroupCallbackService());
+        HubServices.registerPreStop(new GroupCallbackService());
     }
 
     private class GroupCallbackService extends AbstractIdleService {

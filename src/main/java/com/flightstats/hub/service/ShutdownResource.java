@@ -1,5 +1,6 @@
 package com.flightstats.hub.service;
 
+import com.flightstats.hub.app.HubServices;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,7 @@ public class ShutdownResource {
         logger.warn("shutting down!");
         healthCheck.shutdown();
 
-        //shut down group callbacks
+        HubServices.preStopAll();
 
         logger.warn("completed shutdown tasks");
         return Response.ok().build();
