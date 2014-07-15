@@ -62,6 +62,9 @@ bin/start.sh :
   min_new : "100m"
   environment : "encrypted-dev"
 
+bin/prestop.sh :
+  _template : prestop.sh.jinja
+
 conf/logback.xml :
     _template : logback.xml.jinja
 
