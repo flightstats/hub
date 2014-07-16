@@ -129,7 +129,7 @@ public class GroupCaller implements Leader {
                 inProcess.add(next);
                 try {
                     makeTimedCall(createResponse(next));
-                    lastCompleted.update(next, getValuePath());
+                    lastCompleted.updateIncrease(next, getValuePath());
                     inProcess.remove(next);
                     logger.debug("completed {} call to {} ", next, group.getName());
                 } catch (Exception e) {
