@@ -3,6 +3,7 @@ package com.flightstats.hub.group;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
+import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -10,10 +11,11 @@ import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class GroupCallbackImpl implements GroupCallback {
     private final static Logger logger = LoggerFactory.getLogger(GroupCallbackImpl.class);
@@ -76,11 +78,26 @@ public class GroupCallbackImpl implements GroupCallback {
         stop(groupsToStop, true);
     }
 
-    private void stop(Set<String> groupsToStop, boolean delete) {
+    private void stop(Set<String> groupsToStop, final boolean delete) {
+        List<Callable<Object>> groups = new ArrayList<>();
+        logger.info("stopping groups {}", groupsToStop);
         for (String groupToStop : groupsToStop) {
             logger.info("stopping " + groupToStop);
-            GroupCaller groupCaller = activeGroups.remove(groupToStop);
-            groupCaller.exit(delete);
+            final GroupCaller groupCaller = activeGroups.remove(groupToStop);
+            groups.add(new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                    groupCaller.exit(delete);
+                    return null;
+                }
+            });
+        }
+        try {
+            List<Future<Object>> futures = Executors.newCachedThreadPool().invokeAll(groups, 90, TimeUnit.SECONDS);
+            logger.info("stopped groups " + futures);
+        } catch (InterruptedException e) {
+            logger.warn("interrupted! ", e);
+            throw new RuntimeInterruptedException(e);
         }
     }
 
