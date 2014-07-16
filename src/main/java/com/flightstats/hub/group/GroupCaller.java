@@ -12,7 +12,10 @@ import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
-import com.github.rholder.retry.*;
+import com.github.rholder.retry.RetryException;
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.inject.Inject;
@@ -38,7 +41,6 @@ public class GroupCaller implements Leader {
     private final SequenceLastUpdatedDao sequenceDao;
     private final GroupService groupService;
     private final MetricsTimer metricsTimer;
-    private final Retryer<ClientResponse> retryer;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
@@ -49,6 +51,8 @@ public class GroupCaller implements Leader {
     private ExecutorService executorService;
     private Semaphore semaphore;
     private LongSet inProcess;
+    private AtomicBoolean hasLeadership;
+    private Retryer<ClientResponse> retryer;
 
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider,
@@ -59,7 +63,6 @@ public class GroupCaller implements Leader {
         this.groupService = groupService;
         this.metricsTimer = metricsTimer;
         lastCompleted = new LongValue(curator);
-        retryer = buildRetryer(1000);
     }
 
     public boolean tryLeadership(Group group) {
@@ -80,6 +83,8 @@ public class GroupCaller implements Leader {
 
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
+        this.hasLeadership = hasLeadership;
+        retryer = buildRetryer();
         logger.info("taking leadership " + group);
         Optional<Group> foundGroup = groupService.getGroup(group.getName());
         if (!foundGroup.isPresent()) {
@@ -97,18 +102,17 @@ public class GroupCaller implements Leader {
             while (iterator.hasNext() && hasLeadership.get()) {
                 send(iterator.next());
             }
-        } catch (RuntimeInterruptedException e) {
-            logger.info("saw RuntimeInterruptedException for " + group.getName());
+        } catch (RuntimeInterruptedException|InterruptedException e) {
+            logger.info("saw InterruptedException for " + group.getName());
         } finally {
             logger.info("stopping " + group);
             if (deleteOnExit.get()) {
                 delete();
             }
-            //todo - gfm - 6/26/14 - does this need to stop the executorService?
         }
     }
 
-    private void sendInProcess() {
+    private void sendInProcess() throws InterruptedException {
         Set<Long> inFlightSet = inProcess.getSet();
         logger.debug("sending in flight {} to {}", inFlightSet, group.getName());
         for (Long inFlight : inFlightSet) {
@@ -116,29 +120,28 @@ public class GroupCaller implements Leader {
         }
     }
 
-    private void send(final long next) {
-        try {
-            logger.debug("sending {} to {}", next, group.getName());
-            //todo - gfm - 6/26/14 - should this InterruptedException propagate up?
-            semaphore.acquire();
-            executorService.submit(new Callable<Object>() {
-                @Override
-                public Object call() throws Exception {
-                    inProcess.add(next);
-                    //todo - gfm - 7/14/14 - get a pass/fail response from makeTimedCall
+    private void send(final long next) throws InterruptedException {
+        logger.debug("sending {} to {}", next, group.getName());
+        semaphore.acquire();
+        executorService.submit(new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+                inProcess.add(next);
+                try {
                     makeTimedCall(createResponse(next));
                     lastCompleted.update(next, getValuePath());
                     inProcess.remove(next);
-                    semaphore.release();
                     logger.debug("completed {} call to {} ", next, group.getName());
-                    return null;
+                } catch (ExecutionException | RetryException e) {
+                    logger.warn("exception sending " + next + " to " + group.getName() + e.getMessage());
+                } catch (Exception e) {
+                    logger.warn("exception sending " + next + " to " + group.getName(), e);
+                } finally {
+                    semaphore.release();
                 }
-            });
-
-        } catch (Exception e) {
-            //todo - gfm - 6/26/14 - can we get here?
-            logger.warn("unable to send " + next + " to " + group, e);
-        }
+                return null;
+            }
+        });
     }
 
     private ObjectNode createResponse(long next) {
@@ -166,10 +169,12 @@ public class GroupCaller implements Leader {
 
     private void makeCall(final ObjectNode response) throws ExecutionException, RetryException {
         logger.debug("calling {} {} {}", group.getCallbackUrl(), group.getName(), response);
-        //todo - gfm - 7/14/14 - should not retry indefinitely during shutdown mode.
         retryer.call(new Callable<ClientResponse>() {
             @Override
             public ClientResponse call() throws Exception {
+                if (!hasLeadership.get()) {
+                    return null;
+                }
                 return client.resource(group.getCallbackUrl())
                         .type(MediaType.APPLICATION_JSON_TYPE)
                         .post(ClientResponse.class, response.toString());
@@ -183,12 +188,9 @@ public class GroupCaller implements Leader {
         curatorLeader.close();
         try {
             executorService.shutdown();
-            //todo - gfm - 6/27/14 - should this wait here?
-            //todo - gfm - 7/14/14 - is 1 minute long enough?
             logger.info("awating termination " + group);
-            executorService.awaitTermination(1, TimeUnit.MINUTES);
+            executorService.awaitTermination(90, TimeUnit.SECONDS);
             logger.info("terminated " + group);
-
         } catch (InterruptedException e) {
             logger.warn("unable to stop?", e);
         }
@@ -219,14 +221,14 @@ public class GroupCaller implements Leader {
         } catch (Exception e) {
             logger.warn("unable to delete leader path", e);
         }
+        logger.info("deleted " + group.getName());
     }
 
-    static Retryer<ClientResponse> buildRetryer(int multiplier) {
+    private Retryer<ClientResponse> buildRetryer() {
         return RetryerBuilder.<ClientResponse>newBuilder()
                 .retryIfException(new Predicate<Throwable>() {
                     @Override
                     public boolean apply(@Nullable Throwable throwable) {
-                        //todo - gfm - 6/22/14 - should this handle InterruptedException separately?
                         if (throwable != null) {
                             if (throwable.getClass().isAssignableFrom(ClientHandlerException.class)) {
                                 logger.info("got ClientHandlerException trying to call client back " + throwable.getMessage());
@@ -248,8 +250,8 @@ public class GroupCaller implements Leader {
                         return failure;
                     }
                 })
-                .withWaitStrategy(WaitStrategies.exponentialWait(multiplier, 1, TimeUnit.MINUTES))
-                .withStopStrategy(StopStrategies.neverStop())
+                .withWaitStrategy(WaitStrategies.exponentialWait(1000, 1, TimeUnit.MINUTES))
+                .withStopStrategy(new GroupStopStrategy(hasLeadership))
                 .build();
     }
 }
