@@ -28,7 +28,7 @@ public class LongValueTest {
         String path = "/LVT/testLifeCycle";
         longValue.initialize(path, 10);
         assertEquals(10, longValue.get(path, 0));
-        longValue.update(20, path);
+        longValue.updateIncrease(20, path);
         assertEquals(20, longValue.get(path, 0));
         longValue.delete(path);
         assertEquals(0, longValue.get(path, 0));
