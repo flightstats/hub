@@ -45,14 +45,6 @@ public class LongValue {
         return Longs.fromByteArray(curator.getData().forPath(path));
     }
 
-    public void update(long next, String path)  {
-        try {
-            curator.setData().forPath(path, Longs.toByteArray(next));
-        } catch (Exception e) {
-            logger.warn("unable to set latest {} {}", path, next);
-        }
-    }
-
     public void updateIncrease(long next, String path)  {
         try {
             int attempts = 0;
