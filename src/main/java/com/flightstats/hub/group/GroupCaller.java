@@ -132,8 +132,6 @@ public class GroupCaller implements Leader {
                     lastCompleted.update(next, getValuePath());
                     inProcess.remove(next);
                     logger.debug("completed {} call to {} ", next, group.getName());
-                } catch (ExecutionException | RetryException e) {
-                    logger.warn("exception sending " + next + " to " + group.getName() + e.getMessage());
                 } catch (Exception e) {
                     logger.warn("exception sending " + next + " to " + group.getName(), e);
                 } finally {
@@ -168,13 +166,13 @@ public class GroupCaller implements Leader {
     }
 
     private void makeCall(final ObjectNode response) throws ExecutionException, RetryException {
-        logger.debug("calling {} {} {}", group.getCallbackUrl(), group.getName(), response);
         retryer.call(new Callable<ClientResponse>() {
             @Override
             public ClientResponse call() throws Exception {
                 if (!hasLeadership.get()) {
                     return null;
                 }
+                logger.debug("calling {} {} {}", group.getCallbackUrl(), group.getName(), response);
                 return client.resource(group.getCallbackUrl())
                         .type(MediaType.APPLICATION_JSON_TYPE)
                         .post(ClientResponse.class, response.toString());
@@ -183,14 +181,15 @@ public class GroupCaller implements Leader {
     }
 
     public void exit(boolean delete) {
-        logger.info("exiting group " + group + " deleting " + delete);
+        String name = group.getName();
+        logger.info("exiting group " + name + " deleting " + delete);
         deleteOnExit.set(delete);
         curatorLeader.close();
         try {
             executorService.shutdown();
-            logger.info("awating termination " + group);
+            logger.info("awating termination " + name);
             executorService.awaitTermination(90, TimeUnit.SECONDS);
-            logger.info("terminated " + group);
+            logger.info("terminated " + name);
         } catch (InterruptedException e) {
             logger.warn("unable to stop?", e);
         }
