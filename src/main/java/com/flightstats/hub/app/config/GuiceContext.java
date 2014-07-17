@@ -12,7 +12,6 @@ import com.flightstats.hub.websocket.MetricsWebSocketCreator;
 import com.flightstats.hub.websocket.WebsocketSubscribers;
 import com.flightstats.jerseyguice.Bindings;
 import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
-import com.flightstats.jerseyguice.jetty.health.HealthCheck;
 import com.flightstats.jerseyguice.metrics.GraphiteConfig;
 import com.flightstats.jerseyguice.metrics.GraphiteConfigImpl;
 import com.google.common.base.Strings;
@@ -56,7 +55,7 @@ public class GuiceContext {
     private static Properties properties = new Properties();
 
     public static HubGuiceServlet construct(
-            @NotNull final Properties properties, Module appModule, Class<? extends HealthCheck> healthCheckClass) throws ConstraintException {
+            @NotNull final Properties properties, Module appModule) throws ConstraintException {
         GuiceContext.properties = properties;
         GraphiteConfig graphiteConfig = new GraphiteConfigImpl(properties);
 
@@ -73,7 +72,6 @@ public class GuiceContext {
                 .withObjectMapper(HubObjectMapperFactory.construct())
                 .withBindings(new HubBindings())
                 .withJerseyGuiceResourcesDisabled()
-                .withHealthCheckClass(healthCheckClass)
                 //this could be more precise
                 .withRegexServe(ChannelNameUtils.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
                 .withModules(Arrays.asList(module))
