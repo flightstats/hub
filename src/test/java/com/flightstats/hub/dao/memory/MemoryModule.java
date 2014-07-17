@@ -6,6 +6,8 @@ import com.flightstats.hub.replication.MemoryReplicationDao;
 import com.flightstats.hub.replication.NoOpReplicationService;
 import com.flightstats.hub.replication.ReplicationDao;
 import com.flightstats.hub.replication.ReplicationService;
+import com.flightstats.hub.service.HubHealthCheck;
+import com.flightstats.hub.service.MemoryHealthCheck;
 import com.flightstats.hub.websocket.MemoryWebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.google.inject.AbstractModule;
@@ -25,6 +27,7 @@ public class MemoryModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		Names.bindProperties(binder(), properties);
+        bind(HubHealthCheck.class).to(MemoryHealthCheck.class).asEagerSingleton();
         bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
         bind(ChannelConfigurationDao.class).to(MemoryChannelConfigurationDao.class).asEagerSingleton();
         bind(ContentService.class).to(ContentServiceImpl.class).asEagerSingleton();

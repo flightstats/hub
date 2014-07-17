@@ -1,11 +1,16 @@
 package com.flightstats.hub.service;
 
-import com.flightstats.jerseyguice.jetty.health.HealthCheck;
+import com.flightstats.hub.model.HealthStatus;
 
-public class MemoryHealthCheck implements HealthCheck {
+public class MemoryHealthCheck implements HubHealthCheck {
 
     @Override
-    public boolean isHealthy() {
-        return true;
+    public HealthStatus getStatus() {
+        return HealthStatus.builder().healthy(true).description("OK").build();
+    }
+
+    @Override
+    public void shutdown() {
+
     }
 }

@@ -61,6 +61,9 @@ bin/start.sh :
   min_new : "100m"
   environment : "staging"
 
+bin/prestop.sh :
+  _template : prestop.sh.jinja
+
 conf/logback.xml :
     _template : logback.xml.jinja
 

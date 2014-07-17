@@ -21,6 +21,8 @@ import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.ChannelValidator;
+import com.flightstats.hub.service.HubHealthCheck;
+import com.flightstats.hub.service.HubHealthCheckImpl;
 import com.flightstats.hub.util.ContentKeyGenerator;
 import com.flightstats.hub.util.CuratorKeyGenerator;
 import com.flightstats.hub.websocket.WebsocketPublisher;
@@ -48,6 +50,7 @@ public class AwsModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		Names.bindProperties(binder(), properties);
+        bind(HubHealthCheck.class).to(HubHealthCheckImpl.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
         bind(ReplicationService.class).to(ReplicationServiceImpl.class).asEagerSingleton();
         bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
