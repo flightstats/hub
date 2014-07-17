@@ -2,6 +2,6 @@ package com.flightstats.hub.group;
 
 public interface GroupCallback {
     void notifyWatchers();
-    long getLastCompleted(Group group);
+    void buildStatus(Group group, GroupStatus.GroupStatusBuilder builder);
     void delete(String name);
 }

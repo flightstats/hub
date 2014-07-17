@@ -66,16 +66,16 @@ function addItem(url, responseCode) {
     });
 }
 
-function postItem(url, responseCode, completed) {
+function postItem(url, responseCode, done) {
     responseCode = responseCode || 201;
-    completed = completed || function () {};
+    done = done || function () {};
     request.post({url : url,
             headers : {"Content-Type" : "application/json", user : 'somebody' },
             body : JSON.stringify({ "data" : Date.now()})},
         function (err, response, body) {
             expect(err).toBeNull();
             expect(response.statusCode).toBe(responseCode);
-            completed();
+            done();
         });
 }
 

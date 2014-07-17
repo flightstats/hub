@@ -50,7 +50,6 @@ public class GroupResource {
             groupObject.put("name", group.getName());
             groupObject.put("href", uriInfo.getBaseUri() + "group/" + group.getName());
         }
-        //todo - gfm - 6/22/14 - add inFlight list to status
         ArrayNode status = root.putArray("status");
         List<GroupStatus> groupStatus = groupService.getGroupStatus();
         for (GroupStatus groupStat : groupStatus) {
@@ -58,6 +57,10 @@ public class GroupResource {
             object.put("name", groupStat.getName());
             object.put("lastCompleted", groupStat.getLastCompleted());
             object.put("channelLatest", groupStat.getChannelLatest());
+            ArrayNode inProcess = object.putArray("inProcess");
+            for (Long aLong : groupStat.getInProcess()) {
+                inProcess.add(aLong);
+            }
         }
         return Response.ok(root).build();
     }

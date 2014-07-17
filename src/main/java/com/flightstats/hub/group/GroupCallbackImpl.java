@@ -118,11 +118,10 @@ public class GroupCallbackImpl implements GroupCallback {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
 
-    public long getLastCompleted(Group group) {
+    public void buildStatus(Group group, GroupStatus.GroupStatusBuilder builder) {
         GroupCaller groupCaller = activeGroups.get(group.getName());
         if (groupCaller != null) {
-            return groupCaller.getLastCompleted();
+            groupCaller.buildStatus(builder);
         }
-        return 0;
     }
 }

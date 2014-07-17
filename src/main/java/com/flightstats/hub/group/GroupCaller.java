@@ -43,11 +43,11 @@ public class GroupCaller implements Leader {
     private final MetricsTimer metricsTimer;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
+    private final LongValue lastCompleted;
 
     private Group group;
     private CuratorLeader curatorLeader;
     private Client client;
-    private LongValue lastCompleted;
     private ExecutorService executorService;
     private Semaphore semaphore;
     private LongSet inProcess;
@@ -207,8 +207,9 @@ public class GroupCaller implements Leader {
         return "/GroupInFlight/" + group.getName();
     }
 
-    public long getLastCompleted() {
-        return lastCompleted.get(getValuePath(), 0);
+    public void buildStatus(GroupStatus.GroupStatusBuilder builder) {
+        builder.lastCompleted(lastCompleted.get(getValuePath(), 0));
+        builder.inProcess(inProcess.getSet());
     }
 
     private void delete() {

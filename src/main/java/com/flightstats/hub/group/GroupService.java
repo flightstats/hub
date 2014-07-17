@@ -63,7 +63,7 @@ public class GroupService {
             if (lastUpdatedKey.isPresent()) {
                 builder.channelLatest(lastUpdatedKey.get().getSequence());
             }
-            builder.lastCompleted(groupCallback.getLastCompleted(group));
+            groupCallback.buildStatus(group, builder);
             groupStatus.add(builder.build());
         }
         return groupStatus;
