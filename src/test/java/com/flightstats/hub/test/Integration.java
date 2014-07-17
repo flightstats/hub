@@ -5,8 +5,6 @@ import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.aws.AwsModule;
 import com.flightstats.hub.dao.memory.MemoryModule;
-import com.flightstats.hub.service.HubHealthCheck;
-import com.flightstats.hub.service.MemoryHealthCheck;
 import com.google.inject.Injector;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -59,7 +57,7 @@ public class Integration {
         }
         startZooKeeper();
         properties = HubMain.loadProperties("useDefault");
-        HubMain.startServer(properties, new AwsModule(properties), HubHealthCheck.class);
+        HubMain.startServer(properties, new AwsModule(properties));
         injector = HubMain.getInjector();
         return injector;
     }
@@ -72,7 +70,7 @@ public class Integration {
         logger.info("starting up memoryHub");
         Properties properties = HubMain.loadProperties("useDefault");
         properties.setProperty("http.bind_port", "9999");
-        HubMain.startServer(properties, new MemoryModule(properties), MemoryHealthCheck.class);
+        HubMain.startServer(properties, new MemoryModule(properties));
     }
 
     public static String getRandomChannel() {

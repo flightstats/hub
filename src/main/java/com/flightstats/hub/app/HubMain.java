@@ -4,11 +4,9 @@ import com.conducivetech.services.common.util.PropertyConfiguration;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.dao.aws.AwsModule;
-import com.flightstats.hub.service.HubHealthCheck;
 import com.flightstats.jerseyguice.jetty.JettyConfig;
 import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
 import com.flightstats.jerseyguice.jetty.JettyServer;
-import com.flightstats.jerseyguice.jetty.health.HealthCheck;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -45,7 +43,7 @@ public class HubMain {
 
         startZookeeperIfSingle(properties);
 
-        JettyServer server = startServer(properties, new AwsModule(properties), HubHealthCheck.class);
+        JettyServer server = startServer(properties, new AwsModule(properties));
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -102,9 +100,9 @@ public class HubMain {
         logger.warn("**********************************************************");
     }
 
-    public static JettyServer startServer(Properties properties, Module module, Class<? extends HealthCheck> healthCheckClass) throws IOException, ConstraintException {
+    public static JettyServer startServer(Properties properties, Module module) throws IOException, ConstraintException {
         JettyConfig jettyConfig = new JettyConfigImpl(properties);
-        GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties, module, healthCheckClass);
+        GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties, module);
         injector = guice.getInjector();
         JettyServer server = new JettyServer(jettyConfig, guice);
         HubServices.startAll();

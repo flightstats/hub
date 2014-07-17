@@ -3,7 +3,7 @@ package com.flightstats.hub.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubMain;
-import com.flightstats.jerseyguice.jetty.health.HealthCheck;
+import com.flightstats.hub.model.HealthStatus;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +26,7 @@ public class HealthResource {
     private static String version;
 
     @Inject
-    HealthCheck healthCheck;
+    HubHealthCheck healthCheck;
 
     @Inject
     @Named("app.lib_path")
@@ -36,13 +36,13 @@ public class HealthResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response checkHealth() {
         ObjectNode rootNode = mapper.createObjectNode();
-        boolean healthy = healthCheck.isHealthy();
-        rootNode.put("healthy", healthy);
-        rootNode.put("description", healthy ? "OK" : "ERROR");
+        HealthStatus healthStatus = healthCheck.getStatus();
+        rootNode.put("healthy", healthStatus.isHealthy());
+        rootNode.put("description", healthStatus.getDescription());
         rootNode.put("version", getVersion());
         rootNode.put("startTime", HubMain.getStartTime().toString());
 
-        if (healthy) {
+        if (healthStatus.isHealthy()) {
             return Response.ok(rootNode).build();
         } else {
             return Response.serverError().entity(rootNode).build();
