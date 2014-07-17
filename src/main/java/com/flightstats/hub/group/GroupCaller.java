@@ -94,11 +94,10 @@ public class GroupCaller implements Leader {
         this.client = GroupClient.createClient();
 
         try (CallbackIterator iterator = iteratorProvider.get()) {
-            sendInProcess();
-            long start = lastCompleted.get(getValuePath(), getLastUpdated(group).getSequence());
-
-            logger.debug("last completed at {} {}", start, group.getName());
-            iterator.start(start, group);
+            long lastCompletedId = lastCompleted.get(getValuePath(), getLastUpdated(group).getSequence());
+            logger.debug("last completed at {} {}", lastCompletedId, group.getName());
+            sendInProcess(lastCompletedId);
+            iterator.start(lastCompletedId, group);
             while (iterator.hasNext() && hasLeadership.get()) {
                 send(iterator.next());
             }
@@ -112,12 +111,17 @@ public class GroupCaller implements Leader {
         }
     }
 
-    private void sendInProcess() throws InterruptedException {
-        Set<Long> inFlightSet = inProcess.getSet();
-        logger.debug("sending in flight {} to {}", inFlightSet, group.getName());
-        for (Long inFlight : inFlightSet) {
-            send(inFlight);
+    private long sendInProcess(long lastCompletedId) throws InterruptedException {
+        Set<Long> inProcessSet = inProcess.getSet();
+        logger.debug("sending in process {} to {}", inProcessSet, group.getName());
+        for (Long toSend : inProcessSet) {
+            if (toSend < lastCompletedId) {
+                send(toSend);
+            } else {
+                inProcess.remove(toSend);
+            }
         }
+        return lastCompletedId;
     }
 
     private void send(final long next) throws InterruptedException {
@@ -170,6 +174,7 @@ public class GroupCaller implements Leader {
             @Override
             public ClientResponse call() throws Exception {
                 if (!hasLeadership.get()) {
+                    logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), response);
                     return null;
                 }
                 logger.debug("calling {} {} {}", group.getCallbackUrl(), group.getName(), response);
