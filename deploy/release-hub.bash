@@ -7,6 +7,7 @@ ENV=${1:-dev}
 VER_NUM1=${VERSION:4}
 VER_NUM=${VER_NUM1%.tgz}
 SERVERS=3
+TYPE=${3:-deploy}
 
 echo "Deploying to ${ENV} : ${VERSION}"
 case ${ENV} in 
@@ -44,11 +45,8 @@ function node_out {
 	ssh utility@saltmaster01.util.pdx.office 'sudo salt '${SERVER}' cmd.run "cat /tmp/triforce/\$(ls -t /tmp/triforce/ | head -1)"'
 }
 
-for n in $( seq 1 ${SERVERS} ) ; do
-	SERVER="${PREFIX}-0${n}${DOM}"
-	echo "Calling ${SERVER}"
-
-	# send salt-call (or ssh to salt master) to deploy
+function deploy {
+    # send salt-call (or ssh to salt master) to deploy
 	salt_output=$(ssh utility@saltmaster01.util.pdx.office "sudo salt '${SERVER}' triforce.deploy s3://triforce_builds/hub/${VERSION} ${ENV}")
 	echo $salt_output
 	# if version in salt_output contains ${VER_NUM}, we're good. if not, exit and give jenkins all the return data
@@ -61,5 +59,34 @@ for n in $( seq 1 ${SERVERS} ) ; do
 		echo "${SERVER} deployment failed."
 		exit 1
 	fi
+}
+
+function restart {
+    ssh utility@${SERVER} "sudo service hub restart"
+
+    jasmine-node --captureExceptions --config host ${SERVER} ./deploy/wait_for_health_spec.js
+    if [ $? -eq 0 ]
+    then
+      echo "success!"
+    else
+      echo "unable to restart ${SERVER}.  exiting"
+      exit 1
+    fi
+
+}
+for n in $( seq 1 ${SERVERS} ) ; do
+	SERVER="${PREFIX}-0${n}${DOM}"
+	echo "Calling ${SERVER}"
+
+    case ${TYPE} in
+        deploy)
+            deploy
+            ;;
+        restart)
+            restart
+            ;;
+        *)
+            echo "invalid type ${TYPE}" ; exit ;;
+    esac
 done
-echo "All nodes deployed."
+echo "All nodes ${TYPE}ed"
