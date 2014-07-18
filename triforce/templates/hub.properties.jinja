@@ -11,6 +11,12 @@ app.environment={{ app['environment'] }}
 app.encrypted={{ app['encrypted'] }}
 app.lib_path=/home/hub/hub/lib/
 
+#how long is the delay to get out of the load balancer's rotation?
+app.shutdown_delay_seconds={{ app['shutdown_delay_seconds']}}
+
+#how long should we wait for the app to shutdown?
+app.shutdown_wait_seconds={{ app['shutdown_wait_seconds']}}
+
 s3.content_backoff_wait= {{ s3['content_backoff_wait'] }}
 s3.content_backoff_times= {{ s3['content_backoff_times'] }}
 s3.environment={{ s3['environment'] }}
@@ -34,6 +40,5 @@ graphite-register-jvm-metrics={{ graphite['enable'] }}
 graphite-hosts={{ graphite['hosts'] }}
 graphite-metrics-prefix={{ app['name'] }}
 
-sweeper.periodMillis=60000
 
 
