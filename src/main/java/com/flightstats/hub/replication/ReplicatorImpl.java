@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Replication is moving from one Hub into another Hub
@@ -30,6 +31,7 @@ public class ReplicatorImpl implements Replicator {
     private final Provider<DomainReplicator> domainReplicatorProvider;
     private final WatchManager watchManager;
     private final Map<String, DomainReplicator> replicatorMap = new HashMap<>();
+    private final AtomicBoolean stopped = new AtomicBoolean();
 
     @Inject
     public ReplicatorImpl(ReplicationService replicationService,
@@ -37,7 +39,7 @@ public class ReplicatorImpl implements Replicator {
         this.replicationService = replicationService;
         this.domainReplicatorProvider = domainReplicatorProvider;
         this.watchManager = watchManager;
-        HubServices.register(new ReplicatorImplService());
+        HubServices.registerPreStop(new ReplicatorImplService());
     }
 
     private class ReplicatorImplService extends AbstractIdleService {
@@ -48,7 +50,10 @@ public class ReplicatorImpl implements Replicator {
         }
 
         @Override
-        protected void shutDown() throws Exception { }
+        protected void shutDown() throws Exception {
+            stopped.set(true);
+            stopReplication();
+        }
 
     }
 
@@ -69,6 +74,10 @@ public class ReplicatorImpl implements Replicator {
     }
 
     private synchronized void replicateDomains() {
+        if (stopped.get()) {
+            logger.info("replication stopped");
+            return;
+        }
         logger.info("replicating domains");
         Collection<ReplicationDomain> domains = replicationService.getDomains(true);
         List<String> currentDomains = new ArrayList<>();
@@ -93,6 +102,15 @@ public class ReplicatorImpl implements Replicator {
             replicatorMap.get(key).exit();
             replicatorMap.remove(key);
         }
+    }
+
+    private void stopReplication() {
+        logger.info("stopping all replication " + replicatorMap.keySet());
+        Collection<DomainReplicator> domainReplicators = replicatorMap.values();
+        for (DomainReplicator domainReplicator : domainReplicators) {
+            domainReplicator.exit();
+        }
+        logger.info("stopped all replication " + replicatorMap.keySet());
     }
 
     private void startReplication(ReplicationDomain domain) {
