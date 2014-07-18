@@ -62,9 +62,9 @@ function deploy {
 }
 
 function restart {
-    ssh utlity@${SERVER} "sudo service hub restart"
+    ssh -v utlity@${SERVER} "sudo service hub restart"
 
-    jasmine-node --captureExceptions --config host ${SERVER} wait_for_health_spec.js
+    jasmine-node --captureExceptions --config host ${SERVER} ./deploy/wait_for_health_spec.js
     if [ $? -eq 0 ]
     then
       echo "success!"
