@@ -1,14 +1,19 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.google.common.base.Optional;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ContentServiceImpl implements ContentService {
 
@@ -17,12 +22,42 @@ public class ContentServiceImpl implements ContentService {
     private final ContentDao contentDao;
     private final LastUpdatedDao lastUpdatedDao;
     private final WebsocketPublisher websocketPublisher;
+    private final Integer shutdown_wait_seconds;
+    private final AtomicInteger inFlight = new AtomicInteger();
 
     @Inject
-    public ContentServiceImpl(ContentDao contentDao, LastUpdatedDao lastUpdatedDao, WebsocketPublisher websocketPublisher) {
+    public ContentServiceImpl(ContentDao contentDao,
+                              LastUpdatedDao lastUpdatedDao,
+                              WebsocketPublisher websocketPublisher,
+                              @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds) {
         this.contentDao = contentDao;
         this.lastUpdatedDao = lastUpdatedDao;
         this.websocketPublisher = websocketPublisher;
+        this.shutdown_wait_seconds = shutdown_wait_seconds;
+        HubServices.registerPreStop(new ContentServiceHook());
+    }
+
+    private class ContentServiceHook extends AbstractIdleService {
+        @Override
+        protected void startUp() throws Exception { }
+
+        @Override
+        protected void shutDown() throws Exception {
+            waitForInFlight();
+        }
+    }
+
+    void waitForInFlight() {
+        logger.info("waiting for in-flight to complete " + inFlight.get());
+        long start = System.currentTimeMillis();
+        while (inFlight.get() > 0) {
+            logger.info("still waiting for in-flight to complete " + inFlight.get());
+            Sleeper.sleep(1000);
+            if (System.currentTimeMillis() > (start + shutdown_wait_seconds * 1000)) {
+                break;
+            }
+        }
+        logger.info("completed waiting for in-flight to complete " + inFlight.get());
     }
 
     @Override
@@ -33,13 +68,18 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     public InsertedContentKey insert(ChannelConfiguration configuration, Content content) {
-        String channelName = configuration.getName();
-        logger.debug("inserting {} bytes into channel {} ", content.getData().length, channelName);
+        try {
+            inFlight.incrementAndGet();
+            String channelName = configuration.getName();
+            logger.debug("inserting {} bytes into channel {} ", content.getData().length, channelName);
 
-        InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());
-        lastUpdatedDao.update(channelName, result.getKey());
-        websocketPublisher.publish(channelName, result.getKey());
-        return result;
+            InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());
+            lastUpdatedDao.update(channelName, result.getKey());
+            websocketPublisher.publish(channelName, result.getKey());
+            return result;
+        } finally {
+            inFlight.decrementAndGet();
+        }
     }
 
     @Override
