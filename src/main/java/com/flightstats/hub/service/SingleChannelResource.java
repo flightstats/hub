@@ -104,18 +104,27 @@ public class SingleChannelResource {
                 .withData(data)
                 .withUser(user)
                 .build();
-        InsertedContentKey insertionResult = channelService.insert(channelName, content);
-        URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo.getRequestUri());
-        Linked<InsertedContentKey> linkedResult = linked(insertionResult)
-                .withLink("channel", linkBuilder.buildChannelUri(channelName, uriInfo))
-                .withLink("self", payloadUri)
-                .build();
+        try {
+            InsertedContentKey insertionResult = channelService.insert(channelName, content);
+            URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo.getRequestUri());
+            Linked<InsertedContentKey> linkedResult = linked(insertionResult)
+                    .withLink("channel", linkBuilder.buildChannelUri(channelName, uriInfo))
+                    .withLink("self", payloadUri)
+                    .build();
 
-        Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
-        builder.entity(linkedResult);
-        builder.location(payloadUri);
-        ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
-        return builder.build();
+            Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
+            builder.entity(linkedResult);
+            builder.location(payloadUri);
+            ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
+            return builder.build();
+        } catch (Exception e) {
+            long sequence = 0;
+            if (content.getContentKey().isPresent()) {
+                sequence = content.getContentKey().get().getSequence();
+            }
+            logger.warn("unable to POST to " + channelName + " sequence " + sequence, e);
+            throw e;
+        }
     }
 
     @DELETE
