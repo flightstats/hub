@@ -19,7 +19,7 @@ conf/hub.properties :
         name : "hub"
         environment : "dev"
         encrypted : false
-        shutdown_delay_seconds : 4
+        shutdown_delay_seconds : 15
         shutdown_wait_seconds : 60
 
     backing :
