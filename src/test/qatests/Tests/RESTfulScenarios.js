@@ -227,13 +227,6 @@ describe('RESTful Scenarios', function() {
             })
         })
 
-        it.skip('NOT IMPLEMENTED: HEAD on data in the midst of a series of data in a channel, walk Next links to end', function(done) {
-
-        })
-
-        it.skip('NOT IMPLEMENTED: Get channel, subscribe', function(done) {
-
-        })
     })
 
 })
