@@ -23,9 +23,7 @@ var chai = require('chai'),
 var ranU = require('../randomUtils.js'),
     gu = require('../genericUtils.js');
 
-var DOMAIN = 'hub.svc.dev';
-//var DOMAIN = 'localhost:9080';
-//var DOMAIN = 'hub.svc.staging';
+var DOMAIN = process.env.hubDomain || 'hub.svc.dev';
 exports.DOMAIN = DOMAIN;
 
 var CP_DOMAIN = '10.11.15.162:8080';    // Crypto Proxy
