@@ -103,14 +103,6 @@ describe('GET Channel metadata:', function() {
             expect(returnedCreationDate.add('minutes', 5).isAfter(moment())).to.be.true;
         })
 
-        it.skip('lastUpdateDate NO LONGER GIVEN - returns correct lastUpdateDate', function() {
-            var returnedCreationDate = moment(cnMetadata.getCreationDate()),
-                returnedLastUpdateDate = moment(cnMetadata.getLastUpdateDate());
-
-            expect(returnedLastUpdateDate.isBefore(returnedCreationDate)).to.be.false;
-            expect(returnedLastUpdateDate.add('minutes', 5).isAfter(moment())).to.be.true;
-        })
-
         it('returns correct name', function() {
             expect(cnMetadata.getName()).to.equal(channelName);
         })
