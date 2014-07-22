@@ -461,20 +461,6 @@ describe('GET data:', function() {
             });
         });
 
-        // As of 2/26, cannot be done (you cannot set the creation timestamp, and despite having the two POST calls done
-        //  in parallel, the times aren't quite the same :(
-        // TODO:  Save two sets of data with the same creation timestamp.
-        //  Note: the client can't control which is the 'latest', but once the server has made that determination, it should stick.
-        //  So repeated calls to this method will always return the same data set.
-        it.skip('(*Not yet possible*) Internal sequence of items with same timestamp is preserved', function(done) {
-            var payload1 = ranU.randomString(ranU.randomNum(51)),
-                payload2 = ranU.randomString(ranU.randomNum(51)),
-                timestamp1,
-                timestamp2;
-
-            // not implemented
-        });
-
         // TODO: if the only remaining item in a channel expires and is cleaned up, then get latest should return 404
     });
 

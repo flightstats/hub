@@ -234,20 +234,6 @@ describe('Create Channel: ', function(){
                 })
             }
 
-            it.skip('may not match a word reserved by Cassandra', function(done) {
-                channelName = 'channelMetadata';
-
-                dhh.createChannel({name: channelName, domain: DOMAIN}, function(res){
-                    if ((res.error) || (!gu.isHTTPSuccess(res.status))) {
-                        //console.log('bad things');
-                        throw new Error(res.error);
-                    }
-                    gu.debugLog('Main test channel:'+ channelName);
-
-                    done();
-                });
-            })
-
             // See:  https://www.pivotaltracker.com/story/show/49566971
             it('may not be blank', function(done){
                 badNameYieldsBadRequest('', done);
@@ -300,36 +286,6 @@ describe('Create Channel: ', function(){
             })
         })
 
-        describe('Code not implemented - TTL', function() {
-
-            var badTTLYieldsBadRequest = function(TTL, callback) {
-                dhh.createChannel({name: dhh.getRandomChannelName(), ttlMillis: TTL, domain: DOMAIN}, function(res) {
-                    expect(res.status).to.equal(gu.HTTPresponses.Bad_Request);
-
-                    callback();
-                })
-            }
-
-            it.skip('BUG: https://www.pivotaltracker.com/story/show/52486795 - may not be negative', function(done) {
-                badTTLYieldsBadRequest(-500, done);
-            })
-
-            it.skip('BUG: https://www.pivotaltracker.com/story/show/52486795 - may not be zero', function(done) {
-                badTTLYieldsBadRequest(0, done);
-            })
-
-            // TODO: blank or empty --> null, or disallowed?
-
-            it.skip('BUG: https://www.pivotaltracker.com/story/show/52486795 - may not be alpha characters', function(done) {
-                badTTLYieldsBadRequest('ohai', done);
-            })
-
-            it.skip('BUG: https://www.pivotaltracker.com/story/show/52486795 - may not contain a period', function(done) {
-                badTTLYieldsBadRequest(8675.309, done);
-            })
-        })
-
-
         // https://www.pivotaltracker.com/story/show/46667409
         it('no / empty payload not allowed', function(done) {
 
@@ -346,44 +302,6 @@ describe('Create Channel: ', function(){
 
 
         describe('channel names must be unique', function() {
-
-            it.skip('BUG: https://www.pivotaltracker.com/story/show/52507013 - parallel attempts to create channel with same name only allow one to be created', function(done) {
-                var name = dhh.getRandomChannelName(),
-                    numAttempts = 10,
-                    VERBOSE = true;
-
-                var makeChannel = function(index, callback) {
-                    dhh.createChannel({name: name, domain: DOMAIN}, function(res, channelUri) {
-                        gu.debugLog('channel creation attempt result: '+ res.status, VERBOSE);
-
-                        if (!lodash.contains([gu.HTTPresponses.Created, gu.HTTPresponses.Conflict], res.status)) {
-                            callback(res.status, null);
-                        }
-                        else {
-                            callback(null, {status: res.status, uri: channelUri});
-                        }
-                    })
-                }
-
-                async.times(numAttempts, function(n, next) {
-                    makeChannel(n, function(err, makeResponse) {
-                        next(err, makeResponse);
-                    })
-                }, function(err, makeResponses) {
-                    if (null != err) {
-                        gu.debugLog('Error, unexpected response: '+ err);
-                        expect(err).to.be.null;
-                    } else {
-                        var numCreateResponses = lodash.countBy(makeResponses, {status: gu.HTTPresponses.Created}).true,
-                            numConflictResponses = lodash.countBy(makeResponses, {status: gu.HTTPresponses.Conflict}).true;
-
-                        expect(numCreateResponses).to.equal(1);
-                        expect(numConflictResponses).to.equal(numAttempts - 1);
-                    }
-
-                    done();
-                })
-            })
 
             // https://www.pivotaltracker.com/story/show/44113267
             it('return 409 if attempting to create channel with a name already in use', function(done) {
