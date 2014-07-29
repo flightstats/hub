@@ -6,7 +6,7 @@ The Hub's ZooKeeper
 
 ## overview
 
-The Hub uses Zookeepr for distributed state throughout a cluster.
+The Hub uses Zookeeper for distributed state throughout a cluster.
 The primary use is tracking the sequence ids of items in a channel.
 A secondary use is leader election.
 Zookeeper is run on dedicated hosts. 
@@ -22,7 +22,8 @@ Run all these steps as the ubuntu user.
 5. Put a file named 'myid' in /ebs/zookeeper with the value equal to the server's number in zoo.cfg 
 6. Extract zookeeper-3.4.5.tar.gz in the ubuntu user's home dir
 7. Create a symlink zookeeper -> zookeeper-3.4.5
-8. Copy zoo.cfg for the environment to ~/zookeeper/conf
-9. Start zookeeper with ~/zookeeper/bin/zkServer.sh
-10. Create cron job to run every 5 minutes calling purge.sh
+8. Copy all files for the environment to ~/zookeeper/conf.  Files are java.env, log4j.properties and zoo.cfg
+9. Start zookeeper with ~/zookeeper/bin/zkServer.sh restart
+10. Copy purge.sh to ~
+11. Create cron job to run every 5 minutes calling purge.sh
 
