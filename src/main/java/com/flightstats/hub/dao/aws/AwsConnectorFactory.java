@@ -88,8 +88,7 @@ public class AwsConnectorFactory {
     }
 
     private ClientConfiguration getClientConfiguration() {
-        RetryPolicy retryPolicy = new RetryPolicy(new HubRetryCondition(),
-                PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY, 3, true);
+        RetryPolicy retryPolicy = PredefinedRetryPolicies.getDefaultRetryPolicy();
         ClientConfiguration configuration = new ClientConfiguration();
         configuration.withRetryPolicy(retryPolicy);
         configuration.setProtocol(Protocol.valueOf(protocol));
