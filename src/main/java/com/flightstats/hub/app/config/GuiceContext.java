@@ -12,8 +12,6 @@ import com.flightstats.hub.websocket.MetricsWebSocketCreator;
 import com.flightstats.hub.websocket.WebsocketSubscribers;
 import com.flightstats.jerseyguice.Bindings;
 import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
-import com.flightstats.jerseyguice.metrics.GraphiteConfig;
-import com.flightstats.jerseyguice.metrics.GraphiteConfigImpl;
 import com.google.common.base.Strings;
 import com.google.inject.*;
 import com.google.inject.name.Named;
@@ -57,7 +55,6 @@ public class GuiceContext {
     public static HubGuiceServlet construct(
             @NotNull final Properties properties, Module appModule) throws ConstraintException {
         GuiceContext.properties = properties;
-        GraphiteConfig graphiteConfig = new GraphiteConfigImpl(properties);
 
         Module module = getMaxPaloadSizeModule(properties);
 
@@ -68,7 +65,6 @@ public class GuiceContext {
                 .withJerseryProperty(ResourceConfig.FEATURE_CANONICALIZE_URI_PATH, "true")
                 .withContainerRequestFilters(GZIPContentEncodingFilter.class, RemoveSlashFilter.class)
                 .withNamedProperties(properties)
-                .withGraphiteConfig(graphiteConfig)
                 .withObjectMapper(HubObjectMapperFactory.construct())
                 .withBindings(new HubBindings())
                 .withJerseyGuiceResourcesDisabled()
@@ -215,7 +211,7 @@ public class GuiceContext {
             client.setConnectTimeout(connectTimeoutMillis);
             client.setReadTimeout(readTimeoutMillis);
             client.addFilter(new RetryClientFilter());
-            client.addFilter(new com.sun.jersey.api.client.filter.GZIPContentEncodingFilter());
+            //client.addFilter(new com.sun.jersey.api.client.filter.GZIPContentEncodingFilter());
             client.setFollowRedirects(followRedirects);
             return client;
         }
