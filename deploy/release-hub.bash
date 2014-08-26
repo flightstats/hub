@@ -36,6 +36,10 @@ case ${ENV} in
 	    PREFIX="hub-data-qa"
 	    SERVERS=2
 	    ;;
+	integration)
+	    DOM=".cloud-east.staging"
+	    PREFIX="hub-int"
+	    ;;
 	*) 
 		echo "No env specified or bad env ${ENV}" ; exit ;;
 esac
