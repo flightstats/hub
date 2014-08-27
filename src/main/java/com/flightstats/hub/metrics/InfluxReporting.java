@@ -1,12 +1,13 @@
 package com.flightstats.hub.metrics;
 
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.conducivetech.services.common.util.Haltable;
 import com.google.inject.Inject;
+import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,25 +20,28 @@ import static com.flightstats.jerseyguice.metrics.KeyPrefixedMetricSet.prefix;
 public class InfluxReporting implements Haltable {
     private static final Logger logger = LoggerFactory.getLogger(InfluxReporting.class);
 
-    private final List<InfluxdbReporter> reporters = new LinkedList<>();
+    private final List<InfluxReporter> reporters = new LinkedList<>();
 
     @Inject
     public InfluxReporting(MetricRegistry registry) throws Exception {
         logger.info("starting");
         registerJvmMetrics(registry);
-        //todo - gfm - 8/14/14 - create a filter to remove any metrics with test in the name
+        //Influxdb influxdb = new Influxdb("104.131.142.112", 8086, "hub_local", "greg", "123456", TimeUnit.MILLISECONDS);
+        InfluxDB influxDB = InfluxDBFactory.connect("http://104.131.142.112:8086", "greg", "123456");
+        //InfluxDB influxDB = InfluxDBFactory.connect("http://127.0.0.1:8086", "test", "test");
 
-        Influxdb influxdb = new Influxdb("104.131.142.112", 8086, "hub_local", "greg", "123456", TimeUnit.MILLISECONDS);
-        InfluxdbReporter reporter = InfluxdbReporter
-                .forRegistry(registry)
-                .prefixedWith("hub")
-                .convertRatesTo(TimeUnit.MINUTES)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .filter(MetricFilter.ALL)
-                .build(influxdb);
-        reporter.start(5, TimeUnit.SECONDS);
+        InfluxConfig config = InfluxConfig.builder()
+                .registry(registry)
+                .prefix("hub")
+                .influxDB(influxDB)
+                .databaseName("hub_local")
+                .rateUnit(TimeUnit.SECONDS)
+                .durationUnit(TimeUnit.MILLISECONDS)
+                .filter(new HubMetricsFilter())
+                .build();
+        InfluxReporter reporter = new InfluxReporter(config);
+        reporter.start(30, TimeUnit.SECONDS);
         reporters.add(reporter);
-
     }
 
     private void registerJvmMetrics(MetricRegistry registry) {
@@ -48,7 +52,7 @@ public class InfluxReporting implements Haltable {
 
     @Override
     public void halt() {
-        for (InfluxdbReporter reporter : reporters)
+        for (InfluxReporter reporter : reporters)
             reporter.stop();
     }
 }
