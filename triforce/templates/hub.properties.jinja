@@ -35,13 +35,14 @@ http.bind_port=8080
 http.idle_timeout=30000
 http.bind_ip=0.0.0.0
 
-graphite-emit-metrics={{ graphite['enable'] }}
-graphite-register-jvm-metrics={{ graphite['enable'] }}
-graphite-hosts={{ graphite['hosts'] }}
-graphite-metrics-prefix={{ app['name'] }}
+graphite.enable={{ graphite['enable'] }}
+graphite.registerJvmMetrics={{ graphite['registerJvmMetrics'] }}
+graphite.host={{ graphite['host'] }}
+graphite.port={{ graphite['port'] }}
+graphite.prefix={{ graphite['prefix'] }}
 
 influx.enable={{ influx['enable'] }}
-influx.registerJvmMetrics={{ influx['enable'] }}
+influx.registerJvmMetrics={{ influx['registerJvmMetrics'] }}
 influx.hosts={{ influx['hosts'] }}
 influx.prefix={{ app['name'] }}
 influx.database={{ app['name'] }}_{{ app['environment'] }}

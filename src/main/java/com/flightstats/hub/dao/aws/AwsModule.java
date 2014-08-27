@@ -21,6 +21,7 @@ import com.flightstats.hub.group.DynamoGroupDao;
 import com.flightstats.hub.group.GroupCallback;
 import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
+import com.flightstats.hub.metrics.GraphiteReporting;
 import com.flightstats.hub.metrics.InfluxReporting;
 import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.ChannelValidator;
@@ -45,15 +46,15 @@ import java.util.Properties;
 public class AwsModule extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(AwsModule.class);
 
-	private final Properties properties;
+    private final Properties properties;
 
-	public AwsModule(Properties properties) {
-		this.properties = properties;
-	}
+    public AwsModule(Properties properties) {
+        this.properties = properties;
+    }
 
-	@Override
-	protected void configure() {
-		Names.bindProperties(binder(), properties);
+    @Override
+    protected void configure() {
+        Names.bindProperties(binder(), properties);
         bind(HubHealthCheck.class).to(HubHealthCheckImpl.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
         bind(ReplicationService.class).to(ReplicationServiceImpl.class).asEagerSingleton();
@@ -62,7 +63,7 @@ public class AwsModule extends AbstractModule {
         bind(ChannelUtils.class).asEagerSingleton();
         bind(CuratorLock.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
-		bind(AwsConnectorFactory.class).asEagerSingleton();
+        bind(AwsConnectorFactory.class).asEagerSingleton();
 
         if (Boolean.parseBoolean(properties.getProperty("app.encrypted"))) {
             logger.info("using encrypted hub");
@@ -97,8 +98,9 @@ public class AwsModule extends AbstractModule {
 
         bind(MetricRegistry.class).in(Singleton.class);
         bind(InfluxReporting.class).asEagerSingleton();
+        bind(GraphiteReporting.class).asEagerSingleton();
         bind(InstrumentedResourceMethodDispatchAdapter.class).toProvider(MethodTimingAdapterProvider.class).in(Singleton.class);
-	}
+    }
 
     @Inject
     @Provides
