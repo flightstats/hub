@@ -83,7 +83,5 @@ conf/logback.xml :
 
     verbosity : "DEBUG"
 
-lib/newrelic.yml :
-  _template : newrelic.yml.jinja
 
 
