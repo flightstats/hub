@@ -33,7 +33,8 @@ For the purposes of this document, the Hub is at http://hub/.
 
 * On your local machine it is at: http://localhost:9080/
 * In development: http://hub.svc.dev/
-* In staging: http://hub.svc.staging/
+* In integration - for DDT use only : http://hub-int.svc.staging/
+* In staging - for general use : http://hub.svc.staging/
 * In production: http://hub.svc.prod/
 
 ## overview

@@ -198,7 +198,7 @@ task startReplicationVerifierStaging (dependsOn: testClasses ) << {
     if ( project.hasProperty("appArgs") ) {
         verifierExec.args = Eval.me(appArgs)
     } else {
-        verifierExec.args = ["http://hub.svc.staging/", "1", "10"].toList()
+        verifierExec.args = ["http://hub-int.svc.staging/", "1", "10"].toList()
     }
     verifierExec.execute()
 }
