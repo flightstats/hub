@@ -40,5 +40,13 @@ graphite-register-jvm-metrics={{ graphite['enable'] }}
 graphite-hosts={{ graphite['hosts'] }}
 graphite-metrics-prefix={{ app['name'] }}
 
+influx.enable={{ influx['enable'] }}
+influx.registerJvmMetrics={{ influx['enable'] }}
+influx.hosts={{ influx['hosts'] }}
+influx.prefix={{ app['name'] }}
+influx.database={{ app['name'] }}_{{ app['environment'] }}
+influx.user={{ app['name'] }}
+influx.password={{ influx['password'] }}
+influx.rateSeconds={{ influx['rateSeconds'] }}
 
 

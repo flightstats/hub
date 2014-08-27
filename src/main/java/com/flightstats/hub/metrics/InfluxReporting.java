@@ -6,7 +6,7 @@ import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.conducivetech.services.common.util.Haltable;
 import com.google.inject.Inject;
-import org.influxdb.InfluxDB;
+import com.google.inject.name.Named;
 import org.influxdb.InfluxDBFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,24 +23,36 @@ public class InfluxReporting implements Haltable {
     private final List<InfluxReporter> reporters = new LinkedList<>();
 
     @Inject
-    public InfluxReporting(MetricRegistry registry) throws Exception {
+    public InfluxReporting(MetricRegistry registry,
+                           @Named("influx.enable") boolean enable,
+                           @Named("influx.registerJvmMetrics") boolean registerJvm,
+                           @Named("influx.hosts") String hosts,
+                           @Named("influx.prefix") String prefix,
+                           @Named("influx.database") String database,
+                           @Named("influx.user") String user,
+                           @Named("influx.password") String password,
+                           @Named("influx.rateSeconds") int rateSeconds
+        ) throws Exception {
+        if (!enable) {
+            logger.info("influx metrics not enabled");
+            return;
+        }
         logger.info("starting");
-        registerJvmMetrics(registry);
-        //Influxdb influxdb = new Influxdb("104.131.142.112", 8086, "hub_local", "greg", "123456", TimeUnit.MILLISECONDS);
-        InfluxDB influxDB = InfluxDBFactory.connect("http://104.131.142.112:8086", "greg", "123456");
-        //InfluxDB influxDB = InfluxDBFactory.connect("http://127.0.0.1:8086", "test", "test");
+        if (registerJvm) {
+            registerJvmMetrics(registry);
+        }
 
         InfluxConfig config = InfluxConfig.builder()
                 .registry(registry)
-                .prefix("hub")
-                .influxDB(influxDB)
-                .databaseName("hub_local")
+                .prefix(prefix)
+                .influxDB(InfluxDBFactory.connect(hosts, user, password))
+                .database(database)
                 .rateUnit(TimeUnit.SECONDS)
                 .durationUnit(TimeUnit.MILLISECONDS)
                 .filter(new HubMetricsFilter())
                 .build();
         InfluxReporter reporter = new InfluxReporter(config);
-        reporter.start(30, TimeUnit.SECONDS);
+        reporter.start(rateSeconds, TimeUnit.SECONDS);
         reporters.add(reporter);
     }
 
