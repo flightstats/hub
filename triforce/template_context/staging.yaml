@@ -46,6 +46,12 @@ conf/hub.properties :
         enable: true
         hosts : "svcsmon.cloud-east.staging:2003"
 
+    influx :
+        enable: true
+        hosts : "http://oldmanpeabody-hueylewis-1.c.influxdb.com:8086"
+        password : "51hZDyVMJd5p"
+        rateSeconds : 30
+
     zookeeper :
         connection : "hub-zk-01.cloud-east.staging:2181,hub-zk-02.cloud-east.staging:2181,hub-zk-03.cloud-east.staging:2181"
 

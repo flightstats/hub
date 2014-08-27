@@ -23,5 +23,5 @@ public class InfluxConfig  {
     @NonNull private final TimeUnit durationUnit;
     @NonNull private final MetricFilter filter;
     @NonNull private final InfluxDB influxDB;
-    @NonNull private final String databaseName;
+    @NonNull private final String database;
 }
