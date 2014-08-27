@@ -211,7 +211,7 @@ public class GuiceContext {
             client.setConnectTimeout(connectTimeoutMillis);
             client.setReadTimeout(readTimeoutMillis);
             client.addFilter(new RetryClientFilter());
-            //client.addFilter(new com.sun.jersey.api.client.filter.GZIPContentEncodingFilter());
+            client.addFilter(new com.sun.jersey.api.client.filter.GZIPContentEncodingFilter());
             client.setFollowRedirects(followRedirects);
             return client;
         }
