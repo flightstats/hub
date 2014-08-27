@@ -2,6 +2,8 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -19,6 +21,8 @@ import com.flightstats.hub.group.DynamoGroupDao;
 import com.flightstats.hub.group.GroupCallback;
 import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
+import com.flightstats.hub.metrics.GraphiteReporting;
+import com.flightstats.hub.metrics.InfluxReporting;
 import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.service.HubHealthCheck;
@@ -27,6 +31,7 @@ import com.flightstats.hub.util.ContentKeyGenerator;
 import com.flightstats.hub.util.CuratorKeyGenerator;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisherImpl;
+import com.flightstats.jerseyguice.metrics.MethodTimingAdapterProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -41,15 +46,15 @@ import java.util.Properties;
 public class AwsModule extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(AwsModule.class);
 
-	private final Properties properties;
+    private final Properties properties;
 
-	public AwsModule(Properties properties) {
-		this.properties = properties;
-	}
+    public AwsModule(Properties properties) {
+        this.properties = properties;
+    }
 
-	@Override
-	protected void configure() {
-		Names.bindProperties(binder(), properties);
+    @Override
+    protected void configure() {
+        Names.bindProperties(binder(), properties);
         bind(HubHealthCheck.class).to(HubHealthCheckImpl.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
         bind(ReplicationService.class).to(ReplicationServiceImpl.class).asEagerSingleton();
@@ -58,7 +63,7 @@ public class AwsModule extends AbstractModule {
         bind(ChannelUtils.class).asEagerSingleton();
         bind(CuratorLock.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
-		bind(AwsConnectorFactory.class).asEagerSingleton();
+        bind(AwsConnectorFactory.class).asEagerSingleton();
 
         if (Boolean.parseBoolean(properties.getProperty("app.encrypted"))) {
             logger.info("using encrypted hub");
@@ -90,7 +95,12 @@ public class AwsModule extends AbstractModule {
         bind(GroupValidator.class).asEagerSingleton();
         bind(GroupCallback.class).to(GroupCallbackImpl.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
-	}
+
+        bind(MetricRegistry.class).in(Singleton.class);
+        bind(InfluxReporting.class).asEagerSingleton();
+        bind(GraphiteReporting.class).asEagerSingleton();
+        bind(InstrumentedResourceMethodDispatchAdapter.class).toProvider(MethodTimingAdapterProvider.class).in(Singleton.class);
+    }
 
     @Inject
     @Provides
