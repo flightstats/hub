@@ -44,10 +44,15 @@ conf/hub.properties :
 
     graphite :
         enable: true
-        hosts : "svcsmon.cloud-east.prod:2003"
+        registerJvmMetrics : false
+        host : "svcsmon.cloud-east.prod"
+        port : 2003
+        prefix : hub
+        rateSeconds : 60
 
     influx :
         enable: true
+        registerJvmMetrics : true
         hosts : "http://oldmanpeabody-hueylewis-1.c.influxdb.com:8086"
         password : "V0TXqZHZkfap"
         rateSeconds : 30
