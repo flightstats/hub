@@ -43,8 +43,19 @@ conf/hub.properties :
       queue: 0
 
     graphite :
-        enable: false
-        hosts : "svcsmon.cloud-east.dev:2003"
+        enable: true
+        registerJvmMetrics : false
+        host : "svcsmon.cloud-east.staging"
+        port : 2003
+        prefix : hub-dev
+        rateSeconds : 60
+
+    influx :
+        enable: true
+        registerJvmMetrics : true
+        hosts : "http://oldmanpeabody-hueylewis-1.c.influxdb.com:8086"
+        password : "LII8SfEco3fV"
+        rateSeconds : 30
 
     zookeeper :
         connection : "hub-zk-01.cloud-east.dev:2181,hub-zk-02.cloud-east.dev:2181,hub-zk-03.cloud-east.dev:2181"
@@ -72,7 +83,5 @@ conf/logback.xml :
 
     verbosity : "DEBUG"
 
-lib/newrelic.yml :
-  _template : newrelic.yml.jinja
 
 
