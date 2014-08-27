@@ -46,7 +46,7 @@ public class InfluxReporter extends ScheduledReporter {
             logger.debug("writing {}", series);
             long start = System.currentTimeMillis();
             long processing = start - now;
-            config.getInfluxDB().write(config.getDatabaseName(), TimeUnit.MILLISECONDS, series.toArray(new Serie[series.size()]));
+            config.getInfluxDB().write(config.getDatabase(), TimeUnit.MILLISECONDS, series.toArray(new Serie[series.size()]));
             logger.info("wrote {} items to influx in {} ms, processing {} ms ", series.size(),
                     (System.currentTimeMillis() - start), processing);
         } catch (Exception e) {
