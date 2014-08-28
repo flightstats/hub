@@ -81,7 +81,7 @@ bin/prestop.sh :
 conf/logback.xml :
     _template : logback.xml.jinja
 
-    verbosity : "DEBUG"
+    verbosity : "INFO"
 
 lib/newrelic.yml :
   _template : newrelic.yml.jinja
