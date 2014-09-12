@@ -50,11 +50,12 @@ conf/hub.properties :
         prefix : hub-encrypted-dev
         rateSeconds : 60
 
-    influx :
+    hosted_graphite :
         enable: false
         registerJvmMetrics : true
-        hosts : "http://oldmanpeabody-hueylewis-1.c.influxdb.com:8086"
-        password : "none"
+        host : "carbon.hostedgraphite.com"
+        port : 2003
+        prefix : 86655285-0562-449c-874a-9ae3bc33c5f2.hub.encrypted-dev
         rateSeconds : 60
 
     zookeeper :

@@ -3,7 +3,6 @@ package com.flightstats.hub.service;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.app.config.PATCH;
-import com.flightstats.hub.app.config.metrics.PerChannelThroughput;
 import com.flightstats.hub.app.config.metrics.PerChannelTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
@@ -46,7 +45,6 @@ public class SingleChannelResource {
     @GET
     @Timed
     @ExceptionMetered
-    @PerChannelTimed(operationName = "metadata", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelMetadata(@PathParam("channelName") String channelName) {
         if (noSuchChannel(channelName)) {
@@ -62,7 +60,6 @@ public class SingleChannelResource {
     @PATCH
     @Timed
     @ExceptionMetered
-    @PerChannelTimed(operationName = "update", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMetadata( @PathParam("channelName") String channelName, String json) throws Exception {
@@ -87,7 +84,6 @@ public class SingleChannelResource {
     @Timed(name = "all-channels.insert")
     @ExceptionMetered
     @PerChannelTimed(operationName = "insert", channelNameParameter = "channelName")
-    @PerChannelThroughput(operationName = "insertBytes", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage, @HeaderParam("User") final String user,

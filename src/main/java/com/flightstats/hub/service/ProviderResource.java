@@ -2,7 +2,6 @@ package com.flightstats.hub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import com.flightstats.hub.app.config.metrics.PerChannelThroughput;
 import com.flightstats.hub.app.config.metrics.PerChannelTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
@@ -40,7 +39,6 @@ public class ProviderResource {
     @Timed(name = "provider.insert")
     @ExceptionMetered
     @PerChannelTimed(operationName = "insert", channelNameParameter = "channelName")
-    @PerChannelThroughput(operationName = "insertBytes", channelNameParameter = "channelName")
     @Produces(MediaType.TEXT_PLAIN)
     public Response insertValue(@HeaderParam("channelName") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,

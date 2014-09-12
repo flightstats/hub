@@ -2,7 +2,6 @@ package com.flightstats.hub.metrics;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
@@ -20,22 +19,22 @@ import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.jerseyguice.metrics.KeyPrefixedMetricSet.prefix;
 
-public class GraphiteReporting implements Haltable {
-    private static final Logger logger = LoggerFactory.getLogger(GraphiteReporting.class);
+public class HostedGraphiteReporting implements Haltable {
+    private static final Logger logger = LoggerFactory.getLogger(HostedGraphiteReporting.class);
 
-    private final List<GraphiteReporter> reporters = new LinkedList<>();
+    private final List<HostedGraphiteReporter> reporters = new LinkedList<>();
 
     @Inject
-    public GraphiteReporting(MetricRegistry registry,
-                             @Named("graphite.enable") boolean enable,
-                             @Named("graphite.registerJvmMetrics") boolean registerJvm,
-                             @Named("graphite.host") String host,
-                             @Named("graphite.port") int port,
-                             @Named("graphite.prefix") String graphitePrefix,
-                             @Named("graphite.rateSeconds") int rateSeconds
-                             ) {
+    public HostedGraphiteReporting(MetricRegistry registry,
+                                   @Named("hosted_graphite.enable") boolean enable,
+                                   @Named("hosted_graphite.registerJvmMetrics") boolean registerJvm,
+                                   @Named("hosted_graphite.host") String host,
+                                   @Named("hosted_graphite.port") int port,
+                                   @Named("hosted_graphite.prefix") String graphitePrefix,
+                                   @Named("hosted_graphite.rateSeconds") int rateSeconds
+    ) {
         if (!enable) {
-            logger.info("graphite metrics not enabled");
+            logger.info("hosted graphite metrics not enabled");
             return;
         }
         try {
@@ -43,9 +42,9 @@ public class GraphiteReporting implements Haltable {
                 registerJvmMetrics(registry);
             }
             final String prefix = graphitePrefix + "." + InetAddress.getLocalHost().getHostName().split("\\.")[0];
-                logger.info("Enabling Graphite metrics for " + host + ":" + port + " - reporting interval " + rateSeconds + " seconds");
+                logger.info("Enabling Hosted Graphite metrics for " + host + ":" + port + " - reporting interval " + rateSeconds + " seconds");
                 final Graphite graphite = new Graphite(new InetSocketAddress(host, port));
-                final GraphiteReporter reporter = GraphiteReporter.forRegistry(registry)
+                final HostedGraphiteReporter reporter = HostedGraphiteReporter.forRegistry(registry)
                         .prefixedWith(prefix)
                         .convertRatesTo(TimeUnit.SECONDS)
                         .convertDurationsTo(TimeUnit.MILLISECONDS)
@@ -67,7 +66,7 @@ public class GraphiteReporting implements Haltable {
 
     @Override
     public void halt() {
-        for (GraphiteReporter reporter : reporters)
+        for (HostedGraphiteReporter reporter : reporters)
             reporter.stop();
     }
 }
