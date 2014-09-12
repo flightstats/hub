@@ -19,11 +19,12 @@ Run all these steps as the ubuntu user.
 2. Create an EC2 instance 
 3. Attach a 15GB SSD EBS volume
 4. Create a mount point for the EBS volume at /ebs/zookeeper
-5. Put a file named 'myid' in /ebs/zookeeper with the value equal to the server's number in zoo.cfg 
-6. Extract zookeeper-3.4.5.tar.gz in the ubuntu user's home dir
-7. Create a symlink zookeeper -> zookeeper-3.4.5
-8. Copy all files for the environment to ~/zookeeper/conf.  Files are java.env, log4j.properties and zoo.cfg
-9. Start zookeeper with ~/zookeeper/bin/zkServer.sh restart
-10. Copy purge.sh to ~
-11. Create cron job to run every 5 minutes calling purge.sh
+5. Change the permissions for the EBS volume: sudo chown ubuntu:ubuntu /ebs/zookeeper
+6. Put a file named 'myid' in /ebs/zookeeper with the value equal to the server's number in zoo.cfg 
+7. Extract zookeeper-3.4.5.tar.gz in the ubuntu user's home dir
+8. Create a symlink zookeeper -> zookeeper-3.4.5
+9. Copy all files for the environment to ~/zookeeper/conf.  Files are java.env, log4j.properties and zoo.cfg
+10. Start zookeeper with ~/zookeeper/bin/zkServer.sh restart
+11. Copy purge.sh to ~
+12. Create cron job to run every 5 minutes calling purge.sh
 
