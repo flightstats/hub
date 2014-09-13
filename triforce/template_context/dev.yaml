@@ -56,7 +56,7 @@ conf/hub.properties :
         registerJvmMetrics : false
         host : "carbon.hostedgraphite.com"
         port : 2003
-        prefix : 86655285-0562-449c-874a-9ae3bc33c5f2.hub.dev
+        prefix : 36067340-1113-4cfb-b922-4ebfa86c6457.hub.dev
         rateSeconds : 60
 
     zookeeper :
