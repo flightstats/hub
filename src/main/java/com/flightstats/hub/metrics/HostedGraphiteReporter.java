@@ -121,7 +121,7 @@ public class HostedGraphiteReporter extends ScheduledReporter {
         }
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GraphiteReporter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HostedGraphiteReporter.class);
 
     private final Graphite graphite;
     private final Clock clock;
@@ -184,7 +184,6 @@ public class HostedGraphiteReporter extends ScheduledReporter {
 
     private void reportTimer(String name, Timer timer, long timestamp) throws IOException {
         final Snapshot snapshot = timer.getSnapshot();
-
         graphite.send(prefix(name, "mean"), format(convertDuration(snapshot.getMean())), timestamp);
         graphite.send(prefix(name, "p50"),
                 format(convertDuration(snapshot.getMedian())),
