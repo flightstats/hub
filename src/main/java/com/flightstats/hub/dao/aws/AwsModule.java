@@ -22,7 +22,7 @@ import com.flightstats.hub.group.GroupCallback;
 import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.metrics.GraphiteReporting;
-import com.flightstats.hub.metrics.InfluxReporting;
+import com.flightstats.hub.metrics.HostedGraphiteReporting;
 import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.service.HubHealthCheck;
@@ -97,7 +97,7 @@ public class AwsModule extends AbstractModule {
         bind(WatchManager.class).asEagerSingleton();
 
         bind(MetricRegistry.class).in(Singleton.class);
-        bind(InfluxReporting.class).asEagerSingleton();
+        bind(HostedGraphiteReporting.class).asEagerSingleton();
         bind(GraphiteReporting.class).asEagerSingleton();
         bind(InstrumentedResourceMethodDispatchAdapter.class).toProvider(MethodTimingAdapterProvider.class).in(Singleton.class);
     }

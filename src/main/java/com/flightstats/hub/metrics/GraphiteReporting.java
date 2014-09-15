@@ -49,7 +49,7 @@ public class GraphiteReporting implements Haltable {
                         .prefixedWith(prefix)
                         .convertRatesTo(TimeUnit.SECONDS)
                         .convertDurationsTo(TimeUnit.MILLISECONDS)
-                        .filter(new HubMetricsFilter())
+                        .filter(new NoTestChannelsMetricsFilter())
                         .build(graphite);
 
                 reporter.start(rateSeconds, TimeUnit.SECONDS);
