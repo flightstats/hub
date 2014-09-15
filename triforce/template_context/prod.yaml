@@ -44,18 +44,19 @@ conf/hub.properties :
 
     graphite :
         enable: true
-        registerJvmMetrics : false
+        registerJvmMetrics : true
         host : "svcsmon.cloud-east.prod"
         port : 2003
         prefix : hub
         rateSeconds : 60
 
-    influx :
+    hosted_graphite :
         enable: true
-        registerJvmMetrics : true
-        hosts : "http://oldmanpeabody-hueylewis-1.c.influxdb.com:8086"
-        password : "V0TXqZHZkfap"
-        rateSeconds : 30
+        registerJvmMetrics : false
+        host : "carbon.hostedgraphite.com"
+        port : 2003
+        prefix : 86655285-0562-449c-874a-9ae3bc33c5f2.hub.prod
+        rateSeconds : 5
 
     zookeeper :
         connection : "hub-zk-01.cloud-east.prod:2181,hub-zk-02.cloud-east.prod:2181,hub-zk-03.cloud-east.prod:2181"

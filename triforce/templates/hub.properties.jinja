@@ -42,13 +42,11 @@ graphite.port={{ graphite['port'] }}
 graphite.prefix={{ graphite['prefix'] }}
 graphite.rateSeconds={{ graphite['rateSeconds'] }}
 
-influx.enable={{ influx['enable'] }}
-influx.registerJvmMetrics={{ influx['registerJvmMetrics'] }}
-influx.hosts={{ influx['hosts'] }}
-influx.prefix={{ app['name'] }}
-influx.database={{ app['name'] }}_{{ app['environment'] }}
-influx.user={{ app['name'] }}
-influx.password={{ influx['password'] }}
-influx.rateSeconds={{ influx['rateSeconds'] }}
+hosted_graphite.enable={{ hosted_graphite['enable'] }}
+hosted_graphite.registerJvmMetrics={{ hosted_graphite['registerJvmMetrics'] }}
+hosted_graphite.host={{ hosted_graphite['host'] }}
+hosted_graphite.port={{ hosted_graphite['port'] }}
+hosted_graphite.prefix={{ hosted_graphite['prefix'] }}
+hosted_graphite.rateSeconds={{ hosted_graphite['rateSeconds'] }}
 
 

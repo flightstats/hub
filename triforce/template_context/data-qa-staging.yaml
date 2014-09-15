@@ -43,18 +43,19 @@ conf/hub.properties :
       queue: 0
 
     graphite :
-        enable: true
+        enable: false
         registerJvmMetrics : false
         host : "svcsmon.cloud-east.staging"
         port : 2003
         prefix : hub-data-qa
         rateSeconds : 60
 
-    influx :
+    hosted_graphite :
         enable: false
         registerJvmMetrics : false
-        hosts : "http://oldmanpeabody-hueylewis-1.c.influxdb.com:8086"
-        password : "none"
+        host : "carbon.hostedgraphite.com"
+        port : 2003
+        prefix : 86655285-0562-449c-874a-9ae3bc33c5f2.hub.data-qa
         rateSeconds : 60
 
     zookeeper :
