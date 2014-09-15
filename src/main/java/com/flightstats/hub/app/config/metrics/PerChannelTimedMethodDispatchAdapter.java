@@ -17,11 +17,13 @@ import javax.ws.rs.ext.Provider;
 public class PerChannelTimedMethodDispatchAdapter implements ResourceMethodDispatchAdapter {
 
 	private final MetricRegistry registry;
+    private final HostedGraphiteSender sender;
 
 	@Inject
-	public PerChannelTimedMethodDispatchAdapter(MetricRegistry registry) {
+	public PerChannelTimedMethodDispatchAdapter(MetricRegistry registry, HostedGraphiteSender sender) {
 		this.registry = registry;
-	}
+        this.sender = sender;
+    }
 
 	@Override
 	public ResourceMethodDispatchProvider adapt(final ResourceMethodDispatchProvider provider) {
@@ -29,7 +31,7 @@ public class PerChannelTimedMethodDispatchAdapter implements ResourceMethodDispa
 			@Override
 			public RequestDispatcher create(final AbstractResourceMethod abstractResourceMethod) {
 				final RequestDispatcher delegate = provider.create(abstractResourceMethod);
-				return new PerChannelTimedRequestDispatcher(registry, abstractResourceMethod, delegate);
+				return new PerChannelTimedRequestDispatcher(registry, abstractResourceMethod, delegate, sender);
 			}
 		};
 	}

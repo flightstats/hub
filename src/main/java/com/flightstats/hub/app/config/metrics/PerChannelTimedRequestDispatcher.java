@@ -12,11 +12,14 @@ class PerChannelTimedRequestDispatcher implements RequestDispatcher {
     private final MetricRegistry registry;
     private final AnnotatedElement annotatedElement;
     private final RequestDispatcher delegate;
+    private final HostedGraphiteSender sender;
 
-    PerChannelTimedRequestDispatcher(MetricRegistry metricRegistry, AnnotatedElement annotatedElement, RequestDispatcher delegate) {
+    PerChannelTimedRequestDispatcher(MetricRegistry metricRegistry, AnnotatedElement annotatedElement,
+                                     RequestDispatcher delegate, HostedGraphiteSender sender) {
         this.registry = metricRegistry;
         this.annotatedElement = annotatedElement;
         this.delegate = delegate;
+        this.sender = sender;
     }
 
     @Override
@@ -28,12 +31,17 @@ class PerChannelTimedRequestDispatcher implements RequestDispatcher {
         }
 
         String metricName = getMetricName(context, timedAnnotation);
+        long start = System.currentTimeMillis();
         final Meter exceptionMeter = registry.meter(metricName + ".exceptions");
         try (Timer.Context ignored = buildTimerContext(metricName)) {
             delegate.dispatch(resource, context);
         } catch (Exception e) {
             exceptionMeter.mark();
             throw e;
+        } finally {
+            long end = System.currentTimeMillis();
+            long time = end - start;
+            sender.send(metricName + " " + time + " " + end/1000 + "\n");
         }
     }
 

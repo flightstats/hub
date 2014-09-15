@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
+import com.flightstats.hub.app.config.metrics.HostedGraphiteSender;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -22,7 +23,6 @@ import com.flightstats.hub.group.GroupCallback;
 import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.metrics.GraphiteReporting;
-import com.flightstats.hub.metrics.HostedGraphiteReporting;
 import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.service.HubHealthCheck;
@@ -97,7 +97,7 @@ public class AwsModule extends AbstractModule {
         bind(WatchManager.class).asEagerSingleton();
 
         bind(MetricRegistry.class).in(Singleton.class);
-        bind(HostedGraphiteReporting.class).asEagerSingleton();
+        bind(HostedGraphiteSender.class).asEagerSingleton();
         bind(GraphiteReporting.class).asEagerSingleton();
         bind(InstrumentedResourceMethodDispatchAdapter.class).toProvider(MethodTimingAdapterProvider.class).in(Singleton.class);
     }
