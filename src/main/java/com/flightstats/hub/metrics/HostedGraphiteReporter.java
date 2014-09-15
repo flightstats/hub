@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A reporter which publishes a limited set of metric values to a Graphite server.
@@ -125,6 +127,7 @@ public class HostedGraphiteReporter extends ScheduledReporter {
     private final GraphiteLogger graphite;
     private final Clock clock;
     private final String prefix;
+    private final Map<String, AtomicLong> previousCounts = new ConcurrentHashMap<>();
 
     private HostedGraphiteReporter(MetricRegistry registry,
                                    GraphiteLogger graphite,
@@ -195,6 +198,7 @@ public class HostedGraphiteReporter extends ScheduledReporter {
 
     private void reportMetered(String name, Metered meter, long timestamp) throws IOException {
         graphite.send(prefix(name, "count"), format(meter.getCount()), timestamp);
+        graphite.send(prefix(name, "intervalCount"), intervalCount(name, meter), timestamp);
         graphite.send(prefix(name, "m1_rate"),
                 format(convertRate(meter.getOneMinuteRate())),
                 timestamp);
@@ -203,6 +207,7 @@ public class HostedGraphiteReporter extends ScheduledReporter {
     private void reportHistogram(String name, Histogram histogram, long timestamp) throws IOException {
         final Snapshot snapshot = histogram.getSnapshot();
         graphite.send(prefix(name, "count"), format(histogram.getCount()), timestamp);
+        graphite.send(prefix(name, "intervalCount"), intervalCount(name, histogram), timestamp);
         graphite.send(prefix(name, "mean"), format(snapshot.getMean()), timestamp);
         graphite.send(prefix(name, "p50"), format(snapshot.getMedian()), timestamp);
         graphite.send(prefix(name, "p99"), format(snapshot.get99thPercentile()), timestamp);
@@ -210,6 +215,22 @@ public class HostedGraphiteReporter extends ScheduledReporter {
 
     private void reportCounter(String name, Counter counter, long timestamp) throws IOException {
         graphite.send(prefix(name, "count"), format(counter.getCount()), timestamp);
+        graphite.send(prefix(name, "intervalCount"), intervalCount(name, counter), timestamp);
+    }
+
+    String intervalCount(String name, Counting counting) {
+        long currentCount = counting.getCount();
+        long correctedCount = currentCount;
+        if (previousCounts.containsKey(name)) {
+            AtomicLong atomicLong = previousCounts.get(name);
+            correctedCount = currentCount - atomicLong.get();
+            atomicLong.set(currentCount);
+        } else {
+            AtomicLong atomicLong = new AtomicLong();
+            previousCounts.put(name, atomicLong);
+            atomicLong.set(currentCount);
+        }
+        return format(correctedCount);
     }
 
     private void reportGauge(String name, Gauge gauge, long timestamp) throws IOException {
