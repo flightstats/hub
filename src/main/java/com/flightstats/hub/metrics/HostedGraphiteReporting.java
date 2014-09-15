@@ -43,7 +43,7 @@ public class HostedGraphiteReporting implements Haltable {
             }
             final String prefix = graphitePrefix + "." + InetAddress.getLocalHost().getHostName().split("\\.")[0];
                 logger.info("Enabling Hosted Graphite metrics for " + host + ":" + port + " - reporting interval " + rateSeconds + " seconds");
-                final Graphite graphite = new Graphite(new InetSocketAddress(host, port));
+                final GraphiteLogger graphite = new GraphiteLogger(new Graphite(new InetSocketAddress(host, port)));
                 final HostedGraphiteReporter reporter = HostedGraphiteReporter.forRegistry(registry)
                         .prefixedWith(prefix)
                         .convertRatesTo(TimeUnit.SECONDS)
