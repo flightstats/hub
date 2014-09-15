@@ -43,7 +43,6 @@ public class SingleChannelResource {
     }
 
     @GET
-    @Timed
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelMetadata(@PathParam("channelName") String channelName) {
@@ -58,7 +57,6 @@ public class SingleChannelResource {
     }
 
     @PATCH
-    @Timed
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
