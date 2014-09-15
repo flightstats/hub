@@ -1,7 +1,6 @@
 package com.flightstats.hub.metrics;
 
 import com.codahale.metrics.*;
-import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,7 +109,7 @@ public class HostedGraphiteReporter extends ScheduledReporter {
          * @param graphite a {@link com.codahale.metrics.graphite.Graphite} client
          * @return a {@link GraphiteReporter}
          */
-        public HostedGraphiteReporter build(Graphite graphite) {
+        public HostedGraphiteReporter build(GraphiteLogger graphite) {
             return new HostedGraphiteReporter(registry,
                     graphite,
                     clock,
@@ -123,12 +122,12 @@ public class HostedGraphiteReporter extends ScheduledReporter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HostedGraphiteReporter.class);
 
-    private final Graphite graphite;
+    private final GraphiteLogger graphite;
     private final Clock clock;
     private final String prefix;
 
     private HostedGraphiteReporter(MetricRegistry registry,
-                             Graphite graphite,
+                                   GraphiteLogger graphite,
                              Clock clock,
                              String prefix,
                              TimeUnit rateUnit,
