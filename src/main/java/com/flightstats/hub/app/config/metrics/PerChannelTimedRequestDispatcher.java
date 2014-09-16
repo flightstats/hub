@@ -29,8 +29,12 @@ class PerChannelTimedRequestDispatcher implements RequestDispatcher {
             delegate.dispatch(resource, context);
             return;
         }
-
-        String metricName = getMetricName(context, timedAnnotation);
+        String channelName = ChannelAnnotationUtil.getChannelName(context, timedAnnotation.channelNameParameter());
+        if (channelName.startsWith("test")) {
+            delegate.dispatch(resource, context);
+            return;
+        }
+        String metricName = "channel." + channelName + "." + timedAnnotation.operationName();
         long start = System.currentTimeMillis();
         final Meter exceptionMeter = registry.meter(metricName + ".exceptions");
         try (Timer.Context ignored = buildTimerContext(metricName)) {
@@ -46,11 +50,6 @@ class PerChannelTimedRequestDispatcher implements RequestDispatcher {
     private Timer.Context buildTimerContext(String metricName) {
         Timer timer = registry.timer(metricName);
         return timer.time();
-    }
-
-    private String getMetricName(HttpContext context, PerChannelTimed timedAnnotation) {
-        String channelName = ChannelAnnotationUtil.getChannelName(context, timedAnnotation.channelNameParameter());
-        return "channel." + channelName + "." + timedAnnotation.operationName();
     }
 
 }
