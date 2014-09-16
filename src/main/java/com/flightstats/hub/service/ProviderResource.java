@@ -38,7 +38,7 @@ public class ProviderResource {
     @POST
     @Timed(name = "provider.ALL.post", absolute = true)
     @ExceptionMetered
-    @PerChannelTimed(operationName = "insert", channelNameParameter = "channelName")
+    @PerChannelTimed(operationName = "post", channelNameParameter = "channelName")
     @Produces(MediaType.TEXT_PLAIN)
     public Response insertValue(@HeaderParam("channelName") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,
