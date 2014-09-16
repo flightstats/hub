@@ -81,7 +81,7 @@ public class SingleChannelResource {
     @POST
     @Timed(name = "channel.ALL.post", absolute = true)
     @ExceptionMetered
-    @PerChannelTimed(operationName = "insert", channelNameParameter = "channelName")
+    @PerChannelTimed(operationName = "post", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage, @HeaderParam("User") final String user,
