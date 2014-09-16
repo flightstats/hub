@@ -33,7 +33,7 @@ public class PerChannelTimedRequestDispatcherTest {
 
 		when(annotatedElement.getAnnotation(any(Class.class))).thenReturn(null);
 
-		PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
+		PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate, null);
 
 		testClass.dispatch(resource, context);
 
@@ -68,7 +68,7 @@ public class PerChannelTimedRequestDispatcherTest {
         context.setMatchResult(matchResult);
         context.pushMatch(uriTemplate, paramNames);
 
-        PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
+        PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate, null);
 
         testClass.dispatch(resource, context);
 
@@ -108,7 +108,7 @@ public class PerChannelTimedRequestDispatcherTest {
         context.setMatchResult(matchResult);
         context.pushMatch(uriTemplate, paramNames);
 
-        PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
+        PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate, null);
 
         try {
             testClass.dispatch(resource, context);
@@ -149,7 +149,7 @@ public class PerChannelTimedRequestDispatcherTest {
 		context.setMatchResult(matchResult);
 		context.pushMatch(uriTemplate, paramNames);
 
-		PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
+		PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate, null);
 
 		testClass.dispatch(resource, context);
 	}
@@ -176,7 +176,7 @@ public class PerChannelTimedRequestDispatcherTest {
         when(registry.timer(timerName)).thenReturn(timer);
         when(timer.time()).thenReturn(timerContext);
 
-        PerChannelTimedRequestDispatcher dispatcher = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate);
+        PerChannelTimedRequestDispatcher dispatcher = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate, null);
 
         dispatcher.dispatch(resource, context);
 
