@@ -3,8 +3,9 @@ package com.flightstats.hub.dao.aws;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.hub.app.config.metrics.HostedGraphiteSender;
+import com.flightstats.hub.app.config.metrics.HubInstrumentedResourceMethodDispatchAdapter;
+import com.flightstats.hub.app.config.metrics.HubMethodTimingAdapterProvider;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -31,7 +32,6 @@ import com.flightstats.hub.util.ContentKeyGenerator;
 import com.flightstats.hub.util.CuratorKeyGenerator;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisherImpl;
-import com.flightstats.jerseyguice.metrics.MethodTimingAdapterProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -99,7 +99,7 @@ public class AwsModule extends AbstractModule {
         bind(MetricRegistry.class).in(Singleton.class);
         bind(HostedGraphiteSender.class).asEagerSingleton();
         bind(GraphiteReporting.class).asEagerSingleton();
-        bind(InstrumentedResourceMethodDispatchAdapter.class).toProvider(MethodTimingAdapterProvider.class).in(Singleton.class);
+        bind(HubInstrumentedResourceMethodDispatchAdapter.class).toProvider(HubMethodTimingAdapterProvider.class).in(Singleton.class);
     }
 
     @Inject
