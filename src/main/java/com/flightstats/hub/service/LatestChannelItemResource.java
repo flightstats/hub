@@ -30,7 +30,7 @@ public class LatestChannelItemResource {
 	}
 
 	@GET
-	@Timed
+    @Timed(name = "channel.ALL.latest", absolute = true)
     @ExceptionMetered
 	public Response getLatest(@PathParam("channelName") String channelName) {
 		Optional<ContentKey> latestId = channelService.findLastUpdatedKey(channelName);
