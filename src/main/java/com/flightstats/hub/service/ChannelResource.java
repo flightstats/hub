@@ -37,7 +37,7 @@ public class ChannelResource {
     }
 
 	@GET
-	@Timed
+	@Timed(name = "channel.get", absolute = true)
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getChannels() {
@@ -47,7 +47,7 @@ public class ChannelResource {
 	}
 
 	@POST
-	@Timed
+    @Timed(name = "channel.post", absolute = true)
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)

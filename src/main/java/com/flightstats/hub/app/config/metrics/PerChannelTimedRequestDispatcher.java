@@ -50,7 +50,7 @@ class PerChannelTimedRequestDispatcher implements RequestDispatcher {
 
     private String getMetricName(HttpContext context, PerChannelTimed timedAnnotation) {
         String channelName = ChannelAnnotationUtil.getChannelName(context, timedAnnotation.channelNameParameter());
-        return "per-channel." + channelName + "." + timedAnnotation.operationName();
+        return "channel." + channelName + "." + timedAnnotation.operationName();
     }
 
 }

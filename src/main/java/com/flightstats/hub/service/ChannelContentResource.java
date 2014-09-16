@@ -46,8 +46,8 @@ public class ChannelContentResource {
     //todo - gfm - 1/22/14 - would be nice to have a head method, which doesn't fetch the body.
 
 	@GET
-	@Timed(name = "all-channels.fetch")
-	@PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName")
+	@Timed(name = "channel.ALL.get", absolute = true)
+	@PerChannelTimed(operationName = "get", channelNameParameter = "channelName")
     @ExceptionMetered
 	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id,
                              @HeaderParam("Accept") String accept, @HeaderParam("User") String user

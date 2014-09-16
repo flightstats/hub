@@ -56,7 +56,7 @@ public class ChannelTimeResource {
 
     @Path("/{datetime}")
 	@GET
-	@Timed(name = "all-channels.ids")
+    @Timed(name = "channel.ALL.time", absolute = true)
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
 	public Response getValue(@PathParam("channelName") String channelName, @PathParam("datetime") String datetime)
