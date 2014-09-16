@@ -68,7 +68,7 @@ public class PerChannelTimedRequestDispatcherTest {
         context.setMatchResult(matchResult);
         context.pushMatch(uriTemplate, paramNames);
 
-        PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate, null);
+        PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate, mock(HostedGraphiteSender.class));
 
         testClass.dispatch(resource, context);
 
@@ -176,7 +176,7 @@ public class PerChannelTimedRequestDispatcherTest {
         when(registry.timer(timerName)).thenReturn(timer);
         when(timer.time()).thenReturn(timerContext);
 
-        PerChannelTimedRequestDispatcher dispatcher = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate, null);
+        PerChannelTimedRequestDispatcher dispatcher = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate, mock(HostedGraphiteSender.class));
 
         dispatcher.dispatch(resource, context);
 
