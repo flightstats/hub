@@ -10,6 +10,7 @@ import com.sun.jersey.server.impl.application.WebApplicationImpl;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.dispatch.RequestDispatcher;
 import org.junit.Test;
+import org.mockito.internal.verification.AtMost;
 
 import java.lang.reflect.AnnotatedElement;
 import java.util.Arrays;
@@ -44,7 +45,7 @@ public class PerChannelTimedRequestDispatcherTest {
     @Test
     public void testHappyPath() throws Exception {
         Object resource = new Object();
-        String timerName = "per-channel.theSpoon.invert";
+        String timerName = "channel.theSpoon.invert";
         String channelName = "theSpoon";
         List<String> paramNames = Arrays.asList("channelName");
         WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), null, null);
@@ -78,10 +79,45 @@ public class PerChannelTimedRequestDispatcherTest {
     }
 
     @Test
+    public void testNoTestChannels() throws Exception {
+        Object resource = new Object();
+        String timerName = "channel.theSpoon.invert";
+        String channelName = "testBlah";
+        List<String> paramNames = Arrays.asList("channelName");
+        WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), null, null);
+
+        AnnotatedElement annotatedElement = mock(AnnotatedElement.class);
+        MetricRegistry registry = mock(MetricRegistry.class);
+        RequestDispatcher delegate = mock(RequestDispatcher.class);
+        UriTemplate uriTemplate = mock(UriTemplate.class);
+        MatchResult matchResult = mock(MatchResult.class);
+        PerChannelTimed annotation = mock(PerChannelTimed.class);
+        Timer.Context timerContext = mock(Timer.Context.class);
+        Timer timer = mock(Timer.class);
+
+        when(annotatedElement.getAnnotation(PerChannelTimed.class)).thenReturn(annotation);
+        when(annotation.channelNameParameter()).thenReturn("channelName");
+        when(annotation.operationName()).thenReturn("invert");
+        when(registry.timer(timerName)).thenReturn(timer);
+        when(timer.time()).thenReturn(timerContext);
+        when(matchResult.group(anyInt())).thenReturn(channelName);
+
+        context.setMatchResult(matchResult);
+        context.pushMatch(uriTemplate, paramNames);
+
+        PerChannelTimedRequestDispatcher testClass = new PerChannelTimedRequestDispatcher(registry, annotatedElement, delegate, mock(HostedGraphiteSender.class));
+
+        testClass.dispatch(resource, context);
+
+        verify(timer, new AtMost(0)).time();
+        verify(delegate).dispatch(resource, context);
+    }
+
+    @Test
     public void testExceptionPath() throws Exception {
         //GIVEN
         Object resource = new Object();
-        String timerName = "per-channel.theSpoon.invert";
+        String timerName = "channel.theSpoon.invert";
         String channelName = "theSpoon";
         List<String> paramNames = Arrays.asList("channelName");
         WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), null, null);
@@ -125,7 +161,7 @@ public class PerChannelTimedRequestDispatcherTest {
     @Test(expected = IllegalArgumentException.class)
 	public void testCantFindChannelName() throws Exception {
 		Object resource = new Object();
-		String timerName = "per-channel.theSpoon.invert";
+		String timerName = "channel.theSpoon.invert";
 		String channelName = "theSpoon";
 		List<String> paramNames = Arrays.asList("notTheRightParam", "alsoTheWrongParamter");
 		WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), null, null);
@@ -157,7 +193,7 @@ public class PerChannelTimedRequestDispatcherTest {
     @Test
     public void testHeader() throws Exception {
         Object resource = new Object();
-        String timerName = "per-channel.theSpoon.invert";
+        String timerName = "channel.theSpoon.invert";
         String channelName = "theSpoon";
         ContainerRequest request = mock(ContainerRequest.class);
         when(request.getHeaderValue("channelName")).thenReturn(channelName);
