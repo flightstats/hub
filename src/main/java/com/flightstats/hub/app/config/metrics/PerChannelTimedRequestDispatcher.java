@@ -39,9 +39,7 @@ class PerChannelTimedRequestDispatcher implements RequestDispatcher {
             exceptionMeter.mark();
             throw e;
         } finally {
-            long end = System.currentTimeMillis();
-            long time = end - start;
-            sender.send(metricName + " " + time + " " + end/1000 + "\n");
+            sender.send(metricName, System.currentTimeMillis() - start);
         }
     }
 

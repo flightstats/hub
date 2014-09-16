@@ -46,10 +46,10 @@ public class HostedGraphiteSender {
         });
     }
 
-    public void send(String value) {
+    public void send(String name, long value) {
         try {
             logger.debug("value to send {}", value);
-            queue.add(value);
+            queue.add(name + " " + value + " " + System.currentTimeMillis()/1000 + "\n");
         } catch (Exception e) {
             logger.warn("unable to add graphite metric to queue {}", value);
         }
