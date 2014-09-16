@@ -39,7 +39,7 @@ public class TagResource {
     }
 
     @GET
-    @Timed
+    @Timed(name = "tag.get", absolute = true)
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
@@ -64,7 +64,7 @@ public class TagResource {
 
 	@GET
     @Path("/{tag}")
-	@Timed
+    @Timed(name = "tag.ALL.get", absolute = true)
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getChannels(@PathParam("tag") String tag) {

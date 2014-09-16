@@ -35,7 +35,7 @@ public class GroupResource {
     }
 
     @GET
-    @Timed
+    @Timed(name = "group.get", absolute = true)
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroups() {
@@ -64,7 +64,7 @@ public class GroupResource {
 
     @Path("/{name}")
     @GET
-    @Timed
+    @Timed(name = "group.ALL.get", absolute = true)
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroup(@PathParam("name") String name) {
@@ -83,7 +83,7 @@ public class GroupResource {
 
     @Path("/{name}")
     @PUT
-    @Timed
+    @Timed(name = "group.ALL.put", absolute = true)
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -99,7 +99,7 @@ public class GroupResource {
 
     @Path("/{name}")
     @DELETE
-    @Timed
+    @Timed(name = "group.ALL.delete", absolute = true)
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteGroup(@PathParam("name") String name) {
