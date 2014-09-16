@@ -79,7 +79,7 @@ public class SingleChannelResource {
     }
 
     @POST
-    @Timed(name = "all-channels.insert")
+    @Timed(name = "all-channels.insert", absolute = true)
     @ExceptionMetered
     @PerChannelTimed(operationName = "insert", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
