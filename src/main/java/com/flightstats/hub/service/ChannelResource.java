@@ -2,6 +2,7 @@ package com.flightstats.hub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.exception.ConflictException;
@@ -37,7 +38,8 @@ public class ChannelResource {
     }
 
 	@GET
-	@Timed(name = "channel.get", absolute = true)
+	@Timed
+    @EventTimed(name = "channel.get")
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getChannels() {
@@ -47,7 +49,8 @@ public class ChannelResource {
 	}
 
 	@POST
-    @Timed(name = "channel.post", absolute = true)
+    @Timed
+    @EventTimed(name = "channel.post")
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)

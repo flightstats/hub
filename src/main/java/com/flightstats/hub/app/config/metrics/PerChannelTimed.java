@@ -17,4 +17,6 @@ public @interface PerChannelTimed {
 	 * What is this method doing?  Inserting?  Fetching?  Deleting?  Some other verb...
 	 */
 	String operationName();
+
+    String newName();
 }

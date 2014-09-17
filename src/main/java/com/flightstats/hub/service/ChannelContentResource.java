@@ -2,6 +2,7 @@ package com.flightstats.hub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.app.config.metrics.PerChannelTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
@@ -46,8 +47,9 @@ public class ChannelContentResource {
     //todo - gfm - 1/22/14 - would be nice to have a head method, which doesn't fetch the body.
 
 	@GET
-	@Timed(name = "channel.ALL.get", absolute = true)
-	@PerChannelTimed(operationName = "get", channelNameParameter = "channelName")
+	@Timed(name = "all-channels.fetch")
+    @EventTimed(name = "channel.ALL.get")
+	@PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName", newName = "get")
     @ExceptionMetered
 	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id,
                              @HeaderParam("Accept") String accept, @HeaderParam("User") String user
