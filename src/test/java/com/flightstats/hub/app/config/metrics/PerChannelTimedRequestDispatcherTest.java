@@ -3,6 +3,7 @@ package com.flightstats.hub.app.config.metrics;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.uri.UriTemplate;
 import com.sun.jersey.server.impl.application.WebApplicationContext;
