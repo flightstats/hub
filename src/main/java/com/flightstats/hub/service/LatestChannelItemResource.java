@@ -2,6 +2,7 @@ package com.flightstats.hub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
@@ -30,7 +31,8 @@ public class LatestChannelItemResource {
 	}
 
 	@GET
-    @Timed(name = "channel.ALL.latest", absolute = true)
+    @Timed
+    @EventTimed(name = "channel.ALL.latest")
     @ExceptionMetered
 	public Response getLatest(@PathParam("channelName") String channelName) {
 		Optional<ContentKey> latestId = channelService.findLastUpdatedKey(channelName);

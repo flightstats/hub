@@ -1,29 +1,25 @@
 package com.flightstats.hub.app.config.metrics;
 
-import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 /**
- * An adapter for dispatching metrics to Graphite.
+ * An adapter for dispatching metrics to Hosted Graphite.
  */
 @Singleton
 public class HubMethodTimingAdapterProvider
-        implements Provider<HubInstrumentedResourceMethodDispatchAdapter>
-{
+        implements Provider<HubInstrumentedResourceMethodDispatchAdapter> {
     HubInstrumentedResourceMethodDispatchAdapter adapter;
 
     @Inject
-    public HubMethodTimingAdapterProvider(MetricRegistry registry, HostedGraphiteSender graphiteSender)
-    {
-        adapter = new HubInstrumentedResourceMethodDispatchAdapter( registry, graphiteSender );
+    public HubMethodTimingAdapterProvider( HostedGraphiteSender graphiteSender) {
+        adapter = new HubInstrumentedResourceMethodDispatchAdapter(graphiteSender);
     }
 
     @Override
-    public HubInstrumentedResourceMethodDispatchAdapter get()
-    {
+    public HubInstrumentedResourceMethodDispatchAdapter get() {
         return adapter;
     }
 }

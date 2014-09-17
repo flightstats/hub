@@ -5,6 +5,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.group.GroupStatus;
@@ -35,7 +36,8 @@ public class GroupResource {
     }
 
     @GET
-    @Timed(name = "group.get", absolute = true)
+    @Timed
+    @EventTimed(name = "group.get")
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroups() {
@@ -64,7 +66,8 @@ public class GroupResource {
 
     @Path("/{name}")
     @GET
-    @Timed(name = "group.ALL.get", absolute = true)
+    @Timed
+    @EventTimed(name = "group.ALL.get")
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroup(@PathParam("name") String name) {
@@ -83,7 +86,8 @@ public class GroupResource {
 
     @Path("/{name}")
     @PUT
-    @Timed(name = "group.ALL.put", absolute = true)
+    @Timed
+    @EventTimed(name = "group.ALL.put")
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -99,7 +103,8 @@ public class GroupResource {
 
     @Path("/{name}")
     @DELETE
-    @Timed(name = "group.ALL.delete", absolute = true)
+    @Timed
+    @EventTimed(name = "group.ALL.delete")
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteGroup(@PathParam("name") String name) {
