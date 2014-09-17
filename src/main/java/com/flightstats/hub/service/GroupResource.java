@@ -37,7 +37,7 @@ public class GroupResource {
 
     @GET
     @Timed
-    @EventTimed(name = "group.get")
+    @EventTimed(name = "groups.get")
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroups() {
