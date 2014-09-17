@@ -41,7 +41,7 @@ public class TagResource {
 
     @GET
     @Timed
-    @EventTimed(name = "tag.get")
+    @EventTimed(name = "tags.get")
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
