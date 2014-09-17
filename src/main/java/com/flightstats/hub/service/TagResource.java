@@ -2,6 +2,7 @@ package com.flightstats.hub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.rest.HalLink;
@@ -40,6 +41,7 @@ public class TagResource {
 
     @GET
     @Timed
+    @EventTimed(name = "tags.get")
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
@@ -64,7 +66,8 @@ public class TagResource {
 
 	@GET
     @Path("/{tag}")
-	@Timed
+    @Timed
+    @EventTimed(name = "tag.ALL.get")
     @ExceptionMetered
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getChannels(@PathParam("tag") String tag) {
