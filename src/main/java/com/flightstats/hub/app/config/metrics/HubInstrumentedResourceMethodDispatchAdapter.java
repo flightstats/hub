@@ -2,6 +2,7 @@ package com.flightstats.hub.app.config.metrics;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
+import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.sun.jersey.spi.container.ResourceMethodDispatchAdapter;
 import com.sun.jersey.spi.container.ResourceMethodDispatchProvider;
 

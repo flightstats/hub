@@ -1,4 +1,4 @@
-package com.flightstats.hub.app.config.metrics;
+package com.flightstats.hub.metrics;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -47,6 +47,9 @@ public class HostedGraphiteSender {
     }
 
     public void send(String name, long value) {
+        if (name.contains(".test")) {
+            return;
+        }
         try {
             logger.debug("value to send {}", value);
             queue.add(name + " " + value + " " + System.currentTimeMillis()/1000 + "\n");
