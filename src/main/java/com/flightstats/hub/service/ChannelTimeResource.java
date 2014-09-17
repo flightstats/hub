@@ -5,6 +5,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.model.ContentKey;
@@ -56,7 +57,8 @@ public class ChannelTimeResource {
 
     @Path("/{datetime}")
 	@GET
-	@Timed(name = "all-channels.ids")
+    @Timed(name = "all-channels.ids")
+    @EventTimed(name = "channel.ALL.time.get")
     @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
 	public Response getValue(@PathParam("channelName") String channelName, @PathParam("datetime") String datetime)

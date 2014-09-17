@@ -2,6 +2,7 @@ package com.flightstats.hub.service;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.app.config.metrics.PerChannelTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
@@ -47,7 +48,8 @@ public class ChannelContentResource {
 
 	@GET
 	@Timed(name = "all-channels.fetch")
-	@PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName")
+    @EventTimed(name = "channel.ALL.get")
+	@PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName", newName = "get")
     @ExceptionMetered
 	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id,
                              @HeaderParam("Accept") String accept, @HeaderParam("User") String user

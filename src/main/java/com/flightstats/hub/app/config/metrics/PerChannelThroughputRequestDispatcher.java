@@ -31,6 +31,7 @@ class PerChannelThroughputRequestDispatcher implements RequestDispatcher {
             delegate.dispatch(resource, context);
             return;
         }
+        //todo - gfm - 9/15/14 - if the channel name starts with test, ignore & return
         String metricName = getMetricName(context, throughputAnnotation);
         Meter meter = registry.meter(metricName);
         try {
