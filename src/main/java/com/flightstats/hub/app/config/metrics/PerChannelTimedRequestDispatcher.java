@@ -35,7 +35,7 @@ class PerChannelTimedRequestDispatcher implements RequestDispatcher {
             delegate.dispatch(resource, context);
             return;
         }
-        String metricName = "channel." + channelName + "." + timedAnnotation.operationName();
+        String metricName = "per-channel." + channelName + "." + timedAnnotation.operationName();
         long start = System.currentTimeMillis();
         final Meter exceptionMeter = registry.meter(metricName + ".exceptions");
         try (Timer.Context ignored = buildTimerContext(metricName)) {
