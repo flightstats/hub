@@ -46,7 +46,7 @@ public class PerChannelTimedRequestDispatcherTest {
     @Test
     public void testHappyPath() throws Exception {
         Object resource = new Object();
-        String timerName = "channel.theSpoon.invert";
+        String timerName = "per-channel.theSpoon.invert";
         String channelName = "theSpoon";
         List<String> paramNames = Arrays.asList("channelName");
         WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), null, null);
@@ -118,7 +118,7 @@ public class PerChannelTimedRequestDispatcherTest {
     public void testExceptionPath() throws Exception {
         //GIVEN
         Object resource = new Object();
-        String timerName = "channel.theSpoon.invert";
+        String timerName = "per-channel.theSpoon.invert";
         String channelName = "theSpoon";
         List<String> paramNames = Arrays.asList("channelName");
         WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), null, null);
@@ -162,7 +162,7 @@ public class PerChannelTimedRequestDispatcherTest {
     @Test(expected = IllegalArgumentException.class)
 	public void testCantFindChannelName() throws Exception {
 		Object resource = new Object();
-		String timerName = "channel.theSpoon.invert";
+		String timerName = "per-channel.theSpoon.invert";
 		String channelName = "theSpoon";
 		List<String> paramNames = Arrays.asList("notTheRightParam", "alsoTheWrongParamter");
 		WebApplicationContext context = new WebApplicationContext(new WebApplicationImpl(), null, null);
@@ -194,7 +194,7 @@ public class PerChannelTimedRequestDispatcherTest {
     @Test
     public void testHeader() throws Exception {
         Object resource = new Object();
-        String timerName = "channel.theSpoon.invert";
+        String timerName = "per-channel.theSpoon.invert";
         String channelName = "theSpoon";
         ContainerRequest request = mock(ContainerRequest.class);
         when(request.getHeaderValue("channelName")).thenReturn(channelName);
