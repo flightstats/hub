@@ -25,8 +25,7 @@
 
     <logger name="com.sun.jersey.server.wadl.generators" level="WARN"/>
     <logger name="org.apache.zookeeper.server.PrepRequestProcessor" level="WARN"/>
-    <logger name="com.flightstats.hub.group" level="DEBUG"/>
-    <!-- <logger name="com.flightstats.hub.dao.SequenceLastUpdatedDao" level="DEBUG"/>-->
-    <logger name="com.flightstats.hub.metrics" level="DEBUG"/>
-    <logger name="com.flightstats.hub.app.config.metrics" level="DEBUG"/>
+    <logger name="com.flightstats.hub" level="WARN"/>
+    <logger name="com.flightstats.hub.service.ChannelResource" level="INFO"/>
+
 </configuration>
