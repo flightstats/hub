@@ -4,6 +4,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.util.RuntimeInterruptedException;
+import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -110,7 +111,20 @@ public class GroupCallbackImpl implements GroupCallback {
 
     @Override
     public void delete(String name) {
+        GroupCaller groupCaller = activeGroups.get(name);
         notifyWatchers();
+        if (groupCaller != null) {
+            for (int i = 0; i < 60; i++) {
+                if (groupCaller.deleteIfReady()) {
+                    logger.info("deleted successfully! " + name);
+                    return;
+                } else {
+                    Sleeper.sleep(i * 1000);
+                    logger.info("waiting to delete " + name);
+                }
+            }
+        }
+
     }
 
     @Override

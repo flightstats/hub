@@ -24,6 +24,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -220,12 +221,30 @@ public class GroupCaller implements Leader {
         logger.info("deleting " + group.getName());
         LongSet.delete(getInFlightPath(), curator);
         lastCompleted.delete(getValuePath());
-        try {
-            curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
-        } catch (Exception e) {
-            logger.warn("unable to delete leader path", e);
-        }
         logger.info("deleted " + group.getName());
+    }
+
+    public boolean deleteIfReady() {
+        if (isReadyToDelete()) {
+            try {
+                curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
+            } catch (Exception e) {
+                logger.warn("unable to delete leader path " + group.getName(), e);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isReadyToDelete() {
+        try {
+            return curator.getChildren().forPath(getLeaderPath()).isEmpty();
+        } catch (KeeperException.NoNodeException ignore) {
+            return true;
+        } catch (Exception e) {
+            logger.warn("unexpected exception " + group.getName(), e);
+            return true;
+        }
     }
 
     private Retryer<ClientResponse> buildRetryer() {
