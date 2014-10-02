@@ -123,6 +123,7 @@ public class GroupCallbackImpl implements GroupCallback {
                     logger.info("waiting to delete " + name);
                 }
             }
+            groupCaller.deleteAnyway();
         }
 
     }
