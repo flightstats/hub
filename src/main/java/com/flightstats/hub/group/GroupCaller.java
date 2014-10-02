@@ -54,6 +54,7 @@ public class GroupCaller implements Leader {
     private LongSet inProcess;
     private AtomicBoolean hasLeadership;
     private Retryer<ClientResponse> retryer;
+    private CallbackIterator iterator;
 
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider,
@@ -93,19 +94,22 @@ public class GroupCaller implements Leader {
             return;
         }
         this.client = GroupClient.createClient();
-
-        try (CallbackIterator iterator = iteratorProvider.get()) {
+        iterator = iteratorProvider.get();
+        try {
             long lastCompletedId = lastCompleted.get(getValuePath(), getLastUpdated(group).getSequence());
             logger.debug("last completed at {} {}", lastCompletedId, group.getName());
-            sendInProcess(lastCompletedId);
-            iterator.start(lastCompletedId, group);
-            while (iterator.hasNext() && hasLeadership.get()) {
-                send(iterator.next());
+            if (hasLeadership.get()) {
+                sendInProcess(lastCompletedId);
+                iterator.start(lastCompletedId, group);
+                while (hasLeadership.get() && iterator.hasNext()) {
+                    send(iterator.next());
+                }
             }
-        } catch (RuntimeInterruptedException|InterruptedException e) {
+        } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + group.getName());
         } finally {
             logger.info("stopping " + group);
+            closeIterator();
             if (deleteOnExit.get()) {
                 delete();
             }
@@ -191,6 +195,7 @@ public class GroupCaller implements Leader {
         logger.info("exiting group " + name + " deleting " + delete);
         deleteOnExit.set(delete);
         curatorLeader.close();
+        closeIterator();
         try {
             executorService.shutdown();
             logger.info("awating termination " + name);
@@ -198,6 +203,12 @@ public class GroupCaller implements Leader {
             logger.info("terminated " + name);
         } catch (InterruptedException e) {
             logger.warn("unable to stop?", e);
+        }
+    }
+
+    private void closeIterator() {
+        if (iterator != null) {
+            iterator.close();
         }
     }
 
