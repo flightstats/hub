@@ -207,8 +207,12 @@ public class GroupCaller implements Leader {
     }
 
     private void closeIterator() {
-        if (iterator != null) {
-            iterator.close();
+        try {
+            if (iterator != null) {
+                iterator.close();
+            }
+        } catch (Exception e) {
+            logger.warn("unable to close iterator", e);
         }
     }
 
@@ -237,14 +241,18 @@ public class GroupCaller implements Leader {
 
     public boolean deleteIfReady() {
         if (isReadyToDelete()) {
-            try {
-                curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
-            } catch (Exception e) {
-                logger.warn("unable to delete leader path " + group.getName(), e);
-            }
+            deleteAnyway();
             return true;
         }
         return false;
+    }
+    void deleteAnyway() {
+        try {
+            curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
+        } catch (Exception e) {
+            logger.warn("unable to delete leader path " + group.getName(), e);
+        }
+        delete();
     }
 
     private boolean isReadyToDelete() {
