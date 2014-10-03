@@ -139,7 +139,7 @@ function deleteGroup(groupName) {
                 expect(response.statusCode).toBe(202);
                 done();
             });
-    });
+    }, 60 * 1000);
 }
 
 function sleep(millis) {

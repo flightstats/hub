@@ -24,6 +24,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +54,7 @@ public class GroupCaller implements Leader {
     private LongSet inProcess;
     private AtomicBoolean hasLeadership;
     private Retryer<ClientResponse> retryer;
+    private CallbackIterator iterator;
 
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider,
@@ -92,19 +94,22 @@ public class GroupCaller implements Leader {
             return;
         }
         this.client = GroupClient.createClient();
-
-        try (CallbackIterator iterator = iteratorProvider.get()) {
+        iterator = iteratorProvider.get();
+        try {
             long lastCompletedId = lastCompleted.get(getValuePath(), getLastUpdated(group).getSequence());
             logger.debug("last completed at {} {}", lastCompletedId, group.getName());
-            sendInProcess(lastCompletedId);
-            iterator.start(lastCompletedId, group);
-            while (iterator.hasNext() && hasLeadership.get()) {
-                send(iterator.next());
+            if (hasLeadership.get()) {
+                sendInProcess(lastCompletedId);
+                iterator.start(lastCompletedId, group);
+                while (hasLeadership.get() && iterator.hasNext()) {
+                    send(iterator.next());
+                }
             }
-        } catch (RuntimeInterruptedException|InterruptedException e) {
+        } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + group.getName());
         } finally {
             logger.info("stopping " + group);
+            closeIterator();
             if (deleteOnExit.get()) {
                 delete();
             }
@@ -190,6 +195,7 @@ public class GroupCaller implements Leader {
         logger.info("exiting group " + name + " deleting " + delete);
         deleteOnExit.set(delete);
         curatorLeader.close();
+        closeIterator();
         try {
             executorService.shutdown();
             logger.info("awating termination " + name);
@@ -197,6 +203,16 @@ public class GroupCaller implements Leader {
             logger.info("terminated " + name);
         } catch (InterruptedException e) {
             logger.warn("unable to stop?", e);
+        }
+    }
+
+    private void closeIterator() {
+        try {
+            if (iterator != null) {
+                iterator.close();
+            }
+        } catch (Exception e) {
+            logger.warn("unable to close iterator", e);
         }
     }
 
@@ -220,12 +236,34 @@ public class GroupCaller implements Leader {
         logger.info("deleting " + group.getName());
         LongSet.delete(getInFlightPath(), curator);
         lastCompleted.delete(getValuePath());
+        logger.info("deleted " + group.getName());
+    }
+
+    public boolean deleteIfReady() {
+        if (isReadyToDelete()) {
+            deleteAnyway();
+            return true;
+        }
+        return false;
+    }
+    void deleteAnyway() {
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
         } catch (Exception e) {
-            logger.warn("unable to delete leader path", e);
+            logger.warn("unable to delete leader path " + group.getName(), e);
         }
-        logger.info("deleted " + group.getName());
+        delete();
+    }
+
+    private boolean isReadyToDelete() {
+        try {
+            return curator.getChildren().forPath(getLeaderPath()).isEmpty();
+        } catch (KeeperException.NoNodeException ignore) {
+            return true;
+        } catch (Exception e) {
+            logger.warn("unexpected exception " + group.getName(), e);
+            return true;
+        }
     }
 
     private Retryer<ClientResponse> buildRetryer() {
