@@ -107,8 +107,10 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
 
     @Override
     public void close() {
-        shouldExit.set(true);
-        singleWatcher.unregister();
+        if (!shouldExit.get()) {
+            shouldExit.set(true);
+            singleWatcher.unregister();
+        }
         signal();
     }
 }

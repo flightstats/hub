@@ -21,9 +21,8 @@ var groupConfig = {
  * 3 - start a server at the endpoint
  * 4 - post item into the channel
  * 5 - delete the group
- * 6 - wait a bit
- * 7 - recreate the group
- * 8 - post item - should only see new item
+ * 6 - recreate the group
+ * 7 - post item - should only see new item
  */
 describe(testName, function () {
     var items = [];
@@ -48,8 +47,6 @@ describe(testName, function () {
     });
 
     utils.deleteGroup(groupName);
-
-    utils.sleep(1000);
 
     utils.addItem(channelResource);
 
