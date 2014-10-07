@@ -113,7 +113,7 @@ public class GroupCaller implements Leader {
 
     private long sendInProcess(long lastCompletedId) throws InterruptedException {
         Set<Long> inProcessSet = inProcess.getSet();
-        logger.debug("sending in process {} to {}", inProcessSet, group.getName());
+        logger.trace("sending in process {} to {}", inProcessSet, group.getName());
         for (Long toSend : inProcessSet) {
             if (toSend < lastCompletedId) {
                 send(toSend);
@@ -125,7 +125,7 @@ public class GroupCaller implements Leader {
     }
 
     private void send(final long next) throws InterruptedException {
-        logger.debug("sending {} to {}", next, group.getName());
+        logger.trace("sending {} to {}", next, group.getName());
         semaphore.acquire();
         executorService.submit(new Callable<Object>() {
             @Override
@@ -135,7 +135,7 @@ public class GroupCaller implements Leader {
                     makeTimedCall(createResponse(next));
                     lastCompleted.updateIncrease(next, getValuePath());
                     inProcess.remove(next);
-                    logger.debug("completed {} call to {} ", next, group.getName());
+                    logger.trace("completed {} call to {} ", next, group.getName());
                 } catch (Exception e) {
                     logger.warn("exception sending " + next + " to " + group.getName(), e);
                 } finally {
@@ -177,7 +177,7 @@ public class GroupCaller implements Leader {
                     logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), response);
                     return null;
                 }
-                logger.debug("calling {} {} {}", group.getCallbackUrl(), group.getName(), response);
+                logger.debug("calling {} {}", group.getCallbackUrl(), response);
                 return client.resource(group.getCallbackUrl())
                         .type(MediaType.APPLICATION_JSON_TYPE)
                         .post(ClientResponse.class, response.toString());
