@@ -82,7 +82,7 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
 
     private void setLatest(String channelName) {
         long sequence = sequenceDao.getLongValue(channelName);
-        logger.debug("latest sequence {} {}", sequence, group.getName());
+        logger.trace("latest sequence {} {}", sequence, group.getName());
         if (sequence > latest.get()) {
             latest.set(sequence);
             signal();
