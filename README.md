@@ -217,7 +217,7 @@ Here's how you can do this with curl:
 
 To insert data to a channel, issue a POST on the channel's `self` URI and specify the appropriate
 content-type header (all content types should be supported).  The `Content-Encoding` and
-`Content-Language` headers are optional:
+`Content-Language` headers are optional.  The maximum payload size is 10 MB, and status 413 is returned if exceeded.
 
 ```
 POST http://hub/channel/stumptown
