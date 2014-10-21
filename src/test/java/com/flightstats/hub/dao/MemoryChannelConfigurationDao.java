@@ -24,11 +24,6 @@ public class MemoryChannelConfigurationDao implements ChannelConfigurationDao {
     }
 
     @Override
-    public boolean isHealthy() {
-        return true;
-    }
-
-    @Override
     public void initialize() { }
 
     @Override

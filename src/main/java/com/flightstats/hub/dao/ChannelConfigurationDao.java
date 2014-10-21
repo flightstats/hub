@@ -10,8 +10,6 @@ public interface ChannelConfigurationDao {
 
     void updateChannel(ChannelConfiguration newConfig);
 
-    boolean isHealthy();
-
     void initialize();
 
     boolean channelExists(String channelName);

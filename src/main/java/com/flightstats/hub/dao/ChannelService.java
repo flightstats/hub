@@ -26,8 +26,6 @@ public interface ChannelService {
 
 	Optional<ContentKey> findLastUpdatedKey(String channelName);
 
-    boolean isHealthy();
-
     ChannelConfiguration updateChannel(ChannelConfiguration configuration);
 
     Collection<ContentKey> getKeys(String channelName, DateTime dateTime);
