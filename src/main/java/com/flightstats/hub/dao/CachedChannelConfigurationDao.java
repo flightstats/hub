@@ -86,8 +86,4 @@ public class CachedChannelConfigurationDao implements ChannelConfigurationDao {
         channelConfigurationMap.remove(channelName);
     }
 
-    @Override
-    public boolean isHealthy() {
-        return delegate.isHealthy();
-    }
 }
