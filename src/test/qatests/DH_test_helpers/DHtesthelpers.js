@@ -434,7 +434,8 @@ exports.packetPOSTHeader = packetPOSTHeader;
  * Inserts data into channel.
  *
  * @param params: .channelUri, .data, .headers=(optional), if provided, then will be set on the superagent request,
- *  .debug=true
+ *  .debug=true, .ignoreDataUri=false (if true, then don't try to parse response for the dataUri -- this is used to
+ *   allow this call to work for group callbacks, where the response body is simply 'OK)
  * @param myCallback: response, uri to data
  */
 var postData = function(params, myCallback) {
@@ -442,6 +443,7 @@ var postData = function(params, myCallback) {
         channelUri = params.channelUri,
         myData = params.data,
         headers = ('undefined' != typeof params.headers) ? params.headers : null,
+        ignoreDataUri = ('undefined' != typeof params.ignoreDataUri) ? params.ignoreDataUri : false,
         VERBOSE = ('undefined' != typeof params.debug) ? params.debug : false;
 
     // Temporarily defaulting Accept-Encoding to */* because any POST through the crypto proxy will fail unless
@@ -477,8 +479,13 @@ var postData = function(params, myCallback) {
             }
             else {
                 gu.debugLog('POST of data succeeded.', VERBOSE);
-                var pMetadata = new packetMetadata(res.body);
-                dataUri = pMetadata.getPacketUri();
+
+                if (ignoreDataUri) {
+                    dataUri = null;
+                } else {
+                    var pMetadata = new packetMetadata(res.body);
+                    dataUri = pMetadata.getPacketUri();
+                }
             }
 
             myCallback(res, dataUri);
