@@ -106,11 +106,6 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public boolean isHealthy() {
-        return channelConfigurationDao.isHealthy();
-    }
-
-    @Override
     public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
         //this line exists to get around ttlMillis fuckery
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();

@@ -154,7 +154,6 @@ public class AwsChannelServiceIntegration {
         logger.info("found " + found);
         assertTrue(found.containsAll(existing));
 
-        assertTrue(channelService.isHealthy());
     }
 
     private ChannelConfiguration getChannelConfig(ChannelConfiguration.ChannelType series) {

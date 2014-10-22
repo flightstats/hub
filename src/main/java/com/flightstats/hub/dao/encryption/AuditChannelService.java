@@ -138,11 +138,6 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public boolean isHealthy() {
-        return channelService.isHealthy();
-    }
-
-    @Override
     public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
         if (isAuditChannel(configuration.getName())) {
             configuration.getTags().add("audit");
