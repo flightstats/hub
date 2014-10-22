@@ -164,17 +164,6 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         dbClient.deleteItem(new DeleteItemRequest(getTableName(), key));
     }
 
-    @Override
-    public boolean isHealthy() {
-        try {
-            dbClient.describeTable(getTableName());
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-
-    }
-
     public String getTableName() {
         return dynamoUtils.getTableName("channelMetaData");
     }
