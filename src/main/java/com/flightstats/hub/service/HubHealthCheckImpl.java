@@ -22,11 +22,7 @@ public class HubHealthCheckImpl implements HubHealthCheck {
         if (shutdown.get()) {
             return builder.healthy(false).description("SHUTTING DOWN").build();
         }
-        if (channelService.isHealthy()) {
-            return builder.healthy(true).description("OK").build();
-        } else {
-            return builder.healthy(false).description("ERROR").build();
-        }
+        return builder.healthy(true).description("OK").build();
     }
 
     @Override
