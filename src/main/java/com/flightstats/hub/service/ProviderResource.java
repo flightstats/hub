@@ -62,9 +62,17 @@ public class ProviderResource {
         Content content = Content.builder().withContentLanguage(contentLanguage)
                 .withContentType(contentType)
                 .withData(data).build();
-        channelService.insert(channelName, content);
-
-        return Response.status(Response.Status.OK).build();
+        try {
+            channelService.insert(channelName, content);
+            return Response.status(Response.Status.OK).build();
+        } catch (Exception e) {
+            long sequence = 0;
+            if (content.getContentKey().isPresent()) {
+                sequence = content.getContentKey().get().getSequence();
+            }
+            logger.warn("unable to POST to " + channelName + " sequence " + sequence, e);
+            throw e;
+        }
     }
 
 
