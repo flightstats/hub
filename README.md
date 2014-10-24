@@ -732,3 +732,15 @@ Releases to Prod currently must be manually kicked off from each machine using t
 ```
 sudo salt-call triforce.deploy s3://triforce_builds/hub/hub-<version>.tgz prod
 ```
+
+## New Relic Integration
+
+To upgrade the version of the New Relic plugin
+
+1. Download the desired version - https://rpm.newrelic.com/accounts/565031
+2. Upload that file to [artifactory](http://artifactory.office/artifactory/webapp/home.html) using:
+    - Target Repository = ext-release-local 
+    - GroupId = newrelic 
+    - ArtifactId = newrelic_agent 
+3. Update build.gradle to use the new version
+
