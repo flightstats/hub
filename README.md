@@ -1,7 +1,6 @@
 The Hub
 =======
 
-
 * [overview](#overview)
 * [clients](#clients)
 * [error handling](#error-handling)
