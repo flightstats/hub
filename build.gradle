@@ -94,14 +94,15 @@ dependencies {
     compile group: "com.codahale.metrics", name: "metrics-logback", version: "3.0.2"
     compile group: "com.codahale.metrics", name: "metrics-jvm", version: "3.0.2"
     compile 'com.codahale.metrics:metrics-jetty9:3.0.2'
-    compile group: "com.hazelcast", name: "hazelcast", version: "3.2"
-    compile group: "com.hazelcast", name: "hazelcast-client", version: "3.2"
+    compile group: "com.hazelcast", name: "hazelcast", version: "3.3.2"
+    compile group: "com.hazelcast", name: "hazelcast-client", version: "3.3.2"
+    //todo - gfm - 10/24/14 - what is the latest here?
     compile group: "com.flightstats.common", name: "util", version: "3.2.8"
     compile group: "com.flightstats.common", name: "jaxb", version: "3.2.8"
     compile group: "com.flightstats.common", name: "rest", version: "3.2.8"
     compile group: "com.flightstats.common", name: "jerseyguice", version: "3.2.8"
-    compile group: 'com.intellij', name: 'annotations', version: '7.0.3'
-    compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
+    compile group: 'com.intellij', name: 'annotations', version: '12.0'
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.9'
     compile 'com.amazonaws:aws-java-sdk:1.8.6'
     compile 'org.apache.curator:curator-recipes:2.4.2'
     testCompile 'org.apache.curator:curator-test:2.4.2'
