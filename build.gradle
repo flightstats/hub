@@ -103,12 +103,12 @@ dependencies {
     compile group: "com.flightstats.common", name: "jerseyguice", version: "3.2.8"
     compile group: 'com.intellij', name: 'annotations', version: '12.0'
     compile group: 'org.reflections', name: 'reflections', version: '0.9.9'
-    compile 'com.amazonaws:aws-java-sdk:1.8.6'
-    compile 'org.apache.curator:curator-recipes:2.4.2'
-    testCompile 'org.apache.curator:curator-test:2.4.2'
+    compile 'com.amazonaws:aws-java-sdk:1.9.2'
+    compile 'org.apache.curator:curator-recipes:2.6.0'
+    testCompile 'org.apache.curator:curator-test:2.6.0'
     compile 'org.apache.commons:commons-lang3:3.2'
     compile 'com.github.rholder:guava-retrying:1.0.6'
-    compile 'com.google.code.gson:gson:2.2.4'
+    compile 'com.google.code.gson:gson:2.3'
     compile(group: 'newrelic', name: 'newrelic_agent', version: '3.5.1')
     compile 'org.projectlombok:lombok:1.14.8'
     compile 'org.influxdb:influxdb-java:1.2'
