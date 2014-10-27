@@ -1,4 +1,4 @@
-The Hub
+The Hub V2
 =======
 
 * [overview](#overview)
@@ -28,24 +28,22 @@ The Hub
 * [monitoring](#monitoring)
 * [development](#development)
 * [deployments](#deployments)
+* [Requirements Notes](#Requirements-Notes)
 
-For the purposes of this document, the Hub is at http://hub/.
+For the purposes of this document, the Hub is at http://hubv2/.
 
 * On your local machine it is at: http://localhost:9080/
-* In development: http://hub.svc.dev/
-* In integration - for DDT use only : http://hub-int.svc.staging/
-* In staging - for general use : http://hub.svc.staging/
-* In production: http://hub.svc.prod/
+* In development: http://hubv2.svc.dev/
+* In staging: http://hubv2.svc.staging/
+* In production: http://hubv2.svc.prod/
 
 ## overview
 
 The Hub is designed to be a fault tolerant, highly available service for data distribution.  Most features are available via a REST API.
 
-It currently only supports Sequence channels.
+It currently only supports time series channels.  Note: The sequence channel API is deprecated and will be supported separately as [Hub V1](https://github.com/flightstats/hub).
 
-Sequence channels represent a linked list of data.  Each item added gets a sequential id.  They are traversable, and can support items up to 10 MB.
-Sequence channels are intended for insertation rates less than five items per second.
-Users should note that with high frequency inserts, the clients view of insertion order may not be maintained.
+TimeSeries channels represent data bucketed by time.  Each item may be up to to 10 MB. 
 
 The [encrypted-hub](#encrypted-hub) (EH) is a separate installation of the Hub.
 The features and API of the EH are mostly the same as the Hub, with a few additions.
@@ -68,13 +66,13 @@ The DDT team recommends clients use exponential backoff.
 
 ## FAQ
 
-* Why does the Hub take 62 seconds to respond with a 404?
-
-  The Hub services deployed in AWS US-East use S3 in US Standard.  Unlike all other regions, US Standard does not provide read after write consistency.  To prevent returning a 404 for data just inserted, the Hub retries for up to 62 seconds. If this delay is problematic for your application, please talk to us, and we can discuss options.
-
-* Why does /latest redirect to an item which returns a 404?
+* Why does /latest return an empty array of uris?
 
   Most likely the last data added to that channel is older than the time to live (ttlDays).
+
+* How can I guarantee ordering in a channel?
+
+  You can wait for the response for an item before writing the next item.  
 
 ## list channels
 
@@ -108,29 +106,20 @@ Content-Type is `application/json`
 Hyphens are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
 Channels starting with `test` will automatically be deleted in the dev and staging environments every hour using [Jenkins](http://ops-jenkins01.cloud-east.dev/job/hub-cleanup-hourly/)
 
-`type` is optional, and defaults to Sequence.  Only `Sequence` is a valid value.
-
 `ttlDays` is optional and should be a positive number. If not specified, a default value of 120 days is used.
-`ttlMillis` is still accepted as an input parameter, and is converted to ttlDays.  A `null` ttlMillis is converted to the default 120 days.
-
-`peakRequestRateSeconds` and `contentSizeKB` are optional.
 
 `description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
 
 `tags` is an optional array of string values.  Tag values are limited to 48 characters, and may only contain `a-z`, `A-Z` and `0-9`.
 A channel may have at most 20 tags.
 
-`POST http://hub/channel`
+`PUT http://hub/channel/stumptown`
 
 * Content-type: application/json
 
 ```json
 {
-   "name": "stumptown",
-   "type": "Sequence",
    "ttlDays": "14",
-   "peakRequestRateSeconds":1,
-   "contentSizeKB":10,
    "description": "a sequence of all the coffee orders from stumptown",
    "tags": ["coffee"]
 }
@@ -144,8 +133,8 @@ On success:  `HTTP/1.1 201 OK`
         "self": {
             "href": "http://hub/channel/stumptown"
         },
-        "latest": {
-            "href": "http://hub/channel/stumptown/latest"
+        "lastwritten": {
+            "href": "http://hub/channel/stumptown/lastwritten"
         },
         "ws": {
             "href": "ws://hub/channel/stumptown/ws"
@@ -157,9 +146,6 @@ On success:  `HTTP/1.1 201 OK`
     "name": "stumptown",
     "creationDate": "2013-04-23T20:25:33.434Z",
     "ttlDays": 14,
-    "type": "Sequence",
-    "contentSizeKB" : 10,
-    "peakRequestRateSeconds" : 10,
     "description": "a sequence of all the coffee orders from stumptown",
     "tags": ["coffee"]
 }
@@ -167,39 +153,18 @@ On success:  `HTTP/1.1 201 OK`
 
 Here's how you can do this with curl:
 ```bash
-curl -i -X POST --header "Content-type: application/json" --data '{"name": "stumptown"}' http://hub/channel
+curl -i -X PUT --header "Content-type: application/json"  http://hub/channel/stumptown
 ```
 
 ## update a channel
 
 Some channel metadata can be updated. The update format looks much like the channel create format
-(currently, only `ttlDays`, `description`, `contentSizeKB`, `peakRequestRateSeconds` and `tags` can be updated).
+(currently, only `ttlDays`, `description` and `tags` can be updated).
 Each of these fields is optional.
 Attempting to change other fields will result in a 400 error.
 
-`PATCH http://hub/channel/channelname`
+`PUT http://hub/channel/channelname`
 
-* Content-type: application/json
-
-```json
-{
-   "ttlDays": 21,
-   "contentSizeKB" : 20,
-   "peakRequestRateSeconds" : 5,
-   "description": "the sequence of all coffee orders from stumptown pdx",
-   "tags": ["coffee", "orders"]
-}
-```
-
-On success:  `HTTP/1.1 200 OK`, and the new channel metadata is returned (see example return data from create channel).
-
-Here's how you can do this with curl:
-```bash
-curl -i -X PATCH --header "Content-type: application/json" \
-    --data '{"ttlDays": 21, "contentSizeKB" : 20, "peakRequestRateSeconds" : 5, \
-    "description": "the sequence of all coffee orders from stumptown pdx", "tags": ["coffee", "orders"]}' \
-    http://hub/channel/stumptown
-```
 
 ## fetch channel metadata
 
@@ -216,13 +181,11 @@ Here's how you can do this with curl:
 ## insert content into channel
 
 To insert data to a channel, issue a POST on the channel's `self` URI and specify the appropriate
-content-type header (all content types should be supported).  The `Content-Encoding` and
-`Content-Language` headers are optional.  The maximum payload size is 10 MB, and status 413 is returned if exceeded.
+content-type header (all content types should be supported).  The `Content-Encoding` header is optional:
 
 ```
 POST http://hub/channel/stumptown
 Content-type: text/plain
-Content-Language: en
 Content-Encoding: gzip
 Accept: application/json
 ___body_contains_arbitrary_content
@@ -230,7 +193,7 @@ ___body_contains_arbitrary_content
 
 On success: `HTTP/1.1 201 Created`
 
-`Location: http://hub/channel/stumptown/1000`
+`Location: http://hub/channel/stumptown/2013/04/23/20/42/{hash}`
 
 ```json
 {
@@ -239,7 +202,7 @@ On success: `HTTP/1.1 201 Created`
       "href" : "http://hub/channel/stumptown"
     },
     "self" : {
-      "href" : "http://hub/channel/stumptown/1000"
+      "href" : "http://hub/channel/stumptown/2013/04/23/20/42/{hash}"
     }
   },
   "timestamp" : "2013-04-23T20:42:31.146Z"
@@ -256,37 +219,36 @@ curl -i -X POST --header "Content-type: text/plain" --data 'your content here' h
 
 To fetch content that was stored into a hub channel, do a `GET` on the `self` link in the above response:
 
-`GET http://hub/channel/stumptown/1001`
+`GET http://hub/channel/stumptown/2013/04/23/20/42/{hash}`
 
 On success: `HTTP/1.1 200 OK`
 ```
 Content-Type: text/plain
 Creation-Date: 2013-04-23T00:21:30.662Z
-Link: <http://hub/channel/stumptown/1000>;rel="previous"
-Link: <http://hub/channel/stumptown/1002>;rel="next"
+Link: <http://hub/channel/stumptown/2013/04/23/20/42/{hash}/previous>;rel="previous"
+Link: <http://hub/channel/stumptown/2013/04/23/20/42/{hash}/next>;rel="next"
 ...other.headers...
 
 your content here
 ```
 
 Note: The `Content-Type` will match the Content-Type used when inserting the data.  
-For Sequence channels, there are two `Link` headers that provide links to the previous and next items in the channel.
-If you are fetching the latest item, there will be no next link.
+There are two `Link` headers that provide links to the previous and next items in the channel.
 The `Creation-Date` header will correspond to when the data was inserted into the channel.
 
 Here's how you can do this with curl:
 
-`curl -i http://hub/channel/stumptown/1000`
+`curl -i http://hub/channel/stumptown/2013/04/23/20/42/{hash}`
 
-## fetch latest channel item
+## fetch latest channel items
 
-To retrieve the latest item inserted into a Sequence channel, issue a HEAD or GET request on the `latest` link returned from the channel
-metadata.  The Hub will issue a 303 redirect.
+To retrieve the latest item inserted into a channel, issue a HEAD or GET request on the `latest` link 
+returned from the channel metadata.  The Hub will issue a 303 redirect.
 
 `HEAD http://hub/channel/stumptown/latest`
 
 On success:  `HTTP/1.1 303 See Other`
-`Location: http://hub/channel/stumptown/1010`
+`Location: http://hub/channel/stumptown/2013/04/23/20/42/{hash}`
 
 Here is how you can do this with curl:
 
@@ -348,12 +310,11 @@ The Hub will issue a 303 redirect for the current time.
 `HEAD http://hub/channel/stumptown/time`
 
 On success:  `HTTP/1.1 303 See Other`
-`Location: http://hub/channel/stumptown/time/2014-01-13T10:42+0000`
+`Location: http://hub/channel/stumptown/2014/01/13/10/42
 
 A GET on the returned URI will return all of the content URIs within that period.
-The time format is the ISO 8601 extended format with minute resolution.  In Java it is "yyyy-MM-dd'T'HH:mmZ" and in Javascript using Moment.js it is "YYYY-MM-DDTHH:mmZ"
 
-`GET http://hub/channel/stumptown/time/2014-01-13T12:42-0800`
+`GET http://hub/channel/stumptown/2014/01/13/10/42`
 
 On success:  `HTTP/1.1 200 OK`
 Content-Type is `application/json`
@@ -362,11 +323,10 @@ Content-Type is `application/json`
 {
   "_links" : {
     "self" : {
-      "href" : "http://hub/channel/stumptown/time/2014-01-13T12:42-0800"
+      "href" : "http://hub/channel/stumptown/2014/01/13/10/42"
     },
-    "uris" : [ "http://hub/channel/stumptown/1002", "http://hub/channel/stumptown/1003",
-    "http://hub/channel/stumptown/1004", "http://hub/channel/stumptown/1005",
-    "http://hub/channel/stumptown/1006", "http://hub/channel/stumptown/1007" ]
+    "uris" : [ "http://hub/channel/stumptown/2014/01/13/10/42/{hash1}", "http://hub/channel/stumptown/2014/01/13/10/42/{hash2}",
+    "http://hub/channel/stumptown/2014/01/13/10/42/{hash3}" ]
   }
 ```
 
@@ -374,10 +334,16 @@ If no items were submitted during that time, 'uris' is an empty array.
 If the time requested is the current minute, 'uri's will reflect all of the items inserted within the minute so far, and will
 change as other items are inserted.
 
+### Resolution
+You can request all of the items by the resolution you specify in the URL.  
+For all the items in a minute: `GET http://hub/channel/stumptown/2014/01/13/10`
+For all the items in an hour: `GET http://hub/channel/stumptown/2014/01/13`
+
+The output format is the same regardless of time resolution
+
 ## subscribe to events
 
-While a common approach to consuming data from the hub involves traversing next/previous links, clients may
-"subscribe" to single channel events by listening on a channel's websocket.  
+Clients may "subscribe" to single channel events by listening on a channel's websocket.  
 In the channel metadata there is a `ws` link, and a websocket aware client may connect to this URL.
 
 Clients should be aware that websockets are a "best effort" service, and are not stateful.  If the ws connection is lost,
@@ -385,13 +351,13 @@ which will happen on hub server restarts, the client will need to reconnect, and
 
 Once connected, the line-oriented protocol is simple:
 
-For Sequence channels, each time data is inserted into the channel, the hub will send a line to the client with the
+Each time data is inserted into the channel, the hub will send a line to the client with the
 URL for that content.
 
 ```
-http://hub/channel/stumptown/1000
-http://hub/channel/stumptown/1001
-http://hub/channel/stumptown/1002
+http://hub/channel/stumptown/2014/01/13/10/42/{hash1}
+http://hub/channel/stumptown/2014/01/13/10/42/{hash2}
+http://hub/channel/stumptown/2014/01/13/10/42/{hash3}
 ...etc...
 ```
 
@@ -406,7 +372,7 @@ the Hub server keeps track of the Group's state.
 `callbackUrl` is the fully qualified location to receive callbacks from the server.  
 `channelUrl` is the fully qualified channel location to monitor.  
 `parallelCalls` is the optional number of callbacks to make in parallel.  The default value is `1`.  
-If parallelCalls is higher than one, callback ordering is not gauranteed.
+If parallelCalls is higher than one, callback ordering is not guaranteed.
 
 To see all existing group callbacks and status:
 
@@ -446,11 +412,10 @@ Retries will use an exponential backoff up to one minute, and the server will co
 ``` json
 {
   "name" : "stumptownCallback",
-  "uris" : [ "http://hub/channel/stumptown/2008" ]
+  "uris" : [ "http://hub/channel/stumptown/2014/01/13/10/42/{hash1}" ]
 }
 ```
 
-Within EC2, channel rates have been tested up to 15 per second.  
 If a client is running in Sungard, latency may limit throughput to ~3 per second.
 
 ## provider interface
@@ -459,7 +424,7 @@ For external data providers, there is a simplified interface suitable for exposi
 
 `POST http://hub/provider/`
 
-* it creates a Sequence channel if it doesn't exist
+* it creates a channel if it doesn't exist
 * it expects a `channelName` header
 * does not support any other HTTP methods
 * does not return any links
@@ -535,11 +500,16 @@ To delete Replication for an entire domain, use DELETE:
 
 `DELETE http://hub/replication/hub.other`
 
-**Replication Details**
+## v1 to v2 replication
+
+When replicating from hub v1 to hub v2, the location urls will change from v1 sequences to v2 time formats.
+The creation time of the original item will stay the same.
+
+## Replication Details
 
 * Modifications to existing replication configuration take effect immediately.
-* If you are replicating a channel into HubB from HubA, and you will be prevnted from inserting data into that channel on HubB.
-* `excludeExcept` means "Exclude all of the channels, Except the ones specified".
+* If you are replicating a channel into HubB from HubA, and you will be prevented from inserting data into that channel on HubB.
+* `channels` means "Replicate listed channels".
 * `historicalDays` tells the replicator how far back in time to start. Zero (the default) means "only get new values".
 * If http://hub.other/channel/stumptown `ttlDays` is 10, and `historicalDays` is 5, only items from the last 5 days will be replicated.
 * If a channel's `historicalDays` is 0 and the ongoing replication is restarted, replication will continue with the existing sequence if it is up to `historicalDays` + 1 old.
@@ -556,11 +526,13 @@ You can see the configuration for a single domain at:
   {
     "domain" : "hub.other",
     "historicalDays" : 10,
-    "excludeExcept" : [ "stumptown", "pdx" ]
+    "channels" : [ "stumptown", "pdx" ]
   }
   ```
 
 ## replication status
+
+TODO figure out replicationLatestFormat
 
 You can get the status of all current replication domains at:
 
@@ -571,14 +543,14 @@ You can get the status of all current replication domains at:
    "domains" : [ {
      "domain" : "datahub.svc.staging",
      "historicalDays" : 0,
-     "excludeExcept" : [ "positionsSynthetic" ]
+     "channels" : [ "positionsSynthetic" ]
    }, {
      "domain" : "hub.svc.prod",
      "historicalDays" : 10,
-     "excludeExcept" : [ "provider_icelandair" ]
+     "channels" : [ "provider_icelandair" ]
    } ],
    "status" : [ {
-     "replicationLatest" : 6187114,
+     "replicationLatest" : '',
      "sourceLatest" : 6187114,
      "connected" : true,
      "deltaLatest" : 0,
@@ -606,6 +578,7 @@ Stop replication of the entire domain `hub.other`, issue a `DELETE` command.
 
 On success: `HTTP/1.1 202 Accepted`. This is Accepted because the replication may be on another server, which should
 be notified within seconds.  The user should verify that replication is stopped.
+
 
 ## health check
 
@@ -664,13 +637,10 @@ The EH is available at:
 * In staging: http://encrypted-hub.svc.staging/ (soon!)
 * In production: http://encrypted-hub.svc.prod/ (soon!)
 
-## api updates
+## TODO changes from v1 to v2
 
-Also, there are a couple of small API changes that clients should be aware of.
 
-`ttlMillis` is deprecated, users should use `ttlDays` instead.  Existing `ttlMillis` values are rounded up to the nearest day.
 
-`lastUpdated` is no longer provided in the channel metadata.  If you need to know the latest value, you can use the `/latest` interface
 
 ## monitoring
 
@@ -733,14 +703,13 @@ Releases to Prod currently must be manually kicked off from each machine using t
 sudo salt-call triforce.deploy s3://triforce_builds/hub/hub-<version>.tgz prod
 ```
 
-## New Relic Integration
+## Requirements Notes
 
-To upgrade the version of the New Relic plugin
+**No missing data**: As an API user I want to be able to query data and know that the order is fixed. If I query a “finished” bucket, then the quantity and order of that bucket will remain the same.
 
-1. Download the desired version - https://rpm.newrelic.com/accounts/565031
-2. Upload that file to [artifactory](http://artifactory.office/artifactory/webapp/home.html) using:
-    - Target Repository = ext-release-local 
-    - GroupId = newrelic 
-    - ArtifactId = newrelic_agent 
-3. Update build.gradle to use the new version
+**Almost real time**:  As an API user I want to get the most recent data as soon as possible.  {Hub Devs: what is the SLA for ASAP?}
 
+**Read out in the same order written**:  As an API user, for certain use cases, I want a guarantee that I can read the data out in the exact order I wrote it into the hub channel.
+
+**Next n items**:  As an API user, I would like to get the next n items from the channel.
+http://hub/year/month/day/hour/minute/second/{keySuffix}/next/n
