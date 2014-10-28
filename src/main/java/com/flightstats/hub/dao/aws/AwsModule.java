@@ -4,12 +4,15 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
+import com.datastax.driver.core.Session;
 import com.flightstats.hub.app.config.metrics.HubInstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.hub.app.config.metrics.HubMethodTimingAdapterProvider;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.*;
+import com.flightstats.hub.dao.cassandra.CassandraConnectorFactory;
+import com.flightstats.hub.dao.cassandra.CassandraContentDao;
 import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
 import com.flightstats.hub.dao.encryption.AuditChannelService;
@@ -86,7 +89,15 @@ public class AwsModule extends AbstractModule {
                 .to(DynamoReplicationDao.class);
 
         bind(ContentService.class).to(ContentServiceImpl.class).asEagerSingleton();
-        bind(ContentDao.class).to(ContentDaoImpl.class).asEagerSingleton();
+
+        bind(ContentDao.class)
+                .annotatedWith(Names.named(ContentDao.LONG_TERM_STORE))
+                .to(ContentDaoImpl.class).asEagerSingleton();
+
+        bind(ContentDao.class)
+                .annotatedWith(Names.named(ContentDao.SHORT_TERM_CACHE))
+                .to(CassandraContentDao.class).asEagerSingleton();
+
         bind(TimeIndexDao.class).to(S3IndexDao.class).asEagerSingleton();
         bind(LastUpdatedDao.class).to(SequenceLastUpdatedDao.class).asEagerSingleton();
         bind(ContentKeyGenerator.class).to(CuratorKeyGenerator.class).asEagerSingleton();
@@ -118,5 +129,12 @@ public class AwsModule extends AbstractModule {
     @Singleton
     public AmazonS3 buildS3Client(AwsConnectorFactory factory) throws IOException {
         return factory.getS3Client();
+    }
+
+    @Inject
+    @Provides
+    @Singleton
+    public Session buildCassandraSession(CassandraConnectorFactory factory) {
+        return factory.getCassandraSession();
     }
 }
