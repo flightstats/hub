@@ -68,7 +68,9 @@ public class ContentServiceImpl implements ContentService {
             logger.debug("inserting {} bytes into channel {} ", content.getData().length, channelName);
 
             InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());
+            //todo - gfm - 10/28/14 - remove this
             lastUpdatedDao.update(channelName, result.getKey());
+            //todo - gfm - 10/28/14 - change this
             websocketPublisher.publish(channelName, result.getKey());
             return result;
         } finally {
