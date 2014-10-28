@@ -64,6 +64,7 @@ public class ContentServiceImpl implements ContentService {
         try {
             inFlight.incrementAndGet();
             String channelName = configuration.getName();
+            //todo - gfm - 10/28/14 - make this a more interesting info level log
             logger.debug("inserting {} bytes into channel {} ", content.getData().length, channelName);
 
             InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());

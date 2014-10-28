@@ -14,9 +14,9 @@ describe(testName, function () {
     var localReplicationUrl = hubUrlBase + '/replication/';
 
     it('creates local replication config', function (done) {
-        request.put({url: localReplicationUrl + replicationDomain,
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ historicalDays: 1, excludeExcept: [channelName] })},
+        request.put({url : localReplicationUrl + replicationDomain,
+                headers : {'Content-Type' : 'application/json'},
+                body : JSON.stringify({ historicalDays : 1, excludeExcept : [channelName] })},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
@@ -27,14 +27,13 @@ describe(testName, function () {
     utils.sleep(1000);
 
     it('tries to delete channel', function (done) {
-        request.del({url: localChannelUrl },
+        request.del({url : localChannelUrl },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(403);
                 done();
             });
     });
-
 
 
 });

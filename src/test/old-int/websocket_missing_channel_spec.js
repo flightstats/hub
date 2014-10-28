@@ -1,4 +1,4 @@
-require('./integration_config.js');
+require('./../integration/integration_config.js');
 
 var WebSocket = require('ws');
 
