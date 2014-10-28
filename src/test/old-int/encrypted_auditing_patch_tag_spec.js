@@ -1,4 +1,4 @@
-require('./integration_config.js');
+require('./../integration/integration_config.js');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -15,7 +15,7 @@ describe(testName, function () {
     utils.createChannel(channelName);
 
     it("verifies audit channel exists " + auditChannelResource, function (done) {
-        request.get({url: auditChannelResource },
+        request.get({url : auditChannelResource },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -24,9 +24,9 @@ describe(testName, function () {
     });
 
     it("patches audit channel" + auditChannelResource, function (done) {
-        request.patch({url: auditChannelResource,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ tags: ['stuff'] })},
+        request.patch({url : auditChannelResource,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify({ tags : ['stuff'] })},
             function (err, response, body) {
                 expect(err).toBeNull();
                 var parse = JSON.parse(body);
@@ -38,7 +38,7 @@ describe(testName, function () {
     });
 
     it("verifies audit channel exists with tag " + auditChannelResource, function (done) {
-        request.get({url: auditChannelResource },
+        request.get({url : auditChannelResource },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);

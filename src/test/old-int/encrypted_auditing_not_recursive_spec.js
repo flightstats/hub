@@ -1,4 +1,4 @@
-require('./integration_config.js');
+require('./../integration/integration_config.js');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -18,7 +18,7 @@ describe(testName, function () {
     utils.createChannel(channelName);
 
     it("verifies audit channel exists " + auditChannelResource, function (done) {
-        request.get({url: auditChannelResource },
+        request.get({url : auditChannelResource },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -27,7 +27,7 @@ describe(testName, function () {
     });
 
     it("verifies audit channel does not have an audit channel " + recursiveAuditChannel, function (done) {
-        request.get({url: recursiveAuditChannel },
+        request.get({url : recursiveAuditChannel },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(404);

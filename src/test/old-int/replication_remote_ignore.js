@@ -1,10 +1,11 @@
-require('./integration_config.js');
+require('./../integration/integration_config.js');
 var request = require('request');
 
-if(typeof replicationDomain === 'undefined'){
-    xdescribe("replicationDomain is not defined, skipping replication_remote_spec", function() {
+if (typeof replicationDomain === 'undefined') {
+    xdescribe("replicationDomain is not defined, skipping replication_remote_spec", function () {
         console.info("replicationDomain is not defined, skipping replication_remote_spec");
-        xit("is just a function, so it can contain any code", function() { });
+        xit("is just a function, so it can contain any code", function () {
+        });
     });
     return;
 }
@@ -19,9 +20,9 @@ describe("replication_remote_spec", function () {
     var localChannelUrl = hubUrlBase + "/channel";
     var localReplicationUrl = hubUrlBase + "/replication/";
     it("creates remote channel", function (done) {
-        request.post({url: remoteChannelUrl,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ "name": channelName, "description": "re-moat channel"})},
+        request.post({url : remoteChannelUrl,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify({ "name" : channelName, "description" : "re-moat channel"})},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
@@ -35,9 +36,9 @@ describe("replication_remote_spec", function () {
     });
 
     it("creates local replication config", function (done) {
-        request.put({url: localReplicationUrl + replicationDomain,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ historicalDays: 1, excludeExcept: [channelName] })},
+        request.put({url : localReplicationUrl + replicationDomain,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify({ historicalDays : 1, excludeExcept : [channelName] })},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
@@ -46,9 +47,9 @@ describe("replication_remote_spec", function () {
     });
 
     it("tries to replicate duplicate channel", function (done) {
-        request.put({url: localReplicationUrl + "duper" ,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ historicalDays: 1, excludeExcept: [channelName] })},
+        request.put({url : localReplicationUrl + "duper",
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify({ historicalDays : 1, excludeExcept : [channelName] })},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(403);
@@ -72,11 +73,11 @@ describe("replication_remote_spec", function () {
             }
         }
 
-        runs(function() {
+        runs(function () {
             getReplication(replicationCallback);
         });
 
-        waitsFor(function() {
+        waitsFor(function () {
             return connected;
         }, 60000);
 
@@ -101,22 +102,22 @@ describe("replication_remote_spec", function () {
             });
         }
 
-        runs(function() {
+        runs(function () {
             getReplication(replicationCallback);
         });
 
-        waitsFor(function() {
+        waitsFor(function () {
             return verified;
         }, 60000);
 
     });
 
-    it("verifies local copy of the channel", function() {
+    it("verifies local copy of the channel", function () {
         var verified = false;
 
-        runs(function() {
-            request.get({url: localChannelUrl + "/" + channelName,
-                    headers: {"Content-Type": "application/json"}},
+        runs(function () {
+            request.get({url : localChannelUrl + "/" + channelName,
+                    headers : {"Content-Type" : "application/json"}},
                 function (err, response, body) {
                     expect(err).toBeNull();
                     expect(response.statusCode).toBe(200);
@@ -126,14 +127,14 @@ describe("replication_remote_spec", function () {
                 });
         });
 
-        waitsFor(function() {
+        waitsFor(function () {
             return verified;
         }, 'waiting for verified ' + testName, 30000);
 
     });
 
     it("stops replication ", function (done) {
-        request.del({url: localReplicationUrl + replicationDomain },
+        request.del({url : localReplicationUrl + replicationDomain },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(202);
@@ -145,7 +146,7 @@ describe("replication_remote_spec", function () {
 
     it("adds local items to " + channelName, function (done) {
         var channelUrl = localChannelUrl + "/" + channelName;
-        request.get({url: channelUrl + "/1003"},
+        request.get({url : channelUrl + "/1003"},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -156,7 +157,7 @@ describe("replication_remote_spec", function () {
 
     it("verifies last item in " + channelName, function (done) {
         var channelUrl = localChannelUrl + "/" + channelName;
-        request.get({url: channelUrl + "/1005"},
+        request.get({url : channelUrl + "/1005"},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -166,7 +167,7 @@ describe("replication_remote_spec", function () {
 
     it("verifies latest item in " + channelName, function (done) {
         var channelUrl = localChannelUrl + "/" + channelName;
-        request.get({url: channelUrl + "/latest", followRedirect:false},
+        request.get({url : channelUrl + "/latest", followRedirect : false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(303);
@@ -174,11 +175,11 @@ describe("replication_remote_spec", function () {
                 done();
             });
     });
-    
-    
+
+
     function getReplication(callback) {
-        request.get({url: localReplicationUrl,
-                headers: {"Content-Type": "application/json"}},
+        request.get({url : localReplicationUrl,
+                headers : {"Content-Type" : "application/json"}},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -187,10 +188,11 @@ describe("replication_remote_spec", function () {
     }
 
     function addItem(url, done) {
-        done = done || function () { };
-        request.post({url: url + "/" + channelName,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ "data": Date.now()})},
+        done = done || function () {
+        };
+        request.post({url : url + "/" + channelName,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify({ "data" : Date.now()})},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
