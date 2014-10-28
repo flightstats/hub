@@ -1,4 +1,4 @@
-require('./integration_config.js');
+require('./../integration/integration_config.js');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -27,9 +27,9 @@ describe(testName, function () {
     utils.createChannel(channelName, remoteUrl);
 
     it("creates replication config", function (done) {
-        request.put({url: hubUrlBase + "/replication/" + replicationDomain,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ historicalDays: 1, excludeExcept: [channelName] })},
+        request.put({url : hubUrlBase + "/replication/" + replicationDomain,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify({ historicalDays : 1, excludeExcept : [channelName] })},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
@@ -44,7 +44,7 @@ describe(testName, function () {
             var statuses = JSON.parse(body)['status'];
             for (var i = 0; i < statuses.length; i++) {
                 var status = statuses[i];
-                if (status.name === channelName ) {
+                if (status.name === channelName) {
                     connected = true;
                 }
             }
@@ -53,11 +53,11 @@ describe(testName, function () {
             }
         }
 
-        runs(function() {
+        runs(function () {
             getReplication(replicationCallback);
         });
 
-        waitsFor(function() {
+        waitsFor(function () {
             return connected;
         }, 60000);
 
@@ -66,8 +66,8 @@ describe(testName, function () {
     utils.addItem(channelResource, 403);
 
     function getReplication(callback) {
-        request.get({url: hubUrlBase + "/replication",
-                headers: {"Content-Type": "application/json"}},
+        request.get({url : hubUrlBase + "/replication",
+                headers : {"Content-Type" : "application/json"}},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);

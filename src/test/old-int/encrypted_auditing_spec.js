@@ -1,4 +1,4 @@
-require('./integration_config.js');
+require('./../integration/integration_config.js');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -21,7 +21,7 @@ describe(testName, function () {
     utils.createChannel(channelName);
 
     it("verifies audit channel exists with tag " + auditChannelResource, function (done) {
-        request.get({url: auditChannelResource },
+        request.get({url : auditChannelResource },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -48,9 +48,9 @@ describe(testName, function () {
     verifyAuditing(1002);
     verifyAuditing(1003);
 
-    it('verifies all audits are found', function() {
+    it('verifies all audits are found', function () {
         expect(foundAudits.length).toEqual(4);
-        expect(foundAudits).toContain(channelResource + '/1000nobody' );
+        expect(foundAudits).toContain(channelResource + '/1000nobody');
         expect(foundAudits).toContain(channelResource + '/1001nobody');
         expect(foundAudits).toContain(channelResource + '/1001anybody');
         expect(foundAudits).toContain(channelResource + '/1000anybody');
@@ -59,7 +59,7 @@ describe(testName, function () {
     function verifyAuditing(id) {
         var url = auditChannelResource + '/' + id;
         it("verifies auditing " + url, function (done) {
-            request.get({url: url },
+            request.get({url : url },
                 function (err, response, body) {
                     expect(err).toBeNull();
                     expect(response.statusCode).toBe(200);
@@ -74,7 +74,7 @@ describe(testName, function () {
     function getItem(id, user) {
         var url = channelResource + '/' + id;
         it("gets an item as a user " + url, function (done) {
-            request.get({url: url, headers: { User: user } },
+            request.get({url : url, headers : { User : user } },
                 function (err, response, body) {
                     expect(err).toBeNull();
                     expect(response.statusCode).toBe(200);

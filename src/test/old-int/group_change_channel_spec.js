@@ -6,25 +6,21 @@ var groupName = utils.randomChannelName();
 var testName = __filename;
 var groupConfig = {
     callbackUrl : 'http://nothing/callback',
-    channelUrl: 'http://nothing/channel/notHere'
-};
-
-var groupConfig2 = {
-    callbackUrl : 'http://nothing/callback',
-    channelUrl: 'http://nothing/channel/notHere',
-    parallelCalls: 1
+    channelUrl : 'http://nothing/channel/notHere'
 };
 
 describe(testName, function () {
 
     utils.putGroup(groupName, groupConfig);
 
-    utils.getGroup(groupName, groupConfig2);
+    var groupConfig2 = {
+        callbackUrl : 'http://nothing/callback2',
+        channelUrl : 'http://different/channel/notHere'
+    };
 
-    utils.putGroup(groupName, groupConfig2, 200);
+    utils.putGroup(groupName, groupConfig2, 409);
 
     utils.deleteGroup(groupName);
 
-    utils.getGroup(groupName, groupConfig2, 404);
 });
 
