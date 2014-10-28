@@ -22,7 +22,6 @@ public class Integration {
     private static TestingServer testingServer;
     private static Injector injector;
     private static Properties properties;
-    private static boolean memoryStarted = false;
     private static CuratorFramework curator;
 
     public static void main(String[] args) throws Exception {
