@@ -27,7 +27,7 @@ public class ContentServiceImplTest {
         channelConfig = ChannelConfiguration.builder().withName(channelName).withTtlDays(days).build();
         LastUpdatedDao lastUpdatedDao = mock(LastUpdatedDao.class);
         WebsocketPublisher publisher = mock(WebsocketPublisher.class);
-        testClass = new ContentServiceImpl(contentDao, lastUpdatedDao, publisher, 1);
+        testClass = new ContentServiceImpl(contentDao, null, lastUpdatedDao, publisher, 1);
     }
 
     @Test
