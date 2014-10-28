@@ -20,31 +20,24 @@ public class ContentServiceImpl implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
     private final ContentDao contentDao;
+    private final ContentDao cacheDao;
     private final LastUpdatedDao lastUpdatedDao;
     private final WebsocketPublisher websocketPublisher;
     private final Integer shutdown_wait_seconds;
     private final AtomicInteger inFlight = new AtomicInteger();
 
     @Inject
-    public ContentServiceImpl(ContentDao contentDao,
+    public ContentServiceImpl(@Named(ContentDao.LONG_TERM_STORE) ContentDao contentDao,
+                              @Named(ContentDao.SHORT_TERM_CACHE) ContentDao cacheDao,
                               LastUpdatedDao lastUpdatedDao,
                               WebsocketPublisher websocketPublisher,
                               @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds) {
         this.contentDao = contentDao;
+        this.cacheDao = cacheDao;
         this.lastUpdatedDao = lastUpdatedDao;
         this.websocketPublisher = websocketPublisher;
         this.shutdown_wait_seconds = shutdown_wait_seconds;
         HubServices.registerPreStop(new ContentServiceHook());
-    }
-
-    private class ContentServiceHook extends AbstractIdleService {
-        @Override
-        protected void startUp() throws Exception { }
-
-        @Override
-        protected void shutDown() throws Exception {
-            waitForInFlight();
-        }
     }
 
     void waitForInFlight() {
@@ -122,6 +115,17 @@ public class ContentServiceImpl implements ContentService {
         logger.info("deleting channel " + channelName);
         contentDao.delete(channelName);
         lastUpdatedDao.delete(channelName);
+    }
+
+    private class ContentServiceHook extends AbstractIdleService {
+        @Override
+        protected void startUp() throws Exception {
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            waitForInFlight();
+        }
     }
 
 
