@@ -4,7 +4,6 @@ import com.flightstats.hub.model.ContentKey;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class IndexUtils {
@@ -14,7 +13,6 @@ public class IndexUtils {
         for (String id : ids) {
             keys.add(ContentKey.fromString(id).get());
         }
-        Collections.sort(keys);
         return keys;
     }
 }

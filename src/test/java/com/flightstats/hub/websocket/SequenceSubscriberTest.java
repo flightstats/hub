@@ -1,18 +1,9 @@
 package com.flightstats.hub.websocket;
 
-import com.flightstats.hub.model.ContentKey;
-import com.hazelcast.core.Message;
-import org.junit.Test;
-import org.mockito.InOrder;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import static org.mockito.Mockito.*;
-
 public class SequenceSubscriberTest {
 
-    @Test
+    //todo - gfm - 10/28/14 -
+    /*@Test
     public void testOneMessageBasic() throws URISyntaxException {
         // GIVEN
         ContentKey key = new ContentKey(1000);
@@ -100,5 +91,5 @@ public class SequenceSubscriberTest {
         messageOrder.verify(consumer).apply(key4);
         messageOrder.verify(consumer).apply(key5);
         verify(consumer, times(4)).apply(anyString());
-    }
+    }*/
 }

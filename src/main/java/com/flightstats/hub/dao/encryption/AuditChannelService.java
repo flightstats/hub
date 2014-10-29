@@ -21,8 +21,8 @@ import java.util.Set;
 import java.util.concurrent.*;
 
 public class AuditChannelService implements ChannelService {
-    private final static Logger logger = LoggerFactory.getLogger(AuditChannelService.class);
     public static final String AUDIT = "_audit";
+    private final static Logger logger = LoggerFactory.getLogger(AuditChannelService.class);
     private final ChannelService channelService;
     private final ExecutorService executorService;
 
@@ -32,6 +32,10 @@ public class AuditChannelService implements ChannelService {
         this.channelService = channelService;
         executorService = new ThreadPoolExecutor(1, auditThreads, 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(auditQueue));
+    }
+
+    public static boolean isAuditChannel(String name) {
+        return StringUtils.endsWith(name, AUDIT);
     }
 
     @Override
@@ -74,8 +78,8 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<LinkedContent> getValue(Request request) {
-        Optional<LinkedContent> optional = channelService.getValue(request);
+    public Optional<Content> getValue(Request request) {
+        Optional<Content> optional = channelService.getValue(request);
         if (optional.isPresent() && !isAuditChannel(request.getChannel())) {
             audit(request);
         }
@@ -160,9 +164,5 @@ public class AuditChannelService implements ChannelService {
 
     private boolean isNotTestChannel(String channelName) {
         return !channelName.startsWith("test_");
-    }
-
-    public static boolean isAuditChannel(String name) {
-        return StringUtils.endsWith(name, AUDIT);
     }
 }

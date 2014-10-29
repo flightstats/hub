@@ -1,4 +1,4 @@
-require('./integration_config.js');
+require('./../integration/integration_config.js');
 var fs = require('fs');
 //npm install --save moment
 var moment = require('moment');
@@ -7,13 +7,14 @@ var testName = __filename;
 var channelName = utils.randomChannelName();
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
-var channelRequest = JSON.stringify({ "name": channelName });
+var channelRequest = JSON.stringify({ "name" : channelName });
 
 utils.configureFrisby();
 
 utils.runInTestChannelJson(testName, channelRequest, function () {
     var hrefs = [];
     var foundHrefs = [];
+
     function insert() {
         request.post({url : thisChannelResource, headers : {"Content-Type" : "text/plain"}, body : messageText}, function (err, response, body) {
             expect(err).toBeNull();
