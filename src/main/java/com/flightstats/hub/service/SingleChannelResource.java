@@ -115,10 +115,11 @@ public class SingleChannelResource {
             return builder.build();
         } catch (Exception e) {
             long sequence = 0;
-            if (content.getContentKey().isPresent()) {
+            //todo - gfm - 10/28/14 -
+            /*if (content.getContentKey().isPresent()) {
                 sequence = content.getContentKey().get().getSequence();
             }
-            logger.warn("unable to POST to " + channelName + " sequence " + sequence, e);
+            logger.warn("unable to POST to " + channelName + " sequence " + sequence, e);*/
             throw e;
         }
     }

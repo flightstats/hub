@@ -1,9 +1,9 @@
 package com.flightstats.hub.model;
 
+import com.google.common.base.Optional;
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -11,14 +11,11 @@ import static org.junit.Assert.assertTrue;
 public class ContentKeyTest {
 
     @Test
-    public void testFromStringAbsent() throws Exception {
-        assertFalse(ContentKey.fromString("1").isPresent());
-        assertFalse(ContentKey.fromString("999").isPresent());
-    }
-
-    @Test
-    public void testFromStringExists() throws Exception {
-        assertTrue(ContentKey.fromString("1000").isPresent());
-        assertTrue(ContentKey.fromString("99999999").isPresent());
+    public void testKeyToString() throws Exception {
+        ContentKey contentKey = new ContentKey();
+        Optional<ContentKey> cycled = ContentKey.fromString(contentKey.key());
+        System.out.println(contentKey.keyToUrl());
+        System.out.println(cycled.get().keyToUrl());
+        assertEquals(contentKey, cycled.get());
     }
 }

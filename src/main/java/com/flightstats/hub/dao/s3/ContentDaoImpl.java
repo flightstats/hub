@@ -2,7 +2,6 @@ package com.flightstats.hub.dao.s3;
 
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.dao.LastUpdatedDao;
 import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
@@ -30,31 +29,17 @@ public class ContentDaoImpl implements ContentDao {
     private final ZooKeeperIndexDao zooKeeperIndexDao;
     private final S3ContentDao s3ContentDao;
     private final S3IndexDao s3IndexDao;
-    private final LastUpdatedDao lastUpdatedDao;
 
     @Inject
     public ContentDaoImpl(ContentKeyGenerator keyGenerator,
                           ZooKeeperIndexDao zooKeeperIndexDao,
                           S3ContentDao s3ContentDao,
-                          S3IndexDao s3IndexDao,
-                          LastUpdatedDao lastUpdatedDao) {
+                          S3IndexDao s3IndexDao) {
         this.keyGenerator = keyGenerator;
         this.s3ContentDao = s3ContentDao;
         this.zooKeeperIndexDao = zooKeeperIndexDao;
         this.s3IndexDao = s3IndexDao;
-        this.lastUpdatedDao = lastUpdatedDao;
         HubServices.register(new S3ContentDaoInit());
-    }
-
-    private class S3ContentDaoInit extends AbstractIdleService {
-        @Override
-        protected void startUp() throws Exception {
-            s3ContentDao.initialize();
-        }
-
-        @Override
-        protected void shutDown() throws Exception { }
-
     }
 
     @Override
@@ -100,7 +85,6 @@ public class ContentDaoImpl implements ContentDao {
     @Override
     public void initializeChannel(ChannelConfiguration config) {
         keyGenerator.seedChannel(config.getName());
-        lastUpdatedDao.initialize(config.getName());
     }
 
     @Override
@@ -113,6 +97,18 @@ public class ContentDaoImpl implements ContentDao {
         s3ContentDao.delete(channelName);
         keyGenerator.delete(channelName);
         zooKeeperIndexDao.delete(channelName);
+    }
+
+    private class S3ContentDaoInit extends AbstractIdleService {
+        @Override
+        protected void startUp() throws Exception {
+            s3ContentDao.initialize();
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+        }
+
     }
 
 }
