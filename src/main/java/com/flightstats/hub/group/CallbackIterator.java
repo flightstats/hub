@@ -2,7 +2,6 @@ package com.flightstats.hub.group;
 
 import com.flightstats.hub.cluster.SingleWatcher;
 import com.flightstats.hub.cluster.Watcher;
-import com.flightstats.hub.dao.SequenceLastUpdatedDao;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.annotations.VisibleForTesting;
@@ -22,15 +21,13 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
     private final Object lock = new Object();
 
     private final AtomicLong latest = new AtomicLong(0);
+    private final SingleWatcher singleWatcher;
     private long current;
     private Group group;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
-    private final SequenceLastUpdatedDao sequenceDao;
-    private final SingleWatcher singleWatcher;
 
     @Inject
-    public CallbackIterator(SequenceLastUpdatedDao sequenceDao, SingleWatcher singleWatcher) {
-        this.sequenceDao = sequenceDao;
+    public CallbackIterator(SingleWatcher singleWatcher) {
         this.singleWatcher = singleWatcher;
     }
 
@@ -75,18 +72,21 @@ public class CallbackIterator implements Iterator<Long>, AutoCloseable {
 
             @Override
             public String getPath() {
-                return sequenceDao.getPath(channelName);
+                //todo - gfm - 10/28/14 -
+                //return sequenceDao.getPath(channelName);
+                return "";
             }
         });
     }
 
     private void setLatest(String channelName) {
-        long sequence = sequenceDao.getLongValue(channelName);
+        //todo - gfm - 10/28/14 -
+        /*long sequence = sequenceDao.getLongValue(channelName);
         logger.trace("latest sequence {} {}", sequence, group.getName());
         if (sequence > latest.get()) {
             latest.set(sequence);
             signal();
-        }
+        }*/
     }
 
     @Override

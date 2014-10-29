@@ -1,4 +1,4 @@
-require('./integration_config.js');
+require('./../integration/integration_config.js');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -25,7 +25,7 @@ describe(testName + ' ' + channelName, function () {
     utils.addItem(channelResource);
 
     it("deletes channel", function (done) {
-        request.del({url: channelResource},
+        request.del({url : channelResource},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(202);
@@ -41,7 +41,7 @@ describe(testName + ' ' + channelName, function () {
 
     //todo - gfm - 5/23/14 - woud be great to check all instances in a cluster.
     it("gets latest " + channelResource, function (done) {
-        request.get({url: channelResource + '/latest'},
+        request.get({url : channelResource + '/latest'},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);

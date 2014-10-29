@@ -44,6 +44,26 @@ public class S3ContentDao {
         contentRetryer = buildRetryer(content_backoff_wait, content_backoff_times);
     }
 
+    @VisibleForTesting
+    static Retryer<Content> buildRetryer(int multiplier, int attempts) {
+        return RetryerBuilder.<Content>newBuilder()
+                .retryIfException(new Predicate<Throwable>() {
+                    @Override
+                    public boolean apply(@Nullable Throwable input) {
+                        logger.debug("exception! " + input);
+                        if (input == null) return false;
+                        if (AmazonS3Exception.class.isAssignableFrom(input.getClass())) {
+                            int statusCode = ((AmazonS3Exception) input).getStatusCode();
+                            return statusCode == 404 || statusCode == 403;
+                        }
+                        return false;
+                    }
+                })
+                .withWaitStrategy(WaitStrategies.exponentialWait(multiplier, 1, TimeUnit.MINUTES))
+                .withStopStrategy(StopStrategies.stopAfterAttempt(attempts))
+                .build();
+    }
+
     void initialize() {
         logger.info("checking if bucket exists " + s3BucketName);
         if (s3Client.doesBucketExist(s3BucketName)) {
@@ -53,7 +73,6 @@ public class S3ContentDao {
         logger.error("EXITING! unable to find bucket " + s3BucketName);
         throw new RuntimeException("unable to find bucket " + s3BucketName);
     }
-
 
     void writeS3(String channelName, Content content, ContentKey key) {
         String s3Key = getS3ContentKey(channelName, key);
@@ -92,6 +111,7 @@ public class S3ContentDao {
                     ObjectMetadata metadata = object.getObjectMetadata();
                     Map<String, String> userData = metadata.getUserMetadata();
                     Content.Builder builder = Content.builder();
+                    builder.withContentKey(key);
                     String type = userData.get("type");
                     if (!type.equals("none")) {
                         builder.withContentType(type);
@@ -110,38 +130,18 @@ public class S3ContentDao {
             });
         } catch (ExecutionException e) {
             if (AmazonClientException.class.isAssignableFrom(e.getCause().getClass())) {
-                logger.info("unable to get " + channelName + " " + key.keyToString() + " " + e.getMessage());
+                logger.info("unable to get " + channelName + " " + key.keyToUrl() + " " + e.getMessage());
             } else {
-                logger.warn("unable to get " + channelName + " " + key.keyToString(), e);
+                logger.warn("unable to get " + channelName + " " + key.keyToUrl(), e);
             }
         } catch (RetryException e) {
-            logger.warn("retried max times for " + channelName + " " + key.keyToString());
+            logger.warn("retried max times for " + channelName + " " + key.keyToUrl());
         }
         return null;
     }
 
     private String getS3ContentKey(String channelName, ContentKey key) {
-        return channelName + "/content/" + key.keyToString();
-    }
-
-    @VisibleForTesting
-    static Retryer<Content> buildRetryer(int multiplier, int attempts) {
-        return RetryerBuilder.<Content>newBuilder()
-                .retryIfException(new Predicate<Throwable>() {
-                    @Override
-                    public boolean apply(@Nullable Throwable input) {
-                        logger.debug("exception! " + input);
-                        if (input == null) return false;
-                        if (AmazonS3Exception.class.isAssignableFrom(input.getClass())) {
-                            int statusCode = ((AmazonS3Exception) input).getStatusCode();
-                            return statusCode == 404 || statusCode == 403;
-                        }
-                        return false;
-                    }
-                })
-                .withWaitStrategy(WaitStrategies.exponentialWait(multiplier, 1, TimeUnit.MINUTES))
-                .withStopStrategy(StopStrategies.stopAfterAttempt(attempts))
-                .build();
+        return channelName + "/content/" + key.keyToUrl();
     }
 
     public void delete(String channel) {

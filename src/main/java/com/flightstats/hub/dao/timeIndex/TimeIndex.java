@@ -33,7 +33,7 @@ public class TimeIndex {
     }
 
     public static String getPath(String channel, DateTime dateTime, ContentKey key) {
-        return getPath(channel, getHash(dateTime)) + "/" + key.keyToString();
+        return getPath(channel, getHash(dateTime)) + "/" + key.keyToUrl();
     }
 
     public static String getPath(String channel, String dateTime) {

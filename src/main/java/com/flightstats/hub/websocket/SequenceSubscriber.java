@@ -29,7 +29,8 @@ public class SequenceSubscriber implements MessageListener<String> {
 
     @Override
     public void onMessage(Message<String> message) {
-        String stringKey = message.getMessageObject();
+        //todo - gfm - 10/28/14 -
+        /*String stringKey = message.getMessageObject();
         long messageSequence = getKeyFromUri(stringKey).getSequence();
 
         if (isFirst()) {
@@ -42,7 +43,7 @@ public class SequenceSubscriber implements MessageListener<String> {
         } else {
             futureMessages.put(messageSequence, stringKey);
             dispatchBufferedInOrder();
-        }
+        }*/
     }
 
     private void dispatchBufferedInOrder() {

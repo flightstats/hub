@@ -1,7 +1,10 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.google.common.base.Optional;
@@ -21,7 +24,6 @@ public class ContentServiceImpl implements ContentService {
 
     private final ContentDao contentDao;
     private final ContentDao cacheDao;
-    private final LastUpdatedDao lastUpdatedDao;
     private final WebsocketPublisher websocketPublisher;
     private final Integer shutdown_wait_seconds;
     private final AtomicInteger inFlight = new AtomicInteger();
@@ -29,12 +31,10 @@ public class ContentServiceImpl implements ContentService {
     @Inject
     public ContentServiceImpl(@Named(ContentDao.LONG_TERM_STORE) ContentDao contentDao,
                               @Named(ContentDao.SHORT_TERM_CACHE) ContentDao cacheDao,
-                              LastUpdatedDao lastUpdatedDao,
                               WebsocketPublisher websocketPublisher,
                               @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds) {
         this.contentDao = contentDao;
         this.cacheDao = cacheDao;
-        this.lastUpdatedDao = lastUpdatedDao;
         this.websocketPublisher = websocketPublisher;
         this.shutdown_wait_seconds = shutdown_wait_seconds;
         HubServices.registerPreStop(new ContentServiceHook());
@@ -68,8 +68,6 @@ public class ContentServiceImpl implements ContentService {
             logger.debug("inserting {} bytes into channel {} ", content.getData().length, channelName);
 
             InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());
-            //todo - gfm - 10/28/14 - remove this
-            lastUpdatedDao.update(channelName, result.getKey());
             //todo - gfm - 10/28/14 - change this
             websocketPublisher.publish(channelName, result.getKey());
             return result;
@@ -79,7 +77,7 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Optional<LinkedContent> getValue(String channelName, String id) {
+    public Optional<Content> getValue(String channelName, String id) {
         Optional<ContentKey> keyOptional = contentDao.getKey(id);
         if (!keyOptional.isPresent()) {
             return Optional.absent();
@@ -87,25 +85,13 @@ public class ContentServiceImpl implements ContentService {
         ContentKey key = keyOptional.get();
         logger.debug("fetching {} from channel {} ", key.toString(), channelName);
         Content value = contentDao.read(channelName, key);
-        if (value == null) {
-            return Optional.absent();
-        }
-        ContentKey next = key.getNext();
-        if (next != null) {
-            Optional<ContentKey> lastUpdatedKey = findLastUpdatedKey(channelName);
-            if (lastUpdatedKey.isPresent()) {
-                if (lastUpdatedKey.get().equals(key)) {
-                    next = null;
-                }
-            }
-        }
-
-        return Optional.of(new LinkedContent(value, key.getPrevious(), next));
+        return Optional.fromNullable(value);
     }
 
     @Override
     public Optional<ContentKey> findLastUpdatedKey(String channelName) {
-        return Optional.fromNullable(lastUpdatedDao.getLastUpdated(channelName));
+        //todo - gfm - 10/28/14 -
+        return Optional.absent();
     }
 
     @Override
@@ -117,7 +103,6 @@ public class ContentServiceImpl implements ContentService {
     public void delete(String channelName) {
         logger.info("deleting channel " + channelName);
         contentDao.delete(channelName);
-        lastUpdatedDao.delete(channelName);
     }
 
     private class ContentServiceHook extends AbstractIdleService {
