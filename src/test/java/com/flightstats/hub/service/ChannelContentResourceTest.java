@@ -1,21 +1,11 @@
 package com.flightstats.hub.service;
 
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.LinkedContent;
-import com.google.common.base.Optional;
 import org.junit.Before;
-import org.junit.Test;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,7 +24,7 @@ public class ChannelContentResourceTest {
 
     }
 
-    @Test
+    /*@Test
     public void testGetValue() throws Exception {
         String channelName = "canal4";
         byte[] expected = new byte[]{55, 66, 77, 88};
@@ -214,5 +204,5 @@ public class ChannelContentResourceTest {
         Response result = testClass.getValue(channelName, key.keyToString(), null, "");
 
         assertNull(result.getMetadata().getFirst("Content-Encoding"));
-    }
+    }*/
 }

@@ -1,7 +1,10 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.replication.ReplicationValidator;
 import com.flightstats.hub.service.ChannelValidator;
@@ -64,7 +67,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Optional<LinkedContent> getValue(Request request) {
+    public Optional<Content> getValue(Request request) {
         return contentService.getValue(request.getChannel(), request.getId());
     }
 

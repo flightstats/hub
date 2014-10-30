@@ -21,31 +21,31 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channelName: .*}/latest")
 public class LatestChannelItemResource {
 
-	private final UriInfo uriInfo;
-	private final ChannelService channelService;
+    private final UriInfo uriInfo;
+    private final ChannelService channelService;
 
-	@Inject
-	public LatestChannelItemResource(UriInfo uriInfo, ChannelService channelService) {
-		this.uriInfo = uriInfo;
-		this.channelService = channelService;
-	}
+    @Inject
+    public LatestChannelItemResource(UriInfo uriInfo, ChannelService channelService) {
+        this.uriInfo = uriInfo;
+        this.channelService = channelService;
+    }
 
-	@GET
+    @GET
     @Timed
     @EventTimed(name = "channel.ALL.latest.get")
     @ExceptionMetered
-	public Response getLatest(@PathParam("channelName") String channelName) {
-		Optional<ContentKey> latestId = channelService.findLastUpdatedKey(channelName);
-		if (!latestId.isPresent()) {
+    public Response getLatest(@PathParam("channelName") String channelName) {
+        Optional<ContentKey> latestId = channelService.findLastUpdatedKey(channelName);
+        if (!latestId.isPresent()) {
             return Response.status(NOT_FOUND).build();
-		}
+        }
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
 
-		String channelUri = uriInfo.getRequestUri().toString().replaceFirst("/latest$", "");
-		ContentKey keyOfLatestItem = latestId.get();
-		URI uri = URI.create(channelUri + "/" + keyOfLatestItem.keyToString());
-		builder.location(uri);
-		return builder.build();
-	}
+        String channelUri = uriInfo.getRequestUri().toString().replaceFirst("/latest$", "");
+        ContentKey keyOfLatestItem = latestId.get();
+        URI uri = URI.create(channelUri + "/" + keyOfLatestItem.keyToUrl());
+        builder.location(uri);
+        return builder.build();
+    }
 
 }

@@ -3,7 +3,6 @@ package com.flightstats.hub.replication;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -90,7 +89,8 @@ public class ReplicationServiceImpl implements ReplicationService {
 
     private Collection<ReplicationStatus> getStatus() {
         ArrayList<ReplicationStatus> statuses = Lists.newArrayList();
-        for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
+        //todo - gfm - 10/28/14 -
+        /*for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
             for (ChannelReplicator channelReplicator : domainReplicator.getChannels()) {
                 ReplicationStatus status = new ReplicationStatus();
                 statuses.add(status);
@@ -110,7 +110,7 @@ public class ReplicationServiceImpl implements ReplicationService {
                     status.setMessage(channelReplicator.getMessage());
                 }
             }
-        }
+        }*/
 
         return statuses;
     }
