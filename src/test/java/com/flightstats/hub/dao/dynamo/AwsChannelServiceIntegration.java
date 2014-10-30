@@ -1,21 +1,7 @@
 package com.flightstats.hub.dao.dynamo;
 
-import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.test.Integration;
-import com.google.inject.Injector;
-import org.apache.curator.framework.CuratorFramework;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.*;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * Any test in this class will cause a channel to be expected in testChannels()
@@ -29,13 +15,13 @@ import static org.junit.Assert.assertTrue;
 public class AwsChannelServiceIntegration {
     private final static Logger logger = LoggerFactory.getLogger(AwsChannelServiceIntegration.class);
 
-    protected static Injector injector;
+    /*protected static Injector injector;
     protected static List<String> channelNames = new ArrayList<>();
     protected ChannelService channelService;
     protected String channelName;
-    private CuratorFramework curator;
+    private CuratorFramework curator;*/
 
-    @BeforeClass
+    /*@BeforeClass
     public static void setupClass() throws Exception {
         injector = Integration.startRealHub();
         channelNames = new ArrayList<>();
@@ -59,7 +45,7 @@ public class AwsChannelServiceIntegration {
         channelName = Integration.getRandomChannel();
         channelNames.add(channelName);
         curator = injector.getInstance(CuratorFramework.class);
-    }
+    }*/
 
     //todo - gfm - 10/30/14 -
     /*@Test
@@ -110,11 +96,11 @@ public class AwsChannelServiceIntegration {
         assertNull(curator.checkExists().forPath("/TimeIndexLock/" + channelName));
     }*/
 
-    private void createLocksPath(String root) throws Exception {
+   /* private void createLocksPath(String root) throws Exception {
         curator.create().creatingParentsIfNeeded().forPath(root + channelName + "/locks");
         curator.create().creatingParentsIfNeeded().forPath(root + channelName + "/leases");
     }
-
+*/
     /*@Test
     public void testChannelOptionals() throws Exception {
 
@@ -137,7 +123,7 @@ public class AwsChannelServiceIntegration {
     /**
      * If this test fails, make sure all new tests either create a channel, or call channelNames.remove(channelName);
      */
-    @Test
+    /*@Test
     public void testChannels() throws Exception {
         Set<String> existing = new HashSet<>(channelNames);
         existing.remove(channelName);
@@ -163,7 +149,7 @@ public class AwsChannelServiceIntegration {
                 .withDescription("descriptive")
                 .withTags(Arrays.asList("one", "two", "three"))
                 .build();
-    }
+    }*/
 
 /*    @Test
     public void testSequenceTimeIndexChannelWriteReadDelete() throws Exception {
