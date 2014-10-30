@@ -114,12 +114,11 @@ public class SingleChannelResource {
             ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
             return builder.build();
         } catch (Exception e) {
-            long sequence = 0;
-            //todo - gfm - 10/28/14 -
-            /*if (content.getContentKey().isPresent()) {
-                sequence = content.getContentKey().get().getSequence();
+            String key = "";
+            if (content.getContentKey().isPresent()) {
+                key = content.getContentKey().get().key();
             }
-            logger.warn("unable to POST to " + channelName + " sequence " + sequence, e);*/
+            logger.warn("unable to POST to " + channelName + " key " + key, e);
             throw e;
         }
     }
