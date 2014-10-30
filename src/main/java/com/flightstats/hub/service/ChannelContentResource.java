@@ -36,27 +36,25 @@ public class ChannelContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
     private final UriInfo uriInfo;
-	private final ChannelService channelService;
-	private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
+    private final ChannelService channelService;
+    private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
-	@Inject
-	public ChannelContentResource(UriInfo uriInfo, ChannelService channelService) {
-		this.uriInfo = uriInfo;
-		this.channelService = channelService;
-	}
+    @Inject
+    public ChannelContentResource(UriInfo uriInfo, ChannelService channelService) {
+        this.uriInfo = uriInfo;
+        this.channelService = channelService;
+    }
 
     //todo - gfm - 1/22/14 - would be nice to have a head method, which doesn't fetch the body.
 
-	@GET
-	@Timed(name = "all-channels.fetch")
+    @GET
+    @Timed(name = "all-channels.fetch")
     @EventTimed(name = "channel.ALL.get")
-	@PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName", newName = "get")
+    @PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName", newName = "get")
     @ExceptionMetered
-	public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id,
+    public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id,
                              @HeaderParam("Accept") String accept, @HeaderParam("User") String user
     ) {
-        logger.info("incoming channelName {}", channelName);
-        logger.info("incoming id {}", id);
         Request request = Request.builder()
                 .channel(channelName)
                 .id(id)
@@ -65,19 +63,19 @@ public class ChannelContentResource {
                 .build();
         Optional<Content> optionalResult = channelService.getValue(request);
 
-		if (!optionalResult.isPresent()) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
+        if (!optionalResult.isPresent()) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
         Content content = optionalResult.get();
 
         MediaType actualContentType = getContentType(content);
 
-		if (contentTypeIsNotCompatible(accept, actualContentType)) {
-			return Responses.notAcceptable().build();
-		}
+        if (contentTypeIsNotCompatible(accept, actualContentType)) {
+            return Responses.notAcceptable().build();
+        }
 
         Response.ResponseBuilder builder = Response.status(Response.Status.OK)
-												   .type(actualContentType)
+                .type(actualContentType)
                 .entity(content.getData())
                 .header(Headers.CREATION_DATE,
                         dateTimeFormatter.print(new DateTime(content.getMillis())));
@@ -97,23 +95,23 @@ public class ChannelContentResource {
     private MediaType getContentType(Content content) {
         Optional<String> contentType = content.getContentType();
         if (contentType.isPresent() && !isNullOrEmpty(contentType.get())) {
-			return MediaType.valueOf(contentType.get());
-		}
-		return MediaType.APPLICATION_OCTET_STREAM_TYPE;
-	}
+            return MediaType.valueOf(contentType.get());
+        }
+        return MediaType.APPLICATION_OCTET_STREAM_TYPE;
+    }
 
-	private boolean contentTypeIsNotCompatible(String acceptHeader, final MediaType actualContentType) {
-		List<MediaType> acceptableContentTypes = acceptHeader != null ?
-				MediaTypes.createMediaTypes(acceptHeader.split(",")) :
-				MediaTypes.GENERAL_MEDIA_TYPE_LIST;
+    private boolean contentTypeIsNotCompatible(String acceptHeader, final MediaType actualContentType) {
+        List<MediaType> acceptableContentTypes = acceptHeader != null ?
+                MediaTypes.createMediaTypes(acceptHeader.split(",")) :
+                MediaTypes.GENERAL_MEDIA_TYPE_LIST;
 
-		return !Iterables.any(acceptableContentTypes, new Predicate<MediaType>() {
-			@Override
-			public boolean apply(MediaType input) {
-				return input.isCompatible(actualContentType);
-			}
-		});
-	}
+        return !Iterables.any(acceptableContentTypes, new Predicate<MediaType>() {
+            @Override
+            public boolean apply(MediaType input) {
+                return input.isCompatible(actualContentType);
+            }
+        });
+    }
 
 
 }
