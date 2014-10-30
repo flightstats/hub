@@ -7,16 +7,12 @@ import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.LongSet;
 import com.flightstats.hub.cluster.LongValue;
-import com.flightstats.hub.dao.SequenceLastUpdatedDao;
 import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.util.ChannelNameUtils;
-import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.WaitStrategies;
-import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -39,7 +35,6 @@ public class GroupCaller implements Leader {
 
     private final CuratorFramework curator;
     private final Provider<CallbackIterator> iteratorProvider;
-    private final SequenceLastUpdatedDao sequenceDao;
     private final GroupService groupService;
     private final MetricsTimer metricsTimer;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -58,34 +53,35 @@ public class GroupCaller implements Leader {
 
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider,
-                       SequenceLastUpdatedDao sequenceDao, GroupService groupService, MetricsTimer metricsTimer) {
+                       GroupService groupService, MetricsTimer metricsTimer) {
         this.curator = curator;
         this.iteratorProvider = iteratorProvider;
-        this.sequenceDao = sequenceDao;
         this.groupService = groupService;
         this.metricsTimer = metricsTimer;
         lastCompleted = new LongValue(curator);
     }
 
     public boolean tryLeadership(Group group) {
-        logger.debug("starting group: " + group);
+        /*logger.debug("starting group: " + group);
         this.group = group;
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(group.getParallelCalls());
         lastCompleted.initialize(getValuePath(), getLastUpdated(group).getSequence());
         inProcess = new LongSet(getInFlightPath(), curator);
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
-        curatorLeader.start();
+        curatorLeader.start();*/
         return true;
     }
 
     private ContentKey getLastUpdated(Group group) {
-        return sequenceDao.getLastUpdated(ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl()));
+        //todo - gfm - 10/28/14 -
+        //return sequenceDao.getLastUpdated(ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl()));
+        return null;
     }
 
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
-        this.hasLeadership = hasLeadership;
+        /*this.hasLeadership = hasLeadership;
         retryer = buildRetryer();
         logger.info("taking leadership " + group);
         Optional<Group> foundGroup = groupService.getGroup(group.getName());
@@ -113,7 +109,7 @@ public class GroupCaller implements Leader {
             if (deleteOnExit.get()) {
                 delete();
             }
-        }
+        }*/
     }
 
     private long sendInProcess(long lastCompletedId) throws InterruptedException {
@@ -246,6 +242,7 @@ public class GroupCaller implements Leader {
         }
         return false;
     }
+
     void deleteAnyway() {
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());

@@ -5,7 +5,6 @@ import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -14,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChannelReplicator implements Leader {
@@ -45,16 +43,16 @@ public class ChannelReplicator implements Leader {
         this.curator = curator;
     }
 
-    public void setChannel(Channel channel) {
-        this.channel = channel;
-    }
-
     public void setHistoricalDays(long historicalDays) {
         this.historicalDays = historicalDays;
     }
 
     public Channel getChannel() {
         return channel;
+    }
+
+    public void setChannel(Channel channel) {
+        this.channel = channel;
     }
 
     public boolean isValid() {
@@ -148,7 +146,7 @@ public class ChannelReplicator implements Leader {
     }
 
     @VisibleForTesting
-    void createLocalChannel()  {
+    void createLocalChannel() {
         if (!channelService.channelExists(configuration.getName())) {
             logger.info("creating channel for " + channel.getUrl());
             channelService.createChannel(configuration);
@@ -179,14 +177,15 @@ public class ChannelReplicator implements Leader {
     }
 
     public long getLastUpdated() {
-        Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
+        //todo - gfm - 10/28/14 -
+        /*Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
         if (lastUpdatedKey.isPresent()) {
             if (lastUpdatedKey.get().getSequence() == ContentKey.START_VALUE) {
                 return sequenceFinder.searchForLastUpdated(channel, ContentKey.START_VALUE, historicalDays, TimeUnit.DAYS);
             }
             return sequenceFinder.searchForLastUpdated(channel, lastUpdatedKey.get().getSequence(), historicalDays + 1, TimeUnit.DAYS);
         }
-        logger.warn("problem getting starting sequence " + channel.getUrl());
+        logger.warn("problem getting starting sequence " + channel.getUrl());*/
         return ChannelUtils.NOT_FOUND;
     }
 

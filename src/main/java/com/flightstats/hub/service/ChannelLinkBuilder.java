@@ -23,30 +23,36 @@ public class ChannelLinkBuilder {
 	public ChannelLinkBuilder() {
 	}
 
-	URI buildChannelUri(ChannelConfiguration channelConfiguration, UriInfo uriInfo) {
-		return buildChannelUri(channelConfiguration.getName(), uriInfo);
-	}
+    public static URI buildWsLinkFor(URI channelUri) {
+        String requestUri = channelUri.toString().replaceFirst("^http", "ws");
+        return URI.create(requestUri + "/ws");
+    }
 
-	URI buildChannelUri(String channelName, UriInfo uriInfo) {
-		return URI.create(uriInfo.getBaseUri() + "channel/" + channelName);
-	}
+    public static void addOptionalHeader(String headerName, Optional<String> headerValue, Response.ResponseBuilder builder) {
+        if (headerValue.isPresent()) {
+            builder.header(headerName, headerValue.get());
+        }
+    }
+
+    URI buildChannelUri(ChannelConfiguration channelConfiguration, UriInfo uriInfo) {
+        return buildChannelUri(channelConfiguration.getName(), uriInfo);
+    }
+
+    URI buildChannelUri(String channelName, UriInfo uriInfo) {
+        return URI.create(uriInfo.getBaseUri() + "channel/" + channelName);
+    }
 
     URI buildTagUri(String tag, UriInfo uriInfo) {
         return URI.create(uriInfo.getBaseUri() + "tag/" + tag);
     }
 
     public URI buildItemUri(ContentKey key, URI channelUri) {
-        return buildItemUri(key.keyToString(), channelUri);
-	}
+        return buildItemUri(key.keyToUrl(), channelUri);
+    }
 
     public URI buildItemUri(String key, URI channelUri) {
         return URI.create(channelUri.toString() + "/" + key);
     }
-
-	public static URI buildWsLinkFor(URI channelUri) {
-		String requestUri = channelUri.toString().replaceFirst("^http", "ws");
-		return URI.create(requestUri + "/ws");
-	}
 
 	public Linked<ChannelConfiguration> buildChannelLinks(ChannelConfiguration config, URI channelUri) {
         Linked.Builder<ChannelConfiguration> linked = linked(config).withLink("self", channelUri);
@@ -57,7 +63,7 @@ public class ChannelLinkBuilder {
 
         linked.withLink("time", URI.create(channelUri + "/time"));
         return linked.build();
-	}
+    }
 
     public Linked<?> build(Iterable<ChannelConfiguration> channels, UriInfo uriInfo) {
         Map<String, URI> mappedChannels = new HashMap<>();
@@ -76,11 +82,5 @@ public class ChannelLinkBuilder {
         }
         responseBuilder.withLinks("channels", channelLinks);
         return responseBuilder.build();
-    }
-
-    public static void addOptionalHeader(String headerName, Optional<String> headerValue, Response.ResponseBuilder builder) {
-        if(headerValue.isPresent()){
-            builder.header(headerName, headerValue.get());
-        }
     }
 }

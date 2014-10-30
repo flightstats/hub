@@ -66,11 +66,11 @@ public class ProviderResource {
             channelService.insert(channelName, content);
             return Response.status(Response.Status.OK).build();
         } catch (Exception e) {
-            long sequence = 0;
+            String key = "";
             if (content.getContentKey().isPresent()) {
-                sequence = content.getContentKey().get().getSequence();
+                key = content.getContentKey().get().key();
             }
-            logger.warn("unable to POST to " + channelName + " sequence " + sequence, e);
+            logger.warn("unable to POST to " + channelName + " key " + key, e);
             throw e;
         }
     }

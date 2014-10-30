@@ -1,20 +1,9 @@
 package com.flightstats.hub.websocket;
 
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.service.ChannelLinkBuilder;
-import org.eclipse.jetty.websocket.api.RemoteEndpoint;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.net.URI;
-
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
-
 public class WebsocketConsumerTest {
 
-	@Test
-	public void testSink() throws Exception {
+/*	@Test
+    public void testSink() throws Exception {
 		String address = "here";
 		URI requestUri = URI.create("http://dorkbot.org");
 		URI itemUri = URI.create("http://flightstats.com/hub/channel/itemKey");
@@ -45,6 +34,6 @@ public class WebsocketConsumerTest {
 		WebsocketConsumer testClass = new WebsocketConsumer(address, remoteEndpoint, linkBuilder, requestUri);
 
 		testClass.apply(itemKey);
-	}
+	}*/
 
 }

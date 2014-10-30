@@ -4,7 +4,6 @@ import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.aws.AwsModule;
-import com.flightstats.hub.dao.memory.MemoryModule;
 import com.google.inject.Injector;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -23,7 +22,6 @@ public class Integration {
     private static TestingServer testingServer;
     private static Injector injector;
     private static Properties properties;
-    private static boolean memoryStarted = false;
     private static CuratorFramework curator;
 
     public static void main(String[] args) throws Exception {
@@ -60,17 +58,6 @@ public class Integration {
         HubMain.startServer(properties, new AwsModule(properties));
         injector = HubMain.getInjector();
         return injector;
-    }
-
-    public static synchronized void startMemoryHub() throws Exception {
-        if (memoryStarted) {
-            return;
-        }
-        memoryStarted = true;
-        logger.info("starting up memoryHub");
-        Properties properties = HubMain.loadProperties("useDefault");
-        properties.setProperty("http.bind_port", "9999");
-        HubMain.startServer(properties, new MemoryModule(properties));
     }
 
     public static String getRandomChannel() {

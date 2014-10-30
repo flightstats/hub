@@ -12,35 +12,35 @@ import org.slf4j.LoggerFactory;
 public class WebsocketPublisherImpl implements WebsocketPublisher {
     private final static Logger logger = LoggerFactory.getLogger(WebsocketPublisherImpl.class);
 
-	private final HazelcastInstance hazelcast;
+    private final HazelcastInstance hazelcast;
 
     @Inject
-	public WebsocketPublisherImpl(HazelcastInstance hazelcast) {
-		this.hazelcast = hazelcast;
+    public WebsocketPublisherImpl(HazelcastInstance hazelcast) {
+        this.hazelcast = hazelcast;
     }
 
-	@Override
+    @Override
     public void publish(final String channelName, final ContentKey key) {
         try {
-            getTopicForChannel(channelName).publish(key.keyToString());
+            getTopicForChannel(channelName).publish(key.keyToUrl());
         } catch (HazelcastInstanceNotActiveException e) {
-            logger.warn("unable to publish to hazelcast due to server shutdown {} {}", channelName, key.keyToString());
+            logger.warn("unable to publish to hazelcast due to server shutdown {} {}", channelName, key.keyToUrl());
         } catch (Exception e) {
-            logger.warn("unable to publish to hazelcast " + channelName + " " + key.keyToString(), e);
+            logger.warn("unable to publish to hazelcast " + channelName + " " + key.keyToUrl(), e);
         }
-	}
+    }
 
-	@Override
+    @Override
     public String subscribe(String channelName, MessageListener<String> messageListener) {
         return getTopicForChannel(channelName).addMessageListener(messageListener);
     }
 
-	@Override
+    @Override
     public void unsubscribe(String channelName, String registrationId) {
-		getTopicForChannel(channelName).removeMessageListener(registrationId);
-	}
+        getTopicForChannel(channelName).removeMessageListener(registrationId);
+    }
 
-	private ITopic<String> getTopicForChannel(String channelName) {
-		return hazelcast.getTopic("ws:" + channelName);
-	}
+    private ITopic<String> getTopicForChannel(String channelName) {
+        return hazelcast.getTopic("ws:" + channelName);
+    }
 }

@@ -1,17 +1,8 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.test.Integration;
-import com.google.inject.Injector;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.junit.Assert.*;
 
 /**
  *
@@ -24,7 +15,8 @@ public class SequenceIteratorTest {
     private static ChannelService channelService;
     private static SequenceIteratorFactory factory;
 
-    @BeforeClass
+    //todo - gfm - 10/30/14 -
+    /*@BeforeClass
     public static void setupClass() throws Exception {
 
         Injector injector = Integration.startRealHub();
@@ -80,5 +72,5 @@ public class SequenceIteratorTest {
         logger.debug("content.getData() " + new String(content.getData()) + " " + content.getContentKey().get());
         assertNotNull(content);
         assertArrayEquals(data.getBytes(), content.getData());
-    }
+    }*/
 }

@@ -33,7 +33,7 @@ import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.service.HubHealthCheck;
 import com.flightstats.hub.service.HubHealthCheckImpl;
 import com.flightstats.hub.util.ContentKeyGenerator;
-import com.flightstats.hub.util.CuratorKeyGenerator;
+import com.flightstats.hub.util.TimeContentKeyGenerator;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisherImpl;
 import com.flightstats.jerseyguice.metrics.MethodTimingAdapterProvider;
@@ -99,8 +99,7 @@ public class AwsModule extends AbstractModule {
                 .to(CassandraContentDao.class).asEagerSingleton();
 
         bind(TimeIndexDao.class).to(S3IndexDao.class).asEagerSingleton();
-        bind(LastUpdatedDao.class).to(SequenceLastUpdatedDao.class).asEagerSingleton();
-        bind(ContentKeyGenerator.class).to(CuratorKeyGenerator.class).asEagerSingleton();
+        bind(ContentKeyGenerator.class).to(TimeContentKeyGenerator.class).asEagerSingleton();
 
         bind(DynamoUtils.class).asEagerSingleton();
         bind(DynamoGroupDao.class).asEagerSingleton();

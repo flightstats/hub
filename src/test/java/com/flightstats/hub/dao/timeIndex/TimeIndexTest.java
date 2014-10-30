@@ -1,11 +1,6 @@
 package com.flightstats.hub.dao.timeIndex;
 
-import com.flightstats.hub.model.ContentKey;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -14,7 +9,8 @@ public class TimeIndexTest {
 
     private DateTime dateTime;
 
-    @Before
+    //todo - gfm - 10/28/14 - go away?
+    /*@Before
     public void setUp() throws Exception {
         dateTime = new DateTime(2013, 12, 26, 12, 59);
     }
@@ -72,7 +68,7 @@ public class TimeIndexTest {
     @Test
     public void testPathFull() throws Exception {
         assertEquals("/TimeIndex/someChannel/2013-12-26T20:59+0000/999", TimeIndex.getPath("someChannel", dateTime, new ContentKey(999)));
-    }
+    }*/
 
 
 }
