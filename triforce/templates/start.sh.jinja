@@ -7,12 +7,6 @@
 #exec > ${APP_STATE}/upstart-debug-${ID}.stdout
 #exec 2> ${APP_STATE}/upstart-debug-${ID}.stderr
 
-# Hack
-if [ -z "${JAVA_HOME}" ] ; then
-  JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64/jre
-  echo "Using Java Home Hack, KILL ME WITH FIRE"
-fi
-
 # Exit on any error
 #
 set -e
@@ -93,7 +87,7 @@ MAIN_CLASS="com.flightstats.hub.app.HubMain"
 
 JAVA_AGENT="-javaagent:$(ls ${APP_HOME}lib/newrelic_agent*.jar)"
 
-CLI="${JAVA_HOME}/bin/java -cp $(ls ${APP_HOME}lib/hub-*):${APP_HOME}lib/* ${JAVA_AGENT} ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties"
+CLI="java -cp $(ls ${APP_HOME}lib/hub-*):${APP_HOME}lib/* ${JAVA_AGENT} ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties"
 
 set -f
 echo "Running : ${CLI}"
