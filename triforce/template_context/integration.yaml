@@ -16,7 +16,7 @@ conf/hub.properties :
     _template : hub.properties.jinja
 
     app :
-        name : "hub"
+        name : "hub-v2"
         environment : "int"
         encrypted : false
         shutdown_delay_seconds : 15
@@ -55,7 +55,7 @@ conf/hub.properties :
         registerJvmMetrics : false
         host : "carbon.hostedgraphite.com"
         port : 2003
-        prefix : cb165ed6-4336-4cc6-91ff-cfe1d04cebd6.hub.int
+        prefix : cb165ed6-4336-4cc6-91ff-cfe1d04cebd6.hubv2.int
 
     zookeeper :
         connection : "hub-int-zk-01.cloud-east.staging:2181,hub-int-zk-02.cloud-east.staging:2181,hub-int-zk-03.cloud-east.staging:2181"
@@ -64,9 +64,9 @@ conf/hub.properties :
 conf/hazelcast.conf.xml :
     _template : hazelcast.conf.xml.jinja
     cluster_hosts :
-        - "hub-int-01.cloud-east.staging"
-        - "hub-int-02.cloud-east.staging"
-        - "hub-int-03.cloud-east.staging"
+        - "hub-v2-int-01.cloud-east.staging"
+        - "hub-v2-int-02.cloud-east.staging"
+        - "hub-v2-int-03.cloud-east.staging"
 
 bin/start.sh :
   _template : start.sh.jinja
