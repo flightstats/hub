@@ -12,7 +12,6 @@ import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.cassandra.CassandraConnectorFactory;
-import com.flightstats.hub.dao.cassandra.CassandraContentDao;
 import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
 import com.flightstats.hub.dao.encryption.AuditChannelService;
@@ -94,9 +93,9 @@ public class AwsModule extends AbstractModule {
                 .annotatedWith(Names.named(ContentDao.LONG_TERM_STORE))
                 .to(ContentDaoImpl.class).asEagerSingleton();
 
-        bind(ContentDao.class)
+/*        bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.SHORT_TERM_CACHE))
-                .to(CassandraContentDao.class).asEagerSingleton();
+                .to(CassandraContentDao.class).asEagerSingleton();*/
 
         bind(TimeIndexDao.class).to(S3IndexDao.class).asEagerSingleton();
         bind(ContentKeyGenerator.class).to(TimeContentKeyGenerator.class).asEagerSingleton();
