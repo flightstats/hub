@@ -13,23 +13,23 @@ echo "Deploying to ${ENV} : ${VERSION}"
 case ${ENV} in 
 	dev)
 	    DOM=".cloud-east.dev"
-	    PREFIX="hub"
+	    PREFIX="hub-v2"
 	     ;;
 	encrypted-dev)
 	    DOM=".cloud-east.dev"
-	    PREFIX="encrypted-hub"
+	    PREFIX="encrypted-hub-v2"
 	     ;;
 	staging)
 	    DOM=".cloud-east.staging"
-	    PREFIX="hub"
+	    PREFIX="hub-v2"
 	     ;;
 	prod)
 	    DOM=".cloud-east.prod"
-	    PREFIX="hub"
+	    PREFIX="hub-v2"
 	    ;;
 	integration)
 	    DOM=".cloud-east.staging"
-	    PREFIX="hub-int"
+	    PREFIX="hub-v2-int"
 	    ;;
 	*)
 		echo "No env specified or bad env ${ENV}" ; exit ;;
