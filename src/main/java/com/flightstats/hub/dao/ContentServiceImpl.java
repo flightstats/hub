@@ -23,18 +23,18 @@ public class ContentServiceImpl implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
     private final ContentDao contentDao;
-    private final ContentDao cacheDao;
+    //private final ContentDao cacheDao;
     private final WebsocketPublisher websocketPublisher;
     private final Integer shutdown_wait_seconds;
     private final AtomicInteger inFlight = new AtomicInteger();
 
     @Inject
     public ContentServiceImpl(@Named(ContentDao.LONG_TERM_STORE) ContentDao contentDao,
-                              @Named(ContentDao.SHORT_TERM_CACHE) ContentDao cacheDao,
+                              //@Named(ContentDao.SHORT_TERM_CACHE) ContentDao cacheDao,
                               WebsocketPublisher websocketPublisher,
                               @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds) {
         this.contentDao = contentDao;
-        this.cacheDao = cacheDao;
+        //this.cacheDao = cacheDao;
         this.websocketPublisher = websocketPublisher;
         this.shutdown_wait_seconds = shutdown_wait_seconds;
         HubServices.registerPreStop(new ContentServiceHook());
