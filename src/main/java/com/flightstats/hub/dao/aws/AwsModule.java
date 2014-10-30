@@ -4,14 +4,12 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
-import com.datastax.driver.core.Session;
 import com.flightstats.hub.app.config.metrics.HubInstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.hub.app.config.metrics.HubMethodTimingAdapterProvider;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.*;
-import com.flightstats.hub.dao.cassandra.CassandraConnectorFactory;
 import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
 import com.flightstats.hub.dao.encryption.AuditChannelService;
@@ -129,10 +127,5 @@ public class AwsModule extends AbstractModule {
         return factory.getS3Client();
     }
 
-    @Inject
-    @Provides
-    @Singleton
-    public Session buildCassandraSession(CassandraConnectorFactory factory) {
-        return factory.getCassandraSession();
-    }
+
 }
