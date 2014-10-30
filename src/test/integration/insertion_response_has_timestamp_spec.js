@@ -18,12 +18,6 @@ utils.runInTestChannel(testName, channelName, function () {
                 href : thisChannelResource
             }
         })
-        .expectJSON('_links.self', {
-            href : function (value) {
-                var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/1000");
-                expect(value).toMatch(regex);
-            }
-        })
         .expectJSON({
             timestamp : function (value) {
                 expect(value).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ$/);

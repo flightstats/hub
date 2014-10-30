@@ -1,23 +1,10 @@
 package com.flightstats.hub.service;
 
-import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ContentKey;
-import com.google.common.base.Optional;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class LatestChannelItemResourceTest {
 
-	@Test
-	public void testGetLatest() throws Exception {
+    //todo - gfm - 10/28/14 - kill?
+/*	@Test
+    public void testGetLatest() throws Exception {
 		String channelName = "fooChan";
 		ContentKey key = new ContentKey(1000);
 
@@ -48,5 +35,5 @@ public class LatestChannelItemResourceTest {
 
         Response response = testClass.getLatest(channelName);
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
-	}
+	}*/
 }

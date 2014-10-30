@@ -1,6 +1,5 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -26,9 +25,10 @@ public class SequenceFinder {
         //this may not play well with discontinuous sequences
         logger.debug("searching the key space with lastUpdated {}", lastUpdated);
         Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getUrl());
-        if (!latestSequence.isPresent()) {
+        //todo - gfm - 10/28/14 -
+        /*if (!latestSequence.isPresent()) {
             return ContentKey.START_VALUE;
-        }
+        }*/
         long high = latestSequence.get();
         long low = lastUpdated;
         long lastExists = high;
@@ -50,7 +50,7 @@ public class SequenceFinder {
      * We want to return a starting id that exists, and isn't going to be expired immediately.
      */
     private boolean existsAndNotYetExpired(Channel channel, long id, long time, TimeUnit timeUnit) {
-        logger.debug("id = {} time = {} {} ", id,  time, timeUnit);
+        logger.debug("id = {} time = {} {} ", id, time, timeUnit);
         Optional<DateTime> creationDate = channelUtils.getCreationDate(channel.getUrl(), id);
         if (!creationDate.isPresent()) {
             return false;

@@ -1,9 +1,7 @@
 package com.flightstats.hub.group;
 
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.exception.ConflictException;
-import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -56,7 +54,8 @@ public class GroupService {
     public List<GroupStatus> getGroupStatus() {
         Iterable<Group> groups = getGroups();
         List<GroupStatus> groupStatus = new ArrayList<>();
-        for (Group group : groups) {
+        //todo - gfm - 10/28/14 -
+        /*for (Group group : groups) {
             GroupStatus.GroupStatusBuilder builder = GroupStatus.builder().group(group);
             String channelName = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
             Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channelName);
@@ -65,7 +64,7 @@ public class GroupService {
             }
             builder.lastCompleted(groupCallback.getLastCompleted(group));
             groupStatus.add(builder.build());
-        }
+        }*/
         return groupStatus;
     }
 

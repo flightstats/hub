@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.service.Headers;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.common.base.Optional;
@@ -33,11 +32,10 @@ public class ChannelUtils {
 
     public static final int NOT_FOUND = -1;
     private final static Logger logger = LoggerFactory.getLogger(ChannelUtils.class);
-
-    private final Client noRedirectsClient;
-    private final Client followClient;
     private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
     private static ObjectMapper mapper = new ObjectMapper();
+    private final Client noRedirectsClient;
+    private final Client followClient;
 
     @Inject
     public ChannelUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient) {
@@ -83,7 +81,8 @@ public class ChannelUtils {
     }
 
     public Optional<Content> getContent(String channelUrl, long sequence) {
-        ClientResponse response = getResponse(appendSlash(channelUrl) + sequence);
+        //todo - gfm - 10/28/14 -
+        /*ClientResponse response = getResponse(appendSlash(channelUrl) + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             logger.info("unable to get content " + response);
             return Optional.absent();
@@ -97,7 +96,8 @@ public class ChannelUtils {
                 .withMillis(getCreationDate(response).getMillis())
                 .build();
 
-        return Optional.of(content);
+        return Optional.of(content);*/
+        return Optional.absent();
     }
 
     public Optional<DateTime> getCreationDate(String channelUrl, long sequence) {
