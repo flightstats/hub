@@ -1,23 +1,8 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.test.Integration;
-import com.google.common.base.Optional;
-import com.google.inject.Injector;
-import org.joda.time.DateTime;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.core.MediaType;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.*;
 
 /**
  * This is an integration test that relies on http://hub.svc.dev/channel/testy1 being actively updated.
@@ -34,7 +19,8 @@ public class ChannelUtilsTest {
     private static String channel;
     private static ChannelService channelService;
 
-    @BeforeClass
+    //todo - gfm - 10/30/14 -
+    /*@BeforeClass
     public static void setupClass() throws Exception {
 
         Injector injector = Integration.startRealHub();
@@ -152,6 +138,6 @@ public class ChannelUtilsTest {
         Set<Channel> channels = channelUtils.getChannels("http://nothing.svc.dev/channel");
         assertNotNull(channels);
         assertTrue(channels.isEmpty());
-    }
+    }*/
 
 }
