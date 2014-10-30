@@ -15,7 +15,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 project.ext.jenkinsBuildNumber = "$System.env.VERSION_NUMBER"
-project.ext.jenkinsJobName = "hub"
+project.ext.jenkinsJobName = "hub-v2"
 
 group = 'com.flightstats'
 

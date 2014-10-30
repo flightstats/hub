@@ -2,7 +2,7 @@
 
 # Temporary rolling-deploy script until triforce.deploy can handle multiple targets and return debug/warn/info to jenkins
 
-VERSION="hub-${2}.tgz"
+VERSION="hub-v2-${2}.tgz"
 ENV=${1:-dev}
 VER_NUM1=${VERSION:4}
 VER_NUM=${VER_NUM1%.tgz}
@@ -23,24 +23,15 @@ case ${ENV} in
 	    DOM=".cloud-east.staging"
 	    PREFIX="hub"
 	     ;;
-    encrypted-staging)
-	    DOM=".cloud-east.staging"
-	    PREFIX="encrypted-hub"
-	     ;;
 	prod)
 	    DOM=".cloud-east.prod"
 	    PREFIX="hub"
-	    ;;
-	data-qa-staging)
-	    DOM=".cloud-east.staging"
-	    PREFIX="hub-data-qa"
-	    SERVERS=2
 	    ;;
 	integration)
 	    DOM=".cloud-east.staging"
 	    PREFIX="hub-int"
 	    ;;
-	*) 
+	*)
 		echo "No env specified or bad env ${ENV}" ; exit ;;
 esac
 	
@@ -51,7 +42,7 @@ function node_out {
 
 function deploy {
     # send salt-call (or ssh to salt master) to deploy
-	salt_output=$(ssh utility@saltmaster01.util.pdx.office "sudo salt '${SERVER}' triforce.deploy s3://triforce_builds/hub/${VERSION} ${ENV}")
+	salt_output=$(ssh utility@saltmaster01.util.pdx.office "sudo salt '${SERVER}' triforce.deploy s3://triforce_builds/hubv2/${VERSION} ${ENV}")
 	echo $salt_output
 	# if version in salt_output contains ${VER_NUM}, we're good. if not, exit and give jenkins all the return data
 	if [[ $salt_output == *"$VER_NUM"* ]]
