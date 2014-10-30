@@ -255,24 +255,18 @@ common: &default_settings
 
 dev:
   <<: *default_settings
-  app_name: Hub-dev
+  app_name: Hub-V2-dev
 
 prod:
   <<: *default_settings
-  app_name: Hub-prod
+  app_name: Hub-V2-prod
 
 staging:
   <<: *default_settings
-  app_name: Hub-staging
+  app_name: Hub-V2-staging
 
 int:
   <<: *default_settings
-  app_name: Hub-int
+  app_name: Hub-V2-int
 
-encrypted-dev:
-  <<: *default_settings
-  app_name: Encrypted-Hub-dev
 
-data-qa-staging:
-  <<: *default_settings
-  app_name: Data-Qa-Hub-staging
