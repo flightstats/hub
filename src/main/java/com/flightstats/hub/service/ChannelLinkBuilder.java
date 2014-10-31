@@ -19,9 +19,9 @@ import static com.flightstats.rest.Linked.linked;
 
 public class ChannelLinkBuilder {
 
-	@Inject
-	public ChannelLinkBuilder() {
-	}
+    @Inject
+    public ChannelLinkBuilder() {
+    }
 
     public static URI buildWsLinkFor(URI channelUri) {
         String requestUri = channelUri.toString().replaceFirst("^http", "ws");
@@ -47,14 +47,14 @@ public class ChannelLinkBuilder {
     }
 
     public URI buildItemUri(ContentKey key, URI channelUri) {
-        return buildItemUri(key.keyToUrl(), channelUri);
+        return buildItemUri(key.urlKey(), channelUri);
     }
 
     public URI buildItemUri(String key, URI channelUri) {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
-	public Linked<ChannelConfiguration> buildChannelLinks(ChannelConfiguration config, URI channelUri) {
+    public Linked<ChannelConfiguration> buildChannelLinks(ChannelConfiguration config, URI channelUri) {
         Linked.Builder<ChannelConfiguration> linked = linked(config).withLink("self", channelUri);
         if (config.isSequence()) {
             linked.withLink("latest", URI.create(channelUri + "/latest"))

@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.dao.timeIndex.TimeIndexProcessor;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -28,18 +27,16 @@ public class ChannelServiceImpl implements ChannelService {
     private final ContentService contentService;
     private final ChannelConfigurationDao channelConfigurationDao;
     private final ChannelValidator channelValidator;
-    private final TimeIndexProcessor timeIndexProcessor;
     private final ChannelReplicator channelReplicator;
     private final ReplicationValidator replicationValidator;
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigurationDao channelConfigurationDao,
-                              ChannelValidator channelValidator, TimeIndexProcessor timeIndexProcessor,
+                              ChannelValidator channelValidator,
                               ChannelReplicator channelReplicator, ReplicationValidator replicationValidator) {
         this.contentService = contentService;
         this.channelConfigurationDao = channelConfigurationDao;
         this.channelValidator = channelValidator;
-        this.timeIndexProcessor = timeIndexProcessor;
         this.channelReplicator = channelReplicator;
         this.replicationValidator = replicationValidator;
     }
@@ -130,7 +127,6 @@ public class ChannelServiceImpl implements ChannelService {
         replicationValidator.throwExceptionIfReplicating(channelName);
         contentService.delete(channelName);
         channelConfigurationDao.delete(channelName);
-        timeIndexProcessor.delete(channelName);
         channelReplicator.delete(channelName);
         return true;
     }

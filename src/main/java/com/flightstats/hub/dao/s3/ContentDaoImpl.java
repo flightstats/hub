@@ -1,5 +1,14 @@
 package com.flightstats.hub.dao.s3;
 
+import com.basho.riak.client.api.RiakClient;
+import com.basho.riak.client.api.cap.Quorum;
+import com.basho.riak.client.api.commands.kv.FetchValue;
+import com.basho.riak.client.api.commands.kv.StoreValue;
+import com.basho.riak.client.core.query.Location;
+import com.basho.riak.client.core.query.Namespace;
+import com.basho.riak.client.core.query.RiakObject;
+import com.basho.riak.client.core.query.indexes.LongIntIndex;
+import com.basho.riak.client.core.util.BinaryValue;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelConfiguration;
@@ -17,18 +26,17 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * This uses S3 for Content and ZooKeeper/S3 for TimeIndex
+ * This uses Riak for Content
  */
 public class ContentDaoImpl implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(ContentDaoImpl.class);
-
-    private final S3ContentDao s3ContentDao;
+    private final RiakClient riakClient;
 
     @Inject
-    public ContentDaoImpl(S3ContentDao s3ContentDao) {
-        this.s3ContentDao = s3ContentDao;
-        HubServices.register(new S3ContentDaoInit());
+    public ContentDaoImpl(RiakClient riakClient) {
+        this.riakClient = riakClient;
+        HubServices.register(new ContentDaoInit());
     }
 
     @Override
@@ -39,14 +47,63 @@ public class ContentDaoImpl implements ContentDao {
             //todo - gfm - 10/31/14 - how should replication be handled?
         }
         ContentKey key = content.getContentKey().get();
-        DateTime dateTime = new DateTime(content.getMillis());
-        s3ContentDao.writeS3(channelName, content, key);
-        return new InsertedContentKey(key, dateTime.toDate());
+        try {
+            Namespace namespace = new Namespace("default", channelName);
+            Location location = new Location(namespace, key.key());
+            RiakObject riakObject = new RiakObject();
+            if (content.getData().length > 0) {
+                riakObject.setValue(BinaryValue.create(content.getData()));
+            }
+            //todo - gfm - 10/31/14 - change headers to be a map in Content
+
+            if (content.getContentType().isPresent()) {
+                riakObject.getUserMeta().put("contentType", content.getContentType().get());
+            }
+            if (content.getContentLanguage().isPresent()) {
+                riakObject.getUserMeta().put("contentLanguage", content.getContentLanguage().get());
+            }
+            if (content.getUser().isPresent()) {
+                riakObject.getUserMeta().put("user", content.getUser().get());
+            }
+            riakObject.getIndexes().getIndex(LongIntIndex.named("time")).add(key.getMillis());
+            StoreValue store = new StoreValue.Builder(riakObject)
+                    .withLocation(location)
+                    .withOption(StoreValue.Option.W, Quorum.quorumQuorum()).build();
+            riakClient.execute(store);
+
+            return new InsertedContentKey(key, new DateTime(key.getMillis()).toDate());
+        } catch (Exception e) {
+            logger.warn("unable to write channel " + channelName + " key " + key, e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public Content read(final String channelName, final ContentKey key) {
-        return s3ContentDao.read(channelName, key);
+    public Content read(String channelName, ContentKey key) {
+        try {
+            Namespace namespace = new Namespace("default", channelName);
+            Location location = new Location(namespace, key.key());
+            FetchValue.Response response = riakClient.execute(new FetchValue.Builder(location).build());
+            RiakObject object = response.getValue(RiakObject.class);
+            Content.Builder builder = Content.builder()
+                    .withContentKey(key)
+                    .withData(object.getValue().getValue())
+                    .withMillis(key.getMillis());
+            if (object.getUserMeta().containsKey("contentType")) {
+                builder.withContentType(object.getUserMeta().get("contentType"));
+            }
+            if (object.getUserMeta().containsKey("contentLanguage")) {
+                builder.withContentLanguage(object.getUserMeta().get("contentLanguage"));
+            }
+            if (object.getUserMeta().containsKey("user")) {
+                builder.withUser(object.getUserMeta().get("user"));
+            }
+            return builder.build();
+
+        } catch (Exception e) {
+            logger.warn("what? " + channelName + key, e);
+        }
+        return null;
     }
 
     @Override
@@ -68,14 +125,13 @@ public class ContentDaoImpl implements ContentDao {
 
     @Override
     public void delete(String channelName) {
-        s3ContentDao.delete(channelName);
         //todo - gfm - 10/31/14 - delete records from Riak
     }
 
-    private class S3ContentDaoInit extends AbstractIdleService {
+    private class ContentDaoInit extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
-            s3ContentDao.initialize();
+            //todo - gfm - 10/31/14 - does this need to do anything?
         }
 
         @Override

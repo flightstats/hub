@@ -14,8 +14,8 @@ public class ContentKeyTest {
     public void testKeyToString() throws Exception {
         ContentKey contentKey = new ContentKey();
         Optional<ContentKey> cycled = ContentKey.fromString(contentKey.key());
-        System.out.println(contentKey.keyToUrl());
-        System.out.println(cycled.get().keyToUrl());
+        System.out.println(contentKey.urlKey());
+        System.out.println(cycled.get().urlKey());
         assertEquals(contentKey, cycled.get());
     }
 }
