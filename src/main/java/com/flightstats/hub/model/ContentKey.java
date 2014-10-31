@@ -2,7 +2,6 @@ package com.flightstats.hub.model;
 
 import com.google.common.base.Optional;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.time.Clock;
@@ -12,18 +11,17 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 @EqualsAndHashCode
-@ToString
 public class ContentKey {
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd/HH/mm/ss/");
-    private final LocalDateTime now;
+    private final LocalDateTime time;
     private final String hash;
 
     public ContentKey() {
         this(LocalDateTime.now(Clock.systemUTC()), RandomStringUtils.randomAlphanumeric(6));
     }
 
-    ContentKey(LocalDateTime now, String hash) {
-        this.now = now;
+    ContentKey(LocalDateTime time, String hash) {
+        this.time = time;
         this.hash = hash;
     }
 
@@ -34,12 +32,20 @@ public class ContentKey {
         return Optional.of(new ContentKey(dateTime, split[1]));
     }
 
-    public String keyToUrl() {
-        return formatter.format(now) + key();
+    public String urlKey() {
+        return formatter.format(time) + key();
     }
 
     public String key() {
-        return now.toInstant(ZoneOffset.UTC).toEpochMilli() + "-" + hash;
+        return getMillis() + "-" + hash;
     }
 
+    public long getMillis() {
+        return time.toInstant(ZoneOffset.UTC).toEpochMilli();
+    }
+
+    @Override
+    public String toString() {
+        return key();
+    }
 }
