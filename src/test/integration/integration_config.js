@@ -2,7 +2,7 @@ frisby = require('frisby');
 utils = require('./utils.js');
 ip = require('ip');
 
-hubDomain = process.env.hubDomain || 'hub.svc.dev';
+hubDomain = process.env.hubDomain || 'hub-v2-03.cloud-east.dev:8080';
 replicationDomain = process.env.replicationDomain || 'hub.svc.staging';
 //replicationDomain = process.env.replicationDomain || 'hub-int.svc.staging';
 runEncrypted = process.env.runEncrypted || false;
