@@ -10,8 +10,6 @@ import org.joda.time.DateTime;
 import java.util.Collection;
 
 public interface ContentDao {
-    String LONG_TERM_STORE = "LongTermStore";
-    String SHORT_TERM_CACHE = "ShortTermCache";
 
     InsertedContentKey write(String channelName, Content content, long ttlDays);
 
