@@ -26,7 +26,7 @@ public class RiakPlay2 {
         DateTime now = new DateTime(DateTimeZone.UTC);
         System.out.println("start at  " + now);
 
-        Namespace namespace = new Namespace("default", "my_bucket4");
+        Namespace namespace = new Namespace("default", "my_bucket5");
         for (int i = 0; i < 24; i++) {
             now = now.withHourOfDay(i);
             String key = now.toString() + "-A";
@@ -36,7 +36,7 @@ public class RiakPlay2 {
             riakObject.getIndexes().getIndex(LongIntIndex.named("time")).add(now.getMillis());
             StoreValue store = new StoreValue.Builder(riakObject)
                     .withLocation(location)
-                    .withOption(StoreValue.Option.W, new Quorum(3)).build();
+                    .withOption(StoreValue.Option.W, Quorum.quorumQuorum()).build();
             client.execute(store);
         }
 

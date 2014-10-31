@@ -7,7 +7,6 @@ import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
-import com.flightstats.hub.util.ContentKeyGenerator;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -25,17 +24,14 @@ public class ContentDaoImpl implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(ContentDaoImpl.class);
 
-    private final ContentKeyGenerator keyGenerator;
     private final ZooKeeperIndexDao zooKeeperIndexDao;
     private final S3ContentDao s3ContentDao;
     private final S3IndexDao s3IndexDao;
 
     @Inject
-    public ContentDaoImpl(ContentKeyGenerator keyGenerator,
-                          ZooKeeperIndexDao zooKeeperIndexDao,
+    public ContentDaoImpl(ZooKeeperIndexDao zooKeeperIndexDao,
                           S3ContentDao s3ContentDao,
                           S3IndexDao s3IndexDao) {
-        this.keyGenerator = keyGenerator;
         this.s3ContentDao = s3ContentDao;
         this.zooKeeperIndexDao = zooKeeperIndexDao;
         this.s3IndexDao = s3IndexDao;
@@ -45,9 +41,9 @@ public class ContentDaoImpl implements ContentDao {
     @Override
     public InsertedContentKey write(String channelName, Content content, long ttlDays) {
         if (content.isNewContent()) {
-            content.setContentKey(keyGenerator.newKey(channelName));
+            content.setContentKey(new ContentKey());
         } else {
-            keyGenerator.setLatest(channelName, content.getContentKey().get());
+            //todo - gfm - 10/31/14 - how should replication be handled?
         }
         ContentKey key = content.getContentKey().get();
         DateTime dateTime = new DateTime(content.getMillis());
@@ -84,18 +80,19 @@ public class ContentDaoImpl implements ContentDao {
 
     @Override
     public void initializeChannel(ChannelConfiguration config) {
-        keyGenerator.seedChannel(config.getName());
+
+        //todo - gfm - 10/31/14 - does this need to create the table in Riak?
     }
 
     @Override
     public Optional<ContentKey> getKey(String id) {
-        return keyGenerator.parse(id);
+        return ContentKey.fromString(id);
     }
 
     @Override
     public void delete(String channelName) {
         s3ContentDao.delete(channelName);
-        keyGenerator.delete(channelName);
+        //todo - gfm - 10/31/14 - delete this too...
         zooKeeperIndexDao.delete(channelName);
     }
 
