@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.timeIndex.TimeIndex;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.exception.InvalidRequestException;
 import com.google.inject.Inject;
@@ -34,10 +33,10 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 public class ChannelTimeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
-	private final UriInfo uriInfo;
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private final UriInfo uriInfo;
 	private final ChannelService channelService;
     private final ChannelLinkBuilder linkBuilder;
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
 	public ChannelTimeResource(UriInfo uriInfo, ChannelService channelService, ChannelLinkBuilder linkBuilder) {
@@ -50,8 +49,9 @@ public class ChannelTimeResource {
     public Response getLatest() {
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
         String channelUri = uriInfo.getRequestUri().toString();
-        URI uri = URI.create(channelUri + "/" + TimeIndex.getHash(new DateTime()));
-        builder.location(uri);
+        //todo - gfm - 11/2/14 -
+        /*URI uri = URI.create(channelUri + "/" + TimeIndex.getHash(new DateTime()));
+        builder.location(uri);*/
         return builder.build();
     }
 
@@ -64,13 +64,14 @@ public class ChannelTimeResource {
 	public Response getValue(@PathParam("channelName") String channelName, @PathParam("datetime") String datetime)
             throws InvalidRequestException {
         DateTime requestTime = null;
-        try {
+        //todo - gfm - 11/2/14 -
+        /*try {
             requestTime = TimeIndex.parseHash(datetime);
         } catch (Exception e) {
             logger.warn("unable to parse " + datetime + " for channel " + channelName);
             throw new InvalidRequestException("{\"error\": \"Datetime was in the wrong format, required format is "
                     + TimeIndex.PATTERN + "\"}");
-        }
+        }*/
         Collection<ContentKey> keys = channelService.getKeys(channelName, requestTime);
 
         ObjectNode root = mapper.createObjectNode();
