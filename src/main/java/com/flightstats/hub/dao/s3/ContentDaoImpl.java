@@ -48,6 +48,7 @@ public class ContentDaoImpl implements ContentDao {
         }
         ContentKey key = content.getContentKey().get();
         try {
+            //todo - gfm - 11/2/14 - change namespace
             Namespace namespace = new Namespace("default", channelName);
             Location location = new Location(namespace, key.key());
             RiakObject riakObject = new RiakObject();
@@ -81,6 +82,7 @@ public class ContentDaoImpl implements ContentDao {
     @Override
     public Content read(String channelName, ContentKey key) {
         try {
+            //todo - gfm - 11/2/14 - change namespace
             Namespace namespace = new Namespace("default", channelName);
             Location location = new Location(namespace, key.key());
             FetchValue.Response response = riakClient.execute(new FetchValue.Builder(location).build());
