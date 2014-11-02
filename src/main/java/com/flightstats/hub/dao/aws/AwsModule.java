@@ -117,8 +117,7 @@ public class AwsModule extends AbstractModule {
     @Provides
     @Singleton
     public RiakClient buildRiakClient(@Named("riak.addresses") String riakAddresses) throws UnknownHostException {
-        //todo - gfm - 10/31/14 - split these up.
-        return RiakClient.newClient(riakAddresses);
+        return RiakClient.newClient(riakAddresses.split(","));
     }
 
 
