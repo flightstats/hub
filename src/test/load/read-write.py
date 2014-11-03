@@ -4,7 +4,7 @@ import json
 import string
 import random
 
-from locust import Locust, TaskSet, task
+from locust import HttpLocust, TaskSet, task
 import httplib2
 
 # Usage:
@@ -39,7 +39,7 @@ class WebsiteTasks(TaskSet):
             if postResponse.status_code != 201:
                 postResponse.failure("Got wrong response on post: " + postResponse.status_code)
 
-        links = postResponse.json
+        links = postResponse.json()
         getResponse = self._http.request(links['_links']['self']['href'], 'GET')
         # print "Get Response status code:", getResponse
         if getResponse[0]['status'] != '200':
@@ -56,7 +56,7 @@ class WebsiteTasks(TaskSet):
         return ''.join(random.choice(chars) for x in range(size))
 
 
-class WebsiteUser(Locust):
+class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
     min_wait = 500
     max_wait = 1000
