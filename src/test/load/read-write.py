@@ -10,9 +10,6 @@ import httplib2
 # Usage:
 # locust -f read-write.py -H http://hub.svc.prod
 
-# Be sure to update gevent to get around DNS issue
-# pip install https://github.com/surfly/gevent/releases/download/1.0rc3/gevent-1.0rc3.tar.gz
-
 class WebsiteTasks(TaskSet):
     channelNum = 0
 
@@ -20,7 +17,7 @@ class WebsiteTasks(TaskSet):
         self._http = httplib2.Http()
         WebsiteTasks.channelNum += 1
         #todo make byte size this a command line var
-        self.number = WebsiteTasks.channelNum * 1000
+        self.number = WebsiteTasks.channelNum * 2000
         self.payload = self.payload_generator(self.number)
         print("payload size " + str(self.payload.__sizeof__()))
         self.channel = "riak_test_" + str(WebsiteTasks.channelNum)
