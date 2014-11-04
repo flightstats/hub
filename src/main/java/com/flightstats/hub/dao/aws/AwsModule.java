@@ -15,7 +15,7 @@ import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
 import com.flightstats.hub.dao.encryption.AuditChannelService;
 import com.flightstats.hub.dao.encryption.BasicChannelService;
-import com.flightstats.hub.dao.s3.ContentDaoImpl;
+import com.flightstats.hub.dao.riak.RiakContentDao;
 import com.flightstats.hub.group.DynamoGroupDao;
 import com.flightstats.hub.group.GroupCallback;
 import com.flightstats.hub.group.GroupCallbackImpl;
@@ -82,7 +82,7 @@ public class AwsModule extends AbstractModule {
 
         bind(ContentService.class).to(ContentServiceImpl.class).asEagerSingleton();
 
-        bind(ContentDao.class).to(ContentDaoImpl.class).asEagerSingleton();
+        bind(ContentDao.class).to(RiakContentDao.class).asEagerSingleton();
 
         bind(DynamoUtils.class).asEagerSingleton();
         bind(DynamoGroupDao.class).asEagerSingleton();
