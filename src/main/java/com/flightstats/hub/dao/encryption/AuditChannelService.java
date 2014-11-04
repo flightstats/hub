@@ -150,8 +150,8 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
-        return channelService.getKeys(channelName, dateTime);
+    public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
+        return channelService.getKeys(channelName, startTime, endTime);
     }
 
     @Override

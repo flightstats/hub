@@ -115,8 +115,8 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
-        return contentService.getKeys(channelName, dateTime);
+    public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
+        return contentService.getKeys(channelName, startTime, endTime);
     }
 
     @Override

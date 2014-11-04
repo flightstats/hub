@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.riak;
 
 import com.basho.riak.client.api.RiakClient;
 import com.basho.riak.client.api.cap.Quorum;
+import com.basho.riak.client.api.commands.indexes.IntIndexQuery;
 import com.basho.riak.client.api.commands.kv.FetchValue;
 import com.basho.riak.client.api.commands.kv.StoreValue;
 import com.basho.riak.client.core.query.Location;
@@ -22,8 +23,10 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class RiakContentDao implements ContentDao {
 
@@ -109,9 +112,26 @@ public class RiakContentDao implements ContentDao {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
-        //todo - gfm - 10/31/14 - query, and allow time range
-        return Collections.emptyList();
+    public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
+        List<ContentKey> keys = new ArrayList<>();
+        try {
+            Namespace namespace = new Namespace("default", channelName);
+            IntIndexQuery query = new IntIndexQuery.Builder(namespace, "time", startTime.getMillis(), endTime.getMillis())
+                    .withPaginationSort(true)
+                    .withKeyAndIndex(true)
+                    .build();
+
+            IntIndexQuery.Response queryResponse = riakClient.execute(query);
+            List<IntIndexQuery.Response.Entry> entries = queryResponse.getEntries();
+            for (IntIndexQuery.Response.Entry entry : entries) {
+                keys.add(ContentKey.fromString(entry.getRiakObjectLocation().getKey().toString()).get());
+
+            }
+            return keys;
+        } catch (Exception e) {
+            logger.warn("query fail " + channelName + " " + startTime + " " + endTime, e);
+            return Collections.emptyList();
+        }
     }
 
     @Override

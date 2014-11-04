@@ -19,7 +19,7 @@ public interface ContentDao {
 
     Optional<ContentKey> getKey(String id);
 
-    Collection<ContentKey> getKeys(String channelName, DateTime dateTime);
+    Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime);
 
     void delete(String channelName);
 
