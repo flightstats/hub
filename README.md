@@ -139,8 +139,8 @@ On success:  `HTTP/1.1 201 OK`
         "self": {
             "href": "http://hub/channel/stumptown"
         },
-        "lastwritten": {
-            "href": "http://hub/channel/stumptown/lastwritten"
+        "latest": {
+            "href": "http://hub/channel/stumptown/latest"
         },
         "ws": {
             "href": "ws://hub/channel/stumptown/ws"
@@ -199,7 +199,7 @@ ___body_contains_arbitrary_content
 
 On success: `HTTP/1.1 201 Created`
 
-`Location: http://hub/channel/stumptown/2013/04/23/20/42/{hash}`
+`Location: http://hub/channel/stumptown/2013/04/23/20/42/31/{hash}`
 
 ```json
 {
@@ -208,7 +208,7 @@ On success: `HTTP/1.1 201 Created`
       "href" : "http://hub/channel/stumptown"
     },
     "self" : {
-      "href" : "http://hub/channel/stumptown/2013/04/23/20/42/{hash}"
+      "href" : "http://hub/channel/stumptown/2013/04/23/20/42/31/{hash}"
     }
   },
   "timestamp" : "2013-04-23T20:42:31.146Z"
@@ -225,14 +225,14 @@ curl -i -X POST --header "Content-type: text/plain" --data 'your content here' h
 
 To fetch content that was stored into a hub channel, do a `GET` on the `self` link in the above response:
 
-`GET http://hub/channel/stumptown/2013/04/23/20/42/{hash}`
+`GET http://hub/channel/stumptown/2013/04/23/20/42/31/{hash}`
 
 On success: `HTTP/1.1 200 OK`
 ```
 Content-Type: text/plain
 Creation-Date: 2013-04-23T00:21:30.662Z
-Link: <http://hub/channel/stumptown/2013/04/23/20/42/{hash}/previous>;rel="previous"
-Link: <http://hub/channel/stumptown/2013/04/23/20/42/{hash}/next>;rel="next"
+Link: <http://hub/channel/stumptown/2013/04/23/20/42/31/{hash}/previous>;rel="previous"
+Link: <http://hub/channel/stumptown/2013/04/23/20/42/31/{hash}/next>;rel="next"
 ...other.headers...
 
 your content here
@@ -244,7 +244,7 @@ The `Creation-Date` header will correspond to when the data was inserted into th
 
 Here's how you can do this with curl:
 
-`curl -i http://hub/channel/stumptown/2013/04/23/20/42/{hash}`
+`curl -i http://hub/channel/stumptown/2013/04/23/20/42/31/{hash}`
 
 ## fetch latest channel items
 
@@ -254,7 +254,7 @@ returned from the channel metadata.  The Hub will issue a 303 redirect.
 `HEAD http://hub/channel/stumptown/latest`
 
 On success:  `HTTP/1.1 303 See Other`
-`Location: http://hub/channel/stumptown/2013/04/23/20/42/{hash}`
+`Location: http://hub/channel/stumptown/2013/04/23/20/42/31/{hash}`
 
 Here is how you can do this with curl:
 
@@ -311,16 +311,16 @@ On success: `HTTP/1.1 200 OK`
 The time interface returns all of the URIs of items inserted within the specified minute.
 
 To see the time format, issue a GET request on the `time` link returned from the channel metadata.
-The Hub will issue a 303 redirect for the current time.
+The Hub will issue a 303 redirect for the current time with second resolution.
 
 `HEAD http://hub/channel/stumptown/time`
 
 On success:  `HTTP/1.1 303 See Other`
-`Location: http://hub/channel/stumptown/2014/01/13/10/42
+`Location: http://hub/channel/stumptown/2014/01/13/10/42/31
 
 A GET on the returned URI will return all of the content URIs within that period.
 
-`GET http://hub/channel/stumptown/2014/01/13/10/42`
+`GET http://hub/channel/stumptown/2014/01/13/10/42/31`
 
 On success:  `HTTP/1.1 200 OK`
 Content-Type is `application/json`
@@ -329,10 +329,10 @@ Content-Type is `application/json`
 {
   "_links" : {
     "self" : {
-      "href" : "http://hub/channel/stumptown/2014/01/13/10/42"
+      "href" : "http://hub/channel/stumptown/2014/01/13/10/42/31"
     },
-    "uris" : [ "http://hub/channel/stumptown/2014/01/13/10/42/{hash1}", "http://hub/channel/stumptown/2014/01/13/10/42/{hash2}",
-    "http://hub/channel/stumptown/2014/01/13/10/42/{hash3}" ]
+    "uris" : [ "http://hub/channel/stumptown/2014/01/13/10/42/31/{hash1}", "http://hub/channel/stumptown/2014/01/13/10/42/31/{hash2}",
+    "http://hub/channel/stumptown/2014/01/13/10/42/31/{hash3}" ]
   }
 ```
 
@@ -340,10 +340,16 @@ If no items were submitted during that time, 'uris' is an empty array.
 If the time requested is the current minute, 'uri's will reflect all of the items inserted within the minute so far, and will
 change as other items are inserted.
 
-### Resolution
-You can request all of the items by the resolution you specify in the URL.  
-For all the items in a minute: `GET http://hub/channel/stumptown/2014/01/13/10`
-For all the items in an hour: `GET http://hub/channel/stumptown/2014/01/13`
+### time resolution
+
+You can request all of the items by the time resolution you specify in the URL.  
+For all the items in a minute: `GET http://hub/channel/stumptown/2014/01/13/10/42`
+For all the items in an hour: `GET http://hub/channel/stumptown/2014/01/13/10`
+
+You can also access the urls via convenience methods:
+
+`HEAD http://hub/channel/stumptown/time/minute`
+`HEAD http://hub/channel/stumptown/time/hour`
 
 The output format is the same regardless of time resolution
 
@@ -361,9 +367,9 @@ Each time data is inserted into the channel, the hub will send a line to the cli
 URL for that content.
 
 ```
-http://hub/channel/stumptown/2014/01/13/10/42/{hash1}
-http://hub/channel/stumptown/2014/01/13/10/42/{hash2}
-http://hub/channel/stumptown/2014/01/13/10/42/{hash3}
+http://hub/channel/stumptown/2014/01/13/10/42/31/{hash1}
+http://hub/channel/stumptown/2014/01/13/10/42/31/{hash2}
+http://hub/channel/stumptown/2014/01/13/10/42/31/{hash3}
 ...etc...
 ```
 
@@ -418,7 +424,7 @@ Retries will use an exponential backoff up to one minute, and the server will co
 ``` json
 {
   "name" : "stumptownCallback",
-  "uris" : [ "http://hub/channel/stumptown/2014/01/13/10/42/{hash1}" ]
+  "uris" : [ "http://hub/channel/stumptown/2014/01/13/10/42/31/{hash1}" ]
 }
 ```
 
