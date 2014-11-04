@@ -34,6 +34,7 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 expect(body._links.uris.length).toBe(4);
+                //todo - gfm - 11/4/14 - do a get on these
                 done();
             })
     });
