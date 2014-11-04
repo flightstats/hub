@@ -5,6 +5,7 @@ The Hub V2
 * [clients](#clients)
 * [error handling](#error-handling)
 * [FAQ](#faq)
+* [hub resources](#hub-resources)
 * [list channels](#list-channels)
 * [create a channel](#create-a-channel)
 * [update a channel](#update-a-channel)
@@ -30,12 +31,12 @@ The Hub V2
 * [deployments](#deployments)
 * [Requirements Notes](#Requirements-Notes)
 
-For the purposes of this document, the Hub is at http://hubv2/.
+For the purposes of this document, the Hub is at http://hub-v2/.
 
 * On your local machine it is at: http://localhost:9080/
-* In development: http://hubv2.svc.dev/
-* In staging: http://hubv2.svc.staging/
-* In production: http://hubv2.svc.prod/
+* In development: http://hub-v2.svc.dev/
+* In staging: http://hub-v2.svc.staging/ (coming soon!)
+* In production: http://hub-v2.svc.prod/ (coming soon!)
 
 ## overview
 
@@ -57,6 +58,7 @@ In addition, some more sophisticated clients exist:
 * [Java](https://github.com/flightstats/datahub-client/)
 * [Javascript](https://github.com/flightstats/edge-lib/tree/master/datahub)
 * [Utilities](https://github.com/flightstats/hub-utilities)
+* [Zombo](https://github.com/flightstats/zombo)
 
 ## error handling
 
@@ -73,6 +75,10 @@ The DDT team recommends clients use exponential backoff.
 * How can I guarantee ordering in a channel?
 
   You can wait for the response for an item before writing the next item.  
+
+## hub resources
+
+To explore the Resources available in the Hub, go to http://hub-v2/
 
 ## list channels
 
