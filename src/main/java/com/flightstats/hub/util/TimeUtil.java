@@ -15,7 +15,11 @@ public class TimeUtil {
     }
 
     public static String secondsNow() {
-        return now().toString(secondsFormatter);
+        return seconds(now());
+    }
+
+    public static String seconds(DateTime dateTime) {
+        return dateTime.toString(secondsFormatter);
     }
 
     public static String minutesNow() {
