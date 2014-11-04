@@ -85,7 +85,10 @@ public class ContentDaoImpl implements ContentDao {
             //todo - gfm - 11/2/14 - change namespace
             Namespace namespace = new Namespace("default", channelName);
             Location location = new Location(namespace, key.key());
-            FetchValue.Response response = riakClient.execute(new FetchValue.Builder(location).build());
+            FetchValue fetchValue = new FetchValue.Builder(location)
+                    .withOption(FetchValue.Option.R, Quorum.quorumQuorum())
+                    .build();
+            FetchValue.Response response = riakClient.execute(fetchValue);
             RiakObject object = response.getValue(RiakObject.class);
             Content.Builder builder = Content.builder()
                     .withContentKey(key)

@@ -9,6 +9,7 @@ import httplib2
 
 # Usage:
 # locust -f read-write.py -H http://hub.svc.prod
+# nohup locust -f read-write.py -H http://hub-v2.svc.dev &
 
 class WebsiteTasks(TaskSet):
     channelNum = 0
@@ -16,7 +17,6 @@ class WebsiteTasks(TaskSet):
     def on_start(self):
         self._http = httplib2.Http()
         WebsiteTasks.channelNum += 1
-        #todo make byte size this a command line var
         self.number = WebsiteTasks.channelNum * 2000
         self.payload = self.payload_generator(self.number)
         print("payload size " + str(self.payload.__sizeof__()))
