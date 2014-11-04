@@ -92,8 +92,8 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
-        return contentDao.getKeys(channelName, dateTime);
+    public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
+        return contentDao.getKeys(channelName, startTime, endTime);
     }
 
     @Override
