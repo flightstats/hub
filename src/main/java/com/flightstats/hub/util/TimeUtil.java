@@ -9,6 +9,7 @@ public class TimeUtil {
     private static final DateTimeFormatter secondsFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm/ss/");
     private static final DateTimeFormatter minutesFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm/");
     private static final DateTimeFormatter hoursFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/");
+    private static final DateTimeFormatter daysFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/");
 
     public static DateTime now() {
         return new DateTime(DateTimeZone.UTC);
@@ -28,6 +29,10 @@ public class TimeUtil {
 
     public static String hoursNow() {
         return now().toString(hoursFormatter);
+    }
+
+    public static String daysNow() {
+        return now().toString(daysFormatter);
     }
 
 }
