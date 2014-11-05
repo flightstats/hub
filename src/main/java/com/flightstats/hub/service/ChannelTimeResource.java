@@ -51,6 +51,12 @@ public class ChannelTimeResource {
         return getResponse(TimeUtil.hoursNow(), "time/hour");
     }
 
+    @Path("/day")
+    @GET
+    public Response getDay() {
+        return getResponse(TimeUtil.hoursNow(), "time/day");
+    }
+
     private Response getResponse(String timePath, String endString) {
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
         String channelUri = uriInfo.getRequestUri().toString();
