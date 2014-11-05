@@ -62,7 +62,7 @@ public class ContentServiceImpl implements ContentService {
             inFlight.incrementAndGet();
             String channelName = configuration.getName();
             //todo - gfm - 10/28/14 - make this a more interesting info level log
-            logger.debug("inserting {} bytes into channel {} ", content.getData().length, channelName);
+            logger.trace("inserting {} bytes into channel {} ", content.getData().length, channelName);
 
             InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());
             //todo - gfm - 10/28/14 - change this
@@ -80,7 +80,7 @@ public class ContentServiceImpl implements ContentService {
             return Optional.absent();
         }
         ContentKey key = keyOptional.get();
-        logger.debug("fetching {} from channel {} ", key.toString(), channelName);
+        logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         Content value = contentDao.read(channelName, key);
         return Optional.fromNullable(value);
     }

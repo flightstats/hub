@@ -83,18 +83,23 @@ public class ChannelContentResource {
     }
 
     private Response getResponse(String channelName, DateTime startTime, DateTime endTime) {
-        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
-        ObjectNode root = mapper.createObjectNode();
-        ObjectNode links = root.putObject("_links");
-        ObjectNode self = links.putObject("self");
-        self.put("href", uriInfo.getRequestUri().toString());
-        ArrayNode ids = links.putArray("uris");
-        URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
-        for (ContentKey key : keys) {
-            URI uri = linkBuilder.buildItemUri(key, channelUri);
-            ids.add(uri.toString());
+        try {
+            Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
+            ObjectNode root = mapper.createObjectNode();
+            ObjectNode links = root.putObject("_links");
+            ObjectNode self = links.putObject("self");
+            self.put("href", uriInfo.getRequestUri().toString());
+            ArrayNode ids = links.putArray("uris");
+            URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
+            for (ContentKey key : keys) {
+                URI uri = linkBuilder.buildItemUri(key, channelUri);
+                ids.add(uri.toString());
+            }
+            return Response.ok(root).build();
+        } catch (Exception e) {
+            logger.warn("unable to process keys", e);
+            throw e;
         }
-        return Response.ok(root).build();
     }
 
     //todo - gfm - 1/22/14 - would be nice to have a head method, which doesn't fetch the body.
