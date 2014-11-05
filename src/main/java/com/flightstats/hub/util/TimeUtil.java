@@ -24,15 +24,27 @@ public class TimeUtil {
     }
 
     public static String minutesNow() {
-        return now().toString(minutesFormatter);
+        return minutes(now());
+    }
+
+    public static String minutes(DateTime dateTime) {
+        return dateTime.toString(minutesFormatter);
     }
 
     public static String hoursNow() {
-        return now().toString(hoursFormatter);
+        return hours(now());
+    }
+
+    public static String hours(DateTime dateTime) {
+        return dateTime.toString(hoursFormatter);
     }
 
     public static String daysNow() {
-        return now().toString(daysFormatter);
+        return days(now());
+    }
+
+    public static String days(DateTime dateTime) {
+        return dateTime.toString(daysFormatter);
     }
 
 }

@@ -34,12 +34,16 @@ public class ChannelLinkBuilder {
         }
     }
 
+    public static String buildChannelString(String channelName, UriInfo uriInfo) {
+        return uriInfo.getBaseUri() + "channel/" + channelName;
+    }
+
     URI buildChannelUri(ChannelConfiguration channelConfiguration, UriInfo uriInfo) {
         return buildChannelUri(channelConfiguration.getName(), uriInfo);
     }
 
     URI buildChannelUri(String channelName, UriInfo uriInfo) {
-        return URI.create(uriInfo.getBaseUri() + "channel/" + channelName);
+        return URI.create(buildChannelString(channelName, uriInfo));
     }
 
     URI buildTagUri(String tag, UriInfo uriInfo) {

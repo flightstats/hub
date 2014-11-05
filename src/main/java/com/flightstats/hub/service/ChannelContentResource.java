@@ -11,6 +11,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -62,7 +63,7 @@ public class ChannelContentResource {
                               @PathParam("day") int day) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
         DateTime endTime = startTime.plusDays(1).minusMillis(1);
-        return getResponse(channelName, startTime, endTime);
+        return getResponse(channelName, startTime, endTime, TimeUtil.days(startTime.minusDays(1)), TimeUtil.days(startTime.plusDays(1)));
     }
 
     @Path("/{month}/{day}/{hour}")
@@ -77,7 +78,7 @@ public class ChannelContentResource {
                               @PathParam("hour") int hour) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
         DateTime endTime = startTime.plusHours(1).minusMillis(1);
-        return getResponse(channelName, startTime, endTime);
+        return getResponse(channelName, startTime, endTime, TimeUtil.hours(startTime.minusHours(1)), TimeUtil.hours(startTime.plusHours(1)));
     }
 
     @Path("/{month}/{day}/{hour}/{minute}")
@@ -93,7 +94,7 @@ public class ChannelContentResource {
                               @PathParam("minute") int minute) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
         DateTime endTime = startTime.plusMinutes(1).minusMillis(1);
-        return getResponse(channelName, startTime, endTime);
+        return getResponse(channelName, startTime, endTime, TimeUtil.minutes(startTime.minusMinutes(1)), TimeUtil.minutes(startTime.plusMinutes(1)));
     }
 
     @Path("/{month}/{day}/{hour}/{minute}/{second}")
@@ -110,15 +111,19 @@ public class ChannelContentResource {
                               @PathParam("second") int second) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
         DateTime endTime = startTime.plusSeconds(1).minusMillis(1);
-        return getResponse(channelName, startTime, endTime);
+        return getResponse(channelName, startTime, endTime, TimeUtil.seconds(startTime.minusSeconds(1)), TimeUtil.seconds(startTime.plusSeconds(1)));
     }
 
-    private Response getResponse(String channelName, DateTime startTime, DateTime endTime) {
+    private Response getResponse(String channelName, DateTime startTime, DateTime endTime, String previousString, String nextString) {
         Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
+        ObjectNode next = links.putObject("next");
+        next.put("href", ChannelLinkBuilder.buildChannelString(channelName, uriInfo) + "/" + nextString);
+        ObjectNode previous = links.putObject("previous");
+        previous.put("href", ChannelLinkBuilder.buildChannelString(channelName, uriInfo) + "/" + previousString);
         ArrayNode ids = links.putArray("uris");
         URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
         for (ContentKey key : keys) {
