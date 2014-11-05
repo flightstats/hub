@@ -310,10 +310,35 @@ On success: `HTTP/1.1 200 OK`
 
 The time interface returns all of the URIs of items inserted within the specified minute.
 
-To see the time format, issue a GET request on the `time` link returned from the channel metadata.
-The Hub will issue a 303 redirect for the current time with second resolution.
+To see time format options, issue a GET request on the `time` link returned from the channel metadata.
 
-`HEAD http://hub/channel/stumptown/time`
+`GET http://hub/channel/stumptown/time`
+
+```json
+{
+    "_links": {
+        "self": {
+            "href": "http://localhost:9080/channel/test_0_8147969620767981/time"
+        },
+        "second": {
+            "href": "http://localhost:9080/channel/test_0_8147969620767981/time/second"
+        },
+        "minute": {
+            "href": "http://localhost:9080/channel/test_0_8147969620767981/time/minute"
+        },
+        "hour": {
+            "href": "http://localhost:9080/channel/test_0_8147969620767981/time/hour"
+        },
+        "day": {
+            "href": "http://localhost:9080/channel/test_0_8147969620767981/time/day"
+        }
+    }
+}
+```
+
+Call one of uris, and the Hub will issue a 303 redirect for the current time with the specified resolution.
+
+`HEAD http://localhost:9080/channel/test_0_8147969620767981/time/second`
 
 On success:  `HTTP/1.1 303 See Other`
 `Location: http://hub/channel/stumptown/2014/01/13/10/42/31
@@ -331,8 +356,11 @@ Content-Type is `application/json`
     "self" : {
       "href" : "http://hub/channel/stumptown/2014/01/13/10/42/31"
     },
-    "uris" : [ "http://hub/channel/stumptown/2014/01/13/10/42/31/{hash1}", "http://hub/channel/stumptown/2014/01/13/10/42/31/{hash2}",
-    "http://hub/channel/stumptown/2014/01/13/10/42/31/{hash3}" ]
+    "uris" : [ 
+        "http://hub/channel/stumptown/2014/01/13/10/42/31/{hash1}", 
+        "http://hub/channel/stumptown/2014/01/13/10/42/31/{hash2}",
+        "http://hub/channel/stumptown/2014/01/13/10/42/31/{hash3}" 
+    ]
   }
 ```
 

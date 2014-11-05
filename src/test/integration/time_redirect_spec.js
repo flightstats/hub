@@ -30,10 +30,6 @@ describe(testName, function () {
 
     });
 
-    it('gets default redirect', function (done) {
-        verifyRedirect(timeUrl, '/YYYY/MM/DD/HH/mm/ss/', done);
-    });
-
     it('gets seconds redirect', function (done) {
         verifyRedirect(timeUrl + '/second', '/YYYY/MM/DD/HH/mm/ss/', done);
     });
