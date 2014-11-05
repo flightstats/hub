@@ -120,6 +120,11 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
+    public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
+        return contentService.getKeys(channelName, contentKey, count);
+    }
+
+    @Override
     public boolean delete(String channelName) {
         if (!channelConfigurationDao.channelExists(channelName)) {
             return false;

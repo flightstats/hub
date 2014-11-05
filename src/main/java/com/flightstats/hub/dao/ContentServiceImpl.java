@@ -102,6 +102,11 @@ public class ContentServiceImpl implements ContentService {
         contentDao.delete(channelName);
     }
 
+    @Override
+    public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
+        return contentDao.getKeys(channelName, contentKey, count);
+    }
+
     private class ContentServiceHook extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
