@@ -113,6 +113,7 @@ public class RiakContentDao implements ContentDao {
 
     @Override
     public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
+        logger.debug("starting query {} {} {}", channelName, startTime, endTime);
         List<ContentKey> keys = new ArrayList<>();
         try {
             Namespace namespace = new Namespace("default", channelName);
@@ -127,6 +128,7 @@ public class RiakContentDao implements ContentDao {
                 keys.add(ContentKey.fromString(entry.getRiakObjectLocation().getKey().toString()).get());
 
             }
+            logger.debug("found {} for {} {} {}", keys.size(), channelName, startTime, endTime);
             return keys;
         } catch (Exception e) {
             logger.warn("query fail " + channelName + " " + startTime + " " + endTime, e);

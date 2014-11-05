@@ -63,9 +63,27 @@ public class ChannelContentResource {
                               @PathParam("minute") int minute) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
         DateTime endTime = new DateTime(year, month, day, hour, minute, 59, 999, DateTimeZone.UTC);
+        return getResponse(channelName, startTime, endTime);
+    }
 
+    @Path("/{month}/{day}/{hour}/{minute}/{second}")
+    @EventTimed(name = "channel.ALL.second")
+    @PerChannelTimed(operationName = "second", channelNameParameter = "channelName", newName = "second")
+    @GET
+    public Response getSecond(@PathParam("channelName") String channelName,
+                              @PathParam("year") int year,
+                              @PathParam("month") int month,
+                              @PathParam("day") int day,
+                              @PathParam("hour") int hour,
+                              @PathParam("minute") int minute,
+                              @PathParam("second") int second) {
+        DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
+        DateTime endTime = new DateTime(year, month, day, hour, minute, second, 999, DateTimeZone.UTC);
+        return getResponse(channelName, startTime, endTime);
+    }
+
+    private Response getResponse(String channelName, DateTime startTime, DateTime endTime) {
         Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
-
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
@@ -76,7 +94,6 @@ public class ChannelContentResource {
             URI uri = linkBuilder.buildItemUri(key, channelUri);
             ids.add(uri.toString());
         }
-
         return Response.ok(root).build();
     }
 
