@@ -54,7 +54,7 @@ public class ChannelTimeResource {
     @Path("/day")
     @GET
     public Response getDay() {
-        return getResponse(TimeUtil.hoursNow(), "time/day");
+        return getResponse(TimeUtil.daysNow(), "time/day");
     }
 
     private Response getResponse(String timePath, String endString) {

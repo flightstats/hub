@@ -46,6 +46,9 @@ describe(testName, function () {
         verifyRedirect(timeUrl + '/hour', '/YYYY/MM/DD/HH/', done);
     });
 
+    it('gets day redirect', function (done) {
+        verifyRedirect(timeUrl + '/day', '/YYYY/MM/DD/', done);
+    });
 
     function verifyRedirect(url, format, done) {
         var time = moment().utc().format(format);
