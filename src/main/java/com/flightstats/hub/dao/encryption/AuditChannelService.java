@@ -155,6 +155,11 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
+    public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
+        return getKeys(channelName, contentKey, count);
+    }
+
+    @Override
     public boolean delete(String channelName) {
         if (isAuditChannel(channelName) && isNotTestChannel(channelName)) {
             throw new ForbiddenRequestException("Audit Channels can not be deleted.");
