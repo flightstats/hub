@@ -1,6 +1,7 @@
 package com.flightstats.hub.service;
 
 import com.flightstats.hub.util.TimeUtil;
+import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -8,6 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -29,8 +32,15 @@ public class ChannelTimeResource {
     }
 
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getDefault() {
-        return getResponse(TimeUtil.secondsNow(), "time");
+        Linked.Builder<?> links = Linked.justLinks();
+        links.withLink("self", uriInfo.getRequestUri());
+        links.withLink("second", uriInfo.getRequestUri() + "/second");
+        links.withLink("minute", uriInfo.getRequestUri() + "/minute");
+        links.withLink("hour", uriInfo.getRequestUri() + "/hour");
+        links.withLink("day", uriInfo.getRequestUri() + "/day");
+        return Response.ok(links.build()).build();
     }
 
     @Path("/second")
