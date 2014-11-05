@@ -51,7 +51,36 @@ public class ChannelContentResource {
         this.linkBuilder = linkBuilder;
     }
 
-    @Path("/{month}/{day}/{hour}/{minute}/")
+    @Path("/{month}/{day}/")
+    @EventTimed(name = "channel.ALL.day")
+    @PerChannelTimed(operationName = "day", channelNameParameter = "channelName", newName = "day")
+    @Produces(MediaType.APPLICATION_JSON)
+    @GET
+    public Response getMinute(@PathParam("channelName") String channelName,
+                              @PathParam("year") int year,
+                              @PathParam("month") int month,
+                              @PathParam("day") int day) {
+        DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
+        DateTime endTime = startTime.plusDays(1).minusMillis(1);
+        return getResponse(channelName, startTime, endTime);
+    }
+
+    @Path("/{month}/{day}/{hour}")
+    @EventTimed(name = "channel.ALL.hour")
+    @PerChannelTimed(operationName = "hour", channelNameParameter = "channelName", newName = "hour")
+    @Produces(MediaType.APPLICATION_JSON)
+    @GET
+    public Response getMinute(@PathParam("channelName") String channelName,
+                              @PathParam("year") int year,
+                              @PathParam("month") int month,
+                              @PathParam("day") int day,
+                              @PathParam("hour") int hour) {
+        DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
+        DateTime endTime = startTime.plusHours(1).minusMillis(1);
+        return getResponse(channelName, startTime, endTime);
+    }
+
+    @Path("/{month}/{day}/{hour}/{minute}")
     @EventTimed(name = "channel.ALL.minute")
     @PerChannelTimed(operationName = "minute", channelNameParameter = "channelName", newName = "minute")
     @Produces(MediaType.APPLICATION_JSON)
@@ -63,7 +92,7 @@ public class ChannelContentResource {
                               @PathParam("hour") int hour,
                               @PathParam("minute") int minute) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        DateTime endTime = new DateTime(year, month, day, hour, minute, 59, 999, DateTimeZone.UTC);
+        DateTime endTime = startTime.plusMinutes(1).minusMillis(1);
         return getResponse(channelName, startTime, endTime);
     }
 
@@ -80,7 +109,7 @@ public class ChannelContentResource {
                               @PathParam("minute") int minute,
                               @PathParam("second") int second) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        DateTime endTime = new DateTime(year, month, day, hour, minute, second, 999, DateTimeZone.UTC);
+        DateTime endTime = startTime.plusSeconds(1).minusMillis(1);
         return getResponse(channelName, startTime, endTime);
     }
 

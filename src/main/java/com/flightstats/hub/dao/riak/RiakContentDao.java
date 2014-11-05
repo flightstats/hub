@@ -126,7 +126,6 @@ public class RiakContentDao implements ContentDao {
             List<IntIndexQuery.Response.Entry> entries = queryResponse.getEntries();
             for (IntIndexQuery.Response.Entry entry : entries) {
                 keys.add(ContentKey.fromString(entry.getRiakObjectLocation().getKey().toString()).get());
-
             }
             logger.debug("found {} for {} {} {}", keys.size(), channelName, startTime, endTime);
             return keys;
