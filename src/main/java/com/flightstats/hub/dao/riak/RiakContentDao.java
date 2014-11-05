@@ -53,6 +53,7 @@ public class RiakContentDao implements ContentDao {
             Namespace namespace = new Namespace("default", channelName);
             Location location = new Location(namespace, key.key());
             RiakObject riakObject = new RiakObject();
+
             if (content.getData().length > 0) {
                 riakObject.setValue(BinaryValue.create(content.getData()));
             }
@@ -60,6 +61,7 @@ public class RiakContentDao implements ContentDao {
 
             if (content.getContentType().isPresent()) {
                 riakObject.getUserMeta().put("contentType", content.getContentType().get());
+                riakObject.setContentType(content.getContentType().get());
             }
             if (content.getContentLanguage().isPresent()) {
                 riakObject.getUserMeta().put("contentLanguage", content.getContentLanguage().get());
