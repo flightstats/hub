@@ -15,10 +15,9 @@ var groupConfig = {
 };
 
 describe(testName, function () {
-    console.log('channelName ' + channelName);
     utils.createChannel(channelName);
 
-    it('adds items and traverses links', function (done) {
+    it('adds items and traverses next links', function (done) {
         var values = [];
         var items = [];
         postItem(channelResource)
@@ -31,9 +30,14 @@ describe(testName, function () {
                 return getItem(items[0] + '/next', 404);
             })
             .then(function (value) {
-                return getItem(items[0] + '/previous', 404);
+                return getItem(items[0] + '/next/2', 200);
             })
             .then(function (value) {
+                expect(value.body._links.uris.length).toBe(0);
+                return postItem(channelResource);
+            })
+            .then(function (value) {
+                items.push(value.body._links.self.href);
                 return postItem(channelResource);
             })
             .then(function (value) {
@@ -42,6 +46,13 @@ describe(testName, function () {
             })
             .then(function (value) {
                 expect(value.response.request.href).toBe(items[1]);
+                return getItem(items[0] + '/next/2', 200);
+            })
+            .then(function (value) {
+                expect(value.body._links.uris.length).toBe(2);
+                expect(value.body._links.uris[0]).toBe(items[1]);
+                expect(value.body._links.uris[1]).toBe(items[2]);
+                expect(value.body._links.next.href).toBe(items[2] + '/next/2');
                 done();
             })
     });
