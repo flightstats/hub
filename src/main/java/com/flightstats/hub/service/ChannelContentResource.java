@@ -54,6 +54,7 @@ public class ChannelContentResource {
     @Path("/{month}/{day}/{hour}/{minute}/")
     @EventTimed(name = "channel.ALL.minute")
     @PerChannelTimed(operationName = "minute", channelNameParameter = "channelName", newName = "minute")
+    @Produces(MediaType.APPLICATION_JSON)
     @GET
     public Response getMinute(@PathParam("channelName") String channelName,
                               @PathParam("year") int year,
@@ -69,6 +70,7 @@ public class ChannelContentResource {
     @Path("/{month}/{day}/{hour}/{minute}/{second}")
     @EventTimed(name = "channel.ALL.second")
     @PerChannelTimed(operationName = "second", channelNameParameter = "channelName", newName = "second")
+    @Produces(MediaType.APPLICATION_JSON)
     @GET
     public Response getSecond(@PathParam("channelName") String channelName,
                               @PathParam("year") int year,
@@ -83,23 +85,18 @@ public class ChannelContentResource {
     }
 
     private Response getResponse(String channelName, DateTime startTime, DateTime endTime) {
-        try {
-            Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
-            ObjectNode root = mapper.createObjectNode();
-            ObjectNode links = root.putObject("_links");
-            ObjectNode self = links.putObject("self");
-            self.put("href", uriInfo.getRequestUri().toString());
-            ArrayNode ids = links.putArray("uris");
-            URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
-            for (ContentKey key : keys) {
-                URI uri = linkBuilder.buildItemUri(key, channelUri);
-                ids.add(uri.toString());
-            }
-            return Response.ok(root).build();
-        } catch (Exception e) {
-            logger.warn("unable to process keys", e);
-            throw e;
+        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
+        ObjectNode root = mapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
+        self.put("href", uriInfo.getRequestUri().toString());
+        ArrayNode ids = links.putArray("uris");
+        URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
+        for (ContentKey key : keys) {
+            URI uri = linkBuilder.buildItemUri(key, channelUri);
+            ids.add(uri.toString());
         }
+        return Response.ok(root).build();
     }
 
     //todo - gfm - 1/22/14 - would be nice to have a head method, which doesn't fetch the body.
