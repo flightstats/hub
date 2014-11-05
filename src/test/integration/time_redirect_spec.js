@@ -15,7 +15,6 @@ var testName = __filename;
  * verify redirects for second, minute, hour
  */
 describe(testName, function () {
-    console.log('channelName ' + channelName);
     utils.createChannel(channelName);
 
     var timeUrl;

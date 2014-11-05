@@ -21,7 +21,6 @@ var groupConfig = {
  * 3 - verify that records are returned via time query
  */
 describe(testName, function () {
-    console.log('channelName ' + channelName);
     utils.createChannel(channelName);
 
     for (var i = 0; i < 4; i++) {
