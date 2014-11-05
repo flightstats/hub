@@ -33,5 +33,7 @@ public interface ChannelService {
 
     Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime);
 
+    Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count);
+
     boolean delete(String channelName);
 }

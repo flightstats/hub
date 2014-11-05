@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class RiakContentDao implements ContentDao {
 
@@ -151,6 +152,39 @@ public class RiakContentDao implements ContentDao {
     @Override
     public void delete(String channelName) {
         //todo - gfm - 10/31/14 - delete records from Riak
+    }
+
+    @Override
+    public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
+        logger.debug("starting query {} {} {}", channelName, contentKey, count);
+        List<ContentKey> keys = new ArrayList<>();
+        try {
+            Namespace namespace = new Namespace("default", channelName);
+            long startMillis = contentKey.getMillis();
+            long endMillis = startMillis + TimeUnit.DAYS.toMillis(1);
+            IntIndexQuery query = new IntIndexQuery.Builder(namespace, "time", startMillis, endMillis)
+                    .withPaginationSort(true)
+                    .withKeyAndIndex(true)
+                    .withMaxResults(count + 1)
+                    .build();
+            //todo - gfm - 11/5/14 - search forward & backward.
+            //todo - gfm - 11/5/14 - don't search into future
+            //todo - gfm - 11/5/14 - handle multiple time queries and variable search space
+            IntIndexQuery.Response queryResponse = riakClient.execute(query);
+            List<IntIndexQuery.Response.Entry> entries = queryResponse.getEntries();
+            for (IntIndexQuery.Response.Entry entry : entries) {
+                Optional<ContentKey> keyOptional = ContentKey.fromString(entry.getRiakObjectLocation().getKey().toString());
+                if (keyOptional.isPresent() && !contentKey.equals(keyOptional.get())) {
+                    keys.add(keyOptional.get());
+                }
+            }
+            logger.trace("found {} for {} {} {}", keys, channelName, contentKey, count);
+            logger.debug("found {} for {} {} {}", keys.size(), channelName, contentKey, count);
+            return keys;
+        } catch (Exception e) {
+            logger.warn("query fail " + channelName + " " + contentKey + " " + count, e);
+            return Collections.emptyList();
+        }
     }
 
     private class ContentDaoInit extends AbstractIdleService {

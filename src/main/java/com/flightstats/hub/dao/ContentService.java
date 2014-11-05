@@ -22,4 +22,6 @@ public interface ContentService {
     Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime);
 
     void delete(String channelName);
+
+    Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count);
 }

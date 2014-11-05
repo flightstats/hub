@@ -30,10 +30,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 @Path("/channel/{channelName}/{year}")
 public class ChannelContentResource {
@@ -57,13 +60,14 @@ public class ChannelContentResource {
     @PerChannelTimed(operationName = "day", channelNameParameter = "channelName", newName = "day")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public Response getMinute(@PathParam("channelName") String channelName,
+    public Response getDay(@PathParam("channelName") String channelName,
                               @PathParam("year") int year,
                               @PathParam("month") int month,
                               @PathParam("day") int day) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
         DateTime endTime = startTime.plusDays(1).minusMillis(1);
-        return getResponse(channelName, startTime, endTime, TimeUtil.days(startTime.minusDays(1)), TimeUtil.days(startTime.plusDays(1)));
+        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
+        return getResponse(channelName, TimeUtil.days(startTime.minusDays(1)), TimeUtil.days(startTime.plusDays(1)), keys);
     }
 
     @Path("/{month}/{day}/{hour}")
@@ -71,14 +75,15 @@ public class ChannelContentResource {
     @PerChannelTimed(operationName = "hour", channelNameParameter = "channelName", newName = "hour")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public Response getMinute(@PathParam("channelName") String channelName,
+    public Response getHour(@PathParam("channelName") String channelName,
                               @PathParam("year") int year,
                               @PathParam("month") int month,
                               @PathParam("day") int day,
                               @PathParam("hour") int hour) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
         DateTime endTime = startTime.plusHours(1).minusMillis(1);
-        return getResponse(channelName, startTime, endTime, TimeUtil.hours(startTime.minusHours(1)), TimeUtil.hours(startTime.plusHours(1)));
+        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
+        return getResponse(channelName, TimeUtil.hours(startTime.minusHours(1)), TimeUtil.hours(startTime.plusHours(1)), keys);
     }
 
     @Path("/{month}/{day}/{hour}/{minute}")
@@ -94,7 +99,8 @@ public class ChannelContentResource {
                               @PathParam("minute") int minute) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
         DateTime endTime = startTime.plusMinutes(1).minusMillis(1);
-        return getResponse(channelName, startTime, endTime, TimeUtil.minutes(startTime.minusMinutes(1)), TimeUtil.minutes(startTime.plusMinutes(1)));
+        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
+        return getResponse(channelName, TimeUtil.minutes(startTime.minusMinutes(1)), TimeUtil.minutes(startTime.plusMinutes(1)), keys);
     }
 
     @Path("/{month}/{day}/{hour}/{minute}/{second}")
@@ -111,19 +117,23 @@ public class ChannelContentResource {
                               @PathParam("second") int second) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
         DateTime endTime = startTime.plusSeconds(1).minusMillis(1);
-        return getResponse(channelName, startTime, endTime, TimeUtil.seconds(startTime.minusSeconds(1)), TimeUtil.seconds(startTime.plusSeconds(1)));
+        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
+        return getResponse(channelName, TimeUtil.seconds(startTime.minusSeconds(1)), TimeUtil.seconds(startTime.plusSeconds(1)), keys);
     }
 
-    private Response getResponse(String channelName, DateTime startTime, DateTime endTime, String previousString, String nextString) {
-        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
+    private Response getResponse(String channelName, String previousString, String nextString, Collection<ContentKey> keys) {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
-        ObjectNode next = links.putObject("next");
-        next.put("href", ChannelLinkBuilder.buildChannelString(channelName, uriInfo) + "/" + nextString);
-        ObjectNode previous = links.putObject("previous");
-        previous.put("href", ChannelLinkBuilder.buildChannelString(channelName, uriInfo) + "/" + previousString);
+        if (nextString != null) {
+            ObjectNode next = links.putObject("next");
+            next.put("href", ChannelLinkBuilder.buildChannelString(channelName, uriInfo) + "/" + nextString);
+        }
+        if (null != previousString) {
+            ObjectNode previous = links.putObject("previous");
+            previous.put("href", ChannelLinkBuilder.buildChannelString(channelName, uriInfo) + "/" + previousString);
+        }
         ArrayNode ids = links.putArray("uris");
         URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
         for (ContentKey key : keys) {
@@ -178,6 +188,43 @@ public class ChannelContentResource {
         URI linkUrl2 = URI.create(uriInfo.getRequestUri().resolve(".") + content.getContentKey().get().key() + "/next");
         builder.header("Link", "<" + linkUrl2 + ">;rel=\"" + "next" + "\"");
         return builder.build();
+    }
+
+    //todo - gfm - 11/5/14 - next & previous links
+
+    @Path("/{month}/{day}/{hour}/{minute}/{second}/{id}/next")
+    @GET
+    //todo - gfm - 11/5/14 - timing?
+    public Response getNext(@PathParam("channelName") String channelName, @PathParam("id") String id) {
+        //todo - gfm - 11/5/14 - more int test
+        Optional<ContentKey> keyOptional = ContentKey.fromString(id);
+        Collection<ContentKey> keys = channelService.getKeys(channelName, keyOptional.get(), 1);
+        if (keys.isEmpty()) {
+            return Response.status(NOT_FOUND).build();
+        }
+        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
+        String channelUri = ChannelLinkBuilder.buildChannelString(channelName, uriInfo);
+        ContentKey key = keys.iterator().next();
+        URI uri = URI.create(channelUri + "/" + key.urlKey());
+        builder.location(uri);
+        return builder.build();
+    }
+
+    @Path("/{month}/{day}/{hour}/{minute}/{second}/{id}/next/{count}")
+    @GET
+    //todo - gfm - 11/5/14 - timing?
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getNextCount(@PathParam("channelName") String channelName, @PathParam("id") String id, @PathParam("count") int count) {
+        //todo - gfm - 11/5/14 - int test
+        Optional<ContentKey> keyOptional = ContentKey.fromString(id);
+        Collection<ContentKey> keys = channelService.getKeys(channelName, keyOptional.get(), count);
+        List<ContentKey> list = new ArrayList<>(keys);
+        String nextString = null;
+        if (!list.isEmpty()) {
+            ContentKey contentKey = list.get(list.size() - 1);
+            nextString = contentKey.urlKey() + "/next/" + count;
+        }
+        return getResponse(channelName, null, nextString, keys);
     }
 
 
