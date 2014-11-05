@@ -120,6 +120,8 @@ public class RiakContentDao implements ContentDao {
             IntIndexQuery query = new IntIndexQuery.Builder(namespace, "time", startTime.getMillis(), endTime.getMillis())
                     .withPaginationSort(true)
                     .withKeyAndIndex(true)
+                            //todo - gfm - 11/4/14 - should there be a max result set size?
+                            //.withMaxResults(100 * 1000)
                     .build();
 
             IntIndexQuery.Response queryResponse = riakClient.execute(query);
