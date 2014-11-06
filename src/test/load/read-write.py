@@ -28,7 +28,7 @@ class WebsiteTasks(TaskSet):
                          headers={"Content-Type": "application/json"}
         )
 
-    @task(10)
+    @task(100)
     def write_read(self):
         payload = {"name": self.payload, "count": self.count}
         #write payload
@@ -49,34 +49,41 @@ class WebsiteTasks(TaskSet):
 
         self.count += 1
 
-    @task(16)
+    @task(1)
     def day_query(self):
-        self.next(self.time_path("day"),100)
+        self.next(self.time_path("day"))
 
-    @task(8)
+    @task(5)
     def hour_query(self):
-        self.next(self.time_path("hour"),10)
+        self.next(self.time_path("hour"))
 
-    @task(4)
+    @task(10)
     def minute_query(self):
-        self.next(self.time_path("minute"),2)
+        self.next(self.time_path("minute"))
 
-    @task(2)
+    @task(10)
     def second_query(self):
         self.client.get(self.time_path("second"))
 
     def time_path(self, unit="second"):
         return "/channel/" + self.channel + "/time/" + unit
 
-    def next(self, path, num=10):
+    def next(self, path):
+        # todo - this should use _http instead, and store stats using
+        #events.request_failure.fire(request_type="xmlrpc", name=name, response_time=total_time, exception=e)
+        # events.request_success.fire(request_type="xmlrpc", name=name, response_time=total_time, response_length=0)
+        # from http://docs.locust.io/en/latest/testing-other-systems.html
+        # this will prevent unique URIs being reported by locust
         with self.client.get(path, catch_response=True) as postResponse:
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on get: " + postResponse.status_code)
         links = postResponse.json()
         uris = links['_links']['uris']
+        #todo - maybe loop over all the results?
         if len(uris) > 0:
             self_href = uris[0]
-            self.client.get(self_href + "/next/" + str(num))
+            # todo - this should use _http instead
+            self.client.get(self_href)
 
 
     def payload_generator(self, size, chars=string.ascii_uppercase + string.digits):
