@@ -28,9 +28,10 @@ class WebsiteTasks(TaskSet):
                          headers={"Content-Type": "application/json"}
         )
 
-    @task
-    def index(self):
+    @task(10)
+    def write_read(self):
         payload = {"name": self.payload, "count": self.count}
+        #write payload
         with self.client.post("/channel/" + self.channel, data=json.dumps(payload),
                               headers={"Content-Type": "application/json"}, catch_response=True) as postResponse:
             if postResponse.status_code != 201:
@@ -47,6 +48,35 @@ class WebsiteTasks(TaskSet):
                 postResponse.failure("wrong count: " + str(body['count']))
 
         self.count += 1
+
+    @task(16)
+    def day_query(self):
+        self.next(self.time_path("day"),100)
+
+    @task(8)
+    def hour_query(self):
+        self.next(self.time_path("hour"),10)
+
+    @task(4)
+    def minute_query(self):
+        self.next(self.time_path("minute"),2)
+
+    @task(2)
+    def second_query(self):
+        self.client.get(self.time_path("second"))
+
+    def time_path(self, unit="second"):
+        return "/channel/" + self.channel + "/time/" + unit
+
+    def next(self, path, num=10):
+        with self.client.get(path, catch_response=True) as postResponse:
+            if postResponse.status_code != 200:
+                postResponse.failure("Got wrong response on get: " + postResponse.status_code)
+        links = postResponse.json()
+        uris = links['_links']['uris']
+        if len(uris) > 0:
+            self_href = uris[0]
+            self.client.get(self_href + "/next/" + str(num))
 
 
     def payload_generator(self, size, chars=string.ascii_uppercase + string.digits):
