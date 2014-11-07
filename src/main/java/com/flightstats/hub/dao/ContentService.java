@@ -15,7 +15,7 @@ public interface ContentService {
 
     InsertedContentKey insert(ChannelConfiguration configuration, Content content);
 
-    Optional<Content> getValue(String channelName, String id);
+    Optional<Content> getValue(String channelName, ContentKey key);
 
     Optional<ContentKey> findLastUpdatedKey(String channelName);
 

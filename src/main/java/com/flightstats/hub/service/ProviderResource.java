@@ -68,7 +68,7 @@ public class ProviderResource {
         } catch (Exception e) {
             String key = "";
             if (content.getContentKey().isPresent()) {
-                key = content.getContentKey().get().key();
+                key = content.getContentKey().get().toString();
             }
             logger.warn("unable to POST to " + channelName + " key " + key, e);
             throw e;

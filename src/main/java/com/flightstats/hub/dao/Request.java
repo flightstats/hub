@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.model.ContentKey;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -11,12 +12,12 @@ import java.util.Date;
 @Builder
 @Getter
 @ToString
-@EqualsAndHashCode(of = {"channel", "id"})
+@EqualsAndHashCode(of = {"channel", "key"})
 public class Request {
     private final String channel;
     private final String user;
     private final URI uri;
-    private final String id;
+    private final ContentKey key;
     private Date date = new Date();
 
 }

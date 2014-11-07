@@ -22,7 +22,7 @@ public class WebsocketPublisherImpl implements WebsocketPublisher {
     @Override
     public void publish(final String channelName, final ContentKey key) {
         try {
-            getTopicForChannel(channelName).publish(key.urlKey());
+            getTopicForChannel(channelName).publish(key.toUrl());
         } catch (HazelcastInstanceNotActiveException e) {
             logger.warn("unable to publish to hazelcast due to server shutdown {} {}", channelName, key);
         } catch (Exception e) {
