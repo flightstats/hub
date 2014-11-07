@@ -164,6 +164,7 @@ public class RiakContentDao implements ContentDao {
             Namespace namespace = new Namespace("default", channelName);
             long startMillis = contentKey.getMillis();
             long endMillis = startMillis + TimeUnit.DAYS.toMillis(1);
+            //todo - gfm - 11/6/14 - cap endMillis to now - 15s
             IntIndexQuery query = new IntIndexQuery.Builder(namespace, "time", startMillis, endMillis)
                     .withPaginationSort(true)
                     .withKeyAndIndex(true)
