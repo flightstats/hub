@@ -35,7 +35,7 @@ class WebsiteTasks(TaskSet):
         with self.client.post("/channel/" + self.channel, data=json.dumps(payload),
                               headers={"Content-Type": "application/json"}, catch_response=True) as postResponse:
             if postResponse.status_code != 201:
-                postResponse.failure("Got wrong response on post: " + postResponse.status_code)
+                postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
 
         links = postResponse.json()
         getResponse = self._http.request(links['_links']['self']['href'], 'GET')
@@ -51,39 +51,42 @@ class WebsiteTasks(TaskSet):
 
     @task(1)
     def day_query(self):
-        self.next(self.time_path("day"))
+        self.next("day")
 
     @task(5)
     def hour_query(self):
-        self.next(self.time_path("hour"))
+        self.next("hour")
 
     @task(10)
     def minute_query(self):
-        self.next(self.time_path("minute"))
+        self.next("minute")
 
     @task(10)
     def second_query(self):
-        self.client.get(self.time_path("second"))
+        self.client.get(self.time_path("second"), name="time_second")
 
     def time_path(self, unit="second"):
         return "/channel/" + self.channel + "/time/" + unit
 
-    def next(self, path):
+    def next(self, time_unit):
+        path = self.time_path(time_unit)
         # todo - this should use _http instead, and store stats using
         #events.request_failure.fire(request_type="xmlrpc", name=name, response_time=total_time, exception=e)
         # events.request_success.fire(request_type="xmlrpc", name=name, response_time=total_time, response_length=0)
         # from http://docs.locust.io/en/latest/testing-other-systems.html
         # this will prevent unique URIs being reported by locust
-        with self.client.get(path, catch_response=True) as postResponse:
+        # bc - is name good enough?
+        with self.client.get(path, catch_response=True, name="time_"+time_unit) as postResponse:
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on get: " + postResponse.status_code)
         links = postResponse.json()
         uris = links['_links']['uris']
         #todo - maybe loop over all the results?
         if len(uris) > 0:
-            self_href = uris[0]
-            # todo - this should use _http instead
-            self.client.get(self_href)
+            for uri in uris:
+                # todo - this should use _http instead
+                # bc - is name good enough?
+                self.client.get(uri, name="get_payload")
 
 
     def payload_generator(self, size, chars=string.ascii_uppercase + string.digits):
