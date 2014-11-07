@@ -43,7 +43,7 @@ public class LatestChannelItemResource {
 
         String channelUri = uriInfo.getRequestUri().toString().replaceFirst("/latest$", "");
         ContentKey keyOfLatestItem = latestId.get();
-        URI uri = URI.create(channelUri + "/" + keyOfLatestItem.urlKey());
+        URI uri = URI.create(channelUri + "/" + keyOfLatestItem.toUrl());
         builder.location(uri);
         return builder.build();
     }

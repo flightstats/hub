@@ -121,6 +121,8 @@ public class ChannelContentResource {
         return getResponse(channelName, TimeUtil.seconds(startTime.minusSeconds(1)), TimeUtil.seconds(startTime.plusSeconds(1)), keys);
     }
 
+    //todo - gfm - 11/7/14 - add millis query path
+
     private Response getResponse(String channelName, String previousString, String nextString, Collection<ContentKey> keys) {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
@@ -145,18 +147,27 @@ public class ChannelContentResource {
 
     //todo - gfm - 1/22/14 - would be nice to have a head method, which doesn't fetch the body.
 
-    @Path("/{month}/{day}/{hour}/{minute}/{second}/{id}")
+    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}")
     @GET
     @Timed(name = "all-channels.fetch")
     @EventTimed(name = "channel.ALL.get")
     @PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName", newName = "get")
     @ExceptionMetered
-    public Response getValue(@PathParam("channelName") String channelName, @PathParam("id") String id,
+    public Response getValue(@PathParam("channelName") String channelName, @PathParam("year") int year,
+                             @PathParam("month") int month,
+                             @PathParam("day") int day,
+                             @PathParam("hour") int hour,
+                             @PathParam("minute") int minute,
+                             @PathParam("second") int second,
+                             @PathParam("millis") int millis,
+                             @PathParam("hash") String hash,
                              @HeaderParam("Accept") String accept, @HeaderParam("User") String user
     ) {
+        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
+        ContentKey key = new ContentKey(dateTime, hash);
         Request request = Request.builder()
                 .channel(channelName)
-                .id(id)
+                .key(key)
                 .user(user)
                 .uri(uriInfo.getRequestUri())
                 .build();
@@ -182,47 +193,62 @@ public class ChannelContentResource {
         ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
         ChannelLinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
 
-        //todo - gfm - 10/28/14 - clean this shit up
-        URI linkUrl1 = URI.create(uriInfo.getRequestUri().resolve(".") + content.getContentKey().get().key() + "/previous");
-        builder.header("Link", "<" + linkUrl1 + ">;rel=\"" + "previous" + "\"");
-        URI linkUrl2 = URI.create(uriInfo.getRequestUri().resolve(".") + content.getContentKey().get().key() + "/next");
-        builder.header("Link", "<" + linkUrl2 + ">;rel=\"" + "next" + "\"");
+        builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/previous") + ">;rel=\"" + "previous" + "\"");
+        builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/next") + ">;rel=\"" + "next" + "\"");
         return builder.build();
     }
 
     //todo - gfm - 11/5/14 - next & previous links
 
-    @Path("/{month}/{day}/{hour}/{minute}/{second}/{id}/next")
+    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}/next")
     @GET
     //todo - gfm - 11/5/14 - timing?
-    public Response getNext(@PathParam("channelName") String channelName, @PathParam("id") String id) {
+    public Response getNext(@PathParam("channelName") String channelName,
+                            @PathParam("year") int year,
+                            @PathParam("month") int month,
+                            @PathParam("day") int day,
+                            @PathParam("hour") int hour,
+                            @PathParam("minute") int minute,
+                            @PathParam("second") int second,
+                            @PathParam("millis") int millis,
+                            @PathParam("hash") String hash) {
         //todo - gfm - 11/5/14 - more int test
-        Optional<ContentKey> keyOptional = ContentKey.fromString(id);
-        Collection<ContentKey> keys = channelService.getKeys(channelName, keyOptional.get(), 1);
+        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
+        ContentKey key = new ContentKey(dateTime, hash);
+        Collection<ContentKey> keys = channelService.getKeys(channelName, key, 1);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
         String channelUri = ChannelLinkBuilder.buildChannelString(channelName, uriInfo);
-        ContentKey key = keys.iterator().next();
-        URI uri = URI.create(channelUri + "/" + key.urlKey());
+        ContentKey foundKey = keys.iterator().next();
+        URI uri = URI.create(channelUri + "/" + foundKey.toUrl());
         builder.location(uri);
         return builder.build();
     }
 
-    @Path("/{month}/{day}/{hour}/{minute}/{second}/{id}/next/{count}")
+    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}/next/{count}")
     @GET
     //todo - gfm - 11/5/14 - timing?
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getNextCount(@PathParam("channelName") String channelName, @PathParam("id") String id, @PathParam("count") int count) {
+    public Response getNextCount(@PathParam("channelName") String channelName,
+                                 @PathParam("year") int year,
+                                 @PathParam("month") int month,
+                                 @PathParam("day") int day,
+                                 @PathParam("hour") int hour,
+                                 @PathParam("minute") int minute,
+                                 @PathParam("second") int second,
+                                 @PathParam("millis") int millis,
+                                 @PathParam("hash") String hash, @PathParam("count") int count) {
         //todo - gfm - 11/5/14 - int test
-        Optional<ContentKey> keyOptional = ContentKey.fromString(id);
-        Collection<ContentKey> keys = channelService.getKeys(channelName, keyOptional.get(), count);
+        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
+        ContentKey key = new ContentKey(dateTime, hash);
+        Collection<ContentKey> keys = channelService.getKeys(channelName, key, count);
         List<ContentKey> list = new ArrayList<>(keys);
         String nextString = null;
         if (!list.isEmpty()) {
             ContentKey contentKey = list.get(list.size() - 1);
-            nextString = contentKey.urlKey() + "/next/" + count;
+            nextString = contentKey.toUrl() + "/next/" + count;
         }
         return getResponse(channelName, null, nextString, keys);
     }

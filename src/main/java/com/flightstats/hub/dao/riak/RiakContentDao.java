@@ -51,7 +51,7 @@ public class RiakContentDao implements ContentDao {
         try {
             //todo - gfm - 11/2/14 - change namespace
             Namespace namespace = new Namespace("default", channelName);
-            Location location = new Location(namespace, key.key());
+            Location location = new Location(namespace, key.toStorage());
             RiakObject riakObject = new RiakObject();
 
             if (content.getData().length > 0) {
@@ -87,7 +87,7 @@ public class RiakContentDao implements ContentDao {
         try {
             //todo - gfm - 11/2/14 - change namespace
             Namespace namespace = new Namespace("default", channelName);
-            Location location = new Location(namespace, key.key());
+            Location location = new Location(namespace, key.toStorage());
             FetchValue fetchValue = new FetchValue.Builder(location)
                     .withOption(FetchValue.Option.R, Quorum.quorumQuorum())
                     .build();
@@ -130,7 +130,7 @@ public class RiakContentDao implements ContentDao {
             IntIndexQuery.Response queryResponse = riakClient.execute(query);
             List<IntIndexQuery.Response.Entry> entries = queryResponse.getEntries();
             for (IntIndexQuery.Response.Entry entry : entries) {
-                keys.add(ContentKey.fromString(entry.getRiakObjectLocation().getKey().toString()).get());
+                keys.add(ContentKey.fromStorage(entry.getRiakObjectLocation().getKey().toString()).get());
             }
             logger.debug("found {} for {} {} {}", keys.size(), channelName, startTime, endTime);
             return keys;
@@ -144,11 +144,6 @@ public class RiakContentDao implements ContentDao {
     public void initializeChannel(ChannelConfiguration config) {
 
         //todo - gfm - 10/31/14 - does this need to create the table in Riak?
-    }
-
-    @Override
-    public Optional<ContentKey> getKey(String id) {
-        return ContentKey.fromString(id);
     }
 
     @Override
@@ -176,7 +171,7 @@ public class RiakContentDao implements ContentDao {
             IntIndexQuery.Response queryResponse = riakClient.execute(query);
             List<IntIndexQuery.Response.Entry> entries = queryResponse.getEntries();
             for (IntIndexQuery.Response.Entry entry : entries) {
-                Optional<ContentKey> keyOptional = ContentKey.fromString(entry.getRiakObjectLocation().getKey().toString());
+                Optional<ContentKey> keyOptional = ContentKey.fromStorage(entry.getRiakObjectLocation().getKey().toString());
                 if (keyOptional.isPresent() && !contentKey.equals(keyOptional.get())) {
                     keys.add(keyOptional.get());
                 }

@@ -51,7 +51,7 @@ public class ChannelLinkBuilder {
     }
 
     public URI buildItemUri(ContentKey key, URI channelUri) {
-        return buildItemUri(key.urlKey(), channelUri);
+        return buildItemUri(key.toUrl(), channelUri);
     }
 
     public URI buildItemUri(String key, URI channelUri) {

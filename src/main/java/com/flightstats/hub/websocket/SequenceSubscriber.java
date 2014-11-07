@@ -75,6 +75,6 @@ public class SequenceSubscriber implements MessageListener<String> {
     }
 
     private ContentKey getKeyFromUri(String stringKey) {
-        return ContentKey.fromString(stringKey).get();
+        return ContentKey.fromStorage(stringKey).get();
     }
 }

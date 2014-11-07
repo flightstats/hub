@@ -74,12 +74,7 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Optional<Content> getValue(String channelName, String id) {
-        Optional<ContentKey> keyOptional = contentDao.getKey(id);
-        if (!keyOptional.isPresent()) {
-            return Optional.absent();
-        }
-        ContentKey key = keyOptional.get();
+    public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         Content value = contentDao.read(channelName, key);
         return Optional.fromNullable(value);
