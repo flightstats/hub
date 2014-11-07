@@ -26,7 +26,7 @@ class WebsiteTasks(TaskSet):
                          headers={"Content-Type": "application/json"}
         )
 
-    @task(120)
+    @task(100)
     def write_read(self):
         payload = {"name": self.payload, "count": self.count}
         #write payload
@@ -81,5 +81,5 @@ class WebsiteTasks(TaskSet):
 
 class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
-    min_wait = 500
-    max_wait = 1000
+    min_wait = 400
+    max_wait = 900
