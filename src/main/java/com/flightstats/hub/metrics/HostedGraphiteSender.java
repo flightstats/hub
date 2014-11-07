@@ -41,6 +41,18 @@ public class HostedGraphiteSender {
         HubServices.register(new HostedGraphiteSenderService());
     }
 
+    public void send(String name, long value) {
+        if (name.contains(".test")) {
+            return;
+        }
+        try {
+            logger.trace("{} to send {}", name, value);
+            queue.add(name + " " + value + " " + System.currentTimeMillis() / 1000 + "\n");
+        } catch (Exception e) {
+            logger.warn("unable to add graphite metric to queue {}", value);
+        }
+    }
+
     private class HostedGraphiteSenderService extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
@@ -54,18 +66,6 @@ public class HostedGraphiteSender {
         @Override
         protected void shutDown() throws Exception {
             //todo - gfm - 9/17/14 - should this wait for the queue to drain?
-        }
-    }
-
-    public void send(String name, long value) {
-        if (name.contains(".test")) {
-            return;
-        }
-        try {
-            logger.debug("{} to send {}", name, value);
-            queue.add(name + " " + value + " " + System.currentTimeMillis() / 1000 + "\n");
-        } catch (Exception e) {
-            logger.warn("unable to add graphite metric to queue {}", value);
         }
     }
 
@@ -102,7 +102,7 @@ public class HostedGraphiteSender {
         }
 
         void send(String toSend) throws IOException {
-            logger.debug("sending value {}", toSend);
+            logger.trace("sending value {}", toSend);
             try {
                 stream.writeBytes(toSend);
                 return;

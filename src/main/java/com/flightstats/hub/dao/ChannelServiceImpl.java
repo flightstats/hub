@@ -65,7 +65,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Optional<Content> getValue(Request request) {
-        return contentService.getValue(request.getChannel(), request.getId());
+        return contentService.getValue(request.getChannel(), request.getKey());
     }
 
     @Override
