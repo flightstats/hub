@@ -5,7 +5,6 @@ import string
 import random
 
 from locust import HttpLocust, TaskSet, task
-import httplib2
 
 # Usage:
 # locust -f read-write.py -H http://hub.svc.prod
@@ -15,7 +14,6 @@ class WebsiteTasks(TaskSet):
     channelNum = 0
 
     def on_start(self):
-        self._http = httplib2.Http()
         WebsiteTasks.channelNum += 1
         self.number = WebsiteTasks.channelNum * 2000
         self.payload = self.payload_generator(self.number)
@@ -28,7 +26,7 @@ class WebsiteTasks(TaskSet):
                          headers={"Content-Type": "application/json"}
         )
 
-    @task(100)
+    @task(120)
     def write_read(self):
         payload = {"name": self.payload, "count": self.count}
         #write payload
@@ -38,54 +36,42 @@ class WebsiteTasks(TaskSet):
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
 
         links = postResponse.json()
-        getResponse = self._http.request(links['_links']['self']['href'], 'GET')
-        # print "Get Response status code:", getResponse
-        if getResponse[0]['status'] != '200':
-            postResponse.failure("Got wrong status on get: " + getResponse[0]['status'])
-        else:
-            body = json.loads(getResponse[1])
-            if body['count'] != self.count:
-                postResponse.failure("wrong count: " + str(body['count']))
+        self.client.get(links['_links']['self']['href'], name="get_payload")
 
         self.count += 1
 
     @task(1)
     def day_query(self):
-        self.next("day")
+        self.client.get(self.time_path("day"), name="time_day")
 
     @task(5)
     def hour_query(self):
-        self.next("hour")
+        self.client.get(self.time_path("hour"), name="time_hour")
 
-    @task(10)
+    @task(7)
+    def minute_query(self):
+        self.client.get(self.time_path("minute"), name="time_minute")
+
+    @task(3)
     def minute_query(self):
         self.next("minute")
 
     @task(10)
     def second_query(self):
-        self.client.get(self.time_path("second"), name="time_second")
+        self.next("second")
 
     def time_path(self, unit="second"):
         return "/channel/" + self.channel + "/time/" + unit
 
     def next(self, time_unit):
         path = self.time_path(time_unit)
-        # todo - this should use _http instead, and store stats using
-        #events.request_failure.fire(request_type="xmlrpc", name=name, response_time=total_time, exception=e)
-        # events.request_success.fire(request_type="xmlrpc", name=name, response_time=total_time, response_length=0)
-        # from http://docs.locust.io/en/latest/testing-other-systems.html
-        # this will prevent unique URIs being reported by locust
-        # bc - is name good enough?
         with self.client.get(path, catch_response=True, name="time_"+time_unit) as postResponse:
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on get: " + postResponse.status_code)
         links = postResponse.json()
         uris = links['_links']['uris']
-        #todo - maybe loop over all the results?
         if len(uris) > 0:
             for uri in uris:
-                # todo - this should use _http instead
-                # bc - is name good enough?
                 self.client.get(uri, name="get_payload")
 
 
