@@ -31,7 +31,9 @@ public interface ChannelService {
 
     ChannelConfiguration updateChannel(ChannelConfiguration configuration);
 
-    Collection<ContentKey> getKeys(String channelName, DateTime dateTime);
+    Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime);
+
+    Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count);
 
     boolean delete(String channelName);
 }

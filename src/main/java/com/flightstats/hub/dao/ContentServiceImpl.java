@@ -23,18 +23,15 @@ public class ContentServiceImpl implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
     private final ContentDao contentDao;
-    //private final ContentDao cacheDao;
     private final WebsocketPublisher websocketPublisher;
     private final Integer shutdown_wait_seconds;
     private final AtomicInteger inFlight = new AtomicInteger();
 
     @Inject
-    public ContentServiceImpl(@Named(ContentDao.LONG_TERM_STORE) ContentDao contentDao,
-                              //@Named(ContentDao.SHORT_TERM_CACHE) ContentDao cacheDao,
+    public ContentServiceImpl(ContentDao contentDao,
                               WebsocketPublisher websocketPublisher,
                               @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds) {
         this.contentDao = contentDao;
-        //this.cacheDao = cacheDao;
         this.websocketPublisher = websocketPublisher;
         this.shutdown_wait_seconds = shutdown_wait_seconds;
         HubServices.registerPreStop(new ContentServiceHook());
@@ -65,7 +62,7 @@ public class ContentServiceImpl implements ContentService {
             inFlight.incrementAndGet();
             String channelName = configuration.getName();
             //todo - gfm - 10/28/14 - make this a more interesting info level log
-            logger.debug("inserting {} bytes into channel {} ", content.getData().length, channelName);
+            logger.trace("inserting {} bytes into channel {} ", content.getData().length, channelName);
 
             InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());
             //todo - gfm - 10/28/14 - change this
@@ -77,13 +74,8 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Optional<Content> getValue(String channelName, String id) {
-        Optional<ContentKey> keyOptional = contentDao.getKey(id);
-        if (!keyOptional.isPresent()) {
-            return Optional.absent();
-        }
-        ContentKey key = keyOptional.get();
-        logger.debug("fetching {} from channel {} ", key.toString(), channelName);
+    public Optional<Content> getValue(String channelName, ContentKey key) {
+        logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         Content value = contentDao.read(channelName, key);
         return Optional.fromNullable(value);
     }
@@ -95,14 +87,19 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, DateTime dateTime) {
-        return contentDao.getKeys(channelName, dateTime);
+    public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
+        return contentDao.getKeys(channelName, startTime, endTime);
     }
 
     @Override
     public void delete(String channelName) {
         logger.info("deleting channel " + channelName);
         contentDao.delete(channelName);
+    }
+
+    @Override
+    public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
+        return contentDao.getKeys(channelName, contentKey, count);
     }
 
     private class ContentServiceHook extends AbstractIdleService {

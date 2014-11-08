@@ -1,90 +1,78 @@
 package com.flightstats.hub.service;
 
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.config.metrics.EventTimed;
-import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.timeIndex.TimeIndex;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.exception.InvalidRequestException;
+import com.flightstats.hub.util.TimeUtil;
+import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
-import org.joda.time.DateTime;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Collection;
 
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 /**
- * This resource represents groups of items stored in the Hub
+ * This resource redirects to the new time interface
  */
 @Path("/channel/{channelName: .*}/time")
 public class ChannelTimeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
-	private final UriInfo uriInfo;
-	private final ChannelService channelService;
-    private final ChannelLinkBuilder linkBuilder;
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private final UriInfo uriInfo;
 
     @Inject
-	public ChannelTimeResource(UriInfo uriInfo, ChannelService channelService, ChannelLinkBuilder linkBuilder) {
-		this.uriInfo = uriInfo;
-		this.channelService = channelService;
-        this.linkBuilder = linkBuilder;
+    public ChannelTimeResource(UriInfo uriInfo) {
+        this.uriInfo = uriInfo;
     }
 
     @GET
-    public Response getLatest() {
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDefault() {
+        Linked.Builder<?> links = Linked.justLinks();
+        links.withLink("self", uriInfo.getRequestUri());
+        links.withLink("second", uriInfo.getRequestUri() + "/second");
+        links.withLink("minute", uriInfo.getRequestUri() + "/minute");
+        links.withLink("hour", uriInfo.getRequestUri() + "/hour");
+        links.withLink("day", uriInfo.getRequestUri() + "/day");
+        return Response.ok(links.build()).build();
+    }
+
+    @Path("/second")
+    @GET
+    public Response getSecond() {
+        return getResponse(TimeUtil.secondsNow(), "time/second");
+    }
+
+    @Path("/minute")
+    @GET
+    public Response getMinute() {
+        return getResponse(TimeUtil.minutesNow(), "time/minute");
+    }
+
+    @Path("/hour")
+    @GET
+    public Response getHour() {
+        return getResponse(TimeUtil.hoursNow(), "time/hour");
+    }
+
+    @Path("/day")
+    @GET
+    public Response getDay() {
+        return getResponse(TimeUtil.daysNow(), "time/day");
+    }
+
+    private Response getResponse(String timePath, String endString) {
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
         String channelUri = uriInfo.getRequestUri().toString();
-        URI uri = URI.create(channelUri + "/" + TimeIndex.getHash(new DateTime()));
+        channelUri = StringUtils.removeEnd(channelUri, endString);
+        URI uri = URI.create(channelUri + timePath);
         builder.location(uri);
         return builder.build();
     }
-
-    @Path("/{datetime}")
-	@GET
-    @Timed(name = "all-channels.ids")
-    @EventTimed(name = "channel.ALL.time.get")
-    @ExceptionMetered
-    @Produces(MediaType.APPLICATION_JSON)
-	public Response getValue(@PathParam("channelName") String channelName, @PathParam("datetime") String datetime)
-            throws InvalidRequestException {
-        DateTime requestTime = null;
-        try {
-            requestTime = TimeIndex.parseHash(datetime);
-        } catch (Exception e) {
-            logger.warn("unable to parse " + datetime + " for channel " + channelName);
-            throw new InvalidRequestException("{\"error\": \"Datetime was in the wrong format, required format is "
-                    + TimeIndex.PATTERN + "\"}");
-        }
-        Collection<ContentKey> keys = channelService.getKeys(channelName, requestTime);
-
-        ObjectNode root = mapper.createObjectNode();
-        ObjectNode links = root.putObject("_links");
-        ObjectNode self = links.putObject("self");
-        self.put("href", uriInfo.getRequestUri().toString());
-        ArrayNode ids = links.putArray("uris");
-        URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
-        for (ContentKey key : keys) {
-            URI uri = linkBuilder.buildItemUri(key, channelUri);
-            ids.add(uri.toString());
-        }
-
-        return Response.ok(root).build();
-	}
-
 }

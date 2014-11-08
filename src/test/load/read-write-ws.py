@@ -1,12 +1,16 @@
 # locust.py
 
 import json
+import time
+import thread
+import string
+import random
+
 from locust import Locust, TaskSet, task
 import websocket
 import httplib2
-import time
-import string
-import random
+
+
 
 
 # Usage:
@@ -15,35 +19,37 @@ import random
 # Be sure to update gevent to get around DNS issue
 # pip install https://github.com/surfly/gevent/releases/download/1.0rc3/gevent-1.0rc3.tar.gz
 
+# todo variable timing from command line
 
-#todo - modify this to support write heavy load - 1000+/sec
 class WebsiteTasks(TaskSet):
+    channelNum = 0
 
     def on_start(self):
-        self.payload = self.payload_generator(20)
+        WebsiteTasks.channelNum += 1
+        #todo make byte size this a command line var
+        self.number = WebsiteTasks.channelNum * 1000
+        self.payload = self.payload_generator(self.number)
         print("payload size " + str(self.payload.__sizeof__()))
-        self.channel = "testThroughput"
+        self.channel = "riak_test_" + str(WebsiteTasks.channelNum)
         self.count = 0
-        payload = {"name": self.channel, "ttlMillis": "36000000", "type" : "Sequence", "contentSizeKB": "1",
-            "peakRequestRateSeconds": "1000", "rateTimeUnit": "SECONDS"}
+        payload = {"name": self.channel, "ttlDays": "100"}
         self.client.post("/channel",
                          data=json.dumps(payload),
                          headers={"Content-Type": "application/json"}
         )
 
-        #todo work on this
-        #thread.start_new_thread(self.reader, ())
+        thread.start_new_thread(self.reader, ())
 
     @task
     def index(self):
         payload = {"name": self.payload, "count": self.count}
         self.client.post("/channel/" + self.channel,
-                         data=json.dumps(payload)
+                         data=json.dumps(payload),
+                         headers={"Content-Type": "application/json"}
         )
         self.count += 1
 
     def reader(self):
-        #todo make this use the time interval interface
         time.sleep(5)
         self._http = httplib2.Http()
         meta = self._load_metadata()
@@ -67,5 +73,5 @@ class WebsiteTasks(TaskSet):
 
 class WebsiteUser(Locust):
     task_set = WebsiteTasks
-    min_wait = 50
-    max_wait = 150
+    min_wait = 500
+    max_wait = 1000
