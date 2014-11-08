@@ -1,45 +1,66 @@
 package com.flightstats.hub.model;
 
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.apache.commons.lang3.RandomStringUtils;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @EqualsAndHashCode
-@ToString
 public class ContentKey {
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd/HH/mm/ss/");
-    private final LocalDateTime now;
+    private final static Logger logger = LoggerFactory.getLogger(ContentKey.class);
+    private final DateTime time;
     private final String hash;
 
     public ContentKey() {
-        this(LocalDateTime.now(Clock.systemUTC()), RandomStringUtils.randomAlphanumeric(6));
+        this(new DateTime(DateTimeZone.UTC), RandomStringUtils.randomAlphanumeric(6));
     }
 
-    ContentKey(LocalDateTime now, String hash) {
-        this.now = now;
+    public ContentKey(DateTime time, String hash) {
+        this.time = time;
         this.hash = hash;
     }
 
-    public static Optional<ContentKey> fromString(String key) {
-        String[] split = key.split("-");
-        long epochMilli = Long.parseLong(split[0]);
-        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMilli), ZoneOffset.UTC);
-        return Optional.of(new ContentKey(dateTime, split[1]));
+    public static Optional<ContentKey> fromStorage(String key) {
+        try {
+            String[] split = key.split("-");
+            long epochMilli = Long.parseLong(split[0]);
+            return Optional.of(new ContentKey(new DateTime(epochMilli, DateTimeZone.UTC), split[1]));
+        } catch (Exception e) {
+            logger.info("unable to parse " + key + " " + e.getMessage());
+            return Optional.absent();
+        }
     }
 
-    public String keyToUrl() {
-        return formatter.format(now) + key();
+    public static Optional<ContentKey> fromUrl(String key) {
+        try {
+            String date = StringUtils.substringBeforeLast(key, "/") + "/";
+            String hash = StringUtils.substringAfterLast(key, "/");
+            return Optional.of(new ContentKey(TimeUtil.millis(date), hash));
+        } catch (Exception e) {
+            logger.info("unable to parse " + key + " " + e.getMessage());
+            return Optional.absent();
+        }
     }
 
-    public String key() {
-        return now.toInstant(ZoneOffset.UTC).toEpochMilli() + "-" + hash;
+    public String toUrl() {
+        return TimeUtil.millis(time) + hash;
     }
 
+    public String toStorage() {
+        return getMillis() + "-" + hash;
+    }
+
+    public long getMillis() {
+        return time.getMillis();
+    }
+
+    @Override
+    public String toString() {
+        return toStorage();
+    }
 }

@@ -9,6 +9,6 @@ sudo apt-get install python2.7
 sudo apt-get install python-pip
 sudo apt-get install libevent-dev
 sudo apt-get install python-dev
-sudo pip install locustio
-sudo pip install https://github.com/surfly/gevent/releases/download/1.0rc3/gevent-1.0rc3.tar.gz
+sudo pip install locustio --upgrade
+#sudo pip install https://github.com/surfly/gevent/releases/download/1.0.1/gevent-1.0.1.tar.gz
 sudo pip install websocket-client

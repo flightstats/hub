@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
+import com.basho.riak.client.api.RiakClient;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.hub.app.config.metrics.HubInstrumentedResourceMethodDispatchAdapter;
@@ -14,11 +15,7 @@ import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
 import com.flightstats.hub.dao.encryption.AuditChannelService;
 import com.flightstats.hub.dao.encryption.BasicChannelService;
-import com.flightstats.hub.dao.s3.ContentDaoImpl;
-import com.flightstats.hub.dao.s3.S3Config;
-import com.flightstats.hub.dao.s3.S3IndexDao;
-import com.flightstats.hub.dao.timeIndex.TimeIndexCoordinator;
-import com.flightstats.hub.dao.timeIndex.TimeIndexDao;
+import com.flightstats.hub.dao.riak.RiakContentDao;
 import com.flightstats.hub.group.DynamoGroupDao;
 import com.flightstats.hub.group.GroupCallback;
 import com.flightstats.hub.group.GroupCallbackImpl;
@@ -29,8 +26,6 @@ import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.service.HubHealthCheck;
 import com.flightstats.hub.service.HubHealthCheckImpl;
-import com.flightstats.hub.util.ContentKeyGenerator;
-import com.flightstats.hub.util.TimeContentKeyGenerator;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisherImpl;
 import com.flightstats.jerseyguice.metrics.MethodTimingAdapterProvider;
@@ -42,7 +37,9 @@ import com.google.inject.name.Names;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Named;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 public class AwsModule extends AbstractModule {
@@ -61,10 +58,8 @@ public class AwsModule extends AbstractModule {
         bind(ZooKeeperState.class).asEagerSingleton();
         bind(ReplicationService.class).to(ReplicationServiceImpl.class).asEagerSingleton();
         bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
-        bind(TimeIndexCoordinator.class).asEagerSingleton();
         bind(ChannelUtils.class).asEagerSingleton();
         bind(CuratorLock.class).asEagerSingleton();
-        bind(S3Config.class).asEagerSingleton();
         bind(AwsConnectorFactory.class).asEagerSingleton();
 
         if (Boolean.parseBoolean(properties.getProperty("app.encrypted"))) {
@@ -87,16 +82,7 @@ public class AwsModule extends AbstractModule {
 
         bind(ContentService.class).to(ContentServiceImpl.class).asEagerSingleton();
 
-        bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.LONG_TERM_STORE))
-                .to(ContentDaoImpl.class).asEagerSingleton();
-
-/*        bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.SHORT_TERM_CACHE))
-                .to(CassandraContentDao.class).asEagerSingleton();*/
-
-        bind(TimeIndexDao.class).to(S3IndexDao.class).asEagerSingleton();
-        bind(ContentKeyGenerator.class).to(TimeContentKeyGenerator.class).asEagerSingleton();
+        bind(ContentDao.class).to(RiakContentDao.class).asEagerSingleton();
 
         bind(DynamoUtils.class).asEagerSingleton();
         bind(DynamoGroupDao.class).asEagerSingleton();
@@ -125,6 +111,13 @@ public class AwsModule extends AbstractModule {
     @Singleton
     public AmazonS3 buildS3Client(AwsConnectorFactory factory) throws IOException {
         return factory.getS3Client();
+    }
+
+    @Inject
+    @Provides
+    @Singleton
+    public RiakClient buildRiakClient(@Named("riak.addresses") String riakAddresses) throws UnknownHostException {
+        return RiakClient.newClient(riakAddresses.split(","));
     }
 
 

@@ -11,15 +11,17 @@ import java.util.Collection;
 
 public interface ContentService {
 
-	void createChannel(ChannelConfiguration configuration);
+    void createChannel(ChannelConfiguration configuration);
 
-	InsertedContentKey insert(ChannelConfiguration configuration, Content content);
+    InsertedContentKey insert(ChannelConfiguration configuration, Content content);
 
-    Optional<Content> getValue(String channelName, String id);
+    Optional<Content> getValue(String channelName, ContentKey key);
 
-	Optional<ContentKey> findLastUpdatedKey(String channelName);
+    Optional<ContentKey> findLastUpdatedKey(String channelName);
 
-    Collection<ContentKey> getKeys(String channelName, DateTime dateTime);
+    Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime);
 
     void delete(String channelName);
+
+    Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count);
 }
