@@ -4,14 +4,11 @@ import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
-import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 
 import java.util.Collection;
 
 public interface ContentDao {
-    String LONG_TERM_STORE = "LongTermStore";
-    String SHORT_TERM_CACHE = "ShortTermCache";
 
     InsertedContentKey write(String channelName, Content content, long ttlDays);
 
@@ -19,10 +16,9 @@ public interface ContentDao {
 
     void initializeChannel(ChannelConfiguration configuration);
 
-    Optional<ContentKey> getKey(String id);
-
-    Collection<ContentKey> getKeys(String channelName, DateTime dateTime);
+    Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime);
 
     void delete(String channelName);
 
+    Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count);
 }

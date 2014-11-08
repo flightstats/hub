@@ -1,21 +1,22 @@
 package com.flightstats.hub.model;
 
-import com.google.common.base.Optional;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- *
- */
 public class ContentKeyTest {
 
     @Test
-    public void testKeyToString() throws Exception {
+    public void testStorageKey() throws Exception {
         ContentKey contentKey = new ContentKey();
-        Optional<ContentKey> cycled = ContentKey.fromString(contentKey.key());
-        System.out.println(contentKey.keyToUrl());
-        System.out.println(cycled.get().keyToUrl());
-        assertEquals(contentKey, cycled.get());
+        ContentKey cycled = ContentKey.fromStorage(contentKey.toStorage()).get();
+        assertEquals(contentKey, cycled);
+    }
+
+    @Test
+    public void testUrlKey() throws Exception {
+        ContentKey contentKey = new ContentKey();
+        ContentKey cycled = ContentKey.fromUrl(contentKey.toUrl()).get();
+        assertEquals(contentKey, cycled);
     }
 }

@@ -16,8 +16,8 @@ public class Content implements Serializable {
     private final long millis;
     private final byte[] data;
     private final Optional<String> user;
-    private Optional<ContentKey> contentKey = Optional.absent();
     private final boolean isNew;
+    private Optional<ContentKey> contentKey = Optional.absent();
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
@@ -29,8 +29,8 @@ public class Content implements Serializable {
         user = builder.user;
     }
 
-    public int getDataLength() {
-        return data == null ? 0 : data.length;
+    public static Builder builder() {
+        return new Builder();
     }
 
     public void setContentKey(ContentKey contentKey) {
@@ -42,10 +42,6 @@ public class Content implements Serializable {
      */
     public boolean isNewContent() {
         return isNew;
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     public static class Builder {
