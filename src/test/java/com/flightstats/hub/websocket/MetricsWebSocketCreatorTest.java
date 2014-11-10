@@ -1,24 +1,9 @@
 package com.flightstats.hub.websocket;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
-import com.flightstats.hub.service.ChannelLinkBuilder;
-import com.flightstats.hub.util.ChannelNameUtils;
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.junit.Test;
-
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.util.concurrent.CountDownLatch;
-
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.*;
-
 public class MetricsWebSocketCreatorTest {
 
-	@Test
-	public void testCreateWebSocket() throws Exception {
+	/*@Test
+    public void testCreateWebSocket() throws Exception {
 		//GIVEN
 		ChannelNameUtils channelNameUtils = new ChannelNameUtils();
 		int threadCt = 50;
@@ -77,5 +62,5 @@ public class MetricsWebSocketCreatorTest {
 		verify(counter, times(threadCt)).inc();
 		verify(counter, times(threadCt)).dec();
 		verify(registry, times(1)).remove(meterName);
-	}
+	}*/
 }
