@@ -107,7 +107,6 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
-        //this line exists to get around ttlMillis fuckery
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
         channelValidator.validate(configuration, false);
         channelConfigurationDao.updateChannel(configuration);

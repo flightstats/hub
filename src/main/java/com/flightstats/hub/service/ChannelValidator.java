@@ -18,7 +18,7 @@ public class ChannelValidator {
     }
 
     public void validate(ChannelConfiguration request, boolean isCreation) throws InvalidRequestException, ConflictException {
-        Optional<String> channelNameOptional =  Optional.absent();
+        Optional<String> channelNameOptional = Optional.absent();
         if (request != null) {
             channelNameOptional = Optional.fromNullable(request.getName());
         }
@@ -31,8 +31,6 @@ public class ChannelValidator {
         if (isCreation) {
             validateChannelUniqueness(channelName);
         }
-        validateRate(request);
-        validateContentSize(request);
         validateTTL(request);
         validateDescription(request);
         validateTags(request);
@@ -61,19 +59,6 @@ public class ChannelValidator {
     private void validateTTL(ChannelConfiguration request) throws InvalidRequestException {
         if (request.getTtlDays() <= 0) {
             throw new InvalidRequestException("{\"error\": \"TTL must be greater than 0 (zero) \"}");
-        }
-    }
-
-
-    private void validateContentSize(ChannelConfiguration request) throws InvalidRequestException {
-        if (request.getContentSizeKB() <= 0) {
-            throw new InvalidRequestException("{\"error\": \"Content Size must be greater than 0 (zero) \"}");
-        }
-    }
-
-    private void validateRate(ChannelConfiguration request) throws InvalidRequestException {
-        if (request.getPeakRequestRateSeconds() <= 0) {
-            throw new InvalidRequestException("{\"error\": \"Peak Request Rate must be greater than 0 (zero) \"}");
         }
     }
 
