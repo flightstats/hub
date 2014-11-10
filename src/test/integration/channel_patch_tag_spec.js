@@ -8,21 +8,19 @@ var testName = __filename;
 function verifyOptionals(parse) {
     expect(parse.description).toBe('describe me');
     expect(parse.ttlDays).toBe(9);
-    expect(parse.contentSizeKB).toBe(3);
-    expect(parse.peakRequestRateSeconds).toBe(2);
 }
 
 describe(testName, function () {
     it("creates channel " + channelName + " at " + channelUrl, function (done) {
-        request.post({url: channelUrl,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    name: channelName,
-                    description: 'describe me',
-                    ttlDays: 9,
-                    contentSizeKB: 3,
-                    peakRequestRateSeconds: 2,
-                    tags: ['one', 'two']
+        request.post({url : channelUrl,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify({
+                    name : channelName,
+                    description : 'describe me',
+                    ttlDays : 9,
+                    contentSizeKB : 3,
+                    peakRequestRateSeconds : 2,
+                    tags : ['one', 'two']
                 })},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -35,7 +33,7 @@ describe(testName, function () {
     });
 
     it("verifies channel exists " + channelResource, function (done) {
-        request.get({url: channelResource },
+        request.get({url : channelResource },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -48,9 +46,9 @@ describe(testName, function () {
     });
 
     it("patches channel " + channelResource, function (done) {
-        request.patch({url: channelResource,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ tags: ['one', 'three'] })},
+        request.patch({url : channelResource,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify({ tags : ['one', 'three'] })},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -64,7 +62,7 @@ describe(testName, function () {
     });
 
     it("verifies channel exists with correct tags " + channelResource, function (done) {
-        request.get({url: channelResource },
+        request.get({url : channelResource },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
