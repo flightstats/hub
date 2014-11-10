@@ -1,6 +1,5 @@
 package com.flightstats.hub.app.config.metrics;
 
-import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.google.inject.Inject;
 import com.sun.jersey.api.model.AbstractResourceMethod;
@@ -17,24 +16,22 @@ import javax.ws.rs.ext.Provider;
 @Provider
 public class PerChannelTimedMethodDispatchAdapter implements ResourceMethodDispatchAdapter {
 
-	private final MetricRegistry registry;
     private final HostedGraphiteSender sender;
 
-	@Inject
-	public PerChannelTimedMethodDispatchAdapter(MetricRegistry registry, HostedGraphiteSender sender) {
-		this.registry = registry;
+    @Inject
+    public PerChannelTimedMethodDispatchAdapter(HostedGraphiteSender sender) {
         this.sender = sender;
     }
 
-	@Override
-	public ResourceMethodDispatchProvider adapt(final ResourceMethodDispatchProvider provider) {
-		return new ResourceMethodDispatchProvider() {
-			@Override
-			public RequestDispatcher create(final AbstractResourceMethod abstractResourceMethod) {
-				final RequestDispatcher delegate = provider.create(abstractResourceMethod);
-				return new PerChannelTimedRequestDispatcher(registry, abstractResourceMethod, delegate, sender);
-			}
-		};
-	}
+    @Override
+    public ResourceMethodDispatchProvider adapt(final ResourceMethodDispatchProvider provider) {
+        return new ResourceMethodDispatchProvider() {
+            @Override
+            public RequestDispatcher create(final AbstractResourceMethod abstractResourceMethod) {
+                final RequestDispatcher delegate = provider.create(abstractResourceMethod);
+                return new PerChannelTimedRequestDispatcher(abstractResourceMethod, delegate, sender);
+            }
+        };
+    }
 
 }

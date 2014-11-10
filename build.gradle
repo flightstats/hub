@@ -41,14 +41,14 @@ buildscript {
     dependencies {
         classpath(
                 [group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.16'],
-                [group: 'org.codehaus.groovy.modules.http-builder', name:'http-builder', version: '0.7']
+                [group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7']
         )
     }
 }
 
 configurations {
     all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
-    all*.exclude( module: 'log4j')
+    all*.exclude(module: 'log4j')
     publish
     publishDev
     integrationTests
@@ -92,13 +92,6 @@ dependencies {
     compile group: "org.slf4j", name: "jul-to-slf4j", version: "1.7.7"
     compile 'org.slf4j:log4j-over-slf4j:1.7.7'
     compile 'org.slf4j:jcl-over-slf4j:1.7.7'
-    compile group: "com.codahale.metrics", name: "metrics-core", version: "3.0.2"
-    compile group: "com.codahale.metrics", name: "metrics-graphite", version: "3.0.2"
-    compile group: "com.codahale.metrics", name: "metrics-servlets", version: "3.0.2"
-    compile group: "com.codahale.metrics", name: "metrics-jersey", version: "3.0.2"
-    compile group: "com.codahale.metrics", name: "metrics-logback", version: "3.0.2"
-    compile group: "com.codahale.metrics", name: "metrics-jvm", version: "3.0.2"
-    compile 'com.codahale.metrics:metrics-jetty9:3.0.2'
     compile group: "com.hazelcast", name: "hazelcast", version: "3.3.2"
     compile group: "com.hazelcast", name: "hazelcast-client", version: "3.3.2"
     compile group: "com.flightstats.common", name: "util", version: "3.3.0b78"
@@ -151,13 +144,13 @@ task jasmineEncryptedTests << {
     runExternal("jasmine-node --forceexit --captureExceptions --config runEncrypted true --config hubDomain encrypted-hub-01.cloud-east.dev:8080 --junitreport --output ${reportsdir} ${testdir}")
 }
 
-task startHub (type: JavaExec) {
+task startHub(type: JavaExec) {
     main = mainClassName
     classpath = sourceSets.main.runtimeClasspath
     args 'useDefault'
 }
 
-task startMemoryHub (type: JavaExec) {
+task startMemoryHub(type: JavaExec) {
     main = 'com.flightstats.hub.app.MemoryHubMain'
     classpath = sourceSets.test.runtimeClasspath
 }
@@ -171,7 +164,7 @@ def startTaskAndWait = { startTask, url ->
 
     health = {
         try {
-            return client.head(path : 'health').status
+            return client.head(path: 'health').status
         } catch (any) {
             println any
             return 500
@@ -184,21 +177,21 @@ def startTaskAndWait = { startTask, url ->
     println('hub started!')
 }
 
-task startHubAsync (dependsOn: classes ) << {
+task startHubAsync(dependsOn: classes) << {
     startTaskAndWait(startHub, 'http://localhost:9080/')
 }
 
-task startMemoryHubAsync (dependsOn: testClasses ) << {
+task startMemoryHubAsync(dependsOn: testClasses) << {
     startTaskAndWait(startMemoryHub, 'http://localhost:9999/')
 }
 
-task integrationTests (dependsOn: [startHubAsync, startMemoryHubAsync, jasmineTests]) << { }
+task integrationTests(dependsOn: [startHubAsync, startMemoryHubAsync, jasmineTests]) << {}
 
 jasmineTests.mustRunAfter startHubAsync
 jasmineTests.mustRunAfter startMemoryHubAsync
 
-task startReplicationVerifierStaging (dependsOn: testClasses ) << {
-    if ( project.hasProperty("appArgs") ) {
+task startReplicationVerifierStaging(dependsOn: testClasses) << {
+    if (project.hasProperty("appArgs")) {
         verifierExec.args = Eval.me(appArgs)
     } else {
         verifierExec.args = ["http://hub-int.svc.staging/", "1", "10"].toList()
@@ -206,7 +199,7 @@ task startReplicationVerifierStaging (dependsOn: testClasses ) << {
     verifierExec.execute()
 }
 
-task verifierExec (type: JavaExec ) {
+task verifierExec(type: JavaExec) {
     main = 'com.flightstats.hub.replication.ReplicationVerifier'
     classpath = sourceSets.test.runtimeClasspath
 }

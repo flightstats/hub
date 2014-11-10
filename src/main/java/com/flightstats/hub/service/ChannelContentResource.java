@@ -1,7 +1,5 @@
 package com.flightstats.hub.service;
 
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -57,7 +55,7 @@ public class ChannelContentResource {
 
     @Path("/{month}/{day}/")
     @EventTimed(name = "channel.ALL.day")
-    @PerChannelTimed(operationName = "day", channelNameParameter = "channelName", newName = "day")
+    @PerChannelTimed(operationName = "day", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public Response getDay(@PathParam("channelName") String channelName,
@@ -72,7 +70,7 @@ public class ChannelContentResource {
 
     @Path("/{month}/{day}/{hour}")
     @EventTimed(name = "channel.ALL.hour")
-    @PerChannelTimed(operationName = "hour", channelNameParameter = "channelName", newName = "hour")
+    @PerChannelTimed(operationName = "hour", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public Response getHour(@PathParam("channelName") String channelName,
@@ -88,7 +86,7 @@ public class ChannelContentResource {
 
     @Path("/{month}/{day}/{hour}/{minute}")
     @EventTimed(name = "channel.ALL.minute")
-    @PerChannelTimed(operationName = "minute", channelNameParameter = "channelName", newName = "minute")
+    @PerChannelTimed(operationName = "minute", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public Response getMinute(@PathParam("channelName") String channelName,
@@ -105,7 +103,7 @@ public class ChannelContentResource {
 
     @Path("/{month}/{day}/{hour}/{minute}/{second}")
     @EventTimed(name = "channel.ALL.second")
-    @PerChannelTimed(operationName = "second", channelNameParameter = "channelName", newName = "second")
+    @PerChannelTimed(operationName = "second", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public Response getSecond(@PathParam("channelName") String channelName,
@@ -149,10 +147,8 @@ public class ChannelContentResource {
 
     @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}")
     @GET
-    @Timed(name = "all-channels.fetch")
     @EventTimed(name = "channel.ALL.get")
-    @PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName", newName = "get")
-    @ExceptionMetered
+    @PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName")
     public Response getValue(@PathParam("channelName") String channelName, @PathParam("year") int year,
                              @PathParam("month") int month,
                              @PathParam("day") int day,

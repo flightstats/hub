@@ -159,7 +159,7 @@ public class GroupCaller implements Leader {
         metricsTimer.time("group." + group.getName() + ".post", new Callable<Object>() {
             @Override
             public Object call() throws Exception {
-                return metricsTimer.time("all-groups.post", "group.ALL.post", new Callable<Object>() {
+                return metricsTimer.time("group.ALL.post", new Callable<Object>() {
                     @Override
                     public Object call() throws ExecutionException, RetryException {
                         makeCall(response);
