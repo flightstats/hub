@@ -42,15 +42,6 @@ conf/hub.properties :
       threads: 0
       queue: 0
 
-    graphite :
-        enable: false
-        host : "svcsmon.cloud-east.dev:2003"
-        port : 2003
-        registerJvmMetrics : false
-        prefix : none
-        rateSeconds : 60
-
-
     hosted_graphite :
         enable: true
         registerJvmMetrics : false

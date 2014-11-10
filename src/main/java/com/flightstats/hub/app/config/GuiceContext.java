@@ -1,6 +1,5 @@
 package com.flightstats.hub.app.config;
 
-import com.codahale.metrics.MetricRegistry;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.hub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -47,9 +46,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 public class GuiceContext {
-    private final static Logger logger = LoggerFactory.getLogger(GuiceContext.class);
-
     public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
+    private final static Logger logger = LoggerFactory.getLogger(GuiceContext.class);
     private static Properties properties = new Properties();
 
     public static HubGuiceServlet construct(
@@ -106,7 +104,6 @@ public class GuiceContext {
 
         @Override
         public void bind(Binder binder) {
-            binder.bind(MetricRegistry.class).asEagerSingleton();
             binder.bind(WebsocketSubscribers.class).asEagerSingleton();
             binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
             binder.bind(WebSocketCreator.class).to(MetricsWebSocketCreator.class).asEagerSingleton();
@@ -152,10 +149,6 @@ public class GuiceContext {
             return hazelcast.getMap("ChannelConfigurationMap");
         }
 
-        @Override
-        protected void configure() {
-        }
-
         @Singleton
         @Provides
         public static CuratorFramework buildCurator(@Named("app.name") String appName, @Named("app.environment") String environment,
@@ -180,7 +173,7 @@ public class GuiceContext {
 
         @Singleton
         @Provides
-        public static RetryPolicy buildRetryPolicy(){
+        public static RetryPolicy buildRetryPolicy() {
             Integer baseSleepTimeMs = Integer.valueOf(properties.getProperty("zookeeper.baseSleepTimeMs", "10"));
             Integer maxSleepTimeMs = Integer.valueOf(properties.getProperty("zookeeper.maxSleepTimeMs", "10000"));
             Integer maxRetries = Integer.valueOf(properties.getProperty("zookeeper.maxRetries", "20"));
@@ -222,6 +215,10 @@ public class GuiceContext {
             ClientContainer container = new ClientContainer();
             container.start();
             return container;
+        }
+
+        @Override
+        protected void configure() {
         }
     }
 }

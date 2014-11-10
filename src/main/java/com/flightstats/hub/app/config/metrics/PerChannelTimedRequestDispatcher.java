@@ -1,8 +1,5 @@
 package com.flightstats.hub.app.config.metrics;
 
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.spi.dispatch.RequestDispatcher;
@@ -10,14 +7,12 @@ import com.sun.jersey.spi.dispatch.RequestDispatcher;
 import java.lang.reflect.AnnotatedElement;
 
 class PerChannelTimedRequestDispatcher implements RequestDispatcher {
-    private final MetricRegistry registry;
     private final AnnotatedElement annotatedElement;
     private final RequestDispatcher delegate;
     private final HostedGraphiteSender sender;
 
-    PerChannelTimedRequestDispatcher(MetricRegistry metricRegistry, AnnotatedElement annotatedElement,
+    PerChannelTimedRequestDispatcher(AnnotatedElement annotatedElement,
                                      RequestDispatcher delegate, HostedGraphiteSender sender) {
-        this.registry = metricRegistry;
         this.annotatedElement = annotatedElement;
         this.delegate = delegate;
         this.sender = sender;
@@ -35,23 +30,16 @@ class PerChannelTimedRequestDispatcher implements RequestDispatcher {
             delegate.dispatch(resource, context);
             return;
         }
-        String metricName = "per-channel." + channelName + "." + timedAnnotation.operationName();
         long start = System.currentTimeMillis();
-        final Meter exceptionMeter = registry.meter(metricName + ".exceptions");
-        try (Timer.Context ignored = buildTimerContext(metricName)) {
+
+        try {
             delegate.dispatch(resource, context);
         } catch (Exception e) {
-            exceptionMeter.mark();
             throw e;
         } finally {
-            sender.send("channel." + channelName + "." + timedAnnotation.newName(),
+            sender.send("channel." + channelName + "." + timedAnnotation.channelNameParameter(),
                     System.currentTimeMillis() - start);
         }
-    }
-
-    private Timer.Context buildTimerContext(String metricName) {
-        Timer timer = registry.timer(metricName);
-        return timer.time();
     }
 
 }
