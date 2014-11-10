@@ -29,17 +29,6 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         HubServices.register(new DynamoChannelConfigurationDaoInit());
     }
 
-    private class DynamoChannelConfigurationDaoInit extends AbstractIdleService {
-        @Override
-        protected void startUp() throws Exception {
-            initialize();
-        }
-
-        @Override
-        protected void shutDown() throws Exception { }
-
-    }
-
     @Override
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
         updateChannel(configuration);
@@ -53,8 +42,6 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
         item.put("ttlDays", new AttributeValue().withN(String.valueOf(config.getTtlDays())));
         item.put("type", new AttributeValue(config.getType().toString()));
-        item.put("peakRequestRate", new AttributeValue().withN(String.valueOf(config.getPeakRequestRateSeconds())));
-        item.put("contentSizeKB", new AttributeValue().withN(String.valueOf(config.getContentSizeKB())));
         if (!config.getTags().isEmpty()) {
             item.put("tags", new AttributeValue().withSS(config.getTags()));
         }
@@ -110,19 +97,9 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
                 .withName(item.get("key").getS());
         if (item.get("ttlDays") != null) {
             builder.withTtlDays(Long.parseLong(item.get("ttlDays").getN()));
-        } else if (item.get("ttlMillis") != null) {
-            builder.withTtlMillis(Long.parseLong(item.get("ttlMillis").getN()));
-        } else {
-            builder.withTtlMillis(null);
         }
         if (item.containsKey("type")) {
             builder.withType(ChannelConfiguration.ChannelType.valueOf(item.get("type").getS()));
-        }
-        if (item.containsKey("peakRequestRate")) {
-            builder.withPeakRequestRate(Integer.parseInt(item.get("peakRequestRate").getN()));
-        }
-        if (item.containsKey("contentSizeKB")) {
-            builder.withContentKiloBytes(Integer.parseInt(item.get("contentSizeKB").getN()));
         }
         if (item.containsKey("description")) {
             builder.withDescription(item.get("description").getS());
@@ -152,7 +129,7 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
     }
 
     private void mapItems(List<ChannelConfiguration> configurations, ScanResult result) {
-        for (Map<String, AttributeValue> item : result.getItems()){
+        for (Map<String, AttributeValue> item : result.getItems()) {
             configurations.add(mapItem(item));
         }
     }
@@ -166,5 +143,17 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
 
     public String getTableName() {
         return dynamoUtils.getTableName("channelMetaData");
+    }
+
+    private class DynamoChannelConfigurationDaoInit extends AbstractIdleService {
+        @Override
+        protected void startUp() throws Exception {
+            initialize();
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+        }
+
     }
 }

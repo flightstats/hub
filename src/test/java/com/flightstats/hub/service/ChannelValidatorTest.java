@@ -81,16 +81,6 @@ public class ChannelValidatorTest {
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testInvalidContentSize() throws Exception {
-        validator.validate(ChannelConfiguration.builder().withName("mychan").withContentKiloBytes(0).build(), true);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testInvalidRequestRate() throws Exception {
-        validator.validate(ChannelConfiguration.builder().withName("mychan").withPeakRequestRate(0).build(), true);
-    }
-
-    @Test(expected = InvalidRequestException.class)
     public void testInvalidChannelTtl() throws Exception {
         validator.validate(ChannelConfiguration.builder().withName("mychan").withTtlDays(0).build(), true);
     }
