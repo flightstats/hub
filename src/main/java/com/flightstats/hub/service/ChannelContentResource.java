@@ -119,6 +119,24 @@ public class ChannelContentResource {
         return getResponse(channelName, TimeUtil.seconds(startTime.minusSeconds(1)), TimeUtil.seconds(startTime.plusSeconds(1)), keys);
     }
 
+    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}")
+    @EventTimed(name = "channel.ALL.millis")
+    @PerChannelTimed(operationName = "millis", channelNameParameter = "channelName", newName = "millis")
+    @Produces(MediaType.APPLICATION_JSON)
+    @GET
+    public Response getMillis(@PathParam("channelName") String channelName,
+                              @PathParam("year") int year,
+                              @PathParam("month") int month,
+                              @PathParam("day") int day,
+                              @PathParam("hour") int hour,
+                              @PathParam("minute") int minute,
+                              @PathParam("second") int second,
+                              @PathParam("millis") int millis) {
+        DateTime startTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
+        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, startTime);
+        return getResponse(channelName, TimeUtil.millis(startTime.minusMillis(1)), TimeUtil.millis(startTime.plusMillis(1)), keys);
+    }
+
     //todo - gfm - 11/7/14 - add millis query path
 
     private Response getResponse(String channelName, String previousString, String nextString, Collection<ContentKey> keys) {
