@@ -1,7 +1,5 @@
 package com.flightstats.hub.service;
 
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -25,9 +23,9 @@ import java.util.List;
 @Path("/group")
 public class GroupResource {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
     private final UriInfo uriInfo;
     private final GroupService groupService;
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public GroupResource(UriInfo uriInfo, GroupService groupService) {
@@ -36,9 +34,7 @@ public class GroupResource {
     }
 
     @GET
-    @Timed
     @EventTimed(name = "groups.get")
-    @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroups() {
         ObjectNode root = mapper.createObjectNode();
@@ -66,9 +62,7 @@ public class GroupResource {
 
     @Path("/{name}")
     @GET
-    @Timed
     @EventTimed(name = "group.ALL.get")
-    @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroup(@PathParam("name") String name) {
         Optional<Group> optionalGroup = groupService.getGroup(name);
@@ -86,9 +80,7 @@ public class GroupResource {
 
     @Path("/{name}")
     @PUT
-    @Timed
     @EventTimed(name = "group.ALL.put")
-    @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsertGroup(@PathParam("name") String name, String body) {
@@ -103,9 +95,7 @@ public class GroupResource {
 
     @Path("/{name}")
     @DELETE
-    @Timed
     @EventTimed(name = "group.ALL.delete")
-    @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteGroup(@PathParam("name") String name) {
         groupService.delete(name);

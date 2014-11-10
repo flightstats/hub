@@ -3,8 +3,6 @@ package com.flightstats.hub.dao.aws;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.basho.riak.client.api.RiakClient;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.hub.app.config.metrics.HubInstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.hub.app.config.metrics.HubMethodTimingAdapterProvider;
 import com.flightstats.hub.cluster.CuratorLock;
@@ -20,7 +18,6 @@ import com.flightstats.hub.group.DynamoGroupDao;
 import com.flightstats.hub.group.GroupCallback;
 import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
-import com.flightstats.hub.metrics.GraphiteReporting;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.ChannelValidator;
@@ -28,7 +25,6 @@ import com.flightstats.hub.service.HubHealthCheck;
 import com.flightstats.hub.service.HubHealthCheckImpl;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisherImpl;
-import com.flightstats.jerseyguice.metrics.MethodTimingAdapterProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -91,11 +87,7 @@ public class AwsModule extends AbstractModule {
         bind(GroupCallback.class).to(GroupCallbackImpl.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
 
-        bind(MetricRegistry.class).in(Singleton.class);
         bind(HostedGraphiteSender.class).asEagerSingleton();
-        bind(GraphiteReporting.class).asEagerSingleton();
-        //todo - gfm - 9/17/14 - this can go away when we only push to hosted graphite
-        bind(InstrumentedResourceMethodDispatchAdapter.class).toProvider(MethodTimingAdapterProvider.class).in(Singleton.class);
         bind(HubInstrumentedResourceMethodDispatchAdapter.class).toProvider(HubMethodTimingAdapterProvider.class).in(Singleton.class);
     }
 

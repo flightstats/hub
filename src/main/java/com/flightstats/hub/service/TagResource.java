@@ -1,7 +1,5 @@
 package com.flightstats.hub.service;
 
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
@@ -28,21 +26,19 @@ import java.util.Map;
 @Path("/tag")
 public class TagResource {
 
-	private final ChannelService channelService;
-	private final ChannelLinkBuilder linkBuilder;
-	private final UriInfo uriInfo;
+    private final ChannelService channelService;
+    private final ChannelLinkBuilder linkBuilder;
+    private final UriInfo uriInfo;
 
-	@Inject
-	public TagResource(ChannelService channelService, ChannelLinkBuilder linkBuilder, UriInfo uriInfo) {
-		this.channelService = channelService;
-		this.linkBuilder = linkBuilder;
-		this.uriInfo = uriInfo;
+    @Inject
+    public TagResource(ChannelService channelService, ChannelLinkBuilder linkBuilder, UriInfo uriInfo) {
+        this.channelService = channelService;
+        this.linkBuilder = linkBuilder;
+        this.uriInfo = uriInfo;
     }
 
     @GET
-    @Timed
     @EventTimed(name = "tags.get")
-    @ExceptionMetered
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
         Iterable<String> tags = channelService.getTags();
@@ -64,17 +60,15 @@ public class TagResource {
         return Response.ok(result).build();
     }
 
-	@GET
+    @GET
     @Path("/{tag}")
-    @Timed
     @EventTimed(name = "tag.ALL.get")
-    @ExceptionMetered
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getChannels(@PathParam("tag") String tag) {
-		Iterable<ChannelConfiguration> channels = channelService.getChannels(tag);
-		Linked<?> result = linkBuilder.build(channels, uriInfo);
-		return Response.ok(result).build();
-	}
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getChannels(@PathParam("tag") String tag) {
+        Iterable<ChannelConfiguration> channels = channelService.getChannels(tag);
+        Linked<?> result = linkBuilder.build(channels, uriInfo);
+        return Response.ok(result).build();
+    }
 
 
 }
