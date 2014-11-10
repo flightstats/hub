@@ -136,7 +136,7 @@ public class ChannelContentResource {
                               @PathParam("millis") int millis) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, startTime);
-        return getResponse(channelName, TimeUtil.seconds(startTime.minusMillis(1)), TimeUtil.seconds(startTime.plusMillis(1)), keys);
+        return getResponse(channelName, TimeUtil.millisfixing(startTime.minusMillis(1)), TimeUtil.millis(startTime.plusMillis(1)), keys);
     }
 
     //todo - gfm - 11/7/14 - add millis query path
