@@ -8,15 +8,14 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface PerChannelTimed {
-	/**
-	 * Which path or header parameter contains the channel name?
-	 */
-	String channelNameParameter();
+    /**
+     * Which path or header parameter contains the channel name?
+     */
+    String channelNameParameter();
 
-	/**
-	 * What is this method doing?  Inserting?  Fetching?  Deleting?  Some other verb...
-	 */
-	String operationName();
+    /**
+     * What is this method doing?  Inserting?  Fetching?  Deleting?  Some other verb...
+     */
+    String operationName();
 
-    String newName();
 }

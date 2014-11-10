@@ -1,7 +1,5 @@
 package com.flightstats.hub.service;
 
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Timed;
 import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
@@ -26,40 +24,36 @@ public class ChannelResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
 
-	private final ChannelService channelService;
-	private final ChannelLinkBuilder linkBuilder;
-	private final UriInfo uriInfo;
+    private final ChannelService channelService;
+    private final ChannelLinkBuilder linkBuilder;
+    private final UriInfo uriInfo;
 
-	@Inject
-	public ChannelResource(ChannelService channelService, ChannelLinkBuilder linkBuilder, UriInfo uriInfo) {
-		this.channelService = channelService;
-		this.linkBuilder = linkBuilder;
-		this.uriInfo = uriInfo;
+    @Inject
+    public ChannelResource(ChannelService channelService, ChannelLinkBuilder linkBuilder, UriInfo uriInfo) {
+        this.channelService = channelService;
+        this.linkBuilder = linkBuilder;
+        this.uriInfo = uriInfo;
     }
 
-	@GET
-	@Timed
+    @GET
     @EventTimed(name = "channels.get")
-    @ExceptionMetered
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getChannels() {
-		Iterable<ChannelConfiguration> channels = channelService.getChannels();
-		Linked<?> result = linkBuilder.build(channels, uriInfo);
-		return Response.ok(result).build();
-	}
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getChannels() {
+        Iterable<ChannelConfiguration> channels = channelService.getChannels();
+        Linked<?> result = linkBuilder.build(channels, uriInfo);
+        return Response.ok(result).build();
+    }
 
-	@POST
-    @Timed
+    @POST
     @EventTimed(name = "channels.post")
-    @ExceptionMetered
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createChannel(String json) throws InvalidRequestException, ConflictException {
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response createChannel(String json) throws InvalidRequestException, ConflictException {
         ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json);
         channelConfiguration = channelService.createChannel(channelConfiguration);
-		URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
-		return Response.created(channelUri).entity(
-			linkBuilder.buildChannelLinks(channelConfiguration, channelUri))
-			.build();
-	}
+        URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
+        return Response.created(channelUri).entity(
+                linkBuilder.buildChannelLinks(channelConfiguration, channelUri))
+                .build();
+    }
 }
