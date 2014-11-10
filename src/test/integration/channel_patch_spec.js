@@ -5,10 +5,7 @@ var jsonBody = JSON.stringify({ "name": channelName, "ttlMillis": null});
 var expectedBody = {
     name: channelName,
     type: "Sequence",
-    contentSizeKB: 20,
-    peakRequestRateSeconds: 5,
-    ttlDays: 1,
-    ttlMillis : 86400000,
+    ttlDays : 2,
     "tags": [ "bar", "foo", "tagz"]
 };
 var channelResource = channelUrl + "/" + channelName;
@@ -26,7 +23,7 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
             .expectStatus(201)
             .afterJSON(function (result) {
                 var updateBody = {
-                    "ttlMillis": 60000,
+                    "ttlDays" : 2,
                     peakRequestRateSeconds: 5,
                     contentSizeKB: 20,
                     "tags": ["foo", "bar", "tagz"]

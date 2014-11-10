@@ -10,7 +10,7 @@ var jsonBody = JSON.stringify({
     tags: ['one', 'two']
 });
 var channelResource = channelUrl + '/' + channelName;
-var testName = 'channel_update_description_spec';
+var testName = __filename;
 utils.configureFrisby();
 
 frisby.create(testName + ': Making sure channel resource does not yet exist.')
@@ -31,8 +31,6 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
                     .expectJSON({'name': channelName})
                     .expectJSON({'description': 'next description'})
                     .expectJSON({ttlDays: 9,
-                        contentSizeKB: 3,
-                        peakRequestRateSeconds: 2,
                         tags: ['one', 'two']})
                     .toss()
             })

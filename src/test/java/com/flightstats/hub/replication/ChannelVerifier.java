@@ -17,14 +17,13 @@ import java.util.concurrent.TimeUnit;
 public class ChannelVerifier implements Callable<VerifierResult> {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelVerifier.class);
-
-    private JsonNode channelStatus;
-    private String replicationUri;
     private final int frequencyHours;
     private final int payloadPercent;
     private final SequenceFinder sequenceFinder;
     private final ChannelUtils channelUtils;
     private final Random random = new Random();
+    private JsonNode channelStatus;
+    private String replicationUri;
 
     public ChannelVerifier(JsonNode channelStatus, String replicationUri, int frequencyHours, int payloadPercent,
                            SequenceFinder sequenceFinder, ChannelUtils channelUtils) {
@@ -52,7 +51,7 @@ public class ChannelVerifier implements Callable<VerifierResult> {
             result.incrementSequencesChecked();
             if (!replicatedContent.isPresent()) {
                 result.addMissingSequence(String.valueOf(sequence));
-            } else  {
+            } else {
                 if (shouldVerifyPayload()) {
                     Optional<Content> sourceContent = channelUtils.getContent(sourceUrl, sequence);
                     if (sourceContent.isPresent()) {
@@ -63,7 +62,7 @@ public class ChannelVerifier implements Callable<VerifierResult> {
                     }
                 }
             }
-            sequence+=1;
+            sequence += 1;
         }
         logger.info("completed " + channelUri + " " + result);
         return result;
@@ -78,7 +77,8 @@ public class ChannelVerifier implements Callable<VerifierResult> {
         channel.setConfiguration(ChannelConfiguration.builder().withTtlDays(1).build());
         int start = Math.max(999, getSourceLatest() - 50000);
         long minutes = TimeUnit.HOURS.toMinutes(frequencyHours) + 10;
-        return sequenceFinder.searchForLastUpdated(channel, start, minutes, TimeUnit.MINUTES) + 1;
+        //return sequenceFinder.searchForLastUpdated(channel, start, minutes, TimeUnit.MINUTES) + 1;
+        return 0;
     }
 
     private String getSourceUrl() {
