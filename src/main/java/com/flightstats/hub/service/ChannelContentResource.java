@@ -121,7 +121,7 @@ public class ChannelContentResource {
 
     @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}")
     @EventTimed(name = "channel.ALL.millis")
-    @PerChannelTimed(operationName = "millis", channelNameParameter = "channelName", newName = "millis")
+    @PerChannelTimed(operationName = "millis", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public Response getMillis(@PathParam("channelName") String channelName,
