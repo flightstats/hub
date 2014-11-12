@@ -7,6 +7,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,10 @@ public class ContentKey {
 
     public long getMillis() {
         return time.getMillis();
+    }
+
+    public String toString(DateTimeFormatter pathFormatter) {
+        return time.toString(pathFormatter) + hash;
     }
 
     @Override
