@@ -104,6 +104,7 @@ dependencies {
     compile 'org.apache.curator:curator-recipes:2.6.0'
     testCompile 'org.apache.curator:curator-test:2.6.0'
     compile 'org.apache.commons:commons-lang3:3.2'
+    compile 'commons-io:commons-io:2.4'
     compile 'com.github.rholder:guava-retrying:1.0.6'
     compile 'com.google.code.gson:gson:2.3'
     compile(group: 'newrelic', name: 'newrelic_agent', version: '3.11.0')
