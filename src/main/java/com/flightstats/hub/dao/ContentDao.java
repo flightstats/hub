@@ -18,7 +18,9 @@ public interface ContentDao {
 
     Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime);
 
+    Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count);
+
     void delete(String channelName);
 
-    Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count);
+    //todo - gfm - 11/12/14 - delete for cache/ttl?
 }
