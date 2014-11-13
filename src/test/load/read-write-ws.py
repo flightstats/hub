@@ -30,7 +30,7 @@ class WebsiteTasks(TaskSet):
         self.number = WebsiteTasks.channelNum * 1000
         self.payload = self.payload_generator(self.number)
         print("payload size " + str(self.payload.__sizeof__()))
-        self.channel = "riak_test_" + str(WebsiteTasks.channelNum)
+        self.channel = "load_test_" + str(WebsiteTasks.channelNum)
         self.count = 0
         payload = {"name": self.channel, "ttlDays": "100"}
         self.client.post("/channel",
