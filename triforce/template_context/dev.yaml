@@ -52,8 +52,8 @@ conf/hub.properties :
     zookeeper :
         connection : "hub-zk-01.cloud-east.dev:2181,hub-zk-02.cloud-east.dev:2181,hub-zk-03.cloud-east.dev:2181"
 
-    riak :
-        addresses : "10.11.15.101,10.11.15.137,10.11.15.152,10.11.15.59,10.11.15.66"
+    storage :
+        path : "/mnt/spoke"
 
 conf/hazelcast.conf.xml :
     _template : hazelcast.conf.xml.jinja

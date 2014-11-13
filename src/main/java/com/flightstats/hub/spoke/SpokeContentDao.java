@@ -99,10 +99,16 @@ public class SpokeContentDao implements ContentDao {
             JsonNode jsonNode = mapper.readTree(bytes);
             Content.Builder builder = Content.builder()
                     .withMillis(jsonNode.get("millis").asLong())
-                    .withContentKey(key)
-                    .withContentLanguage(jsonNode.get("contentLanguage").asText())
-                    .withContentType(jsonNode.get("contentType").asText())
-                    .withUser(jsonNode.get("user").asText());
+                    .withContentKey(key);
+            if (jsonNode.has("contentLanguage")) {
+                builder.withContentLanguage(jsonNode.get("contentLanguage").asText());
+            }
+            if (jsonNode.has("contentType")) {
+                builder.withContentType(jsonNode.get("contentType").asText());
+            }
+            if (jsonNode.has("user")) {
+                builder.withUser(jsonNode.get("user").asText());
+            }
             zipStream.getNextEntry();
             bytes = ByteStreams.toByteArray(zipStream);
             //todo - gfm - 11/11/14 - try next store

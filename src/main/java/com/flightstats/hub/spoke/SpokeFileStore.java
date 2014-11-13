@@ -1,6 +1,9 @@
 package com.flightstats.hub.spoke;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,13 +19,17 @@ public class SpokeFileStore {
 
     private final String storagePath;
 
-    public SpokeFileStore(String storagePath) {
-        this.storagePath = storagePath;
+    @Inject
+    public SpokeFileStore(@Named("storage.path") String storagePath) {
+        this.storagePath = StringUtils.appendIfMissing(storagePath, "/");
         logger.info("starting with storage path " + storagePath);
+        if (!write("!startup", ("" + System.currentTimeMillis()).getBytes())) {
+            throw new RuntimeException("unable to create startup file");
+        }
     }
 
     public boolean write(String path, byte[] payload) {
-        File file = new File(storagePath + "/" + path);
+        File file = new File(storagePath + path);
         logger.trace("writing {}", file);
         try {
             FileUtils.writeByteArrayToFile(file, payload);
@@ -34,7 +41,7 @@ public class SpokeFileStore {
     }
 
     public byte[] read(String path) {
-        File file = new File(storagePath + "/" + path);
+        File file = new File(storagePath + path);
         logger.trace("reading {}", file);
         try {
             return FileUtils.readFileToByteArray(file);
