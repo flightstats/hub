@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ContentDao;
@@ -20,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -52,12 +54,12 @@ public class SpokeContentDao implements ContentDao {
         try {
             //todo - gfm - 11/12/14 - clean this up
             ContentKey key = content.getContentKey().get();
-            String timeString = key.toString(pathFormatter);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ZipOutputStream zipOut = new ZipOutputStream(baos);
             zipOut.putNextEntry(new ZipEntry("meta"));
             ObjectNode objectNode = mapper.createObjectNode();
-            objectNode.put("millis", content.getMillis());
+            //todo - gfm - 11/12/14 - make headers a map
+            objectNode.put("millis", key.getMillis());
             if (content.getUser().isPresent()) {
                 objectNode.put("user", content.getUser().get());
             }
@@ -72,9 +74,9 @@ public class SpokeContentDao implements ContentDao {
             zipOut.putNextEntry(new ZipEntry("payload"));
             ByteStreams.copy(new ByteArrayInputStream(content.getData()), zipOut);
             zipOut.close();
-            spokeFileStore.write(timeString, baos.toByteArray());
+            spokeFileStore.write(getPath(channelName, key), baos.toByteArray());
 
-            //todo - gfm - 11/11/14 - send async to other stores
+            //todo - gfm - 11/11/14 - send async to other stores, wait for success
             return new InsertedContentKey(key, new DateTime(key.getMillis()).toDate());
         } catch (IOException e) {
             logger.warn("what's up?", e);
@@ -82,12 +84,36 @@ public class SpokeContentDao implements ContentDao {
         }
     }
 
+    private String getPath(String channelName, ContentKey key) {
+        return channelName + "/" + key.toString(pathFormatter);
+    }
+
     @Override
     public Content read(String channelName, ContentKey key) {
-        //todo - gfm - 11/11/14 - try local store
-        //todo - gfm - 11/11/14 - try next store
-        //todo - gfm - 11/11/14 - try 3rd store
-        return null;
+        String path = getPath(channelName, key);
+        try {
+            byte[] read = spokeFileStore.read(path);
+            ZipInputStream zipStream = new ZipInputStream(new ByteArrayInputStream(read));
+            zipStream.getNextEntry();
+            byte[] bytes = ByteStreams.toByteArray(zipStream);
+            JsonNode jsonNode = mapper.readTree(bytes);
+            Content.Builder builder = Content.builder()
+                    .withMillis(jsonNode.get("millis").asLong())
+                    .withContentKey(key)
+                    .withContentLanguage(jsonNode.get("contentLanguage").asText())
+                    .withContentType(jsonNode.get("contentType").asText())
+                    .withUser(jsonNode.get("user").asText());
+            zipStream.getNextEntry();
+            bytes = ByteStreams.toByteArray(zipStream);
+            //todo - gfm - 11/11/14 - try next store
+            //todo - gfm - 11/11/14 - try 3rd store
+            return builder
+                    .withData(bytes)
+                    .build();
+        } catch (IOException e) {
+            logger.warn("unable to get data" + path, e);
+            return null;
+        }
     }
 
     @Override
