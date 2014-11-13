@@ -53,7 +53,7 @@ conf/hub.properties :
         connection : "hub-zk-01.cloud-east.dev:2181,hub-zk-02.cloud-east.dev:2181,hub-zk-03.cloud-east.dev:2181"
 
     storage :
-        path : "/mnt/spoke"
+        path : "/ebs/spoke"
 
 conf/hazelcast.conf.xml :
     _template : hazelcast.conf.xml.jinja
