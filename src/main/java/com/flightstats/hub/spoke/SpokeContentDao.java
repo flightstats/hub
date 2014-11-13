@@ -1,14 +1,10 @@
 package com.flightstats.hub.spoke;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
-import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -16,13 +12,8 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 /**
  * This is the entry point in the Hub's storage system, Spoke.
@@ -34,8 +25,10 @@ import java.util.zip.ZipOutputStream;
  */
 public class SpokeContentDao implements ContentDao {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+
     private final static Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
+
+    //todo - gfm - 11/13/14 - where should this formatting live?
     private static final DateTimeFormatter pathFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm/ssSSS").withZoneUTC();
     private final SpokeFileStore spokeFileStore;
 
@@ -52,29 +45,8 @@ public class SpokeContentDao implements ContentDao {
             //todo - gfm - 10/31/14 - how should replication be handled?
         }
         try {
-            //todo - gfm - 11/12/14 - clean this up
             ContentKey key = content.getContentKey().get();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ZipOutputStream zipOut = new ZipOutputStream(baos);
-            zipOut.putNextEntry(new ZipEntry("meta"));
-            ObjectNode objectNode = mapper.createObjectNode();
-            //todo - gfm - 11/12/14 - make headers a map
-            objectNode.put("millis", key.getMillis());
-            if (content.getUser().isPresent()) {
-                objectNode.put("user", content.getUser().get());
-            }
-            if (content.getContentLanguage().isPresent()) {
-                objectNode.put("contentLanguage", content.getContentLanguage().get());
-            }
-            if (content.getContentType().isPresent()) {
-                objectNode.put("contentType", content.getContentType().get());
-            }
-            String meta = objectNode.toString();
-            zipOut.write(meta.getBytes());
-            zipOut.putNextEntry(new ZipEntry("payload"));
-            ByteStreams.copy(new ByteArrayInputStream(content.getData()), zipOut);
-            zipOut.close();
-            spokeFileStore.write(getPath(channelName, key), baos.toByteArray());
+            spokeFileStore.write(getPath(channelName, key), SpokeMarshaller.toBytes(content));
 
             //todo - gfm - 11/11/14 - send async to other stores, wait for success
             return new InsertedContentKey(key, new DateTime(key.getMillis()).toDate());
@@ -93,29 +65,9 @@ public class SpokeContentDao implements ContentDao {
         String path = getPath(channelName, key);
         try {
             byte[] read = spokeFileStore.read(path);
-            ZipInputStream zipStream = new ZipInputStream(new ByteArrayInputStream(read));
-            zipStream.getNextEntry();
-            byte[] bytes = ByteStreams.toByteArray(zipStream);
-            JsonNode jsonNode = mapper.readTree(bytes);
-            Content.Builder builder = Content.builder()
-                    .withMillis(jsonNode.get("millis").asLong())
-                    .withContentKey(key);
-            if (jsonNode.has("contentLanguage")) {
-                builder.withContentLanguage(jsonNode.get("contentLanguage").asText());
-            }
-            if (jsonNode.has("contentType")) {
-                builder.withContentType(jsonNode.get("contentType").asText());
-            }
-            if (jsonNode.has("user")) {
-                builder.withUser(jsonNode.get("user").asText());
-            }
-            zipStream.getNextEntry();
-            bytes = ByteStreams.toByteArray(zipStream);
+            return SpokeMarshaller.toContent(read, key);
             //todo - gfm - 11/11/14 - try next store
             //todo - gfm - 11/11/14 - try 3rd store
-            return builder
-                    .withData(bytes)
-                    .build();
         } catch (IOException e) {
             logger.warn("unable to get data" + path, e);
             return null;
