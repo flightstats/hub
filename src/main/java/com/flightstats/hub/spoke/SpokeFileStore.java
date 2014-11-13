@@ -14,7 +14,6 @@ public class SpokeFileStore {
 
     private final static Logger logger = LoggerFactory.getLogger(SpokeFileStore.class);
 
-
     private final String storagePath;
 
     public SpokeFileStore(String storagePath) {
@@ -24,6 +23,7 @@ public class SpokeFileStore {
 
     public boolean write(String path, byte[] payload) {
         File file = new File(storagePath + "/" + path);
+        logger.trace("writing {}", file);
         try {
             FileUtils.writeByteArrayToFile(file, payload);
         } catch (IOException e) {
@@ -35,6 +35,7 @@ public class SpokeFileStore {
 
     public byte[] read(String path) {
         File file = new File(storagePath + "/" + path);
+        logger.trace("reading {}", file);
         try {
             return FileUtils.readFileToByteArray(file);
         } catch (IOException e) {
