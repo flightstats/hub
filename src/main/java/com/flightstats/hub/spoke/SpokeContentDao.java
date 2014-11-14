@@ -4,7 +4,6 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.InsertedContentKey;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -34,7 +33,7 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public InsertedContentKey write(String channelName, Content content) {
+    public ContentKey write(String channelName, Content content) {
         if (content.isNewContent()) {
             content.setContentKey(new ContentKey());
         } else {
@@ -43,7 +42,7 @@ public class SpokeContentDao implements ContentDao {
         try {
             ContentKey key = content.getContentKey().get();
             spokeStore.write(getPath(channelName, key), SpokeMarshaller.toBytes(content));
-            return new InsertedContentKey(key, new DateTime(key.getMillis()).toDate());
+            return key;
         } catch (Exception e) {
             logger.warn("what's up?", e);
             return null;
