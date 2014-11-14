@@ -8,17 +8,17 @@ import java.io.File;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
-public class SpokeFileStoreTest {
+public class FileSpokeStoreTest {
 
     @Test
     public void testWriteRead() throws Exception {
         File tempDir = Files.createTempDir();
-        SpokeFileStore spokeFileStore = new SpokeFileStore(tempDir.getPath());
+        SpokeStore spokeStore = new FileSpokeStore(tempDir.getPath());
 
         byte[] bytes = {0, 2, 3, 4, 5, 6};
         String path = "a/b/c/10/blah";
-        assertTrue(spokeFileStore.write(path, bytes));
-        byte[] read = spokeFileStore.read(path);
+        assertTrue(spokeStore.write(path, bytes));
+        byte[] read = spokeStore.read(path);
         assertArrayEquals(bytes, read);
     }
 }

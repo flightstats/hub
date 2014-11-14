@@ -21,7 +21,10 @@ import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.service.HubHealthCheck;
 import com.flightstats.hub.service.HubHealthCheckImpl;
+import com.flightstats.hub.spoke.FileSpokeStore;
+import com.flightstats.hub.spoke.RemoteSpokeStore;
 import com.flightstats.hub.spoke.SpokeContentDao;
+import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisherImpl;
 import com.google.inject.AbstractModule;
@@ -35,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Properties;
 
+//todo - gfm - 11/13/14 - rename this to something other than Aws
 public class AwsModule extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(AwsModule.class);
 
@@ -74,6 +78,16 @@ public class AwsModule extends AbstractModule {
                 .to(DynamoReplicationDao.class);
 
         bind(ContentService.class).to(ContentServiceImpl.class).asEagerSingleton();
+
+        bind(SpokeStore.class)
+                .annotatedWith(Names.named(SpokeStore.FILE))
+                .to(FileSpokeStore.class)
+                .asEagerSingleton();
+
+        bind(SpokeStore.class)
+                .annotatedWith(Names.named(SpokeStore.REMOTE))
+                .to(RemoteSpokeStore.class)
+                .asEagerSingleton();
 
         bind(ContentDao.class).to(SpokeContentDao.class).asEagerSingleton();
 

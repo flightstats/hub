@@ -1,43 +1,66 @@
 package com.flightstats.hub.spoke;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 @Path("/spoke")
 public class SpokeResource {
 
-    private final SpokeFileStore spokeFileStore;
+    private final static Logger logger = LoggerFactory.getLogger(SpokeResource.class);
+    private final SpokeStore spokeStore;
     private final UriInfo uriInfo;
 
     @Inject
-    public SpokeResource(SpokeFileStore spokeFileStore, UriInfo uriInfo) {
-        this.spokeFileStore = spokeFileStore;
+    public SpokeResource(@Named(SpokeStore.FILE) SpokeStore spokeStore, UriInfo uriInfo) {
+        this.spokeStore = spokeStore;
         this.uriInfo = uriInfo;
     }
 
-    @Path("/payload/{path}")
+    @Path("/payload/{path:.+}")
     @GET
     public Response getPayload(@PathParam("path") String path) {
-        byte[] read = spokeFileStore.read(path);
-        if (read == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+        try {
+            byte[] read = spokeStore.read(path);
+            if (read == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            return Response.ok(read).build();
+        } catch (Exception e) {
+            logger.warn("unable to get " + path, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
-        return Response.ok(read).build();
     }
 
-    @Path("/payload/{path}")
+    @Path("/payload/{path:.+}")
     @PUT
     public Response putPayload(@PathParam("path") String path, byte[] data) {
-        if (spokeFileStore.write(path, data)) {
-            return Response.created(uriInfo.getRequestUri()).build();
+        try {
+            if (spokeStore.write(path, data)) {
+                return Response.created(uriInfo.getRequestUri()).build();
+            }
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        } catch (Exception e) {
+            logger.warn("unable to write " + path, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+    }
+
+    @Path("/payload/{path:.+}")
+    @DELETE
+    public Response delete(@PathParam("path") String path) {
+        try {
+            spokeStore.delete(path);
+            return Response.ok().build();
+        } catch (Exception e) {
+            logger.warn("unable to write " + path, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
 
