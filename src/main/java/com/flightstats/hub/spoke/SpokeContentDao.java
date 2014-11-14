@@ -6,7 +6,6 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -26,16 +25,16 @@ public class SpokeContentDao implements ContentDao {
     private final static Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
 
     //todo - gfm - 11/13/14 - where should this formatting live?  thick client or server?
-    private static final DateTimeFormatter pathFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm/ssSSS").withZoneUTC();
-    private final SpokeStore spokeStore;
+    private final static DateTimeFormatter pathFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm/ssSSS").withZoneUTC();
+    private final RemoteSpokeStore spokeStore;
 
     @Inject
-    public SpokeContentDao(@Named(SpokeStore.REMOTE) SpokeStore spokeStore) {
+    public SpokeContentDao(RemoteSpokeStore spokeStore) {
         this.spokeStore = spokeStore;
     }
 
     @Override
-    public InsertedContentKey write(String channelName, Content content, long ttlDays) {
+    public InsertedContentKey write(String channelName, Content content) {
         if (content.isNewContent()) {
             content.setContentKey(new ContentKey());
         } else {
@@ -59,10 +58,9 @@ public class SpokeContentDao implements ContentDao {
     public Content read(String channelName, ContentKey key) {
         String path = getPath(channelName, key);
         try {
-            byte[] read = spokeStore.read(path);
-            return SpokeMarshaller.toContent(read, key);
+            return spokeStore.read(path, key);
         } catch (Exception e) {
-            logger.warn("unable to get data" + path, e);
+            logger.warn("unable to get data: " + path, e);
             return null;
         }
     }

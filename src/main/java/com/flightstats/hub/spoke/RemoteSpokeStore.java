@@ -1,17 +1,19 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.model.ContentKey;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class RemoteSpokeStore implements SpokeStore {
+public class RemoteSpokeStore {
 
     private final static Logger logger = LoggerFactory.getLogger(RemoteSpokeStore.class);
 
@@ -34,7 +36,6 @@ public class RemoteSpokeStore implements SpokeStore {
         return client;
     }
 
-    @Override
     public boolean write(String path, byte[] payload) throws InterruptedException {
         String[] servers = cluster.getServers();
         //todo - gfm - 11/13/14 - change this to be cluster aware
@@ -56,13 +57,11 @@ public class RemoteSpokeStore implements SpokeStore {
                 }
             });
         }
-
         //todo - gfm - 11/13/14 - this should be smarter with waiting.  should we return success if one succeeds?
         return countDownLatch.await(60, TimeUnit.SECONDS);
     }
 
-    @Override
-    public byte[] read(String path) {
+    public com.flightstats.hub.model.Content read(String path, ContentKey key) {
         //todo - gfm - 11/13/14 - this could do read repair
         String[] servers = cluster.getServers();
         for (String server : servers) {
@@ -70,13 +69,17 @@ public class RemoteSpokeStore implements SpokeStore {
                     .get(ClientResponse.class);
             logger.trace("server {} path {} response {}", server, path, response);
             if (response.getStatus() == 200) {
-                return response.getEntity(byte[].class);
+                byte[] entity = response.getEntity(byte[].class);
+                try {
+                    return SpokeMarshaller.toContent(entity, key);
+                } catch (IOException e) {
+                    logger.warn("unable to parse content " + path);
+                }
             }
         }
         return null;
     }
 
-    @Override
     public boolean delete(String path) throws Exception {
         //todo - gfm - 11/13/14 - this could be merged with some of the write code
         String[] servers = cluster.getServers();
