@@ -12,7 +12,7 @@ public class SpokeContentDaoTest {
     @Test
     public void testWriteRead() throws Exception {
 
-        SpokeContentDao spokeContentDao = new SpokeContentDao(new SpokeFileStore(Files.createTempDir().getPath()));
+        SpokeContentDao spokeContentDao = new SpokeContentDao(new FileSpokeStore(Files.createTempDir().getPath()));
         Content content = Content.builder()
                 .withData("this is my dataz!".getBytes())
                 .withContentType("typing")

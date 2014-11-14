@@ -52,8 +52,9 @@ conf/hub.properties :
     zookeeper :
         connection : "hub-zk-01.cloud-east.dev:2181,hub-zk-02.cloud-east.dev:2181,hub-zk-03.cloud-east.dev:2181"
 
-    storage :
+    spoke :
         path : "/ebs/spoke"
+        servers : "hub-v2-01.cloud-east.dev:8080,hub-v2-02.cloud-east.dev:8080,hub-v2-03.cloud-east.dev:8080"
 
 conf/hazelcast.conf.xml :
     _template : hazelcast.conf.xml.jinja
