@@ -8,6 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,7 +66,8 @@ public class RemoteSpokeStore {
 
     public com.flightstats.hub.model.Content read(String path, ContentKey key) {
         //todo - gfm - 11/13/14 - this could do read repair
-        String[] servers = cluster.getServers();
+        List<String> servers = Arrays.asList(cluster.getServers());
+        Collections.shuffle(servers);
         for (String server : servers) {
             ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
                     .get(ClientResponse.class);
