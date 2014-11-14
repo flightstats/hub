@@ -34,10 +34,8 @@ class PerChannelTimedRequestDispatcher implements RequestDispatcher {
 
         try {
             delegate.dispatch(resource, context);
-        } catch (Exception e) {
-            throw e;
         } finally {
-            sender.send("channel." + channelName + "." + timedAnnotation.channelNameParameter(),
+            sender.send("channel." + channelName + "." + timedAnnotation.operationName(),
                     System.currentTimeMillis() - start);
         }
     }
