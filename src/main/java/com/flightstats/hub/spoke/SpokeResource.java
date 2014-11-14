@@ -1,7 +1,6 @@
 package com.flightstats.hub.spoke;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,11 +12,11 @@ import javax.ws.rs.core.UriInfo;
 public class SpokeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(SpokeResource.class);
-    private final SpokeStore spokeStore;
+    private final FileSpokeStore spokeStore;
     private final UriInfo uriInfo;
 
     @Inject
-    public SpokeResource(@Named(SpokeStore.FILE) SpokeStore spokeStore, UriInfo uriInfo) {
+    public SpokeResource(FileSpokeStore spokeStore, UriInfo uriInfo) {
         this.spokeStore = spokeStore;
         this.uriInfo = uriInfo;
     }
@@ -30,6 +29,7 @@ public class SpokeResource {
             if (read == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
+            //todo - gfm - 11/13/14 - this could verify bytes
             return Response.ok(read).build();
         } catch (Exception e) {
             logger.warn("unable to get " + path, e);
