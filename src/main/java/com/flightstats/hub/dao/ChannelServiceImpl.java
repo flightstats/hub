@@ -3,7 +3,6 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.replication.ReplicationValidator;
 import com.flightstats.hub.service.ChannelValidator;
@@ -55,7 +54,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public InsertedContentKey insert(String channelName, Content content) {
+    public ContentKey insert(String channelName, Content content) {
         if (content.isNewContent()) {
             replicationValidator.throwExceptionIfReplicating(channelName);
         }

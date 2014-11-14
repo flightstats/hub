@@ -4,7 +4,6 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -56,7 +55,7 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public InsertedContentKey insert(ChannelConfiguration configuration, Content content) {
+    public ContentKey insert(ChannelConfiguration configuration, Content content) {
         try {
             inFlight.incrementAndGet();
             String channelName = configuration.getName();

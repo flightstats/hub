@@ -6,6 +6,7 @@ import com.flightstats.hub.app.config.metrics.PerChannelTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
@@ -95,8 +96,9 @@ public class SingleChannelResource {
                 .withUser(user)
                 .build();
         try {
-            InsertedContentKey insertionResult = channelService.insert(channelName, content);
-            URI payloadUri = linkBuilder.buildItemUri(insertionResult.getKey(), uriInfo.getRequestUri());
+            ContentKey contentKey = channelService.insert(channelName, content);
+            InsertedContentKey insertionResult = new InsertedContentKey(contentKey);
+            URI payloadUri = linkBuilder.buildItemUri(contentKey, uriInfo.getRequestUri());
             Linked<InsertedContentKey> linkedResult = linked(insertionResult)
                     .withLink("channel", linkBuilder.buildChannelUri(channelName, uriInfo))
                     .withLink("self", payloadUri)
