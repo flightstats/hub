@@ -2,7 +2,10 @@ package com.flightstats.hub.dao.encryption;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.Audit;
+import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.exception.ConflictException;
 import com.flightstats.hub.model.exception.ForbiddenRequestException;
 import com.google.common.base.Optional;
@@ -70,7 +73,7 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public InsertedContentKey insert(String channelName, Content content) {
+    public ContentKey insert(String channelName, Content content) {
         if (isAuditChannel(channelName)) {
             throw new ForbiddenRequestException("Audit Channels do not allow inserts");
         }
