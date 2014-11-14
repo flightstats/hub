@@ -13,14 +13,14 @@ import java.io.IOException;
 /**
  * Direct interactions with the file system
  */
-public class SpokeFileStore {
+public class FileSpokeStore implements SpokeStore {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeFileStore.class);
+    private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);
 
     private final String storagePath;
 
     @Inject
-    public SpokeFileStore(@Named("storage.path") String storagePath) {
+    public FileSpokeStore(@Named("spoke.path") String storagePath) {
         this.storagePath = StringUtils.appendIfMissing(storagePath, "/");
         logger.info("starting with storage path " + storagePath);
         if (!write("!startup", ("" + System.currentTimeMillis()).getBytes())) {
@@ -28,6 +28,7 @@ public class SpokeFileStore {
         }
     }
 
+    @Override
     public boolean write(String path, byte[] payload) {
         File file = new File(storagePath + path);
         logger.trace("writing {}", file);
@@ -40,6 +41,7 @@ public class SpokeFileStore {
         return true;
     }
 
+    @Override
     public byte[] read(String path) {
         File file = new File(storagePath + path);
         logger.trace("reading {}", file);
@@ -49,6 +51,12 @@ public class SpokeFileStore {
             logger.warn("unable to read from " + path, e);
             return null;
         }
+    }
+
+    @Override
+    public boolean delete(String path) throws Exception {
+        FileUtils.deleteDirectory(new File(storagePath + path));
+        return true;
     }
 
     /*
@@ -63,8 +71,5 @@ public class SpokeFileStore {
 
     todo - gfm - 11/12/14 - add delete to support TTL
 
-    public void delete(String channelName) {
-
-    }
     */
 }
