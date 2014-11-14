@@ -24,7 +24,6 @@ import com.flightstats.hub.service.HubHealthCheckImpl;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
 import com.flightstats.hub.spoke.SpokeContentDao;
-import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisherImpl;
 import com.google.inject.AbstractModule;
@@ -79,16 +78,8 @@ public class AwsModule extends AbstractModule {
 
         bind(ContentService.class).to(ContentServiceImpl.class).asEagerSingleton();
 
-        bind(SpokeStore.class)
-                .annotatedWith(Names.named(SpokeStore.FILE))
-                .to(FileSpokeStore.class)
-                .asEagerSingleton();
-
-        bind(SpokeStore.class)
-                .annotatedWith(Names.named(SpokeStore.REMOTE))
-                .to(RemoteSpokeStore.class)
-                .asEagerSingleton();
-
+        bind(FileSpokeStore.class).asEagerSingleton();
+        bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(ContentDao.class).to(SpokeContentDao.class).asEagerSingleton();
 
         bind(DynamoUtils.class).asEagerSingleton();

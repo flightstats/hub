@@ -8,12 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
  * Direct interactions with the file system
  */
-public class FileSpokeStore implements SpokeStore {
+public class FileSpokeStore {
 
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);
 
@@ -28,7 +29,6 @@ public class FileSpokeStore implements SpokeStore {
         }
     }
 
-    @Override
     public boolean write(String path, byte[] payload) {
         File file = new File(storagePath + path);
         logger.trace("writing {}", file);
@@ -41,19 +41,20 @@ public class FileSpokeStore implements SpokeStore {
         return true;
     }
 
-    @Override
     public byte[] read(String path) {
         File file = new File(storagePath + path);
         logger.trace("reading {}", file);
         try {
             return FileUtils.readFileToByteArray(file);
+        } catch (FileNotFoundException e) {
+            logger.info("file not found " + path);
+            return null;
         } catch (IOException e) {
-            logger.warn("unable to read from " + path, e);
+            logger.info("unable to read from " + path, e);
             return null;
         }
     }
 
-    @Override
     public boolean delete(String path) throws Exception {
         FileUtils.deleteDirectory(new File(storagePath + path));
         return true;

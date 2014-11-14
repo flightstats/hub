@@ -10,7 +10,7 @@ import java.util.Collection;
 
 public interface ContentDao {
 
-    InsertedContentKey write(String channelName, Content content, long ttlDays);
+    InsertedContentKey write(String channelName, Content content);
 
     Content read(String channelName, ContentKey key);
 
