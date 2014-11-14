@@ -4,6 +4,7 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -69,9 +70,16 @@ public class SpokeContentDao implements ContentDao {
         //todo - gfm - 11/11/14 - do anything?
     }
 
+    @Deprecated
     @Override
     public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
 
+        return null;
+    }
+
+    @Override
+    public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+        //todo - gfm - 11/14/14 -
         return null;
     }
 

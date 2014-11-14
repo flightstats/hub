@@ -21,15 +21,18 @@ public class ContentServiceImpl implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
     private final ContentDao contentDao;
+    private final ContentDao longTermContentDao;
     private final int spokeTtlMinutes;
     private final Integer shutdown_wait_seconds;
     private final AtomicInteger inFlight = new AtomicInteger();
 
     @Inject
-    public ContentServiceImpl(ContentDao contentDao,
+    public ContentServiceImpl(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
+                              @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
                               @Named("spoke.ttl_minutes") int spokeTtlMinutes,
                               @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds) {
-        this.contentDao = contentDao;
+        this.contentDao = cacheContentDao;
+        this.longTermContentDao = longTermContentDao;
         this.spokeTtlMinutes = spokeTtlMinutes;
         this.shutdown_wait_seconds = shutdown_wait_seconds;
         HubServices.registerPreStop(new ContentServiceHook());
@@ -104,6 +107,7 @@ public class ContentServiceImpl implements ContentService {
     private class ContentServiceHook extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
+            //todo - gfm - 11/14/14 - call init on both Daos
         }
 
         @Override
