@@ -7,7 +7,6 @@ import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -69,16 +68,16 @@ public class RemoteSpokeStore {
         List<String> servers = Arrays.asList(cluster.getServers());
         Collections.shuffle(servers);
         for (String server : servers) {
-            ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
-                    .get(ClientResponse.class);
-            logger.trace("server {} path {} response {}", server, path, response);
-            if (response.getStatus() == 200) {
-                byte[] entity = response.getEntity(byte[].class);
-                try {
+            try {
+                ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
+                        .get(ClientResponse.class);
+                logger.trace("server {} path {} response {}", server, path, response);
+                if (response.getStatus() == 200) {
+                    byte[] entity = response.getEntity(byte[].class);
                     return SpokeMarshaller.toContent(entity, key);
-                } catch (IOException e) {
-                    logger.warn("unable to parse content " + path);
                 }
+            } catch (Exception e) {
+                logger.warn("unable to get content " + path, e);
             }
         }
         return null;
