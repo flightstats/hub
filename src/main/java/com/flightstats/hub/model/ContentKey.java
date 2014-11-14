@@ -26,17 +26,6 @@ public class ContentKey {
         this.hash = hash;
     }
 
-    public static Optional<ContentKey> fromStorage(String key) {
-        try {
-            String[] split = key.split("-");
-            long epochMilli = Long.parseLong(split[0]);
-            return Optional.of(new ContentKey(new DateTime(epochMilli, DateTimeZone.UTC), split[1]));
-        } catch (Exception e) {
-            logger.info("unable to parse " + key + " " + e.getMessage());
-            return Optional.absent();
-        }
-    }
-
     public static Optional<ContentKey> fromUrl(String key) {
         try {
             String date = StringUtils.substringBeforeLast(key, "/") + "/";
@@ -52,10 +41,6 @@ public class ContentKey {
         return TimeUtil.millis(time) + hash;
     }
 
-    public String toStorage() {
-        return getMillis() + "-" + hash;
-    }
-
     public long getMillis() {
         return time.getMillis();
     }
@@ -66,6 +51,6 @@ public class ContentKey {
 
     @Override
     public String toString() {
-        return toStorage();
+        return toUrl();
     }
 }

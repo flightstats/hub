@@ -56,4 +56,22 @@ public class TimeUtil {
         return dateTime.toString(daysFormatter);
     }
 
+    public enum Unit {
+        MILLIS(millisFormatter),
+        SECONDS(secondsFormatter),
+        MINUTES(minutesFormatter),
+        HOURS(hoursFormatter),
+        DAYS(daysFormatter);
+
+        private DateTimeFormatter formatter;
+
+        Unit(DateTimeFormatter formatter) {
+            this.formatter = formatter;
+        }
+
+        public String format(DateTime dateTime) {
+            return dateTime.toString(formatter);
+        }
+    }
+
 }
