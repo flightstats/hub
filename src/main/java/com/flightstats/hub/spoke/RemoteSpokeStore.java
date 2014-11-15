@@ -42,6 +42,9 @@ public class RemoteSpokeStore {
         String[] servers = cluster.getServers();
         //todo - gfm - 11/13/14 - change this to be cluster aware
         int quorum = Math.max(1, servers.length - 1);
+        /**
+         * todo - gfm - 11/15/14 - this balloons to 60s if a spoke server is down
+         */
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
 
         for (final String server : servers) {
@@ -67,6 +70,10 @@ public class RemoteSpokeStore {
         //todo - gfm - 11/13/14 - this could do read repair
         List<String> servers = Arrays.asList(cluster.getServers());
         Collections.shuffle(servers);
+        /**
+         * todo - gfm - 11/15/14 - this method returns some nulls during a rolling restart.
+         * could be due to trying the down server last?
+         */
         for (String server : servers) {
             try {
                 ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
