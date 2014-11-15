@@ -22,18 +22,18 @@ public class ContentServiceImpl implements ContentService {
 
     private final ContentDao contentDao;
     private final ContentDao longTermContentDao;
-    private final int spokeTtlMinutes;
+    private final int ttlMinutes;
     private final Integer shutdown_wait_seconds;
     private final AtomicInteger inFlight = new AtomicInteger();
 
     @Inject
     public ContentServiceImpl(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
                               @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
-                              @Named("spoke.ttl_minutes") int spokeTtlMinutes,
+                              @Named("spoke.ttlMinutes") int ttlMinutes,
                               @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds) {
         this.contentDao = cacheContentDao;
         this.longTermContentDao = longTermContentDao;
-        this.spokeTtlMinutes = spokeTtlMinutes;
+        this.ttlMinutes = ttlMinutes;
         this.shutdown_wait_seconds = shutdown_wait_seconds;
         HubServices.registerPreStop(new ContentServiceHook());
     }
