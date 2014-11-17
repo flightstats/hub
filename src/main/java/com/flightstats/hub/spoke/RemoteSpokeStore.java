@@ -39,22 +39,29 @@ public class RemoteSpokeStore {
         //todo - gfm - 11/13/14 - change this to be cluster aware
         int quorum = Math.max(1, servers.length - 1);
         /**
-         * todo - gfm - 11/15/14 - this balloons to 60s if a spoke server is down
+         * todo - gfm - 11/15/14 - this balloons to 60s during a rolling restart
          */
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
 
         for (final String server : servers) {
-            //todo - gfm - 11/13/14 - we need to upgrade to Jersey 2.x for lambdas
+            //todo - gfm - 11/13/14 - we need to upgrade to Jersey 2.x or Spark for lambdas
             //noinspection Convert2Lambda
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
-                            .put(ClientResponse.class, payload);
-                    if (response.getStatus() == 201) {
-                        countDownLatch.countDown();
+                    try {
+                        ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
+                                .put(ClientResponse.class, payload);
+                        if (response.getStatus() == 201) {
+                            countDownLatch.countDown();
+                            logger.trace("server {} path {} response {}", server, path, response);
+                        } else {
+                            logger.info("write failed: server {} path {} response {}", server, path, response);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("write failed: " + server + " " + path, e);
                     }
-                    logger.trace("server {} path {} response {}", server, path, response);
+
                 }
             });
         }
