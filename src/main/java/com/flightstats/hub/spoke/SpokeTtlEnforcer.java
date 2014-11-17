@@ -63,8 +63,7 @@ public class SpokeTtlEnforcer {
 
     private void delete(File file, String datePath) {
         String path = file.toString() + "/" + datePath;
-        boolean deleted = FileUtils.deleteQuietly(new File(path));
-        logger.info("deleted {} {} ", path, deleted);
+        FileUtils.deleteQuietly(new File(path));
     }
 
     private class SpokeTtlEnforcerService extends AbstractScheduledService {
