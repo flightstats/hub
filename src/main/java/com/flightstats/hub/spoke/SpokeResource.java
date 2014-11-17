@@ -41,6 +41,7 @@ public class SpokeResource {
     @GET
     public Response getTimeBucket(@PathParam("path") String path) {
         try {
+            //todo - gfm - 11/17/14 - this can use String instead of bytes, could also use Json
             byte[] read = spokeStore.readKeysInBucket(path);
             if (read == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();

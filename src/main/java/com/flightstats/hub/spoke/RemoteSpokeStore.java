@@ -130,6 +130,7 @@ public class RemoteSpokeStore {
         int received = 0;
         boolean errors = false;
 
+        //todo - gfm - 11/17/14 - I think this needs a different definition of quorum
         while(received < quorum && !errors) {
             Future<List<String>> resultFuture = compService.take(); //blocks if none available
             try {
