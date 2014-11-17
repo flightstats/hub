@@ -42,8 +42,10 @@ public class SpokeContentDao implements ContentDao {
         }
         try {
             ContentKey key = content.getContentKey().get();
-            //todo - gfm - 11/17/14 - write should pay attention to return value
-            spokeStore.write(getPath(channelName, key), SpokeMarshaller.toBytes(content));
+            String path = getPath(channelName, key);
+            if (!spokeStore.write(path, SpokeMarshaller.toBytes(content))) {
+                logger.warn("failed to write to all for " + path);
+            }
             return key;
         } catch (Exception e) {
             logger.warn("what's up?", e);
