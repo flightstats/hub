@@ -7,6 +7,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,17 +26,6 @@ public class ContentKey {
         this.hash = hash;
     }
 
-    public static Optional<ContentKey> fromStorage(String key) {
-        try {
-            String[] split = key.split("-");
-            long epochMilli = Long.parseLong(split[0]);
-            return Optional.of(new ContentKey(new DateTime(epochMilli, DateTimeZone.UTC), split[1]));
-        } catch (Exception e) {
-            logger.info("unable to parse " + key + " " + e.getMessage());
-            return Optional.absent();
-        }
-    }
-
     public static Optional<ContentKey> fromUrl(String key) {
         try {
             String date = StringUtils.substringBeforeLast(key, "/") + "/";
@@ -51,16 +41,16 @@ public class ContentKey {
         return TimeUtil.millis(time) + hash;
     }
 
-    public String toStorage() {
-        return getMillis() + "-" + hash;
-    }
-
     public long getMillis() {
         return time.getMillis();
     }
 
+    public String toString(DateTimeFormatter pathFormatter) {
+        return time.toString(pathFormatter) + hash;
+    }
+
     @Override
     public String toString() {
-        return toStorage();
+        return toUrl();
     }
 }
