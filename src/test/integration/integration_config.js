@@ -2,9 +2,8 @@ frisby = require('frisby');
 utils = require('./utils.js');
 ip = require('ip');
 
-hubDomain = process.env.hubDomain || 'hub-v2-03.cloud-east.dev:8080';
+hubDomain = process.env.hubDomain || 'hub-v2.svc.dev';
 replicationDomain = process.env.replicationDomain || 'hub.svc.staging';
-//replicationDomain = process.env.replicationDomain || 'hub-int.svc.staging';
 runEncrypted = process.env.runEncrypted || false;
 integrationTestPath = process.env.integrationTestPath || 'src/test/integration/';
 callbackPort = 8888;

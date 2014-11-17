@@ -4,9 +4,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.hub.util.Sleeper;
-import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -23,16 +21,19 @@ public class ContentServiceImpl implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
     private final ContentDao contentDao;
-    private final WebsocketPublisher websocketPublisher;
+    private final ContentDao longTermContentDao;
+    private final int ttlMinutes;
     private final Integer shutdown_wait_seconds;
     private final AtomicInteger inFlight = new AtomicInteger();
 
     @Inject
-    public ContentServiceImpl(ContentDao contentDao,
-                              WebsocketPublisher websocketPublisher,
+    public ContentServiceImpl(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
+                              @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
+                              @Named("spoke.ttlMinutes") int ttlMinutes,
                               @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds) {
-        this.contentDao = contentDao;
-        this.websocketPublisher = websocketPublisher;
+        this.contentDao = cacheContentDao;
+        this.longTermContentDao = longTermContentDao;
+        this.ttlMinutes = ttlMinutes;
         this.shutdown_wait_seconds = shutdown_wait_seconds;
         HubServices.registerPreStop(new ContentServiceHook());
     }
@@ -57,17 +58,13 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public InsertedContentKey insert(ChannelConfiguration configuration, Content content) {
+    public ContentKey insert(ChannelConfiguration configuration, Content content) {
         try {
             inFlight.incrementAndGet();
             String channelName = configuration.getName();
-            //todo - gfm - 10/28/14 - make this a more interesting info level log
             logger.trace("inserting {} bytes into channel {} ", content.getData().length, channelName);
-
-            InsertedContentKey result = contentDao.write(channelName, content, configuration.getTtlDays());
-            //todo - gfm - 10/28/14 - change this
-            websocketPublisher.publish(channelName, result.getKey());
-            return result;
+            //todo - gfm - 11/14/14 - always write to cache
+            return contentDao.write(channelName, content);
         } finally {
             inFlight.decrementAndGet();
         }
@@ -76,35 +73,41 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
+        //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours
         Content value = contentDao.read(channelName, key);
         return Optional.fromNullable(value);
     }
 
     @Override
     public Optional<ContentKey> findLastUpdatedKey(String channelName) {
-        //todo - gfm - 10/28/14 -
+        //todo - gfm - 11/14/14 - look in cache first, then S3
+        //todo - gfm - 10/28/14 - implement
         return Optional.absent();
     }
 
     @Override
     public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
+        //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours
         return contentDao.getKeys(channelName, startTime, endTime);
     }
 
     @Override
     public void delete(String channelName) {
         logger.info("deleting channel " + channelName);
+        //todo - gfm - 11/14/14 - delete in both
         contentDao.delete(channelName);
     }
 
     @Override
     public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
+        //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours, may need to span
         return contentDao.getKeys(channelName, contentKey, count);
     }
 
     private class ContentServiceHook extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
+            //todo - gfm - 11/14/14 - call init on both Daos
         }
 
         @Override
