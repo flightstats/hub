@@ -37,6 +37,21 @@ public class SpokeResource {
         }
     }
 
+    @Path("/time/{path:.+}")
+    @GET
+    public Response getTimeBucket(@PathParam("path") String path) {
+        try {
+            byte[] read = spokeStore.readKeysInBucket(path);
+            if (read == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            return Response.ok(read).build();
+        } catch (Exception e) {
+            logger.warn("unable to get " + path, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @Path("/payload/{path:.+}")
     @PUT
     public Response putPayload(@PathParam("path") String path, byte[] data) {

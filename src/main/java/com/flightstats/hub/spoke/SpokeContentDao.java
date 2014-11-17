@@ -80,6 +80,19 @@ public class SpokeContentDao implements ContentDao {
     @Override
     public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
         //todo - gfm - 11/14/14 -
+        // TODO bc 11/17/14: Do we need this api or can we use the format below "queryByTimeBucket"
+        return null;
+    }
+
+
+    public Collection<ContentKey> queryByTimeBucket(String channelName, String timePath){
+        try {
+            // TODO bc 11/17/14: limit this to day, hour, minute
+            return spokeStore.readTimeBucket(channelName + "/" + timePath);
+        } catch (Exception e) {
+            logger.warn("huh?", e);
+            e.printStackTrace();
+        }
         return null;
     }
 

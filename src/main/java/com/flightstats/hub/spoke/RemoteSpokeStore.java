@@ -7,13 +7,9 @@ import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class RemoteSpokeStore {
 
@@ -89,6 +85,70 @@ public class RemoteSpokeStore {
         }
         return null;
     }
+
+    // read from 3 servers and do set intersection and sort
+    public Collection<ContentKey> readTimeBucket(String path)throws InterruptedException {
+        String[] servers = cluster.getServers();
+        //todo - gfm - 11/13/14 - change this to be cluster aware
+        // TODO bc 11/17/14: Can we make this read from a subset of the cluster and get all results?
+        int quorum = servers.length;
+
+        CompletionService<List<String>> compService = new ExecutorCompletionService<>(
+                Executors.newFixedThreadPool(quorum));
+
+        SortedSet<String> keySet = new TreeSet<>();  // result accumulator
+
+        // Futures for all submitted Callables that have not yet been checked
+        Set<Future<List<String>>> futures = new HashSet<>();
+
+        for (final String server : servers) {
+            // keep track of the futures that get created so we can cancel them if necessary
+            futures.add(compService.submit(new Callable<List<String>>(){
+                @Override public List<String> call(){
+                    ClientResponse response = client.resource("http://" + server + "/spoke/time/" + path)
+                            .get(ClientResponse.class);
+                    logger.trace("server {} path {} response {}", server, path, response);
+
+                    if (response.getStatus() == 200) {
+                        byte[] entity = response.getEntity(byte[].class);
+                        String keysString = null;
+                        try {
+                            keysString = new String(entity, "UTF-8");
+                        } catch (UnsupportedEncodingException e) {
+                            // TODO bc 11/17/14: better way to handle this?
+                            e.printStackTrace();
+                        }
+                        String[] keys = keysString.split(",");
+                        return Arrays.asList(keys);
+                    }
+                    logger.trace("server {} path {} response {}", server, path, response);
+                    return new Vector<>(); // TODO bc 11/17/14: should this be an exception?
+                }
+            }));
+        }
+
+        int received = 0;
+        boolean errors = false;
+
+        while(received < quorum && !errors) {
+            Future<List<String>> resultFuture = compService.take(); //blocks if none available
+            try {
+                List<String> keys = resultFuture.get();
+                keySet.addAll(keys);
+                received ++;
+            }
+            catch(Exception e) {
+                //log
+                errors = true;
+            }
+        }
+        Vector<ContentKey> contentKeys = new Vector<>();
+        for(String key : keySet){
+            ContentKey.fromUrl(key);
+        }
+        return contentKeys;
+    }
+
 
     public boolean delete(String path) throws Exception {
         //todo - gfm - 11/13/14 - this could be merged with some of the write code
