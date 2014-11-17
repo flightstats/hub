@@ -1,6 +1,3 @@
-#valid values are currently "aws"
-backing.store={{ backing['store'] }}
-
 aws.protocol={{ aws['protocol'] }}
 
 dynamo.endpoint={{ dynamo['endpoint'] }}
@@ -21,6 +18,7 @@ s3.content_backoff_wait= {{ s3['content_backoff_wait'] }}
 s3.content_backoff_times= {{ s3['content_backoff_times'] }}
 s3.environment={{ s3['environment'] }}
 s3.endpoint={{ s3['endpoint'] }}
+s3.maxItems={{ s3.maxItems }}
 
 audit.threads={{ audit['threads'] }}
 audit.queue={{ audit['queue'] }}
@@ -41,6 +39,8 @@ hosted_graphite.host={{ hosted_graphite['host'] }}
 hosted_graphite.port={{ hosted_graphite['port'] }}
 hosted_graphite.prefix={{ hosted_graphite['prefix'] }}
 
-riak.addresses={{ riak['addresses'] }}
+spoke.path={{ spoke.path }}
+spoke.servers={{ spoke.servers }}
+spoke.ttlMinutes={{ spoke.ttlMinutes }}
 
 

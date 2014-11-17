@@ -104,12 +104,12 @@ dependencies {
     compile 'org.apache.curator:curator-recipes:2.6.0'
     testCompile 'org.apache.curator:curator-test:2.6.0'
     compile 'org.apache.commons:commons-lang3:3.2'
+    compile 'commons-io:commons-io:2.4'
     compile 'com.github.rholder:guava-retrying:1.0.6'
     compile 'com.google.code.gson:gson:2.3'
     compile(group: 'newrelic', name: 'newrelic_agent', version: '3.11.0')
     compile 'org.projectlombok:lombok:1.14.8'
     compile 'com.datastax.cassandra:cassandra-driver-core:2.1.2'
-    compile 'com.basho.riak:riak-client:2.0.0'
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: "org.mockito", name: "mockito-all", version: "1.10.8"
@@ -135,14 +135,14 @@ task jasmineTests << {
     runExternal("jasmine-node --forceexit --captureExceptions --junitreport --output ${reportsdir} ${testdir}")
 }
 
-task jasmineEncryptedTests << {
+/*task jasmineEncryptedTests << {
     def testdir = "${projectDir}/src/test/integration"
     def reportsdir = "${projectDir}/build/reports/integration/"
     println "Making " + reportsdir
     new File(reportsdir).mkdirs()
     //todo - gfm - 5/21/14 - change this once the load balancer is in place
     runExternal("jasmine-node --forceexit --captureExceptions --config runEncrypted true --config hubDomain encrypted-hub-01.cloud-east.dev:8080 --junitreport --output ${reportsdir} ${testdir}")
-}
+}*/
 
 task startHub(type: JavaExec) {
     main = mainClassName

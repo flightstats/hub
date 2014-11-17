@@ -3,7 +3,6 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.InsertedContentKey;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 
@@ -15,7 +14,7 @@ public interface ChannelService {
 
     ChannelConfiguration createChannel(ChannelConfiguration configuration);
 
-    InsertedContentKey insert(String channelName, Content content);
+    ContentKey insert(String channelName, Content content);
 
     Optional<Content> getValue(Request request);
 
