@@ -36,11 +36,7 @@ public class RemoteSpokeStore {
 
     public boolean write(String path, byte[] payload) throws InterruptedException {
         List<String> servers = cluster.getServers();
-        //todo - gfm - 11/13/14 - change this to be cluster aware
         int quorum = Math.max(1, servers.size() - 1);
-        /**
-         * todo - gfm - 11/15/14 - this balloons to 60s during a rolling restart
-         */
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
 
         for (final String server : servers) {
@@ -71,8 +67,7 @@ public class RemoteSpokeStore {
 
     public com.flightstats.hub.model.Content read(String path, ContentKey key) {
         //todo - gfm - 11/13/14 - this could do read repair
-        //todo - gfm - 11/17/14 - randomize this
-        List<String> servers = cluster.getServers();
+        List<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             try {
                 ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
@@ -92,7 +87,6 @@ public class RemoteSpokeStore {
     // read from 3 servers and do set intersection and sort
     public Collection<ContentKey> readTimeBucket(String path)throws InterruptedException {
         List<String> servers = cluster.getServers();
-        //todo - gfm - 11/13/14 - change this to be cluster aware
         // TODO bc 11/17/14: Can we make this read from a subset of the cluster and get all results?
         int quorum = servers.size();
 
@@ -157,7 +151,6 @@ public class RemoteSpokeStore {
     public boolean delete(String path) throws Exception {
         //todo - gfm - 11/13/14 - this could be merged with some of the write code
         List<String> servers = cluster.getServers();
-        //todo - gfm - 11/13/14 - change this to be cluster aware
         int quorum = Math.max(1, servers.size() - 1);
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
         for (final String server : servers) {
