@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CuratorSpokeCluster implements SpokeCluster {
@@ -67,6 +68,13 @@ public class CuratorSpokeCluster implements SpokeCluster {
         for (ChildData childData : currentData) {
             servers.add(new String(childData.getData()));
         }
+        return servers;
+    }
+
+    @Override
+    public List<String> getRandomServers() {
+        List<String> servers = getServers();
+        Collections.shuffle(servers);
         return servers;
     }
 

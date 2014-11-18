@@ -1,6 +1,8 @@
 package com.flightstats.hub.spoke;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class StringSpokeCluster implements SpokeCluster {
@@ -14,5 +16,12 @@ public class StringSpokeCluster implements SpokeCluster {
     @Override
     public List<String> getServers() {
         return servers;
+    }
+
+    @Override
+    public List<String> getRandomServers() {
+        List<String> random = new ArrayList<>(servers);
+        Collections.shuffle(random);
+        return random;
     }
 }
