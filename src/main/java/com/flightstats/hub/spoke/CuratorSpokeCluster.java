@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,13 +43,20 @@ public class CuratorSpokeCluster implements SpokeCluster {
 
     public void register() {
         try {
-            String host = InetAddress.getLocalHost().getHostName() + ":" + port;
-            logger.info("adding host {}", host);
-            curator.create().withMode(CreateMode.EPHEMERAL).forPath(CLUSTER_PATH + "/" + host, host.getBytes());
+            logger.info("adding host {}", getHost());
+            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), getHost().getBytes());
         } catch (Exception e) {
             logger.error("unable to register, should die", e);
             throw new RuntimeException(e);
         }
+    }
+
+    private String getFullPath() throws UnknownHostException {
+        return CLUSTER_PATH + "/" + getHost();
+    }
+
+    private String getHost() throws UnknownHostException {
+        return InetAddress.getLocalHost().getHostName() + ":" + port;
     }
 
     @Override
@@ -70,7 +78,8 @@ public class CuratorSpokeCluster implements SpokeCluster {
 
         @Override
         protected void shutDown() throws Exception {
-            //todo - gfm - 11/18/14 - unregister
+            logger.info("removing host from cluster " + getHost());
+            curator.delete().forPath(getFullPath());
         }
     }
 }
