@@ -105,10 +105,10 @@ public class HubMain {
         GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties, module);
         injector = guice.getInjector();
         JettyServer server = new JettyServer(jettyConfig, guice);
-        HubServices.startAll();
+        HubServices.start(HubServices.TYPE.PRE_START);
         server.start();
-        //todo - gfm - 11/18/14 - register CuratorSpokeCluster
         logger.info("Jetty server has been started.");
+        HubServices.start(HubServices.TYPE.POST_START);
         return server;
     }
 
