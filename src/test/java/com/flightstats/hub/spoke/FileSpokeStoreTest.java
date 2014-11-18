@@ -5,6 +5,7 @@ import com.google.common.io.Files;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Collection;
 
 import static org.junit.Assert.*;
 
@@ -31,7 +32,7 @@ public class FileSpokeStoreTest {
         assertEquals(tempDir + "/test_0_4274725520517677/2014/11/18/00/57/24015NV2cl5", output);
     }
 
-   /* @Test public void testAdjacentPaths() throws Exception{
+   @Test public void testAdjacentPaths() throws Exception{
         // setup - folder with 3 files
         File tempDir = Files.createTempDir();
         FileSpokeStore FileSpokeStore = new FileSpokeStore(tempDir.getPath());
@@ -56,11 +57,11 @@ public class FileSpokeStoreTest {
         assertEquals(FileSpokeStore.nextPath(path3), nextbucket1);
         assertEquals(FileSpokeStore.previousPath(path1), previousbucket1);
 
+       // keysInBucket tests
         Collection<String> files = FileSpokeStore.keysInBucket("a/b/c");
         assertEquals(files.size(), 5);
         files = FileSpokeStore.keysInBucket("a/b/c/10");
         assertEquals(files.size(), 3);
-
-    }*/
+    }
 
 }
