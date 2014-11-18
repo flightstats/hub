@@ -7,8 +7,6 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +22,6 @@ public class SpokeContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
 
-    //todo - gfm - 11/13/14 - where should this formatting live?  thick client or server?
-    private final static DateTimeFormatter pathFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm/ssSSS").withZoneUTC();
     private final RemoteSpokeStore spokeStore;
 
     @Inject
@@ -54,7 +50,7 @@ public class SpokeContentDao implements ContentDao {
     }
 
     private String getPath(String channelName, ContentKey key) {
-        return channelName + "/" + key.toString(pathFormatter);
+        return channelName + "/" + key.toUrl();
     }
 
     @Override
@@ -76,7 +72,6 @@ public class SpokeContentDao implements ContentDao {
     @Deprecated
     @Override
     public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
-
         return null;
     }
 

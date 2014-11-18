@@ -1,5 +1,7 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.model.ContentKey;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
@@ -27,14 +29,18 @@ public class FileSpokeStore {
     @Inject
     public FileSpokeStore(@Named("spoke.path") String storagePath) {
         this.storagePath = StringUtils.appendIfMissing(storagePath, "/");
-        logger.info("starting with storage path " + storagePath);
-        if (!write("!startup", ("" + System.currentTimeMillis()).getBytes())) {
+        logger.info("starting with storage path " + this.storagePath);
+        if (!write("!startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
             throw new RuntimeException("unable to create startup file");
         }
     }
 
-    private String spokePath(String path){
-        return storagePath + path;
+    @VisibleForTesting
+    String spokePath(String path) {
+        String[] split = path.split("/");
+        logger.info("split " + Arrays.toString(split));
+        return storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
+                + "/" + split[5] + "/" + split[6] + split[7] + split[8];
     }
 
     public boolean write(String path, byte[] payload) {
