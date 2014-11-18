@@ -166,14 +166,17 @@ public class FileSpokeStore {
         return keys;
     }
 
-    public byte[] readKeysInBucket(String path){
+    public String readKeysInBucket(String path){
         Collection<String> keys = keysInBucket(path);
-        StringBuilder tmp = new StringBuilder();
+        String tmp = "";
+        int i = 0;
         for(String key : keys){
-            tmp.append(key);
-            tmp.append(",");
+            tmp+=key;
+            if(i < keys.size() - 1)
+                tmp+=",";
+            i++;
         }
-        return tmp.toString().getBytes();
+        return tmp;
     }
 
     public boolean delete(String path) throws Exception {
