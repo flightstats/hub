@@ -1,5 +1,7 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.app.HubServices;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
@@ -26,8 +28,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
     public CuratorSpokeCluster(CuratorFramework curator, @Named("http.bind_port") int port) {
         this.curator = curator;
         this.port = port;
-        //todo - gfm - 11/18/14 - we need to register this server on the path ASAP after servicing requests.
-        //todo - gfm - 11/18/14 - should spoke run on different port from the Hub, which starts first?
+        //todo - gfm - 11/18/14 - should spoke run on different port from the Hub, that starts first?
         clusterCache = new PathChildrenCache(curator, CLUSTER_PATH, true);
         clusterCache.getListenable().addListener(new PathChildrenCacheListener() {
             @Override
@@ -35,6 +36,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
                 logger.info("event {}", event);
             }
         });
+        HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
     }
 
     public void register() {
@@ -58,5 +60,17 @@ public class CuratorSpokeCluster implements SpokeCluster {
             servers.add(new String(childData.getData()));
         }
         return servers;
+    }
+
+    private class CuratorSpokeClusterHook extends AbstractIdleService {
+        @Override
+        protected void startUp() throws Exception {
+            register();
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            //todo - gfm - 11/18/14 - unregister
+        }
     }
 }
