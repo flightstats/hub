@@ -105,12 +105,34 @@ public class RemoteSpokeStoreTest {
         assertTrue(success.await(1, TimeUnit.SECONDS));
     }
 
-    //todo - gfm - 11/17/14 - how do we re-create the rolling restart 60s wait time for posts?
-    /**
-     * request comes into server A
-     * server B is currently being restarted
-     * server C is up
-     */
+    @Test
+    public void testWriteThreeDifferentServers() throws Exception {
+
+        SpokeCluster cluster = new SpokeCluster("localhost:4567/serverOne,localhost:4567/serverTwo,localhost:4567/serverThree");
+        CountDownLatch one = new CountDownLatch(1);
+        CountDownLatch two = new CountDownLatch(1);
+        CountDownLatch three = new CountDownLatch(1);
+        put("/serverOne/spoke/payload/*", (req, res) -> {
+            res.status(201);
+            one.countDown();
+            return "created";
+        });
+        put("/serverTwo/spoke/payload/*", (req, res) -> {
+            res.status(201);
+            two.countDown();
+            return "created";
+        });
+        put("/serverThree/spoke/payload/*", (req, res) -> {
+            res.status(201);
+            three.countDown();
+            return "created";
+        });
+        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
+        assertTrue(spokeStore.write("A/B", PAYLOAD));
+        assertTrue(one.await(1, TimeUnit.SECONDS));
+        assertTrue(two.await(1, TimeUnit.SECONDS));
+        assertTrue(three.await(1, TimeUnit.SECONDS));
+    }
 
 }
 
