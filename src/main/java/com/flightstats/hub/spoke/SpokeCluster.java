@@ -1,19 +1,9 @@
 package com.flightstats.hub.spoke;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import java.util.List;
 
-//todo - gfm - 11/13/14 - this is dumb for now, would be better handle cluster state changes via ZooKeeper.
-public class SpokeCluster {
+public interface SpokeCluster {
+    List<String> getServers();
 
-    private final String[] servers;
-
-    @Inject
-    public SpokeCluster(@Named("spoke.servers") String spokeServers) {
-        servers = spokeServers.split(",");
-    }
-
-    public String[] getServers() {
-        return servers;
-    }
+    List<String> getRandomServers();
 }
