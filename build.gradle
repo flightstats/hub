@@ -95,7 +95,6 @@ dependencies {
     compile group: "com.hazelcast", name: "hazelcast", version: "3.3.2"
     compile group: "com.hazelcast", name: "hazelcast-client", version: "3.3.2"
     compile group: "com.flightstats.common", name: "util", version: "3.3.0b78"
-    compile group: "com.flightstats.common", name: "jaxb", version: "3.3.0b78"
     compile group: "com.flightstats.common", name: "rest", version: "3.3.0b78"
     compile group: "com.flightstats.common", name: "jerseyguice", version: "3.3.0b78"
     compile group: 'com.intellij', name: 'annotations', version: '12.0'
