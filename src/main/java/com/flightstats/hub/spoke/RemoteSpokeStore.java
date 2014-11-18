@@ -71,12 +71,8 @@ public class RemoteSpokeStore {
 
     public com.flightstats.hub.model.Content read(String path, ContentKey key) {
         //todo - gfm - 11/13/14 - this could do read repair
-        List<String> servers = Arrays.asList(cluster.getServers());
-        Collections.shuffle(servers);
-        /**
-         * todo - gfm - 11/15/14 - this method returns some nulls during a rolling restart.
-         * could be due to trying the down server last?
-         */
+        //todo - gfm - 11/17/14 - randomize this
+        String[] servers = cluster.getServers();
         for (String server : servers) {
             try {
                 ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
