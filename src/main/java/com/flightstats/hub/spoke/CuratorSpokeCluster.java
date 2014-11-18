@@ -25,11 +25,12 @@ public class CuratorSpokeCluster implements SpokeCluster {
     private final PathChildrenCache clusterCache;
 
     @Inject
-    public CuratorSpokeCluster(CuratorFramework curator, @Named("http.bind_port") int port) {
+    public CuratorSpokeCluster(CuratorFramework curator, @Named("http.bind_port") int port) throws Exception {
         this.curator = curator;
         this.port = port;
         //todo - gfm - 11/18/14 - should spoke run on different port from the Hub, that starts first?
         clusterCache = new PathChildrenCache(curator, CLUSTER_PATH, true);
+        clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
         clusterCache.getListenable().addListener(new PathChildrenCacheListener() {
             @Override
             public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
@@ -41,7 +42,6 @@ public class CuratorSpokeCluster implements SpokeCluster {
 
     public void register() {
         try {
-            clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
             String host = InetAddress.getLocalHost().getHostName() + ":" + port;
             logger.info("adding host {}", host);
             curator.create().withMode(CreateMode.EPHEMERAL).forPath(CLUSTER_PATH + "/" + host, host.getBytes());
