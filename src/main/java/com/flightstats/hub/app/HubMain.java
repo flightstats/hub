@@ -31,8 +31,8 @@ import java.util.concurrent.CountDownLatch;
 public class HubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(HubMain.class);
-    private static Injector injector;
     private static final DateTime startTime = new DateTime();
+    private static Injector injector;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -107,6 +107,7 @@ public class HubMain {
         JettyServer server = new JettyServer(jettyConfig, guice);
         HubServices.startAll();
         server.start();
+        //todo - gfm - 11/18/14 - register CuratorSpokeCluster
         logger.info("Jetty server has been started.");
         return server;
     }
