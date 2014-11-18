@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
@@ -90,14 +91,12 @@ public class RemoteSpokeStore {
     }
 
     // read from 3 servers and do set intersection and sort
-    public Collection<ContentKey> readTimeBucket(String path)throws InterruptedException {
+    public Collection<String> readTimeBucket(String path)throws InterruptedException {
         String[] servers = cluster.getServers();
-        //todo - gfm - 11/13/14 - change this to be cluster aware
-        // TODO bc 11/17/14: Can we make this read from a subset of the cluster and get all results?
-        int quorum = servers.length;
+        int serverCount = servers.length;
 
         CompletionService<List<String>> compService = new ExecutorCompletionService<>(
-                Executors.newFixedThreadPool(quorum));
+                Executors.newFixedThreadPool(serverCount));
 
         SortedSet<String> keySet = new TreeSet<>();  // result accumulator
 
@@ -113,19 +112,12 @@ public class RemoteSpokeStore {
                     logger.trace("server {} path {} response {}", server, path, response);
 
                     if (response.getStatus() == 200) {
-                        byte[] entity = response.getEntity(byte[].class);
-                        String keysString = null;
-                        try {
-                            keysString = new String(entity, "UTF-8");
-                        } catch (UnsupportedEncodingException e) {
-                            // TODO bc 11/17/14: better way to handle this?
-                            e.printStackTrace();
-                        }
+                        String keysString = response.getEntity(String.class);
                         String[] keys = keysString.split(",");
                         return Arrays.asList(keys);
                     }
                     logger.trace("server {} path {} response {}", server, path, response);
-                    return new Vector<>(); // TODO bc 11/17/14: should this be an exception?
+                    return new ArrayList<>(); // TODO bc 11/17/14: should this be an exception?
                 }
             }));
         }
@@ -133,8 +125,7 @@ public class RemoteSpokeStore {
         int received = 0;
         boolean errors = false;
 
-        //todo - gfm - 11/17/14 - I think this needs a different definition of quorum
-        while(received < quorum && !errors) {
+        while(received < serverCount && !errors) {
             Future<List<String>> resultFuture = compService.take(); //blocks if none available
             try {
                 List<String> keys = resultFuture.get();
@@ -146,13 +137,73 @@ public class RemoteSpokeStore {
                 errors = true;
             }
         }
-        Vector<ContentKey> contentKeys = new Vector<>();
+        ArrayList<String> contentKeys = new ArrayList<>();
         for(String key : keySet){
-            ContentKey.fromUrl(key);
+            contentKeys.add(key);
         }
         return contentKeys;
     }
 
+    public String readAdjacent(String path, boolean readNext) throws InterruptedException{
+        // TODO bc 11/18/14: use lambdas
+        // read from as many servers as we can
+        // put results into a sorted set
+        // read and return the payload
+        String[] servers = cluster.getServers();
+        int serverCount = servers.length;
+
+        CompletionService<String> compService = new ExecutorCompletionService<>(
+                Executors.newFixedThreadPool(serverCount));
+
+        SortedSet<String> keySet = new TreeSet<>();  // result accumulator
+
+        // Futures for all submitted Callables that have not yet been checked
+        Set<Future<String>> futures = new HashSet<>();
+
+        for (final String server : servers) {
+            // keep track of the futures that get created so we can cancel them if necessary
+            futures.add(compService.submit(new Callable<String>(){
+                @Override public String call(){
+                    ClientResponse response = client.resource("http://" + server + "/spoke/next/" + path )
+                            .get(ClientResponse.class);
+                    logger.trace("server {} path {} response {}", server, path, response);
+
+                    if (response.getStatus() == 200) {
+                        response.bufferEntity();
+                        return response.getEntity(String.class);
+                        }
+                    logger.trace("server {} path {} response {}", server, path, response);
+                    return null; // TODO bc 11/17/14: should this be an exception?
+                }
+            }));
+        }
+
+        int received = 0;
+        boolean errors = false;
+
+        while(received < serverCount && !errors) {
+            Future<String> resultFuture = compService.take(); //blocks if none available
+            try {
+                String key = resultFuture.get();
+                if(key != null) keySet.add(key);
+                received ++;
+            }
+            catch(Exception e) {
+                //log
+                errors = true;
+            }
+        }
+        if(readNext) return keySet.first();
+        return keySet.last();
+    }
+
+    public String readNext(String path) throws InterruptedException{
+        return readAdjacent(path, true);
+    }
+
+    public String readPrevious(String path) throws InterruptedException{
+        return readAdjacent(path, false);
+    }
 
     public boolean delete(String path) throws Exception {
         //todo - gfm - 11/13/14 - this could be merged with some of the write code

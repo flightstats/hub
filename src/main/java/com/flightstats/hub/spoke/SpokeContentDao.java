@@ -83,7 +83,7 @@ public class SpokeContentDao implements ContentDao {
     }
 
 
-    public Collection<ContentKey> queryByTimeBucket(String channelName, String timePath){
+    public Collection<String> queryByTimeBucket(String channelName, String timePath){
         try {
             // TODO bc 11/17/14: limit this to day, hour, minute
             return spokeStore.readTimeBucket(channelName + "/" + timePath);
