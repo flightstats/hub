@@ -33,7 +33,7 @@ public class ShutdownResource {
         //wait until it's likely the node is removed from the Load Balancer
         Sleeper.sleep(shutdown_delay_seconds * 1000);
         //after the node isn't getting new requests, stop everything that needs a clean kill
-        HubServices.preStopAll();
+        HubServices.preStop();
 
         logger.warn("completed shutdown tasks");
         return Response.ok().build();
