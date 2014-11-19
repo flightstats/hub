@@ -1,6 +1,5 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
@@ -8,7 +7,6 @@ import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -109,6 +107,7 @@ public class RemoteSpokeStore {
 
                     if (response.getStatus() == 200) {
                         String keysString = response.getEntity(String.class);
+                        logger.trace("entity {}", keysString);
                         String[] keys = keysString.split(",");
                         return Arrays.asList(keys);
                     }
