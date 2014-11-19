@@ -10,9 +10,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * This is the entry point in the Hub's storage system, Spoke.
@@ -76,15 +74,9 @@ public class SpokeContentDao implements ContentDao {
         String timePath = unit.format(startTime);
         try {
             // TODO bc 11/17/14: limit this to day, hour, minute, second, millis
-            List<ContentKey> keys = new ArrayList<>();
-            Collection<String> strings = spokeStore.readTimeBucket(channelName + "/" + timePath);
-            for (String string : strings) {
-                keys.add(ContentKey.fromUrl(string).get());
-            }
-            return keys;
+            return spokeStore.readTimeBucket(channelName, timePath);
         } catch (Exception e) {
-            logger.warn("huh?", e);
-            e.printStackTrace();
+            logger.warn("what happened? " + channelName + " " + startTime + " " + unit, e);
         }
         return null;
     }
