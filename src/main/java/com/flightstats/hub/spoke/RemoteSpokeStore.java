@@ -1,16 +1,18 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.model.ContentKey;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.concurrent.*;
 
+@SuppressWarnings({"Convert2streamapi", "Convert2Lambda"})
 public class RemoteSpokeStore {
 
     private final static Logger logger = LoggerFactory.getLogger(RemoteSpokeStore.class);
@@ -36,12 +38,9 @@ public class RemoteSpokeStore {
 
     public boolean write(String path, byte[] payload) throws InterruptedException {
         List<String> servers = cluster.getServers();
-        int quorum = Math.max(1, servers.size() - 1);
+        int quorum = getQuorum(servers);
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
-
         for (final String server : servers) {
-            //todo - gfm - 11/13/14 - we need to upgrade to Jersey 2.x or Spark for lambdas
-            //noinspection Convert2Lambda
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
@@ -61,12 +60,15 @@ public class RemoteSpokeStore {
                 }
             });
         }
-        //todo - gfm - 11/13/14 - this should be smarter with waiting.  should we return success if one succeeds?
-        return countDownLatch.await(60, TimeUnit.SECONDS);
+        //todo - gfm - 11/13/14 - this could be smarter with waiting.  should we return success if one succeeds?
+        return countDownLatch.await(30, TimeUnit.SECONDS);
+    }
+
+    private int getQuorum(List<String> servers) {
+        return Math.max(1, servers.size() - 1);
     }
 
     public com.flightstats.hub.model.Content read(String path, ContentKey key) {
-        //todo - gfm - 11/13/14 - this could do read repair
         List<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             try {
@@ -84,42 +86,64 @@ public class RemoteSpokeStore {
         return null;
     }
 
-    // read from 3 servers and do set intersection and sort
-    public Collection<ContentKey> readTimeBucket(String path)throws InterruptedException {
+    public Collection<ContentKey> readTimeBucket(String channel, String timePath) throws InterruptedException {
         List<String> servers = cluster.getServers();
-        // TODO bc 11/17/14: Can we make this read from a subset of the cluster and get all results?
-        int quorum = servers.size();
+        CountDownLatch countDownLatch = new CountDownLatch(servers.size());
+        String path = channel + "/" + timePath;
+        Set<ContentKey> results = Sets.newConcurrentHashSet();
+        for (final String server : servers) {
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    ClientResponse response = client.resource("http://" + server + "/spoke/time/" + path)
+                            .get(ClientResponse.class);
+                    logger.trace("server {} path {} response {}", server, path, response);
+                    if (response.getStatus() == 200) {
+                        String keysString = response.getEntity(String.class);
+                        logger.trace("entity {}", keysString);
+                        String[] keys = keysString.split(",");
+                        for (String key : keys) {
+                            results.add(ContentKey.fromUrl(StringUtils.substringAfter(key, "/")).get());
+                        }
+                    }
+                    countDownLatch.countDown();
+                }
+            });
+        }
+        countDownLatch.await(30, TimeUnit.SECONDS);
+        return results;
+    }
 
-        CompletionService<List<String>> compService = new ExecutorCompletionService<>(
-                Executors.newFixedThreadPool(quorum));
+    public String readAdjacent(String path, boolean readNext) throws InterruptedException{
+        // TODO bc 11/18/14: use lambdas
+        // read from as many servers as we can
+        // put results into a sorted set
+        // read and return the payload
+        List<String> servers = cluster.getServers();
+        int serverCount = servers.size();
+
+        CompletionService<String> compService = new ExecutorCompletionService<>(
+                Executors.newFixedThreadPool(serverCount));
 
         SortedSet<String> keySet = new TreeSet<>();  // result accumulator
 
         // Futures for all submitted Callables that have not yet been checked
-        Set<Future<List<String>>> futures = new HashSet<>();
+        Set<Future<String>> futures = new HashSet<>();
 
         for (final String server : servers) {
             // keep track of the futures that get created so we can cancel them if necessary
-            futures.add(compService.submit(new Callable<List<String>>(){
-                @Override public List<String> call(){
-                    ClientResponse response = client.resource("http://" + server + "/spoke/time/" + path)
+            futures.add(compService.submit(new Callable<String>(){
+                @Override public String call(){
+                    ClientResponse response = client.resource("http://" + server + "/spoke/next/" + path )
                             .get(ClientResponse.class);
                     logger.trace("server {} path {} response {}", server, path, response);
 
                     if (response.getStatus() == 200) {
-                        byte[] entity = response.getEntity(byte[].class);
-                        String keysString = null;
-                        try {
-                            keysString = new String(entity, "UTF-8");
-                        } catch (UnsupportedEncodingException e) {
-                            // TODO bc 11/17/14: better way to handle this?
-                            e.printStackTrace();
+                        response.bufferEntity();
+                        return response.getEntity(String.class);
                         }
-                        String[] keys = keysString.split(",");
-                        return Arrays.asList(keys);
-                    }
                     logger.trace("server {} path {} response {}", server, path, response);
-                    return new Vector<>(); // TODO bc 11/17/14: should this be an exception?
+                    return null; // TODO bc 11/17/14: should this be an exception?
                 }
             }));
         }
@@ -127,12 +151,11 @@ public class RemoteSpokeStore {
         int received = 0;
         boolean errors = false;
 
-        //todo - gfm - 11/17/14 - I think this needs a different definition of quorum
-        while(received < quorum && !errors) {
-            Future<List<String>> resultFuture = compService.take(); //blocks if none available
+        while(received < serverCount && !errors) {
+            Future<String> resultFuture = compService.take(); //blocks if none available
             try {
-                List<String> keys = resultFuture.get();
-                keySet.addAll(keys);
+                String key = resultFuture.get();
+                if(key != null) keySet.add(key);
                 received ++;
             }
             catch(Exception e) {
@@ -140,18 +163,23 @@ public class RemoteSpokeStore {
                 errors = true;
             }
         }
-        Vector<ContentKey> contentKeys = new Vector<>();
-        for(String key : keySet){
-            ContentKey.fromUrl(key);
-        }
-        return contentKeys;
+        if(readNext) return keySet.first();
+        return keySet.last();
     }
 
+    public String readNext(String path) throws InterruptedException{
+        return readAdjacent(path, true);
+    }
+
+    public String readPrevious(String path) throws InterruptedException{
+        return readAdjacent(path, false);
+    }
 
     public boolean delete(String path) throws Exception {
+        //todo - gfm - 11/19/14 - do we actually care about deleting in the short term cache?
         //todo - gfm - 11/13/14 - this could be merged with some of the write code
         List<String> servers = cluster.getServers();
-        int quorum = Math.max(1, servers.size() - 1);
+        int quorum = getQuorum(servers);
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
         for (final String server : servers) {
             //todo - gfm - 11/13/14 - we need to upgrade to Jersey 2.x for lambdas

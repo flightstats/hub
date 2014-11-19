@@ -63,8 +63,7 @@ public class ChannelContentResource {
                               @PathParam("month") int month,
                               @PathParam("day") int day) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        DateTime endTime = startTime.plusDays(1).minusMillis(1);
-        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
+        Collection<ContentKey> keys = channelService.queryByTime(channelName, startTime, TimeUtil.Unit.DAYS);
         return getResponse(channelName, TimeUtil.days(startTime.minusDays(1)), TimeUtil.days(startTime.plusDays(1)), keys);
     }
 
@@ -79,8 +78,7 @@ public class ChannelContentResource {
                               @PathParam("day") int day,
                               @PathParam("hour") int hour) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        DateTime endTime = startTime.plusHours(1).minusMillis(1);
-        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
+        Collection<ContentKey> keys = channelService.queryByTime(channelName, startTime, TimeUtil.Unit.HOURS);
         return getResponse(channelName, TimeUtil.hours(startTime.minusHours(1)), TimeUtil.hours(startTime.plusHours(1)), keys);
     }
 
@@ -96,8 +94,7 @@ public class ChannelContentResource {
                               @PathParam("hour") int hour,
                               @PathParam("minute") int minute) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        DateTime endTime = startTime.plusMinutes(1).minusMillis(1);
-        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
+        Collection<ContentKey> keys = channelService.queryByTime(channelName, startTime, TimeUtil.Unit.MINUTES);
         return getResponse(channelName, TimeUtil.minutes(startTime.minusMinutes(1)), TimeUtil.minutes(startTime.plusMinutes(1)), keys);
     }
 
@@ -114,8 +111,7 @@ public class ChannelContentResource {
                               @PathParam("minute") int minute,
                               @PathParam("second") int second) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        DateTime endTime = startTime.plusSeconds(1).minusMillis(1);
-        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, endTime);
+        Collection<ContentKey> keys = channelService.queryByTime(channelName, startTime, TimeUtil.Unit.SECONDS);
         return getResponse(channelName, TimeUtil.seconds(startTime.minusSeconds(1)), TimeUtil.seconds(startTime.plusSeconds(1)), keys);
     }
 
@@ -133,7 +129,7 @@ public class ChannelContentResource {
                               @PathParam("second") int second,
                               @PathParam("millis") int millis) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
-        Collection<ContentKey> keys = channelService.getKeys(channelName, startTime, startTime);
+        Collection<ContentKey> keys = channelService.queryByTime(channelName, startTime, TimeUtil.Unit.MILLIS);
         return getResponse(channelName, TimeUtil.millis(startTime.minusMillis(1)), TimeUtil.millis(startTime.plusMillis(1)), keys);
     }
 
