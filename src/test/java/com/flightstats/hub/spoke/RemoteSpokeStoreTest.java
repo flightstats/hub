@@ -140,37 +140,35 @@ public class RemoteSpokeStoreTest {
 
     @Test
     public void testTimeBucketUsing3Servers() throws Exception{
-        SpokeCluster cluster = new SpokeCluster("localhost:4567/serverOne,localhost:4567/serverTwo,localhost:4567/serverThree");
+        SpokeCluster cluster = new StringSpokeCluster("localhost:4567/serverOne,localhost:4567/serverTwo,localhost:4567/serverThree");
         String one = "a/b/10.txt";
         String two = "a/b/11.txt";
         String three = "a/b/12.txt";
         String allThree = one + "," + two + "," + three;
         String just2 = one + "," + two;
-        get("/serverOne/spoke/payload/*", (req, res) -> {
+        get("/serverOne/spoke/time/*", (req, res) -> {
             res.status(200);
             return allThree;
         });
-        get("/serverTwo/spoke/payload/*", (req, res) -> {
+        get("/serverTwo/spoke/time/*", (req, res) -> {
             res.status(200);
             return allThree;
         });
-        get("/serverThree/spoke/payload/*", (req, res) -> {
+        get("/serverThree/spoke/time/*", (req, res) -> {
             res.status(200);
             return just2;
         });
         RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
         Collection<String> keys = spokeStore.readTimeBucket("a/b");
-        assertEquals(keys.size(), 3);
+        assertEquals(3, keys.size());
     }
 
     @Test
     public void testNextUsing3Servers() throws Exception {
-        SpokeCluster cluster = new SpokeCluster("localhost:4567/serverOne,localhost:4567/serverTwo,localhost:4567/serverThree");
+        SpokeCluster cluster = new StringSpokeCluster("localhost:4567/serverOne,localhost:4567/serverTwo,localhost:4567/serverThree");
         String one = "a/b/10.txt";
         String two = "a/b/11.txt";
         String three = "a/b/12.txt";
-        String allThree = one + "," + two + "," + three;
-        String just2 = one + "," + two;
 
         String nextPath = "/spoke/next/*";
         get("/serverOne" + nextPath, (req, res) -> {
