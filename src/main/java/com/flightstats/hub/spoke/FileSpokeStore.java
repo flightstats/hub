@@ -37,18 +37,6 @@ public class FileSpokeStore {
         }
     }
 
-    // given a url containing a key, return the file format
-    // example: "test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5"
-    @VisibleForTesting
-    String spokeFilePathPart(String urlPathPart) {
-        //todo - gfm - 11/19/14 - this is confusing
-        String[] split = urlPathPart.split("/");
-        if (split.length < 9)
-            return storagePath + urlPathPart;
-        return storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
-                + "/" + split[5] + "/" + split[6] + split[7] + split[8];
-    }
-
     public boolean write(String path, byte[] payload) {
         File file = new File(spokeFilePathPart(path));
         logger.trace("writing {}", file);
@@ -75,15 +63,45 @@ public class FileSpokeStore {
         }
     }
 
+    public String nextPath(String path) {
+        return adjacentPath(path, true);
+    }
+
+    public String previousPath(String path) {
+        return adjacentPath(path, false);
+    }
+
+    public String readKeysInBucket(String path) {
+        Collection<String> keys = keysInBucket(spokeFilePathPart(path));
+        return StringUtils.join(keys, ",");
+    }
+
+    public boolean delete(String path) throws Exception {
+        FileUtils.deleteDirectory(new File(storagePath + path));
+        return true;
+    }
+
+    // given a url containing a key, return the file format
+    // example: "test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5"
+    @VisibleForTesting
+    String spokeFilePathPart(String urlPathPart) {
+        //todo - gfm - 11/19/14 - this is confusing
+        String[] split = urlPathPart.split("/");
+        if (split.length < 9)
+            return storagePath + urlPathPart;
+        return storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
+                + "/" + split[5] + "/" + split[6] + split[7] + split[8];
+    }
+
 
     // note: this should only operate on a file path not a url
-    public String parentOfPath(String path) {
+    String parentOfPath(String path) {
         // TODO bc 11/19/14: make this type specific
         int index = path.lastIndexOf('/');
         return path.substring(0, index);
     }
 
-    public String keyPart(String spokeRootAndKey) {
+    String keyPart(String spokeRootAndKey) {
         int index = spokeRootAndKey.indexOf(storagePath);
         if (index >= 0) return spokeRootAndKey.substring(storagePath.length());
         return spokeRootAndKey;
@@ -93,7 +111,7 @@ public class FileSpokeStore {
     // e.g. nextPath( "2014/10/10/22") might return "2014/10/10/23" i.e. the next hour.
     // or it might return "2014/10/11/01" if there was no next in the day 10 bucket.
     // nextPath( "2014/10/10/22/15/hash1") might return "2014/10/10/22/15/hash2" i.e. the next file.
-    public String adjacentPath(String path, boolean findNext) {
+    String adjacentPath(String path, boolean findNext) {
         String spokePath = spokeFilePathPart(path);
         String parentPath = parentOfPath(spokePath);
         File parentFolder = new File(parentPath).getAbsoluteFile();
@@ -141,15 +159,7 @@ public class FileSpokeStore {
         return folderPath + "/" + seconds + "/" + milliseconds + "/" + hash;
     }
 
-    public String nextPath(String path) {
-        return adjacentPath(path, true);
-    }
-
-    public String previousPath(String path) {
-        return adjacentPath(path, false);
-    }
-
-    public String nthFileInFolder(String path, int index) {
+    String nthFileInFolder(String path, int index) {
         File file = new File(spokeFilePathPart(path));
         File[] files = file.listFiles((FilenameFilter) null);
         if (index < 0) index = files.length - 1;  // mystery meaning for negative index
@@ -160,26 +170,16 @@ public class FileSpokeStore {
         }
     }
 
-    public Collection<String> keysInBucket(String path) {
+    Collection<String> keysInBucket(String path) {
+        logger.trace("path {}", path);
         Collection<File> files = FileUtils.listFiles(new File(path), null, true);
         List<String> keys = new ArrayList<>();
         for (File file : files) {
             String filePath = file.getPath();
             logger.trace("filePath {}", filePath);
-            //todo - gfm - 11/19/14 - need to pull out the filepath - /tmp/spoke/test/test_0_7475501417648047/2014/11/19/18/15/43916UD7V4N
-            keys.add(keyPart(filePath));
+            keys.add(spokeKeyFromFilePath(filePath));
         }
         return keys;
-    }
-
-    public String readKeysInBucket(String path) {
-        Collection<String> keys = keysInBucket(spokeFilePathPart(path));
-        return StringUtils.join(keys, ",");
-    }
-
-    public boolean delete(String path) throws Exception {
-        FileUtils.deleteDirectory(new File(storagePath + path));
-        return true;
     }
 
     //    public byte[] readNextItem(String path){

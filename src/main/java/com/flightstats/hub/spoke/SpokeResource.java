@@ -37,6 +37,20 @@ public class SpokeResource {
         }
     }
 
+    @Path("/payload/{path:.+}")
+    @PUT
+    public Response putPayload(@PathParam("path") String path, byte[] data) {
+        try {
+            if (spokeStore.write(path, data)) {
+                return Response.created(uriInfo.getRequestUri()).build();
+            }
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        } catch (Exception e) {
+            logger.warn("unable to write " + path, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @Path("/next/{path:.+}")
     @GET
     public Response getNext(@PathParam("path") String path) {
@@ -84,20 +98,7 @@ public class SpokeResource {
         }
     }
 
-    @Path("/payload/{path:.+}")
-    @PUT
-    public Response putPayload(@PathParam("path") String path, byte[] data) {
-        try {
-            if (spokeStore.write(path, data)) {
-                return Response.created(uriInfo.getRequestUri()).build();
-            }
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-        } catch (Exception e) {
-            logger.warn("unable to write " + path, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
+    //todo - gfm - 11/19/14 - do we care about this?
     @Path("/payload/{path:.+}")
     @DELETE
     public Response delete(@PathParam("path") String path) {
