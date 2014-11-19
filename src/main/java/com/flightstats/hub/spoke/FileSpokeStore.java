@@ -34,16 +34,32 @@ public class FileSpokeStore {
             throw new RuntimeException("unable to create startup file");
         }
     }
-
+    // given a url containing a key, return the file format
+    // example: "test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5"
     @VisibleForTesting
-    String spokePath(String path) {
-        String[] split = path.split("/");
+    String spokeFilePathPart(String urlPathPart) {
+        String[] split = urlPathPart.split("/");
+        if(split.length < 9)
+            return storagePath + urlPathPart;
         return storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
                 + "/" + split[5] + "/" + split[6] + split[7] + split[8];
     }
 
+    //Given a filePath, return a key
+    String spokeKeyFromFilePath(String filePathPart){
+        int lastSlash = filePathPart.lastIndexOf("/");
+        String fileName = filePathPart.substring(lastSlash + 1);
+        String folderPath = filePathPart.substring(1, lastSlash);
+        if(filePathPart.contains(storagePath))
+            folderPath = filePathPart.substring(storagePath.length(),lastSlash);
+        String seconds = fileName.substring(0,2);
+        String milliseconds = fileName.substring(2,5);
+        String hash = fileName.substring(5);
+        return folderPath+"/"+seconds+"/"+milliseconds+"/"+hash;
+    }
+
     public boolean write(String path, byte[] payload) {
-        File file = new File(spokePath(path));
+        File file = new File(spokeFilePathPart(path));
         logger.trace("writing {}", file);
         try {
             FileUtils.writeByteArrayToFile(file, payload);
@@ -55,7 +71,7 @@ public class FileSpokeStore {
     }
 
     public byte[] read(String path) {
-        File file = new File(spokePath(path));
+        File file = new File(spokeFilePathPart(path));
         logger.trace("reading {}", file);
         try {
             return FileUtils.readFileToByteArray(file);
@@ -69,9 +85,9 @@ public class FileSpokeStore {
     }
 
 
-
-
+    // note: this should only operate on a file path not a url
     public String parentOfPath(String path){
+        // TODO bc 11/19/14: make this type specific
         int index=path.lastIndexOf('/');
         return path.substring(0,index);
     }
@@ -87,9 +103,9 @@ public class FileSpokeStore {
     // or it might return "2014/10/11/01" if there was no next in the day 10 bucket.
     // nextPath( "2014/10/10/22/15/hash1") might return "2014/10/10/22/15/hash2" i.e. the next file.
     public String adjacentPath(String path, boolean findNext){
-        String parentPath = parentOfPath(path);
-        String spokePath = spokePath(path);
-        File parentFolder = new File(spokePath(parentPath)).getAbsoluteFile();
+        String spokePath = spokeFilePathPart(path);
+        String parentPath = parentOfPath(spokePath);
+        File parentFolder = new File(parentPath).getAbsoluteFile();
         File[] files = parentFolder.listFiles((FilenameFilter) null);
         Arrays.sort(files);
 
@@ -118,7 +134,7 @@ public class FileSpokeStore {
                 nextPath = nthFileInFolder(adjacentParent, -1); //last file
             }
         }
-        return keyPart(nextPath);
+        return spokeKeyFromFilePath(nextPath);
     }
 
     // sugar
@@ -131,7 +147,7 @@ public class FileSpokeStore {
     }
 
     public String nthFileInFolder(String path, int index){
-        File file = new File(spokePath(path));
+        File file = new File(spokeFilePathPart(path));
         File[] files = file.listFiles((FilenameFilter) null);
         if(index < 0) index = files.length - 1;  // mystery meaning for negative index
         if(files.length < index) {
@@ -143,7 +159,7 @@ public class FileSpokeStore {
 
 
 //    public byte[] readNextItem(String path){
-//        Path p = Paths.get(spokePath(path));
+//        Path p = Paths.get(spokeFilePathPart(path));
 //        Path parent = p.getParent();
 //        File parentFolder = new File(parent.toString());
 //        String file = p.getFileName().toString();
@@ -155,7 +171,7 @@ public class FileSpokeStore {
 //    }
 
     public Collection<String> keysInBucket(String path){
-        Collection<File> files = FileUtils.listFiles(new File(spokePath(path)), null, true);
+        Collection<File> files = FileUtils.listFiles(new File(spokeFilePathPart(path)), null, true);
         // return array of strings with just keys
         Vector keys = new Vector();
 
@@ -166,7 +182,7 @@ public class FileSpokeStore {
     }
 
     public String readKeysInBucket(String path){
-        Collection<String> keys = keysInBucket(path);
+        Collection<String> keys = keysInBucket(spokeFilePathPart(path));
         String tmp = "";
         int i = 0;
         for(String key : keys){

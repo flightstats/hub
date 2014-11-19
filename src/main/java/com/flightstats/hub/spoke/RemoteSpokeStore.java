@@ -145,8 +145,8 @@ public class RemoteSpokeStore {
         // read from as many servers as we can
         // put results into a sorted set
         // read and return the payload
-        String[] servers = cluster.getServers();
-        int serverCount = servers.length;
+        List<String> servers = cluster.getServers();
+        int serverCount = servers.size();
 
         CompletionService<String> compService = new ExecutorCompletionService<>(
                 Executors.newFixedThreadPool(serverCount));
