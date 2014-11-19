@@ -6,6 +6,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.replication.ReplicationValidator;
 import com.flightstats.hub.service.ChannelValidator;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -113,8 +114,8 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
-        return contentService.getKeys(channelName, startTime, endTime);
+    public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+        return contentService.queryByTime(channelName, startTime, unit);
     }
 
     @Override
