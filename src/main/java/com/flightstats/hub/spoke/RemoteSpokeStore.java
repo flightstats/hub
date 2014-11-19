@@ -36,12 +36,8 @@ public class RemoteSpokeStore {
     }
 
     public boolean write(String path, byte[] payload) throws InterruptedException {
-        String[] servers = cluster.getServers();
-        //todo - gfm - 11/13/14 - change this to be cluster aware
-        int quorum = Math.max(1, servers.length - 1);
-        /**
-         * todo - gfm - 11/15/14 - this balloons to 60s during a rolling restart
-         */
+        List<String> servers = cluster.getServers();
+        int quorum = Math.max(1, servers.size() - 1);
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
 
         for (final String server : servers) {
@@ -72,8 +68,7 @@ public class RemoteSpokeStore {
 
     public com.flightstats.hub.model.Content read(String path, ContentKey key) {
         //todo - gfm - 11/13/14 - this could do read repair
-        //todo - gfm - 11/17/14 - randomize this
-        String[] servers = cluster.getServers();
+        List<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             try {
                 ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
@@ -92,8 +87,9 @@ public class RemoteSpokeStore {
 
     // read from 3 servers and do set intersection and sort
     public Collection<String> readTimeBucket(String path)throws InterruptedException {
-        String[] servers = cluster.getServers();
-        int serverCount = servers.length;
+        List<String> servers = cluster.getServers();
+        // TODO bc 11/17/14: Can we make this read from a subset of the cluster and get all results?
+        int serverCount = servers.size();
 
         CompletionService<List<String>> compService = new ExecutorCompletionService<>(
                 Executors.newFixedThreadPool(serverCount));
@@ -207,9 +203,8 @@ public class RemoteSpokeStore {
 
     public boolean delete(String path) throws Exception {
         //todo - gfm - 11/13/14 - this could be merged with some of the write code
-        String[] servers = cluster.getServers();
-        //todo - gfm - 11/13/14 - change this to be cluster aware
-        int quorum = Math.max(1, servers.length - 1);
+        List<String> servers = cluster.getServers();
+        int quorum = Math.max(1, servers.size() - 1);
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
         for (final String server : servers) {
             //todo - gfm - 11/13/14 - we need to upgrade to Jersey 2.x for lambdas

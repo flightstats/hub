@@ -759,7 +759,7 @@ Deployments to Staging can be manually run from [Hub Tasks](http://ops-jenkins01
 
 Releases to Prod currently must be manually kicked off from each machine using the version number from Jenkins.
 ```
-sudo salt-call triforce.deploy s3://triforce_builds/hub/hub-<version>.tgz prod
+sudo salt-call triforce.deploy s3://triforce_builds/hubv2/hub-v2-<version>.tgz prod
 ```
 
 ## Requirements Notes
