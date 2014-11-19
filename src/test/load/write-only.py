@@ -7,8 +7,8 @@ import random
 from locust import HttpLocust, TaskSet, task
 
 # Usage:
-# locust -f write-only.py -H http://hub-v2-03.cloud-east.dev:8080
-# nohup locust -f write-only.py -H http://hub-v2-03.cloud-east.dev:8080 &
+# locust -f write-only.py -H http://hub-v2.svc.dev
+# nohup locust -f write-only.py -H http://hub-v2.svc.dev &
 
 class WebsiteTasks(TaskSet):
     channelNum = 0
