@@ -8,6 +8,7 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.exception.ConflictException;
 import com.flightstats.hub.model.exception.ForbiddenRequestException;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -153,8 +154,8 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
-        return channelService.getKeys(channelName, startTime, endTime);
+    public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+        return channelService.queryByTime(channelName, startTime, unit);
     }
 
     @Override
