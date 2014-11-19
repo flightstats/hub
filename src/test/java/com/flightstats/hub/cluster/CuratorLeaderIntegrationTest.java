@@ -1,9 +1,7 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
-import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -24,15 +22,9 @@ public class CuratorLeaderIntegrationTest {
     private AtomicInteger count;
     private CountDownLatch countDownLatch;
 
-    @Test
-    public void testNothing() throws Exception {
-
-    }
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Integration.startZooKeeper();
-        RetryPolicy retryPolicy = GuiceContext.HubCommonModule.buildRetryPolicy();
-        curator = GuiceContext.HubCommonModule.buildCurator("hub", "test", "localhost:2181", retryPolicy, new ZooKeeperState());
+        curator = Integration.startZooKeeper();
     }
 
     @Test
@@ -70,17 +62,6 @@ public class CuratorLeaderIntegrationTest {
         curatorLeader3.close();
     }
 
-    private class MockLeader implements Leader {
-
-        @Override
-        public void takeLeadership(AtomicBoolean hasLeadership) {
-            logger.info("do Work");
-            Sleeper.sleep(5);
-            count.incrementAndGet();
-            countDownLatch.countDown();
-        }
-    }
-
     @Test
     public void testMultipleStarts() throws Exception {
         count = new AtomicInteger();
@@ -95,6 +76,7 @@ public class CuratorLeaderIntegrationTest {
         assertEquals(5, count.get());
         curatorLeader.close();
     }
+
     @Test
     public void testClose() throws Exception {
         count = new AtomicInteger();
@@ -106,6 +88,17 @@ public class CuratorLeaderIntegrationTest {
         assertTrue(startLatch.await(2000, TimeUnit.MILLISECONDS));
         curatorLeader.close();
         assertTrue(countDownLatch.await(2000, TimeUnit.MILLISECONDS));
+    }
+
+    private class MockLeader implements Leader {
+
+        @Override
+        public void takeLeadership(AtomicBoolean hasLeadership) {
+            logger.info("do Work");
+            Sleeper.sleep(5);
+            count.incrementAndGet();
+            countDownLatch.countDown();
+        }
     }
 
     private class CloseLeader implements Leader {

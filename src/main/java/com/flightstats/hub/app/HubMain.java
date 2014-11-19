@@ -31,8 +31,8 @@ import java.util.concurrent.CountDownLatch;
 public class HubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(HubMain.class);
-    private static Injector injector;
     private static final DateTime startTime = new DateTime();
+    private static Injector injector;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -105,9 +105,10 @@ public class HubMain {
         GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties, module);
         injector = guice.getInjector();
         JettyServer server = new JettyServer(jettyConfig, guice);
-        HubServices.startAll();
+        HubServices.start(HubServices.TYPE.PRE_START);
         server.start();
         logger.info("Jetty server has been started.");
+        HubServices.start(HubServices.TYPE.POST_START);
         return server;
     }
 

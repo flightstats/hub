@@ -23,10 +23,7 @@ import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.service.HubHealthCheck;
 import com.flightstats.hub.service.HubHealthCheckImpl;
-import com.flightstats.hub.spoke.FileSpokeStore;
-import com.flightstats.hub.spoke.RemoteSpokeStore;
-import com.flightstats.hub.spoke.SpokeContentDao;
-import com.flightstats.hub.spoke.SpokeTtlEnforcer;
+import com.flightstats.hub.spoke.*;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisherImpl;
 import com.google.inject.AbstractModule;
@@ -85,6 +82,7 @@ public class AwsModule extends AbstractModule {
 
         bind(FileSpokeStore.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
+        bind(SpokeCluster.class).to(CuratorSpokeCluster.class).asEagerSingleton();
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.CACHE))
