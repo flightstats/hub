@@ -30,7 +30,7 @@ public class FileSpokeStore {
     public FileSpokeStore(@Named("spoke.path") String storagePath) {
         this.storagePath = StringUtils.appendIfMissing(storagePath, "/");
         logger.info("starting with storage path " + this.storagePath);
-        if (!write("!startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
+        if (!write("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
             throw new RuntimeException("unable to create startup file");
         }
     }
@@ -38,7 +38,6 @@ public class FileSpokeStore {
     @VisibleForTesting
     String spokePath(String path) {
         String[] split = path.split("/");
-        logger.info("split " + Arrays.toString(split));
         return storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
                 + "/" + split[5] + "/" + split[6] + split[7] + split[8];
     }
