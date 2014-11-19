@@ -30,7 +30,7 @@ public class RemoteSpokeStoreTest {
     @Test
     public void testWriteOneServer() throws Exception {
         String name = "testWriteOneServer";
-        SpokeCluster cluster = new SpokeCluster("localhost:4567/" + name);
+        SpokeCluster cluster = new StringSpokeCluster("localhost:4567/" + name);
         CountDownLatch latch = new CountDownLatch(1);
         put("/" + name + "/spoke/payload/*", (req, res) -> {
             res.status(201);
@@ -45,7 +45,7 @@ public class RemoteSpokeStoreTest {
     @Test
     public void testWriteTwoServers() throws Exception {
         String name = "testWriteTwoServers";
-        SpokeCluster cluster = new SpokeCluster(StringUtils.repeat("localhost:4567/" + name, ",", 2));
+        SpokeCluster cluster = new StringSpokeCluster(StringUtils.repeat("localhost:4567/" + name, ",", 2));
         CountDownLatch latch = new CountDownLatch(2);
         put("/" + name + "/spoke/payload/*", (req, res) -> {
             res.status(201);
@@ -60,7 +60,7 @@ public class RemoteSpokeStoreTest {
     @Test
     public void testWriteThreeServers() throws Exception {
         String name = "testWriteThreeServers";
-        SpokeCluster cluster = new SpokeCluster(StringUtils.repeat("localhost:4567/" + name, ",", 3));
+        SpokeCluster cluster = new StringSpokeCluster(StringUtils.repeat("localhost:4567/" + name, ",", 3));
         CountDownLatch latch = new CountDownLatch(3);
         put("/" + name + "/spoke/payload/*", (req, res) -> {
             res.status(201);
@@ -75,7 +75,7 @@ public class RemoteSpokeStoreTest {
     @Test
     public void testWriteThreeServersOne500() throws Exception {
         String name = "testWriteThreeServersOne500";
-        SpokeCluster cluster = new SpokeCluster("localhost:4567/" + name + ",localhost:4567/500,localhost:4567/" + name);
+        SpokeCluster cluster = new StringSpokeCluster("localhost:4567/" + name + ",localhost:4567/500,localhost:4567/" + name);
         CountDownLatch success = new CountDownLatch(2);
         CountDownLatch fail = new CountDownLatch(1);
         put("/" + name + "/spoke/payload/*", (req, res) -> {
@@ -97,7 +97,7 @@ public class RemoteSpokeStoreTest {
     @Test
     public void testWriteThreeServersOneMissing() throws Exception {
         String name = "testWriteThreeServersOneMissing";
-        SpokeCluster cluster = new SpokeCluster("localhost:4567/" + name + ",localhost:9876/missing,localhost:4567/" + name);
+        SpokeCluster cluster = new StringSpokeCluster("localhost:4567/" + name + ",localhost:9876/missing,localhost:4567/" + name);
         CountDownLatch success = new CountDownLatch(2);
         put("/" + name + "/spoke/payload/*", (req, res) -> {
             res.status(201);
@@ -112,7 +112,7 @@ public class RemoteSpokeStoreTest {
     @Test
     public void testWriteThreeDifferentServers() throws Exception {
 
-        SpokeCluster cluster = new SpokeCluster("localhost:4567/serverOne,localhost:4567/serverTwo,localhost:4567/serverThree");
+        SpokeCluster cluster = new StringSpokeCluster("localhost:4567/serverOne,localhost:4567/serverTwo,localhost:4567/serverThree");
         CountDownLatch one = new CountDownLatch(1);
         CountDownLatch two = new CountDownLatch(1);
         CountDownLatch three = new CountDownLatch(1);
