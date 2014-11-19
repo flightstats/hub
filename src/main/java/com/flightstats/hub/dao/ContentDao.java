@@ -19,14 +19,10 @@ public interface ContentDao {
 
     void initializeChannel(ChannelConfiguration configuration);
 
-    @Deprecated
-    Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime);
-
     Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit);
 
     Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count);
 
     void delete(String channelName);
 
-    //todo - gfm - 11/12/14 - delete for cache/ttl?
 }

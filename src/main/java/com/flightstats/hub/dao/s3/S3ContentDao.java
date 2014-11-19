@@ -114,13 +114,6 @@ public class S3ContentDao implements ContentDao {
     public void initializeChannel(ChannelConfiguration configuration) {
     }
 
-    @Deprecated
-    @Override
-    public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
-        //todo - gfm - 11/14/14 - do nothing
-        return null;
-    }
-
     @Override
     public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
         String timePath = unit.format(startTime);
