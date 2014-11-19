@@ -5,6 +5,7 @@ import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.Sleeper;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -86,9 +87,9 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, DateTime startTime, DateTime endTime) {
+    public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
         //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours
-        return contentDao.getKeys(channelName, startTime, endTime);
+        return contentDao.queryByTime(channelName, startTime, unit);
     }
 
     @Override

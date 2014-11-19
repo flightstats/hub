@@ -1,15 +1,21 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static spark.Spark.get;
 import static spark.Spark.put;
 import static spark.SparkBase.setPort;
 
@@ -134,6 +140,61 @@ public class RemoteSpokeStoreTest {
         assertTrue(three.await(1, TimeUnit.SECONDS));
     }
 
+    @Test
+    public void testTimeBucketUsing3Servers() throws Exception {
+        SpokeCluster cluster = new StringSpokeCluster("localhost:4567/serverOne,localhost:4567/serverTwo,localhost:4567/serverThree");
+        DateTime now = TimeUtil.now();
+        String channel = "channy";
+        String one = channel + "/" + new ContentKey(now, "A").toUrl();
+        String two = channel + "/" + new ContentKey(now, "B").toUrl();
+        String three = channel + "/" + new ContentKey(now, "C").toUrl();
+
+        String allThree = one + "," + two + "," + three;
+        String just2 = one + "," + two;
+        get("/serverOne/spoke/time/*", (req, res) -> {
+            res.status(200);
+            return allThree;
+        });
+        get("/serverTwo/spoke/time/*", (req, res) -> {
+            res.status(200);
+            return allThree;
+        });
+        get("/serverThree/spoke/time/*", (req, res) -> {
+            res.status(200);
+            return just2;
+        });
+        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
+
+        Collection<ContentKey> keys = spokeStore.readTimeBucket(channel, TimeUtil.hours(now));
+        assertEquals(3, keys.size());
+    }
+
+   /*
+    todo - gfm - 11/19/14 - get this working too
+   @Test
+    public void testNextUsing3Servers() throws Exception {
+        SpokeCluster cluster = new StringSpokeCluster("localhost:4567/serverOne,localhost:4567/serverTwo,localhost:4567/serverThree");
+        String one = "a/b/10.txt";
+        String two = "a/b/11.txt";
+        String three = "a/b/12.txt";
+
+        String nextPath = "/spoke/next*//*";
+        get("/serverOne" + nextPath, (req, res) -> {
+            res.status(200);
+            return two;
+        });
+        get("/serverTwo" + nextPath, (req, res) -> {
+            res.status(200);
+            return two;
+        });
+        get("/serverThree" + nextPath, (req, res) -> {
+            res.status(200);
+            return three;
+        });
+        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
+        String key = spokeStore.readNext(one);
+        assertEquals(two, key);
+    }*/
 }
 
 
