@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ContentServiceImpl implements ContentService {
@@ -89,7 +91,8 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
         //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours
-        return contentDao.queryByTime(channelName, startTime, unit);
+        Set<ContentKey> orderedKeys = new TreeSet<>(contentDao.queryByTime(channelName, startTime, unit));
+        return orderedKeys;
     }
 
     @Override
