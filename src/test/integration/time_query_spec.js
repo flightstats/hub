@@ -29,6 +29,7 @@ describe(testName, function () {
 
     //todo - gfm - 11/5/14 - tests for different resolutions
     //todo - gfm - 11/5/14 - tests for next/previous
+    //todo - gfm - 11/19/14 - test for ordering
 
     it('gets items from channel', function (done) {
         request.get({url : channelResource + '/time/minute', json : true },
