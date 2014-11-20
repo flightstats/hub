@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @EqualsAndHashCode
-public class ContentKey {
+public class ContentKey implements Comparable<ContentKey> {
     private final static Logger logger = LoggerFactory.getLogger(ContentKey.class);
     private final DateTime time;
     private final String hash;
@@ -52,5 +52,14 @@ public class ContentKey {
     @Override
     public String toString() {
         return toUrl();
+    }
+
+    @Override
+    public int compareTo(ContentKey other) {
+        int diff = time.compareTo(other.time);
+        if (diff == 0) {
+            diff = hash.compareTo(other.hash);
+        }
+        return diff;
     }
 }
