@@ -15,7 +15,7 @@ class WebsiteTasks(TaskSet):
 
     def on_start(self):
         WebsiteTasks.channelNum += 1
-        self.number = WebsiteTasks.channelNum * 2000
+        self.number = WebsiteTasks.channelNum * WebsiteTasks.channelNum * 300
         self.payload = self.payload_generator(self.number)
         print("payload size " + str(self.payload.__sizeof__()))
         self.channel = "load_test_" + str(WebsiteTasks.channelNum)
