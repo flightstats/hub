@@ -26,10 +26,9 @@ class WebsiteTasks(TaskSet):
                          headers={"Content-Type": "application/json"}
         )
 
-    @task(100)
+    @task(1000)
     def write_read(self):
         payload = {"name": self.payload, "count": self.count}
-        #write payload
         with self.client.post("/channel/" + self.channel, data=json.dumps(payload),
                               headers={"Content-Type": "application/json"}, catch_response=True) as postResponse:
             if postResponse.status_code != 201:
@@ -42,31 +41,35 @@ class WebsiteTasks(TaskSet):
 
         # @task(1)
 
-    #    def day_query(self):
+    # def day_query(self):
     #        self.client.get(self.time_path("day"), name="time_day")
 
-#    @task(5)
-    # def hour_query(self):
-    #        self.client.get(self.time_path("hour"), name="time_hour")
+    @task(5)
+    def hour_query(self):
+        self.client.get(self.time_path("hour"), name="time_hour")
 
-    @task(7)
+    @task(1)
+    def hour_query(self):
+        self.next("hour")
+
+    @task(1)
     def minute_query(self):
         self.client.get(self.time_path("minute"), name="time_minute")
 
-    @task(3)
+    @task(1)
     def minute_query(self):
         self.next("minute")
 
-    @task(10)
-    def second_query(self):
-        self.next("second")
+    # @task(10)
+    # def second_query(self):
+    # self.next("second")
 
     def time_path(self, unit="second"):
         return "/channel/" + self.channel + "/time/" + unit
 
     def next(self, time_unit):
         path = self.time_path(time_unit)
-        with self.client.get(path, catch_response=True, name="time_"+time_unit) as postResponse:
+        with self.client.get(path, catch_response=True, name="time_" + time_unit) as postResponse:
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on get: " + postResponse.status_code)
         links = postResponse.json()
