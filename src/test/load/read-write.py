@@ -7,7 +7,7 @@ import random
 from locust import HttpLocust, TaskSet, task
 
 # Usage:
-# locust -f read-write.py -H http://hub.svc.prod
+# locust -f read-write.py -H http://hub-v2.svc.dev
 # nohup locust -f read-write.py -H http://hub-v2.svc.dev &
 
 class WebsiteTasks(TaskSet):
@@ -40,13 +40,14 @@ class WebsiteTasks(TaskSet):
 
         self.count += 1
 
-    @task(1)
-    def day_query(self):
-        self.client.get(self.time_path("day"), name="time_day")
+        # @task(1)
 
-    @task(5)
-    def hour_query(self):
-        self.client.get(self.time_path("hour"), name="time_hour")
+    #    def day_query(self):
+    #        self.client.get(self.time_path("day"), name="time_day")
+
+#    @task(5)
+    # def hour_query(self):
+    #        self.client.get(self.time_path("hour"), name="time_hour")
 
     @task(7)
     def minute_query(self):
