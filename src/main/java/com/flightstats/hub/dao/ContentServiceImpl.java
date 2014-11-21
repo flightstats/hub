@@ -4,6 +4,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -66,7 +67,6 @@ public class ContentServiceImpl implements ContentService {
             inFlight.incrementAndGet();
             String channelName = configuration.getName();
             logger.trace("inserting {} bytes into channel {} ", content.getData().length, channelName);
-            //todo - gfm - 11/14/14 - always write to cache
             return cacheContentDao.write(channelName, content);
         } finally {
             inFlight.decrementAndGet();
@@ -76,9 +76,14 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
-        //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours
-        Content value = cacheContentDao.read(channelName, key);
-        return Optional.fromNullable(value);
+        if (isOutsideCacheWindow(key.getTime())) {
+            return Optional.fromNullable(longTermContentDao.read(channelName, key));
+        }
+        return Optional.fromNullable(cacheContentDao.read(channelName, key));
+    }
+
+    private boolean isOutsideCacheWindow(DateTime dateTime) {
+        return TimeUtil.now().minusMinutes(ttlMinutes).isBefore(dateTime);
     }
 
     @Override
@@ -89,17 +94,28 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
-        //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours
-        Set<ContentKey> orderedKeys = new TreeSet<>(cacheContentDao.queryByTime(channelName, startTime, unit));
+    public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
+        Set<ContentKey> orderedKeys = new TreeSet<>();
+        if (timeQuery.getLocation().equals(TimeQuery.Location.CACHE)) {
+            orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+        } else if (timeQuery.getLocation().equals(TimeQuery.Location.LONG_TERM)) {
+            orderedKeys.addAll(longTermContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+        } else if (isOutsideCacheWindow(timeQuery.getStartTime())) {
+            //todo - gfm - 11/21/14 - is this distinction really needed?
+            orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+        } else {
+            //todo - gfm - 11/21/14 - merge both results
+
+        }
+
         return orderedKeys;
     }
 
     @Override
     public void delete(String channelName) {
         logger.info("deleting channel " + channelName);
-        //todo - gfm - 11/14/14 - delete in both
         cacheContentDao.delete(channelName);
+        longTermContentDao.delete(channelName);
     }
 
     @Override
@@ -111,7 +127,7 @@ public class ContentServiceImpl implements ContentService {
     private class ContentServiceHook extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
-            //todo - gfm - 11/14/14 - call init on both Daos
+            //todo - gfm - 11/14/14 - call init on both Daos?
         }
 
         @Override
