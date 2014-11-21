@@ -45,6 +45,10 @@ public class ContentKey implements Comparable<ContentKey> {
         return time.getMillis();
     }
 
+    public DateTime getTime() {
+        return time;
+    }
+
     public String toString(DateTimeFormatter pathFormatter) {
         return time.toString(pathFormatter) + hash;
     }
