@@ -42,7 +42,6 @@ public class ChannelServiceImpl implements ChannelService {
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
         channelValidator.validate(configuration, true);
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
-        contentService.createChannel(configuration);
         return channelConfigurationDao.createChannel(configuration);
     }
 
