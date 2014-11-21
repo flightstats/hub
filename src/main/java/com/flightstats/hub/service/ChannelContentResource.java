@@ -9,6 +9,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
@@ -63,7 +64,11 @@ public class ChannelContentResource {
                               @PathParam("month") int month,
                               @PathParam("day") int day) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        Collection<ContentKey> keys = channelService.queryByTime(channelName, startTime, TimeUtil.Unit.DAYS);
+        TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
+                .channelName(channelName)
+                .startTime(startTime)
+                .unit(TimeUtil.Unit.DAYS);
+        Collection<ContentKey> keys = channelService.queryByTime(builder.build());
         return getResponse(channelName, TimeUtil.days(startTime.minusDays(1)), TimeUtil.days(startTime.plusDays(1)), keys);
     }
 
@@ -78,7 +83,11 @@ public class ChannelContentResource {
                               @PathParam("day") int day,
                               @PathParam("hour") int hour) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        Collection<ContentKey> keys = channelService.queryByTime(channelName, startTime, TimeUtil.Unit.HOURS);
+        TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
+                .channelName(channelName)
+                .startTime(startTime)
+                .unit(TimeUtil.Unit.HOURS);
+        Collection<ContentKey> keys = channelService.queryByTime(builder.build());
         return getResponse(channelName, TimeUtil.hours(startTime.minusHours(1)), TimeUtil.hours(startTime.plusHours(1)), keys);
     }
 
@@ -92,9 +101,15 @@ public class ChannelContentResource {
                               @PathParam("month") int month,
                               @PathParam("day") int day,
                               @PathParam("hour") int hour,
-                              @PathParam("minute") int minute) {
+                              @PathParam("minute") int minute,
+                              @QueryParam("location") @DefaultValue("ALL") String location) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        Collection<ContentKey> keys = channelService.queryByTime(channelName, startTime, TimeUtil.Unit.MINUTES);
+        TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
+                .channelName(channelName)
+                .startTime(startTime)
+                .unit(TimeUtil.Unit.MINUTES)
+                .location(TimeQuery.Location.valueOf(location));
+        Collection<ContentKey> keys = channelService.queryByTime(builder.build());
         return getResponse(channelName, TimeUtil.minutes(startTime.minusMinutes(1)), TimeUtil.minutes(startTime.plusMinutes(1)), keys);
     }
 
@@ -111,7 +126,11 @@ public class ChannelContentResource {
                               @PathParam("minute") int minute,
                               @PathParam("second") int second) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        Collection<ContentKey> keys = channelService.queryByTime(channelName, startTime, TimeUtil.Unit.SECONDS);
+        TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
+                .channelName(channelName)
+                .startTime(startTime)
+                .unit(TimeUtil.Unit.DAYS);
+        Collection<ContentKey> keys = channelService.queryByTime(builder.build());
         return getResponse(channelName, TimeUtil.seconds(startTime.minusSeconds(1)), TimeUtil.seconds(startTime.plusSeconds(1)), keys);
     }
 
@@ -129,11 +148,13 @@ public class ChannelContentResource {
                               @PathParam("second") int second,
                               @PathParam("millis") int millis) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
-        Collection<ContentKey> keys = channelService.queryByTime(channelName, startTime, TimeUtil.Unit.MILLIS);
+        TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
+                .channelName(channelName)
+                .startTime(startTime)
+                .unit(TimeUtil.Unit.MILLIS);
+        Collection<ContentKey> keys = channelService.queryByTime(builder.build());
         return getResponse(channelName, TimeUtil.millis(startTime.minusMillis(1)), TimeUtil.millis(startTime.plusMillis(1)), keys);
     }
-
-    //todo - gfm - 11/7/14 - add millis query path
 
     private Response getResponse(String channelName, String previousString, String nextString, Collection<ContentKey> keys) {
         ObjectNode root = mapper.createObjectNode();
