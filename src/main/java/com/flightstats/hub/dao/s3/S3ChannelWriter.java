@@ -61,9 +61,8 @@ public class S3ChannelWriter implements Leader {
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
         while (hasLeadership.get()) {
-            DateTime lastTime = lastCompleted.get(getValuePath(), TimeUtil.now());
-            Sleeper.sleep(getSleep(lastTime, TimeUtil.now()));
-            DateTime nextTime = lastTime.plusMinutes(1);
+            DateTime nextTime = lastCompleted.get(getValuePath(), TimeUtil.now()).plusMinutes(1);
+            Sleeper.sleep(getSleep(nextTime, TimeUtil.now()));
             logger.debug("processing {} ", nextTime);
             Collection<ContentKey> contentKeys = cacheContentDao.queryByTime(channel, nextTime, TimeUtil.Unit.MINUTES);
             for (ContentKey contentKey : contentKeys) {
