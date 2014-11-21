@@ -64,12 +64,6 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public void createChannel(ChannelConfiguration configuration) {
-        logger.info("Creating channel " + configuration);
-        cacheContentDao.initializeChannel(configuration);
-    }
-
-    @Override
     public ContentKey insert(ChannelConfiguration configuration, Content content) {
         try {
             inFlight.incrementAndGet();
