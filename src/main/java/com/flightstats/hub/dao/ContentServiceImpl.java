@@ -23,7 +23,7 @@ public class ContentServiceImpl implements ContentService {
 
     private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
 
-    private final ContentDao contentDao;
+    private final ContentDao cacheContentDao;
     private final ContentDao longTermContentDao;
     private final int ttlMinutes;
     private final Integer shutdown_wait_seconds;
@@ -34,7 +34,7 @@ public class ContentServiceImpl implements ContentService {
                               @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
                               @Named("spoke.ttlMinutes") int ttlMinutes,
                               @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds) {
-        this.contentDao = cacheContentDao;
+        this.cacheContentDao = cacheContentDao;
         this.longTermContentDao = longTermContentDao;
         this.ttlMinutes = ttlMinutes;
         this.shutdown_wait_seconds = shutdown_wait_seconds;
@@ -57,7 +57,7 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public void createChannel(ChannelConfiguration configuration) {
         logger.info("Creating channel " + configuration);
-        contentDao.initializeChannel(configuration);
+        cacheContentDao.initializeChannel(configuration);
     }
 
     @Override
@@ -67,7 +67,7 @@ public class ContentServiceImpl implements ContentService {
             String channelName = configuration.getName();
             logger.trace("inserting {} bytes into channel {} ", content.getData().length, channelName);
             //todo - gfm - 11/14/14 - always write to cache
-            return contentDao.write(channelName, content);
+            return cacheContentDao.write(channelName, content);
         } finally {
             inFlight.decrementAndGet();
         }
@@ -77,7 +77,7 @@ public class ContentServiceImpl implements ContentService {
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours
-        Content value = contentDao.read(channelName, key);
+        Content value = cacheContentDao.read(channelName, key);
         return Optional.fromNullable(value);
     }
 
@@ -91,7 +91,7 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
         //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours
-        Set<ContentKey> orderedKeys = new TreeSet<>(contentDao.queryByTime(channelName, startTime, unit));
+        Set<ContentKey> orderedKeys = new TreeSet<>(cacheContentDao.queryByTime(channelName, startTime, unit));
         return orderedKeys;
     }
 
@@ -99,13 +99,13 @@ public class ContentServiceImpl implements ContentService {
     public void delete(String channelName) {
         logger.info("deleting channel " + channelName);
         //todo - gfm - 11/14/14 - delete in both
-        contentDao.delete(channelName);
+        cacheContentDao.delete(channelName);
     }
 
     @Override
     public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
         //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours, may need to span
-        return contentDao.getKeys(channelName, contentKey, count);
+        return cacheContentDao.getKeys(channelName, contentKey, count);
     }
 
     private class ContentServiceHook extends AbstractIdleService {
