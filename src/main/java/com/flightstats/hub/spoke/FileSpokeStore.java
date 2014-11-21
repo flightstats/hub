@@ -5,14 +5,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -96,11 +94,11 @@ public class FileSpokeStore {
 
     // note: this should only operate on a file path not a url
     String parentOfPath(String path) {
-        // TODO bc 11/19/14: make this type specific
         int index = path.lastIndexOf('/');
         return path.substring(0, index);
     }
 
+    // subtract {storagePath} from spokeRootAndKey
     String keyPart(String spokeRootAndKey) {
         int index = spokeRootAndKey.indexOf(storagePath);
         if (index >= 0) return spokeRootAndKey.substring(storagePath.length());
@@ -171,14 +169,26 @@ public class FileSpokeStore {
     }
 
     Collection<String> keysInBucket(String path) {
-        logger.trace("path {}", path);
+        Collection<File> files;
         List<String> keys = new ArrayList<>();
-        try {
-            Collection<File> files = FileUtils.listFiles(new File(path), null, true);
+        logger.trace("path {}", path);
+        String resolution = SpokePathUtil.smallestTimeResolution(path);
+        // TODO bc 11/21/14: also handle millisecond
+        try{
+            if(resolution.equals("second")){
+                // filter all files in the minute folder that start with seconds
+                File dir = (new File(path)).getParentFile();
+                FileFilter fileFilter = new WildcardFileFilter(SpokePathUtil.second(path)+"*");
+                files = Arrays.asList(dir.listFiles(fileFilter));
+            }else {
+                files = FileUtils.listFiles(new File(path), null, true);
+            }
+    
             for (File file : files) {
                 String filePath = file.getPath();
                 logger.trace("filePath {}", filePath);
                 keys.add(spokeKeyFromFilePath(filePath));
+    
             }
         } catch (IllegalArgumentException e) {
             logger.info("path not found " + path + " " + e.getMessage());
