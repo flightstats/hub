@@ -1,7 +1,6 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.TimeUtil;
@@ -62,11 +61,6 @@ public class SpokeContentDao implements ContentDao {
             logger.warn("unable to get data: " + path, e);
             return null;
         }
-    }
-
-    @Override
-    public void initializeChannel(ChannelConfiguration configuration) {
-        //todo - gfm - 11/11/14 - do anything?
     }
 
     @Override

@@ -10,8 +10,6 @@ import java.util.Collection;
 
 public interface ContentService {
 
-    void createChannel(ChannelConfiguration configuration);
-
     ContentKey insert(ChannelConfiguration configuration, Content content);
 
     Optional<Content> getValue(String channelName, ContentKey key);

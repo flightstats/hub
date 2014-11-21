@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.TimeUtil;
@@ -16,8 +15,6 @@ public interface ContentDao {
     ContentKey write(String channelName, Content content);
 
     Content read(String channelName, ContentKey key);
-
-    void initializeChannel(ChannelConfiguration configuration);
 
     Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit);
 
