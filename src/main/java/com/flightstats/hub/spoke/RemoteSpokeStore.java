@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -79,6 +80,8 @@ public class RemoteSpokeStore {
                     byte[] entity = response.getEntity(byte[].class);
                     return SpokeMarshaller.toContent(entity, key);
                 }
+            } catch (JsonMappingException e) {
+                logger.info("JsonMappingException for " + path);
             } catch (Exception e) {
                 logger.warn("unable to get content " + path, e);
             }
