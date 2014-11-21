@@ -70,6 +70,11 @@ public class FileSpokeStoreTest {
         assertTrue(files.contains(path1));
         assertTrue(files.contains(path2));
         assertTrue(files.contains(path3));
+
+        // keysInBucket second query
+        files = spokeStore.keysInBucket(tempDir + "/testAdjacentPaths/2014/11/18/00/57/24");
+        assertEquals(5, files.size());
+
     }
 
     @Test
@@ -77,5 +82,6 @@ public class FileSpokeStoreTest {
         String key = spokeStore.spokeKeyFromFilePath(tempDir + "/test_0_7475501417648047/2014/11/19/18/15/43916UD7V4N");
         assertEquals("test_0_7475501417648047/2014/11/19/18/15/43/916/UD7V4N", key);
     }
+
 
 }
