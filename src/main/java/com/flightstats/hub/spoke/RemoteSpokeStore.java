@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -26,8 +27,7 @@ public class RemoteSpokeStore {
     @Inject
     public RemoteSpokeStore(SpokeCluster cluster) {
         this.cluster = cluster;
-        //todo - gfm - 11/13/14 - name this executorService
-        executorService = Executors.newCachedThreadPool();
+        executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
     private static Client create() {
