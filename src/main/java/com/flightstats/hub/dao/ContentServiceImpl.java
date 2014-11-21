@@ -76,13 +76,13 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
-        if (isOutsideCacheWindow(key.getTime())) {
-            return Optional.fromNullable(longTermContentDao.read(channelName, key));
+        if (isInsideCacheWindow(key.getTime())) {
+            return Optional.fromNullable(cacheContentDao.read(channelName, key));
         }
-        return Optional.fromNullable(cacheContentDao.read(channelName, key));
+        return Optional.fromNullable(longTermContentDao.read(channelName, key));
     }
 
-    private boolean isOutsideCacheWindow(DateTime dateTime) {
+    private boolean isInsideCacheWindow(DateTime dateTime) {
         return TimeUtil.now().minusMinutes(ttlMinutes).isBefore(dateTime);
     }
 
@@ -100,14 +100,13 @@ public class ContentServiceImpl implements ContentService {
             orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
         } else if (timeQuery.getLocation().equals(TimeQuery.Location.LONG_TERM)) {
             orderedKeys.addAll(longTermContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
-        } else if (isOutsideCacheWindow(timeQuery.getStartTime())) {
+        } else if (isInsideCacheWindow(timeQuery.getStartTime())) {
             //todo - gfm - 11/21/14 - is this distinction really needed?
             orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
         } else {
             //todo - gfm - 11/21/14 - merge both results
-
+            orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
         }
-
         return orderedKeys;
     }
 
