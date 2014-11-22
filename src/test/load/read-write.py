@@ -36,20 +36,18 @@ class WebsiteTasks(TaskSet):
 
         links = postResponse.json()
         self.client.get(links['_links']['self']['href'], name="get_payload")
-
         self.count += 1
 
-        # @task(1)
+    @task(1)
+    def day_query(self):
+        self.client.get(self.time_path("day"), name="time_day")
 
-    # def day_query(self):
-    #        self.client.get(self.time_path("day"), name="time_day")
-
-    @task(5)
+    @task(1)
     def hour_query(self):
         self.client.get(self.time_path("hour"), name="time_hour")
 
     @task(1)
-    def hour_query(self):
+    def hour_query_get_items(self):
         self.next("hour")
 
     @task(1)
@@ -57,12 +55,8 @@ class WebsiteTasks(TaskSet):
         self.client.get(self.time_path("minute"), name="time_minute")
 
     @task(1)
-    def minute_query(self):
+    def minute_query_get_items(self):
         self.next("minute")
-
-    # @task(10)
-    # def second_query(self):
-    # self.next("second")
 
     def time_path(self, unit="second"):
         return "/channel/" + self.channel + "/time/" + unit
@@ -71,7 +65,7 @@ class WebsiteTasks(TaskSet):
         path = self.time_path(time_unit)
         with self.client.get(path, catch_response=True, name="time_" + time_unit) as postResponse:
             if postResponse.status_code != 200:
-                postResponse.failure("Got wrong response on get: " + postResponse.status_code)
+                postResponse.failure("Got wrong response on get: " + str(postResponse.status_code))
         links = postResponse.json()
         uris = links['_links']['uris']
         if len(uris) > 0:
@@ -81,6 +75,8 @@ class WebsiteTasks(TaskSet):
 
     def payload_generator(self, size, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for x in range(size))
+
+        # add a test which puts in 10 items sequentially, then verfies that the items are still in the same order
 
 
 class WebsiteUser(HttpLocust):
