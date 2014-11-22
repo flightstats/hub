@@ -96,12 +96,8 @@ class WebsiteTasks(TaskSet):
             for uri in uris:
                 self.client.get(uri, name="get_payload")
 
-
     def payload_generator(self, size, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for x in range(size))
-
-        # add a test which puts in 10 items sequentially, then verfies that the items are still in the same order
-
 
 class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
