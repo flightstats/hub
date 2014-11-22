@@ -3,6 +3,7 @@
 import json
 import string
 import random
+import time
 
 from locust import HttpLocust, TaskSet, task, events
 
@@ -43,6 +44,7 @@ class WebsiteTasks(TaskSet):
 
     @task(10)
     def sequential(self):
+        start_time = time.time()
         posted_items = []
         query_items = []
         items = 10
@@ -55,12 +57,14 @@ class WebsiteTasks(TaskSet):
             query_items.extend(previous['_links']['uris'])
         query_items.extend(initial['_links']['uris'])
         query_slice = query_items[-items:]
+        total_time = int((time.time() - start_time) * 1000)
         if cmp(query_slice, posted_items) == 0:
-            events.request_success.fire(request_type="sequential", name="compare", response_time=0,
+            events.request_success.fire(request_type="sequential", name="compare", response_time=total_time,
                                         response_length=items)
         else:
             print "expected " + ", ".join(posted_items) + " found " + ", ".join(query_slice)
-            events.request_failure.fire(request_type="sequential", name="compare", response_time=0, exception=-1)
+            events.request_failure.fire(request_type="sequential", name="compare", response_time=total_time
+                                        , exception=-1)
 
     @task(1)
     def day_query(self):
