@@ -118,12 +118,14 @@ public class ContentServiceImpl implements ContentService {
                 @Override
                 public void run() {
                     orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+                    countDownLatch.countDown();
                 }
             });
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
                     orderedKeys.addAll(longTermContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+                    countDownLatch.countDown();
                 }
             });
             countDownLatch.await();
