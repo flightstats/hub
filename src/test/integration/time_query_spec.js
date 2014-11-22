@@ -23,6 +23,16 @@ var groupConfig = {
 describe(testName, function () {
     utils.createChannel(channelName);
 
+    it('queries before insertion', function (done) {
+        request.get({url : channelResource + '/time/minute', json : true},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                expect(body._links.uris.length).toBe(0);
+                done();
+            })
+    });
+
     for (var i = 0; i < 4; i++) {
         utils.addItem(channelResource);
     }
