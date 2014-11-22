@@ -4,7 +4,7 @@ import json
 import string
 import random
 
-from locust import HttpLocust, TaskSet, task
+from locust import HttpLocust, TaskSet, task, events
 
 # Usage:
 # locust -f read-write.py -H http://hub-v2.svc.dev
@@ -26,8 +26,7 @@ class WebsiteTasks(TaskSet):
                          headers={"Content-Type": "application/json"}
         )
 
-    @task(1000)
-    def write_read(self):
+    def write(self):
         payload = {"name": self.payload, "count": self.count}
         with self.client.post("/channel/" + self.channel, data=json.dumps(payload),
                               headers={"Content-Type": "application/json"}, catch_response=True) as postResponse:
@@ -35,8 +34,33 @@ class WebsiteTasks(TaskSet):
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
 
         links = postResponse.json()
-        self.client.get(links['_links']['self']['href'], name="get_payload")
         self.count += 1
+        return links['_links']['self']['href']
+
+    @task(1000)
+    def write_read(self):
+        self.client.get(self.write(), name="get_payload")
+
+    @task(10)
+    def sequential(self):
+        posted_items = []
+        query_items = []
+        items = 10
+        for x in range(0, items):
+            posted_items.append(self.write())
+        initial = (self.client.get(self.time_path("minute"), name="time_minute")).json()
+
+        if len(initial['_links']['uris']) < items:
+            previous = (self.client.get(initial['_links']['previous']['href'], name="time_minute")).json()
+            query_items.extend(previous['_links']['uris'])
+        query_items.extend(initial['_links']['uris'])
+        query_slice = query_items[-items:]
+        if cmp(query_slice, posted_items) == 0:
+            events.request_success.fire(request_type="sequential", name="compare", response_time=0,
+                                        response_length=items)
+        else:
+            print "expected " + ", ".join(posted_items) + " found " + ", ".join(query_slice)
+            events.request_failure.fire(request_type="sequential", name="compare", response_time=0, exception=-1)
 
     @task(1)
     def day_query(self):
