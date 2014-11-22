@@ -3,7 +3,6 @@ package com.flightstats.hub.dao.s3;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.TimeUtil;
@@ -108,10 +107,6 @@ public class S3ContentDao implements ContentDao {
             logger.warn("unable to read " + channelName + " " + key, e);
             return null;
         }
-    }
-
-    @Override
-    public void initializeChannel(ChannelConfiguration configuration) {
     }
 
     @Override
