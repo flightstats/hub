@@ -173,15 +173,19 @@ public class FileSpokeStore {
     Collection<String> keysInBucket(String path) {
         logger.trace("path {}", path);
         List<String> keys = new ArrayList<>();
+        File directory = new File(path);
+        if (!directory.exists()) {
+            return keys;
+        }
         try {
-            Collection<File> files = FileUtils.listFiles(new File(path), null, true);
+            Collection<File> files = FileUtils.listFiles(directory, null, true);
             for (File file : files) {
                 String filePath = file.getPath();
                 logger.trace("filePath {}", filePath);
                 keys.add(spokeKeyFromFilePath(filePath));
             }
-        } catch (IllegalArgumentException e) {
-            logger.info("path not found " + path + " " + e.getMessage());
+        } catch (Exception e) {
+            logger.info("error with " + path, e);
         }
         return keys;
     }

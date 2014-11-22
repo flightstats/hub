@@ -98,18 +98,25 @@ public class RemoteSpokeStore {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    ClientResponse response = client.resource("http://" + server + "/spoke/time/" + path)
-                            .get(ClientResponse.class);
-                    logger.trace("server {} path {} response {}", server, path, response);
-                    if (response.getStatus() == 200) {
-                        String keysString = response.getEntity(String.class);
-                        logger.trace("entity {}", keysString);
-                        String[] keys = keysString.split(",");
-                        for (String key : keys) {
-                            results.add(ContentKey.fromUrl(StringUtils.substringAfter(key, "/")).get());
+                    try {
+                        ClientResponse response = client.resource("http://" + server + "/spoke/time/" + path)
+                                .get(ClientResponse.class);
+                        logger.trace("server {} path {} response {}", server, path, response);
+                        if (response.getStatus() == 200) {
+                            String keysString = response.getEntity(String.class);
+                            if (StringUtils.isNotEmpty(keysString)) {
+                                logger.trace("entity '{}'", keysString);
+                                String[] keys = keysString.split(",");
+                                for (String key : keys) {
+                                    results.add(ContentKey.fromUrl(StringUtils.substringAfter(key, "/")).get());
+                                }
+                            }
                         }
+                    } catch (Exception e) {
+                        logger.warn("unable to handle " + server + " " + path, e);
+                    } finally {
+                        countDownLatch.countDown();
                     }
-                    countDownLatch.countDown();
                 }
             });
         }
