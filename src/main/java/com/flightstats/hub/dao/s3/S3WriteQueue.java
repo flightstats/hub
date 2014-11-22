@@ -53,5 +53,5 @@ public class S3WriteQueue {
         }
     }
 
-
+    //todo - gfm - 11/22/14 - this should wait for an empty queue during an ordered shutdown.
 }
