@@ -14,6 +14,7 @@ import com.flightstats.hub.dao.encryption.AuditChannelService;
 import com.flightstats.hub.dao.encryption.BasicChannelService;
 import com.flightstats.hub.dao.s3.S3Config;
 import com.flightstats.hub.dao.s3.S3ContentDao;
+import com.flightstats.hub.dao.s3.S3WriterManager;
 import com.flightstats.hub.group.DynamoGroupDao;
 import com.flightstats.hub.group.GroupCallback;
 import com.flightstats.hub.group.GroupCallbackImpl;
@@ -91,6 +92,7 @@ public class AwsModule extends AbstractModule {
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.LONG_TERM))
                 .to(S3ContentDao.class).asEagerSingleton();
+        bind(S3WriterManager.class).asEagerSingleton();
 
         bind(DynamoUtils.class).asEagerSingleton();
         bind(DynamoGroupDao.class).asEagerSingleton();
