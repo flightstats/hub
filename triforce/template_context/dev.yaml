@@ -36,6 +36,8 @@ conf/hub.properties :
       environment : "dev-east1.flightstats.com"
       endpoint : "s3-external-1.amazonaws.com"
       maxQueryItems : 1000
+      writeQueueSize : 2000
+      writeQueueThreads : 20
 
     audit :
       threads: 0

@@ -14,11 +14,11 @@ app.shutdown_delay_seconds={{ app['shutdown_delay_seconds']}}
 #how long should we wait for the app to shutdown?
 app.shutdown_wait_seconds={{ app['shutdown_wait_seconds']}}
 
-s3.content_backoff_wait= {{ s3['content_backoff_wait'] }}
-s3.content_backoff_times= {{ s3['content_backoff_times'] }}
 s3.environment={{ s3['environment'] }}
 s3.endpoint={{ s3['endpoint'] }}
 s3.maxQueryItems={{ s3.maxQueryItems }}
+s3.writeQueueSize={{ s3.writeQueueSize }}
+s3.writeQueueThreads={{ s3.writeQueueThreads }}
 
 audit.threads={{ audit['threads'] }}
 audit.queue={{ audit['queue'] }}
