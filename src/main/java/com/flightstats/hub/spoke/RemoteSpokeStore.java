@@ -2,6 +2,7 @@ package com.flightstats.hub.spoke;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.Trace;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -37,7 +38,7 @@ public class RemoteSpokeStore {
         return client;
     }
 
-    public boolean write(String path, byte[] payload) throws InterruptedException {
+    public boolean write(String path, byte[] payload, List<Trace> traces) throws InterruptedException {
         List<String> servers = cluster.getServers();
         int quorum = getQuorum(servers);
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
@@ -45,9 +46,11 @@ public class RemoteSpokeStore {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
+                    traces.add(new Trace(server));
                     try {
                         ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
                                 .put(ClientResponse.class, payload);
+                        traces.add(new Trace(response));
                         if (response.getStatus() == 201) {
                             countDownLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
@@ -55,6 +58,7 @@ public class RemoteSpokeStore {
                             logger.info("write failed: server {} path {} response {}", server, path, response);
                         }
                     } catch (Exception e) {
+                        traces.add(new Trace(server, e.getMessage()));
                         logger.warn("write failed: " + server + " " + path, e);
                     }
 
