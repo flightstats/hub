@@ -90,7 +90,8 @@ public class SingleChannelResource {
         if (data.length > maxPayloadSizeBytes) {
             return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
         }
-        Content content = Content.builder().withContentLanguage(contentLanguage)
+        Content content = Content.builder()
+                .withContentLanguage(contentLanguage)
                 .withContentType(contentType)
                 .withData(data)
                 .withUser(user)
@@ -108,6 +109,7 @@ public class SingleChannelResource {
             builder.entity(linkedResult);
             builder.location(payloadUri);
             ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
+            content.logTraces();
             return builder.build();
         } catch (Exception e) {
             String key = "";

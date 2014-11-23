@@ -3,12 +3,19 @@ package com.flightstats.hub.model;
 import com.google.common.base.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Getter
 @EqualsAndHashCode(of = {"data", "contentType", "contentLanguage", "user"})
 public class Content implements Serializable {
+    private final static Logger logger = LoggerFactory.getLogger(Content.class);
+
     private static final long serialVersionUID = 1L;
 
     private final Optional<String> contentType;
@@ -18,6 +25,7 @@ public class Content implements Serializable {
     private final Optional<String> user;
     private final boolean isNew;
     private Optional<ContentKey> contentKey = Optional.absent();
+    private List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
@@ -27,6 +35,7 @@ public class Content implements Serializable {
         millis = builder.millis;
         data = builder.data;
         user = builder.user;
+        traces.add(new Trace("Content.start"));
     }
 
     public static Builder builder() {
@@ -35,6 +44,22 @@ public class Content implements Serializable {
 
     public void setContentKey(ContentKey contentKey) {
         this.contentKey = Optional.of(contentKey);
+    }
+
+    public void logTraces() {
+        long processingTime = System.currentTimeMillis() - millis;
+        if (processingTime >= 1000) {
+            try {
+                traces.add(new Trace("logging"));
+                String output = "\n\t";
+                for (Trace trace : traces) {
+                    output += trace.toString() + "\n\t";
+                }
+                logger.info("slow processing of {} millis. trace: {}", processingTime, output);
+            } catch (Exception e) {
+                logger.warn("unable to log {} traces {}", contentKey, traces);
+            }
+        }
     }
 
     /**
