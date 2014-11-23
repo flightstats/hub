@@ -35,7 +35,7 @@ conf/hub.properties :
     s3 :
       environment : "dev-east1.flightstats.com"
       endpoint : "s3-external-1.amazonaws.com"
-      maxItems : 1000
+      maxQueryItems : 1000
 
     audit :
       threads: 0
