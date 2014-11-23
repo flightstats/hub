@@ -69,7 +69,7 @@ public class S3WriterManager {
             for (S3ChannelWriter writer : writers) {
                 writer.close();
             }
-            //todo - gfm - 11/22/14 - wait for S3WriteQueue to empty?
+            s3WriteQueue.close();
         }
     }
 }

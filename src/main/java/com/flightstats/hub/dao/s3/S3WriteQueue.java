@@ -18,7 +18,7 @@ public class S3WriteQueue {
     private final static Logger logger = LoggerFactory.getLogger(S3WriteQueue.class);
 
     private ExecutorService executorService;
-    private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(1000);
+    private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(2000);
 
     @Inject
     public S3WriteQueue(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
@@ -53,5 +53,11 @@ public class S3WriteQueue {
         }
     }
 
-    //todo - gfm - 11/22/14 - this should wait for an empty queue during an ordered shutdown.
+    public void close() {
+        try {
+            logger.info("awaited " + executorService.awaitTermination(1, TimeUnit.MINUTES));
+        } catch (InterruptedException e) {
+            logger.warn("unable to close", e);
+        }
+    }
 }
