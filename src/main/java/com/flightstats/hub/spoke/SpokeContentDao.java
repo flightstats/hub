@@ -32,15 +32,11 @@ public class SpokeContentDao implements ContentDao {
     @Override
     public ContentKey write(String channelName, Content content) {
         content.getTraces().add(new Trace("SpokeContentDao.start"));
-        if (content.isNewContent()) {
-            content.setContentKey(new ContentKey());
-        } else {
-            //todo - gfm - 10/31/14 - how should replication be handled?
-        }
         try {
-            ContentKey key = content.getContentKey().get();
-            String path = getPath(channelName, key);
             byte[] payload = SpokeMarshaller.toBytes(content);
+            ContentKey key = new ContentKey();
+            content.setContentKey(key);
+            String path = getPath(channelName, key);
             content.getTraces().add(new Trace("SpokeContentDao.marshalled"));
             if (!spokeStore.write(path, payload, content.getTraces())) {
                 logger.warn("failed to write to all for " + path);

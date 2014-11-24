@@ -219,7 +219,7 @@ public class ChannelContentResource {
                 .type(actualContentType)
                 .entity(content.getData())
                 .header(Headers.CREATION_DATE,
-                        dateTimeFormatter.print(new DateTime(content.getMillis())));
+                        dateTimeFormatter.print(new DateTime(key.getMillis())));
 
         ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
         ChannelLinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
