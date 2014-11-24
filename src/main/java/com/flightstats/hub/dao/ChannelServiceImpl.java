@@ -50,8 +50,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (content.isNewContent()) {
             replicationValidator.throwExceptionIfReplicating(channelName);
         }
-        ChannelConfiguration configuration = channelConfigurationDao.getChannelConfiguration(channelName);
-        return contentService.insert(configuration, content);
+        return contentService.insert(channelName, content);
     }
 
     @Override

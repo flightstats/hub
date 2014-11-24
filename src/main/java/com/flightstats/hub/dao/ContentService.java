@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.TimeQuery;
@@ -10,7 +9,7 @@ import java.util.Collection;
 
 public interface ContentService {
 
-    ContentKey insert(ChannelConfiguration configuration, Content content);
+    ContentKey insert(String channelName, Content content);
 
     Optional<Content> getValue(String channelName, ContentKey key);
 
