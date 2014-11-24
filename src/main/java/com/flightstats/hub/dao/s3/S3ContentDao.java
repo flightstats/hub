@@ -72,7 +72,6 @@ public class S3ContentDao implements ContentDao {
         if (content.getUser().isPresent()) {
             metadata.addUserMetadata("user", content.getUser().get());
         }
-        metadata.addUserMetadata("millis", String.valueOf(content.getMillis()));
         if (useEncrypted) {
             metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
         }
@@ -99,9 +98,8 @@ public class S3ContentDao implements ContentDao {
             if (userData.containsKey("user")) {
                 builder.withUser(userData.get("user"));
             }
-            Long millis = Long.valueOf(userData.get("millis"));
             builder.withContentKey(key);
-            builder.withData(bytes).withMillis(millis);
+            builder.withData(bytes);
             return builder.build();
         } catch (IOException e) {
             logger.warn("unable to read " + channelName + " " + key, e);
