@@ -42,7 +42,10 @@ function node_out {
 
 function deploy {
     # send salt-call (or ssh to salt master) to deploy
-	salt_output=$(ssh utility@saltmaster01.util.pdx.office "sudo salt '${SERVER}' triforce.deploy s3://triforce_builds/hubv2/${VERSION} ${ENV}")
+    # this command fails to deply to all servers ~50% of the time.
+	#salt_output=$(ssh utility@saltmaster01.util.pdx.office "sudo salt '${SERVER}' triforce.deploy s3://triforce_builds/hubv2/${VERSION} ${ENV}")
+	# this direct deploy option requires that jenkins have a ssh key setup as the utility user on each machine
+	salt_output=$(ssh utility@${SERVER} "sudo salt-call triforce.deploy s3://triforce_builds/hubv2/${VERSION} ${ENV}")
 	echo $salt_output
 	# if version in salt_output contains ${VER_NUM}, we're good. if not, exit and give jenkins all the return data
 	if [[ $salt_output == *"$VER_NUM"* ]]
