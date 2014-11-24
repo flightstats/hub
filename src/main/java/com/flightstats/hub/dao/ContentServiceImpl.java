@@ -1,7 +1,6 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.TimeQuery;
@@ -64,10 +63,9 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public ContentKey insert(ChannelConfiguration configuration, Content content) {
+    public ContentKey insert(String channelName, Content content) {
         try {
             inFlight.incrementAndGet();
-            String channelName = configuration.getName();
             logger.trace("inserting {} bytes into channel {} ", content.getData().length, channelName);
             return cacheContentDao.write(channelName, content);
         } finally {
@@ -118,12 +116,14 @@ public class ContentServiceImpl implements ContentService {
                 @Override
                 public void run() {
                     orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+                    countDownLatch.countDown();
                 }
             });
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
                     orderedKeys.addAll(longTermContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+                    countDownLatch.countDown();
                 }
             });
             countDownLatch.await();
