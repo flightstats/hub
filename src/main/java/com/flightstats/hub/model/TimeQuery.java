@@ -14,7 +14,14 @@ public class TimeQuery {
     private final String channelName;
     private final DateTime startTime;
     private final TimeUtil.Unit unit;
-    private Location location = Location.ALL;
+    private final Location location;
+
+    public Location getLocation() {
+        if (location == null) {
+            return Location.ALL;
+        }
+        return location;
+    }
 
     public enum Location {
         ALL,
