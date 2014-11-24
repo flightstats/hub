@@ -51,6 +51,7 @@ public class SpokePathUtil {
 //        return timePart(pathPart, millisecondPattern);
 //    }
 
+
     static public String smallestTimeResolution(String pathPart){
         String result;
 //        if(millisecond(pathPart)>-1) return "millisecond";
@@ -65,10 +66,16 @@ public class SpokePathUtil {
 
     static public String secondPathPart(String p){
         // return path up to and including the second part
-        String secPath = SpokePathUtil.year(p)+"/"+ SpokePathUtil.month(p)+"/"+ SpokePathUtil.day(p)+"/"+ SpokePathUtil.hour(p)+
-                "/"+ SpokePathUtil.minute(p)+"/"+ SpokePathUtil.second(p);
+        String secPath = hourPathPart(p) + "/"+ SpokePathUtil.minute(p)+"/"+ SpokePathUtil.second(p);
         int i = p.lastIndexOf(secPath);
         return p.substring(0,i + secPath.length());
     }
 
+    static public String hourPathPart(String p){
+        // return path up to and including the hour part
+        String hourPath = SpokePathUtil.year(p)+"/"+ SpokePathUtil.month(p)+"/"+ SpokePathUtil.day(p)+"/"+
+                SpokePathUtil.hour(p);
+        int i = p.lastIndexOf(hourPath);
+        return p.substring(0,i + hourPath.length());
+    }
 }
