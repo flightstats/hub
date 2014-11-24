@@ -2,6 +2,7 @@ package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
@@ -118,11 +119,8 @@ public class FileSpokeStore {
 
         int i = 0;
         // TODO bc 11/13/14: handle the case where the requested item is outside of cache ttl
-        for (; i < files.length; i++) {
-            if (files[i].getAbsolutePath().equals(spokePath)) {
-                break;
-            }
-        }
+
+        i = Arrays.binarySearch(files, new File(spokePath));
         // TODO bc 11/13/14: Make sure we handle the case where there is no next or prev
         // TODO bc 11/14/14: Put these in lambdas that we pass in - when the tech supports it
         String nextPath;
@@ -194,6 +192,45 @@ public class FileSpokeStore {
             logger.info("path not found " + path + " " + e.getMessage());
         }
         return keys;
+    }
+
+    Collection<String> adjacentNKeys(String path, int count, boolean next){
+        //0: Start with the next item - this will skip to the next hour bucket if need be.
+        path = nextPath(path);
+
+        //1: collect all items in current hour adjacent to path
+        //  if these >= count, return keys
+        String[] adjacentKeys;
+        String hourPath = SpokePathUtil.hourPathPart(path);
+        Collection<String> hourKeys = keysInBucket(hourPath);
+        String[] hourKeyArray = (String []) hourKeys.toArray();
+        Arrays.sort(hourKeyArray);
+        int i = Arrays.binarySearch(hourKeyArray, new File(path));
+        if(next){
+            int nextCompliment = hourKeyArray.length - i;
+            int to = nextCompliment < count ? i + count: hourKeyArray.length - 1 ;
+            adjacentKeys = Arrays.copyOfRange(hourKeyArray,i,to);
+        }else{
+            int from = i < count ? 0 : i - count ;
+            adjacentKeys = Arrays.copyOfRange(hourKeyArray,from,i);
+        }
+        Collection<String> result = Arrays.asList((String[]) adjacentKeys);
+        if (adjacentKeys.length == count)  //terminal
+                return result;
+
+        //todo 2: else iterate on adjacent hours until we have enough
+        // recurse
+        result.addAll(adjacentNKeys(Iterables.getLast(result, null), count - result.size(),
+                next));
+        return result;
+    }
+
+    public Collection<String> nextNKeys(String path, int count){
+        return adjacentNKeys(path, count, true);
+    }
+
+    public Collection<String> previousNKeys(String path, int count){
+        return adjacentNKeys(path, count, false);
     }
 
     //    public byte[] readNextItem(String path){
