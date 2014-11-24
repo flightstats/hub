@@ -20,7 +20,6 @@ public class Content implements Serializable {
 
     private final Optional<String> contentType;
     private final Optional<String> contentLanguage;
-    private final long millis;
     private final byte[] data;
     private final Optional<String> user;
     private final boolean isNew;
@@ -32,7 +31,6 @@ public class Content implements Serializable {
         isNew = !getContentKey().isPresent();
         contentLanguage = builder.contentLanguage;
         contentType = builder.contentType;
-        millis = builder.millis;
         data = builder.data;
         user = builder.user;
         traces.add(new Trace("Content.start"));
@@ -47,7 +45,7 @@ public class Content implements Serializable {
     }
 
     public void logTraces() {
-        long processingTime = System.currentTimeMillis() - millis;
+        long processingTime = System.currentTimeMillis() - contentKey.get().getMillis();
         if (processingTime >= 1000) {
             try {
                 traces.add(new Trace("logging"));
@@ -72,7 +70,6 @@ public class Content implements Serializable {
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private Optional<String> contentLanguage = Optional.absent();
-        private long millis = System.currentTimeMillis();
         private Optional<ContentKey> contentKey = Optional.absent();
         private byte[] data;
         private Optional<String> user = Optional.absent();
@@ -89,11 +86,6 @@ public class Content implements Serializable {
 
         public Builder withContentLanguage(String contentLanguage) {
             this.contentLanguage = Optional.fromNullable(contentLanguage);
-            return this;
-        }
-
-        public Builder withMillis(long millis) {
-            this.millis = millis;
             return this;
         }
 
