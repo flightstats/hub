@@ -46,7 +46,7 @@ public class Content implements Serializable {
 
     public void logTraces() {
         long processingTime = System.currentTimeMillis() - contentKey.get().getMillis();
-        if (processingTime >= 1000) {
+        if (processingTime >= 250) {
             try {
                 traces.add(new Trace("logging"));
                 String output = "\n\t";
