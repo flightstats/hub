@@ -1,7 +1,7 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.Trace;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +22,7 @@ import static spark.SparkBase.setPort;
 public class RemoteSpokeStoreTest {
 
     private static final byte[] PAYLOAD = "data".getBytes();
-    private ArrayList<Trace> traces;
+    private Content content;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -32,7 +31,7 @@ public class RemoteSpokeStoreTest {
 
     @Before
     public void setUp() throws Exception {
-        traces = new ArrayList<>();
+        content = Content.builder().withContentKey(new ContentKey()).build();
     }
 
     @Test
@@ -46,7 +45,7 @@ public class RemoteSpokeStoreTest {
             return "created";
         });
         RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
-        assertTrue(spokeStore.write("A/B", PAYLOAD, traces));
+        assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(latch.await(1, TimeUnit.SECONDS));
     }
 
@@ -61,7 +60,7 @@ public class RemoteSpokeStoreTest {
             return "created";
         });
         RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
-        assertTrue(spokeStore.write("A/B", PAYLOAD, traces));
+        assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(latch.await(1, TimeUnit.SECONDS));
     }
 
@@ -76,7 +75,7 @@ public class RemoteSpokeStoreTest {
             return "created";
         });
         RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
-        assertTrue(spokeStore.write("A/B", PAYLOAD, traces));
+        assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(latch.await(1, TimeUnit.SECONDS));
     }
 
@@ -97,7 +96,7 @@ public class RemoteSpokeStoreTest {
             return "fail";
         });
         RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
-        assertTrue(spokeStore.write("A/B", PAYLOAD, traces));
+        assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(success.await(1, TimeUnit.SECONDS));
         assertTrue(fail.await(1, TimeUnit.SECONDS));
     }
@@ -113,7 +112,7 @@ public class RemoteSpokeStoreTest {
             return "created";
         });
         RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
-        assertTrue(spokeStore.write("A/B", PAYLOAD, traces));
+        assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(success.await(1, TimeUnit.SECONDS));
     }
 
@@ -140,7 +139,7 @@ public class RemoteSpokeStoreTest {
             return "created";
         });
         RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
-        assertTrue(spokeStore.write("A/B", PAYLOAD, traces));
+        assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(one.await(1, TimeUnit.SECONDS));
         assertTrue(two.await(1, TimeUnit.SECONDS));
         assertTrue(three.await(1, TimeUnit.SECONDS));
