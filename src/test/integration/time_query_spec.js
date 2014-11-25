@@ -46,13 +46,11 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var items = body._links.uris;
-                console.log('previous', body._links.previous);
                 request.get({url : body._links.previous.href, json : true},
                     function (err, response, body) {
                         expect(err).toBeNull();
                         expect(response.statusCode).toBe(200);
                         items = items.concat(body._links.uris);
-                        console.log('items2', items);
                         expect(items.length).toBe(4);
                         done();
                     });

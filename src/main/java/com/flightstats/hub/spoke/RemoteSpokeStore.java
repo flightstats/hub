@@ -1,6 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.Trace;
 import com.google.common.collect.Sets;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings({"Convert2streamapi", "Convert2Lambda"})
 public class RemoteSpokeStore {
@@ -38,27 +40,32 @@ public class RemoteSpokeStore {
         return client;
     }
 
-    public boolean write(String path, byte[] payload, List<Trace> traces) throws InterruptedException {
+    public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
         List<String> servers = cluster.getServers();
         int quorum = getQuorum(servers);
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
+        AtomicBoolean reported = new AtomicBoolean();
         for (final String server : servers) {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    traces.add(new Trace(server));
+                    content.getTraces().add(new Trace(server));
                     try {
                         ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
                                 .put(ClientResponse.class, payload);
-                        traces.add(new Trace(response));
+                        long complete = System.currentTimeMillis();
+                        content.getTraces().add(new Trace(response));
                         if (response.getStatus() == 201) {
+                            if (reported.compareAndSet(false, true)) {
+                                SpokeUnorderedWindow.report(content.getContentKey().get(), complete);
+                            }
                             countDownLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
                         } else {
                             logger.info("write failed: server {} path {} response {}", server, path, response);
                         }
                     } catch (Exception e) {
-                        traces.add(new Trace(server, e.getMessage()));
+                        content.getTraces().add(new Trace(server, e.getMessage()));
                         logger.warn("write failed: " + server + " " + path, e);
                     }
 
