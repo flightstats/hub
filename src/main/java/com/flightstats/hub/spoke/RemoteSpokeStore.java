@@ -1,6 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.Trace;
@@ -25,11 +26,13 @@ public class RemoteSpokeStore {
     private final static Client client = create();
 
     private final SpokeCluster cluster;
+    private final HostedGraphiteSender sender;
     private final ExecutorService executorService;
 
     @Inject
-    public RemoteSpokeStore(SpokeCluster cluster) {
+    public RemoteSpokeStore(SpokeCluster cluster, HostedGraphiteSender sender) {
         this.cluster = cluster;
+        this.sender = sender;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
@@ -57,7 +60,7 @@ public class RemoteSpokeStore {
                         content.getTraces().add(new Trace(response));
                         if (response.getStatus() == 201) {
                             if (reported.compareAndSet(false, true)) {
-                                SpokeUnorderedWindow.report(content.getContentKey().get(), complete);
+                                sender.send("heisenberg", complete - content.getContentKey().get().getMillis());
                             }
                             countDownLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
