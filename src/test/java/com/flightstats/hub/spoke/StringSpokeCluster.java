@@ -24,4 +24,9 @@ public class StringSpokeCluster implements SpokeCluster {
         Collections.shuffle(random);
         return random;
     }
+
+    @Override
+    public List<String> getOtherServers() {
+        return getServers();
+    }
 }

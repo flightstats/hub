@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings({"Convert2streamapi", "Convert2Lambda"})
 public class RemoteSpokeStore {
@@ -26,12 +25,14 @@ public class RemoteSpokeStore {
     private final static Client client = create();
 
     private final SpokeCluster cluster;
+    private final FileSpokeStore localSpokeStore;
     private final HostedGraphiteSender sender;
     private final ExecutorService executorService;
 
     @Inject
-    public RemoteSpokeStore(SpokeCluster cluster, HostedGraphiteSender sender) {
+    public RemoteSpokeStore(SpokeCluster cluster, FileSpokeStore localSpokeStore, HostedGraphiteSender sender) {
         this.cluster = cluster;
+        this.localSpokeStore = localSpokeStore;
         this.sender = sender;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
@@ -44,10 +45,15 @@ public class RemoteSpokeStore {
     }
 
     public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
-        List<String> servers = cluster.getServers();
-        int quorum = getQuorum(servers);
+        localSpokeStore.write(path, payload);
+        long complete = System.currentTimeMillis();
+        sender.send("heisenberg", complete - content.getContentKey().get().getMillis());
+        content.getTraces().add(new Trace("wrote to localSpokeStore"));
+
+        List<String> servers = cluster.getOtherServers();
+        if (servers.size() == 0) return true;
+        int quorum = servers.size() - 1;
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
-        AtomicBoolean reported = new AtomicBoolean();
         for (final String server : servers) {
             executorService.submit(new Runnable() {
                 @Override
@@ -56,12 +62,8 @@ public class RemoteSpokeStore {
                     try {
                         ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
                                 .put(ClientResponse.class, payload);
-                        long complete = System.currentTimeMillis();
                         content.getTraces().add(new Trace(response));
                         if (response.getStatus() == 201) {
-                            if (reported.compareAndSet(false, true)) {
-                                sender.send("heisenberg", complete - content.getContentKey().get().getMillis());
-                            }
                             countDownLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
                         } else {
@@ -77,10 +79,6 @@ public class RemoteSpokeStore {
         }
         //todo - gfm - 11/13/14 - this could be smarter with waiting.  should we return success if one succeeds?
         return countDownLatch.await(30, TimeUnit.SECONDS);
-    }
-
-    private int getQuorum(List<String> servers) {
-        return Math.max(1, servers.size() - 1);
     }
 
     public com.flightstats.hub.model.Content read(String path, ContentKey key) {
@@ -200,28 +198,7 @@ public class RemoteSpokeStore {
     }
 
     public boolean delete(String path) throws Exception {
-        //todo - gfm - 11/19/14 - do we actually care about deleting in the short term cache?
-        //todo - gfm - 11/13/14 - this could be merged with some of the write code
-        List<String> servers = cluster.getServers();
-        int quorum = getQuorum(servers);
-        CountDownLatch countDownLatch = new CountDownLatch(quorum);
-        for (final String server : servers) {
-            //todo - gfm - 11/13/14 - we need to upgrade to Jersey 2.x for lambdas
-            //noinspection Convert2Lambda
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
-                            .delete(ClientResponse.class);
-                    if (response.getStatus() < 400) {
-                        countDownLatch.countDown();
-                    }
-                    logger.trace("server {} path {} response {}", server, path, response);
-                }
-            });
-        }
-
-        //todo - gfm - 11/13/14 - this should be smarter with waiting.  should we return success if one succeeds?
-        return countDownLatch.await(60, TimeUnit.SECONDS);
+        //todo - gfm - 11/25/14 - //do nothing, let data fall off the TTL window?
+        return true;
     }
 }

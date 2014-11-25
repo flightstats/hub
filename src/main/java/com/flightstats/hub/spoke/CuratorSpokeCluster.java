@@ -23,20 +23,21 @@ public class CuratorSpokeCluster implements SpokeCluster {
     public static final String CLUSTER_PATH = "/SpokeCluster";
     private final static Logger logger = LoggerFactory.getLogger(CuratorSpokeCluster.class);
     private final CuratorFramework curator;
-    private final int port;
     private final PathChildrenCache clusterCache;
+    private final String host;
 
     @Inject
     public CuratorSpokeCluster(CuratorFramework curator, @Named("http.bind_port") int port) throws Exception {
         this.curator = curator;
-        this.port = port;
-        //todo - gfm - 11/18/14 - should spoke run on different port from the Hub, that starts first?
+        this.host = InetAddress.getLocalHost().getHostName() + ":" + port;
         clusterCache = new PathChildrenCache(curator, CLUSTER_PATH, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
         clusterCache.getListenable().addListener(new PathChildrenCacheListener() {
             @Override
             public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
                 logger.info("event {}", event);
+                logger.info("servers {}", getServers());
+                logger.info("others {}", getOtherServers());
             }
         });
         HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
@@ -44,8 +45,8 @@ public class CuratorSpokeCluster implements SpokeCluster {
 
     public void register() {
         try {
-            logger.info("adding host {}", getHost());
-            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), getHost().getBytes());
+            logger.info("adding host {}", host);
+            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), host.getBytes());
         } catch (Exception e) {
             logger.error("unable to register, should die", e);
             throw new RuntimeException(e);
@@ -53,11 +54,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
     }
 
     private String getFullPath() throws UnknownHostException {
-        return CLUSTER_PATH + "/" + getHost();
-    }
-
-    private String getHost() throws UnknownHostException {
-        return InetAddress.getLocalHost().getHostName() + ":" + port;
+        return CLUSTER_PATH + "/" + host;
     }
 
     @Override
@@ -68,6 +65,12 @@ public class CuratorSpokeCluster implements SpokeCluster {
         for (ChildData childData : currentData) {
             servers.add(new String(childData.getData()));
         }
+        return servers;
+    }
+
+    public List<String> getOtherServers() {
+        List<String> servers = getServers();
+        servers.remove(host);
         return servers;
     }
 
@@ -86,7 +89,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
 
         @Override
         protected void shutDown() throws Exception {
-            logger.info("removing host from cluster " + getHost());
+            logger.info("removing host from cluster " + host);
             curator.delete().forPath(getFullPath());
         }
     }

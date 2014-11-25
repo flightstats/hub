@@ -3,21 +3,9 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.util.TimeUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
-import java.util.Collection;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static spark.Spark.get;
-import static spark.Spark.put;
 import static spark.SparkBase.setPort;
 
 public class RemoteSpokeStoreTest {
@@ -37,12 +25,12 @@ public class RemoteSpokeStoreTest {
         sender = new HostedGraphiteSender(false, "", 0, "");
     }
 
-    @Test
+    /*@Test
     public void testWriteOneServer() throws Exception {
         String name = "testWriteOneServer";
         SpokeCluster cluster = new StringSpokeCluster("localhost:4567/" + name);
         CountDownLatch latch = new CountDownLatch(1);
-        put("/" + name + "/spoke/payload/*", (req, res) -> {
+        put("/" + name + "/spoke/payload*//*", (req, res) -> {
             res.status(201);
             latch.countDown();
             return "created";
@@ -57,7 +45,7 @@ public class RemoteSpokeStoreTest {
         String name = "testWriteTwoServers";
         SpokeCluster cluster = new StringSpokeCluster(StringUtils.repeat("localhost:4567/" + name, ",", 2));
         CountDownLatch latch = new CountDownLatch(2);
-        put("/" + name + "/spoke/payload/*", (req, res) -> {
+        put("/" + name + "/spoke/payload*//*", (req, res) -> {
             res.status(201);
             latch.countDown();
             return "created";
@@ -72,7 +60,7 @@ public class RemoteSpokeStoreTest {
         String name = "testWriteThreeServers";
         SpokeCluster cluster = new StringSpokeCluster(StringUtils.repeat("localhost:4567/" + name, ",", 3));
         CountDownLatch latch = new CountDownLatch(3);
-        put("/" + name + "/spoke/payload/*", (req, res) -> {
+        put("/" + name + "/spoke/payload*//*", (req, res) -> {
             res.status(201);
             latch.countDown();
             return "created";
@@ -88,12 +76,12 @@ public class RemoteSpokeStoreTest {
         SpokeCluster cluster = new StringSpokeCluster("localhost:4567/" + name + ",localhost:4567/500,localhost:4567/" + name);
         CountDownLatch success = new CountDownLatch(2);
         CountDownLatch fail = new CountDownLatch(1);
-        put("/" + name + "/spoke/payload/*", (req, res) -> {
+        put("/" + name + "/spoke/payload*//*", (req, res) -> {
             res.status(201);
             success.countDown();
             return "created";
         });
-        put("/500/spoke/payload/*", (req, res) -> {
+        put("/500/spoke/payload*//*", (req, res) -> {
             res.status(500);
             fail.countDown();
             return "fail";
@@ -109,7 +97,7 @@ public class RemoteSpokeStoreTest {
         String name = "testWriteThreeServersOneMissing";
         SpokeCluster cluster = new StringSpokeCluster("localhost:4567/" + name + ",localhost:9876/missing,localhost:4567/" + name);
         CountDownLatch success = new CountDownLatch(2);
-        put("/" + name + "/spoke/payload/*", (req, res) -> {
+        put("/" + name + "/spoke/payload*//*", (req, res) -> {
             res.status(201);
             success.countDown();
             return "created";
@@ -126,17 +114,17 @@ public class RemoteSpokeStoreTest {
         CountDownLatch one = new CountDownLatch(1);
         CountDownLatch two = new CountDownLatch(1);
         CountDownLatch three = new CountDownLatch(1);
-        put("/serverOne/spoke/payload/*", (req, res) -> {
+        put("/serverOne/spoke/payload*//*", (req, res) -> {
             res.status(201);
             one.countDown();
             return "created";
         });
-        put("/serverTwo/spoke/payload/*", (req, res) -> {
+        put("/serverTwo/spoke/payload*//*", (req, res) -> {
             res.status(201);
             two.countDown();
             return "created";
         });
-        put("/serverThree/spoke/payload/*", (req, res) -> {
+        put("/serverThree/spoke/payload*//*", (req, res) -> {
             res.status(201);
             three.countDown();
             return "created";
@@ -159,15 +147,15 @@ public class RemoteSpokeStoreTest {
 
         String allThree = one + "," + two + "," + three;
         String just2 = one + "," + two;
-        get("/serverOne/spoke/time/*", (req, res) -> {
+        get("/serverOne/spoke/time*//*", (req, res) -> {
             res.status(200);
             return allThree;
         });
-        get("/serverTwo/spoke/time/*", (req, res) -> {
+        get("/serverTwo/spoke/time*//*", (req, res) -> {
             res.status(200);
             return allThree;
         });
-        get("/serverThree/spoke/time/*", (req, res) -> {
+        get("/serverThree/spoke/time*//*", (req, res) -> {
             res.status(200);
             return just2;
         });
@@ -175,7 +163,7 @@ public class RemoteSpokeStoreTest {
 
         Collection<ContentKey> keys = spokeStore.readTimeBucket(channel, TimeUtil.hours(now));
         assertEquals(3, keys.size());
-    }
+    }*/
 
    /*
     todo - gfm - 11/19/14 - get this working too

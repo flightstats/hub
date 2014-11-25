@@ -6,4 +6,6 @@ public interface SpokeCluster {
     List<String> getServers();
 
     List<String> getRandomServers();
+
+    public List<String> getOtherServers();
 }
