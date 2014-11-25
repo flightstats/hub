@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.Trace;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -30,19 +31,20 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public ContentKey write(String channelName, Content content) {
-        if (content.isNewContent()) {
-            content.setContentKey(new ContentKey());
-        } else {
-            //todo - gfm - 10/31/14 - how should replication be handled?
-        }
+        content.getTraces().add(new Trace("SpokeContentDao.start"));
         try {
-            ContentKey key = content.getContentKey().get();
+            byte[] payload = SpokeMarshaller.toBytes(content);
+            ContentKey key = new ContentKey();
+            content.setContentKey(key);
             String path = getPath(channelName, key);
-            if (!spokeStore.write(path, SpokeMarshaller.toBytes(content))) {
+            content.getTraces().add(new Trace("SpokeContentDao.marshalled"));
+            if (!spokeStore.write(path, payload, content.getTraces())) {
                 logger.warn("failed to write to all for " + path);
             }
+            content.getTraces().add(new Trace("SpokeContentDao.end"));
             return key;
         } catch (Exception e) {
+            content.getTraces().add(new Trace("SpokeContentDao", "error", e.getMessage()));
             logger.warn("what's up?", e);
             return null;
         }

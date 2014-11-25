@@ -122,7 +122,6 @@ public class S3ContentDaoTest {
         assertEquals(content.getContentLanguage(), read.getContentLanguage());
         assertEquals(content.getContentType(), read.getContentType());
         assertEquals(content.getUser(), read.getUser());
-        assertEquals(content.getMillis(), read.getMillis());
         assertArrayEquals(content.getData(), read.getData());
         assertEquals(content, read);
     }
