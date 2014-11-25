@@ -29,7 +29,7 @@ public class S3WriterManager {
         this.cacheContentDao = cacheContentDao;
         this.s3WriteQueue = s3WriteQueue;
         this.curator = curator;
-        HubServices.register(new S3WriterManagerService(), HubServices.TYPE.POST_START);
+        HubServices.register(new S3WriterManagerService(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
     }
 
     public void run() {
@@ -69,6 +69,7 @@ public class S3WriterManager {
             for (S3ChannelWriter writer : writers) {
                 writer.close();
             }
+            s3WriteQueue.close();
         }
     }
 }

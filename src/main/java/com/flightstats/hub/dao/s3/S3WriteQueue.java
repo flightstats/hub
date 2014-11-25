@@ -6,6 +6,7 @@ import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,17 +14,20 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.*;
 
 @SuppressWarnings("Convert2Lambda")
+@Singleton
 public class S3WriteQueue {
 
     private final static Logger logger = LoggerFactory.getLogger(S3WriteQueue.class);
 
     private ExecutorService executorService;
-    private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(1000);
+    private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(2000);
 
     @Inject
     public S3WriteQueue(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
-                        @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao) throws InterruptedException {
-        int threads = 20;
+                        @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
+                        @Named("s3.writeQueueSize") int queueSize,
+                        @Named("s3.writeQueueThreads") int threads) throws InterruptedException {
+        keys = new LinkedBlockingQueue<>(queueSize);
         executorService = Executors.newFixedThreadPool(threads);
         for (int i = 0; i < threads; i++) {
             executorService.submit(new Callable<Object>() {
@@ -53,5 +57,11 @@ public class S3WriteQueue {
         }
     }
 
-
+    public void close() {
+        try {
+            logger.info("awaited " + executorService.awaitTermination(1, TimeUnit.MINUTES));
+        } catch (InterruptedException e) {
+            logger.warn("unable to close", e);
+        }
+    }
 }
