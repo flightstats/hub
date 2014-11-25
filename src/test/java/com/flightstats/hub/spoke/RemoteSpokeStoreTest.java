@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.TimeUtil;
@@ -23,6 +24,7 @@ public class RemoteSpokeStoreTest {
 
     private static final byte[] PAYLOAD = "data".getBytes();
     private Content content;
+    private HostedGraphiteSender sender;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -32,6 +34,7 @@ public class RemoteSpokeStoreTest {
     @Before
     public void setUp() throws Exception {
         content = Content.builder().withContentKey(new ContentKey()).build();
+        sender = new HostedGraphiteSender(false, "", 0, "");
     }
 
     @Test
@@ -44,7 +47,7 @@ public class RemoteSpokeStoreTest {
             latch.countDown();
             return "created";
         });
-        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
+        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster, sender);
         assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(latch.await(1, TimeUnit.SECONDS));
     }
@@ -59,7 +62,7 @@ public class RemoteSpokeStoreTest {
             latch.countDown();
             return "created";
         });
-        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
+        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster, sender);
         assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(latch.await(1, TimeUnit.SECONDS));
     }
@@ -74,7 +77,7 @@ public class RemoteSpokeStoreTest {
             latch.countDown();
             return "created";
         });
-        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
+        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster, sender);
         assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(latch.await(1, TimeUnit.SECONDS));
     }
@@ -95,7 +98,7 @@ public class RemoteSpokeStoreTest {
             fail.countDown();
             return "fail";
         });
-        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
+        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster, sender);
         assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(success.await(1, TimeUnit.SECONDS));
         assertTrue(fail.await(1, TimeUnit.SECONDS));
@@ -111,7 +114,7 @@ public class RemoteSpokeStoreTest {
             success.countDown();
             return "created";
         });
-        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
+        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster, sender);
         assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(success.await(1, TimeUnit.SECONDS));
     }
@@ -138,7 +141,7 @@ public class RemoteSpokeStoreTest {
             three.countDown();
             return "created";
         });
-        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
+        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster, sender);
         assertTrue(spokeStore.write("A/B", PAYLOAD, content));
         assertTrue(one.await(1, TimeUnit.SECONDS));
         assertTrue(two.await(1, TimeUnit.SECONDS));
@@ -168,7 +171,7 @@ public class RemoteSpokeStoreTest {
             res.status(200);
             return just2;
         });
-        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
+        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster, sender);
 
         Collection<ContentKey> keys = spokeStore.readTimeBucket(channel, TimeUtil.hours(now));
         assertEquals(3, keys.size());
@@ -196,7 +199,7 @@ public class RemoteSpokeStoreTest {
             res.status(200);
             return three;
         });
-        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster);
+        RemoteSpokeStore spokeStore = new RemoteSpokeStore(cluster, sender);
         String key = spokeStore.readNext(one);
         assertEquals(two, key);
     }*/
