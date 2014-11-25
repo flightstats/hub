@@ -41,7 +41,9 @@ describe(testName, function () {
     //todo - gfm - 11/5/14 - tests for next/previous
     //todo - gfm - 11/19/14 - test for ordering
 
-    it('gets items from channel second', function (done) {
+    /*
+     this should merge together results from previoous second(s)
+     it('gets items from channel second', function (done) {
         request.get({url : channelResource + '/time/second', json : true},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -49,7 +51,7 @@ describe(testName, function () {
                 expect(body._links.uris.length).toBe(4);
                 done();
             })
-    });
+     });*/
 
     it('gets items from channel minute', function (done) {
         request.get({url : channelResource + '/time/minute', json : true },
