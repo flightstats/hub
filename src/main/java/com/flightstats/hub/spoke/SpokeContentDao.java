@@ -38,7 +38,7 @@ public class SpokeContentDao implements ContentDao {
             content.setContentKey(key);
             String path = getPath(channelName, key);
             content.getTraces().add(new Trace("SpokeContentDao.marshalled"));
-            if (!spokeStore.write(path, payload, content.getTraces())) {
+            if (!spokeStore.write(path, payload, content)) {
                 logger.warn("failed to write to all for " + path);
             }
             content.getTraces().add(new Trace("SpokeContentDao.end"));
