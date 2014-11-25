@@ -11,7 +11,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -84,12 +87,7 @@ public class FileSpokeStore {
     // example: "test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5"
     @VisibleForTesting
     File spokeFilePathPart(String urlPathPart) {
-        //todo - gfm - 11/19/14 - this is confusing
-        String[] split = urlPathPart.split("/");
-        // remove any blanks from split
-        List<String> list = new ArrayList<String>(Arrays.asList(split));
-        list.removeAll(Arrays.asList(""));
-        split = list.toArray(new String[0]);
+        String[] split = StringUtils.split(urlPathPart, "/");
         if (split.length < 9)
             return new File(storagePath + urlPathPart);
         return new File(storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
@@ -109,16 +107,13 @@ public class FileSpokeStore {
     // nextPath( "2014/10/10/22/15/hash1") might return "2014/10/10/22/15/hash2" i.e. the next file.
     String adjacentPath(String path, boolean findNext) {
         File file = spokeFilePathPart(path);
-//        String spokePath =
         String parentPath = file.getParent();
         File parentFolder = new File(parentPath).getAbsoluteFile();
-        File[] files = parentFolder.listFiles((FilenameFilter) null);
+        File[] files = parentFolder.listFiles();
+        // TODO bc 11/13/14: handle the case where the requested item is outside of cache ttl
         Arrays.sort(files);
 
-        int i = 0;
-        // TODO bc 11/13/14: handle the case where the requested item is outside of cache ttl
-
-        i = Arrays.binarySearch(files, file);
+        int i = Arrays.binarySearch(files, file);
         // TODO bc 11/13/14: Make sure we handle the case where there is no next or prev
         // TODO bc 11/14/14: Put these in lambdas that we pass in - when the tech supports it
         String nextPath;
@@ -154,7 +149,7 @@ public class FileSpokeStore {
 
     String nthFileInFolder(String path, int index) {
         File file = spokeFilePathPart(path);
-        File[] files = file.listFiles((FilenameFilter) null);
+        File[] files = file.listFiles();
         if (index < 0) index = files.length - 1;  // mystery meaning for negative index
         if (files.length < index) {
             return null;
@@ -180,7 +175,7 @@ public class FileSpokeStore {
             return keys;
         }
         try{
-            Collection<File> files = FileUtils.listFiles(directory, null, true);
+            Collection<File> files;
             if(resolution.equals("second")){
                 // filter all files in the minute folder that start with seconds
                 FileFilter fileFilter = new WildcardFileFilter(SpokePathUtil.second(path)+"*");
@@ -241,16 +236,5 @@ public class FileSpokeStore {
         return adjacentNKeys(path, count, false);
     }
 
-    //    public byte[] readNextItem(String path){
-//        Path p = Paths.get(spokeFilePathPart(path));
-//        Path parent = p.getParent();
-//        File parentFolder = new File(parent.toString());
-//        String file = p.getFileName().toString();
-//        // TODO bc 11/17/14: finish implementation
-//        File[] files = parentFolder.listFiles((FileFilter) FileFileFilter.FILE);
-//        // find file in listing
-//        String nextPath = "";
-//        return read(nextPath);
-//    }
 
 }
