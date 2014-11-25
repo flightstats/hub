@@ -3,8 +3,9 @@
 import json
 import string
 import random
+import time
 
-from locust import HttpLocust, TaskSet, task
+from locust import HttpLocust, TaskSet, task, events
 
 # Usage:
 # locust -f read-write.py -H http://hub-v2.svc.dev
@@ -26,8 +27,7 @@ class WebsiteTasks(TaskSet):
                          headers={"Content-Type": "application/json"}
         )
 
-    @task(1000)
-    def write_read(self):
+    def write(self):
         payload = {"name": self.payload, "count": self.count}
         with self.client.post("/channel/" + self.channel, data=json.dumps(payload),
                               headers={"Content-Type": "application/json"}, catch_response=True) as postResponse:
@@ -35,21 +35,47 @@ class WebsiteTasks(TaskSet):
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
 
         links = postResponse.json()
-        self.client.get(links['_links']['self']['href'], name="get_payload")
-
         self.count += 1
+        return links['_links']['self']['href']
 
-        # @task(1)
+    @task(1000)
+    def write_read(self):
+        self.client.get(self.write(), name="get_payload")
 
-    # def day_query(self):
-    #        self.client.get(self.time_path("day"), name="time_day")
+    @task(10)
+    def sequential(self):
+        start_time = time.time()
+        posted_items = []
+        query_items = []
+        items = 10
+        for x in range(0, items):
+            posted_items.append(self.write())
+        initial = (self.client.get(self.time_path("minute"), name="time_minute")).json()
 
-    @task(5)
+        if len(initial['_links']['uris']) < items:
+            previous = (self.client.get(initial['_links']['previous']['href'], name="time_minute")).json()
+            query_items.extend(previous['_links']['uris'])
+        query_items.extend(initial['_links']['uris'])
+        query_slice = query_items[-items:]
+        total_time = int((time.time() - start_time) * 1000)
+        if cmp(query_slice, posted_items) == 0:
+            events.request_success.fire(request_type="sequential", name="compare", response_time=total_time,
+                                        response_length=items)
+        else:
+            print "expected " + ", ".join(posted_items) + " found " + ", ".join(query_slice)
+            events.request_failure.fire(request_type="sequential", name="compare", response_time=total_time
+                                        , exception=-1)
+
+    @task(1)
+    def day_query(self):
+        self.client.get(self.time_path("day"), name="time_day")
+
+    @task(1)
     def hour_query(self):
         self.client.get(self.time_path("hour"), name="time_hour")
 
     @task(1)
-    def hour_query(self):
+    def hour_query_get_items(self):
         self.next("hour")
 
     @task(1)
@@ -57,12 +83,8 @@ class WebsiteTasks(TaskSet):
         self.client.get(self.time_path("minute"), name="time_minute")
 
     @task(1)
-    def minute_query(self):
+    def minute_query_get_items(self):
         self.next("minute")
-
-    # @task(10)
-    # def second_query(self):
-    # self.next("second")
 
     def time_path(self, unit="second"):
         return "/channel/" + self.channel + "/time/" + unit
@@ -78,11 +100,8 @@ class WebsiteTasks(TaskSet):
             for uri in uris:
                 self.client.get(uri, name="get_payload")
 
-
     def payload_generator(self, size, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for x in range(size))
-
-        # add a test which puts in 10 items sequentially, then verfies that the items are still in the same order
 
 class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
