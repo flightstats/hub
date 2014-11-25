@@ -2,18 +2,13 @@ package com.flightstats.hub.dao.encryption;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
-import com.flightstats.hub.model.Audit;
-import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.model.exception.ConflictException;
 import com.flightstats.hub.model.exception.ForbiddenRequestException;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,8 +149,8 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
-        return channelService.queryByTime(channelName, startTime, unit);
+    public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
+        return channelService.queryByTime(timeQuery);
     }
 
     @Override

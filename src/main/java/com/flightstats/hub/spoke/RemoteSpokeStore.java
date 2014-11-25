@@ -1,7 +1,10 @@
 package com.flightstats.hub.spoke;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.Trace;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -25,8 +28,7 @@ public class RemoteSpokeStore {
     @Inject
     public RemoteSpokeStore(SpokeCluster cluster) {
         this.cluster = cluster;
-        //todo - gfm - 11/13/14 - name this executorService
-        executorService = Executors.newCachedThreadPool();
+        executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
     private static Client create() {
@@ -36,7 +38,7 @@ public class RemoteSpokeStore {
         return client;
     }
 
-    public boolean write(String path, byte[] payload) throws InterruptedException {
+    public boolean write(String path, byte[] payload, List<Trace> traces) throws InterruptedException {
         List<String> servers = cluster.getServers();
         int quorum = getQuorum(servers);
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
@@ -44,9 +46,11 @@ public class RemoteSpokeStore {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
+                    traces.add(new Trace(server));
                     try {
                         ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
                                 .put(ClientResponse.class, payload);
+                        traces.add(new Trace(response));
                         if (response.getStatus() == 201) {
                             countDownLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
@@ -54,6 +58,7 @@ public class RemoteSpokeStore {
                             logger.info("write failed: server {} path {} response {}", server, path, response);
                         }
                     } catch (Exception e) {
+                        traces.add(new Trace(server, e.getMessage()));
                         logger.warn("write failed: " + server + " " + path, e);
                     }
 
@@ -79,6 +84,8 @@ public class RemoteSpokeStore {
                     byte[] entity = response.getEntity(byte[].class);
                     return SpokeMarshaller.toContent(entity, key);
                 }
+            } catch (JsonMappingException e) {
+                logger.info("JsonMappingException for " + path);
             } catch (Exception e) {
                 logger.warn("unable to get content " + path, e);
             }
@@ -95,18 +102,25 @@ public class RemoteSpokeStore {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    ClientResponse response = client.resource("http://" + server + "/spoke/time/" + path)
-                            .get(ClientResponse.class);
-                    logger.trace("server {} path {} response {}", server, path, response);
-                    if (response.getStatus() == 200) {
-                        String keysString = response.getEntity(String.class);
-                        logger.trace("entity {}", keysString);
-                        String[] keys = keysString.split(",");
-                        for (String key : keys) {
-                            results.add(ContentKey.fromUrl(StringUtils.substringAfter(key, "/")).get());
+                    try {
+                        ClientResponse response = client.resource("http://" + server + "/spoke/time/" + path)
+                                .get(ClientResponse.class);
+                        logger.trace("server {} path {} response {}", server, path, response);
+                        if (response.getStatus() == 200) {
+                            String keysString = response.getEntity(String.class);
+                            if (StringUtils.isNotEmpty(keysString)) {
+                                logger.trace("entity '{}'", keysString);
+                                String[] keys = keysString.split(",");
+                                for (String key : keys) {
+                                    results.add(ContentKey.fromUrl(StringUtils.substringAfter(key, "/")).get());
+                                }
+                            }
                         }
+                    } catch (Exception e) {
+                        logger.warn("unable to handle " + server + " " + path, e);
+                    } finally {
+                        countDownLatch.countDown();
                     }
-                    countDownLatch.countDown();
                 }
             });
         }
