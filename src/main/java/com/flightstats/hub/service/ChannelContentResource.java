@@ -129,7 +129,7 @@ public class ChannelContentResource {
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
-                .unit(TimeUtil.Unit.DAYS);
+                .unit(TimeUtil.Unit.SECONDS);
         Collection<ContentKey> keys = channelService.queryByTime(builder.build());
         return getResponse(channelName, TimeUtil.seconds(startTime.minusSeconds(1)), TimeUtil.seconds(startTime.plusSeconds(1)), keys);
     }
