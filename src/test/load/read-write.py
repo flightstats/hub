@@ -71,7 +71,7 @@ class WebsiteTasks(TaskSet):
         path = self.time_path(time_unit)
         with self.client.get(path, catch_response=True, name="time_" + time_unit) as postResponse:
             if postResponse.status_code != 200:
-                postResponse.failure("Got wrong response on get: " + postResponse.status_code)
+                postResponse.failure("Got wrong response on get: " + str(postResponse.status_code))
         links = postResponse.json()
         uris = links['_links']['uris']
         if len(uris) > 0:
@@ -82,6 +82,7 @@ class WebsiteTasks(TaskSet):
     def payload_generator(self, size, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for x in range(size))
 
+        # add a test which puts in 10 items sequentially, then verfies that the items are still in the same order
 
 class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks

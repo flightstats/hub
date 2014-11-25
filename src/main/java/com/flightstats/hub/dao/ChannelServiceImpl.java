@@ -3,26 +3,18 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.replication.ReplicationValidator;
 import com.flightstats.hub.service.ChannelValidator;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
-/**
- *
- */
 public class ChannelServiceImpl implements ChannelService {
-
-    private final static Logger logger = LoggerFactory.getLogger(ChannelServiceImpl.class);
 
     private final ContentService contentService;
     private final ChannelConfigurationDao channelConfigurationDao;
@@ -50,7 +42,6 @@ public class ChannelServiceImpl implements ChannelService {
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
         channelValidator.validate(configuration, true);
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
-        contentService.createChannel(configuration);
         return channelConfigurationDao.createChannel(configuration);
     }
 
@@ -59,8 +50,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (content.isNewContent()) {
             replicationValidator.throwExceptionIfReplicating(channelName);
         }
-        ChannelConfiguration configuration = channelConfigurationDao.getChannelConfiguration(channelName);
-        return contentService.insert(configuration, content);
+        return contentService.insert(channelName, content);
     }
 
     @Override
@@ -114,8 +104,8 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
-        return contentService.queryByTime(channelName, startTime, unit);
+    public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
+        return contentService.queryByTime(timeQuery);
     }
 
     @Override

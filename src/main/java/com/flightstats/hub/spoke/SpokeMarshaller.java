@@ -19,13 +19,11 @@ public class SpokeMarshaller {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static byte[] toBytes(Content content) throws IOException {
-        ContentKey key = content.getContentKey().get();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ZipOutputStream zipOut = new ZipOutputStream(baos);
         zipOut.putNextEntry(new ZipEntry("meta"));
         ObjectNode objectNode = mapper.createObjectNode();
         //todo - gfm - 11/12/14 - make headers a map
-        objectNode.put("millis", key.getMillis());
         if (content.getUser().isPresent()) {
             objectNode.put("user", content.getUser().get());
         }
@@ -48,9 +46,7 @@ public class SpokeMarshaller {
         zipStream.getNextEntry();
         byte[] bytes = ByteStreams.toByteArray(zipStream);
         JsonNode jsonNode = mapper.readTree(bytes);
-        Content.Builder builder = Content.builder()
-                .withMillis(jsonNode.get("millis").asLong())
-                .withContentKey(key);
+        Content.Builder builder = Content.builder().withContentKey(key);
         if (jsonNode.has("contentLanguage")) {
             builder.withContentLanguage(jsonNode.get("contentLanguage").asText());
         }
