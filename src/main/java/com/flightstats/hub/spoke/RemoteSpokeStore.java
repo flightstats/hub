@@ -46,8 +46,7 @@ public class RemoteSpokeStore {
 
     public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
         localSpokeStore.write(path, payload);
-        long complete = System.currentTimeMillis();
-        sender.send("heisenberg", complete - content.getContentKey().get().getMillis());
+        sender.send("heisenberg", System.currentTimeMillis() - content.getContentKey().get().getMillis());
         content.getTraces().add(new Trace("wrote to localSpokeStore"));
 
         List<String> servers = cluster.getOtherServers();
@@ -78,7 +77,9 @@ public class RemoteSpokeStore {
             });
         }
         //todo - gfm - 11/13/14 - this could be smarter with waiting.  should we return success if one succeeds?
-        return countDownLatch.await(30, TimeUnit.SECONDS);
+        boolean awaited = countDownLatch.await(30, TimeUnit.SECONDS);
+        sender.send("consistent", System.currentTimeMillis() - content.getContentKey().get().getMillis());
+        return awaited;
     }
 
     public com.flightstats.hub.model.Content read(String path, ContentKey key) {
