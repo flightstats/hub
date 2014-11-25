@@ -14,6 +14,8 @@ public class SpokePathUtil {
     public static final Pattern hourPattern =   Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
     public static final Pattern minutePattern = Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
     public static final Pattern secondPattern = Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
+    public static final Pattern urlPattern =
+            Pattern.compile("(/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d)/(\\d\\d)/(\\d\\d\\d)/(.{6})");
     public static final Pattern secondPathPartPattern =
             Pattern.compile("(/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d)");
 //    public static final Pattern millisecondPattern = Pattern.compile
@@ -78,4 +80,18 @@ public class SpokePathUtil {
         int i = p.lastIndexOf(hourPath);
         return p.substring(0,i + hourPath.length());
     }
+
+//    static public File spokeFileFromUrl(String storagePath, String urlPathPart) {
+//        // can we clean this up using regex?
+//        Matcher m = urlPattern.matcher(urlPathPart);
+//        if(m.find()) {
+//            return m.group(1);
+//        }
+//
+//        String[] split = urlPathPart.split("/");
+//        if (split.length < 9)
+//            return new File(storagePath + urlPathPart);
+//        return new File(storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
+//                + "/" + split[5] + "/" + split[6] + split[7] + split[8]);
+//    }
 }

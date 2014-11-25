@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.Collection;
 
 import static org.junit.Assert.*;
@@ -33,11 +34,12 @@ public class FileSpokeStoreTest {
 
     @Test
     public void testPathTranslation() throws Exception {
-        String incoming = "test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5";
-        String output = spokeStore.spokeFilePathPart(incoming);
+        String incoming = "/test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5";
+        File outputFile = spokeStore.spokeFilePathPart(incoming);
         String filePath = "/test_0_4274725520517677/2014/11/18/00/57/24015NV2cl5";
-        assertEquals(tempDir + filePath, output);
-        String urlPart = spokeStore.spokeKeyFromFilePath(filePath);
+        String expectedPath = tempDir + filePath;
+        assertEquals(expectedPath, outputFile.getAbsolutePath());
+        String urlPart = spokeStore.spokeKeyFromFile(new File(filePath));
         assertEquals(incoming, urlPart);
     }
 
@@ -63,7 +65,7 @@ public class FileSpokeStoreTest {
         assertEquals(spokeStore.previousPath(path1), previousbucket1);
 
         // keysInBucket tests
-        Collection<String> files = spokeStore.keysInBucket(tempDir + "/testAdjacentPaths/2014/11/18/00/57");
+        Collection<String> files = spokeStore.keysInBucket(new File(tempDir + "/testAdjacentPaths/2014/11/18/00/57"));
         assertEquals(5, files.size());
 
         logger.info("files " + files);
@@ -72,18 +74,29 @@ public class FileSpokeStoreTest {
         assertTrue(files.contains(path3));
 
         // keysInBucket second query
-        files = spokeStore.keysInBucket(tempDir + "/testAdjacentPaths/2014/11/18/00/57/24");
+        files = spokeStore.keysInBucket(spokeStore.spokeFilePathPart(
+                "/testAdjacentPaths/2014/11/18/00/57/24"));
         assertEquals(5, files.size());
 
         // test adjacent
         files = spokeStore.nextNKeys(path1,2);
         assertEquals(2,files.size());
+        assertTrue(files.contains(path2));
+        assertTrue(files.contains(path3));
+
+//        String nexthour1 = "testAdjacentPaths/2014/11/19/00/57/24/016/1";
+//        spokeStore.write(nexthour1, BYTES);
+//        assertEquals(spokeStore.nextPath(nextbucket1), nexthour1);
+//
+//        files = spokeStore.nextNKeys(path1,4);
+//        assertEquals(4,files.size());
 
     }
 
     @Test
     public void testSpokeKeyFromFilePath() throws Exception {
-        String key = spokeStore.spokeKeyFromFilePath(tempDir + "/test_0_7475501417648047/2014/11/19/18/15/43916UD7V4N");
+        String key = spokeStore.spokeKeyFromFile(new File(tempDir +
+                "/test_0_7475501417648047/2014/11/19/18/15/43916UD7V4N"));
         assertEquals("test_0_7475501417648047/2014/11/19/18/15/43/916/UD7V4N", key);
     }
 

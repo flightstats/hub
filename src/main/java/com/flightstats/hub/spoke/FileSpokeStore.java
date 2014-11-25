@@ -37,7 +37,7 @@ public class FileSpokeStore {
     }
 
     public boolean write(String path, byte[] payload) {
-        File file = new File(spokeFilePathPart(path));
+        File file = spokeFilePathPart(path);
         logger.trace("writing {}", file);
         try {
             FileUtils.writeByteArrayToFile(file, payload);
@@ -49,7 +49,7 @@ public class FileSpokeStore {
     }
 
     public byte[] read(String path) {
-        File file = new File(spokeFilePathPart(path));
+        File file = spokeFilePathPart(path);
         logger.trace("reading {}", file);
         try {
             return FileUtils.readFileToByteArray(file);
@@ -83,20 +83,17 @@ public class FileSpokeStore {
     // given a url containing a key, return the file format
     // example: "test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5"
     @VisibleForTesting
-    String spokeFilePathPart(String urlPathPart) {
+    File spokeFilePathPart(String urlPathPart) {
         //todo - gfm - 11/19/14 - this is confusing
         String[] split = urlPathPart.split("/");
+        // remove any blanks from split
+        List<String> list = new ArrayList<String>(Arrays.asList(split));
+        list.removeAll(Arrays.asList(""));
+        split = list.toArray(new String[0]);
         if (split.length < 9)
-            return storagePath + urlPathPart;
-        return storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
-                + "/" + split[5] + "/" + split[6] + split[7] + split[8];
-    }
-
-
-    // note: this should only operate on a file path not a url
-    String parentOfPath(String path) {
-        int index = path.lastIndexOf('/');
-        return path.substring(0, index);
+            return new File(storagePath + urlPathPart);
+        return new File(storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
+                + "/" + split[5] + "/" + split[6] + split[7] + split[8]);
     }
 
     // subtract {storagePath} from spokeRootAndKey
@@ -111,8 +108,9 @@ public class FileSpokeStore {
     // or it might return "2014/10/11/01" if there was no next in the day 10 bucket.
     // nextPath( "2014/10/10/22/15/hash1") might return "2014/10/10/22/15/hash2" i.e. the next file.
     String adjacentPath(String path, boolean findNext) {
-        String spokePath = spokeFilePathPart(path);
-        String parentPath = parentOfPath(spokePath);
+        File file = spokeFilePathPart(path);
+//        String spokePath =
+        String parentPath = file.getParent();
         File parentFolder = new File(parentPath).getAbsoluteFile();
         File[] files = parentFolder.listFiles((FilenameFilter) null);
         Arrays.sort(files);
@@ -120,7 +118,7 @@ public class FileSpokeStore {
         int i = 0;
         // TODO bc 11/13/14: handle the case where the requested item is outside of cache ttl
 
-        i = Arrays.binarySearch(files, new File(spokePath));
+        i = Arrays.binarySearch(files, file);
         // TODO bc 11/13/14: Make sure we handle the case where there is no next or prev
         // TODO bc 11/14/14: Put these in lambdas that we pass in - when the tech supports it
         String nextPath;
@@ -139,16 +137,15 @@ public class FileSpokeStore {
                 nextPath = nthFileInFolder(adjacentParent, -1); //last file
             }
         }
-        return spokeKeyFromFilePath(nextPath);
+        return spokeKeyFromFile(new File(nextPath));
     }
 
-    //Given a filePath, return a key
-    String spokeKeyFromFilePath(String filePathPart) {
-        int lastSlash = filePathPart.lastIndexOf("/");
-        String fileName = filePathPart.substring(lastSlash + 1);
-        String folderPath = filePathPart.substring(1, lastSlash);
-        if (filePathPart.contains(storagePath))
-            folderPath = filePathPart.substring(storagePath.length(), lastSlash);
+    //Given a File, return a key
+    String spokeKeyFromFile(File file) {
+        String fileName = file.getName();
+        String folderPath = file.getParent();
+        if (file.getAbsolutePath().contains(storagePath))
+            folderPath = file.getAbsolutePath().substring(storagePath.length(), folderPath.length());
         String seconds = fileName.substring(0, 2);
         String milliseconds = fileName.substring(2, 5);
         String hash = fileName.substring(5);
@@ -156,7 +153,7 @@ public class FileSpokeStore {
     }
 
     String nthFileInFolder(String path, int index) {
-        File file = new File(spokeFilePathPart(path));
+        File file = spokeFilePathPart(path);
         File[] files = file.listFiles((FilenameFilter) null);
         if (index < 0) index = files.length - 1;  // mystery meaning for negative index
         if (files.length < index) {
@@ -166,30 +163,35 @@ public class FileSpokeStore {
         }
     }
 
-    Collection<String> keysInBucket(String path) {
-        Collection<File> files;
+    Collection<String> keysInBucket(File file) {
+        String path = file.getAbsolutePath();
         List<String> keys = new ArrayList<>();
         logger.trace("path {}", path);
         String resolution = SpokePathUtil.smallestTimeResolution(path);
         // TODO bc 11/21/14: also handle millisecond
-        File directory = new File(path);
+        File directory;
+        if(resolution.equals("second")){
+            directory = (new File(path)).getParentFile();
+        }else{
+            directory= new File(path);
+        }
+
         if (!directory.exists()) {
             return keys;
         }
         try{
+            Collection<File> files = FileUtils.listFiles(directory, null, true);
             if(resolution.equals("second")){
                 // filter all files in the minute folder that start with seconds
-                File dir = (new File(path)).getParentFile();
                 FileFilter fileFilter = new WildcardFileFilter(SpokePathUtil.second(path)+"*");
-                files = Arrays.asList(dir.listFiles(fileFilter));
+                files = Arrays.asList(directory.listFiles(fileFilter));
             }else {
                 files = FileUtils.listFiles(new File(path), null, true);
             }
-            Collection<File> files = FileUtils.listFiles(directory, null, true);
-            for (File file : files) {
-                String filePath = file.getPath();
+            for (File aFile : files) {
+                String filePath = aFile.getPath();
                 logger.trace("filePath {}", filePath);
-                keys.add(spokeKeyFromFilePath(filePath));
+                keys.add(spokeKeyFromFile(aFile));
             }
         } catch (Exception e) {
             logger.info("error with " + path, e);
@@ -204,19 +206,22 @@ public class FileSpokeStore {
         //1: collect all items in current hour adjacent to path
         //  if these >= count, return keys
         String[] adjacentKeys;
-        String hourPath = SpokePathUtil.hourPathPart(path);
-        Collection<String> hourKeys = keysInBucket(hourPath);
-        String[] hourKeyArray = (String []) hourKeys.toArray();
+        String hourPath = SpokePathUtil.hourPathPart(storagePath + path);
+        Collection<String> hourKeys = keysInBucket(new File(hourPath));
+        String[] hourKeyArray = new String[hourKeys.size()];
+        hourKeyArray = hourKeys.toArray(hourKeyArray);
         Arrays.sort(hourKeyArray);
-        int i = Arrays.binarySearch(hourKeyArray, new File(path));
+
+        int i = Arrays.binarySearch(hourKeyArray, path);
         if(next){
             int nextCompliment = hourKeyArray.length - i;
-            int to = nextCompliment < count ? i + count: hourKeyArray.length - 1 ;
+            int to = nextCompliment < count ? i + nextCompliment: hourKeyArray.length - 1 ;
             adjacentKeys = Arrays.copyOfRange(hourKeyArray,i,to);
         }else{
             int from = i < count ? 0 : i - count ;
             adjacentKeys = Arrays.copyOfRange(hourKeyArray,from,i);
         }
+        Arrays.sort(adjacentKeys);
         Collection<String> result = Arrays.asList((String[]) adjacentKeys);
         if (adjacentKeys.length == count)  //terminal
                 return result;
