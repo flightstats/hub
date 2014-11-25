@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.util.RuntimeInterruptedException;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.CancelLeadershipException;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
@@ -19,10 +20,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CuratorLeader {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorLeader.class);
-
+    private final CuratorFramework curator;
     private String leaderPath;
     private Leader leader;
-    private final CuratorFramework curator;
     private LeaderSelector leaderSelector;
     private AtomicBoolean hasLeadership = new AtomicBoolean(false);
 
@@ -46,6 +46,13 @@ public class CuratorLeader {
         }
     }
 
+    public void close() {
+        hasLeadership.set(false);
+        if (leaderSelector != null) {
+            leaderSelector.close();
+        }
+    }
+
     private class CuratorLeaderSelectionListener implements LeaderSelectorListener {
 
         public void takeLeadership(final CuratorFramework client) throws Exception {
@@ -53,10 +60,13 @@ public class CuratorLeader {
             try {
                 hasLeadership.set(true);
                 leader.takeLeadership(hasLeadership);
+            } catch (RuntimeInterruptedException e) {
+                logger.info("interrupted " + leaderPath + e.getMessage());
             } catch (Exception e) {
                 logger.warn("exception thrown from ElectedLeader " + leaderPath, e);
+            } finally {
+                logger.info("lost leadership " + leaderPath);
             }
-            logger.info("lost leadership " + leaderPath);
         }
 
         /**
@@ -68,13 +78,6 @@ public class CuratorLeader {
                 hasLeadership.set(false);
                 throw new CancelLeadershipException();
             }
-        }
-    }
-
-    public void close() {
-        hasLeadership.set(false);
-        if (leaderSelector != null) {
-            leaderSelector.close();
         }
     }
 

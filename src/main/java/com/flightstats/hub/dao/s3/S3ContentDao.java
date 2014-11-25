@@ -3,7 +3,6 @@ package com.flightstats.hub.dao.s3;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.TimeUtil;
@@ -29,17 +28,17 @@ public class S3ContentDao implements ContentDao {
 
     private final AmazonS3 s3Client;
     private final boolean useEncrypted;
-    private final int s3MaxItems;
+    private final int s3MaxQueryItems;
     private final String s3BucketName;
 
     @Inject
     public S3ContentDao(AmazonS3 s3Client,
                         @Named("app.encrypted") boolean useEncrypted,
                         S3BucketName s3BucketName,
-                        @Named("s3.maxItems") int s3MaxItems) {
+                        @Named("s3.maxQueryItems") int s3MaxQueryItems) {
         this.s3Client = s3Client;
         this.useEncrypted = useEncrypted;
-        this.s3MaxItems = s3MaxItems;
+        this.s3MaxQueryItems = s3MaxQueryItems;
         this.s3BucketName = s3BucketName.getS3BucketName();
     }
 
@@ -73,7 +72,6 @@ public class S3ContentDao implements ContentDao {
         if (content.getUser().isPresent()) {
             metadata.addUserMetadata("user", content.getUser().get());
         }
-        metadata.addUserMetadata("millis", String.valueOf(content.getMillis()));
         if (useEncrypted) {
             metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
         }
@@ -100,9 +98,8 @@ public class S3ContentDao implements ContentDao {
             if (userData.containsKey("user")) {
                 builder.withUser(userData.get("user"));
             }
-            Long millis = Long.valueOf(userData.get("millis"));
             builder.withContentKey(key);
-            builder.withData(bytes).withMillis(millis);
+            builder.withData(bytes);
             return builder.build();
         } catch (IOException e) {
             logger.warn("unable to read " + channelName + " " + key, e);
@@ -111,16 +108,12 @@ public class S3ContentDao implements ContentDao {
     }
 
     @Override
-    public void initializeChannel(ChannelConfiguration configuration) {
-    }
-
-    @Override
     public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
         String timePath = unit.format(startTime);
         ListObjectsRequest request = new ListObjectsRequest();
         request.withBucketName(s3BucketName);
         request.withPrefix(channelName + "/" + timePath);
-        request.withMaxKeys(s3MaxItems);
+        request.withMaxKeys(s3MaxQueryItems);
         List<ContentKey> keys = new ArrayList<>();
         ObjectListing listing = s3Client.listObjects(request);
         String marker = addKeys(channelName, listing, keys);
