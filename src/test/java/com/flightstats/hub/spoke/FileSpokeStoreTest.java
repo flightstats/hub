@@ -106,6 +106,10 @@ public class FileSpokeStoreTest {
         files = spokeStore.nextNKeys(path1File,4);
         assertEquals(4,files.size());
 
+        // previous test
+        files = spokeStore.previousNKeys(nexthour1File,3);
+        assertEquals(3,files.size());
+
     }
 
     @Test
