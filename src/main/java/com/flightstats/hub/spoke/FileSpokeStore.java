@@ -220,7 +220,9 @@ public class FileSpokeStore {
     // given the path to a file, return the adjacent n files (next or previous)
     Collection<File> adjacentNFiles(File path, int count, boolean next){
         //0: Start with the next item - this will skip to the next hour bucket if need be.
-        path = nextPath(path);
+
+        path = next ? nextPath(path) : previousPath(path);
+        if(path==null) return new ArrayList<>(0);
 
         //1: collect all items in current hour adjacent to path
         //  if these >= count, return keys
@@ -239,6 +241,7 @@ public class FileSpokeStore {
             adjacentFiles = Arrays.copyOfRange(hourFileArray,i,to);
         }else{
             int from = i < count ? 0 : i - count ;
+            i = from == i ? i + 1 : i;
             adjacentFiles = Arrays.copyOfRange(hourFileArray,from,i);
         }
         Arrays.sort(adjacentFiles);
@@ -249,10 +252,9 @@ public class FileSpokeStore {
         if (adjacentFiles.length == count)  //terminal
                 return result;
 
+        File nextPath = next ? Iterables.getLast(result, null) : Iterables.getFirst(result,null);
         // recurse until we have enough to satisfy the count
-        File nextPath = Iterables.getLast(result, null);
-        result.addAll(adjacentNFiles(nextPath, count - result.size(),
-                next));
+        result.addAll(adjacentNFiles(nextPath, count - result.size(), next));
         return result;
     }
 
