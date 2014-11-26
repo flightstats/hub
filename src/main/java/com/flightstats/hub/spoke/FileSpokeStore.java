@@ -116,16 +116,15 @@ public class FileSpokeStore {
     // or it might return "2014/10/11/01" if there was no next in the day 10 bucket.
     // nextPath( "2014/10/10/22/15/hash1") might return "2014/10/10/22/15/hash2" i.e. the next file.
     File adjacentPath(File file, boolean findNext) {
-//        File file = spokeFilePathPart(path);
         String parentPath = file.getParent();
         File parentFolder = new File(parentPath).getAbsoluteFile();
         File[] files = parentFolder.listFiles();  // immediate children
-        // TODO bc 11/13/14: handle the case where the requested item is outside of cache ttl
+        if(files==null || files.length ==0) return null;
+
         Arrays.sort(files);
 
         int i = Arrays.binarySearch(files, file);
         // TODO bc 11/13/14: Make sure we handle the case where there is no next or prev
-        // TODO bc 11/14/14: Put these in lambdas that we pass in - when the tech supports it
         File nextPath;
         if (findNext) {
             if (i + 1 < files.length) {
@@ -171,6 +170,8 @@ public class FileSpokeStore {
     // magic negative index gives us the last item in the directory
     File nthFileInFolder(File folder, int index) {
         File[] files = folder.listFiles();
+        if(files==null || files.length==0) return null;
+
         if (index < 0) index = files.length - 1;
         if (files.length < index) {
             return null;
@@ -187,7 +188,7 @@ public class FileSpokeStore {
     // we can use it to get the files we are interested in.
     Collection<File> filesInBucket(File file, String seconds) {
         String path = file.getAbsolutePath();
-        List<String> keys = new ArrayList<>();
+//        List<String> keys = new ArrayList<>();
         logger.trace("path {}", path);
         File directory = new File(path);
         Collection<File> files = new ArrayList<>();
@@ -209,7 +210,6 @@ public class FileSpokeStore {
             for (File aFile : files) {
                 String filePath = aFile.getPath();
                 logger.trace("filePath {}", filePath);
-                keys.add(spokeKeyFromFile(aFile));
             }
         } catch (Exception e) {
             logger.info("error with " + path, e);
