@@ -66,7 +66,7 @@ describe(testName, function () {
                     ],
                     function (err, results) {
                         console.log(channelTime.url + ' ' + results[0].length + ' ' + results[1].length);
-                        expect(results[0].length - results[1].length).toBe(0);
+                        expect(results[1].length).toBe(results[0].length);
                         callback(err);
                     });
 
