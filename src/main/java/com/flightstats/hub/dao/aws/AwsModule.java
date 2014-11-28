@@ -25,6 +25,7 @@ import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.service.HubHealthCheck;
 import com.flightstats.hub.service.HubHealthCheckImpl;
 import com.flightstats.hub.spoke.*;
+import com.flightstats.hub.time.TimeMonitor;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisherImpl;
 import com.google.inject.AbstractModule;
@@ -103,6 +104,7 @@ public class AwsModule extends AbstractModule {
 
         bind(HostedGraphiteSender.class).asEagerSingleton();
         bind(HubInstrumentedResourceMethodDispatchAdapter.class).toProvider(HubMethodTimingAdapterProvider.class).in(Singleton.class);
+        bind(TimeMonitor.class).asEagerSingleton();
     }
 
     @Inject
