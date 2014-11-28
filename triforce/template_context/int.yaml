@@ -17,7 +17,7 @@ conf/hub.properties :
 
     app :
         name : "hub-v2"
-        environment : "dev"
+        environment : "int"
         encrypted : false
         shutdown_delay_seconds : 15
         shutdown_wait_seconds : 60
@@ -48,10 +48,10 @@ conf/hub.properties :
         registerJvmMetrics : false
         host : "carbon.hostedgraphite.com"
         port : 2003
-        prefix : cb165ed6-4336-4cc6-91ff-cfe1d04cebd6.hubv2.dev
+        prefix : cb165ed6-4336-4cc6-91ff-cfe1d04cebd6.hubv2.int
 
     zookeeper :
-        connection : "hub-zk-01.cloud-east.dev:2181,hub-zk-02.cloud-east.dev:2181,hub-zk-03.cloud-east.dev:2181"
+        connection : "hub-zk-01.cloud-east.staging:2181,hub-zk-02.cloud-east.staging:2181,hub-zk-03.cloud-east.staging:2181"
 
     spoke :
         path : "/ebs/spoke"
@@ -60,23 +60,22 @@ conf/hub.properties :
 conf/hazelcast.conf.xml :
     _template : hazelcast.conf.xml.jinja
     cluster_hosts :
-        - "hub-v2-01.cloud-east.dev"
-        - "hub-v2-02.cloud-east.dev"
-        - "hub-v2-03.cloud-east.dev"
+        - "hub-v2-int-01.cloud-east.staging"
+        - "hub-v2-int-02.cloud-east.staging"
+        - "hub-v2-int-03.cloud-east.staging"
 
 bin/start.sh :
   _template : start.sh.jinja
   max_heap : "800m"
   min_heap : "256m"
   min_new : "100m"
-  environment : "dev"
+  environment : "int"
 
 bin/prestop.sh :
   _template : prestop.sh.jinja
 
 conf/logback.xml :
     _template : logback.xml.jinja
-
     verbosity : "DEBUG"
 
 lib/newrelic.yml :
