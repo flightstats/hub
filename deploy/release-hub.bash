@@ -27,7 +27,7 @@ case ${ENV} in
 	    DOM=".cloud-east.prod"
 	    PREFIX="hub-v2"
 	    ;;
-	integration)
+	int)
 	    DOM=".cloud-east.staging"
 	    PREFIX="hub-v2-int"
 	    ;;
