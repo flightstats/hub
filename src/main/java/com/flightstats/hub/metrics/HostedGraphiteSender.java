@@ -41,7 +41,7 @@ public class HostedGraphiteSender {
         HubServices.register(new HostedGraphiteSenderService());
     }
 
-    public void send(String name, long value) {
+    public void send(String name, Object value) {
         if (name.contains(".test")) {
             return;
         }
