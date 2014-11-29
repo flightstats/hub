@@ -148,7 +148,8 @@ public class ContentServiceImpl implements ContentService {
     private class ContentServiceHook extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
-            //todo - gfm - 11/14/14 - call init on both Daos?
+            cacheContentDao.initialize();
+            longTermContentDao.initialize();
         }
 
         @Override
