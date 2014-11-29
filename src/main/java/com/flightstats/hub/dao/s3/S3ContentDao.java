@@ -42,7 +42,7 @@ public class S3ContentDao implements ContentDao {
         this.s3BucketName = s3BucketName.getS3BucketName();
     }
 
-    void initialize() {
+    public void initialize() {
         logger.info("checking if bucket exists " + s3BucketName);
         if (s3Client.doesBucketExist(s3BucketName)) {
             logger.info("bucket exists " + s3BucketName);
