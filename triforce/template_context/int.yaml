@@ -33,7 +33,7 @@ conf/hub.properties :
         table_creation_wait_minutes : 10
 
     s3 :
-      environment : "dev-east1.flightstats.com"
+      environment : "int-east1.flightstats.com"
       endpoint : "s3-external-1.amazonaws.com"
       maxQueryItems : 1000
       writeQueueSize : 2000
