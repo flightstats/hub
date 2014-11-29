@@ -22,4 +22,5 @@ public interface ContentDao {
 
     void delete(String channelName);
 
+    void initialize();
 }
