@@ -89,6 +89,10 @@ public class SpokeContentDao implements ContentDao {
         } catch (Exception e) {
             logger.warn("unable to delete " + channelName, e);
         }
+    }
 
+    @Override
+    public void initialize() {
+        //do anything?
     }
 }
