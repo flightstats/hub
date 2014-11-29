@@ -15,10 +15,6 @@ case ${ENV} in
 	    DOM=".cloud-east.dev"
 	    PREFIX="hub-v2"
 	     ;;
-	encrypted-dev)
-	    DOM=".cloud-east.dev"
-	    PREFIX="encrypted-hub-v2"
-	     ;;
 	staging)
 	    DOM=".cloud-east.staging"
 	    PREFIX="hub-v2"
