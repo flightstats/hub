@@ -87,8 +87,17 @@ public class FileSpokeStore {
 
     public String readKeysInBucket(String path) {
         String seconds = SpokePathUtil.second(path);
-        Collection<File> keys = filesInBucket(spokeFilePathPart(path), seconds);
-        return StringUtils.join(keys, ",");
+        Collection<File> files = filesInBucket(spokeFilePathPart(path), seconds);
+        String keys = "";
+        int i = 0;
+        for (File file : files){
+            keys += spokeKeyFromFile(file);
+            if(i < files.size() - 1){
+                keys += ",";
+                i++;
+            }
+        }
+        return keys;
     }
 
     public boolean delete(String path) throws Exception {

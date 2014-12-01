@@ -77,6 +77,7 @@ public class FileSpokeStoreTest {
         assertEquals(spokeStore.nextPath(path3), nextMillisecond);
         assertEquals(spokeStore.previousPath(path1), previousMillisecond);
 
+
         // filesInBucket tests
         Collection<File> files = spokeStore.filesInBucket(new File(tempDir + "/testAdjacentPaths/2014/11/18/00/57"),
                 null);
@@ -91,6 +92,9 @@ public class FileSpokeStoreTest {
         files = spokeStore.filesInBucket(spokeStore.spokeFilePathPart(
                 "/testAdjacentPaths/2014/11/18/00/57/24"), "24");
         assertEquals(5, files.size());
+
+        String readKeys = spokeStore.readKeysInBucket("/testAdjacentPaths/2014/11/18/00/57/24");
+        assertEquals("testAdjacentPaths/2014/11/18/00/57/24/014/1,testAdjacentPaths/2014/11/18/00/57/24/015/1,testAdjacentPaths/2014/11/18/00/57/24/015/2,testAdjacentPaths/2014/11/18/00/57/24/015/3,testAdjacentPaths/2014/11/18/00/57/24/016/1", readKeys);
 
         // test adjacent
         files = spokeStore.nextNKeys(path1File,2);
@@ -107,7 +111,7 @@ public class FileSpokeStoreTest {
         assertEquals(4,files.size());
 
         // previous test
-        files = spokeStore.previousNKeys(nexthour1File,3);
+        files = spokeStore.previousNKeys(nexthour1File, 3);
         assertEquals(3,files.size());
 
     }
