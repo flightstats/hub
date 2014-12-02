@@ -4,9 +4,7 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by bcorliss on 11/20/14.
- */
+
 public class SpokePathUtil {
     public static final Pattern yearPattern =   Pattern.compile("/(20\\d\\d)");
     public static final Pattern monthPattern =  Pattern.compile("/20\\d\\d/(\\d\\d)");
@@ -14,14 +12,8 @@ public class SpokePathUtil {
     public static final Pattern hourPattern =   Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
     public static final Pattern minutePattern = Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
     public static final Pattern secondPattern = Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
-    public static final Pattern urlPattern =
-            Pattern.compile("(/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d)/(\\d\\d)/(\\d\\d\\d)/(.{6})");
-    public static final Pattern secondPathPartPattern =
-            Pattern.compile("(/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d)");
-//    public static final Pattern millisecondPattern = Pattern.compile
-//                                                                ("/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d[/]\\?" +
-//                                                                        "(\\d\\d\\d)");
-//bc: all of these patterns are anchored off of having a yyyy that starts with 20.
+
+    //bc: all of these patterns are anchored off of having a yyyy that starts with 20.
     // this code will need to be updated in 85 years.
 
     static public String timePart(String pathPart, Pattern pattern){
@@ -55,8 +47,6 @@ public class SpokePathUtil {
 
 
     static public String smallestTimeResolution(String pathPart){
-        String result;
-//        if(millisecond(pathPart)>-1) return "millisecond";
         if(second(pathPart)!=null) return "second";
         if(minute(pathPart)!=null) return "minute";
         if(hour(pathPart)!=null) return "hour";
@@ -81,17 +71,9 @@ public class SpokePathUtil {
         return p.substring(0,i + hourPath.length());
     }
 
-//    static public File spokeFileFromUrl(String storagePath, String urlPathPart) {
-//        // can we clean this up using regex?
-//        Matcher m = urlPattern.matcher(urlPathPart);
-//        if(m.find()) {
-//            return m.group(1);
-//        }
-//
-//        String[] split = urlPathPart.split("/");
-//        if (split.length < 9)
-//            return new File(storagePath + urlPathPart);
-//        return new File(storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
-//                + "/" + split[5] + "/" + split[6] + split[7] + split[8]);
-//    }
+    static public File hourPathFolder(File path){
+        String hourPath = hourPathPart(path.getAbsolutePath());
+        return new File(hourPath);
+    }
+
 }
