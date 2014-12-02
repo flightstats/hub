@@ -28,14 +28,11 @@ public class TimeMonitor {
     }
 
     static double parseClusterRange(List<String> lines) {
-        logger.trace("ntpq {}", lines);
         double maxPositive = 0;
         double maxNegative = 0;
         for (String line : lines) {
             if (line.contains("hub-v2")) {
-                logger.debug("ntp hub peer {}", line);
-                String[] split = StringUtils.split(line, " ");
-                double offset = Double.parseDouble(split[split.length - 2]);
+                double offset = parseLine(line);
                 if (offset > 0) {
                     maxPositive = Math.max(maxPositive, offset);
                 } else {
@@ -46,12 +43,26 @@ public class TimeMonitor {
         return maxNegative + maxPositive;
     }
 
+    static double parsePrimary(List<String> lines) {
+        for (String line : lines) {
+            if (line.startsWith("*")) {
+                return parseLine(line);
+            }
+        }
+        return 0;
+    }
+
+    private static double parseLine(String line) {
+        String[] split = StringUtils.split(line, " ");
+        return Double.parseDouble(split[split.length - 2]);
+    }
+
     private void run() {
         try {
             Process process = new ProcessBuilder("ntpq", "-p").start();
             List<String> lines = IOUtils.readLines(process.getInputStream());
-            double clusterRange = parseClusterRange(lines);
-            sender.send("clusterTimeDelta", clusterRange);
+            sender.send("clusterTimeDelta", parseClusterRange(lines));
+            sender.send("primaryTimeDelta", parsePrimary(lines));
         } catch (Exception e) {
             logger.info("unable to exec", e);
         }
