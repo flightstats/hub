@@ -37,6 +37,13 @@ describe(testName, function () {
         utils.addItem(channelResource);
     }
 
+    it('waits', function (done) {
+        setTimeout(function () {
+            done();
+        }, 500);
+    });
+
+
     //todo - gfm - 11/5/14 - tests for next/previous
     //todo - gfm - 11/19/14 - test for ordering
 
