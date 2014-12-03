@@ -20,7 +20,7 @@ describe(testName, function () {
     it('adds items and traverses next links', function (done) {
         var values = [];
         var items = [];
-        postItem(channelResource)
+        utils.postItemQ(channelResource)
             .then(function (value) {
                 values.push(value);
                 items.push(value.body._links.self.href);
@@ -34,11 +34,11 @@ describe(testName, function () {
             })
             .then(function (value) {
                 expect(value.body._links.uris.length).toBe(0);
-                return postItem(channelResource);
+                return utils.postItemQ(channelResource);
             })
             .then(function (value) {
                 items.push(value.body._links.self.href);
-                return postItem(channelResource);
+                return utils.postItemQ(channelResource);
             })
             .then(function (value) {
                 items.push(value.body._links.self.href);
@@ -56,19 +56,6 @@ describe(testName, function () {
                 done();
             })
     });
-
-    function postItem(url) {
-        var deferred = Q.defer();
-        request.post({url : url, json : true,
-                headers : {"Content-Type" : "application/json" },
-                body : JSON.stringify({ "data" : Date.now()})},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
-                deferred.resolve({response : response, body : body});
-            });
-        return deferred.promise;
-    }
 
     function getItem(url, status) {
         status = status || 200;

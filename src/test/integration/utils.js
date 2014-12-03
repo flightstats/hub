@@ -4,6 +4,7 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var request = require('request');
+var Q = require('q');
 
 function runInTestChannel(testName, channelName, functionToExecute) {
     testName = testName || '';
@@ -77,6 +78,21 @@ function postItem(url, responseCode, completed) {
             expect(response.statusCode).toBe(responseCode);
             completed();
         });
+}
+
+function postItemQ(url) {
+    var deferred = Q.defer();
+    request.post({
+            url : url, json : true,
+            headers : {"Content-Type" : "application/json"},
+            body : JSON.stringify({"data" : Date.now()})
+        },
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(201);
+            deferred.resolve({response : response, body : body});
+        });
+    return deferred.promise;
 }
 
 function putGroup(groupName, groupConfig, status) {
@@ -240,6 +256,7 @@ exports.putGroup = putGroup;
 exports.getGroup = getGroup;
 exports.deleteGroup = deleteGroup;
 exports.postItem = postItem;
+exports.postItemQ = postItemQ;
 exports.startServer = startServer;
 exports.startHttpsServer = startHttpsServer;
 exports.closeServer = closeServer;

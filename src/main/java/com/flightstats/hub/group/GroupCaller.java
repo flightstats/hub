@@ -6,13 +6,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.LongSet;
-import com.flightstats.hub.cluster.LongValue;
 import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.WaitStrategies;
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -26,15 +27,15 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
-import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@SuppressWarnings("Convert2Lambda")
 public class GroupCaller implements Leader {
     private final static Logger logger = LoggerFactory.getLogger(GroupCaller.class);
 
     private final CuratorFramework curator;
-    private final Provider<CallbackIterator> iteratorProvider;
+    private final Provider<CallbackQueue> queueProvider;
     private final GroupService groupService;
     private final MetricsTimer metricsTimer;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -43,33 +44,33 @@ public class GroupCaller implements Leader {
     private Group group;
     private CuratorLeader curatorLeader;
     private Client client;
-    private LongValue lastCompleted;
+    //private LongValue lastCompleted;
     private ExecutorService executorService;
     private Semaphore semaphore;
     private LongSet inProcess;
     private AtomicBoolean hasLeadership;
     private Retryer<ClientResponse> retryer;
-    private CallbackIterator iterator;
+    private CallbackQueue callbackQueue;
 
     @Inject
-    public GroupCaller(CuratorFramework curator, Provider<CallbackIterator> iteratorProvider,
+    public GroupCaller(CuratorFramework curator, Provider<CallbackQueue> queueProvider,
                        GroupService groupService, MetricsTimer metricsTimer) {
         this.curator = curator;
-        this.iteratorProvider = iteratorProvider;
+        this.queueProvider = queueProvider;
         this.groupService = groupService;
         this.metricsTimer = metricsTimer;
-        lastCompleted = new LongValue(curator);
+        //lastCompleted = new LongValue(curator);
     }
 
     public boolean tryLeadership(Group group) {
-        /*logger.debug("starting group: " + group);
+        logger.debug("starting group: " + group);
         this.group = group;
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(group.getParallelCalls());
-        lastCompleted.initialize(getValuePath(), getLastUpdated(group).getSequence());
+        //lastCompleted.initialize(getValuePath(), getLastUpdated(group).getSequence());
         inProcess = new LongSet(getInFlightPath(), curator);
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
-        curatorLeader.start();*/
+        curatorLeader.start();
         return true;
     }
 
@@ -81,7 +82,7 @@ public class GroupCaller implements Leader {
 
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
-        /*this.hasLeadership = hasLeadership;
+        this.hasLeadership = hasLeadership;
         retryer = buildRetryer();
         logger.info("taking leadership " + group);
         Optional<Group> foundGroup = groupService.getGroup(group.getName());
@@ -90,15 +91,21 @@ public class GroupCaller implements Leader {
             return;
         }
         this.client = GroupClient.createClient();
-        iterator = iteratorProvider.get();
+        callbackQueue = queueProvider.get();
         try {
-            long lastCompletedId = lastCompleted.get(getValuePath(), getLastUpdated(group).getSequence());
-            logger.debug("last completed at {} {}", lastCompletedId, group.getName());
+            //todo - gfm - 12/3/14 -
+            //long lastCompletedId = lastCompleted.get(getValuePath(), getLastUpdated(group).getSequence());
+            //logger.debug("last completed at {} {}", lastCompletedId, group.getName());
             if (hasLeadership.get()) {
-                sendInProcess(lastCompletedId);
-                iterator.start(lastCompletedId, group);
-                while (hasLeadership.get() && iterator.hasNext()) {
-                    send(iterator.next());
+                //todo - gfm - 12/3/14 -
+                //sendInProcess(lastCompletedId);
+                callbackQueue.start(group);
+                while (hasLeadership.get()) {
+                    Optional<ContentKey> nextOptional = callbackQueue.next();
+                    if (nextOptional.isPresent()) {
+                        send(nextOptional.get());
+                    }
+
                 }
             }
         } catch (RuntimeInterruptedException | InterruptedException e) {
@@ -109,10 +116,11 @@ public class GroupCaller implements Leader {
             if (deleteOnExit.get()) {
                 delete();
             }
-        }*/
+        }
     }
 
-    private long sendInProcess(long lastCompletedId) throws InterruptedException {
+    //todo - gfm - 12/3/14 -
+    /*private long sendInProcess(long lastCompletedId) throws InterruptedException {
         Set<Long> inProcessSet = inProcess.getSet();
         logger.trace("sending in process {} to {}", inProcessSet, group.getName());
         for (Long toSend : inProcessSet) {
@@ -124,21 +132,24 @@ public class GroupCaller implements Leader {
         }
         return lastCompletedId;
     }
-
-    private void send(final long next) throws InterruptedException {
-        logger.trace("sending {} to {}", next, group.getName());
+*/
+    private void send(ContentKey key) throws InterruptedException {
+        logger.trace("sending {} to {}", key, group.getName());
         semaphore.acquire();
         executorService.submit(new Callable<Object>() {
             @Override
             public Object call() throws Exception {
-                inProcess.add(next);
+                //todo - gfm - 12/3/14 -
+                //inProcess.add(next);
                 try {
-                    makeTimedCall(createResponse(next));
-                    lastCompleted.updateIncrease(next, getValuePath());
-                    inProcess.remove(next);
-                    logger.trace("completed {} call to {} ", next, group.getName());
+                    makeTimedCall(createResponse(key));
+                    //todo - gfm - 12/3/14 -
+                    //lastCompleted.updateIncrease(next, getValuePath());
+                    //todo - gfm - 12/3/14 -
+                    //inProcess.remove(next);
+                    logger.trace("completed {} call to {} ", key, group.getName());
                 } catch (Exception e) {
-                    logger.warn("exception sending " + next + " to " + group.getName(), e);
+                    logger.warn("exception sending " + key + " to " + group.getName(), e);
                 } finally {
                     semaphore.release();
                 }
@@ -147,11 +158,11 @@ public class GroupCaller implements Leader {
         });
     }
 
-    private ObjectNode createResponse(long next) {
+    private ObjectNode createResponse(ContentKey key) {
         ObjectNode response = mapper.createObjectNode();
         response.put("name", group.getName());
         ArrayNode uris = response.putArray("uris");
-        uris.add(group.getChannelUrl() + "/" + next);
+        uris.add(group.getChannelUrl() + "/" + key.toUrl());
         return response;
     }
 
@@ -204,11 +215,11 @@ public class GroupCaller implements Leader {
 
     private void closeIterator() {
         try {
-            if (iterator != null) {
-                iterator.close();
+            if (callbackQueue != null) {
+                callbackQueue.close();
             }
         } catch (Exception e) {
-            logger.warn("unable to close iterator", e);
+            logger.warn("unable to close callbackQueue", e);
         }
     }
 
@@ -225,13 +236,15 @@ public class GroupCaller implements Leader {
     }
 
     public long getLastCompleted() {
-        return lastCompleted.get(getValuePath(), 0);
+        //todo - gfm - 12/3/14 -
+//        return lastCompleted.get(getValuePath(), 0);
+        return 0;
     }
 
     private void delete() {
         logger.info("deleting " + group.getName());
         LongSet.delete(getInFlightPath(), curator);
-        lastCompleted.delete(getValuePath());
+        //lastCompleted.delete(getValuePath());
         logger.info("deleted " + group.getName());
     }
 
