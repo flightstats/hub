@@ -1,4 +1,4 @@
-require('./../integration/integration_config.js');
+require('./integration_config.js');
 
 var request = require('request');
 var http = require('http');
@@ -27,35 +27,48 @@ describe(testName, function () {
 
     utils.putGroup(groupName, groupConfig);
 
-    var items = [];
+    var callbackItems = [];
+    var postedItems = [];
     var server;
 
     it('runs callback server', function (done) {
         server = utils.startHttpsServer(port, function (string) {
-            items.push(string);
+            callbackItems.push(string);
         }, done);
 
     });
 
     it('posts items', function () {
-        runs(function () {
-            for (var i = 0; i < 4; i++) {
-                utils.postItem(channelResource);
-            }
-        });
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                return postedItem(value, true);
+            }).then(function (value) {
+                return postedItem(value, true);
+            }).then(function (value) {
+                return postedItem(value, true);
+            }).then(function (value) {
+                postedItem(value, false);
+            });
 
         waitsFor(function () {
-            return items.length == 4;
+            return callbackItems.length == 4;
         }, 12000);
 
+        function postedItem(value, post) {
+            postedItems.push(value.body._links.self.href);
+            if (post) {
+                return utils.postItemQ(channelResource);
+            }
+        }
     });
 
     it('closes server and verifies items', function () {
         server.close();
-        expect(items.length).toBe(4);
-        for (var i = 0; i < items.length; i++) {
-            var parse = JSON.parse(items[i]);
-            expect(parse.uris[0]).toBe(channelResource + '/100' + i);
+        expect(callbackItems.length).toBe(4);
+        expect(postedItems.length).toBe(4);
+        for (var i = 0; i < callbackItems.length; i++) {
+            var parse = JSON.parse(callbackItems[i]);
+            expect(parse.uris[0]).toBe(postedItems[i]);
             expect(parse.name).toBe(groupName);
         }
 
