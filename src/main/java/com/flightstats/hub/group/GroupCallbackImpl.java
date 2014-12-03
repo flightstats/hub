@@ -36,20 +36,6 @@ public class GroupCallbackImpl implements GroupCallback {
         HubServices.registerPreStop(new GroupCallbackService());
     }
 
-    private class GroupCallbackService extends AbstractIdleService {
-
-        @Override
-        protected void startUp() throws Exception {
-            start();
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-            stop(new HashSet<>(activeGroups.keySet()), false);
-        }
-
-    }
-
     private void start() {
         logger.info("starting");
         watchManager.register(new Watcher() {
@@ -103,6 +89,7 @@ public class GroupCallbackImpl implements GroupCallback {
     }
 
     private void startGroup(Group group) {
+        logger.trace("starting group {}", group);
         GroupCaller groupCaller = callerProvider.get();
         groupCaller.tryLeadership(group);
         activeGroups.put(group.getName(), groupCaller);
@@ -139,5 +126,19 @@ public class GroupCallbackImpl implements GroupCallback {
             return groupCaller.getLastCompleted();
         }
         return 0;
+    }
+
+    private class GroupCallbackService extends AbstractIdleService {
+
+        @Override
+        protected void startUp() throws Exception {
+            start();
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            stop(new HashSet<>(activeGroups.keySet()), false);
+        }
+
     }
 }

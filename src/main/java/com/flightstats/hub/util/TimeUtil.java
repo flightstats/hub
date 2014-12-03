@@ -16,6 +16,10 @@ public class TimeUtil {
         return new DateTime(DateTimeZone.UTC);
     }
 
+    public static DateTime stableOrdering() {
+        return now().minusSeconds(1).withMillisOfSecond(0);
+    }
+
     public static String secondsNow() {
         return seconds(now());
     }
