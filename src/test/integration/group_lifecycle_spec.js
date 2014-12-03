@@ -28,29 +28,48 @@ describe(testName, function () {
     utils.putGroup(groupName, groupConfig);
 
     it('runs callback server', function () {
-        var items = [];
+        var callbackItems = [];
+        var postedItems = [];
 
         utils.startServer(port, function (string) {
-            items.push(string);
+            callbackItems.push(string);
         });
 
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                return postedItem(value, true);
+            }).then(function (value) {
+                return postedItem(value, true);
+            }).then(function (value) {
+                return postedItem(value, true);
+            }).then(function (value) {
+                postedItem(value, false);
+            });
+
         runs(function () {
-            for (var i = 0; i < 4; i++) {
-                utils.postItem(channelResource);
-            }
+            //do nothing
         });
 
         waitsFor(function () {
-            return items.length == 4;
-        }, 5000);
+            return callbackItems.length == 4;
+        }, 9999);
 
         utils.closeServer(function () {
-            for (var i = 0; i < items.length; i++) {
-                var parse = JSON.parse(items[i]);
-                expect(parse.uris[0]).toBe(channelResource + '/100' + i);
+            expect(callbackItems.length).toBe(4);
+            expect(postedItems.length).toBe(4);
+            for (var i = 0; i < callbackItems.length; i++) {
+                var parse = JSON.parse(callbackItems[i]);
+                expect(parse.uris[0]).toBe(postedItems[i]);
                 expect(parse.name).toBe(groupName);
             }
         });
+
+        function postedItem(value, post) {
+            postedItems.push(value.body._links.self.href);
+            if (post) {
+                return utils.postItemQ(channelResource);
+            }
+        }
 
     });
 
