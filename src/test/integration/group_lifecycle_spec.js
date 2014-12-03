@@ -1,4 +1,4 @@
-require('./../integration/integration_config.js');
+require('./integration_config.js');
 
 var request = require('request');
 var http = require('http');
@@ -38,12 +38,11 @@ describe(testName, function () {
             for (var i = 0; i < 4; i++) {
                 utils.postItem(channelResource);
             }
-
         });
 
         waitsFor(function () {
             return items.length == 4;
-        }, 12000);
+        }, 5000);
 
         utils.closeServer(function () {
             for (var i = 0; i < items.length; i++) {
