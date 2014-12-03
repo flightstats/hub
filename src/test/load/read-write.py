@@ -86,6 +86,13 @@ class WebsiteTasks(TaskSet):
     def minute_query_get_items(self):
         self.next("minute")
 
+    @task(10)
+    def second_query(self):
+        results = self.client.get(self.time_path("second"), name="time_second").json()
+        items = 60
+        for x in range(0, items):
+            results = self.client.get(results['_links']['previous']['href'], name="time_second").json()
+
     def time_path(self, unit="second"):
         return "/channel/" + self.channel + "/time/" + unit
 
