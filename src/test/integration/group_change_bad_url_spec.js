@@ -26,6 +26,7 @@ describe(testName, function () {
     var portB = callbackPort + 6;
 
     var itemsB = [];
+    var postedItem;
     var badConfig = {
         callbackUrl : 'http://hub.svc.dev/austrianairlinesParser',
         channelUrl : channelResource
@@ -50,9 +51,10 @@ describe(testName, function () {
             itemsB.push(string);
         });
 
-        runs(function () {
-            utils.postItem(channelResource);
-        });
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                postedItem = value.body._links.self.href;
+            });
 
         waitsFor(function () {
             return itemsB.length == 1;
@@ -61,8 +63,8 @@ describe(testName, function () {
     });
 
     utils.closeServer(function () {
-        expect(JSON.parse(itemsB[0]).uris[0]).toBe(channelResource + '/1001');
         expect(itemsB.length).toBe(1);
+        expect(JSON.parse(itemsB[0]).uris[0]).toBe(postedItem);
     });
 });
 

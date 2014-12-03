@@ -46,10 +46,6 @@ describe(testName, function () {
                 postedItem(value, false);
             });
 
-        runs(function () {
-            //do nothing
-        });
-
         waitsFor(function () {
             return callbackItems.length == 4;
         }, 9999);
