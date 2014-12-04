@@ -3,6 +3,7 @@ package com.flightstats.hub.group;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -120,12 +121,12 @@ public class GroupCallbackImpl implements GroupCallback {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
 
-    public long getLastCompleted(Group group) {
+    public ContentKey getLastCompleted(Group group) {
         GroupCaller groupCaller = activeGroups.get(group.getName());
         if (groupCaller != null) {
             return groupCaller.getLastCompleted();
         }
-        return 0;
+        return ContentKey.NONE;
     }
 
     private class GroupCallbackService extends AbstractIdleService {

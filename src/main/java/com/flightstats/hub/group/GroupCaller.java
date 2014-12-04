@@ -3,6 +3,7 @@ package com.flightstats.hub.group;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.cluster.ContentKeyValue;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.LongSet;
@@ -44,10 +45,11 @@ public class GroupCaller implements Leader {
     private Group group;
     private CuratorLeader curatorLeader;
     private Client client;
-    //private LongValue lastCompleted;
+    private ContentKeyValue lastCompletedValue;
     private ExecutorService executorService;
     private Semaphore semaphore;
-    private LongSet inProcess;
+    //todo - gfm - 12/3/14 -
+    //private LongSet inProcess;
     private AtomicBoolean hasLeadership;
     private Retryer<ClientResponse> retryer;
     private CallbackQueue callbackQueue;
@@ -59,7 +61,7 @@ public class GroupCaller implements Leader {
         this.queueProvider = queueProvider;
         this.groupService = groupService;
         this.metricsTimer = metricsTimer;
-        //lastCompleted = new LongValue(curator);
+        lastCompletedValue = new ContentKeyValue(curator);
     }
 
     public boolean tryLeadership(Group group) {
@@ -67,17 +69,12 @@ public class GroupCaller implements Leader {
         this.group = group;
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(group.getParallelCalls());
-        //lastCompleted.initialize(getValuePath(), getLastUpdated(group).getSequence());
-        inProcess = new LongSet(getInFlightPath(), curator);
+        lastCompletedValue.initialize(getValuePath(), new ContentKey());
+        //todo - gfm - 12/3/14 -
+        //inProcess = new LongSet(getInFlightPath(), curator);
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
         curatorLeader.start();
         return true;
-    }
-
-    private ContentKey getLastUpdated(Group group) {
-        //todo - gfm - 10/28/14 -
-        //return sequenceDao.getLastUpdated(ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl()));
-        return null;
     }
 
     @Override
@@ -93,13 +90,12 @@ public class GroupCaller implements Leader {
         this.client = GroupClient.createClient();
         callbackQueue = queueProvider.get();
         try {
-            //todo - gfm - 12/3/14 -
-            //long lastCompletedId = lastCompleted.get(getValuePath(), getLastUpdated(group).getSequence());
-            //logger.debug("last completed at {} {}", lastCompletedId, group.getName());
+            ContentKey lastCompletedKey = lastCompletedValue.get(getValuePath(), new ContentKey());
+            logger.debug("last completed at {} {}", lastCompletedKey, group.getName());
             if (hasLeadership.get()) {
                 //todo - gfm - 12/3/14 -
-                //sendInProcess(lastCompletedId);
-                callbackQueue.start(group);
+                //sendInProcess(lastCompletedKeyId);
+                callbackQueue.start(group, lastCompletedKey);
                 while (hasLeadership.get()) {
                     Optional<ContentKey> nextOptional = callbackQueue.next();
                     if (nextOptional.isPresent()) {
@@ -120,17 +116,17 @@ public class GroupCaller implements Leader {
     }
 
     //todo - gfm - 12/3/14 -
-    /*private long sendInProcess(long lastCompletedId) throws InterruptedException {
+    /*private long sendInProcess(long lastCompletedKeyId) throws InterruptedException {
         Set<Long> inProcessSet = inProcess.getSet();
         logger.trace("sending in process {} to {}", inProcessSet, group.getName());
         for (Long toSend : inProcessSet) {
-            if (toSend < lastCompletedId) {
+            if (toSend < lastCompletedKeyId) {
                 send(toSend);
             } else {
                 inProcess.remove(toSend);
             }
         }
-        return lastCompletedId;
+        return lastCompletedKeyId;
     }
 */
     private void send(ContentKey key) throws InterruptedException {
@@ -143,8 +139,7 @@ public class GroupCaller implements Leader {
                 //inProcess.add(next);
                 try {
                     makeTimedCall(createResponse(key));
-                    //todo - gfm - 12/3/14 -
-                    //lastCompleted.updateIncrease(next, getValuePath());
+                    lastCompletedValue.updateIncrease(key, getValuePath());
                     //todo - gfm - 12/3/14 -
                     //inProcess.remove(next);
                     logger.trace("completed {} call to {} ", key, group.getName());
@@ -235,16 +230,14 @@ public class GroupCaller implements Leader {
         return "/GroupInFlight/" + group.getName();
     }
 
-    public long getLastCompleted() {
-        //todo - gfm - 12/3/14 -
-//        return lastCompleted.get(getValuePath(), 0);
-        return 0;
+    public ContentKey getLastCompleted() {
+        return lastCompletedValue.get(getValuePath(), ContentKey.NONE);
     }
 
     private void delete() {
         logger.info("deleting " + group.getName());
         LongSet.delete(getInFlightPath(), curator);
-        //lastCompleted.delete(getValuePath());
+        lastCompletedValue.delete(getValuePath());
         logger.info("deleted " + group.getName());
     }
 
