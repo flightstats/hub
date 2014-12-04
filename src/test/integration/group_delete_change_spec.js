@@ -27,8 +27,10 @@ describe(testName, function () {
     var portA = callbackPort + 4;
     var portB = callbackPort + 5;
 
-    var itemsA = [];
-    var itemsB = [];
+    var callbackItemsA = [];
+    var callbackItemsB = [];
+    var postedItemsA = [];
+    var postedItemsB = [];
     var groupConfigA = {
         callbackUrl : callbackDomain + ':' + portA + '/',
         channelUrl : channelResource
@@ -44,16 +46,17 @@ describe(testName, function () {
 
     it('runs callback server', function () {
         utils.startServer(portA, function (string) {
-            itemsA.push(string);
+            callbackItemsA.push(string);
         });
 
-        runs(function () {
-            utils.postItem(channelResource);
-        });
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                postedItemsA.push(value.body._links.self.href);
+            });
 
         waitsFor(function () {
-            return itemsA.length == 1;
-        }, 12000);
+            return callbackItemsA.length == 1;
+        }, 11999);
 
     });
 
@@ -65,35 +68,25 @@ describe(testName, function () {
 
     it('runs callback server', function () {
         utils.startServer(portB, function (string) {
-            itemsB.push(string);
+            callbackItemsB.push(string);
         });
 
-        runs(function () {
-            utils.postItem(channelResource);
-        });
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                postedItemsB.push(value.body._links.self.href);
+            });
 
         waitsFor(function () {
-            return itemsB.length == 1;
-        }, 12000);
-
-    });
-
-    it('waits for item group ' + groupName + ' channel ' + channelName, function () {
-        runs(function () {
-            utils.postItem(channelResource);
-        });
-
-        waitsFor(function () {
-            return itemsB.length == 1;
-        }, 5000);
+            return callbackItemsB.length == 1;
+        }, 11998);
 
     });
 
     utils.closeServer(function () {
-        expect(JSON.parse(itemsA[0]).uris[0]).toBe(channelResource + '/1000');
-        expect(JSON.parse(itemsB[0]).uris[0]).toBe(channelResource + '/1002');
-        expect(itemsA.length).toBe(1);
-        expect(itemsB.length).toBe(1);
+        expect(callbackItemsA.length).toBe(1);
+        expect(callbackItemsB.length).toBe(1);
+        expect(JSON.parse(callbackItemsA[0]).uris[0]).toBe(postedItemsA[0]);
+        expect(JSON.parse(callbackItemsB[0]).uris[0]).toBe(postedItemsB[0]);
     });
 });
 
