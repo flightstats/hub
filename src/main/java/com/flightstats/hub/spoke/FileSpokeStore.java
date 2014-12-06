@@ -8,11 +8,13 @@ import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -73,19 +75,10 @@ public class FileSpokeStore {
         return adjacentPath(path, false);
     }
 
+
     public String readKeysInBucket(String path) {
-        String seconds = SpokePathUtil.second(path);
-        Collection<File> files = filesInBucket(spokeFilePathPart(path), seconds);
-        String keys = "";
-        int i = 0;
-        for (File file : files){
-            keys += spokeKeyFromFile(file);
-            if(i < files.size() - 1){
-                keys += ",";
-                i++;
-            }
-        }
-        return keys;
+        Collection<String> keys = keysInBucket(path);
+        return StringUtils.join(keys, ",");
     }
 
     public boolean delete(String path) throws Exception {
@@ -183,90 +176,89 @@ public class FileSpokeStore {
     }
 
 
-    // file should be an actual file path, or a directory.
-    // seconds are fucked up since they are a bucket, but they aren't a directory.
-    // There are many fucked up ways to handle seconds, but I chose to add it as a param.
-    // If it "exists" then the path should be a minute bucket and
-    // we can use it to get the files we are interested in.
-    Collection<File> filesInBucket(File file, String seconds) {
-        String path = file.getAbsolutePath();
-//        List<String> keys = new ArrayList<>();
+    Collection<String> keysInBucket(String key) {
+        String path = spokeFilePathPart(key).getAbsolutePath();
+        List<String> keys = new ArrayList<>();
         logger.trace("path {}", path);
-        File directory = new File(path);
-        Collection<File> files = new ArrayList<>();
+        String resolution = SpokePathUtil.smallestTimeResolution(key);
+        File directory;
+        if (resolution.equals("second")) {
+            directory = new File(path);
+        } else {
+            directory = new File(path);
+        }
 
         if (!directory.exists()) {
-            return files;
+            return keys;
         }
         try{
-            if(seconds != null){
+            Collection<File> files;
+            if (resolution.equals("second")) {
                 // filter all files in the minute folder that start with seconds
-                files = FileUtils.listFiles(
-                        directory,
-                        new RegexFileFilter(seconds + ".*"),
-                        DirectoryFileFilter.DIRECTORY
-                );
-            }else {
+                FileFilter fileFilter = new WildcardFileFilter(SpokePathUtil.second(key) + "*");
+                files = Arrays.asList(directory.listFiles(fileFilter));
+            } else {
                 files = FileUtils.listFiles(new File(path), null, true);
             }
             for (File aFile : files) {
                 String filePath = aFile.getPath();
                 logger.trace("filePath {}", filePath);
+                keys.add(spokeKeyFromFile(aFile));
             }
         } catch (Exception e) {
             logger.info("error with " + path, e);
         }
-        return files;
+        return keys;
     }
 
-    // given the path to a file, return the adjacent n files (next or previous)
-    Collection<File> adjacentNFiles(File path, int count, boolean next){
-        //0: Start with the next item - this will skip to the next hour bucket if need be.
-        String key = spokeKeyFromFile(path);
-        key = next ? nextPath(key) : previousPath(key);
-        if(key==null) return new ArrayList<>(0);
-
-        //1: collect all items in current hour adjacent to path
-        //  if these >= count, return keys
-
-        File hourPath = SpokePathUtil.hourPathFolder(spokeFilePathPart(key));
-        Collection<File> hourFiles = filesInBucket(hourPath, SpokePathUtil.second(path.getAbsolutePath()));
-        File[] hourFileArray = new File[hourFiles.size()];
-        hourFileArray = hourFiles.toArray(hourFileArray);
-        Arrays.sort(hourFileArray);
-        File[] adjacentFiles;
-
-        File searchForThisFile = spokeFilePathPart(key);
-        int i = Arrays.binarySearch(hourFileArray, searchForThisFile);
-        if(next){
-            int nextCompliment = hourFileArray.length - i;
-            int to = nextCompliment > count ? i + count: hourFileArray.length - 1 ;
-            to = to == i ? to + 1 : to; // handle case of one item in array
-            adjacentFiles = Arrays.copyOfRange(hourFileArray,i,to);
-        }else{
-            int from = i < count ? 0 : i - count ;
-            i = from == i ? i + 1 : i;
-            adjacentFiles = Arrays.copyOfRange(hourFileArray,from,i);
-        }
-        Arrays.sort(adjacentFiles);
-        ArrayList<File> result = new ArrayList<>();
-
-        List<File> temp =  Arrays.asList((File[]) adjacentFiles);
-        result.addAll(temp);
-        if (adjacentFiles.length == count)  //terminal
-                return result;
-
-        File nextPath = next ? Iterables.getLast(result, null) : Iterables.getFirst(result,null);
-        // recurse until we have enough to satisfy the count
-        result.addAll(adjacentNFiles(nextPath, count - result.size(), next));
-        return result;
-    }
-
-    public Collection<File> nextNKeys(File path, int count){
-        return adjacentNFiles(path, count, true);
-    }
-
-    public Collection<File> previousNKeys(File path, int count){
-        return adjacentNFiles(path, count, false);
-    }
+//    // given the path to a file, return the adjacent n files (next or previous)
+//    Collection<File> adjacentNFiles(File path, int count, boolean next){
+//        //0: Start with the next item - this will skip to the next hour bucket if need be.
+//        String key = spokeKeyFromFile(path);
+//        key = next ? nextPath(key) : previousPath(key);
+//        if(key==null) return new ArrayList<>(0);
+//
+//        //1: collect all items in current hour adjacent to path
+//        //  if these >= count, return keys
+//
+//        File hourPath = SpokePathUtil.hourPathFolder(spokeFilePathPart(key));
+//        Collection<File> hourFiles = filesInBucket(hourPath, SpokePathUtil.second(path.getAbsolutePath()));
+//        File[] hourFileArray = new File[hourFiles.size()];
+//        hourFileArray = hourFiles.toArray(hourFileArray);
+//        Arrays.sort(hourFileArray);
+//        File[] adjacentFiles;
+//
+//        File searchForThisFile = spokeFilePathPart(key);
+//        int i = Arrays.binarySearch(hourFileArray, searchForThisFile);
+//        if(next){
+//            int nextCompliment = hourFileArray.length - i;
+//            int to = nextCompliment > count ? i + count: hourFileArray.length - 1 ;
+//            to = to == i ? to + 1 : to; // handle case of one item in array
+//            adjacentFiles = Arrays.copyOfRange(hourFileArray,i,to);
+//        }else{
+//            int from = i < count ? 0 : i - count ;
+//            i = from == i ? i + 1 : i;
+//            adjacentFiles = Arrays.copyOfRange(hourFileArray,from,i);
+//        }
+//        Arrays.sort(adjacentFiles);
+//        ArrayList<File> result = new ArrayList<>();
+//
+//        List<File> temp =  Arrays.asList((File[]) adjacentFiles);
+//        result.addAll(temp);
+//        if (adjacentFiles.length == count)  //terminal
+//                return result;
+//
+//        File nextPath = next ? Iterables.getLast(result, null) : Iterables.getFirst(result,null);
+//        // recurse until we have enough to satisfy the count
+//        result.addAll(adjacentNFiles(nextPath, count - result.size(), next));
+//        return result;
+//    }
+//
+//    public Collection<File> nextNKeys(File path, int count){
+//        return adjacentNFiles(path, count, true);
+//    }
+//
+//    public Collection<File> previousNKeys(File path, int count){
+//        return adjacentNFiles(path, count, false);
+//    }
 }
