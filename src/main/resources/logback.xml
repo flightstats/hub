@@ -27,5 +27,6 @@
     <logger name="org.apache.zookeeper.server.PrepRequestProcessor" level="WARN"/>
     <logger name="com.flightstats.hub" level="DEBUG"/>
     <logger name="com.flightstats.hub.group" level="DEBUG"/>
+    <logger name="com.flightstats.hub.spoke.SpokeContentDao" level="TRACE"/>
 
 </configuration>
