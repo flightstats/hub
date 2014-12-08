@@ -205,6 +205,7 @@ public class ChannelContentResource {
         Optional<Content> optionalResult = channelService.getValue(request);
 
         if (!optionalResult.isPresent()) {
+            logger.warn("404 content not found {} {}", channelName, key);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         Content content = optionalResult.get();
