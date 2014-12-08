@@ -32,6 +32,12 @@ describe(testName, function () {
 
     utils.putGroup(groupName, groupConfig);
 
+    it('waits', function (done) {
+        setTimeout(function () {
+            done();
+        }, 500);
+    });
+
     it('runs callback server', function () {
         utils.startServer(port, function (string) {
             callbackItems.push(string);
@@ -44,7 +50,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return callbackItems.length == 1;
-        }, 12000);
+        }, 3333);
 
     });
 
@@ -54,6 +60,12 @@ describe(testName, function () {
 
     utils.putGroup(groupName, groupConfig);
 
+    it('waits', function (done) {
+        setTimeout(function () {
+            done();
+        }, 500);
+    });
+
     it('waits for item group ' + groupName + ' channel ' + channelName, function () {
         utils.postItemQ(channelResource)
             .then(function (value) {
@@ -62,7 +74,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return callbackItems.length == 2;
-        }, 5000);
+        }, 4949);
 
     });
 
