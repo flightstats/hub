@@ -37,64 +37,40 @@ describe(testName, function () {
         utils.addItem(channelResource);
     }
 
-    it('waits', function (done) {
-        setTimeout(function () {
-            done();
-        }, 500);
-    });
-
-
     //todo - gfm - 11/5/14 - tests for next/previous
     //todo - gfm - 11/19/14 - test for ordering
 
-     it('gets items from channel second', function (done) {
-        request.get({url : channelResource + '/time/second', json : true},
+    function callTime(url, items, calls, done) {
+        request.get({url : url, json : true},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var items = body._links.uris;
-                request.get({url : body._links.previous.href, json : true},
-                    function (err, response, body) {
-                        expect(err).toBeNull();
-                        expect(response.statusCode).toBe(200);
-                        items = items.concat(body._links.uris);
-                        expect(items.length).toBe(4);
-                        done();
-                    });
-            })
-     });
+                calls++;
+                items = items.concat(body._links.uris);
+                if (items.length == 4) {
+                    done();
+                } else if (calls < 10) {
+                    callTime(body._links.previous.href, items, calls, done);
+                } else {
+                    done('unable to find 4 items in ' + calls + ' calls');
+                }
+            });
+    }
+
+    it('gets items from channel second', function (done) {
+        callTime(channelResource + '/time/second', [], 0, done);
+    });
 
     it('gets items from channel minute', function (done) {
-        request.get({url : channelResource + '/time/minute', json : true },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                expect(body._links.uris.length).toBe(4);
-                //todo - gfm - 11/4/14 - do a get on these
-                done();
-            })
+        callTime(channelResource + '/time/minute', [], 0, done);
     });
 
     it('gets items from channel hour', function (done) {
-        request.get({url : channelResource + '/time/hour', json : true},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                expect(body._links.uris.length).toBe(4);
-                //todo - gfm - 11/4/14 - do a get on these
-                done();
-            })
+        callTime(channelResource + '/time/hour', [], 0, done);
     });
 
     it('gets items from channel day', function (done) {
-        request.get({url : channelResource + '/time/day', json : true},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                expect(body._links.uris.length).toBe(4);
-                //todo - gfm - 11/4/14 - do a get on these
-                done();
-            })
+        callTime(channelResource + '/time/day', [], 0, done);
     });
 
 });
