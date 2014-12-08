@@ -9,6 +9,7 @@ from locust import HttpLocust, TaskSet, task, events, web
 from flask import request
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # locust -f read-write-group.py -H http://hub-v2.svc.dev
@@ -132,17 +133,10 @@ class WebsiteTasks(TaskSet):
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
         if request.method == 'POST':
-            posted = request.get_json()
-            # posted load_test_1 {u'name': u'locust_load_test_1', u'uris':
-            # [u'http://localhost:9080/channel/load_test_1/2014/12/08/21/19/01/415/iQzdLN']}
-
-            print "posted " + channel + " " + str(posted['uris'][0])
-            groupList = groupCallbacks[channel]
-            print "list " + str(groupList)
-            groupList.remove(posted['uris'][0])
+            (groupCallbacks[channel]).remove(request.get_json()['uris'][0])
             return "ok"
         else:
-            return "get for " + channel + str(groupCallbacks)
+            return "get for " + channel + str(groupCallbacks[channel])
 
 
 class WebsiteUser(HttpLocust):
