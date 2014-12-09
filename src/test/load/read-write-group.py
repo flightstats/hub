@@ -9,9 +9,6 @@ from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
 
 
-
-
-
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # locust -f read-write-group.py -H http://hub-v2.svc.dev
@@ -60,9 +57,14 @@ class WebsiteTasks(TaskSet):
         groupCallbacks[self.channel].append(href)
         return href
 
+    def read(self, uri):
+        with self.client.get(uri, catch_response=True, name="get_payload") as postResponse:
+            if postResponse.status_code != 200:
+                postResponse.failure("Got wrong response on get: " + str(postResponse.status_code) + " " + uri)
+
     @task(1000)
     def write_read(self):
-        self.client.get(self.write(), name="get_payload")
+        self.read(self.write())
 
     @task(10)
     def sequential(self):
@@ -127,7 +129,7 @@ class WebsiteTasks(TaskSet):
         uris = links['_links']['uris']
         if len(uris) > 0:
             for uri in uris:
-                self.client.get(uri, name="get_payload")
+                self.read(uri)
 
     def payload_generator(self, size, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for x in range(size))
