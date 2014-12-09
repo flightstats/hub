@@ -30,9 +30,10 @@ class WebsiteTasks(TaskSet):
         payload = {"name": self.channel, "ttlDays": "100"}
         self.client.post("/channel",
                          data=json.dumps(payload),
-                         headers={"Content-Type": "application/json"})
+                         headers={"Content-Type": "application/json"},
+                         name="channel")
         group_name = "/group/locust_" + self.channel
-        self.client.delete(group_name)
+        self.client.delete(group_name, name="group")
         groupCallbacks[self.channel] = []
         # fix these urls
         group = {
@@ -42,7 +43,8 @@ class WebsiteTasks(TaskSet):
         }
         self.client.put(group_name,
                         data=json.dumps(group),
-                        headers={"Content-Type": "application/json"})
+                        headers={"Content-Type": "application/json"},
+                        name="group")
 
     def write(self):
         payload = {"name": self.payload, "count": self.count}
@@ -139,6 +141,12 @@ class WebsiteTasks(TaskSet):
         if request.method == 'POST':
             if groupCallbacks[channel][0] == request.get_json()['uris'][0]:
                 groupCallbacks[channel].pop(0)
+                events.request_success.fire(request_type="group", name="callback", response_time=1,
+                                            response_length=1)
+            else:
+                print "item in the wrong order " + str(request.get_json()['uris'][0]) + " " + str(groupCallbacks[channel][0])
+                events.request_failure.fire(request_type="group", name="callback", response_time=1
+                                            , exception=-1)
             return "ok"
         else:
             return jsonify(items=groupCallbacks[channel])
