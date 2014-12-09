@@ -1,4 +1,4 @@
-package com.flightstats.hub.cluster;
+package com.flightstats.hub.group;
 
 import com.flightstats.hub.model.ContentKey;
 import com.google.inject.Inject;
@@ -8,19 +8,23 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ContentKeyValue {
-    private final static Logger logger = LoggerFactory.getLogger(ContentKeyValue.class);
+public class GroupContentKey {
+    private final static Logger logger = LoggerFactory.getLogger(GroupContentKey.class);
 
     private final CuratorFramework curator;
 
     @Inject
-    public ContentKeyValue(CuratorFramework curator) {
+    public GroupContentKey(CuratorFramework curator) {
         this.curator = curator;
     }
 
-    public void initialize(String path, ContentKey defaultKey) {
+    private String getPath(String groupName) {
+        return "/GroupLastCompleted/" + groupName;
+    }
+
+    public void initialize(String groupName, ContentKey defaultKey) {
         try {
-            curator.create().creatingParentsIfNeeded().forPath(path, defaultKey.getBytes());
+            curator.create().creatingParentsIfNeeded().forPath(getPath(groupName), defaultKey.getBytes());
         } catch (KeeperException.NodeExistsException ignore) {
             //this will typically happen, except the first time
         } catch (Exception e) {
@@ -28,12 +32,13 @@ public class ContentKeyValue {
         }
     }
 
-    public ContentKey get(String path, ContentKey defaultKey) {
+    public ContentKey get(String groupName, ContentKey defaultKey) {
+        String path = getPath(groupName);
         try {
             return get(path);
         } catch (KeeperException.NoNodeException e) {
-            logger.warn("missing value for {}", path);
-            initialize(path, defaultKey);
+            logger.warn("missing value for {}", groupName);
+            initialize(groupName, defaultKey);
             return get(path, defaultKey);
         } catch (Exception e) {
             logger.warn("unable to get node " + e.getMessage());
@@ -45,7 +50,8 @@ public class ContentKeyValue {
         return ContentKey.fromBytes(curator.getData().forPath(path));
     }
 
-    public void updateIncrease(ContentKey nextKey, String path) {
+    public void updateIncrease(ContentKey nextKey, String name) {
+        String path = getPath(name);
         try {
             int attempts = 0;
             while (attempts < 3) {
@@ -77,7 +83,8 @@ public class ContentKeyValue {
         }
     }
 
-    public void delete(String path) {
+    public void delete(String name) {
+        String path = getPath(name);
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (Exception e) {

@@ -1,6 +1,7 @@
 package com.flightstats.hub.group;
 
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.exception.ConflictException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -17,14 +18,17 @@ public class GroupService {
     private final GroupValidator groupValidator;
     private final GroupCallback groupCallback;
     private final ChannelService channelService;
+    private final GroupContentKey groupContentKey;
 
     @Inject
     public GroupService(DynamoGroupDao dynamoGroupDao, GroupValidator groupValidator,
-                        GroupCallback groupCallback, ChannelService channelService) {
+                        GroupCallback groupCallback, ChannelService channelService,
+                        GroupContentKey groupContentKey) {
         this.dynamoGroupDao = dynamoGroupDao;
         this.groupValidator = groupValidator;
         this.groupCallback = groupCallback;
         this.channelService = channelService;
+        this.groupContentKey = groupContentKey;
     }
 
     public Optional<Group> upsertGroup(Group group) {
@@ -38,6 +42,7 @@ public class GroupService {
             }
             throw new ConflictException("{\"error\": \"Groups are immutable\"}");
         }
+        groupContentKey.initialize(group.getName(), new ContentKey());
         dynamoGroupDao.upsertGroup(group);
         groupCallback.notifyWatchers();
         return existingGroup;

@@ -15,10 +15,7 @@ import com.flightstats.hub.dao.encryption.BasicChannelService;
 import com.flightstats.hub.dao.s3.S3Config;
 import com.flightstats.hub.dao.s3.S3ContentDao;
 import com.flightstats.hub.dao.s3.S3WriterManager;
-import com.flightstats.hub.group.DynamoGroupDao;
-import com.flightstats.hub.group.GroupCallback;
-import com.flightstats.hub.group.GroupCallbackImpl;
-import com.flightstats.hub.group.GroupValidator;
+import com.flightstats.hub.group.*;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.ChannelValidator;
@@ -100,6 +97,7 @@ public class AwsModule extends AbstractModule {
         bind(ChannelValidator.class).asEagerSingleton();
         bind(GroupValidator.class).asEagerSingleton();
         bind(GroupCallback.class).to(GroupCallbackImpl.class).asEagerSingleton();
+        bind(GroupContentKey.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
 
         bind(HostedGraphiteSender.class).asEagerSingleton();
