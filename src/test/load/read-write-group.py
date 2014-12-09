@@ -6,7 +6,8 @@ import random
 import time
 
 from locust import HttpLocust, TaskSet, task, events, web
-from flask import request
+from flask import request, jsonify
+
 
 
 
@@ -134,10 +135,17 @@ class WebsiteTasks(TaskSet):
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
         if request.method == 'POST':
-            (groupCallbacks[channel]).remove(request.get_json()['uris'][0])
+            if groupCallbacks[channel][0] == request.get_json()['uris'][0]:
+                groupCallbacks[channel].pop(0)
             return "ok"
         else:
-            return "get for " + channel + str(groupCallbacks[channel])
+            return jsonify(items=groupCallbacks[channel])
+
+    @web.app.route("/callbacks", methods=['GET'])
+    def callbacks():
+        return jsonify(groups=groupCallbacks)
+
+        # how do we tie into Flask's reset?
 
 
 class WebsiteUser(HttpLocust):
