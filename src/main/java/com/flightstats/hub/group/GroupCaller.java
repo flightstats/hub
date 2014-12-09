@@ -3,7 +3,6 @@ package com.flightstats.hub.group;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.cluster.ContentKeyValue;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.LongSet;
@@ -39,13 +38,13 @@ public class GroupCaller implements Leader {
     private final Provider<CallbackQueue> queueProvider;
     private final GroupService groupService;
     private final MetricsTimer metricsTimer;
+    private final GroupContentKey groupContentKey;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
     private Group group;
     private CuratorLeader curatorLeader;
     private Client client;
-    private ContentKeyValue lastCompletedValue;
     private ExecutorService executorService;
     private Semaphore semaphore;
     //todo - gfm - 12/3/14 -
@@ -56,12 +55,12 @@ public class GroupCaller implements Leader {
 
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackQueue> queueProvider,
-                       GroupService groupService, MetricsTimer metricsTimer) {
+                       GroupService groupService, MetricsTimer metricsTimer, GroupContentKey groupContentKey) {
         this.curator = curator;
         this.queueProvider = queueProvider;
         this.groupService = groupService;
         this.metricsTimer = metricsTimer;
-        lastCompletedValue = new ContentKeyValue(curator);
+        this.groupContentKey = groupContentKey;
     }
 
     public boolean tryLeadership(Group group) {
@@ -69,7 +68,6 @@ public class GroupCaller implements Leader {
         this.group = group;
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(group.getParallelCalls());
-        lastCompletedValue.initialize(getValuePath(), new ContentKey());
         //todo - gfm - 12/3/14 -
         //inProcess = new LongSet(getInFlightPath(), curator);
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
@@ -90,7 +88,7 @@ public class GroupCaller implements Leader {
         this.client = GroupClient.createClient();
         callbackQueue = queueProvider.get();
         try {
-            ContentKey lastCompletedKey = lastCompletedValue.get(getValuePath(), new ContentKey());
+            ContentKey lastCompletedKey = groupContentKey.get(group.getName(), new ContentKey());
             logger.debug("last completed at {} {}", lastCompletedKey, group.getName());
             if (hasLeadership.get()) {
                 //todo - gfm - 12/3/14 -
@@ -139,7 +137,7 @@ public class GroupCaller implements Leader {
                 //inProcess.add(next);
                 try {
                     makeTimedCall(createResponse(key));
-                    lastCompletedValue.updateIncrease(key, getValuePath());
+                    groupContentKey.updateIncrease(key, group.getName());
                     //todo - gfm - 12/3/14 -
                     //inProcess.remove(next);
                     logger.trace("completed {} call to {} ", key, group.getName());
@@ -222,22 +220,18 @@ public class GroupCaller implements Leader {
         return "/GroupLeader/" + group.getName();
     }
 
-    private String getValuePath() {
-        return "/GroupLastCompleted/" + group.getName();
-    }
-
     private String getInFlightPath() {
         return "/GroupInFlight/" + group.getName();
     }
 
     public ContentKey getLastCompleted() {
-        return lastCompletedValue.get(getValuePath(), ContentKey.NONE);
+        return groupContentKey.get(group.getName(), ContentKey.NONE);
     }
 
     private void delete() {
         logger.info("deleting " + group.getName());
         LongSet.delete(getInFlightPath(), curator);
-        lastCompletedValue.delete(getValuePath());
+        groupContentKey.delete(group.getName());
         logger.info("deleted " + group.getName());
     }
 
