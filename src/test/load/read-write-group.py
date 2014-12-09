@@ -4,6 +4,7 @@ import json
 import string
 import random
 import time
+import threading
 
 from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
@@ -34,11 +35,13 @@ class WebsiteTasks(TaskSet):
                          name="channel")
         group_name = "/group/locust_" + self.channel
         self.client.delete(group_name, name="group")
-        groupCallbacks[self.channel] = []
-        # fix these urls
+        groupCallbacks[self.channel] = {"data": [], "lock": threading.Lock()}
+        # todo fix these urls
         group = {
-            "callbackUrl": "http://localhost:8089/callback/" + self.channel,
-            "channelUrl": "http://localhost:9080/channel/" + self.channel,
+            # "callbackUrl": "http://localhost:8089/callback/" + self.channel,
+            # "channelUrl": "http://localhost:9080/channel/" + self.channel,
+            "callbackUrl": "http://hub-node-tester.cloud-east.dev:8089//callback/" + self.channel,
+            "channelUrl": "http://hub-v2.svc.dev/channel/" + self.channel,
             "parallelCalls": 1
         }
         self.client.put(group_name,
@@ -56,7 +59,11 @@ class WebsiteTasks(TaskSet):
         links = postResponse.json()
         self.count += 1
         href = links['_links']['self']['href']
-        groupCallbacks[self.channel].append(href)
+        groupCallbacks[self.channel]["lock"].acquire()
+        try:
+            groupCallbacks[self.channel]["data"].append(href)
+        finally:
+            groupCallbacks[self.channel]["lock"].release()
         return href
 
     def read(self, uri):
@@ -139,21 +146,29 @@ class WebsiteTasks(TaskSet):
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
         if request.method == 'POST':
-            if groupCallbacks[channel][0] == request.get_json()['uris'][0]:
-                groupCallbacks[channel].pop(0)
-                events.request_success.fire(request_type="group", name="callback", response_time=1,
-                                            response_length=1)
-            else:
-                print "item in the wrong order " + str(request.get_json()['uris'][0]) + " " + str(groupCallbacks[channel][0])
-                events.request_failure.fire(request_type="group", name="callback", response_time=1
-                                            , exception=-1)
+            uri = request.get_json()['uris'][0]
+            groupCallbacks[channel]["lock"].acquire()
+            try:
+                channel_callback = groupCallbacks[channel]["data"]
+                compare_value = channel_callback[0]
+                if compare_value == uri:
+                    channel_callback.pop(0)
+                    events.request_success.fire(request_type="group", name="callback", response_time=1,
+                                                response_length=1)
+                else:
+                    print "item in the wrong order " + str(uri) + " " + str(compare_value)
+                    events.request_failure.fire(request_type="group", name="callback", response_time=1
+                                                , exception=-1)
+            finally:
+                groupCallbacks[channel]["lock"].release()
+
             return "ok"
         else:
-            return jsonify(items=groupCallbacks[channel])
+            return jsonify(items=groupCallbacks[channel]["data"])
 
-    @web.app.route("/callbacks", methods=['GET'])
-    def callbacks():
-        return jsonify(groups=groupCallbacks)
+#    @web.app.route("/callbacks", methods=['GET'])
+#    def callbacks():
+#        return jsonify(groups=groupCallbacks)
 
         # how do we tie into Flask's reset?
 
