@@ -38,10 +38,10 @@ class WebsiteTasks(TaskSet):
         groupCallbacks[self.channel] = {"data": [], "lock": threading.Lock()}
         # todo fix these urls
         group = {
-            # "callbackUrl": "http://localhost:8089/callback/" + self.channel,
-            # "channelUrl": "http://localhost:9080/channel/" + self.channel,
-            "callbackUrl": "http://hub-node-tester.cloud-east.dev:8089//callback/" + self.channel,
-            "channelUrl": "http://hub-v2.svc.dev/channel/" + self.channel,
+            "callbackUrl": "http://localhost:8089/callback/" + self.channel,
+            "channelUrl": "http://localhost:9080/channel/" + self.channel,
+            # "callbackUrl": "http://hub-node-tester.cloud-east.dev:8089//callback/" + self.channel,
+            # "channelUrl": "http://hub-v2.svc.dev/channel/" + self.channel,
             "parallelCalls": 1
         }
         self.client.put(group_name,
