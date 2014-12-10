@@ -159,7 +159,8 @@ class WebsiteTasks(TaskSet):
                     print "item in the wrong order " + str(incoming_uri) + " " + str(first_sent_uri)
                     events.request_failure.fire(request_type="group", name="callback", response_time=1
                                                 , exception=-1)
-                    (groupCallbacks[channel]["data"]).remove(incoming_uri)
+                    if incoming_uri in groupCallbacks[channel]["data"]:
+                        (groupCallbacks[channel]["data"]).remove(incoming_uri)
             finally:
                 groupCallbacks[channel]["lock"].release()
 
