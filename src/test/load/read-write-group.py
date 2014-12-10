@@ -151,17 +151,20 @@ class WebsiteTasks(TaskSet):
                 return "ok"
             try:
                 groupCallbacks[channel]["lock"].acquire()
-                first_sent_uri = groupCallbacks[channel]["data"][0]
-                if first_sent_uri == incoming_uri:
-                    (groupCallbacks[channel]["data"]).pop(0)
+                if groupCallbacks[channel]["data"][0] == incoming_uri:
+                    (groupCallbacks[channel]["data"]).remove(incoming_uri)
                     events.request_success.fire(request_type="group", name="callback", response_time=1,
                                                 response_length=1)
                 else:
-                    print "item in the wrong order " + str(incoming_uri) + " data " + str(groupCallbacks[channel]["data"])
                     events.request_failure.fire(request_type="group", name="callback", response_time=1
                                                 , exception=-1)
                     if incoming_uri in groupCallbacks[channel]["data"]:
                         (groupCallbacks[channel]["data"]).remove(incoming_uri)
+                        print "item in the wrong order " + str(incoming_uri) + " data " + \
+                              str(groupCallbacks[channel]["data"])
+                    else:
+                        print "missing item " + str(incoming_uri) + " data " + \
+                              str(groupCallbacks[channel]["data"])
             finally:
                 groupCallbacks[channel]["lock"].release()
 
