@@ -57,7 +57,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
     }
 
     private String getHost() throws UnknownHostException {
-        return InetAddress.getLocalHost().getHostName() + ":" + port;
+        return InetAddress.getLocalHost().getHostAddress() + ":" + port;
     }
 
     @Override
