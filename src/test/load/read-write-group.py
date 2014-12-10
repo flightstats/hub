@@ -5,6 +5,7 @@ import string
 import random
 import time
 import threading
+import socket
 
 from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
@@ -12,10 +13,10 @@ from flask import request, jsonify
 
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
-# locust -f read-write-group.py -H http://hub-v2.svc.dev
 # nohup locust -f read-write-group.py -H http://hub-v2.svc.dev &
 
 groupCallbacks = {}
+groupConfig = {}
 
 
 class WebsiteTasks(TaskSet):
@@ -36,12 +37,9 @@ class WebsiteTasks(TaskSet):
         group_name = "/group/locust_" + self.channel
         self.client.delete(group_name, name="group")
         groupCallbacks[self.channel] = {"data": [], "lock": threading.Lock()}
-        # todo fix these urls
         group = {
-            "callbackUrl": "http://localhost:8089/callback/" + self.channel,
-            "channelUrl": "http://localhost:9080/channel/" + self.channel,
-            # "callbackUrl": "http://hub-node-tester.cloud-east.dev:8089//callback/" + self.channel,
-            # "channelUrl": "http://hub-v2.svc.dev/channel/" + self.channel,
+            "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
+            "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
             "parallelCalls": 1
         }
         self.client.put(group_name,
@@ -180,4 +178,10 @@ class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
     min_wait = 400
     max_wait = 900
+
+    def __init__(self):
+        super(WebsiteUser, self).__init__()
+        groupConfig['host'] = self.host
+        groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
+        print groupConfig
 
