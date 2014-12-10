@@ -57,6 +57,7 @@ public class GroupService {
     }
 
     public List<GroupStatus> getGroupStatus() {
+        //todo - gfm - 12/10/14 - fix this
         Iterable<Group> groups = getGroups();
         List<GroupStatus> groupStatus = new ArrayList<>();
         //todo - gfm - 10/28/14 -
