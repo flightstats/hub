@@ -57,20 +57,20 @@ public class GroupService {
     }
 
     public List<GroupStatus> getGroupStatus() {
-        //todo - gfm - 12/10/14 - fix this
         Iterable<Group> groups = getGroups();
         List<GroupStatus> groupStatus = new ArrayList<>();
-        //todo - gfm - 10/28/14 -
-        /*for (Group group : groups) {
+        for (Group group : groups) {
             GroupStatus.GroupStatusBuilder builder = GroupStatus.builder().group(group);
+            //todo - gfm - 12/10/14 - fix this
+            /*
             String channelName = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
             Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channelName);
             if (lastUpdatedKey.isPresent()) {
                 builder.channelLatest(lastUpdatedKey.get().getSequence());
-            }
+            }*/
             builder.lastCompleted(groupCallback.getLastCompleted(group));
             groupStatus.add(builder.build());
-        }*/
+        }
         return groupStatus;
     }
 
