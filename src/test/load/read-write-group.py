@@ -150,6 +150,7 @@ class WebsiteTasks(TaskSet):
                 print "incoming uri before init " + str(incoming_uri)
                 return "ok"
             try:
+                print "incoming " + str(incoming_uri)
                 groupCallbacks[channel]["lock"].acquire()
                 if groupCallbacks[channel]["data"][0] == incoming_uri:
                     (groupCallbacks[channel]["data"]).remove(incoming_uri)
