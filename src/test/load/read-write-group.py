@@ -57,9 +57,10 @@ class WebsiteTasks(TaskSet):
         links = postResponse.json()
         self.count += 1
         href = links['_links']['self']['href']
-        groupCallbacks[self.channel]["lock"].acquire()
         try:
+            groupCallbacks[self.channel]["lock"].acquire()
             groupCallbacks[self.channel]["data"].append(href)
+            print "wrote " + href
         finally:
             groupCallbacks[self.channel]["lock"].release()
         return href
@@ -146,7 +147,7 @@ class WebsiteTasks(TaskSet):
         if request.method == 'POST':
             incoming_uri = request.get_json()['uris'][0]
             if channel not in groupCallbacks:
-                print "unexpected incoming uri " + str(incoming_uri)
+                print "incoming uri before init " + str(incoming_uri)
                 return "ok"
             try:
                 groupCallbacks[channel]["lock"].acquire()
