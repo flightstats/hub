@@ -156,7 +156,7 @@ class WebsiteTasks(TaskSet):
                     events.request_success.fire(request_type="group", name="callback", response_time=1,
                                                 response_length=1)
                 else:
-                    print "item in the wrong order " + str(incoming_uri) + " " + str(first_sent_uri)
+                    print "item in the wrong order " + str(incoming_uri) + " data " + str(groupCallbacks[channel]["data"])
                     events.request_failure.fire(request_type="group", name="callback", response_time=1
                                                 , exception=-1)
                     if incoming_uri in groupCallbacks[channel]["data"]:
