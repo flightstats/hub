@@ -60,7 +60,7 @@ class WebsiteTasks(TaskSet):
         try:
             groupCallbacks[self.channel]["lock"].acquire()
             groupCallbacks[self.channel]["data"].append(href)
-            print "wrote " + href
+            print "wrote " + href + " data " + str(groupCallbacks[self.channel]["data"])
         finally:
             groupCallbacks[self.channel]["lock"].release()
         return href
