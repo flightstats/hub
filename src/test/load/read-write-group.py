@@ -146,19 +146,22 @@ class WebsiteTasks(TaskSet):
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
         if request.method == 'POST':
-            uri = request.get_json()['uris'][0]
-            groupCallbacks[channel]["lock"].acquire()
+            incoming_uri = request.get_json()['uris'][0]
+            if channel not in groupCallbacks:
+                print "unexpected incoming uri " + str(incoming_uri)
+                return "ok"
             try:
-                channel_callback = groupCallbacks[channel]["data"]
-                compare_value = channel_callback[0]
-                if compare_value == uri:
-                    channel_callback.pop(0)
+                groupCallbacks[channel]["lock"].acquire()
+                first_sent_uri = groupCallbacks[channel]["data"][0]
+                if first_sent_uri == incoming_uri:
+                    (groupCallbacks[channel]["data"]).pop(0)
                     events.request_success.fire(request_type="group", name="callback", response_time=1,
                                                 response_length=1)
                 else:
-                    print "item in the wrong order " + str(uri) + " " + str(compare_value)
+                    print "item in the wrong order " + str(incoming_uri) + " " + str(first_sent_uri)
                     events.request_failure.fire(request_type="group", name="callback", response_time=1
                                                 , exception=-1)
+                    (groupCallbacks[channel]["data"]).remove(incoming_uri)
             finally:
                 groupCallbacks[channel]["lock"].release()
 
