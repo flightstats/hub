@@ -3,14 +3,21 @@
 import json
 import string
 import random
-
 import time
-from locust import HttpLocust, TaskSet, task, events
+import threading
+import socket
+
+from locust import HttpLocust, TaskSet, task, events, web
+from flask import request, jsonify
 
 
 # Usage:
-# locust -f read-write.py -H http://hub-v2.svc.dev
-# nohup locust -f read-write.py -H http://hub-v2.svc.dev &
+# locust -f read-write-group.py -H http://localhost:9080
+# nohup locust -f read-write-group.py -H http://hub-v2.svc.dev &
+
+groupCallbacks = {}
+groupConfig = {}
+
 
 class WebsiteTasks(TaskSet):
     channelNum = 0
@@ -25,8 +32,20 @@ class WebsiteTasks(TaskSet):
         payload = {"name": self.channel, "ttlDays": "100"}
         self.client.post("/channel",
                          data=json.dumps(payload),
-                         headers={"Content-Type": "application/json"}
-        )
+                         headers={"Content-Type": "application/json"},
+                         name="channel")
+        group_name = "/group/locust_" + self.channel
+        self.client.delete(group_name, name="group")
+        groupCallbacks[self.channel] = {"data": [], "lock": threading.Lock()}
+        group = {
+            "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
+            "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
+            "parallelCalls": 1
+        }
+        self.client.put(group_name,
+                        data=json.dumps(group),
+                        headers={"Content-Type": "application/json"},
+                        name="group")
 
     def write(self):
         payload = {"name": self.payload, "count": self.count}
@@ -37,7 +56,13 @@ class WebsiteTasks(TaskSet):
 
         links = postResponse.json()
         self.count += 1
-        return links['_links']['self']['href']
+        href = links['_links']['self']['href']
+        try:
+            groupCallbacks[self.channel]["lock"].acquire()
+            groupCallbacks[self.channel]["data"].append(href)
+        finally:
+            groupCallbacks[self.channel]["lock"].release()
+        return href
 
     def read(self, uri):
         with self.client.get(uri, catch_response=True, name="get_payload") as postResponse:
@@ -116,7 +141,46 @@ class WebsiteTasks(TaskSet):
     def payload_generator(self, size, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for x in range(size))
 
+    @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
+    def callback(channel):
+        if request.method == 'POST':
+            incoming_json = request.get_json()
+            incoming_uri = incoming_json['uris'][0]
+            if channel not in groupCallbacks:
+                print "incoming uri before locust tests started " + str(incoming_uri)
+                return "ok"
+            try:
+                groupCallbacks[channel]["lock"].acquire()
+                print "incoming " + str(incoming_uri) + " - " + str(request.headers['post-id'])
+                if groupCallbacks[channel]["data"][0] == incoming_uri:
+                    (groupCallbacks[channel]["data"]).remove(incoming_uri)
+                    events.request_success.fire(request_type="group", name="callback", response_time=1,
+                                                response_length=1)
+                else:
+                    events.request_failure.fire(request_type="group", name="callback", response_time=1,
+                                                exception=-1)
+                    if incoming_uri in groupCallbacks[channel]["data"]:
+                        (groupCallbacks[channel]["data"]).remove(incoming_uri)
+                        print "item in the wrong order " + str(incoming_uri) + " data " + \
+                              str(groupCallbacks[channel]["data"])
+                    else:
+                        print "missing item " + str(incoming_uri)
+            finally:
+                groupCallbacks[channel]["lock"].release()
+
+            return "ok"
+        else:
+            return jsonify(items=groupCallbacks[channel]["data"])
+
+
 class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
     min_wait = 400
     max_wait = 900
+
+    def __init__(self):
+        super(WebsiteUser, self).__init__()
+        groupConfig['host'] = self.host
+        groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
+        print groupConfig
+

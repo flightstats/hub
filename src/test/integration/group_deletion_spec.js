@@ -25,24 +25,32 @@ var groupConfig = {
  * 7 - post item - should only see new item
  */
 describe(testName, function () {
-    var items = [];
+    var callbackItems = [];
+    var postedItems = [];
 
     utils.createChannel(channelName);
 
     utils.putGroup(groupName, groupConfig);
 
+    it('waits', function (done) {
+        setTimeout(function () {
+            done();
+        }, 500);
+    });
+
     it('runs callback server', function () {
         utils.startServer(port, function (string) {
-            items.push(string);
+            callbackItems.push(string);
         });
 
-        runs(function () {
-            utils.postItem(channelResource);
-        });
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                postedItems.push(value.body._links.self.href);
+            });
 
         waitsFor(function () {
-            return items.length == 1;
-        }, 12000);
+            return callbackItems.length == 1;
+        }, 3333);
 
     });
 
@@ -52,21 +60,28 @@ describe(testName, function () {
 
     utils.putGroup(groupName, groupConfig);
 
+    it('waits', function (done) {
+        setTimeout(function () {
+            done();
+        }, 500);
+    });
+
     it('waits for item group ' + groupName + ' channel ' + channelName, function () {
-        runs(function () {
-            utils.postItem(channelResource);
-        });
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                postedItems.push(value.body._links.self.href);
+            });
 
         waitsFor(function () {
-            return items.length == 2;
-        }, 5000);
+            return callbackItems.length == 2;
+        }, 4949);
 
     });
 
     utils.closeServer(function () {
-        expect(JSON.parse(items[0]).uris[0]).toBe(channelResource + '/1000');
-        expect(JSON.parse(items[1]).uris[0]).toBe(channelResource + '/1002');
-        expect(items.length).toBe(2);
+        expect(callbackItems.length).toBe(2);
+        expect(JSON.parse(callbackItems[0]).uris[0]).toBe(postedItems[0]);
+        expect(JSON.parse(callbackItems[1]).uris[0]).toBe(postedItems[1]);
     });
 });
 

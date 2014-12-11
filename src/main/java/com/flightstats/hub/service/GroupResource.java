@@ -54,8 +54,9 @@ public class GroupResource {
         for (GroupStatus groupStat : groupStatus) {
             ObjectNode object = status.addObject();
             object.put("name", groupStat.getName());
-            object.put("lastCompleted", groupStat.getLastCompleted());
-            object.put("channelLatest", groupStat.getChannelLatest());
+            object.put("lastCompleted", groupStat.getLastCompleted().toString());
+            //todo - gfm - 12/10/14 - fix this
+            //object.put("channelLatest", groupStat.getChannelLatest().toString());
         }
         return Response.ok(root).build();
     }

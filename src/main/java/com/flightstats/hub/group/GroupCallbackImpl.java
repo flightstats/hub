@@ -3,6 +3,7 @@ package com.flightstats.hub.group;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -34,20 +35,6 @@ public class GroupCallbackImpl implements GroupCallback {
         this.groupService = groupService;
         this.callerProvider = callerProvider;
         HubServices.registerPreStop(new GroupCallbackService());
-    }
-
-    private class GroupCallbackService extends AbstractIdleService {
-
-        @Override
-        protected void startUp() throws Exception {
-            start();
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-            stop(new HashSet<>(activeGroups.keySet()), false);
-        }
-
     }
 
     private void start() {
@@ -103,6 +90,7 @@ public class GroupCallbackImpl implements GroupCallback {
     }
 
     private void startGroup(Group group) {
+        logger.trace("starting group {}", group);
         GroupCaller groupCaller = callerProvider.get();
         groupCaller.tryLeadership(group);
         activeGroups.put(group.getName(), groupCaller);
@@ -133,11 +121,25 @@ public class GroupCallbackImpl implements GroupCallback {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
 
-    public long getLastCompleted(Group group) {
+    public ContentKey getLastCompleted(Group group) {
         GroupCaller groupCaller = activeGroups.get(group.getName());
         if (groupCaller != null) {
             return groupCaller.getLastCompleted();
         }
-        return 0;
+        return ContentKey.NONE;
+    }
+
+    private class GroupCallbackService extends AbstractIdleService {
+
+        @Override
+        protected void startUp() throws Exception {
+            start();
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            stop(new HashSet<>(activeGroups.keySet()), false);
+        }
+
     }
 }
