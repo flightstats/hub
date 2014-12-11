@@ -151,7 +151,8 @@ class WebsiteTasks(TaskSet):
                 return "ok"
             try:
                 groupCallbacks[channel]["lock"].acquire()
-                print "incoming " + str(incoming_uri) + " - " + str(incoming_json['id'])
+                print "incoming " + str(incoming_uri) + " - " + str(incoming_json['id'] +
+                                                                    " " + str(request.headers['post-id']))
                 if groupCallbacks[channel]["data"][0] == incoming_uri:
                     (groupCallbacks[channel]["data"]).remove(incoming_uri)
                     events.request_success.fire(request_type="group", name="callback", response_time=1,
