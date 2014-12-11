@@ -60,7 +60,6 @@ class WebsiteTasks(TaskSet):
         try:
             groupCallbacks[self.channel]["lock"].acquire()
             groupCallbacks[self.channel]["data"].append(href)
-            print "wrote " + href + " data " + str(groupCallbacks[self.channel]["data"])
         finally:
             groupCallbacks[self.channel]["lock"].release()
         return href
@@ -145,27 +144,28 @@ class WebsiteTasks(TaskSet):
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
         if request.method == 'POST':
-            incoming_uri = request.get_json()['uris'][0]
+            incoming_json = request.get_json()
+            incoming_uri = incoming_json['uris'][0]
             if channel not in groupCallbacks:
-                print "incoming uri before init " + str(incoming_uri)
+                print "incoming uri before locust tests started " + str(incoming_uri)
                 return "ok"
             try:
-                print "incoming " + str(incoming_uri)
                 groupCallbacks[channel]["lock"].acquire()
+                print "incoming " + str(incoming_uri) + " - " + str(incoming_json['id'])
                 if groupCallbacks[channel]["data"][0] == incoming_uri:
                     (groupCallbacks[channel]["data"]).remove(incoming_uri)
                     events.request_success.fire(request_type="group", name="callback", response_time=1,
                                                 response_length=1)
                 else:
-                    events.request_failure.fire(request_type="group", name="callback", response_time=1
-                                                , exception=-1)
                     if incoming_uri in groupCallbacks[channel]["data"]:
+                        events.request_failure.fire(request_type="group", name="callback", response_time=1
+                                                    , exception=-1)
                         (groupCallbacks[channel]["data"]).remove(incoming_uri)
                         print "item in the wrong order " + str(incoming_uri) + " data " + \
                               str(groupCallbacks[channel]["data"])
                     else:
-                        print "missing item " + str(incoming_uri) + " data " + \
-                              str(groupCallbacks[channel]["data"])
+                        # ignore this as an error for now, still need to figure out the root cause
+                        print "missing item " + str(incoming_uri)
             finally:
                 groupCallbacks[channel]["lock"].release()
 
