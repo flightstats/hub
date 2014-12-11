@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
+import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -154,6 +155,7 @@ public class GroupCaller implements Leader {
     private ObjectNode createResponse(ContentKey key) {
         ObjectNode response = mapper.createObjectNode();
         response.put("name", group.getName());
+        response.put("id", UUID.randomUUID().toString());
         ArrayNode uris = response.putArray("uris");
         uris.add(group.getChannelUrl() + "/" + key.toUrl());
         return response;
