@@ -3,6 +3,7 @@ package com.flightstats.hub.model;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import lombok.EqualsAndHashCode;
+import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 @EqualsAndHashCode
 public class ContentKey implements Comparable<ContentKey> {
+    public static final ContentKey NONE = new ContentKey(new DateTime(1, DateTimeZone.UTC), "none");
     private final static Logger logger = LoggerFactory.getLogger(ContentKey.class);
     private final DateTime time;
     private final String hash;
@@ -35,6 +37,10 @@ public class ContentKey implements Comparable<ContentKey> {
             logger.info("unable to parse " + key + " " + e.getMessage());
             return Optional.absent();
         }
+    }
+
+    public static ContentKey fromBytes(byte[] bytes) {
+        return fromUrl(new String(bytes, Charsets.UTF_8)).get();
     }
 
     public String toUrl() {
@@ -65,5 +71,9 @@ public class ContentKey implements Comparable<ContentKey> {
             diff = hash.compareTo(other.hash);
         }
         return diff;
+    }
+
+    public byte[] getBytes() {
+        return toUrl().getBytes(Charsets.UTF_8);
     }
 }

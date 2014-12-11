@@ -35,6 +35,7 @@ public class SpokeContentDao implements ContentDao {
         try {
             byte[] payload = SpokeMarshaller.toBytes(content);
             ContentKey key = new ContentKey();
+            logger.trace("writing key {} to channel {}", key, channelName);
             content.setContentKey(key);
             String path = getPath(channelName, key);
             content.getTraces().add(new Trace("SpokeContentDao.marshalled"));
@@ -69,7 +70,6 @@ public class SpokeContentDao implements ContentDao {
     public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
         String timePath = unit.format(startTime);
         try {
-            // TODO bc 11/17/14: limit this to day, hour, minute, second, millis
             return spokeStore.readTimeBucket(channelName, timePath);
         } catch (Exception e) {
             logger.warn("what happened? " + channelName + " " + startTime + " " + unit, e);
