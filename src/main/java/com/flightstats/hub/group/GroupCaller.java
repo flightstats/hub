@@ -187,6 +187,7 @@ public class GroupCaller implements Leader {
                 logger.debug("calling {} {}", group.getCallbackUrl(), response);
                 return client.resource(group.getCallbackUrl())
                         .type(MediaType.APPLICATION_JSON_TYPE)
+                        .header("post-id", UUID.randomUUID().toString())
                         .post(ClientResponse.class, response.toString());
             }
         });
