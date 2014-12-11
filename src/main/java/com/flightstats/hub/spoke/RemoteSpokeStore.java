@@ -9,6 +9,7 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -128,6 +129,8 @@ public class RemoteSpokeStore {
                                 }
                             }
                         }
+                    } catch (ClientHandlerException e) {
+                        logger.warn("ClientHandlerException " + e.getMessage());
                     } catch (Exception e) {
                         logger.warn("unable to handle " + server + " " + path, e);
                     } finally {

@@ -85,6 +85,7 @@ public class SpokeResource {
     @Path("/time/{path:.+}")
     @GET
     public Response getTimeBucket(@PathParam("path") String path) {
+        logger.trace("time {}", path);
         try {
             String read = spokeStore.readKeysInBucket(path);
             if (read == null) {
