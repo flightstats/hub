@@ -285,11 +285,23 @@ public class GroupCaller implements Leader {
                     @Override
                     public boolean apply(@Nullable ClientResponse response) {
                         if (response == null) return true;
-                        boolean failure = response.getStatus() != 200;
-                        if (failure) {
-                            logger.info("unable to send to " + response);
+                        try {
+                            boolean failure = response.getStatus() != 200;
+                            if (failure) {
+                                logger.info("unable to send to " + response);
+                            }
+                            return failure;
+                        } finally {
+                            close(response);
                         }
-                        return failure;
+                    }
+
+                    private void close(ClientResponse response) {
+                        try {
+                            response.close();
+                        } catch (ClientHandlerException e) {
+                            logger.info("exception closing response", e);
+                        }
                     }
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, 1, TimeUnit.MINUTES))
