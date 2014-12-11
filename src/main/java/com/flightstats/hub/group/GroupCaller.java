@@ -155,7 +155,6 @@ public class GroupCaller implements Leader {
     private ObjectNode createResponse(ContentKey key) {
         ObjectNode response = mapper.createObjectNode();
         response.put("name", group.getName());
-        response.put("id", UUID.randomUUID().toString());
         ArrayNode uris = response.putArray("uris");
         uris.add(group.getChannelUrl() + "/" + key.toUrl());
         return response;
@@ -184,10 +183,11 @@ public class GroupCaller implements Leader {
                     logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), response);
                     return null;
                 }
-                logger.debug("calling {} {}", group.getCallbackUrl(), response);
+                String postId = UUID.randomUUID().toString();
+                logger.debug("calling {} {} {}", group.getCallbackUrl(), response, postId);
                 return client.resource(group.getCallbackUrl())
                         .type(MediaType.APPLICATION_JSON_TYPE)
-                        .header("post-id", UUID.randomUUID().toString())
+                        .header("post-id", postId)
                         .post(ClientResponse.class, response.toString());
             }
         });
