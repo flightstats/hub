@@ -151,21 +151,19 @@ class WebsiteTasks(TaskSet):
                 return "ok"
             try:
                 groupCallbacks[channel]["lock"].acquire()
-                print "incoming " + str(incoming_uri) + " - " + str(incoming_json['id'] +
-                                                                    " " + str(request.headers['post-id']))
+                print "incoming " + str(incoming_uri) + " - " + str(request.headers['post-id'])
                 if groupCallbacks[channel]["data"][0] == incoming_uri:
                     (groupCallbacks[channel]["data"]).remove(incoming_uri)
                     events.request_success.fire(request_type="group", name="callback", response_time=1,
                                                 response_length=1)
                 else:
+                    events.request_failure.fire(request_type="group", name="callback", response_time=1,
+                                                exception=-1)
                     if incoming_uri in groupCallbacks[channel]["data"]:
-                        events.request_failure.fire(request_type="group", name="callback", response_time=1
-                                                    , exception=-1)
                         (groupCallbacks[channel]["data"]).remove(incoming_uri)
                         print "item in the wrong order " + str(incoming_uri) + " data " + \
                               str(groupCallbacks[channel]["data"])
                     else:
-                        # ignore this as an error for now, still need to figure out the root cause
                         print "missing item " + str(incoming_uri)
             finally:
                 groupCallbacks[channel]["lock"].release()
@@ -173,12 +171,6 @@ class WebsiteTasks(TaskSet):
             return "ok"
         else:
             return jsonify(items=groupCallbacks[channel]["data"])
-
-#    @web.app.route("/callbacks", methods=['GET'])
-#    def callbacks():
-#        return jsonify(groups=groupCallbacks)
-
-        # how do we tie into Flask's reset?
 
 
 class WebsiteUser(HttpLocust):
