@@ -50,7 +50,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return callbackItems.length == 1;
-        }, 3333);
+        }, 8333);
 
     });
 
@@ -74,7 +74,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return callbackItems.length == 2;
-        }, 4949);
+        }, 8444);
 
     });
 
