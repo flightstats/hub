@@ -68,6 +68,7 @@ public class RemoteSpokeStore {
                         } else {
                             logger.info("write failed: server {} path {} response {}", server, path, response);
                         }
+                        response.close();
                     } catch (Exception e) {
                         content.getTraces().add(new Trace(server, e.getMessage()));
                         logger.warn("write failed: " + server + " " + path, e);
