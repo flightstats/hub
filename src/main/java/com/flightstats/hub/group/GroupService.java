@@ -56,22 +56,26 @@ public class GroupService {
         return dynamoGroupDao.getGroups();
     }
 
-    public List<GroupStatus> getGroupStatus() {
+    public List<GroupStatus> getGroupStatuses() {
         Iterable<Group> groups = getGroups();
-        List<GroupStatus> groupStatus = new ArrayList<>();
+        List<GroupStatus> groupStatuses = new ArrayList<>();
         for (Group group : groups) {
-            GroupStatus.GroupStatusBuilder builder = GroupStatus.builder().group(group);
-            //todo - gfm - 12/10/14 - fix this
+            groupStatuses.add(getGroupStatus(group));
+        }
+        return groupStatuses;
+    }
+
+    public GroupStatus getGroupStatus(Group group) {
+        GroupStatus.GroupStatusBuilder builder = GroupStatus.builder().group(group);
+        //todo - gfm - 12/10/14 - fix this
             /*
             String channelName = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
             Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channelName);
             if (lastUpdatedKey.isPresent()) {
                 builder.channelLatest(lastUpdatedKey.get().getSequence());
             }*/
-            builder.lastCompleted(groupCallback.getLastCompleted(group));
-            groupStatus.add(builder.build());
-        }
-        return groupStatus;
+        builder.lastCompleted(groupCallback.getLastCompleted(group));
+        return builder.build();
     }
 
     public void delete(String name) {
