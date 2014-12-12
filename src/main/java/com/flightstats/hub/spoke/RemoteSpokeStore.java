@@ -11,7 +11,12 @@ import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.client.apache4.ApacheHttpClient4;
+import com.sun.jersey.client.apache4.ApacheHttpClient4Handler;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +43,13 @@ public class RemoteSpokeStore {
     }
 
     private static Client create() {
-        Client client = Client.create();
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+        connectionManager.setMaxTotal(300);
+        connectionManager.setDefaultMaxPerRoute(100);
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .setConnectionManager(connectionManager)
+                .build();
+        ApacheHttpClient4 client = new ApacheHttpClient4(new ApacheHttpClient4Handler(httpClient, null, false));
         client.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(5));
         client.setReadTimeout((int) TimeUnit.SECONDS.toMillis(5));
         return client;
@@ -144,7 +155,7 @@ public class RemoteSpokeStore {
         return results;
     }
 
-    public String readAdjacent(String path, boolean readNext) throws InterruptedException{
+    public String readAdjacent(String path, boolean readNext) throws InterruptedException {
         // TODO bc 11/18/14: use lambdas
         // read from as many servers as we can
         // put results into a sorted set
@@ -162,16 +173,17 @@ public class RemoteSpokeStore {
 
         for (final String server : servers) {
             // keep track of the futures that get created so we can cancel them if necessary
-            futures.add(compService.submit(new Callable<String>(){
-                @Override public String call(){
-                    ClientResponse response = client.resource("http://" + server + "/spoke/next/" + path )
+            futures.add(compService.submit(new Callable<String>() {
+                @Override
+                public String call() {
+                    ClientResponse response = client.resource("http://" + server + "/spoke/next/" + path)
                             .get(ClientResponse.class);
                     logger.trace("server {} path {} response {}", server, path, response);
 
                     if (response.getStatus() == 200) {
                         response.bufferEntity();
                         return response.getEntity(String.class);
-                        }
+                    }
                     logger.trace("server {} path {} response {}", server, path, response);
                     return null; // TODO bc 11/17/14: should this be an exception?
                 }
@@ -181,27 +193,26 @@ public class RemoteSpokeStore {
         int received = 0;
         boolean errors = false;
 
-        while(received < serverCount && !errors) {
+        while (received < serverCount && !errors) {
             Future<String> resultFuture = compService.take(); //blocks if none available
             try {
                 String key = resultFuture.get();
-                if(key != null) keySet.add(key);
-                received ++;
-            }
-            catch(Exception e) {
+                if (key != null) keySet.add(key);
+                received++;
+            } catch (Exception e) {
                 //log
                 errors = true;
             }
         }
-        if(readNext) return keySet.first();
+        if (readNext) return keySet.first();
         return keySet.last();
     }
 
-    public String readNext(String path) throws InterruptedException{
+    public String readNext(String path) throws InterruptedException {
         return readAdjacent(path, true);
     }
 
-    public String readPrevious(String path) throws InterruptedException{
+    public String readPrevious(String path) throws InterruptedException {
         return readAdjacent(path, false);
     }
 
