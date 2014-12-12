@@ -1,7 +1,8 @@
 package com.flightstats.hub.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.util.TimeUtil;
-import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 public class ChannelTimeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
     private final UriInfo uriInfo;
 
     @Inject
@@ -34,19 +36,32 @@ public class ChannelTimeResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDefault() {
-        Linked.Builder<?> links = Linked.justLinks();
-        links.withLink("self", uriInfo.getRequestUri());
-        links.withLink("second", uriInfo.getRequestUri() + "/second");
-        links.withLink("minute", uriInfo.getRequestUri() + "/minute");
-        links.withLink("hour", uriInfo.getRequestUri() + "/hour");
-        links.withLink("day", uriInfo.getRequestUri() + "/day");
-        return Response.ok(links.build()).build();
+        ObjectNode root = mapper.createObjectNode();
+        ObjectNode links = addSelfLink(root);
+        addNode(links, "second", "/second", "/{year}/{month}/{day}/{hour}/{minute}/{second}");
+        addNode(links, "minute", "/minute", "/{year}/{month}/{day}/{hour}/{minute}");
+        addNode(links, "hour", "/hour", "/{year}/{month}/{day}/{hour}");
+        addNode(links, "day", "/day", "/{year}/{month}/{day}");
+        return Response.ok(root).build();
+    }
+
+    private void addNode(ObjectNode links, String name, String href, String template) {
+        ObjectNode second = links.putObject(name);
+        second.put("href", uriInfo.getRequestUri() + href);
+        second.put("template", uriInfo.getRequestUri() + template);
+    }
+
+    private ObjectNode addSelfLink(ObjectNode root) {
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
+        self.put("href", uriInfo.getRequestUri().toString());
+        return links;
     }
 
     @Path("/second")
     @GET
     public Response getSecond() {
-        return getResponse(TimeUtil.secondsNow(), "time/second");
+        return getResponse(TimeUtil.seconds(TimeUtil.stableOrdering()), "time/second");
     }
 
     @Path("/minute")
