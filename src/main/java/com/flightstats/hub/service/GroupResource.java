@@ -38,9 +38,7 @@ public class GroupResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroups() {
         ObjectNode root = mapper.createObjectNode();
-        ObjectNode links = root.putObject("_links");
-        ObjectNode self = links.putObject("self");
-        self.put("href", uriInfo.getRequestUri().toString());
+        ObjectNode links = addSelfLink(root);
         ArrayNode groupsNode = links.putArray("groups");
         Iterable<Group> groups = groupService.getGroups();
         for (Group group : groups) {
@@ -50,7 +48,7 @@ public class GroupResource {
         }
         //todo - gfm - 6/22/14 - add inFlight list to status
         ArrayNode status = root.putArray("status");
-        List<GroupStatus> groupStatus = groupService.getGroupStatus();
+        List<GroupStatus> groupStatus = groupService.getGroupStatuses();
         for (GroupStatus groupStat : groupStatus) {
             ObjectNode object = status.addObject();
             object.put("name", groupStat.getName());
@@ -59,6 +57,13 @@ public class GroupResource {
             //object.put("channelLatest", groupStat.getChannelLatest().toString());
         }
         return Response.ok(root).build();
+    }
+
+    private ObjectNode addSelfLink(ObjectNode root) {
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
+        self.put("href", uriInfo.getRequestUri().toString());
+        return links;
     }
 
     @Path("/{name}")
@@ -70,7 +75,16 @@ public class GroupResource {
         if (!optionalGroup.isPresent()) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return Response.ok(getLinkedGroup(optionalGroup.get())).build();
+        Group group = optionalGroup.get();
+        GroupStatus status = groupService.getGroupStatus(group);
+        ObjectNode root = mapper.createObjectNode();
+        addSelfLink(root);
+        root.put("name", group.getName());
+        root.put("callbackUrl", group.getCallbackUrl());
+        root.put("channelUrl", group.getChannelUrl());
+        root.put("parallelCalls", group.getParallelCalls());
+        root.put("lastCompleted", status.getLastCompleted().toString());
+        return Response.ok(root).build();
     }
 
     private Linked<Group> getLinkedGroup(Group group) {
