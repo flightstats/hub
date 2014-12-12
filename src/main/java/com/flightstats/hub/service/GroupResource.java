@@ -52,7 +52,7 @@ public class GroupResource {
         for (GroupStatus groupStat : groupStatus) {
             ObjectNode object = status.addObject();
             object.put("name", groupStat.getName());
-            object.put("lastCompleted", groupStat.getLastCompleted().toString());
+            object.put("lastCompleted", groupStat.getGroup().getChannelUrl() + "/" + groupStat.getLastCompleted().toString());
             //todo - gfm - 12/10/14 - fix this
             //object.put("channelLatest", groupStat.getChannelLatest().toString());
         }
@@ -83,7 +83,7 @@ public class GroupResource {
         root.put("callbackUrl", group.getCallbackUrl());
         root.put("channelUrl", group.getChannelUrl());
         root.put("parallelCalls", group.getParallelCalls());
-        root.put("lastCompleted", status.getLastCompleted().toString());
+        root.put("lastCompleted", group.getChannelUrl() + "/" + status.getLastCompleted().toString());
         return Response.ok(root).build();
     }
 
