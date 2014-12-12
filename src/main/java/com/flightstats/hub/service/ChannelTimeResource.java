@@ -2,9 +2,9 @@ package com.flightstats.hub.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +16,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
+import static com.flightstats.hub.util.TimeUtil.*;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 /**
@@ -38,17 +39,20 @@ public class ChannelTimeResource {
     public Response getDefault() {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = addSelfLink(root);
-        addNode(links, "second", "/second", "/{year}/{month}/{day}/{hour}/{minute}/{second}");
-        addNode(links, "minute", "/minute", "/{year}/{month}/{day}/{hour}/{minute}");
-        addNode(links, "hour", "/hour", "/{year}/{month}/{day}/{hour}");
-        addNode(links, "day", "/day", "/{year}/{month}/{day}");
+        DateTime stable = stable();
+        addNode(links, "second", "/{year}/{month}/{day}/{hour}/{minute}/{second}", seconds(stable));
+        addNode(links, "minute", "/{year}/{month}/{day}/{hour}/{minute}", minutes(stable));
+        addNode(links, "hour", "/{year}/{month}/{day}/{hour}", hours(stable));
+        addNode(links, "day", "/{year}/{month}/{day}", days(stable));
         return Response.ok(root).build();
     }
 
-    private void addNode(ObjectNode links, String name, String href, String template) {
+    private void addNode(ObjectNode links, String name, String template, String time) {
         ObjectNode second = links.putObject(name);
-        second.put("href", uriInfo.getRequestUri() + href);
+        String requestUri = StringUtils.removeEnd(uriInfo.getRequestUri().toString(), "time");
+        second.put("href", requestUri + time);
         second.put("template", uriInfo.getRequestUri() + template);
+        second.put("redirect", uriInfo.getRequestUri() + "/" + name);
     }
 
     private ObjectNode addSelfLink(ObjectNode root) {
@@ -61,25 +65,25 @@ public class ChannelTimeResource {
     @Path("/second")
     @GET
     public Response getSecond() {
-        return getResponse(TimeUtil.seconds(TimeUtil.stableOrdering()), "time/second");
+        return getResponse(seconds(stable()), "time/second");
     }
 
     @Path("/minute")
     @GET
     public Response getMinute() {
-        return getResponse(TimeUtil.minutesNow(), "time/minute");
+        return getResponse(minutes(stable()), "time/minute");
     }
 
     @Path("/hour")
     @GET
     public Response getHour() {
-        return getResponse(TimeUtil.hoursNow(), "time/hour");
+        return getResponse(hours(stable()), "time/hour");
     }
 
     @Path("/day")
     @GET
     public Response getDay() {
-        return getResponse(TimeUtil.daysNow(), "time/day");
+        return getResponse(days(stable()), "time/day");
     }
 
     private Response getResponse(String timePath, String endString) {
