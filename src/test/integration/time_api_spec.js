@@ -16,30 +16,60 @@ var testName = __filename;
 describe(testName, function () {
     utils.createChannel(channelName);
 
-    it('get time links', function (done) {
+    function verifyLinks(body, url, time, params) {
+        params = params || '';
+        expect(body._links.self.href).toBe(url + params);
+        expect(body._links.second.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH/mm/ss') + params);
+        expect(body._links.second.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}/{second}{?stable}');
+        expect(body._links.second.redirect).toBe(url + '/second' + params);
+
+        expect(body._links.minute.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH/mm') + params);
+        expect(body._links.minute.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}{?stable}');
+        expect(body._links.minute.redirect).toBe(url + '/minute' + params);
+
+        expect(body._links.hour.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH') + params);
+        expect(body._links.hour.template).toBe(url + '/{year}/{month}/{day}/{hour}{?stable}');
+        expect(body._links.hour.redirect).toBe(url + '/hour' + params);
+
+        expect(body._links.day.href).toBe(channelResource + time.format('/YYYY/MM/DD') + params);
+        expect(body._links.day.template).toBe(url + '/{year}/{month}/{day}{?stable}');
+        expect(body._links.day.redirect).toBe(url + '/day' + params);
+    }
+
+    it('gets stable time links', function (done) {
         var url = channelResource + '/time';
         request.get({url : url, json : true},
             function (err, response, body) {
-
                 var time = moment().utc().subtract(stableOffset, 'seconds');
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                expect(body._links.self.href).toBe(url);
-                expect(body._links.second.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH/mm/ss'));
-                expect(body._links.second.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}/{second}');
-                expect(body._links.second.redirect).toBe(url + '/second');
+                verifyLinks(body, url, time);
+                done();
+            })
+    });
 
-                expect(body._links.minute.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH/mm'));
-                expect(body._links.minute.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}');
-                expect(body._links.minute.redirect).toBe(url + '/minute');
+    it('gets stable param time links', function (done) {
+        var url = channelResource + '/time';
+        var params = '?stable=true';
+        request.get({url : url + params, json : true},
+            function (err, response, body) {
+                var time = moment().utc().subtract(stableOffset, 'seconds');
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                verifyLinks(body, url, time, params);
+                done();
+            })
+    });
 
-                expect(body._links.hour.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH'));
-                expect(body._links.hour.template).toBe(url + '/{year}/{month}/{day}/{hour}');
-                expect(body._links.hour.redirect).toBe(url + '/hour');
-
-                expect(body._links.day.href).toBe(channelResource + time.format('/YYYY/MM/DD'));
-                expect(body._links.day.redirect).toBe(url + '/day');
-                expect(body._links.day.template).toBe(url + '/{year}/{month}/{day}');
+    it('gets unstable time links', function (done) {
+        var url = channelResource + '/time';
+        var params = '?stable=false';
+        request.get({url : url + params, json : true},
+            function (err, response, body) {
+                var time = moment().utc();
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                verifyLinks(body, url, time, params);
                 done();
             })
     });
