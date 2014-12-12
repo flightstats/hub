@@ -23,12 +23,8 @@ public class TimeUtil {
         return new DateTime(DateTimeZone.UTC);
     }
 
-    public static DateTime stableOrdering() {
+    public static DateTime stable() {
         return now().minusSeconds(stableSeconds).withMillisOfSecond(0);
-    }
-
-    public static String secondsNow() {
-        return seconds(now());
     }
 
     public static String seconds(DateTime dateTime) {
@@ -43,24 +39,12 @@ public class TimeUtil {
         return millisFormatter.parseDateTime(string);
     }
 
-    public static String minutesNow() {
-        return minutes(now());
-    }
-
     public static String minutes(DateTime dateTime) {
         return dateTime.toString(minutesFormatter);
     }
 
-    public static String hoursNow() {
-        return hours(now());
-    }
-
     public static String hours(DateTime dateTime) {
         return dateTime.toString(hoursFormatter);
-    }
-
-    public static String daysNow() {
-        return days(now());
     }
 
     public static String days(DateTime dateTime) {
