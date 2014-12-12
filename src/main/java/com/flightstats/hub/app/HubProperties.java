@@ -7,7 +7,7 @@ import java.util.Properties;
 
 public class HubProperties {
     private final static Logger logger = LoggerFactory.getLogger(HubProperties.class);
-    private static Properties properties;
+    private static Properties properties = new Properties();
 
     public static void setProperties(Properties properties) {
         logger.info("setting properties {}", properties);
