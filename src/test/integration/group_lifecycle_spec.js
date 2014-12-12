@@ -23,14 +23,14 @@ var groupConfig = {
  * 5 - verify that the records are returned within delta time
  */
 describe(testName, function () {
+    var callbackItems = [];
+    var postedItems = [];
+
     utils.createChannel(channelName);
 
     utils.putGroup(groupName, groupConfig);
 
     it('runs callback server', function () {
-        var callbackItems = [];
-        var postedItems = [];
-
         utils.startServer(port, function (string) {
             callbackItems.push(string);
         });
@@ -68,6 +68,27 @@ describe(testName, function () {
         }
 
     });
+
+    it('verifies lastCompleted', function (done) {
+        var groupResource = groupUrl + "/" + groupName;
+        request.get({url : groupResource,
+                headers : {"Content-Type" : "application/json"} },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parse = JSON.parse(body);
+                expect(parse._links.self.href).toBe(groupResource);
+                if (typeof groupConfig !== "undefined") {
+                    expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
+                    expect(parse.channelUrl).toBe(groupConfig.channelUrl);
+                    expect(parse.transactional).toBe(groupConfig.transactional);
+                    expect(parse.name).toBe(groupName);
+                    expect(parse.lastCompleted).toBe(postedItems[3]);
+                }
+                done();
+        });
+
+    })
 
 });
 
