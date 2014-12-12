@@ -58,7 +58,7 @@ public class RemoteSpokeStore {
                         ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
                                 .put(ClientResponse.class, payload);
                         long complete = System.currentTimeMillis();
-                        content.getTraces().add(new Trace(response));
+                        content.getTraces().add(new Trace(server, response.getEntity(String.class)));
                         if (response.getStatus() == 201) {
                             if (reported.compareAndSet(false, true)) {
                                 sender.send("heisenberg", complete - content.getContentKey().get().getMillis());
@@ -68,6 +68,7 @@ public class RemoteSpokeStore {
                         } else {
                             logger.info("write failed: server {} path {} response {}", server, path, response);
                         }
+                        response.close();
                     } catch (Exception e) {
                         content.getTraces().add(new Trace(server, e.getMessage()));
                         logger.warn("write failed: " + server + " " + path, e);
