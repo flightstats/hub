@@ -125,7 +125,7 @@ class WebsiteTasks(TaskSet):
             results = self.client.get(results['_links']['previous']['href'], name="time_second").json()
 
     def time_path(self, unit="second"):
-        return "/channel/" + self.channel + "/time/" + unit
+        return "/channel/" + self.channel + "/time/" + unit + "?stable=false"
 
     def next(self, time_unit):
         path = self.time_path(time_unit)
