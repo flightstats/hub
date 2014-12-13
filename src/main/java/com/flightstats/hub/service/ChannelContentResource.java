@@ -10,7 +10,6 @@ import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.TimeQuery;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.flightstats.hub.util.TimeUtil.Unit;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
@@ -72,10 +72,9 @@ public class ChannelContentResource {
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
-                .unit(TimeUtil.Unit.DAYS);
+                .unit(Unit.DAYS);
         Collection<ContentKey> keys = channelService.queryByTime(builder.build(), stable);
-        //todo - gfm - 12/12/14 - modify end time
-        return getResponse(channelName, TimeUtil.days(startTime.minusDays(1)), TimeUtil.days(startTime.plusDays(1)), keys);
+        return getResponse(channelName, startTime.minusDays(1), startTime.plusDays(1), Unit.DAYS, keys, stable);
     }
 
     @Path("/{month}/{day}/{hour}")
@@ -93,10 +92,9 @@ public class ChannelContentResource {
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
-                .unit(TimeUtil.Unit.HOURS);
+                .unit(Unit.HOURS);
         Collection<ContentKey> keys = channelService.queryByTime(builder.build(), stable);
-        //todo - gfm - 12/12/14 - modify end time
-        return getResponse(channelName, TimeUtil.hours(startTime.minusHours(1)), TimeUtil.hours(startTime.plusHours(1)), keys);
+        return getResponse(channelName, startTime.minusHours(1), startTime.plusHours(1), Unit.HOURS, keys, stable);
     }
 
     @Path("/{month}/{day}/{hour}/{minute}")
@@ -116,11 +114,10 @@ public class ChannelContentResource {
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
-                .unit(TimeUtil.Unit.MINUTES)
+                .unit(Unit.MINUTES)
                 .location(TimeQuery.Location.valueOf(location));
         Collection<ContentKey> keys = channelService.queryByTime(builder.build(), stable);
-        //todo - gfm - 12/12/14 - modify end time
-        return getResponse(channelName, TimeUtil.minutes(startTime.minusMinutes(1)), TimeUtil.minutes(startTime.plusMinutes(1)), keys);
+        return getResponse(channelName, startTime.minusMinutes(1), startTime.plusMinutes(1), Unit.MINUTES, keys, stable);
     }
 
     @Path("/{month}/{day}/{hour}/{minute}/{second}")
@@ -140,10 +137,9 @@ public class ChannelContentResource {
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
-                .unit(TimeUtil.Unit.SECONDS);
+                .unit(Unit.SECONDS);
         Collection<ContentKey> keys = channelService.queryByTime(builder.build(), stable);
-        //todo - gfm - 12/12/14 - modify end time
-        return getResponse(channelName, TimeUtil.seconds(startTime.minusSeconds(1)), TimeUtil.seconds(startTime.plusSeconds(1)), keys);
+        return getResponse(channelName, startTime.minusSeconds(1), startTime.plusSeconds(1), Unit.SECONDS, keys, stable);
     }
 
     @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}")
@@ -164,10 +160,31 @@ public class ChannelContentResource {
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
-                .unit(TimeUtil.Unit.MILLIS);
+                .unit(Unit.MILLIS);
         Collection<ContentKey> keys = channelService.queryByTime(builder.build(), stable);
-        //todo - gfm - 12/12/14 - modify end time
-        return getResponse(channelName, TimeUtil.millis(startTime.minusMillis(1)), TimeUtil.millis(startTime.plusMillis(1)), keys);
+        return getResponse(channelName, startTime.minusMillis(1), startTime.plusMillis(1), Unit.MILLIS , keys, stable);
+    }
+
+    private Response getResponse(String channelName,
+                                 DateTime previous,
+                                 DateTime next,
+                                 Unit unit,
+                                 Collection<ContentKey> keys,
+                                 boolean stable) {
+        ObjectNode root = mapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
+        self.put("href", uriInfo.getRequestUri().toString());
+        //todo - gfm - 12/12/14 - limit links to the future?
+        links.putObject("next").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(next) + "?stable=" + stable);
+        links.putObject("previous").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(previous) + "?stable=" + stable);
+        ArrayNode ids = links.putArray("uris");
+        URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
+        for (ContentKey key : keys) {
+            URI uri = linkBuilder.buildItemUri(key, channelUri);
+            ids.add(uri.toString());
+        }
+        return Response.ok(root).build();
     }
 
     private Response getResponse(String channelName, String previousString, String nextString, Collection<ContentKey> keys) {
@@ -177,11 +194,11 @@ public class ChannelContentResource {
         self.put("href", uriInfo.getRequestUri().toString());
         if (nextString != null) {
             ObjectNode next = links.putObject("next");
-            next.put("href", ChannelLinkBuilder.buildChannelString(channelName, uriInfo) + "/" + nextString);
+            next.put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + nextString);
         }
         if (null != previousString) {
             ObjectNode previous = links.putObject("previous");
-            previous.put("href", ChannelLinkBuilder.buildChannelString(channelName, uriInfo) + "/" + previousString);
+            previous.put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + previousString);
         }
         ArrayNode ids = links.putArray("uris");
         URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
@@ -266,7 +283,7 @@ public class ChannelContentResource {
             return Response.status(NOT_FOUND).build();
         }
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
-        String channelUri = ChannelLinkBuilder.buildChannelString(channelName, uriInfo);
+        String channelUri = uriInfo.getBaseUri() + "channel/" + channelName;
         ContentKey foundKey = keys.iterator().next();
         URI uri = URI.create(channelUri + "/" + foundKey.toUrl());
         builder.location(uri);
