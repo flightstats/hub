@@ -71,25 +71,25 @@ public class ChannelTimeResource {
     @Path("/second")
     @GET
     public Response getSecond(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return getResponse(seconds(getDateTime(stable)), "time/second");
+        return getResponse(seconds(getDateTime(stable)) + "?stable=" + stable, "time/second");
     }
 
     @Path("/minute")
     @GET
     public Response getMinute(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return getResponse(minutes(getDateTime(stable)), "time/minute");
+        return getResponse(minutes(getDateTime(stable)) + "?stable=" + stable, "time/minute");
     }
 
     @Path("/hour")
     @GET
     public Response getHour(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return getResponse(hours(getDateTime(stable)), "time/hour");
+        return getResponse(hours(getDateTime(stable)) + "?stable=" + stable, "time/hour");
     }
 
     @Path("/day")
     @GET
     public Response getDay(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return getResponse(days(getDateTime(stable)), "time/day");
+        return getResponse(days(getDateTime(stable)) + "?stable=" + stable, "time/day");
     }
 
     private DateTime getDateTime(boolean stable) {
