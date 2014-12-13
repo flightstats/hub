@@ -33,6 +33,8 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.flightstats.hub.util.TimeUtil.Unit;
+import static com.flightstats.hub.util.TimeUtil.now;
+import static com.flightstats.hub.util.TimeUtil.stable;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
@@ -175,8 +177,10 @@ public class ChannelContentResource {
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
-        //todo - gfm - 12/12/14 - limit links to the future?
-        links.putObject("next").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(next) + "?stable=" + stable);
+        DateTime current = stable ? stable() : now();
+        if (next.isBefore(current)) {
+            links.putObject("next").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(next) + "?stable=" + stable);
+        }
         links.putObject("previous").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(previous) + "?stable=" + stable);
         ArrayNode ids = links.putArray("uris");
         URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
