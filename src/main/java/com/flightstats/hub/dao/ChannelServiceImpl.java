@@ -7,8 +7,10 @@ import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.replication.ReplicationValidator;
 import com.flightstats.hub.service.ChannelValidator;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -104,8 +106,19 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
-        return contentService.queryByTime(timeQuery);
+    public Collection<ContentKey> queryByTime(TimeQuery timeQuery, boolean stable) {
+        DateTime stableTime = TimeUtil.stable();
+        Collection<ContentKey> contentKeys = contentService.queryByTime(timeQuery);
+        if (stable) {
+            ArrayList<ContentKey> remove = new ArrayList<>();
+            for (ContentKey contentKey : contentKeys) {
+                if (contentKey.getTime().isAfter(stableTime)) {
+                    remove.add(contentKey);
+                }
+            }
+            contentKeys.removeAll(remove);
+        }
+        return contentKeys;
     }
 
     @Override
