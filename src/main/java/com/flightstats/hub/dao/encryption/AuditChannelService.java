@@ -149,8 +149,8 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
-        return channelService.queryByTime(timeQuery);
+    public Collection<ContentKey> queryByTime(TimeQuery timeQuery, boolean stable) {
+        return channelService.queryByTime(timeQuery, stable);
     }
 
     @Override
