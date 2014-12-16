@@ -132,11 +132,6 @@ public class ChannelReplicator implements Leader {
             configuration = optionalConfig.get();
             channel.setConfiguration(configuration);
             logger.debug("configuration " + configuration);
-            if (!configuration.isSequence()) {
-                message = "Non-Sequence channels are not currently supported " + channel.getUrl();
-                logger.warn(message);
-                return false;
-            }
             return true;
         } catch (IOException e) {
             message = "IOException " + channel.getUrl() + " " + e.getMessage();

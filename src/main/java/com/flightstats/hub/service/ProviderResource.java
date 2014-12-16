@@ -46,7 +46,6 @@ public class ProviderResource {
             logger.info("creating new Provider channel " + channelName);
             ChannelConfiguration configuration = ChannelConfiguration.builder()
                     .withName(channelName)
-                    .withType(ChannelConfiguration.ChannelType.Sequence)
                     .build();
             channelService.createChannel(configuration);
         }

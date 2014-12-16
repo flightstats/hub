@@ -80,15 +80,13 @@ public class S3Config {
             logger.info("running with lock");
             ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
             for (ChannelConfiguration config : configurations) {
-                if (config.isSequence()) {
-                    String namePrefix = config.getName() + "/";
-                    BucketLifecycleConfiguration.Rule configRule = new BucketLifecycleConfiguration.Rule()
-                            .withPrefix(namePrefix)
-                            .withId(config.getName())
-                            .withExpirationInDays((int) config.getTtlDays())
-                            .withStatus(BucketLifecycleConfiguration.ENABLED);
-                    rules.add(configRule);
-                }
+                String namePrefix = config.getName() + "/";
+                BucketLifecycleConfiguration.Rule configRule = new BucketLifecycleConfiguration.Rule()
+                        .withPrefix(namePrefix)
+                        .withId(config.getName())
+                        .withExpirationInDays((int) config.getTtlDays())
+                        .withStatus(BucketLifecycleConfiguration.ENABLED);
+                rules.add(configRule);
             }
             logger.info("updating " + rules.size());
             BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
