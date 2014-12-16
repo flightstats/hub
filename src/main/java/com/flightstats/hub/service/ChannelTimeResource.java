@@ -6,6 +6,7 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,17 @@ public class ChannelTimeResource {
         addNode(links, "minute", "/{year}/{month}/{day}/{hour}/{minute}", Unit.MINUTES);
         addNode(links, "hour", "/{year}/{month}/{day}/{hour}", Unit.HOURS);
         addNode(links, "day", "/{year}/{month}/{day}", Unit.DAYS);
+        DateTime now = TimeUtil.now();
+        DateTime stable = TimeUtil.stable();
+        addTime(root, now, "now");
+        addTime(root, stable, "stable");
         return Response.ok(root).build();
+    }
+
+    private void addTime(ObjectNode root, DateTime time, String name) {
+        ObjectNode nowNode = root.putObject(name);
+        nowNode.put("iso8601", ISODateTimeFormat.dateTime().print(time));
+        nowNode.put("millis", time.getMillis());
     }
 
     private void addNode(ObjectNode links, String name, String template, Unit unit) {
