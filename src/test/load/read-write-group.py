@@ -125,7 +125,7 @@ class WebsiteTasks(TaskSet):
             results = self.client.get(results['_links']['previous']['href'], name="time_second").json()
 
     def time_path(self, unit="second"):
-        return "/channel/" + self.channel + "/time/" + unit
+        return "/channel/" + self.channel + "/time/" + unit + "?stable=false"
 
     def next(self, time_unit):
         path = self.time_path(time_unit)
@@ -151,7 +151,7 @@ class WebsiteTasks(TaskSet):
                 return "ok"
             try:
                 groupCallbacks[channel]["lock"].acquire()
-                print "incoming " + str(incoming_uri) + " - " + str(request.headers['post-id'])
+                # print "incoming " + str(incoming_uri) + " - " + str(request.headers['post-id'])
                 if groupCallbacks[channel]["data"][0] == incoming_uri:
                     (groupCallbacks[channel]["data"]).remove(incoming_uri)
                     events.request_success.fire(request_type="group", name="callback", response_time=1,

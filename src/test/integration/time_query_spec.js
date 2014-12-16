@@ -24,7 +24,7 @@ describe(testName, function () {
     utils.createChannel(channelName);
 
     it('queries before insertion', function (done) {
-        request.get({url : channelResource + '/time/minute', json : true},
+        request.get({url : channelResource + '/time/minute?stable=false', json : true},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -58,19 +58,19 @@ describe(testName, function () {
     }
 
     it('gets items from channel second', function (done) {
-        callTime(channelResource + '/time/second', [], 0, done);
+        callTime(channelResource + '/time/second?stable=false', [], 0, done);
     });
 
     it('gets items from channel minute', function (done) {
-        callTime(channelResource + '/time/minute', [], 0, done);
+        callTime(channelResource + '/time/minute?stable=false', [], 0, done);
     });
 
     it('gets items from channel hour', function (done) {
-        callTime(channelResource + '/time/hour', [], 0, done);
+        callTime(channelResource + '/time/hour?stable=false', [], 0, done);
     });
 
     it('gets items from channel day', function (done) {
-        callTime(channelResource + '/time/day', [], 0, done);
+        callTime(channelResource + '/time/day?stable=false', [], 0, done);
     });
 
 });
