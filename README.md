@@ -708,6 +708,7 @@ The EH is available at:
 
 Channel items type, ttlMillis, contentSizeKB and peakRequestRateSeconds from Hub-V1 are no longer provided.
 
+You can now use PUT to create and update channels idempotently.  The V1 POST and PATCH methods are still supported.
 
 ## monitoring
 
