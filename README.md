@@ -26,7 +26,7 @@ The Hub V2
 * [health check](#health-check)
 * [access control](#access-control)
 * [encrypted-hub](#encrypted-hub)
-* [api updates](#api-updates)
+* [api changes from v1 to v2](#api-changes-from-v1-to-v2)
 * [monitoring](#monitoring)
 * [development](#development)
 * [deployments](#deployments)
@@ -125,6 +125,8 @@ Channels starting with `test` will automatically be deleted in the dev and stagi
 
 `tags` is an optional array of string values.  Tag values are limited to 48 characters, and may only contain `a-z`, `A-Z` and `0-9`.
 A channel may have at most 20 tags.
+
+Note: Channel items type, ttlMillis, contentSizeKB and peakRequestRateSeconds from Hub-V1 are no longer provided.
 
 `PUT http://hub/channel/stumptown`
 
@@ -665,6 +667,8 @@ To request a change to a controlled API, or to request access, please use the [h
 
 ## encrypted-hub
 
+**This is not yet implemented in V2**
+
 The Encrypted Hub (EH) is a separate installation of the Hub.
 The features and API of the EH are nearly identical, with a few additions.
 EH also has some additional features to the normal Hub:
@@ -692,13 +696,13 @@ All audit channels have an `audit` tag, which can not be modified by clients.
 
 The EH is available at:
 
-* In development: http://encrypted-hub.svc.dev/
-* In staging: http://encrypted-hub.svc.staging/ (soon!)
-* In production: http://encrypted-hub.svc.prod/ (soon!)
+* In development: http://encrypted-hub-v2.svc.dev/ (soon!)
+* In staging: http://encrypted-hub-v2.svc.staging/ (soon!)
+* In production: http://encrypted-hub-v2.svc.prod/ (soon!)
 
-## TODO changes from v1 to v2
+## api changes from v1 to v2
 
-
+Channel items type, ttlMillis, contentSizeKB and peakRequestRateSeconds from Hub-V1 are no longer provided.
 
 
 ## monitoring

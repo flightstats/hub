@@ -41,7 +41,6 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         item.put("key", new AttributeValue(config.getName()));
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
         item.put("ttlDays", new AttributeValue().withN(String.valueOf(config.getTtlDays())));
-        item.put("type", new AttributeValue(config.getType().toString()));
         if (!config.getTags().isEmpty()) {
             item.put("tags", new AttributeValue().withSS(config.getTags()));
         }
@@ -97,9 +96,6 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
                 .withName(item.get("key").getS());
         if (item.get("ttlDays") != null) {
             builder.withTtlDays(Long.parseLong(item.get("ttlDays").getN()));
-        }
-        if (item.containsKey("type")) {
-            builder.withType(ChannelConfiguration.ChannelType.valueOf(item.get("type").getS()));
         }
         if (item.containsKey("description")) {
             builder.withDescription(item.get("description").getS());

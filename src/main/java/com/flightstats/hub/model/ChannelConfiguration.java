@@ -1,6 +1,5 @@
 package com.flightstats.hub.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,14 +23,12 @@ public class ChannelConfiguration implements Serializable {
     private final String name;
     private final Date creationDate;
     private final long ttlDays;
-    private final ChannelType type;
     private final String description;
     private final Set<String> tags = new TreeSet<>();
 
     public ChannelConfiguration(Builder builder) {
         this.name = StringUtils.trim(builder.name);
         this.creationDate = builder.creationDate;
-        this.type = builder.type;
         this.ttlDays = builder.ttlDays;
         if (builder.description == null) {
             this.description = "";
@@ -67,16 +64,6 @@ public class ChannelConfiguration implements Serializable {
         return ttlDays;
     }
 
-    @JsonIgnore()
-    public boolean isSequence() {
-        return ChannelType.Sequence.equals(type);
-    }
-
-    @JsonProperty("type")
-    public ChannelType getType() {
-        return type;
-    }
-
     @JsonProperty("description")
     public String getDescription() {
         return description;
@@ -87,14 +74,11 @@ public class ChannelConfiguration implements Serializable {
         return tags;
     }
 
-    public enum ChannelType {Sequence}
-
     public static class Builder {
         private static final ObjectMapper mapper = new ObjectMapper();
         private String name;
         private Date creationDate = new Date();
         private long ttlDays = 120;
-        private ChannelType type = ChannelType.Sequence;
         private String description = "";
         private Set<String> tags = new HashSet<>();
 
@@ -105,7 +89,6 @@ public class ChannelConfiguration implements Serializable {
             this.name = config.name;
             this.creationDate = config.creationDate;
             this.ttlDays = config.ttlDays;
-            this.type = config.type;
             this.description = config.description;
             this.tags.addAll(config.getTags());
             return this;
@@ -145,11 +128,6 @@ public class ChannelConfiguration implements Serializable {
 
         public Builder withCreationDate(Date date) {
             this.creationDate = date;
-            return this;
-        }
-
-        public Builder withType(ChannelType channelType) {
-            this.type = channelType;
             return this;
         }
 
