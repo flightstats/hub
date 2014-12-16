@@ -25,6 +25,7 @@ hubUrlBase = 'http://' + hubDomain;
 channelUrl = hubUrlBase + '/channel';
 groupUrl = hubUrlBase + '/group';
 callbackDomain = 'http://' + ipAddress;
+stableOffset = 5;
 
 console.log("hubDomain " + hubDomain);
 console.log("replicationDomain " + replicationDomain);

@@ -39,7 +39,7 @@ public class HubMain {
             throw new UnsupportedOperationException("HubMain requires a property filename, or 'useDefault'");
         }
         final Properties properties = loadProperties(args[0]);
-        logger.info(properties.toString());
+        HubProperties.setProperties(properties);
 
         startZookeeperIfSingle(properties);
 

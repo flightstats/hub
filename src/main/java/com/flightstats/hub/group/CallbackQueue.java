@@ -58,7 +58,7 @@ public class CallbackQueue implements AutoCloseable {
                 //todo - gfm - 12/2/14 - handle exceptions
                 //todo - gfm - 12/2/14 - this could change the query units based on lag from now
                 while (!shouldExit.get()) {
-                    DateTime stableOrdering = TimeUtil.stableOrdering();
+                    DateTime stableOrdering = TimeUtil.stable();
                     logger.trace("iterating {} last={} stable={} ", channel, lastTime, stableOrdering);
                     if (lastTime.isBefore(stableOrdering)) {
                         //todo - gfm - 12/3/14 - do we want a convenience method that doens't need these params?

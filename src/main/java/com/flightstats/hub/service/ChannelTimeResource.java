@@ -1,29 +1,29 @@
 package com.flightstats.hub.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.util.TimeUtil;
-import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
+import static com.flightstats.hub.util.TimeUtil.*;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-/**
- * This resource redirects to the new time interface
- */
 @Path("/channel/{channelName: .*}/time")
 public class ChannelTimeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
     private final UriInfo uriInfo;
 
     @Inject
@@ -34,42 +34,75 @@ public class ChannelTimeResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDefault() {
-        Linked.Builder<?> links = Linked.justLinks();
-        links.withLink("self", uriInfo.getRequestUri());
-        links.withLink("second", uriInfo.getRequestUri() + "/second");
-        links.withLink("minute", uriInfo.getRequestUri() + "/minute");
-        links.withLink("hour", uriInfo.getRequestUri() + "/hour");
-        links.withLink("day", uriInfo.getRequestUri() + "/day");
-        return Response.ok(links.build()).build();
+        ObjectNode root = mapper.createObjectNode();
+        ObjectNode links = addSelfLink(root);
+        addNode(links, "second", "/{year}/{month}/{day}/{hour}/{minute}/{second}", Unit.SECONDS);
+        addNode(links, "minute", "/{year}/{month}/{day}/{hour}/{minute}", Unit.MINUTES);
+        addNode(links, "hour", "/{year}/{month}/{day}/{hour}", Unit.HOURS);
+        addNode(links, "day", "/{year}/{month}/{day}", Unit.DAYS);
+        return Response.ok(root).build();
+    }
+
+    private void addNode(ObjectNode links, String name, String template, Unit unit) {
+        ObjectNode node = links.putObject(name);
+        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+        String stable = "";
+        DateTime dateTime = stable();
+        if (queryParameters.containsKey("stable")) {
+            String value = queryParameters.getFirst("stable");
+            stable = "?stable=" + value;
+            if (!Boolean.parseBoolean(value)) {
+                dateTime = now();
+            }
+        }
+        String requestUri = StringUtils.removeEnd(uriInfo.getAbsolutePath().toString(), "time");
+        node.put("href", requestUri + unit.format(dateTime) + stable);
+        node.put("template", uriInfo.getAbsolutePath() + template + "{?stable}");
+        node.put("redirect", uriInfo.getAbsolutePath() + "/" + name + stable);
+    }
+
+    private ObjectNode addSelfLink(ObjectNode root) {
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
+        self.put("href", uriInfo.getRequestUri().toString());
+        return links;
     }
 
     @Path("/second")
     @GET
-    public Response getSecond() {
-        return getResponse(TimeUtil.secondsNow(), "time/second");
+    public Response getSecond(@QueryParam("stable") @DefaultValue("true") boolean stable) {
+        return getResponse(seconds(getDateTime(stable)) + "?stable=" + stable, "time/second");
     }
 
     @Path("/minute")
     @GET
-    public Response getMinute() {
-        return getResponse(TimeUtil.minutesNow(), "time/minute");
+    public Response getMinute(@QueryParam("stable") @DefaultValue("true") boolean stable) {
+        return getResponse(minutes(getDateTime(stable)) + "?stable=" + stable, "time/minute");
     }
 
     @Path("/hour")
     @GET
-    public Response getHour() {
-        return getResponse(TimeUtil.hoursNow(), "time/hour");
+    public Response getHour(@QueryParam("stable") @DefaultValue("true") boolean stable) {
+        return getResponse(hours(getDateTime(stable)) + "?stable=" + stable, "time/hour");
     }
 
     @Path("/day")
     @GET
-    public Response getDay() {
-        return getResponse(TimeUtil.daysNow(), "time/day");
+    public Response getDay(@QueryParam("stable") @DefaultValue("true") boolean stable) {
+        return getResponse(days(getDateTime(stable)) + "?stable=" + stable, "time/day");
+    }
+
+    private DateTime getDateTime(boolean stable) {
+        DateTime dateTime = TimeUtil.stable();
+        if (!stable) {
+            dateTime = TimeUtil.now();
+        }
+        return dateTime;
     }
 
     private Response getResponse(String timePath, String endString) {
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
-        String channelUri = uriInfo.getRequestUri().toString();
+        String channelUri = uriInfo.getAbsolutePath().toString();
         channelUri = StringUtils.removeEnd(channelUri, endString);
         URI uri = URI.create(channelUri + timePath);
         builder.location(uri);

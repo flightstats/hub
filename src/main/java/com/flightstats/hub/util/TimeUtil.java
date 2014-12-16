@@ -1,5 +1,6 @@
 package com.flightstats.hub.util;
 
+import com.flightstats.hub.app.HubProperties;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -12,16 +13,18 @@ public class TimeUtil {
     private static final DateTimeFormatter hoursFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH").withZoneUTC();
     private static final DateTimeFormatter daysFormatter = DateTimeFormat.forPattern("yyyy/MM/dd").withZoneUTC();
 
+    static {
+        stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
+    }
+
+    private static final int stableSeconds;
+
     public static DateTime now() {
         return new DateTime(DateTimeZone.UTC);
     }
 
-    public static DateTime stableOrdering() {
-        return now().minusSeconds(1).withMillisOfSecond(0);
-    }
-
-    public static String secondsNow() {
-        return seconds(now());
+    public static DateTime stable() {
+        return now().minusSeconds(stableSeconds).withMillisOfSecond(0);
     }
 
     public static String seconds(DateTime dateTime) {
@@ -36,24 +39,12 @@ public class TimeUtil {
         return millisFormatter.parseDateTime(string);
     }
 
-    public static String minutesNow() {
-        return minutes(now());
-    }
-
     public static String minutes(DateTime dateTime) {
         return dateTime.toString(minutesFormatter);
     }
 
-    public static String hoursNow() {
-        return hours(now());
-    }
-
     public static String hours(DateTime dateTime) {
         return dateTime.toString(hoursFormatter);
-    }
-
-    public static String daysNow() {
-        return days(now());
     }
 
     public static String days(DateTime dateTime) {

@@ -30,7 +30,7 @@ public interface ChannelService {
 
     ChannelConfiguration updateChannel(ChannelConfiguration configuration);
 
-    Collection<ContentKey> queryByTime(TimeQuery timeQuery);
+    Collection<ContentKey> queryByTime(TimeQuery timeQuery, boolean stable);
 
     Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count);
 
