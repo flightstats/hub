@@ -126,7 +126,9 @@ Channels starting with `test` will automatically be deleted in the dev and stagi
 `tags` is an optional array of string values.  Tag values are limited to 48 characters, and may only contain `a-z`, `A-Z` and `0-9`.
 A channel may have at most 20 tags.
 
-Note: Channel items type, ttlMillis, contentSizeKB and peakRequestRateSeconds from Hub-V1 are no longer provided.
+**V2 Note**:
+Channel items type, ttlMillis, contentSizeKB and peakRequestRateSeconds from V1 are no longer provided.
+While PUT is shown here, the V1 POST to http://hub/channel/ is still supported.
 
 `PUT http://hub/channel/stumptown`
 
@@ -189,6 +191,9 @@ Some channel metadata can be updated. The update format looks much like the chan
 (currently, only `ttlDays`, `description` and `tags` can be updated).
 Each of these fields is optional.
 Attempting to change other fields will result in a 400 error.
+
+**V2 Note**:
+While PUT is shown here, the V1 PATCH to http://hub/channel/channelname is still supported.
 
 `PUT http://hub/channel/channelname`
 
