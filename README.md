@@ -190,7 +190,6 @@ curl -i -X PUT --header "Content-type: application/json"  http://hub/channel/stu
 Some channel metadata can be updated. The update format looks much like the channel create format
 (currently, only `ttlDays`, `description` and `tags` can be updated).
 Each of these fields is optional.
-Attempting to change other fields will result in a 400 error.
 
 **V2 Note**:
 While PUT is shown here, the V1 PATCH to http://hub/channel/channelname is still supported.
