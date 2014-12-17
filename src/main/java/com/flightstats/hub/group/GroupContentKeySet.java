@@ -49,6 +49,8 @@ public class GroupContentKeySet {
             for (String string : strings) {
                 keys.add(ContentKey.fromZk(string));
             }
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("no node for {}", path);
         } catch (Exception e) {
             logger.warn("unable to get set " + path , e);
         }
@@ -63,7 +65,8 @@ public class GroupContentKeySet {
         return getPath(groupName) + "/" + key.toZk();
     }
 
-    public static void delete(String path, CuratorFramework curator)  {
+    public void delete(String groupName)  {
+        String path = getPath(groupName);
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (Exception e) {
