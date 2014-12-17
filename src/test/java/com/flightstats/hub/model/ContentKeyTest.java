@@ -49,4 +49,10 @@ public class ContentKeyTest {
             previous = current;
         }
     }
+
+    @Test
+    public void testZkCycle() throws Exception {
+        ContentKey key = new ContentKey();
+        assertEquals(key, ContentKey.fromZk(key.toZk()));
+    }
 }
