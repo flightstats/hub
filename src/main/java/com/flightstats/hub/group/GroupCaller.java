@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
-import com.flightstats.hub.cluster.LongSet;
 import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -27,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -233,7 +233,8 @@ public class GroupCaller implements Leader {
 
     private void delete() {
         logger.info("deleting " + group.getName());
-        LongSet.delete(getInFlightPath(), curator);
+        //todo - gfm - 12/17/14 -
+        //LongSet.delete(getInFlightPath(), curator);
         groupContentKey.delete(group.getName());
         logger.info("deleted " + group.getName());
     }
@@ -257,7 +258,9 @@ public class GroupCaller implements Leader {
 
     private boolean isReadyToDelete() {
         try {
-            return curator.getChildren().forPath(getLeaderPath()).isEmpty();
+            List<String> children = curator.getChildren().forPath(getLeaderPath());
+            logger.debug("found children {}", children);
+            return children.isEmpty();
         } catch (KeeperException.NoNodeException ignore) {
             return true;
         } catch (Exception e) {
