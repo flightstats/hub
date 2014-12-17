@@ -61,6 +61,22 @@ function createChannel(channelName, url) {
 
 }
 
+function putChannel(channelName, verify, body) {
+    verify = verify || function () {};
+    body = body || {"name" : channelName};
+    it("puts channel " + channelName + " at " + channelUrl, function (done) {
+        request.put({url: channelUrl + '/' + channelName,
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(body)},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(201);
+                verify(response, body);
+                done();
+            });
+    });
+}
+
 function addItem(url, responseCode) {
     it("adds item to " + url, function (done) {
         postItem(url, responseCode, done);
@@ -250,6 +266,7 @@ exports.randomChannelName = randomChannelName;
 exports.configureFrisby = configureFrisby;
 exports.runInTestChannelJson = runInTestChannelJson;
 exports.createChannel = createChannel;
+exports.putChannel = putChannel;
 exports.addItem = addItem;
 exports.sleep = sleep;
 exports.putGroup = putGroup;

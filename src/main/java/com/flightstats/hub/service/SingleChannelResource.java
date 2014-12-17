@@ -55,6 +55,26 @@ public class SingleChannelResource {
         return Response.ok(channelUri).entity(linked).build();
     }
 
+    @PUT
+    @EventTimed(name = "channels.put")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response createChannel(@PathParam("channelName") String channelName, String json) throws Exception {
+        ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
+        ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json);
+        if (oldConfig != null) {
+            channelConfiguration = ChannelConfiguration.builder()
+                    .withChannelConfiguration(oldConfig)
+                    .withUpdateJson(json)
+                    .build();
+        }
+        channelConfiguration = channelService.updateChannel(channelConfiguration);
+        URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
+        return Response.created(channelUri).entity(
+                linkBuilder.buildChannelLinks(channelConfiguration, channelUri))
+                .build();
+    }
+
     @PATCH
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
