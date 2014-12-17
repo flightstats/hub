@@ -1,13 +1,13 @@
 #!/bin/sh
 
-HOST="hub-node-tester.cloud-east.dev"
+HOST=`hostname`
 
 case ${HOST} in
 	hub-node-tester.cloud-east.dev)
 	    HUB="http://hub-v2.svc.dev"
 	     ;;
 	hub-node-tester.cloud-east.staging)
-	    HUB="http://hub-v2.svc.dev"
+	    HUB="http://hub-v2-int.svc.staging"
 	     ;;
 	*)
 		echo "host not supported ${HOST}" ; exit ;;
