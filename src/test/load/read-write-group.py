@@ -36,11 +36,18 @@ class WebsiteTasks(TaskSet):
                          name="channel")
         group_name = "/group/locust_" + self.channel
         self.client.delete(group_name, name="group")
-        groupCallbacks[self.channel] = {"data": [], "lock": threading.Lock()}
+        parallel = 1
+        if WebsiteTasks.channelNum % 2 == 0:
+            parallel = 2
+        groupCallbacks[self.channel] = {
+            "data": [],
+            "lock": threading.Lock(),
+            "parallel": parallel
+        }
         group = {
             "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
             "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
-            "parallelCalls": 1
+            "parallelCalls": parallel
         }
         self.client.put(group_name,
                         data=json.dumps(group),
@@ -141,6 +148,32 @@ class WebsiteTasks(TaskSet):
     def payload_generator(self, size, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for x in range(size))
 
+    @staticmethod
+    def verify_ordered(channel, incoming_uri):
+        if groupCallbacks[channel]["data"][0] == incoming_uri:
+            (groupCallbacks[channel]["data"]).remove(incoming_uri)
+            events.request_success.fire(request_type="group", name="ordered", response_time=1,
+                                        response_length=1)
+        else:
+            events.request_failure.fire(request_type="group", name="ordered", response_time=1,
+                                        exception=-1)
+            if incoming_uri in groupCallbacks[channel]["data"]:
+                (groupCallbacks[channel]["data"]).remove(incoming_uri)
+                print "item in the wrong order " + str(incoming_uri) + " data " + \
+                      str(groupCallbacks[channel]["data"])
+            else:
+                print "missing item " + str(incoming_uri)
+
+    @staticmethod
+    def verify_parallel(channel, incoming_uri):
+        if incoming_uri in groupCallbacks[channel]["data"]:
+            (groupCallbacks[channel]["data"]).remove(incoming_uri)
+            events.request_success.fire(request_type="group", name="parallel", response_time=1,
+                                        response_length=1)
+        else:
+            events.request_failure.fire(request_type="group", name="parallel", response_time=1,
+                                        exception=-1)
+
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
         if request.method == 'POST':
@@ -151,20 +184,10 @@ class WebsiteTasks(TaskSet):
                 return "ok"
             try:
                 groupCallbacks[channel]["lock"].acquire()
-                # print "incoming " + str(incoming_uri) + " - " + str(request.headers['post-id'])
-                if groupCallbacks[channel]["data"][0] == incoming_uri:
-                    (groupCallbacks[channel]["data"]).remove(incoming_uri)
-                    events.request_success.fire(request_type="group", name="callback", response_time=1,
-                                                response_length=1)
+                if groupCallbacks[channel]["parallel"] == 1:
+                    WebsiteTasks.verify_ordered(channel, incoming_uri)
                 else:
-                    events.request_failure.fire(request_type="group", name="callback", response_time=1,
-                                                exception=-1)
-                    if incoming_uri in groupCallbacks[channel]["data"]:
-                        (groupCallbacks[channel]["data"]).remove(incoming_uri)
-                        print "item in the wrong order " + str(incoming_uri) + " data " + \
-                              str(groupCallbacks[channel]["data"])
-                    else:
-                        print "missing item " + str(incoming_uri)
+                    WebsiteTasks.verify_parallel(channel, incoming_uri)
             finally:
                 groupCallbacks[channel]["lock"].release()
 
