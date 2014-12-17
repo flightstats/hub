@@ -6,6 +6,7 @@ import random
 import time
 import threading
 import socket
+import logging
 
 from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
@@ -14,6 +15,14 @@ from flask import request, jsonify
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub-v2.svc.dev &
+
+logger = logging.getLogger('hub-locust')
+logger.setLevel(logging.INFO)
+fh = logging.FileHandler('/home/ubuntu/locust.log')
+fh.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+logger.addHandler(fh)
 
 groupCallbacks = {}
 groupConfig = {}
@@ -26,7 +35,7 @@ class WebsiteTasks(TaskSet):
         WebsiteTasks.channelNum += 1
         self.number = WebsiteTasks.channelNum * WebsiteTasks.channelNum * 300
         self.payload = self.payload_generator(self.number)
-        print("payload size " + str(self.payload.__sizeof__()))
+        logger.info("payload size " + str(self.payload.__sizeof__()))
         self.channel = "load_test_" + str(WebsiteTasks.channelNum)
         self.count = 0
         payload = {"name": self.channel, "ttlDays": "3"}
@@ -67,6 +76,7 @@ class WebsiteTasks(TaskSet):
         try:
             groupCallbacks[self.channel]["lock"].acquire()
             groupCallbacks[self.channel]["data"].append(href)
+            logger.debug('wrote %s', href)
         finally:
             groupCallbacks[self.channel]["lock"].release()
         return href
@@ -100,7 +110,7 @@ class WebsiteTasks(TaskSet):
             events.request_success.fire(request_type="sequential", name="compare", response_time=total_time,
                                         response_length=items)
         else:
-            print "expected " + ", ".join(posted_items) + " found " + ", ".join(query_slice)
+            logger.info("expected " + ", ".join(posted_items) + " found " + ", ".join(query_slice))
             events.request_failure.fire(request_type="sequential", name="compare", response_time=total_time
                                         , exception=-1)
 
@@ -159,10 +169,10 @@ class WebsiteTasks(TaskSet):
                                         exception=-1)
             if incoming_uri in groupCallbacks[channel]["data"]:
                 (groupCallbacks[channel]["data"]).remove(incoming_uri)
-                print "item in the wrong order " + str(incoming_uri) + " data " + \
-                      str(groupCallbacks[channel]["data"])
+                logger.info("item in the wrong order " + str(incoming_uri) + " data " + \
+                      str(groupCallbacks[channel]["data"]))
             else:
-                print "missing item " + str(incoming_uri)
+                logger.info("missing item " + str(incoming_uri))
 
     @staticmethod
     def verify_parallel(channel, incoming_uri):
@@ -180,7 +190,7 @@ class WebsiteTasks(TaskSet):
             incoming_json = request.get_json()
             incoming_uri = incoming_json['uris'][0]
             if channel not in groupCallbacks:
-                print "incoming uri before locust tests started " + str(incoming_uri)
+                logger.info("incoming uri before locust tests started " + str(incoming_uri))
                 return "ok"
             try:
                 groupCallbacks[channel]["lock"].acquire()
@@ -190,7 +200,6 @@ class WebsiteTasks(TaskSet):
                     WebsiteTasks.verify_parallel(channel, incoming_uri)
             finally:
                 groupCallbacks[channel]["lock"].release()
-
             return "ok"
         else:
             return jsonify(items=groupCallbacks[channel]["data"])
@@ -205,5 +214,6 @@ class WebsiteUser(HttpLocust):
         super(WebsiteUser, self).__init__()
         groupConfig['host'] = self.host
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
+        logger.info('groupConfig %s', groupConfig)
         print groupConfig
 
