@@ -8,3 +8,4 @@ scp *.sh ubuntu@${SERVER}:${APP_PATH}/.
 ssh ubuntu@${SERVER} "chmod +x ${APP_PATH}/*.sh"
 ssh ubuntu@${SERVER} "sudo service hub-locust restart"
 
+
