@@ -23,7 +23,6 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
                     }
                 },
                 name: channelName,
-                type: "Sequence",
                 ttlDays: 120,
                 description: ""
                 //TODO: Date validation

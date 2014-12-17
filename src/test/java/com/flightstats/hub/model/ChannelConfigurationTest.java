@@ -29,7 +29,6 @@ public class ChannelConfigurationTest {
     private void assertDefaults(ChannelConfiguration config) {
         assertEquals("defaults", config.getName());
         assertEquals(120, config.getTtlDays());
-        assertTrue(config.isSequence());
         assertEquals("", config.getDescription());
         assertTrue(config.getTags().isEmpty());
     }

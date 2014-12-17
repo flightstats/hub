@@ -26,7 +26,7 @@ The Hub V2
 * [health check](#health-check)
 * [access control](#access-control)
 * [encrypted-hub](#encrypted-hub)
-* [api updates](#api-updates)
+* [api changes from v1 to v2](#api-changes-from-v1-to-v2)
 * [monitoring](#monitoring)
 * [development](#development)
 * [deployments](#deployments)
@@ -126,6 +126,10 @@ Channels starting with `test` will automatically be deleted in the dev and stagi
 `tags` is an optional array of string values.  Tag values are limited to 48 characters, and may only contain `a-z`, `A-Z` and `0-9`.
 A channel may have at most 20 tags.
 
+**V2 Note**:
+Channel items type, ttlMillis, contentSizeKB and peakRequestRateSeconds from V1 are no longer provided.
+While PUT is shown here, the V1 POST to http://hub/channel/ is still supported.
+
 `PUT http://hub/channel/stumptown`
 
 * Content-type: application/json
@@ -186,7 +190,9 @@ curl -i -X PUT --header "Content-type: application/json"  http://hub/channel/stu
 Some channel metadata can be updated. The update format looks much like the channel create format
 (currently, only `ttlDays`, `description` and `tags` can be updated).
 Each of these fields is optional.
-Attempting to change other fields will result in a 400 error.
+
+**V2 Note**:
+While PUT is shown here, the V1 PATCH to http://hub/channel/channelname is still supported.
 
 `PUT http://hub/channel/channelname`
 
@@ -665,6 +671,8 @@ To request a change to a controlled API, or to request access, please use the [h
 
 ## encrypted-hub
 
+**This is not yet implemented in V2**
+
 The Encrypted Hub (EH) is a separate installation of the Hub.
 The features and API of the EH are nearly identical, with a few additions.
 EH also has some additional features to the normal Hub:
@@ -692,14 +700,15 @@ All audit channels have an `audit` tag, which can not be modified by clients.
 
 The EH is available at:
 
-* In development: http://encrypted-hub.svc.dev/
-* In staging: http://encrypted-hub.svc.staging/ (soon!)
-* In production: http://encrypted-hub.svc.prod/ (soon!)
+* In development: http://encrypted-hub-v2.svc.dev/ (soon!)
+* In staging: http://encrypted-hub-v2.svc.staging/ (soon!)
+* In production: http://encrypted-hub-v2.svc.prod/ (soon!)
 
-## TODO changes from v1 to v2
+## api changes from v1 to v2
 
+Channel items type, ttlMillis, contentSizeKB and peakRequestRateSeconds from Hub-V1 are no longer provided.
 
-
+You can now use PUT to create and update channels idempotently.  The V1 POST and PATCH methods are still supported.
 
 ## monitoring
 
