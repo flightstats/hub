@@ -33,10 +33,10 @@ class WebsiteTasks(TaskSet):
 
     def on_start(self):
         WebsiteTasks.channelNum += 1
-        self.number = WebsiteTasks.channelNum * WebsiteTasks.channelNum * 300
-        self.payload = self.payload_generator(self.number)
+        self.number = WebsiteTasks.channelNum
+        self.payload = self.payload_generator()
         logger.info("payload size " + str(self.payload.__sizeof__()))
-        self.channel = "load_test_" + str(WebsiteTasks.channelNum)
+        self.channel = "load_test_" + str(self.number)
         self.count = 0
         payload = {"name": self.channel, "ttlDays": "3"}
         self.client.put("/channel/" + self.channel,
@@ -46,8 +46,9 @@ class WebsiteTasks(TaskSet):
         group_name = "/group/locust_" + self.channel
         self.client.delete(group_name, name="group")
         parallel = 1
-        if WebsiteTasks.channelNum % 2 == 0:
+        if self.number % 2 == 0:
             parallel = 2
+        logger.info("channel " + self.channel + " parallel:" + str(parallel))
         groupCallbacks[self.channel] = {
             "data": [],
             "lock": threading.Lock(),
@@ -155,7 +156,8 @@ class WebsiteTasks(TaskSet):
             for uri in uris:
                 self.read(uri)
 
-    def payload_generator(self, size, chars=string.ascii_uppercase + string.digits):
+    def payload_generator(self, chars=string.ascii_uppercase + string.digits):
+        size = self.number * self.number * 300
         return ''.join(random.choice(chars) for x in range(size))
 
     @staticmethod
