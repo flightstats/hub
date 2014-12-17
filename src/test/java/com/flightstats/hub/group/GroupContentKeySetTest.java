@@ -52,4 +52,16 @@ public class GroupContentKeySetTest {
         assertTrue(set.contains(key));
     }
 
+    @Test
+    public void testDelete() throws Exception {
+        groupSet = new GroupContentKeySet(curator);
+        groupName = "testDelete";
+        addAndCompare(new ContentKey(), 1);
+        addAndCompare(new ContentKey(), 2);
+        addAndCompare(new ContentKey(), 3);
+        groupSet.delete(groupName);
+        assertEquals(0, groupSet.getSet(groupName).size());
+
+    }
+
 }
