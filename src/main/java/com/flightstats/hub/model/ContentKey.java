@@ -76,4 +76,13 @@ public class ContentKey implements Comparable<ContentKey> {
     public byte[] getBytes() {
         return toUrl().getBytes(Charsets.UTF_8);
     }
+
+    public String toZk() {
+        return time.getMillis() + ":" + hash;
+    }
+
+    public static ContentKey fromZk(String value) {
+        String[] split = value.split(":");
+        return new ContentKey(new DateTime(Long.parseLong(split[0]), DateTimeZone.UTC), split[1]);
+    }
 }
