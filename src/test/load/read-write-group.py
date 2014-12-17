@@ -29,8 +29,8 @@ class WebsiteTasks(TaskSet):
         print("payload size " + str(self.payload.__sizeof__()))
         self.channel = "load_test_" + str(WebsiteTasks.channelNum)
         self.count = 0
-        payload = {"name": self.channel, "ttlDays": "100"}
-        self.client.post("/channel",
+        payload = {"name": self.channel, "ttlDays": "3"}
+        self.client.put("/channel/" + self.channel,
                          data=json.dumps(payload),
                          headers={"Content-Type": "application/json"},
                          name="channel")

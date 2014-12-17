@@ -4,7 +4,6 @@ var channelName = utils.randomChannelName();
 var jsonBody = JSON.stringify({ "name": channelName, "ttlMillis": null});
 var expectedBody = {
     name: channelName,
-    type: "Sequence",
     ttlDays : 2,
     "tags": [ "bar", "foo", "tagz"]
 };
