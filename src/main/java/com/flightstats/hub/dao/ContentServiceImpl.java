@@ -1,10 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.Location;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -141,9 +138,9 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
+    public Collection<ContentKey> getKeys(DirectionQuery query) {
         //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours, may need to span
-        return cacheContentDao.getKeys(channelName, contentKey, count);
+        return cacheContentDao.getKeys(query);
     }
 
     private class ContentServiceHook extends AbstractIdleService {

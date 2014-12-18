@@ -14,6 +14,7 @@ public class DirectionQuery {
     private final int count;
     private final boolean next;
     private final Location location;
+    private final boolean stable;
 
     public Location getLocation() {
         if (location == null) {

@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.Trace;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
@@ -10,7 +11,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  * This is the entry point in the Hub's storage system, Spoke.
@@ -74,12 +75,30 @@ public class SpokeContentDao implements ContentDao {
         } catch (Exception e) {
             logger.warn("what happened? " + channelName + " " + startTime + " " + unit, e);
         }
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
-        return null;
+    public Collection<ContentKey> getKeys(DirectionQuery query) {
+        Set<ContentKey> orderedKeys = new TreeSet<>();
+        ContentKey startKey = query.getContentKey();
+        //queryByTime returns oldest to newest
+        DateTime time = query.isStable() ? TimeUtil.stable() : TimeUtil.now();
+        Collection<ContentKey> contentKeys = new TreeSet<>(queryByTime(query.getChannelName(), time, TimeUtil.Unit.DAYS));
+        if (query.isNext()) {
+            for (ContentKey contentKey : contentKeys) {
+                if (contentKey.compareTo(startKey) > 0) {
+                    orderedKeys.add(contentKey);
+                    logger.info("adding {}", contentKey);
+                    if (orderedKeys.size() == query.getCount()) {
+                        return orderedKeys;
+                    }
+                }
+            }
+        } else {
+            //todo - gfm - 12/17/14 - handle previous too
+        }
+        return orderedKeys;
     }
 
     @Override
