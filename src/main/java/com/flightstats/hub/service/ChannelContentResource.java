@@ -35,7 +35,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-@Path("/channel/{channelName}/{year}")
+@Path("/channel/{channelName}/{year}/{month}/{day}/")
 public class ChannelContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
@@ -56,7 +56,6 @@ public class ChannelContentResource {
     //404 ?
     //307 ?
 
-    @Path("/{month}/{day}/")
     @EventTimed(name = "channel.ALL.day")
     @PerChannelTimed(operationName = "day", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
@@ -76,7 +75,7 @@ public class ChannelContentResource {
         return getResponse(channelName, startTime.minusDays(1), startTime.plusDays(1), Unit.DAYS, keys, stable);
     }
 
-    @Path("/{month}/{day}/{hour}")
+    @Path("/{hour}")
     @EventTimed(name = "channel.ALL.hour")
     @PerChannelTimed(operationName = "hour", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
@@ -97,7 +96,7 @@ public class ChannelContentResource {
         return getResponse(channelName, startTime.minusHours(1), startTime.plusHours(1), Unit.HOURS, keys, stable);
     }
 
-    @Path("/{month}/{day}/{hour}/{minute}")
+    @Path("/{hour}/{minute}")
     @EventTimed(name = "channel.ALL.minute")
     @PerChannelTimed(operationName = "minute", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
@@ -121,7 +120,7 @@ public class ChannelContentResource {
         return getResponse(channelName, startTime.minusMinutes(1), startTime.plusMinutes(1), Unit.MINUTES, keys, stable);
     }
 
-    @Path("/{month}/{day}/{hour}/{minute}/{second}")
+    @Path("/{hour}/{minute}/{second}")
     @EventTimed(name = "channel.ALL.second")
     @PerChannelTimed(operationName = "second", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
@@ -144,7 +143,7 @@ public class ChannelContentResource {
         return getResponse(channelName, startTime.minusSeconds(1), startTime.plusSeconds(1), Unit.SECONDS, keys, stable);
     }
 
-    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}")
+    @Path("/{hour}/{minute}/{second}/{millis}")
     @EventTimed(name = "channel.ALL.millis")
     @PerChannelTimed(operationName = "millis", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
@@ -216,7 +215,7 @@ public class ChannelContentResource {
 
     //todo - gfm - 1/22/14 - would be nice to have a head method, which doesn't fetch the body.
 
-    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}")
+    @Path("/{hour}/{minute}/{second}/{millis}/{hash}")
     @GET
     @EventTimed(name = "channel.ALL.get")
     @PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName")
@@ -266,7 +265,7 @@ public class ChannelContentResource {
         return builder.build();
     }
 
-    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}/next")
+    @Path("/{hour}/{minute}/{second}/{millis}/{hash}/next")
     @GET
     //todo - gfm - 11/5/14 - timing?
     public Response getNext(@PathParam("channelName") String channelName,
@@ -282,7 +281,7 @@ public class ChannelContentResource {
         return directional(channelName, year, month, day, hour, minute, second, millis, hash, stable, true);
     }
 
-    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}/next/{count}")
+    @Path("/{hour}/{minute}/{second}/{millis}/{hash}/next/{count}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getNextCount(@PathParam("channelName") String channelName,
@@ -313,7 +312,7 @@ public class ChannelContentResource {
         return getResponse(channelName, null, nextString, keys);
     }
 
-    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}/previous")
+    @Path("/{hour}/{minute}/{second}/{millis}/{hash}/previous")
     @GET
     public Response getPrevious(@PathParam("channelName") String channelName,
                             @PathParam("year") int year,
@@ -328,7 +327,7 @@ public class ChannelContentResource {
         return directional(channelName, year, month, day, hour, minute, second, millis, hash, stable, false);
     }
 
-    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}/previous/{count}")
+    @Path("/{hour}/{minute}/{second}/{millis}/{hash}/previous/{count}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPreviousCount(@PathParam("channelName") String channelName,
