@@ -9,6 +9,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQuery;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
@@ -32,9 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.flightstats.hub.util.TimeUtil.Unit;
-import static com.flightstats.hub.util.TimeUtil.now;
-import static com.flightstats.hub.util.TimeUtil.stable;
+import static com.flightstats.hub.util.TimeUtil.*;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
@@ -117,7 +116,7 @@ public class ChannelContentResource {
                 .channelName(channelName)
                 .startTime(startTime)
                 .unit(Unit.MINUTES)
-                .location(TimeQuery.Location.valueOf(location));
+                .location(Location.valueOf(location));
         Collection<ContentKey> keys = channelService.queryByTime(builder.build(), stable);
         return getResponse(channelName, startTime.minusMinutes(1), startTime.plusMinutes(1), Unit.MINUTES, keys, stable);
     }
