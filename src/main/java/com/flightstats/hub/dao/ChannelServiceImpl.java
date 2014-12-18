@@ -1,9 +1,6 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.replication.ReplicationValidator;
 import com.flightstats.hub.service.ChannelValidator;
@@ -106,10 +103,10 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(TimeQuery timeQuery, boolean stable) {
+    public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
         DateTime stableTime = TimeUtil.stable();
         Collection<ContentKey> contentKeys = contentService.queryByTime(timeQuery);
-        if (stable) {
+        if (timeQuery.isStable()) {
             ArrayList<ContentKey> remove = new ArrayList<>();
             for (ContentKey contentKey : contentKeys) {
                 if (contentKey.getTime().isAfter(stableTime)) {
@@ -122,8 +119,8 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
-        return contentService.getKeys(channelName, contentKey, count);
+    public Collection<ContentKey> getKeys(DirectionQuery query) {
+        return contentService.getKeys(query);
     }
 
     @Override

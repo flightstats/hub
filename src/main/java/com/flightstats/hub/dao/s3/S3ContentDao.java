@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
@@ -137,7 +138,7 @@ public class S3ContentDao implements ContentDao {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
+    public Collection<ContentKey> getKeys(DirectionQuery query) {
         //todo - gfm - 11/14/14 -
         return null;
     }
