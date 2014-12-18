@@ -43,21 +43,13 @@ public class FileSpokeStoreTest {
         assertEquals(incoming, urlPart);
     }
 
-    File makeFile(String path){
-        return spokeStore.spokeFilePathPart(path);
-    }
-
     @Test
     public void testAdjacentPaths() throws Exception {
         String previousSecond = "testAdjacentPaths/2014/11/18/00/57/23/015/1";
         String path1 = "testAdjacentPaths/2014/11/18/00/57/24/015/1";
-        File path1File = makeFile(path1);
         String path2 = "testAdjacentPaths/2014/11/18/00/57/24/015/2";
-        File path2File = makeFile(path2);
         String path3 = "testAdjacentPaths/2014/11/18/00/57/24/015/3";
-        File path3File = makeFile(path3);
         String nextSecond = "testAdjacentPaths/2014/11/18/00/57/25/015/1";
-        File nextSecondFile = makeFile(nextSecond);
 
         spokeStore.write(path1, BYTES);
         spokeStore.write(path2, BYTES);
@@ -91,33 +83,8 @@ public class FileSpokeStoreTest {
         keys = spokeStore.keysInBucket("/testAdjacentPaths/2014/11/18/00/57/24");
         assertEquals(5, keys.size());
 
-        //todo - gfm - 12/2/14 - this fails on Jenkins, but passes locally
-        //org.junit.ComparisonFailure: expected:
-        // <...14/11/18/00/57/24/01[4/1,testAdjacentPaths/2014/11/18/00/57/24/015/1,testAdjacentPaths/2014/11/18/00/57/24/015/2,testAdjacentPaths/2014/11/18/00/57/24/015/3,testAdjacentPaths/2014/11/18/00/57/24/016/1]>
-        // but was:
-        // <...14/11/18/00/57/24/01[5/3,testAdjacentPaths/2014/11/18/00/57/24/015/1,testAdjacentPaths/2014/11/18/00/57/24/014/1,testAdjacentPaths/2014/11/18/00/57/24/016/1,testAdjacentPaths/2014/11/18/00/57/24/015/2]>
-        //String readKeys = spokeStore.readKeysInBucket("/testAdjacentPaths/2014/11/18/00/57/24");
-        //assertEquals("testAdjacentPaths/2014/11/18/00/57/24/014/1,testAdjacentPaths/2014/11/18/00/57/24/015/1,testAdjacentPaths/2014/11/18/00/57/24/015/2,testAdjacentPaths/2014/11/18/00/57/24/015/3,testAdjacentPaths/2014/11/18/00/57/24/016/1", readKeys);
-
-        // test adjacent
-//        keys = spokeStore.nextNKeys(path1File,2);
-//        assertEquals(2,keys.size());
-//        assertTrue(keys.contains(path2File));
-//        assertTrue(keys.contains(path3File));
-//
-//        String nexthour1 = "testAdjacentPaths/2014/11/19/00/57/24/016/1";
-//        spokeStore.write(nexthour1, BYTES);
-//        File nexthour1File = makeFile(nexthour1);
-//        assertEquals(nexthour1,spokeStore.nextPath(nextSecond));
-
-//        files = spokeStore.nextNKeys(path1File,4);
-//        assertEquals(4,files.size());
-//
-//        // previous test
-//        files = spokeStore.previousNKeys(nexthour1File, 3);
-//        assertEquals(3,files.size());
-
     }
+
 
     @Test
     public void testSpokeKeyFromFilePath() throws Exception {
