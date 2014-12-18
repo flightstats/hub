@@ -144,67 +144,6 @@ public class RemoteSpokeStore {
         return results;
     }
 
-    public String readAdjacent(String path, boolean readNext) throws InterruptedException{
-        // TODO bc 11/18/14: use lambdas
-        // read from as many servers as we can
-        // put results into a sorted set
-        // read and return the payload
-        List<String> servers = cluster.getServers();
-        int serverCount = servers.size();
-
-        CompletionService<String> compService = new ExecutorCompletionService<>(
-                Executors.newFixedThreadPool(serverCount));
-
-        SortedSet<String> keySet = new TreeSet<>();  // result accumulator
-
-        // Futures for all submitted Callables that have not yet been checked
-        Set<Future<String>> futures = new HashSet<>();
-
-        for (final String server : servers) {
-            // keep track of the futures that get created so we can cancel them if necessary
-            futures.add(compService.submit(new Callable<String>(){
-                @Override public String call(){
-                    ClientResponse response = client.resource("http://" + server + "/spoke/next/" + path )
-                            .get(ClientResponse.class);
-                    logger.trace("server {} path {} response {}", server, path, response);
-
-                    if (response.getStatus() == 200) {
-                        response.bufferEntity();
-                        return response.getEntity(String.class);
-                        }
-                    logger.trace("server {} path {} response {}", server, path, response);
-                    return null; // TODO bc 11/17/14: should this be an exception?
-                }
-            }));
-        }
-
-        int received = 0;
-        boolean errors = false;
-
-        while(received < serverCount && !errors) {
-            Future<String> resultFuture = compService.take(); //blocks if none available
-            try {
-                String key = resultFuture.get();
-                if(key != null) keySet.add(key);
-                received ++;
-            }
-            catch(Exception e) {
-                //log
-                errors = true;
-            }
-        }
-        if(readNext) return keySet.first();
-        return keySet.last();
-    }
-
-    public String readNext(String path) throws InterruptedException{
-        return readAdjacent(path, true);
-    }
-
-    public String readPrevious(String path) throws InterruptedException{
-        return readAdjacent(path, false);
-    }
-
     public boolean delete(String path) throws Exception {
         //todo - gfm - 11/19/14 - do we actually care about deleting in the short term cache?
         //todo - gfm - 11/13/14 - this could be merged with some of the write code

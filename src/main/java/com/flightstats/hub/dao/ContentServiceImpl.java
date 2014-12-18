@@ -1,9 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -96,9 +94,9 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
         Set<ContentKey> orderedKeys = new TreeSet<>();
-        if (timeQuery.getLocation().equals(TimeQuery.Location.CACHE)) {
+        if (timeQuery.getLocation().equals(Location.CACHE)) {
             orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
-        } else if (timeQuery.getLocation().equals(TimeQuery.Location.LONG_TERM)) {
+        } else if (timeQuery.getLocation().equals(Location.LONG_TERM)) {
             orderedKeys.addAll(longTermContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
         } else if (isInsideCacheWindow(timeQuery.getStartTime())) {
             //todo - gfm - 11/21/14 - is this distinction really needed?
@@ -140,9 +138,9 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
+    public Collection<ContentKey> getKeys(DirectionQuery query) {
         //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours, may need to span
-        return cacheContentDao.getKeys(channelName, contentKey, count);
+        return cacheContentDao.getKeys(query);
     }
 
     private class ContentServiceHook extends AbstractIdleService {
