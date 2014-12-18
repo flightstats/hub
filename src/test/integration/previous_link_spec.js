@@ -11,20 +11,20 @@ var testName = __filename;
 describe(testName, function () {
     utils.createChannel(channelName);
 
-    it('adds items and traverses next links', function (done) {
+    it('adds items and traverses previous links', function (done) {
         var values = [];
         var items = [];
         utils.postItemQ(channelResource)
             .then(function (value) {
                 values.push(value);
                 items.push(value.body._links.self.href);
-                return getItem(value.body._links.self.href, 200);
+                return getItem(value.body._links.self.href, 200, '0');
             })
             .then(function (value) {
-                return getItem(items[0] + '/next', 404);
+                return getItem(items[0] + '/previous', 404, 'A');
             })
             .then(function (value) {
-                return getItem(items[0] + '/next/2', 200);
+                return getItem(items[0] + '/previous/2', 200, 'B');
             })
             .then(function (value) {
                 expect(value.body._links.uris.length).toBe(0);
@@ -36,17 +36,17 @@ describe(testName, function () {
             })
             .then(function (value) {
                 items.push(value.body._links.self.href);
-                return getItem(items[0] + '/next', 200);
+                return getItem(items[2] + '/previous', 200, 'C');
             })
             .then(function (value) {
                 expect(value.response.request.href).toBe(items[1]);
-                return getItem(items[0] + '/next/2', 200);
+                return getItem(items[2] + '/previous/2', 200);
             })
             .then(function (value) {
                 expect(value.body._links.uris.length).toBe(2);
-                expect(value.body._links.uris[0]).toBe(items[1]);
-                expect(value.body._links.uris[1]).toBe(items[2]);
-                expect(value.body._links.next.href).toBe(items[2] + '/next/2');
+                expect(value.body._links.uris[0]).toBe(items[0]);
+                expect(value.body._links.uris[1]).toBe(items[1]);
+                expect(value.body._links.previous.href).toBe(items[0] + '/previous/2');
                 done();
             })
     });

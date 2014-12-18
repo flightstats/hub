@@ -266,8 +266,6 @@ public class ChannelContentResource {
         return builder.build();
     }
 
-    //todo - gfm - 11/5/14 - next & previous links with stability
-
     @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}/next")
     @GET
     //todo - gfm - 11/5/14 - timing?
@@ -281,29 +279,11 @@ public class ChannelContentResource {
                             @PathParam("millis") int millis,
                             @PathParam("hash") String hash,
                             @QueryParam("stable") @DefaultValue("true") boolean stable) {
-        //todo - gfm - 11/5/14 - more int test
-        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
-        DirectionQuery query = DirectionQuery.builder()
-                .channelName(channelName)
-                .contentKey(new ContentKey(dateTime, hash))
-                .next(true)
-                .stable(stable)
-                .count(1).build();
-        Collection<ContentKey> keys = channelService.getKeys(query);
-        if (keys.isEmpty()) {
-            return Response.status(NOT_FOUND).build();
-        }
-        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
-        String channelUri = uriInfo.getBaseUri() + "channel/" + channelName;
-        ContentKey foundKey = keys.iterator().next();
-        URI uri = URI.create(channelUri + "/" + foundKey.toUrl());
-        builder.location(uri);
-        return builder.build();
+        return directional(channelName, year, month, day, hour, minute, second, millis, hash, stable, true);
     }
 
     @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}/next/{count}")
     @GET
-    //todo - gfm - 11/5/14 - timing?
     @Produces(MediaType.APPLICATION_JSON)
     public Response getNextCount(@PathParam("channelName") String channelName,
                                  @PathParam("year") int year,
@@ -316,7 +296,6 @@ public class ChannelContentResource {
                                  @PathParam("hash") String hash,
                                  @PathParam("count") int count,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable) {
-        //todo - gfm - 11/5/14 - int test
         DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channelName)
@@ -334,6 +313,72 @@ public class ChannelContentResource {
         return getResponse(channelName, null, nextString, keys);
     }
 
+    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}/previous")
+    @GET
+    public Response getPrevious(@PathParam("channelName") String channelName,
+                            @PathParam("year") int year,
+                            @PathParam("month") int month,
+                            @PathParam("day") int day,
+                            @PathParam("hour") int hour,
+                            @PathParam("minute") int minute,
+                            @PathParam("second") int second,
+                            @PathParam("millis") int millis,
+                            @PathParam("hash") String hash,
+                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
+        return directional(channelName, year, month, day, hour, minute, second, millis, hash, stable, false);
+    }
+
+    @Path("/{month}/{day}/{hour}/{minute}/{second}/{millis}/{hash}/previous/{count}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getPreviousCount(@PathParam("channelName") String channelName,
+                                 @PathParam("year") int year,
+                                 @PathParam("month") int month,
+                                 @PathParam("day") int day,
+                                 @PathParam("hour") int hour,
+                                 @PathParam("minute") int minute,
+                                 @PathParam("second") int second,
+                                 @PathParam("millis") int millis,
+                                 @PathParam("hash") String hash,
+                                 @PathParam("count") int count,
+                                 @QueryParam("stable") @DefaultValue("true") boolean stable) {
+        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channelName)
+                .contentKey(new ContentKey(dateTime, hash))
+                .next(false)
+                .stable(stable)
+                .count(count).build();
+        Collection<ContentKey> keys = channelService.getKeys(query);
+        List<ContentKey> list = new ArrayList<>(keys);
+        String previousString = null;
+        if (!list.isEmpty()) {
+            ContentKey contentKey = list.get(0);
+            previousString = contentKey.toUrl() + "/previous/" + count;
+        }
+        return getResponse(channelName, previousString, null, keys);
+    }
+
+    private Response directional(String channelName, int year, int month, int day, int hour, int minute,
+                                 int second, int millis, String hash, boolean stable, boolean next) {
+        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channelName)
+                .contentKey(new ContentKey(dateTime, hash))
+                .next(next)
+                .stable(stable)
+                .count(1).build();
+        Collection<ContentKey> keys = channelService.getKeys(query);
+        if (keys.isEmpty()) {
+            return Response.status(NOT_FOUND).build();
+        }
+        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
+        String channelUri = uriInfo.getBaseUri() + "channel/" + channelName;
+        ContentKey foundKey = keys.iterator().next();
+        URI uri = URI.create(channelUri + "/" + foundKey.toUrl());
+        builder.location(uri);
+        return builder.build();
+    }
 
     private MediaType getContentType(Content content) {
         Optional<String> contentType = content.getContentType();
