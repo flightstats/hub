@@ -85,13 +85,6 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Optional<ContentKey> findLastUpdatedKey(String channelName) {
-        //todo - gfm - 11/14/14 - look in cache first, then S3
-        //todo - gfm - 10/28/14 - implement
-        return Optional.absent();
-    }
-
-    @Override
     public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
         Set<ContentKey> orderedKeys = new TreeSet<>();
         if (timeQuery.getLocation().equals(Location.CACHE)) {

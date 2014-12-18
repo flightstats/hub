@@ -90,11 +90,6 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Optional<ContentKey> findLastUpdatedKey(String channelName) {
-        return contentService.findLastUpdatedKey(channelName);
-    }
-
-    @Override
     public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
         channelValidator.validate(configuration, false);
