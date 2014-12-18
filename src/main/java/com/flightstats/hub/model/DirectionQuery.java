@@ -1,19 +1,18 @@
 package com.flightstats.hub.model;
 
 
-import com.flightstats.hub.util.TimeUtil;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.Builder;
-import org.joda.time.DateTime;
 
 @Builder
 @Getter
 @ToString
-public class TimeQuery {
+public class DirectionQuery {
     private final String channelName;
-    private final DateTime startTime;
-    private final TimeUtil.Unit unit;
+    private final ContentKey contentKey;
+    private final int count;
+    private final boolean next;
     private final Location location;
 
     public Location getLocation() {
