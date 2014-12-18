@@ -82,21 +82,30 @@ public class SpokeContentDao implements ContentDao {
     public Collection<ContentKey> getKeys(DirectionQuery query) {
         Set<ContentKey> orderedKeys = new TreeSet<>();
         ContentKey startKey = query.getContentKey();
-        //queryByTime returns oldest to newest
-        DateTime time = query.isStable() ? TimeUtil.stable() : TimeUtil.now();
-        Collection<ContentKey> contentKeys = new TreeSet<>(queryByTime(query.getChannelName(), time, TimeUtil.Unit.DAYS));
+        DateTime time = TimeUtil.time(query.isStable());
+        Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), TimeUtil.now(), TimeUtil.Unit.DAYS);
         if (query.isNext()) {
-            for (ContentKey contentKey : contentKeys) {
-                if (contentKey.compareTo(startKey) > 0) {
+            //from oldest to newest
+            for (ContentKey contentKey : new TreeSet<>(queryByTime)) {
+                if (contentKey.compareTo(startKey) > 0 && contentKey.getTime().isBefore(time)) {
                     orderedKeys.add(contentKey);
-                    logger.info("adding {}", contentKey);
                     if (orderedKeys.size() == query.getCount()) {
                         return orderedKeys;
                     }
                 }
             }
         } else {
-            //todo - gfm - 12/17/14 - handle previous too
+            //from newest to oldest
+            Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
+            contentKeys.addAll(queryByTime);
+            for (ContentKey contentKey : contentKeys) {
+                if (contentKey.compareTo(startKey) < 0 && contentKey.getTime().isBefore(time)) {
+                    orderedKeys.add(contentKey);
+                    if (orderedKeys.size() == query.getCount()) {
+                        return orderedKeys;
+                    }
+                }
+            }
         }
         return orderedKeys;
     }
