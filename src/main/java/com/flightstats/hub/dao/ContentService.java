@@ -2,6 +2,7 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.google.common.base.Optional;
 
@@ -19,5 +20,5 @@ public interface ContentService {
 
     void delete(String channelName);
 
-    Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count);
+    Collection<ContentKey> getKeys(DirectionQuery query);
 }

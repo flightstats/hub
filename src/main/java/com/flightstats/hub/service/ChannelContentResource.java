@@ -7,10 +7,7 @@ import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.app.config.metrics.PerChannelTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.Location;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -73,8 +70,9 @@ public class ChannelContentResource {
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
+                .stable(stable)
                 .unit(Unit.DAYS);
-        Collection<ContentKey> keys = channelService.queryByTime(builder.build(), stable);
+        Collection<ContentKey> keys = channelService.queryByTime(builder.build());
         return getResponse(channelName, startTime.minusDays(1), startTime.plusDays(1), Unit.DAYS, keys, stable);
     }
 
@@ -93,8 +91,9 @@ public class ChannelContentResource {
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
+                .stable(stable)
                 .unit(Unit.HOURS);
-        Collection<ContentKey> keys = channelService.queryByTime(builder.build(), stable);
+        Collection<ContentKey> keys = channelService.queryByTime(builder.build());
         return getResponse(channelName, startTime.minusHours(1), startTime.plusHours(1), Unit.HOURS, keys, stable);
     }
 
@@ -115,9 +114,10 @@ public class ChannelContentResource {
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
+                .stable(stable)
                 .unit(Unit.MINUTES)
                 .location(Location.valueOf(location));
-        Collection<ContentKey> keys = channelService.queryByTime(builder.build(), stable);
+        Collection<ContentKey> keys = channelService.queryByTime(builder.build());
         return getResponse(channelName, startTime.minusMinutes(1), startTime.plusMinutes(1), Unit.MINUTES, keys, stable);
     }
 
@@ -138,8 +138,9 @@ public class ChannelContentResource {
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
+                .stable(stable)
                 .unit(Unit.SECONDS);
-        Collection<ContentKey> keys = channelService.queryByTime(builder.build(), stable);
+        Collection<ContentKey> keys = channelService.queryByTime(builder.build());
         return getResponse(channelName, startTime.minusSeconds(1), startTime.plusSeconds(1), Unit.SECONDS, keys, stable);
     }
 
@@ -161,8 +162,9 @@ public class ChannelContentResource {
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
+                .stable(stable)
                 .unit(Unit.MILLIS);
-        Collection<ContentKey> keys = channelService.queryByTime(builder.build(), stable);
+        Collection<ContentKey> keys = channelService.queryByTime(builder.build());
         return getResponse(channelName, startTime.minusMillis(1), startTime.plusMillis(1), Unit.MILLIS , keys, stable);
     }
 
@@ -277,11 +279,17 @@ public class ChannelContentResource {
                             @PathParam("minute") int minute,
                             @PathParam("second") int second,
                             @PathParam("millis") int millis,
-                            @PathParam("hash") String hash) {
+                            @PathParam("hash") String hash,
+                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
         //todo - gfm - 11/5/14 - more int test
         DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
-        ContentKey key = new ContentKey(dateTime, hash);
-        Collection<ContentKey> keys = channelService.getKeys(channelName, key, 1);
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channelName)
+                .contentKey(new ContentKey(dateTime, hash))
+                .next(true)
+                .stable(stable)
+                .count(1).build();
+        Collection<ContentKey> keys = channelService.getKeys(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }
@@ -305,11 +313,18 @@ public class ChannelContentResource {
                                  @PathParam("minute") int minute,
                                  @PathParam("second") int second,
                                  @PathParam("millis") int millis,
-                                 @PathParam("hash") String hash, @PathParam("count") int count) {
+                                 @PathParam("hash") String hash,
+                                 @PathParam("count") int count,
+                                 @QueryParam("stable") @DefaultValue("true") boolean stable) {
         //todo - gfm - 11/5/14 - int test
         DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
-        ContentKey key = new ContentKey(dateTime, hash);
-        Collection<ContentKey> keys = channelService.getKeys(channelName, key, count);
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channelName)
+                .contentKey(new ContentKey(dateTime, hash))
+                .next(true)
+                .stable(stable)
+                .count(count).build();
+        Collection<ContentKey> keys = channelService.getKeys(query);
         List<ContentKey> list = new ArrayList<>(keys);
         String nextString = null;
         if (!list.isEmpty()) {
