@@ -2,8 +2,6 @@ package com.flightstats.hub.service;
 
 import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ContentKey;
-import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
 import javax.ws.rs.GET;
@@ -11,10 +9,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 @Path("/channel/{channelName: .*}/latest")
 public class LatestChannelItemResource {
@@ -31,7 +25,7 @@ public class LatestChannelItemResource {
     @GET
     @EventTimed(name = "channel.ALL.latest.get")
     public Response getLatest(@PathParam("channelName") String channelName) {
-        Optional<ContentKey> latestId = channelService.findLastUpdatedKey(channelName);
+        /*Optional<ContentKey> latestId = channelService.findLastUpdatedKey(channelName);
         if (!latestId.isPresent()) {
             return Response.status(NOT_FOUND).build();
         }
@@ -41,7 +35,8 @@ public class LatestChannelItemResource {
         ContentKey keyOfLatestItem = latestId.get();
         URI uri = URI.create(channelUri + "/" + keyOfLatestItem.toUrl());
         builder.location(uri);
-        return builder.build();
+        return builder.build();*/
+        return null;
     }
 
 }

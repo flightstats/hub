@@ -14,8 +14,6 @@ public interface ContentService {
 
     Optional<Content> getValue(String channelName, ContentKey key);
 
-    Optional<ContentKey> findLastUpdatedKey(String channelName);
-
     Collection<ContentKey> queryByTime(TimeQuery timeQuery);
 
     void delete(String channelName);
