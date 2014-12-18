@@ -1,9 +1,6 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 
 import java.util.Collection;
@@ -30,9 +27,9 @@ public interface ChannelService {
 
     ChannelConfiguration updateChannel(ChannelConfiguration configuration);
 
-    Collection<ContentKey> queryByTime(TimeQuery timeQuery, boolean stable);
+    Collection<ContentKey> queryByTime(TimeQuery timeQuery);
 
-    Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count);
+    Collection<ContentKey> getKeys(DirectionQuery query);
 
     boolean delete(String channelName);
 }

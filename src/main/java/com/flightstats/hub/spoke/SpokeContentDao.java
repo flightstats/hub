@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.Trace;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
@@ -10,7 +11,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  * This is the entry point in the Hub's storage system, Spoke.
@@ -74,12 +75,39 @@ public class SpokeContentDao implements ContentDao {
         } catch (Exception e) {
             logger.warn("what happened? " + channelName + " " + startTime + " " + unit, e);
         }
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
-    public Collection<ContentKey> getKeys(String channelName, ContentKey contentKey, int count) {
-        return null;
+    public Collection<ContentKey> getKeys(DirectionQuery query) {
+        Set<ContentKey> orderedKeys = new TreeSet<>();
+        ContentKey startKey = query.getContentKey();
+        DateTime time = TimeUtil.time(query.isStable());
+        Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), TimeUtil.now(), TimeUtil.Unit.DAYS);
+        if (query.isNext()) {
+            //from oldest to newest
+            for (ContentKey contentKey : new TreeSet<>(queryByTime)) {
+                if (contentKey.compareTo(startKey) > 0 && contentKey.getTime().isBefore(time)) {
+                    orderedKeys.add(contentKey);
+                    if (orderedKeys.size() == query.getCount()) {
+                        return orderedKeys;
+                    }
+                }
+            }
+        } else {
+            //from newest to oldest
+            Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
+            contentKeys.addAll(queryByTime);
+            for (ContentKey contentKey : contentKeys) {
+                if (contentKey.compareTo(startKey) < 0 && contentKey.getTime().isBefore(time)) {
+                    orderedKeys.add(contentKey);
+                    if (orderedKeys.size() == query.getCount()) {
+                        return orderedKeys;
+                    }
+                }
+            }
+        }
+        return orderedKeys;
     }
 
     @Override
