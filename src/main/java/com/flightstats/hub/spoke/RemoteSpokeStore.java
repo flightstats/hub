@@ -15,8 +15,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings({"Convert2streamapi", "Convert2Lambda"})
@@ -107,7 +111,7 @@ public class RemoteSpokeStore {
         return null;
     }
 
-    public Collection<ContentKey> readTimeBucket(String channel, String timePath) throws InterruptedException {
+    public Set<ContentKey> readTimeBucket(String channel, String timePath) throws InterruptedException {
         List<String> servers = cluster.getServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         String path = channel + "/" + timePath;
