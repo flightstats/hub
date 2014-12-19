@@ -18,10 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class S3ContentDao implements ContentDao {
 
@@ -110,13 +107,13 @@ public class S3ContentDao implements ContentDao {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+    public Set<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
         String timePath = unit.format(startTime);
         ListObjectsRequest request = new ListObjectsRequest();
         request.withBucketName(s3BucketName);
         request.withPrefix(channelName + "/" + timePath);
         request.withMaxKeys(s3MaxQueryItems);
-        List<ContentKey> keys = new ArrayList<>();
+        Set<ContentKey> keys = new TreeSet<>();
         ObjectListing listing = s3Client.listObjects(request);
         String marker = addKeys(channelName, listing, keys);
         while (listing.isTruncated()) {
@@ -127,7 +124,7 @@ public class S3ContentDao implements ContentDao {
         return keys;
     }
 
-    private String addKeys(String channelName, ObjectListing listing, List<ContentKey> keys) {
+    private String addKeys(String channelName, ObjectListing listing, Set<ContentKey> keys) {
         String key = null;
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
@@ -138,9 +135,9 @@ public class S3ContentDao implements ContentDao {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(DirectionQuery query) {
+    public Set<ContentKey> query(DirectionQuery query) {
         //todo - gfm - 11/14/14 -
-        return null;
+        return Collections.emptySet();
     }
 
     private String getS3ContentKey(String channelName, ContentKey key) {

@@ -6,7 +6,7 @@ import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 
-import java.util.Collection;
+import java.util.Set;
 
 public interface ContentDao {
 
@@ -17,9 +17,9 @@ public interface ContentDao {
 
     Content read(String channelName, ContentKey key);
 
-    Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit);
+    Set<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit);
 
-    Collection<ContentKey> getKeys(DirectionQuery query);
+    Set<ContentKey> query(DirectionQuery query);
 
     void delete(String channelName);
 
