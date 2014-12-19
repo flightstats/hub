@@ -1,50 +1,79 @@
 require('./integration_config.js');
 
+var request = require('request');
 var channelName = utils.randomChannelName();
-var jsonBody = JSON.stringify({ "name": channelName, "ttlMillis": null});
-var expectedBody = {
-    name: channelName,
-    ttlDays : 2,
-    "tags": [ "bar", "foo", "tagz"]
-};
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
+var updateBody = {
+    "ttlDays" : 2,
+    description: 'next',
+    "tags": ["foo", "bar", "tagz"]
+};
+function verifyOptionals(parse) {
+    expect(parse.description).toBe('describe me');
+    expect(parse.ttlDays).toBe(9);
+}
 
-utils.configureFrisby();
+describe(testName, function () {
+    it("creates channel " + channelName + " at " + channelUrl, function (done) {
+        request.post({url : channelUrl,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify({
+                    name : channelName,
+                    description : 'describe me',
+                    ttlDays : 9
+                })},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(201);
+                var parse = JSON.parse(body);
+                verifyOptionals(parse);
+                done();
+            });
+    });
 
-frisby.create(testName + ': Making sure channel resource does not yet exist.')
-    .get(channelResource)
-    .expectStatus(404)
-    .after(function () {
-        frisby.create(testName + ': Test create channel')
-            .post(channelUrl, null, { body: jsonBody})
-            .addHeader("Content-Type", "application/json")
-            .expectStatus(201)
-            .afterJSON(function (result) {
-                var updateBody = {
-                    "ttlDays" : 2,
-                    peakRequestRateSeconds: 5,
-                    contentSizeKB: 20,
-                    "tags": ["foo", "bar", "tagz"]
-                };
-                frisby.create(testName + ': Update channel ttlMillis')
-                    .patch(channelResource, updateBody, {json:true})
-                    .expectStatus(200)
-                    .expectHeader('content-type', 'application/json')
-                    .expectJSON(expectedBody)
-                    .toss();
+    it("verifies channel exists " + channelResource, function (done) {
+        request.get({url : channelResource },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parse = JSON.parse(body);
+                verifyOptionals(parse);
+                done();
+            });
+    });
 
-                frisby.create(testName + ': Update channel ttlMillis')
-                    .get(channelResource)
-                    .expectStatus(200)
-                    .expectHeader('content-type', 'application/json')
-                    .expectJSON(expectedBody)
-                    .toss()
+    it("patches channel " + channelResource, function (done) {
+        request.patch({url : channelResource,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify(updateBody)},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parse = JSON.parse(body);
+                expect(parse.ttlDays).toBe(2);
+                expect(parse.description).toBe('next');
+                expect(parse.tags).toContain('foo');
+                expect(parse.tags).toContain('bar');
+                expect(parse.tags).toContain('tagz');
+                done();
+            });
+    });
 
-            })
-            .toss()
-    })
-    .toss();
+    it("verifies channel exists with attributes " + channelResource, function (done) {
+        request.get({url : channelResource },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parse = JSON.parse(body);
+                expect(parse.ttlDays).toBe(2);
+                expect(parse.description).toBe('next');
+                expect(parse.tags).toContain('foo');
+                expect(parse.tags).toContain('bar');
+                expect(parse.tags).toContain('tagz');
+                done();
+            });
+    });
 
-
+});
 
