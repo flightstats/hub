@@ -1,40 +1,67 @@
 require('./integration_config.js');
 
+var request = require('request');
 var channelName = utils.randomChannelName();
-var jsonBody = JSON.stringify({ 
-    'name': channelName, 
-    'description': 'starting',
-    ttlDays: 9,
-    contentSizeKB: 3,
-    peakRequestRateSeconds: 2,
-    tags: ['one', 'two']
-});
-var channelResource = channelUrl + '/' + channelName;
+var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-utils.configureFrisby();
 
-frisby.create(testName + ': Making sure channel resource does not yet exist.')
-    .get(channelResource)
-    .expectStatus(404)
-    .after(function () {
-        frisby.create(testName + ': Test create channel')
-            .post(channelUrl, null, { body: jsonBody})
-            .addHeader('Content-Type', 'application/json')
-            .expectStatus(201)
-            .expectJSON({'description': 'starting'})
-            .afterJSON(function (result) {
-                var updateBody = {'description': 'next description'};
-                frisby.create(testName + ': Update channel description')
-                    .patch(channelResource, updateBody, {json:true})
-                    .expectStatus(200)
-                    .expectHeader('content-type', 'application/json')
-                    .expectJSON({'name': channelName})
-                    .expectJSON({'description': 'next description'})
-                    .expectJSON({ttlDays: 9,
-                        tags: ['one', 'two']})
-                    .toss()
-            })
-            .toss()
-    })
-    .toss();
+function verifyOptionals(parse) {
+    expect(parse.description).toBe('describe me');
+    expect(parse.ttlDays).toBe(9);
+}
+
+describe(testName, function () {
+    it("creates channel " + channelName + " at " + channelUrl, function (done) {
+        request.post({url : channelUrl,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify({
+                    name : channelName,
+                    description : 'describe me',
+                    ttlDays : 9
+                })},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(201);
+                var parse = JSON.parse(body);
+                verifyOptionals(parse);
+                done();
+            });
+    });
+
+    it("verifies channel exists " + channelResource, function (done) {
+        request.get({url : channelResource },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parse = JSON.parse(body);
+                verifyOptionals(parse);
+                done();
+            });
+    });
+
+    it("patches channel with null description " + channelResource, function (done) {
+        request.patch({url : channelResource,
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify({ description : 'stuff' })},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parse = JSON.parse(body);
+                expect(parse.description).toBe("stuff");
+                done();
+            });
+    });
+
+    it("verifies channel exists with correct description " + channelResource, function (done) {
+        request.get({url : channelResource },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parse = JSON.parse(body);
+                expect(parse.description).toBe("stuff");
+                done();
+            });
+    });
+
+});
 
