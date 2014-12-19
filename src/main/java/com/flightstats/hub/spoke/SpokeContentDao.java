@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
@@ -71,19 +71,19 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public Set<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+    public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
         String timePath = unit.format(startTime);
         try {
-            return spokeStore.readTimeBucket(channelName, timePath);
+            return new TreeSet<>(spokeStore.readTimeBucket(channelName, timePath));
         } catch (Exception e) {
             logger.warn("what happened? " + channelName + " " + startTime + " " + unit, e);
         }
-        return Collections.emptySet();
+        return new TreeSet<>();
     }
 
     @Override
-    public Set<ContentKey> query(DirectionQuery query) {
-        Set<ContentKey> orderedKeys = new TreeSet<>();
+    public SortedSet<ContentKey> query(DirectionQuery query) {
+        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         ContentKey startKey = query.getContentKey();
         DateTime time = TimeUtil.time(query.isStable());
         Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), TimeUtil.now(), TimeUtil.Unit.DAYS);
