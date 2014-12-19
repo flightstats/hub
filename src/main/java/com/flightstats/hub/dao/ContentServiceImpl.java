@@ -85,17 +85,14 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
+    public Collection<ContentKey> queryByTime(TimeQuery query) {
         Set<ContentKey> orderedKeys = new TreeSet<>();
-        if (timeQuery.getLocation().equals(Location.CACHE)) {
-            orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
-        } else if (timeQuery.getLocation().equals(Location.LONG_TERM)) {
-            orderedKeys.addAll(longTermContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
-        } else if (isInsideCacheWindow(timeQuery.getStartTime())) {
-            //todo - gfm - 11/21/14 - is this distinction really needed?
-            orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+        if (query.getLocation().equals(Location.CACHE)) {
+            orderedKeys.addAll(cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit()));
+        } else if (query.getLocation().equals(Location.LONG_TERM)) {
+            orderedKeys.addAll(longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit()));
         } else {
-            queryBothByTime(timeQuery, orderedKeys);
+            queryBothByTime(query, orderedKeys);
         }
         return orderedKeys;
     }
@@ -132,8 +129,38 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
-        //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours, may need to span
-        return cacheContentDao.getKeys(query);
+        if (query.getLocation().equals(Location.CACHE)) {
+            return cacheContentDao.query(query);
+        } else if (query.getLocation().equals(Location.LONG_TERM)) {
+            return longTermContentDao.query(query);
+        } else {
+            return queryBoth(query);
+        }
+    }
+
+    private Set<ContentKey> queryBoth(DirectionQuery query) {
+        Set<ContentKey> orderedKeys = new TreeSet<>();
+        try {
+            CountDownLatch countDownLatch = new CountDownLatch(2);
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    orderedKeys.addAll(cacheContentDao.query(query));
+                    countDownLatch.countDown();
+                }
+            });
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    orderedKeys.addAll(longTermContentDao.query(query));
+                    countDownLatch.countDown();
+                }
+            });
+            countDownLatch.await();
+            return orderedKeys;
+        } catch (InterruptedException e) {
+            throw new RuntimeInterruptedException(e);
+        }
     }
 
     private class ContentServiceHook extends AbstractIdleService {

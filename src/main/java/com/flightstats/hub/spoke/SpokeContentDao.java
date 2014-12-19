@@ -11,7 +11,10 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * This is the entry point in the Hub's storage system, Spoke.
@@ -68,18 +71,18 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+    public Set<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
         String timePath = unit.format(startTime);
         try {
             return spokeStore.readTimeBucket(channelName, timePath);
         } catch (Exception e) {
             logger.warn("what happened? " + channelName + " " + startTime + " " + unit, e);
         }
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
-    public Collection<ContentKey> getKeys(DirectionQuery query) {
+    public Set<ContentKey> query(DirectionQuery query) {
         Set<ContentKey> orderedKeys = new TreeSet<>();
         ContentKey startKey = query.getContentKey();
         DateTime time = TimeUtil.time(query.isStable());
