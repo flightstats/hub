@@ -6,8 +6,6 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -44,11 +42,10 @@ public class LatestChannelItemResource {
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }
-        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
         ContentKey foundKey = keys.iterator().next();
-        URI uri = URI.create(uriInfo.getBaseUri() + "channel/" + channelName + "/" + foundKey.toUrl());
-        builder.location(uri);
-        return builder.build();
+        return Response.status(SEE_OTHER)
+                .location(URI.create(uriInfo.getBaseUri() + "channel/" + channelName + "/" + foundKey.toUrl()))
+                .build();
     }
 
 }
