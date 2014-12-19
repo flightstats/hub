@@ -107,13 +107,13 @@ public class S3ContentDao implements ContentDao {
     }
 
     @Override
-    public Set<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+    public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
         String timePath = unit.format(startTime);
         ListObjectsRequest request = new ListObjectsRequest();
         request.withBucketName(s3BucketName);
         request.withPrefix(channelName + "/" + timePath);
         request.withMaxKeys(s3MaxQueryItems);
-        Set<ContentKey> keys = new TreeSet<>();
+        SortedSet<ContentKey> keys = new TreeSet<>();
         ObjectListing listing = s3Client.listObjects(request);
         String marker = addKeys(channelName, listing, keys);
         while (listing.isTruncated()) {
@@ -135,9 +135,9 @@ public class S3ContentDao implements ContentDao {
     }
 
     @Override
-    public Set<ContentKey> query(DirectionQuery query) {
+    public SortedSet<ContentKey> query(DirectionQuery query) {
         //todo - gfm - 11/14/14 -
-        return Collections.emptySet();
+        return new TreeSet<>();
     }
 
     private String getS3ContentKey(String channelName, ContentKey key) {

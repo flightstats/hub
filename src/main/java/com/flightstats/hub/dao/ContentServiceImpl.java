@@ -16,10 +16,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("Convert2Lambda")
@@ -86,18 +88,17 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     public Collection<ContentKey> queryByTime(TimeQuery query) {
-        Set<ContentKey> orderedKeys = new TreeSet<>();
         if (query.getLocation().equals(Location.CACHE)) {
-            orderedKeys.addAll(cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit()));
+            return cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit());
         } else if (query.getLocation().equals(Location.LONG_TERM)) {
-            orderedKeys.addAll(longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit()));
+            return longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit());
         } else {
-            queryBothByTime(query, orderedKeys);
+            return queryBothByTime(query);
         }
-        return orderedKeys;
     }
 
-    private void queryBothByTime(TimeQuery timeQuery, Set<ContentKey> orderedKeys) {
+    private SortedSet<ContentKey> queryBothByTime(TimeQuery timeQuery) {
+        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             executorService.submit(new Runnable() {
@@ -114,7 +115,8 @@ public class ContentServiceImpl implements ContentService {
                     countDownLatch.countDown();
                 }
             });
-            countDownLatch.await();
+            countDownLatch.await(3, TimeUnit.MINUTES);
+            return orderedKeys;
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
@@ -156,7 +158,7 @@ public class ContentServiceImpl implements ContentService {
                     countDownLatch.countDown();
                 }
             });
-            countDownLatch.await();
+            countDownLatch.await(3, TimeUnit.MINUTES);
             return orderedKeys;
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
