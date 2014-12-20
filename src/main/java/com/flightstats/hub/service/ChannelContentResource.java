@@ -347,6 +347,7 @@ public class ChannelContentResource {
                 .contentKey(new ContentKey(dateTime, hash))
                 .next(false)
                 .stable(stable)
+                .ttlDays(channelService.getChannelConfiguration(channelName).getTtlDays())
                 .count(count).build();
         Collection<ContentKey> keys = channelService.getKeys(query);
         List<ContentKey> list = new ArrayList<>(keys);
@@ -366,6 +367,7 @@ public class ChannelContentResource {
                 .contentKey(new ContentKey(dateTime, hash))
                 .next(next)
                 .stable(stable)
+                .ttlDays(channelService.getChannelConfiguration(channelName).getTtlDays())
                 .count(1).build();
         Collection<ContentKey> keys = channelService.getKeys(query);
         if (keys.isEmpty()) {

@@ -105,8 +105,8 @@ public class S3ContentDaoTest {
     }
 
     @Test
-    public void testQueryNext() throws Exception {
-        String channel = "testQueryNext" + RandomStringUtils.randomAlphanumeric(20);
+    public void testDirectionQuery() throws Exception {
+        String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = new DateTime(2014, 11, 14, 15, 27, DateTimeZone.UTC);
         for (int i = 0; i < 60; i += 6) {
@@ -117,6 +117,52 @@ public class S3ContentDaoTest {
             s3ContentDao.write(channel, content);
         }
         logger.info("wrote {} {}", keys.size(), keys);
+        next20(channel, keys, start);
+        next3(channel, keys, start);
+        previous20(channel, keys, start);
+        previous3(channel, keys, start);
+    }
+
+    private void previous3(String channel, List<ContentKey> keys, DateTime start) {
+        DirectionQuery query = DirectionQuery.builder()
+                .stable(false)
+                .channelName(channel)
+                .count(3)
+                .next(false)
+                .contentKey(new ContentKey(start.plusMinutes(61), "blah"))
+                .build();
+        Collection<ContentKey> found = s3ContentDao.query(query);
+        assertEquals(3, found.size());
+        assertTrue(keys.containsAll(found));
+    }
+
+    private void previous20(String channel, List<ContentKey> keys, DateTime start) {
+        DirectionQuery query = DirectionQuery.builder()
+                .stable(false)
+                .channelName(channel)
+                .count(20)
+                .next(false)
+                .contentKey(new ContentKey(start.plusMinutes(61), "blah"))
+                .build();
+        Collection<ContentKey> found = s3ContentDao.query(query);
+        assertEquals(10, found.size());
+        assertTrue(keys.containsAll(found));
+    }
+
+    private void next3(String channel, List<ContentKey> keys, DateTime start) {
+        DirectionQuery query = DirectionQuery.builder()
+                .stable(false)
+                .channelName(channel)
+                .count(3)
+                .next(true)
+                .contentKey(new ContentKey(start.plusMinutes(1), "blah"))
+                .build();
+        Collection<ContentKey> found = s3ContentDao.query(query);
+        assertEquals(3, found.size());
+        assertTrue(keys.containsAll(found));
+    }
+
+    private void next20(String channel, List<ContentKey> keys, DateTime start) {
         DirectionQuery query = DirectionQuery.builder()
                 .stable(false)
                 .channelName(channel)
@@ -127,19 +173,7 @@ public class S3ContentDaoTest {
         Collection<ContentKey> found = s3ContentDao.query(query);
         assertEquals(keys.size(), found.size());
         assertTrue(keys.containsAll(found));
-
-        query = DirectionQuery.builder()
-                .stable(false)
-                .channelName(channel)
-                .count(3)
-                .next(true)
-                .contentKey(new ContentKey(start.plusMinutes(1), "blah"))
-                .build();
-        found = s3ContentDao.query(query);
-        assertEquals(3, found.size());
-        assertTrue(keys.containsAll(found));
     }
-
 
     private Content createContent(ContentKey key) {
         return Content.builder()
