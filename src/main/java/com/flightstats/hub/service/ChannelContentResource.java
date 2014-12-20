@@ -191,18 +191,18 @@ public class ChannelContentResource {
         return Response.ok(root).build();
     }
 
-    private Response getResponse(String channelName, String previousString, String nextString, Collection<ContentKey> keys) {
+    private Response directionalResponse(String channelName, Collection<ContentKey> keys, int count) {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
-        if (nextString != null) {
+        List<ContentKey> list = new ArrayList<>(keys);
+        if (!list.isEmpty()) {
+            String baseUri = uriInfo.getBaseUri() + "channel/" + channelName + "/";
             ObjectNode next = links.putObject("next");
-            next.put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + nextString);
-        }
-        if (null != previousString) {
+            next.put("href", baseUri + list.get(list.size() - 1).toUrl() + "/next/" + count);
             ObjectNode previous = links.putObject("previous");
-            previous.put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + previousString);
+            previous.put("href", baseUri + list.get(0).toUrl() + "/previous/" + count);
         }
         ArrayNode ids = links.putArray("uris");
         URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
@@ -303,13 +303,7 @@ public class ChannelContentResource {
                 .stable(stable)
                 .count(count).build();
         Collection<ContentKey> keys = channelService.getKeys(query);
-        List<ContentKey> list = new ArrayList<>(keys);
-        String nextString = null;
-        if (!list.isEmpty()) {
-            ContentKey contentKey = list.get(list.size() - 1);
-            nextString = contentKey.toUrl() + "/next/" + count;
-        }
-        return getResponse(channelName, null, nextString, keys);
+        return directionalResponse(channelName, keys, count);
     }
 
     @Path("/{hour}/{minute}/{second}/{millis}/{hash}/previous")
@@ -350,13 +344,7 @@ public class ChannelContentResource {
                 .ttlDays(channelService.getChannelConfiguration(channelName).getTtlDays())
                 .count(count).build();
         Collection<ContentKey> keys = channelService.getKeys(query);
-        List<ContentKey> list = new ArrayList<>(keys);
-        String previousString = null;
-        if (!list.isEmpty()) {
-            ContentKey contentKey = list.get(0);
-            previousString = contentKey.toUrl() + "/previous/" + count;
-        }
-        return getResponse(channelName, previousString, null, keys);
+        return directionalResponse(channelName, keys, count);
     }
 
     private Response directional(String channelName, int year, int month, int day, int hour, int minute,
