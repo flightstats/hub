@@ -6,6 +6,7 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.spoke.PreviousUtil;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
@@ -141,18 +142,32 @@ public class S3ContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        //todo - handle previous
         logger.debug("query {}", query);
         if (query.isNext()) {
             return next(query);
         } else {
             return previous(query);
         }
-
     }
 
     private SortedSet<ContentKey> previous(DirectionQuery query) {
-        return null;
+        DateTime startTime = query.getContentKey().getTime();
+        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
+        int hourCount = 0;
+        while (orderedKeys.size() < query.getCount() && hourCount < 6) {
+            SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.HOURS);
+            PreviousUtil.addToPrevious(query, queryByTime, orderedKeys);
+            startTime = startTime.minusHours(1);
+            hourCount++;
+        }
+        int dayCount = 0;
+        while (orderedKeys.size() < query.getCount() && dayCount <= query.getTtlDays()) {
+            SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS);
+            PreviousUtil.addToPrevious(query, queryByTime, orderedKeys);
+            startTime = startTime.minusDays(1);
+            dayCount++;
+        }
+        return orderedKeys;
     }
 
     private SortedSet<ContentKey> next(DirectionQuery query) {
