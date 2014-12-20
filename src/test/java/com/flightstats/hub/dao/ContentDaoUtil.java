@@ -95,70 +95,31 @@ public class ContentDaoUtil {
     public void testDirectionQuery() throws Exception {
         String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
         List<ContentKey> keys = new ArrayList<>();
-        DateTime start = new DateTime(2014, 11, 14, 15, 27, DateTimeZone.UTC);
-        for (int i = 0; i < 60; i += 6) {
-            ContentKey key = new ContentKey(start.plusMinutes(i), "A" + i);
+        DateTime start = new DateTime(2014, 11, 14, 22, 27, DateTimeZone.UTC);
+        for (int i = 0; i < 7; i++) {
+            ContentKey key = new ContentKey(start.plusHours(i), "A" + i);
             keys.add(key);
             logger.info("writing " + key);
-            Content content = createContent(key);
-            contentDao.write(channel, content);
+            contentDao.write(channel, createContent(key));
         }
         logger.info("wrote {} {}", keys.size(), keys);
-        next20(channel, keys, start);
-        next3(channel, keys, start);
-        previous20(channel, keys, start);
-        previous3(channel, keys, start);
+        query(channel, keys, 20, 7, true, start.minusMinutes(1));
+        query(channel, keys, 3, 3, true, start.minusMinutes(1));
+        query(channel, keys, 20, 7, false, start.plusHours(8));
+        query(channel, keys, 3, 3, false, start.plusHours(8));
     }
 
-    private void previous3(String channel, List<ContentKey> keys, DateTime start) {
+    private void query(String channel, List<ContentKey> keys,
+                       int count, int expected, boolean next, DateTime queryTime) {
         DirectionQuery query = DirectionQuery.builder()
                 .stable(false)
                 .channelName(channel)
-                .count(3)
-                .next(false)
-                .contentKey(new ContentKey(start.plusMinutes(61), "blah"))
+                .count(count)
+                .next(next)
+                .contentKey(new ContentKey(queryTime, "blah"))
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
-        assertEquals(3, found.size());
-        assertTrue(keys.containsAll(found));
-    }
-
-    private void previous20(String channel, List<ContentKey> keys, DateTime start) {
-        DirectionQuery query = DirectionQuery.builder()
-                .stable(false)
-                .channelName(channel)
-                .count(20)
-                .next(false)
-                .contentKey(new ContentKey(start.plusMinutes(61), "blah"))
-                .build();
-        Collection<ContentKey> found = contentDao.query(query);
-        assertEquals(10, found.size());
-        assertTrue(keys.containsAll(found));
-    }
-
-    private void next3(String channel, List<ContentKey> keys, DateTime start) {
-        DirectionQuery query = DirectionQuery.builder()
-                .stable(false)
-                .channelName(channel)
-                .count(3)
-                .next(true)
-                .contentKey(new ContentKey(start.plusMinutes(1), "blah"))
-                .build();
-        Collection<ContentKey> found = contentDao.query(query);
-        assertEquals(3, found.size());
-        assertTrue(keys.containsAll(found));
-    }
-
-    private void next20(String channel, List<ContentKey> keys, DateTime start) {
-        DirectionQuery query = DirectionQuery.builder()
-                .stable(false)
-                .channelName(channel)
-                .count(20)
-                .next(true)
-                .contentKey(new ContentKey(start.minusMinutes(1), "blah"))
-                .build();
-        Collection<ContentKey> found = contentDao.query(query);
-        assertEquals(keys.size(), found.size());
+        assertEquals(expected, found.size());
         assertTrue(keys.containsAll(found));
     }
 

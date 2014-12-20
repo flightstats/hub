@@ -24,4 +24,10 @@ public class DirectionQuery {
         return location;
     }
 
+    public long getTtlDays() {
+        if (ttlDays == 0) {
+            return 1;
+        }
+        return ttlDays;
+    }
 }
