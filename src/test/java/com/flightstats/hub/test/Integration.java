@@ -3,7 +3,6 @@ package com.flightstats.hub.test;
 import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.cluster.ZooKeeperState;
-import com.flightstats.hub.dao.aws.AwsModule;
 import com.google.inject.Injector;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -55,7 +54,7 @@ public class Integration {
         }
         startZooKeeper();
         properties = HubMain.loadProperties("useDefault");
-        HubMain.startServer(properties, new AwsModule(properties));
+        HubMain.startServer(properties);
         injector = HubMain.getInjector();
         return injector;
     }

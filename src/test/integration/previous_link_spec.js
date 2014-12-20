@@ -54,6 +54,7 @@ describe(testName, function () {
     function getItem(url, status) {
         status = status || 200;
         var deferred = Q.defer();
+        console.log('getting item', url);
         request.get({url : url + '?stable=false', json : true },
             function (err, response, body) {
                 expect(err).toBeNull();

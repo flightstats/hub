@@ -9,7 +9,6 @@ import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
 import com.flightstats.jerseyguice.jetty.JettyServer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -43,7 +42,7 @@ public class HubMain {
 
         startZookeeperIfSingle(properties);
 
-        JettyServer server = startServer(properties, new AwsModule(properties));
+        JettyServer server = startServer(properties);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -100,9 +99,10 @@ public class HubMain {
         logger.warn("**********************************************************");
     }
 
-    public static JettyServer startServer(Properties properties, Module module) throws IOException, ConstraintException {
+    public static JettyServer startServer(Properties properties) throws IOException, ConstraintException {
+        AwsModule awsModule = new AwsModule(properties);
         JettyConfig jettyConfig = new JettyConfigImpl(properties);
-        GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties, module);
+        GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties, awsModule);
         injector = guice.getInjector();
         JettyServer server = new JettyServer(jettyConfig, guice);
         HubServices.start(HubServices.TYPE.PRE_START);

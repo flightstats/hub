@@ -1,6 +1,7 @@
-package com.flightstats.hub.spoke;
+package com.flightstats.hub.service;
 
 import com.flightstats.hub.model.Trace;
+import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
