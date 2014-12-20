@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -99,17 +98,7 @@ public class SpokeContentDao implements ContentDao {
                 }
             }
         } else {
-            //from newest to oldest
-            Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
-            contentKeys.addAll(queryByTime);
-            for (ContentKey contentKey : contentKeys) {
-                if (contentKey.compareTo(startKey) < 0 && contentKey.getTime().isBefore(time)) {
-                    orderedKeys.add(contentKey);
-                    if (orderedKeys.size() == query.getCount()) {
-                        return orderedKeys;
-                    }
-                }
-            }
+            PreviousUtil.addToPrevious(query, queryByTime, orderedKeys);
         }
         return orderedKeys;
     }
