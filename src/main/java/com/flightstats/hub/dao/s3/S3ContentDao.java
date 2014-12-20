@@ -131,7 +131,6 @@ public class S3ContentDao implements ContentDao {
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
             key = summary.getKey();
-            logger.info("key " + key);
             Optional<ContentKey> contentKey = ContentKey.fromUrl(StringUtils.substringAfter(key, channelName + "/"));
             if (contentKey.isPresent()) {
                 keys.add(contentKey.get());
@@ -142,7 +141,7 @@ public class S3ContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        logger.debug("query {}", query);
+        logger.trace("query {}", query);
         if (query.isNext()) {
             return next(query);
         } else {
