@@ -88,7 +88,7 @@ public class SpokeContentDao implements ContentDao {
         ContentKey startKey = query.getContentKey();
         DateTime time = TimeUtil.time(query.isStable());
         //todo - this won't span a previous day.
-        Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), TimeUtil.now(), TimeUtil.Unit.DAYS);
+        Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), query.getContentKey().getTime(), TimeUtil.Unit.DAYS);
         if (query.isNext()) {
             //from oldest to newest
             for (ContentKey contentKey : new TreeSet<>(queryByTime)) {
