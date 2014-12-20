@@ -18,7 +18,8 @@ from flask import request, jsonify
 
 logger = logging.getLogger('hub-locust')
 logger.setLevel(logging.INFO)
-fh = logging.FileHandler('/home/ubuntu/locust.log')
+fh = logging.FileHandler('./locust.log')
+# fh = logging.FileHandler('/home/ubuntu/locust.log')
 fh.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
@@ -134,6 +135,27 @@ class WebsiteTasks(TaskSet):
     @task(1)
     def minute_query_get_items(self):
         self.next("minute")
+
+    @task(100)
+    def next_previous(self):
+        items = []
+        first = (self.client.get(self.time_path("minute"), name="time_minute")).json()
+        second = (self.client.get(first['_links']['previous']['href'], name="time_minute")).json()
+        items.extend(second['_links']['uris'])
+        items.extend(first['_links']['uris'])
+
+        # use the first item to get the next N
+        next = \
+        (self.client.get(items[0] + "/next/" + str(len(items)) + "?stable=false", name="nextN")).json()['_links'][
+            'uris']
+
+        if cmp(next, items[1:]) == 0:
+            events.request_success.fire(request_type="next", name="compare", response_time=1,
+                                        response_length=len(items))
+        else:
+            logger.info("expected " + ", ".join(items) + " found " + ", ".join(next))
+            events.request_failure.fire(request_type="next", name="compare", response_time=1
+                                        , exception=-1)
 
     @task(10)
     def second_query(self):
