@@ -136,7 +136,7 @@ class WebsiteTasks(TaskSet):
     def minute_query_get_items(self):
         self.next("minute")
 
-    @task(100)
+    @task(10)
     def next_previous(self):
         items = []
         first = (self.client.get(self.time_path("minute"), name="time_minute")).json()
@@ -144,17 +144,25 @@ class WebsiteTasks(TaskSet):
         items.extend(second['_links']['uris'])
         items.extend(first['_links']['uris'])
 
-        # use the first item to get the next N
-        next = \
-        (self.client.get(items[0] + "/next/" + str(len(items)) + "?stable=false", name="nextN")).json()['_links'][
-            'uris']
-
+        numItems = str(len(items) - 1)
+        url = items[0] + "/next/" + numItems + "?stable=false"
+        next = (self.client.get(url, name="next")).json()['_links']['uris']
         if cmp(next, items[1:]) == 0:
             events.request_success.fire(request_type="next", name="compare", response_time=1,
                                         response_length=len(items))
         else:
-            logger.info("expected " + ", ".join(items) + " found " + ", ".join(next))
+            logger.info("next " + ", ".join(items[1:]) + " found " + ", ".join(next))
             events.request_failure.fire(request_type="next", name="compare", response_time=1
+                                        , exception=-1)
+
+        url = items[-1] + "/previous/" + numItems + "?stable=false"
+        previous = (self.client.get(url, name="previous")).json()['_links']['uris']
+        if cmp(previous, items[:-1]) == 0:
+            events.request_success.fire(request_type="previous", name="compare", response_time=1,
+                                        response_length=len(items))
+        else:
+            logger.info("previous " + ", ".join(items[:-1]) + " found " + ", ".join(previous))
+            events.request_failure.fire(request_type="previous", name="compare", response_time=1
                                         , exception=-1)
 
     @task(10)
