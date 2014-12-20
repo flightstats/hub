@@ -68,7 +68,7 @@ dependencies {
     compile group: 'com.sun.jersey', name: 'jersey-core', version: '1.18.3'
     compile group: 'com.sun.jersey', name: 'jersey-json', version: '1.18.3'
     compile group: 'com.sun.jersey', name: 'jersey-servlet', version: '1.18.3'
-    compile group: 'com.sun.jersey', name: 'jersey-server', version: '1.18.13'
+    compile group: 'com.sun.jersey', name: 'jersey-server', version: '1.18.3'
     compile group: 'com.sun.jersey', name: 'jersey-client', version: '1.18.3'
     compile group: 'com.sun.jersey.contribs', name: 'jersey-guice', version: '1.18.3'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.4.3'
