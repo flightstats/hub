@@ -142,8 +142,20 @@ public class S3ContentDao implements ContentDao {
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
         //todo - handle previous
-        //todo make sure limit is respected
         logger.debug("query {}", query);
+        if (query.isNext()) {
+            return next(query);
+        } else {
+            return previous(query);
+        }
+
+    }
+
+    private SortedSet<ContentKey> previous(DirectionQuery query) {
+        return null;
+    }
+
+    private SortedSet<ContentKey> next(DirectionQuery query) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)

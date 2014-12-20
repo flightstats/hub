@@ -115,6 +115,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
+        //todo - limit set to count.
         return contentService.getKeys(query);
     }
 
