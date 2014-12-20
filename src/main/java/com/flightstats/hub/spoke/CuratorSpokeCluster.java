@@ -10,6 +10,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,12 +43,15 @@ public class CuratorSpokeCluster implements SpokeCluster {
         HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
     }
 
-    public void register() {
+    public void register() throws UnknownHostException {
+        String host = getHost();
         try {
-            logger.info("adding host {}", getHost());
-            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), getHost().getBytes());
+            logger.info("adding host {}", host);
+            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), host.getBytes());
+        } catch (KeeperException.NodeExistsException e) {
+            logger.warn("node already exists {} - not likely in prod", host);
         } catch (Exception e) {
-            logger.error("unable to register, should die", e);
+            logger.error("unable to register, should die", host, e);
             throw new RuntimeException(e);
         }
     }

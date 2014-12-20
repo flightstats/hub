@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
-import java.util.UUID;
 
 /**
  *
@@ -39,15 +38,6 @@ public class Integration {
         return curator;
     }
 
-    public static synchronized void stopZooKeeper() throws Exception {
-        if (testingServer == null) {
-            logger.info("can't stop, testingServer is null");
-        } else {
-            testingServer.stop();
-            testingServer = null;
-        }
-    }
-
     public static synchronized Injector startRealHub() throws Exception {
         if (injector != null) {
             return injector;
@@ -59,11 +49,4 @@ public class Integration {
         return injector;
     }
 
-    public static String getRandomChannel() {
-        return UUID.randomUUID().toString().replaceAll("-", "");
-    }
-
-    public static Properties getProperties() {
-        return properties;
-    }
 }
