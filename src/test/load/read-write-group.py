@@ -18,8 +18,8 @@ from flask import request, jsonify
 
 logger = logging.getLogger('hub-locust')
 logger.setLevel(logging.INFO)
-fh = logging.FileHandler('./locust.log')
-# fh = logging.FileHandler('/home/ubuntu/locust.log')
+# fh = logging.FileHandler('./locust.log')
+fh = logging.FileHandler('/home/ubuntu/locust.log')
 fh.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
