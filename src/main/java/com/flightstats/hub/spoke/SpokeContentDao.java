@@ -37,11 +37,13 @@ public class SpokeContentDao implements ContentDao {
         content.getTraces().add(new Trace("SpokeContentDao.start"));
         try {
             byte[] payload = SpokeMarshaller.toBytes(content);
-            ContentKey key = new ContentKey();
-            logger.trace("writing key {} to channel {}", key, channelName);
-            content.setContentKey(key);
-            String path = getPath(channelName, key);
             content.getTraces().add(new Trace("SpokeContentDao.marshalled"));
+            if (!content.getContentKey().isPresent()) {
+                content.setContentKey(new ContentKey());
+            }
+            ContentKey key = content.getContentKey().get();
+            String path = getPath(channelName, key);
+            logger.trace("writing key {} to channel {}", key, channelName);
             if (!spokeStore.write(path, payload, content)) {
                 logger.warn("failed to write to all for " + path);
             }
