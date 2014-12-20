@@ -4,6 +4,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.dao.aws.AwsConnectorFactory;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
@@ -102,6 +103,43 @@ public class S3ContentDaoTest {
         assertEquals(keys.size(), found.size());
         assertTrue(keys.containsAll(found));
     }
+
+    @Test
+    public void testQueryNext() throws Exception {
+        String channel = "testQueryNext" + RandomStringUtils.randomAlphanumeric(20);
+        List<ContentKey> keys = new ArrayList<>();
+        DateTime start = new DateTime(2014, 11, 14, 15, 27, DateTimeZone.UTC);
+        for (int i = 0; i < 60; i += 6) {
+            ContentKey key = new ContentKey(start.plusMinutes(i), "A" + i);
+            keys.add(key);
+            logger.info("writing " + key);
+            Content content = createContent(key);
+            s3ContentDao.write(channel, content);
+        }
+        logger.info("wrote {} {}", keys.size(), keys);
+        DirectionQuery query = DirectionQuery.builder()
+                .stable(false)
+                .channelName(channel)
+                .count(20)
+                .next(true)
+                .contentKey(new ContentKey(start.minusMinutes(1), "blah"))
+                .build();
+        Collection<ContentKey> found = s3ContentDao.query(query);
+        assertEquals(keys.size(), found.size());
+        assertTrue(keys.containsAll(found));
+
+        query = DirectionQuery.builder()
+                .stable(false)
+                .channelName(channel)
+                .count(3)
+                .next(true)
+                .contentKey(new ContentKey(start.plusMinutes(1), "blah"))
+                .build();
+        found = s3ContentDao.query(query);
+        assertEquals(3, found.size());
+        assertTrue(keys.containsAll(found));
+    }
+
 
     private Content createContent(ContentKey key) {
         return Content.builder()

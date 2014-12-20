@@ -7,6 +7,7 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -129,15 +130,34 @@ public class S3ContentDao implements ContentDao {
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
             key = summary.getKey();
-            keys.add(ContentKey.fromUrl(StringUtils.substringAfter(key, channelName + "/")).get());
+            logger.info("key " + key);
+            Optional<ContentKey> contentKey = ContentKey.fromUrl(StringUtils.substringAfter(key, channelName + "/"));
+            if (contentKey.isPresent()) {
+                keys.add(contentKey.get());
+            }
         }
         return key;
     }
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        //todo - gfm - 11/14/14 -
-        return new TreeSet<>();
+        //todo - handle previous
+        //todo make sure limit is respected
+        logger.debug("query {}", query);
+        SortedSet<ContentKey> keys = new TreeSet<>();
+        ListObjectsRequest request = new ListObjectsRequest()
+                .withBucketName(s3BucketName)
+                .withPrefix(query.getChannelName() + "/")
+                .withMarker(query.getChannelName() + "/" + query.getContentKey().toUrl())
+                .withMaxKeys(query.getCount());
+        ObjectListing listing = s3Client.listObjects(request);
+        String marker = addKeys(query.getChannelName(), listing, keys);
+        while (listing.isTruncated() && keys.size() < query.getCount()) {
+            request.withMarker(marker);
+            listing = s3Client.listObjects(request);
+            marker = addKeys(query.getChannelName(), listing, keys);
+        }
+        return keys;
     }
 
     private String getS3ContentKey(String channelName, ContentKey key) {
