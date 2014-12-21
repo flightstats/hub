@@ -88,11 +88,16 @@ public class SpokeContentDao implements ContentDao {
         SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         ContentKey startKey = query.getContentKey();
         DateTime startTime = startKey.getTime();
-        Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS);
-        if (queryByTime.size() < query.getCount()) {
-            startTime = query.isNext() ? startTime.plusDays(1) : startTime.minusDays(1);
-            queryByTime.addAll(queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS));
+        if (query(query, orderedKeys, startKey, startTime)) {
+            return orderedKeys;
         }
+        startTime = query.isNext() ? startTime.plusDays(1) : startTime.minusDays(1);
+        query(query, orderedKeys, startKey, startTime);
+        return orderedKeys;
+    }
+
+    private boolean query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime) {
+        Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS);
         if (query.isNext()) {
             //from oldest to newest
             DateTime stableTime = TimeUtil.time(query.isStable());
@@ -100,14 +105,14 @@ public class SpokeContentDao implements ContentDao {
                 if (contentKey.compareTo(startKey) > 0 && contentKey.getTime().isBefore(stableTime)) {
                     orderedKeys.add(contentKey);
                     if (orderedKeys.size() == query.getCount()) {
-                        return orderedKeys;
+                        return true;
                     }
                 }
             }
         } else {
             PreviousUtil.addToPrevious(query, queryByTime, orderedKeys);
         }
-        return orderedKeys;
+        return false;
     }
 
     @Override

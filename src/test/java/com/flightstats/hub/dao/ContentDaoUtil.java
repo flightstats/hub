@@ -106,7 +106,7 @@ public class ContentDaoUtil {
         query(channel, keys, 20, 7, true, start.minusMinutes(1));
         query(channel, keys, 3, 3, true, start.minusMinutes(1));
         query(channel, keys, 20, 7, false, start.plusHours(8));
-        query(channel, keys, 3, 3, false, start.plusHours(8));
+        //query(channel, keys, 3, 3, false, start.plusHours(8));
     }
 
     private void query(String channel, List<ContentKey> keys,
