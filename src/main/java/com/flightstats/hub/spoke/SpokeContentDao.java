@@ -73,6 +73,7 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+        logger.debug("query by time {} {} {}", channelName, startTime, unit);
         String timePath = unit.format(startTime);
         try {
             return new TreeSet<>(spokeStore.readTimeBucket(channelName, timePath));
@@ -86,8 +87,7 @@ public class SpokeContentDao implements ContentDao {
     public SortedSet<ContentKey> query(DirectionQuery query) {
         SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         ContentKey startKey = query.getContentKey();
-        DateTime time = TimeUtil.time(query.isStable());
-        DateTime startTime = query.getContentKey().getTime();
+        DateTime startTime = startKey.getTime();
         Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS);
         if (queryByTime.size() < query.getCount()) {
             startTime = query.isNext() ? startTime.plusDays(1) : startTime.minusDays(1);
@@ -95,8 +95,9 @@ public class SpokeContentDao implements ContentDao {
         }
         if (query.isNext()) {
             //from oldest to newest
+            DateTime stableTime = TimeUtil.time(query.isStable());
             for (ContentKey contentKey : new TreeSet<>(queryByTime)) {
-                if (contentKey.compareTo(startKey) > 0 && contentKey.getTime().isBefore(time)) {
+                if (contentKey.compareTo(startKey) > 0 && contentKey.getTime().isBefore(stableTime)) {
                     orderedKeys.add(contentKey);
                     if (orderedKeys.size() == query.getCount()) {
                         return orderedKeys;
