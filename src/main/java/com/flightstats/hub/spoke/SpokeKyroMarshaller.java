@@ -45,17 +45,18 @@ public class SpokeKyroMarshaller {
             output.writeString(content.getUser().orNull());
             output.writeString(content.getContentLanguage().orNull());
             output.writeString(content.getContentType().orNull());
+            output.writeInt(content.getData().length);
             output.write(content.getData());
         }
 
         @Override
         public Content read(Kryo kryo, Input input, Class<Content> type) {
-            return Content.builder()
+            Content.Builder builder = Content.builder()
                     .withUser(input.readString())
                     .withContentLanguage(input.readString())
-                    .withContentType(input.readString())
-                    .withData(input.getBuffer())
-                    .build();
+                    .withContentType(input.readString());
+            int dataLength = input.readInt();
+            return builder.withData(input.readBytes(dataLength)).build();
         }
     }
 

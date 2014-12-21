@@ -1,6 +1,5 @@
 package com.flightstats.hub.spoke;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -15,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -100,15 +100,28 @@ public class RemoteSpokeStore {
                 logger.trace("server {} path {} response {}", server, path, response);
                 if (response.getStatus() == 200) {
                     byte[] entity = response.getEntity(byte[].class);
-                    return SpokeMarshaller.toContent(entity, key);
+                    Content content = marshall(key, entity);
+                    if (content != null) {
+                        return content;
+                    }
                 }
-            } catch (JsonMappingException e) {
-                logger.info("JsonMappingException for " + path);
             } catch (Exception e) {
                 logger.warn("unable to get content " + path, e);
             }
         }
         return null;
+    }
+
+    private Content marshall(ContentKey key, byte[] entity) throws IOException {
+        try {
+            return SpokeKyroMarshaller.toContent(entity, key);
+        } catch (Exception e) {
+            try {
+                return SpokeMarshaller.toContent(entity, key);
+            } catch (Exception e1) {
+                return null;
+            }
+        }
     }
 
     public Set<ContentKey> readTimeBucket(String channel, String timePath) throws InterruptedException {

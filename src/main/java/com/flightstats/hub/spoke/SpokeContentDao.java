@@ -36,7 +36,7 @@ public class SpokeContentDao implements ContentDao {
     public ContentKey write(String channelName, Content content) {
         content.getTraces().add(new Trace("SpokeContentDao.start"));
         try {
-            byte[] payload = SpokeMarshaller.toBytes(content);
+            byte[] payload = SpokeKyroMarshaller.toBytes(content);
             content.getTraces().add(new Trace("SpokeContentDao.marshalled"));
             if (!content.getContentKey().isPresent()) {
                 content.setContentKey(new ContentKey());

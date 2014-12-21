@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-public class SpokeMarshallerTest {
+public class SpokeMarshallerPlay {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeMarshallerTest.class);
+    private final static Logger logger = LoggerFactory.getLogger(SpokeMarshallerPlay.class);
     public static final int WARM_UP = 10000;
     public static final int LOOPS = 10000;
 
