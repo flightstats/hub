@@ -294,13 +294,15 @@ public class ChannelContentResource {
                                  @PathParam("millis") int millis,
                                  @PathParam("hash") String hash,
                                  @PathParam("count") int count,
-                                 @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                 @QueryParam("location") @DefaultValue("ALL") String location) {
         DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channelName)
                 .contentKey(new ContentKey(dateTime, hash))
                 .next(true)
                 .stable(stable)
+                .location(Location.valueOf(location))
                 .count(count).build();
         Collection<ContentKey> keys = channelService.getKeys(query);
         return directionalResponse(channelName, keys, count);
@@ -334,13 +336,15 @@ public class ChannelContentResource {
                                  @PathParam("millis") int millis,
                                  @PathParam("hash") String hash,
                                  @PathParam("count") int count,
-                                 @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                 @QueryParam("location") @DefaultValue("ALL") String location) {
         DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channelName)
                 .contentKey(new ContentKey(dateTime, hash))
                 .next(false)
                 .stable(stable)
+                .location(Location.valueOf(location))
                 .ttlDays(channelService.getChannelConfiguration(channelName).getTtlDays())
                 .count(count).build();
         Collection<ContentKey> keys = channelService.getKeys(query);
