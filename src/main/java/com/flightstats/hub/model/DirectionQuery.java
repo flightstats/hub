@@ -15,6 +15,7 @@ public class DirectionQuery {
     private final boolean next;
     private final Location location;
     private final boolean stable;
+    private final long ttlDays;
 
     public Location getLocation() {
         if (location == null) {
@@ -23,4 +24,10 @@ public class DirectionQuery {
         return location;
     }
 
+    public long getTtlDays() {
+        if (ttlDays == 0) {
+            return 1;
+        }
+        return ttlDays;
+    }
 }

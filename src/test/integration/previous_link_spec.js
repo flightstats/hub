@@ -9,7 +9,8 @@ var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 
 describe(testName, function () {
-    utils.createChannel(channelName);
+    utils.putChannel(channelName, function () {
+    }, {"name": channelName, ttlDays: 1});
 
     it('adds items and traverses previous links', function (done) {
         var values = [];

@@ -18,6 +18,7 @@ from flask import request, jsonify
 
 logger = logging.getLogger('hub-locust')
 logger.setLevel(logging.INFO)
+# fh = logging.FileHandler('./locust.log')
 fh = logging.FileHandler('/home/ubuntu/locust.log')
 fh.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -134,6 +135,35 @@ class WebsiteTasks(TaskSet):
     @task(1)
     def minute_query_get_items(self):
         self.next("minute")
+
+    @task(10)
+    def next_previous(self):
+        items = []
+        first = (self.client.get(self.time_path("minute"), name="time_minute")).json()
+        second = (self.client.get(first['_links']['previous']['href'], name="time_minute")).json()
+        items.extend(second['_links']['uris'])
+        items.extend(first['_links']['uris'])
+
+        numItems = str(len(items) - 1)
+        url = items[0] + "/next/" + numItems + "?stable=false"
+        next = (self.client.get(url, name="next")).json()['_links']['uris']
+        if cmp(next, items[1:]) == 0:
+            events.request_success.fire(request_type="next", name="compare", response_time=1,
+                                        response_length=len(items))
+        else:
+            logger.info("next " + ", ".join(items[1:]) + " found " + ", ".join(next))
+            events.request_failure.fire(request_type="next", name="compare", response_time=1
+                                        , exception=-1)
+
+        url = items[-1] + "/previous/" + numItems + "?stable=false"
+        previous = (self.client.get(url, name="previous")).json()['_links']['uris']
+        if cmp(previous, items[:-1]) == 0:
+            events.request_success.fire(request_type="previous", name="compare", response_time=1,
+                                        response_length=len(items))
+        else:
+            logger.info("previous " + ", ".join(items[:-1]) + " found " + ", ".join(previous))
+            events.request_failure.fire(request_type="previous", name="compare", response_time=1
+                                        , exception=-1)
 
     @task(10)
     def second_query(self):

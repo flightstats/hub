@@ -64,11 +64,11 @@ public class FileSpokeStore {
         }
     }
 
-    String nextPath(String path) {
+    public String nextPath(String path) {
         return adjacentPath(path, true);
     }
 
-    String previousPath(String path) {
+    public String previousPath(String path) {
         return adjacentPath(path, false);
     }
 

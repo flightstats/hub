@@ -11,7 +11,9 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * This is the entry point in the Hub's storage system, Spoke.
@@ -35,11 +37,13 @@ public class SpokeContentDao implements ContentDao {
         content.getTraces().add(new Trace("SpokeContentDao.start"));
         try {
             byte[] payload = SpokeMarshaller.toBytes(content);
-            ContentKey key = new ContentKey();
-            logger.trace("writing key {} to channel {}", key, channelName);
-            content.setContentKey(key);
-            String path = getPath(channelName, key);
             content.getTraces().add(new Trace("SpokeContentDao.marshalled"));
+            if (!content.getContentKey().isPresent()) {
+                content.setContentKey(new ContentKey());
+            }
+            ContentKey key = content.getContentKey().get();
+            String path = getPath(channelName, key);
+            logger.trace("writing key {} to channel {}", key, channelName);
             if (!spokeStore.write(path, payload, content)) {
                 logger.warn("failed to write to all for " + path);
             }
@@ -68,46 +72,47 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+    public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+        logger.trace("query by time {} {} {}", channelName, startTime, unit);
         String timePath = unit.format(startTime);
         try {
-            return spokeStore.readTimeBucket(channelName, timePath);
+            return new TreeSet<>(spokeStore.readTimeBucket(channelName, timePath));
         } catch (Exception e) {
             logger.warn("what happened? " + channelName + " " + startTime + " " + unit, e);
         }
-        return Collections.emptyList();
+        return new TreeSet<>();
     }
 
     @Override
-    public Collection<ContentKey> getKeys(DirectionQuery query) {
-        Set<ContentKey> orderedKeys = new TreeSet<>();
+    public SortedSet<ContentKey> query(DirectionQuery query) {
+        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         ContentKey startKey = query.getContentKey();
-        DateTime time = TimeUtil.time(query.isStable());
-        Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), TimeUtil.now(), TimeUtil.Unit.DAYS);
+        DateTime startTime = startKey.getTime();
+        if (query(query, orderedKeys, startKey, startTime)) {
+            return orderedKeys;
+        }
+        startTime = query.isNext() ? startTime.plusDays(1) : startTime.minusDays(1);
+        query(query, orderedKeys, startKey, startTime);
+        return orderedKeys;
+    }
+
+    private boolean query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime) {
+        Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS);
         if (query.isNext()) {
             //from oldest to newest
+            DateTime stableTime = TimeUtil.time(query.isStable());
             for (ContentKey contentKey : new TreeSet<>(queryByTime)) {
-                if (contentKey.compareTo(startKey) > 0 && contentKey.getTime().isBefore(time)) {
+                if (contentKey.compareTo(startKey) > 0 && contentKey.getTime().isBefore(stableTime)) {
                     orderedKeys.add(contentKey);
                     if (orderedKeys.size() == query.getCount()) {
-                        return orderedKeys;
+                        return true;
                     }
                 }
             }
         } else {
-            //from newest to oldest
-            Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
-            contentKeys.addAll(queryByTime);
-            for (ContentKey contentKey : contentKeys) {
-                if (contentKey.compareTo(startKey) < 0 && contentKey.getTime().isBefore(time)) {
-                    orderedKeys.add(contentKey);
-                    if (orderedKeys.size() == query.getCount()) {
-                        return orderedKeys;
-                    }
-                }
-            }
+            PreviousUtil.addToPrevious(query, queryByTime, orderedKeys);
         }
-        return orderedKeys;
+        return false;
     }
 
     @Override

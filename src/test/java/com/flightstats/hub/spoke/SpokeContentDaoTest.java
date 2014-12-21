@@ -1,26 +1,48 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.dao.ContentDaoUtil;
+import com.flightstats.hub.test.Integration;
+import com.google.inject.Injector;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class SpokeContentDaoTest {
 
-    @Test
-    public void testWriteRead() throws Exception {
+    private static ContentDaoUtil util;
 
-       /* SpokeContentDao spokeContentDao = new SpokeContentDao(new FileSpokeStore(Files.createTempDir().getPath()));
-        Content content = Content.builder()
-                .withData("this is my dataz!".getBytes())
-                .withContentType("typing")
-                .withUser("awesome")
-                .withContentLanguage("english")
-                .build();
-        InsertedContentKey insertedContentKey = spokeContentDao.write("stuff", content, 1);
-        assertNotNull(insertedContentKey);
-
-        Content read = spokeContentDao.read("stuff", insertedContentKey.getKey());
-        assertNotNull(read);
-        assertArrayEquals(content.getData(), read.getData());
-        assertEquals(content, read);*/
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        Injector injector = Integration.startRealHub();
+        util = new ContentDaoUtil(injector.getInstance(SpokeContentDao.class));
     }
 
+    @Test
+    public void testWriteRead() throws Exception {
+        util.testWriteRead();
+    }
+
+    @Test
+    public void testWriteReadNoOptionals() throws Exception {
+        util.testWriteReadNoOptionals();
+    }
+
+    @Test
+    public void testQueryRangeDay() throws Exception {
+        util.testQueryRangeDay();
+    }
+
+    @Test
+    public void testQueryRangeHour() throws Exception {
+        util.testQueryRangeHour();
+    }
+
+    @Test
+    public void testQueryRangeMinute() throws Exception {
+        util.testQueryRangeMinute();
+    }
+
+    @Test
+    public void testDirectionQuery() throws Exception {
+        util.testDirectionQuery();
+    }
 }
