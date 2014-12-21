@@ -73,7 +73,7 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
-        logger.debug("query by time {} {} {}", channelName, startTime, unit);
+        logger.trace("query by time {} {} {}", channelName, startTime, unit);
         String timePath = unit.format(startTime);
         try {
             return new TreeSet<>(spokeStore.readTimeBucket(channelName, timePath));
