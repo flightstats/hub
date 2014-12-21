@@ -1,7 +1,7 @@
 require('./../integration/integration_config.js');
 
 var channelName = utils.randomChannelName();
-var testName = "latest_item_in_nonexistant_channel_spec";
+var testName = __filename;
 
 utils.configureFrisby();
 

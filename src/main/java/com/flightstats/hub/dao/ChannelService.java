@@ -23,8 +23,6 @@ public interface ChannelService {
 
     Iterable<String> getTags();
 
-    Optional<ContentKey> findLastUpdatedKey(String channelName);
-
     ChannelConfiguration updateChannel(ChannelConfiguration configuration);
 
     Collection<ContentKey> queryByTime(TimeQuery timeQuery);

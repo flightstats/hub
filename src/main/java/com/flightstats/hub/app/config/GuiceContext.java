@@ -57,7 +57,7 @@ public class GuiceContext {
         Module module = getMaxPaloadSizeModule(properties);
 
         JerseyServletModule jerseyModule = new JerseyServletModuleBuilder()
-                .withJerseyPackage("com.flightstats.hub")
+                .withJerseyPackage("com.flightstats.hub.service")
                 .withContainerResponseFilters(GZIPContentEncodingFilter.class)
                 .withJerseryProperty(JSONConfiguration.FEATURE_POJO_MAPPING, "true")
                 .withJerseryProperty(ResourceConfig.FEATURE_CANONICALIZE_URI_PATH, "true")
