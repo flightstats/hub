@@ -9,9 +9,7 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 
 public class ChannelServiceImpl implements ChannelService {
 
@@ -90,11 +88,6 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Optional<ContentKey> findLastUpdatedKey(String channelName) {
-        return contentService.findLastUpdatedKey(channelName);
-    }
-
-    @Override
     public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
         channelValidator.validate(configuration, false);
@@ -120,7 +113,24 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
-        return contentService.getKeys(query);
+        Set<ContentKey> toReturn = new TreeSet<>();
+        List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
+        if (query.isNext()) {
+            for (ContentKey key : keys) {
+                toReturn.add(key);
+                if (toReturn.size() >= query.getCount()) {
+                    return toReturn;
+                }
+            }
+        } else {
+            for (int i = keys.size() - 1; i >= 0; i--) {
+                toReturn.add(keys.get(i));
+                if (toReturn.size() >= query.getCount()) {
+                    return toReturn;
+                }
+            }
+        }
+        return toReturn;
     }
 
     @Override

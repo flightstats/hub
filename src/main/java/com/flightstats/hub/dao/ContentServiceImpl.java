@@ -16,10 +16,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("Convert2Lambda")
@@ -85,29 +87,18 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Optional<ContentKey> findLastUpdatedKey(String channelName) {
-        //todo - gfm - 11/14/14 - look in cache first, then S3
-        //todo - gfm - 10/28/14 - implement
-        return Optional.absent();
-    }
-
-    @Override
-    public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
-        Set<ContentKey> orderedKeys = new TreeSet<>();
-        if (timeQuery.getLocation().equals(Location.CACHE)) {
-            orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
-        } else if (timeQuery.getLocation().equals(Location.LONG_TERM)) {
-            orderedKeys.addAll(longTermContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
-        } else if (isInsideCacheWindow(timeQuery.getStartTime())) {
-            //todo - gfm - 11/21/14 - is this distinction really needed?
-            orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+    public Collection<ContentKey> queryByTime(TimeQuery query) {
+        if (query.getLocation().equals(Location.CACHE)) {
+            return cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit());
+        } else if (query.getLocation().equals(Location.LONG_TERM)) {
+            return longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit());
         } else {
-            queryBothByTime(timeQuery, orderedKeys);
+            return queryBothByTime(query);
         }
-        return orderedKeys;
     }
 
-    private void queryBothByTime(TimeQuery timeQuery, Set<ContentKey> orderedKeys) {
+    private SortedSet<ContentKey> queryBothByTime(TimeQuery timeQuery) {
+        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             executorService.submit(new Runnable() {
@@ -124,7 +115,8 @@ public class ContentServiceImpl implements ContentService {
                     countDownLatch.countDown();
                 }
             });
-            countDownLatch.await();
+            countDownLatch.await(3, TimeUnit.MINUTES);
+            return orderedKeys;
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
@@ -139,8 +131,38 @@ public class ContentServiceImpl implements ContentService {
 
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
-        //todo - gfm - 11/14/14 - figure out where to look based on cacheTtlHours, may need to span
-        return cacheContentDao.getKeys(query);
+        if (query.getLocation().equals(Location.CACHE)) {
+            return cacheContentDao.query(query);
+        } else if (query.getLocation().equals(Location.LONG_TERM)) {
+            return longTermContentDao.query(query);
+        } else {
+            return queryBoth(query);
+        }
+    }
+
+    private Set<ContentKey> queryBoth(DirectionQuery query) {
+        Set<ContentKey> orderedKeys = new TreeSet<>();
+        try {
+            CountDownLatch countDownLatch = new CountDownLatch(2);
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    orderedKeys.addAll(cacheContentDao.query(query));
+                    countDownLatch.countDown();
+                }
+            });
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    orderedKeys.addAll(longTermContentDao.query(query));
+                    countDownLatch.countDown();
+                }
+            });
+            countDownLatch.await(3, TimeUnit.MINUTES);
+            return orderedKeys;
+        } catch (InterruptedException e) {
+            throw new RuntimeInterruptedException(e);
+        }
     }
 
     private class ContentServiceHook extends AbstractIdleService {

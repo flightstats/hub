@@ -48,13 +48,9 @@ public class SpokeTtlEnforcer {
                 cursor = cursor.minusMinutes(1);
                 delete(file, TimeUtil.minutes(cursor));
             }
-            for (int i = 1; i <= 24; i++) {
+            for (int i = 1; i <= 6; i++) {
                 delete(file, TimeUtil.hours(cursor));
                 cursor = cursor.minusHours(1);
-            }
-            for (int i = 1; i <= 30; i++) {
-                delete(file, TimeUtil.days(cursor));
-                cursor = cursor.minusDays(1);
             }
         } catch (Exception e) {
             logger.warn("unable to delete " + file, e);

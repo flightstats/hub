@@ -136,11 +136,6 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<ContentKey> findLastUpdatedKey(String channelName) {
-        return channelService.findLastUpdatedKey(channelName);
-    }
-
-    @Override
     public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
         if (isAuditChannel(configuration.getName())) {
             configuration.getTags().add("audit");
