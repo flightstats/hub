@@ -31,7 +31,7 @@ public class SpokeTtlEnforcerTest {
                 spokeStore.write(path, "stuff".getBytes());
                 insideTtl.add(path);
             }
-            for (int j = ttlMinutes + 1; j <= ttlMinutes * 50; j += 50) {
+            for (int j = ttlMinutes + 1; j <= ttlMinutes * 5; j += 50) {
                 String path = channel + "/" + new ContentKey(now.minusMinutes(j), "BB").toUrl();
                 spokeStore.write(path, "stuff".getBytes());
                 outsideTtl.add(path);
