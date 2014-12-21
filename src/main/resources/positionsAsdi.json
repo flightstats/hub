@@ -1,0 +1,2646 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "geometry": {
+        "coordinates": [
+          -84.1667,
+          33.6667,
+          2377.4
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477594988,
+        "altitude": 2377.4,
+        "arrival": "RDU",
+        "flight_number": "1083",
+        "groundspeed": 147.1,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:28:00Z",
+        "expected_covered_km": 124,
+        "sgd": "2014-12-21T04:10:00Z",
+        "ard": "2014-12-21T04:28:00Z",
+        "era": "2014-12-21T05:13:00Z",
+        "erd": "2014-12-21T04:28:00Z",
+        "callsign": "DAL1083",
+        "station": "KA80",
+        "id": 5987256631,
+        "departure": "ATL",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -100.895,
+          40.9492,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477599876,
+        "altitude": 10972.8,
+        "arrival": "DEN",
+        "flight_number": "993",
+        "groundspeed": 223.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:30:00Z",
+        "expected_covered_km": 375,
+        "sgd": "2014-12-21T00:45:00Z",
+        "ard": "2014-12-21T01:14:00Z",
+        "era": "2014-12-21T05:01:00Z",
+        "erd": "2014-12-21T01:14:00Z",
+        "callsign": "JBU993",
+        "station": "KZDV",
+        "id": 5987256632,
+        "departure": "BOS",
+        "airline": "B6",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -99.9678,
+          40.9056,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477628840,
+        "altitude": 10972.8,
+        "arrival": "DEN",
+        "flight_number": "2548",
+        "groundspeed": 222.2,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:42:00Z",
+        "expected_covered_km": 490,
+        "sgd": "2014-12-21T01:00:00Z",
+        "ard": "2014-12-21T01:27:00Z",
+        "era": "2014-12-21T05:07:00Z",
+        "erd": "2014-12-21T01:27:00Z",
+        "callsign": "DAL2548",
+        "station": "KZDV",
+        "id": 5987256634,
+        "departure": "JFK",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -108.8814,
+          38.4486,
+          10363.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477595074,
+        "altitude": 10363.2,
+        "arrival": "SFO",
+        "flight_number": "2265",
+        "groundspeed": 221.2,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:46:00Z",
+        "expected_covered_km": 328,
+        "sgd": "2014-12-21T01:17:00Z",
+        "ard": "2014-12-21T01:25:00Z",
+        "era": "2014-12-21T06:09:00Z",
+        "erd": "2014-12-21T01:25:00Z",
+        "callsign": "DAL2265",
+        "station": "KZDV",
+        "id": 5987256635,
+        "departure": "ATL",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -106.4714,
+          42.7361,
+          11277.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 479280799,
+        "altitude": 11277.6,
+        "arrival": "MEM",
+        "flight_number": "2223",
+        "groundspeed": 265.5,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:33:00Z",
+        "expected_covered_km": 972,
+        "sgd": "2014-12-21T03:11:00Z",
+        "ard": "2014-12-21T03:08:00Z",
+        "era": "2014-12-21T06:26:00Z",
+        "erd": "2014-12-21T03:08:00Z",
+        "callsign": "FDX2223",
+        "station": "KZDV",
+        "id": 5987256636,
+        "departure": "SEA",
+        "airline": "FX",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -98.8775,
+          42.8703,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477600132,
+        "altitude": 10972.8,
+        "arrival": "SLC",
+        "flight_number": "1215",
+        "groundspeed": 221.2,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:12:00Z",
+        "expected_covered_km": 955,
+        "sgd": "2014-12-21T00:30:00Z",
+        "ard": "2014-12-21T01:29:00Z",
+        "era": "2014-12-21T06:04:00Z",
+        "erd": "2014-12-21T01:29:00Z",
+        "callsign": "DAL1215",
+        "station": "KZDV",
+        "id": 5987256637,
+        "departure": "BOS",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -111.55,
+          36.6797,
+          9631.7
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477646869,
+        "altitude": 9631.7,
+        "arrival": "DFW",
+        "flight_number": "408",
+        "groundspeed": 248.5,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:15:00Z",
+        "expected_covered_km": 523,
+        "sgd": "2014-12-21T02:59:00Z",
+        "ard": "2014-12-21T03:23:00Z",
+        "era": "2014-12-21T06:15:00Z",
+        "erd": "2014-12-21T03:23:00Z",
+        "callsign": "NKS408",
+        "station": "KZDV",
+        "id": 5987256638,
+        "departure": "OAK",
+        "airline": "NK",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -105.2989,
+          39.2642,
+          5181.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477651769,
+        "altitude": 5181.6,
+        "arrival": "DEN",
+        "flight_number": "494",
+        "groundspeed": 165.7,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:43:00Z",
+        "expected_covered_km": 167,
+        "sgd": "2014-12-21T02:55:00Z",
+        "ard": "2014-12-21T03:16:00Z",
+        "era": "2014-12-21T04:45:00Z",
+        "erd": "2014-12-21T03:16:00Z",
+        "callsign": "AWE494",
+        "station": "KZDV",
+        "id": 5987256639,
+        "departure": "PHX",
+        "airline": "US",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -103.4772,
+          37.6847,
+          11887.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477610895,
+        "altitude": 11887.2,
+        "arrival": "HOU",
+        "flight_number": "2412",
+        "groundspeed": 250.0,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:05:00Z",
+        "expected_covered_km": 341,
+        "sgd": "2014-12-21T03:40:00Z",
+        "ard": "2014-12-21T04:09:00Z",
+        "era": "2014-12-21T05:55:00Z",
+        "erd": "2014-12-21T04:09:00Z",
+        "callsign": "SWA2412",
+        "station": "KZDV",
+        "id": 5987256640,
+        "departure": "DEN",
+        "airline": "WN",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -111.9869,
+          36.4983,
+          10363.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477643470,
+        "altitude": 10363.2,
+        "arrival": "LAX",
+        "flight_number": "2321",
+        "groundspeed": 240.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:30:00Z",
+        "expected_covered_km": 178,
+        "sgd": "2014-12-21T01:27:00Z",
+        "ard": "2014-12-21T02:14:00Z",
+        "era": "2014-12-21T05:24:00Z",
+        "erd": "2014-12-21T02:14:00Z",
+        "callsign": "DAL2321",
+        "station": "KZDV",
+        "id": 5987256641,
+        "departure": "MSP",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -107.0842,
+          41.8717,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477610945,
+        "altitude": 10972.8,
+        "arrival": "JAC",
+        "flight_number": "650",
+        "groundspeed": 200.1,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T03:34:00Z",
+        "expected_covered_km": 160,
+        "sgd": "2014-12-21T02:04:00Z",
+        "ard": "2014-12-21T04:02:00Z",
+        "era": "2014-12-21T05:00:00Z",
+        "erd": "2014-12-21T04:02:00Z",
+        "callsign": "UAL650",
+        "station": "KZDV",
+        "id": 5987256642,
+        "departure": "DEN",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -104.0942,
+          41.3806,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "altitude": 10972.8,
+        "callsign": "VRD029",
+        "station": "KZDV",
+        "groundspeed": 217.1,
+        "received": "2014-12-21T04:35:50Z",
+        "id": 5987256643,
+        "priority": "ASDI",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -109.8861,
+          37.1103,
+          6400.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477651856,
+        "altitude": 6400.8,
+        "arrival": "GJT",
+        "flight_number": "6562",
+        "groundspeed": 214.5,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:17:00Z",
+        "expected_covered_km": 261,
+        "sgd": "2014-12-21T02:48:00Z",
+        "ard": "2014-12-21T03:51:00Z",
+        "era": "2014-12-21T04:54:00Z",
+        "erd": "2014-12-21T03:51:00Z",
+        "callsign": "SKW266J",
+        "station": "KZDV",
+        "id": 5987256644,
+        "departure": "PHX",
+        "airline": "OO",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -108.0406,
+          36.3744,
+          11582.4
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477628968,
+        "altitude": 11582.4,
+        "arrival": "LAX",
+        "flight_number": "413",
+        "groundspeed": 225.3,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:34:00Z",
+        "expected_covered_km": 493,
+        "sgd": "2014-12-21T00:00:00Z",
+        "ard": "2014-12-21T00:24:00Z",
+        "era": "2014-12-21T05:48:00Z",
+        "erd": "2014-12-21T00:24:00Z",
+        "callsign": "DAL413",
+        "station": "KZDV",
+        "id": 5987256645,
+        "departure": "JFK",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -111.4633,
+          36.3322,
+          9753.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477643638,
+        "altitude": 9753.6,
+        "arrival": "SAN",
+        "flight_number": "2570",
+        "groundspeed": 233.6,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:35:00Z",
+        "expected_covered_km": 212,
+        "sgd": "2014-12-21T01:35:00Z",
+        "ard": "2014-12-21T02:13:00Z",
+        "era": "2014-12-21T05:25:00Z",
+        "erd": "2014-12-21T02:13:00Z",
+        "callsign": "DAL2570",
+        "station": "KZDV",
+        "id": 5987256646,
+        "departure": "MSP",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -98.9567,
+          42.4553,
+          10363.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477648739,
+        "altitude": 10363.2,
+        "arrival": "SMF",
+        "flight_number": "156",
+        "groundspeed": 214.5,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:51:00Z",
+        "expected_covered_km": 932,
+        "sgd": "2014-12-21T02:15:00Z",
+        "ard": "2014-12-21T03:15:00Z",
+        "era": "2014-12-21T07:07:00Z",
+        "erd": "2014-12-21T03:15:00Z",
+        "callsign": "UAL156",
+        "station": "KZDV",
+        "id": 5987256647,
+        "departure": "ORD",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -104.7294,
+          43.4139,
+          9753.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477629245,
+        "altitude": 9753.6,
+        "arrival": "SMF",
+        "flight_number": "161",
+        "groundspeed": 216.6,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:57:00Z",
+        "expected_covered_km": 363,
+        "sgd": "2014-12-21T00:29:00Z",
+        "ard": "2014-12-21T01:01:00Z",
+        "era": "2014-12-21T06:31:00Z",
+        "erd": "2014-12-21T01:01:00Z",
+        "callsign": "JBU161",
+        "station": "KZDV",
+        "id": 5987256648,
+        "departure": "JFK",
+        "airline": "B6",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -97.8422,
+          40.6864,
+          10363.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477648657,
+        "altitude": 10363.2,
+        "arrival": "SAN",
+        "flight_number": "1650",
+        "groundspeed": 212.0,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T07:22:00Z",
+        "expected_covered_km": 1507,
+        "sgd": "2014-12-21T02:50:00Z",
+        "ard": "2014-12-21T03:18:00Z",
+        "era": "2014-12-21T07:09:00Z",
+        "erd": "2014-12-21T03:18:00Z",
+        "callsign": "UAL1650",
+        "station": "KZDV",
+        "id": 5987256649,
+        "departure": "ORD",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -98.7094,
+          40.4103,
+          10363.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477651418,
+        "altitude": 10363.2,
+        "arrival": "LAS",
+        "flight_number": "419",
+        "groundspeed": 214.5,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:59:00Z",
+        "expected_covered_km": 1350,
+        "sgd": "2014-12-21T01:30:00Z",
+        "ard": "2014-12-21T01:44:00Z",
+        "era": "2014-12-21T06:31:00Z",
+        "erd": "2014-12-21T01:44:00Z",
+        "callsign": "AWE419",
+        "station": "KZDV",
+        "id": 5987256650,
+        "departure": "PHL",
+        "airline": "US",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -98.5956,
+          40.7353,
+          11277.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477610819,
+        "altitude": 11277.6,
+        "arrival": "DSM",
+        "flight_number": "538",
+        "groundspeed": 247.4,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:35:00Z",
+        "expected_covered_km": 106,
+        "sgd": "2014-12-21T02:55:00Z",
+        "ard": "2014-12-21T03:52:00Z",
+        "era": "2014-12-21T05:07:00Z",
+        "erd": "2014-12-21T03:52:00Z",
+        "callsign": "UAL538",
+        "station": "KZDV",
+        "id": 5987256651,
+        "departure": "DEN",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -106.6264,
+          36.3622,
+          11887.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477633697,
+        "altitude": 11887.2,
+        "arrival": "TUL",
+        "flight_number": "2319",
+        "groundspeed": 237.2,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:00:00Z",
+        "expected_covered_km": 463,
+        "sgd": "2014-12-21T02:30:00Z",
+        "ard": "2014-12-21T03:30:00Z",
+        "era": "2014-12-21T05:43:00Z",
+        "erd": "2014-12-21T03:30:00Z",
+        "callsign": "SWA2319",
+        "station": "KZDV",
+        "id": 5987256652,
+        "departure": "LAS",
+        "airline": "WN",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -100.0206,
+          39.1967,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477629173,
+        "altitude": 10972.8,
+        "arrival": "SAN",
+        "flight_number": "95",
+        "groundspeed": 211.4,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:40:00Z",
+        "expected_covered_km": 1240,
+        "sgd": "2014-12-20T22:20:00Z",
+        "ard": "2014-12-21T01:12:00Z",
+        "era": "2014-12-21T06:53:00Z",
+        "erd": "2014-12-21T01:12:00Z",
+        "callsign": "AAL95",
+        "station": "KZDV",
+        "id": 5987256653,
+        "departure": "JFK",
+        "airline": "AA",
+        "timestamp": "2014-12-21T04:30:31Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -82.8892,
+          27.8803,
+          2743.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477624644,
+        "altitude": 2743.2,
+        "arrival": "TPA",
+        "flight_number": "610",
+        "groundspeed": 163.1,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T03:50:00Z",
+        "expected_covered_km": 131,
+        "sgd": "2014-12-21T01:55:00Z",
+        "ard": "2014-12-21T03:08:00Z",
+        "era": "2014-12-21T04:44:00Z",
+        "erd": "2014-12-21T03:08:00Z",
+        "callsign": "SWA610",
+        "station": "KZJX",
+        "id": 5987256654,
+        "departure": "HOU",
+        "airline": "WN",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -78.2797,
+          32.0642,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477628862,
+        "altitude": 10972.8,
+        "arrival": "FLL",
+        "flight_number": "1901",
+        "groundspeed": 208.3,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:31:00Z",
+        "expected_covered_km": 655,
+        "sgd": "2014-12-21T02:30:00Z",
+        "ard": "2014-12-21T03:00:00Z",
+        "era": "2014-12-21T05:32:00Z",
+        "erd": "2014-12-21T03:00:00Z",
+        "callsign": "JBU1901",
+        "station": "KZJX",
+        "id": 5987256655,
+        "departure": "JFK",
+        "airline": "B6",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -77.2189,
+          31.515,
+          10668.0
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477606240,
+        "altitude": 10668.0,
+        "arrival": "GIG",
+        "flight_number": "400",
+        "groundspeed": 273.2,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T13:15:00Z",
+        "expected_covered_km": 532,
+        "sgd": "2014-12-21T03:35:00Z",
+        "ard": "2014-12-21T03:51:00Z",
+        "era": "2014-12-21T12:55:00Z",
+        "erd": "2014-12-21T03:51:00Z",
+        "callsign": "AWE400",
+        "station": "KZJX",
+        "id": 5987256656,
+        "departure": "CLT",
+        "airline": "US",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -81.06,
+          33.8419,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477629164,
+        "altitude": 10972.8,
+        "arrival": "RSW",
+        "flight_number": "329",
+        "groundspeed": 194.5,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:11:00Z",
+        "expected_covered_km": 922,
+        "sgd": "2014-12-21T01:59:00Z",
+        "ard": "2014-12-21T03:02:00Z",
+        "era": "2014-12-21T05:44:00Z",
+        "erd": "2014-12-21T03:02:00Z",
+        "callsign": "JBU329",
+        "station": "KZJX",
+        "id": 5987256657,
+        "departure": "JFK",
+        "airline": "B6",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -82.6486,
+          30.3272,
+          11887.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477642135,
+        "altitude": 11887.2,
+        "arrival": "MCO",
+        "flight_number": "2597",
+        "groundspeed": 238.2,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:30:00Z",
+        "expected_covered_km": 357,
+        "sgd": "2014-12-21T02:40:00Z",
+        "ard": "2014-12-21T02:42:00Z",
+        "era": "2014-12-21T05:00:00Z",
+        "erd": "2014-12-21T02:42:00Z",
+        "callsign": "SWA2597",
+        "station": "KZJX",
+        "id": 5987256658,
+        "departure": "MKE",
+        "airline": "WN",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -81.2333,
+          33.4944,
+          11887.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477609007,
+        "altitude": 11887.2,
+        "arrival": "YHM",
+        "flight_number": "2803",
+        "groundspeed": 259.3,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:17:00Z",
+        "expected_covered_km": 540,
+        "sgd": "2014-12-21T01:40:00Z",
+        "ard": "2014-12-21T02:43:00Z",
+        "era": "2014-12-21T05:58:00Z",
+        "erd": "2014-12-21T02:43:00Z",
+        "callsign": "WJA2803",
+        "station": "KZJX",
+        "id": 5987256659,
+        "departure": "CUN",
+        "airline": "WS",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -79.7825,
+          33.7544,
+          9448.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477641914,
+        "altitude": 9448.8,
+        "arrival": "RIC",
+        "flight_number": "3216",
+        "groundspeed": 251.6,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:36:00Z",
+        "expected_covered_km": 342,
+        "sgd": "2014-12-21T02:15:00Z",
+        "ard": "2014-12-21T03:19:00Z",
+        "era": "2014-12-21T05:16:00Z",
+        "erd": "2014-12-21T03:19:00Z",
+        "callsign": "ENY3216",
+        "station": "KZJX",
+        "id": 5987256660,
+        "departure": "MIA",
+        "airline": "MQ",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -84.9833,
+          34.0667,
+          3962.4
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477593352,
+        "altitude": 3962.4,
+        "arrival": "ATL",
+        "flight_number": "243",
+        "groundspeed": 160.5,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:45:00Z",
+        "expected_covered_km": 105,
+        "sgd": "2014-12-20T22:20:00Z",
+        "ard": "2014-12-20T22:33:00Z",
+        "era": "2014-12-21T04:41:00Z",
+        "erd": "2014-12-20T22:33:00Z",
+        "callsign": "KAL243",
+        "station": "KA80",
+        "id": 5987256661,
+        "departure": "ANC",
+        "airline": "KE",
+        "timestamp": "2014-12-21T04:30:37Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -84.3167,
+          33.6333,
+          1280.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477594690,
+        "altitude": 1280.2,
+        "arrival": "LOS",
+        "flight_number": "54",
+        "groundspeed": 119.4,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T15:15:00Z",
+        "expected_covered_km": 125,
+        "sgd": "2014-12-21T04:05:00Z",
+        "ard": "2014-12-21T04:29:00Z",
+        "era": "2014-12-21T14:23:00Z",
+        "erd": "2014-12-21T04:29:00Z",
+        "callsign": "DAL54",
+        "station": "KA80",
+        "id": 5987256662,
+        "departure": "ATL",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -100.1778,
+          40.7536,
+          8229.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477611074,
+        "altitude": 8229.6,
+        "arrival": "MSN",
+        "flight_number": "3690",
+        "groundspeed": 242.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:47:00Z",
+        "expected_covered_km": 310,
+        "sgd": "2014-12-21T02:41:00Z",
+        "ard": "2014-12-21T04:01:00Z",
+        "era": "2014-12-21T05:38:00Z",
+        "erd": "2014-12-21T04:01:00Z",
+        "callsign": "GJS3690",
+        "station": "KZDV",
+        "id": 5987256663,
+        "departure": "DEN",
+        "airline": "G7",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -100.0725,
+          39.6217,
+          11277.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477651809,
+        "altitude": 11277.6,
+        "arrival": "DSM",
+        "flight_number": "5481",
+        "groundspeed": 242.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:26:00Z",
+        "expected_covered_km": 277,
+        "sgd": "2014-12-21T02:45:00Z",
+        "ard": "2014-12-21T02:54:00Z",
+        "era": "2014-12-21T05:16:00Z",
+        "erd": "2014-12-21T02:54:00Z",
+        "callsign": "ASH5481",
+        "station": "KZDV",
+        "id": 5987256664,
+        "departure": "PHX",
+        "airline": "YV",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -112.9883,
+          36.7258,
+          8839.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477634165,
+        "altitude": 8839.2,
+        "arrival": "MSP",
+        "flight_number": "1568",
+        "groundspeed": 242.3,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:28:00Z",
+        "expected_covered_km": 1505,
+        "sgd": "2014-12-21T02:50:00Z",
+        "ard": "2014-12-21T03:43:00Z",
+        "era": "2014-12-21T06:45:00Z",
+        "erd": "2014-12-21T03:43:00Z",
+        "callsign": "DAL1568",
+        "station": "KZDV",
+        "id": 5987256665,
+        "departure": "LAX",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -105.0056,
+          37.9297,
+          11582.4
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477648582,
+        "altitude": 11582.4,
+        "arrival": "PHX",
+        "flight_number": "1150",
+        "groundspeed": 225.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:55:00Z",
+        "expected_covered_km": 479,
+        "sgd": "2014-12-21T02:05:00Z",
+        "ard": "2014-12-21T02:25:00Z",
+        "era": "2014-12-21T05:39:00Z",
+        "erd": "2014-12-21T02:25:00Z",
+        "callsign": "AAL1150",
+        "station": "KZDV",
+        "id": 5987256666,
+        "departure": "ORD",
+        "airline": "AA",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -106.9853,
+          36.4706,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477647516,
+        "altitude": 10972.8,
+        "arrival": "PHX",
+        "flight_number": "5446",
+        "groundspeed": 244.4,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:45:00Z",
+        "expected_covered_km": 300,
+        "sgd": "2014-12-21T02:55:00Z",
+        "ard": "2014-12-21T03:04:00Z",
+        "era": "2014-12-21T05:17:00Z",
+        "erd": "2014-12-21T03:04:00Z",
+        "callsign": "ASH5446",
+        "station": "KZDV",
+        "id": 5987256667,
+        "departure": "OMA",
+        "airline": "YV",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -104.3792,
+          40.1792,
+          10363.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477612163,
+        "altitude": 10363.2,
+        "arrival": "SEA",
+        "flight_number": "2247",
+        "groundspeed": 213.5,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T07:00:00Z",
+        "expected_covered_km": 678,
+        "sgd": "2014-12-21T02:35:00Z",
+        "ard": "2014-12-21T03:05:00Z",
+        "era": "2014-12-21T07:09:00Z",
+        "erd": "2014-12-21T03:05:00Z",
+        "callsign": "AAL2247",
+        "station": "KZDV",
+        "id": 5987256668,
+        "departure": "DFW",
+        "airline": "AA",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -107.1569,
+          40.7164,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477648697,
+        "altitude": 10972.8,
+        "arrival": "SFO",
+        "flight_number": "1582",
+        "groundspeed": 223.3,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:31:00Z",
+        "expected_covered_km": 465,
+        "sgd": "2014-12-21T00:35:00Z",
+        "ard": "2014-12-21T02:22:00Z",
+        "era": "2014-12-21T06:20:00Z",
+        "erd": "2014-12-21T02:22:00Z",
+        "callsign": "UAL1582",
+        "station": "KZDV",
+        "id": 5987256669,
+        "departure": "ORD",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -102.4475,
+          40.025,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477628948,
+        "altitude": 10972.8,
+        "arrival": "LAX",
+        "flight_number": "293",
+        "groundspeed": 219.7,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T07:15:00Z",
+        "expected_covered_km": 1048,
+        "sgd": "2014-12-21T00:45:00Z",
+        "ard": "2014-12-21T01:11:00Z",
+        "era": "2014-12-21T06:46:00Z",
+        "erd": "2014-12-21T01:11:00Z",
+        "callsign": "AAL293",
+        "station": "KZDV",
+        "id": 5987256670,
+        "departure": "JFK",
+        "airline": "AA",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -108.6653,
+          37.7244,
+          10668.0
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477660831,
+        "altitude": 10668.0,
+        "arrival": "AUS",
+        "flight_number": "5793",
+        "groundspeed": 246.4,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:57:00Z",
+        "expected_covered_km": 655,
+        "sgd": "2014-12-21T03:03:00Z",
+        "ard": "2014-12-21T03:56:00Z",
+        "era": "2014-12-21T06:17:00Z",
+        "erd": "2014-12-21T03:56:00Z",
+        "callsign": "CPZ5793",
+        "station": "KZDV",
+        "id": 5987256671,
+        "departure": "SLC",
+        "airline": "CP",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -109.7875,
+          36.1492,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477640327,
+        "altitude": 10972.8,
+        "arrival": "SAN",
+        "flight_number": "2164",
+        "groundspeed": 225.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:50:00Z",
+        "expected_covered_km": 319,
+        "sgd": "2014-12-21T01:25:00Z",
+        "ard": "2014-12-21T01:52:00Z",
+        "era": "2014-12-21T05:34:00Z",
+        "erd": "2014-12-21T01:52:00Z",
+        "callsign": "SWA2164",
+        "station": "KZDV",
+        "id": 5987256672,
+        "departure": "MDW",
+        "airline": "WN",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -99.8864,
+          38.4817,
+          9753.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477601427,
+        "altitude": 9753.6,
+        "arrival": "LAX",
+        "flight_number": "307",
+        "groundspeed": 225.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:50:00Z",
+        "expected_covered_km": 1269,
+        "sgd": "2014-12-20T23:55:00Z",
+        "ard": "2014-12-21T01:48:00Z",
+        "era": "2014-12-21T06:42:00Z",
+        "erd": "2014-12-21T01:48:00Z",
+        "callsign": "UAL307",
+        "station": "KZDV",
+        "id": 5987256673,
+        "departure": "BWI",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -104.7281,
+          38.9961,
+          10668.0
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 478865440,
+        "altitude": 10668.0,
+        "arrival": "DFW",
+        "flight_number": "7980",
+        "groundspeed": 264.9,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:53:00Z",
+        "expected_covered_km": 470,
+        "sgd": "2014-12-21T00:22:00Z",
+        "ard": "2014-12-21T00:21:00Z",
+        "era": "2014-12-21T05:39:00Z",
+        "erd": "2014-12-21T00:21:00Z",
+        "callsign": "SQC7980",
+        "station": "KZDV",
+        "id": 5987256674,
+        "departure": "ANC",
+        "airline": "SQC",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -101.2689,
+          36.8519,
+          12192.0
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 478871384,
+        "altitude": 12192.0,
+        "arrival": "YYJ",
+        "flight_number": "3541",
+        "groundspeed": 215.6,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:13:00Z",
+        "expected_covered_km": 903,
+        "sgd": "2014-12-21T00:15:00Z",
+        "era": "2014-12-21T07:35:00Z",
+        "erd": "2014-12-21T00:15:00Z",
+        "callsign": "TSC3541",
+        "station": "KZDV",
+        "id": 5987256675,
+        "departure": "CUN",
+        "airline": "TS",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -109.0753,
+          40.4586,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 479282152,
+        "altitude": 10972.8,
+        "arrival": "RNO",
+        "flight_number": "8621",
+        "groundspeed": 225.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:33:00Z",
+        "expected_covered_km": 170,
+        "sgd": "2014-12-21T02:13:00Z",
+        "ard": "2014-12-21T01:57:00Z",
+        "era": "2014-12-21T05:44:00Z",
+        "erd": "2014-12-21T01:57:00Z",
+        "callsign": "UPS8621",
+        "station": "KZDV",
+        "id": 5987256676,
+        "departure": "SDF",
+        "airline": "5X",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -101.6317,
+          45.1108,
+          10363.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477616952,
+        "altitude": 10363.2,
+        "arrival": "SLC",
+        "flight_number": "5773",
+        "groundspeed": 213.5,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T02:24:00Z",
+        "expected_covered_km": 803,
+        "sgd": "2014-12-20T23:36:00Z",
+        "ard": "2014-12-21T03:54:00Z",
+        "era": "2014-12-21T05:57:00Z",
+        "erd": "2014-12-21T03:54:00Z",
+        "callsign": "CPZ5773",
+        "station": "KZDV",
+        "id": 5987256677,
+        "departure": "FAR",
+        "airline": "CP",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -103.9442,
+          40.8053,
+          7924.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477611087,
+        "altitude": 7924.8,
+        "arrival": "MSP",
+        "flight_number": "116",
+        "groundspeed": 236.1,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:29:00Z",
+        "expected_covered_km": 615,
+        "sgd": "2014-12-21T03:40:00Z",
+        "ard": "2014-12-21T04:18:00Z",
+        "era": "2014-12-21T05:56:00Z",
+        "erd": "2014-12-21T04:18:00Z",
+        "callsign": "FFT116",
+        "station": "KZDV",
+        "id": 5987256678,
+        "departure": "DEN",
+        "airline": "F9",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -108.9767,
+          39.4772,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477611275,
+        "altitude": 10972.8,
+        "arrival": "SFO",
+        "flight_number": "864",
+        "groundspeed": 222.2,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:32:00Z",
+        "expected_covered_km": 291,
+        "sgd": "2014-12-21T02:57:00Z",
+        "ard": "2014-12-21T04:00:00Z",
+        "era": "2014-12-21T06:05:00Z",
+        "erd": "2014-12-21T04:00:00Z",
+        "callsign": "UAL864",
+        "station": "KZDV",
+        "id": 5987256679,
+        "departure": "DEN",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -106.8908,
+          36.3292,
+          11582.4
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477614006,
+        "altitude": 11582.4,
+        "arrival": "PHX",
+        "flight_number": "5488",
+        "groundspeed": 237.7,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:51:00Z",
+        "expected_covered_km": 290,
+        "sgd": "2014-12-21T02:45:00Z",
+        "ard": "2014-12-21T02:49:00Z",
+        "era": "2014-12-21T05:18:00Z",
+        "erd": "2014-12-21T02:49:00Z",
+        "callsign": "ASH5488",
+        "station": "KZDV",
+        "id": 5987256680,
+        "departure": "DSM",
+        "airline": "YV",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -101.66,
+          43.6872,
+          11277.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477658531,
+        "altitude": 11277.6,
+        "arrival": "MSP",
+        "flight_number": "396",
+        "groundspeed": 244.4,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:05:00Z",
+        "expected_covered_km": 179,
+        "sgd": "2014-12-21T01:30:00Z",
+        "ard": "2014-12-21T02:15:00Z",
+        "era": "2014-12-21T05:23:00Z",
+        "erd": "2014-12-21T02:15:00Z",
+        "callsign": "SCX396",
+        "station": "KZDV",
+        "id": 5987256681,
+        "departure": "SFO",
+        "airline": "SY",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -106.6186,
+          42.2625,
+          10058.4
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477661019,
+        "altitude": 10058.4,
+        "arrival": "MSP",
+        "flight_number": "5810",
+        "groundspeed": 240.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:34:00Z",
+        "expected_covered_km": 710,
+        "sgd": "2014-12-21T02:55:00Z",
+        "ard": "2014-12-21T03:50:00Z",
+        "era": "2014-12-21T05:53:00Z",
+        "erd": "2014-12-21T03:50:00Z",
+        "callsign": "CPZ5810",
+        "station": "KZDV",
+        "id": 5987256682,
+        "departure": "SLC",
+        "airline": "CP",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -105.9097,
+          39.0658,
+          10363.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477606629,
+        "altitude": 10363.2,
+        "arrival": "SFO",
+        "flight_number": "475",
+        "groundspeed": 216.6,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:46:00Z",
+        "expected_covered_km": 551,
+        "sgd": "2014-12-21T01:05:00Z",
+        "ard": "2014-12-21T01:25:00Z",
+        "era": "2014-12-21T06:26:00Z",
+        "erd": "2014-12-21T01:25:00Z",
+        "callsign": "AWE475",
+        "station": "KZDV",
+        "id": 5987256683,
+        "departure": "CLT",
+        "airline": "US",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -107.1481,
+          36.1239,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477617740,
+        "altitude": 10972.8,
+        "arrival": "SFO",
+        "flight_number": "277",
+        "groundspeed": 199.1,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:59:00Z",
+        "expected_covered_km": 547,
+        "sgd": "2014-12-20T23:30:00Z",
+        "ard": "2014-12-21T00:37:00Z",
+        "era": "2014-12-21T06:25:00Z",
+        "erd": "2014-12-21T00:37:00Z",
+        "callsign": "JBU277",
+        "station": "KZDV",
+        "id": 5987256684,
+        "departure": "FLL",
+        "airline": "B6",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -106.4583,
+          39.1953,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477614279,
+        "altitude": 10972.8,
+        "arrival": "LAS",
+        "flight_number": "1917",
+        "groundspeed": 224.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:34:00Z",
+        "expected_covered_km": 713,
+        "sgd": "2014-12-21T00:59:00Z",
+        "ard": "2014-12-21T01:52:00Z",
+        "era": "2014-12-21T05:42:00Z",
+        "erd": "2014-12-21T01:52:00Z",
+        "callsign": "DAL1917",
+        "station": "KZDV",
+        "id": 5987256685,
+        "departure": "DTW",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -107.1786,
+          44.0781,
+          11582.4
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 478871826,
+        "altitude": 11582.4,
+        "arrival": "BFI",
+        "flight_number": "2982",
+        "groundspeed": 223.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:36:00Z",
+        "expected_covered_km": 157,
+        "sgd": "2014-12-21T02:14:00Z",
+        "ard": "2014-12-21T02:02:00Z",
+        "era": "2014-12-21T06:15:00Z",
+        "erd": "2014-12-21T02:02:00Z",
+        "callsign": "UPS2982",
+        "station": "KZDV",
+        "id": 5987256686,
+        "departure": "SDF",
+        "airline": "5X",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -103.0381,
+          38.4544,
+          11887.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477651973,
+        "altitude": 11887.2,
+        "arrival": "MSP",
+        "flight_number": "508",
+        "groundspeed": 230.5,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:45:00Z",
+        "expected_covered_km": 645,
+        "sgd": "2014-12-21T01:45:00Z",
+        "ard": "2014-12-21T03:10:00Z",
+        "era": "2014-12-21T05:53:00Z",
+        "erd": "2014-12-21T03:10:00Z",
+        "callsign": "SWA508",
+        "station": "KZDV",
+        "id": 5987256687,
+        "departure": "PHX",
+        "airline": "WN",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -106.9339,
+          39.3567,
+          3627.1
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "altitude": 3627.1,
+        "callsign": "SKW558P",
+        "station": "KZDV",
+        "groundspeed": 100.3,
+        "received": "2014-12-21T04:35:50Z",
+        "id": 5987256688,
+        "priority": "ASDI",
+        "timestamp": "2014-12-21T04:30:43Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -85.9667,
+          36.4833,
+          4724.4
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477625208,
+        "altitude": 4724.4,
+        "arrival": "BNA",
+        "flight_number": "5933",
+        "groundspeed": 187.8,
+        "received": "2014-12-21T04:35:50Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:43:00Z",
+        "expected_covered_km": 118,
+        "sgd": "2014-12-21T02:52:00Z",
+        "ard": "2014-12-21T03:14:00Z",
+        "era": "2014-12-21T04:42:00Z",
+        "erd": "2014-12-21T03:14:00Z",
+        "callsign": "ASQ5933",
+        "station": "KBNA",
+        "id": 5987256689,
+        "departure": "IAD",
+        "airline": "EV",
+        "timestamp": "2014-12-21T04:30:45Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -77.9389,
+          31.9253,
+          11247.1
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 479280678,
+        "altitude": 11247.1,
+        "arrival": "SJU",
+        "flight_number": "313",
+        "groundspeed": 286.5,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:48:00Z",
+        "expected_covered_km": 490,
+        "sgd": "2014-12-21T03:27:00Z",
+        "ard": "2014-12-21T03:18:00Z",
+        "era": "2014-12-21T06:37:00Z",
+        "erd": "2014-12-21T03:18:00Z",
+        "callsign": "CKS313",
+        "station": "KZJX",
+        "id": 5987256690,
+        "departure": "MEM",
+        "airline": "K4",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -81.0342,
+          31.5644,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477673104,
+        "altitude": 10972.8,
+        "arrival": "FLL",
+        "flight_number": "934",
+        "groundspeed": 230.5,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:24:00Z",
+        "expected_covered_km": 662,
+        "sgd": "2014-12-21T02:00:00Z",
+        "ard": "2014-12-21T02:43:00Z",
+        "era": "2014-12-21T05:41:00Z",
+        "erd": "2014-12-21T02:43:00Z",
+        "callsign": "ACA934",
+        "station": "KZJX",
+        "id": 5987256691,
+        "departure": "YYZ",
+        "airline": "AC",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -76.5683,
+          36.6436,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477616365,
+        "altitude": 10972.8,
+        "arrival": "FLL",
+        "flight_number": "705",
+        "groundspeed": 206.3,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:34:00Z",
+        "expected_covered_km": 1287,
+        "sgd": "2014-12-21T02:39:00Z",
+        "ard": "2014-12-21T03:46:00Z",
+        "era": "2014-12-21T06:14:00Z",
+        "erd": "2014-12-21T03:46:00Z",
+        "callsign": "JBU705",
+        "station": "KZJX",
+        "id": 5987256692,
+        "departure": "EWR",
+        "airline": "B6",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -80.7317,
+          28.0978,
+          396.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477606436,
+        "altitude": 396.2,
+        "arrival": "MLB",
+        "flight_number": "5203",
+        "groundspeed": 84.9,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:59:00Z",
+        "expected_covered_km": 10,
+        "sgd": "2014-12-21T03:20:00Z",
+        "era": "2014-12-21T04:33:00Z",
+        "erd": "2014-12-21T03:22:00Z",
+        "callsign": "JIA5203",
+        "station": "KZJX",
+        "id": 5987256693,
+        "departure": "CLT",
+        "airline": "JIA",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -85.4042,
+          26.4489,
+          10668.0
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477641017,
+        "altitude": 10668.0,
+        "arrival": "MAD",
+        "flight_number": "6402",
+        "groundspeed": 278.8,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T12:45:00Z",
+        "expected_covered_km": 1058,
+        "sgd": "2014-12-21T02:15:00Z",
+        "era": "2014-12-21T12:17:00Z",
+        "erd": "2014-12-21T02:40:00Z",
+        "callsign": "IBE6402",
+        "station": "KZJX",
+        "id": 5987256695,
+        "departure": "MEX",
+        "airline": "IB",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -88.1756,
+          30.7528,
+          11277.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477625834,
+        "altitude": 11277.6,
+        "arrival": "LOS",
+        "flight_number": "142",
+        "groundspeed": 300.9,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T15:10:00Z",
+        "expected_covered_km": 1361,
+        "sgd": "2014-12-21T03:20:00Z",
+        "ard": "2014-12-21T03:45:00Z",
+        "era": "2014-12-21T14:21:00Z",
+        "erd": "2014-12-21T03:45:00Z",
+        "callsign": "UAL142",
+        "station": "KZJX",
+        "id": 5987256696,
+        "departure": "IAH",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -80.8069,
+          26.3394,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 478870702,
+        "altitude": 10972.8,
+        "arrival": "MEM",
+        "flight_number": "43",
+        "groundspeed": 237.2,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:36:00Z",
+        "expected_covered_km": 1009,
+        "sgd": "2014-12-20T21:57:00Z",
+        "era": "2014-12-21T06:08:00Z",
+        "erd": "2014-12-20T21:57:00Z",
+        "callsign": "FDX43",
+        "station": "KZJX",
+        "id": 5987256697,
+        "departure": "VCP",
+        "airline": "FX",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -82.3067,
+          28.3061,
+          3352.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477616687,
+        "altitude": 3352.8,
+        "arrival": "TPA",
+        "flight_number": "519",
+        "groundspeed": 175.4,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:38:00Z",
+        "expected_covered_km": 105,
+        "sgd": "2014-12-21T01:37:00Z",
+        "ard": "2014-12-21T02:18:00Z",
+        "era": "2014-12-21T04:45:00Z",
+        "erd": "2014-12-21T02:18:00Z",
+        "callsign": "UAL519",
+        "station": "KZJX",
+        "id": 5987256699,
+        "departure": "EWR",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -82.9272,
+          28.9664,
+          12496.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 478904696,
+        "altitude": 12496.8,
+        "arrival": "MIA",
+        "flight_number": "688",
+        "groundspeed": 215.0,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T03:44:00Z",
+        "expected_covered_km": 359,
+        "sgd": "2014-12-21T02:26:00Z",
+        "ard": "2014-12-21T03:44:00Z",
+        "era": "2014-12-21T05:16:00Z",
+        "erd": "2014-12-21T03:44:00Z",
+        "callsign": "EJA688",
+        "station": "KZJX",
+        "id": 5987256700,
+        "departure": "ATL",
+        "airline": "1I",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -79.1603,
+          28.9969,
+          10668.0
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "altitude": 10668.0,
+        "callsign": "SWG631",
+        "station": "KZJX",
+        "groundspeed": 246.4,
+        "received": "2014-12-21T04:35:51Z",
+        "id": 5987256702,
+        "priority": "ASDI",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -83.5708,
+          31.3125,
+          9448.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477595058,
+        "altitude": 9448.8,
+        "arrival": "SCL",
+        "flight_number": "147",
+        "groundspeed": 239.7,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T12:50:00Z",
+        "expected_covered_km": 843,
+        "sgd": "2014-12-21T03:24:00Z",
+        "ard": "2014-12-21T04:08:00Z",
+        "era": "2014-12-21T13:14:00Z",
+        "erd": "2014-12-21T04:08:00Z",
+        "callsign": "DAL147",
+        "station": "KZJX",
+        "id": 5987256703,
+        "departure": "ATL",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -79.9431,
+          36.0833,
+          10972.8
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477629281,
+        "altitude": 10972.8,
+        "arrival": "TPA",
+        "flight_number": "425",
+        "groundspeed": 181.1,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:44:00Z",
+        "expected_covered_km": 1040,
+        "sgd": "2014-12-21T02:45:00Z",
+        "ard": "2014-12-21T03:24:00Z",
+        "era": "2014-12-21T05:48:00Z",
+        "erd": "2014-12-21T03:24:00Z",
+        "callsign": "JBU425",
+        "station": "KZJX",
+        "id": 5987256704,
+        "departure": "JFK",
+        "airline": "B6",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -81.6997,
+          28.0511,
+          6522.7
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477606601,
+        "altitude": 6522.7,
+        "arrival": "RSW",
+        "flight_number": "1820",
+        "groundspeed": 217.6,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:59:00Z",
+        "expected_covered_km": 272,
+        "sgd": "2014-12-21T03:10:00Z",
+        "ard": "2014-12-21T03:24:00Z",
+        "era": "2014-12-21T04:54:00Z",
+        "erd": "2014-12-21T03:24:00Z",
+        "callsign": "AWE1820",
+        "station": "KZJX",
+        "id": 5987256705,
+        "departure": "CLT",
+        "airline": "US",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -83.7506,
+          31.4883,
+          11277.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477614455,
+        "altitude": 11277.6,
+        "arrival": "RSW",
+        "flight_number": "689",
+        "groundspeed": 224.3,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:05:00Z",
+        "expected_covered_km": 651,
+        "sgd": "2014-12-21T01:15:00Z",
+        "ard": "2014-12-21T02:55:00Z",
+        "era": "2014-12-21T05:22:00Z",
+        "erd": "2014-12-21T02:55:00Z",
+        "callsign": "NKS689",
+        "station": "KZJX",
+        "id": 5987256706,
+        "departure": "DTW",
+        "airline": "NK",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -78.6158,
+          31.4639,
+          10942.3
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477616363,
+        "altitude": 10942.3,
+        "arrival": "FLL",
+        "flight_number": "222",
+        "groundspeed": 217.1,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:33:00Z",
+        "expected_covered_km": 582,
+        "sgd": "2014-12-21T02:25:00Z",
+        "ard": "2014-12-21T03:00:00Z",
+        "era": "2014-12-21T05:29:00Z",
+        "erd": "2014-12-21T03:00:00Z",
+        "callsign": "UAL222",
+        "station": "KZJX",
+        "id": 5987256707,
+        "departure": "EWR",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -79.8481,
+          32.8383,
+          609.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477616291,
+        "altitude": 609.6,
+        "arrival": "CHS",
+        "flight_number": "4641",
+        "groundspeed": 129.6,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:47:00Z",
+        "expected_covered_km": 18,
+        "sgd": "2014-12-21T02:37:00Z",
+        "ard": "2014-12-21T02:55:00Z",
+        "era": "2014-12-21T04:32:00Z",
+        "erd": "2014-12-21T02:55:00Z",
+        "callsign": "ASQ4641",
+        "station": "KZJX",
+        "id": 5987256708,
+        "departure": "EWR",
+        "airline": "EV",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -80.4964,
+          35.0039,
+          10363.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477625471,
+        "altitude": 10363.2,
+        "arrival": "TPA",
+        "flight_number": "1284",
+        "groundspeed": 192.9,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:19:00Z",
+        "expected_covered_km": 1051,
+        "sgd": "2014-12-21T02:58:00Z",
+        "ard": "2014-12-21T03:44:00Z",
+        "era": "2014-12-21T05:46:00Z",
+        "erd": "2014-12-21T03:44:00Z",
+        "callsign": "UAL1284",
+        "station": "KZJX",
+        "id": 5987256710,
+        "departure": "IAD",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -76.8847,
+          35.48,
+          11582.4
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477600543,
+        "altitude": 11582.4,
+        "arrival": "MIA",
+        "flight_number": "623",
+        "groundspeed": 214.0,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-20T21:05:00Z",
+        "expected_covered_km": 1082,
+        "sgd": "2014-12-20T10:45:00Z",
+        "era": "2014-12-21T06:14:00Z",
+        "erd": "2014-12-20T15:24:00Z",
+        "callsign": "JAF623",
+        "station": "KZJX",
+        "id": 5987256711,
+        "departure": "BRU",
+        "airline": "JAF",
+        "timestamp": "2014-12-21T04:30:33Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -81.6506,
+          31.2467,
+          5791.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "altitude": 5791.2,
+        "callsign": "LN939TW",
+        "station": "KZJX",
+        "groundspeed": 173.9,
+        "received": "2014-12-21T04:35:51Z",
+        "id": 5987256712,
+        "priority": "ASDI",
+        "timestamp": "2014-12-21T04:30:39Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -124.1336,
+          33.9864,
+          10363.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477647082,
+        "altitude": 10363.2,
+        "arrival": "LAX",
+        "flight_number": "391",
+        "groundspeed": 246.9,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:28:00Z",
+        "expected_covered_km": 513,
+        "sgd": "2014-12-21T00:08:00Z",
+        "ard": "2014-12-21T00:19:00Z",
+        "era": "2014-12-21T05:18:00Z",
+        "erd": "2014-12-21T00:19:00Z",
+        "callsign": "UAL391",
+        "station": "KZLA",
+        "id": 5987256744,
+        "departure": "OGG",
+        "airline": "UA",
+        "timestamp": "2014-12-21T04:30:27Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -111.6264,
+          36.7986,
+          11582.4
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477610986,
+        "altitude": 11582.4,
+        "arrival": "LAX",
+        "flight_number": "1024",
+        "groundspeed": 226.4,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:55:00Z",
+        "expected_covered_km": 717,
+        "sgd": "2014-12-21T03:25:00Z",
+        "ard": "2014-12-21T03:36:00Z",
+        "era": "2014-12-21T05:29:00Z",
+        "erd": "2014-12-21T03:36:00Z",
+        "callsign": "SWA1024",
+        "station": "KZLA",
+        "id": 5987256746,
+        "departure": "DEN",
+        "airline": "WN",
+        "timestamp": "2014-12-21T04:30:27Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -118.8711,
+          35.295,
+          8534.4
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477634245,
+        "altitude": 8534.4,
+        "arrival": "PDX",
+        "flight_number": "567",
+        "groundspeed": 198.6,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:14:00Z",
+        "expected_covered_km": 609,
+        "sgd": "2014-12-21T03:50:00Z",
+        "ard": "2014-12-21T04:14:00Z",
+        "era": "2014-12-21T06:24:00Z",
+        "erd": "2014-12-21T04:14:00Z",
+        "callsign": "ASA567",
+        "station": "KZLA",
+        "id": 5987256747,
+        "departure": "LAX",
+        "airline": "AS",
+        "timestamp": "2014-12-21T04:30:27Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -111.9869,
+          34.5467,
+          6705.6
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477651721,
+        "altitude": 6705.6,
+        "arrival": "BOI",
+        "flight_number": "449",
+        "groundspeed": 195.0,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T06:15:00Z",
+        "expected_covered_km": 647,
+        "sgd": "2014-12-21T04:05:00Z",
+        "ard": "2014-12-21T04:16:00Z",
+        "era": "2014-12-21T06:13:00Z",
+        "erd": "2014-12-21T04:16:00Z",
+        "callsign": "AWE449",
+        "station": "KZLA",
+        "id": 5987256748,
+        "departure": "PHX",
+        "airline": "US",
+        "timestamp": "2014-12-21T04:30:27Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -119.3669,
+          35.4189,
+          7620.0
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477658602,
+        "altitude": 7620.0,
+        "arrival": "PHX",
+        "flight_number": "5206",
+        "groundspeed": 238.7,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:38:00Z",
+        "expected_covered_km": 882,
+        "sgd": "2014-12-21T03:42:00Z",
+        "ard": "2014-12-21T03:58:00Z",
+        "era": "2014-12-21T05:21:00Z",
+        "erd": "2014-12-21T03:58:00Z",
+        "callsign": "SKW5206",
+        "station": "KZLA",
+        "id": 5987256749,
+        "departure": "SFO",
+        "airline": "OO",
+        "timestamp": "2014-12-21T04:30:27Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -80.8575,
+          35.2742,
+          701.0
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 479280768,
+        "altitude": 701.0,
+        "arrival": "CLT",
+        "flight_number": "9010",
+        "groundspeed": 87.5,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T04:29:00Z",
+        "expected_covered_km": 100,
+        "airport": "CLT",
+        "airports": "CLT",
+        "sgd": "2014-12-21T03:06:00Z",
+        "ard": "2014-12-21T03:16:00Z",
+        "era": "2014-12-21T04:39:00Z",
+        "erd": "2014-12-21T03:16:00Z",
+        "callsign": "SWA9010",
+        "station": "KZTL",
+        "id": 5987256750,
+        "departure": "MDW",
+        "airline": "WN",
+        "timestamp": "2014-12-21T04:30:27Z"
+      }
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -111.9814,
+          34.9214,
+          7315.2
+        ],
+        "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+        "flight_history_id": 477614460,
+        "altitude": 7315.2,
+        "arrival": "SAN",
+        "flight_number": "1635",
+        "groundspeed": 202.7,
+        "received": "2014-12-21T04:35:51Z",
+        "priority": "ASDI",
+        "sga": "2014-12-21T05:59:00Z",
+        "expected_covered_km": 610,
+        "sgd": "2014-12-21T00:55:00Z",
+        "ard": "2014-12-21T01:05:00Z",
+        "era": "2014-12-21T05:21:00Z",
+        "erd": "2014-12-21T01:05:00Z",
+        "callsign": "DAL1635",
+        "station": "KZLA",
+        "id": 5987256751,
+        "departure": "DTW",
+        "airline": "DL",
+        "timestamp": "2014-12-21T04:30:27Z"
+      }
+    }
+  ]
+}
