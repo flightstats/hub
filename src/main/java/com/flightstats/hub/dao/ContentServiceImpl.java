@@ -66,7 +66,6 @@ public class ContentServiceImpl implements ContentService {
     public ContentKey insert(String channelName, Content content) {
         try {
             inFlight.incrementAndGet();
-            logger.trace("inserting {} bytes into channel {} ", content.getData().length, channelName);
             return cacheContentDao.write(channelName, content);
         } finally {
             inFlight.decrementAndGet();

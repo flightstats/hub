@@ -6,6 +6,8 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +25,7 @@ public class Content implements Serializable {
     private final byte[] data;
     private final Optional<String> user;
     private final boolean isNew;
+    private final InputStream stream;
     private Optional<ContentKey> contentKey = Optional.absent();
     private List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
 
@@ -33,6 +36,7 @@ public class Content implements Serializable {
         contentType = builder.contentType;
         data = builder.data;
         user = builder.user;
+        stream = builder.stream;
         traces.add(new Trace("Content.start"));
     }
 
@@ -60,6 +64,13 @@ public class Content implements Serializable {
         }
     }
 
+    public InputStream getStream() {
+        if (stream == null) {
+            return new ByteArrayInputStream(getData());
+        }
+        return stream;
+    }
+
     /**
      * @return true if this Content is new, false if it has been inserted elsewhere and is a replicant.
      */
@@ -73,6 +84,7 @@ public class Content implements Serializable {
         private Optional<ContentKey> contentKey = Optional.absent();
         private byte[] data;
         private Optional<String> user = Optional.absent();
+        private InputStream stream;
 
         public Builder withData(byte[] data) {
             this.data = data;
@@ -96,6 +108,11 @@ public class Content implements Serializable {
 
         public Builder withUser(String user) {
             this.user = Optional.fromNullable(user);
+            return this;
+        }
+
+        public Builder withStream(InputStream stream) {
+            this.stream = stream;
             return this;
         }
 
