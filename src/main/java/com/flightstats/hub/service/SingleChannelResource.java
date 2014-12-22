@@ -18,6 +18,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.InputStream;
 import java.net.URI;
 
 import static com.flightstats.rest.Linked.linked;
@@ -102,18 +103,19 @@ public class SingleChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage, @HeaderParam("User") final String user,
-                                final byte[] data) throws Exception {
+                                final InputStream data) throws Exception {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        if (data.length > maxPayloadSizeBytes) {
+        //todo - gfm - 12/22/14 - where to handle max length?
+        /*if (data.length > maxPayloadSizeBytes) {
             return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
-        }
+        }*/
         Content content = Content.builder()
                 .withContentLanguage(contentLanguage)
                 .withContentType(contentType)
-                .withData(data)
+                .withStream(data)
                 .withUser(user)
                 .build();
         try {

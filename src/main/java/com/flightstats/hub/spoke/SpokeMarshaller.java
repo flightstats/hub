@@ -38,7 +38,8 @@ public class SpokeMarshaller {
         String meta = objectNode.toString();
         zipOut.write(meta.getBytes());
         zipOut.putNextEntry(new ZipEntry("payload"));
-        ByteStreams.copy(new ByteArrayInputStream(content.getData()), zipOut);
+        //todo - gfm - 12/22/14 - verify the max length here?
+        ByteStreams.copy(content.getStream(), zipOut);
         zipOut.close();
         return baos.toByteArray();
     }

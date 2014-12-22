@@ -11,6 +11,7 @@ import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.sun.jersey.api.Responses;
 import com.sun.jersey.core.header.MediaTypes;
@@ -24,7 +25,10 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -250,10 +254,18 @@ public class ChannelContentResource {
         if (contentTypeIsNotCompatible(accept, actualContentType)) {
             return Responses.notAcceptable().build();
         }
-
-        Response.ResponseBuilder builder = Response.status(Response.Status.OK)
-                .type(actualContentType)
-                .entity(content.getData())
+        Response.ResponseBuilder builder = Response.ok();
+        if (content.getData() != null) {
+            builder.entity(content.getData());
+        } else {
+            builder = Response.ok(new StreamingOutput() {
+                @Override
+                public void write(OutputStream output) throws IOException, WebApplicationException {
+                    ByteStreams.copy(content.getStream(), output);
+                }
+            });
+        }
+        builder.type(actualContentType)
                 .header(Headers.CREATION_DATE,
                         dateTimeFormatter.print(new DateTime(key.getMillis())));
 
