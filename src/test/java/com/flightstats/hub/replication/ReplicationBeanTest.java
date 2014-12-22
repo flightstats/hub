@@ -16,9 +16,9 @@ public class ReplicationBeanTest {
 
     @Test
     public void testReplicationDomainOrdering() throws Exception {
-        ReplicationDomain a = ReplicationDomain.builder().withDomain("A").build();
-        ReplicationDomain b = ReplicationDomain.builder().withDomain("B").build();
-        ReplicationDomain c = ReplicationDomain.builder().withDomain("C").build();
+        ReplicationDomain a = ReplicationDomain.builder().domain("A").build();
+        ReplicationDomain b = ReplicationDomain.builder().domain("B").build();
+        ReplicationDomain c = ReplicationDomain.builder().domain("C").build();
         List<ReplicationDomain> replicationDomains = Arrays.asList(c, a, b);
         ReplicationBean replicationBean = new ReplicationBean(replicationDomains, Collections.EMPTY_LIST);
         ArrayList<ReplicationDomain> domains = new ArrayList<>(replicationBean.getDomains());

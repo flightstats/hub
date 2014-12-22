@@ -12,9 +12,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-/**
- *
- */
 @Path("/replication")
 public class ReplicationResource {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationResource.class);
@@ -45,7 +42,8 @@ public class ReplicationResource {
         if (domain.equalsIgnoreCase(host)) {
             return Response.status(Response.Status.BAD_REQUEST).entity("The domain must be different than the host").build();
         }
-        replicationDomain.setDomain(domain);
+        //todo - gfm - 12/22/14 - is this needed?
+        //replicationDomain.setDomain(domain);
         replicationService.create(replicationDomain);
         return Response.created(uriInfo.getRequestUri()).entity(replicationDomain).build();
     }

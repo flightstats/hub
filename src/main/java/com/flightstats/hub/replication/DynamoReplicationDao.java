@@ -110,13 +110,14 @@ public class DynamoReplicationDao implements ReplicationDao {
     }
 
     private ReplicationDomain mapItem(Map<String, AttributeValue> item) {
-        ReplicationDomain.Builder builder = ReplicationDomain.builder()
-                .withDomain(item.get("domain").getS());
+        ReplicationDomain.ReplicationDomainBuilder builder = ReplicationDomain.builder()
+                .domain(item.get("domain").getS());
+
         if (item.containsKey("historicalDays")) {
-            builder.withHistoricalDays(Long.parseLong(item.get("historicalDays").getN()));
+            builder.historicalDays(Long.parseLong(item.get("historicalDays").getN()));
         }
         if (item.containsKey("excludeExcept")) {
-            builder.withExcludedExcept(item.get("excludeExcept").getSS());
+            builder.excludeExcept(new TreeSet<>(item.get("excludeExcept").getSS()));
         }
         return builder.build();
     }
