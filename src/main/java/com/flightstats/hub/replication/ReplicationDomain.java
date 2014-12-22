@@ -35,6 +35,10 @@ public class ReplicationDomain {
         return !excludeExcept.isEmpty();
     }
 
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
     @JsonCreator
     protected static ReplicationDomain create(Map<String, JsonNode> props) {
         ReplicationDomainBuilder builder = builder();
