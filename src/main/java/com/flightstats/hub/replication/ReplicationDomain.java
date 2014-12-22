@@ -5,35 +5,39 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.flightstats.hub.model.exception.InvalidRequestException;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.experimental.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-/**
- *
- */
+@EqualsAndHashCode
+@ToString
+@Builder
+@Getter
 public class ReplicationDomain {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationDomain.class);
 
     private String domain;
     private final long historicalDays;
-    private final Set<String> excludeExcept;
-
-    private ReplicationDomain(Builder builder) {
-        domain = builder.domain;
-        historicalDays = builder.historicalDays;
-        excludeExcept = Collections.unmodifiableSet(new TreeSet<>(builder.excludedExcept));
-    }
+    private final SortedSet<String> excludeExcept;
 
     @JsonIgnore()
     public boolean isValid() {
+        if (null == excludeExcept) {
+            return false;
+        }
         return !excludeExcept.isEmpty();
     }
 
     @JsonCreator
     protected static ReplicationDomain create(Map<String, JsonNode> props) {
-        Builder builder = builder();
+        ReplicationDomainBuilder builder = builder();
         for (Map.Entry<String, JsonNode> entry : props.entrySet()) {
             switch (entry.getKey()) {
                 case "historicalDays":
@@ -41,10 +45,10 @@ public class ReplicationDomain {
                     if (historicalDaysValue < 0) {
                         throw new InvalidRequestException("historicalDays must be a number, zero or greater.");
                     }
-                    builder.withHistoricalDays(historicalDaysValue);
+                    builder.historicalDays(historicalDaysValue);
                     break;
                 case "excludeExcept":
-                    builder.withExcludedExcept(convert(entry.getValue()));
+                    builder.excludeExcept(convert(entry.getValue()));
                     break;
                 case "includeExcept":
                     throw new InvalidRequestException("includeExcept is no longer supported");
@@ -56,8 +60,8 @@ public class ReplicationDomain {
         return builder.build();
     }
 
-    private static Set<String> convert(JsonNode node) {
-        Set<String> values = new HashSet<>();
+    private static SortedSet<String> convert(JsonNode node) {
+        SortedSet<String> values = new TreeSet<>();
         if (node.isArray()) {
             ArrayNode array = (ArrayNode) node;
             for (JsonNode item : array) {
@@ -69,80 +73,4 @@ public class ReplicationDomain {
         return values;
     }
 
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public long getHistoricalDays() {
-        return historicalDays;
-    }
-
-
-    public Set<String> getExcludeExcept() {
-        return excludeExcept;
-    }
-
-    @Override
-    public String toString() {
-        return "ReplicationConfig{" +
-                "domain='" + domain + '\'' +
-                ", historicalDays=" + historicalDays +
-                ", excludeExcept=" + excludeExcept +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ReplicationDomain that = (ReplicationDomain) o;
-
-        if (historicalDays != that.historicalDays) return false;
-        if (!domain.equals(that.domain)) return false;
-        if (!excludeExcept.equals(that.excludeExcept)) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = domain.hashCode();
-        result = 31 * result + (int) (historicalDays ^ (historicalDays >>> 32));
-        result = 31 * result + excludeExcept.hashCode();
-        return result;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-        private String domain;
-        private long historicalDays = 0;
-        private Set<String> excludedExcept = new HashSet<>();
-
-        public Builder withHistoricalDays(long historicalDays) {
-            this.historicalDays = historicalDays;
-            return this;
-        }
-
-        public Builder withExcludedExcept(Collection<String> excluded) {
-            this.excludedExcept.addAll(excluded);
-            return this;
-        }
-
-        public Builder withDomain(String domain) {
-            this.domain = domain;
-            return this;
-        }
-
-        public ReplicationDomain build() {
-            return new ReplicationDomain(this);
-        }
-    }
 }
