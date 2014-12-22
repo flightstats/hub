@@ -4,13 +4,11 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,10 +16,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("Convert2Lambda")
@@ -76,14 +71,42 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
-        if (isInsideCacheWindow(key.getTime())) {
-            return Optional.fromNullable(cacheContentDao.read(channelName, key));
-        }
-        return Optional.fromNullable(longTermContentDao.read(channelName, key));
+        //todo - gfm - 12/22/14 - this should also handle the case of replication,
+        // where something is in the cache outside the 'cache window'
+        return getBoth(channelName, key);
     }
 
-    private boolean isInsideCacheWindow(DateTime dateTime) {
-        return TimeUtil.now().minusMinutes(ttlMinutes).isBefore(dateTime);
+    private Optional<Content> getBoth(String channelName, ContentKey key) {
+        ConcurrentLinkedQueue<Content> queue = new ConcurrentLinkedQueue<>();
+        try {
+            CountDownLatch countDownLatch = new CountDownLatch(2);
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    Content content = cacheContentDao.read(channelName, key);
+                    if (content != null) {
+                        queue.add(content);
+                        countDownLatch.countDown();
+                    }
+                    countDownLatch.countDown();
+                }
+            });
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    Content content = longTermContentDao.read(channelName, key);
+                    if (content != null) {
+                        queue.add(content);
+                        countDownLatch.countDown();
+                    }
+                    countDownLatch.countDown();
+                }
+            });
+            countDownLatch.await();
+            return Optional.fromNullable(queue.poll());
+        } catch (InterruptedException e) {
+            throw new RuntimeInterruptedException(e);
+        }
     }
 
     @Override

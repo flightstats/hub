@@ -122,7 +122,7 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
     public void onMessage(String message) {
         try {
             long sequence = Long.parseLong(StringUtils.substringAfterLast(message, "/"));
-            logger.debug("message {} {}", channel, sequence);
+            logger.trace("message {} {}", channel, sequence);
             if (sequence > latest.get()) {
                 latest.set(sequence);
                 signal();

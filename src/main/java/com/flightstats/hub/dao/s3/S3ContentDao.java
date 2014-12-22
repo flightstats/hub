@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
@@ -102,7 +101,7 @@ public class S3ContentDao implements ContentDao {
             builder.withContentKey(key);
             builder.withData(bytes);
             return builder.build();
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.warn("unable to read " + channelName + " " + key, e);
             return null;
         }

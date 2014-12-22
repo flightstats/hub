@@ -31,7 +31,7 @@ public class SequenceFinder {
         long low = lastUpdated;
         long lastExists = high;
         while (low <= high) {
-            long middle = low + (high - low) / 2;
+            long middle = (long) (low + (high - low) * .95);
             if (existsAndNotYetExpired(channel, middle, time, timeUnit)) {
                 high = middle - 1;
                 lastExists = middle;
