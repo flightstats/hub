@@ -103,12 +103,12 @@ public class GroupCallbackImpl implements GroupCallback {
         notifyWatchers();
         if (groupCaller != null) {
             logger.info("deleting...{}", groupCaller);
-            for (int i = 0; i < 60; i++) {
+            for (int i = 0; i < 30; i++) {
                 if (groupCaller.deleteIfReady()) {
                     logger.info("deleted successfully! " + name);
                     return;
                 } else {
-                    Sleeper.sleep(i * 1000);
+                    Sleeper.sleep(1000);
                     logger.info("waiting to delete " + name);
                 }
             }
