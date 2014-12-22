@@ -10,6 +10,7 @@ import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -21,6 +22,7 @@ public class SpokeMarshaller {
     public static byte[] toBytes(Content content) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ZipOutputStream zipOut = new ZipOutputStream(baos);
+        zipOut.setLevel(Deflater.BEST_SPEED);
         zipOut.putNextEntry(new ZipEntry("meta"));
         ObjectNode objectNode = mapper.createObjectNode();
         //todo - gfm - 11/12/14 - make headers a map
