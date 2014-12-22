@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.service.Headers;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.common.base.Optional;
@@ -12,6 +13,7 @@ import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
@@ -80,24 +82,22 @@ public class ChannelUtils {
         return Optional.of(configuration);
     }
 
-    public Optional<Content> getContent(String channelUrl, long sequence) {
-        //todo - gfm - 10/28/14 -
-        /*ClientResponse response = getResponse(appendSlash(channelUrl) + sequence);
+    public Optional<Content> getContentV1(String channelUrl, long sequence) {
+        ClientResponse response = getResponse(appendSlash(channelUrl) + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             logger.info("unable to get content " + response);
             return Optional.absent();
         }
+        long millis = getCreationDate(response).getMillis();
         Content content = Content.builder()
-                .withContentKey(new ContentKey(sequence))
+                .withContentKey(new ContentKey(new DateTime(millis, DateTimeZone.UTC), Long.toString(sequence)))
                 .withContentType(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
                 .withContentLanguage(response.getHeaders().getFirst(Headers.LANGUAGE))
                 .withUser(response.getHeaders().getFirst(Headers.USER))
                 .withData(response.getEntity(byte[].class))
-                .withMillis(getCreationDate(response).getMillis())
                 .build();
 
-        return Optional.of(content);*/
-        return Optional.absent();
+        return Optional.of(content);
     }
 
     public Optional<DateTime> getCreationDate(String channelUrl, long sequence) {

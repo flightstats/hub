@@ -42,6 +42,9 @@ public class HubVersion {
                 }
                 version = "multiple hub jar files found: " + fileNames;
             }
+        } catch (NullPointerException e) {
+            logger.info("unable to get version, presume local");
+            version = "v2-local";
         } catch (Exception e) {
             logger.info("unable to get version ", e);
             version = "v2";
