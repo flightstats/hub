@@ -238,6 +238,7 @@ public class GroupCaller implements Leader {
 
     void deleteAnyway() {
         try {
+            debugLaederPath();
             curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
         } catch (Exception e) {
             logger.warn("unable to delete leader path " + group.getName(), e);
@@ -245,10 +246,25 @@ public class GroupCaller implements Leader {
         delete();
     }
 
+    private void debugLaederPath() {
+        try {
+            String leaderPath = getLeaderPath();
+            List<String> children = curator.getChildren().forPath(leaderPath);
+            for (String child : children) {
+                String path = leaderPath + "/" + child;
+                byte[] bytes = curator.getData().forPath(path);
+                logger.info("found child {} {} ", new String(bytes), path);
+            }
+        } catch (KeeperException.NoNodeException ignore) {
+            //do nothing
+        } catch (Exception e) {
+            logger.info("unexpected exception " + group.getName(), e);
+        }
+    }
+
     private boolean isReadyToDelete() {
         try {
             List<String> children = curator.getChildren().forPath(getLeaderPath());
-            logger.debug("found children {}", children);
             return children.isEmpty();
         } catch (KeeperException.NoNodeException ignore) {
             return true;
