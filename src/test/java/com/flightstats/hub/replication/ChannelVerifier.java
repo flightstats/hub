@@ -19,19 +19,17 @@ public class ChannelVerifier implements Callable<VerifierResult> {
     private final static Logger logger = LoggerFactory.getLogger(ChannelVerifier.class);
     private final int frequencyHours;
     private final int payloadPercent;
-    private final SequenceFinder sequenceFinder;
     private final ChannelUtils channelUtils;
     private final Random random = new Random();
     private JsonNode channelStatus;
     private String replicationUri;
 
     public ChannelVerifier(JsonNode channelStatus, String replicationUri, int frequencyHours, int payloadPercent,
-                           SequenceFinder sequenceFinder, ChannelUtils channelUtils) {
+                           ChannelUtils channelUtils) {
         this.channelStatus = channelStatus;
         this.replicationUri = replicationUri;
         this.frequencyHours = frequencyHours;
         this.payloadPercent = payloadPercent;
-        this.sequenceFinder = sequenceFinder;
         this.channelUtils = channelUtils;
     }
 
@@ -47,13 +45,13 @@ public class ChannelVerifier implements Callable<VerifierResult> {
         }
         logger.info("verifying {} from {} to {}, {} items", channelUri, sequence, sourceLatest, sourceLatest - sequence);
         while (sequence <= sourceLatest) {
-            Optional<Content> replicatedContent = channelUtils.getContent(channelUri, sequence);
+            Optional<Content> replicatedContent = channelUtils.getContentV1(channelUri, sequence);
             result.incrementSequencesChecked();
             if (!replicatedContent.isPresent()) {
                 result.addMissingSequence(String.valueOf(sequence));
             } else {
                 if (shouldVerifyPayload()) {
-                    Optional<Content> sourceContent = channelUtils.getContent(sourceUrl, sequence);
+                    Optional<Content> sourceContent = channelUtils.getContentV1(sourceUrl, sequence);
                     if (sourceContent.isPresent()) {
                         result.incrementPayloadsChecked();
                         if (!sourceContent.get().equals(replicatedContent.get())) {

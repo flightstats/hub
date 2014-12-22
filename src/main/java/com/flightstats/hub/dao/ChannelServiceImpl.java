@@ -1,8 +1,8 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.replication.ReplicationValidator;
+import com.flightstats.hub.replication.V1ChannelReplicator;
 import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -16,17 +16,17 @@ public class ChannelServiceImpl implements ChannelService {
     private final ContentService contentService;
     private final ChannelConfigurationDao channelConfigurationDao;
     private final ChannelValidator channelValidator;
-    private final ChannelReplicator channelReplicator;
+    private final V1ChannelReplicator v1ChannelReplicator;
     private final ReplicationValidator replicationValidator;
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigurationDao channelConfigurationDao,
                               ChannelValidator channelValidator,
-                              ChannelReplicator channelReplicator, ReplicationValidator replicationValidator) {
+                              V1ChannelReplicator v1ChannelReplicator, ReplicationValidator replicationValidator) {
         this.contentService = contentService;
         this.channelConfigurationDao = channelConfigurationDao;
         this.channelValidator = channelValidator;
-        this.channelReplicator = channelReplicator;
+        this.v1ChannelReplicator = v1ChannelReplicator;
         this.replicationValidator = replicationValidator;
     }
 
@@ -141,7 +141,7 @@ public class ChannelServiceImpl implements ChannelService {
         replicationValidator.throwExceptionIfReplicating(channelName);
         contentService.delete(channelName);
         channelConfigurationDao.delete(channelName);
-        channelReplicator.delete(channelName);
+        v1ChannelReplicator.delete(channelName);
         return true;
     }
 }
