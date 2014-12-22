@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.model.HealthStatus;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,8 +13,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.FilenameFilter;
 
 @Path("/health")
 public class HealthResource {
@@ -29,8 +25,7 @@ public class HealthResource {
     HubHealthCheck healthCheck;
 
     @Inject
-    @Named("app.lib_path")
-    String libPath;
+    HubVersion hubVersion;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -39,7 +34,7 @@ public class HealthResource {
         HealthStatus healthStatus = healthCheck.getStatus();
         rootNode.put("healthy", healthStatus.isHealthy());
         rootNode.put("description", healthStatus.getDescription());
-        rootNode.put("version", getVersion());
+        rootNode.put("version", hubVersion.getVersion());
         rootNode.put("startTime", HubMain.getStartTime().toString());
 
         if (healthStatus.isHealthy()) {
@@ -50,34 +45,4 @@ public class HealthResource {
     }
 
 
-    public synchronized String getVersion() {
-        if (version != null) {
-            return version;
-        }
-        try {
-            File libDir = new File(libPath);
-            File[] files = libDir.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return name.startsWith("hub");
-                }
-            });
-            if (files.length == 1) {
-                String name = files[0].getName();
-                version = StringUtils.removeEnd(StringUtils.removeStart(name, "hub-"), ".jar");
-            } else if (files.length == 0) {
-                version = "no hub jar file found";
-            } else {
-                String fileNames = "";
-                for (File file : files) {
-                    fileNames += file.getName() + ";";
-                }
-                version = "multiple hub jar files found: " + fileNames;
-            }
-        } catch (Exception e) {
-            logger.info("unable to get version ", e);
-            version = "unknown";
-        }
-        return version;
-    }
 }
