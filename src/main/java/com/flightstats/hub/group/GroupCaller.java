@@ -82,48 +82,6 @@ public class GroupCaller implements Leader {
         retryer = buildRetryer();
         logger.info("taking leadership " + group);
         Optional<Group> foundGroup = groupService.getGroup(group.getName());
-        /**
-         * todo - gfm - 12/21/14 - the issue with integration tests and deleting
-         * is that a second server picks up leadership after the first has lost it and after the group is deleted
-         * hub-03
-
-         INFO 2014-12-22 01:06:34,060 [qtp1973790994-493] com.flightstats.hub.group.GroupService [line 35] - upsert group Group(callbackUrl=http://nothing/callback, channelUrl=http://nothing/channel/notHere, parallelCalls=null, name=test_0_5755902747623622)
-         DEBUG 2014-12-22 01:06:34,086 [pool-7-thread-9] com.flightstats.hub.group.GroupCaller [line 70] - starting group: Group(callbackUrl=http://nothing/callback, channelUrl=http://nothing/channel/notHere, parallelCalls=1, name=test_0_5755902747623622)
-         INFO 2014-12-22 01:06:34,094 [LeaderSelector-556] com.flightstats.hub.cluster.CuratorLeader [line 59] - have leadership for /GroupLeader/test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,094 [LeaderSelector-556] com.flightstats.hub.group.GroupCaller [line 83] - taking leadership Group(callbackUrl=http://nothing/callback, channelUrl=http://nothing/channel/notHere, parallelCalls=1, name=test_0_5755902747623622)
-         DEBUG 2014-12-22 01:06:34,176 [LeaderSelector-556] com.flightstats.hub.group.GroupCaller [line 93] - last completed at 2014/12/22/01/06/34/067/Rf06Pm test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,177 [LeaderSelector-556] com.flightstats.hub.group.GroupContentKeySet [line 53] - no node for /GroupInFlight/test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,474 [qtp1973790994-797] com.flightstats.hub.group.GroupService [line 82] - deleting group test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,488 [qtp1973790994-797] com.flightstats.hub.group.GroupCallbackImpl [line 112] - waiting to delete test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,496 [pool-7-thread-7] com.flightstats.hub.group.GroupCallbackImpl [line 71] - stopping groups [test_0_5755902747623622]
-         INFO 2014-12-22 01:06:34,496 [pool-7-thread-7] com.flightstats.hub.group.GroupCallbackImpl [line 73] - stopping test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,497 [pool-506-thread-1] com.flightstats.hub.group.GroupCaller [line 192] - exiting group test_0_5755902747623622 deleting true
-         INFO 2014-12-22 01:06:34,497 [LeaderSelector-556] com.flightstats.hub.group.GroupCaller [line 106] - saw InterruptedException for test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,497 [LeaderSelector-556] com.flightstats.hub.group.GroupCaller [line 108] - stopping Group(callbackUrl=http://nothing/callback, channelUrl=http://nothing/channel/notHere, parallelCalls=1, name=test_0_5755902747623622)
-         INFO 2014-12-22 01:06:34,497 [LeaderSelector-556] com.flightstats.hub.group.GroupCaller [line 225] - deleting test_0_5755902747623622
-         WARN 2014-12-22 01:06:34,497 [LeaderSelector-556] com.flightstats.hub.group.GroupContentKeySet [line 73] - unable to delete /GroupInFlight/test_0_5755902747623622 null
-         WARN 2014-12-22 01:06:34,498 [LeaderSelector-556] com.flightstats.hub.group.GroupContentKey [line 91] - unable to delete /GroupLastCompleted/test_0_5755902747623622 null
-         INFO 2014-12-22 01:06:34,498 [LeaderSelector-556] com.flightstats.hub.group.GroupCaller [line 228] - deleted test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,498 [LeaderSelector-556] com.flightstats.hub.cluster.CuratorLeader [line 68] - lost leadership /GroupLeader/test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,499 [pool-506-thread-1] com.flightstats.hub.group.GroupCaller [line 198] - awating termination test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,499 [pool-506-thread-1] com.flightstats.hub.group.GroupCaller [line 200] - terminated test_0_5755902747623622
-         INFO 2014-12-22 01:06:35,489 [qtp1973790994-797] com.flightstats.hub.group.GroupCallbackImpl [line 112] - waiting to delete test_0_5755902747623622
-         INFO 2014-12-22 01:06:37,490 [qtp1973790994-797] com.flightstats.hub.group.GroupCallbackImpl [line 112] - waiting to delete test_0_5755902747623622
-         INFO 2014-12-22 01:06:40,491 [qtp1973790994-797] com.flightstats.hub.group.GroupCallbackImpl [line 112] - waiting to delete test_0_5755902747623622
-         INFO 2014-12-22 01:06:44,492 [qtp1973790994-797] com.flightstats.hub.group.GroupCallbackImpl [line 112] - waiting to delete test_0_5755902747623622
-         *
-         * hub-02
-         DEBUG 2014-12-22 01:06:34,094 [pool-7-thread-2] com.flightstats.hub.group.GroupCaller [line 70] - starting group: Group(callbackUrl=http://nothing/callback, channelUrl=http://nothing/channel/notHere, parallelCalls=1, name=test_0_5755902747623622)
-         INFO 2014-12-22 01:06:34,502 [LeaderSelector-538] com.flightstats.hub.cluster.CuratorLeader [line 59] - have leadership for /GroupLeader/test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,502 [LeaderSelector-538] com.flightstats.hub.group.GroupCaller [line 83] - taking leadership Group(callbackUrl=http://nothing/callback, channelUrl=http://nothing/channel/notHere, parallelCalls=1, name=test_0_5755902747623622)
-         INFO 2014-12-22 01:06:34,517 [LeaderSelector-538] com.flightstats.hub.group.GroupCaller [line 86] - group is missing, exiting test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,517 [LeaderSelector-538] com.flightstats.hub.cluster.CuratorLeader [line 68] - lost leadership /GroupLeader/test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,520 [pool-7-thread-3] com.flightstats.hub.group.GroupCallbackImpl [line 71] - stopping groups [test_0_5755902747623622]
-         INFO 2014-12-22 01:06:34,521 [pool-7-thread-3] com.flightstats.hub.group.GroupCallbackImpl [line 73] - stopping test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,521 [pool-483-thread-1] com.flightstats.hub.group.GroupCaller [line 192] - exiting group test_0_5755902747623622 deleting true
-         INFO 2014-12-22 01:06:34,523 [pool-483-thread-1] com.flightstats.hub.group.GroupCaller [line 198] - awating termination test_0_5755902747623622
-         INFO 2014-12-22 01:06:34,523 [pool-483-thread-1] com.flightstats.hub.group.GroupCaller [line 200] - terminated test_0_5755902747623622
-         */
         if (!foundGroup.isPresent()) {
             logger.info("group is missing, exiting " + group.getName());
             return;
