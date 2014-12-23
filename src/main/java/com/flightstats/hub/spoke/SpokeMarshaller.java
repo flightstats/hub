@@ -3,8 +3,10 @@ package com.flightstats.hub.spoke;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.exception.ContentTooLargeException;
 import com.google.common.io.ByteStreams;
 
 import java.io.ByteArrayInputStream;
@@ -18,6 +20,7 @@ import java.util.zip.ZipOutputStream;
 public class SpokeMarshaller {
 
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 10) * 1024 * 1024;
 
     public static byte[] toBytes(Content content) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -38,7 +41,10 @@ public class SpokeMarshaller {
         String meta = objectNode.toString();
         zipOut.write(meta.getBytes());
         zipOut.putNextEntry(new ZipEntry("payload"));
-        ByteStreams.copy(new ByteArrayInputStream(content.getData()), zipOut);
+        long copy = ByteStreams.copy(content.getStream(), zipOut);
+        if (copy > maxBytes) {
+            throw new ContentTooLargeException("max payload size is " + maxBytes + " bytes");
+        }
         zipOut.close();
         return baos.toByteArray();
     }
@@ -58,9 +64,8 @@ public class SpokeMarshaller {
         if (jsonNode.has("user")) {
             builder.withUser(jsonNode.get("user").asText());
         }
-        zipStream.getNextEntry();
-        bytes = ByteStreams.toByteArray(zipStream);
 
-        return builder.withData(bytes).build();
+        zipStream.getNextEntry();
+        return builder.withStream(zipStream).build();
     }
 }
