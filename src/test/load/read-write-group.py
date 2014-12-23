@@ -68,7 +68,8 @@ class WebsiteTasks(TaskSet):
     def write(self):
         payload = {"name": self.payload, "count": self.count}
         with self.client.post("/channel/" + self.channel, data=json.dumps(payload),
-                              headers={"Content-Type": "application/json"}, catch_response=True) as postResponse:
+                              headers={"Content-Type": "application/json"}, catch_response=True,
+                              name="post_payload") as postResponse:
             if postResponse.status_code != 201:
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
 
