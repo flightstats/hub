@@ -32,19 +32,20 @@ public class ContentDaoUtil {
         ContentKey key = contentDao.write(channel, content);
         assertEquals(content.getContentKey().get(), key);
         Content read = contentDao.read(channel, key);
-        compare(content, read);
+        compare(content, read, key.toString().getBytes());
     }
 
     public void testWriteReadNoOptionals() throws Exception {
         String channel = "testWriteReadNoOptionals";
+        byte[] data = "testWriteReadNoOptionals data".getBytes();
         Content content = Content.builder()
                 .withContentKey(new ContentKey())
-                .withData("testWriteReadNoOptionals data".getBytes())
+                .withData(data)
                 .build();
         ContentKey key = contentDao.write(channel, content);
         assertEquals(content.getContentKey().get(), key);
         Content read = contentDao.read(channel, key);
-        compare(content, read);
+        compare(content, read, data);
     }
 
     public void testQueryRangeDay() throws Exception {
@@ -137,12 +138,12 @@ public class ContentDaoUtil {
         return createContent(new ContentKey());
     }
 
-    private void compare(Content content, Content read) {
+    private void compare(Content content, Content read, byte[] data) {
         assertEquals(content.getContentKey().get(), read.getContentKey().get());
         assertEquals(content.getContentLanguage(), read.getContentLanguage());
         assertEquals(content.getContentType(), read.getContentType());
         assertEquals(content.getUser(), read.getUser());
-        assertArrayEquals(content.getData(), read.getData());
+        assertArrayEquals(data, read.getData());
         assertEquals(content, read);
     }
 }

@@ -254,17 +254,13 @@ public class ChannelContentResource {
         if (contentTypeIsNotCompatible(accept, actualContentType)) {
             return Responses.notAcceptable().build();
         }
-        Response.ResponseBuilder builder = Response.ok();
-        if (content.getData() != null) {
-            builder.entity(content.getData());
-        } else {
-            builder = Response.ok(new StreamingOutput() {
-                @Override
-                public void write(OutputStream output) throws IOException, WebApplicationException {
-                    ByteStreams.copy(content.getStream(), output);
-                }
-            });
-        }
+        Response.ResponseBuilder builder = Response.ok(new StreamingOutput() {
+            @Override
+            public void write(OutputStream output) throws IOException, WebApplicationException {
+                ByteStreams.copy(content.getStream(), output);
+            }
+        });
+
         builder.type(actualContentType)
                 .header(Headers.CREATION_DATE,
                         dateTimeFormatter.print(new DateTime(key.getMillis())));

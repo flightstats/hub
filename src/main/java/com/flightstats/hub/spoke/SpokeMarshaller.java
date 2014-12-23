@@ -38,8 +38,8 @@ public class SpokeMarshaller {
         String meta = objectNode.toString();
         zipOut.write(meta.getBytes());
         zipOut.putNextEntry(new ZipEntry("payload"));
-        //todo - gfm - 12/22/14 - verify the max length here?
-        ByteStreams.copy(content.getStream(), zipOut);
+        long copy = ByteStreams.copy(content.getStream(), zipOut);
+        //todo - gfm - 12/22/14 - throws exception if too big
         zipOut.close();
         return baos.toByteArray();
     }
@@ -59,9 +59,8 @@ public class SpokeMarshaller {
         if (jsonNode.has("user")) {
             builder.withUser(jsonNode.get("user").asText());
         }
-        zipStream.getNextEntry();
-        bytes = ByteStreams.toByteArray(zipStream);
 
-        return builder.withData(bytes).build();
+        zipStream.getNextEntry();
+        return builder.withStream(zipStream).build();
     }
 }
