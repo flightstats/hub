@@ -1,6 +1,7 @@
 package com.flightstats.hub.model;
 
 import com.google.common.base.Optional;
+import com.google.common.io.ByteStreams;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -14,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Getter
-@EqualsAndHashCode(of = {"data", "contentType", "contentLanguage", "user"})
+@EqualsAndHashCode(of = {"contentType", "contentLanguage", "user"})
 public class Content implements Serializable {
     private final static Logger logger = LoggerFactory.getLogger(Content.class);
 
@@ -22,11 +23,12 @@ public class Content implements Serializable {
 
     private final Optional<String> contentType;
     private final Optional<String> contentLanguage;
-    private final byte[] data;
     private final Optional<String> user;
     private final boolean isNew;
     private final InputStream stream;
+    private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
+    //todo - gfm - 12/22/14 - pull this out as it's own class
     private List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
 
     private Content(Builder builder) {
@@ -34,7 +36,6 @@ public class Content implements Serializable {
         isNew = !getContentKey().isPresent();
         contentLanguage = builder.contentLanguage;
         contentType = builder.contentType;
-        data = builder.data;
         user = builder.user;
         stream = builder.stream;
         traces.add(new Trace("Content.start"));
@@ -71,6 +72,16 @@ public class Content implements Serializable {
         return stream;
     }
 
+    public byte[] getData() {
+        if (data == null && stream != null) {
+            try {
+                data = ByteStreams.toByteArray(stream);
+            } catch (Exception e) {
+                logger.warn("no data", e);
+            }
+        }
+        return data;
+    }
     /**
      * @return true if this Content is new, false if it has been inserted elsewhere and is a replicant.
      */
@@ -82,14 +93,8 @@ public class Content implements Serializable {
         private Optional<String> contentType = Optional.absent();
         private Optional<String> contentLanguage = Optional.absent();
         private Optional<ContentKey> contentKey = Optional.absent();
-        private byte[] data;
         private Optional<String> user = Optional.absent();
         private InputStream stream;
-
-        public Builder withData(byte[] data) {
-            this.data = data;
-            return this;
-        }
 
         public Builder withContentType(String contentType) {
             this.contentType = Optional.fromNullable(contentType);
@@ -113,6 +118,11 @@ public class Content implements Serializable {
 
         public Builder withStream(InputStream stream) {
             this.stream = stream;
+            return this;
+        }
+
+        public Builder withData(byte[] data) {
+            this.stream = new ByteArrayInputStream(data);
             return this;
         }
 
