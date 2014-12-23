@@ -8,9 +8,9 @@ import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
+import com.flightstats.hub.model.exception.ContentTooLargeException;
 import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,15 +31,13 @@ public class SingleChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(SingleChannelResource.class);
     private final ChannelService channelService;
     private final ChannelLinkBuilder linkBuilder;
-    private final Integer maxPayloadSizeBytes;
     private final UriInfo uriInfo;
 
     @Inject
     public SingleChannelResource(ChannelService channelService, ChannelLinkBuilder linkBuilder,
-                                 @Named("maxPayloadSizeBytes") Integer maxPayloadSizeBytes, UriInfo uriInfo) {
+                                 UriInfo uriInfo) {
         this.channelService = channelService;
         this.linkBuilder = linkBuilder;
-        this.maxPayloadSizeBytes = maxPayloadSizeBytes;
         this.uriInfo = uriInfo;
     }
 
@@ -107,11 +105,6 @@ public class SingleChannelResource {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-
-        //todo - gfm - 12/22/14 - where to handle max length?
-        /*if (data.length > maxPayloadSizeBytes) {
-            return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
-        }*/
         Content content = Content.builder()
                 .withContentLanguage(contentLanguage)
                 .withContentType(contentType)
@@ -133,6 +126,8 @@ public class SingleChannelResource {
             ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
             content.logTraces();
             return builder.build();
+        } catch (ContentTooLargeException e) {
+            return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {
             String key = "";
             if (content.getContentKey().isPresent()) {

@@ -3,8 +3,10 @@ package com.flightstats.hub.spoke;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.exception.ContentTooLargeException;
 import com.google.common.io.ByteStreams;
 
 import java.io.ByteArrayInputStream;
@@ -18,6 +20,7 @@ import java.util.zip.ZipOutputStream;
 public class SpokeMarshaller {
 
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 10) * 1024 * 1024;
 
     public static byte[] toBytes(Content content) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -39,11 +42,14 @@ public class SpokeMarshaller {
         zipOut.write(meta.getBytes());
         zipOut.putNextEntry(new ZipEntry("payload"));
         long copy = ByteStreams.copy(content.getStream(), zipOut);
-        //todo - gfm - 12/22/14 - throws exception if too big
+        if (copy > maxBytes) {
+            throw new ContentTooLargeException("max payload size is " + maxBytes + " bytes");
+        }
         zipOut.close();
         return baos.toByteArray();
     }
 
+    //todo - gfm - 12/22/14 - can this take a stream instead?
     public static Content toContent(byte[] read, ContentKey key) throws IOException {
         ZipInputStream zipStream = new ZipInputStream(new ByteArrayInputStream(read));
         zipStream.getNextEntry();

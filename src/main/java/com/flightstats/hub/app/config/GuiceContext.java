@@ -14,7 +14,6 @@ import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
 import com.google.common.base.Strings;
 import com.google.inject.*;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
@@ -40,7 +39,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.websocket.WebSocketContainer;
 import java.io.FileNotFoundException;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -54,8 +52,6 @@ public class GuiceContext {
             @NotNull final Properties properties, Module appModule) throws ConstraintException {
         GuiceContext.properties = properties;
 
-        Module module = getMaxPaloadSizeModule(properties);
-
         JerseyServletModule jerseyModule = new JerseyServletModuleBuilder()
                 .withJerseyPackage("com.flightstats.hub.service")
                 .withContainerResponseFilters(GZIPContentEncodingFilter.class)
@@ -68,36 +64,9 @@ public class GuiceContext {
                 .withJerseyGuiceResourcesDisabled()
                 //this could be more precise
                 .withRegexServe(ChannelNameUtils.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
-                .withModules(Arrays.asList(module))
                 .build();
 
         return new HubGuiceServlet(jerseyModule, appModule, new HubCommonModule());
-    }
-
-    private static Module getMaxPaloadSizeModule(final Properties properties) {
-
-        return new AbstractModule() {
-            @Override
-            protected void configure() {
-                bind(Integer.class)
-                        .annotatedWith(Names.named("maxPayloadSizeBytes"))
-                        .toInstance(getMaxPayloadSize(properties));
-                bind(String.class)
-                        .annotatedWith(Names.named("migration.source.urls"))
-                        .toInstance(properties.getProperty("service.migration.source.urls", ""));
-            }
-        };
-    }
-
-    private static Integer getMaxPayloadSize(Properties properties) {
-        String maxPayloadSizeMB = properties.getProperty("service.maxPayloadSizeMB", "10");
-        try {
-            int mb = Integer.parseInt(maxPayloadSizeMB);
-            logger.info("Setting MAX_PAYLOAD_SIZE to " + maxPayloadSizeMB + "MB");
-            return 1024 * 1024 * mb;
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("Unable to parse 'service.maxPayloadSizeMB", e);
-        }
     }
 
     public static class HubBindings implements Bindings {
