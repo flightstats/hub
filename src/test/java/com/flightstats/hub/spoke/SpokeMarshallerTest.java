@@ -5,6 +5,7 @@ import com.flightstats.hub.model.ContentKey;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
@@ -33,7 +34,8 @@ public class SpokeMarshallerTest {
     }
 
     private void verify(Content content, int size) throws IOException {
-        Content cycled = SpokeMarshaller.toContent(SpokeMarshaller.toBytes(content), content.getContentKey().get());
+        byte[] bytes = SpokeMarshaller.toBytes(content);
+        Content cycled = SpokeMarshaller.toContent(new ByteArrayInputStream(bytes), content.getContentKey().get());
         assertTrue(content.equals(cycled));
         assertEquals(size, cycled.getData().length);
     }
