@@ -9,9 +9,9 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.exception.ContentTooLargeException;
 import com.google.common.io.ByteStreams;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -49,8 +49,8 @@ public class SpokeMarshaller {
         return baos.toByteArray();
     }
 
-    public static Content toContent(InputStream inputStream, ContentKey key) throws IOException {
-        ZipInputStream zipStream = new ZipInputStream(inputStream);
+    public static Content toContent(byte[] read, ContentKey key) throws IOException {
+        ZipInputStream zipStream = new ZipInputStream(new ByteArrayInputStream(read));
         zipStream.getNextEntry();
         byte[] bytes = ByteStreams.toByteArray(zipStream);
         JsonNode jsonNode = mapper.readTree(bytes);
