@@ -53,8 +53,8 @@ The features and API of the EH are mostly the same as the Hub, with a few additi
 ## consistency
 
 * All times from the Hub are in UTC.
-* By default all iteration, queries, group callbacks and websockets return stable data.  Data is considered stable when iteration will provide consistent results.
-* All requests for a specific item by id will return that item if it exists.  If the item is within the unstable window, it will not include iterator links.
+* By default all iteration, queries, group callbacks and websockets return items with stable ordering.  Data is considered stable when iteration will provide consistent results.
+* All requests for a specific item by id will return that item if it exists.
 
 ## clients
 
@@ -75,11 +75,11 @@ The DDT team recommends clients use exponential backoff.
 
 ## FAQ
 
-* Why does /latest return an empty array of uris?
+* Why does /latest return 404?
 
-  Most likely the last data added to that channel is older than the time to live (ttlDays).
+  Either data has never been added to that channel, or the last data added to that channel is older than the time to live (ttlDays).
 
-* How can I guarantee ordering in a channel?
+* How can I guarantee ordering for items within a channel?
 
   You can wait for the response for an item before writing the next item.  
 
@@ -158,18 +158,6 @@ On success:  `HTTP/1.1 201 OK`
         },
         "time": {
             "href": "http://hub/channel/stumptown/time"
-        },
-        "dayQuery": {
-             "href": "http://hub/channel/stumptown/{year}/{month}/{day}"
-        },
-        "hourQuery": {
-             "href": "http://hub/channel/stumptown/{year}/{month}/{day}/{hour}"
-        },
-        "minuteQuery": {
-             "href": "http://hub/channel/stumptown/{year}/{month}/{day}/{hour}/{minute}"
-        },
-        "secondQuery": {
-             "href": "http://hub/channel/stumptown/{year}/{month}/{day}/{hour}/{minute}/{second}"
         }
     },
     "name": "stumptown",
@@ -331,11 +319,10 @@ On success: `HTTP/1.1 200 OK`
 }
 ```
 
-## latest time interface
+## time interface
 
-TODO 
-
-The time interface returns all of the URIs of items inserted within the specified minute.
+The time interface provides a variety of options to query data in a hub channel.  All queries will only show items
+ with stable ordering by default.  If you want to see items which might be unstable, add the parameter ```?stable=false```
 
 To see time format options, issue a GET request on the `time` link returned from the channel metadata.
 
@@ -345,27 +332,43 @@ To see time format options, issue a GET request on the `time` link returned from
 {
     "_links": {
         "self": {
-            "href": "http://localhost:9080/channel/test_0_8147969620767981/time"
+            "href": "http://hub-v2.svc.dev/channel/stumptown/time"
         },
         "second": {
-            "href": "http://localhost:9080/channel/test_0_8147969620767981/time/second"
+            "href": "http://hub-v2.svc.dev/channel/stumptown/2014/12/23/05/58/55",
+            "template": "http://hub-v2.svc.dev/channel/stumptown/time/{year}/{month}/{day}/{hour}/{minute}/{second}{?stable}",
+            "redirect": "http://hub-v2.svc.dev/channel/stumptown/time/second"
         },
         "minute": {
-            "href": "http://localhost:9080/channel/test_0_8147969620767981/time/minute"
+            "href": "http://hub-v2.svc.dev/channel/stumptown/2014/12/23/05/58",
+            "template": "http://hub-v2.svc.dev/channel/stumptown/time/{year}/{month}/{day}/{hour}/{minute}{?stable}",
+            "redirect": "http://hub-v2.svc.dev/channel/stumptown/time/minute"
         },
         "hour": {
-            "href": "http://localhost:9080/channel/test_0_8147969620767981/time/hour"
+            "href": "http://hub-v2.svc.dev/channel/stumptown/2014/12/23/05",
+            "template": "http://hub-v2.svc.dev/channel/stumptown/time/{year}/{month}/{day}/{hour}{?stable}",
+            "redirect": "http://hub-v2.svc.dev/channel/stumptown/time/hour"
         },
         "day": {
-            "href": "http://localhost:9080/channel/test_0_8147969620767981/time/day"
+            "href": "http://hub-v2.svc.dev/channel/stumptown/2014/12/23",
+            "template": "http://hub-v2.svc.dev/channel/stumptown/time/{year}/{month}/{day}{?stable}",
+            "redirect": "http://hub-v2.svc.dev/channel/stumptown/time/day"
         }
+    },
+    "now": {
+        "iso8601": "2014-12-23T05:59:00.162Z",
+        "millis": 1419314340162
+    },
+    "stable": {
+        "iso8601": "2014-12-23T05:58:55.000Z",
+        "millis": 1419314335000
     }
 }
 ```
 
-Call one of uris, and the Hub will issue a 303 redirect for the current time with the specified resolution.
+Call one of redirect uris, and the Hub will issue a 303 redirect for the current time with the specified resolution.
 
-`HEAD http://localhost:9080/channel/test_0_8147969620767981/time/second`
+`HEAD http://localhost:9080/channel/stumptown/time/second`
 
 On success:  `HTTP/1.1 303 See Other`
 `Location: http://hub/channel/stumptown/2014/01/13/10/42/31
