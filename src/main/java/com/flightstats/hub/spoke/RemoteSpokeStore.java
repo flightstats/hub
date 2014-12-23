@@ -99,8 +99,7 @@ public class RemoteSpokeStore {
                         .get(ClientResponse.class);
                 logger.trace("server {} path {} response {}", server, path, response);
                 if (response.getStatus() == 200) {
-                    byte[] entity = response.getEntity(byte[].class);
-                    return SpokeMarshaller.toContent(entity, key);
+                    return SpokeMarshaller.toContent(response.getEntityInputStream(), key);
                 }
             } catch (JsonMappingException e) {
                 logger.info("JsonMappingException for " + path);
