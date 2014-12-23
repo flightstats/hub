@@ -8,9 +8,9 @@ import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
+import com.flightstats.hub.model.exception.ContentTooLargeException;
 import com.flightstats.rest.Linked;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +18,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.InputStream;
 import java.net.URI;
 
 import static com.flightstats.rest.Linked.linked;
@@ -30,15 +31,13 @@ public class SingleChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(SingleChannelResource.class);
     private final ChannelService channelService;
     private final ChannelLinkBuilder linkBuilder;
-    private final Integer maxPayloadSizeBytes;
     private final UriInfo uriInfo;
 
     @Inject
     public SingleChannelResource(ChannelService channelService, ChannelLinkBuilder linkBuilder,
-                                 @Named("maxPayloadSizeBytes") Integer maxPayloadSizeBytes, UriInfo uriInfo) {
+                                 UriInfo uriInfo) {
         this.channelService = channelService;
         this.linkBuilder = linkBuilder;
-        this.maxPayloadSizeBytes = maxPayloadSizeBytes;
         this.uriInfo = uriInfo;
     }
 
@@ -102,18 +101,14 @@ public class SingleChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage, @HeaderParam("User") final String user,
-                                final byte[] data) throws Exception {
+                                final InputStream data) throws Exception {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-
-        if (data.length > maxPayloadSizeBytes) {
-            return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
         }
         Content content = Content.builder()
                 .withContentLanguage(contentLanguage)
                 .withContentType(contentType)
-                .withData(data)
+                .withStream(data)
                 .withUser(user)
                 .build();
         try {
@@ -131,6 +126,8 @@ public class SingleChannelResource {
             ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
             content.logTraces();
             return builder.build();
+        } catch (ContentTooLargeException e) {
+            return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {
             String key = "";
             if (content.getContentKey().isPresent()) {
