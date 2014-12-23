@@ -152,7 +152,7 @@ class WebsiteTasks(TaskSet):
             events.request_success.fire(request_type="next", name="compare", response_time=1,
                                         response_length=len(items))
         else:
-            logger.info("next " + ", ".join(items[1:]) + " found " + ", ".join(next))
+            logger.info("url " + url + "next " + ", ".join(items[1:]) + " found " + ", ".join(next))
             events.request_failure.fire(request_type="next", name="compare", response_time=1
                                         , exception=-1)
 
@@ -162,7 +162,7 @@ class WebsiteTasks(TaskSet):
             events.request_success.fire(request_type="previous", name="compare", response_time=1,
                                         response_length=len(items))
         else:
-            logger.info("previous " + ", ".join(items[:-1]) + " found " + ", ".join(previous))
+            logger.info("url " + url + "previous " + ", ".join(items[:-1]) + " found " + ", ".join(previous))
             events.request_failure.fire(request_type="previous", name="compare", response_time=1
                                         , exception=-1)
 
