@@ -62,36 +62,6 @@ public class SpokeResource {
         }
     }
 
-    @Path("/next/{path:.+}")
-    @GET
-    public Response getNext(@PathParam("path") String path) {
-        try {
-            String key = spokeStore.nextPath(path);
-            if (key == null) {
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-            return Response.ok(key).build();
-        } catch (Exception e) {
-            logger.warn("unable to get " + path, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @Path("/previous/{path:.+}")
-    @GET
-    public Response getPrevious(@PathParam("path") String path) {
-        // TODO bc 11/18/14:  use lambdas on next and previous
-        try {
-            String key = spokeStore.previousPath(path);
-            if (key == null) {
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-            return Response.ok(key).build();
-        } catch (Exception e) {
-            logger.warn("unable to get " + path, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-        }
-    }
 
     @Path("/time/{path:.+}")
     @GET
