@@ -49,7 +49,7 @@ conf/hub.properties :
         host : "carbon.hostedgraphite.com"
         port : 2003
         prefix : cb165ed6-4336-4cc6-91ff-cfe1d04cebd6.hubv2.staging
-@
+
     zookeeper :
         connection : "hub-zk-01.cloud-east.staging:2181,hub-zk-02.cloud-east.staging:2181,hub-zk-03.cloud-east.staging:2181"
 
