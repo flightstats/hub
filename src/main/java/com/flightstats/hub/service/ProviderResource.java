@@ -5,8 +5,8 @@ import com.flightstats.hub.app.config.metrics.PerChannelTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.exception.ContentTooLargeException;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +16,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.InputStream;
 
 /**
  * This is a convenience interface for external data Providers.
@@ -25,13 +26,11 @@ import javax.ws.rs.core.Response;
 public class ProviderResource {
     private final static Logger logger = LoggerFactory.getLogger(ProviderResource.class);
     private final ChannelService channelService;
-    private final Integer maxPayloadSizeBytes;
 
     @Inject
-    public ProviderResource(ChannelService channelService,
-                            @Named("maxPayloadSizeBytes") Integer maxPayloadSizeBytes) {
+    public ProviderResource(ChannelService channelService) {
         this.channelService = channelService;
-        this.maxPayloadSizeBytes = maxPayloadSizeBytes;
+
     }
 
     @POST
@@ -41,7 +40,7 @@ public class ProviderResource {
     public Response insertValue(@HeaderParam("channelName") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam(Headers.LANGUAGE) final String contentLanguage,
-                                final byte[] data) throws Exception {
+                                final InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             logger.info("creating new Provider channel " + channelName);
             ChannelConfiguration configuration = ChannelConfiguration.builder()
@@ -50,16 +49,14 @@ public class ProviderResource {
             channelService.createChannel(configuration);
         }
 
-        if (data.length > maxPayloadSizeBytes) {
-            return Response.status(413).entity("Max payload size is " + maxPayloadSizeBytes + " bytes.").build();
-        }
-
         Content content = Content.builder().withContentLanguage(contentLanguage)
                 .withContentType(contentType)
-                .withData(data).build();
+                .withStream(data).build();
         try {
             channelService.insert(channelName, content);
             return Response.status(Response.Status.OK).build();
+        } catch (ContentTooLargeException e) {
+            return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {
             String key = "";
             if (content.getContentKey().isPresent()) {
