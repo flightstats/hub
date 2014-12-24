@@ -57,17 +57,11 @@ public class FileSpokeStoreTest {
         spokeStore.write(previousSecond, BYTES);
         spokeStore.write(nextSecond, BYTES);
 
-        // test happy cases
-        assertEquals(path3, spokeStore.nextPath(path2));
-        assertEquals(path1, spokeStore.previousPath(path2));
 
         String previousMillisecond = "testAdjacentPaths/2014/11/18/00/57/24/014/1";
         spokeStore.write(previousMillisecond, BYTES);
         String nextMillisecond = "testAdjacentPaths/2014/11/18/00/57/24/016/1";
         spokeStore.write(nextMillisecond, BYTES);
-
-        assertEquals(spokeStore.nextPath(path3), nextMillisecond);
-        assertEquals(spokeStore.previousPath(path1), previousMillisecond);
 
 
         // filesInBucket tests
@@ -79,7 +73,7 @@ public class FileSpokeStoreTest {
         assertTrue(keys.contains(path2));
         assertTrue(keys.contains(path3));
 
-        // filesInBucket second query
+            // filesInBucket second query
         keys = spokeStore.keysInBucket("/testAdjacentPaths/2014/11/18/00/57/24");
         assertEquals(5, keys.size());
 
