@@ -55,18 +55,31 @@ public class CallbackQueue implements AutoCloseable {
         executorService.submit(new Runnable() {
             @Override
             public void run() {
+                try {
+                    doWork();
+                } catch (Exception e) {
+                    logger.warn("unexpected issue with " + channel, e);
+                }
+
+            }
+
+            private void doWork() {
                 //todo - gfm - 12/2/14 - handle exceptions
                 //todo - gfm - 12/2/14 - this could change the query units based on lag from now
+                //todo - gfm - 12/23/14 - this needs to handle replication where latest isn't now
                 while (!shouldExit.get()) {
-                    DateTime stableOrdering = TimeUtil.stable();
-                    logger.trace("iterating {} last={} stable={} ", channel, lastTime, stableOrdering);
-                    if (lastTime.isBefore(stableOrdering)) {
-                        //todo - gfm - 12/3/14 - do we want a convenience method that doens't need these params?
-                        TimeQuery query = TimeQuery.builder().channelName(channel).startTime(lastTime).unit(TimeUtil.Unit.SECONDS).build();
+                    //todo - gfm - 12/23/14 - if channel is replicated, get time from /latest?
+                    DateTime latestStableInChannel = TimeUtil.stable();
+                    logger.trace("iterating {} last={} stable={} ", channel, lastTime, latestStableInChannel);
+                    if (lastTime.isBefore(latestStableInChannel)) {
+                        TimeQuery query = TimeQuery.builder()
+                                .channelName(channel)
+                                .startTime(lastTime)
+                                .unit(TimeUtil.Unit.SECONDS).build();
                         addKeys(contentService.queryByTime(query));
                         lastTime = lastTime.plusSeconds(1);
                     } else {
-                        Duration duration = new Duration(stableOrdering, lastTime);
+                        Duration duration = new Duration(latestStableInChannel, lastTime);
                         logger.trace("sleeping " + duration.getMillis());
                         Sleeper.sleep(duration.getMillis());
                     }

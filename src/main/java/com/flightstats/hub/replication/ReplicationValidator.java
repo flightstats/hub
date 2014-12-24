@@ -25,6 +25,16 @@ public class ReplicationValidator {
         }
     }
 
+    public boolean isReplicating(String channelName) {
+        Collection<ReplicationDomain> domains = replicationDao.getDomains(false);
+        for (ReplicationDomain domain : domains) {
+            if (domain.getExcludeExcept().contains(channelName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void validateDomain(ReplicationDomain domain) {
         if (!domain.isValid()) {
             throw new InvalidRequestException("Invalid request. excludeExcept must be populated.");
