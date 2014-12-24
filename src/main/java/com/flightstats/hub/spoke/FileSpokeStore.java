@@ -64,15 +64,6 @@ public class FileSpokeStore {
         }
     }
 
-    public String nextPath(String path) {
-        return adjacentPath(path, true);
-    }
-
-    public String previousPath(String path) {
-        return adjacentPath(path, false);
-    }
-
-
     public String readKeysInBucket(String path) {
         Collection<String> keys = keysInBucket(path);
         return StringUtils.join(keys, ",");
@@ -97,45 +88,7 @@ public class FileSpokeStore {
                 + "/" + split[5] + "/" + split[6] + split[7] + split[8]);
     }
 
-    // return the string part before the last "/"
-    String getParent(String filePath){
-        File file = spokeFilePathPart(filePath);
-        return filePath.substring(0, filePath.lastIndexOf("/"));
-    }
 
-    // give me the next path of the resolution of the path passed in.
-    // e.g. nextPath( "2014/10/10/22") might return "2014/10/10/23" i.e. the next hour.
-    // or it might return "2014/10/11/01" if there was no next in the day 10 bucket.
-    // nextPath( "2014/10/10/22/15/hash1") might return "2014/10/10/22/15/hash2" i.e. the next file.
-    String adjacentPath(String keyPart, boolean findNext) {
-        File file = spokeFilePathPart(keyPart);
-        File parentFolder = file.getParentFile();
-        String parentKey = spokeKeyFromFile(parentFolder);
-        File[] files = parentFolder.listFiles();  // immediate children
-        if(files==null || files.length ==0) return null;
-
-        Arrays.sort(files);
-
-        int i = Arrays.binarySearch(files, file);
-        // TODO bc 11/13/14: Make sure we handle the case where there is no next or prev
-        File nextPath;
-        if (findNext) {
-            if (i + 1 < files.length) {
-                nextPath = files[i + 1];
-            } else {//   need to get first item of next directory
-                File adjacentParent = spokeFilePathPart(nextPath(parentKey));
-                nextPath = nthFileInFolder(adjacentParent, 0);  //first file
-            }
-        } else { // find previous
-            if (i > 0) {
-                nextPath = files[i - 1];
-            } else {//   need to get first item of next directory
-                File adjacentParent = spokeFilePathPart(previousPath(parentKey));
-                nextPath = nthFileInFolder(adjacentParent, -1); //last file
-            }
-        }
-        return spokeKeyFromFile(nextPath);
-    }
 
     //Given a File, return a key part (full key, or time path part)
     String spokeKeyFromFile(File file) {
@@ -158,19 +111,6 @@ public class FileSpokeStore {
         return path;
     }
 
-    // given a directory, return the nth item
-    // magic negative index gives us the last item in the directory
-    File nthFileInFolder(File folder, int index) {
-        File[] files = folder.listFiles();
-        if(files==null || files.length==0) return null;
-
-        if (index < 0) index = files.length - 1;
-        if (files.length < index) {
-            return null;
-        } else {
-            return files[index];
-        }
-    }
 
 
     Collection<String> keysInBucket(String key) {
