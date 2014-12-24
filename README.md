@@ -3,6 +3,7 @@ The Hub V2
 
 * [overview](#overview)
 * [consistency](#consistency)
+* [new features in v2](#new-features-in-v2)
 * [clients](#clients)
 * [error handling](#error-handling)
 * [FAQ](#faq)
@@ -13,7 +14,8 @@ The Hub V2
 * [fetch channel metadata](#fetch-channel-metadata)
 * [insert content into channel](#insert-content-into-channel)
 * [fetch content from channel](#fetch-content-from-channel)
-* [fetch latest channel item](#fetch-latest-channel-item)
+* [latest channel item](#latest-channel-item)
+* [next and previous links](#next-and-previous-links)
 * [tag interface](#tag-interface)
 * [time interface](#time-interface)
 * [subscribe to events](#subscribe-to-events)
@@ -35,20 +37,28 @@ The Hub V2
 For the purposes of this document, the Hub is at http://hub-v2/.
 
 * On your local machine it is at: http://localhost:9080/
-* In development: http://hub-v2.svc.dev/
-* In staging: http://hub-v2.svc.staging/ (coming soon!)
+* In development: http://hub-v2/
+* In staging: http://hub-v2.svc.staging/
 * In production: http://hub-v2.svc.prod/ (coming soon!)
 
 ## overview
 
 The Hub is designed to be a fault tolerant, highly available service for data storage and distribution.  Most features are available via a REST API.
 
-It currently only supports time series channels.  Note: The sequence channel API is deprecated and will be supported separately as [Hub V1](https://github.com/flightstats/hub).
+It currently only supports channels ordered by time.  Note: The sequence channel API is deprecated and will be supported separately as [Hub V1](https://github.com/flightstats/hub).
 
-Channels represent uniquely addressable items that are iterable and query-able by time.  Each item may be up to to 10 MB. 
+Channels represent uniquely addressable items that are iterable and query-able by time.  Each item may be up to to 20 MB.
 
 The [encrypted-hub](#encrypted-hub) (EH) is a separate installation of the Hub.
 The features and API of the EH are mostly the same as the Hub, with a few additions.
+
+## new features in v2
+
+* [next and previous links](#next-and-previous-links) will let you request a batch of items.
+* The [time interface](#time-interface) is completely new for v2.  Previously users could only get items by the minute. Now you can query by second, minute, hour or day.
+* Channels can be idempotently PUT with [create a channel](#create-a-channel).
+* Fixed - 62 second 404 delay for missing items.  404s will return quickly.
+* Performance - PUTs and GETs for channel items are significantly faster.  Typical times are ~10ms.
 
 ## consistency
 
@@ -91,7 +101,7 @@ To explore the Resources available in the Hub, go to http://hub-v2/
 
 To obtain the list of channels:
 
-`GET http://hub/channel`
+`GET http://hub-v2/channel`
 
 On success:  `HTTP/1.1 200 OK`
 Content-Type is `application/json`
@@ -100,14 +110,14 @@ Content-Type is `application/json`
 {
   "_links" : {
     "self" : {
-      "href" : "http://hub/channel"
+      "href" : "http://hub-v2/channel"
     },
     "channels" : [ {
       "name" : "stumptown",
-      "href" : "http://hub/channel/stumptown"
+      "href" : "http://hub-v2/channel/stumptown"
     }, {
       "name" : "ptown",
-      "href" : "http://hub/channel/ptown"
+      "href" : "http://hub-v2/channel/ptown"
     } ]
   }
 }
@@ -128,9 +138,9 @@ A channel may have at most 20 tags.
 
 **V2 Note**:
 Channel items type, ttlMillis, contentSizeKB and peakRequestRateSeconds from V1 are no longer provided.
-While PUT is shown here, the V1 POST to http://hub/channel/ is still supported.
+While PUT is shown here, the V1 POST to http://hub-v2/channel/ is still supported.
 
-`PUT http://hub/channel/stumptown`
+`PUT http://hub-v2/channel/stumptown`
 
 * Content-type: application/json
 
@@ -148,16 +158,16 @@ On success:  `HTTP/1.1 201 OK`
 {
     "_links": {
         "self": {
-            "href": "http://hub/channel/stumptown"
+            "href": "http://hub-v2/channel/stumptown"
         },
         "latest": {
-            "href": "http://hub/channel/stumptown/latest"
+            "href": "http://hub-v2/channel/stumptown/latest"
         },
         "ws": {
             "href": "ws://hub/channel/stumptown/ws"
         },
         "time": {
-            "href": "http://hub/channel/stumptown/time"
+            "href": "http://hub-v2/channel/stumptown/time"
         }
     },
     "name": "stumptown",
@@ -170,7 +180,7 @@ On success:  `HTTP/1.1 201 OK`
 
 Here's how you can do this with curl:
 ```bash
-curl -i -X PUT --header "Content-type: application/json"  http://hub/channel/stumptown
+curl -i -X PUT --header "Content-type: application/json"  http://hub-v2/channel/stumptown
 ```
 
 ## update a channel
@@ -180,22 +190,22 @@ Some channel metadata can be updated. The update format looks much like the chan
 Each of these fields is optional.
 
 **V2 Note**:
-While PUT is shown here, the V1 PATCH to http://hub/channel/channelname is still supported.
+While PUT is shown here, the V1 PATCH to http://hub-v2/channel/channelname is still supported.
 
-`PUT http://hub/channel/channelname`
+`PUT http://hub-v2/channel/channelname`
 
 
 ## fetch channel metadata
 
 To fetch metadata about a channel, do a GET on its `self` link:
 
-`GET http://hub/channel/stumptown`
+`GET http://hub-v2/channel/stumptown`
 
 On success: `HTTP/1.1 200 OK`  (see example return data from create channel).
 
 Here's how you can do this with curl:
 
-`curl http://hub/channel/stumptown`
+`curl http://hub-v2/channel/stumptown`
 
 ## insert content into channel
 
@@ -203,7 +213,7 @@ To insert data to a channel, issue a POST on the channel's `self` URI and specif
 content-type header (all content types should be supported).  The `Content-Encoding` header is optional:
 
 ```
-POST http://hub/channel/stumptown
+POST http://hub-v2/channel/stumptown
 Content-type: text/plain
 Content-Encoding: gzip
 Accept: application/json
@@ -212,16 +222,16 @@ ___body_contains_arbitrary_content
 
 On success: `HTTP/1.1 201 Created`
 
-`Location: http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}`
+`Location: http://hub-v2/channel/stumptown/2013/04/23/20/42/31/749/{hash}`
 
 ```json
 {
   "_links" : {
     "channel" : {
-      "href" : "http://hub/channel/stumptown"
+      "href" : "http://hub-v2/channel/stumptown"
     },
     "self" : {
-      "href" : "http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}"
+      "href" : "http://hub-v2/channel/stumptown/2013/04/23/20/42/31/749/{hash}"
     }
   },
   "timestamp" : "2013-04-23T20:42:31.146Z"
@@ -231,21 +241,21 @@ On success: `HTTP/1.1 201 Created`
 Here's how you could do this with curl:
 
 ```bash
-curl -i -X POST --header "Content-type: text/plain" --data 'your content here' http://hub/channel/stumptown
+curl -i -X POST --header "Content-type: text/plain" --data 'your content here' http://hub-v2/channel/stumptown
 ```
 
 ## fetch content from channel
 
 To fetch content that was stored into a hub channel, do a `GET` on the `self` link in the above response:
 
-`GET http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}`
+`GET http://hub-v2/channel/stumptown/2013/04/23/20/42/31/749/{hash}`
 
 On success: `HTTP/1.1 200 OK`
 ```
 Content-Type: text/plain
 Creation-Date: 2013-04-23T00:21:30.662Z
-Link: <http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}/previous>;rel="previous"
-Link: <http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}/next>;rel="next"
+Link: <http://hub-v2/channel/stumptown/2013/04/23/20/42/31/749/{hash}/previous>;rel="previous"
+Link: <http://hub-v2/channel/stumptown/2013/04/23/20/42/31/749/{hash}/next>;rel="next"
 ...other.headers...
 
 your content here
@@ -257,41 +267,79 @@ The `Creation-Date` header will correspond to when the data was inserted into th
 
 Here's how you can do this with curl:
 
-`curl -i http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}`
+`curl -i http://hub-v2/channel/stumptown/2013/04/23/20/42/31/749/{hash}`
 
-## fetch latest channel items
+## fetch latest channel item
 
 To retrieve the latest item inserted into a channel, issue a HEAD or GET request on the `latest` link 
 returned from the channel metadata.  The Hub will issue a 303 redirect.
 
-`HEAD http://hub/channel/stumptown/latest`
+`HEAD http://hub-v2/channel/stumptown/latest`
 
 On success:  `HTTP/1.1 303 See Other`
-`Location: http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}`
+`Location: http://hub-v2/channel/stumptown/2013/04/23/20/42/31/749/{hash}`
 
 Here is how you can do this with curl:
 
-`curl -I http://hub/channel/stumptown/latest`
+`curl -I http://hub-v2/channel/stumptown/latest`
+
+## next and previous links
+
+A GET on the next and previous links returned as headers with content will redirect to those respective items.  A 404 will be returned if they don't exist.
+
+New for v2, any item's uri can be appended with next or previous link, and also a number, and you'll receive a list of that many items.
+For example:
+
+`GET http://hub-v2/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/10`
+
+On success: `HTTP/1.1 200 OK`
+```
+{
+  "_links" : {
+    "self" : {
+      "href" : "http://hub-v2/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/10"
+    },
+    "next" : {
+      "href" : "http://hub-v2/channel/stumptown/2014/12/23/23/14/49/887/x46z8p/next/10"
+    },
+    "previous" : {
+      "href" : "http://hub-v2/channel/stumptown/2014/12/23/23/14/42/751/mRklXw/previous/10"
+    },
+    "uris" : [
+        "http://hub-v2/channel/stumptown/2014/12/23/23/14/42/751/mRklXw", 
+        "http://hub-v2/channel/stumptown/2014/12/23/23/14/43/339/CJ9mt9", 
+        "http://hub-v2/channel/stumptown/2014/12/23/23/14/44/163/LzhylF", 
+        "http://hub-v2/channel/stumptown/2014/12/23/23/14/44/588/zDygpg", 
+        "http://hub-v2/channel/stumptown/2014/12/23/23/14/45/105/ZuJUmM", 
+        "http://hub-v2/channel/stumptown/2014/12/23/23/14/45/972/qeKDF6", 
+        "http://hub-v2/channel/stumptown/2014/12/23/23/14/46/703/Jm09Un", 
+        "http://hub-v2/channel/stumptown/2014/12/23/23/14/47/376/swdWJD", 
+        "http://hub-v2/channel/stumptown/2014/12/23/23/14/48/115/lDCHYY", 
+        "http://hub-v2/channel/stumptown/2014/12/23/23/14/49/887/x46z8p" 
+        ]
+  }
+}
+```
 
 ## tag interface
 
 To retrieve all of the tags in the Hub:
 
-`GET http://hub/tag`
+`GET http://hub-v2/tag`
 
 On success: `HTTP/1.1 200 OK`
 ```json
 {
   "_links" : {
     "self" : {
-      "href" : "http://hub/tag"
+      "href" : "http://hub-v2/tag"
     },
     "tags" : [ {
       "name" : "orders",
-      "href" : "http://hub/tag/orders"
+      "href" : "http://hub-v2/tag/orders"
     }, {
       "name" : "coffee",
-      "href" : "http://hub/tag/coffee"
+      "href" : "http://hub-v2/tag/coffee"
     } ]
   }
 }
@@ -299,21 +347,21 @@ On success: `HTTP/1.1 200 OK`
 
 Any of the returned tag links can be followed to see all of the channels with that tag:
 
-`GET http://hub/tag/coffee`
+`GET http://hub-v2/tag/coffee`
 
 On success: `HTTP/1.1 200 OK`
 ```json
 {
   "_links" : {
     "self" : {
-      "href" : "http://hub/tag/coffee"
+      "href" : "http://hub-v2/tag/coffee"
     },
     "channels" : [ {
       "name" : "stumptown",
-      "href" : "http://hub/channel/stumptown"
+      "href" : "http://hub-v2/channel/stumptown"
     }, {
       "name" : "spella",
-      "href" : "http://hub/channel/spella"
+      "href" : "http://hub-v2/channel/spella"
     } ]
   }
 }
@@ -326,33 +374,33 @@ The time interface provides a variety of options to query data in a hub channel.
 
 To see time format options, issue a GET request on the `time` link returned from the channel metadata.
 
-`GET http://hub/channel/stumptown/time`
+`GET http://hub-v2/channel/stumptown/time`
 
 ```json
 {
     "_links": {
         "self": {
-            "href": "http://hub-v2.svc.dev/channel/stumptown/time"
+            "href": "http://hub-v2/channel/stumptown/time"
         },
         "second": {
-            "href": "http://hub-v2.svc.dev/channel/stumptown/2014/12/23/05/58/55",
-            "template": "http://hub-v2.svc.dev/channel/stumptown/time/{year}/{month}/{day}/{hour}/{minute}/{second}{?stable}",
-            "redirect": "http://hub-v2.svc.dev/channel/stumptown/time/second"
+            "href": "http://hub-v2/channel/stumptown/2014/12/23/05/58/55",
+            "template": "http://hub-v2/channel/stumptown/time/{year}/{month}/{day}/{hour}/{minute}/{second}{?stable}",
+            "redirect": "http://hub-v2/channel/stumptown/time/second"
         },
         "minute": {
-            "href": "http://hub-v2.svc.dev/channel/stumptown/2014/12/23/05/58",
-            "template": "http://hub-v2.svc.dev/channel/stumptown/time/{year}/{month}/{day}/{hour}/{minute}{?stable}",
-            "redirect": "http://hub-v2.svc.dev/channel/stumptown/time/minute"
+            "href": "http://hub-v2/channel/stumptown/2014/12/23/05/58",
+            "template": "http://hub-v2/channel/stumptown/time/{year}/{month}/{day}/{hour}/{minute}{?stable}",
+            "redirect": "http://hub-v2/channel/stumptown/time/minute"
         },
         "hour": {
-            "href": "http://hub-v2.svc.dev/channel/stumptown/2014/12/23/05",
-            "template": "http://hub-v2.svc.dev/channel/stumptown/time/{year}/{month}/{day}/{hour}{?stable}",
-            "redirect": "http://hub-v2.svc.dev/channel/stumptown/time/hour"
+            "href": "http://hub-v2/channel/stumptown/2014/12/23/05",
+            "template": "http://hub-v2/channel/stumptown/time/{year}/{month}/{day}/{hour}{?stable}",
+            "redirect": "http://hub-v2/channel/stumptown/time/hour"
         },
         "day": {
-            "href": "http://hub-v2.svc.dev/channel/stumptown/2014/12/23",
-            "template": "http://hub-v2.svc.dev/channel/stumptown/time/{year}/{month}/{day}{?stable}",
-            "redirect": "http://hub-v2.svc.dev/channel/stumptown/time/day"
+            "href": "http://hub-v2/channel/stumptown/2014/12/23",
+            "template": "http://hub-v2/channel/stumptown/time/{year}/{month}/{day}{?stable}",
+            "redirect": "http://hub-v2/channel/stumptown/time/day"
         }
     },
     "now": {
@@ -371,11 +419,11 @@ Call one of redirect uris, and the Hub will issue a 303 redirect for the current
 `HEAD http://localhost:9080/channel/stumptown/time/second`
 
 On success:  `HTTP/1.1 303 See Other`
-`Location: http://hub/channel/stumptown/2014/01/13/10/42/31
+`Location: http://hub-v2/channel/stumptown/2014/01/13/10/42/31
 
 A GET on the returned URI will return all of the content URIs within that period.
 
-`GET http://hub/channel/stumptown/2014/01/13/10/42/31`
+`GET http://hub-v2/channel/stumptown/2014/01/13/10/42/31`
 
 On success:  `HTTP/1.1 200 OK`
 Content-Type is `application/json`
@@ -384,12 +432,12 @@ Content-Type is `application/json`
 {
   "_links" : {
     "self" : {
-      "href" : "http://hub/channel/stumptown/2014/01/13/10/42/31"
+      "href" : "http://hub-v2/channel/stumptown/2014/01/13/10/42/31"
     },
     "uris" : [ 
-        "http://hub/channel/stumptown/2014/01/13/10/42/31/149/{hash1}", 
-        "http://hub/channel/stumptown/2014/01/13/10/42/31/359/{hash2}",
-        "http://hub/channel/stumptown/2014/01/13/10/42/31/642/{hash3}" 
+        "http://hub-v2/channel/stumptown/2014/01/13/10/42/31/149/{hash1}", 
+        "http://hub-v2/channel/stumptown/2014/01/13/10/42/31/359/{hash2}",
+        "http://hub-v2/channel/stumptown/2014/01/13/10/42/31/642/{hash3}" 
     ]
   }
 ```
@@ -401,13 +449,13 @@ change as other items are inserted.
 ### time resolution
 
 You can request all of the items by the time resolution you specify in the URL.  
-For all the items in a minute: `GET http://hub/channel/stumptown/2014/01/13/10/42`
-For all the items in an hour: `GET http://hub/channel/stumptown/2014/01/13/10`
+For all the items in a minute: `GET http://hub-v2/channel/stumptown/2014/01/13/10/42`
+For all the items in an hour: `GET http://hub-v2/channel/stumptown/2014/01/13/10`
 
 You can also access the urls via convenience methods:
 
-`HEAD http://hub/channel/stumptown/time/minute`
-`HEAD http://hub/channel/stumptown/time/hour`
+`HEAD http://hub-v2/channel/stumptown/time/minute`
+`HEAD http://hub-v2/channel/stumptown/time/hour`
 
 The output format is the same regardless of time resolution
 
@@ -425,9 +473,9 @@ Each time data is inserted into the channel, the hub will send a line to the cli
 URL for that content.
 
 ```
-http://hub/channel/stumptown/2014/01/13/10/42/31/149/{hash1}
-http://hub/channel/stumptown/2014/01/13/10/42/31/359/{hash2}
-http://hub/channel/stumptown/2014/01/13/10/42/31/642/{hash3}
+http://hub-v2/channel/stumptown/2014/01/13/10/42/31/149/{hash1}
+http://hub-v2/channel/stumptown/2014/01/13/10/42/31/359/{hash2}
+http://hub-v2/channel/stumptown/2014/01/13/10/42/31/642/{hash3}
 ...etc...
 ```
 
@@ -444,16 +492,16 @@ If parallelCalls is higher than one, callback ordering is not guaranteed.
 
 To see all existing group callbacks and status:
 
-`GET http://hub/group`
+`GET http://hub-v2/group`
  
 To create a new group callback:
 
-`PUT http://hub/group/{name}`
+`PUT http://hub-v2/group/{name}`
 
 ``` json
 {
   "callbackUrl" : "http://client/path/callback",
-  "channelUrl" : "http://hub/channel/stumptown",
+  "channelUrl" : "http://hub-v2/channel/stumptown",
   "parallelCalls" : 2
 }
 ```
@@ -463,11 +511,11 @@ Once a Group is created, it can not be changed, only deleted.  Put may be safely
 
 To see the current configuration of a group callback:
 
-`GET http://hub/group/{name}`
+`GET http://hub-v2/group/{name}`
 
 To delete a group callback:
 
-`DELETE http://hub/group/{name}`
+`DELETE http://hub-v2/group/{name}`
 
 Delete will return a 202, and it may take up to a minute to properly stop a group from servicing the callback.
 
@@ -480,7 +528,7 @@ Retries will use an exponential backoff up to one minute, and the server will co
 ``` json
 {
   "name" : "stumptownCallback",
-  "uris" : [ "http://hub/channel/stumptown/2014/01/13/10/42/31/759/{hash1}" ]
+  "uris" : [ "http://hub-v2/channel/stumptown/2014/01/13/10/42/31/759/{hash1}" ]
 }
 ```
 
@@ -490,7 +538,7 @@ If a client is running in Sungard, latency may limit throughput to ~3 per second
 
 For external data providers, there is a simplified interface suitable for exposing to the authenticated outside world.
 
-`POST http://hub/provider/`
+`POST http://hub-v2/provider/`
 
 * it creates a channel if it doesn't exist
 * it expects a `channelName` header
@@ -505,11 +553,11 @@ For external data providers, there is a simplified interface suitable for exposi
 To delete a channel when after you no longer need it, simply issue a `DELETE` command to that channel.
 Delete returns a 202, indicating that the request has been accepted, and will take an indeterminate time to process.
 
- `DELETE http://hub/channel/stumptown`
+ `DELETE http://hub-v2/channel/stumptown`
 
 Here's how you can do this with curl:
 ```bash
-curl -i -X DELETE http://hub/channel/stumptown
+curl -i -X DELETE http://hub-v2/channel/stumptown
 ```
 
 ## configure replication
@@ -540,7 +588,7 @@ GET the existing configuration for replication:
 
 Modify the existing replication configuration to include `pdx`:
 
-`PUT http://hub/replication/hub.other`
+`PUT http://hub-v2/replication/hub.other`
 
 * Content-type: application/json
 
@@ -553,7 +601,7 @@ Modify the existing replication configuration to include `pdx`:
 
 To remove a single channel from Replication, use PUT without that channel.  To remove `stumptown`:
 
-`PUT http://hub/replication/hub.other`
+`PUT http://hub-v2/replication/hub.other`
 
 * Content-type: application/json
 
@@ -566,7 +614,7 @@ To remove a single channel from Replication, use PUT without that channel.  To r
 
 To delete Replication for an entire domain, use DELETE:
 
-`DELETE http://hub/replication/hub.other`
+`DELETE http://hub-v2/replication/hub.other`
 
 ## v1 to v2 replication
 
@@ -588,7 +636,7 @@ If, instead, the cluster didn't start until 1 PM the next day, one hour's worth 
 
 You can see the configuration for a single domain at:
 
- `GET http://hub/replication/hub.other`
+ `GET http://hub-v2/replication/hub.other`
 
   ```json
   {
@@ -604,7 +652,7 @@ TODO figure out replicationLatestFormat
 
 You can get the status of all current replication domains at:
 
- `GET http://hub/replication`
+ `GET http://hub-v2/replication`
 
  ```json
  {
@@ -642,7 +690,7 @@ You can get the status of all current replication domains at:
 
 Stop replication of the entire domain `hub.other`, issue a `DELETE` command.
 
-`DELETE http://hub/replication/hub.other`
+`DELETE http://hub-v2/replication/hub.other`
 
 On success: `HTTP/1.1 202 Accepted`. This is Accepted because the replication may be on another server, which should
 be notified within seconds.  The user should verify that replication is stopped.
@@ -656,7 +704,7 @@ If the server can not access a data store, it will return a 500 status code.
 Responding to http connections is the last step on startup, so the health check will be unresponsive until startup is complete.
 On shutdown, the server immediately stops responding to new http connections, so there are no separate codes for startup and shutdown.
 
-`GET http://hub/health`
+`GET http://hub-v2/health`
 
 ```json
 {
@@ -691,12 +739,12 @@ All Channel reads are logged to a new channel <channel>_audit.   The auditing ch
 Since it is a channel, you can perform the standard operations on it, however clients are not allowed to create or delete auditing channels.
 All audit channels have an `audit` tag, which can not be modified by clients.
 
-`GET http://hub/channel/stumptown_encrypted_audit/1007`
+`GET http://hub-v2/channel/stumptown_encrypted_audit/1007`
 
 ```json
 {
   "user": "somebody",
-  "uri": "http://hub/channel/stumptown_encrypted/1005",
+  "uri": "http://hub-v2/channel/stumptown_encrypted/1005",
   "date": "2014-05-22T20:56:08.739Z"
 }
 ```
@@ -765,4 +813,4 @@ sudo salt-call triforce.deploy s3://triforce_builds/hubv2/hub-v2-<version>.tgz p
 **Read out in the same order written**:  As an API user, for certain use cases, I want a guarantee that I can read the data out in the exact order I wrote it into the hub channel.
 
 **Next n items**:  As an API user, I would like to get the next n items from the channel.
-http://hub/year/month/day/hour/minute/second/{keySuffix}/next/n
+http://hub-v2/year/month/day/hour/minute/second/{keySuffix}/next/n
