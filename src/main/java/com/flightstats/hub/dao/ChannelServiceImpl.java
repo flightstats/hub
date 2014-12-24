@@ -114,6 +114,9 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
         Set<ContentKey> toReturn = new TreeSet<>();
+        if (query.getCount() <= 0) {
+            return toReturn;
+        }
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
         if (query.isNext()) {
             for (ContentKey key : keys) {

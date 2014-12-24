@@ -146,23 +146,23 @@ class WebsiteTasks(TaskSet):
         items.extend(first['_links']['uris'])
 
         numItems = str(len(items) - 1)
-        url = items[0] + "/next/" + numItems + "?stable=false"
-        next = (self.client.get(url, name="next")).json()['_links']['uris']
+        nextUrl = items[0] + "/next/" + numItems + "?stable=false"
+        next = (self.client.get(nextUrl, name="next")).json()['_links']['uris']
         if cmp(next, items[1:]) == 0:
             events.request_success.fire(request_type="next", name="compare", response_time=1,
                                         response_length=len(items))
         else:
-            logger.info("url " + url + "next " + ", ".join(items[1:]) + " found " + ", ".join(next))
+            logger.info(nextUrl + " next " + ", ".join(items[1:]) + " found " + ", ".join(next))
             events.request_failure.fire(request_type="next", name="compare", response_time=1
                                         , exception=-1)
 
-        url = items[-1] + "/previous/" + numItems + "?stable=false"
-        previous = (self.client.get(url, name="previous")).json()['_links']['uris']
+        previousUrl = items[-1] + "/previous/" + numItems + "?stable=false"
+        previous = (self.client.get(previousUrl, name="previous")).json()['_links']['uris']
         if cmp(previous, items[:-1]) == 0:
             events.request_success.fire(request_type="previous", name="compare", response_time=1,
                                         response_length=len(items))
         else:
-            logger.info("url " + url + "previous " + ", ".join(items[:-1]) + " found " + ", ".join(previous))
+            logger.info(previousUrl + " previous " + ", ".join(items[:-1]) + " found " + ", ".join(previous))
             events.request_failure.fire(request_type="previous", name="compare", response_time=1
                                         , exception=-1)
 
