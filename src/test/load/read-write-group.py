@@ -117,9 +117,9 @@ class WebsiteTasks(TaskSet):
             events.request_failure.fire(request_type="sequential", name="compare", response_time=total_time
                                         , exception=-1)
 
-    @task(1)
-    def day_query(self):
-        self.client.get(self.time_path("day"), name="time_day")
+            # @task(1)
+        #    def day_query(self):
+        #        self.client.get(self.time_path("day"), name="time_day")
 
     @task(1)
     def hour_query(self):
