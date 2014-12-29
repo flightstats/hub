@@ -140,7 +140,7 @@ public class ContentServiceImpl implements ContentService {
     }
 
     private Set<ContentKey> queryBoth(DirectionQuery query) {
-        Set<ContentKey> orderedKeys = new TreeSet<>();
+        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             executorService.submit(new Runnable() {
