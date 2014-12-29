@@ -6,6 +6,7 @@ import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.Traces;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.curator.framework.CuratorFramework;
@@ -64,7 +65,7 @@ public class S3ChannelWriter implements Leader {
             DateTime nextTime = lastCompleted.get(getValuePath(), TimeUtil.now()).plusMinutes(1);
             Sleeper.sleep(getSleep(nextTime, TimeUtil.now()));
             logger.debug("processing {} ", nextTime);
-            Collection<ContentKey> contentKeys = cacheContentDao.queryByTime(channel, nextTime, TimeUtil.Unit.MINUTES);
+            Collection<ContentKey> contentKeys = cacheContentDao.queryByTime(channel, nextTime, TimeUtil.Unit.MINUTES, Traces.NOOP);
             for (ContentKey contentKey : contentKeys) {
                 s3WriteQueue.add(new ChannelContentKey(channel, contentKey));
             }

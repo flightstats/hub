@@ -1,10 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.Trace;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -72,11 +69,14 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+    public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
         logger.trace("query by time {} {} {}", channelName, startTime, unit);
+        traces.add("spoke query by time", channelName, startTime, unit);
         String timePath = unit.format(startTime);
         try {
-            return new TreeSet<>(spokeStore.readTimeBucket(channelName, timePath));
+            TreeSet<ContentKey> keys = new TreeSet<>(spokeStore.readTimeBucket(channelName, timePath, traces));
+            traces.add("spoke query by time", keys);
+            return keys;
         } catch (Exception e) {
             logger.warn("what happened? " + channelName + " " + startTime + " " + unit, e);
         }
@@ -97,7 +97,7 @@ public class SpokeContentDao implements ContentDao {
     }
 
     private boolean query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime) {
-        Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS);
+        Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS, query.getTraces());
         if (query.isNext()) {
             //from oldest to newest
             DateTime stableTime = TimeUtil.time(query.isStable());
