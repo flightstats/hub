@@ -16,13 +16,21 @@ public class TimeQuery {
     private final TimeUtil.Unit unit;
     private final Location location;
     private final boolean stable;
-    private final Traces traces = Traces.NOOP;
+    private Traces traces;
 
     public Location getLocation() {
         if (location == null) {
             return Location.ALL;
         }
         return location;
+    }
+
+    public void trace(boolean trace) {
+        if (trace) {
+            traces = new TracesImpl();
+        } else {
+            traces = Traces.NOOP;
+        }
     }
 
 }
