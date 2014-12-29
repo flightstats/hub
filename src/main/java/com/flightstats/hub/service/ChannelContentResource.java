@@ -195,7 +195,7 @@ public class ChannelContentResource {
         return Response.ok(root).build();
     }
 
-    private Response directionalResponse(String channelName, Collection<ContentKey> keys, int count) {
+    private Response directionalResponse(String channelName, Collection<ContentKey> keys, int count, DirectionQuery query) {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
@@ -214,6 +214,7 @@ public class ChannelContentResource {
             URI uri = linkBuilder.buildItemUri(key, channelUri);
             ids.add(uri.toString());
         }
+        query.getTraces().output(root);
         return Response.ok(root).build();
     }
 
@@ -303,6 +304,7 @@ public class ChannelContentResource {
                                  @PathParam("hash") String hash,
                                  @PathParam("count") int count,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
                                  @QueryParam("location") @DefaultValue("ALL") String location) {
         DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         DirectionQuery query = DirectionQuery.builder()
@@ -312,8 +314,9 @@ public class ChannelContentResource {
                 .stable(stable)
                 .location(Location.valueOf(location))
                 .count(count).build();
+        query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return directionalResponse(channelName, keys, count);
+        return directionalResponse(channelName, keys, count, query);
     }
 
     @Path("/{hour}/{minute}/{second}/{millis}/{hash}/previous")
@@ -345,6 +348,7 @@ public class ChannelContentResource {
                                  @PathParam("hash") String hash,
                                  @PathParam("count") int count,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
                                  @QueryParam("location") @DefaultValue("ALL") String location) {
         DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         DirectionQuery query = DirectionQuery.builder()
@@ -355,8 +359,9 @@ public class ChannelContentResource {
                 .location(Location.valueOf(location))
                 .ttlDays(channelService.getChannelConfiguration(channelName).getTtlDays())
                 .count(count).build();
+        query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return directionalResponse(channelName, keys, count);
+        return directionalResponse(channelName, keys, count, query);
     }
 
     private Response directional(String channelName, int year, int month, int day, int hour, int minute,

@@ -16,6 +16,7 @@ public class TimeQuery {
     private final TimeUtil.Unit unit;
     private final Location location;
     private final boolean stable;
+    private final Traces traces = Traces.NOOP;
 
     public Location getLocation() {
         if (location == null) {
