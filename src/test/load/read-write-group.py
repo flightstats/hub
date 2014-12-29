@@ -141,29 +141,35 @@ class WebsiteTasks(TaskSet):
     @task(10)
     def next_previous(self):
         items = []
-        first = (self.client.get(self.time_path("minute"), name="time_minute")).json()
-        second = (self.client.get(first['_links']['previous']['href'], name="time_minute")).json()
+        first = (self.client.get(self.time_path("minute") + "&trace=true", name="time_minute")).json()
+        second = (self.client.get(first['_links']['previous']['href'] + "&trace=true", name="time_minute")).json()
         items.extend(second['_links']['uris'])
         items.extend(first['_links']['uris'])
 
+        logger.info(" first " + first['trace'] + " second " + second['trace'])
         numItems = str(len(items) - 1)
-        nextUrl = items[0] + "/next/" + numItems + "?stable=false"
-        next = (self.client.get(nextUrl, name="next")).json()['_links']['uris']
-        if cmp(next, items[1:]) == 0:
+        nextUrl = items[0] + "/next/" + numItems + "?stable=false&trace=true"
+        next_json = (self.client.get(nextUrl, name="next")).json()
+        next_uris = next_json['_links']['uris']
+        logger.info(" next " + next_json['trace'])
+        if cmp(next_uris, items[1:]) == 0:
             events.request_success.fire(request_type="next", name="compare", response_time=1,
                                         response_length=len(items))
         else:
-            logger.info(nextUrl + " next " + ", ".join(items[1:]) + " found " + ", ".join(next))
+            logger.info(nextUrl + " next " + ", ".join(items[1:]) + " found " + ", ".join(next_uris))
+
             events.request_failure.fire(request_type="next", name="compare", response_time=1
                                         , exception=-1)
 
-        previousUrl = items[-1] + "/previous/" + numItems + "?stable=false"
-        previous = (self.client.get(previousUrl, name="previous")).json()['_links']['uris']
-        if cmp(previous, items[:-1]) == 0:
+        previousUrl = items[-1] + "/previous/" + numItems + "?stable=false&trace=true"
+        previous_json = (self.client.get(previousUrl, name="previous")).json()
+        logger.info(" previous " + previous_json['trace'])
+        previous_uris = previous_json['_links']['uris']
+        if cmp(previous_uris, items[:-1]) == 0:
             events.request_success.fire(request_type="previous", name="compare", response_time=1,
                                         response_length=len(items))
         else:
-            logger.info(previousUrl + " previous " + ", ".join(items[:-1]) + " found " + ", ".join(previous))
+            logger.info(previousUrl + " previous " + ", ".join(items[:-1]) + " found " + ", ".join(previous_uris))
             events.request_failure.fire(request_type="previous", name="compare", response_time=1
                                         , exception=-1)
 
