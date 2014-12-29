@@ -137,7 +137,7 @@ public class RemoteSpokeStore {
                                     keySet.add(ContentKey.fromUrl(StringUtils.substringAfter(key, "/")).get());
                                 }
                             }
-                            traces.add(keySet, "server", server);
+                            traces.add(server, keySet);
                             results.addAll(keySet);
                         }
                     } catch (ClientHandlerException e) {
@@ -153,7 +153,6 @@ public class RemoteSpokeStore {
             });
         }
         countDownLatch.await(30, TimeUnit.SECONDS);
-        traces.add(results, "spoke returning ");
         return results;
     }
 

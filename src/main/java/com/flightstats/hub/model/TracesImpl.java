@@ -25,11 +25,11 @@ public class TracesImpl implements Traces {
     }
 
     @Override
-    public void add(SortedSet sortedSet, Object... objects) {
+    public void add(String string, SortedSet sortedSet) {
         if (sortedSet.isEmpty()) {
-            add(objects, "empty set");
+            add(string, "empty set");
         } else {
-            add(objects, sortedSet.size(), sortedSet.first(), sortedSet.last());
+            add(string, sortedSet.size(), sortedSet.first(), sortedSet.last());
         }
     }
 
