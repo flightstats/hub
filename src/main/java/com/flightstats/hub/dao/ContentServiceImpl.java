@@ -88,29 +88,29 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Collection<ContentKey> queryByTime(TimeQuery query) {
         if (query.getLocation().equals(Location.CACHE)) {
-            return cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit());
+            return cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces());
         } else if (query.getLocation().equals(Location.LONG_TERM)) {
-            return longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit());
+            return longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces());
         } else {
             return queryBothByTime(query);
         }
     }
 
-    private SortedSet<ContentKey> queryBothByTime(TimeQuery timeQuery) {
+    private SortedSet<ContentKey> queryBothByTime(TimeQuery query) {
         SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+                    orderedKeys.addAll(cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces()));
                     countDownLatch.countDown();
                 }
             });
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    orderedKeys.addAll(longTermContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+                    orderedKeys.addAll(longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces()));
                     countDownLatch.countDown();
                 }
             });
@@ -131,9 +131,9 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
         if (query.getLocation().equals(Location.CACHE)) {
-            return cacheContentDao.query(query);
+            return getKeys(query, cacheContentDao, "cache");
         } else if (query.getLocation().equals(Location.LONG_TERM)) {
-            return longTermContentDao.query(query);
+            return getKeys(query, longTermContentDao, "s3");
         } else {
             return queryBoth(query);
         }
@@ -146,22 +146,29 @@ public class ContentServiceImpl implements ContentService {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    orderedKeys.addAll(cacheContentDao.query(query));
+                    orderedKeys.addAll(getKeys(query, cacheContentDao, "cache"));
                     countDownLatch.countDown();
                 }
             });
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    orderedKeys.addAll(longTermContentDao.query(query));
+                    orderedKeys.addAll(getKeys(query, longTermContentDao, "s3"));
                     countDownLatch.countDown();
                 }
             });
             countDownLatch.await(3, TimeUnit.MINUTES);
+            query.getTraces().add("both unique keys", orderedKeys.size());
             return orderedKeys;
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
+    }
+
+    private SortedSet<ContentKey> getKeys(DirectionQuery query, ContentDao dao, String name) {
+        SortedSet<ContentKey> keys = dao.query(query);
+        query.getTraces().add(keys, name, "unique keys");
+        return keys;
     }
 
     private class ContentServiceHook extends AbstractIdleService {
