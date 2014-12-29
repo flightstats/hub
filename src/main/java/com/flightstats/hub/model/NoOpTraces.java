@@ -17,7 +17,7 @@ public class NoOpTraces implements Traces {
     }
 
     @Override
-    public void add(SortedSet sortedSet, Object... objects) {
+    public void add(String string, SortedSet sortedSet) {
 
     }
 

@@ -38,6 +38,7 @@ public class LatestChannelItemResource {
                 .next(false)
                 .stable(stable)
                 .count(1).build();
+        query.trace(false);
         Collection<ContentKey> keys = channelService.getKeys(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();

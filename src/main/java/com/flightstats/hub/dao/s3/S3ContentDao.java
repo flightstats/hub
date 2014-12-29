@@ -125,7 +125,7 @@ public class S3ContentDao implements ContentDao {
             listing = s3Client.listObjects(request);
             marker = addKeys(channelName, listing, keys);
         }
-        traces.add(keys, "s3 returning ");
+        traces.add("s3 returning ", keys);
         return keys;
     }
 
@@ -169,7 +169,7 @@ public class S3ContentDao implements ContentDao {
             startTime = startTime.minusDays(1);
             dayCount++;
         }
-        query.getTraces().add(orderedKeys, "s3 previous returning");
+        query.getTraces().add("s3 previous returning", orderedKeys);
         return orderedKeys;
     }
 
@@ -188,7 +188,7 @@ public class S3ContentDao implements ContentDao {
             listing = s3Client.listObjects(request);
             marker = addKeys(query.getChannelName(), listing, keys);
         }
-        query.getTraces().add(keys, "s3 next returning");
+        query.getTraces().add("s3 next returning", keys);
         return keys;
     }
 

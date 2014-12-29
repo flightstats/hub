@@ -12,7 +12,7 @@ public interface Traces {
 
     void add(Object... objects);
 
-    void add(SortedSet sortedSet, Object... objects);
+    void add(String string, SortedSet sortedSet);
 
     void setStart(long start);
 

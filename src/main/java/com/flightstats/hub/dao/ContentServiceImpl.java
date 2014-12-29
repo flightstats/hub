@@ -158,7 +158,7 @@ public class ContentServiceImpl implements ContentService {
                 }
             });
             countDownLatch.await(3, TimeUnit.MINUTES);
-            query.getTraces().add("both unique keys", orderedKeys.size());
+            query.getTraces().add("both unique keys", orderedKeys);
             return orderedKeys;
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
@@ -167,7 +167,7 @@ public class ContentServiceImpl implements ContentService {
 
     private SortedSet<ContentKey> getKeys(DirectionQuery query, ContentDao dao, String name) {
         SortedSet<ContentKey> keys = dao.query(query);
-        query.getTraces().add(keys, name, "unique keys");
+        query.getTraces().add(name, keys);
         return keys;
     }
 
