@@ -3,6 +3,7 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Traces;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 
@@ -17,7 +18,7 @@ public interface ContentDao {
 
     Content read(String channelName, ContentKey key);
 
-    SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit);
+    SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces);
 
     SortedSet<ContentKey> query(DirectionQuery query);
 

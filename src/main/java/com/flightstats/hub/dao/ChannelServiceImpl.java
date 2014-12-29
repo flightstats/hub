@@ -115,6 +115,7 @@ public class ChannelServiceImpl implements ChannelService {
     public Collection<ContentKey> getKeys(DirectionQuery query) {
         Set<ContentKey> toReturn = new TreeSet<>();
         if (query.getCount() <= 0) {
+            query.getTraces().add("requested zero");
             return toReturn;
         }
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
