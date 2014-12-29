@@ -76,6 +76,7 @@ public class CallbackQueue implements AutoCloseable {
                                 .channelName(channel)
                                 .startTime(lastTime)
                                 .unit(TimeUtil.Unit.SECONDS).build();
+                        query.trace(false);
                         addKeys(contentService.queryByTime(query));
                         lastTime = lastTime.plusSeconds(1);
                     } else {

@@ -1,8 +1,6 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
@@ -58,7 +56,7 @@ public class ContentDaoUtil {
             Content content = createContent(key);
             contentDao.write(channel, content);
         }
-        Collection<ContentKey> found = contentDao.queryByTime(channel, start, TimeUtil.Unit.DAYS);
+        Collection<ContentKey> found = contentDao.queryByTime(channel, start, TimeUtil.Unit.DAYS, new TracesImpl());
         assertEquals(keys.size(), found.size());
         assertTrue(keys.containsAll(found));
     }
@@ -73,7 +71,7 @@ public class ContentDaoUtil {
             Content content = createContent(key);
             contentDao.write(channel, content);
         }
-        Collection<ContentKey> found = contentDao.queryByTime(channel, start, TimeUtil.Unit.HOURS);
+        Collection<ContentKey> found = contentDao.queryByTime(channel, start, TimeUtil.Unit.HOURS, new TracesImpl());
         assertEquals(keys.size(), found.size());
         assertTrue(keys.containsAll(found));
     }
@@ -88,7 +86,7 @@ public class ContentDaoUtil {
             Content content = createContent(key);
             contentDao.write(channel, content);
         }
-        Collection<ContentKey> found = contentDao.queryByTime(channel, start, TimeUtil.Unit.MINUTES);
+        Collection<ContentKey> found = contentDao.queryByTime(channel, start, TimeUtil.Unit.MINUTES, new TracesImpl());
         assertEquals(keys.size(), found.size());
         assertTrue(keys.containsAll(found));
     }
@@ -118,6 +116,7 @@ public class ContentDaoUtil {
                 .count(count)
                 .next(next)
                 .contentKey(new ContentKey(queryTime, "blah"))
+                .traces(Traces.NOOP)
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
         assertEquals(expected, found.size());

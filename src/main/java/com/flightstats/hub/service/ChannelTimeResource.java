@@ -87,8 +87,9 @@ public class ChannelTimeResource {
 
     @Path("/minute")
     @GET
-    public Response getMinute(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return getResponse(minutes(getDateTime(stable)) + "?stable=" + stable, "time/minute");
+    public Response getMinute(@QueryParam("stable") @DefaultValue("true") boolean stable,
+                              @QueryParam("trace") @DefaultValue("false") boolean trace) {
+        return getResponse(minutes(getDateTime(stable)) + "?stable=" + stable + "&trace=" + trace, "time/minute");
     }
 
     @Path("/hour")
