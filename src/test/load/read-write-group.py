@@ -116,6 +116,7 @@ class WebsiteTasks(TaskSet):
             logger.info("expected " + ", ".join(posted_items) + " found " + ", ".join(query_slice))
             events.request_failure.fire(request_type="sequential", name="compare", response_time=total_time
                                         , exception=-1)
+            # add tests for next & previous
 
     @task(1)
     def day_query(self):
