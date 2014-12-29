@@ -74,7 +74,9 @@ public class SpokeContentDao implements ContentDao {
         traces.add("spoke query by time", channelName, startTime, unit);
         String timePath = unit.format(startTime);
         try {
-            return new TreeSet<>(spokeStore.readTimeBucket(channelName, timePath, traces));
+            TreeSet<ContentKey> keys = new TreeSet<>(spokeStore.readTimeBucket(channelName, timePath, traces));
+            traces.add("spoke query by time", keys);
+            return keys;
         } catch (Exception e) {
             logger.warn("what happened? " + channelName + " " + startTime + " " + unit, e);
         }
