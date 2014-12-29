@@ -63,6 +63,7 @@ public class CallbackQueue implements AutoCloseable {
                     if (lastTime.isBefore(stableOrdering)) {
                         //todo - gfm - 12/3/14 - do we want a convenience method that doens't need these params?
                         TimeQuery query = TimeQuery.builder().channelName(channel).startTime(lastTime).unit(TimeUtil.Unit.SECONDS).build();
+                        query.trace(false);
                         addKeys(contentService.queryByTime(query));
                         lastTime = lastTime.plusSeconds(1);
                     } else {
