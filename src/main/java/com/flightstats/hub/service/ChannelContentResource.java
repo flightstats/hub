@@ -374,6 +374,7 @@ public class ChannelContentResource {
                 .stable(stable)
                 .ttlDays(channelService.getChannelConfiguration(channelName).getTtlDays())
                 .count(1).build();
+        query.trace(false);
         Collection<ContentKey> keys = channelService.getKeys(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
