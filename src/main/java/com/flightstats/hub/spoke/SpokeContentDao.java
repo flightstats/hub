@@ -8,7 +8,6 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -74,7 +73,7 @@ public class SpokeContentDao implements ContentDao {
         traces.add("spoke query by time", channelName, startTime, unit);
         String timePath = unit.format(startTime);
         try {
-            TreeSet<ContentKey> keys = new TreeSet<>(spokeStore.readTimeBucket(channelName, timePath, traces));
+            SortedSet<ContentKey> keys = spokeStore.readTimeBucket(channelName, timePath, traces);
             traces.add("spoke query by time", keys);
             return keys;
         } catch (Exception e) {
@@ -97,11 +96,11 @@ public class SpokeContentDao implements ContentDao {
     }
 
     private boolean query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime) {
-        Collection<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS, query.getTraces());
+        SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS, query.getTraces());
         if (query.isNext()) {
             //from oldest to newest
             DateTime stableTime = TimeUtil.time(query.isStable());
-            for (ContentKey contentKey : new TreeSet<>(queryByTime)) {
+            for (ContentKey contentKey : queryByTime) {
                 if (contentKey.compareTo(startKey) > 0 && contentKey.getTime().isBefore(stableTime)) {
                     orderedKeys.add(contentKey);
                     if (orderedKeys.size() == query.getCount()) {

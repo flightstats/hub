@@ -14,10 +14,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -97,7 +94,7 @@ public class ContentServiceImpl implements ContentService {
     }
 
     private SortedSet<ContentKey> queryBothByTime(TimeQuery query) {
-        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
+        SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             executorService.submit(new Runnable() {
@@ -140,7 +137,7 @@ public class ContentServiceImpl implements ContentService {
     }
 
     private Set<ContentKey> queryBoth(DirectionQuery query) {
-        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
+        SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             executorService.submit(new Runnable() {
