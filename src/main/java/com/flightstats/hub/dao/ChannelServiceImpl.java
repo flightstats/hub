@@ -50,6 +50,27 @@ public class ChannelServiceImpl implements ChannelService {
         return contentService.insert(channelName, content);
     }
 
+    public boolean isReplicating(String channelName) {
+        return replicationValidator.isReplicating(channelName);
+    }
+
+    @Override
+    public Optional<ContentKey> getLatest(String channelName, boolean stable) {
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channelName)
+                .contentKey(new ContentKey(TimeUtil.time(stable), "ZZZZZ"))
+                .next(false)
+                .stable(stable)
+                .count(1).build();
+        query.trace(false);
+        Collection<ContentKey> keys = getKeys(query);
+        if (keys.isEmpty()) {
+            return Optional.absent();
+        } else {
+            return Optional.of(keys.iterator().next());
+        }
+    }
+
     @Override
     public Optional<Content> getValue(Request request) {
         return contentService.getValue(request.getChannel(), request.getKey());
