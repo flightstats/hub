@@ -161,6 +161,16 @@ public class AuditChannelService implements ChannelService {
         return channelService.delete(channelName);
     }
 
+    @Override
+    public boolean isReplicating(String channelName) {
+        return channelService.isReplicating(channelName);
+    }
+
+    @Override
+    public Optional<ContentKey> getLatest(String channelName, boolean stable) {
+        return channelService.getLatest(channelName, stable);
+    }
+
     private boolean isNotTestChannel(String channelName) {
         return !channelName.startsWith("test_");
     }

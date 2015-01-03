@@ -1,6 +1,6 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.ChannelNameUtils;
@@ -28,15 +28,15 @@ public class CallbackQueue implements AutoCloseable {
 
     private final static Logger logger = LoggerFactory.getLogger(CallbackQueue.class);
 
-    private final ContentService contentService;
+    private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private BlockingQueue<ContentKey> queue = new ArrayBlockingQueue<>(1000);
     private String channel;
     private DateTime lastTime;
 
     @Inject
-    public CallbackQueue(ContentService contentService) {
-        this.contentService = contentService;
+    public CallbackQueue(ChannelService channelService) {
+        this.channelService = channelService;
     }
 
     public Optional<ContentKey> next() {
@@ -60,16 +60,12 @@ public class CallbackQueue implements AutoCloseable {
                 } catch (Exception e) {
                     logger.warn("unexpected issue with " + channel, e);
                 }
-
             }
 
             private void doWork() {
-                //todo - gfm - 12/2/14 - handle exceptions
-                //todo - gfm - 12/2/14 - this could change the query units based on lag from now
-                //todo - gfm - 12/23/14 - this needs to handle replication where latest isn't now
+                //todo - gfm - 12/2/14 - this should change the query units based on lag from now, to avoid excessive queries
                 while (!shouldExit.get()) {
-                    //todo - gfm - 12/23/14 - if channel is replicated, get time from /latest?
-                    DateTime latestStableInChannel = TimeUtil.stable();
+                    DateTime latestStableInChannel = getLatestStable();
                     logger.trace("iterating {} last={} stable={} ", channel, lastTime, latestStableInChannel);
                     if (lastTime.isBefore(latestStableInChannel)) {
                         TimeQuery query = TimeQuery.builder()
@@ -77,7 +73,7 @@ public class CallbackQueue implements AutoCloseable {
                                 .startTime(lastTime)
                                 .unit(TimeUtil.Unit.SECONDS).build();
                         query.trace(false);
-                        addKeys(contentService.queryByTime(query));
+                        addKeys(channelService.queryByTime(query));
                         lastTime = lastTime.plusSeconds(1);
                     } else {
                         Duration duration = new Duration(latestStableInChannel, lastTime);
@@ -101,6 +97,20 @@ public class CallbackQueue implements AutoCloseable {
             }
         });
 
+    }
+
+    private DateTime getLatestStable() {
+        if (channelService.isReplicating(channel)) {
+            Optional<ContentKey> latest = channelService.getLatest(channel, false);
+            if (latest.isPresent()) {
+                return latest.get().getTime();
+            } else {
+                //todo - gfm - 1/3/15 - return what here?
+                return new DateTime(0);
+            }
+        } else {
+            return TimeUtil.stable();
+        }
     }
 
     @Override
