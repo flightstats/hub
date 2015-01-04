@@ -1,4 +1,4 @@
-require('./../integration/integration_config.js');
+require('./integration_config.js');
 
 
 var replicationResource = hubUrlBase + "/replication/not_there";
