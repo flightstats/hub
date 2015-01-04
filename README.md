@@ -764,44 +764,36 @@ You can now use PUT to create and update channels idempotently.  The V1 POST and
 ## monitoring
 
 The Hub has monitoring available in:
-* [New Relic](https://rpm.newrelic.com/accounts/565031/applications#filter=hub)
-* [Graphite Prod](http://svcsmon.cloud-east.prod/dashboard/#hub)
-* [Graphite Staging](http://svcsmon.cloud-east.staging/dashboard/#hub)
-* [Graphite Dev](http://svcsmon.cloud-east.dev/dashboard/#hub)
+* [New Relic](https://rpm.newrelic.com/accounts/565031/applications#filter=hub-v2)
+* [Grafana](https://www.hostedgraphite.com/805cc7bf/b9f046ac-8ec4-4141-9e6d-5edc2b73e4d5/grafana/#/dashboard/db/hubv2)
 
 Hub Servers:
-* Prod - hub-0<1-3>.cloud-east.prod
-* Staging - hub-0<1-3>.cloud-east.staging
-* Dev - hub-0<1-3>.cloud-east.dev
-
-Encrypted Hub Servers:
-* Dev - encrypted-hub-0<1-3>.cloud-east.dev
+* Staging - hub-v2-0<1-3>.cloud-east.staging
+* Int - hub-v2-int-0<1-3>.cloud-east.staging
+* Dev - hub-v2-0<1-3>.cloud-east.dev
 
 ## development
 
 The Hub is a work in progress.  If you'd like to contribute, let us know.
 
-The latest builds are in [Jenkins](http://ops-jenkins01.cloud-east.dev/view/hub/)
+The latest builds are in [Jenkins](http://ops-jenkins01.cloud-east.dev/view/hub-v2/)
 
 [Install locally](https://github.com/flightstats/hubv2/wiki/Install-the-Hub-locally)
 
-The Hub uses the Client Team's [Develop-Master branching strategy](http://wiki.office/wiki/Client_Team_Operational_Documentation#Git_Usage_Diagram).
-Rules:
+General Rules for Development:
 * Only pull from master
-* merge feature branches to develop, which [builds and deploys](http://ops-jenkins01.cloud-east.dev/job/hub-develop/) to dev with version `DEVELOP.mm-dd.#`
+* Create a new branch for features and bugs, avoiding '/' in the branch name
+* Push a build from the branch to dev using [hub-v2-dev-cycle](http://ops-jenkins01.cloud-east.dev/view/hub-v2/job/hub-v2-dev-cycle/)
 * after testing in dev, create a pull request from the feature branch to master
-* every merge to master kicks off [build and deploy](http://ops-jenkins01.cloud-east.dev/job/hub-staging/) to staging with version ``
-* develop is reset to master every day at 6 AM [hub-develop-daily-reset](http://ops-jenkins01.cloud-east.dev/job/hub-develop-daily-reset/)
+* every merge to master kicks off [hub-v2-int-cycle](http://ops-jenkins01.cloud-east.dev/view/hub-v2/job/hub-v2-int-cycle/) to hub-v2-int
 
 ## deployments
 
-The Hub is deployed to [Dev](http://hub.svc.dev/health) after each successful build in [Jenkins](http://ops-jenkins01.cloud-east.dev/job/hub/)
+Any specific version of the Hub can be manually deployed to any environment using [hub-v2-deploy](http://ops-jenkins01.cloud-east.dev/view/hub-v2/job/hub-v2-deploy/)
 
-Deployments to Staging can be manually run from [Hub Tasks](http://ops-jenkins01.cloud-east.dev/job/hub/batchTasks/)
-
-Releases to Prod currently must be manually kicked off from each machine using the version number from Jenkins.
+Releases can also be manually kicked off from each machine in a cluster using the version number from Jenkins.
 ```
-sudo salt-call triforce.deploy s3://triforce_builds/hubv2/hub-v2-<version>.tgz prod
+sudo salt-call triforce.deploy s3://triforce_builds/hubv2/hub-v2-<version>.tgz staging
 ```
 
 ## Requirements Notes
