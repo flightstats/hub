@@ -99,7 +99,6 @@ public class GroupCaller implements Leader {
                     if (nextOptional.isPresent()) {
                         send(nextOptional.get());
                     }
-
                 }
             }
         } catch (RuntimeInterruptedException | InterruptedException e) {

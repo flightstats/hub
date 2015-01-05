@@ -16,6 +16,7 @@ public class DirectionQuery {
     private final Location location;
     private final boolean stable;
     private final long ttlDays;
+    private Traces traces;
 
     public Location getLocation() {
         if (location == null) {
@@ -29,5 +30,13 @@ public class DirectionQuery {
             return 1;
         }
         return ttlDays;
+    }
+
+    public void trace(boolean trace) {
+        if (trace) {
+            traces = new TracesImpl();
+        } else {
+            traces = Traces.NOOP;
+        }
     }
 }

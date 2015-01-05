@@ -1,6 +1,6 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.ChannelNameUtils;
@@ -28,45 +28,55 @@ public class CallbackQueue implements AutoCloseable {
 
     private final static Logger logger = LoggerFactory.getLogger(CallbackQueue.class);
 
-    private final ContentService contentService;
+    private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private BlockingQueue<ContentKey> queue = new ArrayBlockingQueue<>(1000);
     private String channel;
-    private DateTime lastTime;
+    private DateTime lastQueryTime;
 
     @Inject
-    public CallbackQueue(ContentService contentService) {
-        this.contentService = contentService;
+    public CallbackQueue(ChannelService channelService) {
+        this.channelService = channelService;
     }
 
     public Optional<ContentKey> next() {
         try {
-            return Optional.fromNullable(queue.poll(1, TimeUnit.SECONDS));
+            return Optional.fromNullable(queue.poll(10, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
     }
 
-    public void start(Group group, ContentKey lastCompletedKey) {
-        lastTime = lastCompletedKey.getTime();
+    public void start(Group group, ContentKey startingKey) {
+        lastQueryTime = startingKey.getTime();
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("group-" + group.getName() + "-queue-%s").build();
         ExecutorService executorService = Executors.newSingleThreadExecutor(factory);
         executorService.submit(new Runnable() {
             @Override
             public void run() {
-                //todo - gfm - 12/2/14 - handle exceptions
-                //todo - gfm - 12/2/14 - this could change the query units based on lag from now
+                try {
+                    doWork();
+                } catch (Exception e) {
+                    logger.warn("unexpected issue with " + channel, e);
+                }
+            }
+
+            private void doWork() {
                 while (!shouldExit.get()) {
-                    DateTime stableOrdering = TimeUtil.stable();
-                    logger.trace("iterating {} last={} stable={} ", channel, lastTime, stableOrdering);
-                    if (lastTime.isBefore(stableOrdering)) {
-                        //todo - gfm - 12/3/14 - do we want a convenience method that doens't need these params?
-                        TimeQuery query = TimeQuery.builder().channelName(channel).startTime(lastTime).unit(TimeUtil.Unit.SECONDS).build();
-                        addKeys(contentService.queryByTime(query));
-                        lastTime = lastTime.plusSeconds(1);
+                    DateTime latestStableInChannel = getLatestStable();
+                    logger.trace("iterating {} last={} stable={} ", channel, lastQueryTime, latestStableInChannel);
+                    if (lastQueryTime.isBefore(latestStableInChannel)) {
+                        TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
+                        TimeQuery query = TimeQuery.builder()
+                                .channelName(channel)
+                                .startTime(lastQueryTime)
+                                .unit(unit).build();
+                        query.trace(false);
+                        addKeys(channelService.queryByTime(query));
+                        lastQueryTime = lastQueryTime.plus(unit.getDuration());
                     } else {
-                        Duration duration = new Duration(stableOrdering, lastTime);
+                        Duration duration = new Duration(latestStableInChannel, lastQueryTime);
                         logger.trace("sleeping " + duration.getMillis());
                         Sleeper.sleep(duration.getMillis());
                     }
@@ -75,18 +85,41 @@ public class CallbackQueue implements AutoCloseable {
 
             private void addKeys(Collection<ContentKey> keys) {
                 logger.trace("channel {} keys {}", channel, keys);
-                if (lastTime.isAfter(lastCompletedKey.getTime())) {
-                    queue.addAll(keys);
-                } else {
+                try {
                     for (ContentKey key : keys) {
-                        if (key.compareTo(lastCompletedKey) > 0) {
-                            queue.add(key);
+                        if (key.compareTo(startingKey) > 0) {
+                            queue.put(key);
                         }
                     }
+                } catch (InterruptedException e) {
+                    logger.info("InterruptedException " + e.getMessage());
+                    throw new RuntimeInterruptedException(e);
                 }
             }
         });
 
+    }
+
+    private TimeUtil.Unit getStepUnit(DateTime latestStableInChannel) {
+        if (lastQueryTime.minusHours(2).isBefore(latestStableInChannel)) {
+            return TimeUtil.Unit.HOURS;
+        } else if (lastQueryTime.minusMinutes(2).isBefore(latestStableInChannel)) {
+            return TimeUtil.Unit.MINUTES;
+        }
+        return TimeUtil.Unit.SECONDS;
+    }
+
+    private DateTime getLatestStable() {
+        if (channelService.isReplicating(channel)) {
+            Optional<ContentKey> latest = channelService.getLatest(channel, true);
+            if (latest.isPresent()) {
+                return latest.get().getTime();
+            } else {
+                return new DateTime(0);
+            }
+        } else {
+            return TimeUtil.stable();
+        }
     }
 
     @Override

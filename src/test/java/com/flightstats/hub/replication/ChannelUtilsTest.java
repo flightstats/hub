@@ -77,7 +77,7 @@ public class ChannelUtilsTest {
 
     @Test
     public void testGetFirstContent() throws Exception {
-        Optional<Content> optionalContent = channelUtils.getContent(channelUrl, 1000);
+        Optional<Content> optionalContent = channelUtils.getContentV1(channelUrl, 1000);
         assertTrue(optionalContent.isPresent());
         Content content = optionalContent.get();
         assertArrayEquals("data1".getBytes(), content.getData());
@@ -89,7 +89,7 @@ public class ChannelUtilsTest {
 
     @Test
     public void testGetContentHeaders() throws Exception {
-        Optional<Content> optionalContent = channelUtils.getContent(channelUrl, 1001);
+        Optional<Content> optionalContent = channelUtils.getContentV1(channelUrl, 1001);
         assertTrue(optionalContent.isPresent());
         Content content = optionalContent.get();
         assertArrayEquals("data2".getBytes(), content.getData());
@@ -102,7 +102,7 @@ public class ChannelUtilsTest {
     @Test
     public void testGetContent() throws Exception {
         Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
-        Optional<Content> optionalContent = channelUtils.getContent(channelUrl, latestSequence.get());
+        Optional<Content> optionalContent = channelUtils.getContentV1(channelUrl, latestSequence.get());
         assertTrue(optionalContent.isPresent());
         Content content = optionalContent.get();
         assertTrue(content.getData().length > 0);

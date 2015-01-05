@@ -5,7 +5,7 @@ import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.Trace;
-import com.google.common.collect.Sets;
+import com.flightstats.hub.model.Traces;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
@@ -15,8 +15,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -111,33 +113,38 @@ public class RemoteSpokeStore {
         return null;
     }
 
-    public Set<ContentKey> readTimeBucket(String channel, String timePath) throws InterruptedException {
+    public SortedSet<ContentKey> readTimeBucket(String channel, String timePath, Traces traces) throws InterruptedException {
         List<String> servers = cluster.getServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         String path = channel + "/" + timePath;
-        Set<ContentKey> results = Sets.newConcurrentHashSet();
+        SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (final String server : servers) {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
                     try {
+                        traces.add("spoke calling", server, path);
                         ClientResponse response = client.resource("http://" + server + "/spoke/time/" + path)
                                 .get(ClientResponse.class);
-                        logger.trace("server {} path {} response {}", server, path, response);
+                        traces.add("server response", server, response);
                         if (response.getStatus() == 200) {
+                            SortedSet<ContentKey> keySet = new TreeSet<>();
                             String keysString = response.getEntity(String.class);
                             if (StringUtils.isNotEmpty(keysString)) {
-                                logger.trace("entity '{}'", keysString);
                                 String[] keys = keysString.split(",");
                                 for (String key : keys) {
-                                    results.add(ContentKey.fromUrl(StringUtils.substringAfter(key, "/")).get());
+                                    keySet.add(ContentKey.fromUrl(StringUtils.substringAfter(key, "/")).get());
                                 }
                             }
+                            traces.add(server, keySet);
+                            orderedKeys.addAll(keySet);
                         }
                     } catch (ClientHandlerException e) {
                         logger.warn("ClientHandlerException " + e.getMessage());
+                        traces.add("ClientHandlerException", e.getMessage());
                     } catch (Exception e) {
                         logger.warn("unable to handle " + server + " " + path, e);
+                        traces.add("unable to handle ", server, path, e);
                     } finally {
                         countDownLatch.countDown();
                     }
@@ -145,7 +152,7 @@ public class RemoteSpokeStore {
             });
         }
         countDownLatch.await(30, TimeUnit.SECONDS);
-        return results;
+        return orderedKeys;
     }
 
     public boolean delete(String path) throws Exception {

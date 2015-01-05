@@ -3,6 +3,7 @@ package com.flightstats.hub.util;
 import com.flightstats.hub.app.HubProperties;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -55,20 +56,26 @@ public class TimeUtil {
     }
 
     public enum Unit {
-        MILLIS(millisFormatter),
-        SECONDS(secondsFormatter),
-        MINUTES(minutesFormatter),
-        HOURS(hoursFormatter),
-        DAYS(daysFormatter);
+        MILLIS(millisFormatter, Duration.millis(1)),
+        SECONDS(secondsFormatter, Duration.standardSeconds(1)),
+        MINUTES(minutesFormatter, Duration.standardMinutes(1)),
+        HOURS(hoursFormatter, Duration.standardHours(1)),
+        DAYS(daysFormatter, Duration.standardDays(1));
 
         private DateTimeFormatter formatter;
+        private Duration duration;
 
-        Unit(DateTimeFormatter formatter) {
+        Unit(DateTimeFormatter formatter, Duration duration) {
             this.formatter = formatter;
+            this.duration = duration;
         }
 
         public String format(DateTime dateTime) {
             return dateTime.toString(formatter);
+        }
+
+        public Duration getDuration() {
+            return duration;
         }
     }
 

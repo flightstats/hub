@@ -1,4 +1,4 @@
-require('./../integration/integration_config.js');
+require('./integration_config.js');
 
 var jsonBody = JSON.stringify({
     historicalDays : 5,
