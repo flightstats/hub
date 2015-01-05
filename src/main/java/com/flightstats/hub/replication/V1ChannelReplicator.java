@@ -5,6 +5,8 @@ import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -13,10 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ChannelReplicator implements Leader {
-    private static final Logger logger = LoggerFactory.getLogger(ChannelReplicator.class);
+public class V1ChannelReplicator implements Leader {
+    private static final Logger logger = LoggerFactory.getLogger(V1ChannelReplicator.class);
 
     private final ChannelService channelService;
     private final ChannelUtils channelUtils;
@@ -31,11 +35,12 @@ public class ChannelReplicator implements Leader {
     private boolean valid = false;
     private String message = "";
     private CuratorLeader curatorLeader;
+    public static int START_VALUE = 999;
 
     @Inject
-    public ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
-                             SequenceIteratorFactory sequenceIteratorFactory,
-                             SequenceFinder sequenceFinder, CuratorFramework curator) {
+    public V1ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
+                               SequenceIteratorFactory sequenceIteratorFactory,
+                               SequenceFinder sequenceFinder, CuratorFramework curator) {
         this.channelService = channelService;
         this.sequenceIteratorFactory = sequenceIteratorFactory;
         this.channelUtils = channelUtils;
@@ -172,16 +177,22 @@ public class ChannelReplicator implements Leader {
     }
 
     public long getLastUpdated() {
-        //todo - gfm - 10/28/14 -
-        /*Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
-        if (lastUpdatedKey.isPresent()) {
-            if (lastUpdatedKey.get().getSequence() == ContentKey.START_VALUE) {
-                return sequenceFinder.searchForLastUpdated(channel, ContentKey.START_VALUE, historicalDays, TimeUnit.DAYS);
+        Collection<ContentKey> keys = channelService.getKeys(DirectionQuery.builder()
+                .contentKey(new ContentKey())
+                .ttlDays(historicalDays)
+                .count(1)
+                .channelName(channel.getName())
+                .build());
+        if (!keys.isEmpty()) {
+            ContentKey contentKey = keys.iterator().next();
+            try {
+                int sequence = Integer.parseInt(contentKey.getHash());
+                return sequenceFinder.searchForLastUpdated(channel, sequence, historicalDays + 1, TimeUnit.DAYS);
+            } catch (NumberFormatException e) {
+                logger.warn("unable to parse existing content key {}", contentKey);
             }
-            return sequenceFinder.searchForLastUpdated(channel, lastUpdatedKey.get().getSequence(), historicalDays + 1, TimeUnit.DAYS);
         }
-        logger.warn("problem getting starting sequence " + channel.getUrl());*/
-        return ChannelUtils.NOT_FOUND;
+        return sequenceFinder.searchForLastUpdated(channel, START_VALUE, historicalDays, TimeUnit.DAYS);
     }
 
     public boolean isConnected() {

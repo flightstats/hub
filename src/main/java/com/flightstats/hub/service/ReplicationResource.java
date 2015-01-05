@@ -12,9 +12,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-/**
- *
- */
 @Path("/replication")
 public class ReplicationResource {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationResource.class);

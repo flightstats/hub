@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.TreeSet;
 
 import static org.junit.Assert.*;
 
@@ -15,9 +16,9 @@ public class ReplicationDomainTest {
     private List<String> list = Lists.newArrayList("one", "two", "three");
 
     private ReplicationDomain getExcluded() {
-        return ReplicationDomain.builder().withDomain("exclude")
-                .withExcludedExcept(list)
-                .withHistoricalDays(10)
+        return ReplicationDomain.builder().domain("exclude")
+                .excludeExcept(new TreeSet<>(list))
+                .historicalDays(10)
                 .build();
     }
 
@@ -32,7 +33,7 @@ public class ReplicationDomainTest {
 
     @Test
     public void testNone() throws Exception {
-        ReplicationDomain domain = ReplicationDomain.builder().withDomain("exclude").build();
+        ReplicationDomain domain = ReplicationDomain.builder().domain("exclude").build();
         assertFalse(domain.equals(getExcluded()));
         assertFalse(domain.isValid());
         assertEquals(0, domain.getHistoricalDays());

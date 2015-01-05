@@ -1,4 +1,4 @@
-require('./../integration/integration_config.js');
+require('./integration_config.js');
 
 var replicationResource = hubUrlBase + "/replication/nonExistent";
 var testName = "replication_missing_deletion_spec";
