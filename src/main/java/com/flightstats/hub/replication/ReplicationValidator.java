@@ -17,12 +17,19 @@ public class ReplicationValidator {
     }
 
     public void throwExceptionIfReplicating(String channelName) {
+        if (isReplicating(channelName)) {
+            throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
+        }
+    }
+
+    public boolean isReplicating(String channelName) {
         Collection<ReplicationDomain> domains = replicationDao.getDomains(false);
         for (ReplicationDomain domain : domains) {
             if (domain.getExcludeExcept().contains(channelName)) {
-                throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
+                return true;
             }
         }
+        return false;
     }
 
     public void validateDomain(ReplicationDomain domain) {
