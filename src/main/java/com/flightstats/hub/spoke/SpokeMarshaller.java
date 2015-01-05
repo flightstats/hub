@@ -20,7 +20,7 @@ import java.util.zip.ZipOutputStream;
 public class SpokeMarshaller {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 10) * 1024 * 1024;
+    private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 20) * 1024 * 1024;
 
     public static byte[] toBytes(Content content) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

@@ -4,24 +4,16 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("Convert2Lambda")
@@ -75,42 +67,70 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
-        if (isInsideCacheWindow(key.getTime())) {
-            return Optional.fromNullable(cacheContentDao.read(channelName, key));
-        }
-        return Optional.fromNullable(longTermContentDao.read(channelName, key));
+        //todo - gfm - 12/22/14 - this should also handle the case of replication,
+        // where something is in the cache outside the 'cache window'
+        return getBoth(channelName, key);
     }
 
-    private boolean isInsideCacheWindow(DateTime dateTime) {
-        return TimeUtil.now().minusMinutes(ttlMinutes).isBefore(dateTime);
-    }
-
-    @Override
-    public Collection<ContentKey> queryByTime(TimeQuery query) {
-        if (query.getLocation().equals(Location.CACHE)) {
-            return cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit());
-        } else if (query.getLocation().equals(Location.LONG_TERM)) {
-            return longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit());
-        } else {
-            return queryBothByTime(query);
-        }
-    }
-
-    private SortedSet<ContentKey> queryBothByTime(TimeQuery timeQuery) {
-        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
+    private Optional<Content> getBoth(String channelName, ContentKey key) {
+        ConcurrentLinkedQueue<Content> queue = new ConcurrentLinkedQueue<>();
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    orderedKeys.addAll(cacheContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+                    Content content = cacheContentDao.read(channelName, key);
+                    if (content != null) {
+                        queue.add(content);
+                        countDownLatch.countDown();
+                    }
                     countDownLatch.countDown();
                 }
             });
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    orderedKeys.addAll(longTermContentDao.queryByTime(timeQuery.getChannelName(), timeQuery.getStartTime(), timeQuery.getUnit()));
+                    Content content = longTermContentDao.read(channelName, key);
+                    if (content != null) {
+                        queue.add(content);
+                        countDownLatch.countDown();
+                    }
+                    countDownLatch.countDown();
+                }
+            });
+            countDownLatch.await();
+            return Optional.fromNullable(queue.poll());
+        } catch (InterruptedException e) {
+            throw new RuntimeInterruptedException(e);
+        }
+    }
+
+    @Override
+    public Collection<ContentKey> queryByTime(TimeQuery query) {
+        if (query.getLocation().equals(Location.CACHE)) {
+            return cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces());
+        } else if (query.getLocation().equals(Location.LONG_TERM)) {
+            return longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces());
+        } else {
+            return queryBothByTime(query);
+        }
+    }
+
+    private SortedSet<ContentKey> queryBothByTime(TimeQuery query) {
+        SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        try {
+            CountDownLatch countDownLatch = new CountDownLatch(2);
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    orderedKeys.addAll(cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces()));
+                    countDownLatch.countDown();
+                }
+            });
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    orderedKeys.addAll(longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces()));
                     countDownLatch.countDown();
                 }
             });
@@ -131,37 +151,44 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
         if (query.getLocation().equals(Location.CACHE)) {
-            return cacheContentDao.query(query);
+            return getKeys(query, cacheContentDao, "cache");
         } else if (query.getLocation().equals(Location.LONG_TERM)) {
-            return longTermContentDao.query(query);
+            return getKeys(query, longTermContentDao, "s3");
         } else {
             return queryBoth(query);
         }
     }
 
     private Set<ContentKey> queryBoth(DirectionQuery query) {
-        Set<ContentKey> orderedKeys = new TreeSet<>();
+        SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    orderedKeys.addAll(cacheContentDao.query(query));
+                    orderedKeys.addAll(getKeys(query, cacheContentDao, "cache"));
                     countDownLatch.countDown();
                 }
             });
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    orderedKeys.addAll(longTermContentDao.query(query));
+                    orderedKeys.addAll(getKeys(query, longTermContentDao, "s3"));
                     countDownLatch.countDown();
                 }
             });
             countDownLatch.await(3, TimeUnit.MINUTES);
+            query.getTraces().add("both unique keys", orderedKeys);
             return orderedKeys;
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
+    }
+
+    private SortedSet<ContentKey> getKeys(DirectionQuery query, ContentDao dao, String name) {
+        SortedSet<ContentKey> keys = dao.query(query);
+        query.getTraces().add(name, keys);
+        return keys;
     }
 
     private class ContentServiceHook extends AbstractIdleService {

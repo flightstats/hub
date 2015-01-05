@@ -1,6 +1,7 @@
 package com.flightstats.hub.service;
 
 import com.flightstats.rest.Linked;
+import com.google.inject.Inject;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -13,6 +14,9 @@ import javax.ws.rs.core.UriInfo;
 @Path("/")
 public class RootResource {
 
+    @Inject
+    HubVersion hubVersion;
+
 	@GET
     @Produces(MediaType.APPLICATION_JSON)
 	public Response getChannels(@Context UriInfo uriInfo) {
@@ -24,7 +28,9 @@ public class RootResource {
         links.withLink("group", uriInfo.getRequestUri() + "group");
         links.withLink("tag", uriInfo.getRequestUri() + "tag");
         links.withLink("health", uriInfo.getRequestUri() + "health");
-        return Response.ok(links.build()).build();
-	}
+        return Response.ok(links.build())
+                .header("Server", "Hub/" + hubVersion.getVersion())
+                .build();
+    }
 
 }

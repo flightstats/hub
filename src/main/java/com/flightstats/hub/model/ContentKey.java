@@ -3,6 +3,7 @@ package com.flightstats.hub.model;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -13,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @EqualsAndHashCode
+@Getter
 public class ContentKey implements Comparable<ContentKey> {
     public static final ContentKey NONE = new ContentKey(new DateTime(1, DateTimeZone.UTC), "none");
     private final static Logger logger = LoggerFactory.getLogger(ContentKey.class);
@@ -49,10 +51,6 @@ public class ContentKey implements Comparable<ContentKey> {
 
     public long getMillis() {
         return time.getMillis();
-    }
-
-    public DateTime getTime() {
-        return time;
     }
 
     public String toString(DateTimeFormatter pathFormatter) {

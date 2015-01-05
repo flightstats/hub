@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * It is designed to skip over missing sequences, should they occur.
  * SequenceIterator is not thread safe, and should only be used from a single thread.
  *
- * todo - gfm - 5/17/14 - split up this class
  */
 @ClientEndpoint()
 public class SequenceIterator implements Iterator<Optional<Content>> {
@@ -74,12 +73,10 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
 
     @Override
     public Optional<Content> next() {
-        Optional<Content> optional = channelUtils.getContent(channelUrl, current);
+        Optional<Content> optional = channelUtils.getContentV1(channelUrl, current);
         if (!optional.isPresent()) {
-            //todo - gfm - 1/25/14 - seems like this missing records should be logged somewhere, perhaps to a missing records channel
             logger.warn("unable to get content " + channelUrl + "/" + current);
-            //once more, with feeling
-            optional = channelUtils.getContent(channelUrl, current);
+            optional = channelUtils.getContentV1(channelUrl, current);
         }
         return optional;
     }
@@ -125,7 +122,7 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
     public void onMessage(String message) {
         try {
             long sequence = Long.parseLong(StringUtils.substringAfterLast(message, "/"));
-            logger.debug("message {} {}", channel, sequence);
+            logger.trace("message {} {}", channel, sequence);
             if (sequence > latest.get()) {
                 latest.set(sequence);
                 signal();

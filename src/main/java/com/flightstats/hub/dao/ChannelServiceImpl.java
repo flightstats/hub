@@ -1,8 +1,8 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.replication.ReplicationValidator;
+import com.flightstats.hub.replication.V1ChannelReplicator;
 import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -16,17 +16,17 @@ public class ChannelServiceImpl implements ChannelService {
     private final ContentService contentService;
     private final ChannelConfigurationDao channelConfigurationDao;
     private final ChannelValidator channelValidator;
-    private final ChannelReplicator channelReplicator;
+    private final V1ChannelReplicator v1ChannelReplicator;
     private final ReplicationValidator replicationValidator;
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigurationDao channelConfigurationDao,
                               ChannelValidator channelValidator,
-                              ChannelReplicator channelReplicator, ReplicationValidator replicationValidator) {
+                              V1ChannelReplicator v1ChannelReplicator, ReplicationValidator replicationValidator) {
         this.contentService = contentService;
         this.channelConfigurationDao = channelConfigurationDao;
         this.channelValidator = channelValidator;
-        this.channelReplicator = channelReplicator;
+        this.v1ChannelReplicator = v1ChannelReplicator;
         this.replicationValidator = replicationValidator;
     }
 
@@ -48,6 +48,27 @@ public class ChannelServiceImpl implements ChannelService {
             replicationValidator.throwExceptionIfReplicating(channelName);
         }
         return contentService.insert(channelName, content);
+    }
+
+    public boolean isReplicating(String channelName) {
+        return replicationValidator.isReplicating(channelName);
+    }
+
+    @Override
+    public Optional<ContentKey> getLatest(String channelName, boolean stable) {
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channelName)
+                .contentKey(new ContentKey(TimeUtil.time(stable), "ZZZZZ"))
+                .next(false)
+                .stable(stable)
+                .count(1).build();
+        query.trace(false);
+        Collection<ContentKey> keys = getKeys(query);
+        if (keys.isEmpty()) {
+            return Optional.absent();
+        } else {
+            return Optional.of(keys.iterator().next());
+        }
     }
 
     @Override
@@ -115,6 +136,7 @@ public class ChannelServiceImpl implements ChannelService {
     public Collection<ContentKey> getKeys(DirectionQuery query) {
         Set<ContentKey> toReturn = new TreeSet<>();
         if (query.getCount() <= 0) {
+            query.getTraces().add("requested zero");
             return toReturn;
         }
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
@@ -144,7 +166,7 @@ public class ChannelServiceImpl implements ChannelService {
         replicationValidator.throwExceptionIfReplicating(channelName);
         contentService.delete(channelName);
         channelConfigurationDao.delete(channelName);
-        channelReplicator.delete(channelName);
+        v1ChannelReplicator.delete(channelName);
         return true;
     }
 }
