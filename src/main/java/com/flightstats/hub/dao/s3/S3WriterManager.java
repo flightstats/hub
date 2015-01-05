@@ -33,6 +33,14 @@ public class S3WriterManager {
     }
 
     public void run() {
+        // TODO bc 1/5/15: modify this to not use leadership - maybe skip s3channelwriter?
+        // 0. find server's offset - from mapping
+        // 1. query minute from s3
+        // look at ContentServiceImpl.java line 119
+        // 2. query minute from cache
+        // 3. set difference
+        // 4. add difference to s3WriteQueue
+
         Set<String> allChannels = new HashSet<>();
         Iterable<ChannelConfiguration> channels = channelService.getChannels();
         for (ChannelConfiguration channel : channels) {
@@ -60,6 +68,13 @@ public class S3WriterManager {
 
         @Override
         protected Scheduler scheduler() {
+            // TODO bc 1/5/15: use customScheduler.getNextSchedule?
+            // the intent is to have each server have a particular time it runs during the hour
+            // to add items to the s3WriteQueue if they hadn't already been added.
+            // find current time
+            // get minutes until the time we should run (e.g. 40 minutes after the hour
+            // create
+
             return Scheduler.newFixedDelaySchedule(0, 1, TimeUnit.MINUTES);
         }
 
