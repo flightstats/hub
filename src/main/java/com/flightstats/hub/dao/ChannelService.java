@@ -30,4 +30,8 @@ public interface ChannelService {
     Collection<ContentKey> getKeys(DirectionQuery query);
 
     boolean delete(String channelName);
+
+    boolean isReplicating(String channelName);
+
+    Optional<ContentKey> getLatest(String channelName, boolean stable);
 }

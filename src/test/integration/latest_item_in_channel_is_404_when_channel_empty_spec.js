@@ -1,4 +1,4 @@
-require('./../integration/integration_config.js');
+require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
 var testName = __filename;

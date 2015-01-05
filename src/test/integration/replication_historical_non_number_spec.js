@@ -1,14 +1,14 @@
-require('./../integration/integration_config.js');
+require('./integration_config.js');
 
 var jsonBody = JSON.stringify({
-    historicalDays : null,
+    historicalDays : "blah",
     includeExcept : ["two", "one"]
 });
-var replicationResource = hubUrlBase + "/replication/nullHistorical";
+var replicationResource = hubUrlBase + "/replication/nonNumber";
 var testName = "replication_historical_non_number_spec";
 utils.configureFrisby();
 
-frisby.create(testName + ': null historical')
+frisby.create(testName + ': non number historical')
     .put(replicationResource, null, { body : jsonBody})
     .addHeader("Content-Type", "application/json")
     .expectStatus(400)

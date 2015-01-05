@@ -2,8 +2,8 @@ package com.flightstats.hub.replication;
 
 public class ReplicationStatus {
 
-    private long replicationLatest;
-    private long sourceLatest;
+    private String replicationLatest;
+    private String sourceLatest;
     private Channel channel;
     private boolean connected;
     private String message;
@@ -20,24 +20,20 @@ public class ReplicationStatus {
         this.channel = channel;
     }
 
-    public long getReplicationLatest() {
+    public String getReplicationLatest() {
         return replicationLatest;
     }
 
-    public void setReplicationLatest(long replicationLatest) {
+    public void setReplicationLatest(String replicationLatest) {
         this.replicationLatest = replicationLatest;
     }
 
-    public long getSourceLatest() {
+    public String getSourceLatest() {
         return sourceLatest;
     }
 
-    public void setSourceLatest(long sourceLatest) {
+    public void setSourceLatest(String sourceLatest) {
         this.sourceLatest = sourceLatest;
-    }
-
-    public long getDeltaLatest() {
-        return getSourceLatest() - getReplicationLatest();
     }
 
     public boolean isConnected() {

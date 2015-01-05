@@ -3,6 +3,7 @@ package com.flightstats.hub.replication;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -89,9 +90,8 @@ public class ReplicationServiceImpl implements ReplicationService {
 
     private Collection<ReplicationStatus> getStatus() {
         ArrayList<ReplicationStatus> statuses = Lists.newArrayList();
-        //todo - gfm - 10/28/14 -
-        /*for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
-            for (ChannelReplicator channelReplicator : domainReplicator.getChannels()) {
+        for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
+            for (V1ChannelReplicator channelReplicator : domainReplicator.getChannels()) {
                 ReplicationStatus status = new ReplicationStatus();
                 statuses.add(status);
                 Channel channel = channelReplicator.getChannel();
@@ -99,18 +99,18 @@ public class ReplicationServiceImpl implements ReplicationService {
                 Optional<Long> sourceLatest = channelUtils.getLatestSequence(channel.getUrl());
                 if (channelReplicator.isValid() && sourceLatest.isPresent()) {
                     status.setConnected( channelReplicator.isConnected());
-                    Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channel.getName());
+                    Optional<ContentKey> lastUpdatedKey = channelService.getLatest(channel.getName(), true);
                     if (lastUpdatedKey.isPresent()) {
-                        status.setReplicationLatest(lastUpdatedKey.get().getSequence());
+                        status.setReplicationLatest(lastUpdatedKey.get().toUrl());
                     }
-                    status.setSourceLatest(sourceLatest.get());
+                    status.setSourceLatest(sourceLatest.get().toString());
                 } else if (!sourceLatest.isPresent()) {
                     status.setMessage("source channel not present");
                 } else {
                     status.setMessage(channelReplicator.getMessage());
                 }
             }
-        }*/
+        }
 
         return statuses;
     }

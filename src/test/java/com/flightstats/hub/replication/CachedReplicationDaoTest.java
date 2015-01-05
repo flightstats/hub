@@ -31,8 +31,8 @@ public class CachedReplicationDaoTest {
 
     private Collection<ReplicationDomain> getReplicationDomains(String first, String second) {
         Collection<ReplicationDomain> domains = new ArrayList<>();
-        domains.add(ReplicationDomain.builder().withDomain(first).build());
-        domains.add(ReplicationDomain.builder().withDomain(second).build());
+        domains.add(ReplicationDomain.builder().domain(first).build());
+        domains.add(ReplicationDomain.builder().domain(second).build());
         return domains;
     }
 
@@ -54,8 +54,8 @@ public class CachedReplicationDaoTest {
         cachedReplicationDao.getDomains(false);
         Collection<ReplicationDomain> domains = cachedReplicationDao.getDomains(true);
         assertEquals(2, domains.size());
-        assertTrue( domains.contains(ReplicationDomain.builder().withDomain("A").build()));
-        assertTrue( domains.contains(ReplicationDomain.builder().withDomain("B").build()));
+        assertTrue(domains.contains(ReplicationDomain.builder().domain("A").build()));
+        assertTrue(domains.contains(ReplicationDomain.builder().domain("B").build()));
     }
 
     @Test
@@ -64,7 +64,7 @@ public class CachedReplicationDaoTest {
         cachedReplicationDao.getDomains(false);
         Collection<ReplicationDomain> domains = cachedReplicationDao.getDomains(false);
         assertEquals(2, domains.size());
-        assertTrue( domains.contains(ReplicationDomain.builder().withDomain("foo").build()));
-        assertTrue( domains.contains(ReplicationDomain.builder().withDomain("bar").build()));
+        assertTrue(domains.contains(ReplicationDomain.builder().domain("foo").build()));
+        assertTrue(domains.contains(ReplicationDomain.builder().domain("bar").build()));
     }
 }

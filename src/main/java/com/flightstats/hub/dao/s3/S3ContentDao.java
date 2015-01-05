@@ -6,6 +6,7 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Traces;
 import com.flightstats.hub.spoke.PreviousUtil;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
@@ -102,14 +102,20 @@ public class S3ContentDao implements ContentDao {
             builder.withContentKey(key);
             builder.withData(bytes);
             return builder.build();
-        } catch (IOException e) {
+        } catch (AmazonS3Exception e) {
+            if (e.getStatusCode() != 404) {
+                logger.warn("unable to read " + channelName + " " + key, e);
+            }
+            return null;
+        } catch (Exception e) {
             logger.warn("unable to read " + channelName + " " + key, e);
             return null;
         }
     }
 
     @Override
-    public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit) {
+    public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
+        traces.add("s3 query by time", channelName, startTime, unit);
         String timePath = unit.format(startTime);
         ListObjectsRequest request = new ListObjectsRequest();
         request.withBucketName(s3BucketName);
@@ -123,6 +129,7 @@ public class S3ContentDao implements ContentDao {
             listing = s3Client.listObjects(request);
             marker = addKeys(channelName, listing, keys);
         }
+        traces.add("s3 returning ", keys);
         return keys;
     }
 
@@ -154,22 +161,24 @@ public class S3ContentDao implements ContentDao {
         SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         int hourCount = 0;
         while (orderedKeys.size() < query.getCount() && hourCount < 6) {
-            SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.HOURS);
+            SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.HOURS, query.getTraces());
             PreviousUtil.addToPrevious(query, queryByTime, orderedKeys);
             startTime = startTime.minusHours(1);
             hourCount++;
         }
         int dayCount = 0;
         while (orderedKeys.size() < query.getCount() && dayCount <= query.getTtlDays()) {
-            SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS);
+            SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS, query.getTraces());
             PreviousUtil.addToPrevious(query, queryByTime, orderedKeys);
             startTime = startTime.minusDays(1);
             dayCount++;
         }
+        query.getTraces().add("s3 previous returning", orderedKeys);
         return orderedKeys;
     }
 
     private SortedSet<ContentKey> next(DirectionQuery query) {
+        query.getTraces().add("s3 next", query);
         SortedSet<ContentKey> keys = new TreeSet<>();
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
@@ -183,6 +192,7 @@ public class S3ContentDao implements ContentDao {
             listing = s3Client.listObjects(request);
             marker = addKeys(query.getChannelName(), listing, keys);
         }
+        query.getTraces().add("s3 next returning", keys);
         return keys;
     }
 

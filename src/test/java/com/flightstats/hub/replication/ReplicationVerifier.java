@@ -1,20 +1,10 @@
 package com.flightstats.hub.replication;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.config.GuiceContext;
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * The replication verifier should get kicked off every N hours.
@@ -22,6 +12,8 @@ import java.util.concurrent.Future;
  * For each replicated channel, it should verify that:
  *  - The sequence is continous for the last N hours
  *  - For a certain percentage, M, verify that the source payload matches the replicated payload
+ *
+ *  //todo - gfm - 12/22/14 - replace this with javascript
  */
 public class ReplicationVerifier {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationVerifier.class);
@@ -30,7 +22,7 @@ public class ReplicationVerifier {
     private static ObjectMapper mapper = new ObjectMapper();
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 3) {
+        /*if (args.length != 3) {
             logger.warn("Usage: com.flightstats.hub.replication.ReplicationVerifier replicationDomain frequencyHours verificationPercent");
             logger.warn("replicationDomain is the full uri of where replication is - http://hub.svc.staging/");
             logger.warn("frequencyHours is how far back in time this process should look for data - 1");
@@ -73,6 +65,6 @@ public class ReplicationVerifier {
         logger.info("returning missing count " + missing);
         executor.shutdown();
 
-        System.exit(missing);
+        System.exit(missing);*/
     }
 }
