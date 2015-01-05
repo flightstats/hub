@@ -49,12 +49,7 @@ public class S3WriteQueue {
     }
 
     public void add(ChannelContentKey key) {
-        try {
-            keys.put(key);
-        } catch (InterruptedException e) {
-            logger.warn("interupted " + e.getMessage());
-            throw new RuntimeInterruptedException(e);
-        }
+        keys.offer(key);
     }
 
     public void close() {
