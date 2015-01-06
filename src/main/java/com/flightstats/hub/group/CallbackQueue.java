@@ -68,6 +68,7 @@ public class CallbackQueue implements AutoCloseable {
                     logger.trace("iterating {} last={} stable={} ", channel, lastQueryTime, latestStableInChannel);
                     if (lastQueryTime.isBefore(latestStableInChannel)) {
                         TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
+                        logger.trace("query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
                         TimeQuery query = TimeQuery.builder()
                                 .channelName(channel)
                                 .startTime(lastQueryTime)
@@ -77,7 +78,7 @@ public class CallbackQueue implements AutoCloseable {
                         lastQueryTime = lastQueryTime.plus(unit.getDuration());
                     } else {
                         Duration duration = new Duration(latestStableInChannel, lastQueryTime);
-                        logger.trace("sleeping " + duration.getMillis());
+                        logger.trace("sleeping {} ", duration.getMillis());
                         Sleeper.sleep(duration.getMillis());
                     }
                 }
@@ -101,9 +102,9 @@ public class CallbackQueue implements AutoCloseable {
     }
 
     private TimeUtil.Unit getStepUnit(DateTime latestStableInChannel) {
-        if (lastQueryTime.minusHours(2).isBefore(latestStableInChannel)) {
+        if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {
             return TimeUtil.Unit.HOURS;
-        } else if (lastQueryTime.minusMinutes(2).isBefore(latestStableInChannel)) {
+        } else if (lastQueryTime.isBefore(latestStableInChannel.minusMinutes(2))) {
             return TimeUtil.Unit.MINUTES;
         }
         return TimeUtil.Unit.SECONDS;
