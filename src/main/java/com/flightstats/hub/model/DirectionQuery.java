@@ -32,6 +32,13 @@ public class DirectionQuery {
         return ttlDays;
     }
 
+    public Traces getTraces() {
+        if (traces == null) {
+            return Traces.NOOP;
+        }
+        return traces;
+    }
+
     public void trace(boolean trace) {
         if (trace) {
             traces = new TracesImpl();
