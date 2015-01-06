@@ -22,6 +22,11 @@ conf/hub.properties :
         shutdown_delay_seconds : 15
         shutdown_wait_seconds : 60
 
+    verification :
+        one: 15
+        two: 30
+        three: 45
+
     backing :
         store : "aws"
 
