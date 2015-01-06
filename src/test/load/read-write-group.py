@@ -198,6 +198,16 @@ class WebsiteTasks(TaskSet):
         size = self.number * self.number * 300
         return ''.join(random.choice(chars) for x in range(size))
 
+    @task(10)
+    def verify_callback_length(self):
+        groupCallbacks[self.channel]["lock"].acquire()
+        items = len(groupCallbacks[self.channel]["data"])
+        if items > 100:
+            events.request_failure.fire(request_type="group", name="length", response_time=1,
+                                        exception=-1)
+            logger.info("too many items in " + self.channel + " " + str(items))
+        groupCallbacks[self.channel]["lock"].release()
+
     @staticmethod
     def verify_ordered(channel, incoming_uri):
         if groupCallbacks[channel]["data"][0] == incoming_uri:
@@ -254,6 +264,7 @@ class WebsiteUser(HttpLocust):
         super(WebsiteUser, self).__init__()
         groupConfig['host'] = self.host
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
+        # groupConfig['ip'] = '127.0.0.1'
         logger.info('groupConfig %s', groupConfig)
         print groupConfig
 
