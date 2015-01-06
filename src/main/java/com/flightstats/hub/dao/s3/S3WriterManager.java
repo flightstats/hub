@@ -1,62 +1,119 @@
 package com.flightstats.hub.dao.s3;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.*;
+import com.flightstats.hub.util.RuntimeInterruptedException;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.curator.framework.CuratorFramework;
+import org.joda.time.DateTime;
 
-import java.util.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("Convert2Lambda")
 public class S3WriterManager {
 
     private final ChannelService channelService;
     private final ContentDao cacheContentDao;
+    private final ContentDao longTermContentDao;
     private final S3WriteQueue s3WriteQueue;
-    private final CuratorFramework curator;
-    private final Map<String, S3ChannelWriter> channelWriterMap = new HashMap<>();
+    private final int offsetMinutes;
+    private final ExecutorService executorService;
 
     @Inject
     public S3WriterManager(ChannelService channelService,
                            @Named(ContentDao.CACHE) ContentDao cacheContentDao,
-                           S3WriteQueue s3WriteQueue,
-                           CuratorFramework curator) {
+                           @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
+                           S3WriteQueue s3WriteQueue) {
         this.channelService = channelService;
         this.cacheContentDao = cacheContentDao;
+        this.longTermContentDao = longTermContentDao;
         this.s3WriteQueue = s3WriteQueue;
-        this.curator = curator;
         HubServices.register(new S3WriterManagerService(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
+
+        String host="";
+        try {
+            host = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        if(host.contains("1.")){
+            this.offsetMinutes = HubProperties.getProperty("verify.one", 15);
+        }else if(host.contains("2.")){
+            this.offsetMinutes = HubProperties.getProperty("verify.two", 30);
+        }else if(host.contains("2.")){
+            this.offsetMinutes = HubProperties.getProperty("verify.three", 45);
+        }else{
+            this.offsetMinutes = 5;
+        }
+        executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ContentServiceImpl-%d").build());
+    }
+
+    TimeQuery buildTimeQuery(DateTime startTime, String channelName, String location){
+        return TimeQuery.builder()
+                .channelName(channelName)
+                .startTime(startTime)
+                .stable(true)
+                .unit(TimeUtil.Unit.MINUTES)
+                .location(Location.valueOf(location))  // CACHE/LONG_TERM
+                .build();
+    }
+
+    SortedSet<ContentKey> itemsInCacheButNotLongTerm(DateTime startTime, String channelName){
+        TimeQuery cacheQuery = buildTimeQuery(startTime, channelName, "CACHE");
+        TimeQuery ltQuery = buildTimeQuery(startTime, channelName, "LONG_TERM");
+
+        SortedSet<ContentKey> cacheKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        SortedSet<ContentKey> ltKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        try {
+            CountDownLatch countDownLatch = new CountDownLatch(2);
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    cacheKeys.addAll(cacheContentDao.queryByTime(cacheQuery.getChannelName(), cacheQuery.getStartTime(), cacheQuery.getUnit(), cacheQuery.getTraces()));
+                    countDownLatch.countDown();
+                }
+            });
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    ltKeys.addAll(longTermContentDao.queryByTime(ltQuery.getChannelName(), ltQuery.getStartTime(), ltQuery.getUnit(), ltQuery.getTraces()));
+                    countDownLatch.countDown();
+                }
+            });
+            countDownLatch.await(3, TimeUnit.MINUTES);
+            cacheKeys.removeAll(ltKeys);
+            return cacheKeys;
+        } catch (InterruptedException e) {
+            throw new RuntimeInterruptedException(e);
+        }
+
     }
 
     public void run() {
-        // TODO bc 1/5/15: modify this to not use leadership - maybe skip s3channelwriter?
-        // 0. find server's offset - from mapping
-        // 1. query minute from s3
-        // look at ContentServiceImpl.java line 119
-        // 2. query minute from cache
-        // 3. set difference
-        // 4. add difference to s3WriteQueue
+        DateTime startTime = DateTime.now()
+                .withMinuteOfHour(offsetMinutes);
 
-        Set<String> allChannels = new HashSet<>();
         Iterable<ChannelConfiguration> channels = channelService.getChannels();
         for (ChannelConfiguration channel : channels) {
             String channelName = channel.getName();
-            allChannels.add(channelName);
-            if (!channelWriterMap.containsKey(channelName)) {
-                S3ChannelWriter writer = new S3ChannelWriter(cacheContentDao, s3WriteQueue, curator);
-                channelWriterMap.put(channelName, writer);
-                writer.tryLeadership(channelName);
+            SortedSet<ContentKey> keysToAdd = itemsInCacheButNotLongTerm(startTime, channelName);
+            for (ContentKey key : keysToAdd) {
+                s3WriteQueue.add(new ChannelContentKey(channelName, key));
             }
-        }
-        Set<String> writers = new HashSet<>(channelWriterMap.keySet());
-        writers.removeAll(allChannels);
-        for (String writer : writers) {
-            S3ChannelWriter removed = channelWriterMap.remove(writer);
-            removed.close();
         }
     }
 
@@ -68,22 +125,11 @@ public class S3WriterManager {
 
         @Override
         protected Scheduler scheduler() {
-            // TODO bc 1/5/15: use customScheduler.getNextSchedule?
-            // the intent is to have each server have a particular time it runs during the hour
-            // to add items to the s3WriteQueue if they hadn't already been added.
-            // find current time
-            // get minutes until the time we should run (e.g. 40 minutes after the hour
-            // create
-
             return Scheduler.newFixedDelaySchedule(0, 1, TimeUnit.MINUTES);
         }
 
         @Override
         protected void shutDown() throws Exception {
-            Collection<S3ChannelWriter> writers = channelWriterMap.values();
-            for (S3ChannelWriter writer : writers) {
-                writer.close();
-            }
             s3WriteQueue.close();
         }
     }
