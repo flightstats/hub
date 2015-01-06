@@ -177,12 +177,14 @@ public class V1ChannelReplicator implements Leader {
     }
 
     public long getLastUpdated() {
-        Collection<ContentKey> keys = channelService.getKeys(DirectionQuery.builder()
+        DirectionQuery query = DirectionQuery.builder()
                 .contentKey(new ContentKey())
                 .ttlDays(historicalDays)
                 .count(1)
                 .channelName(channel.getName())
-                .build());
+                .build();
+        query.trace(false);
+        Collection<ContentKey> keys = channelService.getKeys(query);
         if (!keys.isEmpty()) {
             ContentKey contentKey = keys.iterator().next();
             try {
