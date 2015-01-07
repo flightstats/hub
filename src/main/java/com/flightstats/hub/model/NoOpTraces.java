@@ -27,6 +27,11 @@ public class NoOpTraces implements Traces {
     }
 
     @Override
+    public long getStart() {
+        return System.currentTimeMillis();
+    }
+
+    @Override
     public void logSlow(long millis, Logger logger) {
 
     }
