@@ -11,6 +11,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -160,16 +161,23 @@ public class V1ChannelReplicator implements Leader {
         }
         logger.info("starting " + channel.getUrl() + " migration at " + sequence);
         iterator = sequenceIteratorFactory.create(sequence, channel);
+        long lastReplicated = 0;
         try {
             while (iterator.hasNext() && hasLeadership.get()) {
                 Optional<Content> optionalContent = iterator.next();
                 if (optionalContent.isPresent()) {
-                    channelService.insert(channel.getName(), optionalContent.get());
+                    Content content = optionalContent.get();
+                    ContentKey key = content.getContentKey().get();
+                    if (key.getMillis() < lastReplicated) {
+                        key = new ContentKey(new DateTime(lastReplicated), key.getHash());
+                        content.setContentKey(key);
+                    }
+                    channelService.insert(channel.getName(), content);
+                    lastReplicated = key.getMillis();
                 } else {
                     logger.warn("missing content for " + channel.getUrl());
                 }
             }
-
         } finally {
             logger.info("stopping " + channel.getUrl() + " migration ");
             closeIterator();
