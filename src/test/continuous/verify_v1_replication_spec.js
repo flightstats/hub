@@ -34,35 +34,39 @@ describe(testName, function () {
     var channels = [];
 
     it('gets replicated items', function (done) {
-        //todo - gfm - 1/6/15 - do this with async
-        replicatedDomain.excludeExcept.forEach(function (channel) {
-            console.log('replicated', channel);
-            agent.get(hubUrl + '/channel/' + channel + '/time/hour')
-                .set('Accept', 'application/json')
-                .end(function (res) {
-                    expect(res.error).toBe(false);
-                    channels.push({'name': channel, uris: res.body._links.uris});
-                    done();
-                })
-
-        });
+        async.eachLimit(replicatedDomain.excludeExcept, 20,
+            function (channel, callback) {
+                console.log('replicated', channel);
+                agent.get(hubUrl + '/channel/' + channel + '/time/hour')
+                    .set('Accept', 'application/json')
+                    .end(function (res) {
+                        expect(res.error).toBe(false);
+                        channels.push({'name': channel, uris: res.body._links.uris});
+                        callback(res.error);
+                    });
+            }, function (err) {
+                done(err);
+            });
     }, 60 * 1000);
 
     function getSequence(uri) {
-        return uri.substring(uri.lastIndexOf('/') + 1);
+        return parseInt(uri.substring(uri.lastIndexOf('/') + 1));
     }
 
     var itemsToVerify = [];
 
     it('checks for sequential', function (done) {
         channels.forEach(function (channel) {
-            console.log('channel', channel);
             channel.verify = [];
+            console.log('channel', channel.name);
             var sequence;
             channel.uris.forEach(function (uri) {
                 if (sequence) {
                     var next = getSequence(uri);
-                    expect(1 + parseInt(sequence)).toBe(parseInt(next));
+                    if (sequence + 1 !== next) {
+                        console.log('wrong order ' + channel.name + ' expected ' + sequence + ' found ' + next);
+                    }
+                    expect(1 + sequence).toBe(next);
                     sequence = next;
                     if (Math.random() > 0.99) {
                         itemsToVerify.push({name: channel.name, sequence: sequence, uri: uri});
@@ -99,8 +103,12 @@ describe(testName, function () {
                         }
                     ],
                     function (err, results) {
-                        console.log(item.uri + ' ' + results[0].length + ' ' + results[1].length);
-                        expect(results[1].length).toBe(results[0].length);
+                        var itemZero = results[0].length;
+                        var itemOne = results[1].length;
+                        if (itemOne !== itemZero) {
+                            console.log('wrong length for item ' + item.uri + ' expected ' + itemZero + ' found ' + itemOne);
+                        }
+                        expect(itemOne).toBe(itemZero);
                         callback(err);
                     });
 
@@ -108,5 +116,7 @@ describe(testName, function () {
                 done(err);
             });
     }, 30 * 60 * 1000);
+
+    //todo - gfm - 1/6/15 - look for /latest in source channel, and make sure it exists in replicated
 
 });
