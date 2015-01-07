@@ -10,9 +10,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Getter
 @EqualsAndHashCode(of = {"contentType", "contentLanguage", "user"})
@@ -28,8 +25,7 @@ public class Content implements Serializable {
     private final InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
-    //todo - gfm - 12/22/14 - pull this out as it's own class
-    private List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
+    private Traces traces = new TracesImpl();
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
@@ -47,22 +43,6 @@ public class Content implements Serializable {
 
     public void setContentKey(ContentKey contentKey) {
         this.contentKey = Optional.of(contentKey);
-    }
-
-    public void logTraces() {
-        long processingTime = System.currentTimeMillis() - contentKey.get().getMillis();
-        if (processingTime >= 100) {
-            try {
-                traces.add(new Trace("logging"));
-                String output = "\n\t";
-                for (Trace trace : traces) {
-                    output += trace.toString() + "\n\t";
-                }
-                logger.info("slow processing of {} millis. trace: {}", processingTime, output);
-            } catch (Exception e) {
-                logger.warn("unable to log {} traces {}", contentKey, traces);
-            }
-        }
     }
 
     public InputStream getStream() {
