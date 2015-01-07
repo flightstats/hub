@@ -38,7 +38,11 @@ public class TracesImpl implements Traces {
         this.start = start;
     }
 
-    //todo - gfm - 12/29/14 - pull this from Content
+    @Override
+    public long getStart() {
+        return start;
+    }
+
     @Override
     public void logSlow(long millis, Logger logger) {
         long processingTime = System.currentTimeMillis() - start;
