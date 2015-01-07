@@ -8,12 +8,13 @@ hubUrl = 'http://' + hubUrl;
 console.log(hubUrl);
 
 var sourceDomain = process.env.sourceDomain || 'hub.svc.prod';
+var MINUTE = 60 * 1000;
 
 describe(testName, function () {
 
     var replicatedDomain;
 
-    it('loads ' + hubUrl + 'replicated channels for source ' + sourceDomain, function (done) {
+    it('loads ' + hubUrl + ' replicated channels for source ' + sourceDomain, function (done) {
         agent.get(hubUrl + '/replication')
             .set('Accept', 'application/json')
             .end(function (res) {
@@ -29,7 +30,7 @@ describe(testName, function () {
                 expect(replicatedDomain).not.toBeUndefined();
                 done();
             })
-    });
+    }, MINUTE);
 
     var latestSourceItems = [];
 
@@ -48,7 +49,7 @@ describe(testName, function () {
                 console.log('latest', latestSourceItems);
                 done(err);
             });
-    }, 2 * 60 * 1000);
+    }, 2 * MINUTE);
 
     var channels = {};
 
@@ -71,7 +72,7 @@ describe(testName, function () {
             }, function (err) {
                 done(err);
             });
-    }, 60 * 1000);
+    }, MINUTE);
 
     function getSequence(uri) {
         return parseInt(uri.substring(uri.lastIndexOf('/') + 1));
@@ -103,7 +104,7 @@ describe(testName, function () {
             console.log('uris for ', channel, channels[channel].length, itemsToVerify.length);
         }
         done();
-    }, 5 * 1000);
+    }, MINUTE);
 
     it('compares replicated items to source items', function (done) {
         function getItem(uri, callback) {
@@ -137,7 +138,7 @@ describe(testName, function () {
             }, function (err) {
                 done(err);
             });
-    }, 30 * 60 * 1000);
+    }, 30 * MINUTE);
 
     it('checks replicated for latest from source', function (done) {
         async.eachLimit(latestSourceItems, 40,
@@ -158,7 +159,7 @@ describe(testName, function () {
             }, function (err) {
                 done(err);
             });
-    }, 2 * 60 * 1000);
+    }, 2 * MINUTE);
 
 
 
