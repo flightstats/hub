@@ -50,7 +50,7 @@ describe(testName, function () {
             });
     }, 2 * 60 * 1000);
 
-    var channels = [];
+    var channels = {};
 
     it('gets lists of replicated items', function (done) {
         async.eachLimit(replicatedDomain.excludeExcept, 20,
@@ -59,8 +59,14 @@ describe(testName, function () {
                     .set('Accept', 'application/json')
                     .end(function (res) {
                         expect(res.error).toBe(false);
-                        channels.push({'name': channel, uris: res.body._links.uris});
-                        callback(res.error);
+                        channels[channel] = res.body._links.uris;
+                        agent.get(res.body._links.previous.href)
+                            .set('Accept', 'application/json')
+                            .end(function (res) {
+                                expect(res.error).toBe(false);
+                                channels[channel] = res.body._links.uris.concat(channels[channel]);
+                                callback(res.error);
+                            });
                     });
             }, function (err) {
                 done(err);
@@ -74,28 +80,28 @@ describe(testName, function () {
     var itemsToVerify = [];
 
     it('makes sure replicated items are sequential ', function (done) {
-        channels.forEach(function (channel) {
-            channel.verify = [];
-            var sequence;
-            channel.uris.forEach(function (uri) {
+        for (var channel in channels) {
+            var sequence = 0;
+            console.log('iterating', channel, sequence);
+            channels[channel].forEach(function (uri) {
                 if (sequence) {
                     var next = getSequence(uri);
                     if (sequence + 1 !== next) {
-                        console.log('wrong order ' + channel.name + ' expected ' + sequence + ' found ' + next);
+                        console.log('wrong order ' + channel + ' expected ' + sequence + ' found ' + next);
                     }
                     expect(1 + sequence).toBe(next);
                     sequence = next;
                     if (Math.random() > 0.99) {
-                        itemsToVerify.push({name: channel.name, sequence: sequence, uri: uri});
+                        itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
                     }
                 } else {
                     sequence = getSequence(uri);
-                    itemsToVerify.push({name: channel.name, sequence: sequence, uri: uri});
+                    itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
                 }
             });
 
-            console.log('uris for ', channel.name, channel.uris.length, itemsToVerify.length);
-        });
+            console.log('uris for ', channel, channels[channel].length, itemsToVerify.length);
+        }
         done();
     }, 5 * 1000);
 
