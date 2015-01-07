@@ -64,7 +64,7 @@ public class S3ChannelWriter implements Leader {
         while (hasLeadership.get()) {
             DateTime nextTime = lastCompleted.get(getValuePath(), TimeUtil.now()).plusMinutes(1);
             Sleeper.sleep(getSleep(nextTime, TimeUtil.now()));
-            logger.debug("processing {} ", nextTime);
+            logger.debug("processing {} {} ", channel, nextTime);
             Collection<ContentKey> contentKeys = cacheContentDao.queryByTime(channel, nextTime, TimeUtil.Unit.MINUTES, Traces.NOOP);
             for (ContentKey contentKey : contentKeys) {
                 s3WriteQueue.add(new ChannelContentKey(channel, contentKey));
