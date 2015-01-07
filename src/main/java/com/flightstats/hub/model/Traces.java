@@ -16,6 +16,8 @@ public interface Traces {
 
     void setStart(long start);
 
+    long getStart();
+
     void logSlow(long millis, Logger logger);
 
     void output(ObjectNode root);
