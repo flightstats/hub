@@ -13,7 +13,7 @@ describe(testName, function () {
 
     var replicatedDomain;
 
-    it('loads replicated channels for specific domain', function (done) {
+    it('loads ' + hubUrl + 'replicated channels for source ' + sourceDomain, function (done) {
         agent.get(hubUrl + '/replication')
             .set('Accept', 'application/json')
             .end(function (res) {
@@ -31,9 +31,29 @@ describe(testName, function () {
             })
     });
 
+    var latestSourceItems = {};
+
+    it('gets latest items for source channels', function (done) {
+        async.eachLimit(replicatedDomain.excludeExcept, 40,
+            function (channel, callback) {
+                agent.get('http://' + sourceDomain + '/channel/' + channel + '/latest')
+                    .set('Accept', 'application/json')
+                    .redirects(0)
+                    .end(function (res) {
+                        expect(res.error).toBe(false);
+                        latestSourceItems[channel] = res.header['location'];
+                        callback(res.error);
+                    });
+            }, function (err) {
+                console.log('latest', latestSourceItems);
+                done(err);
+            });
+    }, 2 * 60 * 1000);
+
     var channels = [];
 
-    it('gets replicated items', function (done) {
+    it('gets lists of replicated items', function (done) {
+        //todo - gfm - 1/6/15 - make this go back further that just the current hour
         async.eachLimit(replicatedDomain.excludeExcept, 20,
             function (channel, callback) {
                 console.log('replicated', channel);
