@@ -62,12 +62,6 @@ public class Content implements Serializable {
         }
         return data;
     }
-    /**
-     * @return true if this Content is new, false if it has been inserted elsewhere and is a replicant.
-     */
-    public boolean isNewContent() {
-        return isNew;
-    }
 
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
