@@ -83,7 +83,6 @@ describe(testName, function () {
     it('makes sure replicated items are sequential ', function (done) {
         for (var channel in channels) {
             var sequence = 0;
-            console.log('iterating', channel, sequence);
             channels[channel].forEach(function (uri) {
                 if (sequence) {
                     var next = getSequence(uri);
@@ -101,7 +100,7 @@ describe(testName, function () {
                 }
             });
 
-            console.log('uris for ', channel, channels[channel].length, itemsToVerify.length);
+            console.log(channels[channel].length + ' items for ' + channel + ' verify ' + itemsToVerify.length);
         }
         done();
     }, MINUTE);
