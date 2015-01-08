@@ -2,7 +2,6 @@ package com.flightstats.hub.app;
 
 import com.conducivetech.services.common.util.Haltable;
 import com.flightstats.jerseyguice.jetty.EmptyServlet;
-import com.flightstats.jerseyguice.jetty.JettyServerConnectorFactory;
 import com.google.inject.servlet.GuiceFilter;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.DispatcherType;
 import java.util.EnumSet;
 import java.util.EventListener;
-import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -34,11 +32,12 @@ public class JettyServer implements Haltable {
             HttpConfiguration httpConfig = new HttpConfiguration();
             ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
 
-            String bindIp = HubProperties.getProperty("http.bind_ip", "0.0.0.0");
-            int httpPort = HubProperties.getProperty("http.bind_port", 8080);
-            JettyServerConnectorFactory connectorFactory = new JettyServerConnectorFactory(server, connectionFactory, httpPort);
-            List<Connector> connectors = connectorFactory.build(bindIp, null);
-            server.setConnectors(connectors.toArray(new Connector[connectors.size()]));
+            ServerConnector serverConnector = new ServerConnector(server, connectionFactory);
+            serverConnector.setHost(HubProperties.getProperty("http.bind_ip", "0.0.0.0"));
+            serverConnector.setPort(HubProperties.getProperty("http.bind_port", 8080));
+            serverConnector.setIdleTimeout(HubProperties.getProperty("http.idle_timeout", 30 * 1000));
+
+            server.setConnectors(new Connector[]{serverConnector});
 
             ServletContextHandler root = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
             root.addEventListener(guice);
