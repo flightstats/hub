@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.app.config.metrics.HubInstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.hub.app.config.metrics.HubMethodTimingAdapterProvider;
+import com.flightstats.hub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -102,6 +103,7 @@ public class AwsModule extends AbstractModule {
 
         bind(HostedGraphiteSender.class).asEagerSingleton();
         bind(HubInstrumentedResourceMethodDispatchAdapter.class).toProvider(HubMethodTimingAdapterProvider.class).in(Singleton.class);
+        bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
         bind(TimeMonitor.class).asEagerSingleton();
     }
 

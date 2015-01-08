@@ -1,19 +1,17 @@
 package com.flightstats.hub.app.config;
 
 import com.conducivetech.services.common.util.constraint.ConstraintException;
-import com.flightstats.hub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.rest.RetryClientFilter;
-import com.flightstats.hub.util.ChannelNameUtils;
-import com.flightstats.hub.websocket.JettyWebSocketServlet;
-import com.flightstats.hub.websocket.MetricsWebSocketCreator;
-import com.flightstats.hub.websocket.WebsocketSubscribers;
-import com.flightstats.jerseyguice.Bindings;
-import com.flightstats.jerseyguice.JerseyServletModuleBuilder;
+import com.flightstats.jerseyguice.ObjectMapperResolver;
+import com.flightstats.jerseyguice.mapper.UnrecognizedPropertyExceptionMapper;
 import com.google.common.base.Strings;
 import com.google.inject.*;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
@@ -22,9 +20,9 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;
-import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
+import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.ensemble.fixed.FixedEnsembleProvider;
 import org.apache.curator.framework.CuratorFramework;
@@ -32,16 +30,19 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.BoundedExponentialBackoffRetry;
 import org.apache.zookeeper.data.Stat;
 import org.eclipse.jetty.websocket.jsr356.ClientContainer;
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.WebSocketContainer;
 import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+
+import static com.sun.jersey.api.core.PackagesResourceConfig.*;
 
 public class GuiceContext {
     public static final String HAZELCAST_CONFIG_FILE = "hazelcast.conf.xml";
@@ -52,32 +53,29 @@ public class GuiceContext {
             @NotNull final Properties properties, Module appModule) throws ConstraintException {
         GuiceContext.properties = properties;
 
-        JerseyServletModule jerseyModule = new JerseyServletModuleBuilder()
-                .withJerseyPackage("com.flightstats.hub.service")
-                .withContainerResponseFilters(GZIPContentEncodingFilter.class)
-                .withJerseryProperty(JSONConfiguration.FEATURE_POJO_MAPPING, "true")
-                .withJerseryProperty(ResourceConfig.FEATURE_CANONICALIZE_URI_PATH, "true")
-                .withContainerRequestFilters(GZIPContentEncodingFilter.class, RemoveSlashFilter.class)
-                .withNamedProperties(properties)
-                .withObjectMapper(HubObjectMapperFactory.construct())
-                .withBindings(new HubBindings())
-                .withJerseyGuiceResourcesDisabled()
-                //this could be more precise
-                .withRegexServe(ChannelNameUtils.WEBSOCKET_URL_REGEX, JettyWebSocketServlet.class)
-                .build();
+        Map<String, String> jerseyProps = new HashMap<>();
+        jerseyProps.put(PROPERTY_PACKAGES, "com.flightstats.hub.service");
+        jerseyProps.put(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName());
+
+        jerseyProps.put(JSONConfiguration.FEATURE_POJO_MAPPING, "true");
+        jerseyProps.put(FEATURE_CANONICALIZE_URI_PATH, "true");
+        jerseyProps.put(PROPERTY_CONTAINER_REQUEST_FILTERS, GZIPContentEncodingFilter.class.getName() +
+                ";" + RemoveSlashFilter.class.getName());
+
+        JerseyServletModule jerseyModule = new JerseyServletModule() {
+            @Override
+            protected void configureServlets() {
+                Names.bindProperties(binder(), properties);
+                bind(UnrecognizedPropertyExceptionMapper.class).asEagerSingleton();
+                bind(ObjectMapper.class).toInstance(HubObjectMapperFactory.construct());
+                bind(ObjectMapperResolver.class).toInstance(new ObjectMapperResolver(HubObjectMapperFactory.construct()));
+                bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
+
+                serve("/*").with(GuiceContainer.class, jerseyProps);
+            }
+        };
 
         return new HubGuiceServlet(jerseyModule, appModule, new HubCommonModule());
-    }
-
-    public static class HubBindings implements Bindings {
-
-        @Override
-        public void bind(Binder binder) {
-            binder.bind(WebsocketSubscribers.class).asEagerSingleton();
-            binder.bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
-            binder.bind(WebSocketCreator.class).to(MetricsWebSocketCreator.class).asEagerSingleton();
-            binder.bind(JettyWebSocketServlet.class).asEagerSingleton();
-        }
     }
 
     public static class HubGuiceServlet extends GuiceServletContextListener {
