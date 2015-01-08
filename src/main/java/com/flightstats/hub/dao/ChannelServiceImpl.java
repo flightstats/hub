@@ -44,7 +44,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ContentKey insert(String channelName, Content content) {
-        if (content.isNewContent()) {
+        if (content.isNew()) {
             replicationValidator.throwExceptionIfReplicating(channelName);
         }
         return contentService.insert(channelName, content);
