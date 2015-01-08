@@ -4,9 +4,6 @@ import com.conducivetech.services.common.util.PropertyConfiguration;
 import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.dao.aws.AwsModule;
-import com.flightstats.jerseyguice.jetty.JettyConfig;
-import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
-import com.flightstats.jerseyguice.jetty.JettyServer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Injector;
 import org.apache.zookeeper.server.ServerConfig;
@@ -101,10 +98,9 @@ public class HubMain {
 
     public static JettyServer startServer(Properties properties) throws IOException, ConstraintException {
         AwsModule awsModule = new AwsModule(properties);
-        JettyConfig jettyConfig = new JettyConfigImpl(properties);
         GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties, awsModule);
         injector = guice.getInjector();
-        JettyServer server = new JettyServer(jettyConfig, guice);
+        JettyServer server = new JettyServer(guice);
         HubServices.start(HubServices.TYPE.PRE_START);
         server.start();
         logger.info("Jetty server has been started.");
