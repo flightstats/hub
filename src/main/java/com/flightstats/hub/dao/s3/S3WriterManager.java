@@ -12,6 +12,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -25,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("Convert2Lambda")
 public class S3WriterManager {
+    private final static Logger logger = LoggerFactory.getLogger(S3WriterManager.class);
 
     private final ChannelService channelService;
     private final ContentDao cacheContentDao;
@@ -96,6 +99,9 @@ public class S3WriterManager {
             });
             countDownLatch.await(3, TimeUnit.MINUTES);
             cacheKeys.removeAll(ltKeys);
+            int missingItemCount = cacheKeys.size();
+            if(missingItemCount>0)
+                logger.debug("Found {} in channel {}", missingItemCount, channelName);
             return cacheKeys;
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
