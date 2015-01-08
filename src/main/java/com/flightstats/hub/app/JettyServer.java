@@ -1,7 +1,6 @@
 package com.flightstats.hub.app;
 
 import com.conducivetech.services.common.util.Haltable;
-import com.flightstats.jerseyguice.jetty.EmptyServlet;
 import com.google.inject.servlet.GuiceFilter;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -43,7 +42,7 @@ public class JettyServer implements Haltable {
             root.addEventListener(guice);
             root.addFilter(GuiceFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
             //todo - gfm - 1/8/15 - do we need this?
-            root.addServlet(EmptyServlet.class, "/*");
+            //root.addServlet(EmptyServlet.class, "/*");
 
             server.start();
         } catch (Exception e) {
