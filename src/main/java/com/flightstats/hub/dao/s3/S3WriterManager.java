@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
@@ -34,7 +33,8 @@ public class S3WriterManager {
     private final ContentDao longTermContentDao;
     private final S3WriteQueue s3WriteQueue;
     private final int offsetMinutes;
-    private final ExecutorService executorService;
+    private final ExecutorService queryThreadPool;
+    private final ExecutorService channelThreadPool;
 
     @Inject
     public S3WriterManager(ChannelService channelService,
@@ -57,43 +57,37 @@ public class S3WriterManager {
             this.offsetMinutes = HubProperties.getProperty("verify.one", 15);
         }else if(host.contains("2.")){
             this.offsetMinutes = HubProperties.getProperty("verify.two", 30);
-        }else if(host.contains("2.")){
+        }else if(host.contains("3.")){
             this.offsetMinutes = HubProperties.getProperty("verify.three", 45);
         }else{
             this.offsetMinutes = 5;
         }
-        executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ContentServiceImpl-%d").build());
+        logger.info("Server offset is -{} minutes", this.offsetMinutes);
+        queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d")
+                .build());
+        channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d")
+                .build());
     }
 
-    TimeQuery buildTimeQuery(DateTime startTime, String channelName, String location){
-        return TimeQuery.builder()
-                .channelName(channelName)
-                .startTime(startTime)
-                .stable(true)
-                .unit(TimeUtil.Unit.MINUTES)
-                .location(Location.valueOf(location))  // CACHE/LONG_TERM
-                .build();
-    }
 
     SortedSet<ContentKey> itemsInCacheButNotLongTerm(DateTime startTime, String channelName){
-        TimeQuery cacheQuery = buildTimeQuery(startTime, channelName, "CACHE");
-        TimeQuery ltQuery = buildTimeQuery(startTime, channelName, "LONG_TERM");
-
-        SortedSet<ContentKey> cacheKeys = Collections.synchronizedSortedSet(new TreeSet<>());
-        SortedSet<ContentKey> ltKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        SortedSet<ContentKey> cacheKeys = new TreeSet<>();
+        SortedSet<ContentKey> ltKeys = new TreeSet<>();
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
-            executorService.submit(new Runnable() {
+            queryThreadPool.submit(new Runnable() {
                 @Override
                 public void run() {
-                    cacheKeys.addAll(cacheContentDao.queryByTime(cacheQuery.getChannelName(), cacheQuery.getStartTime(), cacheQuery.getUnit(), cacheQuery.getTraces()));
+                    cacheKeys.addAll(cacheContentDao.queryByTime(channelName, startTime, TimeUtil.Unit.MINUTES,
+                            Traces.NOOP));
                     countDownLatch.countDown();
                 }
             });
-            executorService.submit(new Runnable() {
+            queryThreadPool.submit(new Runnable() {
                 @Override
                 public void run() {
-                    ltKeys.addAll(longTermContentDao.queryByTime(ltQuery.getChannelName(), ltQuery.getStartTime(), ltQuery.getUnit(), ltQuery.getTraces()));
+                    ltKeys.addAll(longTermContentDao.queryByTime(channelName, startTime, TimeUtil.Unit.MINUTES,
+                            Traces.NOOP));
                     countDownLatch.countDown();
                 }
             });
@@ -110,16 +104,26 @@ public class S3WriterManager {
     }
 
     public void run() {
-        DateTime startTime = DateTime.now()
-                .withMinuteOfHour(offsetMinutes);
+        try {
+            DateTime startTime = DateTime.now()
+                    .minusMinutes(offsetMinutes);
+            logger.info("Verifying S3 data at: {}", startTime);
 
-        Iterable<ChannelConfiguration> channels = channelService.getChannels();
-        for (ChannelConfiguration channel : channels) {
-            String channelName = channel.getName();
-            SortedSet<ContentKey> keysToAdd = itemsInCacheButNotLongTerm(startTime, channelName);
-            for (ContentKey key : keysToAdd) {
-                s3WriteQueue.add(new ChannelContentKey(channelName, key));
+            Iterable<ChannelConfiguration> channels = channelService.getChannels();
+            for (ChannelConfiguration channel : channels) {
+                channelThreadPool.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        String channelName = channel.getName();
+                        SortedSet<ContentKey> keysToAdd = itemsInCacheButNotLongTerm(startTime, channelName);
+                        for (ContentKey key : keysToAdd) {
+                            s3WriteQueue.add(new ChannelContentKey(channelName, key));
+                        }
+                    }
+                });
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -137,6 +141,7 @@ public class S3WriterManager {
         @Override
         protected void shutDown() throws Exception {
             s3WriteQueue.close();
+            //TODO - look at shutting down thread pools
         }
     }
 }
