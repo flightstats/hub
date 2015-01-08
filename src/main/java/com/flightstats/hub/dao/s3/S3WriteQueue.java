@@ -4,7 +4,6 @@ package com.flightstats.hub.dao.s3;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -49,7 +48,10 @@ public class S3WriteQueue {
     }
 
     public void add(ChannelContentKey key) {
-        keys.offer(key);
+        boolean value = keys.offer(key);
+        if(!value){
+            logger.debug("Add to queue failed - out of queue space.");
+        }
     }
 
     public void close() {
