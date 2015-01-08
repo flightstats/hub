@@ -37,7 +37,7 @@ public class S3WriteQueue {
                     while (true) {
                         ChannelContentKey key = keys.take();
                         if (key != null) {
-                            logger.trace("writing {}", key);
+                            logger.trace("writing {}", key.getContentKey());
                             Content content = cacheContentDao.read(key.getChannel(), key.getContentKey());
                             longTermContentDao.write(key.getChannel(), content);
                             //todo - gfm - 11/21/14 - should this do something else to verify?
