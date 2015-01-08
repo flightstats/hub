@@ -1,7 +1,6 @@
 package com.flightstats.hub.app.config;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.flightstats.jackson.ObjectMapperBuilder;
@@ -18,9 +17,6 @@ public class HubObjectMapperFactory {
     public static ObjectMapper construct() {
 
         ObjectMapper mapper = new ObjectMapperBuilder("hub-service")
-                .withVersion(new Version(1, 0, 0, null, "data hub", "service"))
-                .withMixInPackage("com.flightstats.hub")
-                .withMixInPackage("com.flightstats.rest")
                 .withSerializer(HalLinks.class, new HalLinksSerializer())
                 .withSerializer(Date.class, new Rfc3339DateSerializer())
                 .build();
