@@ -39,7 +39,7 @@ public class GroupContentKey {
         } catch (KeeperException.NoNodeException e) {
             logger.warn("missing value for {}", groupName);
             initialize(groupName, defaultKey);
-            return get(path, defaultKey);
+            return get(groupName, defaultKey);
         } catch (Exception e) {
             logger.warn("unable to get node " + e.getMessage());
             return defaultKey;
