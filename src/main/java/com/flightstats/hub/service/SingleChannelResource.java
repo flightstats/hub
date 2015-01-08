@@ -2,7 +2,6 @@ package com.flightstats.hub.service;
 
 import com.flightstats.hub.app.config.PATCH;
 import com.flightstats.hub.app.config.metrics.EventTimed;
-import com.flightstats.hub.app.config.metrics.PerChannelTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
@@ -97,7 +96,6 @@ public class SingleChannelResource {
 
     @POST
     @EventTimed(name = "channel.ALL.post")
-    @PerChannelTimed(operationName = "post", channelNameParameter = "channelName")
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage, @HeaderParam("User") final String user,

@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationValidator;
 import com.flightstats.hub.replication.V1ChannelReplicator;
@@ -18,16 +19,18 @@ public class ChannelServiceImpl implements ChannelService {
     private final ChannelValidator channelValidator;
     private final V1ChannelReplicator v1ChannelReplicator;
     private final ReplicationValidator replicationValidator;
+    private HostedGraphiteSender sender;
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigurationDao channelConfigurationDao,
-                              ChannelValidator channelValidator,
-                              V1ChannelReplicator v1ChannelReplicator, ReplicationValidator replicationValidator) {
+                              ChannelValidator channelValidator, V1ChannelReplicator v1ChannelReplicator,
+                              ReplicationValidator replicationValidator, HostedGraphiteSender sender) {
         this.contentService = contentService;
         this.channelConfigurationDao = channelConfigurationDao;
         this.channelValidator = channelValidator;
         this.v1ChannelReplicator = v1ChannelReplicator;
         this.replicationValidator = replicationValidator;
+        this.sender = sender;
     }
 
     @Override
@@ -47,7 +50,10 @@ public class ChannelServiceImpl implements ChannelService {
         if (content.isNew()) {
             replicationValidator.throwExceptionIfReplicating(channelName);
         }
-        return contentService.insert(channelName, content);
+        long start = System.currentTimeMillis();
+        ContentKey contentKey = contentService.insert(channelName, content);
+        sender.send("channel." + channelName + ".post", System.currentTimeMillis() - start);
+        return contentKey;
     }
 
     public boolean isReplicating(String channelName) {
