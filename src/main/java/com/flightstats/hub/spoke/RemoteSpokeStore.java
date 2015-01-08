@@ -67,7 +67,7 @@ public class RemoteSpokeStore {
                         content.getTraces().add(new Trace(server, response.getEntity(String.class)));
                         if (response.getStatus() == 201) {
                             if (reported.compareAndSet(false, true)) {
-                                sender.send("heisenberg", complete - content.getContentKey().get().getMillis());
+                                sender.send("heisenberg", complete - content.getTraces().getStart());
                             }
                             countDownLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
@@ -85,7 +85,7 @@ public class RemoteSpokeStore {
         }
         //todo - gfm - 11/13/14 - this could be smarter with waiting.  should we return success if one succeeds?
         boolean awaited = countDownLatch.await(30, TimeUnit.SECONDS);
-        sender.send("consistent", System.currentTimeMillis() - content.getContentKey().get().getMillis());
+        sender.send("consistent", System.currentTimeMillis() - content.getTraces().getStart());
         return awaited;
     }
 

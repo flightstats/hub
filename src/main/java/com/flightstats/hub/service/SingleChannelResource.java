@@ -124,7 +124,7 @@ public class SingleChannelResource {
             builder.entity(linkedResult);
             builder.location(payloadUri);
             ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
-            content.logTraces();
+            content.getTraces().logSlow(100, logger);
             return builder.build();
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
