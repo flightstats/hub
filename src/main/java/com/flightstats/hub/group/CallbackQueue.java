@@ -11,7 +11,6 @@ import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,9 +76,7 @@ public class CallbackQueue implements AutoCloseable {
                         addKeys(channelService.queryByTime(query));
                         lastQueryTime = lastQueryTime.plus(unit.getDuration());
                     } else {
-                        Duration duration = new Duration(latestStableInChannel, lastQueryTime);
-                        logger.trace("sleeping {} ", duration.getMillis());
-                        Sleeper.sleep(duration.getMillis());
+                        Sleeper.sleep(1000);
                     }
                 }
             }
