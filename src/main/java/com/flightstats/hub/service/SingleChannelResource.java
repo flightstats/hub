@@ -1,8 +1,8 @@
 package com.flightstats.hub.service;
 
 import com.flightstats.hub.app.config.PATCH;
-import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;

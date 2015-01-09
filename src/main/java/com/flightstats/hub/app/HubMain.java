@@ -135,8 +135,7 @@ public class HubMain {
         return loadProperties(resource);
     }
 
-    private static Properties loadProperties(URL url)
-            throws IOException {
+    private static Properties loadProperties(URL url) throws IOException {
         Properties properties = new Properties();
         InputStream inputStream = null;
         try {
