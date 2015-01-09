@@ -1,10 +1,16 @@
 package com.flightstats.hub.app.config;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.rest.RetryClientFilter;
+import com.flightstats.rest.HalLinks;
+import com.flightstats.rest.HalLinksSerializer;
+import com.flightstats.rest.Rfc3339DateSerializer;
 import com.google.common.base.Strings;
 import com.google.inject.*;
 import com.google.inject.name.Named;
@@ -34,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import javax.websocket.WebSocketContainer;
 import javax.ws.rs.ext.ContextResolver;
 import java.io.FileNotFoundException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -64,11 +71,10 @@ public class GuiceContext {
             @Override
             protected void configureServlets() {
                 Names.bindProperties(binder(), properties);
-                ObjectMapper mapper = HubObjectMapperFactory.construct();
+                ObjectMapper mapper = objectMapper();
                 bind(ObjectMapper.class).toInstance(mapper);
                 bind(ObjectMapperResolver.class).toInstance(new ObjectMapperResolver(mapper));
                 bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
-
                 serve("/*").with(GuiceContainer.class, jerseyProps);
             }
         };
@@ -189,8 +195,7 @@ public class GuiceContext {
 
     @javax.ws.rs.ext.Provider
     @Singleton
-    static class ObjectMapperResolver
-            implements ContextResolver<ObjectMapper> {
+    static class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
         private final ObjectMapper objectMapper;
 
         public ObjectMapperResolver(ObjectMapper objectMapper) {
@@ -201,5 +206,16 @@ public class GuiceContext {
         public ObjectMapper getContext(Class<?> type) {
             return objectMapper;
         }
+    }
+
+    private static ObjectMapper objectMapper() {
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(HalLinks.class, new HalLinksSerializer());
+        module.addSerializer(Date.class, new Rfc3339DateSerializer());
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(module);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        return mapper;
     }
 }

@@ -40,9 +40,6 @@ public class JettyServer {
             ServletContextHandler root = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
             root.addEventListener(guice);
             root.addFilter(GuiceFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
-            //todo - gfm - 1/8/15 - do we need this?
-            //root.addServlet(EmptyServlet.class, "/*");
-
             server.start();
         } catch (Exception e) {
             logger.error("Exception in JettyServer: " + e.getMessage(), e);
