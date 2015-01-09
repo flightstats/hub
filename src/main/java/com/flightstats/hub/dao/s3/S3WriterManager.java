@@ -123,7 +123,7 @@ public class S3WriterManager {
                 });
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error: {} ", e.getStackTrace());
         }
     }
 
