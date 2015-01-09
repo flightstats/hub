@@ -1,6 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.dao.aws.AwsModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Injector;

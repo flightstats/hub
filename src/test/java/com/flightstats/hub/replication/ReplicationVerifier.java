@@ -1,7 +1,7 @@
 package com.flightstats.hub.replication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.config.GuiceContext;
+import com.flightstats.hub.app.GuiceContext;
 import com.sun.jersey.api.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
