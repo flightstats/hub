@@ -105,6 +105,9 @@ public class AwsModule extends AbstractModule {
         bind(HubInstrumentedResourceMethodDispatchAdapter.class).toProvider(HubMethodTimingAdapterProvider.class).in(Singleton.class);
         bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
         bind(TimeMonitor.class).asEagerSingleton();
+
+        bind(S3WriterManager.class).asEagerSingleton();
+
     }
 
     @Inject
