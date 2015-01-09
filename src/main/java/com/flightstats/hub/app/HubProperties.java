@@ -5,8 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
 
@@ -31,23 +31,23 @@ public class HubProperties {
         return properties.getProperty(name, defaultValue);
     }
 
-    public static Properties loadProperties(String fileName) throws IOException {
+    public static Properties loadProperties(String fileName) throws MalformedURLException {
         Properties properties;
         if (fileName.equals("useDefault")) {
             properties = getLocalProperties("default");
         } else if (fileName.equals("useEncryptedDefault")) {
             properties = getLocalProperties("defaultEncrypted");
         } else {
-            properties = loadProperties(new File(fileName).toURI().toURL());
+            properties = loadProperties(new File(fileName).toURI().toURL(), true);
         }
         HubProperties.setProperties(properties);
         return properties;
     }
 
-    private static Properties getLocalProperties(String fileNameRoot) throws IOException {
+    private static Properties getLocalProperties(String fileNameRoot) {
         HubMain.warn("using " + fileNameRoot + " properties file");
-        Properties defaultProperties = getProperties("/" + fileNameRoot + ".properties");
-        Properties localProperties = getProperties("/" + fileNameRoot + "_local.properties");
+        Properties defaultProperties = getProperties("/" + fileNameRoot + ".properties", true);
+        Properties localProperties = getProperties("/" + fileNameRoot + "_local.properties", false);
         for (String localKey : localProperties.stringPropertyNames()) {
             String newVal = localProperties.getProperty(localKey);
             logger.info("overriding " + localKey + " using '" + newVal +
@@ -57,21 +57,22 @@ public class HubProperties {
         return defaultProperties;
     }
 
-    private static Properties getProperties(String name) throws IOException {
-        URL resource = HubMain.class.getResource(name);
-        return loadProperties(resource);
+    private static Properties getProperties(String name, boolean required) {
+        return loadProperties(HubMain.class.getResource(name), required);
     }
 
-    private static Properties loadProperties(URL url) throws IOException {
+    private static Properties loadProperties(URL url, boolean required) {
         Properties properties = new Properties();
         InputStream inputStream = null;
         try {
             inputStream = url.openStream();
             properties.load(inputStream);
-        } catch (IOException e) {
-            String message = "Unable to load required properties file from location: " + url.toString();
+        } catch (Exception e) {
+            String message = "Unable to load required properties file from location: " + url;
             logger.error(message, e);
-            throw new IOException(message, e);
+            if (required) {
+                throw new RuntimeException(message, e);
+            }
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
