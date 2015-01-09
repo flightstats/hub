@@ -8,8 +8,8 @@ console.log(hubUrl);
 
 var timeout = 60 * 1000;
 var minute_format = '/YYYY/MM/DD/HH/mm';
-var startOffset = 5;
-var endOffset = 40;
+var startOffset = process.env.startOffset || 40;
+var endOffset = process.env.endOffset || 55;
 
 /**
  * This should load all the channels in the hub.
