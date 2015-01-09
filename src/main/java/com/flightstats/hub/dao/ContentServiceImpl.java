@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.dao.s3.S3WriteQueue;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -27,16 +28,19 @@ public class ContentServiceImpl implements ContentService {
     private final Integer shutdown_wait_seconds;
     private final AtomicInteger inFlight = new AtomicInteger();
     private final ExecutorService executorService;
+    private final S3WriteQueue s3WriteQueue;
 
     @Inject
     public ContentServiceImpl(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
                               @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
                               @Named("spoke.ttlMinutes") int ttlMinutes,
-                              @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds) {
+                              @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds,
+                              S3WriteQueue s3WriteQueue) {
         this.cacheContentDao = cacheContentDao;
         this.longTermContentDao = longTermContentDao;
         this.ttlMinutes = ttlMinutes;
         this.shutdown_wait_seconds = shutdown_wait_seconds;
+        this.s3WriteQueue = s3WriteQueue;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ContentServiceImpl-%d").build());
         HubServices.registerPreStop(new ContentServiceHook());
     }
@@ -58,7 +62,9 @@ public class ContentServiceImpl implements ContentService {
     public ContentKey insert(String channelName, Content content) {
         try {
             inFlight.incrementAndGet();
-            return cacheContentDao.write(channelName, content);
+            ContentKey key = cacheContentDao.write(channelName, content);
+            s3WriteQueue.add(new ChannelContentKey(channelName,key));
+            return key;
         } finally {
             inFlight.decrementAndGet();
         }
