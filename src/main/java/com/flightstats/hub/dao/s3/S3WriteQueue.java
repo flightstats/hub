@@ -4,7 +4,6 @@ package com.flightstats.hub.dao.s3;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -37,7 +36,7 @@ public class S3WriteQueue {
                     while (true) {
                         ChannelContentKey key = keys.take();
                         if (key != null) {
-                            logger.trace("writing {}", key);
+                            logger.trace("writing {}", key.getContentKey());
                             Content content = cacheContentDao.read(key.getChannel(), key.getContentKey());
                             longTermContentDao.write(key.getChannel(), content);
                             //todo - gfm - 11/21/14 - should this do something else to verify?
@@ -49,11 +48,9 @@ public class S3WriteQueue {
     }
 
     public void add(ChannelContentKey key) {
-        try {
-            keys.put(key);
-        } catch (InterruptedException e) {
-            logger.warn("interupted " + e.getMessage());
-            throw new RuntimeInterruptedException(e);
+        boolean value = keys.offer(key);
+        if(!value){
+            logger.info("Add to queue failed - out of queue space. key= {}", key);
         }
     }
 
