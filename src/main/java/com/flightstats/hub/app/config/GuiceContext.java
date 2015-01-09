@@ -1,6 +1,5 @@
 package com.flightstats.hub.app.config;
 
-import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -49,7 +48,7 @@ public class GuiceContext {
     private static Properties properties = new Properties();
 
     public static HubGuiceServlet construct(
-            @NotNull final Properties properties, Module appModule) throws ConstraintException {
+            final Properties properties, Module appModule) {
         GuiceContext.properties = properties;
 
         Map<String, String> jerseyProps = new HashMap<>();
