@@ -3,10 +3,10 @@ package com.flightstats.hub.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.config.metrics.EventTimed;
-import com.flightstats.hub.app.config.metrics.PerChannelTimed;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.metrics.EventTimed;
+import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
@@ -43,18 +43,19 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 public class ChannelContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
-    private final UriInfo uriInfo;
-    private final ChannelService channelService;
+
     private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
-    private final ChannelLinkBuilder linkBuilder;
 
     @Inject
-    public ChannelContentResource(UriInfo uriInfo, ChannelService channelService, ChannelLinkBuilder linkBuilder) {
-        this.uriInfo = uriInfo;
-        this.channelService = channelService;
-        this.linkBuilder = linkBuilder;
-    }
+    private ObjectMapper mapper;
+    @Inject
+    private UriInfo uriInfo;
+    @Inject
+    private ChannelService channelService;
+    @Inject
+    private ChannelLinkBuilder linkBuilder;
+    @Inject
+    HostedGraphiteSender sender;
 
     //todo - gfm - 12/12/14 - what is the proper response for a time request in the future?
     //404 ?
@@ -185,7 +186,6 @@ public class ChannelContentResource {
     @Path("/{hour}/{minute}/{second}/{millis}/{hash}")
     @GET
     @EventTimed(name = "channel.ALL.get")
-    @PerChannelTimed(operationName = "fetch", channelNameParameter = "channelName")
     public Response getValue(@PathParam("channelName") String channelName, @PathParam("year") int year,
                              @PathParam("month") int month,
                              @PathParam("day") int day,
@@ -196,6 +196,7 @@ public class ChannelContentResource {
                              @PathParam("hash") String hash,
                              @HeaderParam("Accept") String accept, @HeaderParam("User") String user
     ) {
+        long start = System.currentTimeMillis();
         DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         ContentKey key = new ContentKey(dateTime, hash);
         Request request = Request.builder()
@@ -233,6 +234,7 @@ public class ChannelContentResource {
 
         builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/previous") + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/next") + ">;rel=\"" + "next" + "\"");
+        sender.send("channel." + channelName + ".get", System.currentTimeMillis() - start);
         return builder.build();
     }
 

@@ -1,6 +1,5 @@
-package com.flightstats.hub.app.config.metrics;
+package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
