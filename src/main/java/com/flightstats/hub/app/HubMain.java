@@ -1,10 +1,10 @@
 package com.flightstats.hub.app;
 
-import com.conducivetech.services.common.util.PropertyConfiguration;
 import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.dao.aws.AwsModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Injector;
+import org.apache.commons.io.IOUtils;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -113,7 +114,7 @@ public class HubMain {
         } else if (fileName.equals("useEncryptedDefault")) {
             return getLocalProperties("defaultEncrypted");
         }
-        return PropertyConfiguration.loadProperties(new File(fileName), true, logger);
+        return loadProperties(new File(fileName).toURI().toURL());
     }
 
     private static Properties getLocalProperties(String fileNameRoot) throws IOException {
@@ -131,7 +132,24 @@ public class HubMain {
 
     private static Properties getProperties(String name, boolean required) throws IOException {
         URL resource = HubMain.class.getResource(name);
-        return PropertyConfiguration.loadProperties(resource, required, logger);
+        return loadProperties(resource);
+    }
+
+    private static Properties loadProperties(URL url)
+            throws IOException {
+        Properties properties = new Properties();
+        InputStream inputStream = null;
+        try {
+            inputStream = url.openStream();
+            properties.load(inputStream);
+        } catch (IOException e) {
+            String message = "Unable to load required properties file from location: " + url.toString();
+            logger.error(message, e);
+            throw new IOException(message, e);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+        return properties;
     }
 
     @VisibleForTesting
