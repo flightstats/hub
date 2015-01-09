@@ -1,6 +1,5 @@
-package com.flightstats.hub.app.config.metrics;
+package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.model.AbstractResourceMethod;
 import com.sun.jersey.spi.container.ResourceMethodDispatchProvider;

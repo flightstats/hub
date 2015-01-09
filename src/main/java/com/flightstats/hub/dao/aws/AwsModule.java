@@ -2,9 +2,6 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
-import com.flightstats.hub.app.config.metrics.HubInstrumentedResourceMethodDispatchAdapter;
-import com.flightstats.hub.app.config.metrics.HubMethodTimingAdapterProvider;
-import com.flightstats.hub.app.config.metrics.PerChannelTimedMethodDispatchAdapter;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -18,6 +15,8 @@ import com.flightstats.hub.dao.s3.S3ContentDao;
 import com.flightstats.hub.dao.s3.S3WriterManager;
 import com.flightstats.hub.group.*;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
+import com.flightstats.hub.metrics.HubInstrumentedResourceMethodDispatchAdapter;
+import com.flightstats.hub.metrics.HubMethodTimingAdapterProvider;
 import com.flightstats.hub.replication.*;
 import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.service.HubHealthCheck;
@@ -103,7 +102,6 @@ public class AwsModule extends AbstractModule {
 
         bind(HostedGraphiteSender.class).asEagerSingleton();
         bind(HubInstrumentedResourceMethodDispatchAdapter.class).toProvider(HubMethodTimingAdapterProvider.class).in(Singleton.class);
-        bind(PerChannelTimedMethodDispatchAdapter.class).asEagerSingleton();
         bind(TimeMonitor.class).asEagerSingleton();
 
         bind(S3WriterManager.class).asEagerSingleton();
