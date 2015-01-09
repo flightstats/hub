@@ -28,6 +28,7 @@ import com.flightstats.hub.spoke.*;
 import com.flightstats.hub.time.TimeMonitor;
 import com.flightstats.hub.websocket.WebsocketPublisher;
 import com.flightstats.hub.websocket.WebsocketPublisherImpl;
+import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -35,6 +36,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.hazelcast.config.ClasspathXmlConfig;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.sun.jersey.api.client.Client;
@@ -134,7 +137,14 @@ public class GuiceBindings extends AbstractModule {
     @Singleton
     @Provides
     public static HazelcastInstance buildHazelcast() throws FileNotFoundException {
-        return Hazelcast.newHazelcastInstance(new ClasspathXmlConfig("hazelcast.conf.xml"));
+        String hazelCastXml = HubProperties.getProperty("hazelcast.conf.xml", "");
+        Config config;
+        if (Strings.isNullOrEmpty(hazelCastXml)) {
+            config = new ClasspathXmlConfig("hazelcast.conf.xml");
+        } else {
+            config = new FileSystemXmlConfig(hazelCastXml);
+        }
+        return Hazelcast.newHazelcastInstance(config);
     }
 
     @Named("ChannelConfigurationMap")
