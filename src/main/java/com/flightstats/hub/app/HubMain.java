@@ -1,7 +1,6 @@
 package com.flightstats.hub.app;
 
 import com.conducivetech.services.common.util.PropertyConfiguration;
-import com.conducivetech.services.common.util.constraint.ConstraintException;
 import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.dao.aws.AwsModule;
 import com.google.common.annotations.VisibleForTesting;
@@ -96,7 +95,7 @@ public class HubMain {
         logger.warn("**********************************************************");
     }
 
-    public static JettyServer startServer(Properties properties) throws IOException, ConstraintException {
+    public static JettyServer startServer(Properties properties) throws IOException {
         AwsModule awsModule = new AwsModule(properties);
         GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties, awsModule);
         injector = guice.getInjector();

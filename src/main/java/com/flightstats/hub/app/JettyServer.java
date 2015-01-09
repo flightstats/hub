@@ -1,6 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.conducivetech.services.common.util.Haltable;
 import com.google.inject.servlet.GuiceFilter;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -13,7 +12,7 @@ import java.util.EventListener;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class JettyServer implements Haltable {
+public class JettyServer {
 
     private final static Logger logger = LoggerFactory.getLogger(JettyServer.class);
 
