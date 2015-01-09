@@ -65,7 +65,6 @@ public class GuiceContext {
             @Override
             protected void configureServlets() {
                 Names.bindProperties(binder(), properties);
-                //bind(UnrecognizedPropertyExceptionMapper.class).asEagerSingleton();
                 ObjectMapper mapper = HubObjectMapperFactory.construct();
                 bind(ObjectMapper.class).toInstance(mapper);
                 bind(ObjectMapperResolver.class).toInstance(new ObjectMapperResolver(mapper));
