@@ -1,6 +1,6 @@
 package com.flightstats.hub.service.exceptions;
 
-import com.flightstats.services.common.jersey.exception.mappers.AbstractExceptionMapper;
+import com.flightstats.hub.util.AbstractExceptionMapper;
 import com.google.inject.Singleton;
 
 import javax.ws.rs.core.Response;
