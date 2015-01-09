@@ -6,8 +6,6 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.rest.RetryClientFilter;
-import com.flightstats.jerseyguice.ObjectMapperResolver;
-import com.flightstats.jerseyguice.mapper.UnrecognizedPropertyExceptionMapper;
 import com.google.common.base.Strings;
 import com.google.inject.*;
 import com.google.inject.name.Named;
@@ -35,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.WebSocketContainer;
+import javax.ws.rs.ext.ContextResolver;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,9 +65,10 @@ public class GuiceContext {
             @Override
             protected void configureServlets() {
                 Names.bindProperties(binder(), properties);
-                bind(UnrecognizedPropertyExceptionMapper.class).asEagerSingleton();
-                bind(ObjectMapper.class).toInstance(HubObjectMapperFactory.construct());
-                bind(ObjectMapperResolver.class).toInstance(new ObjectMapperResolver(HubObjectMapperFactory.construct()));
+                //bind(UnrecognizedPropertyExceptionMapper.class).asEagerSingleton();
+                ObjectMapper mapper = HubObjectMapperFactory.construct();
+                bind(ObjectMapper.class).toInstance(mapper);
+                bind(ObjectMapperResolver.class).toInstance(new ObjectMapperResolver(mapper));
                 bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
 
                 serve("/*").with(GuiceContainer.class, jerseyProps);
@@ -186,6 +186,22 @@ public class GuiceContext {
 
         @Override
         protected void configure() {
+        }
+    }
+
+    @javax.ws.rs.ext.Provider
+    @Singleton
+    static class ObjectMapperResolver
+            implements ContextResolver<ObjectMapper> {
+        private final ObjectMapper objectMapper;
+
+        public ObjectMapperResolver(ObjectMapper objectMapper) {
+            this.objectMapper = objectMapper;
+        }
+
+        @Override
+        public ObjectMapper getContext(Class<?> type) {
+            return objectMapper;
         }
     }
 }
