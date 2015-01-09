@@ -1,7 +1,7 @@
 package com.flightstats.hub.test;
 
+import com.flightstats.hub.app.GuiceContext;
 import com.flightstats.hub.app.HubMain;
-import com.flightstats.hub.app.config.GuiceContext;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.google.inject.Injector;
 import org.apache.curator.RetryPolicy;

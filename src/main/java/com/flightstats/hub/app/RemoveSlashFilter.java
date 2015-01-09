@@ -1,4 +1,4 @@
-package com.flightstats.hub.app.config;
+package com.flightstats.hub.app;
 
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;

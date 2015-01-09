@@ -1,4 +1,4 @@
-package com.flightstats.hub.app.config;
+package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
