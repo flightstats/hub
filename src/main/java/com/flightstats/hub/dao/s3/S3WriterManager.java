@@ -49,26 +49,31 @@ public class S3WriterManager {
 
         String host="";
         try {
-            host = InetAddress.getLocalHost().getHostAddress();
+            host = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        if(host.contains("1.")){
-            this.offsetMinutes = HubProperties.getProperty("verify.one", 15);
-        }else if(host.contains("2.")){
-            this.offsetMinutes = HubProperties.getProperty("verify.two", 30);
-        }else if(host.contains("3.")){
-            this.offsetMinutes = HubProperties.getProperty("verify.three", 45);
-        }else{
-            this.offsetMinutes = 5;
-        }
-        logger.info("Server offset is -{} minutes", this.offsetMinutes);
+        this.offsetMinutes = serverOffset(host);
+        logger.info("{} offset is -{} minutes", host, this.offsetMinutes);
         queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d")
                 .build());
         channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d")
                 .build());
     }
 
+    static int serverOffset(String host){
+        int offset;
+        if(host.contains("1.")){
+            offset = HubProperties.getProperty("verify.one", 15);
+        }else if(host.contains("2.")){
+            offset = HubProperties.getProperty("verify.two", 30);
+        }else if(host.contains("3.")){
+            offset = HubProperties.getProperty("verify.three", 45);
+        }else{
+            offset = 5;
+        }
+        return offset;
+    }
 
     SortedSet<ContentKey> itemsInCacheButNotLongTerm(DateTime startTime, String channelName){
         SortedSet<ContentKey> cacheKeys = new TreeSet<>();
@@ -123,7 +128,7 @@ public class S3WriterManager {
                 });
             }
         } catch (Exception e) {
-            logger.error("Error: {} ", e.getStackTrace());
+            logger.error("Error: ", e);
         }
     }
 
