@@ -5,6 +5,7 @@ import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
 import com.google.inject.Injector;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,14 +43,23 @@ public class WebSocketService {
         logger.info("creating callback {} {} {}", channel, id, uri);
         sessionMap.put(id, session);
         String groupName = setGroupName(session, channel);
-
         Group group = Group.builder()
-                .channelUrl("http://localhost:9080/channel/" + channel)
-                .callbackUrl("http://" + InetAddress.getLocalHost().getHostAddress() + ":" + uri.getPort() + "/ws/" + id)
+                .channelUrl(getChannelUrl(uri))
+                .callbackUrl(getCallbackUrl(id, uri))
                 .parallelCalls(1)
                 .name(groupName)
                 .build();
         groupService.upsertGroup(group);
+    }
+
+    private String getChannelUrl(URI uri) {
+        String channelUrl = uri.toString().replaceFirst("ws://", "http://");
+        channelUrl = StringUtils.removeEnd(channelUrl, "/ws");
+        return channelUrl;
+    }
+
+    private String getCallbackUrl(String id, URI uri) throws UnknownHostException {
+        return "http://" + InetAddress.getLocalHost().getHostAddress() + ":" + uri.getPort() + "/ws/" + id;
     }
 
     private String setGroupName(Session session, String channel) {
