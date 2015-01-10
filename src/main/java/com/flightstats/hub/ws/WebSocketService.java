@@ -1,6 +1,7 @@
 package com.flightstats.hub.ws;
 
 import com.flightstats.hub.app.HubMain;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ContentKey;
@@ -47,7 +48,7 @@ public class WebSocketService {
         String groupName = setGroupName(session, channel);
         Group group = Group.builder()
                 .channelUrl(getChannelUrl(uri))
-                .callbackUrl(getCallbackUrl(id, uri))
+                .callbackUrl(getCallbackUrl(id))
                 .parallelCalls(1)
                 .name(groupName)
                 .startingKey(contentKey)
@@ -61,8 +62,9 @@ public class WebSocketService {
         return channelUrl;
     }
 
-    private String getCallbackUrl(String id, URI uri) throws UnknownHostException {
-        return "http://" + InetAddress.getLocalHost().getHostAddress() + ":" + uri.getPort() + "/ws/" + id;
+    private String getCallbackUrl(String id) throws UnknownHostException {
+        return "http://" + InetAddress.getLocalHost().getHostAddress() + ":" +
+                HubProperties.getProperty("http.bind_port", 8080) + "/ws/" + id;
     }
 
     private String setGroupName(Session session, String channel) {
