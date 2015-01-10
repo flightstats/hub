@@ -10,7 +10,7 @@ import lombok.experimental.Wither;
 @Builder
 @Getter
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = {"startingKey"})
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Group {
 
