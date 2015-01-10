@@ -118,10 +118,10 @@ describe(testName, function () {
             function (item, callback) {
                 async.parallel([
                         function (callback) {
-                            getItem(item.uri, callback);
+                            getItem('http://' + sourceDomain + '/channel/' + item.name + "/" + item.sequence, callback);
                         },
                         function (callback) {
-                            getItem('http://' + sourceDomain + '/channel/' + item.name + "/" + item.sequence, callback);
+                            getItem(item.uri, callback);
                         }
                     ],
                     function (err, results) {

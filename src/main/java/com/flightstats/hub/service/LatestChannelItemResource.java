@@ -1,7 +1,7 @@
 package com.flightstats.hub.service;
 
-import com.flightstats.hub.app.config.metrics.EventTimed;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;

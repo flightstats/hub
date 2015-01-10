@@ -1,4 +1,4 @@
-package com.flightstats.hub.app.config;
+package com.flightstats.hub.service;
 
 import javax.ws.rs.HttpMethod;
 import java.lang.annotation.ElementType;

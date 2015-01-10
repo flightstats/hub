@@ -1,12 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.conducivetech.services.common.util.PropertyConfiguration;
-import com.conducivetech.services.common.util.constraint.ConstraintException;
-import com.flightstats.hub.app.config.GuiceContext;
-import com.flightstats.hub.dao.aws.AwsModule;
-import com.flightstats.jerseyguice.jetty.JettyConfig;
-import com.flightstats.jerseyguice.jetty.JettyConfigImpl;
-import com.flightstats.jerseyguice.jetty.JettyServer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Injector;
 import org.apache.zookeeper.server.ServerConfig;
@@ -16,9 +9,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -37,12 +28,10 @@ public class HubMain {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, or 'useDefault'");
         }
-        final Properties properties = loadProperties(args[0]);
-        HubProperties.setProperties(properties);
+        HubProperties.loadProperties(args[0]);
+        startZookeeperIfSingle();
 
-        startZookeeperIfSingle(properties);
-
-        JettyServer server = startServer(properties);
+        JettyServer server = startServer();
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -57,12 +46,23 @@ public class HubMain {
         logger.info("Server shutdown complete.  Exiting application.");
     }
 
-    private static void startZookeeperIfSingle(final Properties properties) {
+    public static JettyServer startServer() throws IOException {
+        GuiceContext.HubGuiceServlet guice = GuiceContext.construct();
+        injector = guice.getInjector();
+        JettyServer server = new JettyServer(guice);
+        HubServices.start(HubServices.TYPE.PRE_START);
+        server.start();
+        logger.info("Jetty server has been started.");
+        HubServices.start(HubServices.TYPE.POST_START);
+        return server;
+    }
+
+    private static void startZookeeperIfSingle() {
         new Thread(new Runnable() {
             @Override
             public void run() {
 
-                String zkConfigFile = properties.getProperty("zookeeper.cfg", "");
+                String zkConfigFile = HubProperties.getProperty("zookeeper.cfg", "");
                 if ("singleNode".equals(zkConfigFile)) {
                     startSingleZookeeper();
                 }
@@ -93,50 +93,10 @@ public class HubMain {
         }).start();
     }
 
-    private static void warn(String message) {
+    static void warn(String message) {
         logger.warn("**********************************************************");
         logger.warn("*** " + message);
         logger.warn("**********************************************************");
-    }
-
-    public static JettyServer startServer(Properties properties) throws IOException, ConstraintException {
-        AwsModule awsModule = new AwsModule(properties);
-        JettyConfig jettyConfig = new JettyConfigImpl(properties);
-        GuiceContext.HubGuiceServlet guice = GuiceContext.construct(properties, awsModule);
-        injector = guice.getInjector();
-        JettyServer server = new JettyServer(jettyConfig, guice);
-        HubServices.start(HubServices.TYPE.PRE_START);
-        server.start();
-        logger.info("Jetty server has been started.");
-        HubServices.start(HubServices.TYPE.POST_START);
-        return server;
-    }
-
-    public  static Properties loadProperties(String fileName) throws IOException {
-        if (fileName.equals("useDefault")) {
-            return getLocalProperties("default");
-        } else if (fileName.equals("useEncryptedDefault")) {
-            return getLocalProperties("defaultEncrypted");
-        }
-        return PropertyConfiguration.loadProperties(new File(fileName), true, logger);
-    }
-
-    private static Properties getLocalProperties(String fileNameRoot) throws IOException {
-        warn("using " + fileNameRoot + " properties file");
-        Properties defaultProperties = getProperties("/" + fileNameRoot + ".properties", true);
-        Properties localProperties = getProperties("/" + fileNameRoot + "_local.properties", false);
-        for (String localKey : localProperties.stringPropertyNames()) {
-            String newVal = localProperties.getProperty(localKey);
-            logger.info("overriding " + localKey + " using '" + newVal +
-                    "' instead of '" + defaultProperties.getProperty(localKey, "") + "'");
-            defaultProperties.setProperty(localKey, newVal);
-        }
-        return defaultProperties;
-    }
-
-    private static Properties getProperties(String name, boolean required) throws IOException {
-        URL resource = HubMain.class.getResource(name);
-        return PropertyConfiguration.loadProperties(resource, required, logger);
     }
 
     @VisibleForTesting

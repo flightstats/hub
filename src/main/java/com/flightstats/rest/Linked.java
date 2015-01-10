@@ -1,5 +1,7 @@
 package com.flightstats.rest;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -20,10 +22,13 @@ public class Linked<T> {
 		this.object = object;
 	}
 
+	@JsonProperty("_links")
 	public HalLinks getHalLinks() {
 		return halLinks;
 	}
 
+	@JsonProperty
+	@JsonUnwrapped
 	public T getObject() {
 		return object;
 	}
