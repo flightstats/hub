@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,15 +36,16 @@ public class WebSocketService {
         groupService = injector.getInstance(GroupService.class);
     }
 
-    public void createCallback(Session session, String channel) {
+    public void createCallback(Session session, String channel) throws UnknownHostException {
         String id = session.getId();
-        logger.info("creating callback {} {}", channel, id);
+        URI uri = session.getRequestURI();
+        logger.info("creating callback {} {} {}", channel, id, uri);
         sessionMap.put(id, session);
         String groupName = setGroupName(session, channel);
-        //todo - gfm - 1/10/15 - fix these variables
+
         Group group = Group.builder()
                 .channelUrl("http://localhost:9080/channel/" + channel)
-                .callbackUrl("http://localhost:9080/ws/" + id)
+                .callbackUrl("http://" + InetAddress.getLocalHost().getHostAddress() + ":" + uri.getPort() + "/ws/" + id)
                 .parallelCalls(1)
                 .name(groupName)
                 .build();
