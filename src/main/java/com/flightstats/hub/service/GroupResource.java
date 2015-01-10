@@ -7,6 +7,7 @@ import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.group.GroupStatus;
 import com.flightstats.hub.metrics.EventTimed;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -99,7 +100,7 @@ public class GroupResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsertGroup(@PathParam("name") String name, String body) {
-        Group group = Group.fromJson(body).withName(name);
+        Group group = Group.fromJson(body).withName(name).withStartingKey(new ContentKey());
         Optional<Group> upsertGroup = groupService.upsertGroup(group);
         if (upsertGroup.isPresent()) {
             return Response.ok(getLinkedGroup(group)).build();

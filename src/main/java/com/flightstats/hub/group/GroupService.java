@@ -1,6 +1,5 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.exception.ConflictException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -38,7 +37,7 @@ public class GroupService {
             }
             throw new ConflictException("{\"error\": \"Groups are immutable\"}");
         }
-        groupContentKey.initialize(group.getName(), new ContentKey());
+        groupContentKey.initialize(group.getName(), group.getStartingKey());
         dynamoGroupDao.upsertGroup(group);
         groupCallback.notifyWatchers();
         return existingGroup;

@@ -3,6 +3,7 @@ package com.flightstats.hub.ws;
 import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
+import com.flightstats.hub.model.ContentKey;
 import com.google.inject.Injector;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +39,7 @@ public class WebSocketService {
     }
 
     public void createCallback(Session session, String channel) throws UnknownHostException {
+        ContentKey contentKey = new ContentKey();
         String id = session.getId();
         URI uri = session.getRequestURI();
         logger.info("creating callback {} {} {}", channel, id, uri);
@@ -48,6 +50,7 @@ public class WebSocketService {
                 .callbackUrl(getCallbackUrl(id, uri))
                 .parallelCalls(1)
                 .name(groupName)
+                .startingKey(contentKey)
                 .build();
         groupService.upsertGroup(group);
     }

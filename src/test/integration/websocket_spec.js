@@ -63,7 +63,7 @@ utils.runInTestChannel(testName, channelName, function (channelResponse) {
 
     waitsFor(function () {
         return connectionClosed;
-    }, 5003);
+    }, 15003);
 
     var secondPostUrl = null;
     var secondPostCompleted = false;
