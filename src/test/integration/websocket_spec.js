@@ -18,7 +18,7 @@ utils.runInTestChannel(testName, channelName, function (channelResponse) {
     var firstDataReceived = false;
     var firstPostCompleted = false;
 
-    //create connection
+    console.log('wsUrl', wsUrl);
     var webSocket = new WebSocket(wsUrl);
     webSocket.on('open', function (message) {
         connectionOpened = true;
@@ -27,10 +27,10 @@ utils.runInTestChannel(testName, channelName, function (channelResponse) {
     webSocket.onmessage = function (message) {
         messagedUrl = message.data;
         firstDataReceived = true;
-    }
+    };
     webSocket.onclose = function () {
         connectionClosed = true;
-    }
+    };
 
     waitsFor(function () {
         return connectionOpened;
