@@ -1,5 +1,6 @@
 package com.flightstats.hub.group;
 
+import com.flightstats.hub.model.ContentKey;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.*;
@@ -19,6 +20,8 @@ public class Group {
     private final Integer parallelCalls;
     @Wither
     private final String name;
+    @Wither
+    private final ContentKey startingKey;
 
     private static final Gson gson = new GsonBuilder().create();
 
