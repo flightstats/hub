@@ -44,7 +44,6 @@ utils.runInTestChannel(testName, channelName, function (channelResponse) {
             error = err;
             resultObj = JSON.parse(body);
             firstPostUrl = resultObj['_links']['self']['href'];
-            console.log('firstPostUrl', firstPostUrl);
             firstPostCompleted = true;
         });
     });
