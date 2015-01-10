@@ -34,7 +34,7 @@ utils.runInTestChannel(testName, channelName, function (channelResponse) {
 
     waitsFor(function () {
         return connectionOpened;
-    }, 5000);
+    }, 5001);
 
 
     //post data
@@ -45,17 +45,18 @@ utils.runInTestChannel(testName, channelName, function (channelResponse) {
             error = err;
             resultObj = JSON.parse(body);
             firstPostUrl = resultObj['_links']['self']['href'];
+            console.log('firstPostUrl', firstPostUrl);
             firstPostCompleted = true;
         });
     });
 
     waitsFor(function () {
         return firstDataReceived && firstPostCompleted;
-    }, 5000);
+    }, 15002);
 
     runs(function () {
         expect(error).toBeNull();
-        expect(messagedUrl).toEqual(firstPostUrl)
+        expect(messagedUrl).toEqual(firstPostUrl);
 
         webSocket.close();
         messagedUrl = 'nothing';
@@ -64,7 +65,7 @@ utils.runInTestChannel(testName, channelName, function (channelResponse) {
 
     waitsFor(function () {
         return connectionClosed;
-    }, 5000);
+    }, 5003);
 
     var secondPostUrl = null;
     var secondPostCompleted = false;
@@ -80,13 +81,12 @@ utils.runInTestChannel(testName, channelName, function (channelResponse) {
 
     waitsFor(function () {
         return secondPostCompleted;
-    }, 5000);
+    }, 15004);
 
 
     runs(function () {
         expect(error).toBeNull();
-        expect(messagedUrl).toEqual('nothing')
-        expect(secondPostUrl).toEqual(channelUrl + '/1001')
+        expect(messagedUrl).toEqual('nothing');
     });
 });
 

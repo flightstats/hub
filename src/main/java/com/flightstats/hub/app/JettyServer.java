@@ -1,6 +1,6 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.ws.ChannelWebsocketEndpoint;
+import com.flightstats.hub.ws.ChannelWebSocketEndpoint;
 import com.google.inject.servlet.GuiceFilter;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -42,7 +42,7 @@ public class JettyServer {
 
             ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
             ServerContainer wsContainer = WebSocketServerContainerInitializer.configureContext(context);
-            wsContainer.addEndpoint(ChannelWebsocketEndpoint.class);
+            wsContainer.addEndpoint(ChannelWebSocketEndpoint.class);
 
             context.addEventListener(guice);
             context.addFilter(GuiceFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
