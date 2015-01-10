@@ -1,6 +1,5 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.exception.ConflictException;
 import com.google.common.base.Optional;
@@ -17,17 +16,14 @@ public class GroupService {
     private final DynamoGroupDao dynamoGroupDao;
     private final GroupValidator groupValidator;
     private final GroupCallback groupCallback;
-    private final ChannelService channelService;
     private final GroupContentKey groupContentKey;
 
     @Inject
     public GroupService(DynamoGroupDao dynamoGroupDao, GroupValidator groupValidator,
-                        GroupCallback groupCallback, ChannelService channelService,
-                        GroupContentKey groupContentKey) {
+                        GroupCallback groupCallback, GroupContentKey groupContentKey) {
         this.dynamoGroupDao = dynamoGroupDao;
         this.groupValidator = groupValidator;
         this.groupCallback = groupCallback;
-        this.channelService = channelService;
         this.groupContentKey = groupContentKey;
     }
 
