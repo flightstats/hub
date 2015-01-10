@@ -1,6 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Injector;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -71,7 +70,6 @@ public class HubMain {
         logger.warn("**********************************************************");
     }
 
-    @VisibleForTesting
     public static Injector getInjector() {
         return injector;
     }
