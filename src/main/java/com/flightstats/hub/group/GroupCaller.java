@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.CuratorLeader;
+import com.flightstats.hub.cluster.LastContentKey;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.ContentKey;
@@ -35,12 +36,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @SuppressWarnings("Convert2Lambda")
 public class GroupCaller implements Leader {
     private final static Logger logger = LoggerFactory.getLogger(GroupCaller.class);
+    public static final String GROUP_LAST_COMPLETED = "/GroupLastCompleted/";
 
     private final CuratorFramework curator;
     private final Provider<CallbackQueue> queueProvider;
     private final GroupService groupService;
     private final MetricsTimer metricsTimer;
-    private final GroupContentKey groupContentKey;
+    private final LastContentKey lastContentKey;
     private final GroupContentKeySet groupInProcess;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
@@ -57,12 +59,12 @@ public class GroupCaller implements Leader {
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackQueue> queueProvider,
                        GroupService groupService, MetricsTimer metricsTimer,
-                       GroupContentKey groupContentKey, GroupContentKeySet groupInProcess) {
+                       LastContentKey lastContentKey, GroupContentKeySet groupInProcess) {
         this.curator = curator;
         this.queueProvider = queueProvider;
         this.groupService = groupService;
         this.metricsTimer = metricsTimer;
-        this.groupContentKey = groupContentKey;
+        this.lastContentKey = lastContentKey;
         this.groupInProcess = groupInProcess;
     }
 
@@ -89,7 +91,7 @@ public class GroupCaller implements Leader {
         this.client = GroupClient.createClient();
         callbackQueue = queueProvider.get();
         try {
-            ContentKey lastCompletedKey = groupContentKey.get(group.getName(), new ContentKey());
+            ContentKey lastCompletedKey = lastContentKey.get(group.getName(), new ContentKey(), GROUP_LAST_COMPLETED);
             logger.debug("last completed at {} {}", lastCompletedKey, group.getName());
             if (hasLeadership.get()) {
                 sendInProcess(lastCompletedKey);
@@ -132,7 +134,7 @@ public class GroupCaller implements Leader {
                 groupInProcess.add(group.getName(), key);
                 try {
                     makeTimedCall(createResponse(key));
-                    groupContentKey.updateIncrease(key, group.getName());
+                    lastContentKey.updateIncrease(key, group.getName(), GROUP_LAST_COMPLETED);
                     groupInProcess.remove(group.getName(), key);
                     logger.trace("completed {} call to {} ", key, group.getName());
                 } catch (Exception e) {
@@ -217,13 +219,13 @@ public class GroupCaller implements Leader {
     }
 
     public ContentKey getLastCompleted() {
-        return groupContentKey.get(group.getName(), ContentKey.NONE);
+        return lastContentKey.get(group.getName(), ContentKey.NONE, GROUP_LAST_COMPLETED);
     }
 
     private void delete() {
         logger.info("deleting " + group.getName());
         groupInProcess.delete(group.getName());
-        groupContentKey.delete(group.getName());
+        lastContentKey.delete(group.getName(), GROUP_LAST_COMPLETED);
         logger.info("deleted " + group.getName());
     }
 

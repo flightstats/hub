@@ -77,6 +77,7 @@ public class HostedGraphiteSender {
                 try {
                     Socket socket = new Socket(host, port);
                     socket.setKeepAlive(true);
+                    socket.setSoTimeout(10 * 1000);
                     stream = new DataOutputStream(socket.getOutputStream());
                     logger.info("connected to " + host + " " + port);
                     return;
