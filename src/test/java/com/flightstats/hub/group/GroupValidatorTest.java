@@ -1,6 +1,6 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.model.exception.InvalidRequestException;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.google.common.base.Strings;
 import org.junit.Before;
 import org.junit.Test;
