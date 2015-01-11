@@ -1,12 +1,15 @@
 package com.flightstats.hub.app;
 
+import com.flightstats.hub.ws.ChannelWSEndpoint;
 import com.google.inject.servlet.GuiceFilter;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.DispatcherType;
+import javax.websocket.server.ServerContainer;
 import java.util.EnumSet;
 import java.util.EventListener;
 
@@ -37,9 +40,13 @@ public class JettyServer {
 
             server.setConnectors(new Connector[]{serverConnector});
 
-            ServletContextHandler root = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
-            root.addEventListener(guice);
-            root.addFilter(GuiceFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+            ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
+            ServerContainer wsContainer = WebSocketServerContainerInitializer.configureContext(context);
+            wsContainer.addEndpoint(ChannelWSEndpoint.class);
+
+            context.addEventListener(guice);
+            context.addFilter(GuiceFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+
             server.start();
         } catch (Exception e) {
             logger.error("Exception in JettyServer: " + e.getMessage(), e);

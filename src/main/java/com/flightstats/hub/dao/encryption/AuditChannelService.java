@@ -2,9 +2,9 @@ package com.flightstats.hub.dao.encryption;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.exception.ConflictException;
+import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.model.exception.ConflictException;
-import com.flightstats.hub.model.exception.ForbiddenRequestException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;

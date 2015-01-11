@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.flightstats.rest.HalLinks;
-import com.flightstats.rest.HalLinksSerializer;
-import com.flightstats.rest.Rfc3339DateSerializer;
+import com.flightstats.hub.rest.HalLinks;
+import com.flightstats.hub.rest.HalLinksSerializer;
+import com.flightstats.hub.rest.Rfc3339DateSerializer;
 import com.google.inject.*;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
@@ -27,7 +27,7 @@ public class GuiceContext {
 
     public static HubGuiceServlet construct() {
         Map<String, String> jerseyProps = new HashMap<>();
-        jerseyProps.put(PROPERTY_PACKAGES, "com.flightstats.hub.service");
+        jerseyProps.put(PROPERTY_PACKAGES, "com.flightstats.hub");
         jerseyProps.put(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName());
 
         jerseyProps.put(JSONConfiguration.FEATURE_POJO_MAPPING, "true");
