@@ -2,6 +2,7 @@ package com.flightstats.hub.app;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
+import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -15,19 +16,15 @@ import com.flightstats.hub.dao.s3.S3Config;
 import com.flightstats.hub.dao.s3.S3ContentDao;
 import com.flightstats.hub.dao.s3.S3WriterManager;
 import com.flightstats.hub.group.*;
+import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.metrics.HubInstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.hub.metrics.HubMethodTimingAdapterProvider;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.replication.*;
 import com.flightstats.hub.rest.RetryClientFilter;
-import com.flightstats.hub.service.ChannelValidator;
-import com.flightstats.hub.service.HubHealthCheck;
-import com.flightstats.hub.service.HubHealthCheckImpl;
 import com.flightstats.hub.spoke.*;
 import com.flightstats.hub.time.TimeMonitor;
-import com.flightstats.hub.websocket.WebsocketPublisher;
-import com.flightstats.hub.websocket.WebsocketPublisherImpl;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
@@ -63,7 +60,7 @@ public class GuiceBindings extends AbstractModule {
     @Override
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
-        bind(HubHealthCheck.class).to(HubHealthCheckImpl.class).asEagerSingleton();
+        bind(HubHealthCheck.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
         bind(ReplicationService.class).to(ReplicationServiceImpl.class).asEagerSingleton();
         bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
@@ -85,7 +82,6 @@ public class GuiceBindings extends AbstractModule {
         bind(ChannelConfigurationDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))
                 .to(DynamoChannelConfigurationDao.class);
-        bind(WebsocketPublisher.class).to(WebsocketPublisherImpl.class).asEagerSingleton();
         bind(ReplicationDao.class).to(CachedReplicationDao.class).asEagerSingleton();
         bind(ReplicationDao.class)
                 .annotatedWith(Names.named(CachedReplicationDao.DELEGATE))

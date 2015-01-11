@@ -1,6 +1,7 @@
 package com.flightstats.rest;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.flightstats.hub.rest.Rfc3339DateSerializer;
 import org.junit.Test;
 
 import java.util.Date;

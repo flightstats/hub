@@ -1,5 +1,7 @@
 package com.flightstats.rest;
 
+import com.flightstats.hub.rest.HalLink;
+import com.flightstats.hub.rest.Linked;
 import org.junit.Test;
 
 import java.net.URI;

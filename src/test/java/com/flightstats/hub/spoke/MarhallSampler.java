@@ -3,7 +3,7 @@ package com.flightstats.hub.spoke;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.service.Headers;
+import com.flightstats.hub.rest.Headers;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;

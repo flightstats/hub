@@ -3,7 +3,7 @@ package com.flightstats.hub.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.model.exception.InvalidRequestException;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.EqualsAndHashCode;

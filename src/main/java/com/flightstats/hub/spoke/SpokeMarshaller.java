@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.exception.ContentTooLargeException;
 import com.google.common.io.ByteStreams;
 
 import java.io.ByteArrayInputStream;

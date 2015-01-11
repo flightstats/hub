@@ -1,6 +1,6 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.model.exception.InvalidRequestException;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.ChannelNameUtils;
 import org.apache.commons.lang3.StringUtils;
 
