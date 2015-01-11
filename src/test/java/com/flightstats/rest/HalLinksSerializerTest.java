@@ -1,6 +1,9 @@
 package com.flightstats.rest;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.flightstats.hub.rest.HalLink;
+import com.flightstats.hub.rest.HalLinks;
+import com.flightstats.hub.rest.HalLinksSerializer;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.junit.Test;

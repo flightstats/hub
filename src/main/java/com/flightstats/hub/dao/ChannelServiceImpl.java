@@ -1,10 +1,10 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationValidator;
 import com.flightstats.hub.replication.V1ChannelReplicator;
-import com.flightstats.hub.service.ChannelValidator;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;

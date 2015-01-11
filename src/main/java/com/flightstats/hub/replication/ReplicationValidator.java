@@ -1,7 +1,7 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.model.exception.ForbiddenRequestException;
-import com.flightstats.hub.model.exception.InvalidRequestException;
+import com.flightstats.hub.exception.ForbiddenRequestException;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 

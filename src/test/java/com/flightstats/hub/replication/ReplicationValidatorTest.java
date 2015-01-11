@@ -1,6 +1,6 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.model.exception.ForbiddenRequestException;
+import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.google.common.collect.Sets;
 import org.junit.Before;
 import org.junit.Test;
