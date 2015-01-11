@@ -41,6 +41,7 @@ describe(testName, function () {
                     .set('Accept', 'application/json')
                     .redirects(0)
                     .end(function (res) {
+                        //todo - gfm - 1/10/15 - this should only look at latest items within the last hour
                         expect(res.error).toBe(false);
                         latestSourceItems.push({name: channel, location: res.header['location']});
                         callback(res.error);
