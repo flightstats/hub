@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.flightstats.hub.model.exception.InvalidRequestException;
+import com.flightstats.hub.exception.InvalidRequestException;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;

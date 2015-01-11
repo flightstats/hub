@@ -1,7 +1,7 @@
 package com.flightstats.hub.replication;
 
+import com.flightstats.hub.channel.ChannelLinkBuilder;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.service.ChannelLinkBuilder;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;

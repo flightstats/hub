@@ -1,6 +1,6 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.model.exception.ConflictException;
+import com.flightstats.hub.exception.ConflictException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
