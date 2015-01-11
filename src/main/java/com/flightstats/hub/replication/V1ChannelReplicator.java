@@ -1,6 +1,7 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.cluster.CuratorLeader;
+import com.flightstats.hub.cluster.LastContentKey;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
@@ -11,7 +12,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,11 +22,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class V1ChannelReplicator implements Leader {
     private static final Logger logger = LoggerFactory.getLogger(V1ChannelReplicator.class);
+    public static final String V1_REPLICATE_LAST_COMPLETED = "/V1ReplicateLastCompleted/";
 
     private final ChannelService channelService;
     private final ChannelUtils channelUtils;
     private final SequenceFinder sequenceFinder;
     private final CuratorFramework curator;
+    private final LastContentKey lastContentKey;
     private final SequenceIteratorFactory sequenceIteratorFactory;
     private ChannelConfiguration configuration;
 
@@ -41,12 +43,14 @@ public class V1ChannelReplicator implements Leader {
     @Inject
     public V1ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
                                SequenceIteratorFactory sequenceIteratorFactory,
-                               SequenceFinder sequenceFinder, CuratorFramework curator) {
+                               SequenceFinder sequenceFinder, CuratorFramework curator,
+                               LastContentKey lastContentKey) {
         this.channelService = channelService;
         this.sequenceIteratorFactory = sequenceIteratorFactory;
         this.channelUtils = channelUtils;
         this.sequenceFinder = sequenceFinder;
         this.curator = curator;
+        this.lastContentKey = lastContentKey;
     }
 
     public void setHistoricalDays(long historicalDays) {
@@ -161,19 +165,20 @@ public class V1ChannelReplicator implements Leader {
         }
         logger.info("starting " + channel.getUrl() + " migration at " + sequence);
         iterator = sequenceIteratorFactory.create(sequence, channel);
-        long lastReplicated = 0;
         try {
             while (iterator.hasNext() && hasLeadership.get()) {
                 Optional<Content> optionalContent = iterator.next();
                 if (optionalContent.isPresent()) {
                     Content content = optionalContent.get();
-                    ContentKey key = content.getContentKey().get();
-                    if (key.getMillis() < lastReplicated) {
-                        key = new ContentKey(new DateTime(lastReplicated), key.getHash());
-                        content.setContentKey(key);
+                    ContentKey nextKey = content.getContentKey().get();
+                    ContentKey lastCompletedKey = lastContentKey.get(channel.getName(),
+                            nextKey, V1_REPLICATE_LAST_COMPLETED);
+                    if (nextKey.compareTo(lastCompletedKey) < 0) {
+                        nextKey = new ContentKey(lastCompletedKey.getTime(), nextKey.getHash());
+                        content.setContentKey(nextKey);
                     }
                     channelService.insert(channel.getName(), content);
-                    lastReplicated = key.getMillis();
+                    lastContentKey.updateIncrease(nextKey, channel.getName(), V1_REPLICATE_LAST_COMPLETED);
                 } else {
                     logger.warn("missing content for " + channel.getUrl());
                 }

@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.cluster.LastContentKey;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.*;
@@ -15,7 +16,10 @@ import com.flightstats.hub.dao.encryption.BasicChannelService;
 import com.flightstats.hub.dao.s3.S3Config;
 import com.flightstats.hub.dao.s3.S3ContentDao;
 import com.flightstats.hub.dao.s3.S3WriterManager;
-import com.flightstats.hub.group.*;
+import com.flightstats.hub.group.DynamoGroupDao;
+import com.flightstats.hub.group.GroupCallback;
+import com.flightstats.hub.group.GroupCallbackImpl;
+import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.metrics.HubInstrumentedResourceMethodDispatchAdapter;
@@ -107,7 +111,7 @@ public class GuiceBindings extends AbstractModule {
         bind(ChannelValidator.class).asEagerSingleton();
         bind(GroupValidator.class).asEagerSingleton();
         bind(GroupCallback.class).to(GroupCallbackImpl.class).asEagerSingleton();
-        bind(GroupContentKey.class).asEagerSingleton();
+        bind(LastContentKey.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
 
         bind(HostedGraphiteSender.class).asEagerSingleton();
