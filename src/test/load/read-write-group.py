@@ -5,11 +5,14 @@ import string
 import random
 import time
 import threading
-import socket
+import thread
 import logging
 
+import httplib2
+import websocket
 from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
+
 
 
 # Usage:
@@ -18,8 +21,8 @@ from flask import request, jsonify
 
 logger = logging.getLogger('hub-locust')
 logger.setLevel(logging.INFO)
-# fh = logging.FileHandler('./locust.log')
-fh = logging.FileHandler('/home/ubuntu/locust.log')
+fh = logging.FileHandler('./locust.log')
+# fh = logging.FileHandler('/home/ubuntu/locust.log')
 fh.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
@@ -64,6 +67,23 @@ class WebsiteTasks(TaskSet):
                         data=json.dumps(group),
                         headers={"Content-Type": "application/json"},
                         name="group")
+        thread.start_new_thread(self.start_websocket, ())
+
+    def start_websocket(self):
+        self._http = httplib2.Http()
+        meta = self._load_metadata()
+        ws_uri = meta['_links']['ws']['href']
+        print ws_uri
+        ws = websocket.WebSocketApp(ws_uri, on_message=self.on_message)
+        ws.run_forever()
+
+    def on_message(self, ws, message):
+        logger.info("ws " + message)
+
+    def _load_metadata(self):
+        print("Fetching channel metadata...")
+        r, c = self._http.request(self.client.base_url + "/channel/" + self.channel, 'GET')
+        return json.loads(c)
 
     def write(self):
         payload = {"name": self.payload, "count": self.count}
@@ -263,8 +283,8 @@ class WebsiteUser(HttpLocust):
     def __init__(self):
         super(WebsiteUser, self).__init__()
         groupConfig['host'] = self.host
-        groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
-        # groupConfig['ip'] = '127.0.0.1'
+        # groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
+        groupConfig['ip'] = '127.0.0.1'
         logger.info('groupConfig %s', groupConfig)
         print groupConfig
 

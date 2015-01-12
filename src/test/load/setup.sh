@@ -12,3 +12,5 @@ sudo apt-get install python-dev
 sudo pip install locustio --upgrade
 #sudo pip install https://github.com/surfly/gevent/releases/download/1.0.1/gevent-1.0.1.tar.gz
 sudo pip install websocket-client
+sudo pip install httplib2
+
