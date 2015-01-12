@@ -6,10 +6,18 @@ import random
 import time
 import threading
 import socket
+import thread
 import logging
 
+import httplib2
+import websocket
 from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
+
+
+
+
+
 
 
 # Usage:
@@ -27,6 +35,7 @@ logger.addHandler(fh)
 
 groupCallbacks = {}
 groupConfig = {}
+websockets = {}
 
 
 class WebsiteTasks(TaskSet):
@@ -44,6 +53,11 @@ class WebsiteTasks(TaskSet):
                          data=json.dumps(payload),
                          headers={"Content-Type": "application/json"},
                          name="channel")
+        self.start_websocket()
+        self.start_group_callback()
+        time.sleep(5)
+
+    def start_group_callback(self):
         group_name = "/group/locust_" + self.channel
         self.client.delete(group_name, name="group")
         parallel = 1
@@ -65,6 +79,27 @@ class WebsiteTasks(TaskSet):
                         headers={"Content-Type": "application/json"},
                         name="group")
 
+    def start_websocket(self):
+        websockets[self.channel] = {
+            "data": [],
+            "lock": threading.Lock()
+        }
+        self._http = httplib2.Http()
+        meta = self._load_metadata()
+        self.ws_uri = meta['_links']['ws']['href']
+        print self.ws_uri
+        ws = websocket.WebSocketApp(self.ws_uri, on_message=self.on_message)
+        thread.start_new_thread(ws.run_forever, ())
+
+    def on_message(self, ws, message):
+        logger.debug("ws %s", message)
+        WebsiteTasks.verify_ordered(self.channel, message, websockets, "websocket")
+
+    def _load_metadata(self):
+        print("Fetching channel metadata...")
+        r, c = self._http.request(self.client.base_url + "/channel/" + self.channel, 'GET')
+        return json.loads(c)
+
     def write(self):
         payload = {"name": self.payload, "count": self.count}
         with self.client.post("/channel/" + self.channel, data=json.dumps(payload),
@@ -76,13 +111,17 @@ class WebsiteTasks(TaskSet):
         links = postResponse.json()
         self.count += 1
         href = links['_links']['self']['href']
+        self.append_href(href, groupCallbacks)
+        self.append_href(href, websockets)
+        return href
+
+    def append_href(self, href, obj):
         try:
-            groupCallbacks[self.channel]["lock"].acquire()
-            groupCallbacks[self.channel]["data"].append(href)
+            obj[self.channel]["lock"].acquire()
+            obj[self.channel]["data"].append(href)
             logger.debug('wrote %s', href)
         finally:
-            groupCallbacks[self.channel]["lock"].release()
-        return href
+            obj[self.channel]["lock"].release()
 
     def read(self, uri):
         with self.client.get(uri, catch_response=True, name="get_payload") as postResponse:
@@ -116,7 +155,6 @@ class WebsiteTasks(TaskSet):
             logger.info("expected " + ", ".join(posted_items) + " found " + ", ".join(query_slice))
             events.request_failure.fire(request_type="sequential", name="compare", response_time=total_time
                                         , exception=-1)
-            # add tests for next & previous
 
             # @task(1)
         #    def day_query(self):
@@ -198,29 +236,33 @@ class WebsiteTasks(TaskSet):
         size = self.number * self.number * 300
         return ''.join(random.choice(chars) for x in range(size))
 
+    def verify_callback(self, obj, name="group"):
+        obj[self.channel]["lock"].acquire()
+        items = len(obj[self.channel]["data"])
+        if items > 100:
+            events.request_failure.fire(request_type=name, name="length", response_time=1,
+                                        exception=-1)
+            logger.info(name + " too many items in " + self.channel + " " + str(items))
+        obj[self.channel]["lock"].release()
+
     @task(10)
     def verify_callback_length(self):
-        groupCallbacks[self.channel]["lock"].acquire()
-        items = len(groupCallbacks[self.channel]["data"])
-        if items > 100:
-            events.request_failure.fire(request_type="group", name="length", response_time=1,
-                                        exception=-1)
-            logger.info("too many items in " + self.channel + " " + str(items))
-        groupCallbacks[self.channel]["lock"].release()
+        self.verify_callback(groupCallbacks, "group")
+        self.verify_callback(websockets, "websocket")
 
     @staticmethod
-    def verify_ordered(channel, incoming_uri):
-        if groupCallbacks[channel]["data"][0] == incoming_uri:
-            (groupCallbacks[channel]["data"]).remove(incoming_uri)
-            events.request_success.fire(request_type="group", name="ordered", response_time=1,
+    def verify_ordered(channel, incoming_uri, obj, name):
+        if obj[channel]["data"][0] == incoming_uri:
+            (obj[channel]["data"]).remove(incoming_uri)
+            events.request_success.fire(request_type=name, name="ordered", response_time=1,
                                         response_length=1)
         else:
-            events.request_failure.fire(request_type="group", name="ordered", response_time=1,
+            events.request_failure.fire(request_type=name, name="ordered", response_time=1,
                                         exception=-1)
-            if incoming_uri in groupCallbacks[channel]["data"]:
-                (groupCallbacks[channel]["data"]).remove(incoming_uri)
-                logger.info("item in the wrong order " + str(incoming_uri) + " data " + \
-                      str(groupCallbacks[channel]["data"]))
+            if incoming_uri in obj[channel]["data"]:
+                logger.info(name + " item in the wrong order " + str(incoming_uri) + " data " + \
+                            str(obj[channel]["data"]))
+                (obj[channel]["data"]).remove(incoming_uri)
             else:
                 logger.info("missing item " + str(incoming_uri))
 
@@ -245,7 +287,7 @@ class WebsiteTasks(TaskSet):
             try:
                 groupCallbacks[channel]["lock"].acquire()
                 if groupCallbacks[channel]["parallel"] == 1:
-                    WebsiteTasks.verify_ordered(channel, incoming_uri)
+                    WebsiteTasks.verify_ordered(channel, incoming_uri, groupCallbacks, "group")
                 else:
                     WebsiteTasks.verify_parallel(channel, incoming_uri)
             finally:
