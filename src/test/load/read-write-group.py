@@ -16,14 +16,15 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub-v2.svc.dev &
 
 logger = logging.getLogger('hub-locust')
 logger.setLevel(logging.INFO)
-fh = logging.FileHandler('./locust.log')
-# fh = logging.FileHandler('/home/ubuntu/locust.log')
+# fh = logging.FileHandler('./locust.log')
+fh = logging.FileHandler('/home/ubuntu/locust.log')
 fh.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
@@ -300,8 +301,8 @@ class WebsiteUser(HttpLocust):
     def __init__(self):
         super(WebsiteUser, self).__init__()
         groupConfig['host'] = self.host
-        # groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
-        groupConfig['ip'] = '127.0.0.1'
+        groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
+        # groupConfig['ip'] = '127.0.0.1'
         logger.info('groupConfig %s', groupConfig)
         print groupConfig
 
