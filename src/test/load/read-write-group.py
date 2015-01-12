@@ -19,6 +19,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub-v2.svc.dev &
@@ -52,8 +53,9 @@ class WebsiteTasks(TaskSet):
                          data=json.dumps(payload),
                          headers={"Content-Type": "application/json"},
                          name="channel")
-        self.start_group_callback()
         self.start_websocket()
+        self.start_group_callback()
+        time.sleep(5)
 
     def start_group_callback(self):
         group_name = "/group/locust_" + self.channel
