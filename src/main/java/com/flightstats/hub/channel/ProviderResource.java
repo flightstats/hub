@@ -2,7 +2,6 @@ package com.flightstats.hub.channel;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
-import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.rest.Headers;
@@ -34,7 +33,6 @@ public class ProviderResource {
     }
 
     @POST
-    @EventTimed(name = "provider.ALL.post")
     @Produces(MediaType.TEXT_PLAIN)
     public Response insertValue(@HeaderParam("channelName") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,
