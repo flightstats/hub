@@ -52,7 +52,9 @@ public class ChannelServiceImpl implements ChannelService {
         }
         long start = System.currentTimeMillis();
         ContentKey contentKey = contentService.insert(channelName, content);
-        sender.send("channel." + channelName + ".post", System.currentTimeMillis() - start);
+        long time = System.currentTimeMillis() - start;
+        sender.send("channel." + channelName + ".post", time);
+        sender.send("channel.ALL.post", time);
         return contentKey;
     }
 
