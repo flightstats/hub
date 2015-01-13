@@ -15,6 +15,7 @@ from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub-v2.svc.dev &
@@ -84,7 +85,10 @@ class WebsiteTasks(TaskSet):
         meta = self._load_metadata()
         self.ws_uri = meta['_links']['ws']['href']
         print self.ws_uri
-        ws = websocket.WebSocketApp(self.ws_uri, on_message=self.on_message, on_close=self.on_close)
+        ws = websocket.WebSocketApp(self.ws_uri,
+                                    on_message=self.on_message,
+                                    on_close=self.on_close,
+                                    on_error=self.on_close)
         thread.start_new_thread(ws.run_forever, ())
 
     def on_message(self, ws, message):
