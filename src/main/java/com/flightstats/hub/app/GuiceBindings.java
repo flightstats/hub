@@ -66,7 +66,6 @@ public class GuiceBindings extends AbstractModule {
         Names.bindProperties(binder(), HubProperties.getProperties());
         bind(HubHealthCheck.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
-        bind(ReplicationService.class).to(ReplicationServiceImpl.class).asEagerSingleton();
         bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
         bind(ChannelUtils.class).asEagerSingleton();
         bind(CuratorLock.class).asEagerSingleton();
