@@ -2,11 +2,9 @@ package com.flightstats.hub.ws;
 
 import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ContentKey;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Injector;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -18,7 +16,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,39 +37,19 @@ public class WebSocketService {
     public WebSocketService() {
         Injector injector = HubMain.getInjector();
         groupService = injector.getInstance(GroupService.class);
-        HubServices.register(new WsService(), HubServices.TYPE.STOP);
-    }
-
-    private class WsService extends AbstractIdleService {
-
-        @Override
-        protected void startUp() throws Exception {
-            //do nothing
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-            logger.info("closing websockets");
-            ArrayList<Session> sessions = new ArrayList<>(sessionMap.values());
-            for (Session session : sessions) {
-                session.close();
-            }
-            logger.info("closed websockets");
-        }
     }
 
     public void createCallback(Session session, String channel) throws UnknownHostException {
         ContentKey contentKey = new ContentKey();
-        String id = session.getId();
+        String id = setId(session, channel);
         URI uri = session.getRequestURI();
         logger.info("creating callback {} {} {}", channel, id, uri);
         sessionMap.put(id, session);
-        String groupName = setGroupName(session, channel);
         Group group = Group.builder()
                 .channelUrl(getChannelUrl(uri))
                 .callbackUrl(getCallbackUrl(id))
                 .parallelCalls(1)
-                .name(groupName)
+                .name(id)
                 .startingKey(contentKey)
                 .build();
         groupService.upsertGroup(group);
@@ -80,8 +57,7 @@ public class WebSocketService {
 
     private String getChannelUrl(URI uri) {
         String channelUrl = uri.toString().replaceFirst("ws://", "http://");
-        channelUrl = StringUtils.removeEnd(channelUrl, "/ws");
-        return channelUrl;
+        return StringUtils.removeEnd(channelUrl, "/ws");
     }
 
     private String getCallbackUrl(String id) throws UnknownHostException {
@@ -89,43 +65,47 @@ public class WebSocketService {
                 HubProperties.getProperty("http.bind_port", 8080) + "/ws/" + id;
     }
 
-    private String setGroupName(Session session, String channel) {
+    private String setId(Session session, String channel) {
         Map<String, Object> userProperties = session.getUserProperties();
-        String groupName = "WS_" + channel + "_" + RandomStringUtils.randomAlphanumeric(20);
-        userProperties.put("groupName", groupName);
-        return groupName;
+        String id = "WS_" + channel + "_" + System.currentTimeMillis() + "_" + RandomStringUtils.randomAlphanumeric(6);
+        userProperties.put("id", id);
+        return id;
     }
 
-    private String getGroupName(Session session) {
+    private String getId(Session session) {
         Map<String, Object> userProperties = session.getUserProperties();
-        return (String) userProperties.get("groupName");
+        return (String) userProperties.get("id");
     }
 
     public void call(String id, String uri) {
         Session session = sessionMap.get(id);
         if (session == null) {
             logger.info("attempting to send to missing session {} {}", id, uri);
+            close(id);
             return;
         }
         try {
             session.getBasicRemote().sendText(uri);
         } catch (IOException e) {
             logger.warn("unable to send to session " + id + " uri " + uri + " " + e.getMessage());
-            close(session);
+            close(id);
         } catch (Exception e) {
             logger.warn("unable to send to session " + id + " uri " + uri, e);
-            close(session);
+            close(id);
         }
     }
 
     public void close(Session session) {
+        close(getId(session));
+    }
+
+    public void close(String id) {
         try {
-            String groupName = getGroupName(session);
-            logger.info("deleting group {}", groupName);
-            groupService.delete(groupName);
-            sessionMap.remove(session.getId());
+            logger.info("deleting ws group {}", id);
+            groupService.delete(id);
+            sessionMap.remove(id);
         } catch (Exception e) {
-            logger.info("unable to close session " + session, e);
+            logger.info("unable to close ws group " + id, e);
         }
     }
 }
