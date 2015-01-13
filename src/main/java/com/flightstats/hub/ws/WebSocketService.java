@@ -2,9 +2,11 @@ package com.flightstats.hub.ws;
 
 import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ContentKey;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Injector;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -16,6 +18,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +40,25 @@ public class WebSocketService {
     public WebSocketService() {
         Injector injector = HubMain.getInjector();
         groupService = injector.getInstance(GroupService.class);
+        HubServices.register(new WsService(), HubServices.TYPE.STOP);
+    }
+
+    private class WsService extends AbstractIdleService {
+
+        @Override
+        protected void startUp() throws Exception {
+            //do nothing
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            logger.info("closing websockets");
+            ArrayList<Session> sessions = new ArrayList<>(sessionMap.values());
+            for (Session session : sessions) {
+                session.close();
+            }
+            logger.info("closed websockets");
+        }
     }
 
     public void createCallback(Session session, String channel) throws UnknownHostException {
@@ -97,9 +119,13 @@ public class WebSocketService {
     }
 
     public void close(Session session) {
-        String groupName = getGroupName(session);
-        logger.info("deleting group {}", groupName);
-        groupService.delete(groupName);
-        sessionMap.remove(session.getId());
+        try {
+            String groupName = getGroupName(session);
+            logger.info("deleting group {}", groupName);
+            groupService.delete(groupName);
+            sessionMap.remove(session.getId());
+        } catch (Exception e) {
+            logger.info("unable to close session " + session, e);
+        }
     }
 }
