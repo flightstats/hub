@@ -16,6 +16,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub-v2.svc.dev &
@@ -88,7 +89,7 @@ class WebsiteTasks(TaskSet):
         ws = websocket.WebSocketApp(self.ws_uri,
                                     on_message=self.on_message,
                                     on_close=self.on_close,
-                                    on_error=self.on_close)
+                                    on_error=self.on_error)
         thread.start_new_thread(ws.run_forever, ())
 
     def on_message(self, ws, message):
@@ -97,6 +98,10 @@ class WebsiteTasks(TaskSet):
 
     def on_close(self):
         logger.info("closing ws %s", self.channel)
+        websockets[self.channel]["open"] = False
+
+    def on_error(self, error):
+        logger.info("error ws %s", self.channel)
         websockets[self.channel]["open"] = False
 
     def _load_metadata(self):
