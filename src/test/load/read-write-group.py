@@ -17,6 +17,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub-v2.svc.dev &
@@ -96,11 +97,11 @@ class WebsiteTasks(TaskSet):
         logger.debug("ws %s", message)
         WebsiteTasks.verify_ordered(self.channel, message, websockets, "websocket")
 
-    def on_close(self):
+    def on_close(self, ws):
         logger.info("closing ws %s", self.channel)
         websockets[self.channel]["open"] = False
 
-    def on_error(self, error):
+    def on_error(self, ws, error):
         logger.info("error ws %s", self.channel)
         websockets[self.channel]["open"] = False
 
