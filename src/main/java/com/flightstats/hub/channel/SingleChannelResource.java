@@ -96,7 +96,6 @@ public class SingleChannelResource {
     }
 
     @POST
-    @EventTimed(name = "channel.ALL.post")
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage, @HeaderParam("User") final String user,

@@ -83,6 +83,7 @@ public class HubServices {
     public enum TYPE {
         PRE_STOP,
         PRE_START,
-        POST_START
+        POST_START,
+        STOP
     }
 }
