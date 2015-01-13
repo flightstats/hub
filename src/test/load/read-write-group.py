@@ -18,8 +18,6 @@ from flask import request, jsonify
 
 
 
-
-
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub-v2.svc.dev &
@@ -82,18 +80,30 @@ class WebsiteTasks(TaskSet):
     def start_websocket(self):
         websockets[self.channel] = {
             "data": [],
-            "lock": threading.Lock()
+            "lock": threading.Lock(),
+            "open": True
         }
         self._http = httplib2.Http()
         meta = self._load_metadata()
         self.ws_uri = meta['_links']['ws']['href']
         print self.ws_uri
-        ws = websocket.WebSocketApp(self.ws_uri, on_message=self.on_message)
+        ws = websocket.WebSocketApp(self.ws_uri,
+                                    on_message=self.on_message,
+                                    on_close=self.on_close,
+                                    on_error=self.on_error)
         thread.start_new_thread(ws.run_forever, ())
 
     def on_message(self, ws, message):
         logger.debug("ws %s", message)
         WebsiteTasks.verify_ordered(self.channel, message, websockets, "websocket")
+
+    def on_close(self, ws):
+        logger.info("closing ws %s", self.channel)
+        websockets[self.channel]["open"] = False
+
+    def on_error(self, ws, error):
+        logger.info("error ws %s", self.channel)
+        websockets[self.channel]["open"] = False
 
     def _load_metadata(self):
         print("Fetching channel metadata...")
@@ -112,7 +122,8 @@ class WebsiteTasks(TaskSet):
         self.count += 1
         href = links['_links']['self']['href']
         self.append_href(href, groupCallbacks)
-        self.append_href(href, websockets)
+        if websockets[self.channel]["open"]:
+            self.append_href(href, websockets)
         return href
 
     def append_href(self, href, obj):
@@ -248,7 +259,8 @@ class WebsiteTasks(TaskSet):
     @task(10)
     def verify_callback_length(self):
         self.verify_callback(groupCallbacks, "group")
-        self.verify_callback(websockets, "websocket")
+        if websockets[self.channel]["open"]:
+            self.verify_callback(websockets, "websocket")
 
     @staticmethod
     def verify_ordered(channel, incoming_uri, obj, name):
