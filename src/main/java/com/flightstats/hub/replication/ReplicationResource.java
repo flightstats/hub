@@ -81,8 +81,7 @@ public class ReplicationResource {
         Optional<ReplicationDomain> domainOptional = replicationService.get(domain);
         if (domainOptional.isPresent()) {
             ReplicationDomain replicationDomain = domainOptional.get();
-            boolean added = replicationDomain.getExcludeExcept().add(channel);
-            if (added) {
+            if (replicationDomain.getExcludeExcept().add(channel)) {
                 replicationService.create(replicationDomain);
             }
         } else {
@@ -109,15 +108,28 @@ public class ReplicationResource {
             if (replicationDomain.getExcludeExcept().contains(channel)) {
                 return Response.ok(replicationService.getStatus(channel)).build();
             } else {
-                Response.status(Response.Status.NOT_FOUND)
+                return Response.status(Response.Status.NOT_FOUND)
                         .entity("Channel " + channel + "not found for Replication Domain " + domain).build();
             }
         } else {
-            Response.status(Response.Status.NOT_FOUND).entity("Replication Domain " + domain + " not found").build();
+            return Response.status(Response.Status.NOT_FOUND).entity("Replication Domain " + domain + " not found").build();
         }
-        return Response.created(uriInfo.getRequestUri()).build();
     }
 
-    //todo - gfm - 1/13/15 - add delete for a channel in a domain
+    @DELETE
+    @Path("/{domain}/{channel}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteChannel(@PathParam("domain") String domain, @PathParam("channel") String channel) {
+        Optional<ReplicationDomain> domainOptional = replicationService.get(domain);
+        if (domainOptional.isPresent()) {
+            ReplicationDomain replicationDomain = domainOptional.get();
+            if (replicationDomain.getExcludeExcept().remove(channel)) {
+                replicationService.create(replicationDomain);
+            }
+            return Response.status(Response.Status.ACCEPTED).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).entity("Replication Domain " + domain + " not found").build();
+        }
+    }
 
 }
