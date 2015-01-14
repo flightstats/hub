@@ -47,18 +47,29 @@ public class TracesImpl implements Traces {
     public void logSlow(long millis, Logger logger) {
         long processingTime = System.currentTimeMillis() - start;
         if (processingTime >= millis) {
-            try {
-                traces.add(new Trace("logging"));
-                String output = "\n\t";
-                synchronized (traces) {
-                    for (Trace trace : traces) {
-                        output += trace.toString() + "\n\t";
-                    }
+            String output = getOutput(logger);
+            logger.info("slow processing of {} millis. trace: {}", processingTime, output);
+        }
+    }
+
+    public void log(Logger logger) {
+        String output = getOutput(logger);
+        logger.info("trace: {}", output);
+    }
+
+    private String getOutput(Logger logger) {
+        try {
+            traces.add(new Trace("logging"));
+            String output = "\n\t";
+            synchronized (traces) {
+                for (Trace trace : traces) {
+                    output += trace.toString() + "\n\t";
                 }
-                logger.info("slow processing of {} millis. trace: {}", processingTime, output);
-            } catch (Exception e) {
-                logger.warn("unable to log {} traces {}", traces);
             }
+            return output;
+        } catch (Exception e) {
+            logger.warn("unable to log {} traces {}", traces);
+            return "unable to output";
         }
     }
 

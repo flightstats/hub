@@ -109,7 +109,7 @@ public class CallbackQueue implements AutoCloseable {
 
     private DateTime getLatestStable() {
         if (channelService.isReplicating(channel)) {
-            Optional<ContentKey> latest = channelService.getLatest(channel, true);
+            Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
             if (latest.isPresent()) {
                 return latest.get().getTime();
             } else {
