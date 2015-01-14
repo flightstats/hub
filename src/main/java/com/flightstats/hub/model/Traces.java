@@ -21,4 +21,6 @@ public interface Traces {
     void logSlow(long millis, Logger logger);
 
     void output(ObjectNode root);
+
+    void log(Logger logger);
 }
