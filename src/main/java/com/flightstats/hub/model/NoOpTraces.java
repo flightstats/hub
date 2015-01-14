@@ -40,4 +40,9 @@ public class NoOpTraces implements Traces {
     public void output(ObjectNode root) {
 
     }
+
+    @Override
+    public void log(Logger logger) {
+
+    }
 }

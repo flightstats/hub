@@ -148,12 +148,17 @@ describe(testName, function () {
                     .redirects(0)
                     .end(function (res) {
                         expect(res.error).toBe(false);
-                        var replicatedSequence = getSequence(res.header['location']);
-                        var sourceSequence = getSequence(item.location);
-                        if (replicatedSequence < sourceSequence) {
-                            console.log('name ' + item.name + ' repl ' + replicatedSequence + ' source ' + sourceSequence);
+                        if (res.statusCode !== 303) {
+                            console.log('!!wrong status code!! ', item.name, res.statusCode);
+                            expect(response.statusCode).toBe(303);
+                        } else {
+                            var replicatedSequence = getSequence(res.header['location']);
+                            var sourceSequence = getSequence(item.location);
+                            if (replicatedSequence < sourceSequence) {
+                                console.log('name ' + item.name + ' repl ' + replicatedSequence + ' source ' + sourceSequence);
+                            }
+                            expect(replicatedSequence).not.toBeLessThan(sourceSequence);
                         }
-                        expect(replicatedSequence).not.toBeLessThan(sourceSequence);
                         callback(res.error);
                     });
             }, function (err) {

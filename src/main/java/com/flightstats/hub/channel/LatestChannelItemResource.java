@@ -29,8 +29,9 @@ public class LatestChannelItemResource {
     @GET
     @EventTimed(name = "channel.ALL.latest.get")
     public Response getLatest(@PathParam("channelName") String channelName,
-                              @QueryParam("stable") @DefaultValue("true") boolean stable) {
-        Optional<ContentKey> latest = channelService.getLatest(channelName, stable);
+                              @QueryParam("stable") @DefaultValue("true") boolean stable,
+                              @QueryParam("trace") @DefaultValue("false") boolean trace) {
+        Optional<ContentKey> latest = channelService.getLatest(channelName, stable, trace);
         if (latest.isPresent()) {
             return Response.status(SEE_OTHER)
                     .location(URI.create(uriInfo.getBaseUri() + "channel/" + channelName + "/" + latest.get().toUrl()))
