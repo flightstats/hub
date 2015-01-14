@@ -111,7 +111,7 @@ public class ReplicationService {
         Optional<Long> sourceLatest = channelUtils.getLatestSequence(channel.getUrl());
         if (channelReplicator.isValid() && sourceLatest.isPresent()) {
             status.setConnected(channelReplicator.isConnected());
-            Optional<ContentKey> lastUpdatedKey = channelService.getLatest(channel.getName(), true);
+            Optional<ContentKey> lastUpdatedKey = channelService.getLatest(channel.getName(), true, false);
             if (lastUpdatedKey.isPresent()) {
                 status.setReplicationLatest(lastUpdatedKey.get().toUrl());
             }
