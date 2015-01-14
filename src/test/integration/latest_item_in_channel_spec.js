@@ -15,7 +15,8 @@ utils.configureFrisby();
  */
 describe(testName, function () {
 
-    utils.putChannel(channelName);
+    utils.putChannel(channelName, function () {
+    }, {"name": channelName, "ttlDays": 1});
 
     utils.addItem(channelResource, 201);
 
