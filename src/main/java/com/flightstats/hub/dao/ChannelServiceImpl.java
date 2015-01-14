@@ -67,12 +67,16 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace) {
+        ChannelConfiguration channelConfiguration = getChannelConfiguration(channelName);
+        if (null == channelConfiguration) {
+            return Optional.absent();
+        }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channelName)
                 .contentKey(new ContentKey(TimeUtil.time(stable), "ZZZZZ"))
                 .next(false)
                 .stable(stable)
-                .ttlDays(getChannelConfiguration(channelName).getTtlDays())
+                .ttlDays(channelConfiguration.getTtlDays())
                 .count(1).build();
         query.trace(trace);
         Collection<ContentKey> keys = getKeys(query);
