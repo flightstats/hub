@@ -72,6 +72,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .contentKey(new ContentKey(TimeUtil.time(stable), "ZZZZZ"))
                 .next(false)
                 .stable(stable)
+                .ttlDays(getChannelConfiguration(channelName).getTtlDays())
                 .count(1).build();
         query.trace(trace);
         Collection<ContentKey> keys = getKeys(query);
