@@ -167,8 +167,8 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channelName, boolean stable) {
-        return channelService.getLatest(channelName, stable);
+    public Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace) {
+        return channelService.getLatest(channelName, stable, trace);
     }
 
     private boolean isNotTestChannel(String channelName) {

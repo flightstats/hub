@@ -9,10 +9,13 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class ChannelServiceImpl implements ChannelService {
+    private final static Logger logger = LoggerFactory.getLogger(ChannelServiceImpl.class);
 
     private final ContentService contentService;
     private final ChannelConfigurationDao channelConfigurationDao;
@@ -63,15 +66,19 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channelName, boolean stable) {
+    public Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace) {
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channelName)
                 .contentKey(new ContentKey(TimeUtil.time(stable), "ZZZZZ"))
                 .next(false)
                 .stable(stable)
+                .ttlDays(getChannelConfiguration(channelName).getTtlDays())
                 .count(1).build();
-        query.trace(false);
+        query.trace(trace);
         Collection<ContentKey> keys = getKeys(query);
+        if (trace) {
+            query.getTraces().log(logger);
+        }
         if (keys.isEmpty()) {
             return Optional.absent();
         } else {
