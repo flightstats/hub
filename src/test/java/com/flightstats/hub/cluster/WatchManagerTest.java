@@ -41,7 +41,7 @@ public class WatchManagerTest {
         watchManager.register(watcher);
 
         watchManager.notifyWatcher(watcher.getPath());
-        assertTrue(countDownLatch.await(20, TimeUnit.MILLISECONDS));
+        assertTrue(countDownLatch.await(1, TimeUnit.SECONDS));
     }
 
     @Test
@@ -64,7 +64,7 @@ public class WatchManagerTest {
         watchManager.notifyWatcher("/testStuff");
         watchManager.notifyWatcher("/testNoCallbac");
         watchManager.notifyWatcher("/testNoCallback1");
-        assertFalse(countDownLatch.await(20, TimeUnit.MILLISECONDS));
+        assertFalse(countDownLatch.await(1, TimeUnit.SECONDS));
     }
 
 }
