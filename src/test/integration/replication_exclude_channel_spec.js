@@ -61,7 +61,7 @@ describe(testName, function () {
             return connected;
         }, 60000);
 
-    });
+    }, 60000);
 
     utils.addItem(channelResource, 403);
 
