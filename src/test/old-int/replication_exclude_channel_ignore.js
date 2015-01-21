@@ -4,11 +4,11 @@ var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var remoteUrl = "http://" + replicationDomain + "/channel";
-var testName = "replication_exclude_channel_spec";
+var testName = __filename;
 
 if (typeof replicationDomain === 'undefined') {
-    xdescribe("replicationDomain is not defined, skipping replication_remote_spec", function () {
-        console.info("replicationDomain is not defined, skipping replication_exclude_channel_spec");
+    xdescribe("replicationDomain is not defined, skipping " + testName, function () {
+        console.info("replicationDomain is not defined, skipping " + testName);
         xit("is just a function, so it can contain any code", function () {
         });
     });
