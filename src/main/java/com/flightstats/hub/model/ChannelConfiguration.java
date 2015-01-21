@@ -25,17 +25,15 @@ public class ChannelConfiguration implements Serializable {
     private final long ttlDays;
     private final String description;
     private final Set<String> tags = new TreeSet<>();
+    private final String replicationSource;
 
     public ChannelConfiguration(Builder builder) {
         this.name = StringUtils.trim(builder.name);
         this.creationDate = builder.creationDate;
         this.ttlDays = builder.ttlDays;
-        if (builder.description == null) {
-            this.description = "";
-        } else {
-            this.description = builder.description;
-        }
+        this.description = StringUtils.defaultString(builder.description, "");
         this.tags.addAll(builder.tags);
+        this.replicationSource = StringUtils.defaultString(builder.replicationSource, "");
     }
 
     public static ChannelConfiguration fromJson(String json) {
@@ -74,6 +72,11 @@ public class ChannelConfiguration implements Serializable {
         return tags;
     }
 
+    @JsonProperty("replicationSource")
+    public String getReplicationSource() {
+        return replicationSource;
+    }
+
     public static class Builder {
         private static final ObjectMapper mapper = new ObjectMapper();
         private String name;
@@ -81,6 +84,7 @@ public class ChannelConfiguration implements Serializable {
         private long ttlDays = 120;
         private String description = "";
         private Set<String> tags = new HashSet<>();
+        private String replicationSource = "";
 
         public Builder() {
         }
@@ -91,6 +95,7 @@ public class ChannelConfiguration implements Serializable {
             this.ttlDays = config.ttlDays;
             this.description = config.description;
             this.tags.addAll(config.getTags());
+            this.replicationSource = config.replicationSource;
             return this;
         }
 
@@ -112,6 +117,9 @@ public class ChannelConfiguration implements Serializable {
                 for (JsonNode tagNode : tagsNode) {
                     tags.add(tagNode.asText());
                 }
+            }
+            if (rootNode.has("replicationSource")) {
+                withReplicationSource(rootNode.get("replicationSource").asText());
             }
             return this;
         }
@@ -142,6 +150,11 @@ public class ChannelConfiguration implements Serializable {
 
         public Builder withDescription(String description) {
             this.description = description;
+            return this;
+        }
+
+        public Builder withReplicationSource(String replicationSource) {
+            this.replicationSource = replicationSource;
             return this;
         }
     }

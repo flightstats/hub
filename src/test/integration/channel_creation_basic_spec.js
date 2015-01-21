@@ -24,8 +24,8 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
                 },
                 name: channelName,
                 ttlDays: 120,
-                description: ""
-                //TODO: Date validation
+                description: "",
+                replicationSource: ""
             })
             .afterJSON(function (result) {
                 frisby.create(testName + ': Making sure channel resource exists.')
