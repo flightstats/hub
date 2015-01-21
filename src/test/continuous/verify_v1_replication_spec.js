@@ -150,7 +150,7 @@ describe(testName, function () {
                         expect(res.error).toBe(false);
                         if (res.statusCode !== 303) {
                             console.log('!!wrong status code!! ', item.name, res.statusCode);
-                            expect(response.statusCode).toBe(303);
+                            expect(res.statusCode).toBe(303);
                         } else {
                             var replicatedSequence = getSequence(res.header['location']);
                             var sourceSequence = getSequence(item.location);
