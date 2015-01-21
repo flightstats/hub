@@ -24,6 +24,7 @@ describe(testName, function () {
         expect(parse.ttlDays).toEqual(120);
         expect(parse.description).toEqual('');
         expect(parse.tags.length).toEqual(0);
+        expect(parse.replicationSource).toEqual('');
     });
 
     var newConfig = {

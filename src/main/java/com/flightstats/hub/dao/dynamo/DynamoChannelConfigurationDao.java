@@ -47,6 +47,9 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         if (StringUtils.isNotEmpty(config.getDescription())) {
             item.put("description", new AttributeValue(config.getDescription()));
         }
+        if (StringUtils.isNotEmpty(config.getReplicationSource())) {
+            item.put("replicationSource", new AttributeValue(config.getReplicationSource()));
+        }
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(getTableName())
                 .withItem(item);
@@ -102,6 +105,9 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         }
         if (item.containsKey("tags")) {
             builder.withTags(item.get("tags").getSS());
+        }
+        if (item.containsKey("replicationSource")) {
+            builder.withReplicationSource(item.get("replicationSource").getS());
         }
         return builder.build();
     }

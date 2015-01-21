@@ -7,11 +7,13 @@ var testName = __filename;
 var updateBody = {
     "ttlDays" : 2,
     description: 'next',
-    "tags": ["foo", "bar", "tagz"]
+    "tags": ["foo", "bar", "tagz"],
+    replicationSource: 'http://hub/channel/nada'
 };
 function verifyOptionals(parse) {
     expect(parse.description).toBe('describe me');
     expect(parse.ttlDays).toBe(9);
+    expect(parse.replicationSource).toBe('');
 }
 
 describe(testName, function () {
@@ -53,6 +55,7 @@ describe(testName, function () {
                 var parse = JSON.parse(body);
                 expect(parse.ttlDays).toBe(2);
                 expect(parse.description).toBe('next');
+                expect(parse.replicationSource).toBe('http://hub/channel/nada');
                 expect(parse.tags).toContain('foo');
                 expect(parse.tags).toContain('bar');
                 expect(parse.tags).toContain('tagz');
@@ -68,6 +71,7 @@ describe(testName, function () {
                 var parse = JSON.parse(body);
                 expect(parse.ttlDays).toBe(2);
                 expect(parse.description).toBe('next');
+                expect(parse.replicationSource).toBe('http://hub/channel/nada');
                 expect(parse.tags).toContain('foo');
                 expect(parse.tags).toContain('bar');
                 expect(parse.tags).toContain('tagz');
