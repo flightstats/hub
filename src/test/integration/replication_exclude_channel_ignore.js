@@ -14,6 +14,7 @@ if (typeof replicationDomain === 'undefined') {
     });
     return;
 }
+//todo - gfm - 1/20/15 - fix this after the replication api is cleaned up
 /**
  * This should exclude POSTs to a channel with replication configured and remote channel is available.
  * 1 - create local channel
