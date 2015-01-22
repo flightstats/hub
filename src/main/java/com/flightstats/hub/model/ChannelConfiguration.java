@@ -33,7 +33,13 @@ public class ChannelConfiguration implements Serializable {
         this.ttlDays = builder.ttlDays;
         this.description = StringUtils.defaultString(builder.description, "");
         this.tags.addAll(builder.tags);
-        this.replicationSource = StringUtils.defaultString(builder.replicationSource, "");
+        if (StringUtils.isBlank(builder.replicationSource)) {
+            this.replicationSource = "";
+            tags.remove("replicated");
+        } else {
+            this.replicationSource = builder.replicationSource;
+            tags.add("replicated");
+        }
     }
 
     public static ChannelConfiguration fromJson(String json) {

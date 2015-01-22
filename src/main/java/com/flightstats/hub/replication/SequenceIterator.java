@@ -1,6 +1,7 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.channel.ChannelLinkBuilder;
+import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.annotations.VisibleForTesting;
@@ -29,7 +30,7 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
 
     private final static Logger logger = LoggerFactory.getLogger(SequenceIterator.class);
     private final ChannelUtils channelUtils;
-    private final Channel channel;
+    private final ChannelConfiguration channel;
     private final WebSocketContainer container;
     private final String channelUrl;
     private final Object lock = new Object();
@@ -39,13 +40,13 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private boolean connected = false;
 
-    public SequenceIterator(long lastCompleted, ChannelUtils channelUtils, Channel channel,
+    public SequenceIterator(long lastCompleted, ChannelUtils channelUtils, ChannelConfiguration channel,
                             WebSocketContainer container) {
         this.current = lastCompleted;
         this.channelUtils = channelUtils;
         this.channel = channel;
         this.container = container;
-        String url = channel.getUrl();
+        String url = channel.getReplicationSource();
         if (url.endsWith("/")) {
             url = url.substring(0, url.length() - 1);
         }

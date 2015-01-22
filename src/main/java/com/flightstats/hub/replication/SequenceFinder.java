@@ -1,5 +1,6 @@
 package com.flightstats.hub.replication;
 
+import com.flightstats.hub.model.ChannelConfiguration;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -21,9 +22,9 @@ public class SequenceFinder {
         this.channelUtils = channelUtils;
     }
 
-    public long searchForLastUpdated(Channel channel, long lastUpdated, long time, TimeUnit timeUnit) {
+    public long searchForLastUpdated(ChannelConfiguration channel, long lastUpdated, long time, TimeUnit timeUnit) {
         logger.debug("searching the key space with lastUpdated {}", lastUpdated);
-        Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getUrl());
+        Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getReplicationSource());
         if (!latestSequence.isPresent()) {
             return ChannelUtils.NOT_FOUND;
         }
@@ -47,13 +48,13 @@ public class SequenceFinder {
     /**
      * We want to return a starting id that exists, and isn't going to be expired immediately.
      */
-    private boolean existsAndNotYetExpired(Channel channel, long id, long time, TimeUnit timeUnit) {
+    private boolean existsAndNotYetExpired(ChannelConfiguration channel, long id, long time, TimeUnit timeUnit) {
         logger.debug("id = {} time = {} {} ", id, time, timeUnit);
-        Optional<DateTime> creationDate = channelUtils.getCreationDate(channel.getUrl(), id);
+        Optional<DateTime> creationDate = channelUtils.getCreationDate(channel.getReplicationSource(), id);
         if (!creationDate.isPresent()) {
             return false;
         }
-        long days = Math.min(timeUnit.toDays(time), channel.getConfiguration().getTtlDays());
+        long days = Math.min(timeUnit.toDays(time), channel.getTtlDays());
         return creationDate.get().isAfter(new DateTime().minusDays((int) days));
     }
 }
