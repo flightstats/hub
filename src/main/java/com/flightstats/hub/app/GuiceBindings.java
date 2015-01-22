@@ -25,7 +25,8 @@ import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.metrics.HubInstrumentedResourceMethodDispatchAdapter;
 import com.flightstats.hub.metrics.HubMethodTimingAdapterProvider;
 import com.flightstats.hub.model.ChannelConfiguration;
-import com.flightstats.hub.replication.*;
+import com.flightstats.hub.replication.ChannelUtils;
+import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.spoke.*;
 import com.flightstats.hub.time.TimeMonitor;
@@ -66,7 +67,7 @@ public class GuiceBindings extends AbstractModule {
         Names.bindProperties(binder(), HubProperties.getProperties());
         bind(HubHealthCheck.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
-        bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
+        bind(Replicator.class).asEagerSingleton();
         bind(ChannelUtils.class).asEagerSingleton();
         bind(CuratorLock.class).asEagerSingleton();
         bind(AwsConnectorFactory.class).asEagerSingleton();
@@ -85,10 +86,6 @@ public class GuiceBindings extends AbstractModule {
         bind(ChannelConfigurationDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))
                 .to(DynamoChannelConfigurationDao.class);
-        bind(ReplicationDao.class).to(CachedReplicationDao.class).asEagerSingleton();
-        bind(ReplicationDao.class)
-                .annotatedWith(Names.named(CachedReplicationDao.DELEGATE))
-                .to(DynamoReplicationDao.class).asEagerSingleton();
 
         bind(ContentService.class).to(ContentServiceImpl.class).asEagerSingleton();
 
