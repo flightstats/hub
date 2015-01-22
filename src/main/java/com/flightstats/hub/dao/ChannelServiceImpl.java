@@ -146,7 +146,9 @@ public class ChannelServiceImpl implements ChannelService {
         ChannelConfiguration oldConfig = getChannelConfiguration(configuration.getName());
         channelValidator.validate(configuration, false);
         channelConfigurationDao.updateChannel(configuration);
-        if (oldConfig.isReplicating() || configuration.isReplicating()) {
+        if (configuration.isReplicating()) {
+            replicator.notifyWatchers();
+        } else if (oldConfig != null && oldConfig.isReplicating()) {
             replicator.notifyWatchers();
         }
         return configuration;
