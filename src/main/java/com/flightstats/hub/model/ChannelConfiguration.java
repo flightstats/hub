@@ -1,5 +1,6 @@
 package com.flightstats.hub.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -81,6 +82,11 @@ public class ChannelConfiguration implements Serializable {
     @JsonProperty("replicationSource")
     public String getReplicationSource() {
         return replicationSource;
+    }
+
+    @JsonIgnore
+    public boolean isReplicating() {
+        return StringUtils.isNotBlank(replicationSource);
     }
 
     public static class Builder {
