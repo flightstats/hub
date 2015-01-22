@@ -51,6 +51,12 @@ public class ChannelConfiguration implements Serializable {
         return gson.fromJson(json, ChannelConfiguration.Builder.class).build();
     }
 
+    public static ChannelConfiguration fromJson(String json, String name) {
+        return gson.fromJson(json, ChannelConfiguration.Builder.class)
+                .withName(name)
+                .build();
+    }
+
     public static Builder builder() {
         return new Builder();
     }
