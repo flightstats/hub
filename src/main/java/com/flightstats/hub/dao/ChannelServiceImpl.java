@@ -1,13 +1,14 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.channel.ChannelValidator;
+import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.ReplicationValidator;
 import com.flightstats.hub.replication.V1ChannelReplicator;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,18 +22,16 @@ public class ChannelServiceImpl implements ChannelService {
     private final ChannelConfigurationDao channelConfigurationDao;
     private final ChannelValidator channelValidator;
     private final V1ChannelReplicator v1ChannelReplicator;
-    private final ReplicationValidator replicationValidator;
     private HostedGraphiteSender sender;
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigurationDao channelConfigurationDao,
                               ChannelValidator channelValidator, V1ChannelReplicator v1ChannelReplicator,
-                              ReplicationValidator replicationValidator, HostedGraphiteSender sender) {
+                              HostedGraphiteSender sender) {
         this.contentService = contentService;
         this.channelConfigurationDao = channelConfigurationDao;
         this.channelValidator = channelValidator;
         this.v1ChannelReplicator = v1ChannelReplicator;
-        this.replicationValidator = replicationValidator;
         this.sender = sender;
     }
 
@@ -50,8 +49,9 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ContentKey insert(String channelName, Content content) {
+        //todo - gfm - 1/21/15 - this check may go away when we support inserting content into a replicating channel.
         if (content.isNew()) {
-            replicationValidator.throwExceptionIfReplicating(channelName);
+            throwExceptionIfReplicating(channelName);
         }
         long start = System.currentTimeMillis();
         ContentKey contentKey = contentService.insert(channelName, content);
@@ -61,8 +61,18 @@ public class ChannelServiceImpl implements ChannelService {
         return contentKey;
     }
 
+    private void throwExceptionIfReplicating(String channelName) {
+        if (isReplicating(channelName)) {
+            throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
+        }
+    }
+
     public boolean isReplicating(String channelName) {
-        return replicationValidator.isReplicating(channelName);
+        ChannelConfiguration configuration = getChannelConfiguration(channelName);
+        if (null == configuration) {
+            return false;
+        }
+        return StringUtils.isNotBlank(configuration.getReplicationSource());
     }
 
     @Override
@@ -182,7 +192,8 @@ public class ChannelServiceImpl implements ChannelService {
         if (!channelConfigurationDao.channelExists(channelName)) {
             return false;
         }
-        replicationValidator.throwExceptionIfReplicating(channelName);
+        //todo - gfm - 1/22/15 - this should notify, not throw exception
+        throwExceptionIfReplicating(channelName);
         contentService.delete(channelName);
         channelConfigurationDao.delete(channelName);
         v1ChannelReplicator.delete(channelName);
