@@ -48,7 +48,7 @@ public class SingleChannelResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         ChannelConfiguration config = channelService.getChannelConfiguration(channelName);
-        URI channelUri = linkBuilder.buildChannelUri(config, uriInfo);
+        URI channelUri = ChannelLinkBuilder.buildChannelUri(config, uriInfo);
         Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(config, channelUri);
 
         return Response.ok(channelUri).entity(linked).build();
@@ -60,15 +60,16 @@ public class SingleChannelResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channelName") String channelName, String json) throws Exception {
         ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
-        ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json);
+        ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json, channelName);
         if (oldConfig != null) {
             channelConfiguration = ChannelConfiguration.builder()
                     .withChannelConfiguration(oldConfig)
                     .withUpdateJson(json)
                     .build();
         }
+        logger.info("creating channel {}", channelConfiguration);
         channelConfiguration = channelService.updateChannel(channelConfiguration);
-        URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
+        URI channelUri = ChannelLinkBuilder.buildChannelUri(channelConfiguration, uriInfo);
         return Response.created(channelUri).entity(
                 linkBuilder.buildChannelLinks(channelConfiguration, channelUri))
                 .build();
@@ -90,7 +91,7 @@ public class SingleChannelResource {
 
         newConfig = channelService.updateChannel(newConfig);
 
-        URI channelUri = linkBuilder.buildChannelUri(newConfig, uriInfo);
+        URI channelUri = ChannelLinkBuilder.buildChannelUri(newConfig, uriInfo);
         Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(newConfig, channelUri);
         return Response.ok(channelUri).entity(linked).build();
     }
@@ -114,7 +115,7 @@ public class SingleChannelResource {
             InsertedContentKey insertionResult = new InsertedContentKey(contentKey);
             URI payloadUri = linkBuilder.buildItemUri(contentKey, uriInfo.getRequestUri());
             Linked<InsertedContentKey> linkedResult = linked(insertionResult)
-                    .withLink("channel", linkBuilder.buildChannelUri(channelName, uriInfo))
+                    .withLink("channel", ChannelLinkBuilder.buildChannelUri(channelName, uriInfo))
                     .withLink("self", payloadUri)
                     .build();
 
