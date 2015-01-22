@@ -45,7 +45,7 @@ public class ReplicationResource {
     }
 
     @GET
-    @Path("/{channel}")
+    @Path("/{channelName}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getReplicatedChannel(@PathParam("channelName") String channelName) throws Exception {
         ObjectNode root = mapper.createObjectNode();
