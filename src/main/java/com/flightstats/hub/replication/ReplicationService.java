@@ -1,78 +1,60 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.cluster.CuratorLock;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.channel.ChannelLinkBuilder;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
-import com.google.common.collect.Lists;
+import com.flightstats.hub.model.ContentKey;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import javax.ws.rs.core.UriInfo;
 
 /**
  *
  */
 public class ReplicationService {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationService.class);
-    private static final String LOCK_PATH = "/ReplicationService/";
-
-    private final ChannelService channelService;
-    private final ChannelUtils channelUtils;
-    private final CuratorLock curatorLock;
-    private final Replicator replicator;
+    public static final String REPLICATED = "replicated";
 
     @Inject
-    public ReplicationService(ChannelService channelService, ChannelUtils channelUtils,
-                              CuratorLock curatorLock, Replicator replicator) {
-        this.channelService = channelService;
-        this.channelUtils = channelUtils;
-        this.curatorLock = curatorLock;
-        this.replicator = replicator;
+    private ChannelService channelService;
+    @Inject
+    private ChannelUtils channelUtils;
+    @Inject
+    private Replicator replicator;
+
+    public Iterable<ChannelConfiguration> getReplicatingChannels() {
+        return channelService.getChannels(REPLICATED);
     }
 
-    private Collection<ReplicationStatus> getStatus() {
-        ArrayList<ReplicationStatus> statuses = Lists.newArrayList();
-        //todo - gfm - 1/22/15 -
-        /*for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
-            for (V1ChannelReplicator channelReplicator : domainReplicator.getChannels()) {
-                statuses.add(getChannel(channelReplicator));
-            }
-        }*/
-        return statuses;
-    }
-
-    public ReplicationStatus getStatus(String channel) {
-        //todo - gfm - 1/22/15 -
-        /*for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
-            for (V1ChannelReplicator channelReplicator : domainReplicator.getChannels()) {
-                if (channelReplicator.getChannel().getName().equals(channel)) {
-                    return getChannel(channelReplicator);
-                }
-            }
-        }*/
-        return null;
-    }
-
-    private ReplicationStatus getChannel(V1ChannelReplicator channelReplicator) {
-        //todo - gfm - 1/22/15 -
-        ReplicationStatus status = new ReplicationStatus();
-        ChannelConfiguration channel = channelReplicator.getChannel();
-        /*status.setChannel(channel);
-        Optional<Long> sourceLatest = channelUtils.getLatestSequence(channel.getUrl());
-        if (channelReplicator.isValid() && sourceLatest.isPresent()) {
-            status.setConnected(channelReplicator.isConnected());
-            Optional<ContentKey> lastUpdatedKey = channelService.getLatest(channel.getName(), true, false);
+    public void getStatus(String channel, ObjectNode node, UriInfo uriInfo) {
+        ChannelConfiguration config = channelService.getChannelConfiguration(channel);
+        if (config == null || !config.isReplicating()) {
+            return;
+        }
+        node.put("name", config.getName());
+        node.put("href", ChannelLinkBuilder.buildChannelUri(config, uriInfo).toString());
+        node.put("replicationSource", config.getReplicationSource());
+        V1ChannelReplicator v1ChannelReplicator = replicator.getChannelReplicator(channel);
+        if (v1ChannelReplicator == null) {
+            node.put("message", "replicationSource channel not found");
+            return;
+        }
+        Optional<Long> sourceLatest = channelUtils.getLatestSequence(config.getReplicationSource());
+        if (v1ChannelReplicator.isValid() && sourceLatest.isPresent()) {
+            Optional<ContentKey> lastUpdatedKey = channelService.getLatest(channel, true, false);
             if (lastUpdatedKey.isPresent()) {
-                status.setReplicationLatest(lastUpdatedKey.get().toUrl());
+                node.put("replicatedLatest", lastUpdatedKey.get().toUrl());
             }
-            status.setSourceLatest(sourceLatest.get().toString());
+            node.put("sourceLatest", sourceLatest.get().toString());
         } else if (!sourceLatest.isPresent()) {
-            status.setMessage("source channel not present");
+            node.put("message", "replicationSource latest not found");
         } else {
-            status.setMessage(channelReplicator.getMessage());
-        }*/
-        return status;
+            node.put("message", v1ChannelReplicator.getMessage());
+        }
     }
+
 }

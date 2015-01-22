@@ -3,7 +3,6 @@ package com.flightstats.hub.replication;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -30,20 +29,22 @@ public class Replicator {
     private final static Logger logger = LoggerFactory.getLogger(Replicator.class);
 
     private final ReplicationService replicationService;
-    private ChannelService channelService;
     private final Provider<V1ChannelReplicator> replicatorProvider;
     private final WatchManager watchManager;
     private final Map<String, V1ChannelReplicator> replicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
 
     @Inject
-    public Replicator(ReplicationService replicationService, ChannelService channelService,
+    public Replicator(ReplicationService replicationService,
                       Provider<V1ChannelReplicator> replicatorProvider, WatchManager watchManager) {
         this.replicationService = replicationService;
-        this.channelService = channelService;
         this.replicatorProvider = replicatorProvider;
         this.watchManager = watchManager;
         HubServices.registerPreStop(new ReplicatorService());
+    }
+
+    public V1ChannelReplicator getChannelReplicator(String channel) {
+        return replicatorMap.get(channel);
     }
 
     private class ReplicatorService extends AbstractIdleService {
@@ -84,7 +85,7 @@ public class Replicator {
         }
         logger.info("replicating channels");
         Set<String> replicators = new HashSet<>();
-        Iterable<ChannelConfiguration> replicatedChannels = channelService.getChannels("replicated");
+        Iterable<ChannelConfiguration> replicatedChannels = replicationService.getReplicatingChannels();
         for (ChannelConfiguration channel : replicatedChannels) {
             if (replicatorMap.containsKey(channel.getName())) {
                 V1ChannelReplicator replicator = replicatorMap.get(channel.getName());
@@ -128,9 +129,6 @@ public class Replicator {
         }
     }
 
-    //todo - gfm - 1/22/15 - add method for getting list of replicators
-
-    //todo - gfm - 1/22/15 - call this when replication is changed
     public void notifyWatchers() {
         watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
     }
