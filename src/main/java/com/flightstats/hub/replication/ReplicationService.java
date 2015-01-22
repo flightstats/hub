@@ -36,7 +36,8 @@ public class ReplicationService {
             return;
         }
         node.put("name", config.getName());
-        node.put("href", ChannelLinkBuilder.buildChannelUri(config, uriInfo).toString());
+        String localUri = ChannelLinkBuilder.buildChannelUri(config, uriInfo).toString();
+        node.put("localHref", localUri);
         node.put("replicationSource", config.getReplicationSource());
         V1ChannelReplicator v1ChannelReplicator = replicator.getChannelReplicator(channel);
         if (v1ChannelReplicator == null) {
@@ -47,9 +48,9 @@ public class ReplicationService {
         if (v1ChannelReplicator.isValid() && sourceLatest.isPresent()) {
             Optional<ContentKey> lastUpdatedKey = channelService.getLatest(channel, true, false);
             if (lastUpdatedKey.isPresent()) {
-                node.put("replicatedLatest", lastUpdatedKey.get().toUrl());
+                node.put("localLatest", localUri + "/" + lastUpdatedKey.get().toUrl());
             }
-            node.put("sourceLatest", sourceLatest.get().toString());
+            node.put("replicationSourceLatest", config.getReplicationSource() + "/" + sourceLatest.get().toString());
         } else if (!sourceLatest.isPresent()) {
             node.put("message", "replicationSource latest not found");
         } else {
