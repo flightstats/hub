@@ -59,7 +59,8 @@ public class ChannelLinkBuilder {
         Linked.Builder<ChannelConfiguration> linked = linked(config).withLink("self", channelUri);
         linked.withLink("latest", URI.create(channelUri + "/latest"))
                 .withLink("ws", buildWsLinkFor(channelUri))
-                .withLink("time", URI.create(channelUri + "/time"));
+                .withLink("time", URI.create(channelUri + "/time"))
+                .withLink("status", URI.create(channelUri + "/status"));
         return linked.build();
     }
 

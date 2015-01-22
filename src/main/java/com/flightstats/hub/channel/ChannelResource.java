@@ -1,59 +1,153 @@
 package com.flightstats.hub.channel;
 
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.exception.ConflictException;
-import com.flightstats.hub.exception.InvalidRequestException;
+import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.InsertedContentKey;
+import com.flightstats.hub.rest.Headers;
 import com.flightstats.hub.rest.Linked;
+import com.flightstats.hub.rest.PATCH;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.InputStream;
 import java.net.URI;
 
+import static com.flightstats.hub.rest.Linked.linked;
+
 /**
- * This resource represents the collection of all channels in the Hub.
+ * This resource represents a single channel in the Hub.
  */
-@Path("/channel")
+@Path("/channel/{channelName}")
 public class ChannelResource {
-
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
-
     private final ChannelService channelService;
     private final ChannelLinkBuilder linkBuilder;
     private final UriInfo uriInfo;
 
     @Inject
-    public ChannelResource(ChannelService channelService, ChannelLinkBuilder linkBuilder, UriInfo uriInfo) {
+    public ChannelResource(ChannelService channelService, ChannelLinkBuilder linkBuilder,
+                           UriInfo uriInfo) {
         this.channelService = channelService;
         this.linkBuilder = linkBuilder;
         this.uriInfo = uriInfo;
     }
 
     @GET
-    @EventTimed(name = "channels.get")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getChannels() {
-        Iterable<ChannelConfiguration> channels = channelService.getChannels();
-        Linked<?> result = linkBuilder.build(channels, uriInfo);
-        return Response.ok(result).build();
+    public Response getChannelMetadata(@PathParam("channelName") String channelName) {
+        if (noSuchChannel(channelName)) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+        ChannelConfiguration config = channelService.getChannelConfiguration(channelName);
+        URI channelUri = ChannelLinkBuilder.buildChannelUri(config, uriInfo);
+        Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(config, channelUri);
+
+        return Response.ok(channelUri).entity(linked).build();
     }
 
-    @POST
-    @EventTimed(name = "channels.post")
+    @PUT
+    @EventTimed(name = "channels.put")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createChannel(String json) throws InvalidRequestException, ConflictException {
-        ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json);
-        channelConfiguration = channelService.createChannel(channelConfiguration);
-        URI channelUri = linkBuilder.buildChannelUri(channelConfiguration, uriInfo);
+    public Response createChannel(@PathParam("channelName") String channelName, String json) throws Exception {
+        ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
+        ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json, channelName);
+        if (oldConfig != null) {
+            channelConfiguration = ChannelConfiguration.builder()
+                    .withChannelConfiguration(oldConfig)
+                    .withUpdateJson(json)
+                    .build();
+        }
+        logger.info("creating channel {}", channelConfiguration);
+        channelConfiguration = channelService.updateChannel(channelConfiguration);
+        URI channelUri = ChannelLinkBuilder.buildChannelUri(channelConfiguration, uriInfo);
         return Response.created(channelUri).entity(
                 linkBuilder.buildChannelLinks(channelConfiguration, channelUri))
                 .build();
     }
+
+    @PATCH
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateMetadata( @PathParam("channelName") String channelName, String json) throws Exception {
+        if (noSuchChannel(channelName)) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+
+        ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
+        ChannelConfiguration newConfig = ChannelConfiguration.builder()
+                .withChannelConfiguration(oldConfig)
+                .withUpdateJson(json)
+                .build();
+
+        newConfig = channelService.updateChannel(newConfig);
+
+        URI channelUri = ChannelLinkBuilder.buildChannelUri(newConfig, uriInfo);
+        Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(newConfig, channelUri);
+        return Response.ok(channelUri).entity(linked).build();
+    }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
+                                @HeaderParam("Content-Language") final String contentLanguage, @HeaderParam("User") final String user,
+                                final InputStream data) throws Exception {
+        if (noSuchChannel(channelName)) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+        Content content = Content.builder()
+                .withContentLanguage(contentLanguage)
+                .withContentType(contentType)
+                .withStream(data)
+                .withUser(user)
+                .build();
+        try {
+            ContentKey contentKey = channelService.insert(channelName, content);
+            InsertedContentKey insertionResult = new InsertedContentKey(contentKey);
+            URI payloadUri = linkBuilder.buildItemUri(contentKey, uriInfo.getRequestUri());
+            Linked<InsertedContentKey> linkedResult = linked(insertionResult)
+                    .withLink("channel", ChannelLinkBuilder.buildChannelUri(channelName, uriInfo))
+                    .withLink("self", payloadUri)
+                    .build();
+
+            Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
+            builder.entity(linkedResult);
+            builder.location(payloadUri);
+            ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
+            content.getTraces().logSlow(100, logger);
+            return builder.build();
+        } catch (ContentTooLargeException e) {
+            return Response.status(413).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            String key = "";
+            if (content.getContentKey().isPresent()) {
+                key = content.getContentKey().get().toString();
+            }
+            logger.warn("unable to POST to " + channelName + " key " + key, e);
+            throw e;
+        }
+    }
+
+    @DELETE
+    public Response delete(@PathParam("channelName") final String channelName) throws Exception {
+        if (channelService.delete(channelName)) {
+            return Response.status(Response.Status.ACCEPTED).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
+        }
+    }
+
+    private boolean noSuchChannel(final String channelName) {
+        return !channelService.channelExists(channelName);
+    }
+
 }
