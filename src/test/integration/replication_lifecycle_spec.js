@@ -62,7 +62,7 @@ describe(testName, function () {
 
     it('verfies items are in local channel', function (done) {
         request.get({
-                url: replicatedUrl + '/status',
+                url: replicatedUrl + '/status?stable=false',
                 headers: {"Content-Type": "application/json"}
             },
             function (err, response, body) {
@@ -92,7 +92,7 @@ describe(testName, function () {
 
     it('verfies new items are in local channel ' + secondItemUrl, function (done) {
         request.get({
-                url: secondItemUrl + '/next/10',
+                url: secondItemUrl + '/next/10?stable=false',
                 headers: {"Content-Type": "application/json"}
             },
             function (err, response, body) {
