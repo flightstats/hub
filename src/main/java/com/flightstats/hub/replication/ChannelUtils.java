@@ -2,6 +2,7 @@ package com.flightstats.hub.replication;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -12,6 +13,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
@@ -164,6 +166,18 @@ public class ChannelUtils {
             logger.debug("unable to get channels " + url, e);
         }
         return channels;
+    }
+
+    public void startGroupCallback(String groupName, String callbackUrl, String sourceChannel) {
+        String sourceRoot = StringUtils.substringBefore(sourceChannel, "/channel/");
+        ObjectNode payload = mapper.createObjectNode();
+        payload.put("callbackUrl", callbackUrl);
+        payload.put("channelUrl", sourceChannel);
+        String groupUrl = sourceRoot + "/group/" + groupName;
+        logger.info("calling {} with {}", groupUrl, payload);
+        ClientResponse response = followClient.resource(groupUrl).put(ClientResponse.class, payload.toString());
+        logger.info("group response", response);
+
     }
 
     private ClientResponse getResponse(String url) {

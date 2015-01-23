@@ -21,6 +21,7 @@ conf/hub.properties :
         encrypted : false
         shutdown_delay_seconds : 15
         shutdown_wait_seconds : 60
+        url : "http://hub-v2-int.svc.staging/"
 
     verification :
         one: 15
