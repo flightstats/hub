@@ -12,52 +12,52 @@ var MINUTE = 60 * 1000;
 
 describe(testName, function () {
 
-    var replicatedDomain;
+    var replicatedChannelUrls = [];
+    var replicatedChannels = {};
 
-    it('loads ' + hubUrl + ' replicated channels for source ' + sourceDomain, function (done) {
-        agent.get(hubUrl + '/replication')
+    it('loads ' + hubUrl + ' replicated channels from ' + sourceDomain, function (done) {
+        agent.get(hubUrl + '/tag/replicated')
             .set('Accept', 'application/json')
             .end(function (res) {
                 expect(res.error).toBe(false);
-                var domains = res.body.domains;
-                console.log('domains', domains);
-                domains.forEach(function (domain) {
-                    if (domain.domain === sourceDomain) {
-                        console.log('found', domain);
-                        replicatedDomain = domain;
+                var channels = res.body._links.channels;
+                console.log('found replicated channels', channels);
+                channels.forEach(function (channel) {
+                    if (channel.name.substring(0, 4) !== 'test') {
+                        replicatedChannelUrls.push(channel.href);
+                        replicatedChannels[channel.href] = channel;
+                    } else {
+                        console.log('excluding channel ', channel.name);
                     }
                 });
-                expect(replicatedDomain).not.toBeUndefined();
+                expect(replicatedChannelUrls.length).not.toBe(0);
                 done();
             })
     }, MINUTE);
 
-    var latestSourceItems = [];
-
-    it('gets latest items for source channels', function (done) {
-        async.eachLimit(replicatedDomain.excludeExcept, 40,
+    it('gets replication sources ', function (done) {
+        async.eachLimit(replicatedChannelUrls, 20,
             function (channel, callback) {
-                agent.get('http://' + sourceDomain + '/channel/' + channel + '/latest')
+                console.log('get channel', channel);
+                agent.get(channel)
                     .set('Accept', 'application/json')
-                    .redirects(0)
                     .end(function (res) {
-                        //todo - gfm - 1/10/15 - this should only look at latest items within the last hour
                         expect(res.error).toBe(false);
-                        latestSourceItems.push({name: channel, location: res.header['location']});
+                        replicatedChannels[channel]['replicationSource'] = res.body.replicationSource;
+                        console.log('replicatedChannels', replicatedChannels);
                         callback(res.error);
                     });
             }, function (err) {
-                console.log('latest', latestSourceItems);
                 done(err);
             });
-    }, 2 * MINUTE);
+    }, MINUTE);
 
     var channels = {};
 
     it('gets lists of replicated items', function (done) {
-        async.eachLimit(replicatedDomain.excludeExcept, 20,
+        async.eachLimit(replicatedChannelUrls, 20,
             function (channel, callback) {
-                agent.get(hubUrl + '/channel/' + channel + '/time/hour?stable=false')
+                agent.get(channel + '/time/hour?stable=false')
                     .set('Accept', 'application/json')
                     .end(function (res) {
                         expect(res.error).toBe(false);
@@ -84,6 +84,7 @@ describe(testName, function () {
     it('makes sure replicated items are sequential ', function (done) {
         for (var channel in channels) {
             var sequence = 0;
+            console.log('working on', channel);
             channels[channel].forEach(function (uri) {
                 if (sequence) {
                     var next = getSequence(uri);
@@ -119,7 +120,7 @@ describe(testName, function () {
             function (item, callback) {
                 async.parallel([
                         function (callback) {
-                            getItem('http://' + sourceDomain + '/channel/' + item.name + "/" + item.sequence, callback);
+                            getItem(replicatedChannels[item.name].replicationSource + "/" + item.sequence, callback);
                         },
                         function (callback) {
                             getItem(item.uri, callback);
@@ -140,7 +141,8 @@ describe(testName, function () {
             });
     }, 30 * MINUTE);
 
-    it('checks replicated for latest from source', function (done) {
+    //todo - gfm - 1/22/15 - come up with a better solution for this
+    /*it('checks replicated for latest from source', function (done) {
         async.eachLimit(latestSourceItems, 40,
             function (item, callback) {
                 agent.get(hubUrl + '/channel/' + item.name + '/latest?stable=false')
@@ -164,7 +166,7 @@ describe(testName, function () {
             }, function (err) {
                 done(err);
             });
-    }, 2 * MINUTE);
+     }, 2 * MINUTE);*/
 
 
 
