@@ -3,6 +3,7 @@ package com.flightstats.hub.replication;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -28,24 +29,19 @@ public class ReplicatorImpl implements Replicator {
     private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
     private final static Logger logger = LoggerFactory.getLogger(ReplicatorImpl.class);
 
-    private final ReplicationService replicationService;
+    private final ChannelService channelService;
     private final Provider<V1ChannelReplicator> replicatorProvider;
     private final WatchManager watchManager;
     private final Map<String, V1ChannelReplicator> replicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
 
     @Inject
-    public ReplicatorImpl(ReplicationService replicationService,
+    public ReplicatorImpl(ChannelService channelService,
                           Provider<V1ChannelReplicator> replicatorProvider, WatchManager watchManager) {
-        this.replicationService = replicationService;
+        this.channelService = channelService;
         this.replicatorProvider = replicatorProvider;
         this.watchManager = watchManager;
         HubServices.registerPreStop(new ReplicatorService());
-    }
-
-    @Override
-    public V1ChannelReplicator getChannelReplicator(String channel) {
-        return replicatorMap.get(channel);
     }
 
     private class ReplicatorService extends AbstractIdleService {
@@ -68,6 +64,7 @@ public class ReplicatorImpl implements Replicator {
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
+                //todo - gfm - 1/23/15 - this should probably use a different thread
                 replicateChannels();
             }
 
@@ -86,7 +83,7 @@ public class ReplicatorImpl implements Replicator {
         }
         logger.info("replicating channels");
         Set<String> replicators = new HashSet<>();
-        Iterable<ChannelConfiguration> replicatedChannels = replicationService.getReplicatingChannels();
+        Iterable<ChannelConfiguration> replicatedChannels = channelService.getChannels(REPLICATED);
         for (ChannelConfiguration channel : replicatedChannels) {
             if (replicatorMap.containsKey(channel.getName())) {
                 V1ChannelReplicator replicator = replicatorMap.get(channel.getName());
@@ -122,6 +119,7 @@ public class ReplicatorImpl implements Replicator {
 
     private void startReplication(ChannelConfiguration channel) {
         logger.info("starting replication of " + channel);
+        //todo - gfm - 1/23/15 - this should test for V1 or V2 source channel
         try {
             V1ChannelReplicator v1ChannelReplicator = replicatorProvider.get();
             v1ChannelReplicator.setChannel(channel);
