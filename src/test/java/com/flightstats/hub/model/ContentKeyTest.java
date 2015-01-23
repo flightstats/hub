@@ -1,6 +1,7 @@
 package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -55,4 +56,13 @@ public class ContentKeyTest {
         ContentKey key = new ContentKey();
         assertEquals(key, ContentKey.fromZk(key.toZk()));
     }
+
+    @Test
+    public void testFullUrl() {
+        Optional<ContentKey> optional = ContentKey.fromFullUrl("http://hub-v2.svc.dev/channel/load_test_2/2015/01/23/21/11/19/407/L7QtaY");
+        assertTrue(optional.isPresent());
+        ContentKey contentKey = optional.get();
+        assertEquals("2015/01/23/21/11/19/407/L7QtaY", contentKey.toString());
+    }
 }
+

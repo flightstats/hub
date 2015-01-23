@@ -30,6 +30,17 @@ public class ContentKey implements Comparable<ContentKey> {
         this.hash = hash;
     }
 
+    public static Optional<ContentKey> fromFullUrl(String key) {
+        try {
+            String substring = StringUtils.substringAfter(key, "/channel/");
+            substring = StringUtils.substringAfter(substring, "/");
+            return fromUrl(substring);
+        } catch (Exception e) {
+            logger.info("unable to parse " + key + " " + e.getMessage());
+            return Optional.absent();
+        }
+    }
+
     public static Optional<ContentKey> fromUrl(String key) {
         try {
             String date = StringUtils.substringBeforeLast(key, "/") + "/";
