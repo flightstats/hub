@@ -31,6 +31,7 @@ public class ChannelConfigurationTest {
         assertEquals(120, config.getTtlDays());
         assertEquals("", config.getDescription());
         assertTrue(config.getTags().isEmpty());
+        assertEquals("", config.getReplicationSource());
     }
 
     @Test
@@ -60,5 +61,20 @@ public class ChannelConfigurationTest {
         ChannelConfiguration config = ChannelConfiguration.builder().withTags(tags).build();
         ChannelConfiguration copy = ChannelConfiguration.builder().withChannelConfiguration(config).build();
         assertTrue(copy.getTags().containsAll(config.getTags()));
+    }
+
+    @Test
+    public void testReplicationSource() throws Exception {
+        String replicationSource = "http://hub/channel/blah";
+        ChannelConfiguration config = ChannelConfiguration.builder().withReplicationSource(replicationSource).build();
+        assertEquals(replicationSource, config.getReplicationSource());
+    }
+
+    @Test
+    public void testReplicationSourceCopy() throws Exception {
+        String replicationSource = "http://hub/channel/blah";
+        ChannelConfiguration config = ChannelConfiguration.builder().withReplicationSource(replicationSource).build();
+        ChannelConfiguration copy = ChannelConfiguration.builder().withChannelConfiguration(config).build();
+        assertEquals(replicationSource, copy.getReplicationSource());
     }
 }

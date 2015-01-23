@@ -1,126 +1,61 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.cluster.CuratorLock;
-import com.flightstats.hub.cluster.Lockable;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.channel.ChannelLinkBuilder;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.concurrent.TimeUnit;
+import javax.ws.rs.core.UriInfo;
 
 /**
  *
  */
 public class ReplicationService {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationService.class);
-    private static final String LOCK_PATH = "/ReplicationService/";
-
-    private final ReplicationDao replicationDao;
-    private final ChannelService channelService;
-    private final ChannelUtils channelUtils;
-    private final CuratorLock curatorLock;
-    private final Replicator replicator;
-    private final ReplicationValidator replicationValidator;
+    public static final String REPLICATED = "replicated";
 
     @Inject
-    public ReplicationService(ReplicationDao replicationDao, ChannelService channelService, ChannelUtils channelUtils,
-                              CuratorLock curatorLock, Replicator replicator,
-                              ReplicationValidator replicationValidator) {
-        this.replicationDao = replicationDao;
-        this.channelService = channelService;
-        this.channelUtils = channelUtils;
-        this.curatorLock = curatorLock;
-        this.replicator = replicator;
-        this.replicationValidator = replicationValidator;
+    private ChannelService channelService;
+    @Inject
+    private ChannelUtils channelUtils;
+    @Inject
+    private Replicator replicator;
+
+    public Iterable<ChannelConfiguration> getReplicatingChannels() {
+        return channelService.getChannels(REPLICATED);
     }
 
-    public void create(final ReplicationDomain domain) {
-        replicationValidator.validateDomain(domain);
-
-        curatorLock.runWithLock(new Lockable() {
-            @Override
-            public void runWithLock() throws Exception {
-                replicationDao.upsert(domain);
-            }
-        }, LOCK_PATH, 1, TimeUnit.MINUTES);
-        notifyWatchers();
-    }
-
-    private void notifyWatchers() {
-        replicator.notifyWatchers();
-    }
-
-    public Optional<ReplicationDomain> get(String domain) {
-        return replicationDao.get(domain);
-    }
-
-    public boolean delete(final String domain) {
-        Optional<ReplicationDomain> optionalDomain = replicationDao.get(domain);
-        if (!optionalDomain.isPresent()) {
-            return false;
+    public void getStatus(String channel, ObjectNode node, UriInfo uriInfo) {
+        ChannelConfiguration config = channelService.getChannelConfiguration(channel);
+        if (config == null || !config.isReplicating()) {
+            return;
         }
-        curatorLock.runWithLock(new Lockable() {
-            @Override
-            public void runWithLock() throws Exception {
-                replicationDao.delete(domain);
-            }
-        }, LOCK_PATH, 1, TimeUnit.MINUTES);
-        notifyWatchers();
-        return true;
-    }
-
-    public Collection<ReplicationDomain> getDomains(boolean refreshCache) {
-        return replicationDao.getDomains(refreshCache);
-    }
-
-    public ReplicationBean getReplicationBean() {
-        return new ReplicationBean(getDomains(false), getStatus());
-    }
-
-    private Collection<ReplicationStatus> getStatus() {
-        ArrayList<ReplicationStatus> statuses = Lists.newArrayList();
-        for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
-            for (V1ChannelReplicator channelReplicator : domainReplicator.getChannels()) {
-                statuses.add(getChannel(channelReplicator));
-            }
+        node.put("name", config.getName());
+        String localUri = ChannelLinkBuilder.buildChannelUri(config, uriInfo).toString();
+        node.put("localHref", localUri);
+        node.put("replicationSource", config.getReplicationSource());
+        V1ChannelReplicator v1ChannelReplicator = replicator.getChannelReplicator(channel);
+        if (v1ChannelReplicator == null) {
+            node.put("message", "replicationSource channel not found");
+            return;
         }
-        return statuses;
-    }
-
-    public ReplicationStatus getStatus(String channel) {
-        for (DomainReplicator domainReplicator : replicator.getDomainReplicators()) {
-            for (V1ChannelReplicator channelReplicator : domainReplicator.getChannels()) {
-                if (channelReplicator.getChannel().getName().equals(channel)) {
-                    return getChannel(channelReplicator);
-                }
-            }
-        }
-        return null;
-    }
-
-    private ReplicationStatus getChannel(V1ChannelReplicator channelReplicator) {
-        ReplicationStatus status = new ReplicationStatus();
-        Channel channel = channelReplicator.getChannel();
-        status.setChannel(channel);
-        Optional<Long> sourceLatest = channelUtils.getLatestSequence(channel.getUrl());
-        if (channelReplicator.isValid() && sourceLatest.isPresent()) {
-            status.setConnected(channelReplicator.isConnected());
-            Optional<ContentKey> lastUpdatedKey = channelService.getLatest(channel.getName(), true, false);
+        Optional<Long> sourceLatest = channelUtils.getLatestSequence(config.getReplicationSource());
+        if (v1ChannelReplicator.isValid() && sourceLatest.isPresent()) {
+            Optional<ContentKey> lastUpdatedKey = channelService.getLatest(channel, true, false);
             if (lastUpdatedKey.isPresent()) {
-                status.setReplicationLatest(lastUpdatedKey.get().toUrl());
+                node.put("localLatest", localUri + "/" + lastUpdatedKey.get().toUrl());
             }
-            status.setSourceLatest(sourceLatest.get().toString());
+            node.put("replicationSourceLatest", config.getReplicationSource() + "/" + sourceLatest.get().toString());
         } else if (!sourceLatest.isPresent()) {
-            status.setMessage("source channel not present");
+            node.put("message", "replicationSource latest not found");
         } else {
-            status.setMessage(channelReplicator.getMessage());
+            node.put("message", v1ChannelReplicator.getMessage());
         }
-        return status;
     }
+
 }

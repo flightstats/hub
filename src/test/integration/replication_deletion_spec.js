@@ -4,25 +4,15 @@ var testName = __filename;
 var channelName = utils.randomChannelName();
 
 /**
- * This test could be fragile relative to time.  If a remote server is running slowly, this may fail.
+ * 1 - Create local channel with replicationSource to non-existent channel
+ * 2 - Delete local channel
  */
 describe(testName, function () {
     var channelName = utils.randomChannelName();
-    utils.createChannel(channelName);
+    utils.putChannel(channelName, function () {
+    }, {'replicationSource': 'http://hub/channel/none'});
 
     var localChannelUrl = hubUrlBase + '/channel/' + channelName;
-    var localReplicationUrl = hubUrlBase + '/replication/';
-
-    it('creates local replication config', function (done) {
-        request.put({url : localReplicationUrl + replicationDomain,
-                headers : {'Content-Type' : 'application/json'},
-                body : JSON.stringify({ historicalDays : 1, excludeExcept : [channelName] })},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
-                done();
-            });
-    });
 
     utils.sleep(1000);
 
@@ -30,7 +20,7 @@ describe(testName, function () {
         request.del({url : localChannelUrl },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(403);
+                expect(response.statusCode).toBe(202);
                 done();
             });
     });

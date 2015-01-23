@@ -1,10 +1,10 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.channel.ChannelValidator;
+import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.ReplicationValidator;
-import com.flightstats.hub.replication.V1ChannelReplicator;
+import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -20,19 +20,17 @@ public class ChannelServiceImpl implements ChannelService {
     private final ContentService contentService;
     private final ChannelConfigurationDao channelConfigurationDao;
     private final ChannelValidator channelValidator;
-    private final V1ChannelReplicator v1ChannelReplicator;
-    private final ReplicationValidator replicationValidator;
+    private final Replicator replicator;
     private HostedGraphiteSender sender;
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigurationDao channelConfigurationDao,
-                              ChannelValidator channelValidator, V1ChannelReplicator v1ChannelReplicator,
-                              ReplicationValidator replicationValidator, HostedGraphiteSender sender) {
+                              ChannelValidator channelValidator, Replicator replicator,
+                              HostedGraphiteSender sender) {
         this.contentService = contentService;
         this.channelConfigurationDao = channelConfigurationDao;
         this.channelValidator = channelValidator;
-        this.v1ChannelReplicator = v1ChannelReplicator;
-        this.replicationValidator = replicationValidator;
+        this.replicator = replicator;
         this.sender = sender;
     }
 
@@ -45,13 +43,18 @@ public class ChannelServiceImpl implements ChannelService {
     public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
         channelValidator.validate(configuration, true);
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
-        return channelConfigurationDao.createChannel(configuration);
+        ChannelConfiguration created = channelConfigurationDao.createChannel(configuration);
+        if (created.isReplicating()) {
+            replicator.notifyWatchers();
+        }
+        return created;
     }
 
     @Override
     public ContentKey insert(String channelName, Content content) {
+        //todo - gfm - 1/21/15 - this check may go away when we support inserting content into a replicating channel.
         if (content.isNew()) {
-            replicationValidator.throwExceptionIfReplicating(channelName);
+            throwExceptionIfReplicating(channelName);
         }
         long start = System.currentTimeMillis();
         ContentKey contentKey = contentService.insert(channelName, content);
@@ -61,8 +64,18 @@ public class ChannelServiceImpl implements ChannelService {
         return contentKey;
     }
 
+    private void throwExceptionIfReplicating(String channelName) {
+        if (isReplicating(channelName)) {
+            throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
+        }
+    }
+
     public boolean isReplicating(String channelName) {
-        return replicationValidator.isReplicating(channelName);
+        ChannelConfiguration configuration = getChannelConfiguration(channelName);
+        if (null == configuration) {
+            return false;
+        }
+        return configuration.isReplicating();
     }
 
     @Override
@@ -130,8 +143,14 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
         configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
+        ChannelConfiguration oldConfig = getChannelConfiguration(configuration.getName());
         channelValidator.validate(configuration, false);
         channelConfigurationDao.updateChannel(configuration);
+        if (configuration.isReplicating()) {
+            replicator.notifyWatchers();
+        } else if (oldConfig != null && oldConfig.isReplicating()) {
+            replicator.notifyWatchers();
+        }
         return configuration;
     }
 
@@ -182,10 +201,12 @@ public class ChannelServiceImpl implements ChannelService {
         if (!channelConfigurationDao.channelExists(channelName)) {
             return false;
         }
-        replicationValidator.throwExceptionIfReplicating(channelName);
+        boolean replicating = isReplicating(channelName);
         contentService.delete(channelName);
         channelConfigurationDao.delete(channelName);
-        v1ChannelReplicator.delete(channelName);
+        if (replicating) {
+            replicator.notifyWatchers();
+        }
         return true;
     }
 }

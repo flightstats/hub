@@ -15,13 +15,13 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 @Path("/channel/{channelName: .*}/latest")
-public class LatestChannelItemResource {
+public class ChannelLatestResource {
 
     private final UriInfo uriInfo;
     private final ChannelService channelService;
 
     @Inject
-    public LatestChannelItemResource(UriInfo uriInfo, ChannelService channelService) {
+    public ChannelLatestResource(UriInfo uriInfo, ChannelService channelService) {
         this.uriInfo = uriInfo;
         this.channelService = channelService;
     }
