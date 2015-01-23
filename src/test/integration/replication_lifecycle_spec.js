@@ -32,33 +32,37 @@ describe(testName, function () {
 
     var items = [];
 
-    it('posts items ' + replicationSource, function (done) {
-        utils.postItemQ(replicationSource)
-            .then(function (value) {
-                items.push(value.body._links.self.href);
-                return utils.postItemQ(replicationSource);
-            })
-            .then(function (value) {
-                items.push(value.body._links.self.href);
-                expect(items.length).toBe(2);
-                done();
-            })
-            .catch(function (error) {
-                console.log('error', error);
-            })
-    });
+    function postTwoItems(expected) {
+        it('posts items ' + replicationSource, function (done) {
+            utils.postItemQ(replicationSource)
+                .then(function (value) {
+                    items.push(value.body._links.self.href);
+                    return utils.postItemQ(replicationSource);
+                })
+                .then(function (value) {
+                    items.push(value.body._links.self.href);
+                    expect(items.length).toBe(expected);
+                    done();
+                })
+                .catch(function (error) {
+                    console.log('error', error);
+                })
+        });
+    }
+
+    postTwoItems(2);
 
     utils.sleep(10 * 1000);
+
+    var secondItemUrl = '';
 
     function getSequence(uri) {
         return parseInt(uri.substring(uri.lastIndexOf('/') + 1));
     }
 
     it('verfies items are in local channel', function (done) {
-        var url = replicatedUrl + '/status';
-        console.log('calling', url);
         request.get({
-                url: url,
+                url: replicatedUrl + '/status',
                 headers: {"Content-Type": "application/json"}
             },
             function (err, response, body) {
@@ -66,22 +70,41 @@ describe(testName, function () {
                 expect(response.statusCode).toBe(200);
                 var parse = JSON.parse(body);
                 expect(getSequence(parse._links.latest.href)).toBe(1001);
+                secondItemUrl = parse._links.latest.href;
                 done();
             });
 
     }, 10 * 1000);
 
-    //utils.sleep(1000);
+    utils.putChannel(replicatedName, function () {
+    }, {'replicationSource': '', 'ttlDays': 1});
 
+    utils.sleep(10 * 1000);
 
-    /*it('tries to delete channel', function (done) {
-     request.del({url : localChannelUrl },
-     function (err, response, body) {
-     expect(err).toBeNull();
-     expect(response.statusCode).toBe(202);
-     done();
-     });
-     });*/
+    postTwoItems(4);
+
+    utils.putChannel(replicatedName, function () {
+    }, {'replicationSource': replicationSource, 'ttlDays': 1});
+
+    postTwoItems(6);
+
+    utils.sleep(10 * 1000);
+
+    it('verfies new items are in local channel ' + secondItemUrl, function (done) {
+        request.get({
+                url: secondItemUrl + '/next/10',
+                headers: {"Content-Type": "application/json"}
+            },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parse = JSON.parse(body);
+                console.log('next uris ', parse._links.uris);
+                expect(parse._links.uris.length).toBe(4);
+                done();
+            });
+
+    }, 10 * 1000);
 
 
 });
