@@ -28,7 +28,8 @@ public class GuiceContext {
     public static HubGuiceServlet construct() {
         Map<String, String> jerseyProps = new HashMap<>();
         jerseyProps.put(PROPERTY_PACKAGES, "com.flightstats.hub");
-        jerseyProps.put(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName());
+        jerseyProps.put(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName() +
+                ";" + HubServerFilter.class.getName());
 
         jerseyProps.put(JSONConfiguration.FEATURE_POJO_MAPPING, "true");
         jerseyProps.put(FEATURE_CANONICALIZE_URI_PATH, "true");
