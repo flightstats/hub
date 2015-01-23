@@ -33,7 +33,6 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
     private ChannelConfiguration channel;
 
     private SequenceIterator iterator;
-    private long historicalDays;
     private boolean valid = false;
     private String message = "";
     private CuratorLeader curatorLeader;
@@ -50,10 +49,6 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
         this.sequenceFinder = sequenceFinder;
         this.curator = curator;
         this.lastContentKey = lastContentKey;
-    }
-
-    public void setHistoricalDays(long historicalDays) {
-        this.historicalDays = historicalDays;
     }
 
     public void setChannel(ChannelConfiguration channel) {
@@ -176,7 +171,7 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
     public long getLastUpdated() {
         DirectionQuery query = DirectionQuery.builder()
                 .contentKey(new ContentKey())
-                .ttlDays(historicalDays)
+                .ttlDays(0)
                 .count(1)
                 .channelName(channel.getName())
                 .build();
@@ -186,12 +181,12 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
             ContentKey contentKey = keys.iterator().next();
             try {
                 int sequence = Integer.parseInt(contentKey.getHash());
-                return sequenceFinder.searchForLastUpdated(channel, sequence, historicalDays + 1, TimeUnit.DAYS);
+                return sequenceFinder.searchForLastUpdated(channel, sequence, 1, TimeUnit.DAYS);
             } catch (NumberFormatException e) {
                 logger.warn("unable to parse existing content key {}", contentKey);
             }
         }
-        return sequenceFinder.searchForLastUpdated(channel, START_VALUE, historicalDays, TimeUnit.DAYS);
+        return sequenceFinder.searchForLastUpdated(channel, START_VALUE, 0, TimeUnit.DAYS);
     }
 
     public boolean isConnected() {
