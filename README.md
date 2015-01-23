@@ -16,15 +16,14 @@ The Hub V2
 * [fetch content from channel](#fetch-content-from-channel)
 * [latest channel item](#latest-channel-item)
 * [next and previous links](#next-and-previous-links)
+* [channel status](#channel-status)
 * [tag interface](#tag-interface)
 * [time interface](#time-interface)
 * [subscribe to events](#subscribe-to-events)
 * [group callback interface](#group-callback-interface)
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
-* [configure replication](#configure-replication)
-* [replication status](#replication-status)
-* [stop replication](#stop-replication)
+* [replication](#replication)
 * [health check](#health-check)
 * [access control](#access-control)
 * [encrypted-hub](#encrypted-hub)
@@ -59,6 +58,7 @@ The features and API of the EH are mostly the same as the Hub, with a few additi
 * Channels can be idempotently PUT with [create a channel](#create-a-channel).
 * Fixed - 62 second 404 delay for missing items.  404s will return quickly.
 * Performance - PUTs and GETs for channel items are significantly faster.  Typical times are ~10ms.
+* [replication](#replication) is now a channel level setting.  Replicated channels can have new names.
 
 ## consistency
 
@@ -136,6 +136,9 @@ Channels starting with `test` will automatically be deleted in the dev and stagi
 `tags` is an optional array of string values.  Tag values are limited to 48 characters, and may only contain `a-z`, `A-Z` and `0-9`.
 A channel may have at most 20 tags.
 
+'replicationSource' is the optional fully qualified path to a another hub channel.  The data from the other channel
+will be duplicated into this channel.  Please see [replication](#replication) for more details.
+
 **V2 Note**:
 Channel items type, ttlMillis, contentSizeKB and peakRequestRateSeconds from V1 are no longer provided.
 While PUT is shown here, the V1 POST to http://hub-v2/channel/ is still supported.
@@ -174,19 +177,24 @@ On success:  `HTTP/1.1 201 OK`
     "creationDate": "2013-04-23T20:25:33.434Z",
     "ttlDays": 14,
     "description": "a sequence of all the coffee orders from stumptown",
-    "tags": ["coffee"]
+    "tags": ["coffee"],
+    "replicationSource": ""
 }
 ```
 
 Here's how you can do this with curl:
 ```bash
-curl -i -X PUT --header "Content-type: application/json"  http://hub-v2/channel/stumptown
+curl -i -X PUT http://hub-v2/channel/stumptown
+
+or
+
+curl -i -X PUT --header "Content-type: application/json"  --data '{ "description" : "stumpy", "ttlDays" : 1 }' http://localhost:9080/channel/stumptown
 ```
 
 ## update a channel
 
 Some channel metadata can be updated. The update format looks much like the channel create format
-(currently, only `ttlDays`, `description` and `tags` can be updated).
+(currently, only `ttlDays`, `description`, `tags` and `replicationSource` can be updated).
 Each of these fields is optional.
 
 **V2 Note**:
@@ -318,6 +326,30 @@ On success: `HTTP/1.1 200 OK`
         "http://hub-v2/channel/stumptown/2014/12/23/23/14/49/887/x46z8p" 
         ]
   }
+}
+```
+
+## channel status
+
+A GET on the status link for a channel will return the link to the latest item in the channel.
+If a replicationSource is defined, it will also return the link the the latest in the replication hub.
+
+`GET http://hub-v2/channel/stumptown/status`
+
+On success: `HTTP/1.1 200 OK`
+```
+{
+    "_links": {
+        "self": {
+            "href": "http://hub-v2/channel/stumptown/status"
+        },
+        "latest": {
+            "href": "http://hub-v2/channel/stumptown/2015/01/23/17/33/08/895/1524"
+        },
+        "replicationSourceLatest": {
+            "href": "http://hub-other/channel/stumptown/1526"
+        }
+    }
 }
 ```
 
@@ -548,10 +580,10 @@ For external data providers, there is a simplified interface suitable for exposi
 
 ## delete a channel
 
-**Channel Deletion will be access controlled in Staging and Prod environments**
 
 To delete a channel when after you no longer need it, simply issue a `DELETE` command to that channel.
 Delete returns a 202, indicating that the request has been accepted, and will take an indeterminate time to process.
+If you re-create a channel before all the data has been deleted, the behavior is undefined.
 
  `DELETE http://hub-v2/channel/stumptown`
 
@@ -560,141 +592,22 @@ Here's how you can do this with curl:
 curl -i -X DELETE http://hub-v2/channel/stumptown
 ```
 
-## configure replication
+## replication
 
-**Replication Configuration will be access controlled in in Staging and Prod environments**
+The v2 hub can replicate a source channel from another hub instance into a destination channel.  The destination channel can have any name.
 
-The Hub can replicate Sequence channels from another Hub instance. 
+To configure replication, specify `replicationSource` when creating the new channel in the desired destination.
 
-The Source Hub has the channel(s) you want replicated.
-The Target Hub is where you want those channel(s).
-Replication is configured on the Target Hub, and does not have any requirements on the Source Hub, other than it must
-implement the standard Hub API for Sequence channels.
+To stop replication, either delete the destination channel, or PUT the destination channel with a blank `replicationSource`.
 
-For example, if you want to replicate the channel `pdx` from Source: http://hub.svc.prod/ to Target: http://hub.svc.staging/
+Modifications to configuration takes effect immediately.
 
-GET the existing configuration for replication:
+Replication destination channels do not allow inserts.
 
-`GET http://hub.svc.staging/replication/hub.svc.prod`
-
-* Content-type: application/json
-
-```json
-{
-   "historicalDays" : 10,
-   "excludeExcept" : [ "stumptown" ]
-}
-```
-
-Modify the existing replication configuration to include `pdx`:
-
-`PUT http://hub-v2/replication/hub.other`
-
-* Content-type: application/json
-
-```json
-{
-   "historicalDays" : 10,
-   "excludeExcept" : [ "stumptown", "pdx" ]
-}
-```
-
-To remove a single channel from Replication, use PUT without that channel.  To remove `stumptown`:
-
-`PUT http://hub-v2/replication/hub.other`
-
-* Content-type: application/json
-
-```json
-{
-   "historicalDays" : 10,
-   "excludeExcept" : [ "pdx" ]
-}
-```
-
-To delete Replication for an entire domain, use DELETE:
-
-`DELETE http://hub-v2/replication/hub.other`
-
-## v1 to v2 replication
+### v1 to v2 replication
 
 When replicating from hub v1 to hub v2, the location urls will change from v1 sequences to v2 time formats.
 The creation time of the original item will stay the same.
-
-## Replication Details
-
-* Modifications to existing replication configuration take effect immediately.
-* If you are replicating a channel into HubB from HubA, and you will be prevented from inserting data into that channel on HubB.
-* `channels` means "Replicate listed channels".
-* `historicalDays` tells the replicator how far back in time to start. Zero (the default) means "only get new values".
-* If http://hub.other/channel/stumptown `ttlDays` is 10, and `historicalDays` is 5, only items from the last 5 days will be replicated.
-* If a channel's `historicalDays` is 0 and the ongoing replication is restarted, replication will continue with the existing sequence if it is up to `historicalDays` + 1 old.
-
-As an example, the replicating cluster is going into a maintenance window, and a domain has `historicalDays` of zero.  The entire cluster is stopped at noon.
-Maintenance takes longer than expected and the cluster resumes at 11 AM the next day.  Replication will pick up where it left off, and will eventually catch up to the current position.
-If, instead, the cluster didn't start until 1 PM the next day, one hour's worth will not be replicated.
-
-You can see the configuration for a single domain at:
-
- `GET http://hub-v2/replication/hub.other`
-
-  ```json
-  {
-    "domain" : "hub.other",
-    "historicalDays" : 10,
-    "channels" : [ "stumptown", "pdx" ]
-  }
-  ```
-
-## replication status
-
-TODO figure out replicationLatestFormat
-
-You can get the status of all current replication domains at:
-
- `GET http://hub-v2/replication`
-
- ```json
- {
-   "domains" : [ {
-     "domain" : "datahub.svc.staging",
-     "historicalDays" : 0,
-     "channels" : [ "positionsSynthetic" ]
-   }, {
-     "domain" : "hub.svc.prod",
-     "historicalDays" : 10,
-     "channels" : [ "provider_icelandair" ]
-   } ],
-   "status" : [ {
-     "replicationLatest" : '',
-     "sourceLatest" : 6187114,
-     "connected" : true,
-     "deltaLatest" : 0,
-     "name" : "positionsSynthetic",
-     "url" : "http://datahub.svc.staging/channel/positionsSynthetic/"
-   }, {
-     "replicationLatest" : 3717,
-     "sourceLatest" : 3717,
-     "connected" : false,
-     "deltaLatest" : 0,
-     "name" : "provider_icelandair",
-     "url" : "http://hub.svc.prod/channel/provider_icelandair/"
-   }
-   ]
- }
- ```
-
-## stop replication
-
-**Stopping Replication will be access controlled in in Staging and Prod environments**
-
-Stop replication of the entire domain `hub.other`, issue a `DELETE` command.
-
-`DELETE http://hub-v2/replication/hub.other`
-
-On success: `HTTP/1.1 202 Accepted`. This is Accepted because the replication may be on another server, which should
-be notified within seconds.  The user should verify that replication is stopped.
-
 
 ## health check
 
