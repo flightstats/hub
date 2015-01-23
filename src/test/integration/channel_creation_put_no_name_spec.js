@@ -24,7 +24,7 @@ describe(testName, function () {
         expect(parse.description).toEqual('');
         expect(parse.tags.length).toEqual(0);
         expect(parse.replicationSource).toEqual('');
-    });
+    }, {});
 
     var newConfig = {
         description: 'yay put!',

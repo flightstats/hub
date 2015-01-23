@@ -1,9 +1,11 @@
 package com.flightstats.hub.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.exception.InvalidRequestException;
+import com.flightstats.hub.replication.ReplicationService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.EqualsAndHashCode;
@@ -25,17 +27,21 @@ public class ChannelConfiguration implements Serializable {
     private final long ttlDays;
     private final String description;
     private final Set<String> tags = new TreeSet<>();
+    private final String replicationSource;
 
     public ChannelConfiguration(Builder builder) {
         this.name = StringUtils.trim(builder.name);
         this.creationDate = builder.creationDate;
         this.ttlDays = builder.ttlDays;
-        if (builder.description == null) {
-            this.description = "";
-        } else {
-            this.description = builder.description;
-        }
+        this.description = StringUtils.defaultString(builder.description, "");
         this.tags.addAll(builder.tags);
+        if (StringUtils.isBlank(builder.replicationSource)) {
+            this.replicationSource = "";
+            tags.remove(ReplicationService.REPLICATED);
+        } else {
+            this.replicationSource = builder.replicationSource;
+            tags.add(ReplicationService.REPLICATED);
+        }
     }
 
     public static ChannelConfiguration fromJson(String json) {
@@ -43,6 +49,12 @@ public class ChannelConfiguration implements Serializable {
             throw new InvalidRequestException("this method requires at least a json name");
         }
         return gson.fromJson(json, ChannelConfiguration.Builder.class).build();
+    }
+
+    public static ChannelConfiguration fromJson(String json, String name) {
+        return gson.fromJson(json, ChannelConfiguration.Builder.class)
+                .withName(name)
+                .build();
     }
 
     public static Builder builder() {
@@ -74,6 +86,16 @@ public class ChannelConfiguration implements Serializable {
         return tags;
     }
 
+    @JsonProperty("replicationSource")
+    public String getReplicationSource() {
+        return replicationSource;
+    }
+
+    @JsonIgnore
+    public boolean isReplicating() {
+        return StringUtils.isNotBlank(replicationSource);
+    }
+
     public static class Builder {
         private static final ObjectMapper mapper = new ObjectMapper();
         private String name;
@@ -81,6 +103,7 @@ public class ChannelConfiguration implements Serializable {
         private long ttlDays = 120;
         private String description = "";
         private Set<String> tags = new HashSet<>();
+        private String replicationSource = "";
 
         public Builder() {
         }
@@ -91,6 +114,7 @@ public class ChannelConfiguration implements Serializable {
             this.ttlDays = config.ttlDays;
             this.description = config.description;
             this.tags.addAll(config.getTags());
+            this.replicationSource = config.replicationSource;
             return this;
         }
 
@@ -112,6 +136,9 @@ public class ChannelConfiguration implements Serializable {
                 for (JsonNode tagNode : tagsNode) {
                     tags.add(tagNode.asText());
                 }
+            }
+            if (rootNode.has("replicationSource")) {
+                withReplicationSource(rootNode.get("replicationSource").asText());
             }
             return this;
         }
@@ -142,6 +169,11 @@ public class ChannelConfiguration implements Serializable {
 
         public Builder withDescription(String description) {
             this.description = description;
+            return this;
+        }
+
+        public Builder withReplicationSource(String replicationSource) {
+            this.replicationSource = replicationSource;
             return this;
         }
     }
