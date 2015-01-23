@@ -122,11 +122,15 @@ public class ReplicatorImpl implements Replicator {
 
     private void startReplication(ChannelConfiguration channel) {
         logger.info("starting replication of " + channel);
-        V1ChannelReplicator v1ChannelReplicator = replicatorProvider.get();
-        v1ChannelReplicator.setChannel(channel);
-        v1ChannelReplicator.setHistoricalDays(0);
-        if (v1ChannelReplicator.tryLeadership()) {
-            replicatorMap.put(channel.getName(), v1ChannelReplicator);
+        try {
+            V1ChannelReplicator v1ChannelReplicator = replicatorProvider.get();
+            v1ChannelReplicator.setChannel(channel);
+            v1ChannelReplicator.setHistoricalDays(0);
+            if (v1ChannelReplicator.tryLeadership()) {
+                replicatorMap.put(channel.getName(), v1ChannelReplicator);
+            }
+        } catch (Exception e) {
+            logger.warn("unable to start replication " + channel, e);
         }
     }
 
