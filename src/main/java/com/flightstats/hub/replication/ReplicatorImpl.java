@@ -30,16 +30,16 @@ public class ReplicatorImpl implements Replicator {
     private final static Logger logger = LoggerFactory.getLogger(ReplicatorImpl.class);
 
     private final ChannelService channelService;
-    private final Provider<V1ChannelReplicator> replicatorProvider;
+    private final Provider<V1ChannelReplicator> v1ReplicatorProvider;
     private final WatchManager watchManager;
-    private final Map<String, V1ChannelReplicator> replicatorMap = new HashMap<>();
+    private final Map<String, ChannelReplicator> replicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
 
     @Inject
     public ReplicatorImpl(ChannelService channelService,
-                          Provider<V1ChannelReplicator> replicatorProvider, WatchManager watchManager) {
+                          Provider<V1ChannelReplicator> v1ReplicatorProvider, WatchManager watchManager) {
         this.channelService = channelService;
-        this.replicatorProvider = replicatorProvider;
+        this.v1ReplicatorProvider = v1ReplicatorProvider;
         this.watchManager = watchManager;
         HubServices.registerPreStop(new ReplicatorService());
     }
@@ -86,7 +86,7 @@ public class ReplicatorImpl implements Replicator {
         Iterable<ChannelConfiguration> replicatedChannels = channelService.getChannels(REPLICATED);
         for (ChannelConfiguration channel : replicatedChannels) {
             if (replicatorMap.containsKey(channel.getName())) {
-                V1ChannelReplicator replicator = replicatorMap.get(channel.getName());
+                ChannelReplicator replicator = replicatorMap.get(channel.getName());
                 if (!replicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
                     logger.info("changing replication source from {} to {}",
                             replicator.getChannel().getReplicationSource(), channel.getReplicationSource());
@@ -103,15 +103,15 @@ public class ReplicatorImpl implements Replicator {
         logger.info("stopping replicators {}", toStop);
         for (String nameToStop : toStop) {
             logger.info("stopping {}", nameToStop);
-            V1ChannelReplicator replicator = replicatorMap.remove(nameToStop);
+            ChannelReplicator replicator = replicatorMap.remove(nameToStop);
             replicator.exit();
         }
     }
 
     private void stopReplication() {
         logger.info("stopping all replication " + replicatorMap.keySet());
-        Collection<V1ChannelReplicator> replicators = replicatorMap.values();
-        for (V1ChannelReplicator replicator : replicators) {
+        Collection<ChannelReplicator> replicators = replicatorMap.values();
+        for (ChannelReplicator replicator : replicators) {
             replicator.exit();
         }
         logger.info("stopped all replication " + replicatorMap.keySet());
@@ -121,7 +121,7 @@ public class ReplicatorImpl implements Replicator {
         logger.info("starting replication of " + channel);
         //todo - gfm - 1/23/15 - this should test for V1 or V2 source channel
         try {
-            V1ChannelReplicator v1ChannelReplicator = replicatorProvider.get();
+            V1ChannelReplicator v1ChannelReplicator = v1ReplicatorProvider.get();
             v1ChannelReplicator.setChannel(channel);
             v1ChannelReplicator.setHistoricalDays(0);
             if (v1ChannelReplicator.tryLeadership()) {

@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class V1ChannelReplicator implements Leader {
+public class V1ChannelReplicator implements Leader, ChannelReplicator {
     private static final Logger logger = LoggerFactory.getLogger(V1ChannelReplicator.class);
     public static final String V1_REPLICATE_LAST_COMPLETED = "/V1ReplicateLastCompleted/";
 
@@ -122,10 +122,6 @@ public class V1ChannelReplicator implements Leader {
         } catch (Exception e) {
             logger.warn("unable to close iterator", e);
         }
-    }
-
-    public void delete(String channelName) {
-        exit();
     }
 
     @VisibleForTesting
