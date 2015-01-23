@@ -39,6 +39,12 @@ public class ChannelUtils {
     private final Client noRedirectsClient;
     private final Client followClient;
 
+    public enum Version {
+        V1,
+        V2,
+        Unknown
+    }
+
     @Inject
     public ChannelUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient) {
         this.noRedirectsClient = noRedirectsClient;
@@ -80,6 +86,19 @@ public class ChannelUtils {
                 .build();
         logger.debug("found config " + configuration);
         return Optional.of(configuration);
+    }
+
+    public Version getHubVersion(String url) {
+        ClientResponse response = followClient.resource(url).get(ClientResponse.class);
+        if (response.getStatus() >= 400) {
+            logger.info("unable to access url " + response);
+            return Version.Unknown;
+        }
+        String server = response.getHeaders().getFirst("Server");
+        if (server.startsWith("Hub/v2")) {
+            return Version.V2;
+        }
+        return Version.V1;
     }
 
     public Optional<Content> getContentV1(String channelUrl, long sequence) {

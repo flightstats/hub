@@ -30,15 +30,17 @@ public class ReplicatorImpl implements Replicator {
     private final static Logger logger = LoggerFactory.getLogger(ReplicatorImpl.class);
 
     private final ChannelService channelService;
+    private final ChannelUtils channelUtils;
     private final Provider<V1ChannelReplicator> v1ReplicatorProvider;
     private final WatchManager watchManager;
     private final Map<String, ChannelReplicator> replicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
 
     @Inject
-    public ReplicatorImpl(ChannelService channelService,
+    public ReplicatorImpl(ChannelService channelService, ChannelUtils channelUtils,
                           Provider<V1ChannelReplicator> v1ReplicatorProvider, WatchManager watchManager) {
         this.channelService = channelService;
+        this.channelUtils = channelUtils;
         this.v1ReplicatorProvider = v1ReplicatorProvider;
         this.watchManager = watchManager;
         HubServices.registerPreStop(new ReplicatorService());
@@ -119,11 +121,26 @@ public class ReplicatorImpl implements Replicator {
 
     private void startReplication(ChannelConfiguration channel) {
         logger.info("starting replication of " + channel);
-        //todo - gfm - 1/23/15 - this should test for V1 or V2 source channel
+        ChannelUtils.Version version = channelUtils.getHubVersion(channel.getReplicationSource());
+        if (version.equals(ChannelUtils.Version.V2)) {
+            startV2Replication(channel);
+        } else if (version.equals(ChannelUtils.Version.V2)) {
+            startV1Replication(channel);
+        }
+    }
+
+    private void startV2Replication(ChannelConfiguration channel) {
+        try {
+            //todo - gfm - 1/23/15 - create V2ChannelReplicator
+        } catch (Exception e) {
+            logger.warn("unable to start replication " + channel, e);
+        }
+    }
+
+    private void startV1Replication(ChannelConfiguration channel) {
         try {
             V1ChannelReplicator v1ChannelReplicator = v1ReplicatorProvider.get();
             v1ChannelReplicator.setChannel(channel);
-            v1ChannelReplicator.setHistoricalDays(0);
             if (v1ChannelReplicator.tryLeadership()) {
                 replicatorMap.put(channel.getName(), v1ChannelReplicator);
             }
