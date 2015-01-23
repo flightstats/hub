@@ -119,6 +119,23 @@ public class ChannelUtils {
         return Optional.of(content);
     }
 
+    public Optional<Content> getContentV2(String contentUrl) {
+        ClientResponse response = getResponse(contentUrl);
+        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+            logger.info("unable to get content " + response);
+            return Optional.absent();
+        }
+        Content content = Content.builder()
+                .withContentKey(ContentKey.fromFullUrl(contentUrl).get())
+                .withContentType(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
+                .withContentLanguage(response.getHeaders().getFirst(Headers.LANGUAGE))
+                .withUser(response.getHeaders().getFirst(Headers.USER))
+                .withData(response.getEntity(byte[].class))
+                .build();
+
+        return Optional.of(content);
+    }
+
     public Optional<DateTime> getCreationDate(String channelUrl, long sequence) {
         ClientResponse response = getResponse(appendSlash(channelUrl) + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {

@@ -12,6 +12,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
+//todo - gfm - 1/23/15 - change this path to /internal/ws/{id}
 @Path("/ws/{id}")
 public class WebSocketResource {
 
