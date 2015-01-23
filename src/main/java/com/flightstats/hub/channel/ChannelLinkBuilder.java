@@ -17,6 +17,7 @@ import java.util.Map;
 
 import static com.flightstats.hub.rest.Linked.linked;
 
+//todo - gfm - 1/22/15 - convert this to all static
 public class ChannelLinkBuilder {
 
     @Inject
@@ -34,11 +35,11 @@ public class ChannelLinkBuilder {
         }
     }
 
-    URI buildChannelUri(ChannelConfiguration channelConfiguration, UriInfo uriInfo) {
+    public static URI buildChannelUri(ChannelConfiguration channelConfiguration, UriInfo uriInfo) {
         return buildChannelUri(channelConfiguration.getName(), uriInfo);
     }
 
-    URI buildChannelUri(String channelName, UriInfo uriInfo) {
+    static URI buildChannelUri(String channelName, UriInfo uriInfo) {
         return URI.create(uriInfo.getBaseUri() + "channel/" + channelName);
     }
 
@@ -58,7 +59,8 @@ public class ChannelLinkBuilder {
         Linked.Builder<ChannelConfiguration> linked = linked(config).withLink("self", channelUri);
         linked.withLink("latest", URI.create(channelUri + "/latest"))
                 .withLink("ws", buildWsLinkFor(channelUri))
-                .withLink("time", URI.create(channelUri + "/time"));
+                .withLink("time", URI.create(channelUri + "/time"))
+                .withLink("status", URI.create(channelUri + "/status"));
         return linked.build();
     }
 

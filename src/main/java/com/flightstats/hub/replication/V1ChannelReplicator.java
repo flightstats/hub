@@ -30,9 +30,8 @@ public class V1ChannelReplicator implements Leader {
     private final CuratorFramework curator;
     private final LastContentKey lastContentKey;
     private final SequenceIteratorFactory sequenceIteratorFactory;
-    private ChannelConfiguration configuration;
+    private ChannelConfiguration channel;
 
-    private Channel channel;
     private SequenceIterator iterator;
     private long historicalDays;
     private boolean valid = false;
@@ -57,12 +56,12 @@ public class V1ChannelReplicator implements Leader {
         this.historicalDays = historicalDays;
     }
 
-    public Channel getChannel() {
-        return channel;
+    public void setChannel(ChannelConfiguration channel) {
+        this.channel = channel;
     }
 
-    public void setChannel(Channel channel) {
-        this.channel = channel;
+    public ChannelConfiguration getChannel() {
+        return channel;
     }
 
     public boolean isValid() {
@@ -91,14 +90,13 @@ public class V1ChannelReplicator implements Leader {
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
         try {
-            Thread.currentThread().setName("ChannelReplicator-" + channel.getUrl());
+            Thread.currentThread().setName("ChannelReplicator-" + channel.getName());
             logger.info("takeLeadership");
             valid = validateRemoteChannel();
             if (!valid) {
                 exit();
                 return;
             }
-            createLocalChannel();
             replicate(hasLeadership);
         } finally {
             Thread.currentThread().setName("Empty");
@@ -133,28 +131,18 @@ public class V1ChannelReplicator implements Leader {
     @VisibleForTesting
     boolean validateRemoteChannel() {
         try {
-            Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channel.getUrl());
+            Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channel.getReplicationSource());
             if (!optionalConfig.isPresent()) {
-                message = "remote channel missing for " + channel.getUrl();
+                message = "remote channel missing for " + channel.getReplicationSource();
                 logger.warn(message);
                 return false;
             }
-            configuration = optionalConfig.get();
-            channel.setConfiguration(configuration);
-            logger.debug("configuration " + configuration);
+            logger.debug("configuration " + optionalConfig.get());
             return true;
         } catch (IOException e) {
-            message = "IOException " + channel.getUrl() + " " + e.getMessage();
+            message = "IOException " + channel.getReplicationSource() + " " + e.getMessage();
             logger.warn(message);
             return false;
-        }
-    }
-
-    @VisibleForTesting
-    void createLocalChannel() {
-        if (!channelService.channelExists(configuration.getName())) {
-            logger.info("creating channel for " + channel.getUrl());
-            channelService.createChannel(configuration);
         }
     }
 
@@ -163,7 +151,7 @@ public class V1ChannelReplicator implements Leader {
         if (sequence == ChannelUtils.NOT_FOUND) {
             return;
         }
-        logger.info("starting " + channel.getUrl() + " migration at " + sequence);
+        logger.info("starting " + channel.getReplicationSource() + " migration at " + sequence);
         iterator = sequenceIteratorFactory.create(sequence, channel);
         try {
             while (iterator.hasNext() && hasLeadership.get()) {
@@ -180,11 +168,11 @@ public class V1ChannelReplicator implements Leader {
                     channelService.insert(channel.getName(), content);
                     lastContentKey.updateIncrease(nextKey, channel.getName(), V1_REPLICATE_LAST_COMPLETED);
                 } else {
-                    logger.warn("missing content for " + channel.getUrl());
+                    logger.warn("missing content for " + channel.getReplicationSource());
                 }
             }
         } finally {
-            logger.info("stopping " + channel.getUrl() + " migration ");
+            logger.info("stopping " + channel.getReplicationSource() + " migration ");
             closeIterator();
         }
     }

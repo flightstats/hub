@@ -3,6 +3,7 @@ package com.flightstats.hub.replication;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
+import com.flightstats.hub.model.ChannelConfiguration;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -16,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Replication is moving from one Hub into another Hub
  * in Replication, we will presume we are moving forward in time, starting with configurable item age.
- * <p/>
+ * <p>
  * Secnario:
  * Producers are inserting Items into a Hub channel
  * The Hub is setup to Replicate a channel from a Hub
@@ -28,21 +29,26 @@ public class ReplicatorImpl implements Replicator {
     private final static Logger logger = LoggerFactory.getLogger(ReplicatorImpl.class);
 
     private final ReplicationService replicationService;
-    private final Provider<DomainReplicator> domainReplicatorProvider;
+    private final Provider<V1ChannelReplicator> replicatorProvider;
     private final WatchManager watchManager;
-    private final Map<String, DomainReplicator> replicatorMap = new HashMap<>();
+    private final Map<String, V1ChannelReplicator> replicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
 
     @Inject
     public ReplicatorImpl(ReplicationService replicationService,
-                          Provider<DomainReplicator> domainReplicatorProvider, WatchManager watchManager) {
+                          Provider<V1ChannelReplicator> replicatorProvider, WatchManager watchManager) {
         this.replicationService = replicationService;
-        this.domainReplicatorProvider = domainReplicatorProvider;
+        this.replicatorProvider = replicatorProvider;
         this.watchManager = watchManager;
-        HubServices.registerPreStop(new ReplicatorImplService());
+        HubServices.registerPreStop(new ReplicatorService());
     }
 
-    private class ReplicatorImplService extends AbstractIdleService {
+    @Override
+    public V1ChannelReplicator getChannelReplicator(String channel) {
+        return replicatorMap.get(channel);
+    }
+
+    private class ReplicatorService extends AbstractIdleService {
 
         @Override
         protected void startUp() throws Exception {
@@ -62,7 +68,7 @@ public class ReplicatorImpl implements Replicator {
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
-                replicateDomains();
+                replicateChannels();
             }
 
             @Override
@@ -70,59 +76,58 @@ public class ReplicatorImpl implements Replicator {
                 return REPLICATOR_WATCHER_PATH;
             }
         });
-        replicateDomains();
+        replicateChannels();
     }
 
-    private synchronized void replicateDomains() {
+    private synchronized void replicateChannels() {
         if (stopped.get()) {
             logger.info("replication stopped");
             return;
         }
-        logger.info("replicating domains");
-        Collection<ReplicationDomain> domains = replicationService.getDomains(true);
-        List<String> currentDomains = new ArrayList<>();
-        for (ReplicationDomain domain : domains) {
-            currentDomains.add(domain.getDomain());
-            logger.info("domain " + domain);
-            if (replicatorMap.containsKey(domain.getDomain())) {
-                DomainReplicator domainReplicator = replicatorMap.get(domain.getDomain());
-                if (domainReplicator.isDifferent(domain)) {
-                    domainReplicator.exit();
-                    startReplication(domain);
+        logger.info("replicating channels");
+        Set<String> replicators = new HashSet<>();
+        Iterable<ChannelConfiguration> replicatedChannels = replicationService.getReplicatingChannels();
+        for (ChannelConfiguration channel : replicatedChannels) {
+            if (replicatorMap.containsKey(channel.getName())) {
+                V1ChannelReplicator replicator = replicatorMap.get(channel.getName());
+                if (!replicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
+                    logger.info("changing replication source from {} to {}",
+                            replicator.getChannel().getReplicationSource(), channel.getReplicationSource());
+                    replicator.exit();
+                    startReplication(channel);
                 }
             } else {
-                startReplication(domain);
+                startReplication(channel);
             }
+            replicators.add(channel.getName());
         }
-        logger.info("current domains " + currentDomains);
-        Set<String> keys = new HashSet<>(replicatorMap.keySet());
-        keys.removeAll(currentDomains);
-        for (String key : keys) {
-            logger.info("removing " + key);
-            replicatorMap.get(key).exit();
-            replicatorMap.remove(key);
+        Set<String> toStop = new HashSet<>(replicatorMap.keySet());
+        toStop.removeAll(replicators);
+        logger.info("stopping replicators {}", toStop);
+        for (String nameToStop : toStop) {
+            logger.info("stopping {}", nameToStop);
+            V1ChannelReplicator replicator = replicatorMap.remove(nameToStop);
+            replicator.exit();
         }
     }
 
     private void stopReplication() {
         logger.info("stopping all replication " + replicatorMap.keySet());
-        Collection<DomainReplicator> domainReplicators = replicatorMap.values();
-        for (DomainReplicator domainReplicator : domainReplicators) {
-            domainReplicator.exit();
+        Collection<V1ChannelReplicator> replicators = replicatorMap.values();
+        for (V1ChannelReplicator replicator : replicators) {
+            replicator.exit();
         }
         logger.info("stopped all replication " + replicatorMap.keySet());
     }
 
-    private void startReplication(ReplicationDomain domain) {
-        logger.info("starting replication of " + domain.getDomain());
-        DomainReplicator domainReplicator = domainReplicatorProvider.get();
-        domainReplicator.start(domain);
-        replicatorMap.put(domain.getDomain(), domainReplicator);
-    }
-
-    @Override
-    public List<DomainReplicator> getDomainReplicators() {
-        return Collections.unmodifiableList(new ArrayList<>(replicatorMap.values()));
+    private void startReplication(ChannelConfiguration channel) {
+        logger.info("starting replication of " + channel);
+        V1ChannelReplicator v1ChannelReplicator = replicatorProvider.get();
+        v1ChannelReplicator.setChannel(channel);
+        v1ChannelReplicator.setHistoricalDays(0);
+        if (v1ChannelReplicator.tryLeadership()) {
+            replicatorMap.put(channel.getName(), v1ChannelReplicator);
+        }
     }
 
     @Override
