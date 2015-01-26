@@ -53,7 +53,16 @@ public class ChannelUtils {
         this.followClient = followClient;
     }
 
-    public Optional<Long> getLatestSequence(String channelUrl) {
+    public Optional<Long> getLatestV1(String channelUrl) {
+        Optional<String> latest = getLatest(channelUrl);
+        if (!latest.isPresent()) {
+            return Optional.absent();
+        }
+        String substring = StringUtils.substringAfterLast(latest.get(), "/");
+        return Optional.of(Long.parseLong(substring));
+    }
+
+    public Optional<String> getLatest(String channelUrl) {
         channelUrl = appendSlash(channelUrl);
         ClientResponse response = noRedirectsClient.resource(channelUrl + "latest")
                 .accept(MediaType.WILDCARD_TYPE)
@@ -62,9 +71,7 @@ public class ChannelUtils {
             logger.info("latest not found for " + channelUrl + " " + response);
             return Optional.absent();
         }
-        String location = response.getLocation().toString();
-        String substring = location.substring(channelUrl.length());
-        return Optional.of(Long.parseLong(substring));
+        return Optional.of(response.getLocation().toString());
     }
 
     private String appendSlash(String channelUrl) {
@@ -91,16 +98,21 @@ public class ChannelUtils {
     }
 
     public Version getHubVersion(String url) {
-        ClientResponse response = followClient.resource(url).get(ClientResponse.class);
-        if (response.getStatus() >= 400) {
-            logger.info("unable to access url " + response);
+        try {
+            ClientResponse response = followClient.resource(url).get(ClientResponse.class);
+            if (response.getStatus() >= 400) {
+                logger.info("unable to access url " + response);
+                return Version.Unknown;
+            }
+            String server = response.getHeaders().getFirst("Server");
+            if (server.startsWith("Hub/v2")) {
+                return Version.V2;
+            }
+            return Version.V1;
+        } catch (Exception e) {
+            logger.warn("unable to get version " + url, e);
             return Version.Unknown;
         }
-        String server = response.getHeaders().getFirst("Server");
-        if (server.startsWith("Hub/v2")) {
-            return Version.V2;
-        }
-        return Version.V1;
     }
 
     public Optional<Content> getContentV1(String channelUrl, long sequence) {
@@ -175,8 +187,11 @@ public class ChannelUtils {
         payload.put("channelUrl", sourceChannel);
         String groupUrl = sourceRoot + "/group/" + groupName;
         logger.info("calling {} with {}", groupUrl, payload);
-        ClientResponse response = followClient.resource(groupUrl).put(ClientResponse.class, payload.toString());
-        logger.info("group response", response);
+        ClientResponse response = followClient.resource(groupUrl)
+                .accept(MediaType.APPLICATION_JSON)
+                .type(MediaType.APPLICATION_JSON)
+                .put(ClientResponse.class, payload.toString());
+        logger.info("group response {}", response);
 
     }
 
