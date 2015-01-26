@@ -62,7 +62,7 @@ public class WebSocketService {
 
     private String getCallbackUrl(String id) throws UnknownHostException {
         return "http://" + InetAddress.getLocalHost().getHostAddress() + ":" +
-                HubProperties.getProperty("http.bind_port", 8080) + "/ws/" + id;
+                HubProperties.getProperty("http.bind_port", 8080) + "/internal/ws/" + id;
     }
 
     private String setId(Session session, String channel) {
