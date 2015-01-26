@@ -50,9 +50,9 @@ public class ChannelStatusResource {
         if (channelService.isReplicating(channelName)) {
             ChannelConfiguration config = channelService.getChannelConfiguration(channelName);
             ObjectNode replicationSourceLatest = links.putObject("replicationSourceLatest");
-            Optional<Long> sourceLatest = channelUtils.getLatestSequence(config.getReplicationSource());
+            Optional<String> sourceLatest = channelUtils.getLatest(config.getReplicationSource());
             if (sourceLatest.isPresent()) {
-                replicationSourceLatest.put("href", config.getReplicationSource() + "/" + sourceLatest.get());
+                replicationSourceLatest.put("href", sourceLatest.get());
             } else {
                 replicationSourceLatest.put("href", config.getReplicationSource() + "/latest");
                 replicationSourceLatest.put("message", "channel is empty");
