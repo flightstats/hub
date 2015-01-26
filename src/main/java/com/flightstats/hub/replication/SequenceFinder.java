@@ -24,7 +24,7 @@ public class SequenceFinder {
 
     public long searchForLastUpdated(ChannelConfiguration channel, long lastUpdated, long time, TimeUnit timeUnit) {
         logger.debug("searching the key space with lastUpdated {}", lastUpdated);
-        Optional<Long> latestSequence = channelUtils.getLatestSequence(channel.getReplicationSource());
+        Optional<Long> latestSequence = channelUtils.getLatestV1(channel.getReplicationSource());
         if (!latestSequence.isPresent()) {
             return ChannelUtils.NOT_FOUND;
         }
