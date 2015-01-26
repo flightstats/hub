@@ -71,7 +71,6 @@ function putChannel(channelName, verify, body) {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
-                console.log('put channel', channelName);
                 verify(response, body);
                 done();
             });

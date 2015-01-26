@@ -18,7 +18,7 @@ describe(testName, function () {
     var sleep_time = 10 * 1000;
 
     var sourceName = utils.randomChannelName();
-    var remoteChannelUrl = 'http://' + hubDomain + '/channel';
+    var remoteChannelUrl = 'http://' + replicationV2Domain + '/channel';
     utils.createChannel(sourceName, remoteChannelUrl);
 
     var replicationSource = remoteChannelUrl + '/' + sourceName;
@@ -34,12 +34,10 @@ describe(testName, function () {
     var items = [];
 
     function postTwoItems(expected) {
-        console.log('postings items...');
         it('posts items ' + replicationSource, function (done) {
             utils.postItemQ(replicationSource)
                 .then(function (value) {
                     items.push(value.body._links.self.href);
-                    console.log('items', items);
                     return utils.postItemQ(replicationSource);
                 })
                 .then(function (value) {
