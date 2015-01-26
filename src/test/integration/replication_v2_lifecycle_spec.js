@@ -1,7 +1,6 @@
 require('./integration_config.js');
 var request = require('request');
 var testName = __filename;
-var channelName = utils.randomChannelName();
 
 /**
  * 1 - Create remote channel
@@ -16,7 +15,7 @@ var channelName = utils.randomChannelName();
  */
 describe(testName, function () {
 
-    var sleep_time = 20 * 1000;
+    var sleep_time = 10 * 1000;
 
     var sourceName = utils.randomChannelName();
     var remoteChannelUrl = 'http://' + hubDomain + '/channel';
@@ -29,16 +28,18 @@ describe(testName, function () {
     utils.putChannel(destinationName, function () {
     }, {'replicationSource': replicationSource, 'ttlDays': 1});
 
-    var replicatedUrl = hubUrlBase + '/channel/' + destinationName;
-    console.log('replicatedUrl', replicatedUrl);
+    var destinationUrl = hubUrlBase + '/channel/' + destinationName;
+    console.log('destinationUrl', destinationUrl);
 
     var items = [];
 
     function postTwoItems(expected) {
+        console.log('postings items...');
         it('posts items ' + replicationSource, function (done) {
             utils.postItemQ(replicationSource)
                 .then(function (value) {
                     items.push(value.body._links.self.href);
+                    console.log('items', items);
                     return utils.postItemQ(replicationSource);
                 })
                 .then(function (value) {
@@ -59,20 +60,22 @@ describe(testName, function () {
 
     var secondItemUrl = '';
 
-    function getSequence(uri) {
-        return parseInt(uri.substring(uri.lastIndexOf('/') + 1));
+    function getContentKey(uri, channel) {
+        return uri.substring(uri.lastIndexOf(channel) + channel.length);
     }
 
     it('verfies items are in local channel', function (done) {
         request.get({
-                url: replicatedUrl + '/status?stable=false',
+                url: destinationUrl + '/status?stable=false',
                 headers: {"Content-Type": "application/json"}
             },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parse = JSON.parse(body);
-                expect(getSequence(parse._links.latest.href)).toBe(1001);
+                var latestKey = getContentKey(parse._links.latest.href, destinationName);
+                var sourceKey = getContentKey(items[1], sourceName);
+                expect(latestKey).toBe(sourceKey);
                 secondItemUrl = parse._links.latest.href;
                 done();
             });
@@ -94,6 +97,7 @@ describe(testName, function () {
     utils.sleep(sleep_time);
 
     it('verfies new items are in local channel ' + secondItemUrl, function (done) {
+        console.log('calling next/10', secondItemUrl);
         request.get({
                 url: secondItemUrl + '/next/10?stable=false',
                 headers: {"Content-Type": "application/json"}
