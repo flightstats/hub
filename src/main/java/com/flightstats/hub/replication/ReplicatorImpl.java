@@ -125,12 +125,13 @@ public class ReplicatorImpl implements Replicator {
         ChannelUtils.Version version = channelUtils.getHubVersion(channel.getReplicationSource());
         if (version.equals(ChannelUtils.Version.V2)) {
             startV2Replication(channel);
-        } else if (version.equals(ChannelUtils.Version.V2)) {
+        } else if (version.equals(ChannelUtils.Version.V1)) {
             startV1Replication(channel);
         }
     }
 
     private void startV2Replication(ChannelConfiguration channel) {
+        logger.debug("starting v2 replication of " + channel);
         try {
             String appUrl = HubProperties.getProperty("app.url", "");
             String groupName = "Replication_" + channel.getName();
@@ -142,6 +143,7 @@ public class ReplicatorImpl implements Replicator {
     }
 
     private void startV1Replication(ChannelConfiguration channel) {
+        logger.debug("starting v1 replication of " + channel);
         try {
             V1ChannelReplicator v1ChannelReplicator = v1ReplicatorProvider.get();
             v1ChannelReplicator.setChannel(channel);
