@@ -133,7 +133,7 @@ public class ReplicatorImpl implements Replicator {
     private void startV2Replication(ChannelConfiguration channel) {
         try {
             String appUrl = HubProperties.getProperty("app.url", "");
-            String groupName = "Replication-" + channel.getName();
+            String groupName = "Replication_" + channel.getName();
             String callbackUrl = appUrl + "internal/replication/" + channel.getName();
             channelUtils.startGroupCallback(groupName, callbackUrl, channel.getReplicationSource());
         } catch (Exception e) {
