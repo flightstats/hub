@@ -12,7 +12,9 @@ var MINUTE = 60 * 1000;
 
 describe(testName, function () {
 
+    //contains links to destination channels
     var replicatedChannelUrls = [];
+    //uses key of replicationSource to channel body
     var replicatedChannels = {};
 
     it('loads ' + hubUrl + ' replicated channels from ' + sourceDomain, function (done) {
@@ -24,6 +26,7 @@ describe(testName, function () {
                 console.log('found replicated channels', channels);
                 channels.forEach(function (channel) {
                     if (channel.name.substring(0, 4) !== 'test') {
+                        console.log('adding channel ', channel.href);
                         replicatedChannelUrls.push(channel.href);
                         replicatedChannels[channel.href] = channel;
                     } else {
@@ -45,7 +48,19 @@ describe(testName, function () {
                         expect(res.error).toBe(false);
                         replicatedChannels[channel]['replicationSource'] = res.body.replicationSource;
                         console.log('replicatedChannels', replicatedChannels);
-                        callback(res.error);
+                        agent.get(res.body.replicationSource)
+                            .set('Accept', 'application/json')
+                            .end(function (res) {
+                                expect(res.error).toBe(false);
+                                var server = res.header['server'];
+                                if (server.indexOf('Hub/v2') >= 0) {
+                                    replicatedChannels[channel]['version'] = 'v2';
+                                } else {
+                                    replicatedChannels[channel]['version'] = 'v1';
+                                }
+                                console.log('version', channel, replicatedChannels[channel]['version']);
+                                callback(res.error);
+                            });
                     });
             }, function (err) {
                 done(err);
@@ -75,30 +90,71 @@ describe(testName, function () {
             });
     }, MINUTE);
 
+    it('verifies v2 replicated items', function (done) {
+
+        async.eachLimit(replicatedChannelUrls, 20,
+            function (channel, callback) {
+                if (replicatedChannels[channel]['version'] !== 'v2') {
+                    callback();
+                    return;
+                }
+                var source = replicatedChannels[channel]['replicationSource'];
+                agent.get(source + '/time/hour?stable=false')
+                    .set('Accept', 'application/json')
+                    .end(function (res) {
+                        expect(res.error).toBe(false);
+                        var v2Uris = res.body._links.uris;
+                        agent.get(res.body._links.previous.href)
+                            .set('Accept', 'application/json')
+                            .end(function (res) {
+                                expect(res.error).toBe(false);
+                                v2Uris = res.body._links.uris.concat(v2Uris);
+                                console.log('comparing length ', channel, v2Uris.length, channels[channel].length);
+                                expect(v2Uris.length).toBe(channels[channel].length);
+                                callback(res.error);
+                            });
+                    });
+            }, function (err) {
+                done(err);
+            });
+    }, MINUTE);
+
     function getSequence(uri) {
         return parseInt(uri.substring(uri.lastIndexOf('/') + 1));
+    }
+
+    function getContentKey(uri, channel) {
+        return uri.substring(uri.lastIndexOf(channel) + channel.length);
     }
 
     var itemsToVerify = [];
 
     it('makes sure replicated items are sequential ', function (done) {
+
         for (var channel in channels) {
             var sequence = 0;
             console.log('working on', channel);
             channels[channel].forEach(function (uri) {
-                if (sequence) {
-                    var next = getSequence(uri);
-                    if (sequence + 1 !== next) {
-                        console.log('wrong order ' + channel + ' expected ' + sequence + ' found ' + next);
-                    }
-                    expect(1 + sequence).toBe(next);
-                    sequence = next;
-                    if (Math.random() > 0.99) {
+                if (replicatedChannels[channel].version === 'v1') {
+                    if (sequence) {
+                        var next = getSequence(uri);
+                        if (sequence + 1 !== next) {
+                            console.log('wrong order ' + channel + ' expected ' + sequence + ' found ' + next);
+                        }
+                        expect(1 + sequence).toBe(next);
+                        sequence = next;
+                        if (Math.random() > 0.99) {
+                            itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
+                        }
+                    } else {
+                        sequence = getSequence(uri);
                         itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
                     }
                 } else {
-                    sequence = getSequence(uri);
-                    itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
+                    if (Math.random() > 0.99) {
+                        var contentKey = getContentKey(uri, channel);
+                        itemsToVerify.push({name: channel, sequence: false, uri: uri, contentKey: contentKey});
+                    }
                 }
             });
 
@@ -111,6 +167,9 @@ describe(testName, function () {
         function getItem(uri, callback) {
             request(uri, function (error, response, body) {
                 expect(error).toBe(null);
+                if (response.statusCode !== 200) {
+                    console.log('wrong status ', uri, response.statusCode);
+                }
                 expect(response.statusCode).toBe(200);
                 callback(null, body);
             });
@@ -120,7 +179,11 @@ describe(testName, function () {
             function (item, callback) {
                 async.parallel([
                         function (callback) {
-                            getItem(replicatedChannels[item.name].replicationSource + "/" + item.sequence, callback);
+                            if (item.sequence) {
+                                getItem(replicatedChannels[item.name].replicationSource + "/" + item.sequence, callback);
+                            } else {
+                                getItem(replicatedChannels[item.name].replicationSource + item.contentKey, callback);
+                            }
                         },
                         function (callback) {
                             getItem(item.uri, callback);
