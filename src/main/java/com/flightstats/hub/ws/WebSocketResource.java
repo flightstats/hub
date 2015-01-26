@@ -12,7 +12,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-@Path("/ws/{id}")
+@Path("/internal/ws/{id}")
 public class WebSocketResource {
 
     private final static Logger logger = LoggerFactory.getLogger(WebSocketResource.class);
