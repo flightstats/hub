@@ -94,7 +94,7 @@ describe(testName, function () {
 
     utils.sleep(sleep_time);
 
-    /*    it('verfies new items are in local channel ' + secondItemUrl, function (done) {
+    it('verfies new items are in local channel ' + secondItemUrl, function (done) {
         console.log('calling next/10', secondItemUrl);
         request.get({
                 url: secondItemUrl + '/next/10?stable=false',
@@ -109,7 +109,7 @@ describe(testName, function () {
                 done();
             });
 
-     }, sleep_time);*/
+    }, sleep_time);
 
 
 });
