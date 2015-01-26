@@ -22,14 +22,14 @@ describe(testName, function () {
     utils.createChannel(sourceName, remoteChannelUrl);
 
     var replicationSource = remoteChannelUrl + '/' + sourceName;
-    console.log('replicationSource', replicationSource);
+    console.log('v2 replicationSource', replicationSource);
 
     var destinationName = utils.randomChannelName();
     utils.putChannel(destinationName, function () {
     }, {'replicationSource': replicationSource, 'ttlDays': 1});
 
     var destinationUrl = hubUrlBase + '/channel/' + destinationName;
-    console.log('destinationUrl', destinationUrl);
+    console.log('v2 destinationUrl', destinationUrl);
 
     var items = [];
 
@@ -94,7 +94,7 @@ describe(testName, function () {
 
     utils.sleep(sleep_time);
 
-    it('verfies new items are in local channel ' + secondItemUrl, function (done) {
+    /*    it('verfies new items are in local channel ' + secondItemUrl, function (done) {
         console.log('calling next/10', secondItemUrl);
         request.get({
                 url: secondItemUrl + '/next/10?stable=false',
@@ -109,7 +109,7 @@ describe(testName, function () {
                 done();
             });
 
-    }, sleep_time);
+     }, sleep_time);*/
 
 
 });
