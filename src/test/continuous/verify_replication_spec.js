@@ -77,11 +77,13 @@ describe(testName, function () {
                     .end(function (res) {
                         expect(res.error).toBe(false);
                         channels[channel] = res.body._links.uris;
+                        console.log('found dest first ', channels[channel][0]);
                         agent.get(res.body._links.previous.href)
                             .set('Accept', 'application/json')
                             .end(function (res) {
                                 expect(res.error).toBe(false);
                                 channels[channel] = res.body._links.uris.concat(channels[channel]);
+                                console.log('found dest second ', channels[channel][0]);
                                 callback(res.error);
                             });
                     });
@@ -104,13 +106,35 @@ describe(testName, function () {
                     .end(function (res) {
                         expect(res.error).toBe(false);
                         var v2Uris = res.body._links.uris;
+                        console.log('found source first ', v2Uris[0]);
                         agent.get(res.body._links.previous.href)
                             .set('Accept', 'application/json')
                             .end(function (res) {
                                 expect(res.error).toBe(false);
                                 v2Uris = res.body._links.uris.concat(v2Uris);
-                                console.log('comparing length ', channel, v2Uris.length, channels[channel].length);
-                                expect(v2Uris.length).toBe(channels[channel].length);
+                                var foundFirst = 0;
+                                var foundLast = 0;
+                                if (v2Uris.length !== channels[channel].length) {
+                                    console.log('comparing length ', channel, v2Uris.length, channels[channel].length);
+                                    var firstKey = getContentKey(channels[channel][0], channel);
+                                    var lastKey = getContentKey(channels[channel][channels[channel].length - 1], channel);
+                                    for (var i = 0; i < v2Uris.length; i++) {
+                                        var item = v2Uris[i];
+
+                                        var sourceKey = getContentKey(item, source);
+                                        if (sourceKey === firstKey) {
+                                            foundFirst = i;
+                                            console.log('found first ', channel, v2Uris.length, channels[channel].length, i);
+                                        }
+                                        if (sourceKey === lastKey) {
+                                            foundLast = i;
+                                            console.log('found last', channel, v2Uris.length, channels[channel].length, i);
+                                        }
+                                    }
+                                    console.log('found ', v2Uris.length, channels[channel].length, foundFirst, foundLast);
+                                    expect(channels[channel].length + foundFirst).toBe(foundLast + 1);
+                                }
+
                                 callback(res.error);
                             });
                     });
