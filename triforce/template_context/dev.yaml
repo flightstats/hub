@@ -52,7 +52,7 @@ conf/hub.properties :
     hosted_graphite :
         enable: true
         registerJvmMetrics : false
-        host : "flightstats.carbon.hostedgraphite.com"
+        host : "carbon.hostedgraphite.com"
         port : 2003
         prefix : cb165ed6-4336-4cc6-91ff-cfe1d04cebd6.hubv2.dev
 
