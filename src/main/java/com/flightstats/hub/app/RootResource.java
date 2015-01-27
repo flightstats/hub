@@ -20,7 +20,6 @@ public class RootResource {
         links.withLink("self", uriInfo.getRequestUri());
         links.withLink("documentation", "https://github.com/flightstats/hubv2");
         links.withLink("channel", uriInfo.getRequestUri() + "channel");
-        links.withLink("replication", uriInfo.getRequestUri() + "replication");
         links.withLink("group", uriInfo.getRequestUri() + "group");
         links.withLink("tag", uriInfo.getRequestUri() + "tag");
         links.withLink("health", uriInfo.getRequestUri() + "health");
