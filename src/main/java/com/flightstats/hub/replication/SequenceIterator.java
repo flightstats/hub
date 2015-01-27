@@ -83,7 +83,7 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
     }
 
     private void startSocket() {
-        Optional<Long> latestSequence = channelUtils.getLatestSequence(channelUrl);
+        Optional<Long> latestSequence = channelUtils.getLatestV1(channelUrl);
         if (!latestSequence.isPresent()) {
             logger.warn("unable to get latest for channel " + channelUrl);
             return;
