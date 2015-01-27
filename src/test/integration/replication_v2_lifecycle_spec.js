@@ -1,7 +1,6 @@
 require('./integration_config.js');
 var request = require('request');
 var testName = __filename;
-var channelName = utils.randomChannelName();
 
 /**
  * 1 - Create remote channel
@@ -16,19 +15,21 @@ var channelName = utils.randomChannelName();
  */
 describe(testName, function () {
 
+    var sleep_time = 10 * 1000;
+
     var sourceName = utils.randomChannelName();
-    var remoteChannelUrl = 'http://' + replicationDomain + '/channel';
+    var remoteChannelUrl = 'http://' + replicationV2Domain + '/channel';
     utils.createChannel(sourceName, remoteChannelUrl);
 
     var replicationSource = remoteChannelUrl + '/' + sourceName;
-    console.log('v1 replicationSource', replicationSource);
+    console.log('v2 replicationSource', replicationSource);
 
-    var replicatedName = utils.randomChannelName();
-    utils.putChannel(replicatedName, function () {
+    var destinationName = utils.randomChannelName();
+    utils.putChannel(destinationName, function () {
     }, {'replicationSource': replicationSource, 'ttlDays': 1});
 
-    var replicatedUrl = hubUrlBase + '/channel/' + replicatedName;
-    console.log('v1 replicatedUrl', replicatedUrl);
+    var destinationUrl = hubUrlBase + '/channel/' + destinationName;
+    console.log('v2 destinationUrl', destinationUrl);
 
     var items = [];
 
@@ -52,66 +53,63 @@ describe(testName, function () {
 
     postTwoItems(2);
 
-    utils.sleep(10 * 1000);
+
+    utils.sleep(sleep_time);
 
     var secondItemUrl = '';
 
-    function getSequence(uri) {
-        return parseInt(uri.substring(uri.lastIndexOf('/') + 1));
+    function getContentKey(uri, channel) {
+        return uri.substring(uri.lastIndexOf(channel) + channel.length);
     }
 
     it('verfies items are in local channel', function (done) {
         request.get({
-                url: replicatedUrl + '/status?stable=false',
+                url: destinationUrl + '/status?stable=false',
                 headers: {"Content-Type": "application/json"}
             },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parse = JSON.parse(body);
-                expect(getSequence(parse._links.latest.href)).toBe(1001);
+                var latestKey = getContentKey(parse._links.latest.href, destinationName);
+                var sourceKey = getContentKey(items[1], sourceName);
+                expect(latestKey).toBe(sourceKey);
                 secondItemUrl = parse._links.latest.href;
                 done();
             });
 
-    }, 10 * 1000);
+    }, sleep_time);
 
-    utils.putChannel(replicatedName, function () {
+    utils.putChannel(destinationName, function () {
     }, {'replicationSource': '', 'ttlDays': 1});
 
-    utils.sleep(10 * 1000);
+    utils.sleep(sleep_time);
 
     postTwoItems(4);
 
-    utils.putChannel(replicatedName, function () {
+    utils.putChannel(destinationName, function () {
     }, {'replicationSource': replicationSource, 'ttlDays': 1});
 
     postTwoItems(6);
 
-    utils.sleep(10 * 1000);
+    utils.sleep(sleep_time);
 
     it('verfies new items are in local channel ' + secondItemUrl, function (done) {
-        console.log('calling next/10 on', secondItemUrl);
-        /*request.get({
+        console.log('calling next/10', secondItemUrl);
+        request.get({
                 url: secondItemUrl + '/next/10?stable=false',
                 headers: {"Content-Type": "application/json"}
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-         if (!response) {
-         expect(response).not.toBeUndefined();
-         done();
-         return;
-         }
                 expect(response.statusCode).toBe(200);
                 var parse = JSON.parse(body);
                 console.log('next uris ', parse._links.uris);
                 expect(parse._links.uris.length).toBe(4);
                 done();
-         });*/
+            });
 
-        done();
-    }, 10 * 1000);
+    }, sleep_time);
 
 
 });
