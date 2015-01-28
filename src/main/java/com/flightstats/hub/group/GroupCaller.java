@@ -22,6 +22,7 @@ import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -239,7 +240,7 @@ public class GroupCaller implements Leader {
 
     void deleteAnyway() {
         try {
-            debugLaederPath();
+            debugLeaderPath();
             curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
         } catch (Exception e) {
             logger.warn("unable to delete leader path " + group.getName(), e);
@@ -247,7 +248,7 @@ public class GroupCaller implements Leader {
         delete();
     }
 
-    private void debugLaederPath() {
+    private void debugLeaderPath() {
         try {
             String leaderPath = getLeaderPath();
             List<String> children = curator.getChildren().forPath(leaderPath);
@@ -273,6 +274,21 @@ public class GroupCaller implements Leader {
             logger.warn("unexpected exception " + group.getName(), e);
             return true;
         }
+    }
+
+    private void logError(String error) {
+        //limit this to 10 items, or less than an hour old
+        DateTime dateTime = new DateTime();
+        String path = "/GroupError/" + group.getName() + "/" + dateTime.toString();
+        try {
+            curator.create().creatingParentsIfNeeded().forPath(path, error.getBytes());
+        } catch (KeeperException.NodeExistsException ignore) {
+            logger.info("node exists " + path);
+        } catch (Exception e) {
+            logger.warn("unable to create " + path, e);
+        }
+        //todo - gfm - 1/28/15 - limit number of children
+
     }
 
     private Retryer<ClientResponse> buildRetryer() {
