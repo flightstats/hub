@@ -25,7 +25,9 @@ describe(testName, function () {
     it('posts item', function () {
         utils.postItemQ(channelResource)
             .then(function (value) {
+                console.log(testName + ' response.statusCode', value.response.statusCode);
                 posted = value.response.headers.location;
+                console.log(testName + ' posted', posted);
             });
     });
 

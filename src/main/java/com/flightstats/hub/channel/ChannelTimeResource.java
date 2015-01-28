@@ -20,7 +20,7 @@ import java.net.URI;
 import static com.flightstats.hub.util.TimeUtil.*;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-@Path("/channel/{channelName: .*}/time")
+@Path("/channel/{channel: .*}/time")
 public class ChannelTimeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
