@@ -165,6 +165,11 @@ public class ContentServiceImpl implements ContentService {
         }
     }
 
+    @Override
+    public Optional<ContentKey> getLatest(String channel, Traces traces) {
+        return cacheContentDao.getLatest(channel, traces);
+    }
+
     private Set<ContentKey> queryBoth(DirectionQuery query) {
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         try {

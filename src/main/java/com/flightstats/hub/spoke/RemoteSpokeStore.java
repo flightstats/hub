@@ -6,6 +6,7 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.Trace;
 import com.flightstats.hub.model.Traces;
+import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
@@ -153,6 +154,45 @@ public class RemoteSpokeStore {
         }
         countDownLatch.await(30, TimeUnit.SECONDS);
         return orderedKeys;
+    }
+
+    public Optional<ContentKey> getLatest(String channel, Traces traces) throws InterruptedException {
+        List<String> servers = cluster.getServers();
+        CountDownLatch countDownLatch = new CountDownLatch(servers.size());
+        SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        for (final String server : servers) {
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        traces.add("spoke calling", server, channel);
+                        ClientResponse response = client.resource("http://" + server + "/spoke/latest/" + channel)
+                                .get(ClientResponse.class);
+                        traces.add("server response", server, response);
+                        if (response.getStatus() == 200) {
+                            String key = response.getEntity(String.class);
+                            if (StringUtils.isNotEmpty(key)) {
+                                orderedKeys.add(ContentKey.fromUrl(StringUtils.substringAfter(key, "/")).get());
+                            }
+                            traces.add(server, key);
+                        }
+                    } catch (ClientHandlerException e) {
+                        logger.warn("ClientHandlerException " + e.getMessage());
+                        traces.add("ClientHandlerException", e.getMessage());
+                    } catch (Exception e) {
+                        logger.warn("unable to handle " + server + " " + channel, e);
+                        traces.add("unable to handle ", server, channel, e);
+                    } finally {
+                        countDownLatch.countDown();
+                    }
+                }
+            });
+        }
+        countDownLatch.await(5, TimeUnit.SECONDS);
+        if (orderedKeys.isEmpty()) {
+            return Optional.absent();
+        }
+        return Optional.of(orderedKeys.last());
     }
 
     public boolean delete(String path) throws Exception {
