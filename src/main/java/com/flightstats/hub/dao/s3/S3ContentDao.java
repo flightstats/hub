@@ -53,6 +53,11 @@ public class S3ContentDao implements ContentDao {
         throw new RuntimeException("unable to find bucket " + s3BucketName);
     }
 
+    @Override
+    public Optional<ContentKey> getLatest(String channel, Traces traces) {
+        throw new UnsupportedOperationException("use query interface");
+    }
+
     public ContentKey write(String channelName, Content content) {
         ContentKey key = content.getContentKey().get();
         String s3Key = getS3ContentKey(channelName, key);

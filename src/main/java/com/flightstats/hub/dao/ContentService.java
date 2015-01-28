@@ -1,9 +1,6 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 
 import java.util.Collection;
@@ -19,4 +16,6 @@ public interface ContentService {
     void delete(String channelName);
 
     Collection<ContentKey> getKeys(DirectionQuery query);
+
+    Optional<ContentKey> getLatest(String channel, Traces traces);
 }
