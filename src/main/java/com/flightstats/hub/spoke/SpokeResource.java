@@ -61,15 +61,6 @@ public class SpokeResource {
         }
     }
 
-
-    //todo - gfm - 1/27/15 - break this into multiple resource paths for auto-tracking by NR
-
-    @Path("/time/{path:.+}")
-    @GET
-    public Response getTimeBucket(@PathParam("path") String path) {
-        return getResponse(path);
-    }
-
     private Response getResponse(String path) {
         logger.trace("time {}", path);
         try {
