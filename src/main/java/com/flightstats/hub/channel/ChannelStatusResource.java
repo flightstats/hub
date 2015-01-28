@@ -15,7 +15,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@Path("/channel/{channelName: .*}/status")
+@Path("/channel/{channel: .*}/status")
 public class ChannelStatusResource {
 
     @Inject
@@ -30,7 +30,7 @@ public class ChannelStatusResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @EventTimed(name = "channel.ALL.status.get")
-    public Response getLatest(@PathParam("channelName") String channelName,
+    public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("trace") @DefaultValue("false") boolean trace) {
         ObjectNode root = mapper.createObjectNode();
@@ -39,16 +39,16 @@ public class ChannelStatusResource {
         String baseUri = uriInfo.getRequestUri().toString();
         self.put("href", baseUri);
 
-        Optional<ContentKey> latest = channelService.getLatest(channelName, stable, trace);
+        Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
         ObjectNode latestNode = links.putObject("latest");
         if (latest.isPresent()) {
-            latestNode.put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + latest.get().toUrl());
+            latestNode.put("href", uriInfo.getBaseUri() + "channel/" + channel + "/" + latest.get().toUrl());
         } else {
-            latestNode.put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/latest");
+            latestNode.put("href", uriInfo.getBaseUri() + "channel/" + channel + "/latest");
             latestNode.put("message", "channel is empty");
         }
-        if (channelService.isReplicating(channelName)) {
-            ChannelConfiguration config = channelService.getChannelConfiguration(channelName);
+        if (channelService.isReplicating(channel)) {
+            ChannelConfiguration config = channelService.getChannelConfiguration(channel);
             ObjectNode replicationSourceLatest = links.putObject("replicationSourceLatest");
             Optional<String> sourceLatest = channelUtils.getLatest(config.getReplicationSource());
             if (sourceLatest.isPresent()) {

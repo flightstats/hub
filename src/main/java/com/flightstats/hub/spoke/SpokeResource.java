@@ -75,35 +75,35 @@ public class SpokeResource {
         }
     }
 
-    @Path("/time/{C}/{Y}/{M}/{D}")
+    @Path("/time/{C}/{Y}/{M}/{day}")
     @GET
     public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
-                                  @PathParam("M") String M, @PathParam("D") String day) {
+                                  @PathParam("M") String M, @PathParam("day") String day) {
         return getResponse(C + "/" + Y + "/" + M + "/" + day);
     }
 
-    @Path("/time/{C}/{Y}/{M}/{D}/{h}")
+    @Path("/time/{C}/{Y}/{M}/{D}/{hour}")
     @GET
     public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
                                   @PathParam("M") String M, @PathParam("D") String D,
-                                  @PathParam("h") String hour) {
+                                  @PathParam("hour") String hour) {
         return getResponse(C + "/" + Y + "/" + M + "/" + D + "/" + hour);
     }
 
-    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{m}")
+    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{minute}")
     @GET
     public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
                                   @PathParam("M") String M, @PathParam("D") String D,
-                                  @PathParam("h") String h, @PathParam("m") String minute) {
+                                  @PathParam("h") String h, @PathParam("minute") String minute) {
         return getResponse(C + "/" + Y + "/" + M + "/" + D + "/" + h + "/" + minute);
     }
 
-    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{m}/{s}")
+    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{m}/{second}")
     @GET
     public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
                                   @PathParam("M") String M, @PathParam("D") String D,
                                   @PathParam("h") String h, @PathParam("m") String m,
-                                  @PathParam("s") String second) {
+                                  @PathParam("second") String second) {
         return getResponse(C + "/" + Y + "/" + M + "/" + D + "/" + h + "/" + m + "/" + second);
     }
 

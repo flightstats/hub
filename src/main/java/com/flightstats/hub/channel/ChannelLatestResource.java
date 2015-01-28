@@ -14,7 +14,7 @@ import java.net.URI;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-@Path("/channel/{channelName: .*}/latest")
+@Path("/channel/{channel: .*}/latest")
 public class ChannelLatestResource {
 
     private final UriInfo uriInfo;
@@ -28,13 +28,13 @@ public class ChannelLatestResource {
 
     @GET
     @EventTimed(name = "channel.ALL.latest.get")
-    public Response getLatest(@PathParam("channelName") String channelName,
+    public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("trace") @DefaultValue("false") boolean trace) {
-        Optional<ContentKey> latest = channelService.getLatest(channelName, stable, trace);
+        Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
         if (latest.isPresent()) {
             return Response.status(SEE_OTHER)
-                    .location(URI.create(uriInfo.getBaseUri() + "channel/" + channelName + "/" + latest.get().toUrl()))
+                    .location(URI.create(uriInfo.getBaseUri() + "channel/" + channel + "/" + latest.get().toUrl()))
                     .build();
         } else {
             return Response.status(NOT_FOUND).build();
