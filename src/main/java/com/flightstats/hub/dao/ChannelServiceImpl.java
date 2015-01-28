@@ -79,23 +79,33 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace) {
-        ChannelConfiguration channelConfiguration = getChannelConfiguration(channelName);
+    public Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace) {
+        ChannelConfiguration channelConfiguration = getChannelConfiguration(channel);
         if (null == channelConfiguration) {
             return Optional.absent();
         }
+        Traces traces = Traces.NOOP;
+        if (trace) {
+            traces = new TracesImpl();
+        }
+        ContentKey limitKey = new ContentKey(TimeUtil.time(stable), "ZZZZZ");
+        Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
+        if (latest.isPresent()) {
+            traces.log(logger);
+            return latest;
+        }
+
         DirectionQuery query = DirectionQuery.builder()
-                .channelName(channelName)
-                .contentKey(new ContentKey(TimeUtil.time(stable), "ZZZZZ"))
+                .channelName(channel)
+                .contentKey(limitKey)
                 .next(false)
                 .stable(stable)
                 .ttlDays(channelConfiguration.getTtlDays())
-                .count(1).build();
-        query.trace(trace);
+                .traces(traces)
+                .count(1)
+                .build();
         Collection<ContentKey> keys = getKeys(query);
-        if (trace) {
-            query.getTraces().log(logger);
-        }
+        query.getTraces().log(logger);
         if (keys.isEmpty()) {
             return Optional.absent();
         } else {

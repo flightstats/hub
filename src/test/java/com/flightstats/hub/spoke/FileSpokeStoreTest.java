@@ -2,6 +2,8 @@ package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.io.Files;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -39,7 +41,8 @@ public class FileSpokeStoreTest {
         String filePath = "/test_0_4274725520517677/2014/11/18/00/57/24015NV2cl5";
         String expectedPath = tempDir + filePath;
         assertEquals(expectedPath, outputFile.getAbsolutePath());
-        String urlPart = spokeStore.spokeKeyFromFile(new File(filePath));
+        final File file = new File(filePath);
+        String urlPart = spokeStore.spokeKeyFromPath(file.getAbsolutePath());
         assertEquals(incoming, urlPart);
     }
 
@@ -82,14 +85,40 @@ public class FileSpokeStoreTest {
 
     @Test
     public void testSpokeKeyFromFilePath() throws Exception {
-        String key = spokeStore.spokeKeyFromFile(new File(tempDir +
-                "/test_0_7475501417648047/2014/11/19/18/15/43916UD7V4N"));
+        final File file = new File(tempDir +
+                "/test_0_7475501417648047/2014/11/19/18/15/43916UD7V4N");
+        String key = spokeStore.spokeKeyFromPath(file.getAbsolutePath());
         assertEquals("test_0_7475501417648047/2014/11/19/18/15/43/916/UD7V4N", key);
 
-        String directory = spokeStore.spokeKeyFromFile(new File(tempDir +
-                "/test_0_7475501417648047/2014/11/19/18"));
+        final File file1 = new File(tempDir +
+                "/test_0_7475501417648047/2014/11/19/18");
+        String directory = spokeStore.spokeKeyFromPath(file1.getAbsolutePath());
         assertEquals("test_0_7475501417648047/2014/11/19/18", directory);
 
+    }
+
+    @Test
+    public void testLastFile() {
+        DateTime time = new DateTime(2014, 12, 31, 23, 30, 1, 2, DateTimeZone.UTC);
+        for (int i = 0; i < 30; i++) {
+            time = time.plusMinutes(2);
+            spokeStore.write("testLastFile/" + new ContentKey(time, "A").toUrl(), BYTES);
+            time = time.plusSeconds(1);
+            spokeStore.write("testLastFile/" + new ContentKey(time, "B").toUrl(), BYTES);
+            time = time.plusMillis(1);
+            spokeStore.write("testLastFile/" + new ContentKey(time, "C").toUrl(), BYTES);
+        }
+        ContentKey limitKey = new ContentKey(time.minusMinutes(1), "A");
+        String found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
+        assertEquals("testLastFile/2015/01/01/00/28/30/031/C", found);
+
+        limitKey = new ContentKey(time.plusMinutes(1), "A");
+        found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
+        assertEquals("testLastFile/2015/01/01/00/30/31/031/B", found);
+
+        limitKey = new ContentKey(time.plusMinutes(1), "D");
+        found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
+        assertEquals("testLastFile/2015/01/01/00/30/31/032/C", found);
     }
 
 }

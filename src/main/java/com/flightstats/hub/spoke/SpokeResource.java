@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+
 import com.flightstats.hub.model.Trace;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
@@ -32,7 +33,6 @@ public class SpokeResource {
             if (read == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
-            //todo - gfm - 11/13/14 - this could verify bytes
             return Response.ok(read).build();
         } catch (Exception e) {
             logger.warn("unable to get " + path, e);
@@ -61,10 +61,7 @@ public class SpokeResource {
         }
     }
 
-
-    @Path("/time/{path:.+}")
-    @GET
-    public Response getTimeBucket(@PathParam("path") String path) {
+    private Response getResponse(String path) {
         logger.trace("time {}", path);
         try {
             String read = spokeStore.readKeysInBucket(path);
@@ -76,6 +73,38 @@ public class SpokeResource {
             logger.warn("unable to get " + path, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @Path("/time/{C}/{Y}/{M}/{day}")
+    @GET
+    public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
+                                  @PathParam("M") String M, @PathParam("day") String day) {
+        return getResponse(C + "/" + Y + "/" + M + "/" + day);
+    }
+
+    @Path("/time/{C}/{Y}/{M}/{D}/{hour}")
+    @GET
+    public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
+                                  @PathParam("M") String M, @PathParam("D") String D,
+                                  @PathParam("hour") String hour) {
+        return getResponse(C + "/" + Y + "/" + M + "/" + D + "/" + hour);
+    }
+
+    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{minute}")
+    @GET
+    public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
+                                  @PathParam("M") String M, @PathParam("D") String D,
+                                  @PathParam("h") String h, @PathParam("minute") String minute) {
+        return getResponse(C + "/" + Y + "/" + M + "/" + D + "/" + h + "/" + minute);
+    }
+
+    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{m}/{second}")
+    @GET
+    public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
+                                  @PathParam("M") String M, @PathParam("D") String D,
+                                  @PathParam("h") String h, @PathParam("m") String m,
+                                  @PathParam("second") String second) {
+        return getResponse(C + "/" + Y + "/" + M + "/" + D + "/" + h + "/" + m + "/" + second);
     }
 
     @Path("/payload/{path:.+}")
@@ -90,5 +119,22 @@ public class SpokeResource {
         }
     }
 
+    @Path("/latest/{channel}/{path:.+}")
+    @GET
+    public Response getLatest(@PathParam("channel") String channel, @PathParam("path") String path) {
+        try {
+            String read = spokeStore.getLatest(channel, path);
+            if (read == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            return Response.ok(read).build();
+        } catch (NullPointerException e) {
+            logger.info("NPE - unable to get latest " + channel + " " + path);
+
+        } catch (Exception e) {
+            logger.warn("unable to get latest " + channel + " " + path, e);
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+    }
 
 }

@@ -26,7 +26,7 @@ import static com.flightstats.hub.rest.Linked.linked;
 /**
  * This resource represents a single channel in the Hub.
  */
-@Path("/channel/{channelName}")
+@Path("/channel/{channel}")
 public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
     private final ChannelService channelService;
@@ -43,7 +43,7 @@ public class ChannelResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getChannelMetadata(@PathParam("channelName") String channelName) {
+    public Response getChannelMetadata(@PathParam("channel") String channelName) {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -58,7 +58,7 @@ public class ChannelResource {
     @EventTimed(name = "channels.put")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createChannel(@PathParam("channelName") String channelName, String json) throws Exception {
+    public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
         ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
         ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json, channelName);
         if (oldConfig != null) {
@@ -78,7 +78,7 @@ public class ChannelResource {
     @PATCH
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateMetadata( @PathParam("channelName") String channelName, String json) throws Exception {
+    public Response updateMetadata(@PathParam("channel") String channelName, String json) throws Exception {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -98,7 +98,7 @@ public class ChannelResource {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public Response insertValue(@PathParam("channelName") final String channelName, @HeaderParam("Content-Type") final String contentType,
+    public Response insertValue(@PathParam("channel") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage, @HeaderParam("User") final String user,
                                 final InputStream data) throws Exception {
         if (noSuchChannel(channelName)) {
@@ -138,7 +138,7 @@ public class ChannelResource {
     }
 
     @DELETE
-    public Response delete(@PathParam("channelName") final String channelName) throws Exception {
+    public Response delete(@PathParam("channel") final String channelName) throws Exception {
         if (channelService.delete(channelName)) {
             return Response.status(Response.Status.ACCEPTED).build();
         } else {

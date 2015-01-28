@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -69,6 +70,21 @@ public class SpokeContentDao implements ContentDao {
             logger.warn("unable to get data: " + path, e);
             return null;
         }
+    }
+
+    @Override
+    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
+        String path = getPath(channel, limitKey);
+        logger.trace("latest {} {}", channel, path);
+        traces.add("spoke latest", channel, path);
+        try {
+            Optional<ContentKey> key = spokeStore.getLatest(channel, path, traces);
+            traces.add("spoke query by time", key);
+            return key;
+        } catch (Exception e) {
+            logger.warn("what happened? " + channel, e);
+        }
+        return Optional.absent();
     }
 
     @Override
