@@ -73,11 +73,12 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, Traces traces) {
-        logger.trace("latest {} ", channel);
-        traces.add("spoke latest", channel);
+    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
+        String path = getPath(channel, limitKey);
+        logger.trace("latest {} {}", channel, path);
+        traces.add("spoke latest", channel, path);
         try {
-            Optional<ContentKey> key = spokeStore.getLatest(channel, traces);
+            Optional<ContentKey> key = spokeStore.getLatest(channel, path, traces);
             traces.add("spoke query by time", key);
             return key;
         } catch (Exception e) {

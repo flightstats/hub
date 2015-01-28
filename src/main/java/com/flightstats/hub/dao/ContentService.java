@@ -17,5 +17,5 @@ public interface ContentService {
 
     Collection<ContentKey> getKeys(DirectionQuery query);
 
-    Optional<ContentKey> getLatest(String channel, Traces traces);
+    Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces);
 }

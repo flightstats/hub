@@ -54,7 +54,7 @@ public class S3ContentDao implements ContentDao {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, Traces traces) {
+    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
         throw new UnsupportedOperationException("use query interface");
     }
 

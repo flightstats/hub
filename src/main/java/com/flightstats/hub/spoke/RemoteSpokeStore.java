@@ -156,7 +156,7 @@ public class RemoteSpokeStore {
         return orderedKeys;
     }
 
-    public Optional<ContentKey> getLatest(String channel, Traces traces) throws InterruptedException {
+    public Optional<ContentKey> getLatest(String channel, String path, Traces traces) throws InterruptedException {
         List<String> servers = cluster.getServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
@@ -166,7 +166,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         traces.add("spoke calling", server, channel);
-                        ClientResponse response = client.resource("http://" + server + "/spoke/latest/" + channel)
+                        ClientResponse response = client.resource("http://" + server + "/spoke/latest/" + path)
                                 .get(ClientResponse.class);
                         traces.add("server response", server, response);
                         if (response.getStatus() == 200) {
