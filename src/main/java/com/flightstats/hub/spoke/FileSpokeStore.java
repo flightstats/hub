@@ -91,17 +91,16 @@ public class FileSpokeStore {
 
 
     //Given a File, return a key part (full key, or time path part)
-    String spokeKeyFromFile(File file) {
-        String path = file.getAbsolutePath();
+    String spokeKeyFromPath(String path) {
         if (path.contains(storagePath))
-            path = file.getAbsolutePath().substring(storagePath.length());
+            path = path.substring(storagePath.length());
 
         // file or directory?
         int i = path.lastIndexOf("/");
-        String suffix = path.substring(i+1);
+        String suffix = path.substring(i + 1);
         if( suffix.length() > 4) {
             // presence of second proves file aims at a full payload path
-            String folderPath = path.substring(0,i);
+            String folderPath = path.substring(0, i);
             String seconds = suffix.substring(0, 2);
             String milliseconds = suffix.substring(2, 5);
             String hash = suffix.substring(5);
@@ -135,12 +134,40 @@ public class FileSpokeStore {
             for (File aFile : files) {
                 String filePath = aFile.getPath();
                 logger.trace("filePath {}", filePath);
-                keys.add(spokeKeyFromFile(aFile));
+                keys.add(spokeKeyFromPath(aFile.getAbsolutePath()));
             }
         } catch (Exception e) {
             logger.info("error with " + path, e);
         }
         return keys;
+    }
+
+    public String getLatest(String channel, String limitPath) {
+        String[] split = StringUtils.split(limitPath, "/");
+        split = new String[]{split[0], split[1], split[2], split[3], split[4], split[5] + split[6] + split[7]};
+        String last = recurseLatest(channel, split, 0);
+        if (last == null) {
+            return null;
+        }
+        return spokeKeyFromPath(last);
+    }
+
+    private String recurseLatest(String path, String[] limitPath, int count) {
+        String base = " ";
+        for (String item : new File(storagePath + "/" + path).list()) {
+            if (item.compareTo(base) > 0 && item.compareTo(limitPath[count]) <= 0) {
+                base = item;
+            }
+        }
+        if (base.equals(" ")) {
+            return null;
+        }
+        logger.trace("count {} base {} path {}", count, base, path);
+        if (count == 5) {
+            return path + "/" + base;
+        }
+        count++;
+        return recurseLatest(path + "/" + base, limitPath, count);
     }
 
 }
