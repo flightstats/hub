@@ -25,7 +25,9 @@ describe(testName, function () {
     it('posts item', function () {
         utils.postItemQ(channelResource)
             .then(function (value) {
+                //console.log(testName + ' response.statusCode', value.response.statusCode);
                 posted = value.response.headers.location;
+                //console.log(testName + ' posted', posted);
             });
     });
 
@@ -38,11 +40,10 @@ describe(testName, function () {
             });
     });
 
-    /*
      //todo - gfm - 12/20/14 -
      //This is only failing when run from Jenkins against dev
      //it works run on local machine against local hub and against dev
-    it("gets latest unstable in channel ", function (done) {
+    /*it("gets latest unstable in channel ", function (done) {
         request.get({url: channelResource + '/latest?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -50,6 +51,5 @@ describe(testName, function () {
                 expect(response.headers.location).toBe(posted);
                 done();
             });
-    });
-     */
+     });*/
 });
