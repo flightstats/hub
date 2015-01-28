@@ -38,7 +38,6 @@ describe(testName, function () {
             });
     });
 
-    /*
      //todo - gfm - 12/20/14 -
      //This is only failing when run from Jenkins against dev
      //it works run on local machine against local hub and against dev
@@ -51,5 +50,4 @@ describe(testName, function () {
                 done();
             });
     });
-     */
 });

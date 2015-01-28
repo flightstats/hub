@@ -108,7 +108,16 @@ public class FileSpokeStoreTest {
             time = time.plusMillis(1);
             spokeStore.write("testLastFile/" + new ContentKey(time, "C").toUrl(), BYTES);
         }
-        String found = spokeStore.getLatest("testLastFile");
+        ContentKey limitKey = new ContentKey(time.minusMinutes(1), "A");
+        String found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
+        assertEquals("testLastFile/2015/01/01/00/28/30/031/C", found);
+
+        limitKey = new ContentKey(time.plusMinutes(1), "A");
+        found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
+        assertEquals("testLastFile/2015/01/01/00/30/31/031/B", found);
+
+        limitKey = new ContentKey(time.plusMinutes(1), "D");
+        found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
         assertEquals("testLastFile/2015/01/01/00/30/31/032/C", found);
     }
 
