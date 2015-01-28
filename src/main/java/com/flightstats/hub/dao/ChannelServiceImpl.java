@@ -88,14 +88,16 @@ public class ChannelServiceImpl implements ChannelService {
         if (trace) {
             traces = new TracesImpl();
         }
-        Optional<ContentKey> latest = contentService.getLatest(channel, traces);
+        ContentKey limitKey = new ContentKey(TimeUtil.time(stable), "ZZZZZ");
+        Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
             traces.log(logger);
             return latest;
         }
+
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(new ContentKey(TimeUtil.time(stable), "ZZZZZ"))
+                .contentKey(limitKey)
                 .next(false)
                 .stable(stable)
                 .ttlDays(channelConfiguration.getTtlDays())

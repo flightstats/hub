@@ -27,5 +27,5 @@ public interface ContentDao {
 
     void initialize();
 
-    Optional<ContentKey> getLatest(String channel, Traces traces);
+    Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces);
 }

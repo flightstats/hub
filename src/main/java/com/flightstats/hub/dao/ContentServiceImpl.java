@@ -166,8 +166,8 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, Traces traces) {
-        return cacheContentDao.getLatest(channel, traces);
+    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
+        return cacheContentDao.getLatest(channel, limitKey, traces);
     }
 
     private Set<ContentKey> queryBoth(DirectionQuery query) {
