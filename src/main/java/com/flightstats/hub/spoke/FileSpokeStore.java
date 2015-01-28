@@ -142,15 +142,15 @@ public class FileSpokeStore {
         return keys;
     }
 
-    public String getLast(String channel) {
-        String last = recurseLast(channel, 0);
+    public String getLatest(String channel) {
+        String last = recurseLatest(channel, 0);
         if (last == null) {
             return null;
         }
         return spokeKeyFromPath(last);
     }
 
-    private String recurseLast(String path, int count) {
+    private String recurseLatest(String path, int count) {
         String base = " ";
         for (String item : new File(storagePath + "/" + path).list()) {
             if (item.compareTo(base) > 0) {
@@ -165,7 +165,7 @@ public class FileSpokeStore {
             return path + "/" + base;
         }
         count++;
-        return recurseLast(path + "/" + base, count);
+        return recurseLatest(path + "/" + base, count);
     }
 
 }
