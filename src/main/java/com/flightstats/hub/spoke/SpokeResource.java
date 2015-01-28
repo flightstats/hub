@@ -119,5 +119,19 @@ public class SpokeResource {
         }
     }
 
+    @Path("/latest/{channel}")
+    @GET
+    public Response getLatest(@PathParam("channel") String channel) {
+        try {
+            String read = spokeStore.getLatest(channel);
+            if (read == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            return Response.ok(read).build();
+        } catch (Exception e) {
+            logger.warn("unable to get " + channel, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
 }
