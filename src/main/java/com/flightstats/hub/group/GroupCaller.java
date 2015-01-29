@@ -45,6 +45,7 @@ public class GroupCaller implements Leader {
     private final MetricsTimer metricsTimer;
     private final LastContentKey lastContentKey;
     private final GroupContentKeySet groupInProcess;
+    private GroupError groupError;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
@@ -60,13 +61,14 @@ public class GroupCaller implements Leader {
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackQueue> queueProvider,
                        GroupService groupService, MetricsTimer metricsTimer,
-                       LastContentKey lastContentKey, GroupContentKeySet groupInProcess) {
+                       LastContentKey lastContentKey, GroupContentKeySet groupInProcess, GroupError groupError) {
         this.curator = curator;
         this.queueProvider = queueProvider;
         this.groupService = groupService;
         this.metricsTimer = metricsTimer;
         this.lastContentKey = lastContentKey;
         this.groupInProcess = groupInProcess;
+        this.groupError = groupError;
     }
 
     public boolean tryLeadership(Group group) {
@@ -276,37 +278,13 @@ public class GroupCaller implements Leader {
         }
     }
 
-    private void logError(String error) {
-        //limit this to 10 items, or less than an hour old
-        DateTime dateTime = new DateTime();
-        String errorRoot = "/GroupError/" + group.getName() + "/";
-        String path = errorRoot + dateTime.getMillis();
-        try {
-            curator.create().creatingParentsIfNeeded().forPath(path, error.getBytes());
-        } catch (Exception e) {
-            logger.warn("unable to create " + path, e);
-        }
-        try {
-            List<String> children = curator.getChildren().forPath(errorRoot);
-            for (String child : children) {
-                DateTime childTime = new DateTime(Long.parseLong(child));
-                if (childTime.isBefore(dateTime.minusHours(1))) {
-                    curator.delete().forPath(errorRoot + child);
-                }
-            }
-        } catch (Exception e) {
-            logger.warn("unable to get children " + errorRoot, e);
-        }
-        //todo - gfm - 1/28/15 - limit number of children
-
-    }
-
     private Retryer<ClientResponse> buildRetryer() {
         return RetryerBuilder.<ClientResponse>newBuilder()
                 .retryIfException(new Predicate<Throwable>() {
                     @Override
                     public boolean apply(@Nullable Throwable throwable) {
                         if (throwable != null) {
+                            groupError.add(group.getName(), new DateTime() + " " + throwable.getMessage());
                             if (throwable.getClass().isAssignableFrom(ClientHandlerException.class)) {
                                 logger.info("got ClientHandlerException trying to call client back " + throwable.getMessage());
                             } else {
@@ -323,6 +301,7 @@ public class GroupCaller implements Leader {
                         try {
                             boolean failure = response.getStatus() != 200;
                             if (failure) {
+                                groupError.add(group.getName(), new DateTime() + " " + response.toString());
                                 logger.info("unable to send to " + response);
                             }
                             return failure;
