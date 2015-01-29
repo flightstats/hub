@@ -279,13 +279,23 @@ public class GroupCaller implements Leader {
     private void logError(String error) {
         //limit this to 10 items, or less than an hour old
         DateTime dateTime = new DateTime();
-        String path = "/GroupError/" + group.getName() + "/" + dateTime.toString();
+        String errorRoot = "/GroupError/" + group.getName() + "/";
+        String path = errorRoot + dateTime.getMillis();
         try {
             curator.create().creatingParentsIfNeeded().forPath(path, error.getBytes());
-        } catch (KeeperException.NodeExistsException ignore) {
-            logger.info("node exists " + path);
         } catch (Exception e) {
             logger.warn("unable to create " + path, e);
+        }
+        try {
+            List<String> children = curator.getChildren().forPath(errorRoot);
+            for (String child : children) {
+                DateTime childTime = new DateTime(Long.parseLong(child));
+                if (childTime.isBefore(dateTime.minusHours(1))) {
+                    curator.delete().forPath(errorRoot + child);
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("unable to get children " + errorRoot, e);
         }
         //todo - gfm - 1/28/15 - limit number of children
 
