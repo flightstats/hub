@@ -70,8 +70,16 @@ public class GroupResource {
         root.put("callbackUrl", group.getCallbackUrl());
         root.put("channelUrl", group.getChannelUrl());
         root.put("parallelCalls", group.getParallelCalls());
-        root.put("lastCompletedCallback", group.getChannelUrl() + "/" + status.getLastCompleted().toString());
-        root.put("channelLatest", group.getChannelUrl() + "/" + status.getChannelLatest().toString());
+        if (status.getLastCompleted() == null) {
+            root.put("lastCompletedCallback", "");
+        } else {
+            root.put("lastCompletedCallback", group.getChannelUrl() + "/" + status.getLastCompleted().toString());
+        }
+        if (status.getChannelLatest() == null) {
+            root.put("channelLatest", "");
+        } else {
+            root.put("channelLatest", group.getChannelUrl() + "/" + status.getChannelLatest().toString());
+        }
         ArrayNode errors = root.putArray("errors");
         for (String error : status.getErrors()) {
             errors.add(error);
