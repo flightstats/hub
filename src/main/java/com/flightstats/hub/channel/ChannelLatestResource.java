@@ -1,15 +1,18 @@
 package com.flightstats.hub.channel;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Collection;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
@@ -17,17 +20,14 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel: .*}/latest")
 public class ChannelLatestResource {
 
-    private final UriInfo uriInfo;
-    private final ChannelService channelService;
-
     @Inject
-    public ChannelLatestResource(UriInfo uriInfo, ChannelService channelService) {
-        this.uriInfo = uriInfo;
-        this.channelService = channelService;
-    }
+    private UriInfo uriInfo;
+    @Inject
+    private ChannelService channelService;
+    @Inject
+    private ObjectMapper mapper;
 
     @GET
-    @EventTimed(name = "channel.ALL.latest.get")
     public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("trace") @DefaultValue("false") boolean trace) {
@@ -39,6 +39,32 @@ public class ChannelLatestResource {
         } else {
             return Response.status(NOT_FOUND).build();
         }
+    }
+
+    @GET
+    @Path("/{count}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getLatestCount(@PathParam("channel") String channel,
+                                   @PathParam("count") int count,
+                                   @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                   @QueryParam("trace") @DefaultValue("false") boolean trace) {
+        Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
+        if (!latest.isPresent()) {
+            return Response.status(NOT_FOUND).build();
+        }
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channel)
+                .contentKey(latest.get())
+                .next(false)
+                .stable(stable)
+                .ttlDays(channelService.getChannelConfiguration(channel).getTtlDays())
+                .count(count - 1)
+                .build();
+        query.trace(trace);
+        Collection<ContentKey> keys = channelService.getKeys(query);
+        keys.add(latest.get());
+        return ChannelLinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
+
     }
 
 }
