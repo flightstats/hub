@@ -322,4 +322,8 @@ public class GroupCaller implements Leader {
                 .withStopStrategy(new GroupStopStrategy(hasLeadership))
                 .build();
     }
+
+    public List<String> getErrors() {
+        return groupError.get(group.getName());
+    }
 }
