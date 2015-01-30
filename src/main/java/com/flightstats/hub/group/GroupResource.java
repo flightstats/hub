@@ -13,7 +13,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.List;
 
 /**
  * GroupResource represents all of the interactions for Group Management.
@@ -44,16 +43,6 @@ public class GroupResource {
             groupObject.put("name", group.getName());
             groupObject.put("href", uriInfo.getBaseUri() + "group/" + group.getName());
         }
-        //todo - gfm - 6/22/14 - add inFlight list to status
-        ArrayNode status = root.putArray("status");
-        List<GroupStatus> groupStatus = groupService.getGroupStatuses();
-        for (GroupStatus groupStat : groupStatus) {
-            ObjectNode object = status.addObject();
-            object.put("name", groupStat.getName());
-            object.put("lastCompleted", groupStat.getGroup().getChannelUrl() + "/" + groupStat.getLastCompleted().toString());
-            //todo - gfm - 12/10/14 - fix this
-            //object.put("channelLatest", groupStat.getChannelLatest().toString());
-        }
         return Response.ok(root).build();
     }
 
@@ -81,7 +70,20 @@ public class GroupResource {
         root.put("callbackUrl", group.getCallbackUrl());
         root.put("channelUrl", group.getChannelUrl());
         root.put("parallelCalls", group.getParallelCalls());
-        root.put("lastCompleted", group.getChannelUrl() + "/" + status.getLastCompleted().toString());
+        if (status.getLastCompleted() == null) {
+            root.put("lastCompletedCallback", "");
+        } else {
+            root.put("lastCompletedCallback", group.getChannelUrl() + "/" + status.getLastCompleted().toString());
+        }
+        if (status.getChannelLatest() == null) {
+            root.put("channelLatest", "");
+        } else {
+            root.put("channelLatest", group.getChannelUrl() + "/" + status.getChannelLatest().toString());
+        }
+        ArrayNode errors = root.putArray("errors");
+        for (String error : status.getErrors()) {
+            errors.add(error);
+        }
         return Response.ok(root).build();
     }
 

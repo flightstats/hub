@@ -1,14 +1,14 @@
 package com.flightstats.hub.group;
 
 import com.flightstats.hub.cluster.LastContentKey;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class GroupService {
     private final static Logger logger = LoggerFactory.getLogger(GroupService.class);
@@ -17,14 +17,17 @@ public class GroupService {
     private final GroupValidator groupValidator;
     private final GroupCallback groupCallback;
     private final LastContentKey lastContentKey;
+    private ChannelService channelService;
 
     @Inject
     public GroupService(DynamoGroupDao dynamoGroupDao, GroupValidator groupValidator,
-                        GroupCallback groupCallback, LastContentKey lastContentKey) {
+                        GroupCallback groupCallback, LastContentKey lastContentKey,
+                        ChannelService channelService) {
         this.dynamoGroupDao = dynamoGroupDao;
         this.groupValidator = groupValidator;
         this.groupCallback = groupCallback;
         this.lastContentKey = lastContentKey;
+        this.channelService = channelService;
     }
 
     public Optional<Group> upsertGroup(Group group) {
@@ -52,25 +55,14 @@ public class GroupService {
         return dynamoGroupDao.getGroups();
     }
 
-    public List<GroupStatus> getGroupStatuses() {
-        Iterable<Group> groups = getGroups();
-        List<GroupStatus> groupStatuses = new ArrayList<>();
-        for (Group group : groups) {
-            groupStatuses.add(getGroupStatus(group));
-        }
-        return groupStatuses;
-    }
-
     public GroupStatus getGroupStatus(Group group) {
         GroupStatus.GroupStatusBuilder builder = GroupStatus.builder().group(group);
-        //todo - gfm - 12/10/14 - fix this
-            /*
-            String channelName = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
-            Optional<ContentKey> lastUpdatedKey = channelService.findLastUpdatedKey(channelName);
-            if (lastUpdatedKey.isPresent()) {
-                builder.channelLatest(lastUpdatedKey.get().getSequence());
-            }*/
-        builder.lastCompleted(groupCallback.getLastCompleted(group));
+        String channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
+        Optional<ContentKey> lastKey = channelService.getLatest(channel, true, false);
+        if (lastKey.isPresent()) {
+            builder.channelLatest(lastKey.get());
+        }
+        groupCallback.getStatus(group, builder);
         return builder.build();
     }
 

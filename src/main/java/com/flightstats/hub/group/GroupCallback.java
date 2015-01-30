@@ -1,10 +1,10 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.model.ContentKey;
-
 public interface GroupCallback {
+
     void notifyWatchers();
 
-    ContentKey getLastCompleted(Group group);
+    void getStatus(Group group, GroupStatus.GroupStatusBuilder statusBuilder);
+
     void delete(String name);
 }
