@@ -31,7 +31,6 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -150,32 +149,9 @@ public class ChannelContentResource {
         }
         links.putObject("previous").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(previous) + "?stable=" + stable);
         ArrayNode ids = links.putArray("uris");
-        URI channelUri = linkBuilder.buildChannelUri(channelName, uriInfo);
+        URI channelUri = ChannelLinkBuilder.buildChannelUri(channelName, uriInfo);
         for (ContentKey key : keys) {
-            URI uri = linkBuilder.buildItemUri(key, channelUri);
-            ids.add(uri.toString());
-        }
-        query.getTraces().output(root);
-        return Response.ok(root).build();
-    }
-
-    private Response directionalResponse(String channel, Collection<ContentKey> keys, int count, DirectionQuery query) {
-        ObjectNode root = mapper.createObjectNode();
-        ObjectNode links = root.putObject("_links");
-        ObjectNode self = links.putObject("self");
-        self.put("href", uriInfo.getRequestUri().toString());
-        List<ContentKey> list = new ArrayList<>(keys);
-        if (!list.isEmpty()) {
-            String baseUri = uriInfo.getBaseUri() + "channel/" + channel + "/";
-            ObjectNode next = links.putObject("next");
-            next.put("href", baseUri + list.get(list.size() - 1).toUrl() + "/next/" + count);
-            ObjectNode previous = links.putObject("previous");
-            previous.put("href", baseUri + list.get(0).toUrl() + "/previous/" + count);
-        }
-        ArrayNode ids = links.putArray("uris");
-        URI channelUri = linkBuilder.buildChannelUri(channel, uriInfo);
-        for (ContentKey key : keys) {
-            URI uri = linkBuilder.buildItemUri(key, channelUri);
+            URI uri = ChannelLinkBuilder.buildItemUri(key, channelUri);
             ids.add(uri.toString());
         }
         query.getTraces().output(root);
@@ -280,7 +256,7 @@ public class ChannelContentResource {
                 .count(count).build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return directionalResponse(channel, keys, count, query);
+        return ChannelLinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/previous")
@@ -325,7 +301,7 @@ public class ChannelContentResource {
                 .count(count).build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return directionalResponse(channel, keys, count, query);
+        return ChannelLinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
     }
 
     private Response directional(String channel, int year, int month, int day, int hour, int minute,
