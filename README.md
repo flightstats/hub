@@ -291,11 +291,15 @@ Here is how you can do this with curl:
 
 `curl -I http://hub-v2/channel/stumptown/latest`
 
+**New for v2** You can also retrieve the latest N items by using /latest/{n}
+
 ## next and previous links
 
 A GET on the next and previous links returned as headers with content will redirect to those respective items.  A 404 will be returned if they don't exist.
 
-New for v2, any item's uri can be appended with next or previous link, and also a number, and you'll receive a list of that many items.
+**New for v2**, any item's uri can be appended with /next or /previous to navigate forward to backward.
+If you append a number /next/20 or /previous/15, and you'll receive a list of that many items.
+
 For example:
 
 `GET http://hub-v2/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/10`
