@@ -83,7 +83,7 @@ describe(testName, function () {
                     expect(parse.channelUrl).toBe(groupConfig.channelUrl);
                     expect(parse.transactional).toBe(groupConfig.transactional);
                     expect(parse.name).toBe(groupName);
-                    expect(parse.lastCompleted).toBe(postedItems[3]);
+                    expect(parse.lastCompletedCallback).toBe(postedItems[3]);
                 }
                 done();
         });
