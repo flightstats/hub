@@ -522,7 +522,7 @@ the Hub server keeps track of the Group's state.
 `parallelCalls` is the optional number of callbacks to make in parallel.  The default value is `1`.  
 If parallelCalls is higher than one, callback ordering is not guaranteed.
 
-To see all existing group callbacks and status:
+To get a list of existing group callbacks:
 
 `GET http://hub-v2/group`
  
@@ -541,7 +541,7 @@ To create a new group callback:
 Once a Group is created, it can not be changed, only deleted.  Put may be safely called multiple times with the same 
  configuration.
 
-To see the current configuration of a group callback:
+To see the configuration and status of a group callback:
 
 `GET http://hub-v2/group/{name}`
 

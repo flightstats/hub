@@ -122,12 +122,16 @@ public class GroupCallbackImpl implements GroupCallback {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
 
-    public ContentKey getLastCompleted(Group group) {
+    @Override
+    public void getStatus(Group group, GroupStatus.GroupStatusBuilder statusBuilder) {
         GroupCaller groupCaller = activeGroups.get(group.getName());
         if (groupCaller != null) {
-            return groupCaller.getLastCompleted();
+            statusBuilder.lastCompleted(groupCaller.getLastCompleted());
+            statusBuilder.errors(groupCaller.getErrors());
+        } else {
+            statusBuilder.lastCompleted(ContentKey.NONE);
+            statusBuilder.errors(Collections.emptyList());
         }
-        return ContentKey.NONE;
     }
 
     private class GroupCallbackService extends AbstractIdleService {
