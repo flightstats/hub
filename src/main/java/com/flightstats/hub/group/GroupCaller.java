@@ -22,6 +22,7 @@ import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,7 @@ public class GroupCaller implements Leader {
     private final MetricsTimer metricsTimer;
     private final LastContentKey lastContentKey;
     private final GroupContentKeySet groupInProcess;
+    private GroupError groupError;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
@@ -59,13 +61,14 @@ public class GroupCaller implements Leader {
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackQueue> queueProvider,
                        GroupService groupService, MetricsTimer metricsTimer,
-                       LastContentKey lastContentKey, GroupContentKeySet groupInProcess) {
+                       LastContentKey lastContentKey, GroupContentKeySet groupInProcess, GroupError groupError) {
         this.curator = curator;
         this.queueProvider = queueProvider;
         this.groupService = groupService;
         this.metricsTimer = metricsTimer;
         this.lastContentKey = lastContentKey;
         this.groupInProcess = groupInProcess;
+        this.groupError = groupError;
     }
 
     public boolean tryLeadership(Group group) {
@@ -239,7 +242,7 @@ public class GroupCaller implements Leader {
 
     void deleteAnyway() {
         try {
-            debugLaederPath();
+            debugLeaderPath();
             curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
         } catch (Exception e) {
             logger.warn("unable to delete leader path " + group.getName(), e);
@@ -247,7 +250,7 @@ public class GroupCaller implements Leader {
         delete();
     }
 
-    private void debugLaederPath() {
+    private void debugLeaderPath() {
         try {
             String leaderPath = getLeaderPath();
             List<String> children = curator.getChildren().forPath(leaderPath);
@@ -281,6 +284,7 @@ public class GroupCaller implements Leader {
                     @Override
                     public boolean apply(@Nullable Throwable throwable) {
                         if (throwable != null) {
+                            groupError.add(group.getName(), new DateTime() + " " + throwable.getMessage());
                             if (throwable.getClass().isAssignableFrom(ClientHandlerException.class)) {
                                 logger.info("got ClientHandlerException trying to call client back " + throwable.getMessage());
                             } else {
@@ -297,6 +301,7 @@ public class GroupCaller implements Leader {
                         try {
                             boolean failure = response.getStatus() != 200;
                             if (failure) {
+                                groupError.add(group.getName(), new DateTime() + " " + response.toString());
                                 logger.info("unable to send to " + response);
                             }
                             return failure;
@@ -316,5 +321,9 @@ public class GroupCaller implements Leader {
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, 1, TimeUnit.MINUTES))
                 .withStopStrategy(new GroupStopStrategy(hasLeadership))
                 .build();
+    }
+
+    public List<String> getErrors() {
+        return groupError.get(group.getName());
     }
 }
