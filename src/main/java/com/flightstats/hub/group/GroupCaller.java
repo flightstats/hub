@@ -28,9 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -325,5 +323,9 @@ public class GroupCaller implements Leader {
 
     public List<String> getErrors() {
         return groupError.get(group.getName());
+    }
+
+    public List<ContentKey> getInFlight() {
+        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(group.getName())));
     }
 }

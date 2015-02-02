@@ -128,9 +128,11 @@ public class GroupCallbackImpl implements GroupCallback {
         if (groupCaller != null) {
             statusBuilder.lastCompleted(groupCaller.getLastCompleted());
             statusBuilder.errors(groupCaller.getErrors());
+            statusBuilder.inFlight(groupCaller.getInFlight());
         } else {
             statusBuilder.lastCompleted(ContentKey.NONE);
             statusBuilder.errors(Collections.emptyList());
+            statusBuilder.inFlight(Collections.emptyList());
         }
     }
 
