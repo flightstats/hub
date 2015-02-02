@@ -14,6 +14,7 @@ public class GroupStatus {
     private ContentKey channelLatest;
     private Group group;
     private List<String> errors;
+    private List<ContentKey> inFlight;
 
     @JsonIgnore
     public Group getGroup() {
