@@ -1,5 +1,6 @@
 package com.flightstats.hub.group;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flightstats.hub.model.ContentKey;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,6 +23,11 @@ public class Group {
     private final String name;
     @Wither
     private final ContentKey startingKey;
+
+    @JsonIgnore
+    public ContentKey getStartingKey() {
+        return startingKey;
+    }
 
     private static final Gson gson = new GsonBuilder().create();
 
