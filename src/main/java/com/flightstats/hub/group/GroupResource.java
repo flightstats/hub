@@ -73,12 +73,16 @@ public class GroupResource {
         if (status.getLastCompleted() == null) {
             root.put("lastCompletedCallback", "");
         } else {
-            root.put("lastCompletedCallback", group.getChannelUrl() + "/" + status.getLastCompleted().toString());
+            root.put("lastCompletedCallback", group.getChannelUrl() + "/" + status.getLastCompleted().toUrl());
         }
         if (status.getChannelLatest() == null) {
             root.put("channelLatest", "");
         } else {
-            root.put("channelLatest", group.getChannelUrl() + "/" + status.getChannelLatest().toString());
+            root.put("channelLatest", group.getChannelUrl() + "/" + status.getChannelLatest().toUrl());
+        }
+        ArrayNode inFlight = root.putArray("inFlight");
+        for (ContentKey key : status.getInFlight()) {
+            inFlight.add(group.getChannelUrl() + "/" + key.toUrl());
         }
         ArrayNode errors = root.putArray("errors");
         for (String error : status.getErrors()) {
