@@ -38,7 +38,7 @@ For the purposes of this document, the Hub is at http://hub-v2/.
 * On your local machine it is at: http://localhost:9080/
 * In development: http://hub-v2/
 * In staging: http://hub-v2.svc.staging/
-* In production: http://hub-v2.svc.prod/ (coming soon!)
+* In production: http://hub-v2.svc.prod/ 
 
 ## overview
 
