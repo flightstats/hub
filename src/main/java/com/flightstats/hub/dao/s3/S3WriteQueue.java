@@ -34,16 +34,23 @@ public class S3WriteQueue {
                 public Object call() throws Exception {
                     //noinspection InfiniteLoopStatement
                     while (true) {
-                        ChannelContentKey key = keys.take();
-                        if (key != null) {
-                            logger.trace("writing {}", key.getContentKey());
-                            Content content = cacheContentDao.read(key.getChannel(), key.getContentKey());
-                            longTermContentDao.write(key.getChannel(), content);
-                            //todo - gfm - 11/21/14 - should this do something else to verify?
-                        }
+                        write(cacheContentDao, longTermContentDao);
                     }
                 }
             });
+        }
+    }
+
+    private void write(ContentDao cacheContentDao, ContentDao longTermContentDao) throws InterruptedException {
+        writeContent(cacheContentDao, longTermContentDao);
+    }
+
+    private void writeContent(ContentDao cacheContentDao, ContentDao longTermContentDao) throws InterruptedException {
+        ChannelContentKey key = keys.take();
+        if (key != null) {
+            logger.trace("writing {}", key.getContentKey());
+            Content content = cacheContentDao.read(key.getChannel(), key.getContentKey());
+            longTermContentDao.write(key.getChannel(), content);
         }
     }
 
