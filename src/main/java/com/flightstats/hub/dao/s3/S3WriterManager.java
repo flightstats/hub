@@ -4,7 +4,10 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.Traces;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -47,11 +50,11 @@ public class S3WriterManager {
         this.s3WriteQueue = s3WriteQueue;
         HubServices.register(new S3WriterManagerService(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
 
-        String host="";
+        String host = "";
         try {
             host = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
-            e.printStackTrace();
+            logger.warn("should not get this", e);
         }
         this.offsetMinutes = serverOffset(host);
         logger.info("{} offset is -{} minutes", host, this.offsetMinutes);
@@ -61,23 +64,23 @@ public class S3WriterManager {
                 .build());
     }
 
-    static int serverOffset(String host){
+    static int serverOffset(String host) {
         int offset;
-        if(host.contains("1.")){
+        if (host.contains("1.")) {
             offset = HubProperties.getProperty("verify.one", 15);
-        }else if(host.contains("2.")){
+        } else if (host.contains("2.")) {
             offset = HubProperties.getProperty("verify.two", 30);
-        }else if(host.contains("3.")){
+        } else if (host.contains("3.")) {
             offset = HubProperties.getProperty("verify.three", 45);
-        }else{
+        } else {
             offset = 5;
         }
         return offset;
     }
 
-    SortedSet<ContentKey> itemsInCacheButNotLongTerm(DateTime startTime, String channelName){
+    SortedSet<ContentKey> itemsInCacheButNotLongTerm(DateTime startTime, String channelName) {
         SortedSet<ContentKey> cacheKeys = new TreeSet<>();
-        SortedSet<ContentKey> ltKeys = new TreeSet<>();
+        SortedSet<ContentKey> longTermKeys = new TreeSet<>();
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             queryThreadPool.submit(new Runnable() {
@@ -91,16 +94,17 @@ public class S3WriterManager {
             queryThreadPool.submit(new Runnable() {
                 @Override
                 public void run() {
-                    ltKeys.addAll(longTermContentDao.queryByTime(channelName, startTime, TimeUtil.Unit.MINUTES,
+                    longTermKeys.addAll(longTermContentDao.queryByTime(channelName, startTime, TimeUtil.Unit.MINUTES,
                             Traces.NOOP));
                     countDownLatch.countDown();
                 }
             });
             countDownLatch.await(3, TimeUnit.MINUTES);
-            cacheKeys.removeAll(ltKeys);
-            int missingItemCount = cacheKeys.size();
-            if(missingItemCount>0)
-                logger.debug("Found {} in channel {}", missingItemCount, channelName);
+            cacheKeys.removeAll(longTermKeys);
+            if (cacheKeys.size() > 0) {
+                logger.info("missing {} items in channel {}", cacheKeys.size(), channelName);
+                logger.debug("channel {} missing items {}", channelName, cacheKeys);
+            }
             return cacheKeys;
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
@@ -110,10 +114,8 @@ public class S3WriterManager {
 
     public void run() {
         try {
-            DateTime startTime = DateTime.now()
-                    .minusMinutes(offsetMinutes);
+            DateTime startTime = DateTime.now().minusMinutes(offsetMinutes);
             logger.info("Verifying S3 data at: {}", startTime);
-
             Iterable<ChannelConfiguration> channels = channelService.getChannels();
             for (ChannelConfiguration channel : channels) {
                 channelThreadPool.submit(new Runnable() {
