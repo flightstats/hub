@@ -44,6 +44,7 @@ conf/hub.properties :
       maxQueryItems : 1000
       writeQueueSize : 2000
       writeQueueThreads : 20
+      dropSomeWrites : true
 
     audit :
       threads: 0
