@@ -23,6 +23,10 @@ public class HubProperties {
         return properties;
     }
 
+    public static boolean getProperty(String name, boolean defaultValue) {
+        return Boolean.parseBoolean(properties.getProperty(name, Boolean.toString(defaultValue)));
+    }
+
     public static int getProperty(String name, int defaultValue) {
         return Integer.parseInt(properties.getProperty(name, Integer.toString(defaultValue)));
     }
