@@ -1,15 +1,21 @@
 package com.flightstats.hub.dao.s3;
 
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.WaitStrategies;
+import com.google.common.base.Predicate;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.concurrent.*;
 
 @SuppressWarnings("Convert2Lambda")
@@ -17,35 +23,52 @@ import java.util.concurrent.*;
 public class S3WriteQueue {
 
     private final static Logger logger = LoggerFactory.getLogger(S3WriteQueue.class);
+    private final Retryer<Void> retryer;
 
     private ExecutorService executorService;
-    private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(2000);
+    private BlockingQueue<ChannelContentKey> keys;
+    private ContentDao cacheContentDao;
+    private ContentDao longTermContentDao;
 
     @Inject
     public S3WriteQueue(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
-                        @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
-                        @Named("s3.writeQueueSize") int queueSize,
-                        @Named("s3.writeQueueThreads") int threads) throws InterruptedException {
-        keys = new LinkedBlockingQueue<>(queueSize);
+                        @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao)
+            throws InterruptedException {
+        this.cacheContentDao = cacheContentDao;
+        this.longTermContentDao = longTermContentDao;
+
+        keys = new LinkedBlockingQueue<>(HubProperties.getProperty("s3.writeQueueSize", 2000));
+        int threads = HubProperties.getProperty("s3.writeQueueThreads", 20);
         executorService = Executors.newFixedThreadPool(threads);
+        retryer = buildRetryer();
         for (int i = 0; i < threads; i++) {
             executorService.submit(new Callable<Object>() {
                 @Override
                 public Object call() throws Exception {
                     //noinspection InfiniteLoopStatement
                     while (true) {
-                        write(cacheContentDao, longTermContentDao);
+                        write();
                     }
                 }
             });
         }
     }
 
-    private void write(ContentDao cacheContentDao, ContentDao longTermContentDao) throws InterruptedException {
-        writeContent(cacheContentDao, longTermContentDao);
+    private void write() throws InterruptedException {
+        try {
+            retryer.call(new Callable<Void>() {
+                @Override
+                public Void call() throws Exception {
+                    writeContent();
+                    return null;
+                }
+            });
+        } catch (Exception e) {
+            logger.warn("unable to call s3", e);
+        }
     }
 
-    private void writeContent(ContentDao cacheContentDao, ContentDao longTermContentDao) throws InterruptedException {
+    private void writeContent() throws InterruptedException {
         ChannelContentKey key = keys.take();
         if (key != null) {
             logger.trace("writing {}", key.getContentKey());
@@ -67,5 +90,20 @@ public class S3WriteQueue {
         } catch (InterruptedException e) {
             logger.warn("unable to close", e);
         }
+    }
+
+    private Retryer<Void> buildRetryer() {
+        return RetryerBuilder.<Void>newBuilder()
+                .retryIfException(new Predicate<Throwable>() {
+                    @Override
+                    public boolean apply(@Nullable Throwable throwable) {
+                        if (throwable != null) {
+                            logger.warn("unable to send to S3 " + throwable.getMessage());
+                        }
+                        return throwable != null;
+                    }
+                })
+                .withWaitStrategy(WaitStrategies.exponentialWait(1000, 1, TimeUnit.MINUTES))
+                .build();
     }
 }
