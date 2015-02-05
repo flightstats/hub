@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.s3.S3WriteQueue;
 import com.flightstats.hub.model.*;
@@ -24,22 +25,20 @@ public class ContentServiceImpl implements ContentService {
 
     private final ContentDao cacheContentDao;
     private final ContentDao longTermContentDao;
-    private final int ttlMinutes;
     private final Integer shutdown_wait_seconds;
     private final AtomicInteger inFlight = new AtomicInteger();
     private final ExecutorService executorService;
     private final S3WriteQueue s3WriteQueue;
+    private final boolean dropSomeWrites;
 
     @Inject
     public ContentServiceImpl(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
                               @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
-                              @Named("spoke.ttlMinutes") int ttlMinutes,
-                              @Named("app.shutdown_wait_seconds") Integer shutdown_wait_seconds,
                               S3WriteQueue s3WriteQueue) {
         this.cacheContentDao = cacheContentDao;
         this.longTermContentDao = longTermContentDao;
-        this.ttlMinutes = ttlMinutes;
-        this.shutdown_wait_seconds = shutdown_wait_seconds;
+        this.dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
+        this.shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 60);
         this.s3WriteQueue = s3WriteQueue;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ContentServiceImpl-%d").build());
         HubServices.registerPreStop(new ContentServiceHook());
@@ -63,7 +62,13 @@ public class ContentServiceImpl implements ContentService {
         try {
             inFlight.incrementAndGet();
             ContentKey key = cacheContentDao.write(channelName, content);
-            s3WriteQueue.add(new ChannelContentKey(channelName,key));
+            if (dropSomeWrites) {
+                if (Math.random() < 0.95) {
+                    s3WriteQueue.add(new ChannelContentKey(channelName, key));
+                }
+            } else {
+                s3WriteQueue.add(new ChannelContentKey(channelName, key));
+            }
             return key;
         } finally {
             inFlight.decrementAndGet();
@@ -73,8 +78,6 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
-        //todo - gfm - 12/22/14 - this should also handle the case of replication,
-        // where something is in the cache outside the 'cache window'
         return getBoth(channelName, key);
     }
 
