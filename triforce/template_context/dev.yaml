@@ -73,7 +73,7 @@ conf/hazelcast.conf.xml :
 
 bin/start.sh :
   _template : start.sh.jinja
-  max_heap : "800m"
+  max_heap : "512m"
   min_heap : "256m"
   min_new : "100m"
   environment : "dev"
