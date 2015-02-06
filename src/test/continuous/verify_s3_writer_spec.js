@@ -37,7 +37,6 @@ describe(testName, function () {
         for (var i = startOffset; i <= endOffset; i++) {
             console.log('i', i);
             var start = moment.utc().subtract(i, 'minutes');
-            console.log('start', start);
             var formatted = start.format(minute_format);
             console.log('checking', formatted);
             channels.forEach(function (channel) {
