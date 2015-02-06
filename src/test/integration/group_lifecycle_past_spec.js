@@ -24,6 +24,7 @@ describe(testName, function () {
     utils.createChannel(channelName);
 
     var postedItems = [];
+    var firstItem;
 
     function postedItem(value, post) {
         postedItems.push(value.body._links.self.href);
@@ -36,6 +37,7 @@ describe(testName, function () {
     it('posts initial items', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
+                firstItem = value.body._links.self.href;
                 return utils.postItemQ(channelResource);
             }).then(function (value) {
                 postedItem(value, false);
@@ -47,7 +49,7 @@ describe(testName, function () {
         var groupConfig = {
             callbackUrl: callbackUrl,
             channelUrl: channelResource,
-            startItem: postedItems[1]
+            startItem: firstItem
         };
         var groupResource = groupUrl + "/" + groupName;
         console.log('creating group', groupName, groupConfig);
