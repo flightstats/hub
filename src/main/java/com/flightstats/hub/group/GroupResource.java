@@ -103,8 +103,10 @@ public class GroupResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsertGroup(@PathParam("name") String name, String body) {
-        //todo - gfm - 2/6/15 - change this to allow starting Key
-        Group group = Group.fromJson(body).withName(name).withStartingKey(new ContentKey());
+        Group group = Group.fromJson(body).withName(name);
+        if (group.getStartingKey() == null) {
+            group = group.withStartingKey(new ContentKey());
+        }
         Optional<Group> upsertGroup = groupService.upsertGroup(group);
         if (upsertGroup.isPresent()) {
             return Response.ok(getLinkedGroup(group)).build();
