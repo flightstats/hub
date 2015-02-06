@@ -30,7 +30,7 @@ import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.replication.ReplicatorImpl;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.spoke.*;
-import com.flightstats.hub.time.TimeMonitor;
+import com.flightstats.hub.time.NTPMonitor;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
@@ -113,7 +113,7 @@ public class GuiceBindings extends AbstractModule {
 
         bind(HostedGraphiteSender.class).asEagerSingleton();
         bind(HubInstrumentedResourceMethodDispatchAdapter.class).toProvider(HubMethodTimingAdapterProvider.class).in(Singleton.class);
-        bind(TimeMonitor.class).asEagerSingleton();
+        bind(NTPMonitor.class).asEagerSingleton();
         bind(S3WriterManager.class).asEagerSingleton();
     }
 

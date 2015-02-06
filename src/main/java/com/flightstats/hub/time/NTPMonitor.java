@@ -6,6 +6,7 @@ import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.newrelic.api.agent.NewRelic;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -15,14 +16,14 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class TimeMonitor {
+public class NTPMonitor {
 
-    private final static Logger logger = LoggerFactory.getLogger(TimeMonitor.class);
+    private final static Logger logger = LoggerFactory.getLogger(NTPMonitor.class);
 
     private final HostedGraphiteSender sender;
 
     @Inject
-    public TimeMonitor(HostedGraphiteSender sender) {
+    public NTPMonitor(HostedGraphiteSender sender) {
         this.sender = sender;
         HubServices.register(new TimeMonitorService(), HubServices.TYPE.POST_START);
     }
@@ -61,10 +62,21 @@ public class TimeMonitor {
         try {
             Process process = new ProcessBuilder("ntpq", "-p").start();
             List<String> lines = IOUtils.readLines(process.getInputStream());
-            sender.send("clusterTimeDelta", parseClusterRange(lines));
+            double delta = parseClusterRange(lines);
+            sender.send("clusterTimeDelta", delta);
             sender.send("primaryTimeDelta", parsePrimary(lines));
+            newRelic(delta);
         } catch (Exception e) {
             logger.info("unable to exec", e);
+        }
+    }
+
+    public void newRelic(double delta) {
+        NewRelic.setTransactionName(null, "NtpMonitor");
+        NewRelic.addCustomParameter("clusterTimeDelta", delta);
+        NewRelic.recordResponseTimeMetric("Custom/ClusterTimeDeltaResponse", (long) delta);
+        if (delta >= 5.0) {
+            NewRelic.noticeError("cluster time delta too high");
         }
     }
 
