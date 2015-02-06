@@ -31,12 +31,11 @@ describe(testName, function () {
     });
 
     it('cross product of channels and times', function () {
-        var now = moment.utc();
-        console.log('now', now.format(minute_format));
+        console.log('now', moment.utc().format(minute_format));
         console.log('startOffset', startOffset);
         console.log('endOffset', endOffset);
         for (var i = startOffset; i <= endOffset; i++) {
-            var start = now.subtract(i, 'minutes');
+            var start = moment.utc().subtract(i, 'minutes');
             var formatted = start.format(minute_format);
             console.log('checking', formatted);
             channels.forEach(function (channel) {
