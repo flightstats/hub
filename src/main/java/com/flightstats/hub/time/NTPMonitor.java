@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Trace;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -58,7 +59,8 @@ public class NTPMonitor {
         return Double.parseDouble(split[split.length - 2]);
     }
 
-    private void run() {
+    @Trace(metricName = "NtpMonitor")
+    public void run() {
         try {
             Process process = new ProcessBuilder("ntpq", "-p").start();
             List<String> lines = IOUtils.readLines(process.getInputStream());
@@ -72,7 +74,6 @@ public class NTPMonitor {
     }
 
     public void newRelic(double delta) {
-        NewRelic.setTransactionName(null, "NtpMonitor");
         NewRelic.addCustomParameter("clusterTimeDelta", delta);
         NewRelic.recordResponseTimeMetric("Custom/ClusterTimeDeltaResponse", (long) delta);
         if (delta >= 5.0) {
