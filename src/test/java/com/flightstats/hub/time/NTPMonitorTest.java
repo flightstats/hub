@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
-public class TimeMonitorTest {
+public class NTPMonitorTest {
 
     @Test
     public void testPositive() throws Exception {
@@ -18,8 +18,8 @@ public class TimeMonitorTest {
                 "+hub-v2-int-01.c 10.11.11.5       5 u  622 1024  337    0.269    0.606   0.449",
                 "-hub-v2-int-02.c 10.11.11.5       5 u 1026 1024  376    0.390    0.277   0.146"
         };
-        assertEquals(0.606, TimeMonitor.parseClusterRange(Arrays.asList(output)), 0.001);
-        assertEquals(-1.128, TimeMonitor.parsePrimary(Arrays.asList(output)), 0.001);
+        assertEquals(0.606, NTPMonitor.parseClusterRange(Arrays.asList(output)), 0.001);
+        assertEquals(-1.128, NTPMonitor.parsePrimary(Arrays.asList(output)), 0.001);
     }
 
     @Test
@@ -32,8 +32,8 @@ public class TimeMonitorTest {
                 "+hub-v2-int-01.c 10.11.11.5       5 u  622 1024  337    0.269   -0.606   0.449",
                 "-hub-v2-int-02.c 10.11.11.5       5 u 1026 1024  376    0.390   -0.277   0.146"
         };
-        assertEquals(0.606, TimeMonitor.parseClusterRange(Arrays.asList(output)), 0.001);
-        assertEquals(-1.128, TimeMonitor.parsePrimary(Arrays.asList(output)), 0.001);
+        assertEquals(0.606, NTPMonitor.parseClusterRange(Arrays.asList(output)), 0.001);
+        assertEquals(-1.128, NTPMonitor.parsePrimary(Arrays.asList(output)), 0.001);
     }
 
     @Test
@@ -46,8 +46,8 @@ public class TimeMonitorTest {
                 "+hub-v2-int-01.c 10.11.11.5       5 u  622 1024  337    0.269    0.606   0.449",
                 "-hub-v2-int-02.c 10.11.11.5       5 u 1026 1024  376    0.390   -0.277   0.146"
         };
-        assertEquals(0.883, TimeMonitor.parseClusterRange(Arrays.asList(output)), 0.001);
-        assertEquals(1.128, TimeMonitor.parsePrimary(Arrays.asList(output)), 0.001);
+        assertEquals(0.883, NTPMonitor.parseClusterRange(Arrays.asList(output)), 0.001);
+        assertEquals(1.128, NTPMonitor.parsePrimary(Arrays.asList(output)), 0.001);
     }
 
     @Test
@@ -57,7 +57,7 @@ public class TimeMonitorTest {
                 "==============================================================================",
                 "*ns2.cloud-east. 10.1.11.5        4 u  898 1024  377    1.538   -1.325   1.167"
         };
-        assertEquals(0.0, TimeMonitor.parseClusterRange(Arrays.asList(output)), 0.001);
-        assertEquals(-1.325, TimeMonitor.parsePrimary(Arrays.asList(output)), 0.001);
+        assertEquals(0.0, NTPMonitor.parseClusterRange(Arrays.asList(output)), 0.001);
+        assertEquals(-1.325, NTPMonitor.parsePrimary(Arrays.asList(output)), 0.001);
     }
 }
