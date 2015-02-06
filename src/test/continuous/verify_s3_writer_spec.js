@@ -9,7 +9,7 @@ console.log(hubUrl);
 var timeout = 60 * 1000;
 var minute_format = '/YYYY/MM/DD/HH/mm';
 var startOffset = process.env.startOffset || 48;
-var endOffset = process.env.endOffset || 58;
+var endOffset = process.env.endOffset || 59;
 
 /**
  * This should load all the channels in the hub.
@@ -35,7 +35,6 @@ describe(testName, function () {
         console.log('startOffset', startOffset);
         console.log('endOffset', endOffset);
         for (var i = startOffset; i <= endOffset; i++) {
-            console.log('i', i);
             var start = moment.utc().subtract(i, 'minutes');
             var formatted = start.format(minute_format);
             console.log('checking', formatted);
