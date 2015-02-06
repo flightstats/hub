@@ -34,6 +34,7 @@ describe(testName, function () {
         for (var i = startOffset; i <= endOffset; i++) {
             var start = moment.utc().subtract(i, 'minutes');
             var formatted = start.format(minute_format);
+            console.log('checking', formatted);
             channels.forEach(function (channel) {
                 channelTimes.push({url : channel.href + formatted});
             });
