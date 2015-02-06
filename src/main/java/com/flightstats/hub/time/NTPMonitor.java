@@ -59,7 +59,7 @@ public class NTPMonitor {
         return Double.parseDouble(split[split.length - 2]);
     }
 
-    @Trace(metricName = "NtpMonitor")
+    @Trace(metricName = "NtpMonitor", dispatcher = true)
     public void run() {
         try {
             Process process = new ProcessBuilder("ntpq", "-p").start();
