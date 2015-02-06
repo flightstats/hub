@@ -1,12 +1,19 @@
 package com.flightstats.hub.group;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.model.ContentKey;
+import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.*;
 import lombok.experimental.Builder;
 import lombok.experimental.Wither;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 @Builder
 @Getter
@@ -14,6 +21,7 @@ import lombok.experimental.Wither;
 @EqualsAndHashCode(exclude = {"startingKey"})
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Group {
+    private final static Logger logger = LoggerFactory.getLogger(Group.class);
 
     @NonNull private final String callbackUrl;
     @NonNull private final String channelUrl;
@@ -23,6 +31,8 @@ public class Group {
     private final String name;
     @Wither
     private final ContentKey startingKey;
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @JsonIgnore
     public ContentKey getStartingKey() {
@@ -36,7 +46,20 @@ public class Group {
     }
 
     public static Group fromJson(String json) {
-        return gson.fromJson(json, GroupBuilder.class).build();
+        Group group = gson.fromJson(json, GroupBuilder.class).build();
+        try {
+            JsonNode root = mapper.readTree(json);
+            if (root.has("startItem")) {
+                String startItem = root.get("startItem").asText();
+                Optional<ContentKey> keyOptional = ContentKey.fromFullUrl(startItem);
+                if (keyOptional.isPresent()) {
+                    group = group.withStartingKey(keyOptional.get());
+                }
+            }
+        } catch (IOException e) {
+            logger.warn("unable to parse " + json, e);
+        }
+        return group;
     }
 
     /**

@@ -51,7 +51,6 @@ describe(testName, function () {
             });
 
         waitsFor(function () {
-            //todo - gfm - 12/17/14 - this failed in dev - Build #74 (Dec 16, 2014 2:40:18 PM)
             return callbackItems.length == 4;
         }, 11997);
 
