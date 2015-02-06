@@ -128,7 +128,6 @@ function putGroup(groupName, groupConfig, status) {
                     var parse = JSON.parse(body);
                     expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
                     expect(parse.channelUrl).toBe(groupConfig.channelUrl);
-                    expect(parse.transactional).toBe(groupConfig.transactional);
                     expect(parse.name).toBe(groupName);
                 }
                 done();
