@@ -103,7 +103,8 @@ dependencies {
     compile 'commons-io:commons-io:2.4'
     compile 'com.github.rholder:guava-retrying:1.0.6'
     compile 'com.google.code.gson:gson:2.3'
-    compile(group: 'newrelic', name: 'newrelic_agent', version: '3.11.0')
+    compile 'newrelic:newrelic_agent:3.11.0'
+    compile 'com.newrelic.agent.java:newrelic-api:3.11.0'
     compile 'org.projectlombok:lombok:1.14.8'
     testCompile 'com.sparkjava:spark-core:2.0.0'
 
