@@ -521,12 +521,14 @@ http://hub-v2/channel/stumptown/2014/01/13/10/42/31/642/{hash3}
 The Group Callback mechanism is an alternative to WebSockets for consuming events.  This POSTs json uris via HTTP, and
 the Hub server keeps track of the Group's state.
 
-`name` is used in the url for the callback.  Names are limited to 48 characters and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
-`callbackUrl` is the fully qualified location to receive callbacks from the server.  
-`channelUrl` is the fully qualified channel location to monitor for new items.
-`parallelCalls` is the optional number of callbacks to make in parallel.  The default value is `1`.  
+* `name` is used in the url for the callback.  Names are limited to 48 characters and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
+
+* `callbackUrl` is the fully qualified location to receive callbacks from the server.
+
+* `channelUrl` is the fully qualified channel location to monitor for new items.
+* `parallelCalls` is the optional number of callbacks to make in parallel.  The default value is `1`.
 If parallelCalls is higher than one, callback ordering is not guaranteed.
-`startItem` is the optional fully qualified item location where the callback should start from.  The startItem will not be sent.
+* `startItem` is the optional fully qualified item location where the callback should start from.  The startItem will not be sent.
 startItem is *only* used when creating a group callback.  If you want to change the pointer of a callback, you will need to
 delete the callback first.
 
