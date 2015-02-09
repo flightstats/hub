@@ -24,7 +24,7 @@ public class HubHost {
             return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
             logger.warn("unable to get local host...", e);
-            return "none";
+            throw new RuntimeException("unable to figure out local host :/", e);
         }
     }
 
@@ -40,8 +40,8 @@ public class HubHost {
         try {
             return InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
-            logger.warn("unable to get local host...", e);
-            return "none";
+            logger.warn("unable to get local address...", e);
+            throw new RuntimeException("unable to figure out local address :/", e);
         }
     }
 
