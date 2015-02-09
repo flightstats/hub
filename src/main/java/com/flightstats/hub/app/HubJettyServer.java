@@ -80,7 +80,7 @@ public class HubJettyServer {
     }
 
     static String getKeyStorePath() throws UnknownHostException {
-        String path = HubProperties.getProperty("app.keyStorePath", "/etc/ssl") + HubHost.getLocalName() + ".jks";
+        String path = HubProperties.getProperty("app.keyStorePath", "/etc/ssl/") + HubHost.getLocalName() + ".jks";
         logger.info("using key store path: {}", path);
         return path;
     }
