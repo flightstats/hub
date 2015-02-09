@@ -648,7 +648,7 @@ To request a change to a controlled API, or to request access, please use the [h
 
 ## encrypted-hub
 
-**This is not yet implemented in V2**
+**This is in process for V2**
 
 The Encrypted Hub (EH) is a separate installation of the Hub.
 The features and API of the EH are nearly identical, with a few additions.
@@ -675,11 +675,53 @@ All audit channels have an `audit` tag, which can not be modified by clients.
 }
 ```
 
+#### Hosts
+
+encrypted-hub-v2-01.cloud-east.dev
+encrypted-hub-v2-02.cloud-east.dev
+encrypted-hub-v2-03.cloud-east.dev
+
+encrypted-hub-v2-01.cloud-east.staging
+encrypted-hub-v2-02.cloud-east.staging
+encrypted-hub-v2-03.cloud-east.staging
+
+encrypted-hub-v2-01.cloud-east.prod
+encrypted-hub-v2-02.cloud-east.prod
+encrypted-hub-v2-03.cloud-east.prod
+
+#### Proxies / load balancers and topology
+
+The following haproxy 1.5 instances (with their topologies) terminate SSL/TLS for the clients and make separate HTTPS connections to the backends above:
+
+* ec2 clients -> http://enc-hub-v2-proxy01.cloud-east.dev:1936/ => dev backends
+* ec2 clients -> http://enc-hub-v2-proxy01.cloud-east.staging:1936/ => staging backends
+* ec2 clients & legacy proxy -> http://enc-hub-v2-proxy01.cloud-east.prod:1936/ => prod backends
+* legacy clients -> http://locator03.util.pdx.prod/haproxy?stats => enc-hub-proxy01.ce.prod
+
+#### Access Control
+
+Access control is accomplished using an IP-based whitelist in the haproxy configurations.
+On dev & staging, the whitelist is permissive, allowing everything from the local subnets.
+On prod, the whitelist is restrictive.
+Whitelisted clients can only access the hub endpoints (channel prefixes and common endpoints such as /health /group /replication etc) configured for them.
+
+#### Configuration Management
+
+The individual backend hosts are currently configured the same as the normal hub hosts, aside from the different deployment payload.
+
+The proxies are configured via the "haproxy.encrypted-hub" salt state, and the client app to channel proxy acl config is managed in the
+yaml pillars "haproxy.encrypted-hub-{env}". Contact a member of IT to request an addition of a client app or new host to these configuration files.
+
+#### Access
+
 The EH is available at:
 
-* In development: http://encrypted-hub-v2.svc.dev/ (soon!)
-* In staging: http://encrypted-hub-v2.svc.staging/ (soon!)
-* In production: http://encrypted-hub-v2.svc.prod/ (soon!)
+* In development: https://enc-dev.hub-v2.flightstats.com/
+* In staging: https://enc-staging.hub-v2.flightstats.com/
+* In production: https://enc-prod.hub-v2.flightstats.com/ or https://enc-prod-legacyaccess.hub-v2.flightstats.com/
+
+Each of the above DNS names are public names with A records listing internal IP addresses of the individual proxies.
+This is a dirty dirty hack to allow for the use of our *.flightstats.com wildcard cert internally.
 
 ## api changes from v1 to v2
 
