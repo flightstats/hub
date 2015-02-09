@@ -15,7 +15,6 @@ import javax.servlet.DispatcherType;
 import javax.websocket.server.ServerContainer;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.EnumSet;
@@ -81,7 +80,7 @@ public class HubJettyServer {
     }
 
     static String getKeyStorePath() throws UnknownHostException {
-        String path = HubProperties.getProperty("app.keyStorePath", "/etc/ssl") + InetAddress.getLocalHost().getHostName() + ".jks";
+        String path = HubProperties.getProperty("app.keyStorePath", "/etc/ssl") + HubHost.getLocalName() + ".jks";
         logger.info("using key store path: {}", path);
         return path;
     }
