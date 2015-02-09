@@ -20,7 +20,7 @@ The Hub V2
 * [tag interface](#tag-interface)
 * [time interface](#time-interface)
 * [subscribe to events](#subscribe-to-events)
-* [group callback interface](#group-callback-interface)
+* [group callback](#group-callback)
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
 * [replication](#replication)
@@ -59,6 +59,7 @@ The features and API of the EH are mostly the same as the Hub, with a few additi
 * Fixed - 62 second 404 delay for missing items.  404s will return quickly.
 * Performance - PUTs and GETs for channel items are significantly faster.  Typical times are ~10ms.
 * [replication](#replication) is now a channel level setting.  Replicated channels can have new names.
+* [group callback](#group-callback) now allows starting in the past.
 
 ## consistency
 
@@ -515,16 +516,19 @@ http://hub-v2/channel/stumptown/2014/01/13/10/42/31/642/{hash3}
 ...etc...
 ```
 
-## group callback interface
+## group callback
 
-The Group Callback mechanism is an alternative to WebSockets for consuming events.  These push notifications use HTTP, and 
+The Group Callback mechanism is an alternative to WebSockets for consuming events.  This POSTs json uris via HTTP, and
 the Hub server keeps track of the Group's state.
 
 `name` is used in the url for the callback.  Names are limited to 48 characters and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
 `callbackUrl` is the fully qualified location to receive callbacks from the server.  
-`channelUrl` is the fully qualified channel location to monitor.  
+`channelUrl` is the fully qualified channel location to monitor for new items.
 `parallelCalls` is the optional number of callbacks to make in parallel.  The default value is `1`.  
 If parallelCalls is higher than one, callback ordering is not guaranteed.
+`startItem` is the optional fully qualified item location where the callback should start from.  The startItem will not be sent.
+startItem is *only* used when creating a group callback.  If you want to change the pointer of a callback, you will need to
+delete the callback first.
 
 To get a list of existing group callbacks:
 
@@ -538,12 +542,13 @@ To create a new group callback:
 {
   "callbackUrl" : "http://client/path/callback",
   "channelUrl" : "http://hub-v2/channel/stumptown",
-  "parallelCalls" : 2
+  "parallelCalls" : 2,
+  "startItem" : "http://hub-v2/channel/stumptown/2015/02/06/22/28/43/239/s03ub2"
 }
 ```
 
 Once a Group is created, it can not be changed, only deleted.  Put may be safely called multiple times with the same 
- configuration.
+ configuration.  `startItem` changes will be ignored.
 
 To see the configuration and status of a group callback:
 
@@ -557,7 +562,7 @@ Delete will return a 202, and it may take up to a minute to properly stop a grou
 
 #### Behavior
 
-The group listening to the `callbackUrl` will get a payload POSTed to it for every new item in the channel, starting at the time the group is created.  
+The group listening to the `callbackUrl` will get a payload POSTed to it for every new item in the channel, starting after `startItem` or at the time the group is created.
 200 is considered a successful response.  Any other response is considered an error, and will cause the server to retry.   Redirects are allowed.                                        
 Retries will use an exponential backoff up to one minute, and the server will continue to retry at one minute intervals indefinitely.
 
