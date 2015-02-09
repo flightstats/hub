@@ -14,7 +14,7 @@ public class HubHost {
 
     static {
         port = HubProperties.getProperty("http.bind_port", 8080);
-        if (HubProperties.getProperty("encrypted", false)) {
+        if (HubProperties.getProperty("app.encrypted", false)) {
             scheme = "https://";
         }
     }
@@ -36,6 +36,10 @@ public class HubHost {
         return getLocalAddress() + ":" + getLocalPort();
     }
 
+    public static String getLocalNamePort() {
+        return getLocalName() + ":" + getLocalPort();
+    }
+
     public static String getLocalAddress() {
         try {
             return InetAddress.getLocalHost().getHostAddress();
@@ -48,7 +52,6 @@ public class HubHost {
     public static int getLocalPort() {
         return port;
     }
-
 
     public static String getScheme() {
         return scheme;

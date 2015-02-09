@@ -1,6 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -57,7 +58,11 @@ public class CuratorSpokeCluster implements SpokeCluster {
     }
 
     private String getHost() throws UnknownHostException {
-        return HubHost.getLocalAddressPort();
+        if (HubProperties.getProperty("app.encrypted", false)) {
+            return HubHost.getLocalNamePort();
+        } else {
+            return HubHost.getLocalAddressPort();
+        }
     }
 
     @Override
