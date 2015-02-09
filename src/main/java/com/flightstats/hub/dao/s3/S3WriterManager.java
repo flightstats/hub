@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.s3;
 
+import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
@@ -18,8 +19,6 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
@@ -50,12 +49,7 @@ public class S3WriterManager {
         this.s3WriteQueue = s3WriteQueue;
         HubServices.register(new S3WriterManagerService(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
 
-        String host = "";
-        try {
-            host = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            logger.warn("should not get this", e);
-        }
+        String host = HubHost.getLocalName();
         this.offsetMinutes = serverOffset(host);
         logger.info("{} offset is -{} minutes", host, this.offsetMinutes);
         queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d")
