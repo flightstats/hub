@@ -126,18 +126,18 @@ Content-Type is `application/json`
     
 ## create a channel
 
-`name` _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
+* `name` _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
 Hyphens are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
 Channels starting with `test` will automatically be deleted in the dev and staging environments every hour using [Jenkins](http://ops-jenkins01.cloud-east.dev/job/hub-cleanup-hourly/)
 
-`ttlDays` is optional and should be a positive number. If not specified, a default value of 120 days is used.
+* `ttlDays` is optional and should be a positive number. If not specified, a default value of 120 days is used.
 
-`description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
+* `description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
 
-`tags` is an optional array of string values.  Tag values are limited to 48 characters, and may only contain `a-z`, `A-Z` and `0-9`.
+* `tags` is an optional array of string values.  Tag values are limited to 48 characters, and may only contain `a-z`, `A-Z` and `0-9`.
 A channel may have at most 20 tags.
 
-'replicationSource' is the optional fully qualified path to a another hub channel.  The data from the other channel
+* `replicationSource` is the optional fully qualified path to channel in a another hub.  The data from the other channel
 will be duplicated into this channel.  Please see [replication](#replication) for more details.
 
 **V2 Note**:
@@ -526,8 +526,10 @@ the Hub server keeps track of the Group's state.
 * `callbackUrl` is the fully qualified location to receive callbacks from the server.
 
 * `channelUrl` is the fully qualified channel location to monitor for new items.
+
 * `parallelCalls` is the optional number of callbacks to make in parallel.  The default value is `1`.
 If parallelCalls is higher than one, callback ordering is not guaranteed.
+
 * `startItem` is the optional fully qualified item location where the callback should start from.  The startItem will not be sent.
 startItem is *only* used when creating a group callback.  If you want to change the pointer of a callback, you will need to
 delete the callback first.
