@@ -2,20 +2,21 @@ package com.flightstats.hub.replication;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.util.HubUtils;
 
 public class V2ChannelReplicator implements ChannelReplicator {
 
     private ChannelConfiguration channel;
-    private ChannelUtils channelUtils;
+    private HubUtils hubUtils;
     private final String appUrl = HubProperties.getProperty("app.url", "");
 
-    public V2ChannelReplicator(ChannelConfiguration channel, ChannelUtils channelUtils) {
+    public V2ChannelReplicator(ChannelConfiguration channel, HubUtils hubUtils) {
         this.channel = channel;
-        this.channelUtils = channelUtils;
+        this.hubUtils = hubUtils;
     }
 
     public void start() {
-        channelUtils.startGroupCallback(getGroupName(), getCallbackUrl(), channel.getReplicationSource());
+        hubUtils.startGroupCallback(getGroupName(), getCallbackUrl(), channel.getReplicationSource());
     }
 
     private String getCallbackUrl() {
@@ -33,6 +34,6 @@ public class V2ChannelReplicator implements ChannelReplicator {
 
     @Override
     public void exit() {
-        channelUtils.stopGroupCallback(getGroupName(), channel.getReplicationSource());
+        hubUtils.stopGroupCallback(getGroupName(), channel.getReplicationSource());
     }
 }

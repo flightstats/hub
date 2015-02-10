@@ -6,7 +6,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.replication.ChannelUtils;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
@@ -23,7 +23,7 @@ public class ChannelStatusResource {
     @Inject
     private ChannelService channelService;
     @Inject
-    private ChannelUtils channelUtils;
+    private HubUtils hubUtils;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -50,7 +50,7 @@ public class ChannelStatusResource {
         if (channelService.isReplicating(channel)) {
             ChannelConfiguration config = channelService.getChannelConfiguration(channel);
             ObjectNode replicationSourceLatest = links.putObject("replicationSourceLatest");
-            Optional<String> sourceLatest = channelUtils.getLatest(config.getReplicationSource());
+            Optional<String> sourceLatest = hubUtils.getLatest(config.getReplicationSource());
             if (sourceLatest.isPresent()) {
                 replicationSourceLatest.put("href", sourceLatest.get());
             } else {
