@@ -3,6 +3,7 @@ package com.flightstats.hub.replication;
 import com.flightstats.hub.channel.ChannelLinkBuilder;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
@@ -29,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SequenceIterator implements Iterator<Optional<Content>> {
 
     private final static Logger logger = LoggerFactory.getLogger(SequenceIterator.class);
-    private final ChannelUtils channelUtils;
+    private final HubUtils hubUtils;
     private final ChannelConfiguration channel;
     private final WebSocketContainer container;
     private final String channelUrl;
@@ -40,10 +41,10 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private boolean connected = false;
 
-    public SequenceIterator(long lastCompleted, ChannelUtils channelUtils, ChannelConfiguration channel,
+    public SequenceIterator(long lastCompleted, HubUtils hubUtils, ChannelConfiguration channel,
                             WebSocketContainer container) {
         this.current = lastCompleted;
-        this.channelUtils = channelUtils;
+        this.hubUtils = hubUtils;
         this.channel = channel;
         this.container = container;
         String url = channel.getReplicationSource();
@@ -74,16 +75,16 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
 
     @Override
     public Optional<Content> next() {
-        Optional<Content> optional = channelUtils.getContentV1(channelUrl, current);
+        Optional<Content> optional = hubUtils.getContentV1(channelUrl, current);
         if (!optional.isPresent()) {
             logger.warn("unable to get content " + channelUrl + "/" + current);
-            optional = channelUtils.getContentV1(channelUrl, current);
+            optional = hubUtils.getContentV1(channelUrl, current);
         }
         return optional;
     }
 
     private void startSocket() {
-        Optional<Long> latestSequence = channelUtils.getLatestV1(channelUrl);
+        Optional<Long> latestSequence = hubUtils.getLatestV1(channelUrl);
         if (!latestSequence.isPresent()) {
             logger.warn("unable to get latest for channel " + channelUrl);
             return;
