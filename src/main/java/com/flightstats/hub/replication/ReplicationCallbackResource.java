@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -27,7 +28,7 @@ public class ReplicationCallbackResource {
     private ChannelService channelService;
 
     @Inject
-    private ChannelUtils channelUtils;
+    private HubUtils hubUtils;
 
     @POST
     public Response putPayload(@PathParam("channel") String channel, String data) {
@@ -36,7 +37,7 @@ public class ReplicationCallbackResource {
             JsonNode node = mapper.readTree(data);
             ArrayNode uris = (ArrayNode) node.get("uris");
             for (JsonNode uri : uris) {
-                Optional<Content> content = channelUtils.getContentV2(uri.asText());
+                Optional<Content> content = hubUtils.getContentV2(uri.asText());
                 if (content.isPresent()) {
                     channelService.insert(channel, content.get());
                 } else {
