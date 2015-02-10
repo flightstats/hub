@@ -1,4 +1,4 @@
-package com.flightstats.hub.replication;
+package com.flightstats.hub.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,8 +6,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.replication.Channel;
 import com.flightstats.hub.rest.Headers;
-import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -29,13 +29,10 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- *
- */
-public class ChannelUtils {
+public class HubUtils {
 
     public static final int NOT_FOUND = -1;
-    private final static Logger logger = LoggerFactory.getLogger(ChannelUtils.class);
+    private final static Logger logger = LoggerFactory.getLogger(HubUtils.class);
     private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
     private static ObjectMapper mapper = new ObjectMapper();
     private final Client noRedirectsClient;
@@ -48,7 +45,7 @@ public class ChannelUtils {
     }
 
     @Inject
-    public ChannelUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient) {
+    public HubUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient) {
         this.noRedirectsClient = noRedirectsClient;
         this.followClient = followClient;
     }
@@ -186,12 +183,23 @@ public class ChannelUtils {
         payload.put("callbackUrl", callbackUrl);
         payload.put("channelUrl", sourceChannel);
         String groupUrl = sourceRoot + "/group/" + groupName;
-        logger.info("calling {} with {}", groupUrl, payload);
+        logger.info("starting {} with {}", groupUrl, payload);
         ClientResponse response = followClient.resource(groupUrl)
                 .accept(MediaType.APPLICATION_JSON)
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, payload.toString());
-        logger.info("group response {}", response);
+        logger.info("start group response {}", response);
+    }
+
+    public void stopGroupCallback(String groupName, String sourceChannel) {
+        String sourceRoot = StringUtils.substringBefore(sourceChannel, "/channel/");
+        String groupUrl = sourceRoot + "/group/" + groupName;
+        logger.info("delete {} ", groupUrl);
+        ClientResponse response = followClient.resource(groupUrl)
+                .accept(MediaType.APPLICATION_JSON)
+                .type(MediaType.APPLICATION_JSON)
+                .delete(ClientResponse.class);
+        logger.info("stop group response {}", response);
 
     }
 

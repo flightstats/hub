@@ -1,6 +1,7 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.util.HubUtils;
 import com.google.inject.Inject;
 
 import javax.websocket.WebSocketContainer;
@@ -10,16 +11,16 @@ import javax.websocket.WebSocketContainer;
  */
 public class SequenceIteratorFactory {
 
-    private final ChannelUtils channelUtils;
+    private final HubUtils hubUtils;
     private final WebSocketContainer container;
 
     @Inject
-    public SequenceIteratorFactory(ChannelUtils channelUtils, WebSocketContainer container) {
-        this.channelUtils = channelUtils;
+    public SequenceIteratorFactory(HubUtils hubUtils, WebSocketContainer container) {
+        this.hubUtils = hubUtils;
         this.container = container;
     }
 
     public SequenceIterator create(long startSequence, ChannelConfiguration channel) {
-        return new SequenceIterator(startSequence, channelUtils, channel, container);
+        return new SequenceIterator(startSequence, hubUtils, channel, container);
     }
 }
