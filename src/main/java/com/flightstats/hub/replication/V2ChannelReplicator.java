@@ -1,11 +1,30 @@
 package com.flightstats.hub.replication;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ChannelConfiguration;
 
 public class V2ChannelReplicator implements ChannelReplicator {
 
-    //todo - gfm - 1/23/15 - this needs to create a group callback for the channel.
+    private ChannelConfiguration channel;
+    private ChannelUtils channelUtils;
+    private final String appUrl = HubProperties.getProperty("app.url", "");
 
+    public V2ChannelReplicator(ChannelConfiguration channel, ChannelUtils channelUtils) {
+        this.channel = channel;
+        this.channelUtils = channelUtils;
+    }
+
+    public void start() {
+        channelUtils.startGroupCallback(getGroupName(), getCallbackUrl(), channel.getReplicationSource());
+    }
+
+    private String getCallbackUrl() {
+        return appUrl + "internal/replication/" + channel.getName();
+    }
+
+    private String getGroupName() {
+        return "Replication_" + channel.getName();
+    }
 
     @Override
     public ChannelConfiguration getChannel() {
@@ -14,6 +33,6 @@ public class V2ChannelReplicator implements ChannelReplicator {
 
     @Override
     public void exit() {
-        //todo - gfm - 1/23/15 - delete group callback
+        channelUtils.stopGroupCallback(getGroupName(), channel.getReplicationSource());
     }
 }

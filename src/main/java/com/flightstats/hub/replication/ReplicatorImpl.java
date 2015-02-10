@@ -1,6 +1,5 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
@@ -133,12 +132,11 @@ public class ReplicatorImpl implements Replicator {
     private void startV2Replication(ChannelConfiguration channel) {
         logger.debug("starting v2 replication of " + channel);
         try {
-            String appUrl = HubProperties.getProperty("app.url", "");
-            String groupName = "Replication_" + channel.getName();
-            String callbackUrl = appUrl + "internal/replication/" + channel.getName();
-            channelUtils.startGroupCallback(groupName, callbackUrl, channel.getReplicationSource());
+            V2ChannelReplicator v2ChannelReplicator = new V2ChannelReplicator(channel, channelUtils);
+            v2ChannelReplicator.start();
+            replicatorMap.put(channel.getName(), v2ChannelReplicator);
         } catch (Exception e) {
-            logger.warn("unable to start replication " + channel, e);
+            logger.warn("unable to start v2 replication " + channel, e);
         }
     }
 
@@ -151,7 +149,7 @@ public class ReplicatorImpl implements Replicator {
                 replicatorMap.put(channel.getName(), v1ChannelReplicator);
             }
         } catch (Exception e) {
-            logger.warn("unable to start replication " + channel, e);
+            logger.warn("unable to start v1 replication " + channel, e);
         }
     }
 

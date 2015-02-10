@@ -189,11 +189,4 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
         return sequenceFinder.searchForLastUpdated(channel, START_VALUE, 0, TimeUnit.DAYS);
     }
 
-    public boolean isConnected() {
-        if (null == iterator) {
-            return false;
-        }
-        return iterator.isConnected();
-    }
-
 }
