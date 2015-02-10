@@ -1,7 +1,7 @@
 package com.flightstats.hub.ws;
 
+import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubMain;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ContentKey;
@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -56,13 +55,12 @@ public class WebSocketService {
     }
 
     private String getChannelUrl(URI uri) {
-        String channelUrl = uri.toString().replaceFirst("ws://", "http://");
+        String channelUrl = uri.toString().replaceFirst("ws://", HubHost.getScheme());
         return StringUtils.removeEnd(channelUrl, "/ws");
     }
 
     private String getCallbackUrl(String id) throws UnknownHostException {
-        return "http://" + InetAddress.getLocalHost().getHostAddress() + ":" +
-                HubProperties.getProperty("http.bind_port", 8080) + "/internal/ws/" + id;
+        return HubHost.getLocalUriRoot() + "/internal/ws/" + id;
     }
 
     private String setId(Session session, String channel) {

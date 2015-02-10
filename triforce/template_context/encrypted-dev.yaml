@@ -16,51 +16,45 @@ conf/hub.properties :
     _template : hub.properties.jinja
 
     app :
-        name : "hub-v2"
-        environment : "prod"
-        encrypted : false
-        keyStorePath : "none"
-        keyStorePasswordPath : "none"
+        name : "encrypted-hub-v2"
+        environment : "dev"
+        encrypted : true
+        keyStorePath : "/etc/ssl/"
+        keyStorePasswordPath : "/etc/ssl/key"
         shutdown_delay_seconds : 15
         shutdown_wait_seconds : 60
-        url : "http://hub-v2.svc.prod/"
-
-    verification :
-        one: 15
-        two: 30
-        three: 45
+        bind_port : 8443
+        url : "https://enc-dev.hub-v2.flightstats.com/"
 
     backing :
         store : "aws"
 
     aws :
-        protocol : "HTTP"
+        protocol : "HTTPS"
 
     dynamo :
         endpoint : "dynamodb.us-east-1.amazonaws.com"
         table_creation_wait_minutes : 10
 
     s3 :
-      environment : "prod-east1.flightstats.com"
+      content_backoff_wait : 1000
+      content_backoff_times : 6
+      environment : "dev-east1.flightstats.com"
       endpoint : "s3-external-1.amazonaws.com"
-      maxQueryItems : 1000
-      writeQueueSize : 2000
-      writeQueueThreads : 20
-      dropSomeWrites : false
 
     audit :
-      threads: 0
-      queue: 0
+      threads: 10
+      queue: 1000
 
     hosted_graphite :
-        enable: true
-        registerJvmMetrics : false
-        host : "carbon.hostedgraphite.com"
-        port : 2003
-        prefix : cb165ed6-4336-4cc6-91ff-cfe1d04cebd6.hubv2.prod
+            enable: true
+            registerJvmMetrics : false
+            host : "carbon.hostedgraphite.com"
+            port : 2003
+            prefix : cb165ed6-4336-4cc6-91ff-cfe1d04cebd6.hubv2.enc-dev
 
     zookeeper :
-        connection : "hub-zk-01.cloud-east.prod:2181,hub-zk-02.cloud-east.prod:2181,hub-zk-03.cloud-east.prod:2181"
+        connection : "hub-zk-01.cloud-east.dev:2181,hub-zk-02.cloud-east.dev:2181,hub-zk-03.cloud-east.dev:2181"
 
     spoke :
         path : "/ebs/spoke"
@@ -69,24 +63,26 @@ conf/hub.properties :
 conf/hazelcast.conf.xml :
     _template : hazelcast.conf.xml.jinja
     cluster_hosts :
-        - "hub-v2-01.cloud-east.prod"
-        - "hub-v2-02.cloud-east.prod"
-        - "hub-v2-03.cloud-east.prod"
+        - "encrypted-hub-v2-01.cloud-east.dev"
+        - "encrypted-hub-v2-02.cloud-east.dev"
+        - "encrypted-hub-v2-03.cloud-east.dev"
 
 bin/start.sh :
   _template : start.sh.jinja
-  max_heap : "1g"
-  min_heap : "512m"
+  max_heap : "512m"
+  min_heap : "256m"
   min_new : "100m"
-  environment : "prod"
+  environment : "encrypted-dev"
 
 bin/prestop.sh :
   _template : prestop.sh.jinja
 
 conf/logback.xml :
     _template : logback.xml.jinja
-    verbosity : "INFO"
+
+    verbosity : "DEBUG"
 
 lib/newrelic.yml :
   _template : newrelic.yml.jinja
+
 

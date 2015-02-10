@@ -22,7 +22,7 @@ public class CuratorSpokeClusterTest {
 
     @Test
     public void testPath() throws Exception {
-        CuratorSpokeCluster cluster = new CuratorSpokeCluster(curator, 8080);
+        CuratorSpokeCluster cluster = new CuratorSpokeCluster(curator);
         List<String> servers = cluster.getServers();
         assertNotNull(servers);
         assertEquals(0, servers.size());

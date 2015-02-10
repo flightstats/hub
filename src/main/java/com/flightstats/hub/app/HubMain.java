@@ -24,7 +24,7 @@ public class HubMain {
         HubProperties.loadProperties(args[0]);
         startZookeeperIfSingle();
 
-        JettyServer server = startServer();
+        HubJettyServer server = startServer();
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -39,10 +39,10 @@ public class HubMain {
         logger.info("Server shutdown complete.  Exiting application.");
     }
 
-    public static JettyServer startServer() throws IOException {
+    public static HubJettyServer startServer() throws IOException {
         GuiceContext.HubGuiceServlet guice = GuiceContext.construct();
         injector = guice.getInjector();
-        JettyServer server = new JettyServer(guice);
+        HubJettyServer server = new HubJettyServer(guice);
         HubServices.start(HubServices.TYPE.PRE_START);
         server.start();
         logger.info("Jetty server has been started.");

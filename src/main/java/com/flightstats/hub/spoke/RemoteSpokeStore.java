@@ -1,6 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -62,7 +63,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     content.getTraces().add(new Trace(server));
                     try {
-                        ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
+                        ClientResponse response = client.resource(HubHost.getScheme() + server + "/spoke/payload/" + path)
                                 .put(ClientResponse.class, payload);
                         long complete = System.currentTimeMillis();
                         content.getTraces().add(new Trace(server, response.getEntity(String.class)));
@@ -84,7 +85,6 @@ public class RemoteSpokeStore {
                 }
             });
         }
-        //todo - gfm - 11/13/14 - this could be smarter with waiting.  should we return success if one succeeds?
         boolean awaited = countDownLatch.await(30, TimeUnit.SECONDS);
         sender.send("consistent", System.currentTimeMillis() - content.getTraces().getStart());
         return awaited;
@@ -98,7 +98,7 @@ public class RemoteSpokeStore {
         List<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             try {
-                ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
+                ClientResponse response = client.resource(HubHost.getScheme() + server + "/spoke/payload/" + path)
                         .get(ClientResponse.class);
                 logger.trace("server {} path {} response {}", server, path, response);
                 if (response.getStatus() == 200) {
@@ -125,7 +125,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         traces.add("spoke calling", server, path);
-                        ClientResponse response = client.resource("http://" + server + "/spoke/time/" + path)
+                        ClientResponse response = client.resource(HubHost.getScheme() + server + "/spoke/time/" + path)
                                 .get(ClientResponse.class);
                         traces.add("server response", server, response);
                         if (response.getStatus() == 200) {
@@ -166,7 +166,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         traces.add("spoke calling", server, channel);
-                        ClientResponse response = client.resource("http://" + server + "/spoke/latest/" + path)
+                        ClientResponse response = client.resource(HubHost.getScheme() + server + "/spoke/latest/" + path)
                                 .get(ClientResponse.class);
                         traces.add("server response", server, response);
                         if (response.getStatus() == 200) {
@@ -196,18 +196,15 @@ public class RemoteSpokeStore {
     }
 
     public boolean delete(String path) throws Exception {
-        //todo - gfm - 11/19/14 - do we actually care about deleting in the short term cache?
-        //todo - gfm - 11/13/14 - this could be merged with some of the write code
         List<String> servers = cluster.getServers();
-        int quorum = getQuorum(servers);
+        int quorum = servers.size();
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
         for (final String server : servers) {
-            //todo - gfm - 11/13/14 - we need to upgrade to Jersey 2.x for lambdas
             //noinspection Convert2Lambda
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    ClientResponse response = client.resource("http://" + server + "/spoke/payload/" + path)
+                    ClientResponse response = client.resource(HubHost.getScheme() + server + "/spoke/payload/" + path)
                             .delete(ClientResponse.class);
                     if (response.getStatus() < 400) {
                         countDownLatch.countDown();
@@ -217,7 +214,6 @@ public class RemoteSpokeStore {
             });
         }
 
-        //todo - gfm - 11/13/14 - this should be smarter with waiting.  should we return success if one succeeds?
         return countDownLatch.await(60, TimeUnit.SECONDS);
     }
 }
