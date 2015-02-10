@@ -38,9 +38,9 @@ public class HubProperties {
     public static Properties loadProperties(String fileName) throws MalformedURLException {
         Properties properties;
         if (fileName.equals("useDefault")) {
-            properties = getLocalProperties("default");
+            properties = getLocalProperties("hub");
         } else if (fileName.equals("useEncryptedDefault")) {
-            properties = getLocalProperties("defaultEncrypted");
+            properties = getLocalProperties("hubEncrypted");
         } else {
             properties = loadProperties(new File(fileName).toURI().toURL(), true);
         }

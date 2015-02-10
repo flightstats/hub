@@ -1,10 +1,9 @@
-datahub-service.iws
-datahub-service.ipr
-datahub-service.iml
+*.iws
+*.ipr
 *.iml
 build/
 .gradle/
 out/
-default_local.properties
+*_local.properties
 integration_config_local.js
 .idea/

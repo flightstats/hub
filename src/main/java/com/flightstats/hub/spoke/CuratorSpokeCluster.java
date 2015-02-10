@@ -1,9 +1,10 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -14,7 +15,6 @@ import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,14 +24,11 @@ public class CuratorSpokeCluster implements SpokeCluster {
     public static final String CLUSTER_PATH = "/SpokeCluster";
     private final static Logger logger = LoggerFactory.getLogger(CuratorSpokeCluster.class);
     private final CuratorFramework curator;
-    private final int port;
     private final PathChildrenCache clusterCache;
 
     @Inject
-    public CuratorSpokeCluster(CuratorFramework curator, @Named("http.bind_port") int port) throws Exception {
+    public CuratorSpokeCluster(CuratorFramework curator) throws Exception {
         this.curator = curator;
-        this.port = port;
-        //todo - gfm - 11/18/14 - should spoke run on different port from the Hub, that starts first?
         clusterCache = new PathChildrenCache(curator, CLUSTER_PATH, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
         clusterCache.getListenable().addListener(new PathChildrenCacheListener() {
@@ -61,7 +58,11 @@ public class CuratorSpokeCluster implements SpokeCluster {
     }
 
     private String getHost() throws UnknownHostException {
-        return InetAddress.getLocalHost().getHostAddress() + ":" + port;
+        if (HubProperties.getProperty("app.encrypted", false)) {
+            return HubHost.getLocalNamePort();
+        } else {
+            return HubHost.getLocalAddressPort();
+        }
     }
 
     @Override
