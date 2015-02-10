@@ -29,9 +29,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- *
- */
 public class ChannelUtils {
 
     public static final int NOT_FOUND = -1;
@@ -186,12 +183,23 @@ public class ChannelUtils {
         payload.put("callbackUrl", callbackUrl);
         payload.put("channelUrl", sourceChannel);
         String groupUrl = sourceRoot + "/group/" + groupName;
-        logger.info("calling {} with {}", groupUrl, payload);
+        logger.info("starting {} with {}", groupUrl, payload);
         ClientResponse response = followClient.resource(groupUrl)
                 .accept(MediaType.APPLICATION_JSON)
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, payload.toString());
-        logger.info("group response {}", response);
+        logger.info("start group response {}", response);
+    }
+
+    public void stopGroupCallback(String groupName, String sourceChannel) {
+        String sourceRoot = StringUtils.substringBefore(sourceChannel, "/channel/");
+        String groupUrl = sourceRoot + "/group/" + groupName;
+        logger.info("delete {} ", groupUrl);
+        ClientResponse response = followClient.resource(groupUrl)
+                .accept(MediaType.APPLICATION_JSON)
+                .type(MediaType.APPLICATION_JSON)
+                .delete(ClientResponse.class);
+        logger.info("stop group response {}", response);
 
     }
 
