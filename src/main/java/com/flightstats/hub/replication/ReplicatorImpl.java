@@ -5,6 +5,7 @@ import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -30,17 +31,17 @@ public class ReplicatorImpl implements Replicator {
     private final static Logger logger = LoggerFactory.getLogger(ReplicatorImpl.class);
 
     private final ChannelService channelService;
-    private final ChannelUtils channelUtils;
+    private final HubUtils hubUtils;
     private final Provider<V1ChannelReplicator> v1ReplicatorProvider;
     private final WatchManager watchManager;
     private final Map<String, ChannelReplicator> replicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
 
     @Inject
-    public ReplicatorImpl(ChannelService channelService, ChannelUtils channelUtils,
+    public ReplicatorImpl(ChannelService channelService, HubUtils hubUtils,
                           Provider<V1ChannelReplicator> v1ReplicatorProvider, WatchManager watchManager) {
         this.channelService = channelService;
-        this.channelUtils = channelUtils;
+        this.hubUtils = hubUtils;
         this.v1ReplicatorProvider = v1ReplicatorProvider;
         this.watchManager = watchManager;
         HubServices.registerPreStop(new ReplicatorService());
@@ -121,10 +122,10 @@ public class ReplicatorImpl implements Replicator {
 
     private void startReplication(ChannelConfiguration channel) {
         logger.info("starting replication of " + channel);
-        ChannelUtils.Version version = channelUtils.getHubVersion(channel.getReplicationSource());
-        if (version.equals(ChannelUtils.Version.V2)) {
+        HubUtils.Version version = hubUtils.getHubVersion(channel.getReplicationSource());
+        if (version.equals(HubUtils.Version.V2)) {
             startV2Replication(channel);
-        } else if (version.equals(ChannelUtils.Version.V1)) {
+        } else if (version.equals(HubUtils.Version.V1)) {
             startV1Replication(channel);
         }
     }
@@ -132,7 +133,7 @@ public class ReplicatorImpl implements Replicator {
     private void startV2Replication(ChannelConfiguration channel) {
         logger.debug("starting v2 replication of " + channel);
         try {
-            V2ChannelReplicator v2ChannelReplicator = new V2ChannelReplicator(channel, channelUtils);
+            V2ChannelReplicator v2ChannelReplicator = new V2ChannelReplicator(channel, hubUtils);
             v2ChannelReplicator.start();
             replicatorMap.put(channel.getName(), v2ChannelReplicator);
         } catch (Exception e) {

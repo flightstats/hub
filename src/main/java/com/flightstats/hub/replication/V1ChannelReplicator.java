@@ -8,6 +8,7 @@ import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -25,7 +26,7 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
     public static final String V1_REPLICATE_LAST_COMPLETED = "/V1ReplicateLastCompleted/";
 
     private final ChannelService channelService;
-    private final ChannelUtils channelUtils;
+    private final HubUtils hubUtils;
     private final SequenceFinder sequenceFinder;
     private final CuratorFramework curator;
     private final LastContentKey lastContentKey;
@@ -39,13 +40,13 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
     public static int START_VALUE = 999;
 
     @Inject
-    public V1ChannelReplicator(ChannelService channelService, ChannelUtils channelUtils,
+    public V1ChannelReplicator(ChannelService channelService, HubUtils hubUtils,
                                SequenceIteratorFactory sequenceIteratorFactory,
                                SequenceFinder sequenceFinder, CuratorFramework curator,
                                LastContentKey lastContentKey) {
         this.channelService = channelService;
         this.sequenceIteratorFactory = sequenceIteratorFactory;
-        this.channelUtils = channelUtils;
+        this.hubUtils = hubUtils;
         this.sequenceFinder = sequenceFinder;
         this.curator = curator;
         this.lastContentKey = lastContentKey;
@@ -122,7 +123,7 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
     @VisibleForTesting
     boolean validateRemoteChannel() {
         try {
-            Optional<ChannelConfiguration> optionalConfig = channelUtils.getConfiguration(channel.getReplicationSource());
+            Optional<ChannelConfiguration> optionalConfig = hubUtils.getConfiguration(channel.getReplicationSource());
             if (!optionalConfig.isPresent()) {
                 message = "remote channel missing for " + channel.getReplicationSource();
                 logger.warn(message);
@@ -139,7 +140,7 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
 
     private void replicate(AtomicBoolean hasLeadership) {
         long sequence = getLastUpdated();
-        if (sequence == ChannelUtils.NOT_FOUND) {
+        if (sequence == HubUtils.NOT_FOUND) {
             return;
         }
         logger.info("starting " + channel.getReplicationSource() + " migration at " + sequence);

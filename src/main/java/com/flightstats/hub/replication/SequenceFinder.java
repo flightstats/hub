@@ -1,6 +1,7 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -15,18 +16,18 @@ import java.util.concurrent.TimeUnit;
 public class SequenceFinder {
     private final static Logger logger = LoggerFactory.getLogger(SequenceFinder.class);
 
-    private final ChannelUtils channelUtils;
+    private final HubUtils hubUtils;
 
     @Inject
-    public SequenceFinder(ChannelUtils channelUtils) {
-        this.channelUtils = channelUtils;
+    public SequenceFinder(HubUtils hubUtils) {
+        this.hubUtils = hubUtils;
     }
 
     public long searchForLastUpdated(ChannelConfiguration channel, long lastUpdated, long time, TimeUnit timeUnit) {
         logger.debug("searching the key space with lastUpdated {}", lastUpdated);
-        Optional<Long> latestSequence = channelUtils.getLatestV1(channel.getReplicationSource());
+        Optional<Long> latestSequence = hubUtils.getLatestV1(channel.getReplicationSource());
         if (!latestSequence.isPresent()) {
-            return ChannelUtils.NOT_FOUND;
+            return HubUtils.NOT_FOUND;
         }
         long high = latestSequence.get();
         long low = lastUpdated;
@@ -50,7 +51,7 @@ public class SequenceFinder {
      */
     private boolean existsAndNotYetExpired(ChannelConfiguration channel, long id, long time, TimeUnit timeUnit) {
         logger.debug("id = {} time = {} {} ", id, time, timeUnit);
-        Optional<DateTime> creationDate = channelUtils.getCreationDate(channel.getReplicationSource(), id);
+        Optional<DateTime> creationDate = hubUtils.getCreationDate(channel.getReplicationSource(), id);
         if (!creationDate.isPresent()) {
             return false;
         }
