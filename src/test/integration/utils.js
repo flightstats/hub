@@ -57,7 +57,7 @@ function createChannel(channelName, url) {
                 expect(response.statusCode).toBe(201);
                 done();
             });
-    });
+    }, 10 * 1001);
 
 }
 
