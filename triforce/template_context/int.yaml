@@ -19,6 +19,8 @@ conf/hub.properties :
         name : "hub-v2"
         environment : "int"
         encrypted : false
+        keyStorePath : "none"
+        keyStorePasswordPath : "none"
         shutdown_delay_seconds : 15
         shutdown_wait_seconds : 60
         url : "http://hub-v2-int.svc.staging/"
