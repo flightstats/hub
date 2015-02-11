@@ -99,6 +99,11 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
         }
     }
 
+    @Override
+    public void stop() {
+        exit();
+    }
+
     public void exit() {
         closeIterator();
         try {
