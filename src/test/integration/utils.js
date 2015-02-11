@@ -57,7 +57,7 @@ function createChannel(channelName, url) {
                 expect(response.statusCode).toBe(201);
                 done();
             });
-    });
+    }, 10 * 1001);
 
 }
 
@@ -80,7 +80,7 @@ function putChannel(channelName, verify, body) {
 function addItem(url, responseCode) {
     it("adds item to " + url, function (done) {
         postItem(url, responseCode, done);
-    });
+    }, 5099);
 }
 
 function postItem(url, responseCode, completed) {
