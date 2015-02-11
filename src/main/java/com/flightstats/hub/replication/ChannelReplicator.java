@@ -7,4 +7,6 @@ public interface ChannelReplicator {
     ChannelConfiguration getChannel();
 
     void exit();
+
+    void stop();
 }
