@@ -4,11 +4,6 @@
         <join>
             <multicast enabled="false"/>
             <tcp-ip enabled="true">
-                <!-- Local config has all hosts disabled
-                <hostname>hub-01.cloud-east.dev:5701</hostname>
-                <hostname>hub-02.cloud-east.dev:5701</hostname>
-                <hostname>hub-03.cloud-east.dev:5701</hostname>
-                -->
             </tcp-ip>
         </join>
     </network>
