@@ -25,6 +25,7 @@ utils.runInTestChannel(testName, channelName, function (channelResponse) {
     });
     webSocket.onmessage = function (message) {
         messagedUrl = message.data;
+        console.log('messagedUrl', messagedUrl);
         firstDataReceived = true;
     };
     webSocket.onclose = function () {
@@ -44,13 +45,14 @@ utils.runInTestChannel(testName, channelName, function (channelResponse) {
             error = err;
             resultObj = JSON.parse(body);
             firstPostUrl = resultObj['_links']['self']['href'];
+            console.log('firstPostUrl', firstPostUrl);
             firstPostCompleted = true;
         });
     });
 
     waitsFor(function () {
         return firstDataReceived && firstPostCompleted;
-    }, 15002);
+    }, 30002);
 
     runs(function () {
         expect(error).toBeNull();
