@@ -57,7 +57,7 @@ public class ReplicatorImpl implements Replicator {
         @Override
         protected void shutDown() throws Exception {
             stopped.set(true);
-            stopReplication();
+            exit();
         }
 
     }
@@ -93,7 +93,7 @@ public class ReplicatorImpl implements Replicator {
                 if (!replicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
                     logger.info("changing replication source from {} to {}",
                             replicator.getChannel().getReplicationSource(), channel.getReplicationSource());
-                    replicator.exit();
+                    replicator.stop();
                     startReplication(channel);
                 }
             } else {
@@ -107,17 +107,17 @@ public class ReplicatorImpl implements Replicator {
         for (String nameToStop : toStop) {
             logger.info("stopping {}", nameToStop);
             ChannelReplicator replicator = replicatorMap.remove(nameToStop);
-            replicator.exit();
+            replicator.stop();
         }
     }
 
-    private void stopReplication() {
-        logger.info("stopping all replication " + replicatorMap.keySet());
+    private void exit() {
+        logger.info("exiting all replication " + replicatorMap.keySet());
         Collection<ChannelReplicator> replicators = replicatorMap.values();
         for (ChannelReplicator replicator : replicators) {
             replicator.exit();
         }
-        logger.info("stopped all replication " + replicatorMap.keySet());
+        logger.info("exited all replication " + replicatorMap.keySet());
     }
 
     private void startReplication(ChannelConfiguration channel) {

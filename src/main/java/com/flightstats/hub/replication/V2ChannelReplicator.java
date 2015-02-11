@@ -33,7 +33,12 @@ public class V2ChannelReplicator implements ChannelReplicator {
     }
 
     @Override
-    public void exit() {
+    public void stop() {
         hubUtils.stopGroupCallback(getGroupName(), channel.getReplicationSource());
+    }
+
+    @Override
+    public void exit() {
+        //do nothing
     }
 }
