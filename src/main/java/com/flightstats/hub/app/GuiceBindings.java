@@ -21,9 +21,7 @@ import com.flightstats.hub.group.GroupCallback;
 import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.health.HubHealthCheck;
-import com.flightstats.hub.metrics.HostedGraphiteSender;
-import com.flightstats.hub.metrics.HubInstrumentedResourceMethodDispatchAdapter;
-import com.flightstats.hub.metrics.HubMethodTimingAdapterProvider;
+import com.flightstats.hub.metrics.*;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.replication.ReplicatorImpl;
@@ -111,7 +109,11 @@ public class GuiceBindings extends AbstractModule {
         bind(LastContentKey.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
 
-        bind(HostedGraphiteSender.class).asEagerSingleton();
+        if (HubProperties.getProperty("hosted_graphite.enable", false)) {
+            bind(MetricsSender.class).to(HostedGraphiteSender.class).asEagerSingleton();
+        } else {
+            bind(MetricsSender.class).to(NoOpMetricsSender.class).asEagerSingleton();
+        }
         bind(HubInstrumentedResourceMethodDispatchAdapter.class).toProvider(HubMethodTimingAdapterProvider.class).in(Singleton.class);
         bind(NTPMonitor.class).asEagerSingleton();
         bind(S3WriterManager.class).asEagerSingleton();

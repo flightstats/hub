@@ -5,10 +5,10 @@ import com.google.inject.Inject;
 import java.util.concurrent.Callable;
 
 public class MetricsTimer {
-    private final HostedGraphiteSender sender;
+    private final MetricsSender sender;
 
     @Inject
-    public MetricsTimer(HostedGraphiteSender sender) {
+    public MetricsTimer(MetricsSender sender) {
         this.sender = sender;
     }
 
