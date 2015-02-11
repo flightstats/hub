@@ -8,10 +8,10 @@ import com.sun.jersey.spi.dispatch.RequestDispatcher;
 public class HubInstrumentedResourceMethodDispatchProvider implements ResourceMethodDispatchProvider {
     private static class TimedRequestDispatcher implements RequestDispatcher {
         private final RequestDispatcher underlying;
-        private final HostedGraphiteSender graphiteSender;
+        private final MetricsSender graphiteSender;
         private final String name;
 
-        private TimedRequestDispatcher(RequestDispatcher underlying, HostedGraphiteSender graphiteSender, String name) {
+        private TimedRequestDispatcher(RequestDispatcher underlying, MetricsSender graphiteSender, String name) {
             this.underlying = underlying;
             this.graphiteSender = graphiteSender;
             this.name = name;
@@ -29,9 +29,9 @@ public class HubInstrumentedResourceMethodDispatchProvider implements ResourceMe
     }
 
     private final ResourceMethodDispatchProvider provider;
-    private final HostedGraphiteSender graphiteSender;
+    private final MetricsSender graphiteSender;
 
-    public HubInstrumentedResourceMethodDispatchProvider(ResourceMethodDispatchProvider provider, HostedGraphiteSender graphiteSender) {
+    public HubInstrumentedResourceMethodDispatchProvider(ResourceMethodDispatchProvider provider, MetricsSender graphiteSender) {
         this.provider = provider;
         this.graphiteSender = graphiteSender;
     }
