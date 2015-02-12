@@ -3,16 +3,25 @@ import groovyx.net.http.RESTClient
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'application'
-apply plugin: 'jacoco'
 
-jacoco {
-    toolVersion = "0.7.2.201409121644"
+apply plugin: 'artifactory'
+
+if (project.ext.properties.get('isDevBuild') == null) {
+    project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
+}
+
+repositories {
+    repositories {
+        maven {
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
+        }
+    }
 }
 
 apply from: 'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-utils-1.0.1.gradle'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 project.ext.jenkinsBuildNumber = "$System.env.VERSION_NUMBER"
 project.ext.jenkinsJobName = "hub-v2"
@@ -20,11 +29,8 @@ project.ext.jenkinsJobName = "hub-v2"
 group = 'com.flightstats'
 
 version = project.ext.jenkinsBuildNumber
-//todo - gfm - 3/20/14 - have the local build just use local-full time stamp
 
 project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
-
-apply from: 'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-1.0.1.gradle'
 
 println "Building version: ${version}"
 
