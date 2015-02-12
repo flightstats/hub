@@ -2,7 +2,7 @@ var agent = require('superagent');
 var async = require('async');
 var moment = require('moment');
 var testName = __filename;
-var hubUrl = process.env.hubUrl || 'hub-v2.svc.dev';
+var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl + '/channel';
 console.log(hubUrl);
 
