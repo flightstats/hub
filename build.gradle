@@ -120,26 +120,9 @@ applicationDistribution.from('README.md') {
     into "doc"
 }
 
-applicationDistribution.from('triforce') {
+applicationDistribution.from('config/triforce') {
     into "triforce"
 }
-
-task jasmineTests << {
-    def testdir = "${projectDir}/src/test/integration"
-    def reportsdir = "${projectDir}/build/reports/integration/"
-    println "Making " + reportsdir
-    new File(reportsdir).mkdirs()
-    runExternal("jasmine-node --forceexit --captureExceptions --junitreport --output ${reportsdir} ${testdir}")
-}
-
-/*task jasmineEncryptedTests << {
-    def testdir = "${projectDir}/src/test/integration"
-    def reportsdir = "${projectDir}/build/reports/integration/"
-    println "Making " + reportsdir
-    new File(reportsdir).mkdirs()
-    //todo - gfm - 5/21/14 - change this once the load balancer is in place
-    runExternal("jasmine-node --forceexit --captureExceptions --config runEncrypted true --config hubDomain encrypted-hub-01.cloud-east.dev:8080 --junitreport --output ${reportsdir} ${testdir}")
-}*/
 
 task startHub(type: JavaExec) {
     main = mainClassName
