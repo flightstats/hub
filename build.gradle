@@ -124,6 +124,15 @@ applicationDistribution.from('config/triforce') {
     into "triforce"
 }
 
+task jasmineTests << {
+    def testdir = "${projectDir}/src/test/integration"
+    def reportsdir = "${projectDir}/build/reports/integration/"
+    println "Making " + reportsdir
+    new File(reportsdir).mkdirs()
+    runExternal("jasmine-node --forceexit --captureExceptions --junitreport --output ${reportsdir} ${testdir}")
+}
+
+
 task startHub(type: JavaExec) {
     main = mainClassName
     classpath = sourceSets.main.runtimeClasspath
