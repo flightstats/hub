@@ -11,11 +11,7 @@ if (project.ext.properties.get('isDevBuild') == null) {
 }
 
 repositories {
-    repositories {
-        maven {
-            url 'https://oss.sonatype.org/content/repositories/snapshots'
-        }
-    }
+    mavenCentral()
 }
 
 apply from: 'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-utils-1.0.1.gradle'
@@ -109,7 +105,7 @@ dependencies {
     compile 'commons-io:commons-io:2.4'
     compile 'com.github.rholder:guava-retrying:1.0.6'
     compile 'com.google.code.gson:gson:2.3'
-    compile 'newrelic:newrelic_agent:3.11.0'
+    compile 'com.newrelic.agent.java:newrelic-agent:3.11.0'
     compile 'com.newrelic.agent.java:newrelic-api:3.11.0'
     compile 'org.projectlombok:lombok:1.14.8'
     testCompile 'com.sparkjava:spark-core:2.0.0'
