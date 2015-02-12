@@ -17,7 +17,7 @@ public class CachedChannelConfigurationDao implements ChannelConfigurationDao {
 
     public static final String DELEGATE = "CachedChannelMetadataDao.DELEGATE";
     private final ChannelConfigurationDao delegate;
-    private final ConcurrentMap<String,ChannelConfiguration> channelConfigurationMap;
+    private final ConcurrentMap<String, ChannelConfiguration> channelConfigurationMap;
 
     @Inject
     public CachedChannelConfigurationDao(@Named(DELEGATE) ChannelConfigurationDao delegate,

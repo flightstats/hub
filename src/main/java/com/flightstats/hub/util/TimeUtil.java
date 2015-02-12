@@ -31,6 +31,7 @@ public class TimeUtil {
     public static DateTime time(boolean stable) {
         return stable ? stable() : now();
     }
+
     public static String seconds(DateTime dateTime) {
         return dateTime.toString(secondsFormatter);
     }

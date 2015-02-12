@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * SequenceIterator uses a WebSocket to keep up with the latest sequence.
  * It is designed to skip over missing sequences, should they occur.
  * SequenceIterator is not thread safe, and should only be used from a single thread.
- *
  */
 @ClientEndpoint()
 public class SequenceIterator implements Iterator<Optional<Content>> {

@@ -11,5 +11,7 @@ import javax.ws.rs.ext.Provider;
 @Singleton
 public class JsonMappingExceptionMapper extends AbstractExceptionMapper<JsonMappingException> {
 
-	protected Response.Status getResponseCode() { return Response.Status.BAD_REQUEST; }
+    protected Response.Status getResponseCode() {
+        return Response.Status.BAD_REQUEST;
+    }
 }

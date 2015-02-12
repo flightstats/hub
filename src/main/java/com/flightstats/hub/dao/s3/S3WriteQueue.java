@@ -79,7 +79,7 @@ public class S3WriteQueue {
 
     public void add(ChannelContentKey key) {
         boolean value = keys.offer(key);
-        if(!value){
+        if (!value) {
             logger.info("Add to queue failed - out of queue space. key= {}", key);
         }
     }

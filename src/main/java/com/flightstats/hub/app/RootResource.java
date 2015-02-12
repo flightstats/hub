@@ -13,9 +13,9 @@ import javax.ws.rs.core.UriInfo;
 @Path("/")
 public class RootResource {
 
-	@GET
+    @GET
     @Produces(MediaType.APPLICATION_JSON)
-	public Response getChannels(@Context UriInfo uriInfo) {
+    public Response getChannels(@Context UriInfo uriInfo) {
         Linked.Builder<?> links = Linked.justLinks();
         links.withLink("self", uriInfo.getRequestUri());
         links.withLink("documentation", "https://github.com/flightstats/hubv2");

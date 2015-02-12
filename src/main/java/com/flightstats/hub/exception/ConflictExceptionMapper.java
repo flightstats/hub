@@ -10,5 +10,7 @@ import javax.ws.rs.ext.Provider;
 @Singleton
 public class ConflictExceptionMapper extends AbstractExceptionMapper<ConflictException> {
 
-	protected Response.Status getResponseCode() { return Response.Status.CONFLICT; }
+    protected Response.Status getResponseCode() {
+        return Response.Status.CONFLICT;
+    }
 }

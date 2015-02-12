@@ -42,7 +42,8 @@ public final class HubDateTypeAdapter extends TypeAdapter<Date> {
         return iso8601Format;
     }
 
-    @Override public Date read(JsonReader in) throws IOException {
+    @Override
+    public Date read(JsonReader in) throws IOException {
         if (in.peek() == JsonToken.NULL) {
             in.nextNull();
             return null;
@@ -66,7 +67,8 @@ public final class HubDateTypeAdapter extends TypeAdapter<Date> {
         }
     }
 
-    @Override public synchronized void write(JsonWriter out, Date value) throws IOException {
+    @Override
+    public synchronized void write(JsonWriter out, Date value) throws IOException {
         if (value == null) {
             out.nullValue();
             return;

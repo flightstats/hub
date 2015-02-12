@@ -88,7 +88,7 @@ public class WatchManager {
     private void createNode(Watcher watcher) {
         try {
             curator.create().creatingParentsIfNeeded().forPath(watcher.getPath(), Longs.toByteArray(System.currentTimeMillis()));
-        } catch (KeeperException.NodeExistsException ignore ) {
+        } catch (KeeperException.NodeExistsException ignore) {
             //this will typically happen, except the first time
         } catch (Exception e) {
             logger.warn("unable to create node", e);

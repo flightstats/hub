@@ -28,7 +28,7 @@ public class GroupContentKeySet {
         } catch (KeeperException.NodeExistsException ignore) {
             logger.info("node exists " + path);
         } catch (Exception e) {
-            logger.warn("unable to create " + path , e);
+            logger.warn("unable to create " + path, e);
         }
     }
 
@@ -37,7 +37,7 @@ public class GroupContentKeySet {
         try {
             curator.delete().forPath(path);
         } catch (Exception e) {
-            logger.warn("unable to delete " + path , e);
+            logger.warn("unable to delete " + path, e);
         }
     }
 
@@ -52,7 +52,7 @@ public class GroupContentKeySet {
         } catch (KeeperException.NoNodeException e) {
             logger.info("no node for {}", path);
         } catch (Exception e) {
-            logger.warn("unable to get set " + path , e);
+            logger.warn("unable to get set " + path, e);
         }
         return keys;
     }
@@ -65,7 +65,7 @@ public class GroupContentKeySet {
         return getPath(groupName) + "/" + key.toZk();
     }
 
-    public void delete(String groupName)  {
+    public void delete(String groupName) {
         String path = getPath(groupName);
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);

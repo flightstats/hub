@@ -35,7 +35,8 @@ public class DynamoGroupDao {
         }
 
         @Override
-        protected void shutDown() throws Exception { }
+        protected void shutDown() throws Exception {
+        }
     }
 
     public void initialize() {
@@ -99,7 +100,7 @@ public class DynamoGroupDao {
     }
 
     private void mapItems(List<Group> configurations, ScanResult result) {
-        for (Map<String, AttributeValue> item : result.getItems()){
+        for (Map<String, AttributeValue> item : result.getItems()) {
             configurations.add(mapItem(item));
         }
     }

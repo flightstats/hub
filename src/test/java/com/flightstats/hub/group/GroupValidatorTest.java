@@ -30,7 +30,7 @@ public class GroupValidatorTest {
     }
 
     @Test(expected = InvalidRequestException.class)
-     public void testNameSizeTooBig() throws Exception {
+    public void testNameSizeTooBig() throws Exception {
         groupValidator.validate(group.withName(Strings.repeat("B", 49)));
     }
 

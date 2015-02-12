@@ -26,8 +26,7 @@ import java.util.List;
  *
  */
 @Path("/zookeeper/")
-public class ZookeeperResource
-{
+public class ZookeeperResource {
     private static final Logger logger = LoggerFactory.getLogger(ZookeeperResource.class);
 
     private final CuratorFramework curator;
@@ -103,7 +102,7 @@ public class ZookeeperResource
 
         ArrayNode ids = root.putArray("children");
         for (String child : children) {
-            ids.add(uriInfo.getRequestUri().toString() + "/" +child);
+            ids.add(uriInfo.getRequestUri().toString() + "/" + child);
         }
     }
 

@@ -26,7 +26,7 @@ public class LongSet {
     private void createNode() {
         try {
             curator.create().creatingParentsIfNeeded().forPath(path);
-        } catch (KeeperException.NodeExistsException ignore ) {
+        } catch (KeeperException.NodeExistsException ignore) {
             //this will typically happen, except the first time
         } catch (Exception e) {
             logger.warn("unable to create node", e);
@@ -39,7 +39,7 @@ public class LongSet {
         } catch (KeeperException.NodeExistsException ignore) {
             logger.info("node exists " + getValuePath(value));
         } catch (Exception e) {
-            logger.warn("unable to create " + getValuePath(value) , e);
+            logger.warn("unable to create " + getValuePath(value), e);
         }
     }
 
@@ -47,7 +47,7 @@ public class LongSet {
         try {
             curator.delete().forPath(getValuePath(value));
         } catch (Exception e) {
-            logger.warn("unable to delete " + getValuePath(value) , e);
+            logger.warn("unable to delete " + getValuePath(value), e);
         }
     }
 
@@ -59,7 +59,7 @@ public class LongSet {
                 longs.add(Long.valueOf(string));
             }
         } catch (Exception e) {
-            logger.warn("unable to get set " + path , e);
+            logger.warn("unable to get set " + path, e);
         }
         return longs;
     }
@@ -68,7 +68,7 @@ public class LongSet {
         return path + "/" + value;
     }
 
-    public static void delete(String path, CuratorFramework curator)  {
+    public static void delete(String path, CuratorFramework curator) {
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (Exception e) {

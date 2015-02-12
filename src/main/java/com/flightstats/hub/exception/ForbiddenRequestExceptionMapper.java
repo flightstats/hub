@@ -10,5 +10,7 @@ import javax.ws.rs.ext.Provider;
 @Singleton
 public class ForbiddenRequestExceptionMapper extends AbstractExceptionMapper<ForbiddenRequestException> {
 
-    protected Response.Status getResponseCode() { return Response.Status.FORBIDDEN; }
+    protected Response.Status getResponseCode() {
+        return Response.Status.FORBIDDEN;
+    }
 }

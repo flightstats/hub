@@ -64,9 +64,9 @@ public class ChannelContentResource {
                            @PathParam("Y") int year,
                            @PathParam("M") int month,
                            @PathParam("D") int day,
-                              @QueryParam("location") @DefaultValue("ALL") String location,
-                              @QueryParam("trace") @DefaultValue("false") boolean trace,
-                              @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                           @QueryParam("location") @DefaultValue("ALL") String location,
+                           @QueryParam("trace") @DefaultValue("false") boolean trace,
+                           @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
         return getResponse(channel, startTime, location, trace, stable, Unit.DAYS);
     }
@@ -79,10 +79,10 @@ public class ChannelContentResource {
                             @PathParam("Y") int year,
                             @PathParam("M") int month,
                             @PathParam("D") int day,
-                              @PathParam("hour") int hour,
-                              @QueryParam("location") @DefaultValue("ALL") String location,
-                              @QueryParam("trace") @DefaultValue("false") boolean trace,
-                              @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                            @PathParam("hour") int hour,
+                            @QueryParam("location") @DefaultValue("ALL") String location,
+                            @QueryParam("trace") @DefaultValue("false") boolean trace,
+                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
         return getResponse(channel, startTime, location, trace, stable, Unit.HOURS);
     }
@@ -263,8 +263,8 @@ public class ChannelContentResource {
                                 @PathParam("m") int minute,
                                 @PathParam("s") int second,
                                 @PathParam("ms") int millis,
-                            @PathParam("hash") String hash,
-                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                                @PathParam("hash") String hash,
+                                @QueryParam("stable") @DefaultValue("true") boolean stable) {
         return directional(channel, year, month, day, hour, minute, second, millis, hash, stable, false);
     }
 
@@ -279,11 +279,11 @@ public class ChannelContentResource {
                                      @PathParam("m") int minute,
                                      @PathParam("s") int second,
                                      @PathParam("ms") int millis,
-                                 @PathParam("hash") String hash,
-                                 @PathParam("count") int count,
-                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                 @QueryParam("location") @DefaultValue("ALL") String location) {
+                                     @PathParam("hash") String hash,
+                                     @PathParam("count") int count,
+                                     @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                     @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                     @QueryParam("location") @DefaultValue("ALL") String location) {
         DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)

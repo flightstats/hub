@@ -17,7 +17,7 @@ public class AwsUtils {
         if (exception.getCause() instanceof IOException) return true;
 
         if (exception instanceof AmazonServiceException) {
-            AmazonServiceException ase = (AmazonServiceException)exception;
+            AmazonServiceException ase = (AmazonServiceException) exception;
 
             if (ase.getStatusCode() >= HttpStatus.SC_INTERNAL_SERVER_ERROR) {
                 return true;
@@ -42,7 +42,7 @@ public class AwsUtils {
 
     public static boolean isAwsThrottling(AmazonClientException exception) {
         if (exception instanceof AmazonServiceException) {
-            AmazonServiceException ase = (AmazonServiceException)exception;
+            AmazonServiceException ase = (AmazonServiceException) exception;
 
             return RetryUtils.isThrottlingException(ase);
         }
