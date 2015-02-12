@@ -3,11 +3,10 @@ var request = require('request');
 var async = require('async');
 var moment = require('moment');
 var testName = __filename;
-var hubUrl = process.env.hubUrl || 'hub-v2.svc.dev';
+var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl;
 console.log(hubUrl);
 
-var sourceDomain = process.env.sourceDomain || 'hub.svc.prod';
 var MINUTE = 60 * 1000;
 
 describe(testName, function () {
@@ -17,7 +16,7 @@ describe(testName, function () {
     //uses key of replicationSource to channel body
     var replicatedChannels = {};
 
-    it('loads ' + hubUrl + ' replicated channels from ' + sourceDomain, function (done) {
+    it('loads ' + hubUrl + ' replicated channels ', function (done) {
         agent.get(hubUrl + '/tag/replicated')
             .set('Accept', 'application/json')
             .end(function (res) {

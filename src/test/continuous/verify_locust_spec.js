@@ -2,15 +2,15 @@ var agent = require('superagent');
 var async = require('async');
 var moment = require('moment');
 var testName = __filename;
-var locustUrl = process.env.locustUrl || 'hub-node-tester.cloud-east.dev:8089';
+var locustUrl = process.env.locustUrl;
 locustUrl = 'http://' + locustUrl + '/stats/';
 console.log(locustUrl);
 
 /**
- * This should get the results from locust, log them to the console
- * http://hub-node-tester.cloud-east.dev:8089/stats/requests
+ * This should get the results from a running locust install and logs results to the console
+ * http://locustUrl/stats/requests
  * it should also reset the stats.
- * http://hub-node-tester.cloud-east.dev:8089/stats/reset
+ * http://locustUrl/stats/reset
  */
 describe(testName, function () {
 

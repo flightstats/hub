@@ -9,11 +9,11 @@ import com.amazonaws.retry.RetryPolicy;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.flightstats.hub.app.HubProperties;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
 
@@ -24,17 +24,13 @@ public class AwsConnectorFactory {
     private final String dynamoEndpoint;
     private final String s3Endpoint;
     private final String protocol;
-    private final boolean useEncrypted;
 
     @Inject
-	public AwsConnectorFactory(@Named("dynamo.endpoint") String dynamoEndpoint,
-                               @Named("s3.endpoint") String s3Endpoint,
-                               @Named("aws.protocol") String protocol,
-                               @Named("app.encrypted") boolean useEncrypted){
-        this.dynamoEndpoint = dynamoEndpoint;
-        this.s3Endpoint = s3Endpoint;
-        this.protocol = protocol;
-        this.useEncrypted = useEncrypted;
+    public AwsConnectorFactory() {
+        this.dynamoEndpoint = HubProperties.getProperty("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
+        this.s3Endpoint = HubProperties.getProperty("s3.endpoint", "s3-external-1.amazonaws.com");
+        this.protocol = HubProperties.getProperty("aws.protocol", "HTTP");
+        ;
     }
 
     public AmazonS3 getS3Client() throws IOException {
@@ -70,19 +66,15 @@ public class AwsConnectorFactory {
     }
 
     private PropertiesCredentials getPropertiesCredentials()  {
-        if (useEncrypted) {
-            return loadTestCredentials("/encrypted_test_credentials.properties");
-        }
-        return loadTestCredentials("/test_credentials.properties");
+        return loadTestCredentials(HubProperties.getProperty("test_credentials", "hub_test_credentials.properties"));
     }
 
-    private PropertiesCredentials loadTestCredentials(String fileName) {
-        logger.info("loading test credentials " + fileName);
+    private PropertiesCredentials loadTestCredentials(String credentialsPath) {
+        logger.info("loading test credentials " + credentialsPath);
         try {
-            return new PropertiesCredentials(new File(
-                    AwsConnectorFactory.class.getResource(fileName).getFile()));
+            return new PropertiesCredentials(new File(credentialsPath));
         } catch (Exception e1) {
-            logger.warn("unable to load test_credentials", e1);
+            logger.warn("unable to load test credentials " + credentialsPath, e1);
             throw new RuntimeException(e1);
         }
     }

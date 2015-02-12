@@ -13,7 +13,7 @@ public class HubMethodTimingAdapterProvider
     HubInstrumentedResourceMethodDispatchAdapter adapter;
 
     @Inject
-    public HubMethodTimingAdapterProvider( HostedGraphiteSender graphiteSender) {
+    public HubMethodTimingAdapterProvider(MetricsSender graphiteSender) {
         adapter = new HubInstrumentedResourceMethodDispatchAdapter(graphiteSender);
     }
 

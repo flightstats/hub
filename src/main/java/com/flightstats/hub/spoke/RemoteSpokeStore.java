@@ -2,7 +2,7 @@ package com.flightstats.hub.spoke;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.metrics.HostedGraphiteSender;
+import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.Trace;
@@ -35,11 +35,11 @@ public class RemoteSpokeStore {
     private final static Client client = create();
 
     private final SpokeCluster cluster;
-    private final HostedGraphiteSender sender;
+    private final MetricsSender sender;
     private final ExecutorService executorService;
 
     @Inject
-    public RemoteSpokeStore(SpokeCluster cluster, HostedGraphiteSender sender) {
+    public RemoteSpokeStore(SpokeCluster cluster, MetricsSender sender) {
         this.cluster = cluster;
         this.sender = sender;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
