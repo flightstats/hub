@@ -3,7 +3,6 @@ import groovyx.net.http.RESTClient
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'application'
-
 apply plugin: 'artifactory'
 
 if (project.ext.properties.get('isDevBuild') == null) {
@@ -13,8 +12,6 @@ if (project.ext.properties.get('isDevBuild') == null) {
 repositories {
     mavenCentral()
 }
-
-apply from: 'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-utils-1.0.1.gradle'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -51,8 +48,6 @@ buildscript {
 configurations {
     all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
     all*.exclude(module: 'log4j')
-    publish
-    publishDev
     integrationTests
 }
 
@@ -199,3 +194,16 @@ test {
     jvmArgs '-Xmx3G'
 }
 
+def runExternal(commandline) {
+    def proc = commandline.execute()
+    showExternalOutput(proc)
+}
+
+def showExternalOutput(proc) {
+    proc.in.eachLine { line -> println line }
+    proc.err.eachLine { line -> println 'ERROR: ' + line }
+    proc.waitFor()
+    if (proc.exitValue()) {
+        System.exit(proc.exitValue())
+    }
+}
