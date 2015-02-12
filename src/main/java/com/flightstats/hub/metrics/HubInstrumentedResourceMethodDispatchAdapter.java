@@ -7,9 +7,9 @@ import javax.ws.rs.ext.Provider;
 
 @Provider
 public class HubInstrumentedResourceMethodDispatchAdapter implements ResourceMethodDispatchAdapter {
-    private final HostedGraphiteSender graphiteSender;
+    private final MetricsSender graphiteSender;
 
-    public HubInstrumentedResourceMethodDispatchAdapter(HostedGraphiteSender graphiteSender) {
+    public HubInstrumentedResourceMethodDispatchAdapter(MetricsSender graphiteSender) {
         this.graphiteSender = graphiteSender;
     }
 

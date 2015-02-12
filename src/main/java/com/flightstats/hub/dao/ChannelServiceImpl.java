@@ -2,7 +2,7 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.exception.ForbiddenRequestException;
-import com.flightstats.hub.metrics.HostedGraphiteSender;
+import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.TimeUtil;
@@ -21,12 +21,12 @@ public class ChannelServiceImpl implements ChannelService {
     private final ChannelConfigurationDao channelConfigurationDao;
     private final ChannelValidator channelValidator;
     private final Replicator replicator;
-    private HostedGraphiteSender sender;
+    private MetricsSender sender;
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigurationDao channelConfigurationDao,
                               ChannelValidator channelValidator, Replicator replicator,
-                              HostedGraphiteSender sender) {
+                              MetricsSender sender) {
         this.contentService = contentService;
         this.channelConfigurationDao = channelConfigurationDao;
         this.channelValidator = channelValidator;

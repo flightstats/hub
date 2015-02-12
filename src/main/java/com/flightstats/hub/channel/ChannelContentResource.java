@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.metrics.EventTimed;
-import com.flightstats.hub.metrics.HostedGraphiteSender;
+import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
 import com.google.common.base.Optional;
@@ -55,11 +55,7 @@ public class ChannelContentResource {
     @Inject
     private ChannelLinkBuilder linkBuilder;
     @Inject
-    HostedGraphiteSender sender;
-
-    //todo - gfm - 12/12/14 - what is the proper response for a time request in the future?
-    //404 ?
-    //307 ?
+    MetricsSender sender;
 
     @EventTimed(name = "channel.ALL.day")
     @Produces(MediaType.APPLICATION_JSON)
@@ -157,8 +153,6 @@ public class ChannelContentResource {
         query.getTraces().output(root);
         return Response.ok(root).build();
     }
-
-    //todo - gfm - 1/22/14 - would be nice to have a head method, which doesn't fetch the body.
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}")
     @GET

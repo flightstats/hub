@@ -1,11 +1,10 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.util.Sleeper;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,33 +13,26 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.*;
 
-public class HostedGraphiteSender {
+public class HostedGraphiteSender implements MetricsSender {
     private final static Logger logger = LoggerFactory.getLogger(HostedGraphiteSender.class);
 
     private final BlockingQueue<String> queue = new ArrayBlockingQueue<>(10000);
     private final String host;
     private final int port;
     private final String graphitePrefix;
-    @VisibleForTesting
-    CallableSender callableSender;
+    private CallableSender callableSender;
 
     @Inject
-    public HostedGraphiteSender(@Named("hosted_graphite.enable") boolean enable,
-                                @Named("hosted_graphite.host") String host,
-                                @Named("hosted_graphite.port") int port,
-                                @Named("hosted_graphite.prefix") final String graphitePrefix)
+    public HostedGraphiteSender()
             throws IOException {
-        this.host = host;
-        this.port = port;
-        this.graphitePrefix = graphitePrefix;
-        if (!enable) {
-            logger.info("hosted graphite not enabled");
-            return;
-        }
+        this.host = HubProperties.getProperty("hosted_graphite.host", "carbon.hostedgraphite.com");
+        this.port = HubProperties.getProperty("hosted_graphite.port", 2003);
+        this.graphitePrefix = HubProperties.getProperty("hosted_graphite.prefix", "hub");
         callableSender = new CallableSender();
         HubServices.register(new HostedGraphiteSenderService());
     }
 
+    @Override
     public void send(String name, Object value) {
         if (name.contains(".test")) {
             return;
@@ -65,7 +57,6 @@ public class HostedGraphiteSender {
 
         @Override
         protected void shutDown() throws Exception {
-            //todo - gfm - 9/17/14 - should this wait for the queue to drain?
         }
     }
 
@@ -106,7 +97,6 @@ public class HostedGraphiteSender {
             logger.trace("sending value {}", toSend);
             try {
                 stream.writeBytes(toSend);
-                return;
             } catch (Exception e) {
                 logger.warn("unable to send " + toSend, e);
                 connect();

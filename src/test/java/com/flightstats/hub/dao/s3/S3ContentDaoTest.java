@@ -12,7 +12,7 @@ public class S3ContentDaoTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        AwsConnectorFactory factory = new AwsConnectorFactory("dynamodb.us-east-1.amazonaws.com", "s3-external-1.amazonaws.com", "HTTP", false);
+        AwsConnectorFactory factory = new AwsConnectorFactory();
         AmazonS3 s3Client = factory.getS3Client();
         S3BucketName bucketName = new S3BucketName("local", "hub-v2");
         S3ContentDao s3ContentDao = new S3ContentDao(s3Client, false, bucketName, 3);

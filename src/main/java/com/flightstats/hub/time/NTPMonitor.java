@@ -2,7 +2,7 @@ package com.flightstats.hub.time;
 
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.metrics.HostedGraphiteSender;
+import com.flightstats.hub.metrics.MetricsSender;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -21,10 +21,10 @@ public class NTPMonitor {
 
     private final static Logger logger = LoggerFactory.getLogger(NTPMonitor.class);
 
-    private final HostedGraphiteSender sender;
+    private final MetricsSender sender;
 
     @Inject
-    public NTPMonitor(HostedGraphiteSender sender) {
+    public NTPMonitor(MetricsSender sender) {
         this.sender = sender;
         HubServices.register(new TimeMonitorService(), HubServices.TYPE.POST_START);
     }

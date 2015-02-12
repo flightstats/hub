@@ -59,7 +59,7 @@ public class ContentKeyTest {
 
     @Test
     public void testFullUrl() {
-        Optional<ContentKey> optional = ContentKey.fromFullUrl("http://hub-v2.svc.dev/channel/load_test_2/2015/01/23/21/11/19/407/L7QtaY");
+        Optional<ContentKey> optional = ContentKey.fromFullUrl("http://hub/channel/load_test_2/2015/01/23/21/11/19/407/L7QtaY");
         assertTrue(optional.isPresent());
         ContentKey contentKey = optional.get();
         assertEquals("2015/01/23/21/11/19/407/L7QtaY", contentKey.toString());
