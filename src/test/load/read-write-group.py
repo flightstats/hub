@@ -15,12 +15,9 @@ from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
 
 
-
-
-
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
-# nohup locust -f read-write-group.py -H http://hub-v2.svc.dev &
+# nohup locust -f read-write-group.py -H http://hub &
 
 logger = logging.getLogger('hub-locust')
 logger.setLevel(logging.INFO)
