@@ -8,9 +8,6 @@ import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 
-/**
- *
- */
 public class AwsUtils {
 
     public static boolean isAwsError(AmazonClientException exception) {

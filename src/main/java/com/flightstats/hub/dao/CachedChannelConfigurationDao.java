@@ -8,9 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentMap;
 
-/**
- *
- */
 public class CachedChannelConfigurationDao implements ChannelConfigurationDao {
 
     private final static Logger logger = LoggerFactory.getLogger(CachedChannelConfigurationDao.class);

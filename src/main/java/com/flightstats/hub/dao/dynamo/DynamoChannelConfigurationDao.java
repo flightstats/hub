@@ -13,9 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-/**
- *
- */
 public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
     private final static Logger logger = LoggerFactory.getLogger(DynamoChannelConfigurationDao.class);
 

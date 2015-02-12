@@ -11,9 +11,6 @@ import org.apache.curator.test.TestingServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- *
- */
 public class Integration {
     private final static Logger logger = LoggerFactory.getLogger(Integration.class);
     private static TestingServer testingServer;

@@ -1,8 +1,5 @@
 package com.flightstats.hub.cluster;
 
-/**
- *
- */
 public interface Lockable {
 
     /**
