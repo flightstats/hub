@@ -27,6 +27,8 @@ println "Building version: ${version}"
 
 buildDir = 'build'
 
+mainClassName = "com.flightstats.hub.app.HubMain"
+
 buildscript {
     repositories {
         mavenCentral()
