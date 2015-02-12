@@ -124,6 +124,10 @@ applicationDistribution.from('config/triforce') {
     into "triforce"
 }
 
+applicationDistribution.from('config/deploy') {
+    into "deploy"
+}
+
 task jasmineTests << {
     def testdir = "${projectDir}/src/test/integration"
     def reportsdir = "${projectDir}/build/reports/integration/"
