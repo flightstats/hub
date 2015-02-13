@@ -9,7 +9,6 @@ import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.rest.HalLink;
 import com.flightstats.hub.rest.Linked;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -18,12 +17,7 @@ import java.util.*;
 
 import static com.flightstats.hub.rest.Linked.linked;
 
-//todo - gfm - 1/22/15 - convert this to all static
-public class ChannelLinkBuilder {
-
-    @Inject
-    public ChannelLinkBuilder() {
-    }
+public class LinkBuilder {
 
     public static URI buildWsLinkFor(URI channelUri) {
         String requestUri = channelUri.toString().replaceFirst("^http", "ws");
@@ -44,7 +38,7 @@ public class ChannelLinkBuilder {
         return URI.create(uriInfo.getBaseUri() + "channel/" + channelName);
     }
 
-    URI buildTagUri(String tag, UriInfo uriInfo) {
+    static URI buildTagUri(String tag, UriInfo uriInfo) {
         return URI.create(uriInfo.getBaseUri() + "tag/" + tag);
     }
 
@@ -56,7 +50,7 @@ public class ChannelLinkBuilder {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
-    public Linked<ChannelConfiguration> buildChannelLinks(ChannelConfiguration config, URI channelUri) {
+    public static Linked<ChannelConfiguration> buildChannelLinks(ChannelConfiguration config, URI channelUri) {
         Linked.Builder<ChannelConfiguration> linked = linked(config).withLink("self", channelUri);
         linked.withLink("latest", URI.create(channelUri + "/latest"))
                 .withLink("ws", buildWsLinkFor(channelUri))
@@ -65,7 +59,7 @@ public class ChannelLinkBuilder {
         return linked.build();
     }
 
-    public Linked<?> build(Iterable<ChannelConfiguration> channels, UriInfo uriInfo) {
+    public static Linked<?> build(Iterable<ChannelConfiguration> channels, UriInfo uriInfo) {
         Map<String, URI> mappedChannels = new HashMap<>();
         for (ChannelConfiguration channelConfiguration : channels) {
             String channelName = channelConfiguration.getName();

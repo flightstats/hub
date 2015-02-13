@@ -20,11 +20,6 @@ utils.runInTestChannel(testName, channelName, function () {
                 href : thisChannelResource
             }
         })
-        .expectJSON('_links.self', {
-            href : function (value) {
-                //todo - gfm - 10/28/14 - check that it exists
-            }
-        })
         .afterJSON(function (result) {
             var valueUrl = result['_links']['self']['href'];
             frisby.create(testName + ': Fetching value to ensure that it was inserted.')

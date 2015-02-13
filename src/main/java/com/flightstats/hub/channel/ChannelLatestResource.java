@@ -63,7 +63,7 @@ public class ChannelLatestResource {
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
         keys.add(latest.get());
-        return ChannelLinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
+        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
 
     }
 

@@ -84,7 +84,5 @@ describe(testName, function () {
 
     }, timeout);
 
-    //todo - gfm - 11/21/14 - this test could also compare payloads
-
 
 });

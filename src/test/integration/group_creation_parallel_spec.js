@@ -17,7 +17,5 @@ describe(testName, function () {
 
     utils.getGroup(groupName, groupConfig);
 
-    //todo - gfm - 12/12/14 - this should verify callbacks
-
 });
 

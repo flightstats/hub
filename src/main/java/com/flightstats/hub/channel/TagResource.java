@@ -27,13 +27,11 @@ import java.util.Map;
 public class TagResource {
 
     private final ChannelService channelService;
-    private final ChannelLinkBuilder linkBuilder;
     private final UriInfo uriInfo;
 
     @Inject
-    public TagResource(ChannelService channelService, ChannelLinkBuilder linkBuilder, UriInfo uriInfo) {
+    public TagResource(ChannelService channelService, UriInfo uriInfo) {
         this.channelService = channelService;
-        this.linkBuilder = linkBuilder;
         this.uriInfo = uriInfo;
     }
 
@@ -44,7 +42,7 @@ public class TagResource {
         Iterable<String> tags = channelService.getTags();
         Map<String, URI> tagUriMap = new HashMap<>();
         for (String tag : tags) {
-            tagUriMap.put(tag, linkBuilder.buildTagUri(tag, uriInfo));
+            tagUriMap.put(tag, LinkBuilder.buildTagUri(tag, uriInfo));
         }
 
         Linked.Builder<?> responseBuilder = Linked.justLinks();
@@ -66,7 +64,7 @@ public class TagResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels(@PathParam("tag") String tag) {
         Iterable<ChannelConfiguration> channels = channelService.getChannels(tag);
-        Linked<?> result = linkBuilder.build(channels, uriInfo);
+        Linked<?> result = LinkBuilder.build(channels, uriInfo);
         return Response.ok(result).build();
     }
 

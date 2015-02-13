@@ -53,7 +53,7 @@ public class ChannelContentResource {
     @Inject
     private ChannelService channelService;
     @Inject
-    private ChannelLinkBuilder linkBuilder;
+    private LinkBuilder linkBuilder;
     @Inject
     MetricsSender sender;
 
@@ -145,9 +145,9 @@ public class ChannelContentResource {
         }
         links.putObject("previous").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(previous) + "?stable=" + stable);
         ArrayNode ids = links.putArray("uris");
-        URI channelUri = ChannelLinkBuilder.buildChannelUri(channelName, uriInfo);
+        URI channelUri = LinkBuilder.buildChannelUri(channelName, uriInfo);
         for (ContentKey key : keys) {
-            URI uri = ChannelLinkBuilder.buildItemUri(key, channelUri);
+            URI uri = LinkBuilder.buildItemUri(key, channelUri);
             ids.add(uri.toString());
         }
         query.getTraces().output(root);
@@ -200,8 +200,8 @@ public class ChannelContentResource {
                 .header(Headers.CREATION_DATE,
                         dateTimeFormatter.print(new DateTime(key.getMillis())));
 
-        ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
-        ChannelLinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
+        LinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
+        LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
 
         builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/previous") + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/next") + ">;rel=\"" + "next" + "\"");
@@ -250,7 +250,7 @@ public class ChannelContentResource {
                 .count(count).build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return ChannelLinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
+        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/previous")
@@ -295,7 +295,7 @@ public class ChannelContentResource {
                 .count(count).build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return ChannelLinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
+        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
     }
 
     private Response directional(String channel, int year, int month, int day, int hour, int minute,

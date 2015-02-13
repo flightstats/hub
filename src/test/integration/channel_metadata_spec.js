@@ -28,7 +28,6 @@ utils.runInTestChannel(testName, channelName, function () {
                     name : channelName,
                     ttlDays : 120
                 })
-                //TODO: Validate creation date
                 .toss();
         })
         .toss();

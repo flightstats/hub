@@ -26,7 +26,6 @@ utils.runInTestChannel(testName, channelName, function () {
                 })
                 .expectJSON({"name" : channelName})
                 .expectJSON({"ttlDays" : 120})
-                //TODO: Validate creation date and last update date
                 .toss();
         })
         .toss();

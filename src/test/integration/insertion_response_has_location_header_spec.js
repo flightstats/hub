@@ -13,9 +13,7 @@ utils.runInTestChannel(testName, channelName, function () {
         .addHeader("Content-Type", "text/plain")
         .expectStatus(201)
         .after(function (err, res, body) {
-            //todo - gfm - 10/28/14 - fix this
-            /*var regex = new RegExp("^" + thisChannelResource.replace(/\//g, "\\/").replace(/\:/g, "\\:") + "\\/1000");
-             expect(res.headers['location']).toMatch(regex);*/
+            expect(res.headers['location']).toBeDefined();
         })
         .toss();
 });

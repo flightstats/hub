@@ -1,6 +1,6 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.channel.ChannelLinkBuilder;
+import com.flightstats.hub.channel.LinkBuilder;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.HubUtils;
@@ -88,7 +88,7 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
             logger.warn("unable to get latest for channel " + channelUrl);
             return;
         }
-        URI wsUri = ChannelLinkBuilder.buildWsLinkFor(URI.create(channelUrl));
+        URI wsUri = LinkBuilder.buildWsLinkFor(URI.create(channelUrl));
         latest.set(latestSequence.get());
         startWebSocket(wsUri);
     }

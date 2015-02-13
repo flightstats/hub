@@ -30,14 +30,11 @@ import static com.flightstats.hub.rest.Linked.linked;
 public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
     private final ChannelService channelService;
-    private final ChannelLinkBuilder linkBuilder;
     private final UriInfo uriInfo;
 
     @Inject
-    public ChannelResource(ChannelService channelService, ChannelLinkBuilder linkBuilder,
-                           UriInfo uriInfo) {
+    public ChannelResource(ChannelService channelService, UriInfo uriInfo) {
         this.channelService = channelService;
-        this.linkBuilder = linkBuilder;
         this.uriInfo = uriInfo;
     }
 
@@ -48,8 +45,8 @@ public class ChannelResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         ChannelConfiguration config = channelService.getChannelConfiguration(channelName);
-        URI channelUri = ChannelLinkBuilder.buildChannelUri(config, uriInfo);
-        Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(config, channelUri);
+        URI channelUri = LinkBuilder.buildChannelUri(config, uriInfo);
+        Linked<ChannelConfiguration> linked = LinkBuilder.buildChannelLinks(config, channelUri);
 
         return Response.ok(channelUri).entity(linked).build();
     }
@@ -69,9 +66,9 @@ public class ChannelResource {
         }
         logger.info("creating channel {}", channelConfiguration);
         channelConfiguration = channelService.updateChannel(channelConfiguration);
-        URI channelUri = ChannelLinkBuilder.buildChannelUri(channelConfiguration, uriInfo);
+        URI channelUri = LinkBuilder.buildChannelUri(channelConfiguration, uriInfo);
         return Response.created(channelUri).entity(
-                linkBuilder.buildChannelLinks(channelConfiguration, channelUri))
+                LinkBuilder.buildChannelLinks(channelConfiguration, channelUri))
                 .build();
     }
 
@@ -91,8 +88,8 @@ public class ChannelResource {
 
         newConfig = channelService.updateChannel(newConfig);
 
-        URI channelUri = ChannelLinkBuilder.buildChannelUri(newConfig, uriInfo);
-        Linked<ChannelConfiguration> linked = linkBuilder.buildChannelLinks(newConfig, channelUri);
+        URI channelUri = LinkBuilder.buildChannelUri(newConfig, uriInfo);
+        Linked<ChannelConfiguration> linked = LinkBuilder.buildChannelLinks(newConfig, channelUri);
         return Response.ok(channelUri).entity(linked).build();
     }
 
@@ -113,16 +110,16 @@ public class ChannelResource {
         try {
             ContentKey contentKey = channelService.insert(channelName, content);
             InsertedContentKey insertionResult = new InsertedContentKey(contentKey);
-            URI payloadUri = linkBuilder.buildItemUri(contentKey, uriInfo.getRequestUri());
+            URI payloadUri = LinkBuilder.buildItemUri(contentKey, uriInfo.getRequestUri());
             Linked<InsertedContentKey> linkedResult = linked(insertionResult)
-                    .withLink("channel", ChannelLinkBuilder.buildChannelUri(channelName, uriInfo))
+                    .withLink("channel", LinkBuilder.buildChannelUri(channelName, uriInfo))
                     .withLink("self", payloadUri)
                     .build();
 
             Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
             builder.entity(linkedResult);
             builder.location(payloadUri);
-            ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
+            LinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
             content.getTraces().logSlow(100, logger);
             return builder.build();
         } catch (ContentTooLargeException e) {
