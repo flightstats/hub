@@ -1,7 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'application'
-apply plugin: 'artifactory'
 
 if (project.ext.properties.get('isDevBuild') == null) {
     project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
@@ -28,20 +27,6 @@ println "Building version: ${version}"
 buildDir = 'build'
 
 mainClassName = "com.flightstats.hub.app.HubMain"
-
-buildscript {
-    repositories {
-        mavenCentral()
-        maven { url 'http://repo.jfrog.org/artifactory/gradle-plugins' }
-    }
-
-    dependencies {
-        classpath(
-                [group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.16'],
-                [group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7']
-        )
-    }
-}
 
 configurations {
     all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
@@ -119,16 +104,3 @@ applicationDistribution.from('config/triforce') {
     into "triforce"
 }
 
-def runExternal(commandline) {
-    def proc = commandline.execute()
-    showExternalOutput(proc)
-}
-
-def showExternalOutput(proc) {
-    proc.in.eachLine { line -> println line }
-    proc.err.eachLine { line -> println 'ERROR: ' + line }
-    proc.waitFor()
-    if (proc.exitValue()) {
-        System.exit(proc.exitValue())
-    }
-}
