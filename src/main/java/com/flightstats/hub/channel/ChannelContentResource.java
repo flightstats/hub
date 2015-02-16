@@ -28,8 +28,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
@@ -189,12 +187,7 @@ public class ChannelContentResource {
         if (contentTypeIsNotCompatible(accept, actualContentType)) {
             return Responses.notAcceptable().build();
         }
-        Response.ResponseBuilder builder = Response.ok(new StreamingOutput() {
-            @Override
-            public void write(OutputStream output) throws IOException, WebApplicationException {
-                ByteStreams.copy(content.getStream(), output);
-            }
-        });
+        Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
 
         builder.type(actualContentType)
                 .header(Headers.CREATION_DATE,

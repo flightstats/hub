@@ -7,7 +7,10 @@ import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.*;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -43,13 +46,8 @@ class GroupClient {
             HttpsURLConnection.setDefaultSSLSocketFactory(ctx.getSocketFactory());
 
             ClientConfig config = new DefaultClientConfig();
-            config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(
-                    new HostnameVerifier() {
-                        @Override
-                        public boolean verify(String hostname, SSLSession session) {
-                            return true;
-                        }
-                    }, ctx));
+            config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES,
+                    new HTTPSProperties((hostname, session) -> true, ctx));
             Client client = Client.create(config);
             client.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(30));
             client.setReadTimeout((int) TimeUnit.SECONDS.toMillis(120));

@@ -207,18 +207,15 @@ public class S3ContentDao implements ContentDao {
 
     public void delete(String channel) {
         final String channelPath = channel + "/";
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    //noinspection StatementWithEmptyBody
-                    while (internalDelete(channelPath)) {
-                    }
-                    internalDelete(channelPath);
-                    logger.info("completed deletion of " + channelPath);
-                } catch (Exception e) {
-                    logger.warn("unable to delete " + channelPath + " in " + s3BucketName, e);
+        new Thread(() -> {
+            try {
+                //noinspection StatementWithEmptyBody
+                while (internalDelete(channelPath)) {
                 }
+                internalDelete(channelPath);
+                logger.info("completed deletion of " + channelPath);
+            } catch (Exception e) {
+                logger.warn("unable to delete " + channelPath + " in " + s3BucketName, e);
             }
         }).start();
     }

@@ -6,8 +6,6 @@ import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.api.CuratorEvent;
-import org.apache.curator.framework.api.CuratorListener;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,20 +47,12 @@ public class WatchManager {
 
     @VisibleForTesting
     void addCuratorListener() {
-        curator.getCuratorListenable().addListener(new CuratorListener() {
-            @Override
-            public void eventReceived(CuratorFramework client, final CuratorEvent event) throws Exception {
-                logger.debug("event {}", event);
-                final Watcher watcher = watcherMap.get(event.getPath());
-                if (watcher != null) {
-                    addWatch(watcher.getPath());
-                    executorService.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            watcher.callback(event);
-                        }
-                    });
-                }
+        curator.getCuratorListenable().addListener((client, event) -> {
+            logger.debug("event {}", event);
+            final Watcher watcher = watcherMap.get(event.getPath());
+            if (watcher != null) {
+                addWatch(watcher.getPath());
+                executorService.submit(() -> watcher.callback(event));
             }
         });
     }

@@ -103,14 +103,11 @@ public class AuditChannelService implements ChannelService {
     }
 
     private void submit(final Request request, final Audit audit, final Content content) {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    channelService.insert(request.getChannel() + AUDIT, content);
-                } catch (Exception e) {
-                    logger.warn("unable to audit " + audit, e);
-                }
+        executorService.submit(() -> {
+            try {
+                channelService.insert(request.getChannel() + AUDIT, content);
+            } catch (Exception e) {
+                logger.warn("unable to audit " + audit, e);
             }
         });
     }

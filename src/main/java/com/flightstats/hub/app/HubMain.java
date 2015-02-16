@@ -51,15 +51,11 @@ public class HubMain {
     }
 
     private static void startZookeeperIfSingle() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-
-                String zkConfigFile = HubProperties.getProperty("zookeeper.cfg", "");
-                if ("singleNode".equals(zkConfigFile)) {
-                    warn("using single node zookeeper");
-                    ZookeeperMain.start();
-                }
+        new Thread(() -> {
+            String zkConfigFile = HubProperties.getProperty("zookeeper.cfg", "");
+            if ("singleNode".equals(zkConfigFile)) {
+                warn("using single node zookeeper");
+                ZookeeperMain.start();
             }
         }).start();
     }
