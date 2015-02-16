@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -36,6 +38,7 @@ public class ReplicatorImpl implements Replicator {
     private final WatchManager watchManager;
     private final Map<String, ChannelReplicator> replicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Inject
     public ReplicatorImpl(ChannelService channelService, HubUtils hubUtils,
@@ -64,11 +67,11 @@ public class ReplicatorImpl implements Replicator {
 
     public void startReplicator() {
         logger.info("starting");
+        ReplicatorImpl replicator = this;
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
-                //todo - gfm - 1/23/15 - this should probably use a different thread
-                replicateChannels();
+                executor.submit(replicator::replicateChannels);
             }
 
             @Override
@@ -76,7 +79,8 @@ public class ReplicatorImpl implements Replicator {
                 return REPLICATOR_WATCHER_PATH;
             }
         });
-        replicateChannels();
+
+        executor.submit(replicator::replicateChannels);
     }
 
     private synchronized void replicateChannels() {
