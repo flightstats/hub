@@ -30,7 +30,7 @@ public class ZooKeeperState {
         };
     }
 
-    public  ConnectionStateListener getStateListener() {
+    public ConnectionStateListener getStateListener() {
         return connectionStateListener;
     }
 

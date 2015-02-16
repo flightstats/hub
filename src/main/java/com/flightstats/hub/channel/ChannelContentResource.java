@@ -53,7 +53,7 @@ public class ChannelContentResource {
     @Inject
     private ChannelService channelService;
     @Inject
-    private ChannelLinkBuilder linkBuilder;
+    private LinkBuilder linkBuilder;
     @Inject
     MetricsSender sender;
 
@@ -64,9 +64,9 @@ public class ChannelContentResource {
                            @PathParam("Y") int year,
                            @PathParam("M") int month,
                            @PathParam("D") int day,
-                              @QueryParam("location") @DefaultValue("ALL") String location,
-                              @QueryParam("trace") @DefaultValue("false") boolean trace,
-                              @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                           @QueryParam("location") @DefaultValue("ALL") String location,
+                           @QueryParam("trace") @DefaultValue("false") boolean trace,
+                           @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
         return getResponse(channel, startTime, location, trace, stable, Unit.DAYS);
     }
@@ -79,10 +79,10 @@ public class ChannelContentResource {
                             @PathParam("Y") int year,
                             @PathParam("M") int month,
                             @PathParam("D") int day,
-                              @PathParam("hour") int hour,
-                              @QueryParam("location") @DefaultValue("ALL") String location,
-                              @QueryParam("trace") @DefaultValue("false") boolean trace,
-                              @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                            @PathParam("hour") int hour,
+                            @QueryParam("location") @DefaultValue("ALL") String location,
+                            @QueryParam("trace") @DefaultValue("false") boolean trace,
+                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
         return getResponse(channel, startTime, location, trace, stable, Unit.HOURS);
     }
@@ -145,9 +145,9 @@ public class ChannelContentResource {
         }
         links.putObject("previous").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(previous) + "?stable=" + stable);
         ArrayNode ids = links.putArray("uris");
-        URI channelUri = ChannelLinkBuilder.buildChannelUri(channelName, uriInfo);
+        URI channelUri = LinkBuilder.buildChannelUri(channelName, uriInfo);
         for (ContentKey key : keys) {
-            URI uri = ChannelLinkBuilder.buildItemUri(key, channelUri);
+            URI uri = LinkBuilder.buildItemUri(key, channelUri);
             ids.add(uri.toString());
         }
         query.getTraces().output(root);
@@ -200,8 +200,8 @@ public class ChannelContentResource {
                 .header(Headers.CREATION_DATE,
                         dateTimeFormatter.print(new DateTime(key.getMillis())));
 
-        ChannelLinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
-        ChannelLinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
+        LinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
+        LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
 
         builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/previous") + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/next") + ">;rel=\"" + "next" + "\"");
@@ -250,7 +250,7 @@ public class ChannelContentResource {
                 .count(count).build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return ChannelLinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
+        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/previous")
@@ -263,8 +263,8 @@ public class ChannelContentResource {
                                 @PathParam("m") int minute,
                                 @PathParam("s") int second,
                                 @PathParam("ms") int millis,
-                            @PathParam("hash") String hash,
-                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                                @PathParam("hash") String hash,
+                                @QueryParam("stable") @DefaultValue("true") boolean stable) {
         return directional(channel, year, month, day, hour, minute, second, millis, hash, stable, false);
     }
 
@@ -279,11 +279,11 @@ public class ChannelContentResource {
                                      @PathParam("m") int minute,
                                      @PathParam("s") int second,
                                      @PathParam("ms") int millis,
-                                 @PathParam("hash") String hash,
-                                 @PathParam("count") int count,
-                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                 @QueryParam("location") @DefaultValue("ALL") String location) {
+                                     @PathParam("hash") String hash,
+                                     @PathParam("count") int count,
+                                     @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                     @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                     @QueryParam("location") @DefaultValue("ALL") String location) {
         DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -295,7 +295,7 @@ public class ChannelContentResource {
                 .count(count).build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return ChannelLinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
+        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
     }
 
     private Response directional(String channel, int year, int month, int day, int hour, int minute,

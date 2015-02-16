@@ -89,7 +89,6 @@ public class FileSpokeStore {
     }
 
 
-
     //Given a File, return a key part (full key, or time path part)
     String spokeKeyFromPath(String path) {
         if (path.contains(storagePath))
@@ -98,7 +97,7 @@ public class FileSpokeStore {
         // file or directory?
         int i = path.lastIndexOf("/");
         String suffix = path.substring(i + 1);
-        if( suffix.length() > 4) {
+        if (suffix.length() > 4) {
             // presence of second proves file aims at a full payload path
             String folderPath = path.substring(0, i);
             String seconds = suffix.substring(0, 2);
@@ -111,7 +110,6 @@ public class FileSpokeStore {
     }
 
 
-
     Collection<String> keysInBucket(String key) {
         String path = spokeFilePathPart(key).getAbsolutePath();
         List<String> keys = new ArrayList<>();
@@ -122,7 +120,7 @@ public class FileSpokeStore {
         if (!directory.exists()) {
             return keys;
         }
-        try{
+        try {
             Collection<File> files;
             if (resolution.equals("second")) {
                 // filter all files in the minute folder that start with seconds

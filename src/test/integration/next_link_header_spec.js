@@ -27,10 +27,6 @@ utils.runInTestChannel(testName, channelName, function (channelResponse) {
                             frisby.create(testName + ": Checking the Link header that should come back with the first url now.")
                                 .get(firstItemUrl)
                                 .expectStatus(200)
-                                //todo - gfm - 10/28/14 - do we care about this?
-                                /*.after(function (err, res, body) {
-                                 expect(res.headers["link"]).toContain("<" + secondItemUrl + ">;rel=\"next\"");
-                                 })*/
                                 .toss()
                         })
                         .toss();

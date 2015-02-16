@@ -21,7 +21,7 @@ public class LongValue {
     public void initialize(String path, long defaultValue) {
         try {
             curator.create().creatingParentsIfNeeded().forPath(path, Longs.toByteArray(defaultValue));
-        } catch (KeeperException.NodeExistsException ignore ) {
+        } catch (KeeperException.NodeExistsException ignore) {
             //this will typically happen, except the first time
         } catch (Exception e) {
             logger.warn("unable to create node", e);
@@ -45,7 +45,7 @@ public class LongValue {
         return Longs.fromByteArray(curator.getData().forPath(path));
     }
 
-    public void updateIncrease(long next, String path)  {
+    public void updateIncrease(long next, String path) {
         try {
             int attempts = 0;
             while (attempts < 3) {
@@ -77,7 +77,7 @@ public class LongValue {
         }
     }
 
-    public void delete(String path)  {
+    public void delete(String path) {
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (Exception e) {

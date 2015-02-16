@@ -60,8 +60,6 @@ describe(testName, function () {
 
     });
 
-    //todo - gfm - 12/17/14 - Build #76 (Dec 17, 2014 12:24:34 PM)
-    //todo - gfm - 12/17/14 - Build #77 (Dec 17, 2014 12:31:07 PM) - test_0_959520191885531
     utils.deleteGroup(groupName);
 
     utils.addItem(channelResource);
@@ -80,7 +78,6 @@ describe(testName, function () {
 
         waitsFor(function () {
             return callbackItemsB.length == 1;
-            //todo - gfm - 12/17/14 - Build #76 (Dec 17, 2014 12:24:34 PM)
         }, 11998);
 
     });

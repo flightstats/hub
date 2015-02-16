@@ -23,8 +23,10 @@ import java.io.IOException;
 public class Group {
     private final static Logger logger = LoggerFactory.getLogger(Group.class);
 
-    @NonNull private final String callbackUrl;
-    @NonNull private final String channelUrl;
+    @NonNull
+    private final String callbackUrl;
+    @NonNull
+    private final String channelUrl;
     @Wither
     private final Integer parallelCalls;
     @Wither

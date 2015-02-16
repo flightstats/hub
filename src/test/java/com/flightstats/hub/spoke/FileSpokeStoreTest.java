@@ -76,7 +76,7 @@ public class FileSpokeStoreTest {
         assertTrue(keys.contains(path2));
         assertTrue(keys.contains(path3));
 
-            // filesInBucket second query
+        // filesInBucket second query
         keys = spokeStore.keysInBucket("/testAdjacentPaths/2014/11/18/00/57/24");
         assertEquals(5, keys.size());
 

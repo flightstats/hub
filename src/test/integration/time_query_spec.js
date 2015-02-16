@@ -37,9 +37,6 @@ describe(testName, function () {
         utils.addItem(channelResource);
     }
 
-    //todo - gfm - 11/5/14 - tests for next/previous
-    //todo - gfm - 11/19/14 - test for ordering
-
     function callTime(url, items, calls, done) {
         request.get({url : url, json : true},
             function (err, response, body) {

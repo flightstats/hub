@@ -19,10 +19,10 @@ public class LinkedTest {
                 new HalLink("foo", URI.create("http://hotmail.com")));
 
         Linked<String> buildResult = Linked.linked("hello")
-                                           .withLink("foo", "http://lycos.com")
-                                           .withLink("bar", "http://yahoo.com")
-                                           .withLink("foo", "http://hotmail.com")
-                                           .build();
+                .withLink("foo", "http://lycos.com")
+                .withLink("bar", "http://yahoo.com")
+                .withLink("foo", "http://hotmail.com")
+                .build();
 
         List<HalLink> linksList = buildResult.getHalLinks().getLinks();
         assertEquals(linksList, expectedLinks);

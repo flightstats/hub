@@ -1,6 +1,6 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.channel.ChannelLinkBuilder;
+import com.flightstats.hub.channel.LinkBuilder;
 import com.flightstats.hub.model.ChannelConfiguration;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.HubUtils;
@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * SequenceIterator uses a WebSocket to keep up with the latest sequence.
  * It is designed to skip over missing sequences, should they occur.
  * SequenceIterator is not thread safe, and should only be used from a single thread.
- *
  */
 @ClientEndpoint()
 public class SequenceIterator implements Iterator<Optional<Content>> {
@@ -89,7 +88,7 @@ public class SequenceIterator implements Iterator<Optional<Content>> {
             logger.warn("unable to get latest for channel " + channelUrl);
             return;
         }
-        URI wsUri = ChannelLinkBuilder.buildWsLinkFor(URI.create(channelUrl));
+        URI wsUri = LinkBuilder.buildWsLinkFor(URI.create(channelUrl));
         latest.set(latestSequence.get());
         startWebSocket(wsUri);
     }

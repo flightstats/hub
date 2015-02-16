@@ -10,7 +10,7 @@ import javax.ws.rs.ext.Provider;
 @Provider
 public class NoSuchChannelExceptionMapper extends AbstractExceptionMapper<NoSuchChannelException> {
 
-	protected Response.Status getResponseCode() {
-		return Response.Status.NOT_FOUND;
-	}
+    protected Response.Status getResponseCode() {
+        return Response.Status.NOT_FOUND;
+    }
 }

@@ -17,16 +17,16 @@ public class ChannelNameUtilsTest {
     }
 
     @Test
-	public void testExtractChannelName() throws Exception {
+    public void testExtractChannelName() throws Exception {
         assertEquals("foobar", utils.extractFromWS(URI.create("/channel/foobar/ws")));
-	}
+    }
 
-	@Test
-	public void testWhenChannelDoesntMatch() throws Exception {
-		String uriString = "/shouldnt/find/me";
-		String result = utils.extractFromWS(URI.create(uriString));
-		assertEquals(uriString, result);
-	}
+    @Test
+    public void testWhenChannelDoesntMatch() throws Exception {
+        String uriString = "/shouldnt/find/me";
+        String result = utils.extractFromWS(URI.create(uriString));
+        assertEquals(uriString, result);
+    }
 
     @Test
     public void testExtractChannelUri() throws Exception {

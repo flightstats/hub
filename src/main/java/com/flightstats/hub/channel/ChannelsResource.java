@@ -25,13 +25,11 @@ public class ChannelsResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelsResource.class);
 
     private final ChannelService channelService;
-    private final ChannelLinkBuilder linkBuilder;
     private final UriInfo uriInfo;
 
     @Inject
-    public ChannelsResource(ChannelService channelService, ChannelLinkBuilder linkBuilder, UriInfo uriInfo) {
+    public ChannelsResource(ChannelService channelService, UriInfo uriInfo) {
         this.channelService = channelService;
-        this.linkBuilder = linkBuilder;
         this.uriInfo = uriInfo;
     }
 
@@ -40,7 +38,7 @@ public class ChannelsResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
         Iterable<ChannelConfiguration> channels = channelService.getChannels();
-        Linked<?> result = linkBuilder.build(channels, uriInfo);
+        Linked<?> result = LinkBuilder.build(channels, uriInfo);
         return Response.ok(result).build();
     }
 
@@ -51,9 +49,9 @@ public class ChannelsResource {
     public Response createChannel(String json) throws InvalidRequestException, ConflictException {
         ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json);
         channelConfiguration = channelService.createChannel(channelConfiguration);
-        URI channelUri = ChannelLinkBuilder.buildChannelUri(channelConfiguration, uriInfo);
+        URI channelUri = LinkBuilder.buildChannelUri(channelConfiguration, uriInfo);
         return Response.created(channelUri).entity(
-                linkBuilder.buildChannelLinks(channelConfiguration, channelUri))
+                LinkBuilder.buildChannelLinks(channelConfiguration, channelUri))
                 .build();
     }
 }

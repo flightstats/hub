@@ -10,5 +10,7 @@ import javax.ws.rs.ext.Provider;
 @Singleton
 public class InvalidRequestExceptionMapper extends AbstractExceptionMapper<InvalidRequestException> {
 
-	protected Response.Status getResponseCode() { return Response.Status.BAD_REQUEST; }
+    protected Response.Status getResponseCode() {
+        return Response.Status.BAD_REQUEST;
+    }
 }

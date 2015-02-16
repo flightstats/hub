@@ -23,7 +23,8 @@ public class ShutdownResource {
     HubHealthCheck healthCheck;
 
     @Inject
-    @Named("app.shutdown_delay_seconds") Integer shutdown_delay_seconds;
+    @Named("app.shutdown_delay_seconds")
+    Integer shutdown_delay_seconds;
 
     @POST
     public Response shutdown() {

@@ -1,18 +1,17 @@
-import groovyx.net.http.RESTClient
-
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'application'
-apply plugin: 'jacoco'
 
-jacoco {
-    toolVersion = "0.7.2.201409121644"
+if (project.ext.properties.get('isDevBuild') == null) {
+    project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
 }
 
-apply from: 'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-utils-1.0.1.gradle'
+repositories {
+    mavenCentral()
+}
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 project.ext.jenkinsBuildNumber = "$System.env.VERSION_NUMBER"
 project.ext.jenkinsJobName = "hub-v2"
@@ -20,11 +19,8 @@ project.ext.jenkinsJobName = "hub-v2"
 group = 'com.flightstats'
 
 version = project.ext.jenkinsBuildNumber
-//todo - gfm - 3/20/14 - have the local build just use local-full time stamp
 
 project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
-
-apply from: 'http://artifactory.office/artifactory/simple/services-dev/com.flightstats/gradle/1.0.1/common-1.0.1.gradle'
 
 println "Building version: ${version}"
 
@@ -32,25 +28,9 @@ buildDir = 'build'
 
 mainClassName = "com.flightstats.hub.app.HubMain"
 
-buildscript {
-    repositories {
-        mavenCentral()
-        maven { url 'http://repo.jfrog.org/artifactory/gradle-plugins' }
-    }
-
-    dependencies {
-        classpath(
-                [group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.16'],
-                [group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7']
-        )
-    }
-}
-
 configurations {
     all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
     all*.exclude(module: 'log4j')
-    publish
-    publishDev
     integrationTests
 }
 
@@ -103,7 +83,7 @@ dependencies {
     compile 'commons-io:commons-io:2.4'
     compile 'com.github.rholder:guava-retrying:1.0.6'
     compile 'com.google.code.gson:gson:2.3'
-    compile 'newrelic:newrelic_agent:3.11.0'
+    compile 'com.newrelic.agent.java:newrelic-agent:3.11.0'
     compile 'com.newrelic.agent.java:newrelic-api:3.11.0'
     compile 'org.projectlombok:lombok:1.14.8'
     testCompile 'com.sparkjava:spark-core:2.0.0'
@@ -122,78 +102,5 @@ applicationDistribution.from('README.md') {
 
 applicationDistribution.from('config/triforce') {
     into "triforce"
-}
-
-task jasmineTests << {
-    def testdir = "${projectDir}/src/test/integration"
-    def reportsdir = "${projectDir}/build/reports/integration/"
-    println "Making " + reportsdir
-    new File(reportsdir).mkdirs()
-    runExternal("jasmine-node --forceexit --captureExceptions --junitreport --output ${reportsdir} ${testdir}")
-}
-
-
-task startHub(type: JavaExec) {
-    main = mainClassName
-    classpath = sourceSets.main.runtimeClasspath
-    args 'useDefault'
-}
-
-task startMemoryHub(type: JavaExec) {
-    main = 'com.flightstats.hub.app.MemoryHubMain'
-    classpath = sourceSets.test.runtimeClasspath
-}
-
-def startTaskAndWait = { startTask, url ->
-    println "starting hub"
-    Thread.start({ startTask.execute() })
-
-    println 'waiting for hub to start'
-    def client = new RESTClient(url)
-
-    health = {
-        try {
-            return client.head(path: 'health').status
-        } catch (any) {
-            println any
-            return 500
-        }
-    }
-    while (health() != 200) {
-        //fail this if it happens too many times
-        sleep 1000
-    }
-    println('hub started!')
-}
-
-task startHubAsync(dependsOn: classes) << {
-    startTaskAndWait(startHub, 'http://localhost:9080/')
-}
-
-task startMemoryHubAsync(dependsOn: testClasses) << {
-    startTaskAndWait(startMemoryHub, 'http://localhost:9999/')
-}
-
-task integrationTests(dependsOn: [startHubAsync, startMemoryHubAsync, jasmineTests]) << {}
-
-jasmineTests.mustRunAfter startHubAsync
-jasmineTests.mustRunAfter startMemoryHubAsync
-
-task startReplicationVerifierStaging(dependsOn: testClasses) << {
-    if (project.hasProperty("appArgs")) {
-        verifierExec.args = Eval.me(appArgs)
-    } else {
-        verifierExec.args = ["http://hub-int.svc.staging/", "1", "10"].toList()
-    }
-    verifierExec.execute()
-}
-
-task verifierExec(type: JavaExec) {
-    main = 'com.flightstats.hub.replication.ReplicationVerifier'
-    classpath = sourceSets.test.runtimeClasspath
-}
-
-test {
-    jvmArgs '-Xmx3G'
 }
 

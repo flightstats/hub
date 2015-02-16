@@ -1,8 +1,5 @@
 package com.flightstats.hub.util;
 
-/**
- *
- */
 public class Sleeper {
     public static void sleep(long millis) {
         try {

@@ -13,8 +13,7 @@ import java.net.UnknownHostException;
 /**
  * RetryClientFilter assumes that connection issues may be transient, so retry is a good idea.
  */
-public class RetryClientFilter extends ClientFilter
-{
+public class RetryClientFilter extends ClientFilter {
     private static final Logger logger = LoggerFactory.getLogger(RetryClientFilter.class);
 
     public ClientResponse handle(ClientRequest clientRequest) throws ClientHandlerException {
@@ -27,8 +26,7 @@ public class RetryClientFilter extends ClientFilter
         int attempt = 0;
         while (attempt < maxRetries) {
             attempt++;
-            try
-            {
+            try {
                 ClientResponse response = getNext().handle(clientRequest);
                 if (response.getStatus() >= 500) {
                     //todo - gfm - 1/26/14 - look at Retry-After header
@@ -36,18 +34,14 @@ public class RetryClientFilter extends ClientFilter
                     if (attempt >= maxRetries) {
                         return response;
                     }
-                } else  {
+                } else {
                     return response;
                 }
-            }
-            catch (ClientHandlerException e)
-            {
-                if (e.getCause() == null)
-                {
+            } catch (ClientHandlerException e) {
+                if (e.getCause() == null) {
                     throw e;
                 }
-                if (UnknownHostException.class.isAssignableFrom(e.getCause().getClass()))
-                {
+                if (UnknownHostException.class.isAssignableFrom(e.getCause().getClass())) {
                     throw e;
                 }
                 lastCause = e;

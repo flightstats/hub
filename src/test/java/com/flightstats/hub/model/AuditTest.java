@@ -35,7 +35,7 @@ public class AuditTest {
         String json = audit.toJson();
         assertTrue(json.contains("\"user\":\"somebody\""));
         assertTrue(json.contains("\"uri\":\"http://hub/channel/blah/1\""));
-        assertTrue(json.contains("\"date\":\"" + formatter.format(audit.getDate()) ));
+        assertTrue(json.contains("\"date\":\"" + formatter.format(audit.getDate())));
     }
 
 }
