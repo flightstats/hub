@@ -72,12 +72,9 @@ public class GroupCallbackImpl implements GroupCallback {
         for (String groupToStop : groupsToStop) {
             logger.info("stopping " + groupToStop);
             final GroupCaller groupCaller = activeGroups.remove(groupToStop);
-            groups.add(new Callable<Object>() {
-                @Override
-                public Object call() throws Exception {
-                    groupCaller.exit(delete);
-                    return null;
-                }
+            groups.add(() -> {
+                groupCaller.exit(delete);
+                return null;
             });
         }
         try {

@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FilenameFilter;
 
 public class HubVersion {
     private final static Logger logger = LoggerFactory.getLogger(HubVersion.class);
@@ -24,11 +23,8 @@ public class HubVersion {
         }
         try {
             File libDir = new File(libPath);
-            File[] files = libDir.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return name.startsWith("hub");
-                }
+            File[] files = libDir.listFiles((dir, name) -> {
+                return name.startsWith("hub");
             });
             if (files.length == 1) {
                 String name = files[0].getName();

@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.dao.aws.AwsConnectorFactory;
 import org.junit.BeforeClass;
@@ -12,6 +13,7 @@ public class S3ContentDaoTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
+        HubProperties.loadProperties("useDefault");
         AwsConnectorFactory factory = new AwsConnectorFactory();
         AmazonS3 s3Client = factory.getS3Client();
         S3BucketName bucketName = new S3BucketName("local", "hub-v2");

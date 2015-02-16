@@ -4,7 +4,6 @@ import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.api.CuratorEvent;
 import org.apache.curator.framework.api.CuratorListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,14 +31,11 @@ public class SingleWatcher {
 
     @VisibleForTesting
     void addCuratorListener() {
-        listener = new CuratorListener() {
-            @Override
-            public void eventReceived(CuratorFramework client, final CuratorEvent event) throws Exception {
-                if (watcher.getPath().equals(event.getPath())) {
-                    logger.debug("event path {}", event.getPath());
-                    addWatch(watcher.getPath());
-                    watcher.callback(event);
-                }
+        listener = (client, event) -> {
+            if (watcher.getPath().equals(event.getPath())) {
+                logger.debug("event path {}", event.getPath());
+                addWatch(watcher.getPath());
+                watcher.callback(event);
             }
         };
         curator.getCuratorListenable().addListener(listener, executorService);

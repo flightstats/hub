@@ -2,7 +2,6 @@ package com.flightstats.hub.rest;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
@@ -80,12 +79,7 @@ public class Linked<T> {
     public static class Builder<T> {
         private final List<HalLink> links = new ArrayList<>();
         private final Multimap<String, HalLink> multiLinks = Multimaps.newListMultimap(new HashMap<String, Collection<HalLink>>(),
-                new Supplier<List<HalLink>>() {
-                    @Override
-                    public List<HalLink> get() {
-                        return new ArrayList<>();
-                    }
-                });
+                () -> new ArrayList<>());
         private final T object;
 
         public Builder(T object) {
