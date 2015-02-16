@@ -89,6 +89,7 @@ dependencies {
     testCompile 'org.apache.curator:curator-test:2.6.0'
 }
 
+
 distTar {
     compression = Compression.GZIP
 }
