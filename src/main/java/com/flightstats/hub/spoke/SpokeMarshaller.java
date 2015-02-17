@@ -28,7 +28,6 @@ public class SpokeMarshaller {
         zipOut.setLevel(Deflater.BEST_SPEED);
         zipOut.putNextEntry(new ZipEntry("meta"));
         ObjectNode objectNode = mapper.createObjectNode();
-        //todo - gfm - 11/12/14 - make headers a map
         if (content.getUser().isPresent()) {
             objectNode.put("user", content.getUser().get());
         }

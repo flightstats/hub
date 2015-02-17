@@ -15,12 +15,8 @@ public class SpokePathUtilTest {
         assertEquals("13", SpokePathUtil.hour("alksdjf/2014/10/05/13"));
         assertEquals("09", SpokePathUtil.minute("alksdjf/2014/10/05/13/09"));
         assertEquals("15", SpokePathUtil.second("alksdjf/2014/10/05/13/09/15123aaa"));
-        // TODO bc 11/20/14: get regex for millisecond to work
-//        assertEquals(123, SpokePathUtil.millisecond("alksdjf/2014/10/05/13/09/15/123aaa"));
-//        assertEquals(123, SpokePathUtil.millisecond("alksdjf/2014/10/05/13/09/15123aaa"));
         assertEquals(null, SpokePathUtil.minute("alksdjf/2014/10/05/13/0"));
         assertEquals("second", SpokePathUtil.smallestTimeResolution("lkjsldfjlkasd/2014/12/12/12/12/12"));
-//        assertEquals("millisecond", SpokePathUtil.smallestTimeResolution("lkjsldfjlkasd/2014/12/12/12/12/12555abcd"));
         assertEquals("year", SpokePathUtil.smallestTimeResolution("lkjsldfjlkasd/2014/"));
         assertEquals("alksdjf/2014/10/05/13/09/15", SpokePathUtil.secondPathPart("alksdjf/2014/10/05/13/09/15123aaa"));
     }

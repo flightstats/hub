@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
@@ -25,8 +26,7 @@ public class WatchManager {
     @Inject
     public WatchManager(CuratorFramework curator) {
         this.curator = curator;
-        //todo - gfm - 6/2/14 - do we care what this number is?
-        executorService = Executors.newFixedThreadPool(10);
+        executorService = Executors.newFixedThreadPool(HubProperties.getProperty("watchManager.threads", 10));
         HubServices.register(new WatchManagerService());
     }
 

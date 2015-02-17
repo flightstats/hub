@@ -28,8 +28,5 @@ public class GroupValidator {
         if (!ChannelNameUtils.isValidChannelUrl(group.getChannelUrl())) {
             throw new InvalidRequestException("{\"error\": \"Invalid channelUrl\"}");
         }
-
-        //todo - gfm - 6/3/14 - should this enforce channel url's format, or silently change it?
-
     }
 }
