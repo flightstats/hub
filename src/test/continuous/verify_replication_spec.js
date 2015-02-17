@@ -52,7 +52,7 @@ describe(testName, function () {
                             .end(function (res) {
                                 expect(res.error).toBe(false);
                                 var server = res.header['server'];
-                                if (server.indexOf('Hub/v2') >= 0) {
+                                if (server.indexOf('Hub') >= 0) {
                                     replicatedChannels[channel]['version'] = 'v2';
                                 } else {
                                     replicatedChannels[channel]['version'] = 'v1';
