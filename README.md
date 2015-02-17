@@ -31,9 +31,7 @@ The Hub
 * [deployments](#deployments)
 * [Requirements Notes](#Requirements-Notes)
 
-For the purposes of this document, the Hub is at http://hub/.
 
-* On your local machine it is at: http://localhost:9080/
 
 ## overview
 
@@ -70,6 +68,10 @@ We also recommend clients use exponential backoff for retries.
 ## hub resources
 
 To explore the Resources available in the Hub, go to http://hub/
+
+**Note**
+For the purposes of this document, the Hub is at http://hub/.
+On your local machine it is at: http://localhost:9080/
 
 ## list channels
 
@@ -140,6 +142,9 @@ On success:  `HTTP/1.1 201 OK`
         },
         "time": {
             "href": "http://hub/channel/stumptown/time"
+        },
+        "status" : {
+              "href" : "http://hub-v2.svc.dev/channel/load_test_1/status"
         }
     },
     "name": "stumptown",
@@ -415,14 +420,14 @@ To see time format options, issue a GET request on the `time` link returned from
 }
 ```
 
-Call one of redirect uris, and the Hub will issue a 303 redirect for the current time with the specified resolution.
+Call a named uri, and the Hub will issue a 303 redirect for the current time with the specified resolution.
 
 `HEAD http://localhost:9080/channel/stumptown/time/second`
 
 On success:  `HTTP/1.1 303 See Other`
 `Location: http://hub/channel/stumptown/2014/01/13/10/42/31
 
-A GET on the returned URI will return all of the content URIs within that period.
+A GET on the returned Location will return all of the content URIs within that period.
 
 `GET http://hub/channel/stumptown/2014/01/13/10/42/31`
 
@@ -445,7 +450,7 @@ Content-Type is `application/json`
 
 If no items were submitted during that time, 'uris' is an empty array.
 If the time requested is the current minute, 'uri's will reflect all of the items inserted within the minute so far, and will
-change as other items are inserted.
+increase as other items are inserted.
 
 ### time resolution
 
@@ -479,6 +484,8 @@ http://hub/channel/stumptown/2014/01/13/10/42/31/359/{hash2}
 http://hub/channel/stumptown/2014/01/13/10/42/31/642/{hash3}
 ...etc...
 ```
+
+The returned items are stable only.
 
 ## group callback
 
