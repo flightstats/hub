@@ -102,7 +102,7 @@ public class HubUtils {
                 return Version.Unknown;
             }
             String server = response.getHeaders().getFirst("Server");
-            if (server.startsWith("Hub/v2")) {
+            if (server.startsWith("Hub")) {
                 return Version.V2;
             }
             return Version.V1;
