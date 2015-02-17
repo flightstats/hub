@@ -1,5 +1,6 @@
 package com.flightstats.hub.rest;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.util.Sleeper;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientRequest;
@@ -17,19 +18,15 @@ public class RetryClientFilter extends ClientFilter {
     private static final Logger logger = LoggerFactory.getLogger(RetryClientFilter.class);
 
     public ClientResponse handle(ClientRequest clientRequest) throws ClientHandlerException {
-        //todo - gfm - 2/28/14 - change this to use com.github.rholder.retry.Retryer
-        //todo - gfm - 1/26/14 - add these to config
-        int maxRetries = 5;
-        int sleep = 1000;
+        int maxRetries = HubProperties.getProperty("http.maxRetries", 5);
+        int sleep = HubProperties.getProperty("http.sleep", 1000);
         ClientHandlerException lastCause = null;
-
         int attempt = 0;
         while (attempt < maxRetries) {
             attempt++;
             try {
                 ClientResponse response = getNext().handle(clientRequest);
                 if (response.getStatus() >= 500) {
-                    //todo - gfm - 1/26/14 - look at Retry-After header
                     logger.info("500 level response {}  attempt={}", response, attempt);
                     if (attempt >= maxRetries) {
                         return response;

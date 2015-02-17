@@ -10,7 +10,6 @@ if (!runEncrypted) return;
 
 /**
  * This should make sure we can't delete an auditing channel
- * //todo - gfm - 5/21/14 - disabling this test for now, as we want to be able to delete test channels.
  */
 describe(testName, function () {
     utils.createChannel(channelName);

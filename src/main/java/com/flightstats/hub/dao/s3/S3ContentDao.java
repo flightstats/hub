@@ -46,7 +46,6 @@ public class S3ContentDao implements ContentDao {
         logger.info("checking if bucket exists " + s3BucketName);
         if (s3Client.doesBucketExist(s3BucketName)) {
             logger.info("bucket exists " + s3BucketName);
-            //todo - gfm - 11/28/14 - this should also verify read/write & query
             return;
         }
         logger.error("EXITING! unable to find bucket " + s3BucketName);

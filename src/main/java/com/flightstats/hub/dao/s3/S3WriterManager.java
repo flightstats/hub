@@ -142,7 +142,6 @@ public class S3WriterManager {
         @Override
         protected void shutDown() throws Exception {
             s3WriteQueue.close();
-            //TODO - look at shutting down thread pools
         }
     }
 }

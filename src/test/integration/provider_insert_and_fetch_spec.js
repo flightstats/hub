@@ -17,7 +17,7 @@ frisby.create(testName + ': Inserting a value into a provider channel .')
     .expectHeader('content-type', 'text/plain')
     .after(function () {
         frisby.create(testName + ': Fetching value to ensure that it was inserted.')
-            .get(thisChannelResource + "/latest")
+            .get(thisChannelResource + "/latest?stable=false")
             .expectStatus(200)
             .expectHeader('content-type', 'text/plain')
             .expectBodyContains(messageText)

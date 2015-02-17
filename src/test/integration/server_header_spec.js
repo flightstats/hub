@@ -15,7 +15,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                expect(response.headers.server.substring(0, 6)).toBe('Hub/v2');
+                expect(response.headers.server.substring(0, 3)).toBe('Hub');
                 done();
             });
     }
