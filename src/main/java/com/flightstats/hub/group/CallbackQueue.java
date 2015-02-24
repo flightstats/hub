@@ -2,6 +2,7 @@ package com.flightstats.hub.group;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -52,6 +53,9 @@ public class CallbackQueue implements AutoCloseable {
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("group-" + group.getName() + "-queue-%s").build();
         ExecutorService executorService = Executors.newSingleThreadExecutor(factory);
         executorService.submit(new Runnable() {
+
+            ContentKey lastAdded = startingKey;
+
             @Override
             public void run() {
                 try {
@@ -68,10 +72,16 @@ public class CallbackQueue implements AutoCloseable {
                     if (lastQueryTime.isBefore(latestStableInChannel)) {
                         TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
                         logger.trace("query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
+                        Location location = Location.ALL;
+                        if (unit.equals(TimeUtil.Unit.SECONDS)) {
+                            location = Location.CACHE;
+                        }
                         TimeQuery query = TimeQuery.builder()
                                 .channelName(channel)
                                 .startTime(lastQueryTime)
-                                .unit(unit).build();
+                                .unit(unit)
+                                .location(location)
+                                .build();
                         query.trace(false);
                         addKeys(channelService.queryByTime(query));
                         lastQueryTime = lastQueryTime.plus(unit.getDuration());
@@ -85,8 +95,9 @@ public class CallbackQueue implements AutoCloseable {
                 logger.trace("channel {} keys {}", channel, keys);
                 try {
                     for (ContentKey key : keys) {
-                        if (key.compareTo(startingKey) > 0) {
+                        if (key.compareTo(lastAdded) > 0) {
                             queue.put(key);
+                            lastAdded = key;
                         }
                     }
                 } catch (InterruptedException e) {
