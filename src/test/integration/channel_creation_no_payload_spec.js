@@ -1,6 +1,6 @@
 require('./integration_config.js');
 
-var testName = "channel_creation_no_payload_spec";
+var testName = __filename;
 utils.configureFrisby();
 
 frisby.create(testName + ':Test create channel with empty name')
