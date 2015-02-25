@@ -13,21 +13,18 @@ describe(testName, function () {
 
     console.log('channelName', channelName);
 
-    it('adds items and traverses next links', function (done) {
-        var values = [];
-        var items = [];
+    it('adds item and checks relative links', function (done) {
+        var item_href;
         utils.postItemQ(channelResource)
             .then(function (value) {
-                values.push(value);
-                var item_link = value.body._links.self.href;
-                items.push(item_link);
-                console.log('item_link', item_link);
-                return utils.getQ(value.body._links.self.href + '/next/10');
+                item_href = value.body._links.self.href;
+                console.log('item_link', item_href);
+                return utils.getQ(item_href + '/next/10');
             })
             .then(function (value) {
-                console.log('value', value.body);
                 expect(value.body._links.uris.length).toBe(0);
                 expect(value.body._links.previous).not.toBeUndefined();
+                expect(value.body._links.previous.href).toBe(item_href + '/previous/10');
                 done();
             })
     });
