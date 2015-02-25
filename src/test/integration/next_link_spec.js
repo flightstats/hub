@@ -18,13 +18,13 @@ describe(testName, function () {
             .then(function (value) {
                 values.push(value);
                 items.push(value.body._links.self.href);
-                return getItem(value.body._links.self.href, 200);
+                return utils.getQ(value.body._links.self.href, 200);
             })
             .then(function (value) {
-                return getItem(items[0] + '/next', 404);
+                return utils.getQ(items[0] + '/next', 404);
             })
             .then(function (value) {
-                return getItem(items[0] + '/next/2', 200);
+                return utils.getQ(items[0] + '/next/2', 200);
             })
             .then(function (value) {
                 expect(value.body._links.uris.length).toBe(0);
@@ -36,11 +36,11 @@ describe(testName, function () {
             })
             .then(function (value) {
                 items.push(value.body._links.self.href);
-                return getItem(items[0] + '/next', 200);
+                return utils.getQ(items[0] + '/next', 200);
             })
             .then(function (value) {
                 expect(value.response.request.href).toBe(items[1]);
-                return getItem(items[0] + '/next/2', 200);
+                return utils.getQ(items[0] + '/next/2', 200);
             })
             .then(function (value) {
                 expect(value.body._links.uris.length).toBe(2);
@@ -50,18 +50,6 @@ describe(testName, function () {
                 done();
             })
     });
-
-    function getItem(url, status) {
-        status = status || 200;
-        var deferred = Q.defer();
-        request.get({url : url + '?stable=false', json : true },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(status);
-                deferred.resolve({response : response, body : body});
-            });
-        return deferred.promise;
-    }
 
 });
 
