@@ -173,6 +173,19 @@ function deleteGroup(groupName) {
     }, 60 * 1000);
 }
 
+function getQ(url, status, stable) {
+    status = status || 200;
+    stable = stable || false;
+    var deferred = Q.defer();
+    request.get({url: url + '?stable=' + stable, json: true},
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(status);
+            deferred.resolve({response: response, body: body});
+        });
+    return deferred.promise;
+}
+
 function sleep(millis) {
     runs(function() {
         flag = false;
@@ -276,4 +289,5 @@ exports.postItemQ = postItemQ;
 exports.startServer = startServer;
 exports.startHttpsServer = startHttpsServer;
 exports.closeServer = closeServer;
+exports.getQ = getQ;
 
