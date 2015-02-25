@@ -52,6 +52,9 @@ public class ChannelConfiguration implements Serializable {
     }
 
     public static ChannelConfiguration fromJson(String json, String name) {
+        if (StringUtils.isEmpty(json)) {
+            return builder().withName(name).build();
+        }
         return gson.fromJson(json, ChannelConfiguration.Builder.class)
                 .withName(name)
                 .build();
