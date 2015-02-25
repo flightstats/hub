@@ -54,7 +54,7 @@ public class RemoteSpokeStore {
 
     public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
         List<String> servers = cluster.getServers();
-        int quorum = getQuorum(servers);
+        int quorum = getQuorum(servers.size());
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
         AtomicBoolean reported = new AtomicBoolean();
         for (final String server : servers) {
@@ -90,8 +90,8 @@ public class RemoteSpokeStore {
         return awaited;
     }
 
-    private int getQuorum(List<String> servers) {
-        return Math.max(1, servers.size() - 1);
+    static int getQuorum(int size) {
+        return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
     public com.flightstats.hub.model.Content read(String path, ContentKey key) {
