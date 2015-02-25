@@ -1,10 +1,10 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,10 +18,9 @@ public class SpokeTtlEnforcer {
     private final int ttlMinutes;
 
     @Inject
-    public SpokeTtlEnforcer(@Named("spoke.path") String storagePath,
-                            @Named("spoke.ttlMinutes") int ttlMinutes) {
-        this.storagePath = storagePath;
-        this.ttlMinutes = ttlMinutes;
+    public SpokeTtlEnforcer() {
+        this.storagePath = HubProperties.getProperty("spoke.path", "/spoke");
+        this.ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
         HubServices.register(new SpokeTtlEnforcerService());
     }
 
