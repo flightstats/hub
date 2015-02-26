@@ -27,7 +27,10 @@ public class HostedGraphiteSender implements MetricsSender {
             throws IOException {
         this.host = HubProperties.getProperty("hosted_graphite.host", "carbon.hostedgraphite.com");
         this.port = HubProperties.getProperty("hosted_graphite.port", 2003);
-        this.graphitePrefix = HubProperties.getProperty("hosted_graphite.prefix", "hub");
+
+        this.graphitePrefix = HubProperties.getProperty("hosted_graphite.apikey", "XYZ")
+                + "." + HubProperties.getProperty("app.name", "hub")
+                + "." + HubProperties.getProperty("app.environment", "dev");
         callableSender = new CallableSender();
         HubServices.register(new HostedGraphiteSenderService());
     }
