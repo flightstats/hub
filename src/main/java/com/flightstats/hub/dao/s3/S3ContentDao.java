@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -12,7 +13,6 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -32,13 +32,10 @@ public class S3ContentDao implements ContentDao {
     private final String s3BucketName;
 
     @Inject
-    public S3ContentDao(AmazonS3 s3Client,
-                        @Named("app.encrypted") boolean useEncrypted,
-                        S3BucketName s3BucketName,
-                        @Named("s3.maxQueryItems") int s3MaxQueryItems) {
+    public S3ContentDao(AmazonS3 s3Client, S3BucketName s3BucketName) {
         this.s3Client = s3Client;
-        this.useEncrypted = useEncrypted;
-        this.s3MaxQueryItems = s3MaxQueryItems;
+        this.useEncrypted = HubProperties.getProperty("app.encrypted", false);
+        this.s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
         this.s3BucketName = s3BucketName.getS3BucketName();
     }
 
