@@ -3,7 +3,6 @@ package com.flightstats.hub.app;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.util.Sleeper;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +21,6 @@ public class ShutdownResource {
     @Inject
     HubHealthCheck healthCheck;
 
-    @Inject
-    @Named("app.shutdown_delay_seconds")
-    Integer shutdown_delay_seconds;
 
     @POST
     public Response shutdown() {
@@ -32,6 +28,7 @@ public class ShutdownResource {
         //this call will get the node removed from the Load Balancer
         healthCheck.shutdown();
         //wait until it's likely the node is removed from the Load Balancer
+        int shutdown_delay_seconds = HubProperties.getProperty("app.shutdown_delay_seconds", 5);
         Sleeper.sleep(shutdown_delay_seconds * 1000);
         //after the node isn't getting new requests, stop everything that needs a clean kill
         HubServices.preStop();
