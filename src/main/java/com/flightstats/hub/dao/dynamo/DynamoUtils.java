@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.dynamo;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.flightstats.hub.app.HubProperties;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
@@ -21,12 +22,12 @@ public class DynamoUtils {
 
     @Inject
     public DynamoUtils(AmazonDynamoDBClient dbClient,
-                       @Named("app.environment") String environment, @Named("app.name") String appName,
-                       @Named("dynamo.table_creation_wait_minutes") int tableCreationWaitMinutes) {
+                       @Named("app.environment") String environment, @Named("app.name") String appName) {
         this.dbClient = dbClient;
         this.environment = environment;
         this.appName = appName;
-        this.tableCreationWaitMinutes = tableCreationWaitMinutes;
+        this.tableCreationWaitMinutes = HubProperties.getProperty("dynamo.table_creation_wait_minutes", 10);
+        ;
     }
 
     public String getTableName(String baseTableName) {
