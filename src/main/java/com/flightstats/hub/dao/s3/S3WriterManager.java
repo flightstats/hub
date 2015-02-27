@@ -61,11 +61,11 @@ public class S3WriterManager {
     static int serverOffset(String host) {
         int offset;
         if (host.contains("1.")) {
-            offset = HubProperties.getProperty("verify.one", 15);
+            offset = HubProperties.getProperty("verify.one", 45);
         } else if (host.contains("2.")) {
             offset = HubProperties.getProperty("verify.two", 30);
         } else if (host.contains("3.")) {
-            offset = HubProperties.getProperty("verify.three", 45);
+            offset = HubProperties.getProperty("verify.three", 15);
         } else {
             offset = 5;
         }
