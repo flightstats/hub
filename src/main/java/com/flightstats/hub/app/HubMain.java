@@ -52,7 +52,7 @@ public class HubMain {
 
     private static void startZookeeperIfSingle() {
         new Thread(() -> {
-            String zkConfigFile = HubProperties.getProperty("zookeeper.cfg", "");
+            String zkConfigFile = HubProperties.getProperty("runSingleZookeeperInternally", "");
             if ("singleNode".equals(zkConfigFile)) {
                 warn("using single node zookeeper");
                 ZookeeperMain.start();

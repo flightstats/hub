@@ -17,7 +17,7 @@ public class S3ContentDaoTest {
         AwsConnectorFactory factory = new AwsConnectorFactory();
         AmazonS3 s3Client = factory.getS3Client();
         S3BucketName bucketName = new S3BucketName("local", "hub-v2");
-        S3ContentDao s3ContentDao = new S3ContentDao(s3Client, false, bucketName, 3);
+        S3ContentDao s3ContentDao = new S3ContentDao(s3Client, bucketName);
         util = new ContentDaoUtil(s3ContentDao);
     }
 
