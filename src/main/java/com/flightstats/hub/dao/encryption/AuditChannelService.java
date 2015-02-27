@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.encryption;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.exception.ConflictException;
@@ -7,7 +8,6 @@ import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,9 +26,10 @@ public class AuditChannelService implements ChannelService {
     private final ExecutorService executorService;
 
     @Inject
-    public AuditChannelService(@BasicChannelService ChannelService channelService,
-                               @Named("audit.threads") int auditThreads, @Named("audit.queue") int auditQueue) {
+    public AuditChannelService(@BasicChannelService ChannelService channelService) {
         this.channelService = channelService;
+        int auditThreads = HubProperties.getProperty("audit.threads", 10);
+        int auditQueue = HubProperties.getProperty("audit.queue", 1000);
         executorService = new ThreadPoolExecutor(1, auditThreads, 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(auditQueue));
     }
