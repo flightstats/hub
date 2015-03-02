@@ -49,26 +49,20 @@ public class S3WriterManager {
         this.s3WriteQueue = s3WriteQueue;
         HubServices.register(new S3WriterManagerService(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
 
-        String host = HubHost.getLocalName();
-        this.offsetMinutes = serverOffset(host);
-        logger.info("{} offset is -{} minutes", host, this.offsetMinutes);
+        this.offsetMinutes = serverOffset();
         queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d")
                 .build());
         channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d")
                 .build());
     }
 
-    static int serverOffset(String host) {
-        int offset;
-        if (host.contains("1.")) {
-            offset = HubProperties.getProperty("verify.one", 45);
-        } else if (host.contains("2.")) {
-            offset = HubProperties.getProperty("verify.two", 30);
-        } else if (host.contains("3.")) {
-            offset = HubProperties.getProperty("verify.three", 15);
-        } else {
-            offset = 5;
-        }
+    static int serverOffset() {
+        String host = HubHost.getLocalName();
+        int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
+        int shiftMinutes = 5;
+        int randomOffset = shiftMinutes + (int) (Math.random() * (ttlMinutes - shiftMinutes * 3));
+        int offset = HubProperties.getProperty("s3.verifyOffset." + host, randomOffset);
+        logger.info("{} offset is -{} minutes", host, offset);
         return offset;
     }
 
