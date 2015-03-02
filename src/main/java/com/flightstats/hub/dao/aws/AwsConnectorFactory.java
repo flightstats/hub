@@ -66,7 +66,7 @@ public class AwsConnectorFactory {
     }
 
     private PropertiesCredentials getPropertiesCredentials() {
-        return loadTestCredentials(HubProperties.getProperty("test_credentials", "hub_test_credentials.properties"));
+        return loadTestCredentials(HubProperties.getProperty("aws.credentials", "hub_test_credentials.properties"));
     }
 
     private PropertiesCredentials loadTestCredentials(String credentialsPath) {
