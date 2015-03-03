@@ -30,6 +30,10 @@ public class ContentKey implements Comparable<ContentKey> {
         this.hash = hash;
     }
 
+    public ContentKey(int year, int month, int day, int hour, int minute, int second, int millis, String hash) {
+        this(new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC), hash);
+    }
+
     public static Optional<ContentKey> fromFullUrl(String url) {
         try {
             String substring = StringUtils.substringAfter(url, "/channel/");

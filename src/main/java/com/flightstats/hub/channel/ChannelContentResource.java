@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
@@ -166,8 +167,7 @@ public class ChannelContentResource {
                              @HeaderParam("Accept") String accept, @HeaderParam("User") String user
     ) {
         long start = System.currentTimeMillis();
-        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
-        ContentKey key = new ContentKey(dateTime, hash);
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         Request request = Request.builder()
                 .channel(channel)
                 .key(key)
@@ -211,23 +211,16 @@ public class ChannelContentResource {
                                 @PathParam("m") int minute,
                                 @PathParam("s") int second,
                                 @PathParam("ms") int millis,
-                                @PathParam("hash") String hash,
-                                @HeaderParam("Accept") String accept, @HeaderParam("User") String user
-    ) {
+                                @PathParam("hash") String hash) {
 
-        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
-        ContentKey key = new ContentKey(dateTime, hash);
-        Request request = Request.builder()
-                .channel(channel)
-                .key(key)
-                .user(user)
-                .uri(uriInfo.getRequestUri())
-                .build();
-        //todo - gfm - 3/3/15 - delete down stack
-        Optional<Content> optionalResult = channelService.getValue(request);
-
-
-        return Response.noContent().build();
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        try {
+            channelService.delete(channel, key);
+            return Response.noContent().build();
+        } catch (ConflictException e) {
+            logger.info("attempting to delete an item to soon {} {}", channel, key);
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/next")
@@ -264,7 +257,7 @@ public class ChannelContentResource {
         DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(new ContentKey(dateTime, hash))
+                .contentKey(new ContentKey(year, month, day, hour, minute, second, millis, hash))
                 .next(true)
                 .stable(stable)
                 .location(Location.valueOf(location))
@@ -305,10 +298,9 @@ public class ChannelContentResource {
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
                                      @QueryParam("location") @DefaultValue("ALL") String location) {
-        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(new ContentKey(dateTime, hash))
+                .contentKey(new ContentKey(year, month, day, hour, minute, second, millis, hash))
                 .next(false)
                 .stable(stable)
                 .location(Location.valueOf(location))
@@ -321,10 +313,9 @@ public class ChannelContentResource {
 
     private Response directional(String channel, int year, int month, int day, int hour, int minute,
                                  int second, int millis, String hash, boolean stable, boolean next) {
-        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(new ContentKey(dateTime, hash))
+                .contentKey(new ContentKey(year, month, day, hour, minute, second, millis, hash))
                 .next(next)
                 .stable(stable)
                 .ttlDays(channelService.getChannelConfiguration(channel).getTtlDays())

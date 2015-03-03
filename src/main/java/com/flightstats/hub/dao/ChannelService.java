@@ -15,8 +15,6 @@ public interface ChannelService {
 
     Optional<Content> getValue(Request request);
 
-    void delete(Request request);
-
     ChannelConfiguration getChannelConfiguration(String channelName);
 
     Iterable<ChannelConfiguration> getChannels();
@@ -36,4 +34,6 @@ public interface ChannelService {
     boolean isReplicating(String channelName);
 
     Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace);
+
+    void delete(String channel, ContentKey key);
 }

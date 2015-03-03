@@ -18,4 +18,6 @@ public interface ContentService {
     Collection<ContentKey> getKeys(DirectionQuery query);
 
     Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces);
+
+    void deleteItem(String channel, ContentKey key);
 }

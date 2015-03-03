@@ -87,8 +87,8 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public void delete(Request request) {
-        channelService.delete(request);
+    public void delete(String channel, ContentKey key) {
+        channelService.delete(channel, key);
     }
 
     private void audit(Request request) {
