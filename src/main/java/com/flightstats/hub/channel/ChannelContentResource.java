@@ -202,6 +202,34 @@ public class ChannelContentResource {
         return builder.build();
     }
 
+    @Path("/{h}/{m}/{s}/{ms}/{hash}")
+    @DELETE
+    public Response deleteValue(@PathParam("channel") String channel, @PathParam("Y") int year,
+                                @PathParam("M") int month,
+                                @PathParam("D") int day,
+                                @PathParam("h") int hour,
+                                @PathParam("m") int minute,
+                                @PathParam("s") int second,
+                                @PathParam("ms") int millis,
+                                @PathParam("hash") String hash,
+                                @HeaderParam("Accept") String accept, @HeaderParam("User") String user
+    ) {
+
+        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
+        ContentKey key = new ContentKey(dateTime, hash);
+        Request request = Request.builder()
+                .channel(channel)
+                .key(key)
+                .user(user)
+                .uri(uriInfo.getRequestUri())
+                .build();
+        //todo - gfm - 3/3/15 - delete down stack
+        Optional<Content> optionalResult = channelService.getValue(request);
+
+
+        return Response.noContent().build();
+    }
+
     @Path("/{h}/{m}/{s}/{ms}/{hash}/next")
     @GET
     public Response getNext(@PathParam("channel") String channel,

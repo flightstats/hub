@@ -15,6 +15,8 @@ public interface ChannelService {
 
     Optional<Content> getValue(Request request);
 
+    void delete(Request request);
+
     ChannelConfiguration getChannelConfiguration(String channelName);
 
     Iterable<ChannelConfiguration> getChannels();

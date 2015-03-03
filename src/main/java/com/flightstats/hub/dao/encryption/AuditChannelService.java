@@ -86,6 +86,11 @@ public class AuditChannelService implements ChannelService {
         return optional;
     }
 
+    @Override
+    public void delete(Request request) {
+        channelService.delete(request);
+    }
+
     private void audit(Request request) {
         Audit audit = Audit.builder()
                 .user(request.getUser())
