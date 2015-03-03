@@ -28,4 +28,6 @@ public interface ContentDao {
     void initialize();
 
     Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces);
+
+    void delete(String channel, ContentKey key);
 }

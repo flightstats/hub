@@ -88,6 +88,11 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
+    public void delete(String channel, ContentKey key) {
+        throw new UnsupportedOperationException("Spoke does not delete");
+    }
+
+    @Override
     public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
         logger.trace("query by time {} {} {}", channelName, startTime, unit);
         traces.add("spoke query by time", channelName, startTime, unit);
