@@ -54,12 +54,6 @@ public class S3ContentDao implements ContentDao {
         throw new UnsupportedOperationException("use query interface");
     }
 
-    @Override
-    public void delete(String channel, ContentKey key) {
-        String s3Key = getS3ContentKey(channel, key);
-        s3Client.deleteObject(s3BucketName, s3Key);
-    }
-
     public ContentKey write(String channelName, Content content) {
         ContentKey key = content.getContentKey().get();
         String s3Key = getS3ContentKey(channelName, key);

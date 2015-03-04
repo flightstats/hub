@@ -3,7 +3,6 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.s3.S3WriteQueue;
-import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -172,16 +171,6 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
         return cacheContentDao.getLatest(channel, limitKey, traces);
-    }
-
-    @Override
-    public void deleteItem(String channel, ContentKey key) {
-        Content item = cacheContentDao.read(channel, key);
-        if (item == null) {
-            longTermContentDao.delete(channel, key);
-        } else {
-            throw new ConflictException("unable to delete item still in Spoke. " + channel + " " + key);
-        }
     }
 
     private Set<ContentKey> queryBoth(DirectionQuery query) {

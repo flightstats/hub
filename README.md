@@ -22,7 +22,6 @@ The Hub
 * [group callback](#group-callback)
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
-* [delete an item](#delete-an-item)
 * [replication](#replication)
 * [health check](#health-check)
 * [access control](#access-control)
@@ -576,16 +575,6 @@ Here's how you can do this with curl:
 ```bash
 curl -i -X DELETE http://hub/channel/stumptown
 ```
-
-## delete an item
-
-While the contents of an item are immutable, individual items can be deleted.
-
- `DELETE http://hub/channel/stumptown/2013/04/23/20/42/31/749/ABC123`
-
-A successful deletion will return a 204 status code.  
-
-Items that are still in the cache's time to live cannot be deleted, and will return a 403 status code.
 
 ## replication
 
