@@ -119,11 +119,6 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public void delete(String channel, ContentKey key) {
-        contentService.deleteItem(channel, key);
-    }
-
-    @Override
     public ChannelConfiguration getChannelConfiguration(String channelName) {
         return channelConfigurationDao.getChannelConfiguration(channelName);
     }

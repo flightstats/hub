@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
-import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
@@ -200,27 +199,6 @@ public class ChannelContentResource {
         builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/next") + ">;rel=\"" + "next" + "\"");
         sender.send("channel." + channel + ".get", System.currentTimeMillis() - start);
         return builder.build();
-    }
-
-    @Path("/{h}/{m}/{s}/{ms}/{hash}")
-    @DELETE
-    public Response deleteValue(@PathParam("channel") String channel, @PathParam("Y") int year,
-                                @PathParam("M") int month,
-                                @PathParam("D") int day,
-                                @PathParam("h") int hour,
-                                @PathParam("m") int minute,
-                                @PathParam("s") int second,
-                                @PathParam("ms") int millis,
-                                @PathParam("hash") String hash) {
-
-        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        try {
-            channelService.delete(channel, key);
-            return Response.noContent().build();
-        } catch (ConflictException e) {
-            logger.info("attempting to delete an item to soon {} {}", channel, key);
-            return Response.status(Response.Status.FORBIDDEN).build();
-        }
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/next")
