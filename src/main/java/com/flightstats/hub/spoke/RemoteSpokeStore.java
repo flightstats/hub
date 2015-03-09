@@ -7,6 +7,7 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.Trace;
 import com.flightstats.hub.model.Traces;
+import com.flightstats.hub.rest.RestClient;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -32,7 +33,7 @@ public class RemoteSpokeStore {
 
     private final static Logger logger = LoggerFactory.getLogger(RemoteSpokeStore.class);
 
-    private final static Client client = create();
+    private final static Client client = RestClient.createClient(5, 5);
 
     private final SpokeCluster cluster;
     private final MetricsSender sender;
@@ -45,13 +46,6 @@ public class RemoteSpokeStore {
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
-    private static Client create() {
-        Client client = Client.create();
-        client.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(5));
-        client.setReadTimeout((int) TimeUnit.SECONDS.toMillis(5));
-        return client;
-    }
-
     public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
         List<String> servers = cluster.getServers();
         int quorum = getQuorum(servers.size());
@@ -61,10 +55,10 @@ public class RemoteSpokeStore {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    content.getTraces().add(new Trace(server));
+                    String uri = HubHost.getScheme() + server + "/spoke/payload/" + path;
+                    content.getTraces().add(new Trace(uri));
                     try {
-                        ClientResponse response = client.resource(HubHost.getScheme() + server + "/spoke/payload/" + path)
-                                .put(ClientResponse.class, payload);
+                        ClientResponse response = client.resource(uri).put(ClientResponse.class, payload);
                         long complete = System.currentTimeMillis();
                         content.getTraces().add(new Trace(server, response.getEntity(String.class)));
                         if (response.getStatus() == 201) {
