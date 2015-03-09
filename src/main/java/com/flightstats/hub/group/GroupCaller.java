@@ -8,6 +8,7 @@ import com.flightstats.hub.cluster.LastContentKey;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
@@ -89,7 +90,7 @@ public class GroupCaller implements Leader {
             logger.info("group is missing, exiting " + group.getName());
             return;
         }
-        this.client = GroupClient.createClient();
+        this.client = RestClient.createClient(30, 120);
         callbackQueue = queueProvider.get();
         try {
             ContentKey lastCompletedKey = lastContentKey.get(group.getName(), new ContentKey(), GROUP_LAST_COMPLETED);

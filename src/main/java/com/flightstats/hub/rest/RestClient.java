@@ -1,4 +1,4 @@
-package com.flightstats.hub.group;
+package com.flightstats.hub.rest;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -17,11 +17,11 @@ import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 
 
-class GroupClient {
+public class RestClient {
 
-    private final static Logger logger = LoggerFactory.getLogger(GroupClient.class);
+    private final static Logger logger = LoggerFactory.getLogger(RestClient.class);
 
-    public static Client createClient() {
+    public static Client createClient(int connectTimeout, int readTimeout) {
         try {
             TrustManager[] certs = new TrustManager[]{
                     new X509TrustManager() {
@@ -49,8 +49,8 @@ class GroupClient {
             config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES,
                     new HTTPSProperties((hostname, session) -> true, ctx));
             Client client = Client.create(config);
-            client.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(30));
-            client.setReadTimeout((int) TimeUnit.SECONDS.toMillis(120));
+            client.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(connectTimeout));
+            client.setReadTimeout((int) TimeUnit.SECONDS.toMillis(readTimeout));
             client.setFollowRedirects(true);
             return client;
         } catch (Exception e) {
