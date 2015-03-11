@@ -39,7 +39,7 @@ public class ChannelResource {
     public ChannelResource(ChannelService channelService, UriInfo uriInfo) {
         this.channelService = channelService;
         this.uriInfo = uriInfo;
-        minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 10);
+        minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
     }
 
     @GET
