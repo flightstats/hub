@@ -1,5 +1,6 @@
 package com.flightstats.hub.channel;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.EventTimed;
@@ -10,6 +11,7 @@ import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.hub.rest.Headers;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
+import com.flightstats.hub.util.Sleeper;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,11 +33,13 @@ public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
     private final ChannelService channelService;
     private final UriInfo uriInfo;
+    private final int minPostTimeMillis;
 
     @Inject
     public ChannelResource(ChannelService channelService, UriInfo uriInfo) {
         this.channelService = channelService;
         this.uriInfo = uriInfo;
+        minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 10);
     }
 
     @GET
@@ -101,6 +105,7 @@ public class ChannelResource {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
+        long start = System.currentTimeMillis();
         Content content = Content.builder()
                 .withContentLanguage(contentLanguage)
                 .withContentType(contentType)
@@ -121,6 +126,10 @@ public class ChannelResource {
             builder.location(payloadUri);
             LinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
             content.getTraces().logSlow(100, logger);
+            long time = System.currentTimeMillis() - start;
+            if (time < minPostTimeMillis) {
+                Sleeper.sleep(minPostTimeMillis - time);
+            }
             return builder.build();
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
