@@ -50,15 +50,20 @@ describe(testName, function () {
                         agent.get(res.body.replicationSource)
                             .set('Accept', 'application/json')
                             .end(function (res) {
-                                expect(res.error).toBe(false);
-                                var server = res.header['server'];
-                                if (server.indexOf('Hub') >= 0) {
-                                    replicatedChannels[channel]['version'] = 'v2';
+                                if (res.statusCode == 404) {
+                                    console.log('channel is missing remote source ', channel, res.body.replicationSource);
+                                    callback();
                                 } else {
-                                    replicatedChannels[channel]['version'] = 'v1';
+                                    expect(res.error).toBe(false);
+                                    var server = res.header['server'];
+                                    if (server.indexOf('Hub') >= 0) {
+                                        replicatedChannels[channel]['version'] = 'v2';
+                                    } else {
+                                        replicatedChannels[channel]['version'] = 'v1';
+                                    }
+                                    console.log('version', channel, replicatedChannels[channel]['version']);
+                                    callback(res.error);
                                 }
-                                console.log('version', channel, replicatedChannels[channel]['version']);
-                                callback(res.error);
                             });
                     });
             }, function (err) {
@@ -115,25 +120,31 @@ describe(testName, function () {
                                 var foundLast = 0;
                                 if (v2Uris.length !== channels[channel].length) {
                                     console.log('comparing length ', channel, v2Uris.length, channels[channel].length);
-                                    var firstKey = getContentKey(channels[channel][0], channel);
-                                    var lastKey = getContentKey(channels[channel][channels[channel].length - 1], channel);
-                                    for (var i = 0; i < v2Uris.length; i++) {
-                                        var item = v2Uris[i];
+                                    var uri = channels[channel][0];
+                                    if (uri) {
+                                        var firstKey = getContentKey(uri, channel);
+                                        var lastKey = getContentKey(channels[channel][channels[channel].length - 1], channel);
+                                        for (var i = 0; i < v2Uris.length; i++) {
+                                            var item = v2Uris[i];
 
-                                        var sourceKey = getContentKey(item, source);
-                                        if (sourceKey === firstKey) {
-                                            foundFirst = i;
-                                            console.log('found first ', channel, v2Uris.length, channels[channel].length, i);
+                                            var sourceKey = getContentKey(item, source);
+                                            if (sourceKey === firstKey) {
+                                                foundFirst = i;
+                                                console.log('found first ', channel, v2Uris.length, channels[channel].length, i);
+                                            }
+                                            if (sourceKey === lastKey) {
+                                                foundLast = i;
+                                                console.log('found last', channel, v2Uris.length, channels[channel].length, i);
+                                            }
                                         }
-                                        if (sourceKey === lastKey) {
-                                            foundLast = i;
-                                            console.log('found last', channel, v2Uris.length, channels[channel].length, i);
-                                        }
+                                        console.log('found ', v2Uris.length, channels[channel].length, foundFirst, foundLast);
+                                        expect(channels[channel].length + foundFirst).toBe(foundLast + 1);
+                                    } else {
+                                        console.log("failure: expected to have uris", channel);
+                                        expect(uri).toBeDefined();
                                     }
-                                    console.log('found ', v2Uris.length, channels[channel].length, foundFirst, foundLast);
-                                    expect(channels[channel].length + foundFirst).toBe(foundLast + 1);
-                                }
 
+                                }
                                 callback(res.error);
                             });
                     });
