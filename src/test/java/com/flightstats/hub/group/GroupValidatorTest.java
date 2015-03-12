@@ -26,12 +26,12 @@ public class GroupValidatorTest {
 
     @Test
     public void testNameLarge() throws Exception {
-        groupValidator.validate(group.withName(Strings.repeat("B", 48)));
+        groupValidator.validate(group.withName(Strings.repeat("B", 128)));
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testNameSizeTooBig() throws Exception {
-        groupValidator.validate(group.withName(Strings.repeat("B", 49)));
+        groupValidator.validate(group.withName(Strings.repeat("B", 129)));
     }
 
     @Test(expected = InvalidRequestException.class)

@@ -9,10 +9,13 @@ public class V2ChannelReplicator implements ChannelReplicator {
     private ChannelConfiguration channel;
     private HubUtils hubUtils;
     private final String appUrl = HubProperties.getProperty("app.url", "");
+    private final String appEnv;
 
     public V2ChannelReplicator(ChannelConfiguration channel, HubUtils hubUtils) {
         this.channel = channel;
         this.hubUtils = hubUtils;
+        appEnv = (HubProperties.getProperty("app.name", "hub")
+                + "_" + HubProperties.getProperty("app.environment", "unknown")).replace("-", "_");
     }
 
     public void start() {
@@ -24,7 +27,7 @@ public class V2ChannelReplicator implements ChannelReplicator {
     }
 
     private String getGroupName() {
-        return "Replication_" + channel.getName();
+        return "Repl_" + appEnv + "_" + channel.getName();
     }
 
     @Override

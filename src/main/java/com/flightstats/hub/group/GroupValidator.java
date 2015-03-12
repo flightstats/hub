@@ -17,8 +17,8 @@ public class GroupValidator {
         if (!name.matches("^[a-zA-Z0-9_]+$")) {
             throw new InvalidRequestException("{\"error\": \"Group name can only contain characters a-z, A-Z, _ and 0-9\"}");
         }
-        if (name.length() > 48) {
-            throw new InvalidRequestException("{\"error\": \"Group name must be less than 48 bytes\"}");
+        if (name.length() > 128) {
+            throw new InvalidRequestException("{\"error\": \"Group name must be less than 128 bytes\"}");
         }
         try {
             new URI(group.getCallbackUrl());
