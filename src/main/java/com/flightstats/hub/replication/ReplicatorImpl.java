@@ -92,6 +92,7 @@ public class ReplicatorImpl implements Replicator {
         Set<String> replicators = new HashSet<>();
         Iterable<ChannelConfiguration> replicatedChannels = channelService.getChannels(REPLICATED);
         for (ChannelConfiguration channel : replicatedChannels) {
+            logger.info("replicating channel {}", channel.getName());
             if (replicatorMap.containsKey(channel.getName())) {
                 ChannelReplicator replicator = replicatorMap.get(channel.getName());
                 if (!replicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
@@ -126,11 +127,15 @@ public class ReplicatorImpl implements Replicator {
 
     private void startReplication(ChannelConfiguration channel) {
         logger.info("starting replication of " + channel);
-        HubUtils.Version version = hubUtils.getHubVersion(channel.getReplicationSource());
-        if (version.equals(HubUtils.Version.V2)) {
-            startV2Replication(channel);
-        } else if (version.equals(HubUtils.Version.V1)) {
-            startV1Replication(channel);
+        try {
+            HubUtils.Version version = hubUtils.getHubVersion(channel.getReplicationSource());
+            if (version.equals(HubUtils.Version.V2)) {
+                startV2Replication(channel);
+            } else if (version.equals(HubUtils.Version.V1)) {
+                startV1Replication(channel);
+            }
+        } catch (Exception e) {
+            logger.warn("unable to start replication of " + channel, e);
         }
     }
 
