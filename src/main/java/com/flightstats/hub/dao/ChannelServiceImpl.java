@@ -167,26 +167,21 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
-        DateTime stableTime = TimeUtil.stable();
-        Collection<ContentKey> contentKeys = contentService.queryByTime(timeQuery);
+        Collection<ContentKey> keys = contentService.queryByTime(timeQuery);
         if (timeQuery.isStable()) {
-            ArrayList<ContentKey> remove = new ArrayList<>();
-            for (ContentKey contentKey : contentKeys) {
-                if (contentKey.getTime().isAfter(stableTime)) {
-                    remove.add(contentKey);
-                }
-            }
-            contentKeys.removeAll(remove);
+            DateTime stableTime = TimeUtil.stable();
+            return keys.stream()
+                    .filter(key -> key.getTime().isBefore(stableTime))
+                    .collect(Collectors.toCollection(TreeSet::new));
         }
-        return contentKeys;
+        return keys;
     }
 
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
-        Set<ContentKey> toReturn = new TreeSet<>();
         if (query.getCount() <= 0) {
             query.getTraces().add("requested zero");
-            return toReturn;
+            return Collections.emptySet();
         }
         DateTime stableTime = TimeUtil.time(query.isStable());
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
@@ -197,14 +192,13 @@ public class ChannelServiceImpl implements ChannelService {
                     .limit(query.getCount())
                     .collect(Collectors.toCollection(TreeSet::new));
         } else {
-            for (int i = keys.size() - 1; i >= 0; i--) {
-                toReturn.add(keys.get(i));
-                if (toReturn.size() >= query.getCount()) {
-                    return toReturn;
-                }
-            }
+            Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
+            contentKeys.addAll(keys);
+            return contentKeys.stream()
+                    .limit(query.getCount())
+                    .collect(Collectors.toCollection(TreeSet::new));
+
         }
-        return toReturn;
     }
 
     @Override
