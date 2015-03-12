@@ -40,6 +40,11 @@ describe(testName, function () {
             })
             .then(function (value) {
                 expect(value.response.request.href).toBe(items[1]);
+                return utils.getQ(items[0] + '/next/2', 200, true);
+            })
+            .then(function (value) {
+                expect(value.body._links.uris.length).toBe(0);
+                expect(value.body._links.next).toBeUndefined();
                 return utils.getQ(items[0] + '/next/2', 200);
             })
             .then(function (value) {

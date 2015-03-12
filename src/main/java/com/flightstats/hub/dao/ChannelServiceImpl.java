@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ChannelServiceImpl implements ChannelService {
     private final static Logger logger = LoggerFactory.getLogger(ChannelServiceImpl.class);
@@ -187,14 +188,14 @@ public class ChannelServiceImpl implements ChannelService {
             query.getTraces().add("requested zero");
             return toReturn;
         }
+        DateTime stableTime = TimeUtil.time(query.isStable());
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
         if (query.isNext()) {
-            for (ContentKey key : keys) {
-                toReturn.add(key);
-                if (toReturn.size() >= query.getCount()) {
-                    return toReturn;
-                }
-            }
+            return keys.stream()
+                    .filter(key -> key.compareTo(query.getContentKey()) > 0)
+                    .filter(key -> key.getTime().isBefore(stableTime))
+                    .limit(query.getCount())
+                    .collect(Collectors.toCollection(TreeSet::new));
         } else {
             for (int i = keys.size() - 1; i >= 0; i--) {
                 toReturn.add(keys.get(i));
