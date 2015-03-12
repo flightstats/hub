@@ -93,18 +93,22 @@ public class ReplicatorImpl implements Replicator {
         Iterable<ChannelConfiguration> replicatedChannels = channelService.getChannels(REPLICATED);
         for (ChannelConfiguration channel : replicatedChannels) {
             logger.info("replicating channel {}", channel.getName());
-            if (replicatorMap.containsKey(channel.getName())) {
-                ChannelReplicator replicator = replicatorMap.get(channel.getName());
-                if (!replicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
-                    logger.info("changing replication source from {} to {}",
-                            replicator.getChannel().getReplicationSource(), channel.getReplicationSource());
-                    replicator.stop();
+            try {
+                if (replicatorMap.containsKey(channel.getName())) {
+                    ChannelReplicator replicator = replicatorMap.get(channel.getName());
+                    if (!replicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
+                        logger.info("changing replication source from {} to {}",
+                                replicator.getChannel().getReplicationSource(), channel.getReplicationSource());
+                        replicator.stop();
+                        startReplication(channel);
+                    }
+                } else {
                     startReplication(channel);
                 }
-            } else {
-                startReplication(channel);
+                replicators.add(channel.getName());
+            } catch (Exception e) {
+                logger.warn("error trying to replicate " + channel, e);
             }
-            replicators.add(channel.getName());
         }
         Set<String> toStop = new HashSet<>(replicatorMap.keySet());
         toStop.removeAll(replicators);
