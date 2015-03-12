@@ -152,7 +152,13 @@ public class FileSpokeStore {
 
     private String recurseLatest(String path, String[] limitPath, int count) {
         String base = " ";
-        for (String item : new File(storagePath + "/" + path).list()) {
+        String pathname = storagePath + "/" + path;
+        String[] items = new File(pathname).list();
+        if (items == null) {
+            logger.trace("path not found {}", pathname);
+            return null;
+        }
+        for (String item : items) {
             if (item.compareTo(base) > 0 && item.compareTo(limitPath[count]) <= 0) {
                 base = item;
             }
