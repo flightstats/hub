@@ -163,23 +163,37 @@ describe(testName, function () {
 
     var itemsToVerify = [];
 
+    function checkForBlackHole(replicatedChannel, expected, channel, next) {
+        agent.get(replicatedChannel.replicationSource + "/" + expected)
+            .end(function (res) {
+                if (res.statusCode == 404) {
+                    //this means it's a black hole
+                } else {
+                    console.log('wrong order ' + channel + ' expected ' + expected + ' found ' + next);
+                    expect(expected).toBe(next);
+                }
+            })
+    }
+
     it('makes sure replicated items are sequential ', function (done) {
 
         for (var channel in channels) {
             var sequence = 0;
             console.log('working on', channel);
             channels[channel].forEach(function (uri) {
-                if (replicatedChannels[channel].version === 'v1') {
+                var replicatedChannel = replicatedChannels[channel];
+                if (replicatedChannel.version === 'v1') {
                     if (sequence) {
                         var next = getSequence(uri);
-                        if (sequence + 1 !== next) {
-                            console.log('wrong order ' + channel + ' expected ' + sequence + ' found ' + next);
+                        var expected = sequence + 1;
+                        if (expected !== next) {
+                            checkForBlackHole(replicatedChannel, expected, channel, next);
+                        } else {
+                            if (Math.random() > 0.99) {
+                                itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
+                            }
                         }
-                        expect(1 + sequence).toBe(next);
                         sequence = next;
-                        if (Math.random() > 0.99) {
-                            itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
-                        }
                     } else {
                         sequence = getSequence(uri);
                         itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
