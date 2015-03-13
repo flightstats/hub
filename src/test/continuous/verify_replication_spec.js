@@ -190,10 +190,11 @@ describe(testName, function () {
                             checkForBlackHole(replicatedChannel, expected, channel, next);
                         } else {
                             if (Math.random() > 0.99) {
-                                itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
+                                itemsToVerify.push({name: channel, sequence: next, uri: uri});
                             }
                         }
                         sequence = next;
+
                     } else {
                         sequence = getSequence(uri);
                         itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
