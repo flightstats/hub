@@ -30,6 +30,7 @@ public class CallbackQueue implements AutoCloseable {
 
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
+    private AtomicBoolean error = new AtomicBoolean(false);
     private BlockingQueue<ContentKey> queue = new ArrayBlockingQueue<>(1000);
     private String channel;
     private DateTime lastQueryTime;
@@ -40,6 +41,9 @@ public class CallbackQueue implements AutoCloseable {
     }
 
     public Optional<ContentKey> next() {
+        if (error.get()) {
+            throw new RuntimeException("unable to determine next");
+        }
         try {
             return Optional.fromNullable(queue.poll(10, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
@@ -61,6 +65,7 @@ public class CallbackQueue implements AutoCloseable {
                 try {
                     doWork();
                 } catch (Exception e) {
+                    error.set(true);
                     logger.warn("unexpected issue with " + channel, e);
                 }
             }
