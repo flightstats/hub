@@ -94,7 +94,7 @@ describe(testName, function () {
             }, function (err) {
                 done(err);
             });
-    }, MINUTE);
+    }, 5 * MINUTE);
 
     it('verifies v2 replicated items', function (done) {
 
