@@ -56,7 +56,7 @@ public class FileSpokeStore {
         try {
             return FileUtils.readFileToByteArray(file);
         } catch (FileNotFoundException e) {
-            logger.info("file not found " + path);
+            logger.debug("file not found {}", path);
             return null;
         } catch (IOException e) {
             logger.info("unable to read from " + path, e);
