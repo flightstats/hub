@@ -141,16 +141,19 @@ public class FileSpokeStore {
     }
 
     public String getLatest(String channel, String limitPath) {
+        logger.trace("latest {} {}", channel, limitPath);
         String[] split = StringUtils.split(limitPath, "/");
         split = new String[]{split[0], split[1], split[2], split[3], split[4], split[5] + split[6] + split[7]};
-        String last = recurseLatest(channel, split, 0);
+        String last = recurseLatest(channel, split, 0, channel);
         if (last == null) {
             return null;
         }
-        return spokeKeyFromPath(last);
+        String latest = spokeKeyFromPath(last);
+        logger.trace("returning latest {} for limit {}", latest, limitPath);
+        return latest;
     }
 
-    private String recurseLatest(String path, String[] limitPath, int count) {
+    private String recurseLatest(String path, String[] limitPath, int count, String channel) {
         String base = " ";
         String pathname = storagePath + "/" + path;
         String[] items = new File(pathname).list();
@@ -158,9 +161,15 @@ public class FileSpokeStore {
             logger.trace("path not found {}", pathname);
             return null;
         }
+        String limitCompare = channel + "/";
+        for (int i = 0; i <= count; i++) {
+            limitCompare += limitPath[i] + "/";
+        }
         for (String item : items) {
-            if (item.compareTo(base) > 0 && item.compareTo(limitPath[count]) <= 0) {
-                base = item;
+            if (item.compareTo(base) > 0) {
+                if ((path + "/" + item).compareTo(limitCompare) <= 0) {
+                    base = item;
+                }
             }
         }
         if (base.equals(" ")) {
@@ -171,7 +180,7 @@ public class FileSpokeStore {
             return path + "/" + base;
         }
         count++;
-        return recurseLatest(path + "/" + base, limitPath, count);
+        return recurseLatest(path + "/" + base, limitPath, count, channel);
     }
 
 }

@@ -89,7 +89,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (trace) {
             traces = new TracesImpl();
         }
-        ContentKey limitKey = new ContentKey(TimeUtil.time(stable), "ZZZZZ");
+        ContentKey limitKey = new ContentKey(TimeUtil.time(stable), "ZZZZZZ");
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
             traces.log(logger);
