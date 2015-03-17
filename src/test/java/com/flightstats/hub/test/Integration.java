@@ -1,6 +1,6 @@
 package com.flightstats.hub.test;
 
-import com.flightstats.hub.app.GuiceBindings;
+import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -25,8 +25,8 @@ public class Integration {
         if (testingServer == null) {
             logger.info("starting zookeeper");
             testingServer = new TestingServer(2181);
-            RetryPolicy retryPolicy = GuiceBindings.buildRetryPolicy();
-            curator = GuiceBindings.buildCurator("hub", "test", "localhost:2181", retryPolicy, new ZooKeeperState());
+            RetryPolicy retryPolicy = HubBindings.buildRetryPolicy();
+            curator = HubBindings.buildCurator("hub", "test", "localhost:2181", retryPolicy, new ZooKeeperState());
         } else {
             logger.info("zookeeper already started");
         }

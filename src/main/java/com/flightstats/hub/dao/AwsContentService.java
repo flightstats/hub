@@ -19,9 +19,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("Convert2Lambda")
-public class ContentServiceImpl implements ContentService {
+public class AwsContentService implements ContentService {
 
-    private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
+    private final static Logger logger = LoggerFactory.getLogger(AwsContentService.class);
 
     private final ContentDao cacheContentDao;
     private final ContentDao longTermContentDao;
@@ -32,9 +32,9 @@ public class ContentServiceImpl implements ContentService {
     private final boolean dropSomeWrites;
 
     @Inject
-    public ContentServiceImpl(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
-                              @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
-                              S3WriteQueue s3WriteQueue) {
+    public AwsContentService(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
+                             @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
+                             S3WriteQueue s3WriteQueue) {
         this.cacheContentDao = cacheContentDao;
         this.longTermContentDao = longTermContentDao;
         this.dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);

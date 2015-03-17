@@ -15,15 +15,16 @@ import com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.ext.ContextResolver;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.sun.jersey.api.core.PackagesResourceConfig.*;
 
 public class GuiceContext {
+    private final static Logger logger = LoggerFactory.getLogger(GuiceContext.class);
 
     public static HubGuiceServlet construct() {
         Map<String, String> jerseyProps = new HashMap<>();
@@ -36,7 +37,8 @@ public class GuiceContext {
         jerseyProps.put(PROPERTY_CONTAINER_REQUEST_FILTERS, GZIPContentEncodingFilter.class.getName() +
                 ";" + RemoveSlashFilter.class.getName());
 
-        JerseyServletModule jerseyModule = new JerseyServletModule() {
+        List<Module> modules = new ArrayList<>();
+        modules.add(new JerseyServletModule() {
             @Override
             protected void configureServlets() {
                 Names.bindProperties(binder(), HubProperties.getProperties());
@@ -46,10 +48,25 @@ public class GuiceContext {
                 bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
                 serve("/*").with(GuiceContainer.class, jerseyProps);
             }
-        };
-        GuiceBindings guiceBindings = new GuiceBindings();
+        });
 
-        return new HubGuiceServlet(jerseyModule, guiceBindings);
+        modules.add(new HubBindings());
+        String hubType = HubProperties.getProperty("hub.type", "aws");
+        logger.info("starting with hub.type {}", hubType);
+        switch (hubType) {
+            case "aws":
+                modules.add(new AwsBindings());
+                break;
+            case "nas":
+                modules.add(new NasBindings());
+                break;
+            case "test":
+                modules.add(new NasBindings());
+                break;
+            default:
+                throw new RuntimeException("unsupported hub.type " + hubType);
+        }
+        return new HubGuiceServlet(modules.toArray(new Module[modules.size()]));
     }
 
     public static class HubGuiceServlet extends GuiceServletContextListener {

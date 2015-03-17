@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ChannelServiceImpl implements ChannelService {
-    private final static Logger logger = LoggerFactory.getLogger(ChannelServiceImpl.class);
+public class AwsChannelService implements ChannelService {
+    private final static Logger logger = LoggerFactory.getLogger(AwsChannelService.class);
 
     private final ContentService contentService;
     private final ChannelConfigurationDao channelConfigurationDao;
@@ -25,9 +25,9 @@ public class ChannelServiceImpl implements ChannelService {
     private MetricsSender sender;
 
     @Inject
-    public ChannelServiceImpl(ContentService contentService, ChannelConfigurationDao channelConfigurationDao,
-                              ChannelValidator channelValidator, Replicator replicator,
-                              MetricsSender sender) {
+    public AwsChannelService(ContentService contentService, ChannelConfigurationDao channelConfigurationDao,
+                             ChannelValidator channelValidator, Replicator replicator,
+                             MetricsSender sender) {
         this.contentService = contentService;
         this.channelConfigurationDao = channelConfigurationDao;
         this.channelValidator = channelValidator;
