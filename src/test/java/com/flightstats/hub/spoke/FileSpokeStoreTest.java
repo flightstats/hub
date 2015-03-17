@@ -112,13 +112,39 @@ public class FileSpokeStoreTest {
         String found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
         assertEquals("testLastFile/2015/01/01/00/28/30/031/C", found);
 
-        limitKey = new ContentKey(time.plusMinutes(1), "A");
+        limitKey = new ContentKey(time, "B");
         found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
         assertEquals("testLastFile/2015/01/01/00/30/31/031/B", found);
 
         limitKey = new ContentKey(time.plusMinutes(1), "D");
         found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
         assertEquals("testLastFile/2015/01/01/00/30/31/032/C", found);
+    }
+
+    @Test
+    public void testLatestBugNumber127() {
+        String channel = "testBugNumber127";
+
+        spokeStore.write(channel + "/2015/03/17/17/31/13/686/2905180", BYTES);
+        spokeStore.write(channel + "/2015/03/17/17/31/43/691/2905200", BYTES);
+        spokeStore.write(channel + "/2015/03/17/17/31/59/600/2905220", BYTES);
+
+        DateTime start = new DateTime(2015, 03, 17, 17, 37, 0, 0, DateTimeZone.UTC);
+        String hash = "ZZZZZ";
+        ContentKey limitKey = new ContentKey(start, hash);
+        String found = spokeStore.getLatest(channel, limitKey.toUrl());
+        logger.info("found {}", found);
+        assertEquals(channel + "/2015/03/17/17/31/59/600/2905220", found);
+
+        limitKey = new ContentKey(start.plusSeconds(15), hash);
+        found = spokeStore.getLatest(channel, limitKey.toUrl());
+        logger.info("found {}", found);
+        assertEquals(channel + "/2015/03/17/17/31/59/600/2905220", found);
+
+        limitKey = new ContentKey(start.plusSeconds(45), hash);
+        found = spokeStore.getLatest(channel, limitKey.toUrl());
+        logger.info("found {}", found);
+        assertEquals(channel + "/2015/03/17/17/31/59/600/2905220", found);
     }
 
 }
