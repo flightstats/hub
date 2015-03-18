@@ -1,11 +1,11 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 
 public class Channel {
     private final String name;
     private final String url;
-    private ChannelConfiguration configuration;
+    private ChannelConfig configuration;
 
     public Channel(String name, String url) {
         this.name = name;
@@ -23,11 +23,11 @@ public class Channel {
         return url;
     }
 
-    public ChannelConfiguration getConfiguration() {
+    public ChannelConfig getConfiguration() {
         return configuration;
     }
 
-    public void setConfiguration(ChannelConfiguration configuration) {
+    public void setConfiguration(ChannelConfig configuration) {
         this.configuration = configuration;
     }
 

@@ -4,7 +4,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.EventTimed;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
@@ -48,9 +48,9 @@ public class ChannelResource {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        ChannelConfiguration config = channelService.getChannelConfiguration(channelName);
+        ChannelConfig config = channelService.getChannelConfiguration(channelName);
         URI channelUri = LinkBuilder.buildChannelUri(config, uriInfo);
-        Linked<ChannelConfiguration> linked = LinkBuilder.buildChannelLinks(config, channelUri);
+        Linked<ChannelConfig> linked = LinkBuilder.buildChannelLinks(config, channelUri);
 
         return Response.ok(channelUri).entity(linked).build();
     }
@@ -60,19 +60,19 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
-        ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
-        ChannelConfiguration channelConfiguration = ChannelConfiguration.fromJson(json, channelName);
+        ChannelConfig oldConfig = channelService.getChannelConfiguration(channelName);
+        ChannelConfig channelConfig = ChannelConfig.fromJson(json, channelName);
         if (oldConfig != null) {
-            channelConfiguration = ChannelConfiguration.builder()
+            channelConfig = ChannelConfig.builder()
                     .withChannelConfiguration(oldConfig)
                     .withUpdateJson(json)
                     .build();
         }
-        logger.info("creating channel {}", channelConfiguration);
-        channelConfiguration = channelService.updateChannel(channelConfiguration);
-        URI channelUri = LinkBuilder.buildChannelUri(channelConfiguration, uriInfo);
+        logger.info("creating channel {}", channelConfig);
+        channelConfig = channelService.updateChannel(channelConfig);
+        URI channelUri = LinkBuilder.buildChannelUri(channelConfig, uriInfo);
         return Response.created(channelUri).entity(
-                LinkBuilder.buildChannelLinks(channelConfiguration, channelUri))
+                LinkBuilder.buildChannelLinks(channelConfig, channelUri))
                 .build();
     }
 
@@ -84,8 +84,8 @@ public class ChannelResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        ChannelConfiguration oldConfig = channelService.getChannelConfiguration(channelName);
-        ChannelConfiguration newConfig = ChannelConfiguration.builder()
+        ChannelConfig oldConfig = channelService.getChannelConfiguration(channelName);
+        ChannelConfig newConfig = ChannelConfig.builder()
                 .withChannelConfiguration(oldConfig)
                 .withUpdateJson(json)
                 .build();
@@ -93,7 +93,7 @@ public class ChannelResource {
         newConfig = channelService.updateChannel(newConfig);
 
         URI channelUri = LinkBuilder.buildChannelUri(newConfig, uriInfo);
-        Linked<ChannelConfiguration> linked = LinkBuilder.buildChannelLinks(newConfig, channelUri);
+        Linked<ChannelConfig> linked = LinkBuilder.buildChannelLinks(newConfig, channelUri);
         return Response.ok(channelUri).entity(linked).build();
     }
 

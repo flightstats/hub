@@ -44,16 +44,16 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
+    public ChannelConfig createChannel(ChannelConfig configuration) {
         if (isAuditChannel(configuration.getName())) {
             throw new ForbiddenRequestException("Audit Channels can not be created");
         }
 
         Set<String> tags = new HashSet<>(configuration.getTags());
         tags.add("audit");
-        ChannelConfiguration channel = channelService.createChannel(configuration);
+        ChannelConfig channel = channelService.createChannel(configuration);
 
-        ChannelConfiguration auditConfig = ChannelConfiguration.builder()
+        ChannelConfig auditConfig = ChannelConfig.builder()
                 .withChannelConfiguration(configuration)
                 .withName(configuration.getName() + AUDIT)
                 .withDescription("auditing channel for " + configuration.getName())
@@ -114,17 +114,17 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public ChannelConfiguration getChannelConfiguration(String channelName) {
+    public ChannelConfig getChannelConfiguration(String channelName) {
         return channelService.getChannelConfiguration(channelName);
     }
 
     @Override
-    public Iterable<ChannelConfiguration> getChannels() {
+    public Iterable<ChannelConfig> getChannels() {
         return channelService.getChannels();
     }
 
     @Override
-    public Iterable<ChannelConfiguration> getChannels(String tag) {
+    public Iterable<ChannelConfig> getChannels(String tag) {
         return channelService.getChannels(tag);
     }
 
@@ -134,7 +134,7 @@ public class AuditChannelService implements ChannelService {
     }
 
     @Override
-    public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
+    public ChannelConfig updateChannel(ChannelConfig configuration) {
         if (isAuditChannel(configuration.getName())) {
             configuration.getTags().add("audit");
         }

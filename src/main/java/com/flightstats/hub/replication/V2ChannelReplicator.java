@@ -1,17 +1,17 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 
 public class V2ChannelReplicator implements ChannelReplicator {
 
-    private ChannelConfiguration channel;
+    private ChannelConfig channel;
     private HubUtils hubUtils;
     private final String appUrl = HubProperties.getProperty("app.url", "");
     private final String appEnv;
 
-    public V2ChannelReplicator(ChannelConfiguration channel, HubUtils hubUtils) {
+    public V2ChannelReplicator(ChannelConfig channel, HubUtils hubUtils) {
         this.channel = channel;
         this.hubUtils = hubUtils;
         appEnv = (HubProperties.getProperty("app.name", "hub")
@@ -31,7 +31,7 @@ public class V2ChannelReplicator implements ChannelReplicator {
     }
 
     @Override
-    public ChannelConfiguration getChannel() {
+    public ChannelConfig getChannel() {
         return null;
     }
 

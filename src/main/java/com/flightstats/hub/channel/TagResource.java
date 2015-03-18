@@ -2,7 +2,7 @@ package com.flightstats.hub.channel;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.EventTimed;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.rest.HalLink;
 import com.flightstats.hub.rest.Linked;
 
@@ -63,7 +63,7 @@ public class TagResource {
     @EventTimed(name = "tag.ALL.get")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels(@PathParam("tag") String tag) {
-        Iterable<ChannelConfiguration> channels = channelService.getChannels(tag);
+        Iterable<ChannelConfig> channels = channelService.getChannels(tag);
         Linked<?> result = LinkBuilder.build(channels, uriInfo);
         return Response.ok(result).build();
     }

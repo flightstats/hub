@@ -2,7 +2,7 @@ package com.flightstats.hub.channel;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.rest.Headers;
 import com.google.inject.Inject;
@@ -40,7 +40,7 @@ public class ProviderResource {
                                 final InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             logger.info("creating new Provider channel " + channelName);
-            ChannelConfiguration configuration = ChannelConfiguration.builder()
+            ChannelConfig configuration = ChannelConfig.builder()
                     .withName(channelName)
                     .build();
             channelService.createChannel(configuration);

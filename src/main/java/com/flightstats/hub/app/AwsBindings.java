@@ -2,8 +2,8 @@ package com.flightstats.hub.app;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
-import com.flightstats.hub.dao.CachedChannelConfigurationDao;
-import com.flightstats.hub.dao.ChannelConfigurationDao;
+import com.flightstats.hub.dao.CachedChannelConfigDao;
+import com.flightstats.hub.dao.ChannelConfigDao;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.aws.*;
@@ -28,10 +28,10 @@ public class AwsBindings extends AbstractModule {
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
         bind(SpokeTtlEnforcer.class).asEagerSingleton();
-        bind(ChannelConfigurationDao.class).to(CachedChannelConfigurationDao.class).asEagerSingleton();
-        bind(ChannelConfigurationDao.class)
-                .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))
-                .to(DynamoChannelConfigurationDao.class);
+        bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();
+        bind(ChannelConfigDao.class)
+                .annotatedWith(Names.named(CachedChannelConfigDao.DELEGATE))
+                .to(DynamoChannelConfigDao.class);
 
         bind(ContentService.class).to(AwsContentService.class).asEagerSingleton();
         bind(FileSpokeStore.class).asEagerSingleton();

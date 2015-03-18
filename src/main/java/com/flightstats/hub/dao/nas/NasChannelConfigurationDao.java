@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.nas;
 
-import com.flightstats.hub.dao.ChannelConfigurationDao;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.dao.ChannelConfigDao;
+import com.flightstats.hub.model.ChannelConfig;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NasChannelConfigurationDao implements ChannelConfigurationDao {
+public class NasChannelConfigurationDao implements ChannelConfigDao {
 
     private final static Logger logger = LoggerFactory.getLogger(NasChannelConfigurationDao.class);
 
@@ -23,13 +23,13 @@ public class NasChannelConfigurationDao implements ChannelConfigurationDao {
     }
 
     @Override
-    public ChannelConfiguration createChannel(ChannelConfiguration config) {
+    public ChannelConfig createChannel(ChannelConfig config) {
         updateChannel(config);
         return config;
     }
 
     @Override
-    public void updateChannel(ChannelConfiguration config) {
+    public void updateChannel(ChannelConfig config) {
         try {
             byte[] bytes = config.toJson().getBytes();
             FileUtils.writeByteArrayToFile(getFile(config.getName()), bytes);
@@ -49,18 +49,18 @@ public class NasChannelConfigurationDao implements ChannelConfigurationDao {
 
     @Override
     public boolean channelExists(String channelName) {
-        return getChannelConfiguration(channelName) != null;
+        return getChannelConfig(channelName) != null;
     }
 
     @Override
-    public ChannelConfiguration getChannelConfiguration(String channelName) {
+    public ChannelConfig getChannelConfig(String channelName) {
         return readConfig(getFile(channelName));
     }
 
-    private ChannelConfiguration readConfig(File file) {
+    private ChannelConfig readConfig(File file) {
         try {
             byte[] bytes = FileUtils.readFileToByteArray(file);
-            return ChannelConfiguration.fromJson(new String(bytes));
+            return ChannelConfig.fromJson(new String(bytes));
         } catch (IOException e) {
             logger.warn("unable to find config for " + file.getName(), e);
         }
@@ -68,9 +68,9 @@ public class NasChannelConfigurationDao implements ChannelConfigurationDao {
     }
 
     @Override
-    public Iterable<ChannelConfiguration> getChannels() {
+    public Iterable<ChannelConfig> getChannels() {
         File[] channelFiles = new File(channelPath).listFiles();
-        List<ChannelConfiguration> configs = new ArrayList<>();
+        List<ChannelConfig> configs = new ArrayList<>();
         for (int i = 0; i < channelFiles.length; i++) {
             configs.add(readConfig(channelFiles[i]));
         }

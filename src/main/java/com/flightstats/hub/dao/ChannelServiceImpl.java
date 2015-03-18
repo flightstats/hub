@@ -19,17 +19,17 @@ public class ChannelServiceImpl implements ChannelService {
     private final static Logger logger = LoggerFactory.getLogger(ChannelServiceImpl.class);
 
     private final ContentService contentService;
-    private final ChannelConfigurationDao channelConfigurationDao;
+    private final ChannelConfigDao channelConfigDao;
     private final ChannelValidator channelValidator;
     private final Replicator replicator;
     private MetricsSender sender;
 
     @Inject
-    public ChannelServiceImpl(ContentService contentService, ChannelConfigurationDao channelConfigurationDao,
+    public ChannelServiceImpl(ContentService contentService, ChannelConfigDao channelConfigDao,
                               ChannelValidator channelValidator, Replicator replicator,
                               MetricsSender sender) {
         this.contentService = contentService;
-        this.channelConfigurationDao = channelConfigurationDao;
+        this.channelConfigDao = channelConfigDao;
         this.channelValidator = channelValidator;
         this.replicator = replicator;
         this.sender = sender;
@@ -37,14 +37,14 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public boolean channelExists(String channelName) {
-        return channelConfigurationDao.channelExists(channelName);
+        return channelConfigDao.channelExists(channelName);
     }
 
     @Override
-    public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
+    public ChannelConfig createChannel(ChannelConfig configuration) {
         channelValidator.validate(configuration, true);
-        configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
-        ChannelConfiguration created = channelConfigurationDao.createChannel(configuration);
+        configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
+        ChannelConfig created = channelConfigDao.createChannel(configuration);
         if (created.isReplicating()) {
             replicator.notifyWatchers();
         }
@@ -72,7 +72,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     public boolean isReplicating(String channelName) {
-        ChannelConfiguration configuration = getChannelConfiguration(channelName);
+        ChannelConfig configuration = getChannelConfiguration(channelName);
         if (null == configuration) {
             return false;
         }
@@ -81,8 +81,8 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace) {
-        ChannelConfiguration channelConfiguration = getChannelConfiguration(channel);
-        if (null == channelConfiguration) {
+        ChannelConfig channelConfig = getChannelConfiguration(channel);
+        if (null == channelConfig) {
             return Optional.absent();
         }
         Traces traces = Traces.NOOP;
@@ -101,7 +101,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .contentKey(limitKey)
                 .next(false)
                 .stable(stable)
-                .ttlDays(channelConfiguration.getTtlDays())
+                .ttlDays(channelConfig.getTtlDays())
                 .traces(traces)
                 .count(1)
                 .build();
@@ -120,20 +120,20 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public ChannelConfiguration getChannelConfiguration(String channelName) {
-        return channelConfigurationDao.getChannelConfiguration(channelName);
+    public ChannelConfig getChannelConfiguration(String channelName) {
+        return channelConfigDao.getChannelConfig(channelName);
     }
 
     @Override
-    public Iterable<ChannelConfiguration> getChannels() {
-        return channelConfigurationDao.getChannels();
+    public Iterable<ChannelConfig> getChannels() {
+        return channelConfigDao.getChannels();
     }
 
     @Override
-    public Iterable<ChannelConfiguration> getChannels(String tag) {
-        Collection<ChannelConfiguration> matchingChannels = new ArrayList<>();
-        Iterable<ChannelConfiguration> channels = getChannels();
-        for (ChannelConfiguration channel : channels) {
+    public Iterable<ChannelConfig> getChannels(String tag) {
+        Collection<ChannelConfig> matchingChannels = new ArrayList<>();
+        Iterable<ChannelConfig> channels = getChannels();
+        for (ChannelConfig channel : channels) {
             if (channel.getTags().contains(tag)) {
                 matchingChannels.add(channel);
             }
@@ -144,19 +144,19 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public Iterable<String> getTags() {
         Collection<String> matchingChannels = new HashSet<>();
-        Iterable<ChannelConfiguration> channels = getChannels();
-        for (ChannelConfiguration channel : channels) {
+        Iterable<ChannelConfig> channels = getChannels();
+        for (ChannelConfig channel : channels) {
             matchingChannels.addAll(channel.getTags());
         }
         return matchingChannels;
     }
 
     @Override
-    public ChannelConfiguration updateChannel(ChannelConfiguration configuration) {
-        configuration = ChannelConfiguration.builder().withChannelConfiguration(configuration).build();
-        ChannelConfiguration oldConfig = getChannelConfiguration(configuration.getName());
+    public ChannelConfig updateChannel(ChannelConfig configuration) {
+        configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
+        ChannelConfig oldConfig = getChannelConfiguration(configuration.getName());
         channelValidator.validate(configuration, false);
-        channelConfigurationDao.updateChannel(configuration);
+        channelConfigDao.updateChannel(configuration);
         if (configuration.isReplicating()) {
             replicator.notifyWatchers();
         } else if (oldConfig != null && oldConfig.isReplicating()) {
@@ -203,12 +203,12 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public boolean delete(String channelName) {
-        if (!channelConfigurationDao.channelExists(channelName)) {
+        if (!channelConfigDao.channelExists(channelName)) {
             return false;
         }
         boolean replicating = isReplicating(channelName);
         contentService.delete(channelName);
-        channelConfigurationDao.delete(channelName);
+        channelConfigDao.delete(channelName);
         if (replicating) {
             replicator.notifyWatchers();
         }

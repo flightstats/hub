@@ -3,7 +3,7 @@ package com.flightstats.hub.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.replication.Channel;
@@ -78,15 +78,15 @@ public class HubUtils {
         return channelUrl;
     }
 
-    public Optional<ChannelConfiguration> getConfiguration(String channelUrl) throws IOException {
+    public Optional<ChannelConfig> getConfiguration(String channelUrl) throws IOException {
         ClientResponse response = followClient.resource(channelUrl).get(ClientResponse.class);
         if (response.getStatus() >= 400) {
             logger.info("unable to locate remote channel " + response);
             return Optional.absent();
         }
         String json = response.getEntity(String.class);
-        ChannelConfiguration configuration = ChannelConfiguration.builder()
-                .withChannelConfiguration(ChannelConfiguration.fromJson(json))
+        ChannelConfig configuration = ChannelConfig.builder()
+                .withChannelConfiguration(ChannelConfig.fromJson(json))
                 .withName(ChannelNameUtils.extractFromChannelUrl(channelUrl))
                 .withCreationDate(new Date())
                 .build();

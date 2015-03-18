@@ -14,7 +14,7 @@ import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.*;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.replication.ReplicatorImpl;
 import com.flightstats.hub.rest.RetryClientFilter;
@@ -98,7 +98,7 @@ public class HubBindings extends AbstractModule {
     @Named("ChannelConfigurationMap")
     @Singleton
     @Provides
-    public static ConcurrentMap<String, ChannelConfiguration> buildChannelConfigurationMap(HazelcastInstance hazelcast) throws FileNotFoundException {
+    public static ConcurrentMap<String, ChannelConfig> buildChannelConfigurationMap(HazelcastInstance hazelcast) throws FileNotFoundException {
         return hazelcast.getMap("ChannelConfigurationMap");
     }
 

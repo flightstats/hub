@@ -4,7 +4,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.encryption.AuditChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.InvalidRequestException;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -17,7 +17,7 @@ public class ChannelValidator {
         this.channelService = channelService;
     }
 
-    public void validate(ChannelConfiguration request, boolean isCreation) throws InvalidRequestException, ConflictException {
+    public void validate(ChannelConfig request, boolean isCreation) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional = Optional.absent();
         if (request != null) {
             channelNameOptional = Optional.fromNullable(request.getName());
@@ -36,7 +36,7 @@ public class ChannelValidator {
         validateTags(request);
     }
 
-    private void validateTags(ChannelConfiguration request) {
+    private void validateTags(ChannelConfig request) {
         if (request.getTags().size() > 20) {
             throw new InvalidRequestException("{\"error\": \"Channels are limited to 20 tags\"}");
         }
@@ -50,13 +50,13 @@ public class ChannelValidator {
         }
     }
 
-    private void validateDescription(ChannelConfiguration request) {
+    private void validateDescription(ChannelConfig request) {
         if (request.getDescription().length() > 1024) {
             throw new InvalidRequestException("{\"error\": \"Description must be less than 1024 bytes. \"}");
         }
     }
 
-    private void validateTTL(ChannelConfiguration request) throws InvalidRequestException {
+    private void validateTTL(ChannelConfig request) throws InvalidRequestException {
         if (request.getTtlDays() <= 0) {
             throw new InvalidRequestException("{\"error\": \"TTL must be greater than 0 (zero) \"}");
         }
