@@ -3,10 +3,7 @@ package com.flightstats.hub.spoke;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.metrics.MetricsSender;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.Trace;
-import com.flightstats.hub.model.Traces;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.RestClient;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -125,12 +122,7 @@ public class RemoteSpokeStore {
                         if (response.getStatus() == 200) {
                             SortedSet<ContentKey> keySet = new TreeSet<>();
                             String keysString = response.getEntity(String.class);
-                            if (StringUtils.isNotEmpty(keysString)) {
-                                String[] keys = keysString.split(",");
-                                for (String key : keys) {
-                                    keySet.add(ContentKey.fromUrl(StringUtils.substringAfter(key, "/")).get());
-                                }
-                            }
+                            ContentKeyUtil.convertKeyStrings(keysString, keySet);
                             traces.add(server, keySet);
                             orderedKeys.addAll(keySet);
                         }

@@ -1,8 +1,6 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.dao.*;
-import com.flightstats.hub.dao.encryption.AuditChannelService;
-import com.flightstats.hub.dao.encryption.BasicChannelService;
 import com.flightstats.hub.group.GroupDao;
 import com.flightstats.hub.group.NasGroupDao;
 import com.flightstats.hub.spoke.FileSpokeStore;
@@ -16,15 +14,6 @@ public class NasBindings extends AbstractModule {
 
     @Override
     protected void configure() {
-        if (Boolean.parseBoolean(HubProperties.getProperty("app.encrypted", "false"))) {
-            logger.info("using encrypted hub");
-            bind(ChannelService.class).annotatedWith(BasicChannelService.class).to(NasChannelService.class).asEagerSingleton();
-            bind(ChannelService.class).to(AuditChannelService.class).asEagerSingleton();
-        } else {
-            logger.info("using normal hub");
-            bind(ChannelService.class).to(NasChannelService.class).asEagerSingleton();
-        }
-
         bind(ChannelConfigurationDao.class).to(CachedChannelConfigurationDao.class).asEagerSingleton();
         bind(ChannelConfigurationDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))

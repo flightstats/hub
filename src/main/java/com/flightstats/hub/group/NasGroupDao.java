@@ -2,6 +2,8 @@ package com.flightstats.hub.group;
 
 import com.google.common.base.Optional;
 
+import java.util.ArrayList;
+
 public class NasGroupDao implements GroupDao {
     @Override
     public Group upsertGroup(Group group) {
@@ -15,7 +17,7 @@ public class NasGroupDao implements GroupDao {
 
     @Override
     public Iterable<Group> getGroups() {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override

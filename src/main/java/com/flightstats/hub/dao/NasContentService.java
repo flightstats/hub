@@ -4,11 +4,14 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.SpokeMarshaller;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.TreeSet;
 
 public class NasContentService implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(NasContentService.class);
@@ -62,21 +65,33 @@ public class NasContentService implements ContentService {
 
     @Override
     public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
-        return null;
+        DateTime time = TimeUtil.time(timeQuery.isStable());
+        String path = timeQuery.getChannelName() + "/" + timeQuery.getUnit().format(time);
+        timeQuery.getTraces().add("query by time", path);
+        TreeSet<ContentKey> keySet = new TreeSet<>();
+        ContentKeyUtil.convertKeyStrings(fileSpokeStore.readKeysInBucket(path), keySet);
+        timeQuery.getTraces().add(timeQuery.getChannelName(), keySet);
+        return keySet;
     }
 
     @Override
     public void delete(String channelName) {
-
+        try {
+            fileSpokeStore.delete(channelName);
+        } catch (Exception e) {
+            logger.warn("unable to delete channel " + channelName, e);
+        }
     }
 
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
+        //todo - gfm - 3/18/15 -
         return null;
     }
 
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
+        //todo - gfm - 3/18/15 -
         return null;
     }
 }

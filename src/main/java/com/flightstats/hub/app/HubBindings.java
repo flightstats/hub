@@ -5,6 +5,10 @@ import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.LastContentKey;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
+import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.ChannelServiceImpl;
+import com.flightstats.hub.dao.encryption.AuditChannelService;
+import com.flightstats.hub.dao.encryption.BasicChannelService;
 import com.flightstats.hub.group.GroupCallback;
 import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
@@ -49,6 +53,14 @@ public class HubBindings extends AbstractModule {
     @Override
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
+        if (Boolean.parseBoolean(HubProperties.getProperty("app.encrypted", "false"))) {
+            logger.info("using encrypted hub");
+            bind(ChannelService.class).annotatedWith(BasicChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
+            bind(ChannelService.class).to(AuditChannelService.class).asEagerSingleton();
+        } else {
+            logger.info("using normal hub");
+            bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
+        }
         bind(HubHealthCheck.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
         bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();

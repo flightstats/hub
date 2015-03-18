@@ -6,8 +6,6 @@ import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.aws.AwsConnectorFactory;
 import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
 import com.flightstats.hub.dao.dynamo.DynamoUtils;
-import com.flightstats.hub.dao.encryption.AuditChannelService;
-import com.flightstats.hub.dao.encryption.BasicChannelService;
 import com.flightstats.hub.dao.s3.S3Config;
 import com.flightstats.hub.dao.s3.S3ContentDao;
 import com.flightstats.hub.dao.s3.S3WriterManager;
@@ -32,15 +30,6 @@ public class AwsBindings extends AbstractModule {
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
         bind(SpokeTtlEnforcer.class).asEagerSingleton();
-
-        if (Boolean.parseBoolean(HubProperties.getProperty("app.encrypted", "false"))) {
-            logger.info("using encrypted hub");
-            bind(ChannelService.class).annotatedWith(BasicChannelService.class).to(AwsChannelService.class).asEagerSingleton();
-            bind(ChannelService.class).to(AuditChannelService.class).asEagerSingleton();
-        } else {
-            logger.info("using normal hub");
-            bind(ChannelService.class).to(AwsChannelService.class).asEagerSingleton();
-        }
         bind(ChannelConfigurationDao.class).to(CachedChannelConfigurationDao.class).asEagerSingleton();
         bind(ChannelConfigurationDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigurationDao.DELEGATE))
