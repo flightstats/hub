@@ -7,7 +7,6 @@ import com.flightstats.hub.dao.ChannelConfigDao;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.aws.*;
-import com.flightstats.hub.group.DynamoGroupDao;
 import com.flightstats.hub.group.GroupDao;
 import com.flightstats.hub.spoke.*;
 import com.google.inject.AbstractModule;

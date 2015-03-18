@@ -61,7 +61,7 @@ public class ChannelResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
         ChannelConfig oldConfig = channelService.getChannelConfiguration(channelName);
-        ChannelConfig channelConfig = ChannelConfig.fromJson(json, channelName);
+        ChannelConfig channelConfig = ChannelConfig.fromJsonName(json, channelName);
         if (oldConfig != null) {
             channelConfig = ChannelConfig.builder()
                     .withChannelConfiguration(oldConfig)
