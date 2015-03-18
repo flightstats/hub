@@ -26,8 +26,8 @@ public class CachedChannelConfigurationDao implements ChannelConfigurationDao {
     }
 
     @Override
-    public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
-        ChannelConfiguration channelConfig = delegate.createChannel(configuration);
+    public ChannelConfiguration createChannel(ChannelConfiguration config) {
+        ChannelConfiguration channelConfig = delegate.createChannel(config);
         channelConfigurationMap.put(channelConfig.getName(), channelConfig);
         return channelConfig;
     }

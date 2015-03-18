@@ -3,7 +3,7 @@ package com.flightstats.hub.group;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.dao.dynamo.DynamoUtils;
+import com.flightstats.hub.dao.aws.DynamoUtils;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;

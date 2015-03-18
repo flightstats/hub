@@ -2,13 +2,11 @@ package com.flightstats.hub.app;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
-import com.flightstats.hub.dao.*;
-import com.flightstats.hub.dao.aws.AwsConnectorFactory;
-import com.flightstats.hub.dao.dynamo.DynamoChannelConfigurationDao;
-import com.flightstats.hub.dao.dynamo.DynamoUtils;
-import com.flightstats.hub.dao.s3.S3Config;
-import com.flightstats.hub.dao.s3.S3ContentDao;
-import com.flightstats.hub.dao.s3.S3WriterManager;
+import com.flightstats.hub.dao.CachedChannelConfigurationDao;
+import com.flightstats.hub.dao.ChannelConfigurationDao;
+import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.group.DynamoGroupDao;
 import com.flightstats.hub.group.GroupDao;
 import com.flightstats.hub.spoke.*;

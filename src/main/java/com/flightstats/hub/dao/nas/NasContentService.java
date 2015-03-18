@@ -1,6 +1,6 @@
-package com.flightstats.hub.dao;
+package com.flightstats.hub.dao.nas;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.SpokeMarshaller;
@@ -19,7 +19,7 @@ public class NasContentService implements ContentService {
     private final FileSpokeStore fileSpokeStore;
 
     public NasContentService() {
-        String contentPath = HubProperties.getProperty("nas.content.path", "/nas");
+        String contentPath = NasUtil.getStoragePath() + "content/";
         logger.info("using {}", contentPath);
         fileSpokeStore = new FileSpokeStore(contentPath);
     }

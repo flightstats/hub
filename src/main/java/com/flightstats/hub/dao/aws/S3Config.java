@@ -1,4 +1,4 @@
-package com.flightstats.hub.dao.s3;
+package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;

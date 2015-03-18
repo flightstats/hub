@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.dao.nas.NasContentService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
@@ -21,7 +22,7 @@ public class NasContentServiceTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         File tempDir = Files.createTempDir();
-        HubProperties.setProperty("nas.content.path", tempDir.toString());
+        HubProperties.setProperty("nas.storage.path", tempDir.toString());
         contentService = new NasContentService();
     }
 

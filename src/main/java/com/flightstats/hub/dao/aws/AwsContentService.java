@@ -1,8 +1,9 @@
-package com.flightstats.hub.dao;
+package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.dao.s3.S3WriteQueue;
+import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;

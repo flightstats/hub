@@ -3,7 +3,7 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.model.ChannelConfiguration;
 
 public interface ChannelConfigurationDao {
-    ChannelConfiguration createChannel(ChannelConfiguration configuration);
+    ChannelConfiguration createChannel(ChannelConfiguration config);
 
     void updateChannel(ChannelConfiguration newConfig);
 

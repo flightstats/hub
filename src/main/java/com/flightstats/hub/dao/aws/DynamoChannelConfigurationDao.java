@@ -1,4 +1,4 @@
-package com.flightstats.hub.dao.dynamo;
+package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
@@ -27,9 +27,9 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
     }
 
     @Override
-    public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
-        updateChannel(configuration);
-        return configuration;
+    public ChannelConfiguration createChannel(ChannelConfiguration config) {
+        updateChannel(config);
+        return config;
     }
 
     @Override
@@ -59,7 +59,6 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
     }
 
     private void createTable() {
-
         CreateTableRequest request = new CreateTableRequest()
                 .withTableName(getTableName())
                 .withAttributeDefinitions(new AttributeDefinition("key", ScalarAttributeType.S))

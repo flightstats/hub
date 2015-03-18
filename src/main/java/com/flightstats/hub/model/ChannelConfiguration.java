@@ -60,6 +60,10 @@ public class ChannelConfiguration implements Serializable {
                 .build();
     }
 
+    public String toJson() {
+        return gson.toJson(this);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
