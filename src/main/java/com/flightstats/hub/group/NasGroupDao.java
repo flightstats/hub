@@ -23,8 +23,4 @@ public class NasGroupDao implements GroupDao {
 
     }
 
-    @Override
-    public String getTableName() {
-        return null;
-    }
 }

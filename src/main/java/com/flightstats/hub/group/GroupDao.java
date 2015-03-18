@@ -10,6 +10,4 @@ public interface GroupDao {
     Iterable<Group> getGroups();
 
     void delete(String name);
-
-    String getTableName();
 }

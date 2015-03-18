@@ -41,6 +41,17 @@ public class Content implements Serializable {
         return new Builder();
     }
 
+    public ContentKey keyAndStart() {
+        if (isNew()) {
+            ContentKey key = new ContentKey();
+            setContentKey(key);
+            getTraces().setStart(key.getMillis());
+        } else {
+            getTraces().setStart(System.currentTimeMillis());
+        }
+        return getContentKey().get();
+    }
+
     public void setContentKey(ContentKey contentKey) {
         this.contentKey = Optional.of(contentKey);
     }

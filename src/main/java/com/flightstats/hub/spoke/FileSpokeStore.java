@@ -22,7 +22,6 @@ import java.util.List;
 /**
  * Direct interactions with the file system
  */
-@SuppressWarnings("Convert2streamapi")
 public class FileSpokeStore {
 
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);

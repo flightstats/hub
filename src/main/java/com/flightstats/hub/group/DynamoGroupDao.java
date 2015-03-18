@@ -115,7 +115,6 @@ public class DynamoGroupDao implements GroupDao {
         dbClient.deleteItem(new DeleteItemRequest(getTableName(), key));
     }
 
-    @Override
     public String getTableName() {
         return dynamoUtils.getTableName("GroupConfig");
     }
