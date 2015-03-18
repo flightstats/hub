@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,8 @@ public class NasUtil {
         try {
             byte[] bytes = FileUtils.readFileToByteArray(file);
             return fromJson.apply(new String(bytes));
+        } catch (FileNotFoundException e) {
+            logger.info("file not found {} {} ", file.getName(), e.getMessage());
         } catch (IOException e) {
             logger.warn("unable to find for " + file.getName(), e);
         }

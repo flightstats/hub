@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class GroupTest {
 
@@ -60,6 +61,8 @@ public class GroupTest {
         Group cycled = Group.fromJson(json);
         assertEquals(group, cycled);
         assertEquals(key, cycled.getStartingKey());
+        String toJson = cycled.toJson();
+        assertNotNull(toJson);
     }
 
 

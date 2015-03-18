@@ -32,7 +32,7 @@ public class Group {
     @Wither
     private final String name;
     @Wither
-    private final ContentKey startingKey;
+    private final transient ContentKey startingKey;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 

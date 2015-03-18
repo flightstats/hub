@@ -158,7 +158,7 @@ public class RemoteSpokeStore {
                         if (response.getStatus() == 200) {
                             String key = response.getEntity(String.class);
                             if (StringUtils.isNotEmpty(key)) {
-                                orderedKeys.add(ContentKey.fromUrl(StringUtils.substringAfter(key, "/")).get());
+                                orderedKeys.add(ContentKeyUtil.convertKey(key).get());
                             }
                             traces.add(server, key);
                         }

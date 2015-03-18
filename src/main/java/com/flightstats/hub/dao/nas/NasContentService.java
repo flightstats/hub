@@ -10,6 +10,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeSet;
 
@@ -86,12 +87,12 @@ public class NasContentService implements ContentService {
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
         //todo - gfm - 3/18/15 -
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
-        //todo - gfm - 3/18/15 -
-        return null;
+        String path = getPath(channel, limitKey);
+        return ContentKeyUtil.convertKey(fileSpokeStore.getLatest(channel, path));
     }
 }
