@@ -10,7 +10,6 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeSet;
 
@@ -65,13 +64,13 @@ public class NasContentService implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
-        DateTime time = TimeUtil.time(timeQuery.isStable());
-        String path = timeQuery.getChannelName() + "/" + timeQuery.getUnit().format(time);
-        timeQuery.getTraces().add("query by time", path);
+    public Collection<ContentKey> queryByTime(TimeQuery query) {
+        DateTime time = TimeUtil.time(query.isStable());
+        String path = query.getChannelName() + "/" + query.getUnit().format(time);
+        query.getTraces().add("query by time", path);
         TreeSet<ContentKey> keySet = new TreeSet<>();
         ContentKeyUtil.convertKeyStrings(fileSpokeStore.readKeysInBucket(path), keySet);
-        timeQuery.getTraces().add(timeQuery.getChannelName(), keySet);
+        query.getTraces().add(query.getChannelName(), keySet);
         return keySet;
     }
 
@@ -86,13 +85,27 @@ public class NasContentService implements ContentService {
 
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
-        //todo - gfm - 3/18/15 -
-        return new ArrayList<>();
+        TreeSet<ContentKey> keys = new TreeSet<>();
+        TimeUtil.Unit hours = TimeUtil.Unit.HOURS;
+        if (query.isNext()) {
+            DateTime endTime = TimeUtil.now().plus(hours.getDuration());
+            DateTime time = query.getContentKey().getTime();
+            while (keys.size() < query.getCount() && time.isBefore(endTime)) {
+                String path = query.getChannelName() + "/" + hours.format(time);
+                String readKeysInBucket = fileSpokeStore.readKeysInBucket(path);
+                ContentKeyUtil.convertKeyStrings(fileSpokeStore.readKeysInBucket(path), keys);
+                time = time.plus(hours.getDuration());
+            }
+        } else {
+            DateTime ttlTime = TimeUtil.now().minusDays((int) query.getTtlDays());
+            //todo - gfm - 3/18/15 - previous
+
+        }
+        return keys;
     }
 
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
-        String path = getPath(channel, limitKey);
-        return ContentKeyUtil.convertKey(fileSpokeStore.getLatest(channel, path));
+        return ContentKeyUtil.convertKey(fileSpokeStore.getLatest(channel, limitKey.toUrl()));
     }
 }
