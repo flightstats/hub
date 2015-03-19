@@ -87,21 +87,27 @@ public class NasContentService implements ContentService {
     public Collection<ContentKey> getKeys(DirectionQuery query) {
         TreeSet<ContentKey> keys = new TreeSet<>();
         TimeUtil.Unit hours = TimeUtil.Unit.HOURS;
+        DateTime time = query.getContentKey().getTime();
         if (query.isNext()) {
             DateTime endTime = TimeUtil.now().plus(hours.getDuration());
-            DateTime time = query.getContentKey().getTime();
             while (keys.size() < query.getCount() && time.isBefore(endTime)) {
-                String path = query.getChannelName() + "/" + hours.format(time);
-                String readKeysInBucket = fileSpokeStore.readKeysInBucket(path);
-                ContentKeyUtil.convertKeyStrings(fileSpokeStore.readKeysInBucket(path), keys);
+                addKeys(query, keys, hours, time);
                 time = time.plus(hours.getDuration());
             }
         } else {
-            DateTime ttlTime = TimeUtil.now().minusDays((int) query.getTtlDays());
-            //todo - gfm - 3/18/15 - previous
-
+            DateTime endTime = TimeUtil.now().minusDays((int) query.getTtlDays());
+            while (keys.size() < query.getCount() && time.isAfter(endTime)) {
+                addKeys(query, keys, hours, time);
+                time = time.minus(hours.getDuration());
+            }
         }
         return keys;
+    }
+
+    private void addKeys(DirectionQuery query, TreeSet<ContentKey> keys, TimeUtil.Unit hours, DateTime time) {
+        String path = query.getChannelName() + "/" + hours.format(time);
+        String readKeysInBucket = fileSpokeStore.readKeysInBucket(path);
+        ContentKeyUtil.convertKeyStrings(fileSpokeStore.readKeysInBucket(path), keys);
     }
 
     @Override

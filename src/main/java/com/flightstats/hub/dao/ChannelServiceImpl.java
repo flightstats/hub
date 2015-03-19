@@ -96,6 +96,7 @@ public class ChannelServiceImpl implements ChannelService {
             return latest;
         }
 
+        //todo - gfm - 3/18/15 - fix this!
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .contentKey(limitKey)
@@ -195,6 +196,7 @@ public class ChannelServiceImpl implements ChannelService {
             Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
             contentKeys.addAll(keys);
             return contentKeys.stream()
+                    .filter(key -> key.compareTo(query.getContentKey()) < 0)
                     .limit(query.getCount())
                     .collect(Collectors.toCollection(TreeSet::new));
 

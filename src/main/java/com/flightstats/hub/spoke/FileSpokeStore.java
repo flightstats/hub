@@ -154,7 +154,7 @@ public class FileSpokeStore {
 
     private String recurseLatest(String path, String[] limitPath, int count, String channel) {
         String base = " ";
-        String pathname = storagePath + "/" + path;
+        String pathname = storagePath + path;
         String[] items = new File(pathname).list();
         if (items == null) {
             logger.trace("path not found {}", pathname);
