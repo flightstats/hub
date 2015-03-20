@@ -65,8 +65,7 @@ public class NasContentService implements ContentService {
 
     @Override
     public Collection<ContentKey> queryByTime(TimeQuery query) {
-        DateTime time = TimeUtil.time(query.isStable());
-        String path = query.getChannelName() + "/" + query.getUnit().format(time);
+        String path = query.getChannelName() + "/" + query.getUnit().format(query.getStartTime());
         query.getTraces().add("query by time", path);
         TreeSet<ContentKey> keySet = new TreeSet<>();
         ContentKeyUtil.convertKeyStrings(fileSpokeStore.readKeysInBucket(path), keySet);
