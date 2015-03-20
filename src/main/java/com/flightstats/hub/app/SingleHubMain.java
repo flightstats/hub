@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import com.google.common.io.Files;
 import com.google.inject.Injector;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -27,7 +28,7 @@ public class SingleHubMain {
         setProperty("zookeeper.connection", "localhost:2181");
         setProperty("runSingleZookeeperInternally", "singleNode");
         setProperty("app.lib_path", "");
-        setProperty("storage.path", "/hub");
+        setProperty("storage.path", Files.createTempDir().getAbsolutePath());
 
         HubMain.start("com.flightstats.hub.channel," +
                 "com.flightstats.hub.health," +
@@ -39,7 +40,9 @@ public class SingleHubMain {
     }
 
     private static void setProperty(String name, String defaultValue) {
-        HubProperties.setProperty(name, System.getProperty(name, defaultValue));
+        String value = System.getProperty(name, defaultValue);
+        HubProperties.setProperty(name, value);
+        System.out.println("setting " + name + "=" + value + " . over ride this value with -D" + name + "=value");
     }
 
 }
