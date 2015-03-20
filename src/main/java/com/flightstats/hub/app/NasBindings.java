@@ -26,4 +26,14 @@ public class NasBindings extends AbstractModule {
         bind(GroupDao.class).to(NasGroupDao.class).asEagerSingleton();
     }
 
+    public static String packages() {
+        return "com.flightstats.hub.channel," +
+                "com.flightstats.hub.health," +
+                "com.flightstats.hub.exception," +
+                "com.flightstats.hub.replication," +
+                "com.flightstats.hub.app," +
+                "com.flightstats.hub.group," +
+                "com.flightstats.hub.ws";
+    }
+
 }

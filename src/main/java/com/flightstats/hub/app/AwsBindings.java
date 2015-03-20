@@ -50,6 +50,10 @@ public class AwsBindings extends AbstractModule {
         bind(S3WriterManager.class).asEagerSingleton();
     }
 
+    public static String packages() {
+        return "com.flightstats.hub";
+    }
+
     @Inject
     @Provides
     @Singleton

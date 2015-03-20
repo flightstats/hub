@@ -22,13 +22,13 @@ public class HubMain {
             throw new UnsupportedOperationException("HubMain requires a property filename, or 'useDefault'");
         }
         HubProperties.loadProperties(args[0]);
-        start("com.flightstats.hub");
+        start();
     }
 
-    static void start(String packages) throws IOException, InterruptedException {
+    static void start() throws IOException, InterruptedException {
         startZookeeperIfSingle();
 
-        HubJettyServer server = startServer(packages);
+        HubJettyServer server = startServer();
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -43,8 +43,8 @@ public class HubMain {
         logger.info("Server shutdown complete.  Exiting application.");
     }
 
-    public static HubJettyServer startServer(String packages) throws IOException {
-        GuiceContext.HubGuiceServlet guice = GuiceContext.construct(packages);
+    public static HubJettyServer startServer() throws IOException {
+        GuiceContext.HubGuiceServlet guice = GuiceContext.construct();
         injector = guice.getInjector();
         HubJettyServer server = new HubJettyServer(guice);
         HubServices.start(HubServices.TYPE.PRE_START);

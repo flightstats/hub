@@ -30,13 +30,7 @@ public class SingleHubMain {
         setProperty("app.lib_path", "");
         setProperty("storage.path", Files.createTempDir().getAbsolutePath());
 
-        HubMain.start("com.flightstats.hub.channel," +
-                "com.flightstats.hub.health," +
-                "com.flightstats.hub.exception," +
-                "com.flightstats.hub.replication," +
-                "com.flightstats.hub.app," +
-                "com.flightstats.hub.group," +
-                "com.flightstats.hub.ws");
+        HubMain.start();
     }
 
     private static void setProperty(String name, String defaultValue) {

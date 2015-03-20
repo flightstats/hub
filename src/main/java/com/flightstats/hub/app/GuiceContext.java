@@ -26,12 +26,10 @@ import static com.sun.jersey.api.core.PackagesResourceConfig.*;
 public class GuiceContext {
     private final static Logger logger = LoggerFactory.getLogger(GuiceContext.class);
 
-    public static HubGuiceServlet construct(String packages) {
+    public static HubGuiceServlet construct() {
         Map<String, String> jerseyProps = new HashMap<>();
-        jerseyProps.put(PROPERTY_PACKAGES, packages);
         jerseyProps.put(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName() +
                 ";" + HubServerFilter.class.getName());
-
         jerseyProps.put(JSONConfiguration.FEATURE_POJO_MAPPING, "true");
         jerseyProps.put(FEATURE_CANONICALIZE_URI_PATH, "true");
         jerseyProps.put(PROPERTY_CONTAINER_REQUEST_FILTERS, GZIPContentEncodingFilter.class.getName() +
@@ -56,12 +54,12 @@ public class GuiceContext {
         switch (hubType) {
             case "aws":
                 modules.add(new AwsBindings());
+                jerseyProps.put(PROPERTY_PACKAGES, AwsBindings.packages());
                 break;
             case "nas":
-                modules.add(new NasBindings());
-                break;
             case "test":
                 modules.add(new NasBindings());
+                jerseyProps.put(PROPERTY_PACKAGES, NasBindings.packages());
                 break;
             default:
                 throw new RuntimeException("unsupported hub.type " + hubType);
