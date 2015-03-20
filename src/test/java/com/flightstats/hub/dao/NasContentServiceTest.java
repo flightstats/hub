@@ -22,7 +22,7 @@ public class NasContentServiceTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         File tempDir = Files.createTempDir();
-        HubProperties.setProperty("nas.storage.path", tempDir.toString());
+        HubProperties.setProperty("storage.path", tempDir.toString());
         contentService = new NasContentService();
     }
 

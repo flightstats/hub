@@ -18,7 +18,7 @@ public class NasUtil {
     private final static Logger logger = LoggerFactory.getLogger(NasUtil.class);
 
     public static String getStoragePath() {
-        return StringUtils.appendIfMissing(HubProperties.getProperty("nas.storage.path", "/nas"), "/");
+        return StringUtils.appendIfMissing(HubProperties.getProperty("storage.path", "/nas"), "/");
     }
 
     public static void writeJson(String json, String name, String path) {

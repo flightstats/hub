@@ -39,7 +39,7 @@ public class Integration {
         }
         startZooKeeper();
         HubProperties.loadProperties("useDefault");
-        HubMain.startServer();
+        HubMain.startServer("com.flightstats.hub");
         injector = HubMain.getInjector();
         return injector;
     }

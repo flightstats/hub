@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * Main entry point for the data hub.  This is the main runnable class.
+ * Main entry point for the hub.  This is the main runnable class.
  */
 public class HubMain {
 
@@ -22,9 +22,13 @@ public class HubMain {
             throw new UnsupportedOperationException("HubMain requires a property filename, or 'useDefault'");
         }
         HubProperties.loadProperties(args[0]);
+        start("com.flightstats.hub");
+    }
+
+    static void start(String packages) throws IOException, InterruptedException {
         startZookeeperIfSingle();
 
-        HubJettyServer server = startServer();
+        HubJettyServer server = startServer(packages);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -39,8 +43,8 @@ public class HubMain {
         logger.info("Server shutdown complete.  Exiting application.");
     }
 
-    public static HubJettyServer startServer() throws IOException {
-        GuiceContext.HubGuiceServlet guice = GuiceContext.construct();
+    public static HubJettyServer startServer(String packages) throws IOException {
+        GuiceContext.HubGuiceServlet guice = GuiceContext.construct(packages);
         injector = guice.getInjector();
         HubJettyServer server = new HubJettyServer(guice);
         HubServices.start(HubServices.TYPE.PRE_START);

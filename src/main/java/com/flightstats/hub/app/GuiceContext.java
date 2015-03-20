@@ -26,9 +26,9 @@ import static com.sun.jersey.api.core.PackagesResourceConfig.*;
 public class GuiceContext {
     private final static Logger logger = LoggerFactory.getLogger(GuiceContext.class);
 
-    public static HubGuiceServlet construct() {
+    public static HubGuiceServlet construct(String packages) {
         Map<String, String> jerseyProps = new HashMap<>();
-        jerseyProps.put(PROPERTY_PACKAGES, "com.flightstats.hub");
+        jerseyProps.put(PROPERTY_PACKAGES, packages);
         jerseyProps.put(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName() +
                 ";" + HubServerFilter.class.getName());
 
