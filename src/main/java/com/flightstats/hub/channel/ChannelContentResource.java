@@ -16,6 +16,7 @@ import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.sun.jersey.api.Responses;
 import com.sun.jersey.core.header.MediaTypes;
+import net.logstash.logback.encoder.org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
@@ -29,7 +30,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.flightstats.hub.util.TimeUtil.*;
@@ -319,10 +322,17 @@ public class ChannelContentResource {
         return MediaType.APPLICATION_OCTET_STREAM_TYPE;
     }
 
-    private boolean contentTypeIsNotCompatible(String acceptHeader, final MediaType actualContentType) {
-        List<MediaType> acceptableContentTypes = acceptHeader != null ?
-                MediaTypes.createMediaTypes(acceptHeader.split(",")) :
-                MediaTypes.GENERAL_MEDIA_TYPE_LIST;
+    static boolean contentTypeIsNotCompatible(String acceptHeader, final MediaType actualContentType) {
+        List<MediaType> acceptableContentTypes;
+        if (StringUtils.isBlank(acceptHeader)) {
+            acceptableContentTypes = MediaTypes.GENERAL_MEDIA_TYPE_LIST;
+        } else {
+            acceptableContentTypes = new ArrayList<>();
+            String[] types = acceptHeader.split(",");
+            for (String type : types) {
+                acceptableContentTypes.addAll(getMediaTypes(type));
+            }
+        }
 
         return !Iterables.any(acceptableContentTypes, new Predicate<MediaType>() {
             @Override
@@ -330,6 +340,14 @@ public class ChannelContentResource {
                 return input.isCompatible(actualContentType);
             }
         });
+    }
+
+    private static List<MediaType> getMediaTypes(String type) {
+        try {
+            return MediaTypes.createMediaTypes(new String[]{type});
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 
 
