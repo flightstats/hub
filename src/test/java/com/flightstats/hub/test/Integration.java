@@ -33,12 +33,13 @@ public class Integration {
         return curator;
     }
 
-    public static synchronized Injector startRealHub() throws Exception {
+    public static synchronized Injector startAwsHub() throws Exception {
         if (injector != null) {
             return injector;
         }
         startZooKeeper();
         HubProperties.loadProperties("useDefault");
+        HubProperties.setProperty("hub.type", "aws");
         HubMain.startServer();
         injector = HubMain.getInjector();
         return injector;

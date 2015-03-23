@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ChannelServiceImpl implements ChannelService {
     private final static Logger logger = LoggerFactory.getLogger(ChannelServiceImpl.class);
@@ -92,11 +93,14 @@ public class ChannelServiceImpl implements ChannelService {
         ContentKey limitKey = new ContentKey(TimeUtil.time(stable), "ZZZZZZ");
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
+            DateTime ttlTime = getTtlTime(channel);
+            if (latest.get().getTime().isBefore(ttlTime)) {
+                return Optional.absent();
+            }
             traces.log(logger);
             return latest;
         }
 
-        //todo - gfm - 3/18/15 - fix this!
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .contentKey(limitKey)
@@ -117,6 +121,10 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Optional<Content> getValue(Request request) {
+        DateTime ttlTime = getTtlTime(request.getChannel());
+        if (request.getKey().getTime().isBefore(ttlTime)) {
+            return Optional.absent();
+        }
         return contentService.getValue(request.getChannel(), request.getKey());
     }
 
@@ -167,15 +175,14 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(TimeQuery timeQuery) {
-        Collection<ContentKey> keys = contentService.queryByTime(timeQuery);
-        if (timeQuery.isStable()) {
-            DateTime stableTime = TimeUtil.stable();
-            return keys.stream()
-                    .filter(key -> key.getTime().isBefore(stableTime))
-                    .collect(Collectors.toCollection(TreeSet::new));
-        }
-        return keys;
+    public Collection<ContentKey> queryByTime(TimeQuery query) {
+        DateTime ttlTime = getTtlTime(query.getChannelName());
+        DateTime stableTime = TimeUtil.time(query.isStable());
+        return contentService.queryByTime(query)
+                .stream()
+                .filter(key -> key.getTime().isBefore(stableTime))
+                .filter(key -> key.getTime().isAfter(ttlTime))
+                .collect(Collectors.toCollection(TreeSet::new));
     }
 
     @Override
@@ -184,23 +191,29 @@ public class ChannelServiceImpl implements ChannelService {
             query.getTraces().add("requested zero");
             return Collections.emptySet();
         }
-        DateTime stableTime = TimeUtil.time(query.isStable());
+        DateTime ttlTime = getTtlTime(query.getChannelName());
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
+        Stream<ContentKey> stream = keys.stream();
         if (query.isNext()) {
-            return keys.stream()
+            DateTime stableTime = TimeUtil.time(query.isStable());
+            stream = stream
                     .filter(key -> key.compareTo(query.getContentKey()) > 0)
-                    .filter(key -> key.getTime().isBefore(stableTime))
-                    .limit(query.getCount())
-                    .collect(Collectors.toCollection(TreeSet::new));
+                    .filter(key -> key.getTime().isBefore(stableTime));
+
         } else {
             Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
             contentKeys.addAll(keys);
-            return contentKeys.stream()
-                    .filter(key -> key.compareTo(query.getContentKey()) < 0)
-                    .limit(query.getCount())
-                    .collect(Collectors.toCollection(TreeSet::new));
-
+            stream = contentKeys.stream()
+                    .filter(key -> key.compareTo(query.getContentKey()) < 0);
         }
+        return stream
+                .filter(key -> key.getTime().isAfter(ttlTime))
+                .limit(query.getCount())
+                .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    private DateTime getTtlTime(String channelName) {
+        return TimeUtil.now().minusDays((int) getChannelConfiguration(channelName).getTtlDays());
     }
 
     @Override
