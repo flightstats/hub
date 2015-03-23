@@ -1,12 +1,14 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,6 +182,43 @@ public class FileSpokeStore {
         }
         count++;
         return recurseLatest(path + "/" + base, limitPath, count, channel);
+    }
+
+    public void enforceTtl(String channel, DateTime dateTime) {
+        String limitPath = TimeUtil.minutes(dateTime);
+        logger.debug("enforceTtl {} {}", channel, limitPath);
+        String[] split = StringUtils.split(limitPath, "/");
+        split = new String[]{split[0], split[1], split[2], split[3], split[4]};
+        recurseDelete(channel, split, 0, channel);
+    }
+
+    private void recurseDelete(String path, String[] limitPath, int count, String channel) {
+        logger.trace("recurse delete {} {}", path, count);
+        String pathname = storagePath + path;
+        String[] items = new File(pathname).list();
+        if (items == null) {
+            logger.trace("path not found {}", pathname);
+            return;
+        }
+        String limitCompare = channel + "/";
+        for (int i = 0; i <= count; i++) {
+            limitCompare += limitPath[i] + "/";
+        }
+        for (String item : items) {
+            logger.info("looking at {} {}", item, limitCompare);
+            String current = path + "/" + item + "/";
+            if (current.compareTo(limitCompare) <= 0) {
+                if (count < 4) {
+                    recurseDelete(path + "/" + item, limitPath, count + 1, channel);
+                } else {
+                    logger.info("deleting {}", storagePath + "/" + current);
+                    FileUtils.deleteQuietly(new File(storagePath + "/" + current));
+                }
+            }
+        }
+        if (count == 4) {
+            return;
+        }
     }
 
 }

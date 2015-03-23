@@ -113,4 +113,9 @@ public class NasContentService implements ContentService {
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
         return ContentKeyUtil.convertKey(fileSpokeStore.getLatest(channel, limitKey.toUrl()));
     }
+
+    public void enforceTtl(String channelName, DateTime dateTime) {
+        logger.info("enforcing ttl for {} at {}", channelName, dateTime);
+        fileSpokeStore.enforceTtl(channelName, dateTime);
+    }
 }

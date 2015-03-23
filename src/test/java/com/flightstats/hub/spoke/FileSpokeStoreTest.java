@@ -1,6 +1,8 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentKeyUtil;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.io.Files;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -10,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import static org.junit.Assert.*;
@@ -145,6 +148,49 @@ public class FileSpokeStoreTest {
         found = spokeStore.getLatest(channel, limitKey.toUrl());
         logger.info("found {}", found);
         assertEquals(channel + "/2015/03/17/17/31/59/600/2905220", found);
+    }
+
+    @Test
+    public void testEnforceTtlYear() {
+        enforceVerify("testEnforceTtlYear", new DateTime(2014, 12, 31, 23, 45, 1, 2, DateTimeZone.UTC));
+    }
+
+    @Test
+    public void testEnforceTtlMonth() {
+        enforceVerify("testEnforceTtlMonth", new DateTime(2015, 1, 31, 23, 45, 1, 2, DateTimeZone.UTC));
+    }
+
+    @Test
+    public void testEnforceTtlDay() {
+        enforceVerify("testEnforceTtlDay", new DateTime(2015, 2, 1, 23, 45, 1, 2, DateTimeZone.UTC));
+    }
+
+    @Test
+    public void testEnforceTtlHour() {
+        enforceVerify("testEnforceTtlHour", new DateTime(2015, 2, 1, 12, 45, 1, 2, DateTimeZone.UTC));
+    }
+
+    private void enforceVerify(String channel, DateTime startTime) {
+        DateTime time = startTime;
+        String startQuery = TimeUtil.hours(time);
+        for (int i = 0; i < 30; i++) {
+            time = time.plusMinutes(1);
+            spokeStore.write(channel + "/" + new ContentKey(time, "" + i).toUrl(), BYTES);
+        }
+        String endQuery = TimeUtil.hours(time);
+        verify(channel + "/" + startQuery, 14);
+        verify(channel + "/" + endQuery, 16);
+
+        spokeStore.enforceTtl(channel, startTime.plusMinutes(17));
+        verify(channel + "/" + startQuery, 0);
+        verify(channel + "/" + endQuery, 13);
+    }
+
+    private void verify(String path, int expected) {
+        String keysInBucket = spokeStore.readKeysInBucket(path);
+        ArrayList<ContentKey> keys = new ArrayList();
+        ContentKeyUtil.convertKeyStrings(spokeStore.readKeysInBucket(path), keys);
+        assertEquals(expected, keys.size());
     }
 
 }

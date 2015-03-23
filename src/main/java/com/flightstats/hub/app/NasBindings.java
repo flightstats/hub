@@ -6,6 +6,7 @@ import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.nas.NasChannelConfigurationDao;
 import com.flightstats.hub.dao.nas.NasContentService;
 import com.flightstats.hub.dao.nas.NasGroupDao;
+import com.flightstats.hub.dao.nas.NasTtlEnforcer;
 import com.flightstats.hub.group.GroupDao;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
@@ -24,6 +25,7 @@ public class NasBindings extends AbstractModule {
 
         bind(ContentService.class).to(NasContentService.class).asEagerSingleton();
         bind(GroupDao.class).to(NasGroupDao.class).asEagerSingleton();
+        bind(NasTtlEnforcer.class).asEagerSingleton();
     }
 
     public static String packages() {
