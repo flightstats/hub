@@ -3,7 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.rest.HalLink;
@@ -30,8 +30,8 @@ public class LinkBuilder {
         }
     }
 
-    public static URI buildChannelUri(ChannelConfiguration channelConfiguration, UriInfo uriInfo) {
-        return buildChannelUri(channelConfiguration.getName(), uriInfo);
+    public static URI buildChannelUri(ChannelConfig channelConfig, UriInfo uriInfo) {
+        return buildChannelUri(channelConfig.getName(), uriInfo);
     }
 
     static URI buildChannelUri(String channelName, UriInfo uriInfo) {
@@ -50,8 +50,8 @@ public class LinkBuilder {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
-    public static Linked<ChannelConfiguration> buildChannelLinks(ChannelConfiguration config, URI channelUri) {
-        Linked.Builder<ChannelConfiguration> linked = linked(config).withLink("self", channelUri);
+    public static Linked<ChannelConfig> buildChannelLinks(ChannelConfig config, URI channelUri) {
+        Linked.Builder<ChannelConfig> linked = linked(config).withLink("self", channelUri);
         linked.withLink("latest", URI.create(channelUri + "/latest"))
                 .withLink("ws", buildWsLinkFor(channelUri))
                 .withLink("time", URI.create(channelUri + "/time"))
@@ -59,10 +59,10 @@ public class LinkBuilder {
         return linked.build();
     }
 
-    public static Linked<?> build(Iterable<ChannelConfiguration> channels, UriInfo uriInfo) {
+    public static Linked<?> build(Iterable<ChannelConfig> channels, UriInfo uriInfo) {
         Map<String, URI> mappedChannels = new HashMap<>();
-        for (ChannelConfiguration channelConfiguration : channels) {
-            String channelName = channelConfiguration.getName();
+        for (ChannelConfig channelConfig : channels) {
+            String channelName = channelConfig.getName();
             mappedChannels.put(channelName, buildChannelUri(channelName, uriInfo));
         }
 

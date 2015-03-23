@@ -1,4 +1,4 @@
-package com.flightstats.hub.dao.s3;
+package com.flightstats.hub.dao.aws;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;

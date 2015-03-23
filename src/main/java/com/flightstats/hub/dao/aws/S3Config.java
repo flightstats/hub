@@ -1,12 +1,12 @@
-package com.flightstats.hub.dao.s3;
+package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.Lockable;
-import com.flightstats.hub.dao.ChannelConfigurationDao;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.dao.ChannelConfigDao;
+import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -21,15 +21,15 @@ public class S3Config {
 
     private final AmazonS3 s3Client;
     private final CuratorLock curatorLock;
-    private final ChannelConfigurationDao channelConfigurationDao;
+    private final ChannelConfigDao channelConfigDao;
     private final String s3BucketName;
 
     @Inject
     public S3Config(AmazonS3 s3Client, S3BucketName s3BucketName,
-                    CuratorLock curatorLock, ChannelConfigurationDao channelConfigurationDao) {
+                    CuratorLock curatorLock, ChannelConfigDao channelConfigDao) {
         this.s3Client = s3Client;
         this.curatorLock = curatorLock;
-        this.channelConfigurationDao = channelConfigurationDao;
+        this.channelConfigDao = channelConfigDao;
         this.s3BucketName = s3BucketName.getS3BucketName();
         HubServices.register(new S3ConfigInit());
     }
@@ -44,7 +44,7 @@ public class S3Config {
 
     public int doWork() {
         logger.info("starting work");
-        Iterable<ChannelConfiguration> channels = channelConfigurationDao.getChannels();
+        Iterable<ChannelConfig> channels = channelConfigDao.getChannels();
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
         curatorLock.runWithLock(lockable, "/S3ConfigLock/", 1, TimeUnit.MINUTES);
         return lockable.size;
@@ -68,10 +68,10 @@ public class S3Config {
     }
 
     private class S3ConfigLockable implements Lockable {
-        final Iterable<ChannelConfiguration> configurations;
+        final Iterable<ChannelConfig> configurations;
         private int size;
 
-        private S3ConfigLockable(Iterable<ChannelConfiguration> configurations) {
+        private S3ConfigLockable(Iterable<ChannelConfig> configurations) {
             this.configurations = configurations;
         }
 
@@ -79,7 +79,7 @@ public class S3Config {
         public void runWithLock() throws Exception {
             logger.info("running with lock");
             ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
-            for (ChannelConfiguration config : configurations) {
+            for (ChannelConfig config : configurations) {
                 String namePrefix = config.getName() + "/";
                 BucketLifecycleConfiguration.Rule configRule = new BucketLifecycleConfiguration.Rule()
                         .withPrefix(namePrefix)

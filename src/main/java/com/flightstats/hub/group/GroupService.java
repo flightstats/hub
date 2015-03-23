@@ -13,17 +13,17 @@ import org.slf4j.LoggerFactory;
 public class GroupService {
     private final static Logger logger = LoggerFactory.getLogger(GroupService.class);
 
-    private final DynamoGroupDao dynamoGroupDao;
+    private final GroupDao groupDao;
     private final GroupValidator groupValidator;
     private final GroupCallback groupCallback;
     private final LastContentKey lastContentKey;
     private ChannelService channelService;
 
     @Inject
-    public GroupService(DynamoGroupDao dynamoGroupDao, GroupValidator groupValidator,
+    public GroupService(GroupDao groupDao, GroupValidator groupValidator,
                         GroupCallback groupCallback, LastContentKey lastContentKey,
                         ChannelService channelService) {
-        this.dynamoGroupDao = dynamoGroupDao;
+        this.groupDao = groupDao;
         this.groupValidator = groupValidator;
         this.groupCallback = groupCallback;
         this.lastContentKey = lastContentKey;
@@ -42,17 +42,17 @@ public class GroupService {
             throw new ConflictException("{\"error\": \"Groups are immutable\"}");
         }
         lastContentKey.initialize(group.getName(), group.getStartingKey(), GroupCaller.GROUP_LAST_COMPLETED);
-        dynamoGroupDao.upsertGroup(group);
+        groupDao.upsertGroup(group);
         groupCallback.notifyWatchers();
         return existingGroup;
     }
 
     public Optional<Group> getGroup(String name) {
-        return dynamoGroupDao.getGroup(name);
+        return groupDao.getGroup(name);
     }
 
     public Iterable<Group> getGroups() {
-        return dynamoGroupDao.getGroups();
+        return groupDao.getGroups();
     }
 
     public GroupStatus getGroupStatus(Group group) {
@@ -68,7 +68,7 @@ public class GroupService {
 
     public void delete(String name) {
         logger.info("deleting group " + name);
-        dynamoGroupDao.delete(name);
+        groupDao.delete(name);
         groupCallback.delete(name);
     }
 

@@ -1,8 +1,9 @@
-package com.flightstats.hub.dao;
+package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.dao.s3.S3WriteQueue;
+import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -19,9 +20,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("Convert2Lambda")
-public class ContentServiceImpl implements ContentService {
+public class AwsContentService implements ContentService {
 
-    private final static Logger logger = LoggerFactory.getLogger(ContentServiceImpl.class);
+    private final static Logger logger = LoggerFactory.getLogger(AwsContentService.class);
 
     private final ContentDao cacheContentDao;
     private final ContentDao longTermContentDao;
@@ -32,9 +33,9 @@ public class ContentServiceImpl implements ContentService {
     private final boolean dropSomeWrites;
 
     @Inject
-    public ContentServiceImpl(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
-                              @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
-                              S3WriteQueue s3WriteQueue) {
+    public AwsContentService(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
+                             @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
+                             S3WriteQueue s3WriteQueue) {
         this.cacheContentDao = cacheContentDao;
         this.longTermContentDao = longTermContentDao;
         this.dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);

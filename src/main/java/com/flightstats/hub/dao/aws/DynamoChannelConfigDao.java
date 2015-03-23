@@ -1,10 +1,10 @@
-package com.flightstats.hub.dao.dynamo;
+package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.dao.ChannelConfigurationDao;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.dao.ChannelConfigDao;
+import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
@@ -13,27 +13,27 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
-    private final static Logger logger = LoggerFactory.getLogger(DynamoChannelConfigurationDao.class);
+public class DynamoChannelConfigDao implements ChannelConfigDao {
+    private final static Logger logger = LoggerFactory.getLogger(DynamoChannelConfigDao.class);
 
     private final AmazonDynamoDBClient dbClient;
     private final DynamoUtils dynamoUtils;
 
     @Inject
-    public DynamoChannelConfigurationDao(AmazonDynamoDBClient dbClient, DynamoUtils dynamoUtils) {
+    public DynamoChannelConfigDao(AmazonDynamoDBClient dbClient, DynamoUtils dynamoUtils) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
         HubServices.register(new DynamoChannelConfigurationDaoInit());
     }
 
     @Override
-    public ChannelConfiguration createChannel(ChannelConfiguration configuration) {
-        updateChannel(configuration);
-        return configuration;
+    public ChannelConfig createChannel(ChannelConfig config) {
+        updateChannel(config);
+        return config;
     }
 
     @Override
-    public void updateChannel(ChannelConfiguration config) {
+    public void updateChannel(ChannelConfig config) {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("key", new AttributeValue(config.getName()));
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
@@ -59,7 +59,6 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
     }
 
     private void createTable() {
-
         CreateTableRequest request = new CreateTableRequest()
                 .withTableName(getTableName())
                 .withAttributeDefinitions(new AttributeDefinition("key", ScalarAttributeType.S))
@@ -69,14 +68,14 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
     }
 
     @Override
-    public boolean channelExists(String channelName) {
-        return getChannelConfiguration(channelName) != null;
+    public boolean channelExists(String name) {
+        return getChannelConfig(name) != null;
     }
 
     @Override
-    public ChannelConfiguration getChannelConfiguration(String channelName) {
+    public ChannelConfig getChannelConfig(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
-        keyMap.put("key", new AttributeValue().withS(channelName));
+        keyMap.put("key", new AttributeValue().withS(name));
         GetItemRequest getItemRequest = new GetItemRequest().withTableName(getTableName()).withKey(keyMap);
         try {
             GetItemResult result = dbClient.getItem(getItemRequest);
@@ -90,8 +89,8 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         }
     }
 
-    private ChannelConfiguration mapItem(Map<String, AttributeValue> item) {
-        ChannelConfiguration.Builder builder = ChannelConfiguration.builder()
+    private ChannelConfig mapItem(Map<String, AttributeValue> item) {
+        ChannelConfig.Builder builder = ChannelConfig.builder()
                 .withCreationDate(new Date(Long.parseLong(item.get("date").getN())))
                 .withName(item.get("key").getS());
         if (item.get("ttlDays") != null) {
@@ -110,8 +109,8 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
     }
 
     @Override
-    public Iterable<ChannelConfiguration> getChannels() {
-        List<ChannelConfiguration> configurations = new ArrayList<>();
+    public Iterable<ChannelConfig> getChannels() {
+        List<ChannelConfig> configurations = new ArrayList<>();
         ScanRequest scanRequest = new ScanRequest()
                 .withTableName(getTableName());
 
@@ -127,16 +126,16 @@ public class DynamoChannelConfigurationDao implements ChannelConfigurationDao {
         return configurations;
     }
 
-    private void mapItems(List<ChannelConfiguration> configurations, ScanResult result) {
+    private void mapItems(List<ChannelConfig> configurations, ScanResult result) {
         for (Map<String, AttributeValue> item : result.getItems()) {
             configurations.add(mapItem(item));
         }
     }
 
     @Override
-    public void delete(String channelName) {
+    public void delete(String name) {
         Map<String, AttributeValue> key = new HashMap<>();
-        key.put("key", new AttributeValue().withS(channelName));
+        key.put("key", new AttributeValue().withS(name));
         dbClient.deleteItem(new DeleteItemRequest(getTableName(), key));
     }
 

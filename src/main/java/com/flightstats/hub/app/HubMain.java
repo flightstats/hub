@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * Main entry point for the data hub.  This is the main runnable class.
+ * Main entry point for the hub.  This is the main runnable class.
  */
 public class HubMain {
 
@@ -22,6 +22,10 @@ public class HubMain {
             throw new UnsupportedOperationException("HubMain requires a property filename, or 'useDefault'");
         }
         HubProperties.loadProperties(args[0]);
+        start();
+    }
+
+    static void start() throws IOException, InterruptedException {
         startZookeeperIfSingle();
 
         HubJettyServer server = startServer();

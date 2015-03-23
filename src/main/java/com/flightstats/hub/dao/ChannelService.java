@@ -9,21 +9,21 @@ public interface ChannelService {
 
     boolean channelExists(String channelName);
 
-    ChannelConfiguration createChannel(ChannelConfiguration configuration);
+    ChannelConfig createChannel(ChannelConfig configuration);
 
     ContentKey insert(String channelName, Content content);
 
     Optional<Content> getValue(Request request);
 
-    ChannelConfiguration getChannelConfiguration(String channelName);
+    ChannelConfig getChannelConfiguration(String channelName);
 
-    Iterable<ChannelConfiguration> getChannels();
+    Iterable<ChannelConfig> getChannels();
 
-    Iterable<ChannelConfiguration> getChannels(String tag);
+    Iterable<ChannelConfig> getChannels(String tag);
 
     Iterable<String> getTags();
 
-    ChannelConfiguration updateChannel(ChannelConfiguration configuration);
+    ChannelConfig updateChannel(ChannelConfig configuration);
 
     Collection<ContentKey> queryByTime(TimeQuery timeQuery);
 

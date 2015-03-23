@@ -1,11 +1,11 @@
-package com.flightstats.hub.dao.s3;
+package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.Traces;
@@ -104,8 +104,8 @@ public class S3WriterManager {
         try {
             DateTime startTime = DateTime.now().minusMinutes(offsetMinutes);
             logger.info("Verifying S3 data at: {}", startTime);
-            Iterable<ChannelConfiguration> channels = channelService.getChannels();
-            for (ChannelConfiguration channel : channels) {
+            Iterable<ChannelConfig> channels = channelService.getChannels();
+            for (ChannelConfig channel : channels) {
                 channelThreadPool.submit(new Runnable() {
                     @Override
                     public void run() {

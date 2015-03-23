@@ -1,6 +1,6 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.google.inject.Inject;
 
@@ -20,7 +20,7 @@ public class SequenceIteratorFactory {
         this.container = container;
     }
 
-    public SequenceIterator create(long startSequence, ChannelConfiguration channel) {
+    public SequenceIterator create(long startSequence, ChannelConfig channel) {
         return new SequenceIterator(startSequence, hubUtils, channel, container);
     }
 }

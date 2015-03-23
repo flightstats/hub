@@ -18,7 +18,7 @@ import java.util.*;
 
 @ToString
 @EqualsAndHashCode(of = {"name"})
-public class ChannelConfiguration implements Serializable {
+public class ChannelConfig implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private static final Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new HubDateTypeAdapter()).create();
@@ -29,7 +29,7 @@ public class ChannelConfiguration implements Serializable {
     private final Set<String> tags = new TreeSet<>();
     private final String replicationSource;
 
-    public ChannelConfiguration(Builder builder) {
+    public ChannelConfig(Builder builder) {
         this.name = StringUtils.trim(builder.name);
         this.creationDate = builder.creationDate;
         this.ttlDays = builder.ttlDays;
@@ -44,20 +44,24 @@ public class ChannelConfiguration implements Serializable {
         }
     }
 
-    public static ChannelConfiguration fromJson(String json) {
+    public static ChannelConfig fromJson(String json) {
         if (StringUtils.isEmpty(json)) {
             throw new InvalidRequestException("this method requires at least a json name");
         }
-        return gson.fromJson(json, ChannelConfiguration.Builder.class).build();
+        return gson.fromJson(json, ChannelConfig.Builder.class).build();
     }
 
-    public static ChannelConfiguration fromJson(String json, String name) {
+    public static ChannelConfig fromJsonName(String json, String name) {
         if (StringUtils.isEmpty(json)) {
             return builder().withName(name).build();
         }
-        return gson.fromJson(json, ChannelConfiguration.Builder.class)
+        return gson.fromJson(json, ChannelConfig.Builder.class)
                 .withName(name)
                 .build();
+    }
+
+    public String toJson() {
+        return gson.toJson(this);
     }
 
     public static Builder builder() {
@@ -111,7 +115,7 @@ public class ChannelConfiguration implements Serializable {
         public Builder() {
         }
 
-        public Builder withChannelConfiguration(ChannelConfiguration config) {
+        public Builder withChannelConfiguration(ChannelConfig config) {
             this.name = config.name;
             this.creationDate = config.creationDate;
             this.ttlDays = config.ttlDays;
@@ -166,8 +170,8 @@ public class ChannelConfiguration implements Serializable {
             return this;
         }
 
-        public ChannelConfiguration build() {
-            return new ChannelConfiguration(this);
+        public ChannelConfig build() {
+            return new ChannelConfig(this);
         }
 
         public Builder withDescription(String description) {

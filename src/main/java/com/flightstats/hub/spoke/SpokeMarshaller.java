@@ -23,9 +23,17 @@ public class SpokeMarshaller {
     private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 20) * 1024 * 1024;
 
     public static byte[] toBytes(Content content) throws IOException {
+        return toBytes(content, true);
+    }
+
+    public static byte[] toBytes(Content content, boolean compress) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ZipOutputStream zipOut = new ZipOutputStream(baos);
-        zipOut.setLevel(Deflater.BEST_SPEED);
+        if (compress) {
+            zipOut.setLevel(Deflater.BEST_SPEED);
+        } else {
+            zipOut.setLevel(Deflater.NO_COMPRESSION);
+        }
         zipOut.putNextEntry(new ZipEntry("meta"));
         ObjectNode objectNode = mapper.createObjectNode();
         if (content.getUser().isPresent()) {

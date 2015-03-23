@@ -12,7 +12,7 @@ public class SpokeContentDaoTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Injector injector = Integration.startRealHub();
+        Injector injector = Integration.startAwsHub();
         util = new ContentDaoUtil(injector.getInstance(SpokeContentDao.class));
     }
 

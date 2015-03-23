@@ -82,4 +82,8 @@ public class HubProperties {
         }
         return properties;
     }
+
+    public static void setProperty(String key, String value) {
+        properties.put(key, value);
+    }
 }

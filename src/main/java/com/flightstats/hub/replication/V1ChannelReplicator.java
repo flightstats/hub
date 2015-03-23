@@ -4,7 +4,7 @@ import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.LastContentKey;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
@@ -31,7 +31,7 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
     private final CuratorFramework curator;
     private final LastContentKey lastContentKey;
     private final SequenceIteratorFactory sequenceIteratorFactory;
-    private ChannelConfiguration channel;
+    private ChannelConfig channel;
 
     private SequenceIterator iterator;
     private boolean valid = false;
@@ -52,11 +52,11 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
         this.lastContentKey = lastContentKey;
     }
 
-    public void setChannel(ChannelConfiguration channel) {
+    public void setChannel(ChannelConfig channel) {
         this.channel = channel;
     }
 
-    public ChannelConfiguration getChannel() {
+    public ChannelConfig getChannel() {
         return channel;
     }
 
@@ -128,7 +128,7 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
     @VisibleForTesting
     boolean validateRemoteChannel() {
         try {
-            Optional<ChannelConfiguration> optionalConfig = hubUtils.getConfiguration(channel.getReplicationSource());
+            Optional<ChannelConfig> optionalConfig = hubUtils.getConfiguration(channel.getReplicationSource());
             if (!optionalConfig.isPresent()) {
                 message = "remote channel missing for " + channel.getReplicationSource();
                 logger.warn(message);

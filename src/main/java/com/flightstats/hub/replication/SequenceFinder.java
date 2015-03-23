@@ -1,6 +1,6 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -23,7 +23,7 @@ public class SequenceFinder {
         this.hubUtils = hubUtils;
     }
 
-    public long searchForLastUpdated(ChannelConfiguration channel, long lastUpdated, long time, TimeUnit timeUnit) {
+    public long searchForLastUpdated(ChannelConfig channel, long lastUpdated, long time, TimeUnit timeUnit) {
         logger.debug("searching the key space with lastUpdated {}", lastUpdated);
         Optional<Long> latestSequence = hubUtils.getLatestV1(channel.getReplicationSource());
         if (!latestSequence.isPresent()) {
@@ -49,7 +49,7 @@ public class SequenceFinder {
     /**
      * We want to return a starting id that exists, and isn't going to be expired immediately.
      */
-    private boolean existsAndNotYetExpired(ChannelConfiguration channel, long id, long time, TimeUnit timeUnit) {
+    private boolean existsAndNotYetExpired(ChannelConfig channel, long id, long time, TimeUnit timeUnit) {
         logger.debug("id = {} time = {} {} ", id, time, timeUnit);
         Optional<DateTime> creationDate = hubUtils.getCreationDate(channel.getReplicationSource(), id);
         if (!creationDate.isPresent()) {

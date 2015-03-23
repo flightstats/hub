@@ -1,4 +1,4 @@
-package com.flightstats.hub.dao.dynamo;
+package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;

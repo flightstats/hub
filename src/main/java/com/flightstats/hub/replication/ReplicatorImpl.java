@@ -4,7 +4,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -90,8 +90,8 @@ public class ReplicatorImpl implements Replicator {
         }
         logger.info("replicating channels");
         Set<String> replicators = new HashSet<>();
-        Iterable<ChannelConfiguration> replicatedChannels = channelService.getChannels(REPLICATED);
-        for (ChannelConfiguration channel : replicatedChannels) {
+        Iterable<ChannelConfig> replicatedChannels = channelService.getChannels(REPLICATED);
+        for (ChannelConfig channel : replicatedChannels) {
             logger.info("replicating channel {}", channel.getName());
             try {
                 if (replicatorMap.containsKey(channel.getName())) {
@@ -129,7 +129,7 @@ public class ReplicatorImpl implements Replicator {
         logger.info("exited all replication " + replicatorMap.keySet());
     }
 
-    private void startReplication(ChannelConfiguration channel) {
+    private void startReplication(ChannelConfig channel) {
         logger.info("starting replication of " + channel);
         try {
             HubUtils.Version version = hubUtils.getHubVersion(channel.getReplicationSource());
@@ -143,7 +143,7 @@ public class ReplicatorImpl implements Replicator {
         }
     }
 
-    private void startV2Replication(ChannelConfiguration channel) {
+    private void startV2Replication(ChannelConfig channel) {
         logger.debug("starting v2 replication of " + channel);
         try {
             V2ChannelReplicator v2ChannelReplicator = new V2ChannelReplicator(channel, hubUtils);
@@ -154,7 +154,7 @@ public class ReplicatorImpl implements Replicator {
         }
     }
 
-    private void startV1Replication(ChannelConfiguration channel) {
+    private void startV1Replication(ChannelConfig channel) {
         logger.debug("starting v1 replication of " + channel);
         try {
             V1ChannelReplicator v1ChannelReplicator = v1ReplicatorProvider.get();

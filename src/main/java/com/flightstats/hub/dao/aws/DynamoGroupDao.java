@@ -1,9 +1,10 @@
-package com.flightstats.hub.group;
+package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.dao.dynamo.DynamoUtils;
+import com.flightstats.hub.group.Group;
+import com.flightstats.hub.group.GroupDao;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -15,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DynamoGroupDao {
+public class DynamoGroupDao implements GroupDao {
     private final static Logger logger = LoggerFactory.getLogger(DynamoGroupDao.class);
 
     private final AmazonDynamoDBClient dbClient;
@@ -48,6 +49,7 @@ public class DynamoGroupDao {
         dynamoUtils.createTable(request);
     }
 
+    @Override
     public Group upsertGroup(Group group) {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("name", new AttributeValue(group.getName()));
@@ -58,6 +60,7 @@ public class DynamoGroupDao {
         return group;
     }
 
+    @Override
     public Optional<Group> getGroup(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("name", new AttributeValue(name));
@@ -84,6 +87,7 @@ public class DynamoGroupDao {
         return groupBuilder.build().withDefaults();
     }
 
+    @Override
     public Iterable<Group> getGroups() {
         List<Group> configurations = new ArrayList<>();
 
@@ -105,6 +109,7 @@ public class DynamoGroupDao {
         }
     }
 
+    @Override
     public void delete(String name) {
         Map<String, AttributeValue> key = new HashMap<>();
         key.put("name", new AttributeValue(name));

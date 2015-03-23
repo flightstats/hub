@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.EventTimed;
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
@@ -48,7 +48,7 @@ public class ChannelStatusResource {
             latestNode.put("message", "channel is empty");
         }
         if (channelService.isReplicating(channel)) {
-            ChannelConfiguration config = channelService.getChannelConfiguration(channel);
+            ChannelConfig config = channelService.getChannelConfiguration(channel);
             ObjectNode replicationSourceLatest = links.putObject("replicationSourceLatest");
             Optional<String> sourceLatest = hubUtils.getLatest(config.getReplicationSource());
             if (sourceLatest.isPresent()) {

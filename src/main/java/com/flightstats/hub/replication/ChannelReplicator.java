@@ -1,10 +1,10 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.model.ChannelConfiguration;
+import com.flightstats.hub.model.ChannelConfig;
 
 public interface ChannelReplicator {
 
-    ChannelConfiguration getChannel();
+    ChannelConfig getChannel();
 
     void exit();
 
