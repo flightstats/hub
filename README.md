@@ -40,8 +40,7 @@ The Hub is designed to be a fault tolerant, highly available service for data st
 It supports channels of data ordered by time.
 Channels represent uniquely addressable items that are iterable and query-able by time.  Each item may be up to to 20 MB.
 
-The [encrypted-hub](#encrypted-hub) (EH) is a separate installation of the Hub.
-The features and API of the EH are mostly the same as the Hub, with a few additions.
+The [encrypted-hub](#encrypted-hub) (EH) is a separate installation of the Hub which ensures that all communication is encrypted.
 
 ## consistency
 
@@ -615,29 +614,14 @@ To request a change to a controlled API, or to request access, please use the [h
 ## encrypted-hub
 
 The Encrypted Hub (EH) is a separate installation of The Hub.
-The features and API of the EH are nearly identical, with a few additions.
 EH also has some additional features to the normal Hub:
 
-* All channel items are encrypted at rest
+* All channel items are encrypted at rest (this relies on disk level encryption)
 * All channel items are encrypted in flight
 * All access to channel items (reads and writes) require authentication and are access controlled
-* All access to channel items is audited
 
 Channel inserts can be audited by a GET or HEAD to each channel item.  The creator of the record is returned in a `User` header.
 
-All Channel reads are logged to a new channel <channel>_audit.   The auditing channel is automatically created for each channel in the EH.
-Since it is a channel, you can perform the standard operations on it, however clients are not allowed to create or delete auditing channels.
-All audit channels have an `audit` tag, which can not be modified by clients.
-
-`GET http://hub/channel/stumptown_encrypted_audit/1007`
-
-```json
-{
-  "user": "somebody",
-  "uri": "http://hub/channel/stumptown_encrypted/1005",
-  "date": "2014-05-22T20:56:08.739Z"
-}
-```
 ## development
 
 The Hub is a work in progress.  If you'd like to contribute, let us know.
