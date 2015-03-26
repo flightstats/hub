@@ -53,7 +53,6 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
         dbClient.putItem(putItemRequest);
     }
 
-    @Override
     public void initialize() {
         createTable();
     }

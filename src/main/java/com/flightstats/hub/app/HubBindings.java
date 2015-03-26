@@ -12,7 +12,6 @@ import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.*;
-import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.replication.ReplicatorImpl;
 import com.flightstats.hub.rest.RetryClientFilter;
@@ -42,7 +41,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.websocket.WebSocketContainer;
 import java.io.FileNotFoundException;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 public class HubBindings extends AbstractModule {
@@ -84,13 +82,6 @@ public class HubBindings extends AbstractModule {
             config = new FileSystemXmlConfig(hazelCastXml);
         }
         return Hazelcast.newHazelcastInstance(config);
-    }
-
-    @Named("ChannelConfigurationMap")
-    @Singleton
-    @Provides
-    public static ConcurrentMap<String, ChannelConfig> buildChannelConfigurationMap(HazelcastInstance hazelcast) throws FileNotFoundException {
-        return hazelcast.getMap("ChannelConfigurationMap");
     }
 
     @Singleton
