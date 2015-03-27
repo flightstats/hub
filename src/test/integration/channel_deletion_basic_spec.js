@@ -23,8 +23,6 @@ describe(testName, function () {
         request.get({url: channelResource},
             function (err, response, body) {
                 expect(err).toBeNull();
-                console.log('error', channelName, err);
-                console.log('response', channelName, response);
                 expect(response.statusCode).toBe(404);
                 done();
             });
