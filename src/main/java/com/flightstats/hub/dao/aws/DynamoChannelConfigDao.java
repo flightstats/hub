@@ -68,7 +68,12 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
 
     @Override
     public boolean channelExists(String name) {
-        return getChannelConfig(name) != null;
+        return getCachedChannelConfig(name) != null;
+    }
+
+    @Override
+    public ChannelConfig getCachedChannelConfig(String name) {
+        return getChannelConfig(name);
     }
 
     @Override

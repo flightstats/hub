@@ -15,7 +15,9 @@ public interface ChannelService {
 
     Optional<Content> getValue(Request request);
 
-    ChannelConfig getChannelConfiguration(String channelName);
+    ChannelConfig getChannelConfig(String channelName);
+
+    ChannelConfig getCachedChannelConfig(String channelName);
 
     Iterable<ChannelConfig> getChannels();
 

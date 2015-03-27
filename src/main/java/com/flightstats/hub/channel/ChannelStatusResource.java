@@ -48,7 +48,7 @@ public class ChannelStatusResource {
             latestNode.put("message", "channel is empty");
         }
         if (channelService.isReplicating(channel)) {
-            ChannelConfig config = channelService.getChannelConfiguration(channel);
+            ChannelConfig config = channelService.getCachedChannelConfig(channel);
             ObjectNode replicationSourceLatest = links.putObject("replicationSourceLatest");
             Optional<String> sourceLatest = hubUtils.getLatest(config.getReplicationSource());
             if (sourceLatest.isPresent()) {

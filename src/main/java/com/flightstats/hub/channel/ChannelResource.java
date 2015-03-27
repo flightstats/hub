@@ -48,7 +48,7 @@ public class ChannelResource {
         if (noSuchChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        ChannelConfig config = channelService.getChannelConfiguration(channelName);
+        ChannelConfig config = channelService.getChannelConfig(channelName);
         URI channelUri = LinkBuilder.buildChannelUri(config, uriInfo);
         Linked<ChannelConfig> linked = LinkBuilder.buildChannelLinks(config, channelUri);
 
@@ -60,7 +60,7 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
-        ChannelConfig oldConfig = channelService.getChannelConfiguration(channelName);
+        ChannelConfig oldConfig = channelService.getChannelConfig(channelName);
         ChannelConfig channelConfig = ChannelConfig.fromJsonName(json, channelName);
         if (oldConfig != null) {
             channelConfig = ChannelConfig.builder()
@@ -84,7 +84,7 @@ public class ChannelResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        ChannelConfig oldConfig = channelService.getChannelConfiguration(channelName);
+        ChannelConfig oldConfig = channelService.getChannelConfig(channelName);
         ChannelConfig newConfig = ChannelConfig.builder()
                 .withChannelConfiguration(oldConfig)
                 .withUpdateJson(json)

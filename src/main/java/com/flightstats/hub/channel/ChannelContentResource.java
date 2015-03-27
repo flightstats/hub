@@ -285,7 +285,7 @@ public class ChannelContentResource {
                 .next(false)
                 .stable(stable)
                 .location(Location.valueOf(location))
-                .ttlDays(channelService.getChannelConfiguration(channel).getTtlDays())
+                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
                 .count(count).build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
@@ -299,7 +299,7 @@ public class ChannelContentResource {
                 .contentKey(new ContentKey(year, month, day, hour, minute, second, millis, hash))
                 .next(next)
                 .stable(stable)
-                .ttlDays(channelService.getChannelConfiguration(channel).getTtlDays())
+                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
                 .count(1).build();
         query.trace(false);
         Collection<ContentKey> keys = channelService.getKeys(query);

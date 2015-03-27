@@ -52,23 +52,25 @@ public class CachedChannelConfigDao implements ChannelConfigDao {
 
     @Override
     public boolean channelExists(String name) {
-        return getChannelConfig(name) != null;
+        return getCachedChannelConfig(name) != null;
     }
 
     @Override
     public ChannelConfig getChannelConfig(String name) {
-        /**
-         * It is very important to use caching here, as getChannelConfig is called for every read and write.
-         */
-        ChannelConfig configuration = channelConfigMap.get(name);
-        if (configuration != null) {
-            return configuration;
-        }
-        configuration = delegate.getChannelConfig(name);
+        ChannelConfig configuration = delegate.getChannelConfig(name);
         if (null != configuration) {
             channelConfigMap.put(name, configuration);
         }
         return configuration;
+    }
+
+    @Override
+    public ChannelConfig getCachedChannelConfig(String name) {
+        ChannelConfig configuration = channelConfigMap.get(name);
+        if (configuration != null) {
+            return configuration;
+        }
+        return getChannelConfig(name);
     }
 
     @Override

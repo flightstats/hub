@@ -11,6 +11,8 @@ public interface ChannelConfigDao {
 
     ChannelConfig getChannelConfig(String name);
 
+    ChannelConfig getCachedChannelConfig(String name);
+
     Iterable<ChannelConfig> getChannels();
 
     void delete(String name);
