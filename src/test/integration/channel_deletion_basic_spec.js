@@ -9,7 +9,7 @@ var testName = "channel_deletion_basic_spec";
 describe(testName, function () {
     utils.createChannel(channelName);
 
-    it("deletes channel", function (done) {
+    it("deletes channel " + channelName, function (done) {
         request.del({url: channelResource},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -19,10 +19,12 @@ describe(testName, function () {
 
     });
 
-    it("gets deleted channel", function (done) {
+    it("gets deleted channel " + channelName, function (done) {
         request.get({url: channelResource},
             function (err, response, body) {
                 expect(err).toBeNull();
+                console.log('error', channelName, err);
+                console.log('response', channelName, response);
                 expect(response.statusCode).toBe(404);
                 done();
             });
