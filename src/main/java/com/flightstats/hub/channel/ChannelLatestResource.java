@@ -30,7 +30,7 @@ public class ChannelLatestResource {
     @GET
     public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
-                              @QueryParam("trace") @DefaultValue("true") boolean trace) {
+                              @QueryParam("trace") @DefaultValue("false") boolean trace) {
         Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
         if (latest.isPresent()) {
             return Response.status(SEE_OTHER)
