@@ -45,10 +45,10 @@ public class ChannelResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelMetadata(@PathParam("channel") String channelName) {
-        if (noSuchChannel(channelName)) {
+        ChannelConfig config = channelService.getChannelConfig(channelName);
+        if (config == null) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        ChannelConfig config = channelService.getChannelConfig(channelName);
         URI channelUri = LinkBuilder.buildChannelUri(config, uriInfo);
         Linked<ChannelConfig> linked = LinkBuilder.buildChannelLinks(config, channelUri);
 
@@ -80,11 +80,11 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMetadata(@PathParam("channel") String channelName, String json) throws Exception {
-        if (noSuchChannel(channelName)) {
+        ChannelConfig oldConfig = channelService.getChannelConfig(channelName);
+        if (oldConfig == null) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        ChannelConfig oldConfig = channelService.getChannelConfig(channelName);
         ChannelConfig newConfig = ChannelConfig.builder()
                 .withChannelConfiguration(oldConfig)
                 .withUpdateJson(json)
@@ -102,7 +102,7 @@ public class ChannelResource {
     public Response insertValue(@PathParam("channel") final String channelName, @HeaderParam("Content-Type") final String contentType,
                                 @HeaderParam("Content-Language") final String contentLanguage, @HeaderParam("User") final String user,
                                 final InputStream data) throws Exception {
-        if (noSuchChannel(channelName)) {
+        if (!channelService.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         long start = System.currentTimeMillis();
@@ -150,10 +150,6 @@ public class ChannelResource {
         } else {
             return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
         }
-    }
-
-    private boolean noSuchChannel(final String channelName) {
-        return !channelService.channelExists(channelName);
     }
 
 }
