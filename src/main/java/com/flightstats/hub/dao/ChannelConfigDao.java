@@ -7,11 +7,11 @@ public interface ChannelConfigDao {
 
     void updateChannel(ChannelConfig newConfig);
 
-    void initialize();
-
     boolean channelExists(String name);
 
     ChannelConfig getChannelConfig(String name);
+
+    ChannelConfig getCachedChannelConfig(String name);
 
     Iterable<ChannelConfig> getChannels();
 

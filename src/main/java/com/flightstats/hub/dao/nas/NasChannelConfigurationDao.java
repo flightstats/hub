@@ -31,12 +31,13 @@ public class NasChannelConfigurationDao implements ChannelConfigDao {
     }
 
     @Override
-    public void initialize() {
+    public boolean channelExists(String channelName) {
+        return getCachedChannelConfig(channelName) != null;
     }
 
     @Override
-    public boolean channelExists(String channelName) {
-        return getChannelConfig(channelName) != null;
+    public ChannelConfig getCachedChannelConfig(String name) {
+        return getChannelConfig(name);
     }
 
     @Override

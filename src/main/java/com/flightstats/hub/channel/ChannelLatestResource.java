@@ -57,7 +57,7 @@ public class ChannelLatestResource {
                 .contentKey(latest.get())
                 .next(false)
                 .stable(stable)
-                .ttlDays(channelService.getChannelConfiguration(channel).getTtlDays())
+                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
                 .count(count - 1)
                 .build();
         query.trace(trace);

@@ -54,7 +54,6 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ContentKey insert(String channelName, Content content) {
-        //todo - gfm - 1/21/15 - this check may go away when we support inserting content into a replicating channel.
         if (content.isNew()) {
             throwExceptionIfReplicating(channelName);
         }
@@ -73,7 +72,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     public boolean isReplicating(String channelName) {
-        ChannelConfig configuration = getChannelConfiguration(channelName);
+        ChannelConfig configuration = getCachedChannelConfig(channelName);
         if (null == configuration) {
             return false;
         }
@@ -82,7 +81,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace) {
-        ChannelConfig channelConfig = getChannelConfiguration(channel);
+        ChannelConfig channelConfig = getCachedChannelConfig(channel);
         if (null == channelConfig) {
             return Optional.absent();
         }
@@ -129,8 +128,13 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public ChannelConfig getChannelConfiguration(String channelName) {
+    public ChannelConfig getChannelConfig(String channelName) {
         return channelConfigDao.getChannelConfig(channelName);
+    }
+
+    @Override
+    public ChannelConfig getCachedChannelConfig(String channelName) {
+        return channelConfigDao.getCachedChannelConfig(channelName);
     }
 
     @Override
@@ -163,7 +167,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public ChannelConfig updateChannel(ChannelConfig configuration) {
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
-        ChannelConfig oldConfig = getChannelConfiguration(configuration.getName());
+        ChannelConfig oldConfig = getChannelConfig(configuration.getName());
         channelValidator.validate(configuration, false);
         channelConfigDao.updateChannel(configuration);
         if (configuration.isReplicating()) {
@@ -213,7 +217,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     private DateTime getTtlTime(String channelName) {
-        return TimeUtil.now().minusDays((int) getChannelConfiguration(channelName).getTtlDays());
+        return TimeUtil.now().minusDays((int) getCachedChannelConfig(channelName).getTtlDays());
     }
 
     @Override

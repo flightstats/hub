@@ -12,23 +12,16 @@ import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.*;
-import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.replication.ReplicatorImpl;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.HubUtils;
-import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import com.hazelcast.config.ClasspathXmlConfig;
-import com.hazelcast.config.Config;
-import com.hazelcast.config.FileSystemXmlConfig;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
 import com.sun.jersey.api.client.Client;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.ensemble.fixed.FixedEnsembleProvider;
@@ -41,8 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.WebSocketContainer;
-import java.io.FileNotFoundException;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 public class HubBindings extends AbstractModule {
@@ -71,26 +62,6 @@ public class HubBindings extends AbstractModule {
         }
         bind(HubInstrumentedResourceMethodDispatchAdapter.class).toProvider(HubMethodTimingAdapterProvider.class).in(Singleton.class);
         bind(NTPMonitor.class).asEagerSingleton();
-    }
-
-    @Singleton
-    @Provides
-    public static HazelcastInstance buildHazelcast() throws FileNotFoundException {
-        String hazelCastXml = HubProperties.getProperty("hazelcast.conf.xml", "");
-        Config config;
-        if (Strings.isNullOrEmpty(hazelCastXml)) {
-            config = new ClasspathXmlConfig("hazelcast.conf.xml");
-        } else {
-            config = new FileSystemXmlConfig(hazelCastXml);
-        }
-        return Hazelcast.newHazelcastInstance(config);
-    }
-
-    @Named("ChannelConfigurationMap")
-    @Singleton
-    @Provides
-    public static ConcurrentMap<String, ChannelConfig> buildChannelConfigurationMap(HazelcastInstance hazelcast) throws FileNotFoundException {
-        return hazelcast.getMap("ChannelConfigurationMap");
     }
 
     @Singleton
