@@ -44,6 +44,7 @@ public class CuratorLeader {
         } else {
             leaderSelector.requeue();
         }
+        LeaderRotator.add(this);
     }
 
     public void close() {
@@ -51,6 +52,7 @@ public class CuratorLeader {
         if (leaderSelector != null) {
             leaderSelector.close();
         }
+        LeaderRotator.remove(this);
     }
 
     private class CuratorLeaderSelectionListener implements LeaderSelectorListener {
@@ -81,5 +83,11 @@ public class CuratorLeader {
         }
     }
 
+    void abdicate() {
+        if (hasLeadership.get()) {
+            logger.info("abdicating leadership for " + leaderPath);
+            hasLeadership.set(false);
+        }
+    }
 }
 
