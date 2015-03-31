@@ -1,10 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.channel.ChannelValidator;
-import com.flightstats.hub.cluster.CuratorLock;
-import com.flightstats.hub.cluster.LastContentKey;
-import com.flightstats.hub.cluster.WatchManager;
-import com.flightstats.hub.cluster.ZooKeeperState;
+import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ChannelServiceImpl;
 import com.flightstats.hub.group.GroupCallback;
@@ -62,6 +59,7 @@ public class HubBindings extends AbstractModule {
         }
         bind(HubInstrumentedResourceMethodDispatchAdapter.class).toProvider(HubMethodTimingAdapterProvider.class).in(Singleton.class);
         bind(NTPMonitor.class).asEagerSingleton();
+        bind(LeaderRotator.class).asEagerSingleton();
     }
 
     @Singleton
