@@ -15,7 +15,7 @@ public abstract class AbstractExceptionMapper<T extends Throwable> implements Ex
     public Response toResponse(T exception) {
         logger.info(exception.getMessage());
         Response.ResponseBuilder builder = Response.status(this.getResponseCode());
-        builder.entity("{\"message\":\"channel can not be modified while replicating\"}");
+        builder.entity(exception.getMessage());
         return builder.build();
     }
 
