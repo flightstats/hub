@@ -39,7 +39,7 @@ public class LeaderRotator {
         protected synchronized void runOneIteration() throws Exception {
             logger.debug("running...");
             for (CuratorLeader leader : leaders) {
-                if (Math.random() > 0.5) {
+                if (Math.random() > 0.75) {
                     leader.abdicate();
                 }
             }
