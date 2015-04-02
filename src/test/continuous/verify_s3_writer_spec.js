@@ -71,7 +71,7 @@ describe(testName, function () {
                     function (err, results) {
                         var expected = results[0].length;
                         var actual = results[1].length;
-                        if(expected !== actual){
+                        if (expected > actual) {
                             console.log(channelTime.url + ' cache=' + expected + ' s3=' + actual);
                         }
                         expect(actual).toBe(expected);
