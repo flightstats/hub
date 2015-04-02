@@ -6,7 +6,7 @@ var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl + '/channel';
 console.log(hubUrl);
 
-var timeout = 60 * 1000;
+var timeout = 5 * 60 * 1000;
 var minute_format = '/YYYY/MM/DD/HH/mm';
 var startOffset = process.env.startOffset || 48;
 var endOffset = process.env.endOffset || 59;
@@ -42,7 +42,7 @@ describe(testName, function () {
                 channelTimes.push({url : channel.href + formatted});
             });
         }
-    });
+    }, timeout);
 
 
     it('compares query results', function (done) {
