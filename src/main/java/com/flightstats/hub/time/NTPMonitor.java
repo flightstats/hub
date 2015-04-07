@@ -33,7 +33,7 @@ public class NTPMonitor {
         double maxPositive = 0;
         double maxNegative = 0;
         for (String line : lines) {
-            if (line.contains("hub-v2")) {
+            if (line.contains("hub")) {
                 double offset = parseLine(line);
                 if (offset > 0) {
                     maxPositive = Math.max(maxPositive, offset);
