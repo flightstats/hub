@@ -89,5 +89,9 @@ public class CuratorLeader {
             hasLeadership.set(false);
         }
     }
+
+    double keepLeadershipRate() {
+        return leader.keepLeadershipRate();
+    }
 }
 
