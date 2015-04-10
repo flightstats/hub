@@ -1,0 +1,39 @@
+{
+  "insertAlerts": {
+    "greaterThanName": {
+      "channel": "greaterThan",
+      "timeWindowMinutes": 10,
+      "threshold": 1,
+      "operator": ">",
+      "serviceName": "sn1"
+    },
+    "greaterThanEqualName": {
+      "channel": "greaterThanEqual",
+      "timeWindowMinutes": 20,
+      "threshold": 2,
+      "operator": ">=",
+      "serviceName": "sn2"
+    },
+    "lessThanName": {
+      "channel": "lessThan",
+      "timeWindowMinutes": 30,
+      "threshold": 3,
+      "operator": "<",
+      "serviceName": "sn3"
+    },
+    "lessThanEqualName": {
+      "channel": "lessThanEqual",
+      "timeWindowMinutes": 40,
+      "threshold": 4,
+      "operator": "<=",
+      "serviceName": "sn4"
+    },
+    "equalName": {
+      "channel": "equal",
+      "timeWindowMinutes": 50,
+      "threshold": 5,
+      "operator": "==",
+      "serviceName": "sn5"
+    }
+  }
+}

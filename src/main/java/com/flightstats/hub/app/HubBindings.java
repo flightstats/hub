@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import com.flightstats.hub.alert.AlertRunner;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
@@ -60,6 +61,7 @@ public class HubBindings extends AbstractModule {
         bind(HubInstrumentedResourceMethodDispatchAdapter.class).toProvider(HubMethodTimingAdapterProvider.class).in(Singleton.class);
         bind(NTPMonitor.class).asEagerSingleton();
         bind(LeaderRotator.class).asEagerSingleton();
+        bind(AlertRunner.class).asEagerSingleton();
     }
 
     @Singleton

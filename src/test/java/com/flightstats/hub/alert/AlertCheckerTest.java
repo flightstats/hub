@@ -18,8 +18,8 @@ public class AlertCheckerTest {
     public void testNegative() throws Exception {
         AlertConfig alertConfig = AlertConfig.builder()
                 .channel("load_test_1")
-                .hubDomain("http://hub-v2.svc.dev")
-                .minutes(2)
+                .hubDomain("http://hub-v2.svc.dev/")
+                .timeWindowMinutes(2)
                 .name("testSimple")
                 .operator("<")
                 .threshold(100)
@@ -37,8 +37,8 @@ public class AlertCheckerTest {
     public void testPositive() throws Exception {
         AlertConfig alertConfig = AlertConfig.builder()
                 .channel("load_test_1")
-                .hubDomain("http://hub-v2.svc.dev")
-                .minutes(5)
+                .hubDomain("http://hub-v2.svc.dev/")
+                .timeWindowMinutes(5)
                 .name("testSimple")
                 .operator(">")
                 .threshold(100)

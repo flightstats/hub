@@ -33,28 +33,41 @@ public class AlertChecker {
         this.alertConfig = alertConfig;
     }
 
-    public void start() throws Exception {
-        JsonNode json = getJson(alertConfig.getHubDomain() + "/channel/" + alertConfig.getChannel() + "/time/minute");
-        while (history.size() < alertConfig.getMinutes()) {
-            json = getJson(json.get("_links").get("previous").get("href").asText());
-            history.addFirst(json);
+    public boolean start() {
+        try {
+            JsonNode json = getJson(alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + "/time/minute");
+            logger.debug("start alertConfig {}", alertConfig);
+            while (history.size() < alertConfig.getTimeWindowMinutes()) {
+                json = getJson(json.get("_links").get("previous").get("href").asText());
+                history.addFirst(json);
+            }
+            logger.debug("start history {}", history);
+            checkForAlert();
+            return true;
+        } catch (Exception e) {
+            logger.warn("unable to start " + alertConfig, e);
+            return false;
         }
-        checkForAlert();
     }
 
-    public void update() throws IOException, ScriptException {
-        boolean updateNext = true;
-        while (updateNext) {
-            JsonNode last = history.getLast();
-            logger.debug("last {}", last);
-            JsonNode nextJson = getJson(last.get("_links").get("next").get("href").asText());
-            if (nextJson.get("_links").has("next")) {
-                history.removeFirst();
-                history.add(nextJson);
-                checkForAlert();
-            } else {
-                updateNext = false;
+    public void update() {
+        try {
+            boolean updateNext = true;
+            logger.debug("update history {}", history);
+            while (updateNext) {
+                JsonNode last = history.getLast();
+                logger.debug("last {}", last);
+                JsonNode nextJson = getJson(last.get("_links").get("next").get("href").asText());
+                if (nextJson.get("_links").has("next")) {
+                    history.removeFirst();
+                    history.add(nextJson);
+                    checkForAlert();
+                } else {
+                    updateNext = false;
+                }
             }
+        } catch (Exception e) {
+            logger.warn("unable to update " + alertConfig, e);
         }
     }
 

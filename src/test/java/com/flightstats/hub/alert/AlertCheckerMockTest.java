@@ -33,7 +33,7 @@ public class AlertCheckerMockTest {
         AlertConfig alertConfig = AlertConfig.builder()
                 .channel("load_test_1")
                 .hubDomain("http://localhost:4567")
-                .minutes(2)
+                .timeWindowMinutes(2)
                 .name("testSimple")
                 .operator("<")
                 .threshold(4)
