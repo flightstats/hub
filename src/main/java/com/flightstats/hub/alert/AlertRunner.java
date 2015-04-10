@@ -46,11 +46,15 @@ public class AlertRunner implements Leader {
         this.client = client;
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("AlertRunner-%d").build();
         threadPool = Executors.newFixedThreadPool(20, threadFactory);
-        hubAppUrl = HubProperties.getProperty("app.url", "http://hub-v2.svc.dev/");
+        hubAppUrl = HubProperties.getProperty("app.url", "");
         sleepPeriod = HubProperties.getProperty("alert.sleep.millis", 60 * 1000);
         alertChannelName = HubProperties.getProperty("alert.channel.config", "zomboAlertsConfig");
-        logger.info("starting with url {} {} {} ", hubAppUrl, sleepPeriod, alertChannelName);
-        HubServices.register(new AlertRunnerService(), HubServices.TYPE.POST_START);
+        if (HubProperties.getProperty("alert.run", true)) {
+            logger.info("starting with url {} {} {} ", hubAppUrl, sleepPeriod, alertChannelName);
+            HubServices.register(new AlertRunnerService(), HubServices.TYPE.POST_START);
+        } else {
+            logger.warn("AlertRunner not running");
+        }
     }
 
     @Override
@@ -77,6 +81,7 @@ public class AlertRunner implements Leader {
                     AlertChecker alertChecker = configCheckerMap.get(currentConfig);
                     threadPool.submit(alertChecker::update);
                 } else {
+                    logger.info("found new or changed alert {}", currentConfig);
                     AlertChecker alertChecker = new AlertChecker(currentConfig);
                     configCheckerMap.put(currentConfig, alertChecker);
                     alertChecker.start();
@@ -84,6 +89,7 @@ public class AlertRunner implements Leader {
             }
 
             for (AlertConfig alertConfig : alertsToStop) {
+                logger.info("removing alert {}", alertConfig);
                 configCheckerMap.remove(alertConfig);
             }
 

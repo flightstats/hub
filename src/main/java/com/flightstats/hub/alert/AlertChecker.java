@@ -41,7 +41,7 @@ public class AlertChecker {
                 json = getJson(json.get("_links").get("previous").get("href").asText());
                 history.addFirst(json);
             }
-            logger.debug("start history {}", history);
+            logger.trace("start history {}", history);
             checkForAlert();
             return true;
         } catch (Exception e) {
@@ -53,7 +53,7 @@ public class AlertChecker {
     public void update() {
         try {
             boolean updateNext = true;
-            logger.debug("update history {}", history);
+            logger.trace("update history {}", history);
             while (updateNext) {
                 JsonNode last = history.getLast();
                 logger.debug("last {}", last);
@@ -67,7 +67,7 @@ public class AlertChecker {
                 }
             }
         } catch (Exception e) {
-            logger.warn("unable to update " + alertConfig, e);
+            logger.warn("unable to update " + alertConfig + " " + history, e);
         }
     }
 
