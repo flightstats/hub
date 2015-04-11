@@ -32,7 +32,7 @@ public class AlertCheckerMockTest {
     public void testNegative() throws Exception {
         AlertConfig alertConfig = AlertConfig.builder()
                 .channel("load_test_1")
-                .hubDomain("http://localhost:4567")
+                .hubDomain("http://localhost:4567/")
                 .timeWindowMinutes(2)
                 .name("testSimple")
                 .operator("<")
