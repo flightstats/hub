@@ -35,8 +35,8 @@ public class AlertChecker {
 
     public boolean start() {
         try {
-            JsonNode json = getJson(alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + "/time/minute");
             logger.debug("start alertConfig {}", alertConfig);
+            JsonNode json = getJson(alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + "/time/minute");
             while (history.size() < alertConfig.getTimeWindowMinutes()) {
                 json = getJson(json.get("_links").get("previous").get("href").asText());
                 history.addFirst(json);
