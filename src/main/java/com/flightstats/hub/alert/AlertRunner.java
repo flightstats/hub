@@ -3,6 +3,7 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
@@ -18,6 +19,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -34,6 +36,7 @@ public class AlertRunner implements Leader {
     private final String hubAppUrl;
     private final ExecutorService threadPool;
     private final String alertChannelName;
+    private final String alertChannelStatus;
 
     private CuratorFramework curator;
     private Client client;
@@ -49,6 +52,7 @@ public class AlertRunner implements Leader {
         hubAppUrl = HubProperties.getProperty("app.url", "");
         sleepPeriod = HubProperties.getProperty("alert.sleep.millis", 60 * 1000);
         alertChannelName = HubProperties.getProperty("alert.channel.config", "zomboAlertsConfig");
+        alertChannelStatus = HubProperties.getProperty("alert.channel.status", "zomboAlertStatus");
         if (HubProperties.getProperty("alert.run", true)) {
             logger.info("starting with url {} {} {} ", hubAppUrl, sleepPeriod, alertChannelName);
             HubServices.register(new AlertRunnerService(), HubServices.TYPE.POST_START);
@@ -67,12 +71,16 @@ public class AlertRunner implements Leader {
 
         while (hasLeadership.get()) {
             long start = System.currentTimeMillis();
-            ClientResponse response = client.resource(hubAppUrl + "channel/" + alertChannelName + "/latest").get(ClientResponse.class);
+            ClientResponse response = client.resource(hubAppUrl + "channel/" + alertChannelName + "/latest")
+                    .get(ClientResponse.class);
             if (response.getStatus() >= 400) {
                 logger.warn("unable to get latest from {} {}", alertChannelName, response);
                 Sleeper.sleep(sleepPeriod);
                 return;
             }
+            Map<String, Boolean> status = loadStatus();
+            saveStatus();
+
             List<AlertConfig> currentConfigs = readConfig(response.getEntity(String.class), hubAppUrl);
             Set<AlertConfig> alertsToStop = new HashSet<>(configCheckerMap.keySet());
             for (AlertConfig currentConfig : currentConfigs) {
@@ -84,7 +92,12 @@ public class AlertRunner implements Leader {
                     logger.info("found new or changed alert {}", currentConfig);
                     AlertChecker alertChecker = new AlertChecker(currentConfig);
                     configCheckerMap.put(currentConfig, alertChecker);
-                    alertChecker.start();
+                    String name = currentConfig.getName();
+                    if (status.containsKey(name)) {
+                        alertChecker.start(status.get(name));
+                    } else {
+                        alertChecker.start();
+                    }
                 }
             }
 
@@ -93,11 +106,22 @@ public class AlertRunner implements Leader {
                 configCheckerMap.remove(alertConfig);
             }
 
-            //todo - gfm - 4/8/15 - save off status to the hub
-
             doSleep(start);
         }
+    }
 
+    private void saveStatus() {
+        ObjectNode status = mapper.createObjectNode();
+        for (AlertChecker alertChecker : configCheckerMap.values()) {
+            alertChecker.toJson(status);
+        }
+        if (status.size() > 0) {
+            String entity = status.toString();
+            logger.info("saving status {}", entity);
+            client.resource(hubAppUrl + "channel/" + alertChannelStatus)
+                    .type(MediaType.APPLICATION_JSON_TYPE)
+                    .post(entity);
+        }
     }
 
     private void doSleep(long start) {
@@ -109,6 +133,41 @@ public class AlertRunner implements Leader {
         } else {
             logger.warn("processing took too long {}", time);
         }
+    }
+
+    Map<String, Boolean> loadStatus() {
+        String statusUrl = hubAppUrl + "channel/" + alertChannelStatus;
+        ObjectNode channel = mapper.createObjectNode();
+        channel.put("ttlDays", 2);
+        channel.put("description", "Status of zombo alerts");
+
+        client.resource(statusUrl)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .put(channel.toString());
+
+        Map<String, Boolean> alertStates = new HashMap<>();
+        ClientResponse response = client.resource(statusUrl + "/latest")
+                .get(ClientResponse.class);
+        if (response.getStatus() == 200) {
+            try {
+                String entity = response.getEntity(String.class);
+                JsonNode node = mapper.readTree(entity);
+                Iterator<String> names = node.fieldNames();
+                while (names.hasNext()) {
+                    String name = names.next();
+                    JsonNode jsonNode = node.get(name);
+                    if (jsonNode.isObject()) {
+                        boolean status = jsonNode.get("alert").asBoolean();
+                        logger.trace("alert {} {}", name, status);
+                        alertStates.put(name, status);
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("unable to load status", e);
+            }
+        }
+
+        return alertStates;
     }
 
     static List<AlertConfig> readConfig(String config, String hubAppUrl) {

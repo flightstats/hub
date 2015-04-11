@@ -2,9 +2,12 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,23 +20,29 @@ import java.util.LinkedList;
 /**
  * Keep the state for an alert, send alert if it meets the requirements.
  */
+@Getter
 public class AlertChecker {
 
     private final static Logger logger = LoggerFactory.getLogger(AlertChecker.class);
 
     public static final ScriptEngine jsEngine = createJsEngine();
-    private final static Client client = RestClient.createClient(15, 60);
-
-    private final static ObjectMapper mapper = new ObjectMapper();
+    private static final Client client = RestClient.createClient(15, 60);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private final AlertConfig alertConfig;
     private final LinkedList<JsonNode> history = new LinkedList<>();
+    private boolean isTriggered = false;
 
     public AlertChecker(AlertConfig alertConfig) {
         this.alertConfig = alertConfig;
     }
 
     public boolean start() {
+        return start(false);
+    }
+
+    public boolean start(boolean status) {
+        isTriggered = status;
         try {
             logger.debug("start alertConfig {}", alertConfig);
             JsonNode json = getJson(alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + "/time/minute");
@@ -78,6 +87,8 @@ public class AlertChecker {
         String script = count + " " + alertConfig.getOperator() + " " + alertConfig.getThreshold();
         Boolean evaluate = (Boolean) jsEngine.eval(script);
         logger.debug("check for alert {} {} {}", alertConfig.getName(), script, evaluate);
+        //todo - gfm - 4/11/15 - send alert when initially triggered
+        isTriggered = evaluate;
         return evaluate;
     }
 
@@ -92,4 +103,19 @@ public class AlertChecker {
         ScriptEngineManager engineManager = new ScriptEngineManager();
         return engineManager.getEngineByName("nashorn");
     }
+
+    public void toJson(ObjectNode root) {
+        String name = getAlertConfig().getName();
+        ObjectNode alertNode = root.putObject(name);
+        alertNode.put("name", name);
+        ArrayNode historyNode = alertNode.putArray("history");
+        for (JsonNode node : history) {
+            ObjectNode objectNode = historyNode.addObject();
+            objectNode.put("href", node.get("_links").get("self").get("href").asText());
+            objectNode.put("items", node.get("_links").get("uris").size());
+        }
+
+        alertNode.put("alert", isTriggered);
+    }
+
 }
