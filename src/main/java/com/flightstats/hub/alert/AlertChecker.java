@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.LinkedList;
 
@@ -28,6 +30,8 @@ public class AlertChecker {
     public static final ScriptEngine jsEngine = createJsEngine();
     private static final Client client = RestClient.createClient(15, 60);
     private static final ObjectMapper mapper = new ObjectMapper();
+
+    private static String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
 
     private final AlertConfig alertConfig;
     private final LinkedList<JsonNode> history = new LinkedList<>();
@@ -87,9 +91,26 @@ public class AlertChecker {
         String script = count + " " + alertConfig.getOperator() + " " + alertConfig.getThreshold();
         Boolean evaluate = (Boolean) jsEngine.eval(script);
         logger.debug("check for alert {} {} {}", alertConfig.getName(), script, evaluate);
-        //todo - gfm - 4/11/15 - send alert when initially triggered
+        if (!isTriggered && evaluate) {
+            sendAlert(count);
+        }
         isTriggered = evaluate;
         return evaluate;
+    }
+
+    private void sendAlert(int count) {
+        String url = alertConfig.getHubDomain() + "channel/" + alertChannelEscalate;
+        ObjectNode alert = mapper.createObjectNode();
+        alert.put("serviceName", alertConfig.getServiceName());
+        alert.put("description", alertConfig.getName() + ": " +
+                alertConfig.getHubDomain() + "/channel/" + alertConfig.getChannel() + " volume " +
+                count + " " + alertConfig.getOperator() + " " + alertConfig.getThreshold());
+        alert.put("details", "TBD");
+        String entity = alert.toString();
+        logger.info("sending alert {}", entity);
+        client.resource(url)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .post(entity);
     }
 
     private JsonNode getJson(String url) throws IOException {
