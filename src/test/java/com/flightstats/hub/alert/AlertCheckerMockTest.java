@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static spark.Spark.get;
+import static spark.Spark.post;
 import static spark.SparkBase.stop;
 
 public class AlertCheckerMockTest {
@@ -45,6 +45,7 @@ public class AlertCheckerMockTest {
             return null;
         });
         get(base + "2015/03/02/22/:minute", AlertCheckerMockTest::handleMinute);
+        post("/channel/escalationAlerts", AlertCheckerMockTest::handleAlert);
 
         next = 3;
         AlertChecker alertChecker = new AlertChecker(alertConfig);
@@ -82,6 +83,16 @@ public class AlertCheckerMockTest {
         }
 
         return root.toString();
+    }
+
+    private static Object handleAlert(Request request, Response response) {
+        logger.info("request.body {}", request.body());
+        assertEquals("{\"serviceName\":null," +
+                        "\"description\":\"testSimple: http://localhost:4567//channel/load_test_1 volume 2 < 4\"," +
+                        "\"details\":\"TBD\"}",
+                request.body());
+        return "";
+
     }
 
 }
