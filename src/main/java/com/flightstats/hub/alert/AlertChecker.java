@@ -103,9 +103,9 @@ public class AlertChecker {
         ObjectNode alert = mapper.createObjectNode();
         alert.put("serviceName", alertConfig.getServiceName());
         alert.put("description", alertConfig.getName() + ": " +
-                alertConfig.getHubDomain() + "/channel/" + alertConfig.getChannel() + " volume " +
+                alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + " volume " +
                 count + " " + alertConfig.getOperator() + " " + alertConfig.getThreshold());
-        alert.put("details", "TBD");
+        toJson(alert.putObject("details"));
         String entity = alert.toString();
         logger.info("sending alert {}", entity);
         client.resource(url)
