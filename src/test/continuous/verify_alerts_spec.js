@@ -45,23 +45,8 @@ describe(testName, function () {
                         existingRules.push(key);
                     }
                 });
-                //2 - delete all rules whose names start with "verifyAlert"
-                existingRules.forEach(function (name) {
-                    delete res.body.insertAlerts[name];
-                })
-                console.log('updating alerts', res.body);
-                agent
-                    .post(zomboAlertsConfig)
-                    .type('json')
-                    .accept('json')
-                    .send(res.body)
-                    .end(function (err, res) {
-                        expect(err).toBe(null);
-                        done();
-                    })
-
             })
-    }, 60 * 1000);
+    });
 
     var escalationAlertsLinks = [];
 
@@ -137,13 +122,16 @@ describe(testName, function () {
     });
 
     it('4 - create a new rule for channel verifyAlertData, named verifyAlert-{time}', function (done) {
-        console.log('zomboAlertsConfig', zomboAlertsConfig);
         var name = 'verifyAlert' + moment().format('YYYY-MM-DD-HH-mm-ss');
         agent
-            .get(zomboAlertsConfig + '/latest')
+            .get(zomboAlertsConfig + '/latest?stable=false')
             .accept('json')
             .end(function (err, res) {
                 expect(err).toBe(null);
+                //2 - delete all rules whose names start with "verifyAlert"
+                existingRules.forEach(function (name) {
+                    delete res.body.insertAlerts[name];
+                })
                 //5 - new rule be triggered for a single item on channel verifyAlertData in a minute
                 res.body.insertAlerts[name] = {
                     channel: 'verifyAlertData', threshold: 0, serviceName: 'test', operator: '>', timeWindowMinutes: 1
