@@ -203,13 +203,17 @@ public class AlertRunner implements Leader {
     }
 
     private void createChannels() {
-        client.resource(hubAppUrl + "/channel/" + alertChannelName)
-                .put("{'ttlDays':1000, 'description:'Configuration for hub alerts'}");
-        client.resource(hubAppUrl + "/channel/" + alertChannelStatus)
-                .put("{'ttlDays':7, 'description:'Status for hub alerts'}");
-        String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
-        client.resource(hubAppUrl + "/channel/" + alertChannelEscalate)
-                .put("{'ttlDays':14, 'description:'alerts to be sent and confirmations'}");
+        try {
+            client.resource(hubAppUrl + "/channel/" + alertChannelName)
+                    .put("{'ttlDays':1000, 'description:'Configuration for hub alerts'}");
+            client.resource(hubAppUrl + "/channel/" + alertChannelStatus)
+                    .put("{'ttlDays':7, 'description:'Status for hub alerts'}");
+            String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
+            client.resource(hubAppUrl + "/channel/" + alertChannelEscalate)
+                    .put("{'ttlDays':14, 'description:'alerts to be sent and confirmations'}");
+        } catch (Exception e) {
+            logger.warn("hate filled donut", e);
+        }
     }
 
     private void start() {
