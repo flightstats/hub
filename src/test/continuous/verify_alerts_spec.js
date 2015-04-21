@@ -45,6 +45,7 @@ describe(testName, function () {
                         existingRules.push(key);
                     }
                 });
+                done();
             })
     });
 
