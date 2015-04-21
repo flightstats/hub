@@ -52,7 +52,15 @@ public class AlertRunner implements Leader {
         hubAppUrl = HubProperties.getProperty("app.url", "");
         sleepPeriod = HubProperties.getProperty("alert.sleep.millis", 60 * 1000);
         alertChannelName = HubProperties.getProperty("alert.channel.config", "zomboAlertsConfig");
+        client.resource(hubAppUrl + "/channel/" + alertChannelName)
+                .put("{'ttlDays':1000, 'description:'Configuration for hub alerts'}");
         alertChannelStatus = HubProperties.getProperty("alert.channel.status", "zomboAlertStatus");
+        client.resource(hubAppUrl + "/channel/" + alertChannelStatus)
+                .put("{'ttlDays':7, 'description:'Status for hub alerts'}");
+        String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
+        client.resource(hubAppUrl + "/channel/" + alertChannelEscalate)
+                .put("{'ttlDays':14, 'description:'alerts to be sent and confirmations'}");
+
         if (HubProperties.getProperty("alert.run", true)) {
             logger.info("starting with url {} {} {} ", hubAppUrl, sleepPeriod, alertChannelName);
             HubServices.register(new AlertRunnerService(), HubServices.TYPE.POST_START);
