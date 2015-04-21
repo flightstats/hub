@@ -87,9 +87,12 @@ public class AlertCheckerMockTest {
 
     private static Object handleAlert(Request request, Response response) {
         logger.info("request.body {}", request.body());
-        assertEquals("{\"serviceName\":null," +
-                        "\"description\":\"testSimple: http://localhost:4567//channel/load_test_1 volume 2 < 4\"," +
-                        "\"details\":\"TBD\"}",
+        assertEquals("{\"serviceName\":null,\"description\":\"testSimple: " +
+                        "http://localhost:4567/channel/load_test_1 volume 2 < 4\"," +
+                        "\"details\":{\"testSimple\":{\"name\":\"testSimple\"," +
+                        "\"history\":[{\"href\":\"http://localhost:4567/channel/load_test_1/2015/03/02/22/25\",\"items\":2}" +
+                        ",{\"href\":\"http://localhost:4567/channel/load_test_1/2015/03/02/22/26\",\"items\":0}]," +
+                        "\"alert\":false}}}",
                 request.body());
         return "";
 
