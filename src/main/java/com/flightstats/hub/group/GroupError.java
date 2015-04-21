@@ -58,7 +58,17 @@ public class GroupError {
                 }
             }
         } catch (Exception e) {
-            logger.warn("unable to limit children " + errorRoot + group, e);
+            logger.warn("unable to limit children " + errorRoot, e);
+        }
+    }
+
+    public void delete(String group) {
+        String errorRoot = getErrorRoot(group);
+        logger.info("deleting " + errorRoot);
+        try {
+            curator.delete().forPath(errorRoot);
+        } catch (Exception e) {
+            logger.warn("unable to delete " + errorRoot, e);
         }
     }
 
