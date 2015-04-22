@@ -245,7 +245,7 @@ public class ChannelContentResource {
                 .count(count).build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
+        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/previous")
@@ -289,7 +289,7 @@ public class ChannelContentResource {
                 .count(count).build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
+        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
     }
 
     private Response directional(String channel, int year, int month, int day, int hour, int minute,

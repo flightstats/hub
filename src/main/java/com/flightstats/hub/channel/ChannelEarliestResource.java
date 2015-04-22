@@ -4,8 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
-import com.google.common.base.Optional;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -20,6 +23,8 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel: .*}/earliest")
 public class ChannelEarliestResource {
 
+    private final static Logger logger = LoggerFactory.getLogger(ChannelEarliestResource.class);
+
     @Inject
     private UriInfo uriInfo;
     @Inject
@@ -31,13 +36,15 @@ public class ChannelEarliestResource {
     public Response getEarliest(@PathParam("channel") String channel,
                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
                                 @QueryParam("trace") @DefaultValue("false") boolean trace) {
-        Optional<ContentKey> earliest = channelService.getEarliest(channel, stable, trace);
-        if (earliest.isPresent()) {
-            return Response.status(SEE_OTHER)
-                    .location(URI.create(uriInfo.getBaseUri() + "channel/" + channel + "/" + earliest.get().toUrl()))
-                    .build();
-        } else {
+        DirectionQuery query = getDirectionQuery(channel, 1, stable, trace);
+        Collection<ContentKey> keys = channelService.getKeys(query);
+        if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
+
+        } else {
+            return Response.status(SEE_OTHER)
+                    .location(URI.create(uriInfo.getBaseUri() + "channel/" + channel + "/" + keys.iterator().next().toUrl()))
+                    .build();
         }
     }
 
@@ -48,23 +55,32 @@ public class ChannelEarliestResource {
                                      @PathParam("count") int count,
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
                                      @QueryParam("trace") @DefaultValue("false") boolean trace) {
-        Optional<ContentKey> earliest = channelService.getEarliest(channel, stable, trace);
-        if (!earliest.isPresent()) {
-            return Response.status(NOT_FOUND).build();
-        }
-        DirectionQuery query = DirectionQuery.builder()
-                .channelName(channel)
-                .contentKey(earliest.get())
-                .next(true)
-                .stable(stable)
-                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
-                .count(count - 1)
-                .build();
-        query.trace(trace);
+        DirectionQuery query = getDirectionQuery(channel, count, stable, trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        keys.add(earliest.get());
-        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo);
+        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, false);
 
     }
+
+    private DirectionQuery getDirectionQuery(String channel, int count, boolean stable, boolean trace) {
+        long ttlDays = channelService.getCachedChannelConfig(channel).getTtlDays();
+        DateTime ttlTime = TimeUtil.now().minusDays((int) ttlDays);
+        DateTime birthDay = TimeUtil.getBirthDay();
+        if (ttlTime.isBefore(birthDay)) {
+            ttlTime = birthDay;
+        }
+        ContentKey limitKey = new ContentKey(ttlTime, "0");
+
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channel)
+                .contentKey(limitKey)
+                .next(true)
+                .stable(stable)
+                .ttlDays(ttlDays)
+                .count(count)
+                .build();
+        query.trace(trace);
+        return query;
+    }
+
 
 }

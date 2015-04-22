@@ -10,15 +10,13 @@ utils.configureFrisby();
 /**
  * create a channel
  * post an item
- * does not get the item back out with latest - stable
- * get the item back out with latest - unstable
+ * does not get the item back out with earliest - stable
+ * get the item back out with earliest - unstable
  */
 describe(testName, function () {
 
     utils.putChannel(channelName, function () {
     }, {"name": channelName, "ttlDays": 1});
-
-    utils.addItem(channelResource, 201);
 
     var posted;
 
@@ -30,8 +28,10 @@ describe(testName, function () {
             });
     });
 
-    it("gets latest stable in channel ", function (done) {
-        request.get({url: channelResource + '/latest', followRedirect: false},
+    utils.addItem(channelResource, 201);
+
+    it("gets earliest stable in channel ", function (done) {
+        request.get({url: channelResource + '/earliest', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(404);
@@ -39,8 +39,8 @@ describe(testName, function () {
             });
     });
 
-    it("gets latest unstable in channel ", function (done) {
-        request.get({url: channelResource + '/latest?stable=false', followRedirect: false},
+    it("gets earliest unstable in channel ", function (done) {
+        request.get({url: channelResource + '/earliest?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(303);
@@ -49,14 +49,16 @@ describe(testName, function () {
             });
     });
 
-    it("gets latest N unstable in channel ", function (done) {
-        request.get({url: channelResource + '/latest/10?stable=false', followRedirect: false},
+    it("gets earliest N unstable in channel ", function (done) {
+        request.get({url: channelResource + '/earliest/10?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = JSON.parse(response.body);
                 expect(parsed._links.uris.length).toBe(2);
-                expect(parsed._links.uris[1]).toBe(posted);
+                expect(parsed._links.uris[0]).toBe(posted);
+                expect(parsed._links.next).toBeDefined();
+                expect(parsed._links.previous).not.toBeDefined();
                 done();
             });
     });
