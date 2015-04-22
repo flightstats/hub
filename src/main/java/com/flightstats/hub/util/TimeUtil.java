@@ -56,9 +56,18 @@ public class TimeUtil {
         return dateTime.toString(daysFormatter);
     }
 
-    public static DateTime getBirthDay() {
+    static DateTime getBirthDay() {
         String property = HubProperties.getProperty("app.birthDay", "2015/01/01");
         return daysFormatter.parseDateTime(property);
+    }
+
+    public static DateTime getEarliestTime(int ttlDays, boolean stable) {
+        DateTime limitTime = TimeUtil.time(stable).minusDays((int) ttlDays);
+        DateTime birthDay = TimeUtil.getBirthDay();
+        if (limitTime.isBefore(birthDay)) {
+            limitTime = birthDay;
+        }
+        return limitTime;
     }
 
     public enum Unit {
