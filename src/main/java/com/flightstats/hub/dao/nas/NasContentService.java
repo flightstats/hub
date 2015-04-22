@@ -94,8 +94,8 @@ public class NasContentService implements ContentService {
                 time = time.plus(hours.getDuration());
             }
         } else {
-            DateTime endTime = TimeUtil.now().minusDays((int) query.getTtlDays());
-            while (keys.size() < query.getCount() && time.isAfter(endTime)) {
+            DateTime limitTime = TimeUtil.getEarliestTime((int) query.getTtlDays(), query.isStable()).minusDays(1);
+            while (keys.size() < query.getCount() && time.isAfter(limitTime)) {
                 addKeys(query, keys, hours, time);
                 time = time.minus(hours.getDuration());
             }
