@@ -119,6 +119,18 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
+    public Optional<ContentKey> getEarliest(String channel, boolean stable, boolean trace) {
+        //todo - gfm - 4/21/15 - if ttlDays from now is before birthdate, choose birthdate
+        DateTime ttlTime = getTtlTime(channel);
+        DateTime birthDay = TimeUtil.getBirthDay();
+        if (ttlTime.isBefore(birthDay)) {
+            ttlTime = birthDay;
+        }
+
+        return null;
+    }
+
+    @Override
     public Optional<Content> getValue(Request request) {
         DateTime ttlTime = getTtlTime(request.getChannel());
         if (request.getKey().getTime().isBefore(ttlTime)) {

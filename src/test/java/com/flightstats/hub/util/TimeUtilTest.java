@@ -20,4 +20,9 @@ public class TimeUtilTest {
                 (double) stableOrdering.getMillis(), (double) 100);
     }
 
+    @Test
+    public void testBirthDay() {
+        assertEquals("2015-01-01T00:00:00.000Z", TimeUtil.getBirthDay().toString());
+    }
+
 }

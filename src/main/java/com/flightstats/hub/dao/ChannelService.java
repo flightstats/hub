@@ -37,4 +37,5 @@ public interface ChannelService {
 
     Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace);
 
+    Optional<ContentKey> getEarliest(String channel, boolean stable, boolean trace);
 }
