@@ -66,7 +66,7 @@ public class GroupError {
         String errorRoot = getErrorRoot(group);
         logger.info("deleting " + errorRoot);
         try {
-            curator.delete().forPath(errorRoot);
+            curator.delete().deletingChildrenIfNeeded().forPath(errorRoot);
         } catch (Exception e) {
             logger.warn("unable to delete " + errorRoot, e);
         }
