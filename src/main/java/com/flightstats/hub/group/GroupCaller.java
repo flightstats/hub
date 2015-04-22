@@ -44,7 +44,7 @@ public class GroupCaller implements Leader {
     private final MetricsTimer metricsTimer;
     private final LastContentKey lastContentKey;
     private final GroupContentKeySet groupInProcess;
-    private GroupError groupError;
+    private final GroupError groupError;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
@@ -229,6 +229,7 @@ public class GroupCaller implements Leader {
         logger.info("deleting " + group.getName());
         groupInProcess.delete(group.getName());
         lastContentKey.delete(group.getName(), GROUP_LAST_COMPLETED);
+        groupError.delete(group.getName());
         logger.info("deleted " + group.getName());
     }
 
