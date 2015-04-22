@@ -94,7 +94,7 @@ public class ContentDaoUtil {
     public void testDirectionQuery() throws Exception {
         String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
         List<ContentKey> keys = new ArrayList<>();
-        DateTime start = new DateTime(2014, 11, 14, 22, 27, DateTimeZone.UTC);
+        DateTime start = TimeUtil.now().minusDays(1);
         for (int i = 0; i < 7; i++) {
             ContentKey key = new ContentKey(start.plusHours(i), "A" + i);
             keys.add(key);
