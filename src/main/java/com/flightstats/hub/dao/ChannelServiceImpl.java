@@ -120,7 +120,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Optional<Content> getValue(Request request) {
-        DateTime ttlTime = getTtlTime(request.getChannel());
+        DateTime ttlTime = getTtlTime(request.getChannel()).minusMinutes(15);
         if (request.getKey().getTime().isBefore(ttlTime)) {
             return Optional.absent();
         }

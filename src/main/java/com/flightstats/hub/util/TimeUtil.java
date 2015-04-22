@@ -56,6 +56,11 @@ public class TimeUtil {
         return dateTime.toString(daysFormatter);
     }
 
+    public static DateTime getBirthDay() {
+        String property = HubProperties.getProperty("app.birthDay", "2015/01/01");
+        return daysFormatter.parseDateTime(property);
+    }
+
     public enum Unit {
         MILLIS(millisFormatter, Duration.millis(1)),
         SECONDS(secondsFormatter, Duration.standardSeconds(1)),

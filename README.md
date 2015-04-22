@@ -14,6 +14,7 @@ The Hub
 * [insert content into channel](#insert-content-into-channel)
 * [fetch content from channel](#fetch-content-from-channel)
 * [latest channel item](#latest-channel-item)
+* [earliest channel item](#earliest-channel-item)
 * [next and previous links](#next-and-previous-links)
 * [channel status](#channel-status)
 * [tag interface](#tag-interface)
@@ -56,7 +57,7 @@ We also recommend clients use exponential backoff for retries.
 
 ## FAQ
 
-* Why does /latest return 404?
+* Why does /latest (or /earliest) return 404?
 
   Either data has never been added to that channel, or the last data added to that channel is older than the time to live (ttlDays).
 
@@ -135,6 +136,9 @@ On success:  `HTTP/1.1 201 OK`
         },
         "latest": {
             "href": "http://hub/channel/stumptown/latest"
+        },
+        "earliest": {
+            "href": "http://hub/channel/stumptown/earliest"
         },
         "ws": {
             "href": "ws://hub/channel/stumptown/ws"
@@ -261,6 +265,22 @@ Here is how you can do this with curl:
 `curl -I http://hub/channel/stumptown/latest`
 
 You can also retrieve the latest N items by using /latest/{n}
+
+## fetch earliest channel item
+
+To retrieve the earliest item inserted into a channel, issue a HEAD or GET request on the `earliest` link 
+returned from the channel metadata.  The Hub will issue a 303 redirect.
+
+`HEAD http://hub/channel/stumptown/earliest`
+
+On success:  `HTTP/1.1 303 See Other`
+`Location: http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}`
+
+Here is how you can do this with curl:
+
+`curl -I http://hub/channel/stumptown/earliest`
+
+You can also retrieve the earliest N items by using /earliest/{n}
 
 ## next and previous links
 

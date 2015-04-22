@@ -53,6 +53,7 @@ public class LinkBuilder {
     public static Linked<ChannelConfig> buildChannelLinks(ChannelConfig config, URI channelUri) {
         Linked.Builder<ChannelConfig> linked = linked(config).withLink("self", channelUri);
         linked.withLink("latest", URI.create(channelUri + "/latest"))
+                .withLink("earliest", URI.create(channelUri + "/earliest"))
                 .withLink("ws", buildWsLinkFor(channelUri))
                 .withLink("time", URI.create(channelUri + "/time"))
                 .withLink("status", URI.create(channelUri + "/status"));
@@ -79,7 +80,7 @@ public class LinkBuilder {
     }
 
     public static Response directionalResponse(String channel, Collection<ContentKey> keys, int count,
-                                               DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo) {
+                                               DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo, boolean includePrevious) {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
@@ -97,8 +98,10 @@ public class LinkBuilder {
         } else {
             ObjectNode next = links.putObject("next");
             next.put("href", baseUri + list.get(list.size() - 1).toUrl() + "/next/" + count);
-            ObjectNode previous = links.putObject("previous");
-            previous.put("href", baseUri + list.get(0).toUrl() + "/previous/" + count);
+            if (includePrevious) {
+                ObjectNode previous = links.putObject("previous");
+                previous.put("href", baseUri + list.get(0).toUrl() + "/previous/" + count);
+            }
         }
         ArrayNode ids = links.putArray("uris");
         URI channelUri = buildChannelUri(channel, uriInfo);
