@@ -1,6 +1,5 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.EventTimed;
@@ -11,6 +10,7 @@ import com.flightstats.hub.model.InsertedContentKey;
 import com.flightstats.hub.rest.Headers;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
+import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.Sleeper;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -33,13 +33,13 @@ public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
     private final ChannelService channelService;
     private final UriInfo uriInfo;
-    private final int minPostTimeMillis;
+    private NTPMonitor ntpMonitor;
 
     @Inject
-    public ChannelResource(ChannelService channelService, UriInfo uriInfo) {
+    public ChannelResource(ChannelService channelService, UriInfo uriInfo, NTPMonitor ntpMonitor) {
         this.channelService = channelService;
         this.uriInfo = uriInfo;
-        minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
+        this.ntpMonitor = ntpMonitor;
     }
 
     @GET
@@ -127,8 +127,9 @@ public class ChannelResource {
             LinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
             content.getTraces().logSlow(100, logger);
             long time = System.currentTimeMillis() - start;
-            if (time < minPostTimeMillis) {
-                Sleeper.sleep(minPostTimeMillis - time);
+            int postTimeBuffer = ntpMonitor.getPostTimeBuffer();
+            if (time < postTimeBuffer) {
+                Sleeper.sleep(postTimeBuffer - time);
             }
             return builder.build();
         } catch (ContentTooLargeException e) {
