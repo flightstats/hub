@@ -1,6 +1,7 @@
 package com.flightstats.hub.time;
 
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -22,11 +23,14 @@ public class NTPMonitor {
     private final static Logger logger = LoggerFactory.getLogger(NTPMonitor.class);
 
     private final MetricsSender sender;
+    private final int minPostTimeMillis;
+    private double delta;
 
     @Inject
     public NTPMonitor(MetricsSender sender) {
         this.sender = sender;
         HubServices.register(new TimeMonitorService(), HubServices.TYPE.POST_START);
+        minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
     }
 
     static double parseClusterRange(List<String> lines) {
@@ -64,13 +68,17 @@ public class NTPMonitor {
         try {
             Process process = new ProcessBuilder("ntpq", "-p").start();
             List<String> lines = IOUtils.readLines(process.getInputStream());
-            double delta = parseClusterRange(lines);
+            delta = parseClusterRange(lines);
             sender.send("clusterTimeDelta", delta);
             sender.send("primaryTimeDelta", parsePrimary(lines));
             newRelic(delta);
         } catch (Exception e) {
             logger.info("unable to exec", e);
         }
+    }
+
+    public int getPostTimeBuffer() {
+        return (int) (minPostTimeMillis + delta);
     }
 
     public void newRelic(double delta) {
