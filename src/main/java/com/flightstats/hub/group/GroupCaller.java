@@ -18,6 +18,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.newrelic.api.agent.Trace;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
@@ -132,6 +133,7 @@ public class GroupCaller implements Leader {
         logger.trace("sending {} to {}", key, group.getName());
         semaphore.acquire();
         executorService.submit(new Callable<Object>() {
+            @Trace(metricName = "GroupCaller", dispatcher = true)
             @Override
             public Object call() throws Exception {
                 groupInProcess.add(group.getName(), key);
