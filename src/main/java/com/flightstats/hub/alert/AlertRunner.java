@@ -8,6 +8,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
+import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -39,14 +40,13 @@ public class AlertRunner implements Leader {
     private final String alertChannelStatus;
 
     private CuratorFramework curator;
-    private Client client;
+    private static final Client client = RestClient.createClient(15, 60);
     private CuratorLeader leader;
     private final Map<AlertConfig, AlertChecker> configCheckerMap = new HashMap<>();
 
     @Inject
-    public AlertRunner(CuratorFramework curator, Client client) {
+    public AlertRunner(CuratorFramework curator) {
         this.curator = curator;
-        this.client = client;
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("AlertRunner-%d").build();
         threadPool = Executors.newFixedThreadPool(20, threadFactory);
         hubAppUrl = HubProperties.getProperty("app.url", "");
