@@ -50,12 +50,13 @@ describe(testName, function () {
                         agent.get(res.body.replicationSource)
                             .set('Accept', 'application/json')
                             .end(function (res) {
-                                if (res.statusCode == 404) {
+                                if (res.statusCode >= 400) {
                                     console.log('channel is missing remote source ', channel, res.body.replicationSource);
                                     callback();
                                 } else {
                                     expect(res.error).toBe(false);
                                     var server = res.header['server'];
+                                    console.log('server', server);
                                     if (server.indexOf('Hub') >= 0) {
                                         replicatedChannels[channel]['version'] = 'v2';
                                     } else {
