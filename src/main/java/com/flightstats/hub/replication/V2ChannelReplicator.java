@@ -32,7 +32,7 @@ public class V2ChannelReplicator implements ChannelReplicator {
 
     @Override
     public ChannelConfig getChannel() {
-        return null;
+        return channel;
     }
 
     @Override
