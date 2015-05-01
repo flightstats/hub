@@ -94,6 +94,7 @@ public class ReplicatorImpl implements Replicator {
         for (ChannelConfig channel : replicatedChannels) {
             logger.info("replicating channel {}", channel.getName());
             try {
+                replicators.add(channel.getName());
                 if (replicatorMap.containsKey(channel.getName())) {
                     ChannelReplicator replicator = replicatorMap.get(channel.getName());
                     if (!replicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
@@ -105,7 +106,6 @@ public class ReplicatorImpl implements Replicator {
                 } else {
                     startReplication(channel);
                 }
-                replicators.add(channel.getName());
             } catch (Exception e) {
                 logger.warn("error trying to replicate " + channel, e);
             }

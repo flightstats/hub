@@ -71,7 +71,7 @@ public class LastContentKey {
             curator.setData().withVersion(existing.version).forPath(path, nextKey.getBytes());
             return true;
         } catch (KeeperException.BadVersionException e) {
-            logger.info("bad version " + path + " " + e.getMessage());
+            logger.debug("bad version " + path + " " + e.getMessage());
             return false;
         } catch (Exception e) {
             logger.info("what happened? " + path, e);
