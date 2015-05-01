@@ -46,7 +46,6 @@ describe(testName, function () {
                     .end(function (res) {
                         expect(res.error).toBe(false);
                         replicatedChannels[channel]['replicationSource'] = res.body.replicationSource;
-                        console.log('replicatedChannels', replicatedChannels);
                         agent.get(res.body.replicationSource)
                             .set('Accept', 'application/json')
                             .end(function (res) {
