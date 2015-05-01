@@ -200,7 +200,7 @@ describe(testName, function () {
                         itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
                     }
                 } else {
-                    if (Math.random() > 0.99) {
+                    if (Math.random() > 0.95) {
                         var contentKey = getContentKey(uri, channel);
                         itemsToVerify.push({name: channel, sequence: false, uri: uri, contentKey: contentKey});
                     }
