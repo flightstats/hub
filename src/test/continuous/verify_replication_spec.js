@@ -80,8 +80,7 @@ describe(testName, function () {
                     .set('Accept', 'application/json')
                     .end(function (res) {
                         expect(res.error).toBe(false);
-                        channels[channel] = res.body._links.uris;
-                        console.log('found dest first ', channels[channel][0]);
+                        channels[channel] = [];
                         agent.get(res.body._links.previous.href)
                             .set('Accept', 'application/json')
                             .end(function (res) {
@@ -109,42 +108,18 @@ describe(testName, function () {
                     .set('Accept', 'application/json')
                     .end(function (res) {
                         expect(res.error).toBe(false);
-                        var v2Uris = res.body._links.uris;
-                        console.log('found source first ', v2Uris[0]);
+                        var v2Uris = [];
                         agent.get(res.body._links.previous.href)
                             .set('Accept', 'application/json')
                             .end(function (res) {
                                 expect(res.error).toBe(false);
                                 v2Uris = res.body._links.uris.concat(v2Uris);
-                                var foundFirst = 0;
-                                var foundLast = 0;
                                 if (v2Uris.length !== channels[channel].length) {
-                                    console.log('comparing length ', channel, v2Uris.length, channels[channel].length);
-                                    var uri = channels[channel][0];
-                                    if (uri) {
-                                        var firstKey = getContentKey(uri, channel);
-                                        var lastKey = getContentKey(channels[channel][channels[channel].length - 1], channel);
-                                        for (var i = 0; i < v2Uris.length; i++) {
-                                            var item = v2Uris[i];
-
-                                            var sourceKey = getContentKey(item, source);
-                                            if (sourceKey === firstKey) {
-                                                foundFirst = i;
-                                                console.log('found first ', channel, v2Uris.length, channels[channel].length, i);
-                                            }
-                                            if (sourceKey === lastKey) {
-                                                foundLast = i;
-                                                console.log('found last', channel, v2Uris.length, channels[channel].length, i);
-                                            }
-                                        }
-                                        console.log('found ', v2Uris.length, channels[channel].length, foundFirst, foundLast);
-                                        expect(channels[channel].length + foundFirst).toBe(foundLast + 1);
-                                    } else {
-                                        console.log("failure: expected to have uris", channel);
-                                        expect(uri).toBeDefined();
-                                    }
-
+                                    console.log('unequal lengths ', channel, v2Uris.length, channels[channel].length);
+                                    console.log('source', v2Uris);
+                                    console.log('destin', channels[channel]);
                                 }
+                                expect(v2Uris.length).toBe(channels[channel].length);
                                 callback(res.error);
                             });
                     });
