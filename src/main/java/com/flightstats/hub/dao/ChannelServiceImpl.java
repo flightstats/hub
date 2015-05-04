@@ -166,6 +166,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfig updateChannel(ChannelConfig configuration) {
+        logger.info("updating channel {}", configuration);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
         ChannelConfig oldConfig = getChannelConfig(configuration.getName());
         channelValidator.validate(configuration, false);

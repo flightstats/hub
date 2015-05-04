@@ -34,7 +34,7 @@ describe(testName, function () {
             console.log('messagedUrl', message.data);
             done();
         };
-    }, MINUTE);
+    }, MINUTE + 1);
 
     it('closes websocket', function (done) {
         webSocket.onclose = function () {
@@ -44,7 +44,7 @@ describe(testName, function () {
 
         webSocket.close();
 
-    }, MINUTE);
+    }, MINUTE + 2);
 
 });
 
