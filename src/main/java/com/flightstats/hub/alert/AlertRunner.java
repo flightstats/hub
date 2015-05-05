@@ -16,6 +16,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,7 @@ public class AlertRunner implements Leader {
         this.curator = curator;
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("AlertRunner-%d").build();
         threadPool = Executors.newFixedThreadPool(20, threadFactory);
-        hubAppUrl = HubProperties.getProperty("app.url", "");
+        hubAppUrl = StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
         sleepPeriod = HubProperties.getProperty("alert.sleep.millis", 60 * 1000);
         alertChannelName = HubProperties.getProperty("alert.channel.config", "zomboAlertsConfig");
         alertChannelStatus = HubProperties.getProperty("alert.channel.status", "zomboAlertStatus");
