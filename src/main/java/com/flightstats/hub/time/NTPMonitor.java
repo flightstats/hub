@@ -78,7 +78,7 @@ public class NTPMonitor {
     }
 
     public int getPostTimeBuffer() {
-        return (int) (minPostTimeMillis + delta);
+        return (int) (minPostTimeMillis + delta * 2);
     }
 
     public void newRelic(double delta) {
