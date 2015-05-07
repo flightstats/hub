@@ -43,6 +43,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfig createChannel(ChannelConfig configuration) {
+        logger.info("create channel {}", configuration);
         channelValidator.validate(configuration, true);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
         ChannelConfig created = channelConfigDao.createChannel(configuration);
