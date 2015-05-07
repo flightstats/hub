@@ -2,7 +2,6 @@ package com.flightstats.hub.group;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -33,11 +32,12 @@ public class CallbackQueue implements AutoCloseable {
     private AtomicBoolean error = new AtomicBoolean(false);
     private BlockingQueue<ContentKey> queue = new ArrayBlockingQueue<>(1000);
     private String channel;
-    private DateTime lastQueryTime;
+    private QueryGenerator queryGenerator;
 
     @Inject
     public CallbackQueue(ChannelService channelService) {
         this.channelService = channelService;
+
     }
 
     public Optional<ContentKey> next() {
@@ -52,8 +52,8 @@ public class CallbackQueue implements AutoCloseable {
     }
 
     public void start(Group group, ContentKey startingKey) {
-        lastQueryTime = startingKey.getTime();
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
+        queryGenerator = new QueryGenerator(startingKey.getTime(), channel);
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("group-" + group.getName() + "-queue-%s").build();
         ExecutorService executorService = Executors.newSingleThreadExecutor(factory);
         executorService.submit(new Runnable() {
@@ -72,24 +72,9 @@ public class CallbackQueue implements AutoCloseable {
 
             private void doWork() {
                 while (!shouldExit.get()) {
-                    DateTime latestStableInChannel = getLatestStable();
-                    logger.trace("iterating {} last={} stable={} ", channel, lastQueryTime, latestStableInChannel);
-                    if (lastQueryTime.isBefore(latestStableInChannel)) {
-                        TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
-                        logger.trace("query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
-                        Location location = Location.ALL;
-                        if (unit.equals(TimeUtil.Unit.SECONDS)) {
-                            location = Location.CACHE;
-                        }
-                        TimeQuery query = TimeQuery.builder()
-                                .channelName(channel)
-                                .startTime(lastQueryTime)
-                                .unit(unit)
-                                .location(location)
-                                .build();
-                        query.trace(false);
-                        addKeys(channelService.queryByTime(query));
-                        lastQueryTime = lastQueryTime.plus(unit.getDuration());
+                    TimeQuery timeQuery = queryGenerator.getQuery(getLatestStable());
+                    if (timeQuery != null) {
+                        addKeys(channelService.queryByTime(timeQuery));
                     } else {
                         Sleeper.sleep(1000);
                     }
@@ -110,31 +95,25 @@ public class CallbackQueue implements AutoCloseable {
                     throw new RuntimeInterruptedException(e);
                 }
             }
+
+            private DateTime getLatestStable() {
+                if (channelService.isReplicating(channel)) {
+                    Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
+                    if (latest.isPresent()) {
+                        return latest.get().getTime();
+                    } else {
+                        return new DateTime(0);
+                    }
+                } else {
+                    return TimeUtil.stable();
+                }
+            }
+
         });
 
     }
 
-    private TimeUtil.Unit getStepUnit(DateTime latestStableInChannel) {
-        if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {
-            return TimeUtil.Unit.HOURS;
-        } else if (lastQueryTime.isBefore(latestStableInChannel.minusMinutes(2))) {
-            return TimeUtil.Unit.MINUTES;
-        }
-        return TimeUtil.Unit.SECONDS;
-    }
 
-    private DateTime getLatestStable() {
-        if (channelService.isReplicating(channel)) {
-            Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
-            if (latest.isPresent()) {
-                return latest.get().getTime();
-            } else {
-                return new DateTime(0);
-            }
-        } else {
-            return TimeUtil.stable();
-        }
-    }
 
     @Override
     public void close() {
