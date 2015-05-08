@@ -95,7 +95,7 @@ public class GroupCaller implements Leader {
         callbackQueue = queueProvider.get();
         try {
             ContentKey lastCompletedKey = lastContentKey.get(group.getName(), new ContentKey(), GROUP_LAST_COMPLETED);
-            logger.debug("last completed at {} {}", lastCompletedKey, group.getName());
+            logger.info("last completed at {} {}", lastCompletedKey, group.getName());
             if (hasLeadership.get()) {
                 sendInProcess(lastCompletedKey);
                 callbackQueue.start(group, lastCompletedKey);
