@@ -55,7 +55,12 @@ describe(testName, function () {
                                 .set('Accept', 'application/json')
                                 .end(function (res) {
                                     expect(res.error).toBe(false);
-                                    callback(null, res.body._links.uris);
+                                    if (!res.body._links) {
+                                        console.log('unable to find cache links', res.status, channelTime.url, res.body);
+                                        callback(null, []);
+                                    } else {
+                                        callback(null, res.body._links.uris);
+                                    }
                                 });
                         },
                         function (callback) {
@@ -64,7 +69,12 @@ describe(testName, function () {
                                 .set('Accept', 'application/json')
                                 .end(function (res) {
                                     expect(res.error).toBe(false);
-                                    callback(null, res.body._links.uris);
+                                    if (!res.body._links) {
+                                        console.log('unable to find long term links', res.status, channelTime.url, res.body);
+                                        callback(null, []);
+                                    } else {
+                                        callback(null, res.body._links.uris);
+                                    }
                                 });
                         }
                     ],
