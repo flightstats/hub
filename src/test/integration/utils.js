@@ -92,6 +92,7 @@ function postItem(url, responseCode, completed) {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(response.statusCode).toBe(responseCode);
+            console.log('posted', response.headers.location);
             completed();
         });
 }
