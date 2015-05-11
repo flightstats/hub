@@ -94,7 +94,7 @@ public class GroupCaller implements Leader {
         this.client = RestClient.createClient(30, 120);
         callbackQueue = queueProvider.get();
         try {
-            ContentKey lastCompletedKey = lastContentKey.get(group.getName(), new ContentKey(), GROUP_LAST_COMPLETED);
+            ContentKey lastCompletedKey = getLastCompleted(group.getStartingKey());
             logger.info("last completed at {} {}", lastCompletedKey, group.getName());
             if (hasLeadership.get()) {
                 sendInProcess(lastCompletedKey);
@@ -109,7 +109,8 @@ public class GroupCaller implements Leader {
         } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + group.getName());
         } finally {
-            logger.info("stopping " + group);
+            ContentKey lastCompletedKey = getLastCompleted(ContentKey.NONE);
+            logger.info("stopping last completed at {} {}", lastCompletedKey, group.getName());
             closeQueue();
             if (deleteOnExit.get()) {
                 delete();
@@ -224,7 +225,11 @@ public class GroupCaller implements Leader {
     }
 
     public ContentKey getLastCompleted() {
-        return lastContentKey.get(group.getName(), ContentKey.NONE, GROUP_LAST_COMPLETED);
+        return getLastCompleted(ContentKey.NONE);
+    }
+
+    public ContentKey getLastCompleted(ContentKey defaultKey) {
+        return lastContentKey.get(group.getName(), defaultKey, GROUP_LAST_COMPLETED);
     }
 
     private void delete() {
