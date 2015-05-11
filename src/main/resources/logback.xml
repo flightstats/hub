@@ -31,5 +31,6 @@
     <logger name="com.flightstats.hub.nas" level="TRACE"/>
     <logger name="com.flightstats.hub.ws" level="TRACE"/>
     <logger name="com.flightstats.hub.alert" level="TRACE"/>
+    <logger name="com.flightstats.hub.util" level="TRACE"/>
 
 </configuration>

@@ -74,16 +74,17 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     public boolean isReplicating(String channelName) {
-        ChannelConfig configuration = getCachedChannelConfig(channelName);
-        if (null == configuration) {
+        try {
+            ChannelConfig configuration = getCachedChannelConfig(channelName);
+            return configuration.isReplicating();
+        } catch (NoSuchChannelException e) {
             return false;
         }
-        return configuration.isReplicating();
     }
 
     @Override
     public Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace) {
-        ChannelConfig channelConfig = getCachedChannelConfig(channel);
+        ChannelConfig channelConfig = getChannelConfig(channel);
         if (null == channelConfig) {
             return Optional.absent();
         }
