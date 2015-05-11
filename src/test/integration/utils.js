@@ -140,7 +140,6 @@ function putGroup(groupName, groupConfig, status) {
 function getGroup(groupName, groupConfig, status) {
     var groupResource = groupUrl + "/" + groupName;
     status = status || 200;
-    console.log('getGroup', groupName);
     it('gets group ' + groupName, function (done) {
         request.get({url : groupResource,
                 headers : {"Content-Type" : "application/json"} },
@@ -148,7 +147,6 @@ function getGroup(groupName, groupConfig, status) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(status);
                 if (status < 400) {
-                    console.log('got group', groupName, body);
                     var parse = JSON.parse(body);
                     expect(parse._links.self.href).toBe(groupResource);
                     if (typeof groupConfig !== "undefined") {
