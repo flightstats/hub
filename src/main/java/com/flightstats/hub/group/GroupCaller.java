@@ -94,7 +94,11 @@ public class GroupCaller implements Leader {
         this.client = RestClient.createClient(30, 120);
         callbackQueue = queueProvider.get();
         try {
-            ContentKey lastCompletedKey = getLastCompleted(group.getStartingKey());
+            ContentKey startingKey = group.getStartingKey();
+            if (null == startingKey) {
+                startingKey = new ContentKey();
+            }
+            ContentKey lastCompletedKey = getLastCompleted(startingKey);
             logger.info("last completed at {} {}", lastCompletedKey, group.getName());
             if (hasLeadership.get()) {
                 sendInProcess(lastCompletedKey);
