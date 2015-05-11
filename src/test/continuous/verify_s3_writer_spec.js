@@ -1,6 +1,7 @@
 var agent = require('superagent');
 var async = require('async');
 var moment = require('moment');
+var _ = require('lodash');
 var testName = __filename;
 var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl + '/channel';
@@ -39,7 +40,9 @@ describe(testName, function () {
             var formatted = start.format(minute_format);
             console.log('checking', formatted);
             channels.forEach(function (channel) {
-                channelTimes.push({url : channel.href + formatted});
+                if (!_.startsWith(channel.name, 'test')) {
+                    channelTimes.push({url: channel.href + formatted});
+                }
             });
         }
     }, timeout);

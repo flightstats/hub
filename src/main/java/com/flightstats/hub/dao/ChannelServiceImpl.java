@@ -2,6 +2,7 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.exception.ForbiddenRequestException;
+import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.Replicator;
@@ -73,16 +74,17 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     public boolean isReplicating(String channelName) {
-        ChannelConfig configuration = getCachedChannelConfig(channelName);
-        if (null == configuration) {
+        try {
+            ChannelConfig configuration = getCachedChannelConfig(channelName);
+            return configuration.isReplicating();
+        } catch (NoSuchChannelException e) {
             return false;
         }
-        return configuration.isReplicating();
     }
 
     @Override
     public Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace) {
-        ChannelConfig channelConfig = getCachedChannelConfig(channel);
+        ChannelConfig channelConfig = getChannelConfig(channel);
         if (null == channelConfig) {
             return Optional.absent();
         }
@@ -135,7 +137,11 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfig getCachedChannelConfig(String channelName) {
-        return channelConfigDao.getCachedChannelConfig(channelName);
+        ChannelConfig channelConfig = channelConfigDao.getCachedChannelConfig(channelName);
+        if (null == channelConfig) {
+            throw new NoSuchChannelException(channelName);
+        }
+        return channelConfig;
     }
 
     @Override
