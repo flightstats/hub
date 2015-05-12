@@ -15,6 +15,7 @@ from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -282,6 +283,7 @@ class WebsiteTasks(TaskSet):
             events.request_success.fire(request_type="group", name="parallel", response_time=1,
                                         response_length=1)
         else:
+            logger.info("missing parallel item " + str(incoming_uri))
             events.request_failure.fire(request_type="group", name="parallel", response_time=1,
                                         exception=-1)
 
