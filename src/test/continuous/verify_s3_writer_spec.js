@@ -29,7 +29,7 @@ describe(testName, function () {
                 channels = res.body._links.channels;
                 done();
             })
-    });
+    }, timeout);
 
     it('cross product of channels and times', function () {
         console.log('now', moment.utc().format(minute_format));
