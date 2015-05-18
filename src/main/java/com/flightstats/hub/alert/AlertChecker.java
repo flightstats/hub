@@ -34,7 +34,7 @@ public class AlertChecker {
     private static String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
 
     private final AlertConfig alertConfig;
-    private final LinkedList<JsonNode> history = new LinkedList<>();
+    private final LinkedList<AlertHistory> history = new LinkedList<>();
     private boolean isTriggered = false;
 
     public AlertChecker(AlertConfig alertConfig) {
@@ -49,10 +49,10 @@ public class AlertChecker {
         isTriggered = status;
         try {
             logger.debug("start alertConfig {}", alertConfig);
-            JsonNode json = getJson(alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + "/time/minute");
+            AlertHistory alertHistory = getAlertHistory(alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + "/time/minute");
             while (history.size() < alertConfig.getTimeWindowMinutes()) {
-                json = getJson(json.get("_links").get("previous").get("href").asText());
-                history.addFirst(json);
+                alertHistory = getAlertHistory(alertHistory.getPrevious());
+                history.addFirst(alertHistory);
             }
             logger.trace("start history {}", history);
             checkForAlert();
@@ -68,12 +68,12 @@ public class AlertChecker {
             boolean updateNext = true;
             logger.trace("update history {}", history);
             while (updateNext) {
-                JsonNode last = history.getLast();
+                AlertHistory last = history.getLast();
                 logger.debug("last {}", last);
-                JsonNode nextJson = getJson(last.get("_links").get("next").get("href").asText());
-                if (nextJson.get("_links").has("next")) {
+                AlertHistory next = getAlertHistory(last.getNext());
+                if (next.getNext() != null) {
                     history.removeFirst();
-                    history.add(nextJson);
+                    history.add(next);
                     checkForAlert();
                 } else {
                     updateNext = false;
@@ -86,7 +86,7 @@ public class AlertChecker {
 
     boolean checkForAlert() throws ScriptException {
         int count = history.stream()
-                .mapToInt(node -> node.get("_links").get("uris").size())
+                .mapToInt(AlertHistory::getCount)
                 .sum();
         String script = count + " " + alertConfig.getOperator() + " " + alertConfig.getThreshold();
         Boolean evaluate = (Boolean) jsEngine.eval(script);
@@ -113,11 +113,20 @@ public class AlertChecker {
                 .post(entity);
     }
 
-    private JsonNode getJson(String url) throws IOException {
+    private AlertHistory getAlertHistory(String url) throws IOException {
         ClientResponse response = client.resource(url).get(ClientResponse.class);
         JsonNode jsonNode = mapper.readTree(response.getEntity(String.class));
         logger.debug("called {} response {} {}", url, response.getStatus(), jsonNode);
-        return jsonNode;
+        JsonNode links = jsonNode.get("_links");
+        AlertHistory.AlertHistoryBuilder builder = AlertHistory.builder()
+                .count(links.get("uris").size())
+                .previous(links.get("previous").get("href").asText())
+                .self(links.get("self").get("href").asText());
+        if (links.has("next")) {
+            builder.next(links.get("next").get("href").asText());
+        }
+
+        return builder.build();
     }
 
     private static ScriptEngine createJsEngine() {
@@ -130,10 +139,10 @@ public class AlertChecker {
         ObjectNode alertNode = root.putObject(name);
         alertNode.put("name", name);
         ArrayNode historyNode = alertNode.putArray("history");
-        for (JsonNode node : history) {
+        for (AlertHistory node : history) {
             ObjectNode objectNode = historyNode.addObject();
-            objectNode.put("href", node.get("_links").get("self").get("href").asText());
-            objectNode.put("items", node.get("_links").get("uris").size());
+            objectNode.put("href", node.getSelf());
+            objectNode.put("items", node.getCount());
         }
 
         alertNode.put("alert", isTriggered);
