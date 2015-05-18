@@ -138,13 +138,6 @@ public class AlertRunner implements Leader {
 
     Map<String, Boolean> loadStatus() {
         String statusUrl = hubAppUrl + "channel/" + alertChannelStatus;
-        ObjectNode channel = mapper.createObjectNode();
-        channel.put("ttlDays", 2);
-        channel.put("description", "Status of zombo alerts");
-
-        client.resource(statusUrl)
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .put(channel.toString());
 
         Map<String, Boolean> alertStates = new HashMap<>();
         ClientResponse response = client.resource(statusUrl + "/latest")
