@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
-import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -30,7 +29,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
-public class AlertRunner implements Leader {
+public class AlertRunner {
 
     private final static Logger logger = LoggerFactory.getLogger(AlertRunner.class);
     private final static ObjectMapper mapper = new ObjectMapper();
@@ -44,6 +43,7 @@ public class AlertRunner implements Leader {
     private static final Client client = RestClient.createClient(15, 60);
     private CuratorLeader leader;
     private final Map<AlertConfig, AlertChecker> configCheckerMap = new HashMap<>();
+    private final AtomicBoolean run = new AtomicBoolean(true);
 
     @Inject
     public AlertRunner(CuratorFramework curator) {
@@ -57,20 +57,14 @@ public class AlertRunner implements Leader {
         if (HubProperties.getProperty("alert.run", true)) {
             logger.info("starting with url {} {} {} ", hubAppUrl, sleepPeriod, alertChannelName);
             HubServices.register(new AlertRunnerService(), HubServices.TYPE.POST_START);
+
         } else {
             logger.warn("AlertRunner not running");
         }
     }
 
-    @Override
-    public double keepLeadershipRate() {
-        return 0.99;
-    }
-
-    @Override
-    public void takeLeadership(AtomicBoolean hasLeadership) {
-
-        while (hasLeadership.get()) {
+    public void run() {
+        while (run.get()) {
             long start = System.currentTimeMillis();
             ClientResponse response = client.resource(hubAppUrl + "channel/" + alertChannelName + "/latest")
                     .get(ClientResponse.class);
@@ -79,26 +73,25 @@ public class AlertRunner implements Leader {
                 Sleeper.sleep(sleepPeriod);
                 return;
             }
-            Map<String, Boolean> status = loadStatus();
+
             saveStatus();
 
             List<AlertConfig> currentConfigs = readConfig(response.getEntity(String.class), hubAppUrl);
             Set<AlertConfig> alertsToStop = new HashSet<>(configCheckerMap.keySet());
+
             for (AlertConfig currentConfig : currentConfigs) {
                 if (configCheckerMap.containsKey(currentConfig)) {
                     alertsToStop.remove(currentConfig);
                     AlertChecker alertChecker = configCheckerMap.get(currentConfig);
-                    threadPool.submit(alertChecker::update);
+                    if (!alertChecker.inProcess()) {
+                        threadPool.submit(alertChecker::update);
+                    }
                 } else {
                     logger.info("found new or changed alert {}", currentConfig);
-                    AlertChecker alertChecker = new AlertChecker(currentConfig);
+                    AlertChecker alertChecker = new AlertChecker(currentConfig, curator);
                     configCheckerMap.put(currentConfig, alertChecker);
                     String name = currentConfig.getName();
-                    if (status.containsKey(name)) {
-                        alertChecker.start(status.get(name));
-                    } else {
-                        alertChecker.start();
-                    }
+                    threadPool.submit(alertChecker::start);
                 }
             }
 
@@ -106,7 +99,6 @@ public class AlertRunner implements Leader {
                 logger.info("removing alert {}", alertConfig);
                 configCheckerMap.remove(alertConfig);
             }
-
             doSleep(start);
         }
     }
@@ -114,7 +106,9 @@ public class AlertRunner implements Leader {
     private void saveStatus() {
         ObjectNode status = mapper.createObjectNode();
         for (AlertChecker alertChecker : configCheckerMap.values()) {
-            alertChecker.toJson(status);
+            if (!alertChecker.inProcess()) {
+                alertChecker.toJson(status);
+            }
         }
         if (status.size() > 0) {
             String entity = status.toString();
@@ -134,34 +128,6 @@ public class AlertRunner implements Leader {
         } else {
             logger.warn("processing took too long {}", time);
         }
-    }
-
-    Map<String, Boolean> loadStatus() {
-        String statusUrl = hubAppUrl + "channel/" + alertChannelStatus;
-
-        Map<String, Boolean> alertStates = new HashMap<>();
-        ClientResponse response = client.resource(statusUrl + "/latest")
-                .get(ClientResponse.class);
-        if (response.getStatus() == 200) {
-            try {
-                String entity = response.getEntity(String.class);
-                JsonNode node = mapper.readTree(entity);
-                Iterator<String> names = node.fieldNames();
-                while (names.hasNext()) {
-                    String name = names.next();
-                    JsonNode jsonNode = node.get(name);
-                    if (jsonNode.isObject()) {
-                        boolean status = jsonNode.get("alert").asBoolean();
-                        logger.trace("alert {} {}", name, status);
-                        alertStates.put(name, status);
-                    }
-                }
-            } catch (Exception e) {
-                logger.warn("unable to load status", e);
-            }
-        }
-
-        return alertStates;
     }
 
     static List<AlertConfig> readConfig(String config, String hubAppUrl) {
@@ -191,6 +157,7 @@ public class AlertRunner implements Leader {
 
         @Override
         protected void shutDown() throws Exception {
+            run.set(false);
             leader.close();
             threadPool.shutdown();
         }
@@ -214,7 +181,6 @@ public class AlertRunner implements Leader {
     }
 
     private void start() {
-        leader = new CuratorLeader("/AlertRunner", this, curator);
-        leader.start();
+        Executors.newSingleThreadExecutor().submit(this::run);
     }
 }

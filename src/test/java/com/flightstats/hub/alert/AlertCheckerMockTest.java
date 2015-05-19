@@ -48,7 +48,7 @@ public class AlertCheckerMockTest {
         post("/channel/escalationAlerts", AlertCheckerMockTest::handleAlert);
 
         next = 3;
-        AlertChecker alertChecker = new AlertChecker(alertConfig);
+        AlertChecker alertChecker = new AlertChecker(alertConfig, null);
         alertChecker.start();
         assertFalse(alertChecker.checkForAlert());
 

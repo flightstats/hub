@@ -5,10 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.cluster.BooleanValue;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import lombok.Getter;
+import org.apache.curator.framework.CuratorFramework;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +21,7 @@ import javax.script.ScriptException;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Keep the state for an alert, send alert if it meets the requirements.
@@ -34,19 +38,19 @@ public class AlertChecker {
     private static String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
 
     private final AlertConfig alertConfig;
+    private CuratorFramework curator;
     private final LinkedList<AlertHistory> history = new LinkedList<>();
-    private boolean isTriggered = false;
+    private final BooleanValue isTriggered;
+    private AtomicBoolean inProcess = new AtomicBoolean(false);
 
-    public AlertChecker(AlertConfig alertConfig) {
+    public AlertChecker(AlertConfig alertConfig, CuratorFramework curator) {
         this.alertConfig = alertConfig;
+        this.curator = curator;
+        isTriggered = new BooleanValue(curator);
     }
 
-    public boolean start() {
-        return start(false);
-    }
-
-    public boolean start(boolean status) {
-        isTriggered = status;
+    public synchronized void start() {
+        inProcess.set(true);
         try {
             logger.debug("start alertConfig {}", alertConfig);
             AlertHistory alertHistory = getAlertHistory(alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + "/time/minute");
@@ -56,14 +60,15 @@ public class AlertChecker {
             }
             logger.trace("start history {}", history);
             checkForAlert();
-            return true;
         } catch (Exception e) {
             logger.warn("unable to start " + alertConfig, e);
-            return false;
+        } finally {
+            inProcess.set(false);
         }
     }
 
-    public void update() {
+    public synchronized void update() {
+        inProcess.set(true);
         try {
             boolean updateNext = true;
             logger.trace("update history {}", history);
@@ -81,7 +86,13 @@ public class AlertChecker {
             }
         } catch (Exception e) {
             logger.warn("unable to update " + alertConfig + " " + history, e);
+        } finally {
+            inProcess.set(false);
         }
+    }
+
+    public boolean inProcess() {
+        return inProcess.get();
     }
 
     boolean checkForAlert() throws ScriptException {
@@ -91,11 +102,20 @@ public class AlertChecker {
         String script = count + " " + alertConfig.getOperator() + " " + alertConfig.getThreshold();
         Boolean evaluate = (Boolean) jsEngine.eval(script);
         logger.debug("check for alert {} {} {}", alertConfig.getName(), script, evaluate);
-        if (!isTriggered && evaluate) {
-            sendAlert(count);
+        if (evaluate) {
+            if (isTriggered.setIfNotValue(getPath(), true)) {
+                sendAlert(count);
+            }
+        } else {
+            isTriggered.setIfNotValue(getPath(), false);
         }
-        isTriggered = evaluate;
+
         return evaluate;
+    }
+
+    @NotNull
+    private String getPath() {
+        return "/AlertChecker/" + alertConfig.getName();
     }
 
     private void sendAlert(int count) {
@@ -145,7 +165,7 @@ public class AlertChecker {
             objectNode.put("items", node.getCount());
         }
 
-        alertNode.put("alert", isTriggered);
+        alertNode.put("alert", isTriggered.get(getPath(), false));
     }
 
 }
