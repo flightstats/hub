@@ -25,7 +25,7 @@ public class BooleanValueTest {
 
     @Test
     public void testLifeCycle() throws Exception {
-        String path = "/BVT/testLifeCycle";
+        String path = "/BVT/test-LifeCycle";
         booleanValue.initialize(path, false);
         assertEquals(false, booleanValue.get(path, true));
         boolean set = booleanValue.setIfNotValue(path, true);
@@ -43,8 +43,17 @@ public class BooleanValueTest {
     }
 
     @Test
-    public void testUpdateIncrease() throws Exception {
-        String path = "/LVT/testsetIfNotValue";
+    public void testSetIfNotValue() throws Exception {
+        String path = "/LVT/testsetIf-NotValue";
+
+        assertTrue(booleanValue.setIfNotValue(path, true));
+        assertTrue(booleanValue.setIfNotValue(path, false));
+        assertFalse(booleanValue.setIfNotValue(path, false));
+    }
+
+    @Test
+    public void testSetIfNotValueInitialize() throws Exception {
+        String path = "/LVT/testsetIf-NotValueInit";
         booleanValue.initialize(path, false);
         assertFalse(booleanValue.setIfNotValue(path, false));
         assertTrue(booleanValue.setIfNotValue(path, true));

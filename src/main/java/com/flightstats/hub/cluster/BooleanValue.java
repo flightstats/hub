@@ -58,20 +58,23 @@ public class BooleanValue {
                 }
                 attempts++;
             }
+        } catch (KeeperException.NoNodeException e) {
+            initialize(path, value);
+            return true;
         } catch (Exception e) {
             logger.warn("unable to set " + path + " lastUpdated to " + value, e);
         }
         return false;
     }
 
-    LastUpdated getLastUpdated(String path) {
+    LastUpdated getLastUpdated(String path) throws KeeperException.NoNodeException {
         try {
             Stat stat = new Stat();
             byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
             return new LastUpdated(getBoolean(bytes), stat.getVersion());
         } catch (KeeperException.NoNodeException e) {
             logger.info("unable to get value " + path + " " + e.getMessage());
-            throw new RuntimeException(e);
+            throw e;
         } catch (Exception e) {
             logger.info("unable to get value " + path, e);
             throw new RuntimeException(e);
