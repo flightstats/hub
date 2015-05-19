@@ -5,10 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.cluster.BooleanValue;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import lombok.Getter;
+import org.apache.curator.framework.CuratorFramework;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +21,7 @@ import javax.script.ScriptException;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Keep the state for an alert, send alert if it meets the requirements.
@@ -34,68 +38,88 @@ public class AlertChecker {
     private static String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
 
     private final AlertConfig alertConfig;
-    private final LinkedList<JsonNode> history = new LinkedList<>();
-    private boolean isTriggered = false;
+    private CuratorFramework curator;
+    private final LinkedList<AlertHistory> history = new LinkedList<>();
+    private final BooleanValue isTriggered;
+    private AtomicBoolean inProcess = new AtomicBoolean(false);
 
-    public AlertChecker(AlertConfig alertConfig) {
+    public AlertChecker(AlertConfig alertConfig, CuratorFramework curator) {
         this.alertConfig = alertConfig;
+        this.curator = curator;
+        isTriggered = new BooleanValue(curator);
     }
 
-    public boolean start() {
-        return start(false);
-    }
-
-    public boolean start(boolean status) {
-        isTriggered = status;
+    public synchronized void start() {
+        inProcess.set(true);
         try {
             logger.debug("start alertConfig {}", alertConfig);
-            JsonNode json = getJson(alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + "/time/minute");
+            AlertHistory alertHistory = getAlertHistory(alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + "/time/minute");
             while (history.size() < alertConfig.getTimeWindowMinutes()) {
-                json = getJson(json.get("_links").get("previous").get("href").asText());
-                history.addFirst(json);
+                alertHistory = getAlertHistory(alertHistory.getPrevious());
+                history.addFirst(alertHistory);
             }
             logger.trace("start history {}", history);
             checkForAlert();
-            return true;
         } catch (Exception e) {
             logger.warn("unable to start " + alertConfig, e);
-            return false;
+        } finally {
+            inProcess.set(false);
         }
     }
 
-    public void update() {
+    public synchronized void update() {
+        inProcess.set(true);
         try {
             boolean updateNext = true;
             logger.trace("update history {}", history);
             while (updateNext) {
-                JsonNode last = history.getLast();
-                logger.debug("last {}", last);
-                JsonNode nextJson = getJson(last.get("_links").get("next").get("href").asText());
-                if (nextJson.get("_links").has("next")) {
-                    history.removeFirst();
-                    history.add(nextJson);
-                    checkForAlert();
+                AlertHistory lastHistory = history.getLast();
+                logger.debug("last {}", lastHistory);
+                if (lastHistory.hasNext()) {
+                    AlertHistory nextHistory = getAlertHistory(lastHistory.getNext());
+                    if (nextHistory.hasNext()) {
+                        history.removeFirst();
+                        history.add(nextHistory);
+                        checkForAlert();
+                    } else {
+                        updateNext = false;
+                    }
                 } else {
                     updateNext = false;
                 }
             }
         } catch (Exception e) {
             logger.warn("unable to update " + alertConfig + " " + history, e);
+        } finally {
+            inProcess.set(false);
         }
+    }
+
+    public boolean inProcess() {
+        return inProcess.get();
     }
 
     boolean checkForAlert() throws ScriptException {
         int count = history.stream()
-                .mapToInt(node -> node.get("_links").get("uris").size())
+                .mapToInt(AlertHistory::getCount)
                 .sum();
         String script = count + " " + alertConfig.getOperator() + " " + alertConfig.getThreshold();
         Boolean evaluate = (Boolean) jsEngine.eval(script);
         logger.debug("check for alert {} {} {}", alertConfig.getName(), script, evaluate);
-        if (!isTriggered && evaluate) {
-            sendAlert(count);
+        if (evaluate) {
+            if (isTriggered.setIfNotValue(getPath(), true)) {
+                sendAlert(count);
+            }
+        } else {
+            isTriggered.setIfNotValue(getPath(), false);
         }
-        isTriggered = evaluate;
+
         return evaluate;
+    }
+
+    @NotNull
+    private String getPath() {
+        return "/AlertChecker/" + alertConfig.getName();
     }
 
     private void sendAlert(int count) {
@@ -113,11 +137,20 @@ public class AlertChecker {
                 .post(entity);
     }
 
-    private JsonNode getJson(String url) throws IOException {
+    private AlertHistory getAlertHistory(String url) throws IOException {
         ClientResponse response = client.resource(url).get(ClientResponse.class);
         JsonNode jsonNode = mapper.readTree(response.getEntity(String.class));
         logger.debug("called {} response {} {}", url, response.getStatus(), jsonNode);
-        return jsonNode;
+        JsonNode links = jsonNode.get("_links");
+        AlertHistory.AlertHistoryBuilder builder = AlertHistory.builder()
+                .count(links.get("uris").size())
+                .previous(links.get("previous").get("href").asText())
+                .self(links.get("self").get("href").asText());
+        if (links.has("next")) {
+            builder.next(links.get("next").get("href").asText());
+        }
+
+        return builder.build();
     }
 
     private static ScriptEngine createJsEngine() {
@@ -130,13 +163,13 @@ public class AlertChecker {
         ObjectNode alertNode = root.putObject(name);
         alertNode.put("name", name);
         ArrayNode historyNode = alertNode.putArray("history");
-        for (JsonNode node : history) {
+        for (AlertHistory node : history) {
             ObjectNode objectNode = historyNode.addObject();
-            objectNode.put("href", node.get("_links").get("self").get("href").asText());
-            objectNode.put("items", node.get("_links").get("uris").size());
+            objectNode.put("href", node.getSelf());
+            objectNode.put("items", node.getCount());
         }
 
-        alertNode.put("alert", isTriggered);
+        alertNode.put("alert", isTriggered.get(getPath(), false));
     }
 
 }
