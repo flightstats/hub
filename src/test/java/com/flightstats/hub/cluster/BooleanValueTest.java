@@ -6,7 +6,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class BooleanValueTest {
 
@@ -28,7 +28,8 @@ public class BooleanValueTest {
         String path = "/BVT/testLifeCycle";
         booleanValue.initialize(path, false);
         assertEquals(false, booleanValue.get(path, true));
-        booleanValue.setValue(path, true);
+        boolean set = booleanValue.setIfNotValue(path, true);
+        assertEquals(true, set);
         assertEquals(true, booleanValue.get(path, false));
         booleanValue.delete(path);
         assertEquals(false, booleanValue.get(path, false));
@@ -41,5 +42,15 @@ public class BooleanValueTest {
         assertEquals(true, booleanValue.get(path, false));
     }
 
+    @Test
+    public void testUpdateIncrease() throws Exception {
+        String path = "/LVT/testsetIfNotValue";
+        booleanValue.initialize(path, false);
+        assertFalse(booleanValue.setIfNotValue(path, false));
+        assertTrue(booleanValue.setIfNotValue(path, true));
+        assertFalse(booleanValue.setIfNotValue(path, true));
+
+
+    }
 
 }

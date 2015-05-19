@@ -3,6 +3,7 @@ package com.flightstats.hub.cluster;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,17 +44,53 @@ public class BooleanValue {
         }
     }
 
-    private boolean get(String path) throws Exception {
-        byte[] bytes = curator.getData().forPath(path);
-        if (bytes.length == 1) {
-            return bytes[0] == 1;
+    public boolean setIfNotValue(String path, boolean value) {
+        try {
+            int attempts = 0;
+            while (attempts < 3) {
+                LastUpdated existing = getLastUpdated(path);
+                if (value != existing.value) {
+                    if (setValue(path, value, existing)) {
+                        return true;
+                    }
+                } else {
+                    return false;
+                }
+                attempts++;
+            }
+        } catch (Exception e) {
+            logger.warn("unable to set " + path + " lastUpdated to " + value, e);
         }
         return false;
     }
 
-    public boolean setValue(String path, boolean value) throws Exception {
+    LastUpdated getLastUpdated(String path) {
         try {
-            curator.setData().forPath(path, getBytes(value));
+            Stat stat = new Stat();
+            byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
+            return new LastUpdated(getBoolean(bytes), stat.getVersion());
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("unable to get value " + path + " " + e.getMessage());
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            logger.info("unable to get value " + path, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    class LastUpdated {
+        boolean value;
+        int version;
+
+        private LastUpdated(boolean value, int version) {
+            this.value = value;
+            this.version = version;
+        }
+    }
+
+    private boolean setValue(String path, boolean value, LastUpdated existing) throws Exception {
+        try {
+            curator.setData().withVersion(existing.version).forPath(path, getBytes(value));
             return true;
         } catch (KeeperException.BadVersionException e) {
             logger.info("bad version " + path + " " + e.getMessage());
@@ -62,6 +99,18 @@ public class BooleanValue {
             logger.info("what happened? " + path, e);
             return false;
         }
+    }
+
+    private boolean get(String path) throws Exception {
+        byte[] bytes = curator.getData().forPath(path);
+        return getBoolean(bytes);
+    }
+
+    private boolean getBoolean(byte[] bytes) {
+        if (bytes.length == 1) {
+            return bytes[0] == 1;
+        }
+        return false;
     }
 
     public void delete(String path) {
