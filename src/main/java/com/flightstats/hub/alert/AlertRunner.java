@@ -65,15 +65,23 @@ public class AlertRunner {
 
     public void run() {
         while (run.get()) {
-            long start = System.currentTimeMillis();
-            ClientResponse response = client.resource(hubAppUrl + "channel/" + alertChannelName + "/latest")
-                    .get(ClientResponse.class);
-            if (response.getStatus() >= 400) {
-                logger.warn("unable to get latest from {} {}", alertChannelName, response);
-                Sleeper.sleep(sleepPeriod);
-                return;
+            try {
+                doWork();
+            } catch (Exception e) {
+                logger.warn("unable to procese", e);
             }
 
+        }
+    }
+
+    private void doWork() {
+        long start = System.currentTimeMillis();
+        ClientResponse response = client.resource(hubAppUrl + "channel/" + alertChannelName + "/latest")
+                .get(ClientResponse.class);
+        if (response.getStatus() >= 400) {
+            logger.warn("unable to get latest from {} {}", alertChannelName, response);
+            Sleeper.sleep(sleepPeriod);
+        } else {
             saveStatus();
 
             List<AlertConfig> currentConfigs = readConfig(response.getEntity(String.class), hubAppUrl);

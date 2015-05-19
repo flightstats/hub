@@ -13,4 +13,8 @@ public class AlertHistory {
     private String next;
     private String previous;
 
+    public boolean hasNext() {
+        return next != null;
+    }
+
 }

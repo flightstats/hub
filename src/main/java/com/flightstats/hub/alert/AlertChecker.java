@@ -73,13 +73,17 @@ public class AlertChecker {
             boolean updateNext = true;
             logger.trace("update history {}", history);
             while (updateNext) {
-                AlertHistory last = history.getLast();
-                logger.debug("last {}", last);
-                AlertHistory next = getAlertHistory(last.getNext());
-                if (next.getNext() != null) {
-                    history.removeFirst();
-                    history.add(next);
-                    checkForAlert();
+                AlertHistory lastHistory = history.getLast();
+                logger.debug("last {}", lastHistory);
+                if (lastHistory.hasNext()) {
+                    AlertHistory nextHistory = getAlertHistory(lastHistory.getNext());
+                    if (nextHistory.hasNext()) {
+                        history.removeFirst();
+                        history.add(nextHistory);
+                        checkForAlert();
+                    } else {
+                        updateNext = false;
+                    }
                 } else {
                     updateNext = false;
                 }
