@@ -75,6 +75,7 @@ public class AlertRunner {
     }
 
     private void doWork() {
+        logger.info("doing work");
         long start = System.currentTimeMillis();
         ClientResponse response = client.resource(hubAppUrl + "channel/" + alertChannelName + "/latest")
                 .get(ClientResponse.class);
@@ -114,16 +115,21 @@ public class AlertRunner {
     private void saveStatus() {
         ObjectNode status = mapper.createObjectNode();
         for (AlertChecker alertChecker : configCheckerMap.values()) {
-            if (!alertChecker.inProcess()) {
+            if (alertChecker.inProcess()) {
+                logger.info("ignoring inProcess " + alertChecker.getAlertConfig().getName());
+            } else {
                 alertChecker.toJson(status);
             }
         }
         if (status.size() > 0) {
             String entity = status.toString();
-            logger.info("saving status {}", entity);
+            logger.info("saving status size {}", entity.length());
+            logger.trace("saving status {}", entity);
             client.resource(hubAppUrl + "channel/" + alertChannelStatus)
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .post(entity);
+        } else {
+            logger.info("no status to save");
         }
     }
 
@@ -131,7 +137,7 @@ public class AlertRunner {
         long time = System.currentTimeMillis() - start;
         if (time < sleepPeriod) {
             long sleepMillis = sleepPeriod - time;
-            logger.debug("sleeping for {}", sleepMillis);
+            logger.info("sleeping for {}", sleepMillis);
             Sleeper.sleep(sleepMillis);
         } else {
             logger.warn("processing took too long {}", time);
