@@ -68,7 +68,7 @@ public class AlertRunner {
             try {
                 doWork();
             } catch (Exception e) {
-                logger.warn("unable to procese", e);
+                logger.warn("unable to process", e);
             }
 
         }
@@ -195,6 +195,7 @@ public class AlertRunner {
     }
 
     private void start() {
-        Executors.newSingleThreadExecutor().submit(this::run);
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("AlertRunnerManager").build();
+        Executors.newSingleThreadExecutor(threadFactory).submit(this::run);
     }
 }

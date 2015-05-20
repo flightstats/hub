@@ -50,8 +50,9 @@ public class AlertChecker {
     }
 
     public synchronized void start() {
-        inProcess.set(true);
         try {
+            logger.info("starting {}", alertConfig.getName());
+            inProcess.set(true);
             logger.debug("start alertConfig {}", alertConfig);
             AlertHistory alertHistory = getAlertHistory(alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + "/time/minute");
             while (history.size() < alertConfig.getTimeWindowMinutes()) {
@@ -64,12 +65,14 @@ public class AlertChecker {
             logger.warn("unable to start " + alertConfig, e);
         } finally {
             inProcess.set(false);
+            logger.info("started {}", alertConfig.getName());
         }
     }
 
     public synchronized void update() {
-        inProcess.set(true);
         try {
+            logger.info("updating {}", alertConfig.getName());
+            inProcess.set(true);
             boolean updateNext = true;
             logger.trace("update history {}", history);
             while (updateNext) {
@@ -91,6 +94,7 @@ public class AlertChecker {
         } catch (Exception e) {
             logger.warn("unable to update " + alertConfig + " " + history, e);
         } finally {
+            logger.info("updated {}", alertConfig.getName());
             inProcess.set(false);
         }
     }
