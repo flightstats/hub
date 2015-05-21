@@ -1,0 +1,66 @@
+{
+  "verifyAlert2015-05-20-15-27-13": {
+    "name": "verifyAlert2015-05-20-15-27-13",
+    "history": [
+      {
+        "href": "http://hub/channel/verifyAlertData/2015/05/20/22/58?stable=true",
+        "items": 0
+      }
+    ],
+    "alert": false
+  },
+  "v2-example": {
+    "name": "v2-example",
+    "history": [
+      {
+        "href": "http://hub/channel/zomboAlertsConfig/2015/05/20/22/56?stable=true",
+        "items": 0
+      },
+      {
+        "href": "http://hub/channel/zomboAlertsConfig/2015/05/20/22/57?stable=true",
+        "items": 0
+      },
+      {
+        "href": "http://hub/channel/zomboAlertsConfig/2015/05/20/22/58?stable=true",
+        "items": 0
+      }
+    ],
+    "alert": true
+  },
+  "test": {
+    "name": "test",
+    "history": [
+      {
+        "href": "http://hub/channel/zomboAlertsConfig/2015/05/20/22/54?stable=true",
+        "items": 0
+      },
+      {
+        "href": "http://hub/channel/zomboAlertsConfig/2015/05/20/22/55?stable=true",
+        "items": 0
+      },
+      {
+        "href": "http://hub/channel/zomboAlertsConfig/2015/05/20/22/56?stable=true",
+        "items": 0
+      },
+      {
+        "href": "http://hub/channel/zomboAlertsConfig/2015/05/20/22/57?stable=true",
+        "items": 0
+      },
+      {
+        "href": "http://hub/channel/zomboAlertsConfig/2015/05/20/22/58?stable=true",
+        "items": 0
+      }
+    ],
+    "alert": false
+  },
+  "delta": {
+    "name": "delta",
+    "history": [
+      {
+        "href": "http://hub/channel/load_test_1/2015/05/20/22/58?stable=true",
+        "items": 85
+      }
+    ],
+    "alert": false
+  }
+}
