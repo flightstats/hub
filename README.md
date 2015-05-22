@@ -567,8 +567,6 @@ Retries will use an exponential backoff up to one minute, and the server will co
 }
 ```
 
-If a client is running in Sungard, latency may limit throughput to ~3 per second.
-
 ## provider interface
 
 For external data providers, there is a simplified interface suitable for exposing to the authenticated outside world.
