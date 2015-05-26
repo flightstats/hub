@@ -38,7 +38,7 @@ public class AlertConfigs {
 
     public List<AlertConfig> getLatest() {
         List<AlertConfig> alertConfigs = new ArrayList<>();
-        ClientResponse response = client.resource(hubAppUrl + "channel/" + alertConfigName + "/latest")
+        ClientResponse response = client.resource(hubAppUrl + "channel/" + alertConfigName + "/latest?stable=false")
                 .get(ClientResponse.class);
         if (response.getStatus() >= 400) {
             logger.warn("unable to get latest from {} {}", alertConfigName, response);

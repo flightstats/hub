@@ -14,4 +14,7 @@ public class AlertStatusHistory {
     private String href;
     private int items;
 
+    private transient String next;
+    private transient String previous;
+
 }

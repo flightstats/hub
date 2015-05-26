@@ -7,6 +7,7 @@ import lombok.ToString;
 @Getter
 @Builder
 @ToString
+//todo - gfm - 5/22/15 - delete
 public class AlertHistory {
     private int count;
     private String self;
