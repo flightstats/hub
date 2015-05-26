@@ -1,7 +1,6 @@
 package com.flightstats.hub.alert;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
@@ -19,9 +18,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -29,19 +32,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AlertRunner implements Leader {
 
     private final static Logger logger = LoggerFactory.getLogger(AlertRunner.class);
-    private final static ObjectMapper mapper = new ObjectMapper();
+
     private final int sleepPeriod;
     private final String hubAppUrl;
     private final ExecutorService threadPool;
-    private final String alertStatusName;
     private final AlertConfigs alertConfigs;
+    private final AlertStatuses alertStatuses;
 
     private CuratorFramework curator;
     private static final Client client = RestClient.createClient(15, 60);
     private CuratorLeader leader;
-    private final Map<AlertConfig, AlertChecker> configCheckerMap = new HashMap<>();
-    private final AtomicBoolean run = new AtomicBoolean(true);
-    private final AlertStatuses alertStatuses;
+
 
     @Inject
     public AlertRunner(CuratorFramework curator) {
@@ -50,11 +51,9 @@ public class AlertRunner implements Leader {
         threadPool = Executors.newFixedThreadPool(20, threadFactory);
         hubAppUrl = StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
         sleepPeriod = HubProperties.getProperty("alert.sleep.millis", 60 * 1000);
-        alertStatusName = HubProperties.getProperty("alert.channel.status", "zomboAlertStatus");
         alertConfigs = new AlertConfigs(hubAppUrl, client);
         alertStatuses = new AlertStatuses(hubAppUrl, client);
         if (HubProperties.getProperty("alert.run", true)) {
-
             logger.info("starting with url {} {} ", hubAppUrl, sleepPeriod);
             HubServices.register(new AlertRunnerService(), HubServices.TYPE.POST_START);
 
@@ -70,27 +69,7 @@ public class AlertRunner implements Leader {
 
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
-
-        /**
-         * thread independent?
-         *  get latest config
-         *  get latest status
-         * compare parsed config to parsed status
-         *   update all extant alerts
-         *      treat 120+ minutes as N hours, round up
-         * wait for all updates
-         *   update status
-         * sleep for rest of minute, or none if took more than a minute
-         */
-
-        List<AlertConfig> alertConfigsLatest = alertConfigs.getLatest();
-        alertStatuses.getLatest();
-
-
-    }
-
-    public void run() {
-        while (run.get()) {
+        while (hasLeadership.get()) {
             try {
                 doWork();
             } catch (Exception e) {
@@ -103,35 +82,29 @@ public class AlertRunner implements Leader {
     private void doWork() {
         logger.info("doing work");
         long start = System.currentTimeMillis();
-
-        //todo - gfm - 5/20/15 -
-        //saveStatus();
-
-        List<AlertConfig> currentConfigs = readConfig("nothing", hubAppUrl);
-        Set<AlertConfig> alertsToStop = new HashSet<>(configCheckerMap.keySet());
-
-        for (AlertConfig currentConfig : currentConfigs) {
-            if (configCheckerMap.containsKey(currentConfig)) {
-                alertsToStop.remove(currentConfig);
-                AlertChecker alertChecker = configCheckerMap.get(currentConfig);
-                if (!alertChecker.inProcess()) {
-                    threadPool.submit(alertChecker::update);
-                }
+        List<AlertConfig> alertConfigsLatest = alertConfigs.getLatest();
+        Map<String, AlertStatus> existingAlertStatus = alertStatuses.getLatest();
+        List<Future<AlertStatus>> futures = new ArrayList<>();
+        for (AlertConfig alertConfig : alertConfigsLatest) {
+            if (existingAlertStatus.containsKey(alertConfig.getName())) {
+                AlertStatus alertStatus = existingAlertStatus.get(alertConfig.getName());
+                futures.add(threadPool.submit(new AlertUpdater(alertConfig, alertStatus)));
             } else {
-                logger.info("found new or changed alert {}", currentConfig);
-                AlertChecker alertChecker = new AlertChecker(currentConfig, curator);
-                configCheckerMap.put(currentConfig, alertChecker);
-                String name = currentConfig.getName();
-                threadPool.submit(alertChecker::start);
+                futures.add(threadPool.submit(new AlertUpdater(alertConfig)));
             }
         }
+        Map<String, AlertStatus> updatedAlertStatus = new HashMap<>();
+        for (Future<AlertStatus> future : futures) {
+            try {
+                AlertStatus alertStatus = future.get();
+                updatedAlertStatus.put(alertStatus.getName(), alertStatus);
+            } catch (Exception e) {
+                logger.warn("unable to get status", e);
 
-        for (AlertConfig alertConfig : alertsToStop) {
-            logger.info("removing alert {}", alertConfig);
-            configCheckerMap.remove(alertConfig);
+            }
         }
+        alertStatuses.saveStatus(updatedAlertStatus);
         doSleep(start);
-
     }
 
 
@@ -146,12 +119,6 @@ public class AlertRunner implements Leader {
         }
     }
 
-    static List<AlertConfig> readConfig(String config, String hubAppUrl) {
-        List<AlertConfig> alertConfigs = new ArrayList<>();
-        //todo - gfm - 5/20/15 - delete method
-        return alertConfigs;
-    }
-
     private class AlertRunnerService extends AbstractIdleService {
 
         @Override
@@ -162,7 +129,6 @@ public class AlertRunner implements Leader {
 
         @Override
         protected void shutDown() throws Exception {
-            run.set(false);
             leader.close();
             threadPool.shutdown();
         }
@@ -175,7 +141,7 @@ public class AlertRunner implements Leader {
             String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
             client.resource(hubAppUrl + "channel/" + alertChannelEscalate)
                     .type(MediaType.APPLICATION_JSON)
-                    .put("{'ttlDays':14, 'description:'alerts to be sent and confirmations'}");
+                    .put("{\"ttlDays\":14, \"description:\"alerts to be sent and confirmations\"}");
         } catch (Exception e) {
             logger.warn("hate filled donut", e);
         }
