@@ -38,4 +38,8 @@ public class AlertStatus {
     public static String toJson(Map<String, AlertStatus> map) {
         return gson.toJson(map);
     }
+
+    public String toJson() {
+        return gson.toJson(this);
+    }
 }

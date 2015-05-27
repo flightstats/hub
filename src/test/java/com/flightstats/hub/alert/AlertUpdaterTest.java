@@ -12,10 +12,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
-import static com.flightstats.hub.test.SparkUtil.get;
-import static com.flightstats.hub.test.SparkUtil.stop;
+import static com.flightstats.hub.test.SparkUtil.*;
 import static org.junit.Assert.*;
 
 public class AlertUpdaterTest {
@@ -23,6 +24,7 @@ public class AlertUpdaterTest {
     private final static Logger logger = LoggerFactory.getLogger(AlertUpdaterTest.class);
     private final static ObjectMapper mapper = new ObjectMapper();
     public static final String HUB_DOMAIN = "http://localhost:4567/";
+    private static final List<String> alerts = new ArrayList<>();
 
     @AfterClass
     public static void tearDownClass() throws Exception {
@@ -46,13 +48,19 @@ public class AlertUpdaterTest {
         System.out.println(alertStatus);
         assertEquals(5, alertStatus.getHistory().size());
         assertFalse(alertStatus.isAlert());
+        assertEquals(0, alerts.size());
     }
 
     private void configureSpark(String channel, TimeUtil.Unit unit, int count) {
+        alerts.clear();
         DateTime time = TimeUtil.now();
         final DateTime startTime = time;
         get("/channel/" + channel + "/time/" + unit.getName(), (req, res) -> {
             res.redirect("/channel/" + channel + "/" + unit.format(startTime));
+            return "";
+        });
+        post("/channel/escalationAlerts", (req, res) -> {
+            alerts.add(req.body());
             return "";
         });
         for (int i = 0; i <= count; i++) {
@@ -97,6 +105,7 @@ public class AlertUpdaterTest {
         System.out.println(alertStatus);
         assertEquals(3, alertStatus.getHistory().size());
         assertTrue(alertStatus.isAlert());
+        assertEquals(1, alerts.size());
     }
 
     @Test
@@ -129,6 +138,7 @@ public class AlertUpdaterTest {
         }
         assertEquals(4, histories.size());
         assertTrue(alertStatus.isAlert());
+        assertEquals(1, alerts.size());
     }
 
     @Test
@@ -161,6 +171,7 @@ public class AlertUpdaterTest {
         }
         assertEquals(3, histories.size());
         assertTrue(alertStatus.isAlert());
+        assertEquals(1, alerts.size());
     }
 
     @Test
@@ -192,6 +203,7 @@ public class AlertUpdaterTest {
             System.out.println(statusHistory);
         }
         assertEquals(3, histories.size());
+        assertEquals(1, alerts.size());
     }
 
     @NotNull
