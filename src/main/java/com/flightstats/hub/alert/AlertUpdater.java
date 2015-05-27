@@ -49,6 +49,9 @@ public class AlertUpdater implements Callable<AlertStatus> {
             checkPeriod(AlertStatus.HOUR);
             historyCount = (int) Math.ceil(alertConfig.getTimeWindowMinutes() / 60.0);
         }
+        while (alertStatus.getHistory().size() > historyCount) {
+            alertStatus.getHistory().removeFirst();
+        }
 
         LinkedList<AlertStatusHistory> history = alertStatus.getHistory();
         if (history.isEmpty()) {
@@ -60,7 +63,7 @@ public class AlertUpdater implements Callable<AlertStatus> {
             }
             checkForAlert();
         } else {
-            AlertStatusHistory alertHistory = getAlertHistory(alertStatus.getHistory().getLast().getHref());
+            AlertStatusHistory alertHistory = getAlertHistory(history.getLast().getHref());
             while (alertHistory.getNext() != null) {
                 alertHistory = getAlertHistory(alertHistory.getNext());
                 if (alertHistory.getNext() != null) {

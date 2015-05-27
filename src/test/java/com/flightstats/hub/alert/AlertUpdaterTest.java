@@ -33,19 +33,10 @@ public class AlertUpdaterTest {
 
     @Test
     public void testMinutesNew() throws Exception {
-        AlertConfig config = AlertConfig.builder()
-                .hubDomain(HUB_DOMAIN)
-                .name("simple")
-                .channel("testMinutesNew")
-                .operator(">")
-                .threshold(16)
-                .timeWindowMinutes(5)
-                .build();
-
+        AlertConfig config = createConfig("testMinutesNew", ">", 16, 5);
         configureSpark("testMinutesNew", TimeUtil.Unit.MINUTES, 5);
         AlertUpdater alertUpdater = new AlertUpdater(config, null);
         AlertStatus alertStatus = alertUpdater.call();
-        System.out.println(alertStatus);
         assertEquals(5, alertStatus.getHistory().size());
         assertFalse(alertStatus.isAlert());
         assertEquals(0, alerts.size());
@@ -89,15 +80,7 @@ public class AlertUpdaterTest {
 
     @Test
     public void testHoursNew() throws Exception {
-        AlertConfig config = AlertConfig.builder()
-                .hubDomain(HUB_DOMAIN)
-                .name("testHoursNew")
-                .channel("testHoursNew")
-                .operator("==")
-                .threshold(6)
-                .timeWindowMinutes(125)
-                .build();
-
+        AlertConfig config = createConfig("testHoursNew", "==", 6, 125);
         configureSpark("testHoursNew", TimeUtil.Unit.HOURS, 3);
         AlertUpdater alertUpdater = new AlertUpdater(config, null);
         AlertStatus alertStatus = alertUpdater.call();
@@ -111,27 +94,16 @@ public class AlertUpdaterTest {
     @Test
     public void testHoursPrevious() throws Exception {
         String channel = "testHoursPrevious";
-        AlertConfig config = AlertConfig.builder()
-                .hubDomain(HUB_DOMAIN)
-                .name(channel)
-                .channel(channel)
-                .operator("==")
-                .threshold(61)
-                .timeWindowMinutes(240)
-                .build();
-
+        AlertConfig config = createConfig(channel, "==", 61, 240);
         AlertStatus status = AlertStatus.builder()
                 .period("hour")
                 .name("stuff")
                 .alert(false)
                 .history(createHistory(TimeUtil.Unit.HOURS, 4, channel))
                 .build();
-        System.out.println("before " + status);
         configureSpark(channel, TimeUtil.Unit.HOURS, 3);
         AlertUpdater alertUpdater = new AlertUpdater(config, status);
         AlertStatus alertStatus = alertUpdater.call();
-
-        System.out.println("after " + alertStatus);
         LinkedList<AlertStatusHistory> histories = alertStatus.getHistory();
         for (AlertStatusHistory statusHistory : histories) {
             System.out.println(statusHistory);
@@ -144,27 +116,16 @@ public class AlertUpdaterTest {
     @Test
     public void testMinutesPrevious() throws Exception {
         String channel = "testMinutesPrevious";
-        AlertConfig config = AlertConfig.builder()
-                .hubDomain(HUB_DOMAIN)
-                .name(channel)
-                .channel(channel)
-                .operator("==")
-                .threshold(31)
-                .timeWindowMinutes(3)
-                .build();
-
+        AlertConfig config = createConfig(channel, "==", 31, 3);
         AlertStatus status = AlertStatus.builder()
                 .period("minute")
                 .name("stuff")
                 .alert(false)
                 .history(createHistory(TimeUtil.Unit.MINUTES, 3, channel))
                 .build();
-        System.out.println("before " + status);
         configureSpark(channel, TimeUtil.Unit.MINUTES, 3);
         AlertUpdater alertUpdater = new AlertUpdater(config, status);
         AlertStatus alertStatus = alertUpdater.call();
-
-        System.out.println("after " + alertStatus);
         LinkedList<AlertStatusHistory> histories = alertStatus.getHistory();
         for (AlertStatusHistory statusHistory : histories) {
             System.out.println(statusHistory);
@@ -177,14 +138,7 @@ public class AlertUpdaterTest {
     @Test
     public void testMinutesToHours() throws Exception {
         String channel = "testMinutesToHours";
-        AlertConfig config = AlertConfig.builder()
-                .hubDomain(HUB_DOMAIN)
-                .name("testMinutesToHours")
-                .channel(channel)
-                .operator(">")
-                .threshold(0)
-                .timeWindowMinutes(125)
-                .build();
+        AlertConfig config = createConfig("testMinutesToHours", ">", 0, 125);
 
         AlertStatus status = AlertStatus.builder()
                 .period("minute")
@@ -192,18 +146,48 @@ public class AlertUpdaterTest {
                 .alert(false)
                 .history(createHistory(TimeUtil.Unit.HOURS, 90, channel))
                 .build();
-        System.out.println("before " + status);
         configureSpark(channel, TimeUtil.Unit.HOURS, 3);
         AlertUpdater alertUpdater = new AlertUpdater(config, status);
         AlertStatus alertStatus = alertUpdater.call();
-
-        System.out.println("after " + alertStatus);
         LinkedList<AlertStatusHistory> histories = alertStatus.getHistory();
         for (AlertStatusHistory statusHistory : histories) {
             System.out.println(statusHistory);
         }
         assertEquals(3, histories.size());
         assertEquals(1, alerts.size());
+    }
+
+    @Test
+    public void testMinutesShorten() throws Exception {
+        String channel = "testMinutesShorten";
+        AlertConfig config = createConfig(channel, "==", 171, 3);
+        AlertStatus status = AlertStatus.builder()
+                .period("minute")
+                .name("stuff")
+                .alert(false)
+                .history(createHistory(TimeUtil.Unit.MINUTES, 10, channel))
+                .build();
+        configureSpark(channel, TimeUtil.Unit.MINUTES, 3);
+        AlertUpdater alertUpdater = new AlertUpdater(config, status);
+        AlertStatus alertStatus = alertUpdater.call();
+        LinkedList<AlertStatusHistory> histories = alertStatus.getHistory();
+        for (AlertStatusHistory statusHistory : histories) {
+            System.out.println(statusHistory);
+        }
+        assertEquals(3, histories.size());
+        assertTrue(alertStatus.isAlert());
+        assertEquals(1, alerts.size());
+    }
+
+    private AlertConfig createConfig(String channel, String operator, int threshold, int timeWindowMinutes) {
+        return AlertConfig.builder()
+                .hubDomain(HUB_DOMAIN)
+                .name(channel)
+                .channel(channel)
+                .operator(operator)
+                .threshold(threshold)
+                .timeWindowMinutes(timeWindowMinutes)
+                .build();
     }
 
     @NotNull
