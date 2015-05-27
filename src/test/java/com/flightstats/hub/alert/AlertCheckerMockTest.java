@@ -11,10 +11,8 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+import static com.flightstats.hub.test.SparkUtil.*;
 import static org.junit.Assert.*;
-import static spark.Spark.get;
-import static spark.Spark.post;
-import static spark.SparkBase.stop;
 
 public class AlertCheckerMockTest {
 

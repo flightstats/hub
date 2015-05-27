@@ -6,10 +6,9 @@ import com.sun.jersey.api.client.Client;
 import org.junit.AfterClass;
 import org.junit.Test;
 
+import static com.flightstats.hub.test.SparkUtil.*;
 import static org.junit.Assert.assertTrue;
-import static spark.Spark.get;
-import static spark.Spark.put;
-import static spark.SparkBase.stop;
+
 
 public class AlertStatusesTest {
 

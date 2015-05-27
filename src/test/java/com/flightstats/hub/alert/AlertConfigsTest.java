@@ -11,11 +11,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
+import static com.flightstats.hub.test.SparkUtil.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static spark.Spark.get;
-import static spark.Spark.put;
-import static spark.SparkBase.stop;
 
 public class AlertConfigsTest {
 
@@ -53,7 +51,6 @@ public class AlertConfigsTest {
     @Test
     public void testLatestConfigs() throws IOException {
         URL resource = AlertRunnerTest.class.getResource("/test-config.json");
-
         String configString = IOUtils.toString(resource);
         get("/channel/testLatestConfigs/latest", (req, res) -> configString);
         HubProperties.setProperty("alert.channel.config", "testLatestConfigs");

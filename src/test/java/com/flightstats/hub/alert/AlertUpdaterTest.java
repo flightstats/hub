@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 
+import static com.flightstats.hub.test.SparkUtil.get;
+import static com.flightstats.hub.test.SparkUtil.stop;
 import static org.junit.Assert.assertEquals;
-import static spark.Spark.get;
-import static spark.SparkBase.stop;
 
 public class AlertUpdaterTest {
 
