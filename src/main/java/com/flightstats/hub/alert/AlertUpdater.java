@@ -56,7 +56,6 @@ public class AlertUpdater implements Callable<AlertStatus> {
                 alertStatusHistory = getAlertHistory(alertStatusHistory.getPrevious());
                 history.addFirst(alertStatusHistory);
             }
-            //todo - gfm - 5/22/15 - check alert status
             checkForAlert();
         } else {
             AlertStatusHistory alertHistory = getAlertHistory(alertStatus.getHistory().getLast().getHref());
@@ -69,7 +68,6 @@ public class AlertUpdater implements Callable<AlertStatus> {
                     }
                 }
             }
-            //todo - gfm - 5/22/15 - check alert status
             checkForAlert();
         }
 
