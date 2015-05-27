@@ -135,7 +135,7 @@ public class AlertRunner implements Leader {
             String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
             client.resource(hubAppUrl + "channel/" + alertChannelEscalate)
                     .type(MediaType.APPLICATION_JSON)
-                    .put("{\"ttlDays\":14, \"description:\"alerts to be sent and confirmations\"}");
+                    .put("{\"ttlDays\":14, \"description\":\"alerts to be sent and confirmations\"}");
         } catch (Exception e) {
             logger.warn("hate filled donut", e);
         }

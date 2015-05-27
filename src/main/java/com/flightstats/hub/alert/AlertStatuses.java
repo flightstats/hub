@@ -29,7 +29,7 @@ public class AlertStatuses {
     public void create() {
         client.resource(hubAppUrl + "channel/" + alertStatusName)
                 .type(MediaType.APPLICATION_JSON)
-                .put("{\"ttlDays\":7, \"description:\"Status for hub alerts\"}");
+                .put("{\"ttlDays\":7, \"description\":\"Status for hub alerts\"}");
     }
 
     public Map<String, AlertStatus> getLatest() {

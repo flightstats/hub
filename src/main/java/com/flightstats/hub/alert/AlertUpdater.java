@@ -119,7 +119,7 @@ public class AlertUpdater implements Callable<AlertStatus> {
         logger.debug("calling {}", url);
         ClientResponse response = client.resource(url).get(ClientResponse.class);
         JsonNode jsonNode = mapper.readTree(response.getEntity(String.class));
-        logger.debug("called {} response {} {}", url, response.getStatus(), jsonNode);
+        logger.trace("called {} response {} {}", url, response.getStatus(), jsonNode);
         JsonNode links = jsonNode.get("_links");
         AlertStatusHistory.AlertStatusHistoryBuilder builder = AlertStatusHistory.builder()
                 .items(links.get("uris").size())

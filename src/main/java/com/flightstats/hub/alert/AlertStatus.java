@@ -23,9 +23,9 @@ public class AlertStatus {
 
 
     private String name;
-    private LinkedList<AlertStatusHistory> history = new LinkedList<>();
-    private boolean alert;
     private String period = MINUTE;
+    private boolean alert;
+    private LinkedList<AlertStatusHistory> history = new LinkedList<>();
 
     public static Map<String, AlertStatus> fromJson(String json) {
         Type mapType = new TypeToken<Map<String, AlertStatus>>() {
