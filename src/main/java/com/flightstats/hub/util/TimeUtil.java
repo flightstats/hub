@@ -71,18 +71,20 @@ public class TimeUtil {
     }
 
     public enum Unit {
-        MILLIS(millisFormatter, Duration.millis(1)),
-        SECONDS(secondsFormatter, Duration.standardSeconds(1)),
-        MINUTES(minutesFormatter, Duration.standardMinutes(1)),
-        HOURS(hoursFormatter, Duration.standardHours(1)),
-        DAYS(daysFormatter, Duration.standardDays(1));
+        MILLIS(millisFormatter, Duration.millis(1), "millis"),
+        SECONDS(secondsFormatter, Duration.standardSeconds(1), "second"),
+        MINUTES(minutesFormatter, Duration.standardMinutes(1), "minute"),
+        HOURS(hoursFormatter, Duration.standardHours(1), "hour"),
+        DAYS(daysFormatter, Duration.standardDays(1), "day");
 
         private DateTimeFormatter formatter;
         private Duration duration;
+        private String name;
 
-        Unit(DateTimeFormatter formatter, Duration duration) {
+        Unit(DateTimeFormatter formatter, Duration duration, String name) {
             this.formatter = formatter;
             this.duration = duration;
+            this.name = name;
         }
 
         public String format(DateTime dateTime) {
@@ -91,6 +93,10 @@ public class TimeUtil {
 
         public Duration getDuration() {
             return duration;
+        }
+
+        public String getName() {
+            return name;
         }
     }
 
