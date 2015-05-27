@@ -16,7 +16,7 @@ import java.util.LinkedList;
 
 import static com.flightstats.hub.test.SparkUtil.get;
 import static com.flightstats.hub.test.SparkUtil.stop;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class AlertUpdaterTest {
 
@@ -36,15 +36,16 @@ public class AlertUpdaterTest {
                 .name("simple")
                 .channel("testMinutesNew")
                 .operator(">")
-                .threshold(0)
+                .threshold(16)
                 .timeWindowMinutes(5)
                 .build();
 
         configureSpark("testMinutesNew", TimeUtil.Unit.MINUTES, 5);
-        AlertUpdater alertUpdater = new AlertUpdater(config);
+        AlertUpdater alertUpdater = new AlertUpdater(config, null);
         AlertStatus alertStatus = alertUpdater.call();
         System.out.println(alertStatus);
         assertEquals(5, alertStatus.getHistory().size());
+        assertFalse(alertStatus.isAlert());
     }
 
     private void configureSpark(String channel, TimeUtil.Unit unit, int count) {
@@ -84,17 +85,18 @@ public class AlertUpdaterTest {
                 .hubDomain(HUB_DOMAIN)
                 .name("testHoursNew")
                 .channel("testHoursNew")
-                .operator(">")
-                .threshold(0)
+                .operator("==")
+                .threshold(6)
                 .timeWindowMinutes(125)
                 .build();
 
         configureSpark("testHoursNew", TimeUtil.Unit.HOURS, 3);
-        AlertUpdater alertUpdater = new AlertUpdater(config);
+        AlertUpdater alertUpdater = new AlertUpdater(config, null);
         AlertStatus alertStatus = alertUpdater.call();
 
         System.out.println(alertStatus);
         assertEquals(3, alertStatus.getHistory().size());
+        assertTrue(alertStatus.isAlert());
     }
 
     @Test
@@ -104,9 +106,9 @@ public class AlertUpdaterTest {
                 .hubDomain(HUB_DOMAIN)
                 .name(channel)
                 .channel(channel)
-                .operator(">")
-                .threshold(0)
-                .timeWindowMinutes(125)
+                .operator("==")
+                .threshold(33)
+                .timeWindowMinutes(240)
                 .build();
 
         String hours = TimeUtil.hours(TimeUtil.now().minusHours(3));
@@ -115,18 +117,54 @@ public class AlertUpdaterTest {
                 .period("hour")
                 .name("stuff")
                 .alert(false)
-                .history(createHistory(hours, 1, channel))
+                .history(createHistory(hours, 2, channel))
                 .build();
+        System.out.println("before " + status);
         configureSpark(channel, TimeUtil.Unit.HOURS, 3);
         AlertUpdater alertUpdater = new AlertUpdater(config, status);
         AlertStatus alertStatus = alertUpdater.call();
 
-        System.out.println(alertStatus);
+        System.out.println("after " + alertStatus);
         LinkedList<AlertStatusHistory> histories = alertStatus.getHistory();
         for (AlertStatusHistory statusHistory : histories) {
             System.out.println(statusHistory);
         }
-        assertEquals(3, histories.size());
+        assertEquals(4, histories.size());
+        assertTrue(alertStatus.isAlert());
+    }
+
+    @Test
+    public void testMinutesPrevious() throws Exception {
+        String channel = "testMinutesPrevious";
+        AlertConfig config = AlertConfig.builder()
+                .hubDomain(HUB_DOMAIN)
+                .name(channel)
+                .channel(channel)
+                .operator("==")
+                .threshold(91)
+                .timeWindowMinutes(4)
+                .build();
+
+        String hours = TimeUtil.minutes(TimeUtil.now().minusMinutes(2));
+
+        AlertStatus status = AlertStatus.builder()
+                .period("minute")
+                .name("stuff")
+                .alert(false)
+                .history(createHistory(hours, 4, channel))
+                .build();
+        System.out.println("before " + status);
+        configureSpark(channel, TimeUtil.Unit.MINUTES, 4);
+        AlertUpdater alertUpdater = new AlertUpdater(config, status);
+        AlertStatus alertStatus = alertUpdater.call();
+
+        System.out.println("after " + alertStatus);
+        LinkedList<AlertStatusHistory> histories = alertStatus.getHistory();
+        for (AlertStatusHistory statusHistory : histories) {
+            System.out.println(statusHistory);
+        }
+        assertEquals(4, histories.size());
+        assertTrue(alertStatus.isAlert());
     }
 
     @Test
@@ -147,11 +185,12 @@ public class AlertUpdaterTest {
                 .alert(false)
                 .history(createHistory(TimeUtil.hours(TimeUtil.now().minusMinutes(90)), 90, channel))
                 .build();
+        System.out.println("before " + status);
         configureSpark(channel, TimeUtil.Unit.HOURS, 3);
         AlertUpdater alertUpdater = new AlertUpdater(config, status);
         AlertStatus alertStatus = alertUpdater.call();
 
-        System.out.println(alertStatus);
+        System.out.println("after " + alertStatus);
         LinkedList<AlertStatusHistory> histories = alertStatus.getHistory();
         for (AlertStatusHistory statusHistory : histories) {
             System.out.println(statusHistory);
@@ -162,14 +201,13 @@ public class AlertUpdaterTest {
     @NotNull
     private LinkedList<AlertStatusHistory> createHistory(String period, int count, String channel) {
         LinkedList<AlertStatusHistory> history = new LinkedList<>();
-        for (int i = 0; i < count; i++) {
+        for (int i = 1; i <= count; i++) {
             AlertStatusHistory alertStatusHistory = AlertStatusHistory.builder()
-                    .items(i)
+                    .items(i * 10)
                     .href(HUB_DOMAIN + "channel/" + channel + "/" + period)
                     .build();
             history.add(alertStatusHistory);
         }
-
         return history;
     }
 

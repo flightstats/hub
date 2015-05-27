@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
@@ -41,7 +42,6 @@ public class AlertUpdater implements Callable<AlertStatus> {
     public AlertStatus call() throws Exception {
         int historyCount = alertConfig.getTimeWindowMinutes();
         if (alertConfig.getTimeWindowMinutes() < 120) {
-
             checkPeriod(AlertStatus.MINUTE);
         } else {
             checkPeriod(AlertStatus.HOUR);
@@ -57,6 +57,7 @@ public class AlertUpdater implements Callable<AlertStatus> {
                 history.addFirst(alertStatusHistory);
             }
             //todo - gfm - 5/22/15 - check alert status
+            checkForAlert();
         } else {
             AlertStatusHistory alertHistory = getAlertHistory(alertStatus.getHistory().getLast().getHref());
             while (alertHistory.getNext() != null) {
@@ -69,9 +70,25 @@ public class AlertUpdater implements Callable<AlertStatus> {
                 }
             }
             //todo - gfm - 5/22/15 - check alert status
+            checkForAlert();
         }
 
         return alertStatus;
+    }
+
+    boolean checkForAlert() throws ScriptException {
+        int count = alertStatus.getHistory().stream()
+                .mapToInt(AlertStatusHistory::getItems)
+                .sum();
+        String script = count + " " + alertConfig.getOperator() + " " + alertConfig.getThreshold();
+        Boolean evaluate = (Boolean) jsEngine.eval(script);
+        logger.debug("check for alert {} {} {}", alertConfig.getName(), script, evaluate);
+        if (evaluate && !alertStatus.isAlert()) {
+            //todo - gfm - 5/27/15 - send alert
+
+        }
+        alertStatus.setAlert(evaluate);
+        return evaluate;
     }
 
     private void checkPeriod(String period) {

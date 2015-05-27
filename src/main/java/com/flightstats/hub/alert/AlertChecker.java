@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Keep the state for an alert, send alert if it meets the requirements.
  */
 @Getter
+//todo - gfm - 5/27/15 - delete
 public class AlertChecker {
 
     private final static Logger logger = LoggerFactory.getLogger(AlertChecker.class);
