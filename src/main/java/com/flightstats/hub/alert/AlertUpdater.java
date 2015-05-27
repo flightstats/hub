@@ -26,16 +26,15 @@ public class AlertUpdater implements Callable<AlertStatus> {
 
     public AlertUpdater(AlertConfig alertConfig, AlertStatus alertStatus) {
         this.alertConfig = alertConfig;
+        if (alertStatus == null) {
+            alertStatus = AlertStatus.builder()
+                    .name(alertConfig.getName())
+                    .alert(false)
+                    .period(AlertStatus.MINUTE)
+                    .history(new LinkedList<>())
+                    .build();
+        }
         this.alertStatus = alertStatus;
-    }
-
-    public AlertUpdater(AlertConfig alertConfig) {
-        this(alertConfig, AlertStatus.builder()
-                .name(alertConfig.getName())
-                .alert(false)
-                .period(AlertStatus.MINUTE)
-                .history(new LinkedList<>())
-                .build());
     }
 
     @Override

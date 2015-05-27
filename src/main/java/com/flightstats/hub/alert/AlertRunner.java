@@ -75,7 +75,6 @@ public class AlertRunner implements Leader {
             } catch (Exception e) {
                 logger.warn("unable to process", e);
             }
-
         }
     }
 
@@ -86,12 +85,8 @@ public class AlertRunner implements Leader {
         Map<String, AlertStatus> existingAlertStatus = alertStatuses.getLatest();
         List<Future<AlertStatus>> futures = new ArrayList<>();
         for (AlertConfig alertConfig : alertConfigsLatest) {
-            if (existingAlertStatus.containsKey(alertConfig.getName())) {
-                AlertStatus alertStatus = existingAlertStatus.get(alertConfig.getName());
-                futures.add(threadPool.submit(new AlertUpdater(alertConfig, alertStatus)));
-            } else {
-                futures.add(threadPool.submit(new AlertUpdater(alertConfig)));
-            }
+            AlertStatus alertStatus = existingAlertStatus.get(alertConfig.getName());
+            futures.add(threadPool.submit(new AlertUpdater(alertConfig, alertStatus)));
         }
         Map<String, AlertStatus> updatedAlertStatus = new HashMap<>();
         for (Future<AlertStatus> future : futures) {
@@ -100,7 +95,6 @@ public class AlertRunner implements Leader {
                 updatedAlertStatus.put(alertStatus.getName(), alertStatus);
             } catch (Exception e) {
                 logger.warn("unable to get status", e);
-
             }
         }
         alertStatuses.saveStatus(updatedAlertStatus);
