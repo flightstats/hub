@@ -33,7 +33,7 @@ public class AlertConfigs {
     public void create() {
         client.resource(hubAppUrl + "channel/" + alertConfigName)
                 .type(MediaType.APPLICATION_JSON)
-                .put("{\"ttlDays\":1000, \"description\":\"Configuration for hub alerts\"}");
+                .put("{\"ttlDays\":1000, \"tags\":[\"alerts\"], \"description\":\"Configuration for hub alerts\"}");
     }
 
     public List<AlertConfig> getLatest() {

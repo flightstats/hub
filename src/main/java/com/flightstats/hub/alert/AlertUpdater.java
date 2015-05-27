@@ -2,7 +2,6 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
@@ -13,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
@@ -86,25 +84,10 @@ public class AlertUpdater implements Callable<AlertStatus> {
         Boolean evaluate = (Boolean) jsEngine.eval(script);
         logger.debug("check for alert {} {} {}", alertConfig.getName(), script, evaluate);
         if (evaluate && !alertStatus.isAlert()) {
-            sendAlert(count);
+            AlertSender.sendAlert(alertConfig, alertStatus, count, client);
         }
         alertStatus.setAlert(evaluate);
         return evaluate;
-    }
-
-    private void sendAlert(int count) {
-        String url = alertConfig.getHubDomain() + "channel/" + alertChannelEscalate;
-        ObjectNode alert = mapper.createObjectNode();
-        alert.put("serviceName", alertConfig.getServiceName());
-        alert.put("description", alertConfig.getName() + ": " +
-                alertConfig.getHubDomain() + "channel/" + alertConfig.getChannel() + " volume " +
-                count + " " + alertConfig.getOperator() + " " + alertConfig.getThreshold());
-        alert.put("details", alertStatus.toJson());
-        String entity = alert.toString();
-        logger.info("sending alert {}", entity);
-        client.resource(url)
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .post(entity);
     }
 
     private void checkPeriod(String period) {

@@ -17,7 +17,6 @@ import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -132,10 +131,7 @@ public class AlertRunner implements Leader {
         try {
             alertConfigs.create();
             alertStatuses.create();
-            String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
-            client.resource(hubAppUrl + "channel/" + alertChannelEscalate)
-                    .type(MediaType.APPLICATION_JSON)
-                    .put("{\"ttlDays\":14, \"description\":\"alerts to be sent and confirmations\"}");
+            AlertSender.create(client, hubAppUrl);
         } catch (Exception e) {
             logger.warn("hate filled donut", e);
         }
