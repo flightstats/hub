@@ -2,7 +2,6 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.group.Group;
-import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.group.GroupStatus;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.rest.RestClient;
@@ -22,12 +21,10 @@ public class GroupAlertUpdater implements Callable<AlertStatus> {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private final AlertConfig alertConfig;
-    private GroupService groupService;
     private final AlertStatus alertStatus;
 
-    public GroupAlertUpdater(AlertConfig alertConfig, AlertStatus alertStatus, GroupService groupService) {
+    public GroupAlertUpdater(AlertConfig alertConfig, AlertStatus alertStatus) {
         this.alertConfig = alertConfig;
-        this.groupService = groupService;
         if (alertStatus == null) {
             alertStatus = AlertStatus.builder()
                     .name(alertConfig.getName())

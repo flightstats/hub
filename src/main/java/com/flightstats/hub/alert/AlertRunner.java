@@ -85,8 +85,7 @@ public class AlertRunner implements Leader {
             if (alertConfig.isChannelAlert()) {
                 futures.add(threadPool.submit(new ChannelAlertUpdater(alertConfig, alertStatus)));
             } else {
-                //todo - gfm - 5/28/15 -
-                //futures.add(threadPool.submit(new GroupAlertUpdater(alertConfig, alertStatus)));
+                futures.add(threadPool.submit(new GroupAlertUpdater(alertConfig, alertStatus)));
             }
         }
         Map<String, AlertStatus> updatedAlertStatus = new HashMap<>();
