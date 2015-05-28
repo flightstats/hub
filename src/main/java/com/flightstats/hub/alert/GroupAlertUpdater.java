@@ -29,7 +29,6 @@ public class GroupAlertUpdater implements Callable<AlertStatus> {
             alertStatus = AlertStatus.builder()
                     .name(alertConfig.getName())
                     .alert(false)
-                    .period(AlertStatus.MINUTE)
                     .history(new LinkedList<>())
                     .build();
         }

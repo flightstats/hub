@@ -29,7 +29,7 @@ public class GroupState {
             logger.warn("unable to get latest from {} {}", alertConfig.getChannel(), response);
         } else {
             String config = response.getEntity(String.class);
-            logger.debug("config {}", config);
+            logger.trace("{} config {}", alertConfig.getChannel(), config);
             try {
                 return parse(config);
             } catch (IOException e) {

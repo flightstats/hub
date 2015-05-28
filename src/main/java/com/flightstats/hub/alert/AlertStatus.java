@@ -20,9 +20,8 @@ public class AlertStatus {
     public static final String MINUTE = "minute";
     public static final String HOUR = "hour";
 
-
     private String name;
-    private String period = MINUTE;
+    private String period;
     private boolean alert;
     private LinkedList<AlertStatusHistory> history = new LinkedList<>();
 
