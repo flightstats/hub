@@ -2,7 +2,6 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -16,18 +15,17 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
 
-public class AlertUpdater implements Callable<AlertStatus> {
+public class ChannelAlertUpdater implements Callable<AlertStatus> {
 
-    private final static Logger logger = LoggerFactory.getLogger(AlertUpdater.class);
+    private final static Logger logger = LoggerFactory.getLogger(ChannelAlertUpdater.class);
     private static final ScriptEngine jsEngine = createJsEngine();
-    private static final Client client = RestClient.createClient(15, 60);
+    private static final Client client = RestClient.defaultClient();
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
 
     private final AlertConfig alertConfig;
     private final AlertStatus alertStatus;
 
-    public AlertUpdater(AlertConfig alertConfig, AlertStatus alertStatus) {
+    public ChannelAlertUpdater(AlertConfig alertConfig, AlertStatus alertStatus) {
         this.alertConfig = alertConfig;
         if (alertStatus == null) {
             alertStatus = AlertStatus.builder()
@@ -38,6 +36,7 @@ public class AlertUpdater implements Callable<AlertStatus> {
                     .build();
         }
         this.alertStatus = alertStatus;
+        alertStatus.setType(AlertConfig.AlertType.CHANNEL.name());
     }
 
     @Override
@@ -87,7 +86,8 @@ public class AlertUpdater implements Callable<AlertStatus> {
         Boolean evaluate = (Boolean) jsEngine.eval(script);
         logger.debug("check for alert {} {} {}", alertConfig.getName(), script, evaluate);
         if (evaluate && !alertStatus.isAlert()) {
-            AlertSender.sendAlert(alertConfig, alertStatus, count, client);
+            alertStatus.setAlert(true);
+            AlertSender.sendAlert(alertConfig, alertStatus, count);
         }
         alertStatus.setAlert(evaluate);
         return evaluate;

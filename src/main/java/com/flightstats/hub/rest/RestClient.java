@@ -20,6 +20,12 @@ import java.util.concurrent.TimeUnit;
 public class RestClient {
 
     private final static Logger logger = LoggerFactory.getLogger(RestClient.class);
+    private final static Client client = RestClient.createClient(15, 60);
+    ;
+
+    public static Client defaultClient() {
+        return client;
+    }
 
     public static Client createClient(int connectTimeout, int readTimeout) {
         try {

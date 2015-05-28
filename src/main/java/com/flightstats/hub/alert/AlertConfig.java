@@ -22,11 +22,31 @@ public class AlertConfig {
     private String operator;
     private int threshold;
     private int timeWindowMinutes;
+    private AlertType alertType;
 
-    public static AlertConfig fromJson(String name, String hubDomain, String json) {
+    enum AlertType {
+        CHANNEL,
+        GROUP
+    }
+
+    public static AlertConfig fromJson(String name, String hubDomain, String json, AlertType alertType) {
         AlertConfig alertConfig = gson.fromJson(json, AlertConfig.class);
         alertConfig.hubDomain = hubDomain;
         alertConfig.name = name;
+        alertConfig.alertType = alertType;
         return alertConfig;
+    }
+
+    public boolean isChannelAlert() {
+        return alertType == AlertType.CHANNEL;
+    }
+
+    public String getAlertDescription(int count) {
+        if (isChannelAlert()) {
+            return getName() + ": " + getHubDomain() + "channel/" + getChannel() + " volume " +
+                    count + " " + getOperator() + " " + getThreshold();
+        } else {
+            return getName() + ": " + getHubDomain() + "group/" + getChannel() + " is " + count + " minutes behind";
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.flightstats.hub.alert;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
@@ -20,13 +21,12 @@ public class AlertConfigs {
     private final static Logger logger = LoggerFactory.getLogger(AlertConfigs.class);
 
     private final String hubAppUrl;
-    private final Client client;
+    private final static Client client = RestClient.defaultClient();
     private final String alertConfigName;
     private final static ObjectMapper mapper = new ObjectMapper();
 
-    public AlertConfigs(String hubAppUrl, Client client) {
+    public AlertConfigs(String hubAppUrl) {
         this.hubAppUrl = hubAppUrl;
-        this.client = client;
         alertConfigName = HubProperties.getProperty("alert.channel.config", "zomboAlertsConfig");
     }
 
@@ -46,17 +46,26 @@ public class AlertConfigs {
             String config = response.getEntity(String.class);
             logger.debug("config {}", config);
             try {
-                JsonNode insertAlerts = mapper.readTree(config).get("insertAlerts");
-                Iterator<Map.Entry<String, JsonNode>> fields = insertAlerts.fields();
-                while (fields.hasNext()) {
-                    Map.Entry<String, JsonNode> entry = fields.next();
-                    AlertConfig alertConfig = AlertConfig.fromJson(entry.getKey(), hubAppUrl, entry.getValue().toString());
-                    alertConfigs.add(alertConfig);
-                }
+                JsonNode rootNode = mapper.readTree(config);
+                readType(alertConfigs, AlertConfig.AlertType.CHANNEL, rootNode.get("insertAlerts"));
+                readType(alertConfigs, AlertConfig.AlertType.GROUP, rootNode.get("groupAlerts"));
             } catch (IOException e) {
                 logger.warn("unable to parse", e);
             }
         }
         return alertConfigs;
+    }
+
+    private void readType(List<AlertConfig> alertConfigs, AlertConfig.AlertType alertType, JsonNode node) {
+        if (node == null) {
+            return;
+        }
+        Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+        while (fields.hasNext()) {
+            Map.Entry<String, JsonNode> entry = fields.next();
+            AlertConfig alertConfig = AlertConfig.fromJson(entry.getKey(), hubAppUrl,
+                    entry.getValue().toString(), alertType);
+            alertConfigs.add(alertConfig);
+        }
     }
 }
