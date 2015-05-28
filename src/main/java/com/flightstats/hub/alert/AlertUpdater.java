@@ -2,7 +2,6 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -22,7 +21,6 @@ public class AlertUpdater implements Callable<AlertStatus> {
     private static final ScriptEngine jsEngine = createJsEngine();
     private static final Client client = RestClient.createClient(15, 60);
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
 
     private final AlertConfig alertConfig;
     private final AlertStatus alertStatus;

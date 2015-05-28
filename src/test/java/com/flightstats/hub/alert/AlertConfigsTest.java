@@ -50,12 +50,16 @@ public class AlertConfigsTest {
 
     @Test
     public void testLatestConfigs() throws IOException {
-        URL resource = AlertRunnerTest.class.getResource("/test-config.json");
+        URL resource = AlertRunnerTest.class.getResource("/alertConfig.json");
         String configString = IOUtils.toString(resource);
         get("/channel/testLatestConfigs/latest", (req, res) -> configString);
         HubProperties.setProperty("alert.channel.config", "testLatestConfigs");
         AlertConfigs alertConfigs = new AlertConfigs(hubAppUrl, client);
         List<AlertConfig> latest = alertConfigs.getLatest();
-        assertEquals(5, latest.size());
+        assertEquals(7, latest.size());
+        assertEquals("greaterThanName", latest.get(0).getName());
+        assertEquals(AlertConfig.AlertType.CHANNEL, latest.get(0).getAlertType());
+        assertEquals("groupAlert1", latest.get(5).getName());
+        assertEquals(AlertConfig.AlertType.GROUP, latest.get(5).getAlertType());
     }
 }

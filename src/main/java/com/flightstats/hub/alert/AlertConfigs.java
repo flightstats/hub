@@ -46,17 +46,26 @@ public class AlertConfigs {
             String config = response.getEntity(String.class);
             logger.debug("config {}", config);
             try {
-                JsonNode insertAlerts = mapper.readTree(config).get("insertAlerts");
-                Iterator<Map.Entry<String, JsonNode>> fields = insertAlerts.fields();
-                while (fields.hasNext()) {
-                    Map.Entry<String, JsonNode> entry = fields.next();
-                    AlertConfig alertConfig = AlertConfig.fromJson(entry.getKey(), hubAppUrl, entry.getValue().toString());
-                    alertConfigs.add(alertConfig);
-                }
+                JsonNode rootNode = mapper.readTree(config);
+                readType(alertConfigs, AlertConfig.AlertType.CHANNEL, rootNode.get("insertAlerts"));
+                readType(alertConfigs, AlertConfig.AlertType.GROUP, rootNode.get("groupAlerts"));
             } catch (IOException e) {
                 logger.warn("unable to parse", e);
             }
         }
         return alertConfigs;
+    }
+
+    private void readType(List<AlertConfig> alertConfigs, AlertConfig.AlertType alertType, JsonNode node) {
+        if (node == null) {
+            return;
+        }
+        Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+        while (fields.hasNext()) {
+            Map.Entry<String, JsonNode> entry = fields.next();
+            AlertConfig alertConfig = AlertConfig.fromJson(entry.getKey(), hubAppUrl,
+                    entry.getValue().toString(), alertType);
+            alertConfigs.add(alertConfig);
+        }
     }
 }

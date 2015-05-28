@@ -22,11 +22,18 @@ public class AlertConfig {
     private String operator;
     private int threshold;
     private int timeWindowMinutes;
+    private AlertType alertType;
 
-    public static AlertConfig fromJson(String name, String hubDomain, String json) {
+    enum AlertType {
+        CHANNEL,
+        GROUP
+    }
+
+    public static AlertConfig fromJson(String name, String hubDomain, String json, AlertType alertType) {
         AlertConfig alertConfig = gson.fromJson(json, AlertConfig.class);
         alertConfig.hubDomain = hubDomain;
         alertConfig.name = name;
+        alertConfig.alertType = alertType;
         return alertConfig;
     }
 }

@@ -35,5 +35,17 @@
       "operator": "==",
       "serviceName": "sn5"
     }
+  },
+  "groupAlerts": {
+    "groupAlert1": {
+      "channel": "groupAlert1Channel",
+      "timeWindowMinutes": 10,
+      "serviceName": "sn1"
+    },
+    "groupAlert2": {
+      "channel": "groupAlert2Channel",
+      "timeWindowMinutes": 20,
+      "serviceName": "sn2"
+    }
   }
 }
