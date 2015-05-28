@@ -33,6 +33,7 @@ public class GroupAlertUpdater implements Callable<AlertStatus> {
                     .build();
         }
         this.alertStatus = alertStatus;
+        alertStatus.setType(alertConfig.getAlertType().name());
     }
 
     @Override
@@ -47,9 +48,9 @@ public class GroupAlertUpdater implements Callable<AlertStatus> {
         if (channelLatest == null) {
             return alertStatus;
         }
-        addHistory(channelLatest, groupStatus.getGroup());
+        addHistory(channelLatest, groupStatus.getGroup(), "channelLatest");
         ContentKey lastCompleted = groupStatus.getLastCompleted();
-        addHistory(lastCompleted, groupStatus.getGroup());
+        addHistory(lastCompleted, groupStatus.getGroup(), "lastCompletedCallback");
         Minutes minutes = Minutes.minutesBetween(lastCompleted.getTime(), channelLatest.getTime());
         logger.trace("alert {} latest {} completed {} minutes {}", alertConfig.getName(), channelLatest, lastCompleted, minutes);
         if (minutes.getMinutes() >= alertConfig.getTimeWindowMinutes()) {
@@ -63,9 +64,10 @@ public class GroupAlertUpdater implements Callable<AlertStatus> {
         return alertStatus;
     }
 
-    private void addHistory(ContentKey contentKey, Group group) {
+    private void addHistory(ContentKey contentKey, Group group, String name) {
         AlertStatusHistory history = AlertStatusHistory.builder()
                 .href(group.getChannelUrl() + "/" + contentKey.toUrl())
+                .name(name)
                 .items(0)
                 .build();
         alertStatus.getHistory().add(history);

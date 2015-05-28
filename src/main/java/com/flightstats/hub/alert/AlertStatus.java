@@ -23,6 +23,7 @@ public class AlertStatus {
     private String name;
     private String period;
     private boolean alert;
+    private String type;
     private LinkedList<AlertStatusHistory> history = new LinkedList<>();
 
     public static Map<String, AlertStatus> fromJson(String json) {
