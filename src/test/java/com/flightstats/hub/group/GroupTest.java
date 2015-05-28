@@ -35,16 +35,6 @@ public class GroupTest {
         assertEquals("wither", group.getName());
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testNullEndpoint() throws Exception {
-        Group.builder().channelUrl("url").build();
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testNullChannelUrl() throws Exception {
-        Group.builder().callbackUrl("end").build();
-    }
-
     @Test
     public void testFromJson() {
         System.out.println(group.toJson());

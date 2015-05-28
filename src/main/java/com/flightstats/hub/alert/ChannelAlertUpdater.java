@@ -36,7 +36,7 @@ public class ChannelAlertUpdater implements Callable<AlertStatus> {
                     .build();
         }
         this.alertStatus = alertStatus;
-        alertStatus.setType(alertConfig.getAlertType().name());
+        alertStatus.setType(AlertConfig.AlertType.CHANNEL.name());
     }
 
     @Override
