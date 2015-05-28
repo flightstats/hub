@@ -3,6 +3,7 @@ package com.flightstats.hub.alert;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
@@ -20,13 +21,12 @@ public class AlertConfigs {
     private final static Logger logger = LoggerFactory.getLogger(AlertConfigs.class);
 
     private final String hubAppUrl;
-    private final Client client;
+    private final static Client client = RestClient.defaultClient();
     private final String alertConfigName;
     private final static ObjectMapper mapper = new ObjectMapper();
 
-    public AlertConfigs(String hubAppUrl, Client client) {
+    public AlertConfigs(String hubAppUrl) {
         this.hubAppUrl = hubAppUrl;
-        this.client = client;
         alertConfigName = HubProperties.getProperty("alert.channel.config", "zomboAlertsConfig");
     }
 

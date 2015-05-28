@@ -19,9 +19,9 @@ import java.util.List;
 import static com.flightstats.hub.test.SparkUtil.*;
 import static org.junit.Assert.*;
 
-public class AlertUpdaterTest {
+public class ChannelAlertUpdaterTest {
 
-    private final static Logger logger = LoggerFactory.getLogger(AlertUpdaterTest.class);
+    private final static Logger logger = LoggerFactory.getLogger(ChannelAlertUpdaterTest.class);
     private final static ObjectMapper mapper = new ObjectMapper();
     public static final String HUB_DOMAIN = "http://localhost:4567/";
     private static final List<String> alerts = new ArrayList<>();
@@ -35,8 +35,8 @@ public class AlertUpdaterTest {
     public void testMinutesNew() throws Exception {
         AlertConfig config = createConfig("testMinutesNew", ">", 16, 5);
         configureSpark("testMinutesNew", TimeUtil.Unit.MINUTES, 5);
-        AlertUpdater alertUpdater = new AlertUpdater(config, null);
-        AlertStatus alertStatus = alertUpdater.call();
+        ChannelAlertUpdater channelAlertUpdater = new ChannelAlertUpdater(config, null);
+        AlertStatus alertStatus = channelAlertUpdater.call();
         assertEquals(5, alertStatus.getHistory().size());
         assertFalse(alertStatus.isAlert());
         assertEquals(0, alerts.size());
@@ -82,8 +82,8 @@ public class AlertUpdaterTest {
     public void testHoursNew() throws Exception {
         AlertConfig config = createConfig("testHoursNew", "==", 6, 125);
         configureSpark("testHoursNew", TimeUtil.Unit.HOURS, 3);
-        AlertUpdater alertUpdater = new AlertUpdater(config, null);
-        AlertStatus alertStatus = alertUpdater.call();
+        ChannelAlertUpdater channelAlertUpdater = new ChannelAlertUpdater(config, null);
+        AlertStatus alertStatus = channelAlertUpdater.call();
 
         System.out.println(alertStatus);
         assertEquals(3, alertStatus.getHistory().size());
@@ -102,8 +102,8 @@ public class AlertUpdaterTest {
                 .history(createHistory(TimeUtil.Unit.HOURS, 4, channel))
                 .build();
         configureSpark(channel, TimeUtil.Unit.HOURS, 3);
-        AlertUpdater alertUpdater = new AlertUpdater(config, status);
-        AlertStatus alertStatus = alertUpdater.call();
+        ChannelAlertUpdater channelAlertUpdater = new ChannelAlertUpdater(config, status);
+        AlertStatus alertStatus = channelAlertUpdater.call();
         LinkedList<AlertStatusHistory> histories = alertStatus.getHistory();
         for (AlertStatusHistory statusHistory : histories) {
             System.out.println(statusHistory);
@@ -124,8 +124,8 @@ public class AlertUpdaterTest {
                 .history(createHistory(TimeUtil.Unit.MINUTES, 3, channel))
                 .build();
         configureSpark(channel, TimeUtil.Unit.MINUTES, 3);
-        AlertUpdater alertUpdater = new AlertUpdater(config, status);
-        AlertStatus alertStatus = alertUpdater.call();
+        ChannelAlertUpdater channelAlertUpdater = new ChannelAlertUpdater(config, status);
+        AlertStatus alertStatus = channelAlertUpdater.call();
         LinkedList<AlertStatusHistory> histories = alertStatus.getHistory();
         for (AlertStatusHistory statusHistory : histories) {
             System.out.println(statusHistory);
@@ -147,8 +147,8 @@ public class AlertUpdaterTest {
                 .history(createHistory(TimeUtil.Unit.HOURS, 90, channel))
                 .build();
         configureSpark(channel, TimeUtil.Unit.HOURS, 3);
-        AlertUpdater alertUpdater = new AlertUpdater(config, status);
-        AlertStatus alertStatus = alertUpdater.call();
+        ChannelAlertUpdater channelAlertUpdater = new ChannelAlertUpdater(config, status);
+        AlertStatus alertStatus = channelAlertUpdater.call();
         LinkedList<AlertStatusHistory> histories = alertStatus.getHistory();
         for (AlertStatusHistory statusHistory : histories) {
             System.out.println(statusHistory);
@@ -168,8 +168,8 @@ public class AlertUpdaterTest {
                 .history(createHistory(TimeUtil.Unit.MINUTES, 10, channel))
                 .build();
         configureSpark(channel, TimeUtil.Unit.MINUTES, 3);
-        AlertUpdater alertUpdater = new AlertUpdater(config, status);
-        AlertStatus alertStatus = alertUpdater.call();
+        ChannelAlertUpdater channelAlertUpdater = new ChannelAlertUpdater(config, status);
+        AlertStatus alertStatus = channelAlertUpdater.call();
         LinkedList<AlertStatusHistory> histories = alertStatus.getHistory();
         for (AlertStatusHistory statusHistory : histories) {
             System.out.println(statusHistory);

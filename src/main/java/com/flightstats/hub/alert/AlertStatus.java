@@ -17,7 +17,6 @@ import java.util.Map;
 public class AlertStatus {
 
     private static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-    //todo - gfm - 5/22/15 - change to enum
     public static final String MINUTE = "minute";
     public static final String HOUR = "hour";
 

@@ -56,7 +56,7 @@ public class GroupService {
     }
 
     public GroupStatus getGroupStatus(Group group) {
-        GroupStatus.GroupStatusBuilder builder = GroupStatus.builder().group(group);
+        GroupStatus.GroupStatusBuilder builder = GroupStatus.builder().name(group.getName());
         String channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         Optional<ContentKey> lastKey = channelService.getLatest(channel, true, false);
         if (lastKey.isPresent()) {

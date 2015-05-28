@@ -36,4 +36,17 @@ public class AlertConfig {
         alertConfig.alertType = alertType;
         return alertConfig;
     }
+
+    public boolean isChannelAlert() {
+        return alertType == AlertType.CHANNEL;
+    }
+
+    public String getAlertDescription(int count) {
+        if (isChannelAlert()) {
+            return getName() + ": " + getHubDomain() + "channel/" + getChannel() + " volume " +
+                    count + " " + getOperator() + " " + getThreshold();
+        } else {
+            return getName() + ": " + getHubDomain() + "group/" + getChannel() + " is " + count + " minutes behind";
+        }
+    }
 }

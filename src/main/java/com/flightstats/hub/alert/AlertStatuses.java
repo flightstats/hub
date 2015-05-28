@@ -2,6 +2,7 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
@@ -16,13 +17,12 @@ public class AlertStatuses {
     private final static Logger logger = LoggerFactory.getLogger(AlertStatuses.class);
 
     private final String hubAppUrl;
-    private final Client client;
+    private final static Client client = RestClient.defaultClient();
     private final String alertStatusName;
     private final static ObjectMapper mapper = new ObjectMapper();
 
-    public AlertStatuses(String hubAppUrl, Client client) {
+    public AlertStatuses(String hubAppUrl) {
         this.hubAppUrl = hubAppUrl;
-        this.client = client;
         alertStatusName = HubProperties.getProperty("alert.channel.status", "zomboAlertStatus");
     }
 

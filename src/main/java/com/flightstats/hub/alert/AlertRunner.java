@@ -5,13 +5,11 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
-import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.sun.jersey.api.client.Client;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -39,7 +37,6 @@ public class AlertRunner implements Leader {
     private final AlertStatuses alertStatuses;
 
     private CuratorFramework curator;
-    private static final Client client = RestClient.createClient(15, 60);
     private CuratorLeader leader;
 
 
@@ -50,8 +47,8 @@ public class AlertRunner implements Leader {
         threadPool = Executors.newFixedThreadPool(20, threadFactory);
         hubAppUrl = StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
         sleepPeriod = HubProperties.getProperty("alert.sleep.millis", 60 * 1000);
-        alertConfigs = new AlertConfigs(hubAppUrl, client);
-        alertStatuses = new AlertStatuses(hubAppUrl, client);
+        alertConfigs = new AlertConfigs(hubAppUrl);
+        alertStatuses = new AlertStatuses(hubAppUrl);
         if (HubProperties.getProperty("alert.run", true)) {
             logger.info("starting with url {} {} ", hubAppUrl, sleepPeriod);
             HubServices.register(new AlertRunnerService(), HubServices.TYPE.POST_START);
@@ -85,7 +82,12 @@ public class AlertRunner implements Leader {
         List<Future<AlertStatus>> futures = new ArrayList<>();
         for (AlertConfig alertConfig : alertConfigsLatest) {
             AlertStatus alertStatus = existingAlertStatus.get(alertConfig.getName());
-            futures.add(threadPool.submit(new AlertUpdater(alertConfig, alertStatus)));
+            if (alertConfig.isChannelAlert()) {
+                futures.add(threadPool.submit(new ChannelAlertUpdater(alertConfig, alertStatus)));
+            } else {
+                //todo - gfm - 5/28/15 -
+                //futures.add(threadPool.submit(new GroupAlertUpdater(alertConfig, alertStatus)));
+            }
         }
         Map<String, AlertStatus> updatedAlertStatus = new HashMap<>();
         for (Future<AlertStatus> future : futures) {
@@ -131,7 +133,7 @@ public class AlertRunner implements Leader {
         try {
             alertConfigs.create();
             alertStatuses.create();
-            AlertSender.create(client, hubAppUrl);
+            AlertSender.create(hubAppUrl);
         } catch (Exception e) {
             logger.warn("hate filled donut", e);
         }
