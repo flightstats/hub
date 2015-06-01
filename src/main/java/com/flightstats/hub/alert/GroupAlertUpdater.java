@@ -33,7 +33,7 @@ public class GroupAlertUpdater implements Callable<AlertStatus> {
                     .build();
         }
         this.alertStatus = alertStatus;
-        alertStatus.setType(AlertConfig.AlertType.GROUP.name());
+        alertStatus.setType(AlertConfig.AlertType.group.name());
     }
 
     @Override

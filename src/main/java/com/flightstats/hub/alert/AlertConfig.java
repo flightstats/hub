@@ -25,8 +25,8 @@ public class AlertConfig {
     private AlertType type;
 
     enum AlertType {
-        CHANNEL,
-        GROUP
+        channel,
+        group
     }
 
     public static AlertConfig fromJson(String name, String hubDomain, String json) {
@@ -34,13 +34,13 @@ public class AlertConfig {
         alertConfig.hubDomain = hubDomain;
         alertConfig.name = name;
         if (alertConfig.type == null) {
-            alertConfig.type = AlertType.CHANNEL;
+            alertConfig.type = AlertType.channel;
         }
         return alertConfig;
     }
 
     public boolean isChannelAlert() {
-        return type == AlertType.CHANNEL;
+        return type == AlertType.channel;
     }
 
     public String getAlertDescription(int count) {

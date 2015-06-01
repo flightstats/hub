@@ -10,8 +10,7 @@ import java.net.URL;
 import java.util.List;
 
 import static com.flightstats.hub.test.SparkUtil.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class AlertConfigsTest {
 
@@ -55,8 +54,15 @@ public class AlertConfigsTest {
         List<AlertConfig> latest = alertConfigs.getLatest();
         assertEquals(7, latest.size());
         assertEquals("greaterThanName", latest.get(0).getName());
-        assertEquals(AlertConfig.AlertType.CHANNEL, latest.get(0).getType());
+        for (int i = 0; i < 5; i++) {
+            AlertConfig alertConfig = latest.get(i);
+            assertTrue("expecting channel " + alertConfig, alertConfig.isChannelAlert());
+        }
         assertEquals("groupAlert1", latest.get(5).getName());
-        assertEquals(AlertConfig.AlertType.GROUP, latest.get(5).getType());
+        for (int i = 5; i < 7; i++) {
+            AlertConfig alertConfig = latest.get(i);
+            assertFalse("expecting group " + alertConfig, alertConfig.isChannelAlert());
+        }
+
     }
 }
