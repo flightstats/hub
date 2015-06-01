@@ -140,7 +140,7 @@ describe(testName, function () {
                     delete res.body.insertAlerts[name];
                 })
                 res.body.insertAlerts[name] = {
-                    channel: 'verifyGroupAlert', serviceName: 'test', timeWindowMinutes: 1
+                    channel: 'verifyGroupAlert', serviceName: 'test', timeWindowMinutes: 1, type: 'group'
                 };
                 console.log('body', res.body.insertAlerts);
                 agent
