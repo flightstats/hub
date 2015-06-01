@@ -135,7 +135,12 @@ describe(testName, function () {
                 })
                 //5 - new rule be triggered for a single item on channel verifyAlertData in a minute
                 res.body.insertAlerts[name] = {
-                    channel: 'verifyAlertData', threshold: 0, serviceName: 'test', operator: '>', timeWindowMinutes: 1
+                    channel: 'verifyAlertData',
+                    threshold: 0,
+                    serviceName: 'test',
+                    operator: '>',
+                    timeWindowMinutes: 1,
+                    type: 'channel'
                 };
                 console.log('body', res.body.insertAlerts);
                 agent

@@ -42,7 +42,7 @@ describe(testName, function () {
             .accept('json')
             .end(function (err, res) {
                 expect(err).toBe(null);
-                _.forIn(res.body.groupAlerts, function (value, key) {
+                _.forIn(res.body.insertAlerts, function (value, key) {
                     if (_.startsWith(key, 'verifyGroupAlert')) {
                         console.log('found rule', key);
                         existingRules.push(key);
@@ -137,12 +137,12 @@ describe(testName, function () {
                 expect(err).toBe(null);
                 //2 - delete all rules whose names start with "verifyGroupAlert"
                 existingRules.forEach(function (name) {
-                    delete res.body.groupAlerts[name];
+                    delete res.body.insertAlerts[name];
                 })
-                res.body.groupAlerts[name] = {
-                    channel: 'verifyGroupAlert', serviceName: 'test', timeWindowMinutes: 1
+                res.body.insertAlerts[name] = {
+                    channel: 'verifyGroupAlert', serviceName: 'test', timeWindowMinutes: 1, type: 'group'
                 };
-                console.log('body', res.body.groupAlerts);
+                console.log('body', res.body.insertAlerts);
                 agent
                     .post(zomboAlertsConfig)
                     .type('json')
