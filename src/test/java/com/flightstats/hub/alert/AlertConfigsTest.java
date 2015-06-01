@@ -55,8 +55,8 @@ public class AlertConfigsTest {
         List<AlertConfig> latest = alertConfigs.getLatest();
         assertEquals(7, latest.size());
         assertEquals("greaterThanName", latest.get(0).getName());
-        assertEquals(AlertConfig.AlertType.CHANNEL, latest.get(0).getAlertType());
+        assertEquals(AlertConfig.AlertType.CHANNEL, latest.get(0).getType());
         assertEquals("groupAlert1", latest.get(5).getName());
-        assertEquals(AlertConfig.AlertType.GROUP, latest.get(5).getAlertType());
+        assertEquals(AlertConfig.AlertType.GROUP, latest.get(5).getType());
     }
 }
