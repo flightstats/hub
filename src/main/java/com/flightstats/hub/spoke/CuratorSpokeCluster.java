@@ -19,12 +19,15 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CuratorSpokeCluster implements SpokeCluster {
     public static final String CLUSTER_PATH = "/SpokeCluster";
     private final static Logger logger = LoggerFactory.getLogger(CuratorSpokeCluster.class);
     private final CuratorFramework curator;
     private final PathChildrenCache clusterCache;
+    private Set<String> backupCluster = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Inject
     public CuratorSpokeCluster(CuratorFramework curator) throws Exception {
@@ -35,22 +38,27 @@ public class CuratorSpokeCluster implements SpokeCluster {
             @Override
             public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
                 logger.info("event {}", event);
+                if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)) {
+                    backupCluster.add(new String(event.getData().getData()));
+                }
             }
         });
         HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
     }
 
-    public void register() throws UnknownHostException {
+    public void startUp() throws UnknownHostException {
         String host = getHost();
+        backupCluster.add(host);
         try {
             logger.info("adding host {}", host);
             curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), host.getBytes());
         } catch (KeeperException.NodeExistsException e) {
             logger.warn("node already exists {} - not likely in prod", host);
         } catch (Exception e) {
-            logger.error("unable to register, should die", host, e);
+            logger.error("unable to startUp, should die", host, e);
             throw new RuntimeException(e);
         }
+        backupCluster.addAll(getServers());
     }
 
     private String getFullPath() throws UnknownHostException {
@@ -69,9 +77,12 @@ public class CuratorSpokeCluster implements SpokeCluster {
     public List<String> getServers() {
         List<String> servers = new ArrayList<>();
         List<ChildData> currentData = clusterCache.getCurrentData();
-        //noinspection Convert2streamapi
         for (ChildData childData : currentData) {
             servers.add(new String(childData.getData()));
+        }
+        if (servers.isEmpty()) {
+            logger.warn("returning backup cluster");
+            servers.addAll(backupCluster);
         }
         return servers;
     }
@@ -86,7 +97,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
     private class CuratorSpokeClusterHook extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
-            register();
+            startUp();
         }
 
         @Override

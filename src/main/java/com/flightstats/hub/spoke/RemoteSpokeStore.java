@@ -76,7 +76,7 @@ public class RemoteSpokeStore {
                 }
             });
         }
-        boolean awaited = countDownLatch.await(30, TimeUnit.SECONDS);
+        boolean awaited = countDownLatch.await(5, TimeUnit.SECONDS);
         sender.send("consistent", System.currentTimeMillis() - content.getTraces().getStart());
         return awaited;
     }
@@ -138,7 +138,7 @@ public class RemoteSpokeStore {
                 }
             });
         }
-        countDownLatch.await(30, TimeUnit.SECONDS);
+        countDownLatch.await(10, TimeUnit.SECONDS);
         return orderedKeys;
     }
 
