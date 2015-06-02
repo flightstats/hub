@@ -24,6 +24,7 @@ public class NTPMonitor {
 
     private final MetricsSender sender;
     private final int minPostTimeMillis;
+    private final int maxPostTimeMillis;
     private double delta;
 
     @Inject
@@ -31,6 +32,7 @@ public class NTPMonitor {
         this.sender = sender;
         HubServices.register(new TimeMonitorService(), HubServices.TYPE.POST_START);
         minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
+        maxPostTimeMillis = HubProperties.getProperty("app.maxPostTimeMillis", 1000);
     }
 
     static double parseClusterRange(List<String> lines) {
@@ -78,7 +80,7 @@ public class NTPMonitor {
     }
 
     public int getPostTimeBuffer() {
-        return (int) (minPostTimeMillis + delta * 2);
+        return Math.min(maxPostTimeMillis, (int) (minPostTimeMillis + delta * 2));
     }
 
     public void newRelic(double delta) {
