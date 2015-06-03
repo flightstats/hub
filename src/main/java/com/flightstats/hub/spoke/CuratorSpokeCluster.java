@@ -38,6 +38,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
             @Override
             public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
                 logger.info("event {}", event);
+                //todo - gfm - 6/2/15 - does this need to re-register?
                 if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)) {
                     backupCluster.add(new String(event.getData().getData()));
                 }
