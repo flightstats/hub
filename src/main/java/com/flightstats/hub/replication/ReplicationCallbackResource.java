@@ -15,7 +15,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 
 @Path("/internal/replication/{channel}")
 public class ReplicationCallbackResource {
@@ -44,7 +43,7 @@ public class ReplicationCallbackResource {
                     logger.warn("unable to get channel {} content {}", channel, uri.asText());
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.warn("unable to parse " + data, e);
         }
         return Response.ok().build();

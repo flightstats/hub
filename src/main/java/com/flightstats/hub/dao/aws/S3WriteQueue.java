@@ -68,7 +68,7 @@ public class S3WriteQueue {
         }
     }
 
-    private void writeContent() throws InterruptedException {
+    private void writeContent() throws Exception {
         ChannelContentKey key = keys.take();
         if (key != null) {
             logger.trace("writing {}", key.getContentKey());

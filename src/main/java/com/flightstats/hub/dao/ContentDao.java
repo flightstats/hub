@@ -15,7 +15,7 @@ public interface ContentDao {
     String CACHE = "Cache";
     String LONG_TERM = "LongTerm";
 
-    ContentKey write(String channelName, Content content);
+    ContentKey write(String channelName, Content content) throws Exception;
 
     Content read(String channelName, ContentKey key);
 

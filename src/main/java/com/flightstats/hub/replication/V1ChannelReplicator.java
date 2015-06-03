@@ -94,6 +94,8 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
                 return;
             }
             replicate(hasLeadership);
+        } catch (Exception e) {
+            logger.warn("exception " + channel, e);
         } finally {
             Thread.currentThread().setName("Empty");
         }
@@ -143,7 +145,7 @@ public class V1ChannelReplicator implements Leader, ChannelReplicator {
         }
     }
 
-    private void replicate(AtomicBoolean hasLeadership) {
+    private void replicate(AtomicBoolean hasLeadership) throws Exception {
         long sequence = getLastUpdated();
         if (sequence == HubUtils.NOT_FOUND) {
             return;
