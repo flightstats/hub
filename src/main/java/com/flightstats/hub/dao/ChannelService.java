@@ -11,7 +11,7 @@ public interface ChannelService {
 
     ChannelConfig createChannel(ChannelConfig configuration);
 
-    ContentKey insert(String channelName, Content content);
+    ContentKey insert(String channelName, Content content) throws Exception;
 
     Optional<Content> getValue(Request request);
 

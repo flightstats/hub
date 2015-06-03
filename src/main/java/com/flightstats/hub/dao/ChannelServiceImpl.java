@@ -55,7 +55,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public ContentKey insert(String channelName, Content content) {
+    public ContentKey insert(String channelName, Content content) throws Exception {
         if (content.isNew()) {
             throwExceptionIfReplicating(channelName);
         }

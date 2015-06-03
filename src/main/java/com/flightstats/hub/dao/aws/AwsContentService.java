@@ -59,7 +59,7 @@ public class AwsContentService implements ContentService {
     }
 
     @Override
-    public ContentKey insert(String channelName, Content content) {
+    public ContentKey insert(String channelName, Content content) throws Exception {
         try {
             inFlight.incrementAndGet();
             ContentKey key = cacheContentDao.write(channelName, content);
