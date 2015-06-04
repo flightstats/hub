@@ -5,6 +5,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Singleton
 public class CuratorSpokeCluster implements SpokeCluster {
     public static final String CLUSTER_PATH = "/SpokeCluster";
     private final static Logger logger = LoggerFactory.getLogger(CuratorSpokeCluster.class);
