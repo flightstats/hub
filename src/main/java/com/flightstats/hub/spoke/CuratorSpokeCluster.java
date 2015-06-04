@@ -10,8 +10,7 @@ import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
+import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +24,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
     private final static Logger logger = LoggerFactory.getLogger(CuratorSpokeCluster.class);
     private final CuratorFramework curator;
     private final PathChildrenCache clusterCache;
-    //private Set<String> backupCluster = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private PersistentEphemeralNode peNode;
 
     @Inject
     public CuratorSpokeCluster(CuratorFramework curator) throws Exception {
@@ -36,10 +35,6 @@ public class CuratorSpokeCluster implements SpokeCluster {
             @Override
             public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
                 logger.info("event {}", event);
-                //todo - gfm - 6/2/15 - does this need to re-register?
-                if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)) {
-                    //backupCluster.add(new String(event.getData().getData()));
-                }
             }
         });
         HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
@@ -47,17 +42,14 @@ public class CuratorSpokeCluster implements SpokeCluster {
 
     public void register() throws UnknownHostException {
         String host = getHost();
-        //backupCluster.add(host);
         try {
             logger.info("adding host {}", host);
-            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), host.getBytes());
-        } catch (KeeperException.NodeExistsException e) {
-            logger.warn("node already exists {} - not likely in prod", host);
+            peNode = new PersistentEphemeralNode(curator, PersistentEphemeralNode.Mode.EPHEMERAL, getFullPath(), host.getBytes());
+            peNode.start();
         } catch (Exception e) {
             logger.error("unable to register, should die", host, e);
             throw new RuntimeException(e);
         }
-        //backupCluster.addAll(getServers());
     }
 
     private String getFullPath() throws UnknownHostException {
@@ -80,8 +72,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
             servers.add(new String(childData.getData()));
         }
         if (servers.isEmpty()) {
-            logger.warn("returning backup cluster");
-            //servers.addAll(backupCluster);
+            logger.warn("returning empty list");
         }
         return servers;
     }
@@ -102,7 +93,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
         @Override
         protected void shutDown() throws Exception {
             logger.info("removing host from cluster " + getHost());
-            curator.delete().forPath(getFullPath());
+            peNode.close();
         }
     }
 }
