@@ -35,7 +35,7 @@ public class AwsBindings extends AbstractModule {
         bind(ContentService.class).to(AwsContentService.class).asEagerSingleton();
         bind(FileSpokeStore.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
-        bind(SpokeCluster.class).to(CuratorSpokeCluster.class).asEagerSingleton();
+        bind(CuratorSpokeCluster.class).asEagerSingleton();
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.CACHE))
