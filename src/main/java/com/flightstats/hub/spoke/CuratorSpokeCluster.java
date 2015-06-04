@@ -45,7 +45,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
         HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
     }
 
-    public void startUp() throws UnknownHostException {
+    public void register() throws UnknownHostException {
         String host = getHost();
         //backupCluster.add(host);
         try {
@@ -54,7 +54,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
         } catch (KeeperException.NodeExistsException e) {
             logger.warn("node already exists {} - not likely in prod", host);
         } catch (Exception e) {
-            logger.error("unable to startUp, should die", host, e);
+            logger.error("unable to register, should die", host, e);
             throw new RuntimeException(e);
         }
         //backupCluster.addAll(getServers());
@@ -96,7 +96,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
     private class CuratorSpokeClusterHook extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
-            startUp();
+            register();
         }
 
         @Override
