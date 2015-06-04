@@ -1,6 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -30,7 +31,7 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public ContentKey write(String channelName, Content content) {
+    public ContentKey write(String channelName, Content content) throws Exception {
         content.getTraces().add(new Trace("SpokeContentDao.start"));
         try {
             byte[] payload = SpokeMarshaller.toBytes(content);
@@ -43,10 +44,13 @@ public class SpokeContentDao implements ContentDao {
             }
             content.getTraces().add(new Trace("SpokeContentDao.end"));
             return key;
+        } catch (ContentTooLargeException e) {
+            logger.info("content too large for channel " + channelName);
+            throw e;
         } catch (Exception e) {
             content.getTraces().add(new Trace("SpokeContentDao", "error", e.getMessage()));
-            logger.warn("what's up?", e);
-            return null;
+            logger.warn("unable to write " + channelName, e);
+            throw e;
         }
     }
 

@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.nas;
 
 import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.SpokeMarshaller;
@@ -25,7 +26,7 @@ public class NasContentService implements ContentService {
     }
 
     @Override
-    public ContentKey insert(String channelName, Content content) {
+    public ContentKey insert(String channelName, Content content) throws Exception {
         content.getTraces().add(new Trace("NasContentService.start"));
         try {
             byte[] payload = SpokeMarshaller.toBytes(content, false);
@@ -38,10 +39,13 @@ public class NasContentService implements ContentService {
             }
             content.getTraces().add(new Trace("NasContentService.end"));
             return key;
+        } catch (ContentTooLargeException e) {
+            logger.info("content too large for channel " + channelName);
+            throw e;
         } catch (Exception e) {
             content.getTraces().add(new Trace("NasContentService", "error", e.getMessage()));
-            logger.warn("what's up?", e);
-            return null;
+            logger.warn("insertion error " + channelName, e);
+            throw e;
         }
     }
 

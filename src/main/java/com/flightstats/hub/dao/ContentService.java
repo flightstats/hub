@@ -7,7 +7,7 @@ import java.util.Collection;
 
 public interface ContentService {
 
-    ContentKey insert(String channelName, Content content);
+    ContentKey insert(String channelName, Content content) throws Exception;
 
     Optional<Content> getValue(String channelName, ContentKey key);
 
