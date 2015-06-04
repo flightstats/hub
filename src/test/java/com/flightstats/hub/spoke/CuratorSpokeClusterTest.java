@@ -27,7 +27,7 @@ public class CuratorSpokeClusterTest {
         assertNotNull(servers);
         assertEquals(0, servers.size());
 
-        cluster.register();
+        cluster.startUp();
         Sleeper.sleep(1000);
 
         servers = cluster.getServers();

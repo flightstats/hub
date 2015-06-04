@@ -19,15 +19,13 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class CuratorSpokeCluster implements SpokeCluster {
     public static final String CLUSTER_PATH = "/SpokeCluster";
     private final static Logger logger = LoggerFactory.getLogger(CuratorSpokeCluster.class);
     private final CuratorFramework curator;
     private final PathChildrenCache clusterCache;
-    private Set<String> backupCluster = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    //private Set<String> backupCluster = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Inject
     public CuratorSpokeCluster(CuratorFramework curator) throws Exception {
@@ -40,7 +38,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
                 logger.info("event {}", event);
                 //todo - gfm - 6/2/15 - does this need to re-register?
                 if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)) {
-                    backupCluster.add(new String(event.getData().getData()));
+                    //backupCluster.add(new String(event.getData().getData()));
                 }
             }
         });
@@ -49,7 +47,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
 
     public void startUp() throws UnknownHostException {
         String host = getHost();
-        backupCluster.add(host);
+        //backupCluster.add(host);
         try {
             logger.info("adding host {}", host);
             curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), host.getBytes());
@@ -59,7 +57,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
             logger.error("unable to startUp, should die", host, e);
             throw new RuntimeException(e);
         }
-        backupCluster.addAll(getServers());
+        //backupCluster.addAll(getServers());
     }
 
     private String getFullPath() throws UnknownHostException {
@@ -83,7 +81,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
         }
         if (servers.isEmpty()) {
             logger.warn("returning backup cluster");
-            servers.addAll(backupCluster);
+            //servers.addAll(backupCluster);
         }
         return servers;
     }
