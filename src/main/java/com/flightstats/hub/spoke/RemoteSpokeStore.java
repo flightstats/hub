@@ -15,8 +15,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
@@ -32,19 +32,19 @@ public class RemoteSpokeStore {
 
     private final static Client client = RestClient.createClient(5, 5);
 
-    private final SpokeCluster cluster;
+    private final CuratorSpokeCluster cluster;
     private final MetricsSender sender;
     private final ExecutorService executorService;
 
     @Inject
-    public RemoteSpokeStore(SpokeCluster cluster, MetricsSender sender) {
+    public RemoteSpokeStore(CuratorSpokeCluster cluster, MetricsSender sender) {
         this.cluster = cluster;
         this.sender = sender;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
     public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
-        List<String> servers = cluster.getServers();
+        Collection<String> servers = cluster.getServers();
         int quorum = getQuorum(servers.size());
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
         AtomicBoolean reported = new AtomicBoolean();
@@ -86,7 +86,7 @@ public class RemoteSpokeStore {
     }
 
     public com.flightstats.hub.model.Content read(String path, ContentKey key) {
-        List<String> servers = cluster.getRandomServers();
+        Collection<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             try {
                 ClientResponse response = client.resource(HubHost.getScheme() + server + "/spoke/payload/" + path)
@@ -106,7 +106,7 @@ public class RemoteSpokeStore {
     }
 
     public SortedSet<ContentKey> readTimeBucket(String channel, String timePath, Traces traces) throws InterruptedException {
-        List<String> servers = cluster.getServers();
+        Collection<String> servers = cluster.getServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         String path = channel + "/" + timePath;
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
@@ -143,7 +143,7 @@ public class RemoteSpokeStore {
     }
 
     public Optional<ContentKey> getLatest(String channel, String path, Traces traces) throws InterruptedException {
-        List<String> servers = cluster.getServers();
+        Collection<String> servers = cluster.getServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (final String server : servers) {
@@ -182,7 +182,7 @@ public class RemoteSpokeStore {
     }
 
     public boolean delete(String path) throws Exception {
-        List<String> servers = cluster.getServers();
+        Collection<String> servers = cluster.getServers();
         int quorum = servers.size();
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
         for (final String server : servers) {

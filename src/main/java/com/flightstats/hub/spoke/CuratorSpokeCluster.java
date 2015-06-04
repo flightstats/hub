@@ -6,27 +6,26 @@ import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
-import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Singleton
-public class CuratorSpokeCluster implements SpokeCluster {
+public class CuratorSpokeCluster {
     public static final String CLUSTER_PATH = "/SpokeCluster";
     private final static Logger logger = LoggerFactory.getLogger(CuratorSpokeCluster.class);
     private final CuratorFramework curator;
     private final PathChildrenCache clusterCache;
-    private PersistentEphemeralNode peNode;
 
     @Inject
     public CuratorSpokeCluster(CuratorFramework curator) throws Exception {
@@ -37,25 +36,28 @@ public class CuratorSpokeCluster implements SpokeCluster {
             @Override
             public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
                 logger.info("event {}", event);
+                if (event.getType().equals(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED)) {
+                    register();
+                }
             }
         });
         HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
     }
 
     public void register() throws UnknownHostException {
-        String host = getHost();
         try {
-            logger.info("adding host {}", host);
-            peNode = new PersistentEphemeralNode(curator, PersistentEphemeralNode.Mode.EPHEMERAL, getFullPath(), host.getBytes());
-            peNode.start();
+            logger.info("registering host {}", getHost());
+            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), getHost().getBytes());
+        } catch (KeeperException.NodeExistsException e) {
+            logger.warn("node already exists {} - not likely in prod", getHost());
         } catch (Exception e) {
-            logger.error("unable to register, should die", host, e);
+            logger.error("unable to register, should die", getHost(), e);
             throw new RuntimeException(e);
         }
     }
 
     private String getFullPath() throws UnknownHostException {
-        return CLUSTER_PATH + "/" + getHost();
+        return CLUSTER_PATH + "/" + getHost() + RandomStringUtils.randomAlphanumeric(6);
     }
 
     private String getHost() throws UnknownHostException {
@@ -66,22 +68,20 @@ public class CuratorSpokeCluster implements SpokeCluster {
         }
     }
 
-    @Override
-    public List<String> getServers() {
-        List<String> servers = new ArrayList<>();
+    public Collection<String> getServers() {
+        Set<String> servers = new HashSet<>();
         List<ChildData> currentData = clusterCache.getCurrentData();
         for (ChildData childData : currentData) {
             servers.add(new String(childData.getData()));
         }
         if (servers.isEmpty()) {
-            logger.warn("returning empty list");
+            logger.warn("returning empty collection");
         }
         return servers;
     }
 
-    @Override
-    public List<String> getRandomServers() {
-        List<String> servers = getServers();
+    public Collection<String> getRandomServers() {
+        List<String> servers = new ArrayList<>(getServers());
         Collections.shuffle(servers);
         return servers;
     }
@@ -95,7 +95,7 @@ public class CuratorSpokeCluster implements SpokeCluster {
         @Override
         protected void shutDown() throws Exception {
             logger.info("removing host from cluster " + getHost());
-            peNode.close();
+            curator.delete().forPath(getFullPath());
         }
     }
 }

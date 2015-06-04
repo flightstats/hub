@@ -6,7 +6,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.List;
+import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -23,7 +23,7 @@ public class CuratorSpokeClusterTest {
     @Test
     public void testPath() throws Exception {
         CuratorSpokeCluster cluster = new CuratorSpokeCluster(curator);
-        List<String> servers = cluster.getServers();
+        Collection<String> servers = cluster.getServers();
         assertNotNull(servers);
         assertEquals(0, servers.size());
 
