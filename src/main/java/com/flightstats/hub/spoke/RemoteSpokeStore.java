@@ -30,7 +30,7 @@ public class RemoteSpokeStore {
 
     private final static Logger logger = LoggerFactory.getLogger(RemoteSpokeStore.class);
 
-    private final static Client client = RestClient.createClient(5, 5);
+    private final static Client client = RestClient.createClient(5, 5, true);
 
     private final CuratorSpokeCluster cluster;
     private final MetricsSender sender;
