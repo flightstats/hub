@@ -51,6 +51,7 @@ public class AlertStatuses {
 
     public static Optional<ContentKey> getLatestKey() {
         ClientResponse response = getLatestResponse();
+        logger.debug("latest alert key {}", response);
         URI location = response.getLocation();
         if (location == null) {
             return Optional.absent();
