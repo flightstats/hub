@@ -41,8 +41,10 @@ public class AlertResource {
             String name = alertConfig.getName();
             nameUriMap.put(name, URI.create(uriInfo.getBaseUri() + "alert/" + name));
         }
-        //todo - gfm - 6/10/15 - add link to health
-        Linked<?> result = LinkBuilder.buildLinks(uriInfo, nameUriMap, "alerts");
+        Linked<?> result = LinkBuilder.buildLinks(nameUriMap, "alerts", builder -> {
+            builder.withLink("self", uriInfo.getRequestUri());
+            builder.withLink("health", uriInfo.getRequestUri() + "/health");
+        });
         return Response.ok(result).build();
     }
 

@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.flightstats.hub.rest.Linked.linked;
 
@@ -66,8 +67,14 @@ public class LinkBuilder {
     }
 
     public static Linked<?> buildLinks(UriInfo uriInfo, Map<String, URI> nameToUriMap, String name) {
+        return buildLinks(nameToUriMap, name, builder -> {
+            builder.withLink("self", uriInfo.getRequestUri());
+        });
+    }
+
+    public static Linked<?> buildLinks(Map<String, URI> nameToUriMap, String name, Consumer<Linked.Builder> consumer) {
         Linked.Builder responseBuilder = Linked.justLinks();
-        responseBuilder.withLink("self", uriInfo.getRequestUri());
+        consumer.accept(responseBuilder);
         List<HalLink> halLinks = new ArrayList<>(nameToUriMap.size());
         for (Map.Entry<String, URI> entry : nameToUriMap.entrySet()) {
             HalLink link = new HalLink(entry.getKey(), entry.getValue());
