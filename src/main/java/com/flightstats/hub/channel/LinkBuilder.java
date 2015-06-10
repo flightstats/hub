@@ -61,21 +61,23 @@ public class LinkBuilder {
     }
 
     public static Linked<?> build(Iterable<ChannelConfig> channels, UriInfo uriInfo) {
-        Map<String, URI> mappedChannels = new HashMap<>();
+        Map<String, URI> mappedUris = new HashMap<>();
         for (ChannelConfig channelConfig : channels) {
             String channelName = channelConfig.getName();
-            mappedChannels.put(channelName, buildChannelUri(channelName, uriInfo));
+            mappedUris.put(channelName, buildChannelUri(channelName, uriInfo));
         }
+        return buildLinks(uriInfo, mappedUris, "channels");
+    }
 
+    public static Linked<?> buildLinks(UriInfo uriInfo, Map<String, URI> nameToUriMap, String name) {
         Linked.Builder responseBuilder = Linked.justLinks();
         responseBuilder.withLink("self", uriInfo.getRequestUri());
-
-        List<HalLink> channelLinks = new ArrayList<>(mappedChannels.size());
-        for (Map.Entry<String, URI> entry : mappedChannels.entrySet()) {
+        List<HalLink> halLinks = new ArrayList<>(nameToUriMap.size());
+        for (Map.Entry<String, URI> entry : nameToUriMap.entrySet()) {
             HalLink link = new HalLink(entry.getKey(), entry.getValue());
-            channelLinks.add(link);
+            halLinks.add(link);
         }
-        responseBuilder.withLinks("channels", channelLinks);
+        responseBuilder.withLinks(name, halLinks);
         return responseBuilder.build();
     }
 

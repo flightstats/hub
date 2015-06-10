@@ -3,7 +3,6 @@ package com.flightstats.hub.channel;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.rest.HalLink;
 import com.flightstats.hub.rest.Linked;
 
 import javax.inject.Inject;
@@ -15,9 +14,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,17 +41,7 @@ public class TagResource {
         for (String tag : tags) {
             tagUriMap.put(tag, LinkBuilder.buildTagUri(tag, uriInfo));
         }
-
-        Linked.Builder<?> responseBuilder = Linked.justLinks();
-        responseBuilder.withLink("self", uriInfo.getRequestUri());
-
-        List<HalLink> channelLinks = new ArrayList<>(tagUriMap.size());
-        for (Map.Entry<String, URI> entry : tagUriMap.entrySet()) {
-            HalLink link = new HalLink(entry.getKey(), entry.getValue());
-            channelLinks.add(link);
-        }
-        responseBuilder.withLinks("tags", channelLinks);
-        Linked<?> result = responseBuilder.build();
+        Linked<?> result = LinkBuilder.buildLinks(uriInfo, tagUriMap, "tags");
         return Response.ok(result).build();
     }
 
