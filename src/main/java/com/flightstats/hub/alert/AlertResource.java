@@ -22,7 +22,7 @@ public class AlertResource {
     private final static ObjectMapper mapper = new ObjectMapper();
 
     @GET
-    @Path("/status")
+    @Path("/health")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelMetadata() {
         Optional<ContentKey> latestKey = AlertStatuses.getLatestKey();
