@@ -33,9 +33,6 @@ public class AlertRunner implements Leader {
     private final int sleepPeriod;
     private final String hubAppUrl;
     private final ExecutorService threadPool;
-    private final AlertConfigs alertConfigs;
-
-
     private CuratorFramework curator;
     private CuratorLeader leader;
 
@@ -46,7 +43,6 @@ public class AlertRunner implements Leader {
         threadPool = Executors.newFixedThreadPool(20, threadFactory);
         hubAppUrl = StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
         sleepPeriod = HubProperties.getProperty("alert.sleep.millis", 60 * 1000);
-        alertConfigs = new AlertConfigs(hubAppUrl);
 
         if (HubProperties.getProperty("alert.run", true)) {
             logger.info("starting with url {} {} ", hubAppUrl, sleepPeriod);
@@ -76,7 +72,7 @@ public class AlertRunner implements Leader {
     private void doWork() {
         logger.info("doing work");
         long start = System.currentTimeMillis();
-        List<AlertConfig> alertConfigsLatest = alertConfigs.getLatest();
+        List<AlertConfig> alertConfigsLatest = AlertConfigs.getLatest();
         Map<String, AlertStatus> existingAlertStatus = AlertStatuses.getLatestMap();
         List<Future<AlertStatus>> futures = new ArrayList<>();
         for (AlertConfig alertConfig : alertConfigsLatest) {
@@ -129,7 +125,7 @@ public class AlertRunner implements Leader {
 
     private void createChannels() {
         try {
-            alertConfigs.create();
+            AlertConfigs.create();
             AlertStatuses.create();
             AlertSender.create(hubAppUrl);
         } catch (Exception e) {

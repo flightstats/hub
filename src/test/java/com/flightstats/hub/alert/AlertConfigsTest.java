@@ -3,6 +3,7 @@ package com.flightstats.hub.alert;
 import com.flightstats.hub.app.HubProperties;
 import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -14,7 +15,10 @@ import static org.junit.Assert.*;
 
 public class AlertConfigsTest {
 
-    private String hubAppUrl = "http://localhost:4567/";
+    @Before
+    public void setUp() throws Exception {
+        HubProperties.setProperty("app.url", "http://localhost:4567/");
+    }
 
     @AfterClass
     public static void tearDown() throws Exception {
@@ -27,8 +31,7 @@ public class AlertConfigsTest {
         final boolean[] created = {false};
         put("/channel/testCreate", (req, res) -> created[0] = true);
         HubProperties.setProperty("alert.channel.config", "testCreate");
-        AlertConfigs alertConfigs = new AlertConfigs(hubAppUrl);
-        alertConfigs.create();
+        AlertConfigs.create();
         assertTrue(created[0]);
     }
 
@@ -39,8 +42,7 @@ public class AlertConfigsTest {
             return "";
         });
         HubProperties.setProperty("alert.channel.config", "testLatestNone");
-        AlertConfigs alertConfigs = new AlertConfigs(hubAppUrl);
-        List<AlertConfig> latest = alertConfigs.getLatest();
+        List<AlertConfig> latest = AlertConfigs.getLatest();
         assertTrue(latest.isEmpty());
     }
 
@@ -50,8 +52,7 @@ public class AlertConfigsTest {
         String configString = IOUtils.toString(resource);
         get("/channel/testLatestConfigs/latest", (req, res) -> configString);
         HubProperties.setProperty("alert.channel.config", "testLatestConfigs");
-        AlertConfigs alertConfigs = new AlertConfigs(hubAppUrl);
-        List<AlertConfig> latest = alertConfigs.getLatest();
+        List<AlertConfig> latest = AlertConfigs.getLatest();
         assertEquals(7, latest.size());
         assertEquals("greaterThanName", latest.get(0).getName());
         for (int i = 0; i < 5; i++) {
