@@ -22,6 +22,7 @@ public class RootResource {
         links.withLink("channel", uriInfo.getRequestUri() + "channel");
         links.withLink("group", uriInfo.getRequestUri() + "group");
         links.withLink("tag", uriInfo.getRequestUri() + "tag");
+        links.withLink("alert", uriInfo.getRequestUri() + "alert");
         links.withLink("health", uriInfo.getRequestUri() + "health");
         return Response.ok(links.build()).build();
     }

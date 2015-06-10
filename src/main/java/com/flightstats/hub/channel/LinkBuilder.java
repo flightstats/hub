@@ -38,10 +38,6 @@ public class LinkBuilder {
         return URI.create(uriInfo.getBaseUri() + "channel/" + channelName);
     }
 
-    static URI buildTagUri(String tag, UriInfo uriInfo) {
-        return URI.create(uriInfo.getBaseUri() + "tag/" + tag);
-    }
-
     public static URI buildItemUri(ContentKey key, URI channelUri) {
         return buildItemUri(key.toUrl(), channelUri);
     }

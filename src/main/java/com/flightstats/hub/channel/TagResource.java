@@ -39,7 +39,7 @@ public class TagResource {
         Iterable<String> tags = channelService.getTags();
         Map<String, URI> tagUriMap = new HashMap<>();
         for (String tag : tags) {
-            tagUriMap.put(tag, LinkBuilder.buildTagUri(tag, uriInfo));
+            tagUriMap.put(tag, URI.create(uriInfo.getBaseUri() + "tag/" + tag));
         }
         Linked<?> result = LinkBuilder.buildLinks(uriInfo, tagUriMap, "tags");
         return Response.ok(result).build();
