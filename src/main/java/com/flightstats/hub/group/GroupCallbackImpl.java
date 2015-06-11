@@ -1,6 +1,7 @@
 package com.flightstats.hub.group;
 
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.cluster.LastContentKey;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.model.ContentKey;
@@ -27,13 +28,16 @@ public class GroupCallbackImpl implements GroupCallback {
     private final WatchManager watchManager;
     private final GroupService groupService;
     private final Provider<GroupCaller> callerProvider;
+    private LastContentKey lastContentKey;
     private final Map<String, GroupCaller> activeGroups = new HashMap<>();
 
     @Inject
-    public GroupCallbackImpl(WatchManager watchManager, GroupService groupService, Provider<GroupCaller> callerProvider) {
+    public GroupCallbackImpl(WatchManager watchManager, GroupService groupService,
+                             Provider<GroupCaller> callerProvider, LastContentKey lastContentKey) {
         this.watchManager = watchManager;
         this.groupService = groupService;
         this.callerProvider = callerProvider;
+        this.lastContentKey = lastContentKey;
         HubServices.registerPreStop(new GroupCallbackService());
     }
 
@@ -121,13 +125,12 @@ public class GroupCallbackImpl implements GroupCallback {
 
     @Override
     public void getStatus(Group group, GroupStatus.GroupStatusBuilder statusBuilder) {
+        statusBuilder.lastCompleted(lastContentKey.get(group.getName(), ContentKey.NONE, GroupCaller.GROUP_LAST_COMPLETED));
         GroupCaller groupCaller = activeGroups.get(group.getName());
         if (groupCaller != null) {
-            statusBuilder.lastCompleted(groupCaller.getLastCompleted());
             statusBuilder.errors(groupCaller.getErrors());
             statusBuilder.inFlight(groupCaller.getInFlight());
         } else {
-            statusBuilder.lastCompleted(ContentKey.NONE);
             statusBuilder.errors(Collections.emptyList());
             statusBuilder.inFlight(Collections.emptyList());
         }
