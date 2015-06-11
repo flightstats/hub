@@ -228,10 +228,6 @@ public class GroupCaller implements Leader {
         return "/GroupLeader/" + group.getName();
     }
 
-    public ContentKey getLastCompleted() {
-        return getLastCompleted(ContentKey.NONE);
-    }
-
     public ContentKey getLastCompleted(ContentKey defaultKey) {
         return lastContentKey.get(group.getName(), defaultKey, GROUP_LAST_COMPLETED);
     }
