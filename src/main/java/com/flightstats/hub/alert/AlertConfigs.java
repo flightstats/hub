@@ -59,6 +59,16 @@ public class AlertConfigs {
     public static void upsert(AlertConfig alertConfig) {
         Map<String, AlertConfig> latest = getLatest();
         latest.put(alertConfig.getName(), alertConfig);
+        update(latest);
+    }
+
+    public static void delete(String name) {
+        Map<String, AlertConfig> latest = getLatest();
+        latest.remove(name);
+        update(latest);
+    }
+
+    private static void update(Map<String, AlertConfig> latest) {
         ObjectNode rootNode = mapper.createObjectNode();
         ObjectNode insertAlerts = rootNode.putObject("insertAlerts");
         for (AlertConfig config : latest.values()) {

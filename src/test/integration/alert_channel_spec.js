@@ -53,7 +53,7 @@ describe(testName, function () {
 
     });
 
-    it('gets config', function (done) {
+    it('gets alert', function (done) {
         request.get({url: selfLink},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -88,6 +88,14 @@ describe(testName, function () {
             });
     });
 
+    it('deletes alert', function (done) {
+        request.del({url: alertUrl + '/' + alertName},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(202);
+                done();
+            });
+    });
 
 });
 
