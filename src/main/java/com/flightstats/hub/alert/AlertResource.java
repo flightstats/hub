@@ -59,10 +59,11 @@ public class AlertResource {
     }
 
     private Response getResponse(AlertConfig alertConfig, int status) {
-        Linked<AlertConfig> linked = Linked.linked(alertConfig)
-                .withLink("self", uriInfo.getRequestUri())
-                .build();
-        return Response.status(status).entity(linked).build();
+        Linked linked = Linked.justLinks().withLink("self", uriInfo.getRequestUri()).build();
+        ObjectNode node = mapper.createObjectNode();
+        alertConfig.writeJson(node);
+        linked.writeJson(node);
+        return Response.status(status).entity(node.toString()).build();
     }
 
     @PUT

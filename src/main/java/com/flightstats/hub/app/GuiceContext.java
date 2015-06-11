@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.flightstats.hub.alert.AlertConfig;
-import com.flightstats.hub.rest.AlertConfigSerializer;
 import com.flightstats.hub.rest.HalLinks;
 import com.flightstats.hub.rest.HalLinksSerializer;
 import com.flightstats.hub.rest.Rfc3339DateSerializer;
@@ -106,7 +104,6 @@ public class GuiceContext {
         SimpleModule module = new SimpleModule();
         module.addSerializer(HalLinks.class, new HalLinksSerializer());
         module.addSerializer(Date.class, new Rfc3339DateSerializer());
-        module.addSerializer(AlertConfig.class, new AlertConfigSerializer());
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(module);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);

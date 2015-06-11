@@ -62,7 +62,7 @@ public class AlertConfigs {
         ObjectNode rootNode = mapper.createObjectNode();
         ObjectNode insertAlerts = rootNode.putObject("insertAlerts");
         for (AlertConfig config : latest.values()) {
-            config.writeJson(insertAlerts);
+            config.writeJson(insertAlerts.putObject(config.getName()));
         }
         logger.info("config {}", rootNode.toString());
         ClientResponse response = RestClient.defaultClient().resource(getUrl())

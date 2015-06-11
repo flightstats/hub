@@ -63,16 +63,16 @@ public class AlertConfig {
     }
 
     public void writeJson(ObjectNode node) {
-        ObjectNode alertConfig = node.putObject(name);
-        alertConfig.put("channel", channel);
-        alertConfig.put("serviceName", serviceName);
-        alertConfig.put("timeWindowMinutes", timeWindowMinutes);
+        node.put("name", name);
+        node.put("channel", channel);
+        node.put("serviceName", serviceName);
+        node.put("timeWindowMinutes", timeWindowMinutes);
         if (isChannelAlert()) {
-            alertConfig.put("type", "channel");
-            alertConfig.put("operator", operator);
-            alertConfig.put("threshold", threshold);
+            node.put("type", "channel");
+            node.put("operator", operator);
+            node.put("threshold", threshold);
         } else {
-            alertConfig.put("type", "group");
+            node.put("type", "group");
         }
     }
 }

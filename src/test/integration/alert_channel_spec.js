@@ -16,7 +16,7 @@ var alertConfig = {
  * 3 - make sure channel alert shows up in list
  * 4 - delete the alert
  *
- * //todo - gfm - 6/10/15 - use source & channel fields
+ * //todo - gfm - 6/10/15 - use source & channel field names
  */
 
 describe(testName, function () {
@@ -30,7 +30,9 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
+                body = JSON.parse(body);
                 console.log('response', body);
+                expect(body.name).toBe(alertName);
                 //todo - gfm - 6/11/15 - verify
                 done();
             });
