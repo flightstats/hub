@@ -1,11 +1,16 @@
 require('./integration_config.js');
 
 var request = require('request');
+var _ = require('lodash');
 var alertName = utils.randomChannelName();
 var testName = __filename;
 
 var alertConfig = {
-
+    "channel": "zomboAlertsConfig",
+    "timeWindowMinutes": 3,
+    "threshold": 10,
+    "operator": ">",
+    "serviceName": "skyhook-test-service"
 };
 
 /**
@@ -21,6 +26,15 @@ var alertConfig = {
 
 describe(testName, function () {
 
+    function verifyBody(body) {
+        expect(body.name).toBe(alertName);
+        _.forOwn(alertConfig, function (value, key) {
+            expect(body[key]).toBe(alertConfig[key]);
+        });
+    }
+
+    var selfLink;
+
     it('creates alert', function (done) {
         request.put({
                 url: alertUrl + '/' + alertName,
@@ -32,11 +46,23 @@ describe(testName, function () {
                 expect(response.statusCode).toBe(201);
                 body = JSON.parse(body);
                 console.log('response', body);
-                expect(body.name).toBe(alertName);
-                //todo - gfm - 6/11/15 - verify
+                verifyBody(body);
+                selfLink = body._links.self.href;
                 done();
             });
 
+    });
+
+    it('gets config', function (done) {
+        request.get({url: selfLink},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                body = JSON.parse(body);
+                verifyBody(body);
+                expect(body._links.self.href).toBe(selfLink);
+                done();
+            });
     });
 
     it('checks for alert in config', function (done) {
@@ -52,6 +78,7 @@ describe(testName, function () {
                     var alert = alerts[i];
                     if (alert.name === alertName) {
                         found = true;
+                        expect(alert.href).toBe(selfLink);
                     }
                 }
                 if (!found) {
@@ -59,7 +86,6 @@ describe(testName, function () {
                 }
                 done();
             });
-
     });
 
 
