@@ -1,6 +1,7 @@
 package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.google.gson.Gson;
 import lombok.Builder;
@@ -58,6 +59,20 @@ public class AlertConfig {
                     count + " " + getOperator() + " " + getThreshold();
         } else {
             return getName() + ": " + getHubDomain() + "group/" + getChannel() + " is " + count + " minutes behind";
+        }
+    }
+
+    public void writeJson(ObjectNode node) {
+        ObjectNode alertConfig = node.putObject(name);
+        alertConfig.put("channel", channel);
+        alertConfig.put("serviceName", serviceName);
+        alertConfig.put("timeWindowMinutes", timeWindowMinutes);
+        if (isChannelAlert()) {
+            alertConfig.put("type", "channel");
+            alertConfig.put("operator", operator);
+            alertConfig.put("threshold", threshold);
+        } else {
+            alertConfig.put("type", "group");
         }
     }
 }

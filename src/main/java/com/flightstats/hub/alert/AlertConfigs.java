@@ -59,13 +59,10 @@ public class AlertConfigs {
     public static void upsert(AlertConfig alertConfig) {
         Map<String, AlertConfig> latest = getLatest();
         latest.put(alertConfig.getName(), alertConfig);
-
-        //todo - gfm - 6/10/15 -
-        //mapper.writeValueAsString()
         ObjectNode rootNode = mapper.createObjectNode();
         ObjectNode insertAlerts = rootNode.putObject("insertAlerts");
         for (AlertConfig config : latest.values()) {
-            insertAlerts.putPOJO(config.getName(), config);
+            config.writeJson(insertAlerts);
         }
         logger.info("config {}", rootNode.toString());
         ClientResponse response = RestClient.defaultClient().resource(getUrl())
