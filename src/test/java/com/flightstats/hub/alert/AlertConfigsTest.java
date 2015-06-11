@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
+import java.util.Map;
 
 import static com.flightstats.hub.test.SparkUtil.*;
 import static org.junit.Assert.*;
@@ -42,7 +42,7 @@ public class AlertConfigsTest {
             return "";
         });
         HubProperties.setProperty("alert.channel.config", "testLatestNone");
-        List<AlertConfig> latest = AlertConfigs.getLatest();
+        Map<String, AlertConfig> latest = AlertConfigs.getLatest();
         assertTrue(latest.isEmpty());
     }
 
@@ -52,18 +52,9 @@ public class AlertConfigsTest {
         String configString = IOUtils.toString(resource);
         get("/channel/testLatestConfigs/latest", (req, res) -> configString);
         HubProperties.setProperty("alert.channel.config", "testLatestConfigs");
-        List<AlertConfig> latest = AlertConfigs.getLatest();
+        Map<String, AlertConfig> latest = AlertConfigs.getLatest();
         assertEquals(7, latest.size());
-        assertEquals("greaterThanName", latest.get(0).getName());
-        for (int i = 0; i < 5; i++) {
-            AlertConfig alertConfig = latest.get(i);
-            assertTrue("expecting channel " + alertConfig, alertConfig.isChannelAlert());
-        }
-        assertEquals("groupAlert1", latest.get(5).getName());
-        for (int i = 5; i < 7; i++) {
-            AlertConfig alertConfig = latest.get(i);
-            assertFalse("expecting group " + alertConfig, alertConfig.isChannelAlert());
-        }
-
+        assertTrue(latest.get("greaterThanName").isChannelAlert());
+        assertFalse(latest.get("groupAlert1").isChannelAlert());
     }
 }

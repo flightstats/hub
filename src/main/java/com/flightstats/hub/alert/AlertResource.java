@@ -12,15 +12,13 @@ import org.joda.time.Minutes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Path("/alert")
@@ -35,7 +33,7 @@ public class AlertResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAlerts() {
-        List<AlertConfig> alertConfigs = AlertConfigs.getLatest();
+        Collection<AlertConfig> alertConfigs = AlertConfigs.getLatest().values();
         Map<String, URI> nameUriMap = new HashMap<>();
         for (AlertConfig alertConfig : alertConfigs) {
             String name = alertConfig.getName();
@@ -46,6 +44,38 @@ public class AlertResource {
             builder.withLink("health", uriInfo.getRequestUri() + "/health");
         });
         return Response.ok(result).build();
+    }
+
+    @GET
+    @Path("/{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAlert(@PathParam("name") String name) {
+        Map<String, AlertConfig> alertConfigs = AlertConfigs.getLatest();
+        if (alertConfigs.containsKey(name)) {
+            AlertConfig alertConfig = alertConfigs.get(name);
+            return getResponse(alertConfig, 200);
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    private Response getResponse(AlertConfig alertConfig, int status) {
+        Linked<AlertConfig> linked = Linked.linked(alertConfig)
+                .withLink("self", uriInfo.getRequestUri())
+                .build();
+        return Response.status(status).entity(linked).build();
+    }
+
+    @PUT
+    @Path("/{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response putAlert(@PathParam("name") String name, String body) {
+        AlertConfig alertConfig = AlertConfig.fromJson(name, body);
+        //todo - gfm - 6/10/15 - validation?
+        //todo - gfm - 6/10/15 - what if error?
+        AlertConfigs.upsert(alertConfig);
+
+        return getResponse(alertConfig, 201);
     }
 
     @GET

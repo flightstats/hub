@@ -72,10 +72,10 @@ public class AlertRunner implements Leader {
     private void doWork() {
         logger.info("doing work");
         long start = System.currentTimeMillis();
-        List<AlertConfig> alertConfigsLatest = AlertConfigs.getLatest();
+        Map<String, AlertConfig> alertConfigsLatest = AlertConfigs.getLatest();
         Map<String, AlertStatus> existingAlertStatus = AlertStatuses.getLatestMap();
         List<Future<AlertStatus>> futures = new ArrayList<>();
-        for (AlertConfig alertConfig : alertConfigsLatest) {
+        for (AlertConfig alertConfig : alertConfigsLatest.values()) {
             AlertStatus alertStatus = existingAlertStatus.get(alertConfig.getName());
             if (alertConfig.isChannelAlert()) {
                 futures.add(threadPool.submit(new ChannelAlertUpdater(alertConfig, alertStatus)));
