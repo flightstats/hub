@@ -81,8 +81,6 @@ public class AlertResource {
 
     @DELETE
     @Path("/{name}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
     public Response deleteAlert(@PathParam("name") String name) {
         AlertConfigs.delete(name);
         return Response.status(202).build();
