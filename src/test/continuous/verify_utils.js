@@ -3,9 +3,8 @@ var _ = require('lodash');
 var async = require('async');
 var request = require('request');
 
-function getExistingAlerts(prefix, existingRules, hubUrl) {
+function getExistingAlerts(prefix, existingRules) {
     it('1 - if ' + prefix + ' rule(s) exist', function (done) {
-        console.log('hubUrl', hubUrl);
         agent
             .get(alertUrl)
             .accept('json')
@@ -22,10 +21,10 @@ function getExistingAlerts(prefix, existingRules, hubUrl) {
     });
 }
 
-function verifyEscalationAlerts(existingRules, hubUrl) {
+function verifyEscalationAlerts(existingRules) {
 
     var escalationAlertsLinks = [];
-    var escalationAlerts = hubUrl + '/channel/escalationAlerts';
+    var escalationAlerts = hubUrlBase + '/channel/escalationAlerts';
 
     it('gets escalationAlerts links for up to two hours', function (done) {
         if (existingRules.length == 0) {
