@@ -6,10 +6,6 @@ var request = require('request');
 var moment = require('moment');
 var _ = require('lodash');
 var testName = __filename;
-var hubUrl = process.env.hubUrl;
-hubUrl = 'http://' + hubUrl;
-console.log(hubUrl);
-alertUrl = hubUrl + '/alert';
 
 
 /**
@@ -26,19 +22,19 @@ alertUrl = hubUrl + '/alert';
  * 5 - create a new rule for channel load_test_1, named verifyGroupAlert-{time}
  */
 
-//jasmine-node --forceexit --captureExceptions --config hubUrl hub-v2.svc.dev verify_group_alerts_spec.js
+//jasmine-node --forceexit --captureExceptions --config hubDomain hub-v2.svc.dev verify_group_alerts_spec.js
 
 describe(testName, function () {
 
     var existingRules = [];
 
-    verify_utils.getExistingAlerts('verifyGroupAlert', existingRules, hubUrl);
+    verify_utils.getExistingAlerts('verifyGroupAlert', existingRules);
 
-    verify_utils.verifyEscalationAlerts(existingRules, hubUrl);
+    verify_utils.verifyEscalationAlerts(existingRules);
 
     utils.putGroup('verifyGroupAlert', {
         callbackUrl: 'http://none',
-        channelUrl: hubUrl + '/channel/load_test_1'
+        channelUrl: hubUrlBase + '/channel/load_test_1'
     }, 200);
 
     it('4 - create a new rule for group , named verifyGroupAlert-{time}', function (done) {

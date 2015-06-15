@@ -6,10 +6,6 @@ var async = require('async');
 var moment = require('moment');
 var _ = require('lodash');
 var testName = __filename;
-var hubUrl = process.env.hubUrl;
-hubUrl = 'http://' + hubUrl;
-console.log(hubUrl);
-alertUrl = hubUrl + '/alert';
 
 /**
  * This should :
@@ -25,16 +21,16 @@ alertUrl = hubUrl + '/alert';
  * 6 - add an item to the channel verifyAlertData
  */
 
-//jasmine-node --forceexit --captureExceptions --config hubUrl hub-v2.svc.dev verify_alerts_spec.js
+//jasmine-node --forceexit --captureExceptions --config hubDomain hub-v2.svc.dev verify_alerts_spec.js
 
 describe(testName, function () {
 
-    var verifyAlertData = hubUrl + '/channel/verifyAlertData';
+    var verifyAlertData = hubUrlBase + '/channel/verifyAlertData';
     var existingRules = [];
 
-    verify_utils.getExistingAlerts('verifyAlert', existingRules, hubUrl);
+    verify_utils.getExistingAlerts('verifyAlert', existingRules);
 
-    verify_utils.verifyEscalationAlerts(existingRules, hubUrl);
+    verify_utils.verifyEscalationAlerts(existingRules);
 
     it('3 - creates verifyAlertData channel', function (done) {
         console.log('verifyAlertData', verifyAlertData);
