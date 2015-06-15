@@ -1,4 +1,5 @@
 require('../integration/integration_config.js');
+var verify_utils = require('verify_utils.js');
 var agent = require('superagent');
 var async = require('async');
 var request = require('request');
@@ -29,103 +30,16 @@ alertUrl = hubUrl + '/alert';
 
 describe(testName, function () {
 
-    var escalationAlerts = hubUrl + '/channel/escalationAlerts';
-
     var existingRules = [];
 
-    it('1 - if verifyGroupAlert rule(s) exist', function (done) {
-        console.log(hubUrl);
-        agent
-            .get(alertUrl)
-            .accept('json')
-            .end(function (err, res) {
-                expect(err).toBe(null);
-                _.forIn(res.body._links.alerts, function (value, key) {
-                    if (_.startsWith(value.name, 'verifyGroupAlert')) {
-                        console.log('found rule', value);
-                        existingRules.push(value);
-                    }
-                });
-                done();
-            })
-    });
+    verify_utils.getExistingAlerts('verifyGroupAlert', existingRules, hubUrl);
 
-    var escalationAlertsLinks = [];
+    verify_utils.verifyEscalationAlerts(existingRules, hubUrl);
 
-    it('gets escalationAlerts links for up to two hours', function (done) {
-        if (existingRules.length == 0) {
-            console.log('no existing rules found');
-            done();
-        } else {
-            agent
-                .get(escalationAlerts + '/time/hour')
-                .accept('json')
-                .end(function (err, res) {
-                    expect(err).toBe(null);
-                    escalationAlertsLinks = escalationAlertsLinks.concat(res.body._links.uris);
-                    agent
-                        .get(res.body._links.previous.href)
-                        .accept('json')
-                        .end(function (err, res) {
-                            expect(err).toBe(null);
-                            escalationAlertsLinks = escalationAlertsLinks.concat(res.body._links.uris);
-                            console.log('escalationAlertsLinks', escalationAlertsLinks);
-                            done();
-                        })
-
-                })
-        }
-    }, 60 * 1000);
-
-    var escalationAlertsItems = [];
-
-    it('loads escalationAlerts items', function (done) {
-        async.eachLimit(escalationAlertsLinks, 20,
-            function (link, callback) {
-                agent
-                    .get(link)
-                    .accept('json')
-                    .end(function (err, res) {
-                        expect(err).toBe(null);
-                        escalationAlertsItems.push(res.body);
-                        callback(err);
-                    })
-
-            }, function (err) {
-                console.log('escalationAlertsItems ', escalationAlertsItems.length)
-                done(err);
-            })
-    }, 60 * 1000);
-
-    it('looks for escalationAlerts items for existing rules', function (done) {
-        existingRules.forEach(function (rule) {
-            var found = 0;
-            escalationAlertsItems.forEach(function (alertItem) {
-                if (_.startsWith(alertItem.description, rule.name)) {
-                    console.log('found alert for rule', found, rule.name, alertItem);
-                    found++;
-                }
-            });
-            expect(found).toBe(1);
-        })
-
-        done();
-    });
-
-    it('creates group verifyGroupAlert', function (done) {
-        request.put({
-                url: hubUrl + '/group/verifyGroupAlert',
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    callbackUrl: 'http://none',
-                    channelUrl: hubUrl + '/channel/load_test_1'
-                })
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                done();
-            });
-    });
+    utils.putGroup('verifyGroupAlert', {
+        callbackUrl: 'http://none',
+        channelUrl: hubUrl + '/channel/load_test_1'
+    }, 200);
 
     it('4 - create a new rule for group , named verifyGroupAlert-{time}', function (done) {
         var name = 'verifyGroupAlert' + moment().format('YYYY-MM-DD-HH-mm-ss');
@@ -147,20 +61,6 @@ describe(testName, function () {
             });
     });
 
-
-    it('deletes pre-existing rules', function (done) {
-        existingRules.forEach(function (rule, index) {
-            console.log('deleting rule', rule.href);
-            request.del(rule.href,
-                function (err, response, body) {
-                    expect(err).toBeNull();
-                    expect(response.statusCode).toBe(202);
-                    console.log('respnse', response.statusCode);
-                    if (index === existingRules.length - 1) {
-                        done();
-                    }
-                });
-        })
-    });
+    verify_utils.deleteExisting(existingRules);
 
 });
