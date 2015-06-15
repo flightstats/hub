@@ -8,7 +8,7 @@
       "serviceName": "sn1"
     },
     "greaterThanEqualName": {
-      "channel": "greaterThanEqual",
+      "source": "greaterThanEqual",
       "timeWindowMinutes": 20,
       "threshold": 2,
       "operator": ">=",

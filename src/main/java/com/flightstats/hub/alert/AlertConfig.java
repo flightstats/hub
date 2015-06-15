@@ -19,9 +19,10 @@ public class AlertConfig {
 
     private transient String hubDomain;
 
-    //todo - gfm - 6/10/15 - rename to source
     private String name;
+    @Deprecated
     private String channel;
+    private String source;
     private String serviceName;
     private String operator;
     private int threshold;
@@ -53,18 +54,26 @@ public class AlertConfig {
         return hubDomain;
     }
 
+    public String getSource() {
+        if (source == null) {
+            return channel;
+        }
+        return source;
+    }
+
     public String getAlertDescription(int count) {
         if (isChannelAlert()) {
-            return getName() + ": " + getHubDomain() + "channel/" + getChannel() + " volume " +
+            return getName() + ": " + getHubDomain() + "channel/" + getSource() + " volume " +
                     count + " " + getOperator() + " " + getThreshold();
         } else {
-            return getName() + ": " + getHubDomain() + "group/" + getChannel() + " is " + count + " minutes behind";
+            return getName() + ": " + getHubDomain() + "group/" + getSource() + " is " + count + " minutes behind";
         }
     }
 
     public void writeJson(ObjectNode node) {
         node.put("name", name);
-        node.put("channel", channel);
+        node.put("channel", getSource());
+        node.put("source", getSource());
         node.put("serviceName", serviceName);
         node.put("timeWindowMinutes", timeWindowMinutes);
         if (isChannelAlert()) {

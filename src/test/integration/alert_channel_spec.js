@@ -21,7 +21,6 @@ var alertConfig = {
  * 3 - make sure channel alert shows up in list
  * 4 - delete the alert
  *
- * //todo - gfm - 6/10/15 - use source & channel field names
  */
 
 describe(testName, function () {

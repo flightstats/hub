@@ -55,7 +55,7 @@ public class ChannelAlertUpdater implements Callable<AlertStatus> {
         LinkedList<AlertStatusHistory> history = alertStatus.getHistory();
         if (history.isEmpty()) {
             AlertStatusHistory alertStatusHistory = getAlertHistory(alertConfig.getHubDomain() +
-                    "channel/" + alertConfig.getChannel() + "/time/" + alertStatus.getPeriod());
+                    "channel/" + alertConfig.getSource() + "/time/" + alertStatus.getPeriod());
             while (history.size() < historyCount) {
                 alertStatusHistory = getAlertHistory(alertStatusHistory.getPrevious());
                 history.addFirst(alertStatusHistory);

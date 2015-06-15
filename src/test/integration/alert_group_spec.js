@@ -6,7 +6,7 @@ var alertName = utils.randomChannelName();
 var testName = __filename;
 
 var alertConfig = {
-    "channel": "locust_load_test_1",
+    "source": "locust_load_test_1",
     "serviceName": "skyhook-test-service",
     "timeWindowMinutes": 8,
     "type": "group"
@@ -20,7 +20,6 @@ var alertConfig = {
  * 3 - make sure group alert shows up in list
  * 4 - delete the alert
  *
- * //todo - gfm - 6/10/15 - use source & channel field names
  */
 
 describe(testName, function () {

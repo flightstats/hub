@@ -54,7 +54,16 @@ public class AlertConfigsTest {
         HubProperties.setProperty("alert.channel.config", "testLatestConfigs");
         Map<String, AlertConfig> latest = AlertConfigs.getLatest();
         assertEquals(7, latest.size());
-        assertTrue(latest.get("greaterThanName").isChannelAlert());
+        AlertConfig greaterThanName = latest.get("greaterThanName");
+        assertTrue(greaterThanName.isChannelAlert());
+        assertEquals("greaterThan", greaterThanName.getSource());
+
+        AlertConfig greaterThanEqualName = latest.get("greaterThanEqualName");
+        assertTrue(greaterThanEqualName.isChannelAlert());
+        assertEquals("greaterThanEqual", greaterThanEqualName.getSource());
+
+        //todo - gfm - 6/15/15 - source
+        assertTrue(greaterThanName.isChannelAlert());
         assertFalse(latest.get("groupAlert1").isChannelAlert());
     }
 }
