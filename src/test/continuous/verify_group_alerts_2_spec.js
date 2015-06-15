@@ -8,6 +8,7 @@ var testName = __filename;
 var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl;
 console.log(hubUrl);
+alertUrl = hubUrlBase + '/alert';
 
 
 /**
