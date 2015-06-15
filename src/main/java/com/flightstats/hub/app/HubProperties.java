@@ -1,6 +1,7 @@
 package com.flightstats.hub.app;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +15,9 @@ public class HubProperties {
     private final static Logger logger = LoggerFactory.getLogger(HubProperties.class);
     private static Properties properties = new Properties();
 
+    public static String getAppUrl() {
+        return StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
+    }
     public static void setProperties(Properties properties) {
         logger.info("setting properties {}", properties);
         HubProperties.properties = properties;

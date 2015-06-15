@@ -2,6 +2,7 @@ package com.flightstats.hub.rest;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
@@ -30,42 +31,6 @@ public class Linked<T> {
     @JsonUnwrapped
     public T getObject() {
         return object;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        Linked linked = (Linked) o;
-
-        if (halLinks != null ? !halLinks.equals(linked.halLinks) : linked.halLinks != null) {
-            return false;
-        }
-        if (object != null ? !object.equals(linked.object) : linked.object != null) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = halLinks != null ? halLinks.hashCode() : 0;
-        result = 31 * result + (object != null ? object.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "Linked{" +
-                "halLinks=" + halLinks +
-                ", object=" + object +
-                '}';
     }
 
     public static <T> Builder<T> linked(T object) {
@@ -103,6 +68,14 @@ public class Linked<T> {
 
         public Linked<T> build() {
             return new Linked<>(new HalLinks(links, multiLinks), object);
+        }
+    }
+
+    public void writeJson(ObjectNode node) {
+        ObjectNode links = node.putObject("_links");
+        for (HalLink link : halLinks.getLinks()) {
+            ObjectNode linkNode = links.putObject(link.getName());
+            linkNode.put("href", link.getUri().toString());
         }
     }
 }

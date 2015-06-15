@@ -33,12 +33,8 @@ public class AlertRunner implements Leader {
     private final int sleepPeriod;
     private final String hubAppUrl;
     private final ExecutorService threadPool;
-    private final AlertConfigs alertConfigs;
-    private final AlertStatuses alertStatuses;
-
     private CuratorFramework curator;
     private CuratorLeader leader;
-
 
     @Inject
     public AlertRunner(CuratorFramework curator) {
@@ -47,8 +43,7 @@ public class AlertRunner implements Leader {
         threadPool = Executors.newFixedThreadPool(20, threadFactory);
         hubAppUrl = StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
         sleepPeriod = HubProperties.getProperty("alert.sleep.millis", 60 * 1000);
-        alertConfigs = new AlertConfigs(hubAppUrl);
-        alertStatuses = new AlertStatuses(hubAppUrl);
+
         if (HubProperties.getProperty("alert.run", true)) {
             logger.info("starting with url {} {} ", hubAppUrl, sleepPeriod);
             HubServices.register(new AlertRunnerService(), HubServices.TYPE.POST_START);
@@ -77,10 +72,10 @@ public class AlertRunner implements Leader {
     private void doWork() {
         logger.info("doing work");
         long start = System.currentTimeMillis();
-        List<AlertConfig> alertConfigsLatest = alertConfigs.getLatest();
-        Map<String, AlertStatus> existingAlertStatus = alertStatuses.getLatest();
+        Map<String, AlertConfig> alertConfigsLatest = AlertConfigs.getLatest();
+        Map<String, AlertStatus> existingAlertStatus = AlertStatuses.getLatestMap();
         List<Future<AlertStatus>> futures = new ArrayList<>();
-        for (AlertConfig alertConfig : alertConfigsLatest) {
+        for (AlertConfig alertConfig : alertConfigsLatest.values()) {
             AlertStatus alertStatus = existingAlertStatus.get(alertConfig.getName());
             if (alertConfig.isChannelAlert()) {
                 futures.add(threadPool.submit(new ChannelAlertUpdater(alertConfig, alertStatus)));
@@ -97,7 +92,7 @@ public class AlertRunner implements Leader {
                 logger.warn("unable to get status", e);
             }
         }
-        alertStatuses.saveStatus(updatedAlertStatus);
+        AlertStatuses.saveStatus(updatedAlertStatus);
         doSleep(start);
     }
 
@@ -130,8 +125,8 @@ public class AlertRunner implements Leader {
 
     private void createChannels() {
         try {
-            alertConfigs.create();
-            alertStatuses.create();
+            AlertConfigs.create();
+            AlertStatuses.create();
             AlertSender.create(hubAppUrl);
         } catch (Exception e) {
             logger.warn("hate filled donut", e);

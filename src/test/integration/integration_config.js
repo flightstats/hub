@@ -25,6 +25,7 @@ hubUrlBase = 'http://' + hubDomain;
 
 channelUrl = hubUrlBase + '/channel';
 groupUrl = hubUrlBase + '/group';
+alertUrl = hubUrlBase + '/alert';
 callbackDomain = 'http://' + ipAddress;
 stableOffset = 5;
 

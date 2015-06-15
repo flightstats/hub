@@ -1,4 +1,5 @@
 require('../integration/integration_config.js');
+var verify_utils = require('verify_utils.js');
 var agent = require('superagent');
 var async = require('async');
 var request = require('request');
@@ -8,6 +9,7 @@ var testName = __filename;
 var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl;
 console.log(hubUrl);
+alertUrl = hubUrl + '/alert';
 
 
 /**
@@ -28,131 +30,37 @@ console.log(hubUrl);
 
 describe(testName, function () {
 
-    var escalationAlerts = hubUrl + '/channel/escalationAlerts';
-    var zomboAlertsConfig = hubUrl + '/channel/zomboAlertsConfig';
-    var dataChannel = hubUrl + '/channel/load_test_1';
-    var zomboAlertStatus = hubUrl + '/channel/zomboAlertStatus';
-    var verifyGroupAlert = hubUrl + '/group/verifyGroupAlert';
-
     var existingRules = [];
 
-    it('1 - if verifyGroupAlert rule(s) exist', function (done) {
-        agent
-            .get(zomboAlertsConfig + '/latest')
-            .accept('json')
-            .end(function (err, res) {
-                expect(err).toBe(null);
-                _.forIn(res.body.insertAlerts, function (value, key) {
-                    if (_.startsWith(key, 'verifyGroupAlert')) {
-                        console.log('found rule', key);
-                        existingRules.push(key);
-                    }
-                });
-                done();
-            })
-    });
+    verify_utils.getExistingAlerts('verifyGroupAlert', existingRules, hubUrl);
 
-    var escalationAlertsLinks = [];
+    verify_utils.verifyEscalationAlerts(existingRules, hubUrl);
 
-    it('gets escalationAlerts links', function (done) {
-        if (existingRules.length == 0) {
-            done();
-        } else {
-            agent
-                .get(escalationAlerts + '/time/hour')
-                .accept('json')
-                .end(function (err, res) {
-                    expect(err).toBe(null);
-                    escalationAlertsLinks = escalationAlertsLinks.concat(res.body._links.uris);
-                    agent
-                        .get(res.body._links.previous.href)
-                        .accept('json')
-                        .end(function (err, res) {
-                            expect(err).toBe(null);
-                            escalationAlertsLinks = escalationAlertsLinks.concat(res.body._links.uris);
-                            console.log('escalationAlertsLinks', escalationAlertsLinks);
-                            done();
-                        })
+    utils.putGroup('verifyGroupAlert', {
+        callbackUrl: 'http://none',
+        channelUrl: hubUrl + '/channel/load_test_1'
+    }, 200);
 
-                })
-        }
-    }, 60 * 1000);
-
-    var escalationAlertsItems = [];
-
-    it('loads escalationAlerts items', function (done) {
-        async.eachLimit(escalationAlertsLinks, 20,
-            function (link, callback) {
-                agent
-                    .get(link)
-                    .accept('json')
-                    .end(function (err, res) {
-                        expect(err).toBe(null);
-                        escalationAlertsItems.push(res.body);
-                        callback(err);
-                    })
-
-            }, function (err) {
-                console.log('escalationAlertsItems ', escalationAlertsItems.length)
-                done(err);
-            })
-    }, 60 * 1000);
-
-    it('looks for escalationAlerts items for existing rules', function (done) {
-        existingRules.forEach(function (rule) {
-            var found = 0;
-            escalationAlertsItems.forEach(function (alertItem) {
-                if (_.startsWith(alertItem.description, rule)) {
-                    console.log('found alert for rule', found, rule, alertItem);
-                    found++;
-                }
-            });
-            expect(found).toBe(1);
-        })
-
-        done();
-    });
-
-    it('creates group verifyGroupAlert', function (done) {
+    it('4 - create a new rule for group , named verifyGroupAlert-{time}', function (done) {
+        var name = 'verifyGroupAlert' + moment().format('YYYY-MM-DD-HH-mm-ss');
+        console.log('adding group alert', name);
         request.put({
-                url: verifyGroupAlert,
+                url: alertUrl + '/' + name,
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
-                    callbackUrl: 'http://none',
-                    channelUrl: dataChannel
+                    source: 'verifyGroupAlert',
+                    serviceName: 'test',
+                    timeWindowMinutes: 1,
+                    type: 'group'
                 })
             },
             function (err, response, body) {
                 expect(err).toBeNull();
+                expect(response.statusCode).toBe(201);
                 done();
             });
     });
 
-    it('4 - create a new rule for group , named verifyGroupAlert-{time}', function (done) {
-        var name = 'verifyGroupAlert' + moment().format('YYYY-MM-DD-HH-mm-ss');
-        agent
-            .get(zomboAlertsConfig + '/latest?stable=false')
-            .accept('json')
-            .end(function (err, res) {
-                expect(err).toBe(null);
-                //2 - delete all rules whose names start with "verifyGroupAlert"
-                existingRules.forEach(function (name) {
-                    delete res.body.insertAlerts[name];
-                })
-                res.body.insertAlerts[name] = {
-                    channel: 'verifyGroupAlert', serviceName: 'test', timeWindowMinutes: 1, type: 'group'
-                };
-                console.log('body', res.body.insertAlerts);
-                agent
-                    .post(zomboAlertsConfig)
-                    .type('json')
-                    .accept('json')
-                    .send(res.body)
-                    .end(function (err, res) {
-                        expect(err).toBe(null);
-                        done();
-                    })
-            })
-    }, 60 * 1000);
+    verify_utils.deleteExisting(existingRules);
 
 });

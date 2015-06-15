@@ -20,14 +20,18 @@ import java.util.concurrent.TimeUnit;
 public class RestClient {
 
     private final static Logger logger = LoggerFactory.getLogger(RestClient.class);
-    private final static Client client = RestClient.createClient(15, 60);
-    ;
+    private final static Client client = RestClient.createClient(15, 60, true);
+    private final static Client noRedirect = RestClient.createClient(15, 60, false);
 
     public static Client defaultClient() {
         return client;
     }
 
-    public static Client createClient(int connectTimeout, int readTimeout) {
+    public static Client noRedirectClient() {
+        return noRedirect;
+    }
+
+    public static Client createClient(int connectTimeout, int readTimeout, boolean followRedirects) {
         try {
             TrustManager[] certs = new TrustManager[]{
                     new X509TrustManager() {
@@ -57,7 +61,7 @@ public class RestClient {
             Client client = Client.create(config);
             client.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(connectTimeout));
             client.setReadTimeout((int) TimeUnit.SECONDS.toMillis(readTimeout));
-            client.setFollowRedirects(true);
+            client.setFollowRedirects(followRedirects);
             return client;
         } catch (Exception e) {
             logger.warn("can't create client ", e);

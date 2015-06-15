@@ -91,7 +91,7 @@ public class GroupCaller implements Leader {
             logger.info("group is missing, exiting " + group.getName());
             return;
         }
-        this.client = RestClient.createClient(30, 120);
+        this.client = RestClient.createClient(30, 120, true);
         callbackQueue = queueProvider.get();
         try {
             ContentKey startingKey = group.getStartingKey();

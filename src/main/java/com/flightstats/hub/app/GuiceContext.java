@@ -25,6 +25,7 @@ import static com.sun.jersey.api.core.PackagesResourceConfig.*;
 
 public class GuiceContext {
     private final static Logger logger = LoggerFactory.getLogger(GuiceContext.class);
+    public static ObjectMapper mapper = objectMapper();
 
     public static HubGuiceServlet construct() {
         Map<String, String> jerseyProps = new HashMap<>();
@@ -40,7 +41,6 @@ public class GuiceContext {
             @Override
             protected void configureServlets() {
                 Names.bindProperties(binder(), HubProperties.getProperties());
-                ObjectMapper mapper = objectMapper();
                 bind(ObjectMapper.class).toInstance(mapper);
                 bind(ObjectMapperResolver.class).toInstance(new ObjectMapperResolver(mapper));
                 bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);

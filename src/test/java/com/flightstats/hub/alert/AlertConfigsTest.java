@@ -3,18 +3,22 @@ package com.flightstats.hub.alert;
 import com.flightstats.hub.app.HubProperties;
 import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
+import java.util.Map;
 
 import static com.flightstats.hub.test.SparkUtil.*;
 import static org.junit.Assert.*;
 
 public class AlertConfigsTest {
 
-    private String hubAppUrl = "http://localhost:4567/";
+    @Before
+    public void setUp() throws Exception {
+        HubProperties.setProperty("app.url", "http://localhost:4567/");
+    }
 
     @AfterClass
     public static void tearDown() throws Exception {
@@ -27,8 +31,7 @@ public class AlertConfigsTest {
         final boolean[] created = {false};
         put("/channel/testCreate", (req, res) -> created[0] = true);
         HubProperties.setProperty("alert.channel.config", "testCreate");
-        AlertConfigs alertConfigs = new AlertConfigs(hubAppUrl);
-        alertConfigs.create();
+        AlertConfigs.create();
         assertTrue(created[0]);
     }
 
@@ -39,8 +42,7 @@ public class AlertConfigsTest {
             return "";
         });
         HubProperties.setProperty("alert.channel.config", "testLatestNone");
-        AlertConfigs alertConfigs = new AlertConfigs(hubAppUrl);
-        List<AlertConfig> latest = alertConfigs.getLatest();
+        Map<String, AlertConfig> latest = AlertConfigs.getLatest();
         assertTrue(latest.isEmpty());
     }
 
@@ -50,19 +52,18 @@ public class AlertConfigsTest {
         String configString = IOUtils.toString(resource);
         get("/channel/testLatestConfigs/latest", (req, res) -> configString);
         HubProperties.setProperty("alert.channel.config", "testLatestConfigs");
-        AlertConfigs alertConfigs = new AlertConfigs(hubAppUrl);
-        List<AlertConfig> latest = alertConfigs.getLatest();
+        Map<String, AlertConfig> latest = AlertConfigs.getLatest();
         assertEquals(7, latest.size());
-        assertEquals("greaterThanName", latest.get(0).getName());
-        for (int i = 0; i < 5; i++) {
-            AlertConfig alertConfig = latest.get(i);
-            assertTrue("expecting channel " + alertConfig, alertConfig.isChannelAlert());
-        }
-        assertEquals("groupAlert1", latest.get(5).getName());
-        for (int i = 5; i < 7; i++) {
-            AlertConfig alertConfig = latest.get(i);
-            assertFalse("expecting group " + alertConfig, alertConfig.isChannelAlert());
-        }
+        AlertConfig greaterThanName = latest.get("greaterThanName");
+        assertTrue(greaterThanName.isChannelAlert());
+        assertEquals("greaterThan", greaterThanName.getSource());
 
+        AlertConfig greaterThanEqualName = latest.get("greaterThanEqualName");
+        assertTrue(greaterThanEqualName.isChannelAlert());
+        assertEquals("greaterThanEqual", greaterThanEqualName.getSource());
+
+        //todo - gfm - 6/15/15 - source
+        assertTrue(greaterThanName.isChannelAlert());
+        assertFalse(latest.get("groupAlert1").isChannelAlert());
     }
 }

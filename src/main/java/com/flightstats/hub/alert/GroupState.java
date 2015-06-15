@@ -22,14 +22,14 @@ public class GroupState {
     private final static ObjectMapper mapper = new ObjectMapper();
 
     public static GroupStatus getGroupStatus(AlertConfig alertConfig) {
-        String url = alertConfig.getHubDomain() + "group/" + alertConfig.getChannel();
+        String url = alertConfig.getHubDomain() + "group/" + alertConfig.getSource();
         logger.debug("calling {}", url);
         ClientResponse response = client.resource(url).get(ClientResponse.class);
         if (response.getStatus() >= 400) {
-            logger.warn("unable to get latest from {} {}", alertConfig.getChannel(), response);
+            logger.warn("unable to get latest from {} {}", alertConfig.getSource(), response);
         } else {
             String config = response.getEntity(String.class);
-            logger.trace("{} config {}", alertConfig.getChannel(), config);
+            logger.trace("{} config {}", alertConfig.getSource(), config);
             try {
                 return parse(config);
             } catch (IOException e) {
