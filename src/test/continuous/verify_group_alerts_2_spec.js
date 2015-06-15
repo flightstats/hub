@@ -25,7 +25,7 @@ alertUrl = hubUrl + '/alert';
  * 5 - create a new rule for channel load_test_1, named verifyGroupAlert-{time}
  */
 
-//jasmine-node --forceexit --captureExceptions --config hubUrl hub-v2.svc.dev verify_group_alerts_2_spec.js
+//jasmine-node --forceexit --captureExceptions --config hubUrl hub-v2.svc.dev verify_group_alerts_spec.js
 
 describe(testName, function () {
 
