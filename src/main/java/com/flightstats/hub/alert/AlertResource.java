@@ -59,7 +59,10 @@ public class AlertResource {
     }
 
     private Response getResponse(AlertConfig alertConfig, int status) {
-        Linked linked = Linked.justLinks().withLink("self", uriInfo.getRequestUri()).build();
+        Linked linked = Linked.justLinks()
+                .withLink("self", uriInfo.getRequestUri())
+                .withLink("status", uriInfo.getRequestUri() + "/status")
+                .build();
         ObjectNode node = mapper.createObjectNode();
         alertConfig.writeJson(node);
         linked.writeJson(node);
@@ -73,9 +76,7 @@ public class AlertResource {
     public Response putAlert(@PathParam("name") String name, String body) {
         AlertConfig alertConfig = AlertConfig.fromJson(name, body);
         //todo - gfm - 6/10/15 - validation?
-        //todo - gfm - 6/10/15 - what if error?
         AlertConfigs.upsert(alertConfig);
-
         return getResponse(alertConfig, 201);
     }
 
@@ -105,6 +106,20 @@ public class AlertResource {
             objectNode.put("latestStatusKey", "none");
         }
         return Response.status(500).entity(objectNode.toString()).build();
+    }
+
+    @GET
+    @Path("/{name}/status")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAlertStatus(@PathParam("name") String name) {
+        Map<String, AlertStatus> alertStatusMap = AlertStatuses.getLatestMap();
+        if (alertStatusMap.containsKey(name)) {
+            Linked linked = Linked.linked(alertStatusMap.get(name))
+                    .withLink("self", uriInfo.getRequestUri())
+                    .build();
+            return Response.status(200).entity(linked).build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 
 }
