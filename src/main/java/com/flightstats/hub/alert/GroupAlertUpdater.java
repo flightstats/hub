@@ -68,7 +68,6 @@ public class GroupAlertUpdater implements Callable<AlertStatus> {
         AlertStatusHistory history = AlertStatusHistory.builder()
                 .href(group.getChannelUrl() + "/" + contentKey.toUrl())
                 .name(name)
-                .items(0)
                 .build();
         alertStatus.getHistory().add(history);
     }

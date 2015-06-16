@@ -12,7 +12,7 @@ import lombok.ToString;
 public class AlertStatusHistory {
 
     private String href;
-    private int items;
+    private Integer items;
     private String name;
 
     private transient String next;
