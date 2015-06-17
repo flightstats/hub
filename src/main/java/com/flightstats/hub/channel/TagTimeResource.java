@@ -10,15 +10,15 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@Path("/channel/{channel: .*}/time")
-public class ChannelTimeResource {
+@Path("/tag/{tag: .*}/time")
+public class TagTimeResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
+    private final static Logger logger = LoggerFactory.getLogger(TagTimeResource.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private final UriInfo uriInfo;
 
     @Inject
-    public ChannelTimeResource(UriInfo uriInfo) {
+    public TagTimeResource(UriInfo uriInfo) {
         this.uriInfo = uriInfo;
     }
 
@@ -51,5 +51,4 @@ public class ChannelTimeResource {
     public Response getDay(@QueryParam("stable") @DefaultValue("true") boolean stable) {
         return TimeLinkUtil.getDay(stable, uriInfo);
     }
-
 }
