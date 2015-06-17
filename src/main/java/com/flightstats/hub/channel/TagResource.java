@@ -1,7 +1,6 @@
 package com.flightstats.hub.channel;
 
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.rest.Linked;
 
@@ -33,7 +32,6 @@ public class TagResource {
     }
 
     @GET
-    @EventTimed(name = "tags.get")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
         Iterable<String> tags = channelService.getTags();
@@ -47,13 +45,24 @@ public class TagResource {
 
     @GET
     @Path("/{tag}")
-    @EventTimed(name = "tag.ALL.get")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getChannels(@PathParam("tag") String tag) {
+    public Response getTagLinks(@PathParam("tag") String tag) {
         Iterable<ChannelConfig> channels = channelService.getChannels(tag);
-        Linked<?> result = LinkBuilder.build(channels, uriInfo);
+        Map<String, URI> mappedUris = new HashMap<>();
+        for (ChannelConfig channelConfig : channels) {
+            String channelName = channelConfig.getName();
+            mappedUris.put(channelName, LinkBuilder.buildChannelUri(channelName, uriInfo));
+        }
+        Linked<?> result = LinkBuilder.buildLinks(mappedUris, "channels", builder -> {
+            String uri = uriInfo.getRequestUri().toString();
+            builder.withLink("self", uriInfo.getRequestUri())
+                    //.withLink("latest", uri + "/latest")
+                    //.withLink("earliest", uri + "/earliest")
+                    //.withLink("status", uri + "/status")
+                    .withLink("time", uri + "/time");
+
+        });
         return Response.ok(result).build();
     }
-
 
 }
