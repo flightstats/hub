@@ -40,10 +40,10 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-@Path("/channel/{channel}/{Y}/{M}/{D}/")
-public class ChannelContentResource {
+@Path("/tag/{tag}")
+public class TagContentResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
+    private final static Logger logger = LoggerFactory.getLogger(TagContentResource.class);
 
     private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
@@ -58,9 +58,10 @@ public class ChannelContentResource {
     @Inject
     MetricsSender sender;
 
+    @Path("/{Y}/{M}/{D}/")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public Response getDay(@PathParam("channel") String channel,
+    public Response getDay(@PathParam("tag") String tag,
                            @PathParam("Y") int year,
                            @PathParam("M") int month,
                            @PathParam("D") int day,
@@ -68,13 +69,13 @@ public class ChannelContentResource {
                            @QueryParam("trace") @DefaultValue("false") boolean trace,
                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getResponse(channel, startTime, location, trace, stable, Unit.DAYS);
+        return getResponse(tag, startTime, location, trace, stable, Unit.DAYS);
     }
 
-    @Path("/{hour}")
+    @Path("/{Y}/{M}/{D}/{hour}")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public Response getHour(@PathParam("channel") String channel,
+    public Response getHour(@PathParam("tag") String tag,
                             @PathParam("Y") int year,
                             @PathParam("M") int month,
                             @PathParam("D") int day,
@@ -83,13 +84,13 @@ public class ChannelContentResource {
                             @QueryParam("trace") @DefaultValue("false") boolean trace,
                             @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getResponse(channel, startTime, location, trace, stable, Unit.HOURS);
+        return getResponse(tag, startTime, location, trace, stable, Unit.HOURS);
     }
 
-    @Path("/{h}/{minute}")
+    @Path("/{Y}/{M}/{D}/{h}/{minute}")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public Response getMinute(@PathParam("channel") String channel,
+    public Response getMinute(@PathParam("tag") String tag,
                               @PathParam("Y") int year,
                               @PathParam("M") int month,
                               @PathParam("D") int day,
@@ -99,13 +100,13 @@ public class ChannelContentResource {
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getResponse(channel, startTime, location, trace, stable, Unit.MINUTES);
+        return getResponse(tag, startTime, location, trace, stable, Unit.MINUTES);
     }
 
-    @Path("/{h}/{m}/{second}")
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{second}")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public Response getSecond(@PathParam("channel") String channel,
+    public Response getSecond(@PathParam("tag") String tag,
                               @PathParam("Y") int year,
                               @PathParam("M") int month,
                               @PathParam("D") int day,
@@ -116,7 +117,7 @@ public class ChannelContentResource {
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getResponse(channel, startTime, location, trace, stable, Unit.SECONDS);
+        return getResponse(tag, startTime, location, trace, stable, Unit.SECONDS);
     }
 
     public Response getResponse(String channelName, DateTime startTime, String location, boolean trace, boolean stable,
@@ -151,10 +152,12 @@ public class ChannelContentResource {
         return Response.ok(root).build();
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}")
+    @Path("/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}")
     @GET
     @EventTimed(name = "channel.ALL.get")
-    public Response getValue(@PathParam("channel") String channel, @PathParam("Y") int year,
+    public Response getValue(@PathParam("tag") String tag,
+                             @PathParam("channel") String channel,
+                             @PathParam("Y") int year,
                              @PathParam("M") int month,
                              @PathParam("D") int day,
                              @PathParam("h") int hour,
@@ -164,6 +167,7 @@ public class ChannelContentResource {
                              @PathParam("hash") String hash,
                              @HeaderParam("Accept") String accept, @HeaderParam("User") String user
     ) {
+        //todo - gfm - 6/17/15 - shares code with ChannelContentResource
         long start = System.currentTimeMillis();
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         Request request = Request.builder()
@@ -200,9 +204,10 @@ public class ChannelContentResource {
         return builder.build();
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/next")
+    @Path("/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/next")
     @GET
-    public Response getNext(@PathParam("channel") String channel,
+    public Response getNext(@PathParam("tag") String tag,
+                            @PathParam("channel") String channel,
                             @PathParam("Y") int year,
                             @PathParam("M") int month,
                             @PathParam("D") int day,
@@ -215,10 +220,11 @@ public class ChannelContentResource {
         return directional(channel, year, month, day, hour, minute, second, millis, hash, stable, true);
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/next/{count}")
+    @Path("/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/next/{count}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getNextCount(@PathParam("channel") String channel,
+    public Response getNextCount(@PathParam("tag") String tag,
+                                 @PathParam("channel") String channel,
                                  @PathParam("Y") int year,
                                  @PathParam("M") int month,
                                  @PathParam("D") int day,
@@ -244,9 +250,10 @@ public class ChannelContentResource {
         return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/previous")
+    @Path("/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/previous")
     @GET
-    public Response getPrevious(@PathParam("channel") String channel,
+    public Response getPrevious(@PathParam("tag") String tag,
+                                @PathParam("channel") String channel,
                                 @PathParam("Y") int year,
                                 @PathParam("M") int month,
                                 @PathParam("D") int day,
@@ -259,10 +266,11 @@ public class ChannelContentResource {
         return directional(channel, year, month, day, hour, minute, second, millis, hash, stable, false);
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/previous/{count}")
+    @Path("/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/previous/{count}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getPreviousCount(@PathParam("channel") String channel,
+    public Response getPreviousCount(@PathParam("tag") String tag,
+                                     @PathParam("channel") String channel,
                                      @PathParam("Y") int year,
                                      @PathParam("M") int month,
                                      @PathParam("D") int day,
