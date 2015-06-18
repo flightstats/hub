@@ -46,7 +46,7 @@ public class S3Config {
         logger.info("starting work");
         Iterable<ChannelConfig> channels = channelConfigDao.getChannels();
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
-        curatorLock.runWithLock(lockable, "/S3ConfigLock/", 1, TimeUnit.MINUTES);
+        curatorLock.runWithLock(lockable, "/S3ConfigLock", 1, TimeUnit.MINUTES);
         return lockable.size;
     }
 
