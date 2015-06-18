@@ -7,6 +7,7 @@ import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelConfigDao;
 import com.flightstats.hub.model.ChannelConfig;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ public class S3Config {
         this.channelConfigDao = channelConfigDao;
         this.s3BucketName = s3BucketName.getS3BucketName();
         HubServices.register(new S3ConfigInit());
+        HubServices.register(new S3ConfigSingle());
     }
 
     public void run() {
@@ -46,8 +48,22 @@ public class S3Config {
         logger.info("starting work");
         Iterable<ChannelConfig> channels = channelConfigDao.getChannels();
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
-        curatorLock.runWithLock(lockable, "/S3ConfigLock/", 1, TimeUnit.MINUTES);
+        curatorLock.runWithLock(lockable, "/S3ConfigLock", 1, TimeUnit.MINUTES);
+        logger.info("updated {} items", lockable.size);
         return lockable.size;
+    }
+
+    private class S3ConfigSingle extends AbstractIdleService {
+
+        @Override
+        protected void startUp() throws Exception {
+            doWork();
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            //do nothing
+        }
     }
 
     private class S3ConfigInit extends AbstractScheduledService {
