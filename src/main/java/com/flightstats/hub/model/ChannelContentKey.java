@@ -7,13 +7,22 @@ import lombok.ToString;
 @EqualsAndHashCode
 @Getter
 @ToString
-public class ChannelContentKey {
+public class ChannelContentKey implements Comparable<ChannelContentKey> {
 
-    private final String channel;
     private final ContentKey contentKey;
+    private final String channel;
 
     public ChannelContentKey(String channel, ContentKey contentKey) {
         this.channel = channel;
         this.contentKey = contentKey;
+    }
+
+    @Override
+    public int compareTo(ChannelContentKey o) {
+        int diff = contentKey.compareTo(o.getContentKey());
+        if (diff == 0) {
+            diff = channel.compareTo(o.getChannel());
+        }
+        return diff;
     }
 }

@@ -3,20 +3,15 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.Request;
-import com.flightstats.hub.metrics.EventTimed;
+import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.metrics.MetricsSender;
-import com.flightstats.hub.model.*;
-import com.flightstats.hub.rest.Headers;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.io.ByteStreams;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.rest.Linked;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
-import com.sun.jersey.api.Responses;
-import com.sun.jersey.core.header.MediaTypes;
-import net.logstash.logback.encoder.org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
@@ -27,18 +22,13 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-import static com.flightstats.hub.util.TimeUtil.*;
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.SEE_OTHER;
+import static com.flightstats.hub.util.TimeUtil.Unit;
 
 @Path("/tag/{tag}")
 public class TagContentResource {
@@ -52,11 +42,33 @@ public class TagContentResource {
     @Inject
     private UriInfo uriInfo;
     @Inject
-    private ChannelService channelService;
+    private TagService tagService;
     @Inject
     private LinkBuilder linkBuilder;
     @Inject
     MetricsSender sender;
+
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getTagLinks(@PathParam("tag") String tag) {
+        Iterable<ChannelConfig> channels = tagService.getChannels(tag);
+        Map<String, URI> mappedUris = new HashMap<>();
+        for (ChannelConfig channelConfig : channels) {
+            String channelName = channelConfig.getName();
+            mappedUris.put(channelName, LinkBuilder.buildChannelUri(channelName, uriInfo));
+        }
+        Linked<?> result = LinkBuilder.buildLinks(mappedUris, "channels", builder -> {
+            String uri = uriInfo.getRequestUri().toString();
+            builder.withLink("self", uriInfo.getRequestUri())
+                    //.withLink("latest", uri + "/latest")
+                    //.withLink("earliest", uri + "/earliest")
+                    //.withLink("status", uri + "/status")
+                    .withLink("time", uri + "/time");
+
+        });
+        return Response.ok(result).build();
+    }
 
     @Path("/{Y}/{M}/{D}/")
     @Produces(MediaType.APPLICATION_JSON)
@@ -120,239 +132,36 @@ public class TagContentResource {
         return getResponse(tag, startTime, location, trace, stable, Unit.SECONDS);
     }
 
-    public Response getResponse(String channelName, DateTime startTime, String location, boolean trace, boolean stable,
+    public Response getResponse(String tag, DateTime startTime, String location, boolean trace, boolean stable,
                                 Unit unit) {
         TimeQuery query = TimeQuery.builder()
-                .channelName(channelName)
+                .tagName(tag)
                 .startTime(startTime)
                 .stable(stable)
                 .unit(unit)
                 .location(Location.valueOf(location))
                 .build();
         query.trace(trace);
-        Collection<ContentKey> keys = channelService.queryByTime(query);
+        Collection<ChannelContentKey> keys = tagService.queryByTime(query);
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
-        DateTime current = stable ? stable() : now();
         DateTime next = startTime.plus(unit.getDuration());
         DateTime previous = startTime.minus(unit.getDuration());
-        if (next.isBefore(current)) {
-            links.putObject("next").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(next) + "?stable=" + stable);
+        if (next.isBefore(TimeUtil.time(stable))) {
+            links.putObject("next").put("href", uriInfo.getBaseUri() + "tag/" + tag + "/" + unit.format(next) + "?stable=" + stable);
         }
-        links.putObject("previous").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(previous) + "?stable=" + stable);
+        links.putObject("previous").put("href", uriInfo.getBaseUri() + "tag/" + tag + "/" + unit.format(previous) + "?stable=" + stable);
         ArrayNode ids = links.putArray("uris");
-        URI channelUri = LinkBuilder.buildChannelUri(channelName, uriInfo);
-        for (ContentKey key : keys) {
-            URI uri = LinkBuilder.buildItemUri(key, channelUri);
+        for (ChannelContentKey key : keys) {
+            URI channelUri = LinkBuilder.buildChannelUri(key.getChannel(), uriInfo);
+            //todo - gfm - 6/18/15 - add ?tag=tagName
+            URI uri = LinkBuilder.buildItemUri(key.getContentKey(), channelUri);
             ids.add(uri.toString());
         }
         query.getTraces().output(root);
         return Response.ok(root).build();
     }
-
-    @Path("/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}")
-    @GET
-    @EventTimed(name = "channel.ALL.get")
-    public Response getValue(@PathParam("tag") String tag,
-                             @PathParam("channel") String channel,
-                             @PathParam("Y") int year,
-                             @PathParam("M") int month,
-                             @PathParam("D") int day,
-                             @PathParam("h") int hour,
-                             @PathParam("m") int minute,
-                             @PathParam("s") int second,
-                             @PathParam("ms") int millis,
-                             @PathParam("hash") String hash,
-                             @HeaderParam("Accept") String accept, @HeaderParam("User") String user
-    ) {
-        //todo - gfm - 6/17/15 - shares code with ChannelContentResource
-        long start = System.currentTimeMillis();
-        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        Request request = Request.builder()
-                .channel(channel)
-                .key(key)
-                .user(user)
-                .uri(uriInfo.getRequestUri())
-                .build();
-        Optional<Content> optionalResult = channelService.getValue(request);
-
-        if (!optionalResult.isPresent()) {
-            logger.warn("404 content not found {} {}", channel, key);
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-        Content content = optionalResult.get();
-
-        MediaType actualContentType = getContentType(content);
-
-        if (contentTypeIsNotCompatible(accept, actualContentType)) {
-            return Responses.notAcceptable().build();
-        }
-        Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
-
-        builder.type(actualContentType)
-                .header(Headers.CREATION_DATE,
-                        dateTimeFormatter.print(new DateTime(key.getMillis())));
-
-        LinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
-        LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
-
-        builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/previous") + ">;rel=\"" + "previous" + "\"");
-        builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/next") + ">;rel=\"" + "next" + "\"");
-        sender.send("channel." + channel + ".get", System.currentTimeMillis() - start);
-        return builder.build();
-    }
-
-    @Path("/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/next")
-    @GET
-    public Response getNext(@PathParam("tag") String tag,
-                            @PathParam("channel") String channel,
-                            @PathParam("Y") int year,
-                            @PathParam("M") int month,
-                            @PathParam("D") int day,
-                            @PathParam("h") int hour,
-                            @PathParam("m") int minute,
-                            @PathParam("s") int second,
-                            @PathParam("ms") int millis,
-                            @PathParam("hash") String hash,
-                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return directional(channel, year, month, day, hour, minute, second, millis, hash, stable, true);
-    }
-
-    @Path("/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/next/{count}")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getNextCount(@PathParam("tag") String tag,
-                                 @PathParam("channel") String channel,
-                                 @PathParam("Y") int year,
-                                 @PathParam("M") int month,
-                                 @PathParam("D") int day,
-                                 @PathParam("h") int hour,
-                                 @PathParam("m") int minute,
-                                 @PathParam("s") int second,
-                                 @PathParam("ms") int millis,
-                                 @PathParam("hash") String hash,
-                                 @PathParam("count") int count,
-                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                 @QueryParam("location") @DefaultValue("ALL") String location) {
-        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
-        DirectionQuery query = DirectionQuery.builder()
-                .channelName(channel)
-                .contentKey(new ContentKey(year, month, day, hour, minute, second, millis, hash))
-                .next(true)
-                .stable(stable)
-                .location(Location.valueOf(location))
-                .count(count).build();
-        query.trace(trace);
-        Collection<ContentKey> keys = channelService.getKeys(query);
-        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
-    }
-
-    @Path("/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/previous")
-    @GET
-    public Response getPrevious(@PathParam("tag") String tag,
-                                @PathParam("channel") String channel,
-                                @PathParam("Y") int year,
-                                @PathParam("M") int month,
-                                @PathParam("D") int day,
-                                @PathParam("h") int hour,
-                                @PathParam("m") int minute,
-                                @PathParam("s") int second,
-                                @PathParam("ms") int millis,
-                                @PathParam("hash") String hash,
-                                @QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return directional(channel, year, month, day, hour, minute, second, millis, hash, stable, false);
-    }
-
-    @Path("/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/previous/{count}")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getPreviousCount(@PathParam("tag") String tag,
-                                     @PathParam("channel") String channel,
-                                     @PathParam("Y") int year,
-                                     @PathParam("M") int month,
-                                     @PathParam("D") int day,
-                                     @PathParam("h") int hour,
-                                     @PathParam("m") int minute,
-                                     @PathParam("s") int second,
-                                     @PathParam("ms") int millis,
-                                     @PathParam("hash") String hash,
-                                     @PathParam("count") int count,
-                                     @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                     @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                     @QueryParam("location") @DefaultValue("ALL") String location) {
-        DirectionQuery query = DirectionQuery.builder()
-                .channelName(channel)
-                .contentKey(new ContentKey(year, month, day, hour, minute, second, millis, hash))
-                .next(false)
-                .stable(stable)
-                .location(Location.valueOf(location))
-                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
-                .count(count).build();
-        query.trace(trace);
-        Collection<ContentKey> keys = channelService.getKeys(query);
-        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
-    }
-
-    private Response directional(String channel, int year, int month, int day, int hour, int minute,
-                                 int second, int millis, String hash, boolean stable, boolean next) {
-        DirectionQuery query = DirectionQuery.builder()
-                .channelName(channel)
-                .contentKey(new ContentKey(year, month, day, hour, minute, second, millis, hash))
-                .next(next)
-                .stable(stable)
-                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
-                .count(1).build();
-        query.trace(false);
-        Collection<ContentKey> keys = channelService.getKeys(query);
-        if (keys.isEmpty()) {
-            return Response.status(NOT_FOUND).build();
-        }
-        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
-        String channelUri = uriInfo.getBaseUri() + "channel/" + channel;
-        ContentKey foundKey = keys.iterator().next();
-        URI uri = URI.create(channelUri + "/" + foundKey.toUrl());
-        builder.location(uri);
-        return builder.build();
-    }
-
-    private MediaType getContentType(Content content) {
-        Optional<String> contentType = content.getContentType();
-        if (contentType.isPresent() && !isNullOrEmpty(contentType.get())) {
-            return MediaType.valueOf(contentType.get());
-        }
-        return MediaType.APPLICATION_OCTET_STREAM_TYPE;
-    }
-
-    static boolean contentTypeIsNotCompatible(String acceptHeader, final MediaType actualContentType) {
-        List<MediaType> acceptableContentTypes;
-        if (StringUtils.isBlank(acceptHeader)) {
-            acceptableContentTypes = MediaTypes.GENERAL_MEDIA_TYPE_LIST;
-        } else {
-            acceptableContentTypes = new ArrayList<>();
-            String[] types = acceptHeader.split(",");
-            for (String type : types) {
-                acceptableContentTypes.addAll(getMediaTypes(type));
-            }
-        }
-
-        return !Iterables.any(acceptableContentTypes, new Predicate<MediaType>() {
-            @Override
-            public boolean apply(MediaType input) {
-                return input.isCompatible(actualContentType);
-            }
-        });
-    }
-
-    private static List<MediaType> getMediaTypes(String type) {
-        try {
-            return MediaTypes.createMediaTypes(new String[]{type});
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
-    }
-
 
 }
