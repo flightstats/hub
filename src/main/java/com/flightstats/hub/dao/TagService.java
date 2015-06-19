@@ -30,6 +30,7 @@ public class TagService {
         Iterable<ChannelConfig> channels = getChannels(timeQuery.getTagName());
 
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        //todo - gfm - 6/19/15 - this should be multi-threaded
         for (ChannelConfig channel : channels) {
             Collection<ContentKey> contentKeys = channelService.queryByTime(timeQuery.withChannelName(channel.getName()));
             for (ContentKey contentKey : contentKeys) {
