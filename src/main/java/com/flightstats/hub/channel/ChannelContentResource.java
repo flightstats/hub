@@ -71,7 +71,7 @@ public class ChannelContentResource {
                            @QueryParam("trace") @DefaultValue("false") boolean trace,
                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getResponse(channel, startTime, location, trace, stable, Unit.DAYS);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS);
     }
 
     @Path("/{hour}")
@@ -86,7 +86,7 @@ public class ChannelContentResource {
                             @QueryParam("trace") @DefaultValue("false") boolean trace,
                             @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getResponse(channel, startTime, location, trace, stable, Unit.HOURS);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS);
     }
 
     @Path("/{h}/{minute}")
@@ -102,7 +102,7 @@ public class ChannelContentResource {
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getResponse(channel, startTime, location, trace, stable, Unit.MINUTES);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES);
     }
 
     @Path("/{h}/{m}/{second}")
@@ -119,11 +119,11 @@ public class ChannelContentResource {
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getResponse(channel, startTime, location, trace, stable, Unit.SECONDS);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS);
     }
 
-    public Response getResponse(String channelName, DateTime startTime, String location, boolean trace, boolean stable,
-                                Unit unit) {
+    public Response getTimeQueryResponse(String channelName, DateTime startTime, String location, boolean trace, boolean stable,
+                                         Unit unit) {
         TimeQuery query = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
@@ -216,7 +216,7 @@ public class ChannelContentResource {
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
                             @QueryParam("tag") String tag) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return directional(channel, contentKey, stable, true, tag);
+        return adjacent(channel, contentKey, stable, true, tag);
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/previous")
@@ -233,19 +233,18 @@ public class ChannelContentResource {
                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
                                 @QueryParam("tag") String tag) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return directional(channel, contentKey, stable, false, tag);
+        return adjacent(channel, contentKey, stable, false, tag);
     }
 
-    private Response directional(String channel, ContentKey contentKey, boolean stable, boolean next, String tag) {
+    private Response adjacent(String channel, ContentKey contentKey, boolean stable, boolean next, String tag) {
         if (null != tag) {
-            return TagContentResource.directional(tag, contentKey, stable, next, tagService, uriInfo);
+            return TagContentResource.adjacent(tag, contentKey, stable, next, tagService, uriInfo);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .contentKey(contentKey)
                 .next(next)
                 .stable(stable)
-                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
                 .count(1).build();
         query.trace(false);
         Collection<ContentKey> keys = channelService.getKeys(query);
@@ -276,17 +275,8 @@ public class ChannelContentResource {
                                  @QueryParam("stable") @DefaultValue("true") boolean stable,
                                  @QueryParam("trace") @DefaultValue("false") boolean trace,
                                  @QueryParam("location") @DefaultValue("ALL") String location) {
-        DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
-        DirectionQuery query = DirectionQuery.builder()
-                .channelName(channel)
-                .contentKey(new ContentKey(year, month, day, hour, minute, second, millis, hash))
-                .next(true)
-                .stable(stable)
-                .location(Location.valueOf(location))
-                .count(count).build();
-        query.trace(trace);
-        Collection<ContentKey> keys = channelService.getKeys(query);
-        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return adjacentCount(channel, count, stable, trace, location, true, key);
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/previous/{count}")
@@ -305,13 +295,17 @@ public class ChannelContentResource {
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
                                      @QueryParam("location") @DefaultValue("ALL") String location) {
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return adjacentCount(channel, count, stable, trace, location, false, key);
+    }
+
+    private Response adjacentCount(String channel, int count, boolean stable, boolean trace, String location, boolean next, ContentKey contentKey) {
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(new ContentKey(year, month, day, hour, minute, second, millis, hash))
-                .next(false)
+                .contentKey(contentKey)
+                .next(next)
                 .stable(stable)
                 .location(Location.valueOf(location))
-                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
                 .count(count).build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);

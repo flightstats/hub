@@ -71,6 +71,7 @@ describe(testName, function () {
                 expect(response.statusCode).toBe(200);
                 body = JSON.parse(body);
                 parsedLinks = parse(response.headers.link);
+                console.log('parsed', parsedLinks);
                 var item = linkStripParams(uris[index]);
                 expect(parsedLinks.previous.url).toContain(item + '/previous?tag=' + tag)
                 expect(parsedLinks.next.url).toContain(item + '/next?tag=' + tag)
@@ -80,7 +81,7 @@ describe(testName, function () {
     }
 
     it('gets last link ', function (done) {
-        traverse(uris[2], 2, done);
+        traverse(uris[2] + '&stable=false', 2, done);
     })
 
     it('gets previous link ', function (done) {

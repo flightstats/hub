@@ -80,7 +80,7 @@ public class TagContentResource {
                            @QueryParam("trace") @DefaultValue("false") boolean trace,
                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getResponse(tag, startTime, location, trace, stable, Unit.DAYS);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS);
     }
 
     @Path("/{Y}/{M}/{D}/{hour}")
@@ -95,7 +95,7 @@ public class TagContentResource {
                             @QueryParam("trace") @DefaultValue("false") boolean trace,
                             @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getResponse(tag, startTime, location, trace, stable, Unit.HOURS);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS);
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{minute}")
@@ -111,7 +111,7 @@ public class TagContentResource {
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getResponse(tag, startTime, location, trace, stable, Unit.MINUTES);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES);
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{second}")
@@ -128,11 +128,11 @@ public class TagContentResource {
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getResponse(tag, startTime, location, trace, stable, Unit.SECONDS);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS);
     }
 
-    public Response getResponse(String tag, DateTime startTime, String location, boolean trace, boolean stable,
-                                Unit unit) {
+    public Response getTimeQueryResponse(String tag, DateTime startTime, String location, boolean trace, boolean stable,
+                                         Unit unit) {
         TimeQuery query = TimeQuery.builder()
                 .tagName(tag)
                 .startTime(startTime)
@@ -175,7 +175,7 @@ public class TagContentResource {
                             @PathParam("hash") String hash,
                             @QueryParam("stable") @DefaultValue("true") boolean stable) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return directional(tag, contentKey, stable, true, tagService, uriInfo);
+        return adjacent(tag, contentKey, stable, true, tagService, uriInfo);
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/previous")
@@ -191,11 +191,11 @@ public class TagContentResource {
                                 @PathParam("hash") String hash,
                                 @QueryParam("stable") @DefaultValue("true") boolean stable) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return directional(tag, contentKey, stable, false, tagService, uriInfo);
+        return adjacent(tag, contentKey, stable, false, tagService, uriInfo);
     }
 
-    public static Response directional(String tag, ContentKey contentKey, boolean stable, boolean next,
-                                       TagService tagService, UriInfo uriInfo) {
+    public static Response adjacent(String tag, ContentKey contentKey, boolean stable, boolean next,
+                                    TagService tagService, UriInfo uriInfo) {
         DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
                 .contentKey(contentKey)
@@ -209,9 +209,15 @@ public class TagContentResource {
         }
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
         ChannelContentKey foundKey = keys.iterator().next();
+        URI uri = uriInfo.getBaseUriBuilder()
+                .path("channel")
+                .path(foundKey.getChannel())
+                .path(foundKey.getContentKey().toUrl())
+                .queryParam("tag", tag)
+                .queryParam("stable", stable)
+                .build();
         String channelUri = uriInfo.getBaseUri() + "channel/" + foundKey.getChannel();
-        URI uri = URI.create(channelUri + "/" + foundKey.getContentKey().toUrl() + "?tag=" + tag);
-        logger.info("returning url {}", uri);
+        logger.trace("returning url {}", uri);
         builder.location(uri);
         return builder.build();
 
