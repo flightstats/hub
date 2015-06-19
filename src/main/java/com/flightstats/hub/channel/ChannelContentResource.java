@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
@@ -53,6 +54,8 @@ public class ChannelContentResource {
     private UriInfo uriInfo;
     @Inject
     private ChannelService channelService;
+    @Inject
+    private TagService tagService;
     @Inject
     private LinkBuilder linkBuilder;
     @Inject
@@ -210,8 +213,51 @@ public class ChannelContentResource {
                             @PathParam("s") int second,
                             @PathParam("ms") int millis,
                             @PathParam("hash") String hash,
-                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return directional(channel, year, month, day, hour, minute, second, millis, hash, stable, true);
+                            @QueryParam("stable") @DefaultValue("true") boolean stable,
+                            @QueryParam("tag") String tag) {
+        ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return directional(channel, contentKey, stable, true, tag);
+    }
+
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/previous")
+    @GET
+    public Response getPrevious(@PathParam("channel") String channel,
+                                @PathParam("Y") int year,
+                                @PathParam("M") int month,
+                                @PathParam("D") int day,
+                                @PathParam("h") int hour,
+                                @PathParam("m") int minute,
+                                @PathParam("s") int second,
+                                @PathParam("ms") int millis,
+                                @PathParam("hash") String hash,
+                                @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                @QueryParam("tag") String tag) {
+        ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return directional(channel, contentKey, stable, false, tag);
+    }
+
+    private Response directional(String channel, ContentKey contentKey, boolean stable, boolean next, String tag) {
+        if (null != tag) {
+            return TagContentResource.directional(tag, contentKey, stable, next, tagService, uriInfo);
+        }
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channel)
+                .contentKey(contentKey)
+                .next(next)
+                .stable(stable)
+                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
+                .count(1).build();
+        query.trace(false);
+        Collection<ContentKey> keys = channelService.getKeys(query);
+        if (keys.isEmpty()) {
+            return Response.status(NOT_FOUND).build();
+        }
+        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
+        String channelUri = uriInfo.getBaseUri() + "channel/" + channel;
+        ContentKey foundKey = keys.iterator().next();
+        URI uri = URI.create(channelUri + "/" + foundKey.toUrl());
+        builder.location(uri);
+        return builder.build();
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/next/{count}")
@@ -243,21 +289,6 @@ public class ChannelContentResource {
         return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/previous")
-    @GET
-    public Response getPrevious(@PathParam("channel") String channel,
-                                @PathParam("Y") int year,
-                                @PathParam("M") int month,
-                                @PathParam("D") int day,
-                                @PathParam("h") int hour,
-                                @PathParam("m") int minute,
-                                @PathParam("s") int second,
-                                @PathParam("ms") int millis,
-                                @PathParam("hash") String hash,
-                                @QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return directional(channel, year, month, day, hour, minute, second, millis, hash, stable, false);
-    }
-
     @Path("/{h}/{m}/{s}/{ms}/{hash}/previous/{count}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -285,28 +316,6 @@ public class ChannelContentResource {
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
         return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
-    }
-
-    private Response directional(String channel, int year, int month, int day, int hour, int minute,
-                                 int second, int millis, String hash, boolean stable, boolean next) {
-        DirectionQuery query = DirectionQuery.builder()
-                .channelName(channel)
-                .contentKey(new ContentKey(year, month, day, hour, minute, second, millis, hash))
-                .next(next)
-                .stable(stable)
-                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
-                .count(1).build();
-        query.trace(false);
-        Collection<ContentKey> keys = channelService.getKeys(query);
-        if (keys.isEmpty()) {
-            return Response.status(NOT_FOUND).build();
-        }
-        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
-        String channelUri = uriInfo.getBaseUri() + "channel/" + channel;
-        ContentKey foundKey = keys.iterator().next();
-        URI uri = URI.create(channelUri + "/" + foundKey.toUrl());
-        builder.location(uri);
-        return builder.build();
     }
 
     private MediaType getContentType(Content content) {

@@ -1,15 +1,21 @@
 package com.flightstats.hub.model;
 
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.Builder;
+import lombok.experimental.Wither;
 
 @Builder
 @Getter
 @ToString
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class DirectionQuery {
+    @Wither
     private final String channelName;
+    private final String tagName;
     private final ContentKey contentKey;
     private final int count;
     private final boolean next;

@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.metrics.MetricsSender;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ChannelContentKey;
-import com.flightstats.hub.model.Location;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
@@ -29,6 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.flightstats.hub.util.TimeUtil.Unit;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 @Path("/tag/{tag}")
 public class TagContentResource {
@@ -161,6 +160,61 @@ public class TagContentResource {
         }
         query.getTraces().output(root);
         return Response.ok(root).build();
+    }
+
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/next")
+    @GET
+    public Response getNext(@PathParam("tag") String tag,
+                            @PathParam("Y") int year,
+                            @PathParam("M") int month,
+                            @PathParam("D") int day,
+                            @PathParam("h") int hour,
+                            @PathParam("m") int minute,
+                            @PathParam("s") int second,
+                            @PathParam("ms") int millis,
+                            @PathParam("hash") String hash,
+                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
+        ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return directional(tag, contentKey, stable, true, tagService, uriInfo);
+    }
+
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/previous")
+    @GET
+    public Response getPrevious(@PathParam("tag") String tag,
+                                @PathParam("Y") int year,
+                                @PathParam("M") int month,
+                                @PathParam("D") int day,
+                                @PathParam("h") int hour,
+                                @PathParam("m") int minute,
+                                @PathParam("s") int second,
+                                @PathParam("ms") int millis,
+                                @PathParam("hash") String hash,
+                                @QueryParam("stable") @DefaultValue("true") boolean stable) {
+        ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return directional(tag, contentKey, stable, false, tagService, uriInfo);
+    }
+
+    public static Response directional(String tag, ContentKey contentKey, boolean stable, boolean next,
+                                       TagService tagService, UriInfo uriInfo) {
+        DirectionQuery query = DirectionQuery.builder()
+                .tagName(tag)
+                .contentKey(contentKey)
+                .next(next)
+                .stable(stable)
+                .count(1).build();
+        query.trace(false);
+        Collection<ChannelContentKey> keys = tagService.getKeys(query);
+        if (keys.isEmpty()) {
+            return Response.status(NOT_FOUND).build();
+        }
+        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
+        ChannelContentKey foundKey = keys.iterator().next();
+        String channelUri = uriInfo.getBaseUri() + "channel/" + foundKey.getChannel();
+        URI uri = URI.create(channelUri + "/" + foundKey.getContentKey().toUrl() + "?tag=" + tag);
+        logger.info("returning url {}", uri);
+        builder.location(uri);
+        return builder.build();
+
     }
 
 }

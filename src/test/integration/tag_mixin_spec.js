@@ -56,44 +56,52 @@ describe(testName, function () {
 
     var parsedLinks;
 
-    it('gets last link ', function (done) {
+    function linkStripParams(uri) {
+        return uri.substr(0, uri.indexOf('?'));
+    }
+
+    function traverse(url, index, done) {
+        url = url.trim();
+        console.log('getting \'' + url + '\'');
         request.get({
-                url: uris[2]
+                url: url
             },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 body = JSON.parse(body);
                 parsedLinks = parse(response.headers.link);
-                console.log('first parsed', parsedLinks);
-                expect(parsedLinks.previous.url).toContain('/previous?tag=' + tag)
-                expect(parsedLinks.next.url).toContain('/next?tag=' + tag)
+                var item = linkStripParams(uris[index]);
+                expect(parsedLinks.previous.url).toContain(item + '/previous?tag=' + tag)
+                expect(parsedLinks.next.url).toContain(item + '/next?tag=' + tag)
 
                 done();
             });
+    }
+
+    it('gets last link ', function (done) {
+        traverse(uris[2], 2, done);
     })
 
-    /*    it('gets previous link ', function (done) {
-     //this should redirect to the tag interface, the redirect to uri[1]
-     console.log('getting', parsedLinks.previous.url);
-     request.get({
-     url: parsedLinks.previous.url
-     },
-     function (err, response, body) {
-     expect(err).toBeNull();
-     expect(response.statusCode).toBe(200);
-     body = JSON.parse(body);
-     parsedLinks = parse(response.headers.link);
-     console.log('second parsed', parsedLinks);
-     console.log(response);
-     expect(parsedLinks.previous.url).toContain('/previous?tag=' + tag)
-     expect(parsedLinks.previous.url).toContain(channelB)
-     expect(parsedLinks.next.url).toContain('/next?tag=' + tag)
+    it('gets previous link ', function (done) {
+        traverse(parsedLinks.previous.url, 1, done);
+    })
 
-     done();
-     });
-     })*/
+    it('gets 2nd previous link ', function (done) {
+        traverse(parsedLinks.previous.url, 0, done);
+    })
 
+    it('gets first link ', function (done) {
+        traverse(uris[0], 0, done);
+    })
+
+    it('gets next link ', function (done) {
+        traverse(parsedLinks.next.url + '&stable=false', 1, done);
+    })
+
+    it('gets 2nd next link ', function (done) {
+        traverse(parsedLinks.next.url + '&stable=false', 2, done);
+    })
 
 
 });
