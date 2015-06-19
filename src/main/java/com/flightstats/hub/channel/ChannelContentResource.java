@@ -193,9 +193,8 @@ public class ChannelContentResource {
 
         LinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
         LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
-
-        builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/previous") + ">;rel=\"" + "previous" + "\"");
-        builder.header("Link", "<" + URI.create(uriInfo.getRequestUri() + "/next") + ">;rel=\"" + "next" + "\"");
+        builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
+        builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
         sender.send("channel." + channel + ".get", System.currentTimeMillis() - start);
         return builder.build();
     }
