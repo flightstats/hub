@@ -156,9 +156,8 @@ public class TagContentResource {
         ArrayNode ids = links.putArray("uris");
         for (ChannelContentKey key : keys) {
             URI channelUri = LinkBuilder.buildChannelUri(key.getChannel(), uriInfo);
-            //todo - gfm - 6/18/15 - add ?tag=tagName
             URI uri = LinkBuilder.buildItemUri(key.getContentKey(), channelUri);
-            ids.add(uri.toString());
+            ids.add(uri.toString() + "?tag=" + tag);
         }
         query.getTraces().output(root);
         return Response.ok(root).build();
