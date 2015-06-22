@@ -47,7 +47,6 @@ public class TagContentResource {
     @Inject
     MetricsSender sender;
 
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTagLinks(@PathParam("tag") String tag) {
@@ -60,7 +59,7 @@ public class TagContentResource {
         Linked<?> result = LinkBuilder.buildLinks(mappedUris, "channels", builder -> {
             String uri = uriInfo.getRequestUri().toString();
             builder.withLink("self", uriInfo.getRequestUri())
-                    //.withLink("latest", uri + "/latest")
+                    .withLink("latest", uri + "/latest")
                     //.withLink("earliest", uri + "/earliest")
                     //.withLink("status", uri + "/status")
                     .withLink("time", uri + "/time");

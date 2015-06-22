@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.*;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -65,5 +66,21 @@ public class TagService {
         return stream
                 .limit(query.getCount())
                 .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    public Optional<ChannelContentKey> getLatest(String tag, boolean stable, boolean trace) {
+        Iterable<ChannelConfig> channels = getChannels(tag);
+        SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        for (ChannelConfig channel : channels) {
+            Optional<ContentKey> contentKey = channelService.getLatest(channel.getName(), stable, trace);
+            if (contentKey.isPresent()) {
+                orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey.get()));
+            }
+        }
+        if (orderedKeys.isEmpty()) {
+            return Optional.absent();
+        } else {
+            return Optional.of(orderedKeys.last());
+        }
     }
 }

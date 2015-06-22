@@ -71,7 +71,6 @@ describe(testName, function () {
                 expect(response.statusCode).toBe(200);
                 body = JSON.parse(body);
                 parsedLinks = parse(response.headers.link);
-                console.log('parsed', parsedLinks);
                 var item = linkStripParams(uris[index]);
                 expect(parsedLinks.previous.url).toContain(item + '/previous?tag=' + tag)
                 expect(parsedLinks.next.url).toContain(item + '/next?tag=' + tag)
@@ -103,6 +102,31 @@ describe(testName, function () {
     it('gets 2nd next link ', function (done) {
         traverse(parsedLinks.next.url + '&stable=false', 2, done);
     })
+
+    it("gets latest unstable in channel ", function (done) {
+        request.get({url: hubUrlBase + '/tag/' + tag + '/latest?stable=false', followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(303);
+                expect(response.headers.location).toBe(uris[2]);
+                done();
+            });
+    });
+
+    it("gets latest N unstable in channel ", function (done) {
+        request.get({url: hubUrlBase + '/tag/' + tag + '/latest/10?stable=false', followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parsed = JSON.parse(response.body);
+                expect(parsed._links.uris.length).toBe(3);
+                uris.forEach(function (uri, index) {
+                    expect(parsed._links.uris[index] + '?tag=' + tag).toBe(uri);
+                });
+
+                done();
+            });
+    });
 
 
 });
