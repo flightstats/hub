@@ -5,13 +5,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
-import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
@@ -55,11 +53,11 @@ public class ChannelContentResource {
     @Inject
     private ChannelService channelService;
     @Inject
-    private TagService tagService;
-    @Inject
     private LinkBuilder linkBuilder;
     @Inject
-    MetricsSender sender;
+    private MetricsSender sender;
+    @Inject
+    private TagContentResource tagContentResource;
 
     @Produces(MediaType.APPLICATION_JSON)
     @GET
@@ -238,7 +236,7 @@ public class ChannelContentResource {
 
     private Response adjacent(String channel, ContentKey contentKey, boolean stable, boolean next, String tag) {
         if (null != tag) {
-            return TagContentResource.adjacent(tag, contentKey, stable, next, tagService, uriInfo);
+            return tagContentResource.adjacent(tag, contentKey, stable, next);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -274,9 +272,10 @@ public class ChannelContentResource {
                                  @PathParam("count") int count,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable,
                                  @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                 @QueryParam("location") @DefaultValue("ALL") String location) {
+                                 @QueryParam("location") @DefaultValue("ALL") String location,
+                                 @QueryParam("tag") String tag) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacentCount(channel, count, stable, trace, location, true, key);
+        return adjacentCount(channel, count, stable, trace, location, true, key, tag);
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/previous/{count}")
@@ -294,12 +293,17 @@ public class ChannelContentResource {
                                      @PathParam("count") int count,
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                     @QueryParam("location") @DefaultValue("ALL") String location) {
+                                     @QueryParam("location") @DefaultValue("ALL") String location,
+                                     @QueryParam("tag") String tag) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacentCount(channel, count, stable, trace, location, false, key);
+        return adjacentCount(channel, count, stable, trace, location, false, key, tag);
     }
 
-    private Response adjacentCount(String channel, int count, boolean stable, boolean trace, String location, boolean next, ContentKey contentKey) {
+    private Response adjacentCount(String channel, int count, boolean stable, boolean trace, String location,
+                                   boolean next, ContentKey contentKey, String tag) {
+        if (null != tag) {
+            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, contentKey);
+        }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .contentKey(contentKey)
@@ -332,12 +336,7 @@ public class ChannelContentResource {
             }
         }
 
-        return !Iterables.any(acceptableContentTypes, new Predicate<MediaType>() {
-            @Override
-            public boolean apply(MediaType input) {
-                return input.isCompatible(actualContentType);
-            }
-        });
+        return !Iterables.any(acceptableContentTypes, input -> input.isCompatible(actualContentType));
     }
 
     private static List<MediaType> getMediaTypes(String type) {

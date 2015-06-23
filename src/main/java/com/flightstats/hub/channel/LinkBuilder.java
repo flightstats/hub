@@ -145,7 +145,7 @@ public class LinkBuilder {
         }
         ArrayNode ids = links.putArray("uris");
         for (ChannelContentKey key : keys) {
-            ids.add(uriInfo.getBaseUri() + key.toUrl());
+            ids.add(uriInfo.getBaseUri() + key.toUrl() + "?tag=" + tag);
         }
         query.getTraces().output(root);
         return Response.ok(root).build();

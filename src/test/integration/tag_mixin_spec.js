@@ -62,7 +62,6 @@ describe(testName, function () {
 
     function traverse(url, index, done) {
         url = url.trim();
-        console.log('getting \'' + url + '\'');
         request.get({
                 url: url
             },
@@ -114,16 +113,33 @@ describe(testName, function () {
     });
 
     it("gets latest N unstable in channel ", function (done) {
-        request.get({url: hubUrlBase + '/tag/' + tag + '/latest/10?stable=false', followRedirect: false},
+        request.get({url: hubUrlBase + '/tag/' + tag + '/latest/10?stable=false'},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = JSON.parse(response.body);
                 expect(parsed._links.uris.length).toBe(3);
                 uris.forEach(function (uri, index) {
-                    expect(parsed._links.uris[index] + '?tag=' + tag).toBe(uri);
+                    expect(parsed._links.uris[index]).toBe(uri);
                 });
 
+                done();
+            });
+    });
+
+    it("next from item ", function (done) {
+        var url = linkStripParams(uris[0]) + '/next/2?tag=' + tag + '&stable=false';
+        console.log('calling ' + url);
+        request.get({url: url},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parsed = JSON.parse(response.body);
+                expect(parsed._links.uris.length).toBe(2);
+                parsed._links.uris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(parsed._links.uris[index]).toBe(uri);
+                });
                 done();
             });
     });

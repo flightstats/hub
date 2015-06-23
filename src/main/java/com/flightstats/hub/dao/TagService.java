@@ -50,7 +50,9 @@ public class TagService {
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         //todo - gfm - 6/19/15 - this should be multi-threaded
         for (ChannelConfig channel : channels) {
+            query.getTraces().add("query for channel", channel.getName());
             Collection<ContentKey> contentKeys = channelService.getKeys(query.withChannelName(channel.getName()));
+            query.getTraces().add("query size for channel", channel.getName(), contentKeys.size());
             for (ContentKey contentKey : contentKeys) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
             }

@@ -11,8 +11,6 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +32,6 @@ public class TagContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(TagContentResource.class);
 
-    private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
-
     @Inject
     private ObjectMapper mapper;
     @Inject
@@ -45,7 +41,7 @@ public class TagContentResource {
     @Inject
     private LinkBuilder linkBuilder;
     @Inject
-    MetricsSender sender;
+    private MetricsSender sender;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -174,7 +170,7 @@ public class TagContentResource {
                             @PathParam("hash") String hash,
                             @QueryParam("stable") @DefaultValue("true") boolean stable) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacent(tag, contentKey, stable, true, tagService, uriInfo);
+        return adjacent(tag, contentKey, stable, true);
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/previous")
@@ -190,11 +186,10 @@ public class TagContentResource {
                                 @PathParam("hash") String hash,
                                 @QueryParam("stable") @DefaultValue("true") boolean stable) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacent(tag, contentKey, stable, false, tagService, uriInfo);
+        return adjacent(tag, contentKey, stable, false);
     }
 
-    public static Response adjacent(String tag, ContentKey contentKey, boolean stable, boolean next,
-                                    TagService tagService, UriInfo uriInfo) {
+    public Response adjacent(String tag, ContentKey contentKey, boolean stable, boolean next) {
         DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
                 .contentKey(contentKey)
@@ -219,7 +214,20 @@ public class TagContentResource {
         logger.trace("returning url {}", uri);
         builder.location(uri);
         return builder.build();
-
     }
 
+    public Response adjacentCount(String tag, int count, boolean stable, boolean trace, String location,
+                                  boolean next, ContentKey contentKey) {
+        DirectionQuery query = DirectionQuery.builder()
+                .tagName(tag)
+                .contentKey(contentKey)
+                .next(next)
+                .stable(stable)
+                .location(Location.valueOf(location))
+                .count(count).build();
+        query.trace(trace);
+        query.getTraces().add("adjacentCount", query);
+        Collection<ChannelContentKey> keys = tagService.getKeys(query);
+        return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true);
+    }
 }
