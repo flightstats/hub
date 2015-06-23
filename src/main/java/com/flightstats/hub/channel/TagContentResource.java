@@ -3,20 +3,29 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.dao.TagService;
+import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.rest.Headers;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.base.Optional;
+import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
+import com.sun.jersey.api.Responses;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Collection;
@@ -31,6 +40,8 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 public class TagContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(TagContentResource.class);
+
+    private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
     @Inject
     private ObjectMapper mapper;
@@ -155,6 +166,56 @@ public class TagContentResource {
         }
         query.getTraces().output(root);
         return Response.ok(root).build();
+    }
+
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}")
+    @GET
+    @EventTimed(name = "channel.ALL.get")
+    public Response getValue(@PathParam("tag") String tag,
+                             @PathParam("Y") int year,
+                             @PathParam("M") int month,
+                             @PathParam("D") int day,
+                             @PathParam("h") int hour,
+                             @PathParam("m") int minute,
+                             @PathParam("s") int second,
+                             @PathParam("ms") int millis,
+                             @PathParam("hash") String hash,
+                             @HeaderParam("Accept") String accept, @HeaderParam("User") String user
+    ) {
+        logger.info("taggy {} {}", tag, hash);
+        long start = System.currentTimeMillis();
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        Request request = Request.builder()
+                .tag(tag)
+                .key(key)
+                .user(user)
+                .uri(uriInfo.getRequestUri())
+                .build();
+        Optional<Content> optionalResult = tagService.getValue(request);
+        logger.info("taggy {} {}", tag, optionalResult);
+
+        if (!optionalResult.isPresent()) {
+            logger.warn("404 content not found {} {}", tag, key);
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+        Content content = optionalResult.get();
+
+        MediaType actualContentType = ChannelContentResource.getContentType(content);
+
+        if (ChannelContentResource.contentTypeIsNotCompatible(accept, actualContentType)) {
+            return Responses.notAcceptable().build();
+        }
+        Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
+
+        builder.type(actualContentType)
+                .header(Headers.CREATION_DATE,
+                        dateTimeFormatter.print(new DateTime(key.getMillis())));
+
+        LinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
+        LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
+        builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
+        builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
+        return builder.build();
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/next")

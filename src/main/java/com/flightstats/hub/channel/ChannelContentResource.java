@@ -44,7 +44,7 @@ public class ChannelContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
 
-    private final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
+    private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
     @Inject
     private ObjectMapper mapper;
@@ -316,7 +316,7 @@ public class ChannelContentResource {
         return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
     }
 
-    private MediaType getContentType(Content content) {
+    public static MediaType getContentType(Content content) {
         Optional<String> contentType = content.getContentType();
         if (contentType.isPresent() && !isNullOrEmpty(contentType.get())) {
             return MediaType.valueOf(contentType.get());

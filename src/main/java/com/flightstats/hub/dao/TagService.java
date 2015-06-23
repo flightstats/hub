@@ -99,4 +99,15 @@ public class TagService {
         }
         return orderedKeys;
     }
+
+    public Optional<Content> getValue(Request request) {
+        Iterable<ChannelConfig> channels = getChannels(request.getTag());
+        for (ChannelConfig channel : channels) {
+            Optional<Content> value = channelService.getValue(request.withChannel(channel.getName()));
+            if (value.isPresent()) {
+                return value;
+            }
+        }
+        return Optional.absent();
+    }
 }
