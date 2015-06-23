@@ -138,7 +138,24 @@ describe(testName, function () {
                 expect(parsed._links.uris.length).toBe(2);
                 parsed._links.uris.forEach(function (uri, index) {
                     console.log('found ', uri);
-                    expect(parsed._links.uris[index]).toBe(uri);
+                    expect(uri).toBe(uris[index + 1]);
+                });
+                done();
+            });
+    });
+
+    it("previous from item ", function (done) {
+        var url = linkStripParams(uris[2]) + '/previous/2?tag=' + tag + '&stable=false';
+        console.log('calling ' + url);
+        request.get({url: url},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parsed = JSON.parse(response.body);
+                expect(parsed._links.uris.length).toBe(2);
+                parsed._links.uris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index]);
                 });
                 done();
             });
