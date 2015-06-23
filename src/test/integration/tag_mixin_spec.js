@@ -127,6 +127,16 @@ describe(testName, function () {
             });
     });
 
+    it("gets earliest unstable in channel ", function (done) {
+        request.get({url: hubUrlBase + '/tag/' + tag + '/earliest?stable=false', followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(303);
+                expect(response.headers.location).toBe(uris[0]);
+                done();
+            });
+    });
+
     it("next from item ", function (done) {
         var url = linkStripParams(uris[0]) + '/next/2?tag=' + tag + '&stable=false';
         console.log('calling ' + url);

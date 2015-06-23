@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.channel.ChannelEarliestResource;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -84,5 +85,18 @@ public class TagService {
         } else {
             return Optional.of(orderedKeys.last());
         }
+    }
+
+    public Collection<ChannelContentKey> getEarliest(String tag, int count, boolean stable, boolean trace) {
+        Iterable<ChannelConfig> channels = getChannels(tag);
+        SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        for (ChannelConfig channel : channels) {
+            DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getName(), count, stable, trace, channelService);
+            Collection<ContentKey> contentKeys = channelService.getKeys(query);
+            for (ContentKey contentKey : contentKeys) {
+                orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
+            }
+        }
+        return orderedKeys;
     }
 }

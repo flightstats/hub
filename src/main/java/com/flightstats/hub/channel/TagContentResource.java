@@ -56,7 +56,7 @@ public class TagContentResource {
             String uri = uriInfo.getRequestUri().toString();
             builder.withLink("self", uriInfo.getRequestUri())
                     .withLink("latest", uri + "/latest")
-                    //.withLink("earliest", uri + "/earliest")
+                    .withLink("earliest", uri + "/earliest")
                     //.withLink("status", uri + "/status")
                     .withLink("time", uri + "/time");
 
