@@ -167,7 +167,7 @@ public class S3ContentDao implements ContentDao {
             startTime = startTime.minusHours(1);
             hourCount++;
         }
-        DateTime limitTime = TimeUtil.getEarliestTime((int) query.getTtlDays(), query.isStable()).minusDays(1);
+        DateTime limitTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
         while (orderedKeys.size() < query.getCount() && startTime.isAfter(limitTime)) {
             SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS, query.getTraces());
             PreviousUtil.addToPrevious(query, queryByTime, orderedKeys);

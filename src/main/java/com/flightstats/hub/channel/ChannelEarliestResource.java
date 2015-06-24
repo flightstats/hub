@@ -73,7 +73,7 @@ public class ChannelEarliestResource {
 
     public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, boolean trace, ChannelService channelService) {
         long ttlDays = channelService.getCachedChannelConfig(channel).getTtlDays();
-        DateTime earliestTime = TimeUtil.getEarliestTime((int) ttlDays, stable);
+        DateTime earliestTime = TimeUtil.getEarliestTime((int) ttlDays);
         ContentKey limitKey = new ContentKey(earliestTime, "0");
 
         DirectionQuery query = DirectionQuery.builder()
