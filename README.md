@@ -18,6 +18,7 @@ The Hub
 * [next and previous links](#next-and-previous-links)
 * [channel status](#channel-status)
 * [tag interface](#tag-interface)
+* [tag unions](#tag-unions)
 * [time interface](#time-interface)
 * [subscribe to events](#subscribe-to-events)
 * [group callback](#group-callback)
@@ -349,7 +350,7 @@ On success: `HTTP/1.1 200 OK`
 
 ## tag interface
 
-To retrieve all of the tags in the Hub:
+Tags are used to logically group channels.  To retrieve all of the tags in the Hub:
 
 `GET http://hub/tag`
 
@@ -382,6 +383,15 @@ On success: `HTTP/1.1 200 OK`
     "self" : {
       "href" : "http://hub/tag/coffee"
     },
+    "latest": {
+        "href": "http://hub-v2.svc.dev/tag/coffee/latest"
+    },
+    "earliest": {
+        "href": "http://hub-v2.svc.dev/tag/coffee/earliest"
+    },
+    "time": {
+        "href": "http://hub-v2.svc.dev/tag/coffee/time"
+    },
     "channels" : [ {
       "name" : "stumptown",
       "href" : "http://hub/channel/stumptown"
@@ -392,6 +402,29 @@ On success: `HTTP/1.1 200 OK`
   }
 }
 ```
+
+## tag unions
+
+Tags can also be used for a read only union set of all it's channels.
+[latest](#latest-channel-item), [earliest](#earliest-channel-item) and [time](#time-interface) work the same as their channel analogs.
+
+Operations which use item urls include a tag parameter.  Using the tag parameter allows the user to stay in the tag context.
+
+For example:
+
+`GET http://hub-v2.svc.dev/tag/coffee/latest`
+
+returns a redirect to
+
+`http://hub-v2.svc.dev/channel/spella/2015/06/24/19/48/17/000/abc?tag=coffee`
+
+Following the previous on that item and including the tag
+
+`http://hub-v2.svc.dev/channel/spella/2015/06/24/19/48/17/000/abc/previous?tag=coffee`
+
+returns a redirect to an item on a different channel
+
+`http://hub-v2.svc.dev/channel/stumptown/2015/06/24/19/40/17/000/qwe?tag=coffee`
 
 ## time interface
 
