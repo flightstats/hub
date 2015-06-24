@@ -35,9 +35,11 @@ describe(testName, function () {
 
     var uris = [];
 
+    var tagUrl = hubUrlBase + '/tag/' + tag;
+
     it('gets tag hour ' + tag, function (done) {
         request.get({
-                url: hubUrlBase + '/tag/' + tag + '/time/hour?stable=false',
+                url: tagUrl + '/time/hour?stable=false',
                 headers: {"Content-Type": "application/json"}
             },
             function (err, response, body) {
@@ -102,8 +104,8 @@ describe(testName, function () {
         traverse(parsedLinks.next.url + '&stable=false', 2, done);
     })
 
-    it("gets latest unstable in channel ", function (done) {
-        request.get({url: hubUrlBase + '/tag/' + tag + '/latest?stable=false', followRedirect: false},
+    it("gets latest unstable in tag ", function (done) {
+        request.get({url: tagUrl + '/latest?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(303);
@@ -112,8 +114,8 @@ describe(testName, function () {
             });
     });
 
-    it("gets latest N unstable in channel ", function (done) {
-        request.get({url: hubUrlBase + '/tag/' + tag + '/latest/10?stable=false'},
+    it("gets latest N unstable in tag ", function (done) {
+        request.get({url: tagUrl + '/latest/10?stable=false'},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -128,7 +130,7 @@ describe(testName, function () {
     });
 
     it("gets earliest unstable in channel ", function (done) {
-        request.get({url: hubUrlBase + '/tag/' + tag + '/earliest?stable=false', followRedirect: false},
+        request.get({url: tagUrl + '/earliest?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(303);
@@ -148,6 +150,23 @@ describe(testName, function () {
                 parsed._links.uris.forEach(function (uri, index) {
                     console.log('found ', uri);
                     expect(uri).toBe(uris[index + 1]);
+                });
+                done();
+            });
+    });
+
+    it("previous from tag ", function (done) {
+        var last = linkStripParams(uris[2]).substring(uris[2].indexOf(channelA) + channelA.length);
+        var url = tagUrl + last + '/previous/3?tag=' + tag + '&stable=false';
+        request.get({url: url},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parsed = JSON.parse(response.body);
+                expect(parsed._links.uris.length).toBe(2);
+                parsed._links.uris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index]);
                 });
                 done();
             });
