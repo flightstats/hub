@@ -68,7 +68,7 @@ public class TagContentResource {
             builder.withLink("self", uriInfo.getRequestUri())
                     .withLink("latest", uri + "/latest")
                     .withLink("earliest", uri + "/earliest")
-                    //.withLink("status", uri + "/status")
+                            //.withLink("status", uri + "/status")
                     .withLink("time", uri + "/time");
 
         });
@@ -217,16 +217,16 @@ public class TagContentResource {
     @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}")
     @GET
     public Response getDirection(@PathParam("tag") String tag,
-                            @PathParam("Y") int year,
-                            @PathParam("M") int month,
-                            @PathParam("D") int day,
-                            @PathParam("h") int hour,
-                            @PathParam("m") int minute,
-                            @PathParam("s") int second,
-                            @PathParam("ms") int millis,
-                            @PathParam("hash") String hash,
+                                 @PathParam("Y") int year,
+                                 @PathParam("M") int month,
+                                 @PathParam("D") int day,
+                                 @PathParam("h") int hour,
+                                 @PathParam("m") int minute,
+                                 @PathParam("s") int second,
+                                 @PathParam("ms") int millis,
+                                 @PathParam("hash") String hash,
                                  @PathParam("direction") String direction,
-                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                                 @QueryParam("stable") @DefaultValue("true") boolean stable) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         return adjacent(tag, contentKey, stable, direction.startsWith("n"));
     }
@@ -261,19 +261,19 @@ public class TagContentResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDirectionCount(@PathParam("tag") String tag,
-                                 @PathParam("Y") int year,
-                                 @PathParam("M") int month,
-                                 @PathParam("D") int day,
-                                 @PathParam("h") int hour,
-                                 @PathParam("m") int minute,
-                                 @PathParam("s") int second,
-                                 @PathParam("ms") int millis,
-                                 @PathParam("hash") String hash,
+                                      @PathParam("Y") int year,
+                                      @PathParam("M") int month,
+                                      @PathParam("D") int day,
+                                      @PathParam("h") int hour,
+                                      @PathParam("m") int minute,
+                                      @PathParam("s") int second,
+                                      @PathParam("ms") int millis,
+                                      @PathParam("hash") String hash,
                                       @PathParam("direction") String direction,
-                                 @PathParam("count") int count,
-                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                 @QueryParam("location") @DefaultValue("ALL") String location) {
+                                      @PathParam("count") int count,
+                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                      @QueryParam("location") @DefaultValue("ALL") String location) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         return adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key);
     }

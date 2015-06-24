@@ -209,17 +209,17 @@ public class ChannelContentResource {
     @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}")
     @GET
     public Response getDirection(@PathParam("channel") String channel,
-                            @PathParam("Y") int year,
-                            @PathParam("M") int month,
-                            @PathParam("D") int day,
-                            @PathParam("h") int hour,
-                            @PathParam("m") int minute,
-                            @PathParam("s") int second,
-                            @PathParam("ms") int millis,
-                            @PathParam("hash") String hash,
+                                 @PathParam("Y") int year,
+                                 @PathParam("M") int month,
+                                 @PathParam("D") int day,
+                                 @PathParam("h") int hour,
+                                 @PathParam("m") int minute,
+                                 @PathParam("s") int second,
+                                 @PathParam("ms") int millis,
+                                 @PathParam("hash") String hash,
                                  @PathParam("direction") String direction,
-                            @QueryParam("stable") @DefaultValue("true") boolean stable,
-                            @QueryParam("tag") String tag) {
+                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                 @QueryParam("tag") String tag) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
