@@ -172,6 +172,23 @@ describe(testName, function () {
             });
     });
 
+    it("next from tag ", function (done) {
+        var last = linkStripParams(uris[0]).substring(uris[0].indexOf(channelA) + channelA.length);
+        var url = tagUrl + last + '/next/3?tag=' + tag + '&stable=false';
+        request.get({url: url},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parsed = JSON.parse(response.body);
+                expect(parsed._links.uris.length).toBe(2);
+                parsed._links.uris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index + 1]);
+                });
+                done();
+            });
+    });
+
     it("previous from item ", function (done) {
         var url = linkStripParams(uris[2]) + '/previous/2?tag=' + tag + '&stable=false';
         request.get({url: url},
