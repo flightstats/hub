@@ -206,9 +206,9 @@ public class ChannelContentResource {
         return builder.build();
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/next")
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}")
     @GET
-    public Response getNext(@PathParam("channel") String channel,
+    public Response getDirection(@PathParam("channel") String channel,
                             @PathParam("Y") int year,
                             @PathParam("M") int month,
                             @PathParam("D") int day,
@@ -217,30 +217,11 @@ public class ChannelContentResource {
                             @PathParam("s") int second,
                             @PathParam("ms") int millis,
                             @PathParam("hash") String hash,
+                                 @PathParam("direction") String direction,
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
                             @QueryParam("tag") String tag) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacent(channel, contentKey, stable, true, tag);
-    }
-
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/previous")
-    @GET
-    public Response getPrevious(@PathParam("channel") String channel,
-                                @PathParam("Y") int year,
-                                @PathParam("M") int month,
-                                @PathParam("D") int day,
-                                @PathParam("h") int hour,
-                                @PathParam("m") int minute,
-                                @PathParam("s") int second,
-                                @PathParam("ms") int millis,
-                                @PathParam("hash") String hash,
-                                @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                @QueryParam("tag") String tag) {
-        ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacent(channel, contentKey, stable, false, tag);
-    }
-
-    private Response adjacent(String channel, ContentKey contentKey, boolean stable, boolean next, String tag) {
+        boolean next = direction.startsWith("n");
         if (null != tag) {
             return tagContentResource.adjacent(tag, contentKey, stable, next);
         }
@@ -263,56 +244,32 @@ public class ChannelContentResource {
         return builder.build();
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/next/{count}")
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}/{count}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getNextCount(@PathParam("channel") String channel,
-                                 @PathParam("Y") int year,
-                                 @PathParam("M") int month,
-                                 @PathParam("D") int day,
-                                 @PathParam("h") int hour,
-                                 @PathParam("m") int minute,
-                                 @PathParam("s") int second,
-                                 @PathParam("ms") int millis,
-                                 @PathParam("hash") String hash,
-                                 @PathParam("count") int count,
-                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                 @QueryParam("location") @DefaultValue("ALL") String location,
-                                 @QueryParam("tag") String tag) {
+    public Response getDirectionCount(@PathParam("channel") String channel,
+                                      @PathParam("Y") int year,
+                                      @PathParam("M") int month,
+                                      @PathParam("D") int day,
+                                      @PathParam("h") int hour,
+                                      @PathParam("m") int minute,
+                                      @PathParam("s") int second,
+                                      @PathParam("ms") int millis,
+                                      @PathParam("hash") String hash,
+                                      @PathParam("direction") String direction,
+                                      @PathParam("count") int count,
+                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                      @QueryParam("location") @DefaultValue("ALL") String location,
+                                      @QueryParam("tag") String tag) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacentCount(channel, count, stable, trace, location, true, key, tag);
-    }
-
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/previous/{count}")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getPreviousCount(@PathParam("channel") String channel,
-                                     @PathParam("Y") int year,
-                                     @PathParam("M") int month,
-                                     @PathParam("D") int day,
-                                     @PathParam("h") int hour,
-                                     @PathParam("m") int minute,
-                                     @PathParam("s") int second,
-                                     @PathParam("ms") int millis,
-                                     @PathParam("hash") String hash,
-                                     @PathParam("count") int count,
-                                     @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                     @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                     @QueryParam("location") @DefaultValue("ALL") String location,
-                                     @QueryParam("tag") String tag) {
-        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacentCount(channel, count, stable, trace, location, false, key, tag);
-    }
-
-    private Response adjacentCount(String channel, int count, boolean stable, boolean trace, String location,
-                                   boolean next, ContentKey contentKey, String tag) {
+        boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, contentKey);
+            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(contentKey)
+                .contentKey(key)
                 .next(next)
                 .stable(stable)
                 .location(Location.valueOf(location))
@@ -321,6 +278,7 @@ public class ChannelContentResource {
         Collection<ContentKey> keys = channelService.getKeys(query);
         return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
     }
+
 
     public static MediaType getContentType(Content content) {
         Optional<String> contentType = content.getContentType();

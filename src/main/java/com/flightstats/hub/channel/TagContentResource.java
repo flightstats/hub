@@ -214,9 +214,9 @@ public class TagContentResource {
         return builder.build();
     }
 
-    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/next")
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}")
     @GET
-    public Response getNext(@PathParam("tag") String tag,
+    public Response getDirection(@PathParam("tag") String tag,
                             @PathParam("Y") int year,
                             @PathParam("M") int month,
                             @PathParam("D") int day,
@@ -225,25 +225,10 @@ public class TagContentResource {
                             @PathParam("s") int second,
                             @PathParam("ms") int millis,
                             @PathParam("hash") String hash,
+                                 @PathParam("direction") String direction,
                             @QueryParam("stable") @DefaultValue("true") boolean stable) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacent(tag, contentKey, stable, true);
-    }
-
-    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/previous")
-    @GET
-    public Response getPrevious(@PathParam("tag") String tag,
-                                @PathParam("Y") int year,
-                                @PathParam("M") int month,
-                                @PathParam("D") int day,
-                                @PathParam("h") int hour,
-                                @PathParam("m") int minute,
-                                @PathParam("s") int second,
-                                @PathParam("ms") int millis,
-                                @PathParam("hash") String hash,
-                                @QueryParam("stable") @DefaultValue("true") boolean stable) {
-        ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacent(tag, contentKey, stable, false);
+        return adjacent(tag, contentKey, stable, direction.startsWith("n"));
     }
 
     public Response adjacent(String tag, ContentKey contentKey, boolean stable, boolean next) {
@@ -272,10 +257,10 @@ public class TagContentResource {
         return builder.build();
     }
 
-    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/next/{count}")
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}/{count}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getNextCount(@PathParam("tag") String tag,
+    public Response getDirectionCount(@PathParam("tag") String tag,
                                  @PathParam("Y") int year,
                                  @PathParam("M") int month,
                                  @PathParam("D") int day,
@@ -284,34 +269,14 @@ public class TagContentResource {
                                  @PathParam("s") int second,
                                  @PathParam("ms") int millis,
                                  @PathParam("hash") String hash,
+                                      @PathParam("direction") String direction,
                                  @PathParam("count") int count,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable,
                                  @QueryParam("trace") @DefaultValue("false") boolean trace,
                                  @QueryParam("location") @DefaultValue("ALL") String location) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacentCount(tag, count, stable, trace, location, true, key);
+        return adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key);
     }
-
-    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/previous/{count}")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getPreviousCount(@PathParam("tag") String tag,
-                                     @PathParam("Y") int year,
-                                     @PathParam("M") int month,
-                                     @PathParam("D") int day,
-                                     @PathParam("h") int hour,
-                                     @PathParam("m") int minute,
-                                     @PathParam("s") int second,
-                                     @PathParam("ms") int millis,
-                                     @PathParam("hash") String hash,
-                                     @PathParam("count") int count,
-                                     @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                     @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                     @QueryParam("location") @DefaultValue("ALL") String location) {
-        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacentCount(tag, count, stable, trace, location, false, key);
-    }
-
 
     public Response adjacentCount(String tag, int count, boolean stable, boolean trace, String location,
                                   boolean next, ContentKey contentKey) {
