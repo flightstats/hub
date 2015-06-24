@@ -199,7 +199,6 @@ public class ChannelContentResource {
                 .header(Headers.CREATION_DATE,
                         dateTimeFormatter.print(new DateTime(key.getMillis())));
 
-        LinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
         LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");

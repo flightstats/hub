@@ -32,24 +32,19 @@ public class TagService {
 
     public Collection<ChannelContentKey> queryByTime(TimeQuery timeQuery) {
         Iterable<ChannelConfig> channels = getChannels(timeQuery.getTagName());
-
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
-        //todo - gfm - 6/19/15 - this should be multi-threaded
         for (ChannelConfig channel : channels) {
             Collection<ContentKey> contentKeys = channelService.queryByTime(timeQuery.withChannelName(channel.getName()));
             for (ContentKey contentKey : contentKeys) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
             }
         }
-
         return orderedKeys;
     }
 
     public Collection<ChannelContentKey> getKeys(DirectionQuery query) {
         Iterable<ChannelConfig> channels = getChannels(query.getTagName());
-
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
-        //todo - gfm - 6/19/15 - this should be multi-threaded
         for (ChannelConfig channel : channels) {
             query.getTraces().add("query for channel", channel.getName());
             Collection<ContentKey> contentKeys = channelService.getKeys(query.withChannelName(channel.getName()));
