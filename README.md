@@ -406,7 +406,8 @@ On success: `HTTP/1.1 200 OK`
 ## tag unions
 
 Tags can also be used for a read only union set of all it's channels.
-[latest](#latest-channel-item), [earliest](#earliest-channel-item) and [time](#time-interface) work the same as their channel analogs.
+[next and previous links](#next-and-previous-links), [latest](#latest-channel-item), 
+[earliest](#earliest-channel-item) and [time](#time-interface) work the same as their channel analogs.
 
 Operations which use item urls include a tag parameter.  Using the tag parameter allows the user to stay in the tag context.
 
