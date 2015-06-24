@@ -61,8 +61,8 @@ public class TimeUtil {
         return daysFormatter.parseDateTime(property);
     }
 
-    public static DateTime getEarliestTime(int ttlDays, boolean stable) {
-        DateTime limitTime = TimeUtil.time(stable).minusDays((int) ttlDays);
+    public static DateTime getEarliestTime(int ttlDays) {
+        DateTime limitTime = TimeUtil.now().minusDays((int) ttlDays);
         DateTime birthDay = TimeUtil.getBirthDay();
         if (limitTime.isBefore(birthDay)) {
             limitTime = birthDay;
