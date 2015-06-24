@@ -180,7 +180,7 @@ describe(testName, function () {
             });
     });
 
-    it("latest from channel ", function (done) {
+    it("latest 3 from channel ", function (done) {
         var url = hubUrlBase + '/channel/' + channelA + '/latest/3?tag=' + tag + '&stable=false';
         request.get({url: url, followRedirect: false},
             function (err, response, body) {
@@ -195,6 +195,35 @@ describe(testName, function () {
                 done();
             });
     });
+
+    it("earliest from channel ", function (done) {
+        var url = hubUrlBase + '/channel/' + channelB + '/earliest?tag=' + tag + '&stable=false';
+        request.get({url: url, followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(303);
+                expect(response.headers.location).toBe(uris[0]);
+                done();
+            });
+    });
+
+    it("earliest 3 from channel ", function (done) {
+        var url = hubUrlBase + '/channel/' + channelA + '/earliest/3?tag=' + tag + '&stable=false';
+        request.get({url: url, followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parsed = JSON.parse(response.body);
+                expect(parsed._links.uris.length).toBe(3);
+                parsed._links.uris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index]);
+                });
+                done();
+            });
+    });
+
+
 
 });
 
