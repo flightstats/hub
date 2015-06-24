@@ -26,11 +26,17 @@ public class ChannelLatestResource {
     private ChannelService channelService;
     @Inject
     private ObjectMapper mapper;
+    @Inject
+    private TagLatestResource tagLatestResource;
 
     @GET
     public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
-                              @QueryParam("trace") @DefaultValue("false") boolean trace) {
+                              @QueryParam("trace") @DefaultValue("false") boolean trace,
+                              @QueryParam("tag") String tag) {
+        if (tag != null) {
+            return tagLatestResource.getLatest(tag, stable, trace);
+        }
         Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
         if (latest.isPresent()) {
             return Response.status(SEE_OTHER)
@@ -47,7 +53,11 @@ public class ChannelLatestResource {
     public Response getLatestCount(@PathParam("channel") String channel,
                                    @PathParam("count") int count,
                                    @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                   @QueryParam("trace") @DefaultValue("false") boolean trace) {
+                                   @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                   @QueryParam("tag") String tag) {
+        if (tag != null) {
+            return tagLatestResource.getLatestCount(tag, count, stable, trace);
+        }
         Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
         if (!latest.isPresent()) {
             return Response.status(NOT_FOUND).build();

@@ -139,7 +139,6 @@ describe(testName, function () {
 
     it("next from item ", function (done) {
         var url = linkStripParams(uris[0]) + '/next/2?tag=' + tag + '&stable=false';
-        console.log('calling ' + url);
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -156,7 +155,6 @@ describe(testName, function () {
 
     it("previous from item ", function (done) {
         var url = linkStripParams(uris[2]) + '/previous/2?tag=' + tag + '&stable=false';
-        console.log('calling ' + url);
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -171,6 +169,32 @@ describe(testName, function () {
             });
     });
 
+    it("latest from channel ", function (done) {
+        var url = hubUrlBase + '/channel/' + channelB + '/latest?tag=' + tag + '&stable=false';
+        request.get({url: url, followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(303);
+                expect(response.headers.location).toBe(uris[2]);
+                done();
+            });
+    });
+
+    it("latest from channel ", function (done) {
+        var url = hubUrlBase + '/channel/' + channelA + '/latest/3?tag=' + tag + '&stable=false';
+        request.get({url: url, followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parsed = JSON.parse(response.body);
+                expect(parsed._links.uris.length).toBe(3);
+                parsed._links.uris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index]);
+                });
+                done();
+            });
+    });
 
 });
 
