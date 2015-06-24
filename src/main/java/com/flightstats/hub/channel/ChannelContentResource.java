@@ -67,9 +67,10 @@ public class ChannelContentResource {
                            @PathParam("D") int day,
                            @QueryParam("location") @DefaultValue("ALL") String location,
                            @QueryParam("trace") @DefaultValue("false") boolean trace,
-                           @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                           @QueryParam("stable") @DefaultValue("true") boolean stable,
+                           @QueryParam("tag") String tag) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag);
     }
 
     @Path("/{hour}")
@@ -82,9 +83,10 @@ public class ChannelContentResource {
                             @PathParam("hour") int hour,
                             @QueryParam("location") @DefaultValue("ALL") String location,
                             @QueryParam("trace") @DefaultValue("false") boolean trace,
-                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                            @QueryParam("stable") @DefaultValue("true") boolean stable,
+                            @QueryParam("tag") String tag) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag);
     }
 
     @Path("/{h}/{minute}")
@@ -98,9 +100,10 @@ public class ChannelContentResource {
                               @PathParam("minute") int minute,
                               @QueryParam("location") @DefaultValue("ALL") String location,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
-                              @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                              @QueryParam("stable") @DefaultValue("true") boolean stable,
+                              @QueryParam("tag") String tag) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag);
     }
 
     @Path("/{h}/{m}/{second}")
@@ -115,13 +118,17 @@ public class ChannelContentResource {
                               @PathParam("second") int second,
                               @QueryParam("location") @DefaultValue("ALL") String location,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
-                              @QueryParam("stable") @DefaultValue("true") boolean stable) {
+                              @QueryParam("stable") @DefaultValue("true") boolean stable,
+                              @QueryParam("tag") String tag) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag);
     }
 
     public Response getTimeQueryResponse(String channelName, DateTime startTime, String location, boolean trace, boolean stable,
-                                         Unit unit) {
+                                         Unit unit, String tag) {
+        if (tag != null) {
+            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit);
+        }
         TimeQuery query = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
@@ -155,7 +162,8 @@ public class ChannelContentResource {
     @Path("/{h}/{m}/{s}/{ms}/{hash}")
     @GET
     @EventTimed(name = "channel.ALL.get")
-    public Response getValue(@PathParam("channel") String channel, @PathParam("Y") int year,
+    public Response getValue(@PathParam("channel") String channel,
+                             @PathParam("Y") int year,
                              @PathParam("M") int month,
                              @PathParam("D") int day,
                              @PathParam("h") int hour,
@@ -163,14 +171,13 @@ public class ChannelContentResource {
                              @PathParam("s") int second,
                              @PathParam("ms") int millis,
                              @PathParam("hash") String hash,
-                             @HeaderParam("Accept") String accept, @HeaderParam("User") String user
+                             @HeaderParam("Accept") String accept
     ) {
         long start = System.currentTimeMillis();
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         Request request = Request.builder()
                 .channel(channel)
                 .key(key)
-                .user(user)
                 .uri(uriInfo.getRequestUri())
                 .build();
         Optional<Content> optionalResult = channelService.getValue(request);

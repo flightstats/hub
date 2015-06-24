@@ -223,6 +223,23 @@ describe(testName, function () {
             });
     });
 
+    it("day query from channel ", function (done) {
+        var url = hubUrlBase + '/channel/' + channelB + '/time/day?tag=' + tag + '&stable=false';
+        request.get({url: url},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parsed = JSON.parse(response.body);
+                console.log('parsed', parsed);
+                expect(parsed._links.uris.length).toBe(3);
+                parsed._links.uris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index]);
+                });
+                //todo - gfm - 6/24/15 - check links too
+                done();
+            });
+    });
 
 
 });

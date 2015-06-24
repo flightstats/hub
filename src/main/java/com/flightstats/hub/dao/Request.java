@@ -17,7 +17,6 @@ public class Request {
     @Wither
     private final String channel;
     private final String tag;
-    private final String user;
     private final URI uri;
     private final ContentKey key;
     private Date date = new Date();

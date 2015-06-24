@@ -180,19 +180,16 @@ public class TagContentResource {
                              @PathParam("s") int second,
                              @PathParam("ms") int millis,
                              @PathParam("hash") String hash,
-                             @HeaderParam("Accept") String accept, @HeaderParam("User") String user
+                             @HeaderParam("Accept") String accept
     ) {
-        logger.info("taggy {} {}", tag, hash);
         long start = System.currentTimeMillis();
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         Request request = Request.builder()
                 .tag(tag)
                 .key(key)
-                .user(user)
                 .uri(uriInfo.getRequestUri())
                 .build();
         Optional<Content> optionalResult = tagService.getValue(request);
-        logger.info("taggy {} {}", tag, optionalResult);
 
         if (!optionalResult.isPresent()) {
             logger.warn("404 content not found {} {}", tag, key);
@@ -271,7 +268,6 @@ public class TagContentResource {
                 .queryParam("tag", tag)
                 .queryParam("stable", stable)
                 .build();
-        String channelUri = uriInfo.getBaseUri() + "channel/" + foundKey.getChannel();
         logger.trace("returning url {}", uri);
         builder.location(uri);
         return builder.build();

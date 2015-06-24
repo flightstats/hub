@@ -6,16 +6,18 @@ import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
+import javax.ws.rs.core.*;
+import java.util.List;
 
 import static com.flightstats.hub.util.TimeUtil.*;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 public class TimeLinkUtil {
+
+    private final static Logger logger = LoggerFactory.getLogger(TimeLinkUtil.class);
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -65,27 +67,34 @@ public class TimeLinkUtil {
     }
 
     public static Response getSecond(boolean stable, UriInfo uriInfo) {
-        return getResponse(seconds(TimeUtil.time(stable)) + "?stable=" + stable, "time/second", uriInfo);
+        return getResponse(seconds(TimeUtil.time(stable)), uriInfo);
     }
 
     public static Response getMinute(boolean stable, UriInfo uriInfo) {
-        return getResponse(minutes(TimeUtil.time(stable)) + "?stable=" + stable, "time/minute", uriInfo);
+        return getResponse(minutes(TimeUtil.time(stable)), uriInfo);
     }
 
     public static Response getHour(boolean stable, UriInfo uriInfo) {
-        return getResponse(hours(TimeUtil.time(stable)) + "?stable=" + stable, "time/hour", uriInfo);
+        return getResponse(hours(TimeUtil.time(stable)), uriInfo);
     }
 
     public static Response getDay(boolean stable, UriInfo uriInfo) {
-        return getResponse(days(TimeUtil.time(stable)) + "?stable=" + stable, "time/day", uriInfo);
+        return getResponse(days(TimeUtil.time(stable)), uriInfo);
     }
 
-    private static Response getResponse(String timePath, String endString, UriInfo uriInfo) {
+    private static Response getResponse(String timePath, UriInfo uriInfo) {
+        List<PathSegment> segments = uriInfo.getPathSegments();
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path(segments.get(0).getPath())
+                .path(segments.get(1).getPath())
+                .path(timePath);
+        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+        for (String param : queryParameters.keySet()) {
+            List<String> strings = queryParameters.get(param);
+            uriBuilder.queryParam(param, strings.toArray(new String[strings.size()]));
+        }
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
-        String fullPath = uriInfo.getAbsolutePath().toString();
-        fullPath = StringUtils.removeEnd(fullPath, endString);
-        URI uri = URI.create(fullPath + timePath);
-        builder.location(uri);
+        builder.location(uriBuilder.build());
         return builder.build();
     }
 }
