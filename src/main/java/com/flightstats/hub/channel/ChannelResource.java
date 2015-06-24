@@ -7,7 +7,6 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.InsertedContentKey;
-import com.flightstats.hub.rest.Headers;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
 import com.flightstats.hub.time.NTPMonitor;
@@ -125,7 +124,6 @@ public class ChannelResource {
             Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
             builder.entity(linkedResult);
             builder.location(payloadUri);
-            LinkBuilder.addOptionalHeader(Headers.USER, content.getUser(), builder);
             content.getTraces().logSlow(100, logger);
             long time = System.currentTimeMillis() - start;
             int postTimeBuffer = ntpMonitor.getPostTimeBuffer();

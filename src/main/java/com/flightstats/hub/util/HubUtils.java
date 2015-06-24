@@ -123,7 +123,6 @@ public class HubUtils {
                 .withContentKey(new ContentKey(new DateTime(millis, DateTimeZone.UTC), Long.toString(sequence)))
                 .withContentType(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
                 .withContentLanguage(response.getHeaders().getFirst(Headers.LANGUAGE))
-                .withUser(response.getHeaders().getFirst(Headers.USER))
                 .withData(response.getEntity(byte[].class))
                 .build();
 
@@ -140,7 +139,6 @@ public class HubUtils {
                 .withContentKey(ContentKey.fromFullUrl(contentUrl).get())
                 .withContentType(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
                 .withContentLanguage(response.getHeaders().getFirst(Headers.LANGUAGE))
-                .withUser(response.getHeaders().getFirst(Headers.USER))
                 .withData(response.getEntity(byte[].class))
                 .build();
 

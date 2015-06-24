@@ -31,12 +31,18 @@ public class ChannelEarliestResource {
     private ChannelService channelService;
     @Inject
     private ObjectMapper mapper;
+    @Inject
+    private TagEarliestResource tagEarliestResource;
 
     @GET
     public Response getEarliest(@PathParam("channel") String channel,
                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                @QueryParam("trace") @DefaultValue("false") boolean trace) {
-        DirectionQuery query = getDirectionQuery(channel, 1, stable, trace);
+                                @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                @QueryParam("tag") String tag) {
+        if (tag != null) {
+            return tagEarliestResource.getEarliest(tag, stable, trace);
+        }
+        DirectionQuery query = getDirectionQuery(channel, 1, stable, trace, channelService);
         Collection<ContentKey> keys = channelService.getKeys(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
@@ -54,14 +60,18 @@ public class ChannelEarliestResource {
     public Response getEarliestCount(@PathParam("channel") String channel,
                                      @PathParam("count") int count,
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                     @QueryParam("trace") @DefaultValue("false") boolean trace) {
-        DirectionQuery query = getDirectionQuery(channel, count, stable, trace);
+                                     @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                     @QueryParam("tag") String tag) {
+        if (tag != null) {
+            return tagEarliestResource.getEarliestCount(tag, count, stable, trace);
+        }
+        DirectionQuery query = getDirectionQuery(channel, count, stable, trace, channelService);
         Collection<ContentKey> keys = channelService.getKeys(query);
         return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, false);
 
     }
 
-    private DirectionQuery getDirectionQuery(String channel, int count, boolean stable, boolean trace) {
+    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, boolean trace, ChannelService channelService) {
         long ttlDays = channelService.getCachedChannelConfig(channel).getTtlDays();
         DateTime earliestTime = TimeUtil.getEarliestTime((int) ttlDays, stable);
         ContentKey limitKey = new ContentKey(earliestTime, "0");
