@@ -272,7 +272,6 @@ describe(testName, function () {
                     console.log('found ', uri);
                     expect(uri).toBe(uris[index]);
                 });
-                //todo - gfm - 6/24/15 - check links too
                 done();
             });
     });
