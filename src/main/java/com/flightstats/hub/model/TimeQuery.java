@@ -32,11 +32,7 @@ public class TimeQuery {
     }
 
     public void trace(boolean trace) {
-        if (trace) {
-            traces = new TracesImpl();
-        } else {
-            traces = Traces.NOOP;
-        }
+        traces = Traces.getTraces(trace);
     }
 
 }

@@ -193,7 +193,6 @@ public class AwsContentService implements ContentService {
                 }
             });
             countDownLatch.await(3, TimeUnit.MINUTES);
-            query.getTraces().add("both unique keys", orderedKeys);
             return orderedKeys;
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);

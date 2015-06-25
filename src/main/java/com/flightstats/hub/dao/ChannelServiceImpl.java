@@ -88,10 +88,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (null == channelConfig) {
             return Optional.absent();
         }
-        Traces traces = Traces.NOOP;
-        if (trace) {
-            traces = new TracesImpl();
-        }
+        Traces traces = Traces.getTraces(trace);
         ContentKey limitKey = new ContentKey(TimeUtil.time(stable), "ZZZZZZ");
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
@@ -205,22 +202,22 @@ public class ChannelServiceImpl implements ChannelService {
         }
         DateTime ttlTime = getTtlTime(query.getChannelName());
         if (query.getContentKey().getTime().isBefore(ttlTime)) {
-            query = query.withContentKey(new ContentKey(ttlTime, "0"));
+            query.setContentKey(new ContentKey(ttlTime, "0"));
         }
-        final DirectionQuery finalQuery = query;
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
+        query.getTraces().add("keys", keys);
         Stream<ContentKey> stream = keys.stream();
         if (query.isNext()) {
             DateTime stableTime = TimeUtil.time(query.isStable());
             stream = stream
-                    .filter(key -> key.compareTo(finalQuery.getContentKey()) > 0)
+                    .filter(key -> key.compareTo(query.getContentKey()) > 0)
                     .filter(key -> key.getTime().isBefore(stableTime));
 
         } else {
             Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
             contentKeys.addAll(keys);
             stream = contentKeys.stream()
-                    .filter(key -> key.compareTo(finalQuery.getContentKey()) < 0);
+                    .filter(key -> key.compareTo(query.getContentKey()) < 0);
         }
         return stream
                 .filter(key -> key.getTime().isAfter(ttlTime))

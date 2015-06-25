@@ -23,4 +23,10 @@ public interface Traces {
     void output(ObjectNode root);
 
     void log(Logger logger);
+
+    static Traces getTraces(boolean trace) {
+        return trace ? new TracesImpl() : Traces.NOOP;
+    }
+
+    ;
 }

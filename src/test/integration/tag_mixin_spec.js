@@ -129,8 +129,8 @@ describe(testName, function () {
             });
     });
 
-    it("gets earliest unstable in channel ", function (done) {
-        request.get({url: tagUrl + '/earliest?stable=false', followRedirect: false},
+    it("gets earliest unstable in channel " + tag, function (done) {
+        request.get({url: tagUrl + '/earliest?stable=false&trace=true', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(303);
@@ -139,7 +139,7 @@ describe(testName, function () {
             });
     });
 
-    it("next from item ", function (done) {
+    it("next from item " + tag, function (done) {
         var url = linkStripParams(uris[0]) + '/next/2?tag=' + tag + '&stable=false';
         request.get({url: url},
             function (err, response, body) {
@@ -155,7 +155,7 @@ describe(testName, function () {
             });
     });
 
-    it("previous from tag ", function (done) {
+    it("previous from tag " + tag, function (done) {
         var last = linkStripParams(uris[2]).substring(uris[2].indexOf(channelA) + channelA.length);
         var url = tagUrl + last + '/previous/3?tag=' + tag + '&stable=false';
         request.get({url: url},
@@ -172,7 +172,7 @@ describe(testName, function () {
             });
     });
 
-    it("next from tag ", function (done) {
+    it("next from tag " + tag, function (done) {
         var last = linkStripParams(uris[0]).substring(uris[0].indexOf(channelA) + channelA.length);
         var url = tagUrl + last + '/next/3?tag=' + tag + '&stable=false';
         request.get({url: url},
@@ -189,7 +189,7 @@ describe(testName, function () {
             });
     });
 
-    it("previous from item ", function (done) {
+    it("previous from item " + tag, function (done) {
         var url = linkStripParams(uris[2]) + '/previous/2?tag=' + tag + '&stable=false';
         request.get({url: url},
             function (err, response, body) {
@@ -205,7 +205,7 @@ describe(testName, function () {
             });
     });
 
-    it("latest from channel ", function (done) {
+    it("latest from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelB + '/latest?tag=' + tag + '&stable=false';
         request.get({url: url, followRedirect: false},
             function (err, response, body) {
@@ -216,7 +216,7 @@ describe(testName, function () {
             });
     });
 
-    it("latest 3 from channel ", function (done) {
+    it("latest 3 from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelA + '/latest/3?tag=' + tag + '&stable=false';
         request.get({url: url, followRedirect: false},
             function (err, response, body) {
@@ -232,8 +232,8 @@ describe(testName, function () {
             });
     });
 
-    it("earliest from channel ", function (done) {
-        var url = hubUrlBase + '/channel/' + channelB + '/earliest?tag=' + tag + '&stable=false';
+    it("earliest from channel " + tag, function (done) {
+        var url = hubUrlBase + '/channel/' + channelB + '/earliest?tag=' + tag + '&stable=false&trace=true';
         request.get({url: url, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -243,8 +243,8 @@ describe(testName, function () {
             });
     });
 
-    it("earliest 3 from channel ", function (done) {
-        var url = hubUrlBase + '/channel/' + channelA + '/earliest/3?tag=' + tag + '&stable=false';
+    it("earliest 3 from channel " + tag, function (done) {
+        var url = hubUrlBase + '/channel/' + channelA + '/earliest/3?tag=' + tag + '&stable=false&trace=true';
         request.get({url: url, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -259,7 +259,7 @@ describe(testName, function () {
             });
     });
 
-    it("day query from channel ", function (done) {
+    it("day query from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelB + '/time/day?tag=' + tag + '&stable=false';
         request.get({url: url},
             function (err, response, body) {

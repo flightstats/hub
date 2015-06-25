@@ -1,28 +1,26 @@
 package com.flightstats.hub.model;
 
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.Builder;
 import lombok.experimental.Wither;
 
 @Builder
 @Getter
-@ToString
+@ToString(exclude = {"traces"})
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class DirectionQuery {
     @Wither
     private final String channelName;
     private final String tagName;
-    @Wither
-    private final ContentKey contentKey;
+    @Setter
+    private ContentKey contentKey;
     private final int count;
     private final boolean next;
     private final Location location;
     private final boolean stable;
     private final long ttlDays;
+    @Setter
     private Traces traces;
 
     public Location getLocation() {
@@ -47,10 +45,6 @@ public class DirectionQuery {
     }
 
     public void trace(boolean trace) {
-        if (trace) {
-            traces = new TracesImpl();
-        } else {
-            traces = Traces.NOOP;
-        }
+        traces = Traces.getTraces(trace);
     }
 }
