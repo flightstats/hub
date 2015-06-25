@@ -17,7 +17,7 @@ describe(testName, function () {
 
     var webSocket;
 
-    it('starts websocket ', function (done) {
+    it('starts websocket ' + channelName, function (done) {
         webSocket = new WebSocket(wsUrl);
         webSocket.on('open', function (message) {
             console.log('opened wsUrl', wsUrl);
@@ -29,14 +29,14 @@ describe(testName, function () {
 
     utils.addItem(channelResource);
 
-    it('waits for data', function (done) {
+    it('waits for data' + channelName, function (done) {
         webSocket.onmessage = function (message) {
             console.log('messagedUrl', message.data);
             done();
         };
     }, MINUTE + 1);
 
-    it('closes websocket', function (done) {
+    it('closes websocket' + channelName, function (done) {
         webSocket.onclose = function () {
             console.log('closed ws');
             done();
