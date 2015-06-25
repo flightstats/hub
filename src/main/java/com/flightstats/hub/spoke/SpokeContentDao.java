@@ -102,6 +102,7 @@ public class SpokeContentDao implements ContentDao {
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
         SortedSet<ContentKey> orderedKeys = new TreeSet<>();
+        //todo - gfm - 6/25/15 - figure out proper start time
         ContentKey startKey = query.getContentKey();
         DateTime startTime = startKey.getTime();
         if (query(query, orderedKeys, startKey, startTime)) {
