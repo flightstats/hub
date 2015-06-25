@@ -149,7 +149,7 @@ On success:  `HTTP/1.1 201 OK`
             "href": "http://hub/channel/stumptown/time"
         },
         "status" : {
-              "href" : "http://hub-v2.svc.dev/channel/load_test_1/status"
+              "href" : "http://hub/channel/load_test_1/status"
         }
     },
     "name": "stumptown",
@@ -384,13 +384,13 @@ On success: `HTTP/1.1 200 OK`
       "href" : "http://hub/tag/coffee"
     },
     "latest": {
-        "href": "http://hub-v2.svc.dev/tag/coffee/latest"
+        "href": "http://hub/tag/coffee/latest"
     },
     "earliest": {
-        "href": "http://hub-v2.svc.dev/tag/coffee/earliest"
+        "href": "http://hub/tag/coffee/earliest"
     },
     "time": {
-        "href": "http://hub-v2.svc.dev/tag/coffee/time"
+        "href": "http://hub/tag/coffee/time"
     },
     "channels" : [ {
       "name" : "stumptown",
@@ -405,27 +405,36 @@ On success: `HTTP/1.1 200 OK`
 
 ## tag unions
 
-Tags can also be used for a read only union set of all it's channels.
+Tags can also be used for a read-only union set of all it's channels.
 [next and previous links](#next-and-previous-links), [latest](#latest-channel-item), 
 [earliest](#earliest-channel-item) and [time](#time-interface) work the same as their channel analogs.
+Tag operations can be accessed through /tag/{tag-name} or /channel/{channel-name}/
 
-Operations which use item urls include a tag parameter.  Using the tag parameter allows the user to stay in the tag context.
+Example operations:
+`GET http://hub/tag/coffee/latest`
+`GET http://hub/tag/coffee/earliest`
+`GET http://hub/tag/coffee/2015/06/25/16`
+`GET http://hub/tag/coffee/2015/06/24/19/48/17/000/abc/previous`
+`GET http://hub/tag/coffee/2015/06/24/19/48/17/000/abc/next/10`
+`GET http://hub/channel/spella/2015/06/24/19/48/17/000/abc/next/10?tag=coffee`
+
+Operations through the channel interface (/channel/{channel-name}/) can a tag parameter.  Using the tag parameter allows the user to stay in the tag context.
 
 For example:
 
-`GET http://hub-v2.svc.dev/tag/coffee/latest`
+`GET http://hub/tag/coffee/latest`
 
 returns a redirect to
 
-`http://hub-v2.svc.dev/channel/spella/2015/06/24/19/48/17/000/abc?tag=coffee`
+`http://hub/channel/spella/2015/06/24/19/48/17/000/abc?tag=coffee`
 
 Following the previous on that item and including the tag
 
-`http://hub-v2.svc.dev/channel/spella/2015/06/24/19/48/17/000/abc/previous?tag=coffee`
+`http://hub/channel/spella/2015/06/24/19/48/17/000/abc/previous?tag=coffee`
 
 returns a redirect to an item on a different channel
 
-`http://hub-v2.svc.dev/channel/stumptown/2015/06/24/19/40/17/000/qwe?tag=coffee`
+`http://hub/channel/stumptown/2015/06/24/19/40/17/000/qwe?tag=coffee`
 
 ## time interface
 
