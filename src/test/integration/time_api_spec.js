@@ -40,10 +40,9 @@ describe(testName, function () {
         var url = channelResource + '/time';
         request.get({url : url, json : true},
             function (err, response, body) {
-                var time = moment().utc().subtract(stableOffset, 'seconds');
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                verifyLinks(body, url, time);
+                verifyLinks(body, url, moment(body.stable.millis).utc());
                 done();
             })
     });
@@ -53,10 +52,9 @@ describe(testName, function () {
         var params = '?stable=true';
         request.get({url : url + params, json : true},
             function (err, response, body) {
-                var time = moment().utc().subtract(stableOffset, 'seconds');
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                verifyLinks(body, url, time, params);
+                verifyLinks(body, url, moment(body.stable.millis).utc(), params);
                 done();
             })
     });
@@ -69,7 +67,7 @@ describe(testName, function () {
                 var time = moment().utc();
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                verifyLinks(body, url, time, params);
+                verifyLinks(body, url, moment(body.now.millis).utc(), params);
                 done();
             })
     });
