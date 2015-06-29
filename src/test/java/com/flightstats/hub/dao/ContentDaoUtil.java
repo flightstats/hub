@@ -95,7 +95,7 @@ public class ContentDaoUtil {
     }
 
     public void testDirectionQueryTTL() throws Exception {
-        String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testDirectionQueryTTL" + RandomStringUtils.randomAlphanumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
         for (int i = 0; i < 7; i++) {
@@ -105,10 +105,10 @@ public class ContentDaoUtil {
             contentDao.write(channel, createContent(key));
         }
         logger.info("wrote {} {}", keys.size(), keys);
-        query(channel, keys, 20, 2, true, start.minusHours(2));
+        query(channel, keys, 20, 3, true, start.minusHours(2));
         query(channel, keys, 20, 4, true, start.minusHours(4));
         query(channel, keys, 20, 4, true, start.minusHours(5));
-        query(channel, keys, 20, 4, false, start);
+        query(channel, keys, 20, 4, false, start.plusMinutes(1));
         query(channel, keys, 1, 1, true, start.minusDays(10));
     }
 
@@ -149,7 +149,7 @@ public class ContentDaoUtil {
         }
         logger.info("wrote {} {}", keys.size(), keys);
         query(channel, keys, 60, 60, true, start.minusHours(1));
-        query(channel, keys, 60, 15, true, start.minusMinutes(15));
+        query(channel, keys, 60, 16, true, start.minusMinutes(15));
         query(channel, keys, 60, 60, true, start.minusDays(20));
     }
 
