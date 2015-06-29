@@ -1,6 +1,8 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
@@ -10,6 +12,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -24,6 +27,8 @@ public class SpokeContentDao implements ContentDao {
     private final static Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
 
     private final RemoteSpokeStore spokeStore;
+
+    private final int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
 
     @Inject
     public SpokeContentDao(RemoteSpokeStore spokeStore) {
@@ -102,34 +107,26 @@ public class SpokeContentDao implements ContentDao {
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
         SortedSet<ContentKey> orderedKeys = new TreeSet<>();
-        //todo - gfm - 6/25/15 - figure out proper start time
+        DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
+        if (query.getContentKey().getTime().isBefore(ttlTime)) {
+            query.setContentKey(new ContentKey(ttlTime, "0"));
+        }
         ContentKey startKey = query.getContentKey();
         DateTime startTime = startKey.getTime();
-        if (query(query, orderedKeys, startKey, startTime)) {
-            return orderedKeys;
+        while (orderedKeys.size() < query.getCount()
+                && startTime.isAfter(ttlTime.minusHours(1))
+                && startTime.isBefore(TimeUtil.time(query.isStable()).plusHours(1))) {
+            query(query, orderedKeys, startKey, startTime, ttlTime);
+            startTime = query.isNext() ? startTime.plusHours(1) : startTime.minusHours(1);
         }
-        startTime = query.isNext() ? startTime.plusDays(1) : startTime.minusDays(1);
-        query(query, orderedKeys, startKey, startTime);
         return orderedKeys;
     }
 
-    private boolean query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime) {
-        SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS, query.getTraces());
-        if (query.isNext()) {
-            //from oldest to newest
-            DateTime stableTime = TimeUtil.time(query.isStable());
-            for (ContentKey contentKey : queryByTime) {
-                if (contentKey.compareTo(startKey) > 0 && contentKey.getTime().isBefore(stableTime)) {
-                    orderedKeys.add(contentKey);
-                    if (orderedKeys.size() == query.getCount()) {
-                        return true;
-                    }
-                }
-            }
-        } else {
-            PreviousUtil.addToPrevious(query, queryByTime, orderedKeys);
-        }
-        return false;
+    private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime, DateTime ttlTime) {
+        SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.HOURS, query.getTraces());
+        queryByTime.addAll(orderedKeys);
+        Set<ContentKey> filtered = ContentKeyUtil.filter(queryByTime, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
+        orderedKeys.addAll(filtered);
     }
 
     @Override

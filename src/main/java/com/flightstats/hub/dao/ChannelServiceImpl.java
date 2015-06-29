@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ChannelServiceImpl implements ChannelService {
     private final static Logger logger = LoggerFactory.getLogger(ChannelServiceImpl.class);
@@ -206,23 +205,7 @@ public class ChannelServiceImpl implements ChannelService {
         }
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
         query.getTraces().add("keys", keys);
-        Stream<ContentKey> stream = keys.stream();
-        if (query.isNext()) {
-            DateTime stableTime = TimeUtil.time(query.isStable());
-            stream = stream
-                    .filter(key -> key.compareTo(query.getContentKey()) > 0)
-                    .filter(key -> key.getTime().isBefore(stableTime));
-
-        } else {
-            Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
-            contentKeys.addAll(keys);
-            stream = contentKeys.stream()
-                    .filter(key -> key.compareTo(query.getContentKey()) < 0);
-        }
-        return stream
-                .filter(key -> key.getTime().isAfter(ttlTime))
-                .limit(query.getCount())
-                .collect(Collectors.toCollection(TreeSet::new));
+        return ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
     }
 
     private DateTime getTtlTime(String channelName) {

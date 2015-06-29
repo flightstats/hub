@@ -40,6 +40,7 @@ public class Integration {
         startZooKeeper();
         HubProperties.loadProperties("useDefault");
         HubProperties.setProperty("hub.type", "aws");
+        HubProperties.setProperty("spoke.ttlMinutes", "240");
         HubMain.startServer();
         injector = HubMain.getInjector();
         return injector;

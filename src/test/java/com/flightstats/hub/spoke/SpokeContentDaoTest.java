@@ -58,6 +58,12 @@ public class SpokeContentDaoTest {
 
     @Test
     public void testDirectionQuery() throws Exception {
+        //todo - gfm - 6/26/15 - fix this for Spoke
         util.testDirectionQuery();
+    }
+
+    @Test
+    public void testEarliest() throws Exception {
+        util.testEarliest();
     }
 }

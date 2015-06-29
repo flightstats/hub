@@ -15,6 +15,7 @@ public class PreviousUtil {
     public static void addToPrevious(DirectionQuery query,
                                      Collection<ContentKey> toAdd,
                                      SortedSet<ContentKey> orderedKeys) {
+        //todo - gfm - 6/29/15 - replce with ContentKeyUtil.filter
         Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
         contentKeys.addAll(toAdd);
         DateTime time = TimeUtil.time(query.isStable());
