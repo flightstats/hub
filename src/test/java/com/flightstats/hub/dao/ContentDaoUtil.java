@@ -91,7 +91,7 @@ public class ContentDaoUtil {
         assertTrue(keys.containsAll(found));
     }
 
-    public void testDirectionQuery() throws Exception {
+    public void testDirectionQueryTTL() throws Exception {
         String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
@@ -107,6 +107,24 @@ public class ContentDaoUtil {
         query(channel, keys, 20, 4, true, start.minusHours(5));
         query(channel, keys, 20, 4, false, start);
         query(channel, keys, 1, 1, true, start.minusDays(10));
+    }
+
+    public void testDirectionQuery() throws Exception {
+        String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
+        List<ContentKey> keys = new ArrayList<>();
+        DateTime start = TimeUtil.now();
+        for (int i = 0; i < 7; i++) {
+            ContentKey key = new ContentKey(start.minusHours(i), "A" + i);
+            keys.add(key);
+            logger.info("writing " + key);
+            contentDao.write(channel, createContent(key));
+        }
+        logger.info("wrote {} {}", keys.size(), keys);
+        query(channel, keys, 20, 2, true, start.minusHours(2));
+        query(channel, keys, 20, 4, true, start.minusHours(4));
+        query(channel, keys, 20, 7, true, start.minusDays(5));
+        query(channel, keys, 20, 7, false, start);
+        query(channel, keys, 5, 5, false, start);
     }
 
     public void testEarliest() throws Exception {
