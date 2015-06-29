@@ -1,6 +1,9 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.TracesImpl;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
@@ -119,12 +122,19 @@ public class ContentDaoUtil {
             logger.info("writing " + key);
             contentDao.write(channel, createContent(key));
         }
+        for (int i = 0; i < 7; i++) {
+            ContentKey key = new ContentKey(start.minusDays(i), "B" + i);
+            keys.add(key);
+            logger.info("writing " + key);
+            contentDao.write(channel, createContent(key));
+        }
         logger.info("wrote {} {}", keys.size(), keys);
-        query(channel, keys, 20, 2, true, start.minusHours(2));
-        query(channel, keys, 20, 4, true, start.minusHours(4));
-        query(channel, keys, 20, 7, true, start.minusDays(5));
-        query(channel, keys, 20, 7, false, start);
+        query(channel, keys, 20, 4, true, start.minusHours(2));
+        query(channel, keys, 20, 6, true, start.minusHours(4));
+        query(channel, keys, 20, 13, true, start.minusDays(5));
+        query(channel, keys, 20, 14, false, start.plusMinutes(1));
         query(channel, keys, 5, 5, false, start);
+        query(channel, keys, 20, 5, false, start.minusDays(1));
     }
 
     public void testEarliest() throws Exception {
@@ -150,11 +160,13 @@ public class ContentDaoUtil {
                 .channelName(channel)
                 .count(count)
                 .next(next)
-                .contentKey(new ContentKey(queryTime, "blah"))
-                .traces(Traces.NOOP)
+                .contentKey(new ContentKey(queryTime, "0"))
+                .traces(new TracesImpl())
+                .ttlDays(10)
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
         logger.info("query {} {}", queryTime, found);
+        query.getTraces().log(logger);
         assertEquals(expected, found.size());
         assertTrue(keys.containsAll(found));
     }

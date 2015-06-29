@@ -6,14 +6,14 @@ import org.joda.time.DateTime;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ContentKeyUtil {
 
-    public static Set<ContentKey> filter(Collection<ContentKey> keys, ContentKey limitKey,
+    public static SortedSet<ContentKey> filter(Collection<ContentKey> keys, ContentKey limitKey,
                                          DateTime ttlTime, int count, boolean next, boolean stable) {
         Stream<ContentKey> stream = keys.stream();
         if (next) {
