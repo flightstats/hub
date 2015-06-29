@@ -4,11 +4,11 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.Traces;
-import com.flightstats.hub.spoke.PreviousUtil;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
@@ -161,16 +161,19 @@ public class S3ContentDao implements ContentDao {
         DateTime startTime = query.getContentKey().getTime();
         SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         int hourCount = 0;
+        DateTime limitTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
         while (orderedKeys.size() < query.getCount() && hourCount < 6) {
             SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.HOURS, query.getTraces());
-            PreviousUtil.addToPrevious(query, queryByTime, orderedKeys);
+            queryByTime.addAll(orderedKeys);
+            orderedKeys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), limitTime, query.getCount(), false, query.isStable());
             startTime = startTime.minusHours(1);
             hourCount++;
         }
-        DateTime limitTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
+
         while (orderedKeys.size() < query.getCount() && startTime.isAfter(limitTime)) {
             SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS, query.getTraces());
-            PreviousUtil.addToPrevious(query, queryByTime, orderedKeys);
+            queryByTime.addAll(orderedKeys);
+            orderedKeys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), limitTime, query.getCount(), false, query.isStable());
             startTime = startTime.minusDays(1);
         }
         query.getTraces().add("s3 previous returning", orderedKeys);

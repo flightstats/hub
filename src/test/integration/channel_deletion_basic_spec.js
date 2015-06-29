@@ -17,7 +17,7 @@ describe(testName, function () {
                 done();
             });
 
-    });
+    }, 65000);
 
     it("gets deleted channel " + channelName, function (done) {
         request.get({url: channelResource},

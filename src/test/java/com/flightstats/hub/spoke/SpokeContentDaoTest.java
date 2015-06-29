@@ -58,6 +58,11 @@ public class SpokeContentDaoTest {
 
     @Test
     public void testDirectionQuery() throws Exception {
-        util.testDirectionQuery();
+        util.testDirectionQueryTTL();
+    }
+
+    @Test
+    public void testEarliest() throws Exception {
+        util.testEarliest();
     }
 }
