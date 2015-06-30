@@ -46,8 +46,9 @@ describe(testName, function () {
 
     utils.putGroup(groupName, groupConfigB);
 
-    it('runs callback server', function () {
+    it('runs callback server: channel:' + channelName + ' group:' + groupName, function () {
         utils.startServer(portB, function (string) {
+            console.log('called group ' + groupName + ' ' + string);
             itemsB.push(string);
         });
 

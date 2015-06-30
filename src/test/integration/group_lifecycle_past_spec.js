@@ -23,6 +23,7 @@ var callbackUrl = callbackDomain + ':' + port + '/';
 describe(testName, function () {
     utils.createChannel(channelName);
 
+    utils.timeout(1000);
     var postedItems = [];
     var firstItem;
 
@@ -34,7 +35,7 @@ describe(testName, function () {
         }
     }
 
-    it('posts initial items', function (done) {
+    it('posts initial items ' + channelResource, function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
                 firstItem = value.body._links.self.href;
@@ -45,7 +46,7 @@ describe(testName, function () {
             });
     });
 
-    it('creates group', function (done) {
+    it('creates group ' + groupName, function (done) {
         var groupConfig = {
             callbackUrl: callbackUrl,
             channelUrl: channelResource,
@@ -71,10 +72,11 @@ describe(testName, function () {
     });
 
 
-    it('runs callback server', function () {
+    it('runs callback server group:' + groupName + ' channel:' + channelName, function () {
         var callbackItems = [];
 
         utils.startServer(port, function (string) {
+            console.log('called group ' + groupName + ' ' + string);
             callbackItems.push(string);
         });
 

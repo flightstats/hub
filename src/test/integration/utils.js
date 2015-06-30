@@ -201,6 +201,14 @@ function sleep(millis) {
     }, millis + 1000);
 }
 
+function timeout(millis) {
+    it('waits for ' + millis, function (done) {
+        setTimeout(function () {
+            done()
+        }, millis);
+    });
+}
+
 function startServer(port, callback) {
     var started = false;
     runs(function () {
@@ -282,6 +290,7 @@ exports.createChannel = createChannel;
 exports.putChannel = putChannel;
 exports.addItem = addItem;
 exports.sleep = sleep;
+exports.timeout = timeout;
 exports.putGroup = putGroup;
 exports.getGroup = getGroup;
 exports.deleteGroup = deleteGroup;
