@@ -411,13 +411,14 @@ Tags can also be used for a read-only union set of all it's channels.
 Tag operations can be accessed through /tag/{tag-name} or /channel/{channel-name}/
 
 Example operations:
-`GET http://hub/tag/coffee/latest`
-`GET http://hub/tag/coffee/earliest`
-`GET http://hub/tag/coffee/2015/06/25/16`
-`GET http://hub/tag/coffee/2015/06/24/19/48/17/000/abc/previous`
-`GET http://hub/tag/coffee/2015/06/24/19/48/17/000/abc/next/10`
-`GET http://hub/channel/spella/2015/06/24/19/48/17/000/abc/next/10?tag=coffee`
-
+```
+GET http://hub/tag/coffee/latest
+GET http://hub/tag/coffee/earliest
+GET http://hub/tag/coffee/2015/06/25/16
+GET http://hub/tag/coffee/2015/06/24/19/48/17/000/abc/previous
+GET http://hub/tag/coffee/2015/06/24/19/48/17/000/abc/next/10
+GET http://hub/channel/spella/2015/06/24/19/48/17/000/abc/next/10?tag=coffee
+```
 Operations through the channel interface (/channel/{channel-name}/) can a tag parameter.  Using the tag parameter allows the user to stay in the tag context.
 
 For example:
