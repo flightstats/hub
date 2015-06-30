@@ -28,7 +28,7 @@ describe(testName, function () {
     var itemsB = [];
     var postedItem;
     var badConfig = {
-        callbackUrl : 'http://hub.svc.dev/austrianairlinesParser',
+        callbackUrl: 'http://localhost:8080/nothing',
         channelUrl : channelResource
     };
     var groupConfigB = {
@@ -59,7 +59,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return itemsB.length == 1;
-        }, 12000);
+        }, 70001);
 
     });
 
