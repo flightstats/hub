@@ -20,7 +20,6 @@ public class Content implements Serializable {
 
     private final Optional<String> contentType;
     private final Optional<String> contentLanguage;
-    private final Optional<String> user;
     private final boolean isNew;
     private final InputStream stream;
     private byte[] data;
@@ -32,7 +31,6 @@ public class Content implements Serializable {
         isNew = !getContentKey().isPresent();
         contentLanguage = builder.contentLanguage;
         contentType = builder.contentType;
-        user = builder.user;
         stream = builder.stream;
         traces.add(new Trace("Content.start"));
     }

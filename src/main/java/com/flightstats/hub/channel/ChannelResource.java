@@ -100,7 +100,7 @@ public class ChannelResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertValue(@PathParam("channel") final String channelName, @HeaderParam("Content-Type") final String contentType,
-                                @HeaderParam("Content-Language") final String contentLanguage, @HeaderParam("User") final String user,
+                                @HeaderParam("Content-Language") final String contentLanguage,
                                 final InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -110,7 +110,6 @@ public class ChannelResource {
                 .withContentLanguage(contentLanguage)
                 .withContentType(contentType)
                 .withStream(data)
-                .withUser(user)
                 .build();
         try {
             ContentKey contentKey = channelService.insert(channelName, content);

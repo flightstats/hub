@@ -189,7 +189,6 @@ public class ContentDaoUtil {
         assertEquals(content.getContentKey().get(), read.getContentKey().get());
         assertEquals(content.getContentLanguage(), read.getContentLanguage());
         assertEquals(content.getContentType(), read.getContentType());
-        assertEquals(content.getUser(), read.getUser());
         assertArrayEquals(data, read.getData());
         assertEquals(content, read);
     }
