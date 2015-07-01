@@ -71,9 +71,6 @@ public class S3ContentDao implements ContentDao {
         } else {
             metadata.addUserMetadata("language", "none");
         }
-        if (content.getUser().isPresent()) {
-            metadata.addUserMetadata("user", content.getUser().get());
-        }
         if (useEncrypted) {
             metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
         }

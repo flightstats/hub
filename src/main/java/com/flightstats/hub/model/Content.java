@@ -4,6 +4,7 @@ import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,19 +21,19 @@ public class Content implements Serializable {
 
     private final Optional<String> contentType;
     private final Optional<String> contentLanguage;
-    private final Optional<String> user;
     private final boolean isNew;
     private final InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
     private Traces traces = new TracesImpl();
+    @Setter
+    private Long size;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
         isNew = !getContentKey().isPresent();
         contentLanguage = builder.contentLanguage;
         contentType = builder.contentType;
-        user = builder.user;
         stream = builder.stream;
         traces.add(new Trace("Content.start"));
     }
@@ -72,6 +73,16 @@ public class Content implements Serializable {
             }
         }
         return data;
+    }
+
+    public Long getSize() {
+        if (size == null) {
+            if (data == null) {
+                throw new UnsupportedOperationException("convert stream to bytes first");
+            }
+            size = new Long(data.length);
+        }
+        return size;
     }
 
     public static class Builder {
