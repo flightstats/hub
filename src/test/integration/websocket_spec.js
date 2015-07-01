@@ -21,22 +21,23 @@ describe(testName, function () {
         webSocket = new WebSocket(wsUrl);
         webSocket.on('open', function (message) {
             console.log('opened wsUrl', wsUrl);
-            done();
-
+            setTimeout(function () {
+                done()
+            }, 2000);
         });
 
-    }, 5000);
+    }, 15000);
 
     utils.addItem(channelResource);
 
-    it('waits for data' + channelName, function (done) {
+    it('waits for data ' + channelName, function (done) {
         webSocket.onmessage = function (message) {
             console.log('messagedUrl', message.data);
             done();
         };
     }, MINUTE + 1);
 
-    it('closes websocket' + channelName, function (done) {
+    it('closes websocket ' + channelName, function (done) {
         webSocket.onclose = function () {
             console.log('closed ws');
             done();

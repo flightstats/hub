@@ -12,7 +12,7 @@ describe(testName, function () {
     utils.putChannel(channelName, function () {
     }, {"name": channelName, ttlDays: 1});
 
-    it('adds items and traverses previous links', function (done) {
+    it('adds items and traverses previous links ' + channelName, function (done) {
         var values = [];
         var items = [];
         utils.postItemQ(channelResource)

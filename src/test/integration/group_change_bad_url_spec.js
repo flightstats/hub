@@ -28,7 +28,7 @@ describe(testName, function () {
     var itemsB = [];
     var postedItem;
     var badConfig = {
-        callbackUrl : 'http://hub.svc.dev/austrianairlinesParser',
+        callbackUrl: 'http://localhost:8080/nothing',
         channelUrl : channelResource
     };
     var groupConfigB = {
@@ -46,8 +46,9 @@ describe(testName, function () {
 
     utils.putGroup(groupName, groupConfigB);
 
-    it('runs callback server', function () {
+    it('runs callback server: channel:' + channelName + ' group:' + groupName, function () {
         utils.startServer(portB, function (string) {
+            console.log('called group ' + groupName + ' ' + string);
             itemsB.push(string);
         });
 
@@ -58,7 +59,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return itemsB.length == 1;
-        }, 12000);
+        }, 70001);
 
     });
 

@@ -25,7 +25,7 @@ var groupConfig = {
  */
 describe(testName, function () {
     utils.createChannel(channelName);
-
+    utils.timeout(1000);
     utils.addItem(channelResource);
     utils.addItem(channelResource);
 
@@ -36,6 +36,7 @@ describe(testName, function () {
         var postedItems = [];
 
         utils.startServer(port, function (string) {
+            console.log('called group ' + groupName + ' ' + string);
             callbackItems.push(string);
         });
 

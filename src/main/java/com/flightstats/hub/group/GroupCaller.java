@@ -10,6 +10,7 @@ import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
+import com.flightstats.hub.util.Sleeper;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
@@ -88,9 +89,11 @@ public class GroupCaller implements Leader {
         logger.info("taking leadership " + group);
         Optional<Group> foundGroup = groupService.getGroup(group.getName());
         if (!foundGroup.isPresent()) {
+            Sleeper.sleep(1000);
             logger.info("group is missing, exiting " + group.getName());
             return;
         }
+        this.group = foundGroup.get();
         this.client = RestClient.createClient(30, 120, true);
         callbackQueue = queueProvider.get();
         try {
