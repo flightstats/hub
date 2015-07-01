@@ -62,12 +62,13 @@ public class ChannelResource {
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName);
         ChannelConfig channelConfig = ChannelConfig.fromJsonName(json, channelName);
         if (oldConfig != null) {
+            logger.info("using old channel {} {}", oldConfig, oldConfig.getCreationDate().getTime());
             channelConfig = ChannelConfig.builder()
                     .withChannelConfiguration(oldConfig)
                     .withUpdateJson(json)
                     .build();
         }
-        logger.info("creating channel {}", channelConfig);
+        logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
         channelConfig = channelService.updateChannel(channelConfig);
         URI channelUri = LinkBuilder.buildChannelUri(channelConfig, uriInfo);
         return Response.created(channelUri).entity(
