@@ -45,10 +45,11 @@ public class SpokeMarshaller {
         String meta = objectNode.toString();
         zipOut.write(meta.getBytes());
         zipOut.putNextEntry(new ZipEntry("payload"));
-        long copy = ByteStreams.copy(content.getStream(), zipOut);
-        if (copy > maxBytes) {
+        long bytesCopied = ByteStreams.copy(content.getStream(), zipOut);
+        if (bytesCopied > maxBytes) {
             throw new ContentTooLargeException("max payload size is " + maxBytes + " bytes");
         }
+        content.setSize(bytesCopied);
         zipOut.close();
         return baos.toByteArray();
     }
