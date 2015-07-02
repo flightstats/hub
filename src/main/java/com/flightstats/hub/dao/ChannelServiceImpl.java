@@ -203,7 +203,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (query.getContentKey().getTime().isBefore(ttlTime)) {
             query = query.withContentKey(new ContentKey(ttlTime, "0"));
         }
-        query.getTraces().add("ChannelServiceImpl", query);
+        query.getTraces().add(query);
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
         query.getTraces().add("keys", keys);
         return ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
