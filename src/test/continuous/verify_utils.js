@@ -18,7 +18,7 @@ function getExistingAlerts(prefix, existingRules) {
                 });
                 done();
             })
-    });
+    }, 60000);
 }
 
 function verifyEscalationAlerts(existingRules) {

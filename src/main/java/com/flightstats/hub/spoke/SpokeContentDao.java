@@ -109,7 +109,7 @@ public class SpokeContentDao implements ContentDao {
         SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
         if (query.getContentKey().getTime().isBefore(ttlTime)) {
-            query.setContentKey(new ContentKey(ttlTime, "0"));
+            query = query.withContentKey(new ContentKey(ttlTime, "0"));
         }
         ContentKey startKey = query.getContentKey();
         DateTime startTime = startKey.getTime();

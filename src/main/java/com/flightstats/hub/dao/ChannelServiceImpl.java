@@ -197,21 +197,25 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
         if (query.getCount() <= 0) {
-            query.getTraces().add("requested zero");
             return Collections.emptySet();
         }
         DateTime ttlTime = getTtlTime(query.getChannelName());
         if (query.getContentKey().getTime().isBefore(ttlTime)) {
-            query.setContentKey(new ContentKey(ttlTime, "0"));
+            query = query.withContentKey(new ContentKey(ttlTime, "0"));
         }
+        query = query.withTtlDays(getTtlDays(query.getChannelName()));
+        query.getTraces().add(query);
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
         query.getTraces().add("keys", keys);
         return ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
     }
 
     private DateTime getTtlTime(String channelName) {
-        int ttlDays = (int) getCachedChannelConfig(channelName).getTtlDays();
-        return TimeUtil.getEarliestTime(ttlDays);
+        return TimeUtil.getEarliestTime(getTtlDays(channelName));
+    }
+
+    private int getTtlDays(String channelName) {
+        return (int) getCachedChannelConfig(channelName).getTtlDays();
     }
 
     @Override
