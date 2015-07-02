@@ -52,7 +52,7 @@ describe(testName, function () {
 
     });
 
-    it('gets alert', function (done) {
+    it('gets alert ' + selfLink, function (done) {
         request.get({url: selfLink},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -64,7 +64,7 @@ describe(testName, function () {
             });
     });
 
-    it('checks for alert in config', function (done) {
+    it('checks for alert in config ' + alertUrl, function (done) {
         request.get({url: alertUrl},
             function (err, response, body) {
                 expect(err).toBeNull();
