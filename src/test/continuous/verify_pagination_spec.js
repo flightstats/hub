@@ -5,6 +5,9 @@ var async = require('async');
 var moment = require('moment');
 var _ = require('lodash');
 var testName = __filename;
+var hubUrl = process.env.hubUrl;
+hubUrl = 'http://' + hubUrl;
+console.log(hubUrl);
 
 /**
  * This assumes that a channel is being written to continuously.
@@ -18,11 +21,11 @@ var testName = __filename;
  *
  */
 
-//jasmine-node --forceexit --captureExceptions --config hubDomain hub-v2.svc.dev verify_pagination_spec.js
+//jasmine-node --forceexit --captureExceptions --config hubUrl hub-v2.svc.dev verify_pagination_spec.js
 
 describe(testName, function () {
 
-    var channelUrl = hubUrlBase + '/channel/load_test_1';
+    var channelUrl = hubUrl + '/channel/load_test_1';
     var twoDaysAgo = channelUrl + '/' + moment().utc().subtract(2, 'days').format('YYYY/MM/DD/HH/mm');
 
     var uris = [];
