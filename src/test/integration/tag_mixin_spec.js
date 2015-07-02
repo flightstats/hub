@@ -54,7 +54,7 @@ describe(testName, function () {
                 expect(uris[2]).toContain(channelA);
                 done();
             });
-    });
+    }, 60001);
 
     var parsedLinks;
 
@@ -82,27 +82,27 @@ describe(testName, function () {
 
     it('gets last link ', function (done) {
         traverse(uris[2] + '&stable=false', 2, done);
-    })
+    }, 60002)
 
     it('gets previous link ', function (done) {
         traverse(parsedLinks.previous.url, 1, done);
-    })
+    }, 60003)
 
     it('gets 2nd previous link ', function (done) {
         traverse(parsedLinks.previous.url, 0, done);
-    })
+    }, 60004)
 
     it('gets first link ', function (done) {
         traverse(uris[0], 0, done);
-    })
+    }, 60005)
 
     it('gets next link ', function (done) {
         traverse(parsedLinks.next.url + '&stable=false', 1, done);
-    })
+    }, 60006)
 
     it('gets 2nd next link ', function (done) {
         traverse(parsedLinks.next.url + '&stable=false', 2, done);
-    })
+    }, 60007)
 
     it("gets latest unstable in tag ", function (done) {
         request.get({url: tagUrl + '/latest?stable=false', followRedirect: false},
@@ -112,7 +112,7 @@ describe(testName, function () {
                 expect(response.headers.location).toBe(uris[2]);
                 done();
             });
-    });
+    }, 60008);
 
     it("gets latest N unstable in tag ", function (done) {
         request.get({url: tagUrl + '/latest/10?stable=false'},
@@ -127,7 +127,7 @@ describe(testName, function () {
 
                 done();
             });
-    });
+    }, 60009);
 
     it("gets earliest unstable in channel " + tag, function (done) {
         request.get({url: tagUrl + '/earliest?stable=false&trace=true', followRedirect: false},
@@ -137,7 +137,7 @@ describe(testName, function () {
                 expect(response.headers.location).toBe(uris[0]);
                 done();
             });
-    });
+    }, 60010);
 
     it("next from item " + tag, function (done) {
         var url = linkStripParams(uris[0]) + '/next/2?tag=' + tag + '&stable=false';
@@ -153,7 +153,7 @@ describe(testName, function () {
                 });
                 done();
             });
-    });
+    }, 60011);
 
     it("previous from tag " + tag, function (done) {
         var last = linkStripParams(uris[2]).substring(uris[2].indexOf(channelA) + channelA.length);
@@ -170,7 +170,7 @@ describe(testName, function () {
                 });
                 done();
             });
-    });
+    }, 60012);
 
     it("next from tag " + tag, function (done) {
         var last = linkStripParams(uris[0]).substring(uris[0].indexOf(channelA) + channelA.length);
@@ -187,7 +187,7 @@ describe(testName, function () {
                 });
                 done();
             });
-    });
+    }, 60013);
 
     it("previous from item " + tag, function (done) {
         var url = linkStripParams(uris[2]) + '/previous/2?tag=' + tag + '&stable=false';
@@ -203,7 +203,7 @@ describe(testName, function () {
                 });
                 done();
             });
-    });
+    }, 6014);
 
     it("latest from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelB + '/latest?tag=' + tag + '&stable=false';
@@ -214,7 +214,7 @@ describe(testName, function () {
                 expect(response.headers.location).toBe(uris[2]);
                 done();
             });
-    });
+    }, 6015);
 
     it("latest 3 from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelA + '/latest/3?tag=' + tag + '&stable=false';
@@ -230,7 +230,7 @@ describe(testName, function () {
                 });
                 done();
             });
-    });
+    }, 6016);
 
     it("earliest from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelB + '/earliest?tag=' + tag + '&stable=false&trace=true';
@@ -241,7 +241,7 @@ describe(testName, function () {
                 expect(response.headers.location).toBe(uris[0]);
                 done();
             });
-    });
+    }, 6017);
 
     it("earliest 3 from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelA + '/earliest/3?tag=' + tag + '&stable=false&trace=true';
@@ -257,7 +257,7 @@ describe(testName, function () {
                 });
                 done();
             });
-    });
+    }, 6018);
 
     it("day query from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelB + '/time/day?tag=' + tag + '&stable=false';
@@ -274,7 +274,7 @@ describe(testName, function () {
                 });
                 done();
             });
-    });
+    }, 6019);
 
 
 });
