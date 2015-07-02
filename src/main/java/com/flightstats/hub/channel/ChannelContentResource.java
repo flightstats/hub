@@ -273,8 +273,10 @@ public class ChannelContentResource {
                 .next(next)
                 .stable(stable)
                 .location(Location.valueOf(location))
-                .count(count).build();
+                .count(count)
+                .build();
         query.trace(trace);
+        query.getTraces().add("key", key, "query", query);
         Collection<ContentKey> keys = channelService.getKeys(query);
         return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
     }

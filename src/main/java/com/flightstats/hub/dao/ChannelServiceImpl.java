@@ -196,7 +196,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Collection<ContentKey> getKeys(DirectionQuery query) {
-        query.getTraces().add("ChannelServiceImpl: ", query);
+        query.getTraces().add("ChannelServiceImpl 1 ", query);
         if (query.getCount() <= 0) {
             return Collections.emptySet();
         }
@@ -205,6 +205,7 @@ public class ChannelServiceImpl implements ChannelService {
             query.setContentKey(new ContentKey(ttlTime, "0"));
         }
         query.getTraces().add("ttl time:", ttlTime, "content key:", query.getContentKey());
+        query.getTraces().add("ChannelServiceImpl 2 ", query);
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
         query.getTraces().add("keys", keys);
         return ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
