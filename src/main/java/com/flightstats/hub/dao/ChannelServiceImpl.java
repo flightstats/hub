@@ -203,6 +203,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (query.getContentKey().getTime().isBefore(ttlTime)) {
             query = query.withContentKey(new ContentKey(ttlTime, "0"));
         }
+        query = query.withTtlDays(getTtlDays(query.getChannelName()));
         query.getTraces().add(query);
         List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
         query.getTraces().add("keys", keys);
@@ -210,8 +211,11 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     private DateTime getTtlTime(String channelName) {
-        int ttlDays = (int) getCachedChannelConfig(channelName).getTtlDays();
-        return TimeUtil.getEarliestTime(ttlDays);
+        return TimeUtil.getEarliestTime(getTtlDays(channelName));
+    }
+
+    private int getTtlDays(String channelName) {
+        return (int) getCachedChannelConfig(channelName).getTtlDays();
     }
 
     @Override

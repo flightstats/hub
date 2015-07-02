@@ -69,13 +69,14 @@ describe(testName, function () {
     }, 60 * 1004);
 
     function getLocation(url, done, assign) {
-        console.log('gets ', url);
+        console.log('get location ', url);
         agent
             .get(url)
             .redirects(0)
             .end(function (err, res) {
                 expect(err).toBe(null);
                 expect(res.status).toBe(303);
+                console.log('res.headers.location', res.headers.location);
                 assign(res.headers.location);
                 done();
             })

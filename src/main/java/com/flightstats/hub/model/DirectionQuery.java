@@ -19,6 +19,7 @@ public class DirectionQuery {
     private final boolean next;
     private final Location location;
     private final boolean stable;
+    @Wither
     private final long ttlDays;
     @Setter
     private Traces traces;
