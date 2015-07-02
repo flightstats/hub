@@ -13,7 +13,7 @@ public class DirectionQuery {
     @Wither
     private final String channelName;
     private final String tagName;
-    @Setter
+    @Wither
     private ContentKey contentKey;
     private final int count;
     private final boolean next;
