@@ -34,3 +34,5 @@ console.log("replicationDomain " + replicationDomain);
 console.log("replicationV2Domain " + replicationV2Domain);
 console.log("runEncrypted " + runEncrypted);
 console.log("callbackDomain " + callbackDomain);
+
+jasmine.getEnv().defaultTimeoutInterval = 60 * 1000;
