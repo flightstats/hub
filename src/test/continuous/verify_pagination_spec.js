@@ -91,7 +91,9 @@ describe(testName, function () {
             .end(function (err, res) {
                 expect(err).toBe(null);
                 expect(res.status).toBe(200);
-                expect(res.body._links.uris).toBe(uris);
+                for (var i = 0; i < uris.length; i++) {
+                    expect(res.body._links.uris[i]).toBe(uris[i]);
+                }
                 done();
             })
     }
