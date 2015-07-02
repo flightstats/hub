@@ -203,7 +203,7 @@ describe(testName, function () {
                 });
                 done();
             });
-    }, 6014);
+    }, 60014);
 
     it("latest from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelB + '/latest?tag=' + tag + '&stable=false';
@@ -214,7 +214,7 @@ describe(testName, function () {
                 expect(response.headers.location).toBe(uris[2]);
                 done();
             });
-    }, 6015);
+    }, 60015);
 
     it("latest 3 from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelA + '/latest/3?tag=' + tag + '&stable=false';
@@ -230,7 +230,7 @@ describe(testName, function () {
                 });
                 done();
             });
-    }, 6016);
+    }, 60016);
 
     it("earliest from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelB + '/earliest?tag=' + tag + '&stable=false&trace=true';
@@ -241,7 +241,7 @@ describe(testName, function () {
                 expect(response.headers.location).toBe(uris[0]);
                 done();
             });
-    }, 6017);
+    }, 60017);
 
     it("earliest 3 from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelA + '/earliest/3?tag=' + tag + '&stable=false&trace=true';
@@ -257,7 +257,7 @@ describe(testName, function () {
                 });
                 done();
             });
-    }, 6018);
+    }, 60018);
 
     it("day query from channel " + tag, function (done) {
         var url = hubUrlBase + '/channel/' + channelB + '/time/day?tag=' + tag + '&stable=false';
@@ -274,7 +274,7 @@ describe(testName, function () {
                 });
                 done();
             });
-    }, 6019);
+    }, 60019);
 
 
 });
