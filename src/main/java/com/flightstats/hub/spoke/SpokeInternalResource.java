@@ -13,18 +13,18 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 /**
- * //todo - gfm - 7/8/15 - This is the same as SpokeInternalResource.
- * After SpokeInternalResource is rolled out to all Hubs, we can update the url in RemoteSpokeStore and remove SpokeResource
+ * //todo - gfm - 7/8/15 - This is the same as SpokeResource.
+ * After this class is rolled out to all Hubs, we can update the url in RemoteSpokeStore and remove SpokeResource
  */
-@Path("/spoke")
-public class SpokeResource {
+@Path("/internal/spoke")
+public class SpokeInternalResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeResource.class);
+    private final static Logger logger = LoggerFactory.getLogger(SpokeInternalResource.class);
     private final FileSpokeStore spokeStore;
     private final UriInfo uriInfo;
 
     @Inject
-    public SpokeResource(FileSpokeStore spokeStore, UriInfo uriInfo) {
+    public SpokeInternalResource(FileSpokeStore spokeStore, UriInfo uriInfo) {
         this.spokeStore = spokeStore;
         this.uriInfo = uriInfo;
     }
