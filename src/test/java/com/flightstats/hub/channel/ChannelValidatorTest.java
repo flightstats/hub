@@ -82,7 +82,10 @@ public class ChannelValidatorTest {
 
     @Test(expected = InvalidRequestException.class)
     public void testInvalidChannelTtl() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("mychan").withTtlDays(0).build(), true);
+        validator.validate(ChannelConfig.builder().withName("mychan")
+                .withTtlDays(10)
+                .withMaxItems(10)
+                .build(), true);
     }
 
     @Test
