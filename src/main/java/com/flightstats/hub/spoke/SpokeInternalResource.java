@@ -13,8 +13,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 /**
- * //todo - gfm - 7/8/15 - This is the same as SpokeResource.
- * After this class is rolled out to all Hubs, we can update the url in RemoteSpokeStore and remove SpokeResource
+ * todo - gfm - 7/8/15 - After SpokeInternalResource is rolled out to all Hubs, we can update the url in RemoteSpokeStore and remove SpokeResource
  */
 @Path("/internal/spoke")
 public class SpokeInternalResource {
