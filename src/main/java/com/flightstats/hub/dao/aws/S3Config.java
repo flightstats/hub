@@ -65,9 +65,9 @@ public class S3Config {
 
         @Override
         protected Scheduler scheduler() {
-            long delayMinutes = TimeUnit.DAYS.toMinutes(1);
+            long delayMinutes = TimeUnit.HOURS.toMinutes(12);
             Random random = new Random();
-            long offsetMinutes = random.nextInt((int) (delayMinutes / 2)) + TimeUnit.HOURS.toMinutes(1);
+            long offsetMinutes = random.nextInt((int) (delayMinutes));
             logger.info("scheduling S3Config with offsetMinutes=" + offsetMinutes);
             return Scheduler.newFixedDelaySchedule(offsetMinutes, delayMinutes, TimeUnit.MINUTES);
         }

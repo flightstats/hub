@@ -364,7 +364,9 @@ Each item returned will be available for 15 minutes after the ttl has expired.
 Once a channel has reached its maxItems, older items will be removed.  maxItems should be considered eventually consistent.
  
 For eaxmple, if you quickly insert 1,000 items into a channel with maxItems = 50, a query of `/latest/100` will return 100 items.
- Within 24 hours, the limit of 50 will be enforced.
+ Within 12 hours, the limit of 50 will be enforced.
+
+If you change a channel from ttlDays to maxItems, it will also take up to 12 hours for the limit to be enforced.
 
 ## tag interface
 
