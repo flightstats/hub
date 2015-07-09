@@ -119,6 +119,7 @@ public class S3Config {
                     channelService.deleteBefore(name, limitKey);
                 }
             }
+            logger.info("completed max items for channel {}", name);
 
         }
 
