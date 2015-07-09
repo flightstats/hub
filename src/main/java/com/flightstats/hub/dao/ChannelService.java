@@ -36,4 +36,6 @@ public interface ChannelService {
     boolean isReplicating(String channelName);
 
     Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace);
+
+    void deleteBefore(String name, ContentKey limitKey);
 }

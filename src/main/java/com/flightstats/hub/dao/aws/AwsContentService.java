@@ -174,6 +174,11 @@ public class AwsContentService implements ContentService {
         return cacheContentDao.getLatest(channel, limitKey, traces);
     }
 
+    @Override
+    public void deleteBefore(String name, ContentKey limitKey) {
+        longTermContentDao.deleteBefore(name, limitKey);
+    }
+
     private Set<ContentKey> queryBoth(DirectionQuery query) {
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         try {

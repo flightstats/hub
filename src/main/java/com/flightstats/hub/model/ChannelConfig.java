@@ -25,21 +25,28 @@ public class ChannelConfig implements Serializable {
     private final String name;
     private final Date creationDate;
     private final long ttlDays;
+    private final long maxItems;
     private final String description;
     private final Set<String> tags = new TreeSet<>();
     private final String replicationSource;
 
     public ChannelConfig(Builder builder) {
-        this.name = StringUtils.trim(builder.name);
-        this.creationDate = builder.creationDate;
-        this.ttlDays = builder.ttlDays;
-        this.description = StringUtils.defaultString(builder.description, "");
-        this.tags.addAll(builder.tags);
+        name = StringUtils.trim(builder.name);
+        creationDate = builder.creationDate;
+        if (builder.maxItems == 0 && builder.ttlDays == 0) {
+            ttlDays = 120;
+            maxItems = 0;
+        } else {
+            ttlDays = builder.ttlDays;
+            maxItems = builder.maxItems;
+        }
+        description = StringUtils.defaultString(builder.description, "");
+        tags.addAll(builder.tags);
         if (StringUtils.isBlank(builder.replicationSource)) {
-            this.replicationSource = "";
+            replicationSource = "";
             tags.remove(Replicator.REPLICATED);
         } else {
-            this.replicationSource = builder.replicationSource;
+            replicationSource = builder.replicationSource;
             tags.add(Replicator.REPLICATED);
         }
     }
@@ -98,6 +105,11 @@ public class ChannelConfig implements Serializable {
         return replicationSource;
     }
 
+    @JsonProperty("maxItems")
+    public long getMaxItems() {
+        return maxItems;
+    }
+
     @JsonIgnore
     public boolean isReplicating() {
         return StringUtils.isNotBlank(replicationSource);
@@ -107,10 +119,11 @@ public class ChannelConfig implements Serializable {
         private static final ObjectMapper mapper = new ObjectMapper();
         private String name;
         private Date creationDate = new Date();
-        private long ttlDays = 120;
+        private long ttlDays = 0;
         private String description = "";
         private Set<String> tags = new HashSet<>();
         private String replicationSource = "";
+        private long maxItems = 0;
 
         public Builder() {
         }
@@ -119,6 +132,7 @@ public class ChannelConfig implements Serializable {
             this.name = config.name;
             this.creationDate = config.creationDate;
             this.ttlDays = config.ttlDays;
+            this.maxItems = config.maxItems;
             this.description = config.description;
             this.tags.addAll(config.getTags());
             this.replicationSource = config.replicationSource;
@@ -136,6 +150,9 @@ public class ChannelConfig implements Serializable {
             }
             if (rootNode.has("ttlDays")) {
                 withTtlDays(rootNode.get("ttlDays").asLong());
+            }
+            if (rootNode.has("maxItems")) {
+                withMaxItems(rootNode.get("maxItems").asLong());
             }
             if (rootNode.has("tags")) {
                 tags.clear();
@@ -157,6 +174,11 @@ public class ChannelConfig implements Serializable {
 
         public Builder withTtlDays(long ttlDays) {
             this.ttlDays = ttlDays;
+            return this;
+        }
+
+        public Builder withMaxItems(long maxItems) {
+            this.maxItems = maxItems;
             return this;
         }
 

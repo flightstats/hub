@@ -118,6 +118,11 @@ public class NasContentService implements ContentService {
         return ContentKeyUtil.convertKey(fileSpokeStore.getLatest(channel, limitKey.toUrl()));
     }
 
+    @Override
+    public void deleteBefore(String name, ContentKey limitKey) {
+        throw new UnsupportedOperationException("deleteBefore is not supported");
+    }
+
     public void enforceTtl(String channelName, DateTime dateTime) {
         logger.info("enforcing ttl for {} at {}", channelName, dateTime);
         fileSpokeStore.enforceTtl(channelName, dateTime);

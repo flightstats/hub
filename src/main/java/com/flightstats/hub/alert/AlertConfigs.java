@@ -29,7 +29,7 @@ public class AlertConfigs {
     public static void create() {
         RestClient.defaultClient().resource(getUrl())
                 .type(MediaType.APPLICATION_JSON)
-                .put("{\"ttlDays\":1000, \"tags\":[\"alerts\"], \"description\":\"Configuration for hub alerts\"}");
+                .put("{\"ttlDays\":0, \"maxItems\":50, \"tags\":[\"alerts\"], \"description\":\"Configuration for hub alerts\"}");
     }
 
     private static String getUrl() {

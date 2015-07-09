@@ -56,8 +56,14 @@ public class ChannelValidator {
     }
 
     private void validateTTL(ChannelConfig request) throws InvalidRequestException {
-        if (request.getTtlDays() <= 0) {
-            throw new InvalidRequestException("{\"error\": \"TTL must be greater than 0 (zero) \"}");
+        if (request.getTtlDays() == 0 && request.getMaxItems() == 0) {
+            throw new InvalidRequestException("{\"error\": \"ttlDays or maxItems must be greater than 0 (zero) \"}");
+        }
+        if (request.getTtlDays() > 0 && request.getMaxItems() > 0) {
+            throw new InvalidRequestException("{\"error\": \"Only one of ttlDays and maxItems can be defined \"}");
+        }
+        if (request.getMaxItems() > 5000) {
+            throw new InvalidRequestException("{\"error\": \"maxItems must be less than 5000 \"}");
         }
     }
 

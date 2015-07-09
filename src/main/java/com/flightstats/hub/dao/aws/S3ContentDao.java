@@ -54,6 +54,11 @@ public class S3ContentDao implements ContentDao {
         throw new UnsupportedOperationException("use query interface");
     }
 
+    @Override
+    public void deleteBefore(String channelName, ContentKey limitKey) {
+        callInternalDelete(channelName, limitKey);
+    }
+
     public ContentKey write(String channelName, Content content) {
         ContentKey key = content.getContentKey().get();
         String s3Key = getS3ContentKey(channelName, key);
@@ -201,28 +206,37 @@ public class S3ContentDao implements ContentDao {
     }
 
     public void delete(String channel) {
-        final String channelPath = channel + "/";
         new Thread(() -> {
             try {
-                //noinspection StatementWithEmptyBody
-                while (internalDelete(channelPath)) {
-                }
-                internalDelete(channelPath);
-                logger.info("completed deletion of " + channelPath);
+
+                ContentKey limitKey = new ContentKey(TimeUtil.now(), "ZZZZZZ");
+                callInternalDelete(channel, limitKey);
+                logger.info("completed deletion of " + channel);
             } catch (Exception e) {
-                logger.warn("unable to delete " + channelPath + " in " + s3BucketName, e);
+                logger.warn("unable to delete " + channel + " in " + s3BucketName, e);
             }
         }).start();
     }
 
-    private boolean internalDelete(String channelPath) {
+    private void callInternalDelete(String channel, ContentKey limitKey) {
+        String channelPath = channel + "/";
+        //noinspection StatementWithEmptyBody
+        while (internalDelete(channelPath, limitKey)) {
+        }
+        internalDelete(channelPath, limitKey);
+    }
+
+    private boolean internalDelete(String channelPath, ContentKey limitKey) {
         ListObjectsRequest request = new ListObjectsRequest();
         request.withBucketName(s3BucketName);
         request.withPrefix(channelPath);
         ObjectListing listing = s3Client.listObjects(request);
         List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
         for (S3ObjectSummary objectSummary : listing.getObjectSummaries()) {
-            keys.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
+            ContentKey contentKey = ContentKey.fromUrl(StringUtils.substringAfter(objectSummary.getKey(), channelPath)).get();
+            if (contentKey.compareTo(limitKey) < 0) {
+                keys.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
+            }
         }
         if (keys.isEmpty()) {
             return false;

@@ -17,6 +17,7 @@ The Hub
 * [earliest channel item](#earliest-channel-item)
 * [next and previous links](#next-and-previous-links)
 * [channel status](#channel-status)
+* [channel limits](#channel-limits)
 * [tag interface](#tag-interface)
 * [tag unions](#tag-unions)
 * [time interface](#time-interface)
@@ -106,7 +107,8 @@ Content-Type is `application/json`
 * `name` _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
 Hyphens are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
 
-* `ttlDays` is optional and should be a positive number. If not specified, a default value of 120 days is used.
+* `ttlDays` and `maxItems` are optional, and only one can be specified at a time. If neither is specified, a default value of 120 ttlDays is used.
+Please see [channel limits](#channel-limits) for more details.
 
 * `description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
 
@@ -347,6 +349,24 @@ On success: `HTTP/1.1 200 OK`
     }
 }
 ```
+
+## channel limits
+
+`ttlDays` and `maxItems` are mutually exclusive.  When one field is set, the other must be 0 (zero).
+
+`ttlDays` is used to limit the number of items in a channel by time.
+The hub strictly enforces the time limit for range queries, and is less strict for indivdual items.
+
+For example, if a channel has ttlDays = 3, and you query `/earliest/10', the results returned will be limited to 3 days ago from now.
+Each item returned will be available for 15 minutes after the ttl has expired.
+
+`maxItems` has a limit of 5000 items.  It is intended to be useful for channels that are updated infrequently.
+Once a channel has reached its maxItems, older items will be removed.  maxItems should be considered eventually consistent.
+ 
+For eaxmple, if you quickly insert 1,000 items into a channel with maxItems = 50, a query of `/latest/100` will return 100 items.
+ Within 12 hours, the limit of 50 will be enforced.
+
+If you change a channel from ttlDays to maxItems, it will also take up to 12 hours for the limit to be enforced.
 
 ## tag interface
 
