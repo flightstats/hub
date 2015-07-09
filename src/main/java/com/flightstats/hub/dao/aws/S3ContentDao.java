@@ -55,8 +55,8 @@ public class S3ContentDao implements ContentDao {
     }
 
     @Override
-    public void deleteBefore(String channelName, ContentKey key) {
-        callInternalDelete(channelName, key);
+    public void deleteBefore(String channelName, ContentKey limitKey) {
+        callInternalDelete(channelName, limitKey);
     }
 
     public ContentKey write(String channelName, Content content) {

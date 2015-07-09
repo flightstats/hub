@@ -119,8 +119,8 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public void deleteBefore(String name, ContentKey key) {
-        contentService.deleteBefore(name, key);
+    public void deleteBefore(String name, ContentKey limitKey) {
+        contentService.deleteBefore(name, limitKey);
     }
 
     @Override

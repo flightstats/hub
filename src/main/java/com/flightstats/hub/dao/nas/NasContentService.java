@@ -119,7 +119,7 @@ public class NasContentService implements ContentService {
     }
 
     @Override
-    public void deleteBefore(String name, ContentKey key) {
+    public void deleteBefore(String name, ContentKey limitKey) {
         throw new UnsupportedOperationException("deleteBefore is not supported");
     }
 

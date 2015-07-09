@@ -37,5 +37,5 @@ public interface ChannelService {
 
     Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace);
 
-    void deleteBefore(String name, ContentKey key);
+    void deleteBefore(String name, ContentKey limitKey);
 }

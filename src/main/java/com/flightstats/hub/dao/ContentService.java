@@ -19,5 +19,5 @@ public interface ContentService {
 
     Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces);
 
-    void deleteBefore(String name, ContentKey key);
+    void deleteBefore(String name, ContentKey limitKey);
 }

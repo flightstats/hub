@@ -99,7 +99,7 @@ public class S3Config {
 
         private void updateMaxItems(ChannelConfig config) {
             String name = config.getName();
-            logger.info("updating max items {}", name);
+            logger.info("updating max items for channel {}", name);
             Optional<ContentKey> latest = channelService.getLatest(name, false, false);
             if (latest.isPresent()) {
                 SortedSet<ContentKey> keys = new TreeSet();
@@ -114,8 +114,9 @@ public class S3Config {
                         .build();
                 keys.addAll(channelService.getKeys(query));
                 if (keys.size() == config.getMaxItems()) {
-                    logger.info("deleting keys before {}", keys.last());
-                    channelService.deleteBefore(name, keys.last());
+                    ContentKey limitKey = keys.first();
+                    logger.info("deleting keys before {}", limitKey);
+                    channelService.deleteBefore(name, limitKey);
                 }
             }
 

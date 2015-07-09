@@ -175,8 +175,8 @@ public class AwsContentService implements ContentService {
     }
 
     @Override
-    public void deleteBefore(String name, ContentKey key) {
-        longTermContentDao.deleteBefore(name, key);
+    public void deleteBefore(String name, ContentKey limitKey) {
+        longTermContentDao.deleteBefore(name, limitKey);
     }
 
     private Set<ContentKey> queryBoth(DirectionQuery query) {
