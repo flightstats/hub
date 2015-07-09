@@ -31,13 +31,6 @@ public class DirectionQuery {
         return location;
     }
 
-    public long getTtlDays() {
-        if (ttlDays == 0) {
-            return 1;
-        }
-        return ttlDays;
-    }
-
     public Traces getTraces() {
         if (traces == null) {
             return Traces.NOOP;

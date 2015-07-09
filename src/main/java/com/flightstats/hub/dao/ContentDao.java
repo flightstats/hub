@@ -29,4 +29,5 @@ public interface ContentDao {
 
     Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces);
 
+    void deleteBefore(String channelName, ContentKey key);
 }

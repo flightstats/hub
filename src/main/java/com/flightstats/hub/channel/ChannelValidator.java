@@ -62,6 +62,9 @@ public class ChannelValidator {
         if (request.getTtlDays() > 0 && request.getMaxItems() > 0) {
             throw new InvalidRequestException("{\"error\": \"Only one of ttlDays and maxItems can be defined \"}");
         }
+        if (request.getMaxItems() > 5000) {
+            throw new InvalidRequestException("{\"error\": \"maxItems must be less than 5000 \"}");
+        }
     }
 
     private void validateNameWasGiven(Optional<String> channelName) throws InvalidRequestException {

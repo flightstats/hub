@@ -153,6 +153,24 @@ public class ContentDaoUtil {
         query(channel, keys, 60, 60, true, start.minusDays(20));
     }
 
+    public void testDeleteMaxItems() throws Exception {
+        String channel = "testDeleteMaxItems" + RandomStringUtils.randomAlphanumeric(20);
+        List<ContentKey> keys = new ArrayList<>();
+        DateTime start = TimeUtil.now();
+        for (int i = 0; i < 5; i++) {
+            ContentKey key = new ContentKey(start.minusHours(i), "A" + i);
+            keys.add(key);
+            logger.info("writing " + key);
+            contentDao.write(channel, createContent(key));
+        }
+        logger.info("wrote {} {}", keys.size(), keys);
+        query(channel, keys, 5, 5, true, start.minusDays(1));
+        contentDao.deleteBefore(channel, keys.get(2));
+        query(channel, keys, 5, 3, true, start.minusDays(1));
+        contentDao.deleteBefore(channel, keys.get(0));
+        query(channel, keys, 5, 1, true, start.minusDays(1));
+    }
+
     private void query(String channel, List<ContentKey> keys,
                        int count, int expected, boolean next, DateTime queryTime) {
         DirectionQuery query = DirectionQuery.builder()

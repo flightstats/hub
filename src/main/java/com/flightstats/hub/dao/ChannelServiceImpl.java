@@ -119,6 +119,11 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
+    public void deleteBefore(String name, ContentKey key) {
+        contentService.deleteBefore(name, key);
+    }
+
+    @Override
     public Optional<Content> getValue(Request request) {
         DateTime ttlTime = getTtlTime(request.getChannel()).minusMinutes(15);
         if (request.getKey().getTime().isBefore(ttlTime)) {

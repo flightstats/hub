@@ -6,8 +6,11 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelConfigDao;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -15,6 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 public class S3Config {
@@ -23,17 +28,18 @@ public class S3Config {
     private final AmazonS3 s3Client;
     private final CuratorLock curatorLock;
     private final ChannelConfigDao channelConfigDao;
+    private ChannelService channelService;
     private final String s3BucketName;
 
     @Inject
     public S3Config(AmazonS3 s3Client, S3BucketName s3BucketName,
-                    CuratorLock curatorLock, ChannelConfigDao channelConfigDao) {
+                    CuratorLock curatorLock, ChannelConfigDao channelConfigDao, ChannelService channelService) {
         this.s3Client = s3Client;
         this.curatorLock = curatorLock;
         this.channelConfigDao = channelConfigDao;
+        this.channelService = channelService;
         this.s3BucketName = s3BucketName.getS3BucketName();
         HubServices.register(new S3ConfigInit());
-        HubServices.register(new S3ConfigSingle());
     }
 
     public void run() {
@@ -44,26 +50,11 @@ public class S3Config {
         }
     }
 
-    public int doWork() {
+    public void doWork() {
         logger.info("starting work");
         Iterable<ChannelConfig> channels = channelConfigDao.getChannels();
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
         curatorLock.runWithLock(lockable, "/S3ConfigLock", 1, TimeUnit.MINUTES);
-        logger.info("updated {} items", lockable.size);
-        return lockable.size;
-    }
-
-    private class S3ConfigSingle extends AbstractIdleService {
-
-        @Override
-        protected void startUp() throws Exception {
-            doWork();
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-            //do nothing
-        }
     }
 
     private class S3ConfigInit extends AbstractScheduledService {
@@ -85,7 +76,6 @@ public class S3Config {
 
     private class S3ConfigLockable implements Lockable {
         final Iterable<ChannelConfig> configurations;
-        private int size;
 
         private S3ConfigLockable(Iterable<ChannelConfig> configurations) {
             this.configurations = configurations;
@@ -93,21 +83,61 @@ public class S3Config {
 
         @Override
         public void runWithLock() throws Exception {
-            logger.info("running with lock");
+            updateTtlDays();
+            updateMaxItems();
+        }
+
+        private void updateMaxItems() {
+            logger.info("updating max items");
+            for (ChannelConfig config : configurations) {
+                if (config.getMaxItems() > 0) {
+                    updateMaxItems(config);
+
+                }
+            }
+        }
+
+        private void updateMaxItems(ChannelConfig config) {
+            String name = config.getName();
+            logger.info("updating max items {}", name);
+            Optional<ContentKey> latest = channelService.getLatest(name, false, false);
+            if (latest.isPresent()) {
+                SortedSet<ContentKey> keys = new TreeSet();
+                keys.add(latest.get());
+                DirectionQuery query = DirectionQuery.builder()
+                        .channelName(name)
+                        .contentKey(latest.get())
+                        .next(false)
+                        .stable(false)
+                        .ttlDays(0)
+                        .count((int) (config.getMaxItems() - 1))
+                        .build();
+                keys.addAll(channelService.getKeys(query));
+                if (keys.size() == config.getMaxItems()) {
+                    logger.info("deleting keys before {}", keys.last());
+                    channelService.deleteBefore(name, keys.last());
+                }
+            }
+
+        }
+
+        private void updateTtlDays() {
+            logger.info("updateTtlDays");
             ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
             for (ChannelConfig config : configurations) {
-                String namePrefix = config.getName() + "/";
-                BucketLifecycleConfiguration.Rule configRule = new BucketLifecycleConfiguration.Rule()
-                        .withPrefix(namePrefix)
-                        .withId(config.getName())
-                        .withExpirationInDays((int) config.getTtlDays())
-                        .withStatus(BucketLifecycleConfiguration.ENABLED);
-                rules.add(configRule);
+                if (config.getTtlDays() > 0) {
+                    String namePrefix = config.getName() + "/";
+                    BucketLifecycleConfiguration.Rule configRule = new BucketLifecycleConfiguration.Rule()
+                            .withPrefix(namePrefix)
+                            .withId(config.getName())
+                            .withExpirationInDays((int) config.getTtlDays())
+                            .withStatus(BucketLifecycleConfiguration.ENABLED);
+                    rules.add(configRule);
+                }
             }
-            logger.info("updating " + rules.size());
+            logger.info("updating " + rules.size() + " rules with ttl life cycle ");
             BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
             s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);
-            size = rules.size();
         }
     }
 

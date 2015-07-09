@@ -53,4 +53,9 @@ public class S3ContentDaoTest {
         util.testDirectionQuery();
     }
 
+    @Test
+    public void testDelete() throws Exception {
+        util.testDeleteMaxItems();
+    }
+
 }

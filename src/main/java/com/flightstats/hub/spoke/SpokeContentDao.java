@@ -90,6 +90,11 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
+    public void deleteBefore(String channelName, ContentKey key) {
+        throw new UnsupportedOperationException("deleteBefore is not supported");
+    }
+
+    @Override
     public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
         logger.trace("query by time {} {} {}", channelName, startTime, unit);
         traces.add("spoke query by time", channelName, startTime, unit);
