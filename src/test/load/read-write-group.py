@@ -16,6 +16,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -54,12 +55,23 @@ class WebsiteTasks(TaskSet):
         time.sleep(5)
 
     def start_group_callback(self):
-        group_name = "/group/locust_" + self.channel
-        self.client.delete(group_name, name="group")
+        # First User - create channel - posts to channel, group callback on channel
+        # Second User - create channel - posts to channel, parallel group callback on channel
+        # Third User - create channel - posts to channel, replicate channel, group callback on replicated channel
+        group_channel = self.channel
         parallel = 1
-        if self.number % 2 == 0:
+        if self.number % 3 == 2:
             parallel = 2
-        logger.info("channel " + self.channel + " parallel:" + str(parallel))
+        if self.number % 3 == 0:
+            group_channel = self.channel + "_replicated"
+            self.client.put("/channel/" + group_channel,
+                            data=json.dumps({"name": group_channel, "ttlDays": "3",
+                                             "replicationSource": groupConfig['host'] + "/channel/" + self.channel}),
+                            headers={"Content-Type": "application/json"},
+                            name="replication")
+        group_name = "/group/locust_" + group_channel
+        self.client.delete(group_name, name="group")
+        logger.info("group channel " + group_channel + " parallel:" + str(parallel))
         groupCallbacks[self.channel] = {
             "data": [],
             "lock": threading.Lock(),
@@ -67,7 +79,7 @@ class WebsiteTasks(TaskSet):
         }
         group = {
             "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
-            "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
+            "channelUrl": groupConfig['host'] + "/channel/" + group_channel,
             "parallelCalls": parallel
         }
         self.client.put(group_name,
@@ -292,6 +304,8 @@ class WebsiteTasks(TaskSet):
         if request.method == 'POST':
             incoming_json = request.get_json()
             incoming_uri = incoming_json['uris'][0]
+            if "_replicated" in incoming_uri:
+                incoming_uri = incoming_uri.replace("_replicated", "")
             if channel not in groupCallbacks:
                 logger.info("incoming uri before locust tests started " + str(incoming_uri))
                 return "ok"
@@ -315,9 +329,10 @@ class WebsiteUser(HttpLocust):
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
+        # groupConfig['host'] = 'http://localhost:8080'
+        # groupConfig['ip'] = '127.0.0.1'
         groupConfig['host'] = self.host
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
-        # groupConfig['ip'] = '127.0.0.1'
         logger.info('groupConfig %s', groupConfig)
         print groupConfig
 
