@@ -93,7 +93,7 @@ public class CallbackQueue implements AutoCloseable {
             }
 
             private void addKeys(Collection<ContentKey> keys) {
-                logger.trace("channel {} keys {}", channel, keys);
+                logger.debug("channel {} keys {}", channel, keys);
                 try {
                     for (ContentKey key : keys) {
                         if (key.compareTo(lastAdded) > 0) {
