@@ -104,7 +104,7 @@ public class CallbackQueue implements AutoCloseable {
                     throw new RuntimeInterruptedException(e);
                 }
                 if (keys.isEmpty()) {
-                    if (missed < 9) {
+                    if (missed < 4) {
                         missed++;
                     }
                     int millis = 1000 * missed ^ 2;
