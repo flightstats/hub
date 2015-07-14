@@ -40,7 +40,7 @@ describe(testName, function () {
             var formatted = start.format(minute_format);
             console.log('checking', formatted);
             channels.forEach(function (channel) {
-                if (!_.startsWith(channel.name, 'test')) {
+                if (!_.startsWith(channel.name, 'test') && !_.startsWith(channel.name, 'verifyMaxItems')) {
                     channelTimes.push({url: channel.href + formatted});
                 }
             });
