@@ -2,6 +2,7 @@ package com.flightstats.hub.group;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -59,6 +60,7 @@ public class CallbackQueue implements AutoCloseable {
         executorService.submit(new Runnable() {
 
             ContentKey lastAdded = startingKey;
+            int missed = 0;
 
             @Override
             public void run() {
@@ -72,13 +74,20 @@ public class CallbackQueue implements AutoCloseable {
 
             private void doWork() {
                 while (!shouldExit.get()) {
-                    DateTime latestStable = getLatestStable();
-                    TimeQuery timeQuery = queryGenerator.getQuery(latestStable);
-                    logger.trace("latest stable {} {}", channel, latestStable);
-                    if (timeQuery != null) {
-                        addKeys(channelService.queryByTime(timeQuery));
+                    DateTime result;
+                    if (channelService.isReplicating(channel)) {
+                        DirectionQuery query = DirectionQuery.builder()
+                                .channelName(channel)
+                                .contentKey(lastAdded)
+                                .next(true)
+                                .stable(true)
+                                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
+                                .count(50)
+                                .build();
+                        addKeys(channelService.getKeys(query));
                     } else {
-                        Sleeper.sleep(1000);
+                        TimeQuery timeQuery = queryGenerator.getQuery(TimeUtil.stable());
+                        addKeys(channelService.queryByTime(timeQuery));
                     }
                 }
             }
@@ -96,18 +105,15 @@ public class CallbackQueue implements AutoCloseable {
                     logger.info("InterruptedException " + e.getMessage());
                     throw new RuntimeInterruptedException(e);
                 }
-            }
-
-            private DateTime getLatestStable() {
-                if (channelService.isReplicating(channel)) {
-                    Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
-                    if (latest.isPresent()) {
-                        return latest.get().getTime();
-                    } else {
-                        return new DateTime(0);
+                if (keys.isEmpty()) {
+                    if (missed < 9) {
+                        missed++;
                     }
+                    int millis = 1000 * missed ^ 2;
+                    logger.trace("channel {} sleeping for {} millis", channel, millis);
+                    Sleeper.sleep(millis);
                 } else {
-                    return TimeUtil.stable();
+                    missed = 0;
                 }
             }
 
