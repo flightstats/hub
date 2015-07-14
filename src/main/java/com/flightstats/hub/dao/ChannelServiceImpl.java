@@ -190,6 +190,9 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Collection<ContentKey> queryByTime(TimeQuery query) {
+        if (query == null) {
+            return Collections.emptyList();
+        }
         DateTime ttlTime = getTtlTime(query.getChannelName());
         DateTime stableTime = TimeUtil.time(query.isStable());
         return contentService.queryByTime(query)
