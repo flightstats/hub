@@ -72,7 +72,9 @@ public class CallbackQueue implements AutoCloseable {
 
             private void doWork() {
                 while (!shouldExit.get()) {
-                    TimeQuery timeQuery = queryGenerator.getQuery(getLatestStable());
+                    DateTime latestStable = getLatestStable();
+                    TimeQuery timeQuery = queryGenerator.getQuery(latestStable);
+                    logger.trace("latest stable {} {}", channel, latestStable);
                     if (timeQuery != null) {
                         addKeys(channelService.queryByTime(timeQuery));
                     } else {
