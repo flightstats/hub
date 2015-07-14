@@ -11,7 +11,6 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +73,6 @@ public class CallbackQueue implements AutoCloseable {
 
             private void doWork() {
                 while (!shouldExit.get()) {
-                    DateTime result;
                     if (channelService.isReplicating(channel)) {
                         DirectionQuery query = DirectionQuery.builder()
                                 .channelName(channel)
