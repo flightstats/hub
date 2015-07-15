@@ -16,8 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.TreeSet;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Every second (with a second lag) we should query new item ids for a channel
@@ -75,22 +78,27 @@ public class CallbackQueue implements AutoCloseable {
             private void doWork() {
                 while (!shouldExit.get()) {
                     if (channelService.isReplicating(channel)) {
-                        DirectionQuery query = DirectionQuery.builder()
-                                .channelName(channel)
-                                .contentKey(lastAdded)
-                                .next(true)
-                                .stable(true)
-                                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
-                                .count(50)
-                                .build();
-                        query.setTraces(new TracesImpl());
-                        logger.trace("query {}", query);
-                        Collection<ContentKey> keys = channelService.getKeys(query);
-                        if (logger.isTraceEnabled()) {
-                            query.getTraces().log(logger);
+                        Collection<ContentKey> keys = Collections.EMPTY_LIST;
+                        Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
+                        if (latest.isPresent()) {
+                            DirectionQuery query = DirectionQuery.builder()
+                                    .channelName(channel)
+                                    .contentKey(lastAdded)
+                                    .next(true)
+                                    .stable(true)
+                                    .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
+                                    .count(50)
+                                    .build();
+                            query.setTraces(new TracesImpl());
+                            keys = channelService.getKeys(query)
+                                    .stream()
+                                    .filter(key -> key.compareTo(latest.get()) <= 0)
+                                    .collect(Collectors.toCollection(TreeSet::new));
+                            if (logger.isTraceEnabled()) {
+                                query.getTraces().log(logger);
+                            }
                         }
                         addKeys(keys);
-
                     } else {
                         TimeQuery timeQuery = queryGenerator.getQuery(TimeUtil.stable());
                         logger.trace("query {}", timeQuery);
