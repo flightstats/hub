@@ -62,7 +62,6 @@ public class CallbackQueue implements AutoCloseable {
         executorService.submit(new Runnable() {
 
             ContentKey lastAdded = startingKey;
-            int missed = 0;
 
             @Override
             public void run() {
@@ -89,7 +88,7 @@ public class CallbackQueue implements AutoCloseable {
             private void handleReplication() {
                 Collection<ContentKey> keys = Collections.EMPTY_LIST;
                 Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
-                if (latest.isPresent()) {
+                if (latest.isPresent() && latest.get().compareTo(lastAdded) > 0) {
                     DirectionQuery query = DirectionQuery.builder()
                             .channelName(channel)
                             .contentKey(lastAdded)
@@ -125,14 +124,7 @@ public class CallbackQueue implements AutoCloseable {
                     throw new RuntimeInterruptedException(e);
                 }
                 if (keys.isEmpty()) {
-                    if (missed < 4) {
-                        missed++;
-                    }
-                    int millis = 1000 * missed ^ 2;
-                    logger.trace("channel {} sleeping for {} millis", channel, millis);
-                    Sleeper.sleep(millis);
-                } else {
-                    missed = 0;
+                    Sleeper.sleep(1000);
                 }
             }
 
