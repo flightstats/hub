@@ -77,34 +77,38 @@ public class CallbackQueue implements AutoCloseable {
             private void doWork() {
                 while (!shouldExit.get()) {
                     if (channelService.isReplicating(channel)) {
-                        Collection<ContentKey> keys = Collections.EMPTY_LIST;
-                        Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
-                        if (latest.isPresent()) {
-                            DirectionQuery query = DirectionQuery.builder()
-                                    .channelName(channel)
-                                    .contentKey(lastAdded)
-                                    .next(true)
-                                    .stable(true)
-                                    .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
-                                    .count(50)
-                                    .build();
-                            query.trace(true);
-                            query.getTraces().add("latest", latest.get());
-                            keys = channelService.getKeys(query)
-                                    .stream()
-                                    .filter(key -> key.compareTo(latest.get()) <= 0)
-                                    .collect(Collectors.toCollection(TreeSet::new));
-                            if (logger.isTraceEnabled()) {
-                                query.getTraces().log(logger);
-                            }
-                        }
-                        addKeys(keys);
+                        handleReplication();
                     } else {
                         TimeQuery timeQuery = queryGenerator.getQuery(TimeUtil.stable());
                         logger.trace("query {}", timeQuery);
                         addKeys(channelService.queryByTime(timeQuery));
                     }
                 }
+            }
+
+            private void handleReplication() {
+                Collection<ContentKey> keys = Collections.EMPTY_LIST;
+                Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
+                if (latest.isPresent()) {
+                    DirectionQuery query = DirectionQuery.builder()
+                            .channelName(channel)
+                            .contentKey(lastAdded)
+                            .next(true)
+                            .stable(true)
+                            .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
+                            .count(50)
+                            .build();
+                    query.trace(true);
+                    query.getTraces().add("latest", latest.get());
+                    keys = channelService.getKeys(query)
+                            .stream()
+                            .filter(key -> key.compareTo(latest.get()) <= 0)
+                            .collect(Collectors.toCollection(TreeSet::new));
+                    if (logger.isTraceEnabled()) {
+                        query.getTraces().log(logger);
+                    }
+                }
+                addKeys(keys);
             }
 
             private void addKeys(Collection<ContentKey> keys) {
