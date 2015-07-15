@@ -84,11 +84,12 @@ public class CallbackQueue implements AutoCloseable {
                                 .count(50)
                                 .build();
                         query.setTraces(new TracesImpl());
+                        logger.trace("query {}", query);
+                        Collection<ContentKey> keys = channelService.getKeys(query);
                         if (logger.isTraceEnabled()) {
-                            logger.trace("query {}", query);
                             query.getTraces().log(logger);
                         }
-                        addKeys(channelService.getKeys(query));
+                        addKeys(keys);
 
                     } else {
                         TimeQuery timeQuery = queryGenerator.getQuery(TimeUtil.stable());
