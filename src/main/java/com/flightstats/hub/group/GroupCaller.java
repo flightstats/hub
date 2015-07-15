@@ -138,8 +138,8 @@ public class GroupCaller implements Leader {
     }
 
     private void send(ContentKey key) throws InterruptedException {
-        logger.trace("sending {} to {}", key, group.getName());
         semaphore.acquire();
+        logger.trace("sending {} to {}", key, group.getName());
         executorService.submit(new Callable<Object>() {
             @Trace(metricName = "GroupCaller", dispatcher = true)
             @Override
