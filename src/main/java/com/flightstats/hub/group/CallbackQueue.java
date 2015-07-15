@@ -82,9 +82,11 @@ public class CallbackQueue implements AutoCloseable {
                                 .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
                                 .count(50)
                                 .build();
+                        logger.trace("query {}", query);
                         addKeys(channelService.getKeys(query));
                     } else {
                         TimeQuery timeQuery = queryGenerator.getQuery(TimeUtil.stable());
+                        logger.trace("query {}", timeQuery);
                         addKeys(channelService.queryByTime(timeQuery));
                     }
                 }
