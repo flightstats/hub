@@ -4,7 +4,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
-import com.flightstats.hub.model.TracesImpl;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -89,7 +88,8 @@ public class CallbackQueue implements AutoCloseable {
                                     .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
                                     .count(50)
                                     .build();
-                            query.setTraces(new TracesImpl());
+                            query.trace(true);
+                            query.getTraces().add("latest", latest.get());
                             keys = channelService.getKeys(query)
                                     .stream()
                                     .filter(key -> key.compareTo(latest.get()) <= 0)
