@@ -33,6 +33,10 @@ public class ChannelStatusResource {
     public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("trace") @DefaultValue("false") boolean trace) {
+        ChannelConfig channelConfig = channelService.getChannelConfig(channel);
+        if (null == channelConfig) {
+            return Response.status(404).build();
+        }
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
