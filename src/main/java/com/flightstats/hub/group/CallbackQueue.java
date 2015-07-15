@@ -79,8 +79,11 @@ public class CallbackQueue implements AutoCloseable {
                         handleReplication();
                     } else {
                         TimeQuery timeQuery = queryGenerator.getQuery(TimeUtil.stable());
-                        logger.trace("query {}", timeQuery);
-                        addKeys(channelService.queryByTime(timeQuery));
+                        if (timeQuery != null) {
+                            addKeys(channelService.queryByTime(timeQuery));
+                        } else {
+                            Sleeper.sleep(1000);
+                        }
                     }
                 }
             }
@@ -107,7 +110,11 @@ public class CallbackQueue implements AutoCloseable {
                         query.getTraces().log(logger);
                     }
                 }
-                addKeys(keys);
+                if (keys.isEmpty()) {
+                    Sleeper.sleep(1000);
+                } else {
+                    addKeys(keys);
+                }
             }
 
             private void addKeys(Collection<ContentKey> keys) {
@@ -122,9 +129,6 @@ public class CallbackQueue implements AutoCloseable {
                 } catch (InterruptedException e) {
                     logger.info("InterruptedException " + e.getMessage());
                     throw new RuntimeInterruptedException(e);
-                }
-                if (keys.isEmpty()) {
-                    Sleeper.sleep(1000);
                 }
             }
 
