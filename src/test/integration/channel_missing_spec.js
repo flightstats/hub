@@ -71,5 +71,21 @@ describe(testName, function () {
         expect404(channelResource + '/earliest/2', done);
     });
 
+    it('queries time', function (done) {
+        expect404(channelResource + '/time', done);
+    });
+
+    it('queries time hour', function (done) {
+        expect404(channelResource + '/time/hour', done);
+    });
+
+    it('queries time minute', function (done) {
+        expect404(channelResource + '/time/minute', done);
+    });
+
+    it('queries status', function (done) {
+        expect404(channelResource + '/status', done);
+    });
+
 });
 

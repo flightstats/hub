@@ -1,6 +1,8 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.ChannelConfig;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,13 +20,20 @@ public class ChannelTimeResource {
     private final UriInfo uriInfo;
 
     @Inject
+    private ChannelService channelService;
+
+    @Inject
     public ChannelTimeResource(UriInfo uriInfo) {
         this.uriInfo = uriInfo;
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getDefault() {
+    public Response getDefault(@PathParam("channel") String channel) {
+        ChannelConfig channelConfig = channelService.getChannelConfig(channel);
+        if (null == channelConfig) {
+            return Response.status(404).build();
+        }
         return TimeLinkUtil.getDefault(uriInfo);
     }
 
