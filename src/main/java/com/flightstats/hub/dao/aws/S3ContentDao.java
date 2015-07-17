@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
+import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
@@ -25,15 +26,18 @@ import java.util.*;
 public class S3ContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3ContentDao.class);
+    private static final int MAX_ITEMS = 1000 * 1000;
 
     private final AmazonS3 s3Client;
+    private final MetricsSender sender;
     private final boolean useEncrypted;
     private final int s3MaxQueryItems;
     private final String s3BucketName;
 
     @Inject
-    public S3ContentDao(AmazonS3 s3Client, S3BucketName s3BucketName) {
+    public S3ContentDao(AmazonS3 s3Client, S3BucketName s3BucketName, MetricsSender sender) {
         this.s3Client = s3Client;
+        this.sender = sender;
         this.useEncrypted = HubProperties.getProperty("app.encrypted", false);
         this.s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
         this.s3BucketName = s3BucketName.getS3BucketName();
@@ -80,12 +84,14 @@ public class S3ContentDao implements ContentDao {
             metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
         }
         PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
+        sender.send("channel." + channelName + ".s3.requestA", 1);
         s3Client.putObject(request);
         return key;
     }
 
     public Content read(final String channelName, final ContentKey key) {
         try {
+            sender.send("channel." + channelName + ".s3.requestB", 1);
             S3Object object = s3Client.getObject(s3BucketName, getS3ContentKey(channelName, key));
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
@@ -120,19 +126,26 @@ public class S3ContentDao implements ContentDao {
     public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
         traces.add("s3 query by time", channelName, startTime, unit);
         String timePath = unit.format(startTime);
-        ListObjectsRequest request = new ListObjectsRequest();
-        request.withBucketName(s3BucketName);
-        request.withPrefix(channelName + "/" + timePath);
-        request.withMaxKeys(s3MaxQueryItems);
+        ListObjectsRequest request = new ListObjectsRequest()
+                .withBucketName(s3BucketName)
+                .withPrefix(channelName + "/" + timePath)
+                .withMaxKeys(s3MaxQueryItems);
+        SortedSet<ContentKey> keys = iterateListObjects(channelName, request, MAX_ITEMS);
+        traces.add("s3 returning ", keys);
+        return keys;
+    }
+
+    private SortedSet<ContentKey> iterateListObjects(String channelName, ListObjectsRequest request, int maxItems) {
         SortedSet<ContentKey> keys = new TreeSet<>();
+        sender.send("channel." + channelName + ".s3.requestA", 1);
         ObjectListing listing = s3Client.listObjects(request);
         String marker = addKeys(channelName, listing, keys);
-        while (listing.isTruncated()) {
+        while (listing.isTruncated() && keys.size() < maxItems) {
             request.withMarker(marker);
+            sender.send("channel." + channelName + ".s3.requestA", 1);
             listing = s3Client.listObjects(request);
             marker = addKeys(channelName, listing, keys);
         }
-        traces.add("s3 returning ", keys);
         return keys;
     }
 
@@ -184,19 +197,12 @@ public class S3ContentDao implements ContentDao {
 
     private SortedSet<ContentKey> next(DirectionQuery query) {
         query.getTraces().add("s3 next", query);
-        SortedSet<ContentKey> keys = new TreeSet<>();
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
                 .withPrefix(query.getChannelName() + "/")
                 .withMarker(query.getChannelName() + "/" + query.getContentKey().toUrl())
                 .withMaxKeys(query.getCount());
-        ObjectListing listing = s3Client.listObjects(request);
-        String marker = addKeys(query.getChannelName(), listing, keys);
-        while (listing.isTruncated() && keys.size() < query.getCount()) {
-            request.withMarker(marker);
-            listing = s3Client.listObjects(request);
-            marker = addKeys(query.getChannelName(), listing, keys);
-        }
+        SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, query.getCount());
         query.getTraces().add("s3 next returning", keys);
         return keys;
     }
@@ -208,7 +214,6 @@ public class S3ContentDao implements ContentDao {
     public void delete(String channel) {
         new Thread(() -> {
             try {
-
                 ContentKey limitKey = new ContentKey(TimeUtil.now(), "ZZZZZZ");
                 callInternalDelete(channel, limitKey);
                 logger.info("completed deletion of " + channel);
@@ -221,15 +226,16 @@ public class S3ContentDao implements ContentDao {
     private void callInternalDelete(String channel, ContentKey limitKey) {
         String channelPath = channel + "/";
         //noinspection StatementWithEmptyBody
-        while (internalDelete(channelPath, limitKey)) {
+        while (internalDelete(channel, channelPath, limitKey)) {
         }
-        internalDelete(channelPath, limitKey);
+        internalDelete(channel, channelPath, limitKey);
     }
 
-    private boolean internalDelete(String channelPath, ContentKey limitKey) {
+    private boolean internalDelete(String channel, String channelPath, ContentKey limitKey) {
         ListObjectsRequest request = new ListObjectsRequest();
         request.withBucketName(s3BucketName);
         request.withPrefix(channelPath);
+        sender.send("channel." + channel + ".s3.requestA", 1);
         ObjectListing listing = s3Client.listObjects(request);
         List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
         for (S3ObjectSummary objectSummary : listing.getObjectSummaries()) {
