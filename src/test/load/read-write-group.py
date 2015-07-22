@@ -18,6 +18,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -149,6 +150,19 @@ class WebsiteTasks(TaskSet):
         with self.client.get(uri, catch_response=True, name="get_payload") as postResponse:
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on get: " + str(postResponse.status_code) + " " + uri)
+
+    @task(10)
+    def change_parallel(self):
+        if self.number % 3 == 2:
+            group = {
+                "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
+                "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
+                "parallelCalls": random.randint(1, 5)
+            }
+            self.client.put("/group/locust_" + self.channel,
+                            data=json.dumps(group),
+                            headers={"Content-Type": "application/json"},
+                            name="group")
 
     @task(1000)
     def write_read(self):

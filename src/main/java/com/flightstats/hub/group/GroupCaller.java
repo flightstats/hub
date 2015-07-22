@@ -213,7 +213,7 @@ public class GroupCaller implements Leader {
             executorService.awaitTermination(1, TimeUnit.SECONDS);
             logger.info("terminated " + name);
         } catch (InterruptedException e) {
-            logger.warn("unable to stop?", e);
+            logger.warn("unable to stop?" + name, e);
         }
     }
 
@@ -340,5 +340,9 @@ public class GroupCaller implements Leader {
 
     public List<ContentKey> getInFlight() {
         return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(group.getName())));
+    }
+
+    public Group getGroup() {
+        return group;
     }
 }

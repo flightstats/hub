@@ -39,6 +39,12 @@ public class Group {
         return startingKey;
     }
 
+    public boolean allowedToChange(Group other) {
+        return callbackUrl.equals(other.callbackUrl)
+                && channelUrl.equals(other.channelUrl)
+                && name.equals(other.name);
+    }
+
     private static final Gson gson = new GsonBuilder().create();
 
     public String toJson() {

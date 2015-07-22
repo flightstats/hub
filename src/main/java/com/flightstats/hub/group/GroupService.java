@@ -36,10 +36,12 @@ public class GroupService {
         groupValidator.validate(group);
         Optional<Group> existingGroup = getGroup(group.getName());
         if (existingGroup.isPresent()) {
-            if (existingGroup.get().equals(group)) {
+            Group existing = existingGroup.get();
+            if (existing.equals(group)) {
                 return existingGroup;
+            } else if (!existing.allowedToChange(group)) {
+                throw new ConflictException("{\"error\": \"Groups are immutable, except for parallelCalls \"}");
             }
-            throw new ConflictException("{\"error\": \"Groups are immutable\"}");
         }
         lastContentKey.initialize(group.getName(), group.getStartingKey(), GroupCaller.GROUP_LAST_COMPLETED);
         groupDao.upsertGroup(group);

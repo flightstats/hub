@@ -16,6 +16,7 @@ public class GroupValidatorTest {
         group = Group.builder()
                 .callbackUrl("http://client/url")
                 .channelUrl("http://hub/channel/channelName")
+                .parallelCalls(1)
                 .build();
     }
 
@@ -35,6 +36,11 @@ public class GroupValidatorTest {
     }
 
     @Test(expected = InvalidRequestException.class)
+    public void testZeroCalls() throws Exception {
+        groupValidator.validate(group.withParallelCalls(0));
+    }
+
+    @Test(expected = InvalidRequestException.class)
     public void testNameChars() throws Exception {
         groupValidator.validate(group.withName("aA9-"));
     }
@@ -44,6 +50,7 @@ public class GroupValidatorTest {
         groupValidator.validate(Group.builder()
                 .callbackUrl("http:/client/url")
                 .channelUrl("http:\\hub/channel/channelName")
+                .parallelCalls(1)
                 .name("nothing")
                 .build());
     }
@@ -53,6 +60,7 @@ public class GroupValidatorTest {
         groupValidator.validate(Group.builder()
                 .callbackUrl("not a url")
                 .channelUrl("http://hub/channel/channelName")
+                .parallelCalls(1)
                 .name("nothing")
                 .build());
     }
@@ -62,7 +70,9 @@ public class GroupValidatorTest {
         groupValidator.validate(Group.builder()
                 .callbackUrl("http:/client/url")
                 .channelUrl("http://hub/channe/channelName")
+                .parallelCalls(1)
                 .name("testInvalidChannelUrl")
                 .build());
     }
+
 }
