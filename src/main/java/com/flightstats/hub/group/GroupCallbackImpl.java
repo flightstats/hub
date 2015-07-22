@@ -63,7 +63,13 @@ public class GroupCallbackImpl implements GroupCallback {
         Iterable<Group> groups = groupService.getGroups();
         for (Group group : groups) {
             groupsToStop.remove(group.getName());
-            if (!activeGroups.containsKey(group.getName())) {
+            GroupCaller activeCaller = activeGroups.get(group.getName());
+            if (activeCaller == null) {
+                startGroup(group);
+            } else if (activeCaller.getGroup().getParallelCalls() != group.getParallelCalls()) {
+                logger.info("changing parallel calls for group {}", group);
+                activeGroups.remove(group.getName());
+                activeCaller.exit(false);
                 startGroup(group);
             }
         }
