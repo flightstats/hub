@@ -45,7 +45,7 @@ public class FileSpokeStore {
         try {
             FileUtils.writeByteArrayToFile(file, payload);
         } catch (IOException e) {
-            logger.warn("unable to write to " + path, e);
+            logger.error("unable to write to " + path, e);
             return false;
         }
         return true;

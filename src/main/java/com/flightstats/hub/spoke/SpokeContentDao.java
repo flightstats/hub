@@ -4,6 +4,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -45,7 +46,7 @@ public class SpokeContentDao implements ContentDao {
             String path = getPath(channelName, key);
             logger.trace("writing key {} to channel {}", key, channelName);
             if (!spokeStore.write(path, payload, content)) {
-                logger.warn("failed to write to all for " + path);
+                throw new FailedWriteException("unable to write to spoke " + path);
             }
             content.getTraces().add(new Trace("SpokeContentDao.end"));
             return key;
@@ -54,7 +55,7 @@ public class SpokeContentDao implements ContentDao {
             throw e;
         } catch (Exception e) {
             content.getTraces().add(new Trace("SpokeContentDao", "error", e.getMessage()));
-            logger.warn("unable to write " + channelName, e);
+            logger.error("unable to write " + channelName, e);
             throw e;
         }
     }

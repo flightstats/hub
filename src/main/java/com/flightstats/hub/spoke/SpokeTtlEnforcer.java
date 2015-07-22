@@ -26,7 +26,7 @@ public class SpokeTtlEnforcer {
 
     public void run() {
         try {
-            String command = "find " + storagePath + " -mmin +" + ttlMinutes + " -delete";
+            String command = "find -D tree " + storagePath + " -mmin +" + ttlMinutes + " -delete";
             logger.debug("running " + command);
             Process process = Runtime.getRuntime().exec(command);
             InputStream stream = new BufferedInputStream(process.getInputStream());
