@@ -20,6 +20,9 @@ public class GroupValidator {
         if (name.length() > 128) {
             throw new InvalidRequestException("{\"error\": \"Group name must be less than 128 bytes\"}");
         }
+        if (group.getParallelCalls() <= 0) {
+            throw new InvalidRequestException("{\"error\": \"Group parallelCalls must be greater than zero\"}");
+        }
         try {
             new URI(group.getCallbackUrl());
         } catch (URISyntaxException e) {
