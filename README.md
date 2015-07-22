@@ -584,6 +584,7 @@ the Hub server keeps track of the Group's state.
 
 * `parallelCalls` is the optional number of callbacks to make in parallel.  The default value is `1`.
 If parallelCalls is higher than one, callback ordering is not guaranteed.
+parallelCalls can be modified with a call to PUT 
 
 * `startItem` is the optional fully qualified item location where the callback should start from.  The startItem will not be sent.
 startItem is *only* used when creating a group callback.  If you want to change the pointer of a callback, you will need to
@@ -606,7 +607,7 @@ To create a new group callback:
 }
 ```
 
-Once a Group is created, it can not be changed, only deleted.  PUT may be safely called multiple times with the same
+Once a Group is created, only parallelCalls can be changed.  PUT may be safely called multiple times with the same
  configuration.  Changes to `startItem` will be ignored.
 
 To see the configuration and status of a group callback:
