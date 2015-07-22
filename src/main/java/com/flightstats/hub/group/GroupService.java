@@ -40,7 +40,7 @@ public class GroupService {
             if (existing.equals(group)) {
                 return existingGroup;
             } else if (!existing.allowedToChange(group)) {
-                throw new ConflictException("{\"error\": \"Groups are immutable\"}");
+                throw new ConflictException("{\"error\": \"Groups are immutable, except for parallelCalls \"}");
             }
         }
         lastContentKey.initialize(group.getName(), group.getStartingKey(), GroupCaller.GROUP_LAST_COMPLETED);
