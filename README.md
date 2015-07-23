@@ -590,6 +590,9 @@ parallelCalls can be modified with a call to PUT
 startItem is *only* used when creating a group callback.  If you want to change the pointer of a callback, you will need to
 delete the callback first.
 
+* `paused` is optional and defaults to false.   When true, this will pause a group callback.
+`paused` can be modified with a call to PUT.
+
 To get a list of existing group callbacks:
 
 `GET http://hub/group`
@@ -603,11 +606,12 @@ To create a new group callback:
   "callbackUrl" : "http://client/path/callback",
   "channelUrl" : "http://hub/channel/stumptown",
   "parallelCalls" : 2,
-  "startItem" : "http://hub/channel/stumptown/2015/02/06/22/28/43/239/s03ub2"
+  "startItem" : "http://hub/channel/stumptown/2015/02/06/22/28/43/239/s03ub2",
+  "paused" : false
 }
 ```
 
-Once a Group is created, only parallelCalls can be changed.  PUT may be safely called multiple times with the same
+Once a Group is created, only parallelCalls and paused can be changed.  PUT may be safely called multiple times with the same
  configuration.  Changes to `startItem` will be ignored.
 
 To see the configuration and status of a group callback:
