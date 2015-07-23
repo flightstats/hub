@@ -58,6 +58,7 @@ public class GroupCaller implements Leader {
     private AtomicBoolean hasLeadership;
     private Retryer<ClientResponse> retryer;
     private CallbackQueue callbackQueue;
+    private boolean exited = false;
 
     @Inject
     public GroupCaller(CuratorFramework curator, Provider<CallbackQueue> queueProvider,
@@ -78,7 +79,11 @@ public class GroupCaller implements Leader {
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(group.getParallelCalls());
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
-        curatorLeader.start();
+        if (!group.isPaused()) {
+            curatorLeader.start();
+        } else {
+            logger.info("not starting paused group " + group);
+        }
         return true;
     }
 
