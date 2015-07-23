@@ -32,6 +32,8 @@ public class Group {
     @Wither
     private final transient ContentKey startingKey;
 
+    private final boolean paused;
+
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @JsonIgnore
