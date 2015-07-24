@@ -35,7 +35,7 @@
         <appender-ref ref="HTTP_FILE"/>
     </root>
 
-    <logger name="org.apache.http.wire" level="DEBUG" additivity="true">
+    <logger name="org.apache.http.wire" level="DEBUG" additivity="false">
         <appender-ref ref="HTTP_FILE"/>
     </logger>
 
