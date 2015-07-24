@@ -66,21 +66,16 @@ public class GroupCallbackImpl implements GroupCallback {
             GroupCaller activeCaller = activeGroups.get(group.getName());
             if (activeCaller == null) {
                 startGroup(group);
-            } else if (group.isPaused() != activeCaller.getGroup().isPaused()) {
-                logger.info("pausing or unpausing group {}", group);
-                restart(group, activeCaller);
-            } else if (activeCaller.getGroup().getParallelCalls() != group.getParallelCalls()) {
-                logger.info("changing parallel calls for group {}", group);
-                restart(group, activeCaller);
+            } else if (activeCaller.getGroup().isChanged(group)) {
+                logger.info("changed group {}", group);
+                activeGroups.remove(group.getName());
+                activeCaller.exit(false);
+                startGroup(group);
+            } else {
+                logger.info("not changed!");
             }
         }
         stop(groupsToStop, true);
-    }
-
-    private void restart(Group group, GroupCaller activeCaller) {
-        activeGroups.remove(group.getName());
-        activeCaller.exit(false);
-        startGroup(group);
     }
 
     private void stop(Set<String> groupsToStop, final boolean delete) {

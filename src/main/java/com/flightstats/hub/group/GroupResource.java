@@ -104,7 +104,7 @@ public class GroupResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsertGroup(@PathParam("name") String name, String body) {
-        Group group = Group.fromJson(body).withName(name);
+        Group group = Group.fromJson(body, groupService.getGroup(name)).withName(name);
         if (group.getStartingKey() == null) {
             group = group.withStartingKey(new ContentKey());
         }

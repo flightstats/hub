@@ -591,7 +591,6 @@ startItem is *only* used when creating a group callback.  If you want to change 
 delete the callback first.
 
 * `paused` is optional and defaults to false.   When true, this will pause a group callback.
-`paused` can be modified with a call to PUT.
 
 To get a list of existing group callbacks:
 
@@ -611,7 +610,7 @@ To create a new group callback:
 }
 ```
 
-Once a Group is created, only parallelCalls and paused can be changed.  PUT may be safely called multiple times with the same
+Once a Group is created, the channelUrl can not change.  PUT may be safely called multiple times with the same
  configuration.  Changes to `startItem` will be ignored.
 
 To see the configuration and status of a group callback:
