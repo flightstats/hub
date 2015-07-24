@@ -42,9 +42,14 @@ public class Group {
     }
 
     public boolean allowedToChange(Group other) {
-        return callbackUrl.equals(other.callbackUrl)
-                && channelUrl.equals(other.channelUrl)
+        return channelUrl.equals(other.channelUrl)
                 && name.equals(other.name);
+    }
+
+    public boolean isChanged(Group other) {
+        return parallelCalls != other.parallelCalls
+                || paused != other.paused
+                || !callbackUrl.equals(other.callbackUrl);
     }
 
     private static final Gson gson = new GsonBuilder().create();
@@ -53,21 +58,49 @@ public class Group {
         return gson.toJson(this);
     }
 
-    public static Group fromJson(String json) {
-        Group group = gson.fromJson(json, GroupBuilder.class).build();
+    public static Group fromJson(String json, Optional<Group> groupOptional) {
+        GroupBuilder builder = Group.builder();
+        if (groupOptional.isPresent()) {
+            Group existing = groupOptional.get();
+            builder.parallelCalls(existing.parallelCalls)
+                    .paused(existing.paused)
+                    .callbackUrl(existing.callbackUrl)
+                    .channelUrl(existing.channelUrl)
+                    .name(existing.name)
+                    .startingKey(existing.startingKey);
+        }
         try {
             JsonNode root = mapper.readTree(json);
             if (root.has("startItem")) {
-                String startItem = root.get("startItem").asText();
-                Optional<ContentKey> keyOptional = ContentKey.fromFullUrl(startItem);
+                Optional<ContentKey> keyOptional = ContentKey.fromFullUrl(root.get("startItem").asText());
                 if (keyOptional.isPresent()) {
-                    group = group.withStartingKey(keyOptional.get());
+                    builder.startingKey(keyOptional.get());
                 }
+            }
+            if (root.has("name")) {
+                builder.name(root.get("name").asText());
+            }
+            if (root.has("paused")) {
+                builder.paused(root.get("paused").asBoolean());
+            }
+            if (root.has("callbackUrl")) {
+                builder.callbackUrl(root.get("callbackUrl").asText());
+            }
+            if (root.has("channelUrl")) {
+                builder.channelUrl(root.get("channelUrl").asText());
+            }
+            if (root.has("parallelCalls")) {
+                builder.parallelCalls(root.get("parallelCalls").intValue());
             }
         } catch (IOException e) {
             logger.warn("unable to parse " + json, e);
+            throw new RuntimeException(e);
         }
-        return group;
+        return builder.build();
+    }
+
+    public static Group fromJson(String json) {
+        return fromJson(json, Optional.absent());
     }
 
     /**
