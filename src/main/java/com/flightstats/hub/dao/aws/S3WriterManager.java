@@ -91,7 +91,7 @@ public class S3WriterManager {
             cacheKeys.removeAll(longTermKeys);
             if (cacheKeys.size() > 0) {
                 logger.info("missing {} items in channel {}", cacheKeys.size(), channelName);
-                logger.debug("channel {} missing items {}", channelName, cacheKeys);
+                logger.info("channel {} missing items {}", channelName, cacheKeys);
             }
             return cacheKeys;
         } catch (InterruptedException e) {

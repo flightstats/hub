@@ -9,7 +9,7 @@
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${HOME}/local/log/hub.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${HOME}/local/log/hub_%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <fileNamePattern>${HOME}/local/log/hub_%d{yyyy-MM-dd-HH}.log.gz</fileNamePattern>
             <maxHistory>14</maxHistory>
         </rollingPolicy>
 
@@ -18,10 +18,26 @@
         </encoder>
     </appender>
 
+    <appender name="HTTP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/Users/gmoulliet/log/http.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/Users/gmoulliet/log/http_%d{yyyy-MM-dd-HH}.log.gz</fileNamePattern>
+            <maxHistory>168</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%5p %d{ISO8601} [%t] %c [line %L] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <root level="info">
         <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="HTTP_FILE"/>
     </root>
+
+    <logger name="org.apache.http.wire" level="DEBUG" additivity="true">
+        <appender-ref ref="HTTP_FILE"/>
+    </logger>
 
     <logger name="com.sun.jersey.server.wadl.generators" level="WARN"/>
     <logger name="org.apache.zookeeper.server.PrepRequestProcessor" level="WARN"/>
