@@ -20,7 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketTimeoutException;
 import java.util.*;
 
 public class S3ContentDao implements ContentDao {
@@ -91,6 +93,23 @@ public class S3ContentDao implements ContentDao {
 
     public Content read(final String channelName, final ContentKey key) {
         try {
+            return getS3Object(channelName, key);
+        } catch (SocketTimeoutException e) {
+            logger.warn("SocketTimeoutException : unable to read " + channelName + " " + key);
+            try {
+                return getS3Object(channelName, key);
+            } catch (Exception e2) {
+                logger.warn("unable to read second time " + channelName + " " + key + " " + e.getMessage(), e2);
+                return null;
+            }
+        } catch (Exception e) {
+            logger.warn("unable to read " + channelName + " " + key, e);
+            return null;
+        }
+    }
+
+    private Content getS3Object(String channelName, ContentKey key) throws IOException {
+        try {
             sender.send("channel." + channelName + ".s3.requestB", 1);
             S3Object object = s3Client.getObject(s3BucketName, getS3ContentKey(channelName, key));
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
@@ -113,11 +132,8 @@ public class S3ContentDao implements ContentDao {
             return builder.build();
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
-                logger.warn("unable to read " + channelName + " " + key, e);
+                logger.warn("AmazonS3Exception : unable to read " + channelName + " " + key, e);
             }
-            return null;
-        } catch (Exception e) {
-            logger.warn("unable to read " + channelName + " " + key, e);
             return null;
         }
     }
