@@ -8,7 +8,6 @@ import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.*;
-import lombok.experimental.Builder;
 import lombok.experimental.Wither;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

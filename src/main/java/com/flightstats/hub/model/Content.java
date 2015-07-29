@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 
 @Getter
-@EqualsAndHashCode(of = {"contentType", "contentLanguage", "user"})
+@EqualsAndHashCode(of = {"contentType", "contentLanguage"})
 public class Content implements Serializable {
     private final static Logger logger = LoggerFactory.getLogger(Content.class);
 

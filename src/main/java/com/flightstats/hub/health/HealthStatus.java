@@ -1,8 +1,8 @@
 package com.flightstats.hub.health;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
-import lombok.experimental.Builder;
 
 @Builder
 @Getter

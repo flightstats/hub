@@ -1,5 +1,6 @@
 package com.flightstats.hub.group;
 
+import com.github.rholder.retry.Attempt;
 import com.github.rholder.retry.StopStrategy;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,7 +13,7 @@ public class GroupStopStrategy implements StopStrategy {
     }
 
     @Override
-    public boolean shouldStop(int previousAttemptNumber, long delaySinceFirstAttemptInMillis) {
+    public boolean shouldStop(Attempt failedAttempt) {
         return !hasLeadership.get();
     }
 }
