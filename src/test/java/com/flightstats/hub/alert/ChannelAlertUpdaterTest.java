@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.TimeUtil;
-import org.jetbrains.annotations.NotNull;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Test;
@@ -190,7 +189,6 @@ public class ChannelAlertUpdaterTest {
                 .build();
     }
 
-    @NotNull
     private LinkedList<AlertStatusHistory> createHistory(TimeUtil.Unit unit, int count, String channel) {
         DateTime now = TimeUtil.now();
         logger.info("now {}", unit.format(now));
