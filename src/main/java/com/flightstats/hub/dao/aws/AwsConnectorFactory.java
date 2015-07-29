@@ -50,16 +50,15 @@ public class AwsConnectorFactory {
     public AmazonDynamoDBClient getDynamoClient() throws IOException {
         logger.info("creating for  " + protocol + " " + dynamoEndpoint);
         AmazonDynamoDBClient client = null;
+        ClientConfiguration configuration = getClientConfiguration();
         try {
             InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
             credentialsProvider.getCredentials();
-            client = new AmazonDynamoDBClient(credentialsProvider);
+            client = new AmazonDynamoDBClient(credentialsProvider, configuration);
         } catch (Exception e) {
             logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
-            client = new AmazonDynamoDBClient(getPropertiesCredentials());
+            client = new AmazonDynamoDBClient(getPropertiesCredentials(), configuration);
         }
-        ClientConfiguration configuration = getClientConfiguration();
-        client.setConfiguration(configuration);
         client.setEndpoint(dynamoEndpoint);
         return client;
 
