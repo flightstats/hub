@@ -2,7 +2,6 @@ package com.flightstats.hub.model;
 
 
 import lombok.*;
-import lombok.experimental.Builder;
 import lombok.experimental.Wither;
 
 @Builder

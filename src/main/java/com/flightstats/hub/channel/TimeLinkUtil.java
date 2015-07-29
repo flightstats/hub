@@ -91,7 +91,7 @@ public class TimeLinkUtil {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         for (String param : queryParameters.keySet()) {
             List<String> strings = queryParameters.get(param);
-            uriBuilder.queryParam(param, strings.toArray(new String[strings.size()]));
+            uriBuilder.queryParam(param, new Object[]{strings.toArray(new String[strings.size()])});
         }
         Response.ResponseBuilder builder = Response.status(SEE_OTHER);
         builder.location(uriBuilder.build());

@@ -2,7 +2,6 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.ContentKey;
 import lombok.*;
-import lombok.experimental.Builder;
 import lombok.experimental.Wither;
 
 import java.net.URI;

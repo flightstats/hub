@@ -2,8 +2,8 @@ package com.flightstats.hub.group;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flightstats.hub.model.ContentKey;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.experimental.Builder;
 
 import java.util.List;
 
