@@ -66,6 +66,7 @@ public class S3ContentDao implements ContentDao {
     }
 
     public ContentKey write(String channelName, Content content) {
+        long start = System.currentTimeMillis();
         ContentKey key = content.getContentKey().get();
         String s3Key = getS3ContentKey(channelName, key);
         InputStream stream = new ByteArrayInputStream(content.getData());
@@ -86,6 +87,9 @@ public class S3ContentDao implements ContentDao {
             metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
         }
         PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
+        long time = System.currentTimeMillis() - start;
+        sender.send("channel." + channelName + ".s3", time);
+        sender.send("channel.ALL.s3", time);
         sender.send("channel." + channelName + ".s3.requestA", 1);
         s3Client.putObject(request);
         return key;

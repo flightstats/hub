@@ -37,7 +37,7 @@ public class S3WriteQueue {
         this.cacheContentDao = cacheContentDao;
         this.longTermContentDao = longTermContentDao;
 
-        keys = new LinkedBlockingQueue<>(HubProperties.getProperty("s3.writeQueueSize", 2000));
+        keys = new LinkedBlockingQueue<>(HubProperties.getProperty("s3.writeQueueSize", 40000));
         int threads = HubProperties.getProperty("s3.writeQueueThreads", 20);
         executorService = Executors.newFixedThreadPool(threads);
         retryer = buildRetryer();
