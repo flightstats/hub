@@ -30,7 +30,7 @@ public class RemoteSpokeStore {
 
     private final static Logger logger = LoggerFactory.getLogger(RemoteSpokeStore.class);
 
-    private final static Client client = RestClient.createClient(5, 5, true);
+    private final static Client client = RestClient.createClient(1, 1, true);
 
     private final CuratorSpokeCluster cluster;
     private final MetricsSender sender;
@@ -76,6 +76,7 @@ public class RemoteSpokeStore {
                 }
             });
         }
+        //todo - gfm - 7/31/15 - what should this be?
         boolean awaited = countDownLatch.await(5, TimeUnit.SECONDS);
         sender.send("consistent", System.currentTimeMillis() - content.getTraces().getStart());
         return awaited;
