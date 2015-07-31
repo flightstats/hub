@@ -55,8 +55,8 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
-        if (content.isNew()) {
-            throwExceptionIfReplicating(channelName);
+        if (content.isNew() && isReplicating(channelName)) {
+            throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
         }
         long start = System.currentTimeMillis();
         ContentKey contentKey = contentService.insert(channelName, content);
@@ -65,12 +65,6 @@ public class ChannelServiceImpl implements ChannelService {
         sender.send("channel." + channelName + ".post.bytes", content.getSize());
         sender.send("channel.ALL.post", time);
         return contentKey;
-    }
-
-    private void throwExceptionIfReplicating(String channelName) {
-        if (isReplicating(channelName)) {
-            throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
-        }
     }
 
     public boolean isReplicating(String channelName) {
