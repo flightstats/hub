@@ -30,6 +30,7 @@ mainClassName = "com.flightstats.hub.app.SingleHubMain"
 
 configurations {
     all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
+    all*.exclude(group: 'org.slf4j', module: 'slf4j-simple')
     all*.exclude(module: 'log4j')
     integrationTests
 }

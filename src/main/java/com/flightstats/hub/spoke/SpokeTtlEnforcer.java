@@ -1,9 +1,9 @@
 package com.flightstats.hub.spoke;
 
+import com.amazonaws.util.StringUtils;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +14,6 @@ public class SpokeTtlEnforcer {
     private final String storagePath;
     private final int ttlMinutes;
 
-    @Inject
     public SpokeTtlEnforcer() {
         this.storagePath = HubProperties.getProperty("spoke.path", "/spoke");
         this.ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
@@ -23,8 +22,8 @@ public class SpokeTtlEnforcer {
 
     public void run() {
         try {
-            String command = "find -D tree " + storagePath + " -mmin +" + ttlMinutes + " -delete";
-            logger.debug("running " + command);
+            String[] command = {"find", storagePath, "-mmin", "+" + ttlMinutes, "-delete"};
+            logger.debug("running " + StringUtils.join(" ", command));
             Process process = new ProcessBuilder(command)
                     .redirectError(ProcessBuilder.Redirect.INHERIT)
                     .redirectOutput(ProcessBuilder.Redirect.INHERIT)
@@ -35,7 +34,6 @@ public class SpokeTtlEnforcer {
             logger.warn("unable to enforce ttl", e);
         }
     }
-
 
     private class SpokeTtlEnforcerService extends AbstractScheduledService {
         @Override
