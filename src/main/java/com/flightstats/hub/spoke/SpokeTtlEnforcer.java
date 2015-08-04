@@ -2,14 +2,11 @@ package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
-import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 public class SpokeTtlEnforcer {
@@ -28,14 +25,12 @@ public class SpokeTtlEnforcer {
         try {
             String command = "find -D tree " + storagePath + " -mmin +" + ttlMinutes + " -delete";
             logger.debug("running " + command);
-            Process process = Runtime.getRuntime().exec(command);
-            InputStream stream = new BufferedInputStream(process.getInputStream());
-            int waited = process.waitFor();
+            Process process = new ProcessBuilder(command)
+                    .redirectError(ProcessBuilder.Redirect.INHERIT)
+                    .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                    .start();
+            boolean waited = process.waitFor(1, TimeUnit.MINUTES);
             logger.debug("waited " + waited);
-            if (logger.isTraceEnabled()) {
-                byte[] output = ByteStreams.toByteArray(stream);
-                logger.trace(new String(output));
-            }
         } catch (Exception e) {
             logger.warn("unable to enforce ttl", e);
         }
