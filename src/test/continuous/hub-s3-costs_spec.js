@@ -116,7 +116,7 @@ describe(testName, function () {
             }, function (err) {
                 done(err);
             });
-    }, MINUTE);
+    }, 10 * MINUTE);
 
     var output = [];
 
@@ -152,21 +152,6 @@ describe(testName, function () {
             .put(hubChannel)
             .accept('json')
             .send({"ttlDays": "30"})
-            .end(function (err, res) {
-                expect(err).toBe(null);
-                done();
-            })
-    });
-
-    it('creates hub callback', function (done) {
-        console.log('creating ', hubChannel);
-        agent
-            .put(hubUrl + '/group/hub_s3_costs_dev')
-            .accept('json')
-            .send({
-                "callbackUrl": "http://it-utils.svc.dev:3000/callback",
-                "channelUrl": hubChannel
-            })
             .end(function (err, res) {
                 expect(err).toBe(null);
                 done();
