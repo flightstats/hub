@@ -159,25 +159,15 @@ public class S3ContentDao implements ContentDao {
     private SortedSet<ContentKey> iterateListObjects(String channelName, ListObjectsRequest request, int maxItems) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         sender.send("channel." + channelName + ".s3.requestA", 1);
-        listObjectsTrace(channelName, request);
         ObjectListing listing = s3Client.listObjects(request);
         String marker = addKeys(channelName, listing, keys);
         while (listing.isTruncated() && keys.size() < maxItems) {
             request.withMarker(marker);
             sender.send("channel." + channelName + ".s3.requestA", 1);
-            listObjectsTrace(channelName, request);
             listing = s3Client.listObjects(request);
             marker = addKeys(channelName, listing, keys);
         }
         return keys;
-    }
-
-    private void listObjectsTrace(String channelName, ListObjectsRequest request) {
-        if (logger.isTraceEnabled()) {
-            if (channelName.equals("load_test_1")) {
-                logger.trace("list {} prefix {} marker {} max {}", channelName, request.getPrefix(), request.getMarker(), request.getMaxKeys());
-            }
-        }
     }
 
     private String addKeys(String channelName, ObjectListing listing, Set<ContentKey> keys) {

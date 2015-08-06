@@ -41,7 +41,7 @@ public class AwsContentService implements ContentService {
         this.dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
         this.shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 5);
         this.s3WriteQueue = s3WriteQueue;
-        executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ContentServiceImpl-%d").build());
+        executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("AwsContentService-%d").build());
         HubServices.registerPreStop(new ContentServiceHook());
     }
 

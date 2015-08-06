@@ -1,0 +1,2 @@
+https://www.hostedgraphite.com/805cc7bf/57da6a42-6293-4daf-9afb-2eaad4925738/graphite/render?format=json&target=summarize(hub-v2.dev.channel.load_test_2.s3.requestA:sum,%225minutes%22,%22sum%22,alignToFrom=true)&target=summarize(hub-v2.dev.channel.load_test_2.s3.requestB:sum,%225minutes%22,%22sum%22,alignToFrom=true)&target=summarize(hub-v2.dev.channel.load_test_2.post.bytes:sum,%225minutes%22,%22sum%22,alignToFrom=true)&target=summarize(hub-v2.dev.channel.load_test_2.post:obvs,%225minutes%22,%22sum%22,alignToFrom=true)&from=-1hours
+
