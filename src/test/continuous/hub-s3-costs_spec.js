@@ -39,10 +39,8 @@ describe(testName, function () {
             .end(function (res) {
                 expect(res.error).toBe(false);
                 var channels = res.body._links.channels;
-                console.log('found replicated channels', channels);
                 channels.forEach(function (channel) {
                     if (channel.name.substring(0, 4) !== 'test') {
-                        console.log('adding channel ', channel);
                         channelData.push(channel);
                     }
                 });
@@ -54,7 +52,6 @@ describe(testName, function () {
     it('gets channel information ', function (done) {
         async.eachLimit(channelData, 20,
             function (channel, callback) {
-                console.log('get channel', channel);
                 agent.get(channel.href)
                     .set('Accept', 'application/json')
                     .end(function (res) {
@@ -67,9 +64,35 @@ describe(testName, function () {
             });
     }, MINUTE);
 
-    var graphiteData = [];
+    var now = moment().utc();
+    it('gets earliest information ', function (done) {
+        async.eachLimit(channelData, 20,
+            function (channel, callback) {
+                agent.get(channel.href + '/earliest')
+                    .redirects(0)
+                    .end(function (res) {
+                        if (res.status === 404) {
+                            channel.earliest = 0;
+                        } else if (res.status === 303) {
+                            var location = res.header.location;
+                            location = location.slice(0, location.lastIndexOf("/"));
+                            location = location.slice(channel.href.length + 1);
+                            var earliest = moment(location, "YYYY/MM/DD/HH/mm/ss/SSS");
+                            channel.earliest = now.diff(earliest, 'days');
+                        } else {
+                            console.log('unexpected status for earliest', channel.name, res.status);
+                            channel.earliest = 0;
+                        }
+                        callback();
+                    });
+            }, function (err) {
+                done(err);
+            });
+    }, MINUTE);
 
-    var start = moment().utc().hours(0).minutes(0).seconds(0).milliseconds(0).subtract(1, 'days').format("X");
+    var graphiteData = [];
+    var days = 14;
+    var start = moment().utc().hours(0).minutes(0).seconds(0).milliseconds(0).subtract(days, 'days').format("X");
     it('gets hosted graphite information ', function (done) {
         var end = moment().utc().hours(0).minutes(0).seconds(0).milliseconds(0).subtract(1, 'seconds').format("X");
 
@@ -77,9 +100,10 @@ describe(testName, function () {
             function (channel, callback) {
                 var field = dataPrefix + '.channel.' + channel.name;
                 var url = graphiteUrl + 'render?format=json' +
-                    '&target=summarize(' + field + '.s3.requestA:sum,"24hours","sum")' +
-                    '&target=summarize(' + field + '.s3.requestB:sum,"24hours","sum")' +
-                    '&target=summarize(' + field + '.post.bytes:sum,"24hours","sum")' +
+                    '&target=summarize(' + field + '.s3.requestA:sum,"14days","sum",alignToFrom=true)' +
+                    '&target=summarize(' + field + '.s3.requestB:sum,"14days","sum",alignToFrom=true)' +
+                    '&target=summarize(' + field + '.post.bytes:sum,"14days","sum",alignToFrom=true)' +
+                    '&target=summarize(' + field + '.post:obvs,"14days","sum",alignToFrom=true)' +
                     '&from=' + start + '&until=' + end;
 
                 console.log('get data ', url);
@@ -95,8 +119,10 @@ describe(testName, function () {
                                 channel.requestA = value.datapoints[0][0];
                             } else if (value.target.indexOf('requestB') > 0) {
                                 channel.requestB = value.datapoints[0][0];
-                            } else if (value.target.indexOf('bytes') > 0) {
+                            } else if (value.target.indexOf('post.bytes') > 0) {
                                 channel.bytes = value.datapoints[0][0];
+                            } else if (value.target.indexOf('post:obvs') > 0) {
+                                channel.posts = value.datapoints[0][0];
                             }
                         }
                         if (!channel.requestA) {
@@ -107,6 +133,9 @@ describe(testName, function () {
                         }
                         if (!channel.bytes) {
                             channel.bytes = 0;
+                        }
+                        if (!channel.posts) {
+                            channel.posts = 0;
                         }
                         graphiteData.push(channel);
                         callback(err);
@@ -127,15 +156,25 @@ describe(testName, function () {
                 output.push(event);
                 event.name = channel.name;
                 event.hub = dataPrefix;
+
+                //todo - gfm - 8/6/15 - remove
                 event.ttlDays = channel.hub.ttlDays;
-                event.DailyS3PutListRequests = channel.requestA;
-                event.DailyS3GetRequests = channel.requestB;
-                event.DailyGB = channel.bytes / 1024 / 1024 / 1024;
-                var cost = channel.requestA / 1000 * 0.005 * 30
-                    + channel.requestB / 10000 * 0.004 * 30
+                event.DailyS3PutListRequests = channel.requestA / days;
+                event.DailyS3GetRequests = channel.requestB / days;
+                event.DailyGB = channel.bytes / 1024 / 1024 / 1024 / days;
+                var cost = event.DailyS3PutListRequests / 1000 * 0.005 * 30
+                    + event.DailyS3GetRequests / 10000 * 0.004 * 30
                     + event.DailyGB * 0.03 * event.ttlDays;
                 event.estimatedMonthlyCost = parseFloat(cost.toFixed(2));
-                //event.timestamp = parseInt(start);
+
+                //todo - gfm - 8/6/15 - keep
+                event.MonthlyS3PutCost = channel.posts / days / 1000 * 0.005 * 30;
+                event.MonthlyS3ListCost = (channel.requestA - channel.posts) / days / 1000 * 0.005 * 30;
+                event.MonthlyS3GetCost = channel.requestB / days / 10000 * 0.004 * 30;
+                event.MonthlyBytesCost = channel.bytes / days / 1024 / 1024 / 1024 * 0.03 * channel.earliest;
+                event.MonthlyTotalCost = event.MonthlyS3PutCost + event.MonthlyS3ListCost + event.MonthlyS3GetCost + event.MonthlyBytesCost;
+                event.earliestItemDays = channel.earliest;
+
                 callback();
 
             }, function (err) {
