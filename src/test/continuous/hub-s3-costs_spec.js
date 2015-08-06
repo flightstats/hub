@@ -91,7 +91,7 @@ describe(testName, function () {
     }, MINUTE);
 
     var graphiteData = [];
-    var days = 14;
+    var days = 7;
     var start = moment().utc().hours(0).minutes(0).seconds(0).milliseconds(0).subtract(days, 'days').format("X");
     it('gets hosted graphite information ', function (done) {
         var end = moment().utc().hours(0).minutes(0).seconds(0).milliseconds(0).subtract(1, 'seconds').format("X");
@@ -100,10 +100,10 @@ describe(testName, function () {
             function (channel, callback) {
                 var field = dataPrefix + '.channel.' + channel.name;
                 var url = graphiteUrl + 'render?format=json' +
-                    '&target=summarize(' + field + '.s3.requestA:sum,"14days","sum",alignToFrom=true)' +
-                    '&target=summarize(' + field + '.s3.requestB:sum,"14days","sum",alignToFrom=true)' +
-                    '&target=summarize(' + field + '.post.bytes:sum,"14days","sum",alignToFrom=true)' +
-                    '&target=summarize(' + field + '.post:obvs,"14days","sum",alignToFrom=true)' +
+                    '&target=summarize(' + field + '.s3.requestA:sum,"7days","sum",alignToFrom=true)' +
+                    '&target=summarize(' + field + '.s3.requestB:sum,"7days","sum",alignToFrom=true)' +
+                    '&target=summarize(' + field + '.post.bytes:sum,"7days","sum",alignToFrom=true)' +
+                    '&target=summarize(' + field + '.post:obvs,"7days","sum",alignToFrom=true)' +
                     '&from=' + start + '&until=' + end;
 
                 console.log('get data ', url);
@@ -157,17 +157,6 @@ describe(testName, function () {
                 event.name = channel.name;
                 event.hub = dataPrefix;
 
-                //todo - gfm - 8/6/15 - remove
-                event.ttlDays = channel.hub.ttlDays;
-                event.DailyS3PutListRequests = channel.requestA / days;
-                event.DailyS3GetRequests = channel.requestB / days;
-                event.DailyGB = channel.bytes / 1024 / 1024 / 1024 / days;
-                var cost = event.DailyS3PutListRequests / 1000 * 0.005 * 30
-                    + event.DailyS3GetRequests / 10000 * 0.004 * 30
-                    + event.DailyGB * 0.03 * event.ttlDays;
-                event.estimatedMonthlyCost = parseFloat(cost.toFixed(2));
-
-                //todo - gfm - 8/6/15 - keep
                 event.MonthlyS3PutCost = channel.posts / days / 1000 * 0.005 * 30;
                 event.MonthlyS3ListCost = (channel.requestA - channel.posts) / days / 1000 * 0.005 * 30;
                 event.MonthlyS3GetCost = channel.requestB / days / 10000 * 0.004 * 30;
