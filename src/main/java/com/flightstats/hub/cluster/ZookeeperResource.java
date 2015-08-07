@@ -53,13 +53,10 @@ public class ZookeeperResource {
     private Response returnData(String path) {
         try {
             path = StringUtils.removeEnd(path, "/");
-            if (!path.isEmpty()) {
-                path = "/" + path;
-            }
+            path = "/" + path;
             if (curator.checkExists().forPath(path) == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
-
             ObjectNode root = mapper.createObjectNode();
             ObjectNode links = root.putObject("_links");
             ObjectNode self = links.putObject("self");
