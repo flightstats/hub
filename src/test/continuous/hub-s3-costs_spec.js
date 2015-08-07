@@ -163,6 +163,7 @@ describe(testName, function () {
                 event.MonthlyBytesCost = channel.bytes / days / 1024 / 1024 / 1024 * 0.03 * channel.earliest;
                 event.MonthlyTotalCost = event.MonthlyS3PutCost + event.MonthlyS3ListCost + event.MonthlyS3GetCost + event.MonthlyBytesCost;
                 event.earliestItemDays = channel.earliest;
+                event.tags = channel.hub.tags;
 
                 callback();
 
