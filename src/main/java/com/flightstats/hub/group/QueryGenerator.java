@@ -20,7 +20,6 @@ public class QueryGenerator {
 
     public TimeQuery getQuery(DateTime latestStableInChannel) {
         logger.trace("iterating {} last={} stable={} ", channel, lastQueryTime, latestStableInChannel);
-        //todo - gfm - 8/6/15 - lastQueryTime should limited by ttl of the channel
         if (lastQueryTime.isBefore(latestStableInChannel)) {
             TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
             logger.trace("query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
@@ -48,8 +47,9 @@ public class QueryGenerator {
     }
 
     private TimeUtil.Unit getStepUnit(DateTime latestStableInChannel) {
-        //todo - gfm - 8/6/15 - step size of a day if more than a day behind
-        if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {
+        if (lastQueryTime.isBefore(latestStableInChannel.minusDays(2))) {
+            return TimeUtil.Unit.DAYS;
+        } else if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {
             return TimeUtil.Unit.HOURS;
         } else if (lastQueryTime.isBefore(latestStableInChannel.minusMinutes(2))) {
             return TimeUtil.Unit.MINUTES;
