@@ -164,6 +164,7 @@ describe(testName, function () {
                 event.MonthlyTotalCost = event.MonthlyS3PutCost + event.MonthlyS3ListCost + event.MonthlyS3GetCost + event.MonthlyBytesCost;
                 event.earliestItemDays = channel.earliest;
                 event.tags = channel.hub.tags;
+                event.ttlDays = channel.hub.ttlDays;
 
                 callback();
 
