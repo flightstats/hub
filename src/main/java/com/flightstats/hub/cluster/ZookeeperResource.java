@@ -22,7 +22,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
-@Path("/zookeeper/")
+@Path("/internal/zookeeper/")
 public class ZookeeperResource {
     private static final Logger logger = LoggerFactory.getLogger(ZookeeperResource.class);
 
