@@ -144,6 +144,7 @@ public class S3ContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
+        logger.trace("queryByTime {} {} {}", channelName, startTime, unit);
         traces.add("s3 query by time", channelName, startTime, unit);
         String timePath = unit.format(startTime);
         ListObjectsRequest request = new ListObjectsRequest()
