@@ -77,6 +77,9 @@ public class ChannelValidator {
 
     private void ensureSize(String value, String title) throws InvalidRequestException {
         int maxLength = 48;
+        if (value == null) {
+            return;
+        }
         if (value.length() > maxLength) {
             throw new InvalidRequestException("{\"error\": \"Channel " + title + " is too long " + value + "\"}");
         }
