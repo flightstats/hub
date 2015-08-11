@@ -1,6 +1,7 @@
 package com.flightstats.hub.group;
 
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
@@ -11,6 +12,7 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,12 +58,19 @@ public class CallbackQueue implements AutoCloseable {
 
     public void start(Group group, ContentKey startingKey) {
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
-        queryGenerator = new QueryGenerator(startingKey.getTime(), channel);
+        ChannelConfig config = channelService.getCachedChannelConfig(channel);
+        DateTime earliestTime = TimeUtil.getEarliestTime((int) config.getTtlDays());
+        if (startingKey.getTime().isBefore(earliestTime)) {
+            logger.info("{} changing starting key {} for earliestTime {}", channel, startingKey, earliestTime);
+            startingKey = new ContentKey(earliestTime, "0");
+        }
+        final ContentKey earliestKey = startingKey;
+        queryGenerator = new QueryGenerator(earliestKey.getTime(), channel);
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("group-" + group.getName() + "-queue-%s").build();
         ExecutorService executorService = Executors.newSingleThreadExecutor(factory);
         executorService.submit(new Runnable() {
 
-            ContentKey lastAdded = startingKey;
+            ContentKey lastAdded = earliestKey;
 
             @Override
             public void run() {
