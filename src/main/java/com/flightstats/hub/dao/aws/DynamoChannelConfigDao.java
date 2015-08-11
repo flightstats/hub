@@ -48,6 +48,9 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
             item.put("replicationSource", new AttributeValue(config.getReplicationSource()));
         }
         item.put("maxItems", new AttributeValue().withN(String.valueOf(config.getMaxItems())));
+        if (StringUtils.isNotEmpty(config.getOwner())) {
+            item.put("owner", new AttributeValue(config.getOwner()));
+        }
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(getTableName())
                 .withItem(item);
@@ -112,6 +115,9 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
         }
         if (item.get("maxItems") != null) {
             builder.withMaxItems(Long.parseLong(item.get("maxItems").getN()));
+        }
+        if (item.containsKey("owner")) {
+            builder.withOwner(item.get("owner").getS());
         }
         return builder.build();
     }

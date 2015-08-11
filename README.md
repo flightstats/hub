@@ -107,6 +107,8 @@ Content-Type is `application/json`
 * `name` _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
 Hyphens are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
 
+* `owner` is optional and is limited to 48 characters.
+
 * `ttlDays` and `maxItems` are optional, and only one can be specified at a time. If neither is specified, a default value of 120 ttlDays is used.
 Please see [channel limits](#channel-limits) for more details.
 

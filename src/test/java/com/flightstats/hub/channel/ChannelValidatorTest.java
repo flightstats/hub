@@ -136,4 +136,13 @@ public class ChannelValidatorTest {
         validator.validate(ChannelConfig.builder().withName("dash").withTags(Arrays.asList("a-b")).build(), true);
         validator.validate(ChannelConfig.builder().withName("colondash").withTags(Arrays.asList("a-b:c")).build(), true);
     }
+
+    public void testOwner() throws Exception {
+        validator.validate(ChannelConfig.builder().withName("A").withOwner(Strings.repeat("A", 48)).build(), true);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testTooLongOwner() throws Exception {
+        validator.validate(ChannelConfig.builder().withName("A").withOwner(Strings.repeat("A", 49)).build(), true);
+    }
 }

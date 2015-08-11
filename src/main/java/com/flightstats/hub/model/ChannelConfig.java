@@ -23,6 +23,7 @@ public class ChannelConfig implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new HubDateTypeAdapter()).create();
     private final String name;
+    private final String owner;
     private final Date creationDate;
     private final long ttlDays;
     private final long maxItems;
@@ -32,6 +33,7 @@ public class ChannelConfig implements Serializable {
 
     public ChannelConfig(Builder builder) {
         name = StringUtils.trim(builder.name);
+        owner = StringUtils.trim(builder.owner);
         creationDate = builder.creationDate;
         if (builder.maxItems == 0 && builder.ttlDays == 0) {
             ttlDays = 120;
@@ -110,6 +112,11 @@ public class ChannelConfig implements Serializable {
         return maxItems;
     }
 
+    @JsonProperty("owner")
+    public String getOwner() {
+        return owner;
+    }
+
     @JsonIgnore
     public boolean isReplicating() {
         return StringUtils.isNotBlank(replicationSource);
@@ -118,6 +125,7 @@ public class ChannelConfig implements Serializable {
     public static class Builder {
         private static final ObjectMapper mapper = new ObjectMapper();
         private String name;
+        private String owner;
         private Date creationDate = new Date();
         private long ttlDays = 0;
         private String description = "";
@@ -136,17 +144,17 @@ public class ChannelConfig implements Serializable {
             this.description = config.description;
             this.tags.addAll(config.getTags());
             this.replicationSource = config.replicationSource;
+            this.owner = config.owner;
             return this;
         }
 
         public Builder withUpdateJson(String json) throws IOException {
             JsonNode rootNode = mapper.readTree(json);
+            if (rootNode.has("owner")) {
+                withDescription(getValue(rootNode.get("owner")));
+            }
             if (rootNode.has("description")) {
-                String desc = rootNode.get("description").asText();
-                if (desc.equals("null")) {
-                    desc = "";
-                }
-                withDescription(desc);
+                withDescription(getValue(rootNode.get("description")));
             }
             if (rootNode.has("ttlDays")) {
                 withTtlDays(rootNode.get("ttlDays").asLong());
@@ -165,6 +173,14 @@ public class ChannelConfig implements Serializable {
                 withReplicationSource(rootNode.get("replicationSource").asText());
             }
             return this;
+        }
+
+        private String getValue(JsonNode jsonNode) {
+            String value = jsonNode.asText();
+            if (value.equals("null")) {
+                value = "";
+            }
+            return value;
         }
 
         public Builder withName(String name) {
@@ -203,6 +219,11 @@ public class ChannelConfig implements Serializable {
 
         public Builder withReplicationSource(String replicationSource) {
             this.replicationSource = replicationSource;
+            return this;
+        }
+
+        public Builder withOwner(String owner) {
+            this.owner = owner;
             return this;
         }
     }

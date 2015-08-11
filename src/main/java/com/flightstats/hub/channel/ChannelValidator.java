@@ -16,23 +16,25 @@ public class ChannelValidator {
         this.channelService = channelService;
     }
 
-    public void validate(ChannelConfig request, boolean isCreation) throws InvalidRequestException, ConflictException {
+    public void validate(ChannelConfig config, boolean isCreation) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional = Optional.absent();
-        if (request != null) {
-            channelNameOptional = Optional.fromNullable(request.getName());
+        if (config != null) {
+            channelNameOptional = Optional.fromNullable(config.getName());
         }
 
         validateNameWasGiven(channelNameOptional);
         String channelName = channelNameOptional.get().trim();
         ensureNotAllBlank(channelName);
-        ensureSize(channelName);
+        ensureSize(channelName, "name");
+        ensureSize(config.getOwner(), "owner");
         checkForInvalidCharacters(channelName);
         if (isCreation) {
             validateChannelUniqueness(channelName);
         }
-        validateTTL(request);
-        validateDescription(request);
-        validateTags(request);
+        validateTTL(config);
+        validateDescription(config);
+        validateTags(config);
+
     }
 
     private void validateTags(ChannelConfig request) {
@@ -73,10 +75,13 @@ public class ChannelValidator {
         }
     }
 
-    private void ensureSize(String name) throws InvalidRequestException {
+    private void ensureSize(String value, String title) throws InvalidRequestException {
         int maxLength = 48;
-        if (name.length() > maxLength) {
-            throw new InvalidRequestException("{\"error\": \"Channel name is too long " + name + "\"}");
+        if (value == null) {
+            return;
+        }
+        if (value.length() > maxLength) {
+            throw new InvalidRequestException("{\"error\": \"Channel " + title + " is too long " + value + "\"}");
         }
     }
 
