@@ -20,6 +20,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -340,8 +341,8 @@ class WebsiteTasks(TaskSet):
 
 class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
-    min_wait = 400
-    max_wait = 900
+    min_wait = 500
+    max_wait = 5000
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
