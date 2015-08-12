@@ -151,7 +151,7 @@ public class ChannelConfig implements Serializable {
         public Builder withUpdateJson(String json) throws IOException {
             JsonNode rootNode = mapper.readTree(json);
             if (rootNode.has("owner")) {
-                withDescription(getValue(rootNode.get("owner")));
+                withOwner(getValue(rootNode.get("owner")));
             }
             if (rootNode.has("description")) {
                 withDescription(getValue(rootNode.get("description")));
