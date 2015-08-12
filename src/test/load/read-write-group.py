@@ -19,6 +19,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -47,7 +48,7 @@ class WebsiteTasks(TaskSet):
         logger.info("payload size " + str(self.payload.__sizeof__()))
         self.channel = "load_test_" + str(self.number)
         self.count = 0
-        payload = {"name": self.channel, "ttlDays": "3"}
+        payload = {"name": self.channel, "ttlDays": "3", "tags": ["load", "test", "DDT"], "owner": "DDT"}
         self.client.put("/channel/" + self.channel,
                          data=json.dumps(payload),
                          headers={"Content-Type": "application/json"},
