@@ -125,7 +125,7 @@ public class ChannelConfig implements Serializable {
     public static class Builder {
         private static final ObjectMapper mapper = new ObjectMapper();
         private String name;
-        private String owner;
+        private String owner = "";
         private Date creationDate = new Date();
         private long ttlDays = 0;
         private String description = "";
