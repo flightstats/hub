@@ -90,20 +90,35 @@ describe(testName, function () {
             });
     }, MINUTE);
 
+    function processData(datapoints) {
+        var days = [];
+        var sum = 0;
+        for (var i = 0; i < datapoints.length; i++) {
+            var point = datapoints[i];
+            if (point[0]) {
+                days.push(point[0]);
+                sum += point[0];
+            } else {
+                days.push(0);
+            }
+        }
+        return {sum: sum, days: days};
+    }
+
     var graphiteData = [];
     var days = 7;
     var start = moment().utc().hours(0).minutes(0).seconds(0).milliseconds(0).subtract(days, 'days').format("X");
     it('gets hosted graphite information ', function (done) {
         var end = moment().utc().hours(0).minutes(0).seconds(0).milliseconds(0).subtract(1, 'seconds').format("X");
-
+        var options = '"1days","sum",alignToFrom=true)';
         async.eachLimit(channelData, 20,
             function (channel, callback) {
                 var field = dataPrefix + '.channel.' + channel.name;
                 var url = graphiteUrl + 'render?format=json' +
-                    '&target=summarize(' + field + '.s3.requestA:sum,"7days","sum",alignToFrom=true)' +
-                    '&target=summarize(' + field + '.s3.requestB:sum,"7days","sum",alignToFrom=true)' +
-                    '&target=summarize(' + field + '.post.bytes:sum,"7days","sum",alignToFrom=true)' +
-                    '&target=summarize(' + field + '.post:obvs,"7days","sum",alignToFrom=true)' +
+                    '&target=summarize(' + field + '.s3.requestA:sum,' + options +
+                    '&target=summarize(' + field + '.s3.requestB:sum,' + options +
+                    '&target=summarize(' + field + '.post.bytes:sum,' + options +
+                    '&target=summarize(' + field + '.post:obvs,' + options +
                     '&from=' + start + '&until=' + end;
 
                 console.log('get data ', url);
@@ -115,27 +130,36 @@ describe(testName, function () {
                         var parsed = JSON.parse(body);
                         for (var i = 0; i < parsed.length; i++) {
                             var value = parsed[i];
+                            var data = processData(value.datapoints);
                             if (value.target.indexOf('requestA') > 0) {
-                                channel.requestA = value.datapoints[0][0];
+                                channel.requestA = data.sum;
+                                channel.requestADays = data.days;
                             } else if (value.target.indexOf('requestB') > 0) {
-                                channel.requestB = value.datapoints[0][0];
+                                channel.requestB = data.sum;
+                                channel.requestBDays = data.days;
                             } else if (value.target.indexOf('post.bytes') > 0) {
-                                channel.bytes = value.datapoints[0][0];
+                                channel.bytes = data.sum;
+                                channel.bytesDays = data.days;
                             } else if (value.target.indexOf('post:obvs') > 0) {
-                                channel.posts = value.datapoints[0][0];
+                                channel.posts = data.sum;
+                                channel.postsDays = data.days;
                             }
                         }
                         if (!channel.requestA) {
                             channel.requestA = 0;
+                            channel.requestADays = [0, 0, 0, 0, 0, 0, 0];
                         }
                         if (!channel.requestB) {
                             channel.requestB = 0;
+                            channel.requestBDays = [0, 0, 0, 0, 0, 0, 0];
                         }
                         if (!channel.bytes) {
                             channel.bytes = 0;
+                            channel.bytesDays = [0, 0, 0, 0, 0, 0, 0];
                         }
                         if (!channel.posts) {
                             channel.posts = 0;
+                            channel.postsDays = [0, 0, 0, 0, 0, 0, 0];
                         }
                         graphiteData.push(channel);
                         callback(err);
@@ -165,6 +189,16 @@ describe(testName, function () {
                 event.earliestItemDays = channel.earliest;
                 event.tags = channel.hub.tags;
                 event.ttlDays = channel.hub.ttlDays;
+
+                event.days = [];
+                for (var i = 0; i < days; i++) {
+                    event.days.push({
+                        s3Put: channel.postsDays[i],
+                        s3List: channel.requestADays[i] - channel.postsDays[i],
+                        s3Get: channel.requestBDays[i],
+                        s3Bytes: channel.bytesDays[i],
+                    });
+                }
 
                 callback();
 
