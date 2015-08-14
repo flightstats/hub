@@ -54,7 +54,7 @@ public class RemoteSpokeStore {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    String uri = HubHost.getScheme() + server + "/spoke/payload/" + path;
+                    String uri = HubHost.getScheme() + server + "/internal/spoke/payload/" + path;
                     content.getTraces().add(new Trace(uri));
                     try {
                         ClientResponse response = client.resource(uri).put(ClientResponse.class, payload);
@@ -91,7 +91,7 @@ public class RemoteSpokeStore {
         Collection<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             try {
-                ClientResponse response = client.resource(HubHost.getScheme() + server + "/spoke/payload/" + path)
+                ClientResponse response = client.resource(HubHost.getScheme() + server + "/internal/spoke/payload/" + path)
                         .get(ClientResponse.class);
                 logger.trace("server {} path {} response {}", server, path, response);
                 if (response.getStatus() == 200) {
@@ -118,7 +118,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         traces.add("spoke calling", server, path);
-                        ClientResponse response = client.resource(HubHost.getScheme() + server + "/spoke/time/" + path)
+                        ClientResponse response = client.resource(HubHost.getScheme() + server + "/internal/spoke/time/" + path)
                                 .get(ClientResponse.class);
                         traces.add("server response", server, response);
                         if (response.getStatus() == 200) {
@@ -154,7 +154,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         traces.add("spoke calling", server, channel);
-                        ClientResponse response = client.resource(HubHost.getScheme() + server + "/spoke/latest/" + path)
+                        ClientResponse response = client.resource(HubHost.getScheme() + server + "/internal/spoke/latest/" + path)
                                 .get(ClientResponse.class);
                         traces.add("server response", server, response);
                         if (response.getStatus() == 200) {
@@ -191,7 +191,7 @@ public class RemoteSpokeStore {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    ClientResponse response = client.resource(HubHost.getScheme() + server + "/spoke/payload/" + path)
+                    ClientResponse response = client.resource(HubHost.getScheme() + server + "/internal/spoke/payload/" + path)
                             .delete(ClientResponse.class);
                     if (response.getStatus() < 400) {
                         countDownLatch.countDown();
