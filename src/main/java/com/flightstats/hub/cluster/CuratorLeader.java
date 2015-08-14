@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.CancelLeadershipException;
@@ -64,6 +65,8 @@ public class CuratorLeader {
                 leader.takeLeadership(hasLeadership);
             } catch (RuntimeInterruptedException e) {
                 logger.info("interrupted " + leaderPath + e.getMessage());
+            } catch (NoSuchChannelException e) {
+                logger.debug("no channel {} ", e.getMessage());
             } catch (Exception e) {
                 logger.warn("exception thrown from ElectedLeader " + leaderPath, e);
             } finally {
