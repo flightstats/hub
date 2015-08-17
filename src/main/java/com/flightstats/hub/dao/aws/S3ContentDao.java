@@ -128,9 +128,6 @@ public class S3ContentDao implements ContentDao {
             if (!language.equals("none")) {
                 builder.withContentLanguage(language);
             }
-            if (userData.containsKey("user")) {
-                builder.withUser(userData.get("user"));
-            }
             builder.withContentKey(key);
             builder.withData(bytes);
             return builder.build();
