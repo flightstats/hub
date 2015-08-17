@@ -43,7 +43,6 @@ public class NasContentServiceTest {
                 .withData(random.getBytes())
                 .withContentKey(new ContentKey())
                 .withContentLanguage("russian")
-                .withUser("bob")
                 .build();
     }
 }
