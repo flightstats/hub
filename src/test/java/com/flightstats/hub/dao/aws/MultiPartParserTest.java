@@ -79,7 +79,7 @@ public class MultiPartParserTest {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
         BatchContent batchContent = BatchContent.builder()
                 .withStream(inputStream)
-                .withContentType("multipart/mixed; boundary=boundary")
+                .withContentType("multipart/mixed; boundary=\"boundary\"")
                 .build();
         MultiPartParser parser = new MultiPartParser(batchContent);
         parser.parse();

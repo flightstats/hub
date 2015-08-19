@@ -37,7 +37,7 @@ public class MultiPartParser {
     }
 
     public void parse() throws IOException {
-        String boundary = "--" + StringUtils.substringAfter(content.getContentType(), "boundary=");
+        String boundary = "--" + getBoundary();
         byte[] startBoundary = (boundary + "\r\n").getBytes();
         byte[] endBoundary = (boundary + "--").getBytes();
         boolean started = false;
@@ -79,6 +79,14 @@ public class MultiPartParser {
             }
             read = stream.read();
         }
+    }
+
+    private String getBoundary() {
+        return StringUtils.removeEnd(
+                StringUtils.removeStart(
+                        StringUtils.trim(
+                                StringUtils.substringAfter(content.getContentType(), "boundary=")), "\""), "\"");
+
     }
 
     private void addItem(byte[] boundary) {

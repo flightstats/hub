@@ -2,7 +2,6 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.exception.ForbiddenRequestException;
-import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
@@ -10,7 +9,6 @@ import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +62,8 @@ public class ChannelServiceImpl implements ChannelService {
         ContentKey contentKey = contentService.insert(channelName, content);
         long time = System.currentTimeMillis() - start;
         sender.send("channel." + channelName + ".post", time);
+        sender.send("channel." + channelName + ".items", 1);
+        //todo - gfm - 8/19/15 - can be removed eventually
         sender.send("channel." + channelName + ".post.bytes", content.getSize());
         sender.send("channel.ALL.post", time);
         return contentKey;
@@ -74,14 +74,12 @@ public class ChannelServiceImpl implements ChannelService {
         if (batchContent.isNew() && isReplicating(channelName)) {
             throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
         }
-        if (StringUtils.isEmpty(batchContent.getContentType())) {
-            throw new InvalidRequestException("content type is required");
-        }
         long start = System.currentTimeMillis();
         Collection<ContentKey> contentKeys = contentService.insert(channelName, batchContent);
         long time = System.currentTimeMillis() - start;
-
-        //todo - gfm - 8/19/15 - what do we want to see in the metric graphs?
+        sender.send("channel." + channelName + ".batchPost", time);
+        sender.send("channel." + channelName + ".items", batchContent.getItems().size());
+        //todo - gfm - 8/19/15 - next two can be removed eventually
         sender.send("channel." + channelName + ".post", time);
         sender.send("channel." + channelName + ".post.bytes", batchContent.getSize());
         sender.send("channel.ALL.post", time);
