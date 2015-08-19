@@ -80,6 +80,8 @@ public class ChannelServiceImpl implements ChannelService {
         long start = System.currentTimeMillis();
         Collection<ContentKey> contentKeys = contentService.insert(channelName, batchContent);
         long time = System.currentTimeMillis() - start;
+
+        //todo - gfm - 8/19/15 - what do we want to see in the metric graphs?
         sender.send("channel." + channelName + ".post", time);
         sender.send("channel." + channelName + ".post.bytes", batchContent.getSize());
         sender.send("channel.ALL.post", time);
