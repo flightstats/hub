@@ -35,10 +35,10 @@ public class MultiPartParserTest {
                 .build();
         MultiPartParser parser = new MultiPartParser(batchContent);
         parser.parse();
-        DateTime time = new DateTime();
         Content item = batchContent.getItems().get(0);
         assertEquals("This is the body of the message.", new String(item.getData()));
         assertEquals("text/plain", item.getContentType().get());
+        DateTime time = new DateTime().plusMillis(1);
         assertTrue(item.getContentKey().get().getTime().isBefore(time));
         assertTrue(StringUtils.endsWith(item.getContentKey().get().getHash(), "000000"));
         item = batchContent.getItems().get(1);
