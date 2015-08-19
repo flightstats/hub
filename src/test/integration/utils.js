@@ -6,7 +6,7 @@ var fs = require('fs');
 var request = require('request');
 var Q = require('q');
 
-exports.runInTestChannel = function runInTestChannel(testName, channelName, functionToExecute) {
+function runInTestChannel(testName, channelName, functionToExecute) {
     testName = testName || '';
     runInTestChannelJson(testName, JSON.stringify({ "name" : channelName}), functionToExecute);
 }
@@ -20,11 +20,11 @@ function runInTestChannelJson(testName, jsonBody, functionToExecute) {
         .toss();
 }
 
-exports.randomChannelName = function randomChannelName() {
+function randomChannelName() {
     return "test_" + Math.random().toString().replace(".", "_");
 }
 
-exports.download = function download(url, completionHandler) {
+function download(url, completionHandler) {
     http.get(url, function (res) {
         var imagedata = '';
         res.setEncoding('binary');
@@ -39,14 +39,14 @@ exports.download = function download(url, completionHandler) {
     });
 }
 
-exports.configureFrisby = function configureFrisby(timeout) {
+function configureFrisby(timeout) {
     timeout = typeof timeout !== 'undefined' ? timeout : 30000;
     frisby.globalSetup({
         timeout: timeout
     });
 }
 
-exports.createChannel = function createChannel(channelName, url) {
+function createChannel(channelName, url) {
     url = url || channelUrl;
     it("creates channel " + channelName + " at " + url, function (done) {
         request.post({url: url,
@@ -61,7 +61,7 @@ exports.createChannel = function createChannel(channelName, url) {
 
 }
 
-exports.putChannel = function putChannel(channelName, verify, body) {
+function putChannel(channelName, verify, body) {
     verify = verify || function () {};
     body = body || {"name" : channelName};
     it("puts channel " + channelName + " at " + channelUrl, function (done) {
@@ -77,13 +77,13 @@ exports.putChannel = function putChannel(channelName, verify, body) {
     });
 }
 
-exports.addItem = function addItem(url, responseCode) {
+function addItem(url, responseCode) {
     it("adds item to " + url, function (done) {
         postItem(url, responseCode, done);
     }, 5099);
 }
 
-exports.postItem = function postItem(url, responseCode, completed) {
+function postItem(url, responseCode, completed) {
     responseCode = responseCode || 201;
     completed = completed || function () {};
     request.post({url : url,
@@ -97,7 +97,7 @@ exports.postItem = function postItem(url, responseCode, completed) {
         });
 }
 
-exports.postItemQ = function postItemQ(url) {
+function postItemQ(url) {
     var deferred = Q.defer();
     request.post({
             url : url, json : true,
@@ -112,7 +112,7 @@ exports.postItemQ = function postItemQ(url) {
     return deferred.promise;
 }
 
-exports.putGroup = function putGroup(groupName, groupConfig, status) {
+function putGroup(groupName, groupConfig, status) {
     status = status || 201;
     var groupResource = groupUrl + "/" + groupName;
     it('creates group ' + groupName, function (done) {
@@ -137,7 +137,7 @@ exports.putGroup = function putGroup(groupName, groupConfig, status) {
     return groupResource;
 }
 
-exports.getGroup = function getGroup(groupName, groupConfig, status) {
+function getGroup(groupName, groupConfig, status) {
     var groupResource = groupUrl + "/" + groupName;
     status = status || 200;
     it('gets group ' + groupName, function (done) {
@@ -162,7 +162,7 @@ exports.getGroup = function getGroup(groupName, groupConfig, status) {
     return groupResource;
 }
 
-exports.deleteGroup = function deleteGroup(groupName) {
+function deleteGroup(groupName) {
     var groupResource = groupUrl + "/" + groupName;
     it('deletes the group ' + groupName, function (done) {
         request.del({url: groupResource },
@@ -174,7 +174,7 @@ exports.deleteGroup = function deleteGroup(groupName) {
     }, 60 * 1000);
 }
 
-exports.getQ = function getQ(url, status, stable) {
+function getQ(url, status, stable) {
     status = status || 200;
     stable = stable || false;
     var deferred = Q.defer();
@@ -187,7 +187,7 @@ exports.getQ = function getQ(url, status, stable) {
     return deferred.promise;
 }
 
-exports.sleep = function sleep(millis) {
+function sleep(millis) {
     runs(function() {
         flag = false;
 
@@ -201,7 +201,7 @@ exports.sleep = function sleep(millis) {
     }, millis + 1000);
 }
 
-exports.timeout = function timeout(millis) {
+function timeout(millis) {
     it('waits for ' + millis, function (done) {
         setTimeout(function () {
             done()
@@ -209,7 +209,7 @@ exports.timeout = function timeout(millis) {
     });
 }
 
-exports.startServer = function startServer(port, callback) {
+function startServer(port, callback) {
     var started = false;
     runs(function () {
         server = http.createServer(function (request, response) {
@@ -230,7 +230,7 @@ exports.startServer = function startServer(port, callback) {
     }, 11000);
 }
 
-exports.serverResponse = function serverResponse(request, response, callback) {
+function serverResponse(request, response, callback) {
     callback = callback || function () {};
     var payload = '';
     request.on('data', function(chunk) {
@@ -243,7 +243,7 @@ exports.serverResponse = function serverResponse(request, response, callback) {
     response.end();
 }
 
-exports.startHttpsServer = function startHttpsServer(port, callback, done) {
+function startHttpsServer(port, callback, done) {
 
     var options = {
         key: fs.readFileSync(integrationTestPath + 'localhost.key'),
@@ -265,7 +265,7 @@ exports.startHttpsServer = function startHttpsServer(port, callback, done) {
     return server;
 }
 
-exports.closeServer = function closeServer(callback) {
+function closeServer(callback) {
     callback = callback || function () {};
     var closed = false;
     runs(function () {
@@ -280,4 +280,24 @@ exports.closeServer = function closeServer(callback) {
         return closed;
     }, 13000);
 }
+
+exports.runInTestChannel = runInTestChannel;
+exports.download = download;
+exports.randomChannelName = randomChannelName;
+exports.configureFrisby = configureFrisby;
+exports.runInTestChannelJson = runInTestChannelJson;
+exports.createChannel = createChannel;
+exports.putChannel = putChannel;
+exports.addItem = addItem;
+exports.sleep = sleep;
+exports.timeout = timeout;
+exports.putGroup = putGroup;
+exports.getGroup = getGroup;
+exports.deleteGroup = deleteGroup;
+exports.postItem = postItem;
+exports.postItemQ = postItemQ;
+exports.startServer = startServer;
+exports.startHttpsServer = startHttpsServer;
+exports.closeServer = closeServer;
+exports.getQ = getQ;
 
