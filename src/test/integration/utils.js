@@ -11,7 +11,7 @@ exports.runInTestChannel = function runInTestChannel(testName, channelName, func
     runInTestChannelJson(testName, JSON.stringify({ "name" : channelName}), functionToExecute);
 }
 
-exports.runInTestChannelJson = function runInTestChannelJson(testName, jsonBody, functionToExecute) {
+function runInTestChannelJson(testName, jsonBody, functionToExecute) {
     frisby.create('Creating channel ' + testName + ' ' + jsonBody)
         .post(channelUrl, null, { body: jsonBody})
         .addHeader("Content-Type", "application/json")
