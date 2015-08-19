@@ -2,6 +2,7 @@ package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.EventTimed;
@@ -155,11 +156,15 @@ public class ChannelResource {
                     .build();
             Collection<ContentKey> keys = channelService.insert(channelName, content);
             logger.trace("posted {}", keys);
-            ArrayNode root = mapper.createArrayNode();
+            ObjectNode root = mapper.createObjectNode();
+            ObjectNode links = root.putObject("_links");
+            ObjectNode self = links.putObject("self");
+            self.put("href", uriInfo.getRequestUri().toString());
+            ArrayNode uris = links.putArray("uris");
             URI channelUri = LinkBuilder.buildChannelUri(channelName, uriInfo);
             for (ContentKey key : keys) {
                 URI uri = LinkBuilder.buildItemUri(key, channelUri);
-                root.add(uri.toString());
+                uris.add(uri.toString());
             }
             return Response.status(Response.Status.CREATED).entity(root).build();
         } catch (ContentTooLargeException e) {
