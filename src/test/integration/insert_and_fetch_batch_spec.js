@@ -21,6 +21,8 @@ describe(testName, function () {
         '{ "type" : "coffee", "roast" : "french" }\r\n' +
         '--abcdefg--'
 
+    var items = [];
+
     it("batches items to " + channelResource, function (done) {
         request.post({
                 url: channelResource,
@@ -33,9 +35,32 @@ describe(testName, function () {
                 var parse = JSON.parse(response.body);
                 console.log(response.body);
                 expect(parse._links.uris.length).toBe(2);
+                items = parse._links.uris;
                 done();
             });
-    }, 60099);
+    });
+
+    it("gets first item " + channelResource, function (done) {
+        request.get({url: items[0]},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                expect(response.body).toBe('<coffee><roast>french</roast><coffee>')
+                expect(response.headers['content-type']).toBe('application/xml')
+                done();
+            });
+    });
+
+    it("gets second item " + channelResource, function (done) {
+        request.get({url: items[1]},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                expect(response.body).toBe('{ "type" : "coffee", "roast" : "french" }')
+                expect(response.headers['content-type']).toBe('application/json')
+                done();
+            });
+    });
 
 });
 
