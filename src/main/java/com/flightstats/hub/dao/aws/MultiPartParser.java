@@ -6,6 +6,7 @@ import com.flightstats.hub.model.BatchContent;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.ByteRing;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ public class MultiPartParser {
     private final ContentKey masterKey;
     private Content.Builder builder;
     private final ByteArrayOutputStream baos;
+    public static final byte[] CRLF = "\r\n".getBytes();
 
     public MultiPartParser(BatchContent content) {
         this.content = content;
@@ -38,13 +40,11 @@ public class MultiPartParser {
         String boundary = "--" + StringUtils.substringAfter(content.getContentType(), "boundary=");
         byte[] startBoundary = (boundary + "\r\n").getBytes();
         byte[] endBoundary = (boundary + "--").getBytes();
-        byte[] crlf = "\r\n".getBytes();
         boolean started = false;
         boolean header = false;
         ByteRing byteRing = new ByteRing(endBoundary.length);
-        int read = stream.read();
         int count = 0;
-
+        int read = stream.read();
         while (read != -1) {
             count++;
             if (count > maxBytes) {
@@ -62,10 +62,10 @@ public class MultiPartParser {
                 }
                 header = true;
                 builder.withContentType("text/plain");
-            } else if (header && byteRing.compare(crlf)) {
-                if (baos.toString().startsWith("Content")) {
-                    String headerLine = StringUtils.strip(baos.toString());
-                    logger.trace("header line '{}'", headerLine);
+            } else if (header && byteRing.compare(CRLF)) {
+                String headerLine = StringUtils.strip(baos.toString());
+                baos.reset();
+                if (StringUtils.startsWithIgnoreCase(headerLine, "content")) {
                     if (StringUtils.startsWithIgnoreCase(headerLine, "content-type:")) {
                         String type = StringUtils.trim(StringUtils.removeStartIgnoreCase(headerLine, "content-type:"));
                         builder.withContentType(type);
@@ -73,7 +73,6 @@ public class MultiPartParser {
                 } else {
                     header = false;
                 }
-                baos.reset();
             } else if (byteRing.compare(endBoundary)) {
                 addItem(endBoundary);
                 return;
@@ -83,19 +82,15 @@ public class MultiPartParser {
     }
 
     private void addItem(byte[] boundary) {
-        String data = StringUtils.strip(StringUtils.removeEnd(baos.toString(), new String(boundary)));
-        builder.withData(data.getBytes());
-        ContentKey contentKey = new ContentKey(masterKey.getTime(), masterKey.getHash() +
-                format.format(content.getItems().size()));
-        builder.withContentKey(contentKey);
+        //todo - gfm - 8/19/15 - this could be more efficient
+        byte[] bytes = baos.toByteArray();
+        byte[] data = ArrayUtils.subarray(bytes, 0, bytes.length - boundary.length - CRLF.length);
+        builder.withData(data);
+        builder.withContentKey(new ContentKey(masterKey.getTime(),
+                masterKey.getHash() + format.format(content.getItems().size())));
         content.getItems().add(builder.build());
         builder = Content.builder();
         baos.reset();
     }
-
-    private String getData(byte[] boundary, ByteArrayOutputStream baos) {
-        return StringUtils.strip(StringUtils.removeEnd(baos.toString(), new String(boundary)));
-    }
-
 
 }

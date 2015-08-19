@@ -67,4 +67,46 @@ public class MultiPartParserTest {
         assertEquals("text/plain", item.getContentType().get());
     }
 
+    @Test
+    public void testContentHeaders() throws IOException {
+        String data = "--boundary\r\n" +
+                "Content-Transfer-Encoding: text\r\n" +
+                "Content-Type: application/ocelot-stream\r\n" +
+                "\r\n" +
+                "meow.\r\n" +
+                "--boundary--";
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
+        BatchContent batchContent = BatchContent.builder()
+                .withStream(inputStream)
+                .withContentType("multipart/mixed; boundary=boundary")
+                .build();
+        MultiPartParser parser = new MultiPartParser(batchContent);
+        parser.parse();
+        Content item = batchContent.getItems().get(0);
+        assertEquals("meow.", new String(item.getData()));
+        assertEquals("application/ocelot-stream", item.getContentType().get());
+    }
+
+    @Test
+    public void testWhiteSpace() throws IOException {
+        String data = "--boundary\r\n" +
+                "\r\n" +
+                "\r\n" +
+                "There is some message here.\r\n" +
+                "\r\n" +
+                "--boundary--";
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
+        BatchContent batchContent = BatchContent.builder()
+                .withStream(inputStream)
+                .withContentType("multipart/mixed; boundary=boundary")
+                .build();
+        MultiPartParser parser = new MultiPartParser(batchContent);
+        parser.parse();
+        Content item = batchContent.getItems().get(0);
+        assertEquals("\r\nThere is some message here.\r\n", new String(item.getData()));
+        assertEquals("text/plain", item.getContentType().get());
+    }
+
 }
