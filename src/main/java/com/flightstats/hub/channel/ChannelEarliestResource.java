@@ -61,14 +61,18 @@ public class ChannelEarliestResource {
                                      @PathParam("count") int count,
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                     @QueryParam("batch") @DefaultValue("false") boolean batch,
                                      @QueryParam("tag") String tag) {
         if (tag != null) {
             return tagEarliestResource.getEarliestCount(tag, count, stable, trace);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, trace, channelService);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, false);
-
+        if (batch) {
+            return MultiPartBuilder.build(keys, channel, channelService, uriInfo);
+        } else {
+            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, false);
+        }
     }
 
     public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, boolean trace, ChannelService channelService) {

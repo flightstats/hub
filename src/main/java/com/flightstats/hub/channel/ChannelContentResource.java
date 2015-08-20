@@ -68,9 +68,10 @@ public class ChannelContentResource {
                            @QueryParam("location") @DefaultValue("ALL") String location,
                            @QueryParam("trace") @DefaultValue("false") boolean trace,
                            @QueryParam("stable") @DefaultValue("true") boolean stable,
+                           @QueryParam("batch") @DefaultValue("false") boolean batch,
                            @QueryParam("tag") String tag) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag, batch);
     }
 
     @Path("/{hour}")
@@ -84,9 +85,10 @@ public class ChannelContentResource {
                             @QueryParam("location") @DefaultValue("ALL") String location,
                             @QueryParam("trace") @DefaultValue("false") boolean trace,
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
+                            @QueryParam("batch") @DefaultValue("false") boolean batch,
                             @QueryParam("tag") String tag) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag, batch);
     }
 
     @Path("/{h}/{minute}")
@@ -101,9 +103,10 @@ public class ChannelContentResource {
                               @QueryParam("location") @DefaultValue("ALL") String location,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
+                              @QueryParam("batch") @DefaultValue("false") boolean batch,
                               @QueryParam("tag") String tag) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag, batch);
     }
 
     @Path("/{h}/{m}/{second}")
@@ -119,18 +122,19 @@ public class ChannelContentResource {
                               @QueryParam("location") @DefaultValue("ALL") String location,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
+                              @QueryParam("batch") @DefaultValue("false") boolean batch,
                               @QueryParam("tag") String tag) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag, batch);
     }
 
-    public Response getTimeQueryResponse(String channelName, DateTime startTime, String location, boolean trace, boolean stable,
-                                         Unit unit, String tag) {
+    public Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
+                                         Unit unit, String tag, boolean batch) {
         if (tag != null) {
             return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit);
         }
         TimeQuery query = TimeQuery.builder()
-                .channelName(channelName)
+                .channelName(channel)
                 .startTime(startTime)
                 .stable(stable)
                 .unit(unit)
@@ -138,25 +142,29 @@ public class ChannelContentResource {
                 .build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.queryByTime(query);
-        ObjectNode root = mapper.createObjectNode();
-        ObjectNode links = root.putObject("_links");
-        ObjectNode self = links.putObject("self");
-        self.put("href", uriInfo.getRequestUri().toString());
-        DateTime current = stable ? stable() : now();
-        DateTime next = startTime.plus(unit.getDuration());
-        DateTime previous = startTime.minus(unit.getDuration());
-        if (next.isBefore(current)) {
-            links.putObject("next").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(next) + "?stable=" + stable);
+        if (batch) {
+            return MultiPartBuilder.build(keys, channel, channelService, uriInfo);
+        } else {
+            ObjectNode root = mapper.createObjectNode();
+            ObjectNode links = root.putObject("_links");
+            ObjectNode self = links.putObject("self");
+            self.put("href", uriInfo.getRequestUri().toString());
+            DateTime current = stable ? stable() : now();
+            DateTime next = startTime.plus(unit.getDuration());
+            DateTime previous = startTime.minus(unit.getDuration());
+            if (next.isBefore(current)) {
+                links.putObject("next").put("href", uriInfo.getBaseUri() + "channel/" + channel + "/" + unit.format(next) + "?stable=" + stable);
+            }
+            links.putObject("previous").put("href", uriInfo.getBaseUri() + "channel/" + channel + "/" + unit.format(previous) + "?stable=" + stable);
+            ArrayNode ids = links.putArray("uris");
+            URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
+            for (ContentKey key : keys) {
+                URI uri = LinkBuilder.buildItemUri(key, channelUri);
+                ids.add(uri.toString());
+            }
+            query.getTraces().output(root);
+            return Response.ok(root).build();
         }
-        links.putObject("previous").put("href", uriInfo.getBaseUri() + "channel/" + channelName + "/" + unit.format(previous) + "?stable=" + stable);
-        ArrayNode ids = links.putArray("uris");
-        URI channelUri = LinkBuilder.buildChannelUri(channelName, uriInfo);
-        for (ContentKey key : keys) {
-            URI uri = LinkBuilder.buildItemUri(key, channelUri);
-            ids.add(uri.toString());
-        }
-        query.getTraces().output(root);
-        return Response.ok(root).build();
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}")
@@ -261,6 +269,7 @@ public class ChannelContentResource {
                                       @QueryParam("stable") @DefaultValue("true") boolean stable,
                                       @QueryParam("trace") @DefaultValue("false") boolean trace,
                                       @QueryParam("location") @DefaultValue("ALL") String location,
+                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
                                       @QueryParam("tag") String tag) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
@@ -277,7 +286,11 @@ public class ChannelContentResource {
                 .build();
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
-        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
+        if (batch) {
+            return MultiPartBuilder.build(keys, channel, channelService, uriInfo);
+        } else {
+            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
+        }
     }
 
 
