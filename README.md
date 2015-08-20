@@ -235,7 +235,7 @@ curl -i -X POST --header "Content-type: text/plain" --data 'your content here' h
 
 ## batch insert content into channel
 
-** batch operations are in alpha **
+**batch operations are in alpha**
 
 You can also insert a batch of items into the hub, and each item will recieve a unique ordered uri.
 
@@ -373,7 +373,7 @@ On success: `HTTP/1.1 200 OK`
 
 ## fetch batch content from channel
 
-** batch operations are in alpha **
+**batch operations are in alpha**
 
 Any query operation (including next, previous, earliest, latest, and times) support the addition of the
 query parameter `?batch=true`.  Using the batch parameter will result in the content all of the query items being streamed
@@ -387,7 +387,7 @@ Using the previous example:
 
 On success: `HTTP/1.1 200 OK`
 
-header
+header:
 ```
 content-type: multipart/mixed; boundary=9wpsMOGsAqtCWNkQKxWCMn0W7o3JrwEy8zW6Ook67zgjPDRVzAR1lLyOdqyOBMgnk7PeDS
 ```
