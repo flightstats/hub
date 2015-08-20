@@ -239,10 +239,10 @@ curl -i -X POST --header "Content-type: text/plain" --data 'your content here' h
 
 You can also insert a batch of items into the hub, and each item will recieve a unique ordered uri.
 
-Currently, [multipart](https://tools.ietf.org/html/rfc2045) is the only way to batch multiple items.
+Currently, [MIME](https://tools.ietf.org/html/rfc2045) is the only way to batch multiple items.
 To insert a batch, issue a POST on the channel's `batch` URI and specify the appropriate "multipart" Content-Type.
 
-Notes on multipart:
+Notes on MIME:
 * All lines must be terminated by [CRLF](https://tools.ietf.org/html/rfc2045#section-2.1)
 * Anything before the starting boundary is ignored 
 * An empty line after the optional Content headers starts the message body
@@ -376,10 +376,10 @@ On success: `HTTP/1.1 200 OK`
 **batch operations are in alpha**
 
 Any query operation (including next, previous, earliest, latest, and times) support the addition of the
-query parameter `?batch=true`.  Using the batch parameter will result in the content all of the query items being streamed
-as [multipart](https://tools.ietf.org/html/rfc2045) to the client.
+query parameter `?batch=true`.  Using the batch parameter will result in the content of the query items being streamed
+as [MIME](https://tools.ietf.org/html/rfc2045) to the client.
 
-The hub will generate a random 70 character boundary, and follows the same multipart rules as [batch insert content into channel](#batch-insert-content-into-channel)
+The hub will generate a random 70 character boundary, and follows the same MIME rules as [batch insert content into channel](#batch-insert-content-into-channel)
 
 Using the previous example:
           
