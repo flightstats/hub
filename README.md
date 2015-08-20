@@ -17,6 +17,7 @@ The Hub
 * [latest channel item](#latest-channel-item)
 * [earliest channel item](#earliest-channel-item)
 * [next and previous links](#next-and-previous-links)
+* [fetch batch content from channel](#fetch-batch-content-from-channel)
 * [channel status](#channel-status)
 * [channel limits](#channel-limits)
 * [tag interface](#tag-interface)
@@ -234,7 +235,7 @@ curl -i -X POST --header "Content-type: text/plain" --data 'your content here' h
 
 ## batch insert content into channel
 
-** batch operations are in beta **
+** batch operations are in alpha **
 
 You can also insert a batch of items into the hub, and each item will recieve a unique ordered uri.
 
@@ -346,35 +347,69 @@ If you append a number /next/20 or /previous/15, and you'll receive a list of th
 
 For example:
 
-`GET http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/10`
+`GET http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/3`
 
 On success: `HTTP/1.1 200 OK`
 ```
 {
   "_links" : {
     "self" : {
-      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/10"
+      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/3"
     },
     "next" : {
-      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/49/887/x46z8p/next/10"
+      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/49/887/x46z8p/next/3"
     },
     "previous" : {
-      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/42/751/mRklXw/previous/10"
+      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/42/751/mRklXw/previous/3"
     },
     "uris" : [
-        "http://hub/channel/stumptown/2014/12/23/23/14/42/751/mRklXw", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/43/339/CJ9mt9", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/44/163/LzhylF", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/44/588/zDygpg", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/45/105/ZuJUmM", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/45/972/qeKDF6", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/46/703/Jm09Un", 
         "http://hub/channel/stumptown/2014/12/23/23/14/47/376/swdWJD", 
         "http://hub/channel/stumptown/2014/12/23/23/14/48/115/lDCHYY", 
         "http://hub/channel/stumptown/2014/12/23/23/14/49/887/x46z8p" 
         ]
   }
 }
+```
+
+## fetch batch content from channel
+
+** batch operations are in alpha **
+
+Any query operation (including next, previous, earliest, latest, and times) support the addition of the
+query parameter `?batch=true`.  Using the batch parameter will result in the content all of the query items being streamed
+as [multipart](https://tools.ietf.org/html/rfc2045) to the client.
+
+The hub will generate a random 70 character boundary, and follows the same multipart rules as [batch insert content into channel](#batch-insert-content-into-channel)
+
+Using the previous example:
+          
+`GET http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/3?batch=true`
+
+On success: `HTTP/1.1 200 OK`
+
+header
+```
+content-type: multipart/mixed; boundary=9wpsMOGsAqtCWNkQKxWCMn0W7o3JrwEy8zW6Ook67zgjPDRVzAR1lLyOdqyOBMgnk7PeDS
+```
+
+body:
+```
+--9wpsMOGsAqtCWNkQKxWCMn0W7o3JrwEy8zW6Ook67zgjPDRVzAR1lLyOdqyOBMgnk7PeDS
+Content-Type: application/json
+Content-Key: http://hub/channel/stumptown/2014/12/23/23/14/47/376/swdWJD
+
+{ "type" : "coffee", "roast" : "french" } 
+--9wpsMOGsAqtCWNkQKxWCMn0W7o3JrwEy8zW6Ook67zgjPDRVzAR1lLyOdqyOBMgnk7PeDS
+Content-Type: application/json
+Content-Key: http://hub/channel/stumptown/2014/12/23/23/14/48/115/lDCHYY
+
+{ "type" : "coffee", "roast" : "italian" }
+--9wpsMOGsAqtCWNkQKxWCMn0W7o3JrwEy8zW6Ook67zgjPDRVzAR1lLyOdqyOBMgnk7PeDS
+Content-Type: application/json
+Content-Key: http://hub/channel/stumptown/2014/12/23/23/14/49/887/x46z8p
+ 
+{ "type" : "coffee", "roast" : "hair bender" } 
+--9wpsMOGsAqtCWNkQKxWCMn0W7o3JrwEy8zW6Ook67zgjPDRVzAR1lLyOdqyOBMgnk7PeDS--
 ```
 
 ## channel status
