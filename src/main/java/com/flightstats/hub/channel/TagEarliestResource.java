@@ -50,8 +50,12 @@ public class TagEarliestResource {
     public Response getEarliestCount(@PathParam("tag") String tag,
                                      @PathParam("count") int count,
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                     @QueryParam("batch") @DefaultValue("false") boolean batch,
                                      @QueryParam("trace") @DefaultValue("false") boolean trace) {
         Collection<ChannelContentKey> keys = tagService.getEarliest(tag, count, stable, trace);
+        if (batch) {
+            return MultiPartBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
+        }
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");

@@ -48,6 +48,7 @@ public class TagLatestResource {
     public Response getLatestCount(@PathParam("tag") String tag,
                                    @PathParam("count") int count,
                                    @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                   @QueryParam("batch") @DefaultValue("false") boolean batch,
                                    @QueryParam("trace") @DefaultValue("false") boolean trace) {
         Optional<ChannelContentKey> latest = tagService.getLatest(tag, stable, trace);
         if (!latest.isPresent()) {
@@ -63,8 +64,10 @@ public class TagLatestResource {
         query.trace(trace);
         Collection<ChannelContentKey> keys = tagService.getKeys(query);
         keys.add(latest.get());
+        if (batch) {
+            return MultiPartBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
+        }
         return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true);
-
     }
 
 }

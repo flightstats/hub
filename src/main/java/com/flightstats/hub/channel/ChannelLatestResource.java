@@ -57,7 +57,7 @@ public class ChannelLatestResource {
                                    @QueryParam("batch") @DefaultValue("false") boolean batch,
                                    @QueryParam("tag") String tag) {
         if (tag != null) {
-            return tagLatestResource.getLatestCount(tag, count, stable, trace);
+            return tagLatestResource.getLatestCount(tag, count, stable, batch, trace);
         }
         Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
         if (!latest.isPresent()) {

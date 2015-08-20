@@ -64,7 +64,7 @@ public class ChannelEarliestResource {
                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
                                      @QueryParam("tag") String tag) {
         if (tag != null) {
-            return tagEarliestResource.getEarliestCount(tag, count, stable, trace);
+            return tagEarliestResource.getEarliestCount(tag, count, stable, batch, trace);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, trace, channelService);
         Collection<ContentKey> keys = channelService.getKeys(query);
