@@ -375,7 +375,7 @@ On success: `HTTP/1.1 200 OK`
 
 **batch operations are in alpha**
 
-Any query operation (including next, previous, earliest, latest, and times) support the addition of the
+Any query operation (including next, previous, earliest, latest, and times) supports the addition of the
 query parameter `?batch=true`.  Using the batch parameter will result in the content of the query items being streamed
 as [MIME](https://tools.ietf.org/html/rfc2045) to the client.
 
