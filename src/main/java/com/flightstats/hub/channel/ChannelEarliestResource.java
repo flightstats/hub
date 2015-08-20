@@ -56,7 +56,7 @@ public class ChannelEarliestResource {
 
     @GET
     @Path("/{count}")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
     public Response getEarliestCount(@PathParam("channel") String channel,
                                      @PathParam("count") int count,
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,

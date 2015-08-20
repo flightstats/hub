@@ -49,7 +49,7 @@ public class ChannelLatestResource {
 
     @GET
     @Path("/{count}")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
     public Response getLatestCount(@PathParam("channel") String channel,
                                    @PathParam("count") int count,
                                    @QueryParam("stable") @DefaultValue("true") boolean stable,

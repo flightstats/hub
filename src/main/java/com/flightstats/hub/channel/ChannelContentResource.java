@@ -59,7 +59,7 @@ public class ChannelContentResource {
     @Inject
     private TagContentResource tagContentResource;
 
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
     @GET
     public Response getDay(@PathParam("channel") String channel,
                            @PathParam("Y") int year,
@@ -75,7 +75,7 @@ public class ChannelContentResource {
     }
 
     @Path("/{hour}")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
     @GET
     public Response getHour(@PathParam("channel") String channel,
                             @PathParam("Y") int year,
@@ -92,7 +92,7 @@ public class ChannelContentResource {
     }
 
     @Path("/{h}/{minute}")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
     @GET
     public Response getMinute(@PathParam("channel") String channel,
                               @PathParam("Y") int year,
@@ -110,7 +110,7 @@ public class ChannelContentResource {
     }
 
     @Path("/{h}/{m}/{second}")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
     @GET
     public Response getSecond(@PathParam("channel") String channel,
                               @PathParam("Y") int year,
@@ -254,7 +254,7 @@ public class ChannelContentResource {
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}/{count}")
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
     public Response getDirectionCount(@PathParam("channel") String channel,
                                       @PathParam("Y") int year,
                                       @PathParam("M") int month,

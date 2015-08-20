@@ -31,7 +31,11 @@ describe(testName, function () {
 
 
     it("gets multipart items ", function (done) {
-        request.get({url: channelResource + '/latest/10?stable=false&batch=true', followRedirect: false},
+        request.get({
+                url: channelResource + '/latest/10?stable=false&batch=true',
+                followRedirect: false,
+                headers: {Accept: "multipart/mixed"}
+            },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
