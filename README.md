@@ -389,27 +389,27 @@ On success: `HTTP/1.1 200 OK`
 
 header:
 ```
-content-type: multipart/mixed; boundary=9wpsMOGsAqtCWNkQKxWCMn0W7o3JrwEy8zW6Ook67zgjPDRVzAR1lLyOdqyOBMgnk7PeDS
+content-type: multipart/mixed; boundary=||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||
 ```
 
 body:
 ```
---9wpsMOGsAqtCWNkQKxWCMn0W7o3JrwEy8zW6Ook67zgjPDRVzAR1lLyOdqyOBMgnk7PeDS
+--||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||
 Content-Type: application/json
 Content-Key: http://hub/channel/stumptown/2014/12/23/23/14/47/376/swdWJD
 
 { "type" : "coffee", "roast" : "french" } 
---9wpsMOGsAqtCWNkQKxWCMn0W7o3JrwEy8zW6Ook67zgjPDRVzAR1lLyOdqyOBMgnk7PeDS
+--||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||
 Content-Type: application/json
 Content-Key: http://hub/channel/stumptown/2014/12/23/23/14/48/115/lDCHYY
 
 { "type" : "coffee", "roast" : "italian" }
---9wpsMOGsAqtCWNkQKxWCMn0W7o3JrwEy8zW6Ook67zgjPDRVzAR1lLyOdqyOBMgnk7PeDS
+--||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||
 Content-Type: application/json
 Content-Key: http://hub/channel/stumptown/2014/12/23/23/14/49/887/x46z8p
  
 { "type" : "coffee", "roast" : "hair bender" } 
---9wpsMOGsAqtCWNkQKxWCMn0W7o3JrwEy8zW6Ook67zgjPDRVzAR1lLyOdqyOBMgnk7PeDS--
+--||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||--
 ```
 
 ## channel status
