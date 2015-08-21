@@ -194,7 +194,6 @@ public class ContentDaoUtil {
                 .withContentKey(key)
                 .withContentLanguage("lang")
                 .withContentType("stuff")
-                .withUser("bob")
                 .withData(key.toString().getBytes())
                 .build();
     }

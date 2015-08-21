@@ -1,0 +1,39 @@
+package com.flightstats.hub.util;
+
+import org.junit.Test;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class ByteRingTest {
+
+    @Test
+    public void testCompare() {
+        ByteRing byteRing = new ByteRing(8);
+        for (int i = 0; i < 8; i++) {
+            byteRing.put((byte) i);
+        }
+        assertTrue(byteRing.compare(byteRing.getBuffer()));
+        assertTrue(byteRing.compare(new byte[]{4, 5, 6, 7}));
+    }
+
+    @Test
+    public void testCompareSmall() {
+        ByteRing byteRing = new ByteRing(8);
+        for (int i = 0; i < 4; i++) {
+            byteRing.put((byte) i);
+        }
+        assertFalse(byteRing.compare(byteRing.getBuffer()));
+        assertTrue(byteRing.compare(new byte[]{-1, 0, 1, 2, 3}));
+    }
+
+    @Test
+    public void testCircleCompare() {
+        ByteRing byteRing = new ByteRing(8);
+        for (int i = 0; i < 12; i++) {
+            byteRing.put((byte) i);
+        }
+        assertFalse(byteRing.compare(byteRing.getBuffer()));
+        assertTrue(byteRing.compare(new byte[]{5, 6, 7, 8, 9, 10, 11}));
+    }
+}

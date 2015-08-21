@@ -111,4 +111,8 @@ public class TagService {
         }
         return Optional.absent();
     }
+
+    public ChannelService getChannelService() {
+        return channelService;
+    }
 }

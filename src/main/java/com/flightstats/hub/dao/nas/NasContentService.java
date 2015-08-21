@@ -49,6 +49,12 @@ public class NasContentService implements ContentService {
         }
     }
 
+    @Override
+    public Collection<ContentKey> insert(String channelName, BatchContent content) throws Exception {
+        //todo - gfm - 8/14/15 -
+        return null;
+    }
+
     private String getPath(String channelName, ContentKey key) {
         return channelName + "/" + key.toUrl();
     }

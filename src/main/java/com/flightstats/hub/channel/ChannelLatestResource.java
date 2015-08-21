@@ -49,14 +49,15 @@ public class ChannelLatestResource {
 
     @GET
     @Path("/{count}")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
     public Response getLatestCount(@PathParam("channel") String channel,
                                    @PathParam("count") int count,
                                    @QueryParam("stable") @DefaultValue("true") boolean stable,
                                    @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                   @QueryParam("batch") @DefaultValue("false") boolean batch,
                                    @QueryParam("tag") String tag) {
         if (tag != null) {
-            return tagLatestResource.getLatestCount(tag, count, stable, trace);
+            return tagLatestResource.getLatestCount(tag, count, stable, batch, trace);
         }
         Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
         if (!latest.isPresent()) {
@@ -73,7 +74,11 @@ public class ChannelLatestResource {
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
         keys.add(latest.get());
-        return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
+        if (batch) {
+            return MultiPartBuilder.build(keys, channel, channelService, uriInfo);
+        } else {
+            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
+        }
 
     }
 

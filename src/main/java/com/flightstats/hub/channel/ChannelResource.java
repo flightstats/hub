@@ -1,12 +1,12 @@
 package com.flightstats.hub.channel;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.EventTimed;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.InsertedContentKey;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
 import com.flightstats.hub.time.NTPMonitor;
@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Collection;
 
 import static com.flightstats.hub.rest.Linked.linked;
 
@@ -30,16 +31,14 @@ import static com.flightstats.hub.rest.Linked.linked;
 @Path("/channel/{channel}")
 public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
-    private final ChannelService channelService;
-    private final UriInfo uriInfo;
-    private NTPMonitor ntpMonitor;
-
     @Inject
-    public ChannelResource(ChannelService channelService, UriInfo uriInfo, NTPMonitor ntpMonitor) {
-        this.channelService = channelService;
-        this.uriInfo = uriInfo;
-        this.ntpMonitor = ntpMonitor;
-    }
+    private ChannelService channelService;
+    @Inject
+    private UriInfo uriInfo;
+    @Inject
+    private NTPMonitor ntpMonitor;
+    @Inject
+    private ObjectMapper mapper;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -139,6 +138,39 @@ public class ChannelResource {
                 key = content.getContentKey().get().toString();
             }
             logger.warn("unable to POST to " + channelName + " key " + key, e);
+            throw e;
+        }
+    }
+
+    @POST
+    @Consumes("multipart/*")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/batch")
+    public Response insertBatch(@PathParam("channel") final String channelName,
+                                @HeaderParam("Content-Type") final String contentType,
+                                final InputStream data) throws Exception {
+        try {
+            BatchContent content = BatchContent.builder()
+                    .withContentType(contentType)
+                    .withStream(data)
+                    .build();
+            Collection<ContentKey> keys = channelService.insert(channelName, content);
+            logger.trace("posted {}", keys);
+            ObjectNode root = mapper.createObjectNode();
+            ObjectNode links = root.putObject("_links");
+            ObjectNode self = links.putObject("self");
+            self.put("href", uriInfo.getRequestUri().toString());
+            ArrayNode uris = links.putArray("uris");
+            URI channelUri = LinkBuilder.buildChannelUri(channelName, uriInfo);
+            for (ContentKey key : keys) {
+                URI uri = LinkBuilder.buildItemUri(key, channelUri);
+                uris.add(uri.toString());
+            }
+            return Response.status(Response.Status.CREATED).entity(root).build();
+        } catch (ContentTooLargeException e) {
+            return Response.status(413).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            logger.warn("unable to POST to " + channelName, e);
             throw e;
         }
     }

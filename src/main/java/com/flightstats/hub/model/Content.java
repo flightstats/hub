@@ -89,7 +89,6 @@ public class Content implements Serializable {
         private Optional<String> contentType = Optional.absent();
         private Optional<String> contentLanguage = Optional.absent();
         private Optional<ContentKey> contentKey = Optional.absent();
-        private Optional<String> user = Optional.absent();
         private InputStream stream;
 
         public Builder withContentType(String contentType) {
@@ -104,11 +103,6 @@ public class Content implements Serializable {
 
         public Builder withContentKey(ContentKey contentKey) {
             this.contentKey = Optional.fromNullable(contentKey);
-            return this;
-        }
-
-        public Builder withUser(String user) {
-            this.user = Optional.fromNullable(user);
             return this;
         }
 

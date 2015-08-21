@@ -12,10 +12,12 @@ The Hub
 * [update a channel](#update-a-channel)
 * [fetch channel metadata](#fetch-channel-metadata)
 * [insert content into channel](#insert-content-into-channel)
+* [batch insert content into channel](#batch-insert-content-into-channel)
 * [fetch content from channel](#fetch-content-from-channel)
 * [latest channel item](#latest-channel-item)
 * [earliest channel item](#earliest-channel-item)
 * [next and previous links](#next-and-previous-links)
+* [fetch batch content from channel](#fetch-batch-content-from-channel)
 * [channel status](#channel-status)
 * [channel limits](#channel-limits)
 * [tag interface](#tag-interface)
@@ -231,6 +233,54 @@ Here's how you could do this with curl:
 curl -i -X POST --header "Content-type: text/plain" --data 'your content here' http://hub/channel/stumptown
 ```
 
+## batch insert content into channel
+
+**batch operations are in alpha**
+
+You can also insert a batch of items into the hub, and each item will recieve a unique ordered uri.
+
+Currently, [MIME](https://tools.ietf.org/html/rfc2045) is the only way to batch multiple items.
+To insert a batch, issue a POST on the channel's `batch` URI and specify the appropriate "multipart" Content-Type.
+
+Notes on MIME:
+* All lines must be terminated by [CRLF](https://tools.ietf.org/html/rfc2045#section-2.1)
+* Anything before the starting boundary is ignored 
+* An empty line after the optional Content headers starts the message body
+* binary payloads are not currently supported
+
+```
+POST http://hub/channel/stumptown/batch
+Content-Type: multipart/mixed; boundary=abcdefg
+Accept: application/json
+
+This is a message with multiple parts in MIME format.  This section is ignored.
+--abcdefg
+Content-Type: application/xml
+
+<coffee><roast>french</roast><coffee>
+--abcdefg
+Content-Type: application/json
+ 
+{ "type" : "coffee", "roast" : "french" } 
+--abcdefg--
+```
+
+On success: `HTTP/1.1 201 Created`
+
+```json
+{
+  "_links" : {
+    "channel" : {
+      "href" : "http://hub/channel/stumptown"
+    },
+    "uris" : [
+      "http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}000",
+      "http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}001"
+    ]
+  }
+}
+```
+
 ## fetch content from channel
 
 To fetch content that was stored into a hub channel, do a `GET` on the `self` link in the above response:
@@ -297,35 +347,69 @@ If you append a number /next/20 or /previous/15, and you'll receive a list of th
 
 For example:
 
-`GET http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/10`
+`GET http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/3`
 
 On success: `HTTP/1.1 200 OK`
 ```
 {
   "_links" : {
     "self" : {
-      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/10"
+      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/3"
     },
     "next" : {
-      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/49/887/x46z8p/next/10"
+      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/49/887/x46z8p/next/3"
     },
     "previous" : {
-      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/42/751/mRklXw/previous/10"
+      "href" : "http://hub/channel/stumptown/2014/12/23/23/14/42/751/mRklXw/previous/3"
     },
     "uris" : [
-        "http://hub/channel/stumptown/2014/12/23/23/14/42/751/mRklXw", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/43/339/CJ9mt9", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/44/163/LzhylF", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/44/588/zDygpg", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/45/105/ZuJUmM", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/45/972/qeKDF6", 
-        "http://hub/channel/stumptown/2014/12/23/23/14/46/703/Jm09Un", 
         "http://hub/channel/stumptown/2014/12/23/23/14/47/376/swdWJD", 
         "http://hub/channel/stumptown/2014/12/23/23/14/48/115/lDCHYY", 
         "http://hub/channel/stumptown/2014/12/23/23/14/49/887/x46z8p" 
         ]
   }
 }
+```
+
+## fetch batch content from channel
+
+**batch operations are in alpha**
+
+Any query operation (including next, previous, earliest, latest, and times) supports the addition of the
+query parameter `?batch=true`.  Using the batch parameter will result in the content of the query items being streamed
+as [MIME](https://tools.ietf.org/html/rfc2045) to the client.
+
+The hub will generate a random 70 character boundary, and follows the same MIME rules as [batch insert content into channel](#batch-insert-content-into-channel)
+
+Using the previous example:
+          
+`GET http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/3?batch=true`
+
+On success: `HTTP/1.1 200 OK`
+
+header:
+```
+content-type: multipart/mixed; boundary=||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||
+```
+
+body:
+```
+--||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||
+Content-Type: application/json
+Content-Key: http://hub/channel/stumptown/2014/12/23/23/14/47/376/swdWJD
+
+{ "type" : "coffee", "roast" : "french" } 
+--||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||
+Content-Type: application/json
+Content-Key: http://hub/channel/stumptown/2014/12/23/23/14/48/115/lDCHYY
+
+{ "type" : "coffee", "roast" : "italian" }
+--||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||
+Content-Type: application/json
+Content-Key: http://hub/channel/stumptown/2014/12/23/23/14/49/887/x46z8p
+ 
+{ "type" : "coffee", "roast" : "hair bender" } 
+--||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||--
 ```
 
 ## channel status

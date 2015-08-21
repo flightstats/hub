@@ -13,6 +13,8 @@ public interface ChannelService {
 
     ContentKey insert(String channelName, Content content) throws Exception;
 
+    Collection<ContentKey> insert(String channelName, BatchContent content) throws Exception;
+
     Optional<Content> getValue(Request request);
 
     ChannelConfig getChannelConfig(String channelName);

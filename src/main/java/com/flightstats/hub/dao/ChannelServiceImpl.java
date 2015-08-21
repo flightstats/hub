@@ -62,9 +62,28 @@ public class ChannelServiceImpl implements ChannelService {
         ContentKey contentKey = contentService.insert(channelName, content);
         long time = System.currentTimeMillis() - start;
         sender.send("channel." + channelName + ".post", time);
+        sender.send("channel." + channelName + ".items", 1);
+        //todo - gfm - 8/19/15 - can be removed eventually
         sender.send("channel." + channelName + ".post.bytes", content.getSize());
         sender.send("channel.ALL.post", time);
         return contentKey;
+    }
+
+    @Override
+    public Collection<ContentKey> insert(String channelName, BatchContent batchContent) throws Exception {
+        if (batchContent.isNew() && isReplicating(channelName)) {
+            throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
+        }
+        long start = System.currentTimeMillis();
+        Collection<ContentKey> contentKeys = contentService.insert(channelName, batchContent);
+        long time = System.currentTimeMillis() - start;
+        sender.send("channel." + channelName + ".batchPost", time);
+        sender.send("channel." + channelName + ".items", batchContent.getItems().size());
+        //todo - gfm - 8/19/15 - next two can be removed eventually
+        sender.send("channel." + channelName + ".post", time);
+        sender.send("channel." + channelName + ".post.bytes", batchContent.getSize());
+        sender.send("channel.ALL.post", time);
+        return contentKeys;
     }
 
     public boolean isReplicating(String channelName) {
