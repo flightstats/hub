@@ -18,10 +18,10 @@ public class QueryGenerator {
         this.channel = channel;
     }
 
-    public TimeQuery getQuery(DateTime channelStableTime) {
-        logger.trace("iterating {} last={} stable={} ", channel, lastQueryTime, channelStableTime);
-        if (lastQueryTime.isBefore(channelStableTime)) {
-            TimeUtil.Unit unit = getStepUnit(channelStableTime);
+    public TimeQuery getQuery(DateTime latestStableInChannel) {
+        logger.trace("iterating {} last={} stable={} ", channel, lastQueryTime, latestStableInChannel);
+        if (lastQueryTime.isBefore(latestStableInChannel)) {
+            TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
             logger.trace("query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
             Location location = Location.ALL;
             if (unit.equals(TimeUtil.Unit.SECONDS)) {
@@ -35,9 +35,7 @@ public class QueryGenerator {
                     .build();
             query.trace(false);
             lastQueryTime = lastQueryTime.plus(unit.getDuration()).withMillisOfSecond(0);
-            if (unit == TimeUtil.Unit.DAYS) {
-                lastQueryTime = lastQueryTime.withHourOfDay(0).withMinuteOfHour(0).withSecondOfMinute(0);
-            } else if (unit == TimeUtil.Unit.HOURS) {
+            if (unit == TimeUtil.Unit.HOURS) {
                 lastQueryTime = lastQueryTime.withMinuteOfHour(0).withSecondOfMinute(0);
             } else if (unit == TimeUtil.Unit.MINUTES) {
                 lastQueryTime = lastQueryTime.withSecondOfMinute(0);
@@ -49,9 +47,7 @@ public class QueryGenerator {
     }
 
     private TimeUtil.Unit getStepUnit(DateTime latestStableInChannel) {
-        if (lastQueryTime.isBefore(latestStableInChannel.minusDays(2))) {
-            return TimeUtil.Unit.DAYS;
-        } else if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {
+        if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {
             return TimeUtil.Unit.HOURS;
         } else if (lastQueryTime.isBefore(latestStableInChannel.minusMinutes(2))) {
             return TimeUtil.Unit.MINUTES;
