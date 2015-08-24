@@ -179,7 +179,7 @@ curl -i -X PUT --header "Content-type: application/json"  --data '{ "description
 ## update a channel
 
 Some channel metadata can be updated. The update format looks much like the channel create format
-(currently, only `ttlDays`, `description`, `tags` and `replicationSource` can be updated).
+(currently, only `ttlDays`, `description`, `tags`, `owner` and `replicationSource` can be updated).
 Each of these fields is optional.
 
 `PUT http://hub/channel/channelname`
