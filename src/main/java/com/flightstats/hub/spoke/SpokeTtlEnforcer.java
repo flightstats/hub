@@ -28,7 +28,7 @@ public class SpokeTtlEnforcer {
                     .redirectError(ProcessBuilder.Redirect.INHERIT)
                     .redirectOutput(ProcessBuilder.Redirect.INHERIT)
                     .start();
-            boolean waited = process.waitFor(1, TimeUnit.MINUTES);
+            boolean waited = process.waitFor(1, TimeUnit.HOURS);
             logger.debug("waited " + waited);
         } catch (Exception e) {
             logger.warn("unable to enforce ttl", e);
