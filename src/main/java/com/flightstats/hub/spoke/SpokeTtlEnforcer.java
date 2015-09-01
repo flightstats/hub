@@ -24,12 +24,20 @@ public class SpokeTtlEnforcer {
         try {
             String[] command = {"find", storagePath, "-mmin", "+" + ttlMinutes, "-delete"};
             logger.debug("running " + StringUtils.join(" ", command));
+            long start = System.currentTimeMillis();
             Process process = new ProcessBuilder(command)
                     .redirectError(ProcessBuilder.Redirect.INHERIT)
                     .redirectOutput(ProcessBuilder.Redirect.INHERIT)
                     .start();
-            boolean waited = process.waitFor(1, TimeUnit.HOURS);
-            logger.debug("waited " + waited);
+            boolean waited = process.waitFor(1, TimeUnit.MINUTES);
+            long time = System.currentTimeMillis() - start;
+            if (waited) {
+                logger.debug("waited " + waited + " for " + time);
+            } else {
+                logger.debug("destroying after " + time);
+                process.destroyForcibly();
+            }
+
         } catch (Exception e) {
             logger.warn("unable to enforce ttl", e);
         }
@@ -43,7 +51,7 @@ public class SpokeTtlEnforcer {
 
         @Override
         protected Scheduler scheduler() {
-            return Scheduler.newFixedDelaySchedule(1, 5, TimeUnit.MINUTES);
+            return Scheduler.newFixedDelaySchedule(1, 1, TimeUnit.MINUTES);
         }
 
     }
