@@ -35,7 +35,7 @@ public class SpokeTracer {
     public static void completed(SpokeRequest request) {
         inProcess.remove(request.getKey());
         completed.put(request.getKey(), request);
-        logger.trace("completed {}", request);
+        //logger.trace("completed {}", request);
     }
 
     public static ObjectNode getTraces() {
@@ -51,17 +51,15 @@ public class SpokeTracer {
 
         @Override
         protected synchronized void runOneIteration() throws Exception {
-            Map<String, SpokeRequest> oldCompleted = completed;
-            completed = new ConcurrentHashMap<>();
-
             logger.debug("inProcess traces:");
-            getSorted(SpokeTracer.inProcess).forEach((request) -> {
+            getSorted(inProcess).forEach((request) -> {
                 logger.debug("\t {}", request);
             });
             logger.debug("completed traces:");
-            getSorted(oldCompleted).forEach((request) -> {
+            getSorted(completed).forEach((request) -> {
                 logger.debug("\t {}", request);
             });
+            completed = new ConcurrentHashMap<>();
         }
 
         @Override
@@ -72,7 +70,7 @@ public class SpokeTracer {
     }
 
     private static TreeSet<SpokeRequest> getSorted(Map<String, SpokeRequest> map) {
-        TreeSet<SpokeRequest> sorted = new TreeSet<>(map.values());
+        TreeSet<SpokeRequest> sorted = new TreeSet<>();
         map.forEach((key, request) -> {
             sorted.add(request);
         });
