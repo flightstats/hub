@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -40,9 +41,9 @@ public class SpokeTracer {
     public static ObjectNode getTraces() {
         ObjectNode root = mapper.createObjectNode();
         ArrayNode inProcessNode = root.putArray("inProcess");
-        inProcess.forEach((key, request) -> inProcessNode.add(request.toNode()));
+        getSorted(inProcess).forEach((request) -> inProcessNode.add(request.toNode()));
         ArrayNode completedNode = root.putArray("completed");
-        completed.forEach((key, request) -> completedNode.add(request.toNode()));
+        getSorted(completed).forEach((request) -> completedNode.add(request.toNode()));
         return root;
     }
 
@@ -54,11 +55,11 @@ public class SpokeTracer {
             completed = new ConcurrentHashMap<>();
 
             logger.debug("inProcess traces:");
-            SpokeTracer.inProcess.forEach((key, request) -> {
+            getSorted(SpokeTracer.inProcess).forEach((request) -> {
                 logger.debug("\t {}", request);
             });
             logger.debug("completed traces:");
-            oldCompleted.forEach((key, request) -> {
+            getSorted(oldCompleted).forEach((request) -> {
                 logger.debug("\t {}", request);
             });
         }
@@ -68,6 +69,14 @@ public class SpokeTracer {
             return Scheduler.newFixedDelaySchedule(1, 1, TimeUnit.MINUTES);
         }
 
+    }
+
+    private static TreeSet<SpokeRequest> getSorted(Map<String, SpokeRequest> map) {
+        TreeSet<SpokeRequest> sorted = new TreeSet<>(map.values());
+        map.forEach((key, request) -> {
+            sorted.add(request);
+        });
+        return sorted;
     }
 
 }

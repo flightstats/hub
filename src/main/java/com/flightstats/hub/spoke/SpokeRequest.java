@@ -11,7 +11,10 @@ import java.util.UUID;
 @Getter
 @Setter
 @EqualsAndHashCode(of = "key")
-public class SpokeRequest {
+/**
+ * Note: this class has a natural ordering that is inconsistent with equals.
+ */
+public class SpokeRequest implements Comparable<SpokeRequest> {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -58,5 +61,14 @@ public class SpokeRequest {
             time = System.currentTimeMillis() - start;
         }
         return time;
+    }
+
+    @Override
+    public int compareTo(SpokeRequest other) {
+        int value = (int) (other.getTime() - this.getTime());
+        if (value != 0) {
+            return value;
+        }
+        return key.compareTo(other.getKey());
     }
 }
