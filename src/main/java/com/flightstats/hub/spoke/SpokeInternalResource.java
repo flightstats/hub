@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -156,9 +157,15 @@ public class SpokeInternalResource {
     }
 
     @Path("/debug")
+    @Produces(MediaType.APPLICATION_JSON)
     @GET
     public Response debug() {
-        ObjectNode traces = SpokeTracer.getTraces();
-        return Response.ok(traces).build();
+        try {
+            ObjectNode traces = SpokeTracer.getTraces();
+            return Response.ok(traces).build();
+        } catch (Exception e) {
+            logger.warn("something went wrong", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+        }
     }
 }

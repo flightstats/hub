@@ -35,6 +35,7 @@ public class SpokeTracer {
         ObjectNode root = mapper.createObjectNode();
         ArrayNode inProcess = root.putArray("inProcess");
         SpokeTracer.inProcess.forEach((key, request) -> {
+            logger.info("adding {}", request);
             inProcess.add(request.toNode());
         });
         return root;
