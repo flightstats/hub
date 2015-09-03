@@ -36,7 +36,7 @@ public class ReplicationCallbackResource {
             JsonNode node = mapper.readTree(data);
             ArrayNode uris = (ArrayNode) node.get("uris");
             for (JsonNode uri : uris) {
-                Optional<Content> content = hubUtils.getContentV2(uri.asText());
+                Optional<Content> content = hubUtils.getContent(uri.asText());
                 if (content.isPresent()) {
                     channelService.insert(channel, content.get());
                 } else {

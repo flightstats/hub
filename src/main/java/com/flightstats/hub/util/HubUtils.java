@@ -15,7 +15,6 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
@@ -39,7 +38,6 @@ public class HubUtils {
     private final Client followClient;
 
     public enum Version {
-        V1,
         V2,
         Unknown
     }
@@ -48,15 +46,6 @@ public class HubUtils {
     public HubUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient) {
         this.noRedirectsClient = noRedirectsClient;
         this.followClient = followClient;
-    }
-
-    public Optional<Long> getLatestV1(String channelUrl) {
-        Optional<String> latest = getLatest(channelUrl);
-        if (!latest.isPresent()) {
-            return Optional.absent();
-        }
-        String substring = StringUtils.substringAfterLast(latest.get(), "/");
-        return Optional.of(Long.parseLong(substring));
     }
 
     public Optional<String> getLatest(String channelUrl) {
@@ -94,42 +83,7 @@ public class HubUtils {
         return Optional.of(configuration);
     }
 
-    public Version getHubVersion(String url) {
-        try {
-            ClientResponse response = followClient.resource(url).get(ClientResponse.class);
-            if (response.getStatus() >= 400) {
-                logger.info("unable to access url " + response);
-                return Version.Unknown;
-            }
-            String server = response.getHeaders().getFirst("Server");
-            if (server.startsWith("Hub")) {
-                return Version.V2;
-            }
-            return Version.V1;
-        } catch (Exception e) {
-            logger.warn("unable to get version " + url, e);
-            return Version.Unknown;
-        }
-    }
-
-    public Optional<Content> getContentV1(String channelUrl, long sequence) {
-        ClientResponse response = getResponse(appendSlash(channelUrl) + sequence);
-        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            logger.info("unable to get content " + response);
-            return Optional.absent();
-        }
-        long millis = getCreationDate(response).getMillis();
-        Content content = Content.builder()
-                .withContentKey(new ContentKey(new DateTime(millis, DateTimeZone.UTC), Long.toString(sequence)))
-                .withContentType(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
-                .withContentLanguage(response.getHeaders().getFirst(Headers.LANGUAGE))
-                .withData(response.getEntity(byte[].class))
-                .build();
-
-        return Optional.of(content);
-    }
-
-    public Optional<Content> getContentV2(String contentUrl) {
+    public Optional<Content> getContent(String contentUrl) {
         ClientResponse response = getResponse(contentUrl);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             logger.info("unable to get content " + response);

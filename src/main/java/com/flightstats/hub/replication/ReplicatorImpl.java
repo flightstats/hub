@@ -8,7 +8,6 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,18 +33,15 @@ public class ReplicatorImpl implements Replicator {
 
     private final ChannelService channelService;
     private final HubUtils hubUtils;
-    private final Provider<V1ChannelReplicator> v1ReplicatorProvider;
     private final WatchManager watchManager;
     private final Map<String, ChannelReplicator> replicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Inject
-    public ReplicatorImpl(ChannelService channelService, HubUtils hubUtils,
-                          Provider<V1ChannelReplicator> v1ReplicatorProvider, WatchManager watchManager) {
+    public ReplicatorImpl(ChannelService channelService, HubUtils hubUtils, WatchManager watchManager) {
         this.channelService = channelService;
         this.hubUtils = hubUtils;
-        this.v1ReplicatorProvider = v1ReplicatorProvider;
         this.watchManager = watchManager;
         HubServices.registerPreStop(new ReplicatorService());
     }
@@ -130,40 +126,13 @@ public class ReplicatorImpl implements Replicator {
     }
 
     private void startReplication(ChannelConfig channel) {
-        logger.info("starting replication of " + channel);
+        logger.debug("starting replication of " + channel);
         try {
-            HubUtils.Version version = hubUtils.getHubVersion(channel.getReplicationSource());
-            if (version.equals(HubUtils.Version.V2)) {
-                startV2Replication(channel);
-            } else if (version.equals(HubUtils.Version.V1)) {
-                startV1Replication(channel);
-            }
+            ChannelReplicatorImpl channelReplicatorImpl = new ChannelReplicatorImpl(channel, hubUtils);
+            channelReplicatorImpl.start();
+            replicatorMap.put(channel.getName(), channelReplicatorImpl);
         } catch (Exception e) {
-            logger.warn("unable to start replication of " + channel, e);
-        }
-    }
-
-    private void startV2Replication(ChannelConfig channel) {
-        logger.debug("starting v2 replication of " + channel);
-        try {
-            V2ChannelReplicator v2ChannelReplicator = new V2ChannelReplicator(channel, hubUtils);
-            v2ChannelReplicator.start();
-            replicatorMap.put(channel.getName(), v2ChannelReplicator);
-        } catch (Exception e) {
-            logger.warn("unable to start v2 replication " + channel, e);
-        }
-    }
-
-    private void startV1Replication(ChannelConfig channel) {
-        logger.debug("starting v1 replication of " + channel);
-        try {
-            V1ChannelReplicator v1ChannelReplicator = v1ReplicatorProvider.get();
-            v1ChannelReplicator.setChannel(channel);
-            if (v1ChannelReplicator.tryLeadership()) {
-                replicatorMap.put(channel.getName(), v1ChannelReplicator);
-            }
-        } catch (Exception e) {
-            logger.warn("unable to start v1 replication " + channel, e);
+            logger.warn("unable to start replication " + channel, e);
         }
     }
 

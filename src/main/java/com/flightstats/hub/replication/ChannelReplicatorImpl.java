@@ -5,14 +5,14 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import org.apache.commons.lang3.StringUtils;
 
-public class V2ChannelReplicator implements ChannelReplicator {
+public class ChannelReplicatorImpl implements ChannelReplicator {
 
     private ChannelConfig channel;
     private HubUtils hubUtils;
     private final String appUrl = StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
     private final String appEnv;
 
-    public V2ChannelReplicator(ChannelConfig channel, HubUtils hubUtils) {
+    public ChannelReplicatorImpl(ChannelConfig channel, HubUtils hubUtils) {
         this.channel = channel;
         this.hubUtils = hubUtils;
         appEnv = (HubProperties.getProperty("app.name", "hub")
