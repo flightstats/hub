@@ -54,14 +54,6 @@ describe(testName, function () {
                                     callback();
                                 } else {
                                     expect(res.error).toBe(false);
-                                    var server = res.header['server'];
-                                    console.log('server', server);
-                                    if (server.indexOf('Hub') >= 0) {
-                                        replicatedChannels[channel]['version'] = 'v2';
-                                    } else {
-                                        replicatedChannels[channel]['version'] = 'v1';
-                                    }
-                                    console.log('version', channel, replicatedChannels[channel]['version']);
                                     callback(res.error);
                                 }
                             });
@@ -95,31 +87,26 @@ describe(testName, function () {
             });
     }, 5 * MINUTE);
 
-    it('verifies v2 replicated items', function (done) {
-
+    it('verifies number of replicated items', function (done) {
         async.eachLimit(replicatedChannelUrls, 20,
             function (channel, callback) {
-                if (replicatedChannels[channel]['version'] !== 'v2') {
-                    callback();
-                    return;
-                }
                 var source = replicatedChannels[channel]['replicationSource'];
                 agent.get(source + '/time/hour?stable=false')
                     .set('Accept', 'application/json')
                     .end(function (res) {
                         expect(res.error).toBe(false);
-                        var v2Uris = [];
+                        var uris = [];
                         agent.get(res.body._links.previous.href)
                             .set('Accept', 'application/json')
                             .end(function (res) {
                                 expect(res.error).toBe(false);
-                                v2Uris = res.body._links.uris.concat(v2Uris);
-                                if (v2Uris.length !== channels[channel].length) {
-                                    console.log('unequal lengths ', channel, v2Uris.length, channels[channel].length);
-                                    console.log('source', v2Uris);
+                                uris = res.body._links.uris.concat(uris);
+                                if (uris.length !== channels[channel].length) {
+                                    console.log('unequal lengths ', channel, uris.length, channels[channel].length);
+                                    console.log('source', uris);
                                     console.log('destin', channels[channel]);
                                 }
-                                expect(v2Uris.length).toBe(channels[channel].length);
+                                expect(uris.length).toBe(channels[channel].length);
                                 callback(res.error);
                             });
                     });
@@ -128,57 +115,20 @@ describe(testName, function () {
             });
     }, MINUTE);
 
-    function getSequence(uri) {
-        return parseInt(uri.substring(uri.lastIndexOf('/') + 1));
-    }
-
     function getContentKey(uri, channel) {
         return uri.substring(uri.lastIndexOf(channel) + channel.length);
     }
 
     var itemsToVerify = [];
 
-    function checkForBlackHole(replicatedChannel, expected, channel, next) {
-        agent.get(replicatedChannel.replicationSource + "/" + expected)
-            .end(function (res) {
-                if (res.statusCode == 404) {
-                    //this means it's a black hole
-                } else {
-                    console.log('wrong order ' + channel + ' expected ' + expected + ' found ' + next);
-                    expect(expected).toBe(next);
-                }
-            })
-    }
-
-    it('makes sure replicated items are sequential ', function (done) {
-
+    it('select some replicated items for content ', function (done) {
         for (var channel in channels) {
-            var sequence = 0;
             console.log('working on', channel);
             channels[channel].forEach(function (uri) {
                 var replicatedChannel = replicatedChannels[channel];
-                if (replicatedChannel.version === 'v1') {
-                    if (sequence) {
-                        var next = getSequence(uri);
-                        var expected = sequence + 1;
-                        if (expected !== next) {
-                            checkForBlackHole(replicatedChannel, expected, channel, next);
-                        } else {
-                            if (Math.random() > 0.99) {
-                                itemsToVerify.push({name: channel, sequence: next, uri: uri});
-                            }
-                        }
-                        sequence = next;
-
-                    } else {
-                        sequence = getSequence(uri);
-                        itemsToVerify.push({name: channel, sequence: sequence, uri: uri});
-                    }
-                } else {
-                    if (Math.random() > 0.95) {
-                        var contentKey = getContentKey(uri, channel);
-                        itemsToVerify.push({name: channel, sequence: false, uri: uri, contentKey: contentKey});
-                    }
+                if (Math.random() > 0.95) {
+                    var contentKey = getContentKey(uri, channel);
+                    itemsToVerify.push({name: channel, uri: uri, contentKey: contentKey});
                 }
             });
 
@@ -203,11 +153,7 @@ describe(testName, function () {
             function (item, callback) {
                 async.parallel([
                         function (callback) {
-                            if (item.sequence) {
-                                getItem(replicatedChannels[item.name].replicationSource + "/" + item.sequence, callback);
-                            } else {
-                                getItem(replicatedChannels[item.name].replicationSource + item.contentKey, callback);
-                            }
+                            getItem(replicatedChannels[item.name].replicationSource + item.contentKey, callback);
                         },
                         function (callback) {
                             getItem(item.uri, callback);
@@ -227,34 +173,5 @@ describe(testName, function () {
                 done(err);
             });
     }, 30 * MINUTE);
-
-    //todo - gfm - 1/22/15 - come up with a better solution for this
-    /*it('checks replicated for latest from source', function (done) {
-        async.eachLimit(latestSourceItems, 40,
-            function (item, callback) {
-                agent.get(hubUrl + '/channel/' + item.name + '/latest?stable=false')
-                    .set('Accept', 'application/json')
-                    .redirects(0)
-                    .end(function (res) {
-                        expect(res.error).toBe(false);
-                        if (res.statusCode !== 303) {
-                            console.log('!!wrong status code!! ', item.name, res.statusCode);
-                            expect(res.statusCode).toBe(303);
-                        } else {
-                            var replicatedSequence = getSequence(res.header['location']);
-                            var sourceSequence = getSequence(item.location);
-                            if (replicatedSequence < sourceSequence) {
-                                console.log('name ' + item.name + ' repl ' + replicatedSequence + ' source ' + sourceSequence);
-                            }
-                            expect(replicatedSequence).not.toBeLessThan(sourceSequence);
-                        }
-                        callback(res.error);
-                    });
-            }, function (err) {
-                done(err);
-            });
-     }, 2 * MINUTE);*/
-
-
 
 });
