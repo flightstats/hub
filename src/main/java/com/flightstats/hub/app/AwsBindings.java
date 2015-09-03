@@ -27,6 +27,7 @@ public class AwsBindings extends AbstractModule {
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
         bind(SpokeTtlEnforcer.class).asEagerSingleton();
+        bind(SpokeTracer.class).asEagerSingleton();
         bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();
         bind(ChannelConfigDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigDao.DELEGATE))
