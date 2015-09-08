@@ -13,33 +13,27 @@ import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
-import com.github.rholder.retry.RetryerBuilder;
-import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.newrelic.api.agent.Trace;
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@SuppressWarnings("Convert2Lambda")
 public class GroupCaller implements Leader {
     private final static Logger logger = LoggerFactory.getLogger(GroupCaller.class);
     public static final String GROUP_LAST_COMPLETED = "/GroupLastCompleted/";
 
+    private static final Client client = RestClient.createClient(30, 120, true);
     private final CuratorFramework curator;
     private final Provider<CallbackQueue> queueProvider;
     private final GroupService groupService;
@@ -52,7 +46,6 @@ public class GroupCaller implements Leader {
 
     private Group group;
     private CuratorLeader curatorLeader;
-    private Client client;
     private ExecutorService executorService;
     private Semaphore semaphore;
     private AtomicBoolean hasLeadership;
@@ -90,7 +83,7 @@ public class GroupCaller implements Leader {
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
         this.hasLeadership = hasLeadership;
-        retryer = buildRetryer();
+        retryer = GroupRetryer.buildRetryer(group.getName(), groupError, hasLeadership);
         logger.info("taking leadership " + group);
         Optional<Group> foundGroup = groupService.getGroup(group.getName());
         if (!foundGroup.isPresent()) {
@@ -99,7 +92,6 @@ public class GroupCaller implements Leader {
             return;
         }
         this.group = foundGroup.get();
-        this.client = RestClient.createClient(30, 120, true);
         callbackQueue = queueProvider.get();
         try {
             ContentKey startingKey = group.getStartingKey();
@@ -174,35 +166,26 @@ public class GroupCaller implements Leader {
     }
 
     private void makeTimedCall(final ObjectNode response) throws Exception {
-        metricsTimer.time("group." + group.getName() + ".post", new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-                return metricsTimer.time("group.ALL.post", new Callable<Object>() {
-                    @Override
-                    public Object call() throws ExecutionException, RetryException {
-                        makeCall(response);
-                        return null;
-                    }
-                });
-            }
-        });
+        metricsTimer.time("group." + group.getName() + ".post",
+                () -> metricsTimer.time("group.ALL.post",
+                        () -> {
+                            makeCall(response);
+                            return null;
+                        }));
     }
 
     private void makeCall(final ObjectNode response) throws ExecutionException, RetryException {
-        retryer.call(new Callable<ClientResponse>() {
-            @Override
-            public ClientResponse call() throws Exception {
-                if (!hasLeadership.get()) {
-                    logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), response);
-                    return null;
-                }
-                String postId = UUID.randomUUID().toString();
-                logger.debug("calling {} {} {}", group.getCallbackUrl(), response, postId);
-                return client.resource(group.getCallbackUrl())
-                        .type(MediaType.APPLICATION_JSON_TYPE)
-                        .header("post-id", postId)
-                        .post(ClientResponse.class, response.toString());
+        retryer.call(() -> {
+            if (!hasLeadership.get()) {
+                logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), response);
+                return null;
             }
+            String postId = UUID.randomUUID().toString();
+            logger.debug("calling {} {} {}", group.getCallbackUrl(), response, postId);
+            return client.resource(group.getCallbackUrl())
+                    .type(MediaType.APPLICATION_JSON_TYPE)
+                    .header("post-id", postId)
+                    .post(ClientResponse.class, response.toString());
         });
     }
 
@@ -292,51 +275,6 @@ public class GroupCaller implements Leader {
             logger.warn("unexpected exception " + group.getName(), e);
             return true;
         }
-    }
-
-    private Retryer<ClientResponse> buildRetryer() {
-        return RetryerBuilder.<ClientResponse>newBuilder()
-                .retryIfException(new Predicate<Throwable>() {
-                    @Override
-                    public boolean apply(@Nullable Throwable throwable) {
-                        if (throwable != null) {
-                            groupError.add(group.getName(), new DateTime() + " " + throwable.getMessage());
-                            if (throwable.getClass().isAssignableFrom(ClientHandlerException.class)) {
-                                logger.info("got ClientHandlerException trying to call client back " + throwable.getMessage());
-                            } else {
-                                logger.info("got throwable trying to call client back ", throwable);
-                            }
-                        }
-                        return throwable != null;
-                    }
-                })
-                .retryIfResult(new Predicate<ClientResponse>() {
-                    @Override
-                    public boolean apply(@Nullable ClientResponse response) {
-                        if (response == null) return true;
-                        try {
-                            boolean failure = response.getStatus() != 200;
-                            if (failure) {
-                                groupError.add(group.getName(), new DateTime() + " " + response.toString());
-                                logger.info("unable to send to " + response);
-                            }
-                            return failure;
-                        } finally {
-                            close(response);
-                        }
-                    }
-
-                    private void close(ClientResponse response) {
-                        try {
-                            response.close();
-                        } catch (ClientHandlerException e) {
-                            logger.info("exception closing response", e);
-                        }
-                    }
-                })
-                .withWaitStrategy(WaitStrategies.exponentialWait(1000, 1, TimeUnit.MINUTES))
-                .withStopStrategy(new GroupStopStrategy(hasLeadership))
-                .build();
     }
 
     public List<String> getErrors() {
