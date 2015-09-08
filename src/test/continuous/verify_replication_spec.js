@@ -37,6 +37,8 @@ describe(testName, function () {
             })
     }, MINUTE);
 
+    var validReplicatedChannelUrls = [];
+
     it('gets replication sources ', function (done) {
         async.eachLimit(replicatedChannelUrls, 20,
             function (channel, callback) {
@@ -54,6 +56,7 @@ describe(testName, function () {
                                     callback();
                                 } else {
                                     expect(res.error).toBe(false);
+                                    validReplicatedChannelUrls.push(channel);
                                     callback(res.error);
                                 }
                             });
@@ -66,7 +69,7 @@ describe(testName, function () {
     var channels = {};
 
     it('gets lists of replicated items', function (done) {
-        async.eachLimit(replicatedChannelUrls, 20,
+        async.eachLimit(validReplicatedChannelUrls, 20,
             function (channel, callback) {
                 agent.get(channel + '/time/hour?stable=false')
                     .set('Accept', 'application/json')
@@ -88,7 +91,7 @@ describe(testName, function () {
     }, 5 * MINUTE);
 
     it('verifies number of replicated items', function (done) {
-        async.eachLimit(replicatedChannelUrls, 20,
+        async.eachLimit(validReplicatedChannelUrls, 20,
             function (channel, callback) {
                 var source = replicatedChannels[channel]['replicationSource'];
                 agent.get(source + '/time/hour?stable=false')
