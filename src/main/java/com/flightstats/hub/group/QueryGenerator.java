@@ -34,12 +34,7 @@ public class QueryGenerator {
                     .location(location)
                     .build();
             query.trace(false);
-            lastQueryTime = lastQueryTime.plus(unit.getDuration()).withMillisOfSecond(0);
-            if (unit == TimeUtil.Unit.HOURS) {
-                lastQueryTime = lastQueryTime.withMinuteOfHour(0).withSecondOfMinute(0);
-            } else if (unit == TimeUtil.Unit.MINUTES) {
-                lastQueryTime = lastQueryTime.withSecondOfMinute(0);
-            }
+            lastQueryTime = unit.round(lastQueryTime.plus(unit.getDuration()));
             return query;
         } else {
             return null;
@@ -47,7 +42,9 @@ public class QueryGenerator {
     }
 
     private TimeUtil.Unit getStepUnit(DateTime latestStableInChannel) {
-        if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {
+        if (lastQueryTime.isBefore(latestStableInChannel.minusDays(2))) {
+            return TimeUtil.Unit.DAYS;
+        } else if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {
             return TimeUtil.Unit.HOURS;
         } else if (lastQueryTime.isBefore(latestStableInChannel.minusMinutes(2))) {
             return TimeUtil.Unit.MINUTES;
