@@ -135,7 +135,7 @@ public class GroupCallbackImpl implements GroupCallback {
         GroupCaller groupCaller = activeGroups.get(group.getName());
         if (groupCaller != null) {
             statusBuilder.errors(groupCaller.getErrors());
-            statusBuilder.inFlight(groupCaller.getInFlight());
+            statusBuilder.inFlight(groupCaller.getInFlight(group));
         } else {
             statusBuilder.errors(Collections.emptyList());
             statusBuilder.inFlight(Collections.emptyList());

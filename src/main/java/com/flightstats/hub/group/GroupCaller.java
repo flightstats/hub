@@ -265,8 +265,8 @@ public class GroupCaller implements Leader {
         return groupError.get(group.getName());
     }
 
-    public List<ContentPath> getInFlight() {
-        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(group.getName(), caller.getType())));
+    public List<ContentPath> getInFlight(Group group) {
+        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(this.group.getName(), Caller.getType(group))));
     }
 
     public Group getGroup() {
