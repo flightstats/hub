@@ -11,10 +11,10 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class LastContentKeyTest {
+public class LastContentPathTest {
 
     private static CuratorFramework curator;
-    private LastContentKey contentKeyValue;
+    private LastContentPath contentKeyValue;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -23,7 +23,7 @@ public class LastContentKeyTest {
 
     @Before
     public void setUp() throws Exception {
-        contentKeyValue = new LastContentKey(curator);
+        contentKeyValue = new LastContentPath(curator);
     }
 
     @Test

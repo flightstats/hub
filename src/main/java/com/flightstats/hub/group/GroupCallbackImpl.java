@@ -1,10 +1,9 @@
 package com.flightstats.hub.group;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.LastContentKey;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
-import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -28,16 +27,16 @@ public class GroupCallbackImpl implements GroupCallback {
     private final WatchManager watchManager;
     private final GroupService groupService;
     private final Provider<GroupCaller> callerProvider;
-    private LastContentKey lastContentKey;
+    private LastContentPath lastContentPath;
     private final Map<String, GroupCaller> activeGroups = new HashMap<>();
 
     @Inject
     public GroupCallbackImpl(WatchManager watchManager, GroupService groupService,
-                             Provider<GroupCaller> callerProvider, LastContentKey lastContentKey) {
+                             Provider<GroupCaller> callerProvider, LastContentPath lastContentPath) {
         this.watchManager = watchManager;
         this.groupService = groupService;
         this.callerProvider = callerProvider;
-        this.lastContentKey = lastContentKey;
+        this.lastContentPath = lastContentPath;
         HubServices.registerPreStop(new GroupCallbackService());
     }
 
@@ -132,7 +131,7 @@ public class GroupCallbackImpl implements GroupCallback {
 
     @Override
     public void getStatus(Group group, GroupStatus.GroupStatusBuilder statusBuilder) {
-        statusBuilder.lastCompleted(lastContentKey.get(group.getName(), ContentKey.NONE, GroupCaller.GROUP_LAST_COMPLETED));
+        statusBuilder.lastCompleted(lastContentPath.get(group.getName(), Caller.getType(group), GroupCaller.GROUP_LAST_COMPLETED));
         GroupCaller groupCaller = activeGroups.get(group.getName());
         if (groupCaller != null) {
             statusBuilder.errors(groupCaller.getErrors());

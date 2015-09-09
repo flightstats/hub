@@ -1,6 +1,6 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -8,19 +8,19 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LastContentKey {
-    private final static Logger logger = LoggerFactory.getLogger(LastContentKey.class);
+public class LastContentPath {
+    private final static Logger logger = LoggerFactory.getLogger(LastContentPath.class);
 
     private final CuratorFramework curator;
 
     @Inject
-    public LastContentKey(CuratorFramework curator) {
+    public LastContentPath(CuratorFramework curator) {
         this.curator = curator;
     }
 
-    public void initialize(String name, ContentKey defaultKey, String keyPath) {
+    public void initialize(String name, ContentPath defaultPath, String basePath) {
         try {
-            curator.create().creatingParentsIfNeeded().forPath(keyPath + name, defaultKey.getBytes());
+            curator.create().creatingParentsIfNeeded().forPath(basePath + name, defaultPath.toBytes());
         } catch (KeeperException.NodeExistsException ignore) {
             //this will typically happen, except the first time
         } catch (Exception e) {
@@ -28,32 +28,32 @@ public class LastContentKey {
         }
     }
 
-    public ContentKey get(String name, ContentKey defaultKey, String keyPath) {
-        String path = keyPath + name;
+    public ContentPath get(String name, ContentPath defaultPath, String basePath) {
+        String path = basePath + name;
         try {
-            return get(path);
+            return get(path, defaultPath);
         } catch (KeeperException.NoNodeException e) {
             logger.warn("missing value for {}", name);
-            initialize(name, defaultKey, keyPath);
-            return get(name, defaultKey, keyPath);
+            initialize(name, defaultPath, basePath);
+            return get(name, defaultPath, basePath);
         } catch (Exception e) {
             logger.warn("unable to get node " + e.getMessage());
-            return defaultKey;
+            return defaultPath;
         }
     }
 
-    private ContentKey get(String path) throws Exception {
-        return ContentKey.fromBytes(curator.getData().forPath(path));
+    private ContentPath get(String path, ContentPath defaultPath) throws Exception {
+        return defaultPath.toContentPath(curator.getData().forPath(path));
     }
 
-    public void updateIncrease(ContentKey nextKey, String name, String keyPath) {
-        String path = keyPath + name;
+    public void updateIncrease(ContentPath nextPath, String name, String basePath) {
+        String path = basePath + name;
         try {
             int attempts = 0;
             while (attempts < 3) {
-                LastUpdated existing = getLastUpdated(path);
-                if (nextKey.compareTo(existing.key) > 0) {
-                    if (setValue(path, nextKey, existing)) {
+                LastUpdated existing = getLastUpdated(path, nextPath);
+                if (nextPath.compareTo(existing.key) > 0) {
+                    if (setValue(path, nextPath, existing)) {
                         return;
                     }
                 } else {
@@ -62,13 +62,13 @@ public class LastContentKey {
                 attempts++;
             }
         } catch (Exception e) {
-            logger.warn("unable to set " + path + " lastUpdated to " + nextKey, e);
+            logger.warn("unable to set " + path + " lastUpdated to " + nextPath, e);
         }
     }
 
-    private boolean setValue(String path, ContentKey nextKey, LastUpdated existing) throws Exception {
+    private boolean setValue(String path, ContentPath nextPath, LastUpdated existing) throws Exception {
         try {
-            curator.setData().withVersion(existing.version).forPath(path, nextKey.getBytes());
+            curator.setData().withVersion(existing.version).forPath(path, nextPath.toBytes());
             return true;
         } catch (KeeperException.BadVersionException e) {
             logger.debug("bad version " + path + " " + e.getMessage());
@@ -79,8 +79,8 @@ public class LastContentKey {
         }
     }
 
-    public void delete(String name, String keyPath) {
-        String path = keyPath + name;
+    public void delete(String name, String basePath) {
+        String path = basePath + name;
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (Exception e) {
@@ -88,11 +88,11 @@ public class LastContentKey {
         }
     }
 
-    LastUpdated getLastUpdated(String path) {
+    LastUpdated getLastUpdated(String path, ContentPath nextPath) {
         try {
             Stat stat = new Stat();
             byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
-            return new LastUpdated(ContentKey.fromBytes(bytes), stat.getVersion());
+            return new LastUpdated(nextPath.toContentPath(bytes), stat.getVersion());
         } catch (KeeperException.NoNodeException e) {
             logger.info("unable to get value " + path + " " + e.getMessage());
             throw new RuntimeException(e);
@@ -103,10 +103,10 @@ public class LastContentKey {
     }
 
     class LastUpdated {
-        ContentKey key;
+        ContentPath key;
         int version;
 
-        private LastUpdated(ContentKey key, int version) {
+        private LastUpdated(ContentPath key, int version) {
             this.key = key;
             this.version = version;
         }

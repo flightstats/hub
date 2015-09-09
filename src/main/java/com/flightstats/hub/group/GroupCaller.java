@@ -1,13 +1,13 @@
 package com.flightstats.hub.group;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.CuratorLeader;
-import com.flightstats.hub.cluster.LastContentKey;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.MetricsTimer;
-import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -15,7 +15,6 @@ import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.newrelic.api.agent.Trace;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -35,11 +34,11 @@ public class GroupCaller implements Leader {
 
     private static final Client client = RestClient.createClient(30, 120, true);
     private final CuratorFramework curator;
-    private final Provider<CallbackQueue> queueProvider;
+    private final ChannelService channelService;
     private final GroupService groupService;
     private final MetricsTimer metricsTimer;
-    private final LastContentKey lastContentKey;
-    private final GroupContentKeySet groupInProcess;
+    private final LastContentPath lastContentPath;
+    private final GroupContentPathSet groupInProcess;
     private final GroupError groupError;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
@@ -50,18 +49,19 @@ public class GroupCaller implements Leader {
     private Semaphore semaphore;
     private AtomicBoolean hasLeadership;
     private Retryer<ClientResponse> retryer;
-    private CallbackQueue callbackQueue;
+
     private boolean exited = false;
+    private Caller caller;
 
     @Inject
-    public GroupCaller(CuratorFramework curator, Provider<CallbackQueue> queueProvider,
+    public GroupCaller(CuratorFramework curator, ChannelService channelService,
                        GroupService groupService, MetricsTimer metricsTimer,
-                       LastContentKey lastContentKey, GroupContentKeySet groupInProcess, GroupError groupError) {
+                       LastContentPath LastContentPath, GroupContentPathSet groupInProcess, GroupError groupError) {
         this.curator = curator;
-        this.queueProvider = queueProvider;
+        this.channelService = channelService;
         this.groupService = groupService;
         this.metricsTimer = metricsTimer;
-        this.lastContentKey = lastContentKey;
+        this.lastContentPath = LastContentPath;
         this.groupInProcess = groupInProcess;
         this.groupError = groupError;
     }
@@ -92,19 +92,16 @@ public class GroupCaller implements Leader {
             return;
         }
         this.group = foundGroup.get();
-        callbackQueue = queueProvider.get();
+        //todo - gfm - 9/9/15 - add option for batch caller
+        caller = new SingleCaller(group, lastContentPath, channelService);
         try {
-            ContentKey startingKey = group.getStartingKey();
-            if (null == startingKey) {
-                startingKey = new ContentKey();
-            }
-            ContentKey lastCompletedKey = getLastCompleted(startingKey);
+            ContentPath lastCompletedKey = caller.getStartingPath();
             logger.info("last completed at {} {}", lastCompletedKey, group.getName());
             if (hasLeadership.get()) {
                 sendInProcess(lastCompletedKey);
-                callbackQueue.start(group, lastCompletedKey);
+                caller.start(group, lastCompletedKey);
                 while (hasLeadership.get()) {
-                    Optional<ContentKey> nextOptional = callbackQueue.next();
+                    Optional<ContentPath> nextOptional = caller.next();
                     if (nextOptional.isPresent()) {
                         send(nextOptional.get());
                     }
@@ -113,8 +110,7 @@ public class GroupCaller implements Leader {
         } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + group.getName());
         } finally {
-            ContentKey lastCompletedKey = getLastCompleted(ContentKey.NONE);
-            logger.info("stopping last completed at {} {}", lastCompletedKey, group.getName());
+            logger.info("stopping last completed at {} {}", caller.getLastCompleted(), group.getName());
             closeQueue();
             if (deleteOnExit.get()) {
                 delete();
@@ -122,10 +118,10 @@ public class GroupCaller implements Leader {
         }
     }
 
-    private void sendInProcess(ContentKey lastCompletedKey) throws InterruptedException {
-        Set<ContentKey> inProcessSet = groupInProcess.getSet(group.getName());
+    private void sendInProcess(ContentPath lastCompletedKey) throws InterruptedException {
+        Set<ContentPath> inProcessSet = groupInProcess.getSet(group.getName(), lastCompletedKey);
         logger.trace("sending in process {} to {}", inProcessSet, group.getName());
-        for (ContentKey toSend : inProcessSet) {
+        for (ContentPath toSend : inProcessSet) {
             if (toSend.compareTo(lastCompletedKey) < 0) {
                 send(toSend);
             } else {
@@ -134,35 +130,27 @@ public class GroupCaller implements Leader {
         }
     }
 
-    private void send(ContentKey key) throws InterruptedException {
+    private void send(ContentPath contentPath) throws InterruptedException {
         semaphore.acquire();
-        logger.trace("sending {} to {}", key, group.getName());
+        logger.trace("sending {} to {}", contentPath, group.getName());
         executorService.submit(new Callable<Object>() {
             @Trace(metricName = "GroupCaller", dispatcher = true)
             @Override
             public Object call() throws Exception {
-                groupInProcess.add(group.getName(), key);
+                groupInProcess.add(group.getName(), contentPath);
                 try {
-                    makeTimedCall(createResponse(key));
-                    lastContentKey.updateIncrease(key, group.getName(), GROUP_LAST_COMPLETED);
-                    groupInProcess.remove(group.getName(), key);
-                    logger.trace("completed {} call to {} ", key, group.getName());
+                    makeTimedCall(caller.createResponse(contentPath, mapper));
+                    lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
+                    groupInProcess.remove(group.getName(), contentPath);
+                    logger.trace("completed {} call to {} ", contentPath, group.getName());
                 } catch (Exception e) {
-                    logger.warn("exception sending " + key + " to " + group.getName(), e);
+                    logger.warn("exception sending " + contentPath + " to " + group.getName(), e);
                 } finally {
                     semaphore.release();
                 }
                 return null;
             }
         });
-    }
-
-    private ObjectNode createResponse(ContentKey key) {
-        ObjectNode response = mapper.createObjectNode();
-        response.put("name", group.getName());
-        ArrayNode uris = response.putArray("uris");
-        uris.add(group.getChannelUrl() + "/" + key.toUrl());
-        return response;
     }
 
     private void makeTimedCall(final ObjectNode response) throws Exception {
@@ -207,8 +195,8 @@ public class GroupCaller implements Leader {
 
     private void closeQueue() {
         try {
-            if (callbackQueue != null) {
-                callbackQueue.close();
+            if (caller != null) {
+                caller.close();
             }
         } catch (Exception e) {
             logger.warn("unable to close callbackQueue", e);
@@ -219,14 +207,10 @@ public class GroupCaller implements Leader {
         return "/GroupLeader/" + group.getName();
     }
 
-    public ContentKey getLastCompleted(ContentKey defaultKey) {
-        return lastContentKey.get(group.getName(), defaultKey, GROUP_LAST_COMPLETED);
-    }
-
     private void delete() {
         logger.info("deleting " + group.getName());
         groupInProcess.delete(group.getName());
-        lastContentKey.delete(group.getName(), GROUP_LAST_COMPLETED);
+        lastContentPath.delete(group.getName(), GROUP_LAST_COMPLETED);
         groupError.delete(group.getName());
         logger.info("deleted " + group.getName());
     }
@@ -281,8 +265,8 @@ public class GroupCaller implements Leader {
         return groupError.get(group.getName());
     }
 
-    public List<ContentKey> getInFlight() {
-        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(group.getName())));
+    public List<ContentPath> getInFlight() {
+        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(group.getName(), caller.getType())));
     }
 
     public Group getGroup() {

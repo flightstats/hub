@@ -54,7 +54,7 @@ public class ContentKeyTest {
     @Test
     public void testZkCycle() throws Exception {
         ContentKey key = new ContentKey();
-        assertEquals(key, ContentKey.fromZk(key.toZk()));
+        assertEquals(key, key.fromZk(key.toZk()));
     }
 
     @Test

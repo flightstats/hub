@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -28,15 +29,16 @@ public class Group {
     private final Integer parallelCalls;
     @Wither
     private final String name;
+
     @Wither
-    private final transient ContentKey startingKey;
+    private final transient ContentPath startingKey;
 
     private final boolean paused;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @JsonIgnore
-    public ContentKey getStartingKey() {
+    public ContentPath getStartingKey() {
         return startingKey;
     }
 

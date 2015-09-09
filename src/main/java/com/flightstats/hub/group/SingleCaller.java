@@ -1,7 +1,12 @@
 package com.flightstats.hub.group;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.ChannelNameUtils;
@@ -10,7 +15,6 @@ import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,15 +25,12 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-/**
- * Every second (with a second lag) we should query new item ids for a channel
- * item ids are put onto a queue, with the queue being size limited to prevent resource explosion
- */
-@SuppressWarnings({"Convert2Lambda", "Convert2streamapi"})
-public class CallbackQueue implements AutoCloseable {
+public class SingleCaller implements Caller {
 
-    private final static Logger logger = LoggerFactory.getLogger(CallbackQueue.class);
+    private final static Logger logger = LoggerFactory.getLogger(SingleCaller.class);
 
+    private final Group group;
+    private final LastContentPath lastContentPath;
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private AtomicBoolean error = new AtomicBoolean(false);
@@ -37,13 +38,45 @@ public class CallbackQueue implements AutoCloseable {
     private String channel;
     private QueryGenerator queryGenerator;
 
-    @Inject
-    public CallbackQueue(ChannelService channelService) {
-        this.channelService = channelService;
 
+    public SingleCaller(Group group, LastContentPath lastContentPath, ChannelService channelService) {
+        this.group = group;
+        this.lastContentPath = lastContentPath;
+        this.channelService = channelService;
     }
 
-    public Optional<ContentKey> next() {
+    public ContentPath getType() {
+        return ContentKey.NONE;
+    }
+
+    @Override
+    public ContentPath getStartingPath() {
+        ContentPath startingKey = group.getStartingKey();
+        if (null == startingKey) {
+            startingKey = new ContentKey();
+        }
+        return getLastCompleted(startingKey);
+    }
+
+    private ContentPath getLastCompleted(ContentPath defaultKey) {
+        return lastContentPath.get(group.getName(), (ContentKey) defaultKey, GroupCaller.GROUP_LAST_COMPLETED);
+    }
+
+    @Override
+    public ContentPath getLastCompleted() {
+        return getLastCompleted(ContentKey.NONE);
+    }
+
+    @Override
+    public ObjectNode createResponse(ContentPath key, ObjectMapper mapper) {
+        ObjectNode response = mapper.createObjectNode();
+        response.put("name", group.getName());
+        ArrayNode uris = response.putArray("uris");
+        uris.add(group.getChannelUrl() + "/" + key.toUrl());
+        return response;
+    }
+
+    public Optional<ContentPath> next() {
         if (error.get()) {
             throw new RuntimeException("unable to determine next");
         }
@@ -54,7 +87,8 @@ public class CallbackQueue implements AutoCloseable {
         }
     }
 
-    public void start(Group group, ContentKey startingKey) {
+    public void start(Group group, ContentPath startingPath) {
+        ContentKey startingKey = (ContentKey) startingPath;
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         queryGenerator = new QueryGenerator(startingKey.getTime(), channel);
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("group-" + group.getName() + "-queue-%s").build();
@@ -135,7 +169,6 @@ public class CallbackQueue implements AutoCloseable {
         });
 
     }
-
 
 
     @Override

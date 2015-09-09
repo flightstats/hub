@@ -50,7 +50,7 @@ public class HubBindings extends AbstractModule {
         bind(ChannelValidator.class).asEagerSingleton();
         bind(GroupValidator.class).asEagerSingleton();
         bind(GroupCallback.class).to(GroupCallbackImpl.class).asEagerSingleton();
-        bind(LastContentKey.class).asEagerSingleton();
+        bind(LastContentPath.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
 
         if (HubProperties.getProperty("hosted_graphite.enable", false)) {
