@@ -26,6 +26,8 @@ public class QueryGenerator {
             Location location = Location.ALL;
             if (unit.equals(TimeUtil.Unit.SECONDS)) {
                 location = Location.CACHE;
+            } else if (unit.equals(TimeUtil.Unit.DAYS)) {
+                location = Location.LONG_TERM;
             }
             TimeQuery query = TimeQuery.builder()
                     .channelName(channel)
