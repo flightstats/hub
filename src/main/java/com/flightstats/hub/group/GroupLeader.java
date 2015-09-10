@@ -28,8 +28,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class GroupCaller implements Leader {
-    private final static Logger logger = LoggerFactory.getLogger(GroupCaller.class);
+public class GroupLeader implements Leader {
+    private final static Logger logger = LoggerFactory.getLogger(GroupLeader.class);
     public static final String GROUP_LAST_COMPLETED = "/GroupLastCompleted/";
 
     private static final Client client = RestClient.createClient(30, 120, true);
@@ -51,10 +51,10 @@ public class GroupCaller implements Leader {
     private Retryer<ClientResponse> retryer;
 
     private boolean exited = false;
-    private Caller caller;
+    private GroupBatch groupBatch;
 
     @Inject
-    public GroupCaller(CuratorFramework curator, ChannelService channelService,
+    public GroupLeader(CuratorFramework curator, ChannelService channelService,
                        GroupService groupService, MetricsTimer metricsTimer,
                        LastContentPath LastContentPath, GroupContentPathSet groupInProcess, GroupError groupError) {
         this.curator = curator;
@@ -93,15 +93,15 @@ public class GroupCaller implements Leader {
         }
         this.group = foundGroup.get();
         //todo - gfm - 9/9/15 - add option for batch caller
-        caller = new SingleCaller(group, lastContentPath, channelService);
+        groupBatch = new SingleGroupBatch(group, lastContentPath, channelService);
         try {
-            ContentPath lastCompletedKey = caller.getStartingPath();
-            logger.info("last completed at {} {}", lastCompletedKey, group.getName());
+            ContentPath lastCompletedPath = groupBatch.getStartingPath();
+            logger.info("last completed at {} {}", lastCompletedPath, group.getName());
             if (hasLeadership.get()) {
-                sendInProcess(lastCompletedKey);
-                caller.start(group, lastCompletedKey);
+                sendInProcess(lastCompletedPath);
+                groupBatch.start(group, lastCompletedPath);
                 while (hasLeadership.get()) {
-                    Optional<ContentPath> nextOptional = caller.next();
+                    Optional<ContentPath> nextOptional = groupBatch.next();
                     if (nextOptional.isPresent()) {
                         send(nextOptional.get());
                     }
@@ -110,7 +110,7 @@ public class GroupCaller implements Leader {
         } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + group.getName());
         } finally {
-            logger.info("stopping last completed at {} {}", caller.getLastCompleted(), group.getName());
+            logger.info("stopping last completed at {} {}", groupBatch.getLastCompleted(), group.getName());
             closeQueue();
             if (deleteOnExit.get()) {
                 delete();
@@ -118,11 +118,11 @@ public class GroupCaller implements Leader {
         }
     }
 
-    private void sendInProcess(ContentPath lastCompletedKey) throws InterruptedException {
-        Set<ContentPath> inProcessSet = groupInProcess.getSet(group.getName(), lastCompletedKey);
+    private void sendInProcess(ContentPath lastCompletedPath) throws InterruptedException {
+        Set<ContentPath> inProcessSet = groupInProcess.getSet(group.getName(), lastCompletedPath);
         logger.trace("sending in process {} to {}", inProcessSet, group.getName());
         for (ContentPath toSend : inProcessSet) {
-            if (toSend.compareTo(lastCompletedKey) < 0) {
+            if (toSend.compareTo(lastCompletedPath) < 0) {
                 send(toSend);
             } else {
                 groupInProcess.remove(group.getName(), toSend);
@@ -139,7 +139,7 @@ public class GroupCaller implements Leader {
             public Object call() throws Exception {
                 groupInProcess.add(group.getName(), contentPath);
                 try {
-                    makeTimedCall(caller.createResponse(contentPath, mapper));
+                    makeTimedCall(groupBatch.createResponse(contentPath, mapper));
                     lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
                     groupInProcess.remove(group.getName(), contentPath);
                     logger.trace("completed {} call to {} ", contentPath, group.getName());
@@ -195,8 +195,8 @@ public class GroupCaller implements Leader {
 
     private void closeQueue() {
         try {
-            if (caller != null) {
-                caller.close();
+            if (groupBatch != null) {
+                groupBatch.close();
             }
         } catch (Exception e) {
             logger.warn("unable to close callbackQueue", e);
@@ -266,7 +266,7 @@ public class GroupCaller implements Leader {
     }
 
     public List<ContentPath> getInFlight(Group group) {
-        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(this.group.getName(), Caller.getType(group))));
+        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(this.group.getName(), GroupBatch.getType(group))));
     }
 
     public Group getGroup() {

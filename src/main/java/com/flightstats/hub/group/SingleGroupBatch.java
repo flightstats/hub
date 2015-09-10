@@ -25,9 +25,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class SingleCaller implements Caller {
+public class SingleGroupBatch implements GroupBatch {
 
-    private final static Logger logger = LoggerFactory.getLogger(SingleCaller.class);
+    private final static Logger logger = LoggerFactory.getLogger(SingleGroupBatch.class);
 
     private final Group group;
     private final LastContentPath lastContentPath;
@@ -39,7 +39,7 @@ public class SingleCaller implements Caller {
     private QueryGenerator queryGenerator;
 
 
-    public SingleCaller(Group group, LastContentPath lastContentPath, ChannelService channelService) {
+    public SingleGroupBatch(Group group, LastContentPath lastContentPath, ChannelService channelService) {
         this.group = group;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
@@ -59,7 +59,7 @@ public class SingleCaller implements Caller {
     }
 
     private ContentPath getLastCompleted(ContentPath defaultKey) {
-        return lastContentPath.get(group.getName(), (ContentKey) defaultKey, GroupCaller.GROUP_LAST_COMPLETED);
+        return lastContentPath.get(group.getName(), (ContentKey) defaultKey, GroupLeader.GROUP_LAST_COMPLETED);
     }
 
     @Override

@@ -6,7 +6,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.google.common.base.Optional;
 
-public interface Caller extends AutoCloseable {
+public interface GroupBatch extends AutoCloseable {
 
     ContentPath getStartingPath();
 

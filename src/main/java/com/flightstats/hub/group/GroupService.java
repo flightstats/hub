@@ -43,7 +43,7 @@ public class GroupService {
                 throw new ConflictException("{\"error\": \"channelUrl can not change. \"}");
             }
         }
-        lastContentPath.initialize(group.getName(), group.getStartingKey(), GroupCaller.GROUP_LAST_COMPLETED);
+        lastContentPath.initialize(group.getName(), group.getStartingKey(), GroupLeader.GROUP_LAST_COMPLETED);
         groupDao.upsertGroup(group);
         groupCallback.notifyWatchers();
         return existingGroup;
