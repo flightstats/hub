@@ -101,6 +101,26 @@ public class TimeUtil {
         public String getName() {
             return name;
         }
+
+        public DateTime round(DateTime time) {
+            DateTime rounded = time;
+            if (name.equals("millis")) {
+                return rounded;
+            }
+            rounded = rounded.withMillisOfSecond(0);
+            if (name.equals("second")) {
+                return rounded;
+            }
+            rounded = rounded.withSecondOfMinute(0);
+            if (name.equals("minute")) {
+                return rounded;
+            }
+            rounded = rounded.withMinuteOfHour(0);
+            if (name.equals("hour")) {
+                return rounded;
+            }
+            return rounded.withHourOfDay(0);
+        }
     }
 
 }
