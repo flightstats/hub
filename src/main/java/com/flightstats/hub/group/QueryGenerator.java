@@ -27,6 +27,7 @@ public class QueryGenerator {
             if (unit.equals(TimeUtil.Unit.SECONDS)) {
                 location = Location.CACHE;
             } else if (unit.equals(TimeUtil.Unit.DAYS)) {
+                logger.info("long term query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
                 location = Location.LONG_TERM;
             }
             TimeQuery query = TimeQuery.builder()
