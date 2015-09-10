@@ -12,7 +12,8 @@ var groupConfig = {
 var groupConfig2 = {
     callbackUrl : 'http://nothing/callback',
     channelUrl : 'http://nothing/channel/notHere',
-    parallelCalls : 1
+    parallelCalls: 1,
+    batch: 'SINGLE'
 };
 
 describe(testName, function () {

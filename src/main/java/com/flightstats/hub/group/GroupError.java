@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -67,6 +68,8 @@ public class GroupError {
         logger.info("deleting " + errorRoot);
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(errorRoot);
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("no node to delete " + errorRoot);
         } catch (Exception e) {
             logger.warn("unable to delete " + errorRoot, e);
         }

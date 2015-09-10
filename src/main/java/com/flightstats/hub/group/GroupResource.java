@@ -72,6 +72,7 @@ public class GroupResource {
         root.put("channelUrl", group.getChannelUrl());
         root.put("parallelCalls", group.getParallelCalls());
         root.put("paused", group.isPaused());
+        root.put("batch", group.getBatch());
         if (status.getLastCompleted() == null) {
             root.put("lastCompletedCallback", "");
         } else {

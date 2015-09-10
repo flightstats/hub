@@ -23,15 +23,19 @@ import java.io.IOException;
 public class Group {
     private final static Logger logger = LoggerFactory.getLogger(Group.class);
 
+    public static final String SINGLE = "SINGLE";
+    public static final String MINUTE = "MINUTE";
+
     private final String callbackUrl;
     private final String channelUrl;
     @Wither
     private final Integer parallelCalls;
     @Wither
     private final String name;
-
     @Wither
     private final transient ContentPath startingKey;
+    @Wither
+    private final String batch;
 
     private final boolean paused;
 
@@ -44,7 +48,8 @@ public class Group {
 
     public boolean allowedToChange(Group other) {
         return channelUrl.equals(other.channelUrl)
-                && name.equals(other.name);
+                && name.equals(other.name)
+                && batch.equals(other.batch);
     }
 
     public boolean isChanged(Group other) {
@@ -68,11 +73,13 @@ public class Group {
                     .callbackUrl(existing.callbackUrl)
                     .channelUrl(existing.channelUrl)
                     .name(existing.name)
-                    .startingKey(existing.startingKey);
+                    .startingKey(existing.startingKey)
+                    .batch(existing.batch);
         }
         try {
             JsonNode root = mapper.readTree(json);
             if (root.has("startItem")) {
+                //todo - gfm - 9/10/15 - this needs to handle ContentPath too
                 Optional<ContentKey> keyOptional = ContentKey.fromFullUrl(root.get("startItem").asText());
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
@@ -93,6 +100,9 @@ public class Group {
             if (root.has("parallelCalls")) {
                 builder.parallelCalls(root.get("parallelCalls").intValue());
             }
+            if (root.has("batch")) {
+                builder.batch(root.get("batch").asText());
+            }
         } catch (IOException e) {
             logger.warn("unable to parse " + json, e);
             throw new RuntimeException(e);
@@ -105,12 +115,15 @@ public class Group {
     }
 
     /**
-     * Returns a Group with all the defaults set if values aren't set.
+     * Returns a Group with all optional values set to the default.
      */
     public Group withDefaults() {
         Group group = this;
         if (parallelCalls == null) {
-            group = withParallelCalls(1);
+            group = group.withParallelCalls(1);
+        }
+        if (batch == null) {
+            group = group.withBatch("SINGLE");
         }
         return group;
     }

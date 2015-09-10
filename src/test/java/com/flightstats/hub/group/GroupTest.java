@@ -5,8 +5,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class GroupTest {
 
@@ -53,6 +52,15 @@ public class GroupTest {
         assertEquals(key, cycled.getStartingKey());
         String toJson = cycled.toJson();
         assertNotNull(toJson);
+    }
+
+    @Test
+    public void testWithDefaults() {
+        assertNull(group.getParallelCalls());
+        assertNull(group.getBatch());
+        group = group.withDefaults();
+        assertEquals(1L, (long) group.getParallelCalls());
+        assertEquals("SINGLE", group.getBatch());
     }
 
 

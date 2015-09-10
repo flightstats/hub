@@ -57,6 +57,7 @@ public class DynamoGroupDao implements GroupDao {
         item.put("channelUrl", new AttributeValue(group.getChannelUrl()));
         item.put("parallelCalls", new AttributeValue().withN(String.valueOf(group.getParallelCalls())));
         item.put("paused", new AttributeValue().withBOOL(group.isPaused()));
+        item.put("batch", new AttributeValue(group.getBatch()));
         dbClient.putItem(getTableName(), item);
         return group;
     }
@@ -87,6 +88,9 @@ public class DynamoGroupDao implements GroupDao {
         }
         if (item.containsKey("paused")) {
             groupBuilder.paused(item.get("paused").getBOOL());
+        }
+        if (item.containsKey("batch")) {
+            groupBuilder.batch(item.get("batch").getS());
         }
         return groupBuilder.build().withDefaults();
     }

@@ -154,6 +154,7 @@ function getGroup(groupName, groupConfig, status) {
                         expect(parse.channelUrl).toBe(groupConfig.channelUrl);
                         expect(parse.transactional).toBe(groupConfig.transactional);
                         expect(parse.name).toBe(groupName);
+                        expect(parse.batch).toBe(groupConfig.batch);
                     }
                 }
                 done();
