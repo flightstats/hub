@@ -19,17 +19,17 @@ public interface GroupStrategy extends AutoCloseable {
 
     Optional<ContentPath> next();
 
-    ContentPath getType();
+    ContentPath createContentPath();
 
     ObjectNode createResponse(ContentPath contentPath, ObjectMapper mapper);
 
     ContentPath inProcess(ContentPath contentPath);
 
-    static ContentPath getType(Group group) {
+    static ContentPath createContentPath(Group group) {
         if (group.isMinute()) {
-            return MinutePath.NONE;
+            return new MinutePath();
         }
-        return ContentKey.NONE;
+        return new ContentKey();
     }
 
     static GroupStrategy getStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {

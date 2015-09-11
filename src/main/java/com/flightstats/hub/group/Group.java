@@ -125,6 +125,9 @@ public class Group {
         if (batch == null) {
             group = group.withBatch("SINGLE");
         }
+        if (getStartingKey() == null) {
+            group = group.withStartingKey(GroupStrategy.createContentPath(group));
+        }
         return group;
     }
 

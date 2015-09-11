@@ -30,6 +30,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
     private AtomicBoolean error = new AtomicBoolean(false);
     private BlockingQueue<MinutePath> queue = new ArrayBlockingQueue<>(1000);
     private String channel;
+    private ScheduledExecutorService executorService;
 
     public MinuteGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
         this.group = group;
@@ -60,7 +61,9 @@ public class MinuteGroupStrategy implements GroupStrategy {
         MinutePath minutePath = (MinutePath) startingPath;
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("minute-group-" + group.getName() + "-%s").build();
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(factory);
+        executorService = Executors.newSingleThreadScheduledExecutor(factory);
+        int offset = getOffset();
+        logger.info("starting {} with offset {}", group, offset);
         executorService.scheduleAtFixedRate(new Runnable() {
 
             MinutePath lastAdded = minutePath;
@@ -76,7 +79,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
             }
 
             private void doWork() {
-                while (!shouldExit.get()) {
+                if (!shouldExit.get()) {
                     if (channelService.isReplicating(channel)) {
                         handleReplication();
                     } else {
@@ -88,7 +91,9 @@ public class MinuteGroupStrategy implements GroupStrategy {
             private void handleNormal() {
                 try {
                     DateTime nextTime = lastAdded.getTime().plusMinutes(1);
-                    while (nextTime.isAfter(TimeUtil.stable().plusMinutes(1))) {
+                    DateTime stable = TimeUtil.stable().minusMinutes(1);
+                    logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
+                    while (nextTime.isBefore(stable)) {
                         MinutePath nextPath = createMinutePath(nextTime);
                         logger.trace("results {} {}", channel, nextPath);
                         queue.put(nextPath);
@@ -124,12 +129,11 @@ public class MinuteGroupStrategy implements GroupStrategy {
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channel)
                 .startTime(time)
+                .unit(TimeUtil.Unit.MINUTES)
                 .stable(true)
-                .location(Location.ALL)
+                .traces(Traces.NOOP)
                 .build();
-        logger.debug("query {} {}", channel, timeQuery);
-        Collection<ContentKey> keys = channelService.queryByTime(timeQuery);
-        return new MinutePath(time, keys);
+        return new MinutePath(time, channelService.queryByTime(timeQuery));
     }
 
     @Override
@@ -145,7 +149,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
     }
 
     @Override
-    public ContentPath getType() {
+    public ContentPath createContentPath() {
         return MinutePath.NONE;
     }
 
@@ -176,6 +180,9 @@ public class MinuteGroupStrategy implements GroupStrategy {
     public void close() throws Exception {
         if (!shouldExit.get()) {
             shouldExit.set(true);
+        }
+        if (null != executorService) {
+            executorService.shutdown();
         }
     }
 }

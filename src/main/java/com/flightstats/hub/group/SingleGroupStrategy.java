@@ -45,7 +45,7 @@ public class SingleGroupStrategy implements GroupStrategy {
         this.channelService = channelService;
     }
 
-    public ContentPath getType() {
+    public ContentPath createContentPath() {
         return ContentKey.NONE;
     }
 

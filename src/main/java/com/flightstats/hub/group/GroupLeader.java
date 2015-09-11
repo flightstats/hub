@@ -265,7 +265,7 @@ public class GroupLeader implements Leader {
     }
 
     public List<ContentPath> getInFlight(Group group) {
-        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(this.group.getName(), GroupStrategy.getType(group))));
+        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(this.group.getName(), GroupStrategy.createContentPath(group))));
     }
 
     public Group getGroup() {

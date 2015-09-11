@@ -35,7 +35,7 @@ public class MinutePath implements ContentPath {
     }
 
     public MinutePath() {
-        this(TimeUtil.now());
+        this(TimeUtil.Unit.MINUTES.round(TimeUtil.now()).minusMinutes(1));
     }
 
     @Override
