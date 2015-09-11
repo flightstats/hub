@@ -51,7 +51,7 @@ public class GroupLeader implements Leader {
     private Retryer<ClientResponse> retryer;
 
     private boolean exited = false;
-    private GroupBatch groupBatch;
+    private GroupStrategy groupStrategy;
 
     @Inject
     public GroupLeader(CuratorFramework curator, ChannelService channelService,
@@ -92,16 +92,15 @@ public class GroupLeader implements Leader {
             return;
         }
         this.group = foundGroup.get();
-        //todo - gfm - 9/9/15 - add option for batch caller
-        groupBatch = new SingleGroupBatch(group, lastContentPath, channelService);
+        groupStrategy = GroupStrategy.getStrategy(group, lastContentPath, channelService);
         try {
-            ContentPath lastCompletedPath = groupBatch.getStartingPath();
+            ContentPath lastCompletedPath = groupStrategy.getStartingPath();
             logger.info("last completed at {} {}", lastCompletedPath, group.getName());
             if (hasLeadership.get()) {
                 sendInProcess(lastCompletedPath);
-                groupBatch.start(group, lastCompletedPath);
+                groupStrategy.start(group, lastCompletedPath);
                 while (hasLeadership.get()) {
-                    Optional<ContentPath> nextOptional = groupBatch.next();
+                    Optional<ContentPath> nextOptional = groupStrategy.next();
                     if (nextOptional.isPresent()) {
                         send(nextOptional.get());
                     }
@@ -110,7 +109,7 @@ public class GroupLeader implements Leader {
         } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + group.getName());
         } finally {
-            logger.info("stopping last completed at {} {}", groupBatch.getLastCompleted(), group.getName());
+            logger.info("stopping last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
             closeQueue();
             if (deleteOnExit.get()) {
                 delete();
@@ -123,7 +122,7 @@ public class GroupLeader implements Leader {
         logger.trace("sending in process {} to {}", inProcessSet, group.getName());
         for (ContentPath toSend : inProcessSet) {
             if (toSend.compareTo(lastCompletedPath) < 0) {
-                send(toSend);
+                send(groupStrategy.inProcess(toSend));
             } else {
                 groupInProcess.remove(group.getName(), toSend);
             }
@@ -139,7 +138,7 @@ public class GroupLeader implements Leader {
             public Object call() throws Exception {
                 groupInProcess.add(group.getName(), contentPath);
                 try {
-                    makeTimedCall(groupBatch.createResponse(contentPath, mapper));
+                    makeTimedCall(groupStrategy.createResponse(contentPath, mapper));
                     lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
                     groupInProcess.remove(group.getName(), contentPath);
                     logger.trace("completed {} call to {} ", contentPath, group.getName());
@@ -195,8 +194,8 @@ public class GroupLeader implements Leader {
 
     private void closeQueue() {
         try {
-            if (groupBatch != null) {
-                groupBatch.close();
+            if (groupStrategy != null) {
+                groupStrategy.close();
             }
         } catch (Exception e) {
             logger.warn("unable to close callbackQueue", e);
@@ -266,7 +265,7 @@ public class GroupLeader implements Leader {
     }
 
     public List<ContentPath> getInFlight(Group group) {
-        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(this.group.getName(), GroupBatch.getType(group))));
+        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(this.group.getName(), GroupStrategy.getType(group))));
     }
 
     public Group getGroup() {

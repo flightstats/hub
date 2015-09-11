@@ -131,7 +131,7 @@ public class GroupCallbackImpl implements GroupCallback {
 
     @Override
     public void getStatus(Group group, GroupStatus.GroupStatusBuilder statusBuilder) {
-        statusBuilder.lastCompleted(lastContentPath.get(group.getName(), GroupBatch.getType(group), GroupLeader.GROUP_LAST_COMPLETED));
+        statusBuilder.lastCompleted(lastContentPath.get(group.getName(), GroupStrategy.getType(group), GroupLeader.GROUP_LAST_COMPLETED));
         GroupLeader groupLeader = activeGroups.get(group.getName());
         if (groupLeader != null) {
             statusBuilder.errors(groupLeader.getErrors());

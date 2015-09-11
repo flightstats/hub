@@ -14,6 +14,6 @@ public interface ContentPath extends Comparable<ContentPath> {
 
     String toZk();
 
-    ContentKey fromZk(String value);
+    ContentPath fromZk(String value);
 
 }

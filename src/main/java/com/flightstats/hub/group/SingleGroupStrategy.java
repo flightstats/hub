@@ -25,9 +25,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class SingleGroupBatch implements GroupBatch {
+public class SingleGroupStrategy implements GroupStrategy {
 
-    private final static Logger logger = LoggerFactory.getLogger(SingleGroupBatch.class);
+    private final static Logger logger = LoggerFactory.getLogger(SingleGroupStrategy.class);
 
     private final Group group;
     private final LastContentPath lastContentPath;
@@ -39,7 +39,7 @@ public class SingleGroupBatch implements GroupBatch {
     private QueryGenerator queryGenerator;
 
 
-    public SingleGroupBatch(Group group, LastContentPath lastContentPath, ChannelService channelService) {
+    public SingleGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
         this.group = group;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
@@ -68,12 +68,17 @@ public class SingleGroupBatch implements GroupBatch {
     }
 
     @Override
-    public ObjectNode createResponse(ContentPath key, ObjectMapper mapper) {
+    public ObjectNode createResponse(ContentPath contentPath, ObjectMapper mapper) {
         ObjectNode response = mapper.createObjectNode();
         response.put("name", group.getName());
         ArrayNode uris = response.putArray("uris");
-        uris.add(group.getChannelUrl() + "/" + key.toUrl());
+        uris.add(group.getChannelUrl() + "/" + contentPath.toUrl());
         return response;
+    }
+
+    @Override
+    public ContentPath inProcess(ContentPath contentPath) {
+        return contentPath;
     }
 
     public Optional<ContentPath> next() {
@@ -91,7 +96,7 @@ public class SingleGroupBatch implements GroupBatch {
         ContentKey startingKey = (ContentKey) startingPath;
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         queryGenerator = new QueryGenerator(startingKey.getTime(), channel);
-        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("group-" + group.getName() + "-queue-%s").build();
+        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("single-group-" + group.getName() + "-%s").build();
         ExecutorService executorService = Executors.newSingleThreadExecutor(factory);
         executorService.submit(new Runnable() {
 
@@ -161,7 +166,7 @@ public class SingleGroupBatch implements GroupBatch {
                         }
                     }
                 } catch (InterruptedException e) {
-                    logger.info("InterruptedException " + e.getMessage());
+                    logger.info("InterruptedException " + channel + " " + e.getMessage());
                     throw new RuntimeInterruptedException(e);
                 }
             }

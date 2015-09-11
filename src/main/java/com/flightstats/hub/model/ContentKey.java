@@ -22,7 +22,7 @@ public class ContentKey implements ContentPath {
     private final String hash;
 
     public ContentKey() {
-        this(new DateTime(DateTimeZone.UTC), RandomStringUtils.randomAlphanumeric(6));
+        this(TimeUtil.now(), RandomStringUtils.randomAlphanumeric(6));
     }
 
     public ContentKey(DateTime time, String hash) {

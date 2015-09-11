@@ -127,4 +127,8 @@ public class Group {
         }
         return group;
     }
+
+    public boolean isMinute() {
+        return MINUTE.equalsIgnoreCase(getBatch());
+    }
 }
