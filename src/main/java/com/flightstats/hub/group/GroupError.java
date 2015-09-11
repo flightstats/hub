@@ -91,6 +91,8 @@ public class GroupError {
             for (String child : children) {
                 errors.add(new String(curator.getData().forPath(getChildPath(errorRoot, child))));
             }
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("no node for children " + errorRoot);
         } catch (Exception e) {
             logger.warn("unable to get children " + errorRoot, e);
         }
