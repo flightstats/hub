@@ -95,7 +95,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
                     logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
                     while (nextTime.isBefore(stable)) {
                         MinutePath nextPath = createMinutePath(nextTime);
-                        logger.trace("results {} {}", channel, nextPath);
+                        logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
                         queue.put(nextPath);
                         lastAdded = nextPath;
                         nextTime = lastAdded.getTime().plusMinutes(1);

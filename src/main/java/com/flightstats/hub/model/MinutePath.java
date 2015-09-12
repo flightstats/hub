@@ -16,7 +16,7 @@ import java.util.Collections;
 
 @Getter
 @EqualsAndHashCode(of = "time")
-@ToString
+@ToString(of = "time")
 public class MinutePath implements ContentPath {
     private final static Logger logger = LoggerFactory.getLogger(MinutePath.class);
 
@@ -64,8 +64,9 @@ public class MinutePath implements ContentPath {
     }
 
     @Override
-    public int compareTo(ContentPath o) {
-        return 0;
+    public int compareTo(ContentPath contentPath) {
+        MinutePath other = (MinutePath) contentPath;
+        return time.compareTo(other.time);
     }
 
     public static MinutePath fromBytes(byte[] bytes) {

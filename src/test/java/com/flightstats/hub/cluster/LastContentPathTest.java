@@ -1,6 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
@@ -13,8 +14,9 @@ import static org.junit.Assert.assertEquals;
 
 public class LastContentPathTest {
 
+    private static final String BASE_PATH = "/GroupLastCompleted/";
     private static CuratorFramework curator;
-    private LastContentPath contentKeyValue;
+    private LastContentPath lastContentPath;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -23,7 +25,7 @@ public class LastContentPathTest {
 
     @Before
     public void setUp() throws Exception {
-        contentKeyValue = new LastContentPath(curator);
+        lastContentPath = new LastContentPath(curator);
     }
 
     @Test
@@ -31,32 +33,49 @@ public class LastContentPathTest {
         String name = "testLifeCycle";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
         ContentKey key1 = new ContentKey(start, "B");
-        contentKeyValue.initialize(name, key1, "/GroupLastCompleted/");
-        assertEquals(key1, contentKeyValue.get(name, new ContentKey(), "/GroupLastCompleted/"));
+        lastContentPath.initialize(name, key1, BASE_PATH);
+        assertEquals(key1, lastContentPath.get(name, new ContentKey(), BASE_PATH));
 
         ContentKey key2 = new ContentKey(start.plusMillis(1), "C");
-        contentKeyValue.updateIncrease(key2, name, "/GroupLastCompleted/");
-        assertEquals(key2, contentKeyValue.get(name, new ContentKey(), "/GroupLastCompleted/"));
+        lastContentPath.updateIncrease(key2, name, BASE_PATH);
+        assertEquals(key2, lastContentPath.get(name, new ContentKey(), BASE_PATH));
 
         ContentKey key3 = new ContentKey(start.minusMillis(1), "A");
-        contentKeyValue.updateIncrease(key3, name, "/GroupLastCompleted/");
-        assertEquals(key2, contentKeyValue.get(name, new ContentKey(), "/GroupLastCompleted/"));
+        lastContentPath.updateIncrease(key3, name, BASE_PATH);
+        assertEquals(key2, lastContentPath.get(name, new ContentKey(), BASE_PATH));
 
         ContentKey key4 = new ContentKey(start.plusMinutes(1), "D");
-        contentKeyValue.updateIncrease(key4, name, "/GroupLastCompleted/");
-        assertEquals(key4, contentKeyValue.get(name, new ContentKey(), "/GroupLastCompleted/"));
+        lastContentPath.updateIncrease(key4, name, BASE_PATH);
+        assertEquals(key4, lastContentPath.get(name, new ContentKey(), BASE_PATH));
 
-        contentKeyValue.delete(name, "/GroupLastCompleted/");
+        lastContentPath.delete(name, BASE_PATH);
         ContentKey contentKey = new ContentKey();
-        assertEquals(contentKey, contentKeyValue.get(name, contentKey, "/GroupLastCompleted/"));
+        assertEquals(contentKey, lastContentPath.get(name, contentKey, BASE_PATH));
     }
 
     @Test
     public void testCreateIfMissing() throws Exception {
         String name = "testCreateIfMissing";
         ContentKey key = new ContentKey();
-        assertEquals(key, contentKeyValue.get(name, key, "/GroupLastCompleted/"));
-        assertEquals(key, contentKeyValue.get(name, new ContentKey(), "/GroupLastCompleted/"));
+        assertEquals(key, lastContentPath.get(name, key, BASE_PATH));
+        assertEquals(key, lastContentPath.get(name, new ContentKey(), BASE_PATH));
+    }
+
+    @Test
+    public void testMinutePath() {
+        String name = "testMinutePath";
+
+        MinutePath minutePath = new MinutePath();
+        lastContentPath.initialize(name, minutePath, BASE_PATH);
+        assertEquals(minutePath, lastContentPath.get(name, new MinutePath(), BASE_PATH));
+
+        MinutePath nextPath = new MinutePath(minutePath.getTime().plusMinutes(1));
+        lastContentPath.updateIncrease(nextPath, name, BASE_PATH);
+        assertEquals(nextPath, lastContentPath.get(name, new MinutePath(), BASE_PATH));
+
+        nextPath = new MinutePath(nextPath.getTime().plusMinutes(1));
+        lastContentPath.updateIncrease(nextPath, name, BASE_PATH);
+        assertEquals(nextPath, lastContentPath.get(name, new MinutePath(), BASE_PATH));
     }
 
 }
