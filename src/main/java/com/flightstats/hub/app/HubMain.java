@@ -50,7 +50,9 @@ public class HubMain {
         HubServices.start(HubServices.TYPE.PRE_START);
         server.start();
         logger.info("Jetty server has been started.");
-        HubServices.start(HubServices.TYPE.POST_START);
+        HubServices.start(HubServices.TYPE.INITIAL_POST_START);
+        logger.info("completed initial post start");
+        HubServices.start(HubServices.TYPE.FINAL_POST_START);
         return server;
     }
 

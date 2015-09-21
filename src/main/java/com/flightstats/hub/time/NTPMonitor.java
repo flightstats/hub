@@ -30,7 +30,7 @@ public class NTPMonitor {
     @Inject
     public NTPMonitor(MetricsSender sender) {
         this.sender = sender;
-        HubServices.register(new TimeMonitorService(), HubServices.TYPE.POST_START);
+        HubServices.register(new TimeMonitorService(), HubServices.TYPE.FINAL_POST_START);
         minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
         maxPostTimeMillis = HubProperties.getProperty("app.maxPostTimeMillis", 1000);
     }
