@@ -3,7 +3,6 @@ package com.flightstats.hub.group;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.google.common.base.Optional;
 import com.google.gson.Gson;
@@ -79,8 +78,7 @@ public class Group {
         try {
             JsonNode root = mapper.readTree(json);
             if (root.has("startItem")) {
-                //todo - gfm - 9/10/15 - this needs to handle ContentPath too
-                Optional<ContentKey> keyOptional = ContentKey.fromFullUrl(root.get("startItem").asText());
+                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("startItem").asText());
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
                 }

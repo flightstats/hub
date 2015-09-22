@@ -1,6 +1,7 @@
 package com.flightstats.hub.group;
 
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.MinutePath;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +47,19 @@ public class GroupTest {
         ContentKey key = new ContentKey();
         String json = "{\"callbackUrl\":\"end\",\"channelUrl\":\"url\",\"startItem\":\"" +
                 "http://hub/channel/stuff/" + key.toUrl() +
+                "\"}";
+        Group cycled = Group.fromJson(json);
+        assertEquals(group, cycled);
+        assertEquals(key, cycled.getStartingKey());
+        String toJson = cycled.toJson();
+        assertNotNull(toJson);
+    }
+
+    @Test
+    public void testJsonContentPath() {
+        MinutePath key = new MinutePath();
+        String json = "{\"callbackUrl\":\"end\",\"channelUrl\":\"url\"," +
+                "\"startItem\":\"http://hub/channel/stuff/" + key.toUrl() +
                 "\"}";
         Group cycled = Group.fromJson(json);
         assertEquals(group, cycled);
