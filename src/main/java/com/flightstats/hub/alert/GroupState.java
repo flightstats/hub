@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupStatus;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
 import com.google.common.base.Optional;
 import com.sun.jersey.api.client.Client;
@@ -48,7 +49,7 @@ public class GroupState {
         if (latestKey.isPresent()) {
             builder.channelLatest(latestKey.get());
         }
-        Optional<ContentKey> lastCompletedCallback = ContentKey.fromFullUrl(jsonNode.get("lastCompletedCallback").asText());
+        Optional<ContentPath> lastCompletedCallback = ContentPath.fromFullUrl(jsonNode.get("lastCompletedCallback").asText());
         if (lastCompletedCallback.isPresent()) {
             builder.lastCompleted(lastCompletedCallback.get());
         }
