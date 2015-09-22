@@ -4,31 +4,29 @@ var request = require('request');
 var http = require('http');
 var groupName = utils.randomChannelName();
 var testName = __filename;
-var groupConfigA = {
+var groupConfig = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',
-    parallelCalls: 1,
-    batch: 'SINGLE'
-
+    batch: 'MINUTE'
 };
 
-var groupConfigB = {
+var groupConfig2 = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',
-    parallelCalls: 2,
-    batch: 'SINGLE'
-
+    batch: 'MINUTE',
+    parallelCalls: 1
 };
 
 describe(testName, function () {
 
-    utils.putGroup(groupName, groupConfigA);
+    utils.putGroup(groupName, groupConfig);
 
-    utils.getGroup(groupName, groupConfigA);
+    utils.getGroup(groupName, groupConfig2);
 
-    utils.putGroup(groupName, groupConfigB, 200);
+    utils.putGroup(groupName, groupConfig2, 200);
 
-    utils.getGroup(groupName, groupConfigB);
+    utils.deleteGroup(groupName);
 
+    utils.getGroup(groupName, groupConfig2, 404);
 });
 

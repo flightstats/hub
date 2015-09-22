@@ -31,5 +31,11 @@ public class GroupValidator {
         if (!ChannelNameUtils.isValidChannelUrl(group.getChannelUrl())) {
             throw new InvalidRequestException("{\"error\": \"Invalid channelUrl\"}");
         }
+        group = group.withBatch(StringUtils.upperCase(group.getBatch()));
+        if (Group.MINUTE.equals(group.getBatch()) || Group.SINGLE.equals(group.getBatch())) {
+            return;
+        } else {
+            throw new InvalidRequestException("{\"error\": \"Allowed values for batch are 'SINGLE' and 'MINUTE'\"}");
+        }
     }
 }

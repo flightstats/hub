@@ -7,7 +7,8 @@ var testName = __filename;
 var groupConfig = {
     callbackUrl : 'http://nothing/callback',
     channelUrl : 'http://nothing/channel/notHere',
-    parallelCalls : 2
+    parallelCalls: 2,
+    batch: 'SINGLE'
 
 };
 

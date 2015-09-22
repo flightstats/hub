@@ -1,6 +1,6 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -11,17 +11,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class GroupContentKeySet {
-    private final static Logger logger = LoggerFactory.getLogger(GroupContentKeySet.class);
+public class GroupContentPathSet {
+    private final static Logger logger = LoggerFactory.getLogger(GroupContentPathSet.class);
 
     private final CuratorFramework curator;
 
     @Inject
-    public GroupContentKeySet(CuratorFramework curator) {
+    public GroupContentPathSet(CuratorFramework curator) {
         this.curator = curator;
     }
 
-    public void add(String groupName, ContentKey key) {
+    public void add(String groupName, ContentPath key) {
         String path = getPath(groupName, key);
         try {
             curator.create().creatingParentsIfNeeded().forPath(path);
@@ -32,7 +32,7 @@ public class GroupContentKeySet {
         }
     }
 
-    public void remove(String groupName, ContentKey key) {
+    public void remove(String groupName, ContentPath key) {
         String path = getPath(groupName, key);
         try {
             curator.delete().forPath(path);
@@ -41,13 +41,13 @@ public class GroupContentKeySet {
         }
     }
 
-    public Set<ContentKey> getSet(String groupName) {
+    public Set<ContentPath> getSet(String groupName, ContentPath type) {
         String path = getPath(groupName);
-        Set<ContentKey> keys = new HashSet<>();
+        Set<ContentPath> keys = new HashSet<>();
         try {
             List<String> strings = curator.getChildren().forPath(path);
             for (String string : strings) {
-                keys.add(ContentKey.fromZk(string));
+                keys.add(type.fromZk(string));
             }
         } catch (KeeperException.NoNodeException e) {
             logger.info("no node for {}", path);
@@ -61,7 +61,7 @@ public class GroupContentKeySet {
         return "/GroupInFlight/" + groupName;
     }
 
-    private String getPath(String groupName, ContentKey key) {
+    private String getPath(String groupName, ContentPath key) {
         return getPath(groupName) + "/" + key.toZk();
     }
 

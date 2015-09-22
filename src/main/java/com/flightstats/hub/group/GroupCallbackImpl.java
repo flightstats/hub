@@ -1,10 +1,9 @@
 package com.flightstats.hub.group;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.LastContentKey;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
-import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -27,17 +26,17 @@ public class GroupCallbackImpl implements GroupCallback {
 
     private final WatchManager watchManager;
     private final GroupService groupService;
-    private final Provider<GroupCaller> callerProvider;
-    private LastContentKey lastContentKey;
-    private final Map<String, GroupCaller> activeGroups = new HashMap<>();
+    private final Provider<GroupLeader> leaderProvider;
+    private LastContentPath lastContentPath;
+    private final Map<String, GroupLeader> activeGroups = new HashMap<>();
 
     @Inject
     public GroupCallbackImpl(WatchManager watchManager, GroupService groupService,
-                             Provider<GroupCaller> callerProvider, LastContentKey lastContentKey) {
+                             Provider<GroupLeader> leaderProvider, LastContentPath lastContentPath) {
         this.watchManager = watchManager;
         this.groupService = groupService;
-        this.callerProvider = callerProvider;
-        this.lastContentKey = lastContentKey;
+        this.leaderProvider = leaderProvider;
+        this.lastContentPath = lastContentPath;
         HubServices.registerPreStop(new GroupCallbackService());
     }
 
@@ -63,16 +62,16 @@ public class GroupCallbackImpl implements GroupCallback {
         Iterable<Group> groups = groupService.getGroups();
         for (Group group : groups) {
             groupsToStop.remove(group.getName());
-            GroupCaller activeCaller = activeGroups.get(group.getName());
-            if (activeCaller == null) {
+            GroupLeader activeLeader = activeGroups.get(group.getName());
+            if (activeLeader == null) {
                 startGroup(group);
-            } else if (activeCaller.getGroup().isChanged(group)) {
+            } else if (activeLeader.getGroup().isChanged(group)) {
                 logger.info("changed group {}", group);
                 activeGroups.remove(group.getName());
-                activeCaller.exit(false);
+                activeLeader.exit(false);
                 startGroup(group);
             } else {
-                logger.info("not changed!");
+                logger.info("group not changed {}", group);
             }
         }
         stop(groupsToStop, true);
@@ -83,9 +82,9 @@ public class GroupCallbackImpl implements GroupCallback {
         logger.info("stopping groups {}", groupsToStop);
         for (String groupToStop : groupsToStop) {
             logger.info("stopping " + groupToStop);
-            final GroupCaller groupCaller = activeGroups.remove(groupToStop);
+            final GroupLeader groupLeader = activeGroups.remove(groupToStop);
             groups.add(() -> {
-                groupCaller.exit(delete);
+                groupLeader.exit(delete);
                 return null;
             });
         }
@@ -100,19 +99,19 @@ public class GroupCallbackImpl implements GroupCallback {
 
     private void startGroup(Group group) {
         logger.trace("starting group {}", group);
-        GroupCaller groupCaller = callerProvider.get();
-        groupCaller.tryLeadership(group);
-        activeGroups.put(group.getName(), groupCaller);
+        GroupLeader groupLeader = leaderProvider.get();
+        groupLeader.tryLeadership(group);
+        activeGroups.put(group.getName(), groupLeader);
     }
 
     @Override
     public void delete(String name) {
-        GroupCaller groupCaller = activeGroups.get(name);
+        GroupLeader groupLeader = activeGroups.get(name);
         notifyWatchers();
-        if (groupCaller != null) {
-            logger.info("deleting...{}", groupCaller);
+        if (groupLeader != null) {
+            logger.info("deleting...{}", groupLeader);
             for (int i = 0; i < 30; i++) {
-                if (groupCaller.deleteIfReady()) {
+                if (groupLeader.deleteIfReady()) {
                     logger.info("deleted successfully! " + name);
                     return;
                 } else {
@@ -120,7 +119,7 @@ public class GroupCallbackImpl implements GroupCallback {
                     logger.info("waiting to delete " + name);
                 }
             }
-            groupCaller.deleteAnyway();
+            groupLeader.deleteAnyway();
         }
 
     }
@@ -132,11 +131,11 @@ public class GroupCallbackImpl implements GroupCallback {
 
     @Override
     public void getStatus(Group group, GroupStatus.GroupStatusBuilder statusBuilder) {
-        statusBuilder.lastCompleted(lastContentKey.get(group.getName(), ContentKey.NONE, GroupCaller.GROUP_LAST_COMPLETED));
-        GroupCaller groupCaller = activeGroups.get(group.getName());
-        if (groupCaller != null) {
-            statusBuilder.errors(groupCaller.getErrors());
-            statusBuilder.inFlight(groupCaller.getInFlight());
+        statusBuilder.lastCompleted(lastContentPath.get(group.getName(), GroupStrategy.createContentPath(group), GroupLeader.GROUP_LAST_COMPLETED));
+        GroupLeader groupLeader = activeGroups.get(group.getName());
+        if (groupLeader != null) {
+            statusBuilder.errors(groupLeader.getErrors());
+            statusBuilder.inFlight(groupLeader.getInFlight(group));
         } else {
             statusBuilder.errors(Collections.emptyList());
             statusBuilder.inFlight(Collections.emptyList());

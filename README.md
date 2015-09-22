@@ -678,6 +678,10 @@ delete the callback first.
 
 * `paused` is optional and defaults to false.   When true, this will pause a group callback.
 
+* `batch` is optional and defaults to `SINGLE`, which will return each item by itself.
+  Setting the value to `MINUTE` will return each minute's worth of data in the channel.  MINUTE callbacks will return an empty 
+  array of uris if there are no items.  
+
 To get a list of existing group callbacks:
 
 `GET http://hub/group`
@@ -692,12 +696,13 @@ To create a new group callback:
   "channelUrl" : "http://hub/channel/stumptown",
   "parallelCalls" : 2,
   "startItem" : "http://hub/channel/stumptown/2015/02/06/22/28/43/239/s03ub2",
-  "paused" : false
+  "paused" : false,
+  "batch" : "SINGLE"
 }
 ```
 
 Once a Group is created, the channelUrl can not change.  PUT may be safely called multiple times with the same
- configuration.  Changes to `startItem` will be ignored.
+ configuration.  Changes to `startItem` and `batch` will be ignored.
 
 To see the configuration and status of a group callback:
 
@@ -712,13 +717,31 @@ DELETE will return a 202, and it may take up to a minute to properly stop a grou
 #### Behavior
 
 The application listening at `callbackUrl` will get a payload POSTed to it for every new item in the channel, starting after `startItem` or at the time the group is created.
-200 is considered a successful response.  Any other response is considered an error, and will cause the server to retry.   Redirects are allowed.                                        
+A 200 client response is considered successful.  Any other response is considered an error, and will cause the server to retry.   Redirects are allowed.                                        
 Retries will use an exponential backoff up to one minute, and the server will continue to retry at one minute intervals indefinitely.
+
+An example SINGLE payload:
 
 ``` json
 {
   "name" : "stumptownCallback",
   "uris" : [ "http://hub/channel/stumptown/2014/01/13/10/42/31/759/s03ub2" ]
+}
+```
+
+An example BATCH payload:
+
+``` json
+{
+  "name" : "stumptownCallbackBatch",
+  "id" : "2014/01/13/10/42",
+  "url" : "http://hub/channel/stumptown/2014/01/13/10/42"
+  "batchUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?batch=true"
+  "uris" : [ 
+    "http://hub/channel/stumptown/2014/01/13/10/42/05/436/abcdef",
+    "http://hub/channel/stumptown/2014/01/13/10/42/31/759/s03ub2"
+    "http://hub/channel/stumptown/2014/01/13/10/42/39/029/zxcvbn"
+  ]
 }
 ```
 

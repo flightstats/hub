@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.metrics.EventTimed;
-import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -71,6 +71,7 @@ public class GroupResource {
         root.put("channelUrl", group.getChannelUrl());
         root.put("parallelCalls", group.getParallelCalls());
         root.put("paused", group.isPaused());
+        root.put("batch", group.getBatch());
         if (status.getLastCompleted() == null) {
             root.put("lastCompletedCallback", "");
         } else {
@@ -82,8 +83,8 @@ public class GroupResource {
             root.put("channelLatest", group.getChannelUrl() + "/" + status.getChannelLatest().toUrl());
         }
         ArrayNode inFlight = root.putArray("inFlight");
-        for (ContentKey key : status.getInFlight()) {
-            inFlight.add(group.getChannelUrl() + "/" + key.toUrl());
+        for (ContentPath contentPath : status.getInFlight()) {
+            inFlight.add(group.getChannelUrl() + "/" + contentPath.toUrl());
         }
         ArrayNode errors = root.putArray("errors");
         for (String error : status.getErrors()) {
@@ -105,9 +106,6 @@ public class GroupResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsertGroup(@PathParam("name") String name, String body) {
         Group group = Group.fromJson(body, groupService.getGroup(name)).withName(name);
-        if (group.getStartingKey() == null) {
-            group = group.withStartingKey(new ContentKey());
-        }
         Optional<Group> upsertGroup = groupService.upsertGroup(group);
         if (upsertGroup.isPresent()) {
             return Response.ok(getLinkedGroup(group)).build();

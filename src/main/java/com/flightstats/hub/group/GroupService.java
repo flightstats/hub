@@ -1,6 +1,6 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.cluster.LastContentKey;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.model.ContentKey;
@@ -16,17 +16,17 @@ public class GroupService {
     private final GroupDao groupDao;
     private final GroupValidator groupValidator;
     private final GroupCallback groupCallback;
-    private final LastContentKey lastContentKey;
+    private final LastContentPath lastContentPath;
     private ChannelService channelService;
 
     @Inject
     public GroupService(GroupDao groupDao, GroupValidator groupValidator,
-                        GroupCallback groupCallback, LastContentKey lastContentKey,
+                        GroupCallback groupCallback, LastContentPath lastContentPath,
                         ChannelService channelService) {
         this.groupDao = groupDao;
         this.groupValidator = groupValidator;
         this.groupCallback = groupCallback;
-        this.lastContentKey = lastContentKey;
+        this.lastContentPath = lastContentPath;
         this.channelService = channelService;
     }
 
@@ -43,7 +43,7 @@ public class GroupService {
                 throw new ConflictException("{\"error\": \"channelUrl can not change. \"}");
             }
         }
-        lastContentKey.initialize(group.getName(), group.getStartingKey(), GroupCaller.GROUP_LAST_COMPLETED);
+        lastContentPath.initialize(group.getName(), group.getStartingKey(), GroupLeader.GROUP_LAST_COMPLETED);
         groupDao.upsertGroup(group);
         groupCallback.notifyWatchers();
         return existingGroup;

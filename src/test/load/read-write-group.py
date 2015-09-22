@@ -15,12 +15,6 @@ from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
 
 
-
-
-
-
-
-
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -62,29 +56,35 @@ class WebsiteTasks(TaskSet):
         # First User - create channel - posts to channel, group callback on channel
         # Second User - create channel - posts to channel, parallel group callback on channel
         # Third User - create channel - posts to channel, replicate channel, group callback on replicated channel
+        # Fourth User - create channel - posts to channel, minute group callback on channel
         group_channel = self.channel
         parallel = 1
-        if self.number % 3 == 2:
+        batch = "SINGLE"
+        if self.number == 2:
             parallel = 2
-        if self.number % 3 == 0:
+        if self.number == 3:
             group_channel = self.channel + "_replicated"
             self.client.put("/channel/" + group_channel,
                             data=json.dumps({"name": group_channel, "ttlDays": "3",
                                              "replicationSource": groupConfig['host'] + "/channel/" + self.channel}),
                             headers={"Content-Type": "application/json"},
                             name="replication")
+        if self.number == 4:
+            batch = "MINUTE"
         group_name = "/group/locust_" + group_channel
         self.client.delete(group_name, name="group")
         logger.info("group channel " + group_channel + " parallel:" + str(parallel))
         groupCallbacks[self.channel] = {
             "data": [],
             "lock": threading.Lock(),
-            "parallel": parallel
+            "parallel": parallel,
+            "batch": batch
         }
         group = {
             "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
             "channelUrl": groupConfig['host'] + "/channel/" + group_channel,
-            "parallelCalls": parallel
+            "parallelCalls": parallel,
+            "batch": batch
         }
         self.client.put(group_name,
                         data=json.dumps(group),
@@ -193,10 +193,6 @@ class WebsiteTasks(TaskSet):
             logger.info("expected " + ", ".join(posted_items) + " found " + ", ".join(query_slice))
             events.request_failure.fire(request_type="sequential", name="compare", response_time=total_time
                                         , exception=-1)
-
-            # @task(1)
-        #    def day_query(self):
-        #        self.client.get(self.time_path("day"), name="time_day")
 
     @task(1)
     def hour_query(self):
@@ -320,20 +316,20 @@ class WebsiteTasks(TaskSet):
     def callback(channel):
         if request.method == 'POST':
             incoming_json = request.get_json()
-            incoming_uri = incoming_json['uris'][0]
-            if "_replicated" in incoming_uri:
-                incoming_uri = incoming_uri.replace("_replicated", "")
-            if channel not in groupCallbacks:
-                logger.info("incoming uri before locust tests started " + str(incoming_uri))
-                return "ok"
-            try:
-                groupCallbacks[channel]["lock"].acquire()
-                if groupCallbacks[channel]["parallel"] == 1:
-                    WebsiteTasks.verify_ordered(channel, incoming_uri, groupCallbacks, "group")
-                else:
-                    WebsiteTasks.verify_parallel(channel, incoming_uri)
-            finally:
-                groupCallbacks[channel]["lock"].release()
+            for incoming_uri in incoming_json['uris']:
+                if "_replicated" in incoming_uri:
+                    incoming_uri = incoming_uri.replace("_replicated", "")
+                if channel not in groupCallbacks:
+                    logger.info("incoming uri before locust tests started " + str(incoming_uri))
+                    return "ok"
+                try:
+                    groupCallbacks[channel]["lock"].acquire()
+                    if groupCallbacks[channel]["parallel"] == 1:
+                        WebsiteTasks.verify_ordered(channel, incoming_uri, groupCallbacks, "group")
+                    else:
+                        WebsiteTasks.verify_parallel(channel, incoming_uri)
+                finally:
+                    groupCallbacks[channel]["lock"].release()
             return "ok"
         else:
             return jsonify(items=groupCallbacks[channel]["data"])

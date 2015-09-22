@@ -1,6 +1,7 @@
 package com.flightstats.hub.group;
 
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.Before;
@@ -10,10 +11,10 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 
-public class GroupContentKeySetTest {
+public class GroupContentPathSetTest {
 
     private CuratorFramework curator;
-    private GroupContentKeySet groupSet;
+    private GroupContentPathSet groupSet;
     private String groupName;
 
     @Before
@@ -23,7 +24,7 @@ public class GroupContentKeySetTest {
 
     @Test
     public void testLifecycle() throws Exception {
-        groupSet = new GroupContentKeySet(curator);
+        groupSet = new GroupContentPathSet(curator);
         ContentKey first = new ContentKey();
         ContentKey second = new ContentKey();
         ContentKey third = new ContentKey();
@@ -38,27 +39,28 @@ public class GroupContentKeySetTest {
 
     private void removeAndCompare(ContentKey key, int expected) {
         groupSet.remove(groupName, key);
-        Set<ContentKey> set = groupSet.getSet(groupName);
+        Set<ContentPath> set = groupSet.getSet(groupName, key);
         assertEquals(expected, set.size());
         assertFalse(set.contains(key));
     }
 
     private void addAndCompare(ContentKey key, int expected) {
         groupSet.add(groupName, key);
-        Set<ContentKey> set = groupSet.getSet(groupName);
+        Set<ContentPath> set = groupSet.getSet(groupName, key);
         assertEquals(expected, set.size());
         assertTrue(set.contains(key));
     }
 
     @Test
     public void testDelete() throws Exception {
-        groupSet = new GroupContentKeySet(curator);
+        groupSet = new GroupContentPathSet(curator);
         groupName = "testDelete";
-        addAndCompare(new ContentKey(), 1);
+        ContentKey contentKey = new ContentKey();
+        addAndCompare(contentKey, 1);
         addAndCompare(new ContentKey(), 2);
         addAndCompare(new ContentKey(), 3);
         groupSet.delete(groupName);
-        assertEquals(0, groupSet.getSet(groupName).size());
+        assertEquals(0, groupSet.getSet(groupName, contentKey).size());
 
     }
 

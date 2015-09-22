@@ -1,7 +1,12 @@
 package com.flightstats.hub.group;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.ChannelNameUtils;
@@ -10,7 +15,6 @@ import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,15 +25,12 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-/**
- * Every second (with a second lag) we should query new item ids for a channel
- * item ids are put onto a queue, with the queue being size limited to prevent resource explosion
- */
-@SuppressWarnings({"Convert2Lambda", "Convert2streamapi"})
-public class CallbackQueue implements AutoCloseable {
+public class SingleGroupStrategy implements GroupStrategy {
 
-    private final static Logger logger = LoggerFactory.getLogger(CallbackQueue.class);
+    private final static Logger logger = LoggerFactory.getLogger(SingleGroupStrategy.class);
 
+    private final Group group;
+    private final LastContentPath lastContentPath;
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private AtomicBoolean error = new AtomicBoolean(false);
@@ -37,13 +38,50 @@ public class CallbackQueue implements AutoCloseable {
     private String channel;
     private QueryGenerator queryGenerator;
 
-    @Inject
-    public CallbackQueue(ChannelService channelService) {
-        this.channelService = channelService;
 
+    public SingleGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
+        this.group = group;
+        this.lastContentPath = lastContentPath;
+        this.channelService = channelService;
     }
 
-    public Optional<ContentKey> next() {
+    public ContentPath createContentPath() {
+        return ContentKey.NONE;
+    }
+
+    @Override
+    public ContentPath getStartingPath() {
+        ContentPath startingKey = group.getStartingKey();
+        if (null == startingKey) {
+            startingKey = new ContentKey();
+        }
+        return getLastCompleted(startingKey);
+    }
+
+    private ContentPath getLastCompleted(ContentPath defaultKey) {
+        return lastContentPath.get(group.getName(), (ContentKey) defaultKey, GroupLeader.GROUP_LAST_COMPLETED);
+    }
+
+    @Override
+    public ContentPath getLastCompleted() {
+        return getLastCompleted(ContentKey.NONE);
+    }
+
+    @Override
+    public ObjectNode createResponse(ContentPath contentPath, ObjectMapper mapper) {
+        ObjectNode response = mapper.createObjectNode();
+        response.put("name", group.getName());
+        ArrayNode uris = response.putArray("uris");
+        uris.add(group.getChannelUrl() + "/" + contentPath.toUrl());
+        return response;
+    }
+
+    @Override
+    public ContentPath inProcess(ContentPath contentPath) {
+        return contentPath;
+    }
+
+    public Optional<ContentPath> next() {
         if (error.get()) {
             throw new RuntimeException("unable to determine next");
         }
@@ -54,10 +92,11 @@ public class CallbackQueue implements AutoCloseable {
         }
     }
 
-    public void start(Group group, ContentKey startingKey) {
+    public void start(Group group, ContentPath startingPath) {
+        ContentKey startingKey = (ContentKey) startingPath;
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         queryGenerator = new QueryGenerator(startingKey.getTime(), channel);
-        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("group-" + group.getName() + "-queue-%s").build();
+        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("single-group-" + group.getName() + "-%s").build();
         ExecutorService executorService = Executors.newSingleThreadExecutor(factory);
         executorService.submit(new Runnable() {
 
@@ -127,7 +166,7 @@ public class CallbackQueue implements AutoCloseable {
                         }
                     }
                 } catch (InterruptedException e) {
-                    logger.info("InterruptedException " + e.getMessage());
+                    logger.info("InterruptedException " + channel + " " + e.getMessage());
                     throw new RuntimeInterruptedException(e);
                 }
             }
@@ -135,7 +174,6 @@ public class CallbackQueue implements AutoCloseable {
         });
 
     }
-
 
 
     @Override

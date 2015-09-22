@@ -3,7 +3,7 @@ package com.flightstats.hub.group;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,6 +22,9 @@ import java.io.IOException;
 public class Group {
     private final static Logger logger = LoggerFactory.getLogger(Group.class);
 
+    public static final String SINGLE = "SINGLE";
+    public static final String MINUTE = "MINUTE";
+
     private final String callbackUrl;
     private final String channelUrl;
     @Wither
@@ -29,20 +32,23 @@ public class Group {
     @Wither
     private final String name;
     @Wither
-    private final transient ContentKey startingKey;
+    private final transient ContentPath startingKey;
+    @Wither
+    private final String batch;
 
     private final boolean paused;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @JsonIgnore
-    public ContentKey getStartingKey() {
+    public ContentPath getStartingKey() {
         return startingKey;
     }
 
     public boolean allowedToChange(Group other) {
         return channelUrl.equals(other.channelUrl)
-                && name.equals(other.name);
+                && name.equals(other.name)
+                && batch.equals(other.batch);
     }
 
     public boolean isChanged(Group other) {
@@ -66,12 +72,13 @@ public class Group {
                     .callbackUrl(existing.callbackUrl)
                     .channelUrl(existing.channelUrl)
                     .name(existing.name)
-                    .startingKey(existing.startingKey);
+                    .startingKey(existing.startingKey)
+                    .batch(existing.batch);
         }
         try {
             JsonNode root = mapper.readTree(json);
             if (root.has("startItem")) {
-                Optional<ContentKey> keyOptional = ContentKey.fromFullUrl(root.get("startItem").asText());
+                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("startItem").asText());
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
                 }
@@ -91,6 +98,9 @@ public class Group {
             if (root.has("parallelCalls")) {
                 builder.parallelCalls(root.get("parallelCalls").intValue());
             }
+            if (root.has("batch")) {
+                builder.batch(root.get("batch").asText());
+            }
         } catch (IOException e) {
             logger.warn("unable to parse " + json, e);
             throw new RuntimeException(e);
@@ -103,13 +113,23 @@ public class Group {
     }
 
     /**
-     * Returns a Group with all the defaults set if values aren't set.
+     * Returns a Group with all optional values set to the default.
      */
     public Group withDefaults() {
         Group group = this;
         if (parallelCalls == null) {
-            group = withParallelCalls(1);
+            group = group.withParallelCalls(1);
+        }
+        if (batch == null) {
+            group = group.withBatch("SINGLE");
+        }
+        if (getStartingKey() == null) {
+            group = group.withStartingKey(GroupStrategy.createContentPath(group));
         }
         return group;
+    }
+
+    public boolean isMinute() {
+        return MINUTE.equalsIgnoreCase(getBatch());
     }
 }

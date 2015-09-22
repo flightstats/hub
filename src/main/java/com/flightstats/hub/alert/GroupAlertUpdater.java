@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupStatus;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
 import org.joda.time.Minutes;
@@ -49,7 +50,7 @@ public class GroupAlertUpdater implements Callable<AlertStatus> {
             return alertStatus;
         }
         addHistory(channelLatest, groupStatus.getGroup(), "channelLatest");
-        ContentKey lastCompleted = groupStatus.getLastCompleted();
+        ContentPath lastCompleted = groupStatus.getLastCompleted();
         addHistory(lastCompleted, groupStatus.getGroup(), "lastCompletedCallback");
         Minutes minutes = Minutes.minutesBetween(lastCompleted.getTime(), channelLatest.getTime());
         logger.trace("alert {} latest {} completed {} minutes {}", alertConfig.getName(), channelLatest, lastCompleted, minutes);
@@ -64,9 +65,9 @@ public class GroupAlertUpdater implements Callable<AlertStatus> {
         return alertStatus;
     }
 
-    private void addHistory(ContentKey contentKey, Group group, String name) {
+    private void addHistory(ContentPath contentPath, Group group, String name) {
         AlertStatusHistory history = AlertStatusHistory.builder()
-                .href(group.getChannelUrl() + "/" + contentKey.toUrl())
+                .href(group.getChannelUrl() + "/" + contentPath.toUrl())
                 .name(name)
                 .build();
         alertStatus.getHistory().add(history);

@@ -22,11 +22,13 @@ public class GroupValidatorTest {
 
     @Test
     public void testName() throws Exception {
+        group = group.withDefaults();
         groupValidator.validate(group.withName("aA9"));
     }
 
     @Test
     public void testNameLarge() throws Exception {
+        group = group.withDefaults();
         groupValidator.validate(group.withName(Strings.repeat("B", 128)));
     }
 
@@ -73,6 +75,18 @@ public class GroupValidatorTest {
                 .parallelCalls(1)
                 .name("testInvalidChannelUrl")
                 .build());
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidBatch() throws Exception {
+        group = group.withBatch("non").withName("blah");
+        groupValidator.validate(group);
+    }
+
+    @Test
+    public void testBatchLowerCase() throws Exception {
+        group = group.withBatch("single").withName("blah");
+        groupValidator.validate(group);
     }
 
 }

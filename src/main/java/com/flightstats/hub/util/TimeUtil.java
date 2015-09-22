@@ -44,6 +44,10 @@ public class TimeUtil {
         return millisFormatter.parseDateTime(string);
     }
 
+    public static DateTime minutes(String string) {
+        return minutesFormatter.parseDateTime(string);
+    }
+
     public static String minutes(DateTime dateTime) {
         return dateTime.toString(minutesFormatter);
     }

@@ -15,14 +15,14 @@ import org.slf4j.LoggerFactory;
 
 @EqualsAndHashCode
 @Getter
-public class ContentKey implements Comparable<ContentKey> {
+public class ContentKey implements ContentPath {
     public static final ContentKey NONE = new ContentKey(new DateTime(1, DateTimeZone.UTC), "none");
     private final static Logger logger = LoggerFactory.getLogger(ContentKey.class);
     private final DateTime time;
     private final String hash;
 
     public ContentKey() {
-        this(new DateTime(DateTimeZone.UTC), RandomStringUtils.randomAlphanumeric(6));
+        this(TimeUtil.now(), RandomStringUtils.randomAlphanumeric(6));
     }
 
     public ContentKey(DateTime time, String hash) {
@@ -78,7 +78,8 @@ public class ContentKey implements Comparable<ContentKey> {
     }
 
     @Override
-    public int compareTo(ContentKey other) {
+    public int compareTo(ContentPath contentPath) {
+        ContentKey other = (ContentKey) contentPath;
         int diff = time.compareTo(other.time);
         if (diff == 0) {
             diff = hash.compareTo(other.hash);
@@ -86,15 +87,20 @@ public class ContentKey implements Comparable<ContentKey> {
         return diff;
     }
 
-    public byte[] getBytes() {
+    public byte[] toBytes() {
         return toUrl().getBytes(Charsets.UTF_8);
+    }
+
+    @Override
+    public ContentPath toContentPath(byte[] bytes) {
+        return fromBytes(bytes);
     }
 
     public String toZk() {
         return time.getMillis() + ":" + hash;
     }
 
-    public static ContentKey fromZk(String value) {
+    public ContentKey fromZk(String value) {
         String[] split = value.split(":");
         return new ContentKey(new DateTime(Long.parseLong(split[0]), DateTimeZone.UTC), split[1]);
     }
