@@ -47,7 +47,7 @@ public class S3WriterManager {
         this.cacheContentDao = cacheContentDao;
         this.longTermContentDao = longTermContentDao;
         this.s3WriteQueue = s3WriteQueue;
-        HubServices.register(new S3WriterManagerService(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
+        HubServices.register(new S3WriterManagerService(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
 
         this.offsetMinutes = serverOffset();
         queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d")
