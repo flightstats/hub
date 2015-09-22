@@ -69,7 +69,7 @@ public class GroupError {
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(errorRoot);
         } catch (KeeperException.NoNodeException e) {
-            logger.info("no node to delete " + errorRoot);
+            logger.info("unable to delete missing node " + errorRoot);
         } catch (Exception e) {
             logger.warn("unable to delete " + errorRoot, e);
         }
@@ -92,7 +92,7 @@ public class GroupError {
                 errors.add(new String(curator.getData().forPath(getChildPath(errorRoot, child))));
             }
         } catch (KeeperException.NoNodeException e) {
-            logger.info("no node for children " + errorRoot);
+            logger.info("unable to get missing node " + errorRoot);
         } catch (Exception e) {
             logger.warn("unable to get children " + errorRoot, e);
         }

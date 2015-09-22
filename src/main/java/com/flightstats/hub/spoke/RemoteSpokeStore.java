@@ -3,10 +3,12 @@ package com.flightstats.hub.spoke;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.RestClient;
 import com.google.common.base.Optional;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
@@ -44,10 +46,40 @@ public class RemoteSpokeStore {
         this.cluster = cluster;
         this.sender = sender;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
+        HubServices.register(new SpokeHealthHook(), HubServices.TYPE.INITIAL_POST_START);
+    }
+
+    private class SpokeHealthHook extends AbstractIdleService {
+
+        @Override
+        protected void startUp() throws Exception {
+            ClientResponse health = RestClient.defaultClient()
+                    .resource(HubHost.getLocalUriRoot() + "/health")
+                    .get(ClientResponse.class);
+            logger.info("localhost health {}", health);
+            Collection<String> server = CuratorSpokeCluster.getLocalServer();
+            String path = "Internal-Spoke-Health-Hook/";
+            TracesImpl traces = new TracesImpl();
+            for (int i = 0; i < 100; i++) {
+                ContentKey key = new ContentKey();
+                if (!write(path + key.toUrl(), key.toUrl().getBytes(), server, traces)) {
+                    traces.log(logger);
+                    throw new RuntimeException("unable to properly start Spoke, should exit!");
+                }
+            }
+            logger.info("completed warmup calls to Spoke!");
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+        }
     }
 
     public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
-        Collection<String> servers = cluster.getServers();
+        return write(path, payload, cluster.getServers(), content.getTraces());
+    }
+
+    private boolean write(final String path, final byte[] payload, Collection<String> servers, final Traces traces) throws InterruptedException {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
         AtomicBoolean reported = new AtomicBoolean();
@@ -56,14 +88,14 @@ public class RemoteSpokeStore {
                 @Override
                 public void run() {
                     String uri = HubHost.getScheme() + server + "/internal/spoke/payload/" + path;
-                    content.getTraces().add(new Trace(uri));
+                    traces.add(new Trace(uri));
                     try {
                         ClientResponse response = write_client.resource(uri).put(ClientResponse.class, payload);
                         long complete = System.currentTimeMillis();
-                        content.getTraces().add(new Trace(server, response.getEntity(String.class)));
+                        traces.add(new Trace(server, response.getEntity(String.class)));
                         if (response.getStatus() == 201) {
                             if (reported.compareAndSet(false, true)) {
-                                sender.send("heisenberg", complete - content.getTraces().getStart());
+                                sender.send("heisenberg", complete - traces.getStart());
                             }
                             quorumLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
@@ -72,7 +104,7 @@ public class RemoteSpokeStore {
                         }
                         response.close();
                     } catch (Exception e) {
-                        content.getTraces().add(new Trace(server, e.getMessage()));
+                        traces.add(new Trace(server, e.getMessage()));
                         logger.warn("write failed: " + server + " " + path, e);
                     }
 
@@ -80,7 +112,7 @@ public class RemoteSpokeStore {
             });
         }
         quorumLatch.await(stableSeconds, TimeUnit.SECONDS);
-        sender.send("consistent", System.currentTimeMillis() - content.getTraces().getStart());
+        sender.send("consistent", System.currentTimeMillis() - traces.getStart());
         return quorumLatch.getCount() != quorum;
     }
 

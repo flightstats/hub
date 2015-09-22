@@ -41,7 +41,7 @@ public class CuratorSpokeCluster {
                 }
             }
         });
-        HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.POST_START, HubServices.TYPE.PRE_STOP);
+        HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
     }
 
     public void register() throws UnknownHostException {
@@ -60,12 +60,18 @@ public class CuratorSpokeCluster {
         return CLUSTER_PATH + "/" + getHost() + RandomStringUtils.randomAlphanumeric(6);
     }
 
-    private String getHost() throws UnknownHostException {
+    private static String getHost() throws UnknownHostException {
         if (HubProperties.getProperty("app.encrypted", false)) {
             return HubHost.getLocalNamePort();
         } else {
             return HubHost.getLocalAddressPort();
         }
+    }
+
+    public static Collection<String> getLocalServer() throws UnknownHostException {
+        List<String> server = new ArrayList<>();
+        server.add(getHost());
+        return server;
     }
 
     public Collection<String> getServers() {
