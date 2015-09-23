@@ -2,7 +2,7 @@ package com.flightstats.hub.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -129,23 +129,32 @@ public class HubUtils {
         return channels;
     }
 
-    public void startGroupCallback(String groupName, String callbackUrl, String sourceChannel) {
-        String sourceRoot = StringUtils.substringBefore(sourceChannel, "/channel/");
-        ObjectNode payload = mapper.createObjectNode();
-        payload.put("callbackUrl", callbackUrl);
-        payload.put("channelUrl", sourceChannel);
-        String groupUrl = sourceRoot + "/group/" + groupName;
-        logger.info("starting {} with {}", groupUrl, payload);
+    public Optional<Group> getGroupCallback(String groupName, String sourceChannel) {
+        String groupUrl = getSourceUrl(sourceChannel) + "/group/" + groupName;
         ClientResponse response = followClient.resource(groupUrl)
                 .accept(MediaType.APPLICATION_JSON)
                 .type(MediaType.APPLICATION_JSON)
-                .put(ClientResponse.class, payload.toString());
+                .get(ClientResponse.class);
+        logger.info("get group response {}", response);
+        if (response.getStatus() < 400) {
+            return Optional.of(Group.fromJson(response.getEntity(String.class)));
+        }
+        return Optional.absent();
+    }
+
+    public void startGroupCallback(Group group) {
+        String groupUrl = getSourceUrl(group.getChannelUrl()) + "/group/" + group.getName();
+        String json = group.toJson();
+        logger.info("starting {} with {}", groupUrl, json);
+        ClientResponse response = followClient.resource(groupUrl)
+                .accept(MediaType.APPLICATION_JSON)
+                .type(MediaType.APPLICATION_JSON)
+                .put(ClientResponse.class, json);
         logger.info("start group response {}", response);
     }
 
     public void stopGroupCallback(String groupName, String sourceChannel) {
-        String sourceRoot = StringUtils.substringBefore(sourceChannel, "/channel/");
-        String groupUrl = sourceRoot + "/group/" + groupName;
+        String groupUrl = getSourceUrl(sourceChannel) + "/group/" + groupName;
         logger.info("delete {} ", groupUrl);
         ClientResponse response = followClient.resource(groupUrl)
                 .accept(MediaType.APPLICATION_JSON)
@@ -153,6 +162,10 @@ public class HubUtils {
                 .delete(ClientResponse.class);
         logger.info("stop group response {}", response);
 
+    }
+
+    private String getSourceUrl(String sourceChannel) {
+        return StringUtils.substringBefore(sourceChannel, "/channel/");
     }
 
     private ClientResponse getResponse(String url) {

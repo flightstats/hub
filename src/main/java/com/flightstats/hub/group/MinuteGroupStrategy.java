@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.replication.ChannelReplicatorImpl;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
@@ -48,7 +49,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
     }
 
     private ContentPath getLastCompleted(ContentPath defaultKey) {
-        return lastContentPath.get(group.getName(), (MinutePath) defaultKey, GroupLeader.GROUP_LAST_COMPLETED);
+        return lastContentPath.get(group.getName(), defaultKey, GroupLeader.GROUP_LAST_COMPLETED);
     }
 
     @Override
@@ -71,7 +72,9 @@ public class MinuteGroupStrategy implements GroupStrategy {
             @Override
             public void run() {
                 try {
-                    doWork();
+                    if (!shouldExit.get()) {
+                        doWork();
+                    }
                 } catch (Exception e) {
                     error.set(true);
                     logger.warn("unexpected issue with " + channel, e);
@@ -79,19 +82,13 @@ public class MinuteGroupStrategy implements GroupStrategy {
             }
 
             private void doWork() {
-                if (!shouldExit.get()) {
-                    if (channelService.isReplicating(channel)) {
-                        handleReplication();
-                    } else {
-                        handleNormal();
-                    }
-                }
-            }
-
-            private void handleNormal() {
                 try {
                     DateTime nextTime = lastAdded.getTime().plusMinutes(1);
                     DateTime stable = TimeUtil.stable().minusMinutes(1);
+                    if (channelService.isReplicating(channel)) {
+                        ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicatorImpl.REPLICATED_LAST_UPDATED);
+                        stable = contentPath.getTime().plusSeconds(1);
+                    }
                     logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
                     while (nextTime.isBefore(stable)) {
                         MinutePath nextPath = createMinutePath(nextTime);
@@ -104,12 +101,6 @@ public class MinuteGroupStrategy implements GroupStrategy {
                     logger.info("InterruptedException " + channel + " " + e.getMessage());
                     throw new RuntimeInterruptedException(e);
                 }
-            }
-
-            private void handleReplication() {
-                //todo - gfm - 9/11/15 -
-                logger.warn("minute group for replicated channel " + channel + "isn't supported yet :/ ");
-
             }
 
         }, getOffset(), 60, TimeUnit.SECONDS);

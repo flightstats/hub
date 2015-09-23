@@ -82,6 +82,11 @@ public class Group {
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
                 }
+            } else if (root.has("lastCompletedCallback")) {
+                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompletedCallback").asText());
+                if (keyOptional.isPresent()) {
+                    builder.startingKey(keyOptional.get());
+                }
             }
             if (root.has("name")) {
                 builder.name(root.get("name").asText());
@@ -131,5 +136,12 @@ public class Group {
 
     public boolean isMinute() {
         return MINUTE.equalsIgnoreCase(getBatch());
+    }
+
+    public static String getBatchType(boolean single) {
+        if (single) {
+            return SINGLE;
+        }
+        return MINUTE;
     }
 }

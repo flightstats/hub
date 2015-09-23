@@ -5,10 +5,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
+import com.flightstats.hub.replication.ChannelReplicatorImpl;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -59,7 +57,7 @@ public class SingleGroupStrategy implements GroupStrategy {
     }
 
     private ContentPath getLastCompleted(ContentPath defaultKey) {
-        return lastContentPath.get(group.getName(), (ContentKey) defaultKey, GroupLeader.GROUP_LAST_COMPLETED);
+        return lastContentPath.get(group.getName(), defaultKey, GroupLeader.GROUP_LAST_COMPLETED);
     }
 
     @Override
@@ -129,21 +127,20 @@ public class SingleGroupStrategy implements GroupStrategy {
 
             private void handleReplication() {
                 Collection<ContentKey> keys = Collections.EMPTY_LIST;
-                Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
-                if (latest.isPresent() && latest.get().compareTo(lastAdded) > 0) {
+                ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicatorImpl.REPLICATED_LAST_UPDATED);
+                if (contentPath.getTime().isAfter(lastAdded.getTime())) {
                     DirectionQuery query = DirectionQuery.builder()
                             .channelName(channel)
                             .contentKey(lastAdded)
                             .next(true)
                             .stable(true)
                             .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
-                            .count(50)
+                            .count(1000)
                             .build();
                     query.trace(true);
-                    query.getTraces().add("latest", latest.get());
+                    query.getTraces().add("latest", contentPath);
                     keys = channelService.getKeys(query)
                             .stream()
-                            .filter(key -> key.compareTo(latest.get()) <= 0)
                             .collect(Collectors.toCollection(TreeSet::new));
                     if (logger.isTraceEnabled()) {
                         query.getTraces().log(logger);

@@ -3,8 +3,10 @@ package com.flightstats.hub.replication;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -29,6 +31,9 @@ public class ReplicationCallbackResource {
     @Inject
     private HubUtils hubUtils;
 
+    @Inject
+    private LastContentPath lastContentPath;
+
     @POST
     public Response putPayload(@PathParam("channel") String channel, String data) {
         logger.trace("incoming {} {}", channel, data);
@@ -41,6 +46,14 @@ public class ReplicationCallbackResource {
                     channelService.insert(channel, content.get());
                 } else {
                     logger.warn("unable to get channel {} content {}", channel, uri.asText());
+                }
+            }
+            if (node.has("id")) {
+                String id = node.get("id").asText();
+                logger.trace("repl id {} for {}", id, channel);
+                Optional<MinutePath> pathOptional = MinutePath.fromUrl(id);
+                if (pathOptional.isPresent()) {
+                    lastContentPath.updateIncrease(pathOptional.get(), channel, ChannelReplicatorImpl.REPLICATED_LAST_UPDATED);
                 }
             }
         } catch (Exception e) {
