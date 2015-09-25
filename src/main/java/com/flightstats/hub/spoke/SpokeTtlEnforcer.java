@@ -35,7 +35,7 @@ public class SpokeTtlEnforcer {
     }
 
     public void run() {
-        DateTime ttlDateTime = TimeUtil.stable().minusMinutes(ttlMinutes);
+        DateTime ttlDateTime = TimeUtil.stable().minusMinutes(ttlMinutes + 1);
         String minutes = TimeUtil.minutes(ttlDateTime);
         String hours = TimeUtil.hours(ttlDateTime.minusHours(1));
         Iterable<ChannelConfig> channels = channelService.getChannels();
