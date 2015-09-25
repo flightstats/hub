@@ -56,12 +56,12 @@ public class SpokeTtlEnforcer {
                 runCommand(new String[]{"rm", "-rf", channelPath + "/" + hours});
             }
         }
-        //todo - gfm - 9/24/15 - compare list of channels to list of folders under spoke -  delete folders w/o channels
         dirSet.removeAll(channelSet);
+        dirSet.remove("lost+found");
         for (String dir : dirSet) {
             String dirPath = storagePath + "/" + dir;
             logger.info("removing dir without channel {}", dirPath);
-            //runCommand(new String[]{"rm", "-rf", dirPath});
+            runCommand(new String[]{"rm", "-rf", dirPath});
         }
     }
 
