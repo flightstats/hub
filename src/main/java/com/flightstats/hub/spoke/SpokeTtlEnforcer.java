@@ -14,6 +14,10 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -35,12 +39,16 @@ public class SpokeTtlEnforcer {
     }
 
     public void run() {
+        File spokeRoot = new File(storagePath);
+        Set<String> dirSet = new HashSet<>(Arrays.asList(spokeRoot.list()));
         DateTime ttlDateTime = TimeUtil.stable().minusMinutes(ttlMinutes + 1);
         String minutes = TimeUtil.minutes(ttlDateTime);
         String hours = TimeUtil.hours(ttlDateTime.minusHours(1));
         Iterable<ChannelConfig> channels = channelService.getChannels();
+        Set<String> channelSet = new HashSet<>();
         for (ChannelConfig channel : channels) {
             String channelPath = storagePath + "/" + channel.getName();
+            channelSet.add(channel.getName());
             if (channel.isReplicating()) {
                 runCommand(new String[]{"find", channelPath, "-mmin", "+" + ttlMinutes, "-delete"});
             } else {
@@ -49,6 +57,12 @@ public class SpokeTtlEnforcer {
             }
         }
         //todo - gfm - 9/24/15 - compare list of channels to list of folders under spoke -  delete folders w/o channels
+        dirSet.removeAll(channelSet);
+        for (String dir : dirSet) {
+            String dirPath = storagePath + "/" + dir;
+            logger.info("removing dir without channel {}", dirPath);
+            //runCommand(new String[]{"rm", "-rf", dirPath});
+        }
     }
 
     private void runCommand(String[] command) {
