@@ -6,13 +6,11 @@ import random
 import time
 import threading
 import socket
-import thread
 import logging
 
-import httplib2
-import websocket
 from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
+
 
 
 
@@ -32,7 +30,6 @@ logger.addHandler(fh)
 
 groupCallbacks = {}
 groupConfig = {}
-websockets = {}
 
 
 class WebsiteTasks(TaskSet):
@@ -50,25 +47,17 @@ class WebsiteTasks(TaskSet):
                         data=json.dumps(payload),
                         headers={"Content-Type": "application/json"},
                         name="channel")
-        self.start_websocket()
         self.start_group_callback()
         time.sleep(5)
 
     def start_group_callback(self):
         # First User - create channel - posts to channel, parallel group callback on channel
         # Second User - create channel - posts to channel, parallel group callback on channel
-        # Third User - create channel - posts to channel, replicate channel, group callback on replicated channel
+        # Third User - create channel - posts to channel, parallel group callback on channel
         # Fourth User - create channel - posts to channel, minute group callback on channel
         group_channel = self.channel
         parallel = 3
         batch = "SINGLE"
-        if self.number == 3:
-            group_channel = self.channel + "_replicated"
-            self.client.put("/channel/" + group_channel,
-                            data=json.dumps({"name": group_channel, "ttlDays": "3",
-                                             "replicationSource": groupConfig['host'] + "/channel/" + self.channel}),
-                            headers={"Content-Type": "application/json"},
-                            name="replication")
         if self.number == 4:
             batch = "MINUTE"
         group_name = "/group/locust_" + group_channel
@@ -91,34 +80,6 @@ class WebsiteTasks(TaskSet):
                         headers={"Content-Type": "application/json"},
                         name="group")
 
-    def start_websocket(self):
-        websockets[self.channel] = {
-            "data": [],
-            "lock": threading.Lock(),
-            "open": True
-        }
-        self._http = httplib2.Http()
-        meta = self._load_metadata()
-        self.ws_uri = meta['_links']['ws']['href']
-        print self.ws_uri
-        ws = websocket.WebSocketApp(self.ws_uri,
-                                    on_message=self.on_message,
-                                    on_close=self.on_close,
-                                    on_error=self.on_error)
-        thread.start_new_thread(ws.run_forever, ())
-
-    def on_message(self, ws, message):
-        logger.debug("ws %s", message)
-        WebsiteTasks.verify_ordered(self.channel, message, websockets, "websocket")
-
-    def on_close(self, ws):
-        logger.info("closing ws %s", self.channel)
-        websockets[self.channel]["open"] = False
-
-    def on_error(self, ws, error):
-        logger.info("error ws %s", self.channel)
-        websockets[self.channel]["open"] = False
-
     def _load_metadata(self):
         print("Fetching channel metadata...")
         r, c = self._http.request(self.client.base_url + "/channel/" + self.channel, 'GET')
@@ -136,8 +97,6 @@ class WebsiteTasks(TaskSet):
         self.count += 1
         href = links['_links']['self']['href']
         self.append_href(href, groupCallbacks)
-        if websockets[self.channel]["open"]:
-            self.append_href(href, websockets)
         return href
 
     def append_href(self, href, obj):
@@ -199,8 +158,6 @@ class WebsiteTasks(TaskSet):
     @task(10)
     def verify_callback_length(self):
         self.verify_callback(groupCallbacks, "group")
-        if websockets[self.channel]["open"]:
-            self.verify_callback(websockets, "websocket")
 
     @staticmethod
     def verify_ordered(channel, incoming_uri, obj, name):
@@ -254,8 +211,8 @@ class WebsiteTasks(TaskSet):
 
 class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
-    min_wait = 0
-    max_wait = 0
+    min_wait = 1
+    max_wait = 3
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
