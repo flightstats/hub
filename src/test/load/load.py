@@ -16,6 +16,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -54,15 +55,13 @@ class WebsiteTasks(TaskSet):
         time.sleep(5)
 
     def start_group_callback(self):
-        # First User - create channel - posts to channel, group callback on channel
+        # First User - create channel - posts to channel, parallel group callback on channel
         # Second User - create channel - posts to channel, parallel group callback on channel
         # Third User - create channel - posts to channel, replicate channel, group callback on replicated channel
         # Fourth User - create channel - posts to channel, minute group callback on channel
         group_channel = self.channel
-        parallel = 1
+        parallel = 3
         batch = "SINGLE"
-        if self.number == 2:
-            parallel = 2
         if self.number == 3:
             group_channel = self.channel + "_replicated"
             self.client.put("/channel/" + group_channel,
@@ -154,19 +153,6 @@ class WebsiteTasks(TaskSet):
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on get: " + str(postResponse.status_code) + " " + uri)
 
-    @task(1)
-    def change_parallel(self):
-        if self.number % 3 == 2:
-            group = {
-                "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
-                "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
-                "parallelCalls": random.randint(1, 5)
-            }
-            self.client.put("/group/locust_" + self.channel,
-                            data=json.dumps(group),
-                            headers={"Content-Type": "application/json"},
-                            name="group")
-
     @task(10000)
     def write_read(self):
         self.read(self.write())
@@ -204,7 +190,7 @@ class WebsiteTasks(TaskSet):
     def verify_callback(self, obj, name="group"):
         obj[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
-        if items > 5000:
+        if items > 10000:
             events.request_failure.fire(request_type=name, name="length", response_time=1,
                                         exception=-1)
             logger.info(name + " too many items in " + self.channel + " " + str(items))
