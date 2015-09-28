@@ -15,6 +15,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -53,13 +54,13 @@ class WebsiteTasks(TaskSet):
     def start_group_callback(self):
         # First User - create channel - posts to channel, parallel group callback on channel
         # Second User - create channel - posts to channel, parallel group callback on channel
-        # Third User - create channel - posts to channel, parallel group callback on channel
-        # Fourth User - create channel - posts to channel, minute group callback on channel
+        # Third User - create channel - posts to channel, minute group callback on channel
         group_channel = self.channel
-        parallel = 3
+        parallel = 10
         batch = "SINGLE"
-        if self.number == 4:
+        if self.number == 3:
             batch = "MINUTE"
+            parallel = 1
         group_name = "/group/locust_" + group_channel
         self.client.delete(group_name, name="group")
         logger.info("group channel " + group_channel + " parallel:" + str(parallel))
@@ -149,7 +150,10 @@ class WebsiteTasks(TaskSet):
     def verify_callback(self, obj, name="group"):
         obj[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
-        if items > 10000:
+        max = 500
+        if obj[self.channel]["data"] == "MINUTE":
+            max = 20000
+        if items > max:
             events.request_failure.fire(request_type=name, name="length", response_time=1,
                                         exception=-1)
             logger.info(name + " too many items in " + self.channel + " " + str(items))
