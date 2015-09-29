@@ -3,12 +3,15 @@
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/home/hub/log/hub.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>/home/hub/log/hub_%d{yyyy-MM-dd}.log.gz</fileNamePattern>
-            <maxHistory>14</maxHistory>
+            <fileNamePattern>/home/hub/log/hub_%d{yyyy-MM-dd-HH}.log.gz</fileNamePattern>
+            <maxHistory>168</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
-
         <encoder>
             <pattern>%5p %d{ISO8601} [%t] %c [line %L] - %msg%n</pattern>
+            <immediateFlush>false</immediateFlush>
         </encoder>
     </appender>
 
