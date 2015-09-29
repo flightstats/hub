@@ -169,7 +169,7 @@ describe(testName, function () {
             }, function (err) {
                 done(err);
             });
-    }, 10 * MINUTE);
+    }, 20 * MINUTE);
 
     var output = [];
 
