@@ -86,11 +86,8 @@ public class S3ContentDao implements ContentDao {
             metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
         }
         PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
-        //todo - gfm - 8/19/15 - can be removed eventually
-        sender.send("channel." + channelName + ".s3.requestA", 1);
         sender.send("channel." + channelName + ".s3.put", 1);
         sender.send("channel." + channelName + ".s3.bytes", content.getData().length);
-        //todo - gfm - 8/19/15 - include bytes
         s3Client.putObject(request);
         return key;
     }
@@ -114,8 +111,6 @@ public class S3ContentDao implements ContentDao {
 
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
         try {
-            //todo - gfm - 8/19/15 - can be removed eventually
-            sender.send("channel." + channelName + ".s3.requestB", 1);
             sender.send("channel." + channelName + ".s3.get", 1);
             S3Object object = s3Client.getObject(s3BucketName, getS3ContentKey(channelName, key));
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
@@ -157,13 +152,11 @@ public class S3ContentDao implements ContentDao {
 
     private SortedSet<ContentKey> iterateListObjects(String channelName, ListObjectsRequest request, int maxItems) {
         SortedSet<ContentKey> keys = new TreeSet<>();
-        sender.send("channel." + channelName + ".s3.requestA", 1);
         sender.send("channel." + channelName + ".s3.list", 1);
         ObjectListing listing = s3Client.listObjects(request);
         String marker = addKeys(channelName, listing, keys);
         while (listing.isTruncated() && keys.size() < maxItems) {
             request.withMarker(marker);
-            sender.send("channel." + channelName + ".s3.requestA", 1);
             sender.send("channel." + channelName + ".s3.list", 1);
             listing = s3Client.listObjects(request);
             marker = addKeys(channelName, listing, keys);
