@@ -173,7 +173,7 @@ public class RemoteSpokeStore {
                 }
             });
         }
-        countDownLatch.await(10, TimeUnit.SECONDS);
+        countDownLatch.await(20, TimeUnit.SECONDS);
         return orderedKeys;
     }
 
