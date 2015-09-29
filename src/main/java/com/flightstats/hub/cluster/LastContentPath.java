@@ -49,8 +49,7 @@ public class LastContentPath {
     public void updateIncrease(ContentPath nextPath, String name, String basePath) {
         String path = basePath + name;
         try {
-            int attempts = 0;
-            while (attempts < 3) {
+            while (true) {
                 LastUpdated existing = getLastUpdated(path, nextPath);
                 if (nextPath.compareTo(existing.key) > 0) {
                     if (setValue(path, nextPath, existing)) {
@@ -59,7 +58,6 @@ public class LastContentPath {
                 } else {
                     return;
                 }
-                attempts++;
             }
         } catch (Exception e) {
             logger.warn("unable to set " + path + " lastUpdated to " + nextPath, e);

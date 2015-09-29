@@ -27,6 +27,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class GroupLeader implements Leader {
     private final static Logger logger = LoggerFactory.getLogger(GroupLeader.class);
@@ -52,6 +53,7 @@ public class GroupLeader implements Leader {
 
     private boolean exited = false;
     private GroupStrategy groupStrategy;
+    private AtomicReference<ContentPath> lastUpdated = new AtomicReference();
 
     @Inject
     public GroupLeader(CuratorFramework curator, ChannelService channelService,
@@ -95,6 +97,7 @@ public class GroupLeader implements Leader {
         groupStrategy = GroupStrategy.getStrategy(group, lastContentPath, channelService);
         try {
             ContentPath lastCompletedPath = groupStrategy.getStartingPath();
+            lastUpdated.set(lastCompletedPath);
             logger.info("last completed at {} {}", lastCompletedPath, group.getName());
             if (hasLeadership.get()) {
                 sendInProcess(lastCompletedPath);
@@ -139,7 +142,9 @@ public class GroupLeader implements Leader {
                 groupInProcess.add(group.getName(), contentPath);
                 try {
                     makeTimedCall(groupStrategy.createResponse(contentPath, mapper));
-                    lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
+                    if (increaseLastUpdated(contentPath)) {
+                        lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
+                    }
                     groupInProcess.remove(group.getName(), contentPath);
                     logger.trace("completed {} call to {} ", contentPath, group.getName());
                 } catch (Exception e) {
@@ -150,6 +155,19 @@ public class GroupLeader implements Leader {
                 return null;
             }
         });
+    }
+
+    private boolean increaseLastUpdated(ContentPath newPath) {
+        AtomicBoolean changed = new AtomicBoolean(false);
+        lastUpdated.getAndUpdate(existingPath -> {
+            if (newPath.compareTo(existingPath) > 0) {
+                changed.set(true);
+                return newPath;
+            }
+            changed.set(false);
+            return existingPath;
+        });
+        return changed.get();
     }
 
     private void makeTimedCall(final ObjectNode response) throws Exception {
