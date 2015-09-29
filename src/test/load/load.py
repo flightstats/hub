@@ -16,6 +16,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -150,8 +151,8 @@ class WebsiteTasks(TaskSet):
     def verify_callback(self, obj, name="group"):
         obj[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
-        max = 500
-        if obj[self.channel]["data"] == "MINUTE":
+        max = 1000
+        if obj[self.channel]["batch"] == "MINUTE":
             max = 20000
         if items > max:
             events.request_failure.fire(request_type=name, name="length", response_time=1,
