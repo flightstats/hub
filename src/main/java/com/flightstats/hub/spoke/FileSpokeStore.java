@@ -12,14 +12,9 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Direct interactions with the file system
@@ -66,8 +61,13 @@ public class FileSpokeStore {
     }
 
     public String readKeysInBucket(String path) {
-        Collection<String> keys = keysInBucket(path);
-        return StringUtils.join(keys, ",");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        keysInBucket(path, baos);
+        return baos.toString();
+    }
+
+    public void readKeysInBucket(String path, OutputStream output) {
+        keysInBucket(path, output);
     }
 
     public boolean delete(String path) throws Exception {
@@ -110,16 +110,14 @@ public class FileSpokeStore {
         return path;
     }
 
-
-    Collection<String> keysInBucket(String key) {
+    void keysInBucket(String key, OutputStream output) {
         String path = spokeFilePathPart(key).getAbsolutePath();
-        List<String> keys = new ArrayList<>();
         logger.trace("path {}", path);
         String resolution = SpokePathUtil.smallestTimeResolution(key);
         File directory = new File(path);
 
         if (!directory.exists()) {
-            return keys;
+            return;
         }
         try {
             Collection<File> files;
@@ -133,12 +131,21 @@ public class FileSpokeStore {
             for (File aFile : files) {
                 String filePath = aFile.getPath();
                 logger.trace("filePath {}", filePath);
-                keys.add(spokeKeyFromPath(aFile.getAbsolutePath()));
+                String keyFromPath = spokeKeyFromPath(aFile.getAbsolutePath());
+                output.write(keyFromPath.getBytes());
+                output.write(",".getBytes());
             }
         } catch (Exception e) {
             logger.info("error with " + path, e);
         }
-        return keys;
+    }
+
+    @VisibleForTesting
+    Collection<String> keysInBucket(String key) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        keysInBucket(key, baos);
+        String[] split = baos.toString().split(",");
+        return Arrays.asList(split);
     }
 
     public String getLatest(String channel, String limitPath) {
