@@ -17,6 +17,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -118,7 +119,7 @@ class WebsiteTasks(TaskSet):
     def write_read(self):
         self.read(self.write())
 
-    @task(1)
+    @task(10)
     def hour_query(self):
         self.client.get(self.time_path("hour"), name="time_hour")
 
