@@ -20,18 +20,18 @@ public class GCRunner {
     public GCRunner(ChannelService channelService) {
         this.gcMinutes = HubProperties.getProperty("hub.gcMinutes", 60);
         if (HubProperties.getProperty("hub.runGC", false)) {
-            HubServices.register(new GCService());
+            HubServices.register(new GCRunnerService());
         }
     }
 
     public void run() {
-        logger.debug("running GC");
+        logger.info("running GC");
         long start = System.currentTimeMillis();
         System.gc();
         logger.info("ran GC {}", (System.currentTimeMillis() - start));
     }
 
-    private class GCService extends AbstractScheduledService {
+    private class GCRunnerService extends AbstractScheduledService {
         @Override
         protected void runOneIteration() throws Exception {
             run();
