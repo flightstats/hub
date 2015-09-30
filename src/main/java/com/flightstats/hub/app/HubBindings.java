@@ -13,6 +13,7 @@ import com.flightstats.hub.metrics.*;
 import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.replication.ReplicatorImpl;
 import com.flightstats.hub.rest.RetryClientFilter;
+import com.flightstats.hub.spoke.GCRunner;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.HubUtils;
 import com.google.inject.AbstractModule;
@@ -46,6 +47,7 @@ public class HubBindings extends AbstractModule {
         bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
         bind(HubUtils.class).asEagerSingleton();
         bind(CuratorLock.class).asEagerSingleton();
+        bind(GCRunner.class).asEagerSingleton();
 
         bind(ChannelValidator.class).asEagerSingleton();
         bind(GroupValidator.class).asEagerSingleton();
