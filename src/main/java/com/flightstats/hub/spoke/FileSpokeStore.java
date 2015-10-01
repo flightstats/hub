@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
@@ -47,16 +48,20 @@ public class FileSpokeStore {
     }
 
     public byte[] read(String path) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        read(path, baos);
+        return baos.toByteArray();
+    }
+
+    public void read(String path, OutputStream output) {
         File file = spokeFilePathPart(path);
         logger.trace("reading {}", file);
-        try {
-            return FileUtils.readFileToByteArray(file);
+        try (FileInputStream input = new FileInputStream(file)) {
+            ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
             logger.debug("file not found {}", path);
-            return null;
         } catch (IOException e) {
             logger.info("unable to read from " + path, e);
-            return null;
         }
     }
 

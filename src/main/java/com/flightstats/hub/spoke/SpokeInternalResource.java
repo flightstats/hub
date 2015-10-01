@@ -31,11 +31,12 @@ public class SpokeInternalResource {
     @GET
     public Response getPayload(@PathParam("path") String path) {
         try {
-            byte[] read = spokeStore.read(path);
-            if (read == null) {
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-            return Response.ok(read).build();
+            Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
+                BufferedOutputStream output = new BufferedOutputStream(os);
+                spokeStore.read(path, output);
+                output.flush();
+            });
+            return builder.build();
         } catch (Exception e) {
             logger.warn("unable to get " + path, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -45,6 +46,7 @@ public class SpokeInternalResource {
     @Path("/payload/{path:.+}")
     @PUT
     public Response putPayload(@PathParam("path") String path, byte[] data) {
+        //todo - gfm - 9/30/15 - change to stream
         try {
             DateTime start = TimeUtil.now();
             if (spokeStore.write(path, data)) {
