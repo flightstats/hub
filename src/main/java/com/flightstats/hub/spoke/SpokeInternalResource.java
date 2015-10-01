@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.BufferedOutputStream;
+import java.io.InputStream;
 
 @Path("/internal/spoke")
 public class SpokeInternalResource {
@@ -45,11 +46,10 @@ public class SpokeInternalResource {
 
     @Path("/payload/{path:.+}")
     @PUT
-    public Response putPayload(@PathParam("path") String path, byte[] data) {
-        //todo - gfm - 9/30/15 - change to stream
+    public Response putPayload(@PathParam("path") String path, InputStream input) {
         try {
             DateTime start = TimeUtil.now();
-            if (spokeStore.write(path, data)) {
+            if (spokeStore.write(path, input)) {
                 return Response
                         .created(uriInfo.getRequestUri())
                         .entity(new Trace("success", start).toString())

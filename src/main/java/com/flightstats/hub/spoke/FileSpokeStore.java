@@ -36,15 +36,20 @@ public class FileSpokeStore {
     }
 
     public boolean write(String path, byte[] payload) {
+        return write(path, new ByteArrayInputStream(payload));
+    }
+
+    public boolean write(String path, InputStream input) {
         File file = spokeFilePathPart(path);
         logger.trace("writing {}", file);
-        try {
-            FileUtils.writeByteArrayToFile(file, payload);
+        file.getParentFile().mkdirs();
+        try (FileOutputStream output = new FileOutputStream(file)) {
+            ByteStreams.copy(input, output);
+            return true;
         } catch (IOException e) {
-            logger.error("unable to write to " + path, e);
+            logger.info("unable to write to " + path, e);
             return false;
         }
-        return true;
     }
 
     public byte[] read(String path) {
