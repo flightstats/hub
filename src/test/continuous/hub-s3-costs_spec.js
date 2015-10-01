@@ -115,10 +115,10 @@ describe(testName, function () {
             function (channel, callback) {
                 var field = dataPrefix + '.channel.' + channel.name;
                 var url = graphiteUrl + 'render?format=json' +
-                    '&target=summarize(' + field + '.s3.requestA:sum,' + options +
-                    '&target=summarize(' + field + '.s3.requestB:sum,' + options +
-                    '&target=summarize(' + field + '.post.bytes:sum,' + options +
-                    '&target=summarize(' + field + '.post:obvs,' + options +
+                    '&target=summarize(' + field + '.s3.put:sum,' + options +
+                    '&target=summarize(' + field + '.s3.list:sum,' + options +
+                    '&target=summarize(' + field + '.s3.get:sum,' + options +
+                    '&target=summarize(' + field + '.s3.bytes:sum,' + options +
                     '&from=' + start + '&until=' + end;
 
                 console.log('get data ', url);
@@ -131,35 +131,35 @@ describe(testName, function () {
                         for (var i = 0; i < parsed.length; i++) {
                             var value = parsed[i];
                             var data = processData(value.datapoints);
-                            if (value.target.indexOf('requestA') > 0) {
-                                channel.requestA = data.sum;
-                                channel.requestADays = data.days;
-                            } else if (value.target.indexOf('requestB') > 0) {
-                                channel.requestB = data.sum;
-                                channel.requestBDays = data.days;
-                            } else if (value.target.indexOf('post.bytes') > 0) {
+                            if (value.target.indexOf('put') > 0) {
+                                channel.put = data.sum;
+                                channel.putDays = data.days;
+                            } else if (value.target.indexOf('list') > 0) {
+                                channel.list = data.sum;
+                                channel.listDays = data.days;
+                            } else if (value.target.indexOf('get') > 0) {
+                                channel.get = data.sum;
+                                channel.getDays = data.days;
+                            } else if (value.target.indexOf('s3.bytes') > 0) {
                                 channel.bytes = data.sum;
                                 channel.bytesDays = data.days;
-                            } else if (value.target.indexOf('post:obvs') > 0) {
-                                channel.posts = data.sum;
-                                channel.postsDays = data.days;
                             }
                         }
-                        if (!channel.requestA) {
-                            channel.requestA = 0;
-                            channel.requestADays = [0, 0, 0, 0, 0, 0, 0];
+                        if (!channel.put) {
+                            channel.put = 0;
+                            channel.putDays = [0, 0, 0, 0, 0, 0, 0];
                         }
-                        if (!channel.requestB) {
-                            channel.requestB = 0;
-                            channel.requestBDays = [0, 0, 0, 0, 0, 0, 0];
+                        if (!channel.list) {
+                            channel.list = 0;
+                            channel.listDays = [0, 0, 0, 0, 0, 0, 0];
+                        }
+                        if (!channel.get) {
+                            channel.get = 0;
+                            channel.getDays = [0, 0, 0, 0, 0, 0, 0];
                         }
                         if (!channel.bytes) {
                             channel.bytes = 0;
                             channel.bytesDays = [0, 0, 0, 0, 0, 0, 0];
-                        }
-                        if (!channel.posts) {
-                            channel.posts = 0;
-                            channel.postsDays = [0, 0, 0, 0, 0, 0, 0];
                         }
                         graphiteData.push(channel);
                         callback(err);
@@ -169,10 +169,14 @@ describe(testName, function () {
             }, function (err) {
                 done(err);
             });
-    }, 10 * MINUTE);
+    }, 20 * MINUTE);
 
     var output = [];
 
+    /**
+     * change to new graphite values
+     *
+     */
     it('creates output items ', function (done) {
         async.eachLimit(graphiteData, 20,
             function (channel, callback) {
@@ -181,21 +185,22 @@ describe(testName, function () {
                 event.name = channel.name;
                 event.hub = dataPrefix;
 
-                event.MonthlyS3PutCost = channel.posts / days / 1000 * 0.005 * 30;
-                event.MonthlyS3ListCost = (channel.requestA - channel.posts) / days / 1000 * 0.005 * 30;
-                event.MonthlyS3GetCost = channel.requestB / days / 10000 * 0.004 * 30;
+                event.MonthlyS3PutCost = channel.put / days / 1000 * 0.005 * 30;
+                event.MonthlyS3ListCost = channel.list / days / 1000 * 0.005 * 30;
+                event.MonthlyS3GetCost = channel.get / days / 10000 * 0.004 * 30;
                 event.MonthlyBytesCost = channel.bytes / days / 1024 / 1024 / 1024 * 0.03 * channel.earliest;
+                event.ProjectedBytesCost = channel.bytes / days / 1024 / 1024 / 1024 * 0.03 * channel.hub.ttlDays;
                 event.MonthlyTotalCost = event.MonthlyS3PutCost + event.MonthlyS3ListCost + event.MonthlyS3GetCost + event.MonthlyBytesCost;
                 event.earliestItemDays = channel.earliest;
                 event.tags = channel.hub.tags;
                 event.ttlDays = channel.hub.ttlDays;
-
+                event.owner = channel.hub.owner;
                 event.days = [];
                 for (var i = 0; i < days; i++) {
                     event.days.push({
-                        s3Put: channel.postsDays[i],
-                        s3List: channel.requestADays[i] - channel.postsDays[i],
-                        s3Get: channel.requestBDays[i],
+                        s3Put: channel.putDays[i],
+                        s3List: channel.listDays[i],
+                        s3Get: channel.getDays[i],
                         s3Bytes: channel.bytesDays[i],
                     });
                 }

@@ -18,7 +18,7 @@ public class RootResource {
     public Response getChannels(@Context UriInfo uriInfo) {
         Linked.Builder<?> links = Linked.justLinks();
         links.withLink("self", uriInfo.getRequestUri());
-        links.withLink("documentation", "https://github.com/flightstats/hubv2");
+        links.withLink("documentation", "https://github.com/flightstats/hub");
         links.withLink("channel", uriInfo.getRequestUri() + "channel");
         links.withLink("group", uriInfo.getRequestUri() + "group");
         links.withLink("tag", uriInfo.getRequestUri() + "tag");
