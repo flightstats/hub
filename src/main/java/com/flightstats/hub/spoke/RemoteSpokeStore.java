@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.ConnectException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.SortedSet;
@@ -133,6 +134,12 @@ public class RemoteSpokeStore {
                 }
             } catch (JsonMappingException e) {
                 logger.info("JsonMappingException for " + path);
+            } catch (ClientHandlerException e) {
+                if (e.getCause() != null && e.getCause() instanceof ConnectException) {
+                    logger.warn("connection exception " + server);
+                } else {
+                    logger.warn("unable to get content " + path, e);
+                }
             } catch (Exception e) {
                 logger.warn("unable to get content " + path, e);
             }
@@ -162,8 +169,12 @@ public class RemoteSpokeStore {
                             orderedKeys.addAll(keySet);
                         }
                     } catch (ClientHandlerException e) {
-                        logger.warn("ClientHandlerException " + e.getMessage());
-                        traces.add("ClientHandlerException", e.getMessage());
+                        if (e.getCause() != null && e.getCause() instanceof ConnectException) {
+                            logger.warn("connection exception " + server);
+                        } else {
+                            logger.warn("unable to get content " + path, e);
+                        }
+                        traces.add("ClientHandlerException", e.getMessage(), server);
                     } catch (Exception e) {
                         logger.warn("unable to handle " + server + " " + path, e);
                         traces.add("unable to handle ", server, path, e);
@@ -198,8 +209,12 @@ public class RemoteSpokeStore {
                             traces.add(server, key);
                         }
                     } catch (ClientHandlerException e) {
-                        logger.warn("ClientHandlerException " + e.getMessage());
-                        traces.add("ClientHandlerException", e.getMessage());
+                        if (e.getCause() != null && e.getCause() instanceof ConnectException) {
+                            logger.warn("connection exception " + server);
+                        } else {
+                            logger.warn("unable to get content " + path, e);
+                        }
+                        traces.add("ClientHandlerException", e.getMessage(), server);
                     } catch (Exception e) {
                         logger.warn("unable to handle " + server + " " + channel, e);
                         traces.add("unable to handle ", server, channel, e);
