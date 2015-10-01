@@ -42,18 +42,18 @@ public class SpokeTtlEnforcer {
         File spokeRoot = new File(storagePath);
         Set<String> dirSet = new HashSet<>(Arrays.asList(spokeRoot.list()));
         DateTime ttlDateTime = TimeUtil.stable().minusMinutes(ttlMinutes + 1);
-        String minutes = TimeUtil.minutes(ttlDateTime);
-        String hours = TimeUtil.hours(ttlDateTime.minusHours(1));
         Iterable<ChannelConfig> channels = channelService.getChannels();
         Set<String> channelSet = new HashSet<>();
         for (ChannelConfig channel : channels) {
             String channelPath = storagePath + "/" + channel.getName();
             channelSet.add(channel.getName());
             if (channel.isReplicating()) {
-                runCommand(new String[]{"find", channelPath, "-mmin", "+" + ttlMinutes, "-delete"});
+                runCommand(new String[]{"find", channelPath, "-mmin", "+" + ttlMinutes, "-delete"}, 1);
             } else {
-                runCommand(new String[]{"rm", "-rf", channelPath + "/" + minutes});
-                runCommand(new String[]{"rm", "-rf", channelPath + "/" + hours});
+                for (int i = 0; i < 3; i++) {
+                    runCommand(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.minutes(ttlDateTime.minusMinutes(i))}, 1);
+                    runCommand(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.hours(ttlDateTime.minusHours(i))}, 5);
+                }
             }
         }
         dirSet.removeAll(channelSet);
@@ -61,41 +61,48 @@ public class SpokeTtlEnforcer {
         for (String dir : dirSet) {
             String dirPath = storagePath + "/" + dir;
             logger.info("removing dir without channel {}", dirPath);
-            runCommand(new String[]{"rm", "-rf", dirPath});
+            runCommand(new String[]{"rm", "-rf", dirPath}, 1);
         }
     }
 
-    private void runCommand(String[] command) {
+    private void runCommand(String[] command, int waitTime) {
         try {
-            logger.debug("running " + StringUtils.join(" ", command));
+            logger.trace("running " + StringUtils.join(" ", command));
             long start = System.currentTimeMillis();
             Process process = new ProcessBuilder(command)
                     .redirectError(ProcessBuilder.Redirect.INHERIT)
                     .redirectOutput(ProcessBuilder.Redirect.INHERIT)
                     .start();
-            boolean waited = process.waitFor(1, TimeUnit.MINUTES);
+            boolean waited = process.waitFor(waitTime, TimeUnit.SECONDS);
             long time = System.currentTimeMillis() - start;
             if (waited) {
-                logger.debug("waited " + waited + " for " + time);
+                logger.trace("waited " + waited + " for " + time);
             } else {
-                logger.debug("destroying after " + time);
+                logger.info("destroying after " + time + " " + StringUtils.join(" ", command));
                 process.destroyForcibly();
             }
 
         } catch (Exception e) {
-            logger.warn("unable to enforce ttl", e);
+            logger.warn("unable to enforce ttl " + StringUtils.join(" ", command), e);
         }
     }
 
     private class SpokeTtlEnforcerService extends AbstractScheduledService {
         @Override
         protected void runOneIteration() throws Exception {
-            run();
+            try {
+                long start = System.currentTimeMillis();
+                logger.info("running ttl cleanup");
+                run();
+                logger.info("completed ttl cleanup {}", (System.currentTimeMillis() - start));
+            } catch (Exception e) {
+                logger.info("issue cleaning up spoke", e);
+            }
         }
 
         @Override
         protected Scheduler scheduler() {
-            return Scheduler.newFixedDelaySchedule(1, 1, TimeUnit.MINUTES);
+            return Scheduler.newFixedRateSchedule(1, 1, TimeUnit.MINUTES);
         }
 
     }
@@ -104,7 +111,7 @@ public class SpokeTtlEnforcer {
         @Override
         protected void startUp() throws Exception {
             logger.info("performing Spoke cleanup");
-            runCommand(new String[]{"find", storagePath, "-mmin", "+" + ttlMinutes, "-delete"});
+            runCommand(new String[]{"find", storagePath, "-mmin", "+" + ttlMinutes, "-delete"}, 10 * 60);
             logger.info("completed Spoke cleanup");
         }
 
