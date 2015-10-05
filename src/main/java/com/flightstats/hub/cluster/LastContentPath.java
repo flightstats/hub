@@ -1,7 +1,9 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.model.ContentPath;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import org.apache.commons.io.Charsets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
@@ -31,7 +33,7 @@ public class LastContentPath {
     public ContentPath get(String name, ContentPath defaultPath, String basePath) {
         String path = basePath + name;
         try {
-            return get(path, defaultPath);
+            return get(path);
         } catch (KeeperException.NoNodeException e) {
             logger.warn("missing value for {}", name);
             initialize(name, defaultPath, basePath);
@@ -42,15 +44,16 @@ public class LastContentPath {
         }
     }
 
-    private ContentPath get(String path, ContentPath defaultPath) throws Exception {
-        return defaultPath.toContentPath(curator.getData().forPath(path));
+    private ContentPath get(String path) throws Exception {
+        byte[] bytes = curator.getData().forPath(path);
+        return ContentPath.fromUrl(new String(bytes, Charsets.UTF_8)).get();
     }
 
     public void updateIncrease(ContentPath nextPath, String name, String basePath) {
         String path = basePath + name;
         try {
             while (true) {
-                LastUpdated existing = getLastUpdated(path, nextPath);
+                LastUpdated existing = getLastUpdated(path);
                 if (nextPath.compareTo(existing.key) > 0) {
                     if (setValue(path, nextPath, existing)) {
                         return;
@@ -86,11 +89,12 @@ public class LastContentPath {
         }
     }
 
-    LastUpdated getLastUpdated(String path, ContentPath nextPath) {
+    LastUpdated getLastUpdated(String path) {
         try {
             Stat stat = new Stat();
             byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
-            return new LastUpdated(nextPath.toContentPath(bytes), stat.getVersion());
+            Optional<ContentPath> pathOptional = ContentPath.fromUrl(new String(bytes, Charsets.UTF_8));
+            return new LastUpdated(pathOptional.get(), stat.getVersion());
         } catch (KeeperException.NoNodeException e) {
             logger.info("unable to get value " + path + " " + e.getMessage());
             throw new RuntimeException(e);

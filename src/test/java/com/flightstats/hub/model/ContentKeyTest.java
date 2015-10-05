@@ -64,5 +64,10 @@ public class ContentKeyTest {
         ContentKey contentKey = optional.get();
         assertEquals("2015/01/23/21/11/19/407/L7QtaY", contentKey.toString());
     }
+
+    @Test
+    public void testCompareMinutePath() {
+        //todo
+    }
 }
 

@@ -44,11 +44,6 @@ public class MinutePath implements ContentPath {
     }
 
     @Override
-    public ContentPath toContentPath(byte[] bytes) {
-        return fromBytes(bytes);
-    }
-
-    @Override
     public String toUrl() {
         return TimeUtil.minutes(time);
     }
@@ -64,9 +59,9 @@ public class MinutePath implements ContentPath {
     }
 
     @Override
-    public int compareTo(ContentPath contentPath) {
-        MinutePath other = (MinutePath) contentPath;
-        return time.compareTo(other.time);
+    public int compareTo(ContentPath other) {
+        //todo - gfm - 10/5/15 - a MinutePath stand for the entire minute, while a ContentKey is a specific instant in time
+        return time.compareTo(other.getTime());
     }
 
     public static MinutePath fromBytes(byte[] bytes) {

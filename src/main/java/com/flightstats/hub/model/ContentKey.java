@@ -50,8 +50,11 @@ public class ContentKey implements ContentPath {
             String date = StringUtils.substringBeforeLast(key, "/") + "/";
             String hash = StringUtils.substringAfterLast(key, "/");
             return Optional.of(new ContentKey(TimeUtil.millis(date), hash));
+        } catch (IllegalArgumentException e) {
+            logger.trace("unable to parse {} {}", key, e.getMessage());
+            return Optional.absent();
         } catch (Exception e) {
-            logger.info("unable to parse " + key + " " + e.getMessage());
+            logger.info("unable to parse " + key, e);
             return Optional.absent();
         }
     }
@@ -79,6 +82,7 @@ public class ContentKey implements ContentPath {
 
     @Override
     public int compareTo(ContentPath contentPath) {
+        //todo - gfm - 10/5/15 - what does it mean to compare these?
         ContentKey other = (ContentKey) contentPath;
         int diff = time.compareTo(other.time);
         if (diff == 0) {
@@ -89,11 +93,6 @@ public class ContentKey implements ContentPath {
 
     public byte[] toBytes() {
         return toUrl().getBytes(Charsets.UTF_8);
-    }
-
-    @Override
-    public ContentPath toContentPath(byte[] bytes) {
-        return fromBytes(bytes);
     }
 
     public String toZk() {

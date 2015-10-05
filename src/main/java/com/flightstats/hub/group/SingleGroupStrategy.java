@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.ChannelReplicatorImpl;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -127,8 +129,8 @@ public class SingleGroupStrategy implements GroupStrategy {
 
             private void handleReplication() {
                 Collection<ContentKey> keys = Collections.EMPTY_LIST;
-                ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicatorImpl.REPLICATED_LAST_UPDATED);
-                if (contentPath.getTime().isAfter(lastAdded.getTime())) {
+                Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
+                if (latest.isPresent() && latest.get().compareTo(lastAdded) > 0) {
                     DirectionQuery query = DirectionQuery.builder()
                             .channelName(channel)
                             .contentKey(lastAdded)
@@ -138,7 +140,7 @@ public class SingleGroupStrategy implements GroupStrategy {
                             .count(1000)
                             .build();
                     query.trace(true);
-                    query.getTraces().add("latest", contentPath);
+                    query.getTraces().add("latest", latest.get());
                     keys = channelService.getKeys(query)
                             .stream()
                             .collect(Collectors.toCollection(TreeSet::new));

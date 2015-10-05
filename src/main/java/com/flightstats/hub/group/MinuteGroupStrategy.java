@@ -59,7 +59,6 @@ public class MinuteGroupStrategy implements GroupStrategy {
 
     @Override
     public void start(Group group, ContentPath startingPath) {
-        MinutePath minutePath = (MinutePath) startingPath;
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("minute-group-" + group.getName() + "-%s").build();
         executorService = Executors.newSingleThreadScheduledExecutor(factory);
@@ -67,7 +66,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
         logger.info("starting {} with offset {}", group, offset);
         executorService.scheduleAtFixedRate(new Runnable() {
 
-            MinutePath lastAdded = minutePath;
+            ContentPath lastAdded = startingPath;
 
             @Override
             public void run() {
@@ -87,6 +86,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
                     DateTime stable = TimeUtil.stable().minusMinutes(1);
                     if (channelService.isReplicating(channel)) {
                         ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicatorImpl.REPLICATED_LAST_UPDATED);
+                        //todo - gfm - 10/5/15 - this could be a ContentKey, what if it is?
                         stable = contentPath.getTime().plusSeconds(1);
                     }
                     logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
