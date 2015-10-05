@@ -52,7 +52,7 @@ public class SpokeTtlEnforcer {
             } else {
                 for (int i = 0; i < 3; i++) {
                     runCommand(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.minutes(ttlDateTime.minusMinutes(i))}, 1);
-                    runCommand(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.hours(ttlDateTime.minusHours(i))}, 5);
+                    runCommand(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.hours(ttlDateTime.minusHours(i + 1))}, 5);
                 }
             }
         }
