@@ -143,6 +143,7 @@ public class SingleGroupStrategy implements GroupStrategy {
                     query.getTraces().add("latest", latest.get());
                     keys = channelService.getKeys(query)
                             .stream()
+                            .filter(key -> key.compareTo(latest.get()) <= 0)
                             .collect(Collectors.toCollection(TreeSet::new));
                     if (logger.isTraceEnabled()) {
                         query.getTraces().log(logger);
