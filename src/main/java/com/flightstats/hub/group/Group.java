@@ -47,14 +47,14 @@ public class Group {
 
     public boolean allowedToChange(Group other) {
         return channelUrl.equals(other.channelUrl)
-                && name.equals(other.name)
-                && batch.equals(other.batch);
+                && name.equals(other.name);
     }
 
     public boolean isChanged(Group other) {
         return parallelCalls != other.parallelCalls
                 || paused != other.paused
-                || !callbackUrl.equals(other.callbackUrl);
+                || !callbackUrl.equals(other.callbackUrl)
+                || !batch.equals(other.batch);
     }
 
     private static final Gson gson = new GsonBuilder().create();
