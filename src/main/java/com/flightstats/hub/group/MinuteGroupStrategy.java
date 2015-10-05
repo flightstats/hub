@@ -86,7 +86,6 @@ public class MinuteGroupStrategy implements GroupStrategy {
                     DateTime stable = TimeUtil.stable().minusMinutes(1);
                     if (channelService.isReplicating(channel)) {
                         ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicatorImpl.REPLICATED_LAST_UPDATED);
-                        //todo - gfm - 10/5/15 - this could be a ContentKey, what if it is?
                         stable = contentPath.getTime().plusSeconds(1);
                     }
                     logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
