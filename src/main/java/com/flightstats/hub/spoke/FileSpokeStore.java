@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
@@ -12,14 +13,9 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Direct interactions with the file system
@@ -40,34 +36,48 @@ public class FileSpokeStore {
     }
 
     public boolean write(String path, byte[] payload) {
+        return write(path, new ByteArrayInputStream(payload));
+    }
+
+    public boolean write(String path, InputStream input) {
         File file = spokeFilePathPart(path);
         logger.trace("writing {}", file);
-        try {
-            FileUtils.writeByteArrayToFile(file, payload);
+        file.getParentFile().mkdirs();
+        try (FileOutputStream output = new FileOutputStream(file)) {
+            ByteStreams.copy(input, output);
+            return true;
         } catch (IOException e) {
-            logger.error("unable to write to " + path, e);
+            logger.info("unable to write to " + path, e);
             return false;
         }
-        return true;
     }
 
     public byte[] read(String path) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        read(path, baos);
+        return baos.toByteArray();
+    }
+
+    public void read(String path, OutputStream output) {
         File file = spokeFilePathPart(path);
         logger.trace("reading {}", file);
-        try {
-            return FileUtils.readFileToByteArray(file);
+        try (FileInputStream input = new FileInputStream(file)) {
+            ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
             logger.debug("file not found {}", path);
-            return null;
         } catch (IOException e) {
             logger.info("unable to read from " + path, e);
-            return null;
         }
     }
 
     public String readKeysInBucket(String path) {
-        Collection<String> keys = keysInBucket(path);
-        return StringUtils.join(keys, ",");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        keysInBucket(path, baos);
+        return baos.toString();
+    }
+
+    public void readKeysInBucket(String path, OutputStream output) {
+        keysInBucket(path, output);
     }
 
     public boolean delete(String path) throws Exception {
@@ -110,16 +120,14 @@ public class FileSpokeStore {
         return path;
     }
 
-
-    Collection<String> keysInBucket(String key) {
+    void keysInBucket(String key, OutputStream output) {
         String path = spokeFilePathPart(key).getAbsolutePath();
-        List<String> keys = new ArrayList<>();
         logger.trace("path {}", path);
         String resolution = SpokePathUtil.smallestTimeResolution(key);
         File directory = new File(path);
 
         if (!directory.exists()) {
-            return keys;
+            return;
         }
         try {
             Collection<File> files;
@@ -133,12 +141,21 @@ public class FileSpokeStore {
             for (File aFile : files) {
                 String filePath = aFile.getPath();
                 logger.trace("filePath {}", filePath);
-                keys.add(spokeKeyFromPath(aFile.getAbsolutePath()));
+                String keyFromPath = spokeKeyFromPath(aFile.getAbsolutePath());
+                output.write(keyFromPath.getBytes());
+                output.write(",".getBytes());
             }
         } catch (Exception e) {
             logger.info("error with " + path, e);
         }
-        return keys;
+    }
+
+    @VisibleForTesting
+    Collection<String> keysInBucket(String key) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        keysInBucket(key, baos);
+        String[] split = baos.toString().split(",");
+        return Arrays.asList(split);
     }
 
     public String getLatest(String channel, String limitPath) {
