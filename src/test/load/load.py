@@ -19,6 +19,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -167,30 +168,14 @@ class WebsiteTasks(TaskSet):
         self.verify_callback(groupCallbacks, "group")
 
     @staticmethod
-    def verify_ordered(channel, incoming_uri, obj, name):
-        if obj[channel]["data"][0] == incoming_uri:
-            (obj[channel]["data"]).remove(incoming_uri)
-            events.request_success.fire(request_type=name, name="ordered", response_time=1,
-                                        response_length=1)
-        else:
-            events.request_failure.fire(request_type=name, name="ordered", response_time=1,
-                                        exception=-1)
-            if incoming_uri in obj[channel]["data"]:
-                logger.info(name + " item in the wrong order " + str(incoming_uri) + " data " + \
-                            str(obj[channel]["data"]))
-                (obj[channel]["data"]).remove(incoming_uri)
-            else:
-                logger.info("missing item " + str(incoming_uri))
-
-    @staticmethod
-    def verify_parallel(channel, incoming_uri):
+    def verify(channel, incoming_uri):
         if incoming_uri in groupCallbacks[channel]["data"]:
             (groupCallbacks[channel]["data"]).remove(incoming_uri)
-            events.request_success.fire(request_type="group", name="parallel", response_time=1,
+            events.request_success.fire(request_type="group", name="verify", response_time=1,
                                         response_length=1)
         else:
             logger.info("missing parallel item " + str(incoming_uri))
-            events.request_failure.fire(request_type="group", name="parallel", response_time=1,
+            events.request_failure.fire(request_type="group", name="verify", response_time=1,
                                         exception=-1)
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
@@ -205,10 +190,7 @@ class WebsiteTasks(TaskSet):
                     return "ok"
                 try:
                     groupCallbacks[channel]["lock"].acquire()
-                    if groupCallbacks[channel]["parallel"] == 1:
-                        WebsiteTasks.verify_ordered(channel, incoming_uri, groupCallbacks, "group")
-                    else:
-                        WebsiteTasks.verify_parallel(channel, incoming_uri)
+                    WebsiteTasks.verify(channel, incoming_uri)
                 finally:
                     groupCallbacks[channel]["lock"].release()
             return "ok"

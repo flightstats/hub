@@ -122,7 +122,7 @@ public class GroupLeader implements Leader {
 
     private void sendInProcess(ContentPath lastCompletedPath) throws InterruptedException {
         Set<ContentPath> inProcessSet = groupInProcess.getSet(group.getName(), lastCompletedPath);
-        logger.trace("sending in process {} to {}", inProcessSet, group.getName());
+        logger.debug("sending in process {} to {}", inProcessSet, group.getName());
         for (ContentPath toSend : inProcessSet) {
             if (toSend.compareTo(lastCompletedPath) < 0) {
                 send(groupStrategy.inProcess(toSend));
