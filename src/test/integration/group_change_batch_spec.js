@@ -20,7 +20,7 @@ describe(testName, function () {
         batch: 'MINUTE'
     };
 
-    utils.putGroup(groupName, groupConfig2);
+    utils.putGroup(groupName, groupConfig2, 200);
 
     utils.deleteGroup(groupName);
 
