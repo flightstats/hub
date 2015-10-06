@@ -47,12 +47,16 @@ public class ContentKey implements ContentPath {
 
     public static Optional<ContentKey> fromUrl(String key) {
         try {
-            String date = StringUtils.substringBeforeLast(key, "/") + "/";
-            String hash = StringUtils.substringAfterLast(key, "/");
-            return Optional.of(new ContentKey(TimeUtil.millis(date), hash));
-        } catch (IllegalArgumentException e) {
-            logger.trace("unable to parse {} {}", key, e.getMessage());
-            return Optional.absent();
+            int year = Integer.parseInt(key.substring(0, 4));
+            int month = Integer.parseInt(key.substring(5, 7));
+            int day = Integer.parseInt(key.substring(8, 10));
+            int hour = Integer.parseInt(key.substring(11, 13));
+            int minute = Integer.parseInt(key.substring(14, 16));
+            int second = Integer.parseInt(key.substring(17, 19));
+            int millis = Integer.parseInt(key.substring(20, 23));
+            String hash = key.substring(24);
+            DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
+            return Optional.of(new ContentKey(dateTime, hash));
         } catch (Exception e) {
             logger.info("unable to parse " + key, e);
             return Optional.absent();

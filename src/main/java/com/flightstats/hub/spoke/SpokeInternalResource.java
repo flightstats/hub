@@ -10,7 +10,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
+import java.io.BufferedOutputStream;
+import java.io.InputStream;
 
 @Path("/internal/spoke")
 public class SpokeInternalResource {
@@ -29,11 +32,12 @@ public class SpokeInternalResource {
     @GET
     public Response getPayload(@PathParam("path") String path) {
         try {
-            byte[] read = spokeStore.read(path);
-            if (read == null) {
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-            return Response.ok(read).build();
+            Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
+                BufferedOutputStream output = new BufferedOutputStream(os);
+                spokeStore.read(path, output);
+                output.flush();
+            });
+            return builder.build();
         } catch (Exception e) {
             logger.warn("unable to get " + path, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -42,10 +46,10 @@ public class SpokeInternalResource {
 
     @Path("/payload/{path:.+}")
     @PUT
-    public Response putPayload(@PathParam("path") String path, byte[] data) {
+    public Response putPayload(@PathParam("path") String path, InputStream input) {
         try {
             DateTime start = TimeUtil.now();
-            if (spokeStore.write(path, data)) {
+            if (spokeStore.write(path, input)) {
                 return Response
                         .created(uriInfo.getRequestUri())
                         .entity(new Trace("success", start).toString())
@@ -64,11 +68,12 @@ public class SpokeInternalResource {
     private Response getResponse(String path) {
         logger.trace("time {}", path);
         try {
-            String read = spokeStore.readKeysInBucket(path);
-            if (read == null) {
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-            return Response.ok(read).build();
+            Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
+                BufferedOutputStream output = new BufferedOutputStream(os);
+                spokeStore.readKeysInBucket(path, output);
+                output.flush();
+            });
+            return builder.build();
         } catch (Exception e) {
             logger.warn("unable to get " + path, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
