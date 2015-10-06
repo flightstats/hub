@@ -62,6 +62,9 @@ public class LastContentPath {
                     return;
                 }
             }
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("values does not exist, creating {}", path);
+            initialize(name, nextPath, basePath);
         } catch (Exception e) {
             logger.warn("unable to set " + path + " lastUpdated to " + nextPath, e);
         }
@@ -89,19 +92,11 @@ public class LastContentPath {
         }
     }
 
-    LastUpdated getLastUpdated(String path) {
-        try {
-            Stat stat = new Stat();
-            byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
-            Optional<ContentPath> pathOptional = ContentPath.fromUrl(new String(bytes, Charsets.UTF_8));
-            return new LastUpdated(pathOptional.get(), stat.getVersion());
-        } catch (KeeperException.NoNodeException e) {
-            logger.info("unable to get value " + path + " " + e.getMessage());
-            throw new RuntimeException(e);
-        } catch (Exception e) {
-            logger.info("unable to get value " + path, e);
-            throw new RuntimeException(e);
-        }
+    LastUpdated getLastUpdated(String path) throws Exception {
+        Stat stat = new Stat();
+        byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
+        Optional<ContentPath> pathOptional = ContentPath.fromUrl(new String(bytes, Charsets.UTF_8));
+        return new LastUpdated(pathOptional.get(), stat.getVersion());
     }
 
     class LastUpdated {
