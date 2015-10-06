@@ -32,6 +32,7 @@ public class ChannelReplicatorImpl implements ChannelReplicator {
                 .name(getGroupName())
                 .callbackUrl(getCallbackUrl())
                 .channelUrl(channel.getReplicationSource())
+                        //.heartbeat(true)
                 .batch(Group.SINGLE);
         //.batch(Group.MINUTE);
         Group group = builder.build();

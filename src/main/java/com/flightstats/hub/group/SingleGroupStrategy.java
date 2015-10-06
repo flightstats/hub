@@ -73,8 +73,7 @@ public class SingleGroupStrategy implements GroupStrategy {
             uris.add(group.getChannelUrl() + "/" + contentPath.toUrl());
             response.put("type", "item");
         } else {
-            String url = contentPath.toUrl();
-            response.put("id", url);
+            response.put("id", contentPath.toUrl());
             response.put("type", "heartbeat");
         }
         return response;
