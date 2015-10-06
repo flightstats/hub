@@ -4,7 +4,6 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 import org.apache.commons.io.Charsets;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -16,7 +15,6 @@ import java.util.Collections;
 
 @Getter
 @EqualsAndHashCode(of = "time")
-@ToString(of = "time")
 public class MinutePath implements ContentPath {
     private final static Logger logger = LoggerFactory.getLogger(MinutePath.class);
 
@@ -26,7 +24,7 @@ public class MinutePath implements ContentPath {
     private final Collection<ContentKey> keys;
 
     public MinutePath(DateTime time, Collection<ContentKey> keys) {
-        this.time = time;
+        this.time = TimeUtil.Unit.MINUTES.round(time);
         this.keys = keys;
     }
 
@@ -77,4 +75,8 @@ public class MinutePath implements ContentPath {
         }
     }
 
+    @Override
+    public String toString() {
+        return toUrl();
+    }
 }
