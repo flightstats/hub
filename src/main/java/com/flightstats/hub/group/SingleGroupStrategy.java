@@ -59,7 +59,7 @@ public class SingleGroupStrategy implements GroupStrategy {
     }
 
     private ContentPath getLastCompleted(ContentPath defaultKey) {
-        return lastContentPath.get(group.getName(), (ContentKey) defaultKey, GroupLeader.GROUP_LAST_COMPLETED);
+        return lastContentPath.get(group.getName(), defaultKey, GroupLeader.GROUP_LAST_COMPLETED);
     }
 
     @Override
@@ -137,7 +137,7 @@ public class SingleGroupStrategy implements GroupStrategy {
                             .next(true)
                             .stable(true)
                             .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
-                            .count(50)
+                            .count(1000)
                             .build();
                     query.trace(true);
                     query.getTraces().add("latest", latest.get());

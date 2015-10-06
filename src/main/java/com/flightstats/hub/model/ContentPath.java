@@ -11,8 +11,6 @@ public interface ContentPath extends Comparable<ContentPath> {
 
     byte[] toBytes();
 
-    ContentPath toContentPath(byte[] bytes);
-
     String toUrl();
 
     DateTime getTime();
@@ -25,20 +23,24 @@ public interface ContentPath extends Comparable<ContentPath> {
         try {
             String substring = StringUtils.substringAfter(url, "/channel/");
             substring = StringUtils.substringAfter(substring, "/");
-            Optional<ContentKey> keyOptional = ContentKey.fromUrl(substring);
-            if (keyOptional.isPresent()) {
-                return Optional.of(keyOptional.get());
-            }
-            Optional<MinutePath> pathOptional = MinutePath.fromUrl(substring);
-            if (pathOptional.isPresent()) {
-                return Optional.of(pathOptional.get());
-            }
-            return Optional.absent();
+            return fromUrl(substring);
         } catch (Exception e) {
             logger.info("unable to parse " + url + " " + e.getMessage());
             return Optional.absent();
         }
+    }
 
+    //todo - gfm - 10/5/15 - rename
+    static Optional<ContentPath> fromUrl(String url) {
+        Optional<ContentKey> keyOptional = ContentKey.fromUrl(url);
+        if (keyOptional.isPresent()) {
+            return Optional.of(keyOptional.get());
+        }
+        Optional<MinutePath> pathOptional = MinutePath.fromUrl(url);
+        if (pathOptional.isPresent()) {
+            return Optional.of(pathOptional.get());
+        }
+        return Optional.absent();
     }
 
 }

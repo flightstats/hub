@@ -1,16 +1,23 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
+import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ChannelReplicatorImpl implements ChannelReplicator {
+
+    private final static Logger logger = LoggerFactory.getLogger(ChannelReplicatorImpl.class);
 
     private ChannelConfig channel;
     private HubUtils hubUtils;
     private final String appUrl = StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
     private final String appEnv;
+    public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
 
     public ChannelReplicatorImpl(ChannelConfig channel, HubUtils hubUtils) {
         this.channel = channel;
@@ -20,7 +27,15 @@ public class ChannelReplicatorImpl implements ChannelReplicator {
     }
 
     public void start() {
-        hubUtils.startGroupCallback(getGroupName(), getCallbackUrl(), channel.getReplicationSource());
+        Optional<Group> groupOptional = hubUtils.getGroupCallback(getGroupName(), channel.getReplicationSource());
+        Group.GroupBuilder builder = Group.builder()
+                .name(getGroupName())
+                .callbackUrl(getCallbackUrl())
+                .channelUrl(channel.getReplicationSource())
+                .batch(Group.SINGLE);
+        //.batch(Group.MINUTE);
+        Group group = builder.build();
+        hubUtils.startGroupCallback(group);
     }
 
     private String getCallbackUrl() {

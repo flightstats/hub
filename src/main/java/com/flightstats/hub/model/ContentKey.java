@@ -58,7 +58,7 @@ public class ContentKey implements ContentPath {
             DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
             return Optional.of(new ContentKey(dateTime, hash));
         } catch (Exception e) {
-            logger.info("unable to parse " + key + " " + e.getMessage(), e);
+            logger.info("unable to parse " + key, e);
             return Optional.absent();
         }
     }
@@ -85,22 +85,17 @@ public class ContentKey implements ContentPath {
     }
 
     @Override
-    public int compareTo(ContentPath contentPath) {
-        ContentKey other = (ContentKey) contentPath;
-        int diff = time.compareTo(other.time);
-        if (diff == 0) {
-            diff = hash.compareTo(other.hash);
+    public int compareTo(ContentPath other) {
+        int diff = time.compareTo(other.getTime());
+        if (diff == 0 && other instanceof ContentKey) {
+            ContentKey key = (ContentKey) other;
+            diff = hash.compareTo(key.hash);
         }
         return diff;
     }
 
     public byte[] toBytes() {
         return toUrl().getBytes(Charsets.UTF_8);
-    }
-
-    @Override
-    public ContentPath toContentPath(byte[] bytes) {
-        return fromBytes(bytes);
     }
 
     public String toZk() {

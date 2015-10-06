@@ -47,14 +47,14 @@ public class Group {
 
     public boolean allowedToChange(Group other) {
         return channelUrl.equals(other.channelUrl)
-                && name.equals(other.name)
-                && batch.equals(other.batch);
+                && name.equals(other.name);
     }
 
     public boolean isChanged(Group other) {
         return parallelCalls != other.parallelCalls
                 || paused != other.paused
-                || !callbackUrl.equals(other.callbackUrl);
+                || !callbackUrl.equals(other.callbackUrl)
+                || !batch.equals(other.batch);
     }
 
     private static final Gson gson = new GsonBuilder().create();
@@ -79,6 +79,11 @@ public class Group {
             JsonNode root = mapper.readTree(json);
             if (root.has("startItem")) {
                 Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("startItem").asText());
+                if (keyOptional.isPresent()) {
+                    builder.startingKey(keyOptional.get());
+                }
+            } else if (root.has("lastCompletedCallback")) {
+                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompletedCallback").asText());
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
                 }
@@ -131,5 +136,12 @@ public class Group {
 
     public boolean isMinute() {
         return MINUTE.equalsIgnoreCase(getBatch());
+    }
+
+    public static String getBatchType(boolean single) {
+        if (single) {
+            return SINGLE;
+        }
+        return MINUTE;
     }
 }

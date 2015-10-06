@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.replication.ChannelReplicatorImpl;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
@@ -15,9 +16,11 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class MinuteGroupStrategy implements GroupStrategy {
 
@@ -48,7 +51,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
     }
 
     private ContentPath getLastCompleted(ContentPath defaultKey) {
-        return lastContentPath.get(group.getName(), (MinutePath) defaultKey, GroupLeader.GROUP_LAST_COMPLETED);
+        return lastContentPath.get(group.getName(), defaultKey, GroupLeader.GROUP_LAST_COMPLETED);
     }
 
     @Override
@@ -58,7 +61,6 @@ public class MinuteGroupStrategy implements GroupStrategy {
 
     @Override
     public void start(Group group, ContentPath startingPath) {
-        MinutePath minutePath = (MinutePath) startingPath;
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("minute-group-" + group.getName() + "-%s").build();
         executorService = Executors.newSingleThreadScheduledExecutor(factory);
@@ -66,12 +68,14 @@ public class MinuteGroupStrategy implements GroupStrategy {
         logger.info("starting {} with offset {}", group, offset);
         executorService.scheduleAtFixedRate(new Runnable() {
 
-            MinutePath lastAdded = minutePath;
+            ContentPath lastAdded = startingPath;
 
             @Override
             public void run() {
                 try {
-                    doWork();
+                    if (!shouldExit.get()) {
+                        doWork();
+                    }
                 } catch (Exception e) {
                     error.set(true);
                     logger.warn("unexpected issue with " + channel, e);
@@ -79,22 +83,24 @@ public class MinuteGroupStrategy implements GroupStrategy {
             }
 
             private void doWork() {
-                if (!shouldExit.get()) {
-                    if (channelService.isReplicating(channel)) {
-                        handleReplication();
-                    } else {
-                        handleNormal();
-                    }
-                }
-            }
-
-            private void handleNormal() {
                 try {
                     DateTime nextTime = lastAdded.getTime().plusMinutes(1);
+                    if (lastAdded instanceof ContentKey) {
+                        nextTime = lastAdded.getTime();
+                    }
                     DateTime stable = TimeUtil.stable().minusMinutes(1);
+                    if (channelService.isReplicating(channel)) {
+                        ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicatorImpl.REPLICATED_LAST_UPDATED);
+                        stable = contentPath.getTime().plusSeconds(1);
+                        logger.debug("replicating {} stable {}", contentPath, stable);
+                    }
                     logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
                     while (nextTime.isBefore(stable)) {
-                        MinutePath nextPath = createMinutePath(nextTime);
+                        Collection<ContentKey> keys = queryKeys(nextTime)
+                                .stream()
+                                .filter(key -> key.compareTo(lastAdded) > 0)
+                                .collect(Collectors.toCollection(ArrayList::new));
+                        MinutePath nextPath = new MinutePath(nextTime, keys);
                         logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
                         queue.put(nextPath);
                         lastAdded = nextPath;
@@ -104,12 +110,6 @@ public class MinuteGroupStrategy implements GroupStrategy {
                     logger.info("InterruptedException " + channel + " " + e.getMessage());
                     throw new RuntimeInterruptedException(e);
                 }
-            }
-
-            private void handleReplication() {
-                //todo - gfm - 9/11/15 -
-                logger.warn("minute group for replicated channel " + channel + "isn't supported yet :/ ");
-
             }
 
         }, getOffset(), 60, TimeUnit.SECONDS);
@@ -125,7 +125,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
         return 0;
     }
 
-    private MinutePath createMinutePath(DateTime time) {
+    private Collection<ContentKey> queryKeys(DateTime time) {
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channel)
                 .startTime(time)
@@ -133,7 +133,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
                 .stable(true)
                 .traces(Traces.NOOP)
                 .build();
-        return new MinutePath(time, channelService.queryByTime(timeQuery));
+        return channelService.queryByTime(timeQuery);
     }
 
     @Override
@@ -173,7 +173,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
 
     @Override
     public ContentPath inProcess(ContentPath contentPath) {
-        return createMinutePath(contentPath.getTime());
+        return new MinutePath(contentPath.getTime(), queryKeys(contentPath.getTime()));
     }
 
     @Override
