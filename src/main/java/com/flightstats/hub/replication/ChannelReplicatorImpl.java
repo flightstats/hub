@@ -32,8 +32,8 @@ public class ChannelReplicatorImpl implements ChannelReplicator {
                 .name(getGroupName())
                 .callbackUrl(getCallbackUrl())
                 .channelUrl(channel.getReplicationSource())
-                        //.batch(Group.SINGLE);
-                .batch(Group.MINUTE);
+                .batch(Group.SINGLE);
+        //.batch(Group.MINUTE);
         Group group = builder.build();
         hubUtils.startGroupCallback(group);
     }
