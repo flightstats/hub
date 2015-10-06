@@ -112,11 +112,12 @@ public class GroupLeader implements Leader {
         } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + group.getName());
         } finally {
-            logger.info("stopping last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
+            //todo - gfm - 10/6/15 - this should wait for all in-process calls to complete
             closeQueue();
             if (deleteOnExit.get()) {
                 delete();
             }
+            logger.info("stopping last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
         }
     }
 
