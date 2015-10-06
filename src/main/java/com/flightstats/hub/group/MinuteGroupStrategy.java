@@ -168,6 +168,11 @@ public class MinuteGroupStrategy implements GroupStrategy {
         for (ContentKey key : keys) {
             uris.add(channelUrl + "/" + key.toUrl());
         }
+        if (keys.isEmpty()) {
+            response.put("type", "heartbeat");
+        } else {
+            response.put("type", "items");
+        }
         return response;
     }
 
