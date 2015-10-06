@@ -81,12 +81,11 @@ public class ContentKey implements ContentPath {
     }
 
     @Override
-    public int compareTo(ContentPath contentPath) {
-        //todo - gfm - 10/5/15 - what does it mean to compare these?
-        ContentKey other = (ContentKey) contentPath;
-        int diff = time.compareTo(other.time);
-        if (diff == 0) {
-            diff = hash.compareTo(other.hash);
+    public int compareTo(ContentPath other) {
+        int diff = time.compareTo(other.getTime());
+        if (diff == 0 && other instanceof ContentKey) {
+            ContentKey key = (ContentKey) other;
+            diff = hash.compareTo(key.hash);
         }
         return diff;
     }

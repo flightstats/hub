@@ -27,22 +27,13 @@ public class ChannelReplicatorImpl implements ChannelReplicator {
     }
 
     public void start() {
-        //todo - gfm - 9/24/15 - for now, we need to roll this out to all envs using SINGLE replication
-        //todo - gfm - 9/24/15 - after this is n all envs, we can change to MINUTE replication
         Optional<Group> groupOptional = hubUtils.getGroupCallback(getGroupName(), channel.getReplicationSource());
         Group.GroupBuilder builder = Group.builder()
                 .name(getGroupName())
                 .callbackUrl(getCallbackUrl())
                 .channelUrl(channel.getReplicationSource())
                 .batch(Group.SINGLE);
-        if (groupOptional.isPresent()) {
-            Group group = groupOptional.get();
-            if (group.isMinute()) {
-                logger.info("stopping MINUTE group {}", group);
-                hubUtils.stopGroupCallback(getGroupName(), channel.getReplicationSource());
-                builder.startingKey(group.getStartingKey());
-            }
-        }
+        //.batch(Group.MINUTE);
         Group group = builder.build();
         hubUtils.startGroupCallback(group);
     }
