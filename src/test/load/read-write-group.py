@@ -16,6 +16,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -358,7 +359,8 @@ class WebsiteTasks(TaskSet):
                     events.request_success.fire(request_type="heartbeats", name="order", response_time=1,
                                                 response_length=1)
                 else:
-                    logger.info("heartbeat " + str(groupCallbacks[channel]["heartbeats"]))
+                    logger.info("heartbeat order failure. id = " + incoming_json['id'] + " array=" + str(
+                        groupCallbacks[channel]["heartbeats"]))
                     events.request_failure.fire(request_type="heartbeats", name="order", response_time=1,
                                                 exception=-1)
             return "ok"
