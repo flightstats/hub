@@ -171,16 +171,16 @@ public class SingleGroupStrategy implements GroupStrategy {
             private void addKeys(Collection<ContentKey> keys) {
                 logger.debug("channel {} keys {}", channel, keys);
                 for (ContentKey key : keys) {
-                    if (key.compareTo(lastAdded) > 0) {
-                        addKey(key);
-                        lastAdded = key;
-                    }
+                    addKey(key);
                 }
             }
 
             private void addKey(ContentPath key) {
                 try {
-                    queue.put(key);
+                    if (key.compareTo(lastAdded) > 0) {
+                        queue.put(key);
+                        lastAdded = key;
+                    }
                 } catch (InterruptedException e) {
                     logger.info("InterruptedException " + channel + " " + e.getMessage());
                     throw new RuntimeInterruptedException(e);

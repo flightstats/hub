@@ -67,7 +67,15 @@ public class ContentKeyTest {
 
     @Test
     public void testCompareMinutePath() {
-        //todo
+        MinutePath minutePath = new MinutePath();
+        ContentKey contentKey = new ContentKey(minutePath.getTime(), "0");
+        assertTrue(contentKey.compareTo(minutePath) < 0);
+
+        ContentKey nextSeconds = new ContentKey(minutePath.getTime().plusSeconds(59), "0");
+        assertTrue(nextSeconds.compareTo(minutePath) < 0);
+
+        ContentKey nextMinute = new ContentKey(minutePath.getTime().plusMinutes(1), "0");
+        assertTrue(nextMinute.compareTo(minutePath) > 0);
     }
 }
 

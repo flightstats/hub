@@ -31,12 +31,13 @@ public class MinutePathTest {
     @Test
     public void testCompareContentKey() {
         MinutePath minutePath = new MinutePath();
+        ContentKey contentKey = new ContentKey(minutePath.getTime(), "0");
+        assertTrue(minutePath.compareTo(contentKey) > 0);
 
-        ContentKey before = new ContentKey(minutePath.getTime().minusMinutes(1), "A");
-        ContentKey same = new ContentKey(minutePath.getTime(), "A");
-        ContentKey after = new ContentKey(minutePath.getTime().plusMinutes(1), "A");
+        ContentKey nextSeconds = new ContentKey(minutePath.getTime().plusSeconds(59), "0");
+        assertTrue(minutePath.compareTo(nextSeconds) > 0);
 
-        assertTrue(minutePath.compareTo(before) > 0);
-        assertTrue(minutePath.compareTo(after) < 0);
+        ContentKey nextMinute = new ContentKey(minutePath.getTime().plusMinutes(1), "0");
+        assertTrue(minutePath.compareTo(nextMinute) < 0);
     }
 }

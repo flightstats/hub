@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 public class ContentKeyUtil {
 
+    //todo - gfm - 10/7/15 - could be switched to ContentPath - not sure it's needed
     public static SortedSet<ContentKey> filter(Collection<ContentKey> keys, ContentKey limitKey,
                                          DateTime ttlTime, int count, boolean next, boolean stable) {
         Stream<ContentKey> stream = keys.stream();

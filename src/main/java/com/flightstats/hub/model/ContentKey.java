@@ -86,12 +86,22 @@ public class ContentKey implements ContentPath {
 
     @Override
     public int compareTo(ContentPath other) {
-        int diff = time.compareTo(other.getTime());
-        if (diff == 0 && other instanceof ContentKey) {
+        if (other instanceof ContentKey) {
             ContentKey key = (ContentKey) other;
-            diff = hash.compareTo(key.hash);
+            int diff = time.compareTo(key.getTime());
+            if (diff == 0) {
+                diff = hash.compareTo(key.hash);
+            }
+            return diff;
+        } else {
+            MinutePath minutePath = (MinutePath) other;
+            DateTime endTime = minutePath.getTime().plusMinutes(1);
+            int diff = time.compareTo(endTime);
+            if (diff == 0) {
+                return 1;
+            }
+            return diff;
         }
-        return diff;
     }
 
     public byte[] toBytes() {
