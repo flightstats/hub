@@ -135,8 +135,8 @@ public class SingleGroupStrategy implements GroupStrategy {
 
             private void handleReplication() {
                 /**
-                 * This does not currently send a minute heartbeat.  If needed, it could after the 'normal'
-                 * heartbeat is in all envs.
+                 * This does not currently send a minute heartbeat.
+                 * Once the heartbeat is available in all envs, we can update this to use REPLICATED_LAST_UPDATED
                  */
                 Collection<ContentKey> keys = Collections.EMPTY_LIST;
                 Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
