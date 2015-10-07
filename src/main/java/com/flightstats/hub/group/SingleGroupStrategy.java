@@ -121,7 +121,6 @@ public class SingleGroupStrategy implements GroupStrategy {
                         handleReplication();
                     } else {
                         TimeQuery timeQuery = queryGenerator.getQuery(TimeUtil.stable());
-                        logger.trace("last query time {}", queryGenerator.getLastQueryTime());
                         if (timeQuery != null) {
                             addKeys(channelService.queryByTime(timeQuery));
                             if (group.isHeartbeat() && queryGenerator.getLastQueryTime().getSecondOfMinute() == 0) {
