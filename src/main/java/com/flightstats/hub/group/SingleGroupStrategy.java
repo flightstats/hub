@@ -124,7 +124,7 @@ public class SingleGroupStrategy implements GroupStrategy {
                         if (timeQuery != null) {
                             addKeys(channelService.queryByTime(timeQuery));
                             if (group.isHeartbeat() && queryGenerator.getLastQueryTime().getSecondOfMinute() == 0) {
-                                addKey(new MinutePath(queryGenerator.getLastQueryTime()));
+                                addKey(new MinutePath(queryGenerator.getLastQueryTime().minusMinutes(1)));
                             }
                         } else {
                             Sleeper.sleep(1000);

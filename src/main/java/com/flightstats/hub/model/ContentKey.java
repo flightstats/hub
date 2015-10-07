@@ -58,7 +58,7 @@ public class ContentKey implements ContentPath {
             DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
             return Optional.of(new ContentKey(dateTime, hash));
         } catch (Exception e) {
-            logger.info("unable to parse " + key, e);
+            logger.debug("unable to parse {} {} ", key, e.getMessage());
             return Optional.absent();
         }
     }
