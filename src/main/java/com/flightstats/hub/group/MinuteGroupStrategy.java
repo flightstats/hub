@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.ChannelReplicatorImpl;
+import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
@@ -90,7 +90,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
                     }
                     DateTime stable = TimeUtil.stable().minusMinutes(1);
                     if (channelService.isReplicating(channel)) {
-                        ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicatorImpl.REPLICATED_LAST_UPDATED);
+                        ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED);
                         stable = contentPath.getTime().plusSeconds(1);
                         logger.debug("replicating {} stable {}", contentPath, stable);
                     }

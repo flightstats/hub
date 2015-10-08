@@ -12,7 +12,10 @@ import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,7 +59,6 @@ public class ReplicatorImpl implements Replicator {
         @Override
         protected void shutDown() throws Exception {
             stopped.set(true);
-            exit();
         }
 
     }
@@ -116,21 +118,12 @@ public class ReplicatorImpl implements Replicator {
         }
     }
 
-    private void exit() {
-        logger.info("exiting all replication " + replicatorMap.keySet());
-        Collection<ChannelReplicator> replicators = replicatorMap.values();
-        for (ChannelReplicator replicator : replicators) {
-            replicator.exit();
-        }
-        logger.info("exited all replication " + replicatorMap.keySet());
-    }
-
     private void startReplication(ChannelConfig channel) {
         logger.debug("starting replication of " + channel);
         try {
-            ChannelReplicatorImpl channelReplicatorImpl = new ChannelReplicatorImpl(channel, hubUtils);
-            channelReplicatorImpl.start();
-            replicatorMap.put(channel.getName(), channelReplicatorImpl);
+            ChannelReplicator channelReplicator = new ChannelReplicator(channel, hubUtils);
+            channelReplicator.start();
+            replicatorMap.put(channel.getName(), channelReplicator);
         } catch (Exception e) {
             logger.warn("unable to start replication " + channel, e);
         }
