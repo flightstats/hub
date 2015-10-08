@@ -12,7 +12,10 @@ import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,9 +30,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Replication starts at nearly the oldest Item, and gradually progresses forward to the current item
  * Replication stays up to date, with some minimal amount of lag
  */
-public class ReplicatorImpl implements Replicator {
+public class ReplicatorManager {
+    public static final String REPLICATED = "replicated";
     private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
-    private final static Logger logger = LoggerFactory.getLogger(ReplicatorImpl.class);
+    private final static Logger logger = LoggerFactory.getLogger(ReplicatorManager.class);
 
     private final ChannelService channelService;
     private final HubUtils hubUtils;
@@ -39,7 +43,7 @@ public class ReplicatorImpl implements Replicator {
     private ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Inject
-    public ReplicatorImpl(ChannelService channelService, HubUtils hubUtils, WatchManager watchManager) {
+    public ReplicatorManager(ChannelService channelService, HubUtils hubUtils, WatchManager watchManager) {
         this.channelService = channelService;
         this.hubUtils = hubUtils;
         this.watchManager = watchManager;
@@ -56,14 +60,13 @@ public class ReplicatorImpl implements Replicator {
         @Override
         protected void shutDown() throws Exception {
             stopped.set(true);
-            exit();
         }
 
     }
 
     public void startReplicator() {
         logger.info("starting");
-        ReplicatorImpl replicator = this;
+        ReplicatorManager replicator = this;
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
@@ -116,27 +119,17 @@ public class ReplicatorImpl implements Replicator {
         }
     }
 
-    private void exit() {
-        logger.info("exiting all replication " + replicatorMap.keySet());
-        Collection<ChannelReplicator> replicators = replicatorMap.values();
-        for (ChannelReplicator replicator : replicators) {
-            replicator.exit();
-        }
-        logger.info("exited all replication " + replicatorMap.keySet());
-    }
-
     private void startReplication(ChannelConfig channel) {
         logger.debug("starting replication of " + channel);
         try {
-            ChannelReplicatorImpl channelReplicatorImpl = new ChannelReplicatorImpl(channel, hubUtils);
-            channelReplicatorImpl.start();
-            replicatorMap.put(channel.getName(), channelReplicatorImpl);
+            ChannelReplicator channelReplicator = new ChannelReplicator(channel, hubUtils);
+            channelReplicator.start();
+            replicatorMap.put(channel.getName(), channelReplicator);
         } catch (Exception e) {
             logger.warn("unable to start replication " + channel, e);
         }
     }
 
-    @Override
     public void notifyWatchers() {
         watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
     }

@@ -682,6 +682,10 @@ delete the callback first.
   Setting the value to `MINUTE` will return each minute's worth of data in the channel.  MINUTE callbacks will return an empty 
   array of uris if there are no items.  
 
+* `heartbeat` is optional and defaults to false for `SINGLE`. `MINUTE` batches always have a heartbeat.
+   A heartbeat is a callback which identifies the end of a minute period.  It may have an empty `uris` array.
+   It will include an `id` field which identifies the ending minute.
+
 To get a list of existing group callbacks:
 
 `GET http://hub/group`
@@ -697,7 +701,8 @@ To create a new group callback:
   "parallelCalls" : 2,
   "startItem" : "http://hub/channel/stumptown/2015/02/06/22/28/43/239/s03ub2",
   "paused" : false,
-  "batch" : "SINGLE"
+  "batch" : "SINGLE",
+  "heartbeat" : false
 }
 ```
 
@@ -725,23 +730,49 @@ An example SINGLE payload:
 ``` json
 {
   "name" : "stumptownCallback",
+  "type" : "item",
   "uris" : [ "http://hub/channel/stumptown/2014/01/13/10/42/31/759/s03ub2" ]
 }
 ```
 
-An example BATCH payload:
+An example SINGLE heartbeat:
+
+``` json
+{
+  "name" : "stumptownCallback",
+  "type" : "heartbeat",
+  "id" : "2014/01/13/10/42",
+  "uris" : []
+}
+```
+
+An example MINUTE payload:
 
 ``` json
 {
   "name" : "stumptownCallbackBatch",
+  "type" : "items",
   "id" : "2014/01/13/10/42",
-  "url" : "http://hub/channel/stumptown/2014/01/13/10/42"
-  "batchUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?batch=true"
+  "url" : "http://hub/channel/stumptown/2014/01/13/10/42",
+  "batchUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?batch=true",
   "uris" : [ 
     "http://hub/channel/stumptown/2014/01/13/10/42/05/436/abcdef",
     "http://hub/channel/stumptown/2014/01/13/10/42/31/759/s03ub2"
     "http://hub/channel/stumptown/2014/01/13/10/42/39/029/zxcvbn"
   ]
+}
+```
+
+An example MINUTE heartbeat :
+
+``` json
+{
+  "name" : "stumptownCallbackBatch",
+  "type" : "heartbeat",
+  "id" : "2014/01/13/10/42",
+  "url" : "http://hub/channel/stumptown/2014/01/13/10/42",
+  "batchUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?batch=true",
+  "uris" : [ ]
 }
 ```
 

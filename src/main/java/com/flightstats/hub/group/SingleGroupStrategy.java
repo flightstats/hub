@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -34,7 +31,7 @@ public class SingleGroupStrategy implements GroupStrategy {
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private AtomicBoolean error = new AtomicBoolean(false);
-    private BlockingQueue<ContentKey> queue = new ArrayBlockingQueue<>(1000);
+    private BlockingQueue<ContentPath> queue = new ArrayBlockingQueue<>(1000);
     private String channel;
     private QueryGenerator queryGenerator;
 
@@ -72,7 +69,13 @@ public class SingleGroupStrategy implements GroupStrategy {
         ObjectNode response = mapper.createObjectNode();
         response.put("name", group.getName());
         ArrayNode uris = response.putArray("uris");
-        uris.add(group.getChannelUrl() + "/" + contentPath.toUrl());
+        if (contentPath instanceof ContentKey) {
+            uris.add(group.getChannelUrl() + "/" + contentPath.toUrl());
+            response.put("type", "item");
+        } else {
+            response.put("id", contentPath.toUrl());
+            response.put("type", "heartbeat");
+        }
         return response;
     }
 
@@ -93,14 +96,14 @@ public class SingleGroupStrategy implements GroupStrategy {
     }
 
     public void start(Group group, ContentPath startingPath) {
-        ContentKey startingKey = (ContentKey) startingPath;
+        ContentPath startingKey = (ContentPath) startingPath;
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         queryGenerator = new QueryGenerator(startingKey.getTime(), channel);
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("single-group-" + group.getName() + "-%s").build();
         ExecutorService executorService = Executors.newSingleThreadExecutor(factory);
         executorService.submit(new Runnable() {
 
-            ContentKey lastAdded = startingKey;
+            ContentPath lastAdded = startingKey;
 
             @Override
             public void run() {
@@ -120,6 +123,11 @@ public class SingleGroupStrategy implements GroupStrategy {
                         TimeQuery timeQuery = queryGenerator.getQuery(TimeUtil.stable());
                         if (timeQuery != null) {
                             addKeys(channelService.queryByTime(timeQuery));
+                            if (group.isHeartbeat() && queryGenerator.getLastQueryTime().getSecondOfMinute() == 0) {
+                                MinutePath minutePath = new MinutePath(queryGenerator.getLastQueryTime().minusMinutes(1));
+                                logger.debug("sending heartbeat {}", minutePath);
+                                addKey(minutePath);
+                            }
                         } else {
                             Sleeper.sleep(1000);
                         }
@@ -128,12 +136,16 @@ public class SingleGroupStrategy implements GroupStrategy {
             }
 
             private void handleReplication() {
+                /**
+                 * This does not currently send a minute heartbeat.
+                 * Once the heartbeat is available in all envs, we can update this to use REPLICATED_LAST_UPDATED
+                 */
                 Collection<ContentKey> keys = Collections.EMPTY_LIST;
                 Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
                 if (latest.isPresent() && latest.get().compareTo(lastAdded) > 0) {
                     DirectionQuery query = DirectionQuery.builder()
                             .channelName(channel)
-                            .contentKey(lastAdded)
+                            .contentKey((ContentKey) lastAdded)
                             .next(true)
                             .stable(true)
                             .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
@@ -158,12 +170,16 @@ public class SingleGroupStrategy implements GroupStrategy {
 
             private void addKeys(Collection<ContentKey> keys) {
                 logger.debug("channel {} keys {}", channel, keys);
+                for (ContentKey key : keys) {
+                    addKey(key);
+                }
+            }
+
+            private void addKey(ContentPath key) {
                 try {
-                    for (ContentKey key : keys) {
-                        if (key.compareTo(lastAdded) > 0) {
-                            queue.put(key);
-                            lastAdded = key;
-                        }
+                    if (key.compareTo(lastAdded) > 0) {
+                        queue.put(key);
+                        lastAdded = key;
                     }
                 } catch (InterruptedException e) {
                     logger.info("InterruptedException " + channel + " " + e.getMessage());

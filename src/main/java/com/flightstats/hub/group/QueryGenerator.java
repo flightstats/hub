@@ -55,4 +55,7 @@ public class QueryGenerator {
         return TimeUtil.Unit.SECONDS;
     }
 
+    public DateTime getLastQueryTime() {
+        return lastQueryTime;
+    }
 }

@@ -15,6 +15,8 @@ from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
 
 
+
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -60,8 +62,10 @@ class WebsiteTasks(TaskSet):
         group_channel = self.channel
         parallel = 1
         batch = "SINGLE"
+        heartbeat = False
         if self.number == 2:
             parallel = 2
+            heartbeat = True
         if self.number == 3:
             group_channel = self.channel + "_replicated"
             self.client.put("/channel/" + group_channel,
@@ -78,13 +82,16 @@ class WebsiteTasks(TaskSet):
             "data": [],
             "lock": threading.Lock(),
             "parallel": parallel,
-            "batch": batch
+            "batch": batch,
+            "heartbeat": heartbeat,
+            "heartbeats": []
         }
         group = {
             "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
             "channelUrl": groupConfig['host'] + "/channel/" + group_channel,
             "parallelCalls": parallel,
-            "batch": batch
+            "batch": batch,
+            "heartbeat": heartbeat
         }
         self.client.put(group_name,
                         data=json.dumps(group),
@@ -138,7 +145,14 @@ class WebsiteTasks(TaskSet):
         self.append_href(href, groupCallbacks)
         if websockets[self.channel]["open"]:
             self.append_href(href, websockets)
+        if groupCallbacks[self.channel]["heartbeat"]:
+            id = href[-30:-14]
+            if id not in groupCallbacks[self.channel]["heartbeats"]:
+                logger.info("adding heartbeat " + id)
+                groupCallbacks[self.channel]["heartbeats"].append(id)
+
         return href
+
 
     def append_href(self, href, obj):
         try:
@@ -284,6 +298,12 @@ class WebsiteTasks(TaskSet):
         self.verify_callback(groupCallbacks, "group")
         if websockets[self.channel]["open"]:
             self.verify_callback(websockets, "websocket")
+        if groupCallbacks[self.channel]["heartbeat"]:
+            heartbeats_ = groupCallbacks[self.channel]["heartbeats"]
+            if len(heartbeats_) > 2:
+                events.request_failure.fire(request_type="heartbeats", name="length", response_time=1,
+                                            exception=-1)
+                logger.info(" too many heartbeats in " + self.channel + " " + str(heartbeats_))
 
     @staticmethod
     def verify_ordered(channel, incoming_uri, obj, name):
@@ -330,6 +350,19 @@ class WebsiteTasks(TaskSet):
                         WebsiteTasks.verify_parallel(channel, incoming_uri)
                 finally:
                     groupCallbacks[channel]["lock"].release()
+            if incoming_json['type'] == "heartbeat":
+                logger.info("heartbeat " + str(incoming_json))
+                # make sure the heart beat is before the first data item
+                # heartbeat {u'id': u'2015/10/07/01/14', u'type': u'heartbeat', u'name': u'locust_load_test_2', u'uris': []}
+                if incoming_json['id'] == groupCallbacks[channel]["heartbeats"][0]:
+                    (groupCallbacks[channel]["heartbeats"]).remove(incoming_json['id'])
+                    events.request_success.fire(request_type="heartbeats", name="order", response_time=1,
+                                                response_length=1)
+                else:
+                    logger.info("heartbeat order failure. id = " + incoming_json['id'] + " array=" + str(
+                        groupCallbacks[channel]["heartbeats"]))
+                    events.request_failure.fire(request_type="heartbeats", name="order", response_time=1,
+                                                exception=-1)
             return "ok"
         else:
             return jsonify(items=groupCallbacks[channel]["data"])

@@ -54,7 +54,7 @@ public class ReplicationCallbackResource {
                 logger.trace("repl id {} for {}", id, channel);
                 Optional<MinutePath> pathOptional = MinutePath.fromUrl(id);
                 if (pathOptional.isPresent()) {
-                    lastContentPath.updateIncrease(pathOptional.get(), channel, ChannelReplicatorImpl.REPLICATED_LAST_UPDATED);
+                    lastContentPath.updateIncrease(pathOptional.get(), channel, ChannelReplicator.REPLICATED_LAST_UPDATED);
                 }
             }
         } catch (Exception e) {

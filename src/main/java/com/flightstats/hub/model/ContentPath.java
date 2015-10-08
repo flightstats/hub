@@ -19,6 +19,8 @@ public interface ContentPath extends Comparable<ContentPath> {
 
     ContentPath fromZk(String value);
 
+    int compareTo(ContentPath other);
+
     static Optional<ContentPath> fromFullUrl(String url) {
         try {
             String substring = StringUtils.substringAfter(url, "/channel/");

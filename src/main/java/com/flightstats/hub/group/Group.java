@@ -35,6 +35,8 @@ public class Group {
     private final transient ContentPath startingKey;
     @Wither
     private final String batch;
+    @Wither
+    private final boolean heartbeat;
 
     private final boolean paused;
 
@@ -54,7 +56,8 @@ public class Group {
         return parallelCalls != other.parallelCalls
                 || paused != other.paused
                 || !callbackUrl.equals(other.callbackUrl)
-                || !batch.equals(other.batch);
+                || !batch.equals(other.batch)
+                || !heartbeat == other.heartbeat;
     }
 
     private static final Gson gson = new GsonBuilder().create();
@@ -73,7 +76,8 @@ public class Group {
                     .channelUrl(existing.channelUrl)
                     .name(existing.name)
                     .startingKey(existing.startingKey)
-                    .batch(existing.batch);
+                    .batch(existing.batch)
+                    .heartbeat(existing.heartbeat);
         }
         try {
             JsonNode root = mapper.readTree(json);
@@ -106,6 +110,9 @@ public class Group {
             if (root.has("batch")) {
                 builder.batch(root.get("batch").asText());
             }
+            if (root.has("heartbeat")) {
+                builder.heartbeat(root.get("heartbeat").asBoolean());
+            }
         } catch (IOException e) {
             logger.warn("unable to parse " + json, e);
             throw new RuntimeException(e);
@@ -127,6 +134,9 @@ public class Group {
         }
         if (batch == null) {
             group = group.withBatch("SINGLE");
+        }
+        if (group.isMinute()) {
+            group = group.withHeartbeat(true);
         }
         if (getStartingKey() == null) {
             group = group.withStartingKey(GroupStrategy.createContentPath(group));

@@ -13,6 +13,10 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * A MinutePath represents the end of a minute period.
+ * So any ContentKeys contained within that minute come before the MinutePath.
+ */
 @Getter
 @EqualsAndHashCode(of = "time")
 public class MinutePath implements ContentPath {
@@ -58,8 +62,17 @@ public class MinutePath implements ContentPath {
 
     @Override
     public int compareTo(ContentPath other) {
-        //todo - gfm - 10/5/15 - a MinutePath stand for the entire minute, while a ContentKey is a specific instant in time
-        return time.compareTo(other.getTime());
+        if (other instanceof MinutePath) {
+            return time.compareTo(other.getTime());
+        } else {
+            ContentKey contentKey = (ContentKey) other;
+            DateTime endTime = getTime().plusMinutes(1);
+            int diff = endTime.compareTo(contentKey.getTime());
+            if (diff == 0) {
+                return -1;
+            }
+            return diff;
+        }
     }
 
     public static MinutePath fromBytes(byte[] bytes) {
