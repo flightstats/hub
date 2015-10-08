@@ -8,10 +8,8 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.HubUtils;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,14 +55,6 @@ public class ReplicationCallbackResource {
                 Optional<MinutePath> pathOptional = MinutePath.fromUrl(id);
                 if (pathOptional.isPresent()) {
                     lastContentPath.updateIncrease(pathOptional.get(), channel, ChannelReplicatorImpl.REPLICATED_LAST_UPDATED);
-                }
-            } else {
-                if (content.isPresent()) {
-                    DateTime time = content.get().getContentKey().get().getTime();
-                    DateTime previousMinute = TimeUtil.Unit.MINUTES.round(time).minusMinutes(1);
-                    MinutePath minutePath = new MinutePath(previousMinute);
-                    logger.trace("temp minutePath {} for {}", minutePath, channel);
-                    lastContentPath.updateIncrease(minutePath, channel, ChannelReplicatorImpl.REPLICATED_LAST_UPDATED);
                 }
             }
         } catch (Exception e) {
