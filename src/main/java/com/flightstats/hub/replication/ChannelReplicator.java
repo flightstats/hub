@@ -32,7 +32,7 @@ public class ChannelReplicator {
                 .name(getGroupName())
                 .callbackUrl(getCallbackUrl())
                 .channelUrl(channel.getReplicationSource())
-                        //.heartbeat(true)
+                .heartbeat(true)
                 .batch(Group.SINGLE);
         //.batch(Group.MINUTE);
         Group group = builder.build();
