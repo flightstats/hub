@@ -10,8 +10,7 @@ import com.flightstats.hub.group.GroupCallbackImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.*;
-import com.flightstats.hub.replication.Replicator;
-import com.flightstats.hub.replication.ReplicatorImpl;
+import com.flightstats.hub.replication.ReplicatorManager;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.spoke.GCRunner;
 import com.flightstats.hub.time.NTPMonitor;
@@ -44,7 +43,7 @@ public class HubBindings extends AbstractModule {
         bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
         bind(HubHealthCheck.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
-        bind(Replicator.class).to(ReplicatorImpl.class).asEagerSingleton();
+        bind(ReplicatorManager.class).asEagerSingleton();
         bind(HubUtils.class).asEagerSingleton();
         bind(CuratorLock.class).asEagerSingleton();
         bind(GCRunner.class).asEagerSingleton();

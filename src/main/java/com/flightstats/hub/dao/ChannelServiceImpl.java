@@ -5,7 +5,7 @@ import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.Replicator;
+import com.flightstats.hub.replication.ReplicatorManager;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -22,17 +22,17 @@ public class ChannelServiceImpl implements ChannelService {
     private final ContentService contentService;
     private final ChannelConfigDao channelConfigDao;
     private final ChannelValidator channelValidator;
-    private final Replicator replicator;
+    private final ReplicatorManager replicatorManager;
     private MetricsSender sender;
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigDao channelConfigDao,
-                              ChannelValidator channelValidator, Replicator replicator,
+                              ChannelValidator channelValidator, ReplicatorManager replicatorManager,
                               MetricsSender sender) {
         this.contentService = contentService;
         this.channelConfigDao = channelConfigDao;
         this.channelValidator = channelValidator;
-        this.replicator = replicator;
+        this.replicatorManager = replicatorManager;
         this.sender = sender;
     }
 
@@ -48,7 +48,7 @@ public class ChannelServiceImpl implements ChannelService {
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
         ChannelConfig created = channelConfigDao.createChannel(configuration);
         if (created.isReplicating()) {
-            replicator.notifyWatchers();
+            replicatorManager.notifyWatchers();
         }
         return created;
     }
@@ -194,9 +194,9 @@ public class ChannelServiceImpl implements ChannelService {
         channelValidator.validate(configuration, false);
         channelConfigDao.updateChannel(configuration);
         if (configuration.isReplicating()) {
-            replicator.notifyWatchers();
+            replicatorManager.notifyWatchers();
         } else if (oldConfig != null && oldConfig.isReplicating()) {
-            replicator.notifyWatchers();
+            replicatorManager.notifyWatchers();
         }
         return configuration;
     }
@@ -248,7 +248,7 @@ public class ChannelServiceImpl implements ChannelService {
         contentService.delete(channelName);
         channelConfigDao.delete(channelName);
         if (replicating) {
-            replicator.notifyWatchers();
+            replicatorManager.notifyWatchers();
         }
         return true;
     }

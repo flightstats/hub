@@ -30,9 +30,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Replication starts at nearly the oldest Item, and gradually progresses forward to the current item
  * Replication stays up to date, with some minimal amount of lag
  */
-public class ReplicatorImpl implements Replicator {
+public class ReplicatorManager {
+    public static final String REPLICATED = "replicated";
     private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
-    private final static Logger logger = LoggerFactory.getLogger(ReplicatorImpl.class);
+    private final static Logger logger = LoggerFactory.getLogger(ReplicatorManager.class);
 
     private final ChannelService channelService;
     private final HubUtils hubUtils;
@@ -42,7 +43,7 @@ public class ReplicatorImpl implements Replicator {
     private ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Inject
-    public ReplicatorImpl(ChannelService channelService, HubUtils hubUtils, WatchManager watchManager) {
+    public ReplicatorManager(ChannelService channelService, HubUtils hubUtils, WatchManager watchManager) {
         this.channelService = channelService;
         this.hubUtils = hubUtils;
         this.watchManager = watchManager;
@@ -65,7 +66,7 @@ public class ReplicatorImpl implements Replicator {
 
     public void startReplicator() {
         logger.info("starting");
-        ReplicatorImpl replicator = this;
+        ReplicatorManager replicator = this;
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
@@ -129,7 +130,6 @@ public class ReplicatorImpl implements Replicator {
         }
     }
 
-    @Override
     public void notifyWatchers() {
         watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
     }
