@@ -112,17 +112,18 @@ public class GroupLeader implements Leader {
         } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + group.getName());
         } finally {
-            logger.info("stopping last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
+            //todo - gfm - 10/6/15 - this should wait for all in-process calls to complete
             closeQueue();
             if (deleteOnExit.get()) {
                 delete();
             }
+            logger.info("stopping last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
         }
     }
 
     private void sendInProcess(ContentPath lastCompletedPath) throws InterruptedException {
         Set<ContentPath> inProcessSet = groupInProcess.getSet(group.getName(), lastCompletedPath);
-        logger.trace("sending in process {} to {}", inProcessSet, group.getName());
+        logger.debug("sending in process {} to {}", inProcessSet, group.getName());
         for (ContentPath toSend : inProcessSet) {
             if (toSend.compareTo(lastCompletedPath) < 0) {
                 send(groupStrategy.inProcess(toSend));
