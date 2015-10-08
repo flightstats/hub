@@ -2,9 +2,11 @@ package com.flightstats.hub.health;
 
 import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Singleton;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Singleton
 public class HubHealthCheck {
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);

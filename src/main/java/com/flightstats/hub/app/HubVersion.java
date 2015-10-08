@@ -1,6 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
+@Singleton
 public class HubVersion {
     private final static Logger logger = LoggerFactory.getLogger(HubVersion.class);
 
