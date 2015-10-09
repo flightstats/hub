@@ -39,6 +39,8 @@ public class HealthResource {
 
         if (healthStatus.isHealthy()) {
             return Response.ok(rootNode).build();
+        } else if (healthCheck.isShuttingDown()) {
+            return Response.status(520).entity(rootNode).build();
         } else {
             return Response.serverError().entity(rootNode).build();
         }

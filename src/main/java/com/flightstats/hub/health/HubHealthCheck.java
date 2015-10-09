@@ -44,4 +44,8 @@ public class HubHealthCheck {
         shutdown.set(true);
     }
 
+    public boolean isShuttingDown() {
+        return shutdown.get();
+    }
+
 }
