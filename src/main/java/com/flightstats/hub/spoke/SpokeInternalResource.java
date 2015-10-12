@@ -14,19 +14,18 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.BufferedOutputStream;
 import java.io.InputStream;
+import java.util.Arrays;
 
 @Path("/internal/spoke")
 public class SpokeInternalResource {
 
     private final static Logger logger = LoggerFactory.getLogger(SpokeInternalResource.class);
-    private final FileSpokeStore spokeStore;
-    private final UriInfo uriInfo;
-
     @Inject
-    public SpokeInternalResource(FileSpokeStore spokeStore, UriInfo uriInfo) {
-        this.spokeStore = spokeStore;
-        this.uriInfo = uriInfo;
-    }
+    private FileSpokeStore spokeStore;
+    @Inject
+    private RemoteSpokeStore remoteSpokeStore;
+    @Inject
+    private UriInfo uriInfo;
 
     @Path("/payload/{path:.+}")
     @GET
@@ -141,4 +140,16 @@ public class SpokeInternalResource {
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
 
+    @Path("/test/{server}")
+    @GET
+    public Response test(@PathParam("server") String server) {
+        logger.info("testing server {}", server);
+        try {
+            remoteSpokeStore.testOne(Arrays.asList(server));
+            return Response.ok().build();
+        } catch (Exception e) {
+            logger.warn("unable to complete calls " + server, e);
+        }
+        return Response.status(417).build();
+    }
 }
