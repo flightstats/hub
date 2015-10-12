@@ -74,14 +74,62 @@ public class RemoteSpokeStore {
     void testOne(Collection<String> server) throws InterruptedException {
         String path = "Internal-Spoke-Health-Hook/";
         TracesImpl traces = new TracesImpl();
-        for (int i = 0; i < 100; i++) {
-            ContentKey key = new ContentKey();
-            if (!write(path + key.toUrl(), key.toUrl().getBytes(), server, traces)) {
-                traces.log(logger);
-                throw new RuntimeException("unable to properly start Spoke, should exit!");
+        int calls = 100;
+        ExecutorService threadPool = Executors.newFixedThreadPool(10);
+        CountDownLatch quorumLatch = new CountDownLatch(calls);
+        for (int i = 0; i < calls; i++) {
+            threadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        ContentKey key = new ContentKey();
+                        if (write(path + key.toUrl(), key.toUrl().getBytes(), server, traces)) {
+                            quorumLatch.countDown();
+                        } else {
+                            traces.log(logger);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("unexpected exception " + server, e);
+                    }
+                }
+            });
+        }
+        if (quorumLatch.await(5, TimeUnit.SECONDS)) {
+            threadPool.shutdown();
+            logger.info("completed warmup calls to Spoke {}", server);
+        } else {
+            threadPool.shutdown();
+            throw new RuntimeException("unable to properly connect to Spoke " + server);
+        }
+    }
+
+    public boolean testAll() throws UnknownHostException {
+        Collection<String> servers = cluster.getRandomServers();
+        servers.addAll(CuratorSpokeCluster.getLocalServer());
+        logger.info("*********************************************");
+        logger.info("testing servers {}", servers);
+        logger.info("*********************************************");
+        String path = HubHost.getLocalAddressPort();
+        for (String server : servers) {
+            try {
+                logger.info("calling server {} path {}", server, path);
+                ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/test/" + path)
+                        .get(ClientResponse.class);
+                if (response.getStatus() == 200) {
+                    logger.info("success calling {}", response);
+                } else if (response.getStatus() == 404) {
+                    logger.info("test not yet implemented {}", response);
+                } else {
+                    logger.info("failed response {}", response);
+                    return false;
+                }
+            } catch (Exception e) {
+                logger.warn("unable to test " + path + " with " + server, e);
+                return false;
             }
         }
-        logger.info("completed warmup calls to Spoke {}", server);
+        logger.info("all startup tests succeeded  " + path);
+        return true;
     }
 
     public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
@@ -127,35 +175,6 @@ public class RemoteSpokeStore {
 
     static int getQuorum(int size) {
         return (int) Math.max(1, Math.ceil(size / 2.0));
-    }
-
-    public boolean testAll() throws UnknownHostException {
-        Collection<String> servers = cluster.getRandomServers();
-        servers.addAll(CuratorSpokeCluster.getLocalServer());
-        logger.info("*********************************************");
-        logger.info("testing servers {}", servers);
-        logger.info("*********************************************");
-        String path = HubHost.getLocalAddressPort();
-        for (String server : servers) {
-            try {
-                logger.info("calling server {} path {}", server, path);
-                ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/test/" + path)
-                        .get(ClientResponse.class);
-                if (response.getStatus() == 200) {
-                    logger.info("success calling {}", response);
-                } else if (response.getStatus() == 404) {
-                    logger.info("test not yet implemented {}", response);
-                } else {
-                    logger.info("failed response {}", response);
-                    return false;
-                }
-            } catch (Exception e) {
-                logger.warn("unable to test " + path + " with " + server, e);
-                return false;
-            }
-        }
-        logger.info("all startup tests succeeded  " + path);
-        return true;
     }
 
     public Content read(String path, ContentKey key) {
