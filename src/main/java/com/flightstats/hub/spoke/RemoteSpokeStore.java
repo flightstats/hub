@@ -142,11 +142,11 @@ public class RemoteSpokeStore {
                 ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/test/" + path)
                         .get(ClientResponse.class);
                 if (response.getStatus() == 200) {
-                    logger.info("success calling {} {} {}", server, path, response);
+                    logger.info("success calling {}", response);
                 } else if (response.getStatus() == 404) {
-                    logger.info("test not yet implemented {} {} {}", server, path, response);
+                    logger.info("test not yet implemented {}", response);
                 } else {
-                    logger.info("failed server {} path {} response {}", server, path, response);
+                    logger.info("failed response {}", response);
                     return false;
                 }
             } catch (Exception e) {
