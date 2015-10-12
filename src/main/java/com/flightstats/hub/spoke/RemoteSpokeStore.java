@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.SortedSet;
@@ -58,22 +59,29 @@ public class RemoteSpokeStore {
                     .resource(HubHost.getLocalUriRoot() + "/health")
                     .get(ClientResponse.class);
             logger.info("localhost health {}", health);
-            Collection<String> server = CuratorSpokeCluster.getLocalServer();
-            String path = "Internal-Spoke-Health-Hook/";
-            TracesImpl traces = new TracesImpl();
-            for (int i = 0; i < 100; i++) {
-                ContentKey key = new ContentKey();
-                if (!write(path + key.toUrl(), key.toUrl().getBytes(), server, traces)) {
-                    traces.log(logger);
-                    throw new RuntimeException("unable to properly start Spoke, should exit!");
-                }
+            testOne(CuratorSpokeCluster.getLocalServer());
+            if (!testAll()) {
+                logger.warn("unable to cleanly start Spoke");
+                throw new RuntimeException("unable to cleanly start Spoke");
             }
-            logger.info("completed warmup calls to Spoke!");
         }
 
         @Override
         protected void shutDown() throws Exception {
         }
+    }
+
+    void testOne(Collection<String> server) throws InterruptedException {
+        String path = "Internal-Spoke-Health-Hook/";
+        TracesImpl traces = new TracesImpl();
+        for (int i = 0; i < 100; i++) {
+            ContentKey key = new ContentKey();
+            if (!write(path + key.toUrl(), key.toUrl().getBytes(), server, traces)) {
+                traces.log(logger);
+                throw new RuntimeException("unable to properly start Spoke, should exit!");
+            }
+        }
+        logger.info("completed warmup calls to Spoke {}", server);
     }
 
     public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
@@ -119,6 +127,35 @@ public class RemoteSpokeStore {
 
     static int getQuorum(int size) {
         return (int) Math.max(1, Math.ceil(size / 2.0));
+    }
+
+    public boolean testAll() throws UnknownHostException {
+        Collection<String> servers = cluster.getRandomServers();
+        servers.addAll(CuratorSpokeCluster.getLocalServer());
+        logger.info("*********************************************");
+        logger.info("testing servers {}", servers);
+        logger.info("*********************************************");
+        String path = HubHost.getLocalAddressPort();
+        for (String server : servers) {
+            try {
+                logger.info("calling server {} path {}", server, path);
+                ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/test/" + path)
+                        .get(ClientResponse.class);
+                if (response.getStatus() == 200) {
+                    logger.info("success calling {} {} {}", server, path, response);
+                } else if (response.getStatus() == 404) {
+                    logger.info("test not yet implemented {} {} {}", server, path, response);
+                } else {
+                    logger.info("failed server {} path {} response {}", server, path, response);
+                    return false;
+                }
+            } catch (Exception e) {
+                logger.warn("unable to test " + path + " with " + server, e);
+                return false;
+            }
+        }
+        logger.info("all startup tests succeeded  " + path);
+        return true;
     }
 
     public Content read(String path, ContentKey key) {
