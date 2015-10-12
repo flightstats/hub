@@ -15,7 +15,7 @@ import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.sun.jersey.api.Responses;
 import com.sun.jersey.core.header.MediaTypes;
-import net.logstash.logback.encoder.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
