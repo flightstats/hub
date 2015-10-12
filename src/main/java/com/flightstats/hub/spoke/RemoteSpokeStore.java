@@ -20,10 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,7 +56,7 @@ public class RemoteSpokeStore {
                     .resource(HubHost.getLocalUriRoot() + "/health")
                     .get(ClientResponse.class);
             logger.info("localhost health {}", health);
-            testOne(CuratorSpokeCluster.getLocalServer());
+            testOne(cluster.getLocalServer());
             if (!testAll()) {
                 logger.warn("unable to cleanly start Spoke");
                 throw new RuntimeException("unable to cleanly start Spoke");
@@ -71,7 +68,11 @@ public class RemoteSpokeStore {
         }
     }
 
-    void testOne(Collection<String> server) throws InterruptedException {
+    public void testOne(String server) throws InterruptedException {
+        testOne(Arrays.asList(cluster.getSpokeServer(server)));
+    }
+
+    void testOne(Collection<SpokeServer> server) throws InterruptedException {
         String path = "Internal-Spoke-Health-Hook/";
         TracesImpl traces = new TracesImpl();
         int calls = 100;
@@ -104,16 +105,16 @@ public class RemoteSpokeStore {
     }
 
     public boolean testAll() throws UnknownHostException {
-        Collection<String> servers = cluster.getRandomServers();
-        servers.addAll(CuratorSpokeCluster.getLocalServer());
+        Collection<SpokeServer> servers = cluster.getRandomServers();
+        servers.addAll(cluster.getLocalServer());
         logger.info("*********************************************");
         logger.info("testing servers {}", servers);
         logger.info("*********************************************");
         String path = HubHost.getLocalAddressPort();
-        for (String server : servers) {
+        for (SpokeServer server : servers) {
             try {
                 logger.info("calling server {} path {}", server, path);
-                ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/test/" + path)
+                ClientResponse response = query_client.resource(HubHost.getScheme() + server.getName() + "/internal/spoke/test/" + path)
                         .get(ClientResponse.class);
                 if (response.getStatus() == 200) {
                     logger.info("success calling {}", response);
@@ -136,15 +137,16 @@ public class RemoteSpokeStore {
         return write(path, payload, cluster.getServers(), content.getTraces());
     }
 
-    private boolean write(final String path, final byte[] payload, Collection<String> servers, final Traces traces) throws InterruptedException {
+    private boolean write(final String path, final byte[] payload, Collection<SpokeServer> servers, final Traces traces)
+            throws InterruptedException {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
         AtomicBoolean reported = new AtomicBoolean();
-        for (final String server : servers) {
+        for (final SpokeServer server : servers) {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    String uri = HubHost.getScheme() + server + "/internal/spoke/payload/" + path;
+                    String uri = HubHost.getScheme() + server.getName() + "/internal/spoke/payload/" + path;
                     traces.add(new Trace(uri));
                     try {
                         ClientResponse response = write_client.resource(uri).put(ClientResponse.class, payload);
@@ -157,12 +159,15 @@ public class RemoteSpokeStore {
                             quorumLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
                         } else {
+                            server.logFailure("write failed " + response);
                             logger.info("write failed: server {} path {} response {}", server, path, response);
                         }
                         response.close();
                     } catch (Exception e) {
                         traces.add(new Trace(server, e.getMessage()));
-                        logger.warn("write failed: " + server + " " + path, e);
+                        String msg = "write failed: " + server + " " + path;
+                        logger.warn(msg, e);
+                        server.logFailure(msg, e);
                     }
 
                 }
@@ -178,10 +183,9 @@ public class RemoteSpokeStore {
     }
 
     public Content read(String path, ContentKey key) {
-        Collection<String> servers = cluster.getRandomServers();
-        for (String server : servers) {
+        for (SpokeServer server : cluster.getRandomServers()) {
             try {
-                ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/payload/" + path)
+                ClientResponse response = query_client.resource(HubHost.getScheme() + server.getName() + "/internal/spoke/payload/" + path)
                         .get(ClientResponse.class);
                 logger.trace("server {} path {} response {}", server, path, response);
                 if (response.getStatus() == 200) {
@@ -206,17 +210,17 @@ public class RemoteSpokeStore {
     }
 
     public SortedSet<ContentKey> readTimeBucket(String channel, String timePath, Traces traces) throws InterruptedException {
-        Collection<String> servers = cluster.getServers();
+        Collection<SpokeServer> servers = cluster.getServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         String path = channel + "/" + timePath;
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
-        for (final String server : servers) {
+        for (final SpokeServer server : servers) {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         traces.add("spoke calling", server, path);
-                        ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/time/" + path)
+                        ClientResponse response = query_client.resource(HubHost.getScheme() + server.getName() + "/internal/spoke/time/" + path)
                                 .get(ClientResponse.class);
                         traces.add("server response", server, response);
                         if (response.getStatus() == 200) {
@@ -247,16 +251,16 @@ public class RemoteSpokeStore {
     }
 
     public Optional<ContentKey> getLatest(String channel, String path, Traces traces) throws InterruptedException {
-        Collection<String> servers = cluster.getServers();
+        Collection<SpokeServer> servers = cluster.getServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
-        for (final String server : servers) {
+        for (final SpokeServer server : servers) {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         traces.add("spoke calling", server, channel);
-                        ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/latest/" + path)
+                        ClientResponse response = query_client.resource(HubHost.getScheme() + server.getName() + "/internal/spoke/latest/" + path)
                                 .get(ClientResponse.class);
                         traces.add("server response", server, response);
                         if (response.getStatus() == 200) {
@@ -290,14 +294,14 @@ public class RemoteSpokeStore {
     }
 
     public boolean delete(String path) throws Exception {
-        Collection<String> servers = cluster.getServers();
+        Collection<SpokeServer> servers = cluster.getServers();
         int quorum = servers.size();
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
-        for (final String server : servers) {
+        for (final SpokeServer server : servers) {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/payload/" + path)
+                    ClientResponse response = query_client.resource(HubHost.getScheme() + server.getName() + "/internal/spoke/payload/" + path)
                             .delete(ClientResponse.class);
                     if (response.getStatus() < 400) {
                         countDownLatch.countDown();

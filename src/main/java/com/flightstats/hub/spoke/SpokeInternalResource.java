@@ -14,7 +14,6 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.BufferedOutputStream;
 import java.io.InputStream;
-import java.util.Arrays;
 
 @Path("/internal/spoke")
 public class SpokeInternalResource {
@@ -145,7 +144,7 @@ public class SpokeInternalResource {
     public Response test(@PathParam("server") String server) {
         logger.info("testing server {}", server);
         try {
-            remoteSpokeStore.testOne(Arrays.asList(server));
+            remoteSpokeStore.testOne(server);
             return Response.ok().build();
         } catch (Exception e) {
             logger.warn("unable to complete calls " + server, e);

@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 public class CuratorSpokeCluster {
@@ -26,6 +27,7 @@ public class CuratorSpokeCluster {
     private final static Logger logger = LoggerFactory.getLogger(CuratorSpokeCluster.class);
     private final CuratorFramework curator;
     private final PathChildrenCache clusterCache;
+    private final Map<String, SpokeServer> spokeServers = new ConcurrentHashMap<>();
 
     @Inject
     public CuratorSpokeCluster(CuratorFramework curator) throws Exception {
@@ -38,6 +40,12 @@ public class CuratorSpokeCluster {
                 logger.info("event {}", event);
                 if (event.getType().equals(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED)) {
                     register();
+                }
+                if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)) {
+                    ChildData data = event.getData();
+                    String server = new String(data.getData());
+                    logger.info("registering new SpokeServer", server);
+                    spokeServers.put(server, new SpokeServer(server));
                 }
             }
         });
@@ -68,17 +76,21 @@ public class CuratorSpokeCluster {
         }
     }
 
-    public static Collection<String> getLocalServer() throws UnknownHostException {
-        List<String> server = new ArrayList<>();
-        server.add(getHost());
+    public Collection<SpokeServer> getLocalServer() throws UnknownHostException {
+        List<SpokeServer> server = new ArrayList<>();
+        server.add(getSpokeServer(getHost()));
         return server;
     }
 
-    public Collection<String> getServers() {
-        Set<String> servers = new HashSet<>();
+    public Collection<SpokeServer> getServers() {
+        Set<SpokeServer> servers = new HashSet<>();
         List<ChildData> currentData = clusterCache.getCurrentData();
         for (ChildData childData : currentData) {
-            servers.add(new String(childData.getData()));
+            String server = new String(childData.getData());
+            SpokeServer spokeServer = getSpokeServer(server);
+            if (spokeServer.isEligible()) {
+                servers.add(spokeServer);
+            }
         }
         if (servers.isEmpty()) {
             logger.warn("returning empty collection");
@@ -86,8 +98,18 @@ public class CuratorSpokeCluster {
         return servers;
     }
 
-    public Collection<String> getRandomServers() {
-        List<String> servers = new ArrayList<>(getServers());
+    public SpokeServer getSpokeServer(String server) {
+        SpokeServer spokeServer = spokeServers.get(server);
+        if (spokeServer == null) {
+            spokeServers.put(server, new SpokeServer(server));
+            return spokeServers.get(server);
+        } else {
+            return spokeServer;
+        }
+    }
+
+    public Collection<SpokeServer> getRandomServers() {
+        List<SpokeServer> servers = new ArrayList<>(getServers());
         Collections.shuffle(servers);
         return servers;
     }
