@@ -5,9 +5,6 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>/home/hub/log/hub_%d{yyyy-MM-dd-HH}.log.gz</fileNamePattern>
             <maxHistory>168</maxHistory>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>100MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
         <encoder>
             <pattern>%5p %d{ISO8601} [%t] %c [line %L] - %msg%n</pattern>
