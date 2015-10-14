@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("Convert2Lambda")
 @Singleton
@@ -29,6 +30,7 @@ public class S3WriteQueue {
     private BlockingQueue<ChannelContentKey> keys;
     private ContentDao cacheContentDao;
     private ContentDao longTermContentDao;
+    private AtomicBoolean shutdown = new AtomicBoolean(false);
 
     @Inject
     public S3WriteQueue(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
@@ -45,10 +47,10 @@ public class S3WriteQueue {
             executorService.submit(new Callable<Object>() {
                 @Override
                 public Object call() throws Exception {
-                    //noinspection InfiniteLoopStatement
-                    while (true) {
+                    while (!shutdown.get()) {
                         write();
                     }
+                    return null;
                 }
             });
         }
@@ -69,7 +71,7 @@ public class S3WriteQueue {
     }
 
     private void writeContent() throws Exception {
-        ChannelContentKey key = keys.take();
+        ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
         if (key != null) {
             logger.trace("writing {}", key.getContentKey());
             Content content = cacheContentDao.read(key.getChannel(), key.getContentKey());
@@ -85,11 +87,8 @@ public class S3WriteQueue {
     }
 
     public void close() {
-        try {
-            logger.info("awaited " + executorService.awaitTermination(1, TimeUnit.MINUTES));
-        } catch (InterruptedException e) {
-            logger.warn("unable to close", e);
-        }
+        shutdown.set(true);
+        executorService.shutdown();
     }
 
     private Retryer<Void> buildRetryer() {

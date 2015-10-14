@@ -43,8 +43,8 @@ public class HubJettyServer {
                 httpConfig.addCustomizer(new SecureRequestCustomizer());
             }
             ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
-
-            ServerConnector serverConnector = new ServerConnector(server, sslContextFactory, connectionFactory);
+            com.flightstats.hub.org.eclipse.jetty.server.ServerConnector serverConnector =
+                    new com.flightstats.hub.org.eclipse.jetty.server.ServerConnector(server, sslContextFactory, connectionFactory);
             serverConnector.setHost(HubProperties.getProperty("http.bind_ip", "0.0.0.0"));
             serverConnector.setPort(HubProperties.getProperty("http.bind_port", 8080));
             serverConnector.setIdleTimeout(HubProperties.getProperty("http.idle_timeout", 30 * 1000));

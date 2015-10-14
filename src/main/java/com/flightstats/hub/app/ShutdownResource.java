@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
+import java.util.concurrent.Executors;
 
 /**
  * ShutdownResource should only be called from the node's instance by the upstart prestop.sh script
@@ -21,9 +22,11 @@ public class ShutdownResource {
     @Inject
     HubHealthCheck healthCheck;
 
-
     @POST
     public Response shutdown() {
+        if (healthCheck.isShuttingDown()) {
+            return Response.ok().build();
+        }
         logger.warn("shutting down!");
         //this call will get the node removed from the Load Balancer
         healthCheck.shutdown();
@@ -34,6 +37,7 @@ public class ShutdownResource {
         HubServices.preStop();
 
         logger.warn("completed shutdown tasks");
+        Executors.newSingleThreadExecutor().submit(() -> System.exit(0));
         return Response.ok().build();
     }
 }
