@@ -8,7 +8,6 @@
         </rollingPolicy>
         <encoder>
             <pattern>%5p %d{ISO8601} [%t] %c [line %L] - %msg%n</pattern>
-            <immediateFlush>false</immediateFlush>
         </encoder>
     </appender>
 
