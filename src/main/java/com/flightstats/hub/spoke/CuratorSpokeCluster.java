@@ -100,8 +100,15 @@ public class CuratorSpokeCluster {
 
         @Override
         protected void shutDown() throws Exception {
-            logger.info("removing host from cluster " + getHost());
-            curator.delete().forPath(getFullPath());
+            logger.info("removing host from cluster {} {}", getHost(), getFullPath());
+            try {
+                curator.delete().forPath(getFullPath());
+                logger.info("deleted host from cluster {} {}", getHost(), getFullPath());
+            } catch (KeeperException.NoNodeException e) {
+                logger.info("no node for" + getFullPath());
+            } catch (Exception e) {
+                logger.warn("unable to delete " + getFullPath(), e);
+            }
         }
     }
 }
