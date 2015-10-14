@@ -26,6 +26,7 @@ public class CuratorSpokeCluster {
     private final static Logger logger = LoggerFactory.getLogger(CuratorSpokeCluster.class);
     private final CuratorFramework curator;
     private final PathChildrenCache clusterCache;
+    private String fullPath;
 
     @Inject
     public CuratorSpokeCluster(CuratorFramework curator) throws Exception {
@@ -47,7 +48,7 @@ public class CuratorSpokeCluster {
     public void register() throws UnknownHostException {
         try {
             logger.info("registering host {}", getHost());
-            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), getHost().getBytes());
+            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(true), getHost().getBytes());
         } catch (KeeperException.NodeExistsException e) {
             logger.warn("node already exists {} - not likely in prod", getHost());
         } catch (Exception e) {
@@ -56,8 +57,11 @@ public class CuratorSpokeCluster {
         }
     }
 
-    private String getFullPath() throws UnknownHostException {
-        return CLUSTER_PATH + "/" + getHost() + RandomStringUtils.randomAlphanumeric(6);
+    private String getFullPath(boolean create) throws UnknownHostException {
+        if (create) {
+            fullPath = CLUSTER_PATH + "/" + getHost() + RandomStringUtils.randomAlphanumeric(6);
+        }
+        return fullPath;
     }
 
     private static String getHost() throws UnknownHostException {
@@ -100,14 +104,14 @@ public class CuratorSpokeCluster {
 
         @Override
         protected void shutDown() throws Exception {
-            logger.info("removing host from cluster {} {}", getHost(), getFullPath());
+            logger.info("removing host from cluster {} {}", getHost(), fullPath);
             try {
-                curator.delete().forPath(getFullPath());
-                logger.info("deleted host from cluster {} {}", getHost(), getFullPath());
+                curator.delete().forPath(fullPath);
+                logger.info("deleted host from cluster {} {}", getHost(), fullPath);
             } catch (KeeperException.NoNodeException e) {
-                logger.info("no node for" + getFullPath());
+                logger.info("no node for" + fullPath);
             } catch (Exception e) {
-                logger.warn("unable to delete " + getFullPath(), e);
+                logger.warn("unable to delete " + fullPath, e);
             }
         }
     }
