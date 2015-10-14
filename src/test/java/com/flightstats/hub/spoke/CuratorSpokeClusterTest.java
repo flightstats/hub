@@ -33,6 +33,11 @@ public class CuratorSpokeClusterTest {
         servers = cluster.getServers();
         assertNotNull(servers);
         assertEquals(1, servers.size());
+
+        cluster.delete();
+        servers = cluster.getServers();
+        assertNotNull(servers);
+        assertEquals(0, servers.size());
     }
 
 }

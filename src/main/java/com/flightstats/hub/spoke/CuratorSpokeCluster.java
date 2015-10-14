@@ -96,6 +96,11 @@ public class CuratorSpokeCluster {
         return servers;
     }
 
+    void delete() throws Exception {
+        curator.delete().forPath(fullPath);
+        logger.info("deleted host from cluster {} {}", getHost(), fullPath);
+    }
+
     private class CuratorSpokeClusterHook extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
@@ -106,8 +111,7 @@ public class CuratorSpokeCluster {
         protected void shutDown() throws Exception {
             logger.info("removing host from cluster {} {}", getHost(), fullPath);
             try {
-                curator.delete().forPath(fullPath);
-                logger.info("deleted host from cluster {} {}", getHost(), fullPath);
+                delete();
             } catch (KeeperException.NoNodeException e) {
                 logger.info("no node for" + fullPath);
             } catch (Exception e) {
