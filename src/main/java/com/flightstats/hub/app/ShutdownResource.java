@@ -30,11 +30,12 @@ public class ShutdownResource {
         logger.warn("shutting down!");
         //this call will get the node removed from the Load Balancer
         healthCheck.shutdown();
-        //wait until it's likely the node is removed from the Load Balancer
-        int shutdown_delay_seconds = HubProperties.getProperty("app.shutdown_delay_seconds", 15);
-        Sleeper.sleep(shutdown_delay_seconds * 1000);
-        //after the node isn't getting new requests, stop everything that needs a clean kill
+
         HubServices.preStop();
+
+        //wait until it's likely the node is removed from the Load Balancer
+        int shutdown_delay_seconds = HubProperties.getProperty("app.shutdown_delay_seconds", 60);
+        Sleeper.sleep(shutdown_delay_seconds * 1000);
 
         logger.warn("completed shutdown tasks");
         Executors.newSingleThreadExecutor().submit(() -> System.exit(0));
