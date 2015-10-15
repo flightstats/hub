@@ -70,6 +70,7 @@ dependencies {
     compile 'com.newrelic.agent.java:newrelic-agent:3.19.0'
     compile 'com.newrelic.agent.java:newrelic-api:3.19.0'
     compile 'org.projectlombok:lombok:1.16.4'
+    compile 'org.kohsuke:file-leak-detector:1.8'
 
     testCompile 'com.sparkjava:spark-core:2.2'
     testCompile 'junit:junit:4.+'
