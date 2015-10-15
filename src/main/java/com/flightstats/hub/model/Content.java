@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.InputStream;
 import java.io.Serializable;
 
@@ -68,8 +69,10 @@ public class Content implements Serializable {
         if (data == null && stream != null) {
             try {
                 data = ByteStreams.toByteArray(stream);
+            } catch (EOFException e) {
+                logger.info("file ended early {}", contentKey);
             } catch (Exception e) {
-                logger.warn("no data", e);
+                logger.warn("no data " + contentKey, e);
             }
         }
         return data;

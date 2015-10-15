@@ -148,6 +148,8 @@ public class GroupLeader implements Leader {
                     }
                     groupInProcess.remove(group.getName(), contentPath);
                     logger.trace("completed {} call to {} ", contentPath, group.getName());
+                } catch (RetryException e) {
+                    logger.info("exception sending {} to {} {} ", contentPath, group.getName(), e.getMessage());
                 } catch (Exception e) {
                     logger.warn("exception sending " + contentPath + " to " + group.getName(), e);
                 } finally {
