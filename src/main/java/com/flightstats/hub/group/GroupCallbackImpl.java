@@ -71,7 +71,7 @@ public class GroupCallbackImpl implements GroupCallback {
                 activeLeader.exit(false);
                 startGroup(group);
             } else {
-                logger.info("group not changed {}", group);
+                logger.debug("group not changed {}", group);
             }
         }
         stop(groupsToStop, true);
