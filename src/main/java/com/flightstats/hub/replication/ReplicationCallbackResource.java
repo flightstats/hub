@@ -42,11 +42,8 @@ public class ReplicationCallbackResource {
             ArrayNode uris = (ArrayNode) node.get("uris");
             Optional<Content> content = Optional.absent();
             for (JsonNode uri : uris) {
-                content = hubUtils.getContent(uri.asText());
-                if (content.isPresent()) {
-                    channelService.insert(channel, content.get());
-                } else {
-                    logger.warn("unable to get channel {} content {}", channel, uri.asText());
+                if (!getAndInsert(channel, uri)) {
+                    getAndInsert(channel, uri);
                 }
             }
             if (node.has("id")) {
@@ -61,5 +58,15 @@ public class ReplicationCallbackResource {
             logger.warn("unable to parse " + data, e);
         }
         return Response.ok().build();
+    }
+
+    private boolean getAndInsert(@PathParam("channel") String channel, JsonNode uri) throws Exception {
+        Optional<Content> content = hubUtils.getContent(uri.asText());
+        if (content.isPresent()) {
+            channelService.insert(channel, content.get());
+            return true;
+        }
+        logger.warn("unable to get channel {} item {}", channel, uri.asText());
+        return false;
     }
 }
