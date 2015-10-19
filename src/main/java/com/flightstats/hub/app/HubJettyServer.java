@@ -1,6 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.org.eclipse.jetty.server.HubServerConnector;
 import com.flightstats.hub.ws.ChannelWSEndpoint;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -44,8 +43,7 @@ public class HubJettyServer {
                 httpConfig.addCustomizer(new SecureRequestCustomizer());
             }
             ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
-            HubServerConnector serverConnector = new HubServerConnector(
-                    new ServerConnector(server, sslContextFactory, connectionFactory));
+            ServerConnector serverConnector = new ServerConnector(server, sslContextFactory, connectionFactory);
             serverConnector.setHost(HubProperties.getProperty("http.bind_ip", "0.0.0.0"));
             serverConnector.setPort(HubProperties.getProperty("http.bind_port", 8080));
             serverConnector.setIdleTimeout(HubProperties.getProperty("http.idle_timeout", 30 * 1000));
