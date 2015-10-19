@@ -5,22 +5,24 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.TreeSet;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 public class SingleGroupStrategy implements GroupStrategy {
 
@@ -31,7 +33,7 @@ public class SingleGroupStrategy implements GroupStrategy {
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private AtomicBoolean error = new AtomicBoolean(false);
-    private BlockingQueue<ContentPath> queue = new ArrayBlockingQueue<>(1000);
+    private BlockingQueue<ContentPath> queue;
     private String channel;
     private QueryGenerator queryGenerator;
 
@@ -40,6 +42,7 @@ public class SingleGroupStrategy implements GroupStrategy {
         this.group = group;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
+        this.queue = new ArrayBlockingQueue<>(group.getParallelCalls() * 2);
     }
 
     public ContentPath createContentPath() {
@@ -117,54 +120,22 @@ public class SingleGroupStrategy implements GroupStrategy {
 
             private void doWork() {
                 while (!shouldExit.get()) {
+                    DateTime latestStableInChannel = TimeUtil.stable();
                     if (channelService.isReplicating(channel)) {
-                        handleReplication();
-                    } else {
-                        TimeQuery timeQuery = queryGenerator.getQuery(TimeUtil.stable());
-                        if (timeQuery != null) {
-                            addKeys(channelService.queryByTime(timeQuery));
-                            if (group.isHeartbeat() && queryGenerator.getLastQueryTime().getSecondOfMinute() == 0) {
-                                MinutePath minutePath = new MinutePath(queryGenerator.getLastQueryTime().minusMinutes(1));
-                                logger.debug("sending heartbeat {}", minutePath);
-                                addKey(minutePath);
-                            }
-                        } else {
-                            Sleeper.sleep(1000);
+                        ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED);
+                        latestStableInChannel = contentPath.getTime();
+                    }
+                    TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);
+                    if (timeQuery != null) {
+                        addKeys(channelService.queryByTime(timeQuery));
+                        if (group.isHeartbeat() && queryGenerator.getLastQueryTime().getSecondOfMinute() == 0) {
+                            MinutePath minutePath = new MinutePath(queryGenerator.getLastQueryTime().minusMinutes(1));
+                            logger.debug("sending heartbeat {}", minutePath);
+                            addKey(minutePath);
                         }
+                    } else {
+                        Sleeper.sleep(1000);
                     }
-                }
-            }
-
-            private void handleReplication() {
-                /**
-                 * This does not currently send a minute heartbeat.
-                 * Once the heartbeat is available in all envs, we can update this to use REPLICATED_LAST_UPDATED
-                 */
-                Collection<ContentKey> keys = Collections.EMPTY_LIST;
-                Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
-                if (latest.isPresent() && latest.get().compareTo(lastAdded) > 0) {
-                    DirectionQuery query = DirectionQuery.builder()
-                            .channelName(channel)
-                            .contentKey((ContentKey) lastAdded)
-                            .next(true)
-                            .stable(true)
-                            .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
-                            .count(1000)
-                            .build();
-                    query.trace(true);
-                    query.getTraces().add("latest", latest.get());
-                    keys = channelService.getKeys(query)
-                            .stream()
-                            .filter(key -> key.compareTo(latest.get()) <= 0)
-                            .collect(Collectors.toCollection(TreeSet::new));
-                    if (logger.isTraceEnabled()) {
-                        query.getTraces().log(logger);
-                    }
-                }
-                if (keys.isEmpty()) {
-                    Sleeper.sleep(1000);
-                } else {
-                    addKeys(keys);
                 }
             }
 

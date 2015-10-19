@@ -31,7 +31,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private AtomicBoolean error = new AtomicBoolean(false);
-    private BlockingQueue<MinutePath> queue = new ArrayBlockingQueue<>(1000);
+    private BlockingQueue<MinutePath> queue;
     private String channel;
     private ScheduledExecutorService executorService;
 
@@ -39,6 +39,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
         this.group = group;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
+        this.queue = new ArrayBlockingQueue<>(group.getParallelCalls() * 2);
     }
 
     @Override
