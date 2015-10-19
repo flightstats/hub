@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
@@ -67,29 +68,34 @@ public class S3ContentDao implements ContentDao {
 
     public ContentKey write(String channelName, Content content) {
         ContentKey key = content.getContentKey().get();
-        String s3Key = getS3ContentKey(channelName, key);
-        InputStream stream = new ByteArrayInputStream(content.getData());
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(content.getData().length);
-        if (content.getContentType().isPresent()) {
-            metadata.setContentType(content.getContentType().get());
-            metadata.addUserMetadata("type", content.getContentType().get());
-        } else {
-            metadata.addUserMetadata("type", "none");
+        try {
+            String s3Key = getS3ContentKey(channelName, key);
+            InputStream stream = new ByteArrayInputStream(content.getData());
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(content.getData().length);
+            if (content.getContentType().isPresent()) {
+                metadata.setContentType(content.getContentType().get());
+                metadata.addUserMetadata("type", content.getContentType().get());
+            } else {
+                metadata.addUserMetadata("type", "none");
+            }
+            if (content.getContentLanguage().isPresent()) {
+                metadata.addUserMetadata("language", content.getContentLanguage().get());
+            } else {
+                metadata.addUserMetadata("language", "none");
+            }
+            if (useEncrypted) {
+                metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+            }
+            PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
+            sender.send("channel." + channelName + ".s3.put", 1);
+            sender.send("channel." + channelName + ".s3.bytes", content.getData().length);
+            s3Client.putObject(request);
+            return key;
+        } catch (AmazonClientException e) {
+            logger.warn("unable to write item to S3 " + channelName + " " + key, e);
+            throw e;
         }
-        if (content.getContentLanguage().isPresent()) {
-            metadata.addUserMetadata("language", content.getContentLanguage().get());
-        } else {
-            metadata.addUserMetadata("language", "none");
-        }
-        if (useEncrypted) {
-            metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
-        }
-        PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
-        sender.send("channel." + channelName + ".s3.put", 1);
-        sender.send("channel." + channelName + ".s3.bytes", content.getData().length);
-        s3Client.putObject(request);
-        return key;
     }
 
     public Content read(final String channelName, final ContentKey key) {
