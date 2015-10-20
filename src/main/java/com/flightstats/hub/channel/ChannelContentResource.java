@@ -143,7 +143,7 @@ public class ChannelContentResource {
         query.trace(trace);
         Collection<ContentKey> keys = channelService.queryByTime(query);
         if (batch) {
-            return MultiPartBuilder.build(keys, channel, channelService, uriInfo);
+            return MultiPartBatchBuilder.build(keys, channel, channelService, uriInfo);
         } else {
             ObjectNode root = mapper.createObjectNode();
             ObjectNode links = root.putObject("_links");
@@ -287,7 +287,7 @@ public class ChannelContentResource {
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
         if (batch) {
-            return MultiPartBuilder.build(keys, channel, channelService, uriInfo);
+            return MultiPartBatchBuilder.build(keys, channel, channelService, uriInfo);
         } else {
             return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
         }

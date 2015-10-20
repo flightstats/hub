@@ -69,7 +69,7 @@ public class ChannelEarliestResource {
         DirectionQuery query = getDirectionQuery(channel, count, stable, trace, channelService);
         Collection<ContentKey> keys = channelService.getKeys(query);
         if (batch) {
-            return MultiPartBuilder.build(keys, channel, channelService, uriInfo);
+            return MultiPartBatchBuilder.build(keys, channel, channelService, uriInfo);
         } else {
             return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, false);
         }

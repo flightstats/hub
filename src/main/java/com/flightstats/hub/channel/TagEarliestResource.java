@@ -54,7 +54,7 @@ public class TagEarliestResource {
                                      @QueryParam("trace") @DefaultValue("false") boolean trace) {
         Collection<ChannelContentKey> keys = tagService.getEarliest(tag, count, stable, trace);
         if (batch) {
-            return MultiPartBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
+            return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
         }
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");

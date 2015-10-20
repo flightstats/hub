@@ -19,9 +19,9 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-public class MultiPartBuilder {
+public class MultiPartBatchBuilder {
 
-    private final static Logger logger = LoggerFactory.getLogger(MultiPartBuilder.class);
+    private final static Logger logger = LoggerFactory.getLogger(MultiPartBatchBuilder.class);
 
     private static final byte[] CRLF = "\r\n".getBytes();
     private static final String BOUNDARY = "||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||";

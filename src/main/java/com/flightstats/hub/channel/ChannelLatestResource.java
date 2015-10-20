@@ -75,7 +75,7 @@ public class ChannelLatestResource {
         Collection<ContentKey> keys = channelService.getKeys(query);
         keys.add(latest.get());
         if (batch) {
-            return MultiPartBuilder.build(keys, channel, channelService, uriInfo);
+            return MultiPartBatchBuilder.build(keys, channel, channelService, uriInfo);
         } else {
             return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
         }
