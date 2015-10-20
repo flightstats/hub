@@ -51,6 +51,7 @@ describe(testName, function () {
     it('compares query results', function (done) {
         async.eachLimit(channelTimes, 10,
             function (channelTime, callback) {
+                console.log('calling', channelTime);
                 async.parallel([
                         function (callback) {
                             agent
@@ -84,8 +85,10 @@ describe(testName, function () {
                     function (err, results) {
                         var expected = results[0].length;
                         var actual = results[1].length;
-                        if (expected > actual) {
-                            console.log(channelTime.url + ' cache=' + expected + ' s3=' + actual);
+                        if (expected == actual) {
+                            console.log('completed ' + channelTime.url + ' with ' + expected);
+                        } else {
+                            console.log('failed ' + channelTime.url + ' cache=' + expected + ' s3=' + actual);
                             expect(actual).toBe(expected);
                         }
 
