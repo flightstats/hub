@@ -85,11 +85,11 @@ describe(testName, function () {
                     function (err, results) {
                         var expected = results[0].length;
                         var actual = results[1].length;
-                        if (expected == actual) {
-                            console.log('completed ' + channelTime.url + ' with ' + expected);
-                        } else {
+                        if (expected > actual) {
                             console.log('failed ' + channelTime.url + ' cache=' + expected + ' s3=' + actual);
                             expect(actual).toBe(expected);
+                        } else {
+                            console.log('completed ' + channelTime.url + ' with ' + expected);
                         }
 
                         callback(err);
