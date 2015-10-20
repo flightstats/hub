@@ -118,6 +118,7 @@ public class GroupLeader implements Leader {
                 delete();
             }
             logger.info("stopping last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
+            groupStrategy = null;
         }
     }
 
