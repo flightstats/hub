@@ -34,6 +34,8 @@ public class GroupLeader implements Leader {
     public static final String GROUP_LAST_COMPLETED = "/GroupLastCompleted/";
 
     private static final Client client = RestClient.createClient(30, 120, true);
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     private final CuratorFramework curator;
     private final ChannelService channelService;
     private final GroupService groupService;
@@ -41,7 +43,6 @@ public class GroupLeader implements Leader {
     private final LastContentPath lastContentPath;
     private final GroupContentPathSet groupInProcess;
     private final GroupError groupError;
-    private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
     private Group group;
