@@ -113,6 +113,7 @@ public class GroupLeader implements Leader {
         } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + group.getName());
         } finally {
+            hasLeadership.set(false);
             closeStrategy();
             if (deleteOnExit.get()) {
                 delete();
@@ -215,7 +216,7 @@ public class GroupLeader implements Leader {
         }
         String name = group.getName();
         try {
-            executorService.shutdownNow();
+            executorService.shutdown();
             logger.debug("awating termination " + name);
             executorService.awaitTermination(1, TimeUnit.MINUTES);
             logger.debug("stopped Executor " + name);
