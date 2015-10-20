@@ -72,8 +72,6 @@ public class GroupLeader implements Leader {
     public boolean tryLeadership(Group group) {
         logger.debug("starting group: " + group);
         this.group = group;
-        executorService = Executors.newCachedThreadPool();
-        semaphore = new Semaphore(group.getParallelCalls());
         curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
         if (!group.isPaused()) {
             curatorLeader.start();
@@ -86,8 +84,6 @@ public class GroupLeader implements Leader {
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
         this.hasLeadership = hasLeadership;
-        retryer = GroupRetryer.buildRetryer(group.getName(), groupError, hasLeadership);
-        logger.info("taking leadership " + group);
         Optional<Group> foundGroup = groupService.getGroup(group.getName());
         if (!foundGroup.isPresent()) {
             Sleeper.sleep(1000);
@@ -95,6 +91,10 @@ public class GroupLeader implements Leader {
             return;
         }
         this.group = foundGroup.get();
+        logger.info("taking leadership " + group);
+        executorService = Executors.newCachedThreadPool();
+        semaphore = new Semaphore(group.getParallelCalls());
+        retryer = GroupRetryer.buildRetryer(group.getName(), groupError, hasLeadership);
         groupStrategy = GroupStrategy.getStrategy(group, lastContentPath, channelService);
         try {
             ContentPath lastCompletedPath = groupStrategy.getStartingPath();
@@ -113,13 +113,14 @@ public class GroupLeader implements Leader {
         } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + group.getName());
         } finally {
-            //todo - gfm - 10/6/15 - this should wait for all in-process calls to complete
-            closeQueue();
+            closeStrategy();
             if (deleteOnExit.get()) {
                 delete();
             }
+            stopExecutor();
             logger.info("stopping last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
             groupStrategy = null;
+            executorService = null;
         }
     }
 
@@ -204,18 +205,26 @@ public class GroupLeader implements Leader {
         logger.info("exiting group " + name + " deleting " + delete);
         deleteOnExit.set(delete);
         curatorLeader.close();
-        closeQueue();
+        closeStrategy();
+        stopExecutor();
+    }
+
+    private void stopExecutor() {
+        if (executorService == null) {
+            return;
+        }
+        String name = group.getName();
         try {
-            executorService.shutdown();
-            logger.info("awating termination " + name);
-            executorService.awaitTermination(1, TimeUnit.SECONDS);
-            logger.info("terminated " + name);
+            executorService.shutdownNow();
+            logger.debug("awating termination " + name);
+            executorService.awaitTermination(1, TimeUnit.MINUTES);
+            logger.debug("stopped Executor " + name);
         } catch (InterruptedException e) {
             logger.warn("unable to stop?" + name, e);
         }
     }
 
-    private void closeQueue() {
+    private void closeStrategy() {
         try {
             if (groupStrategy != null) {
                 groupStrategy.close();
