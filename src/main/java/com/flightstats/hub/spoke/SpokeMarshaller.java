@@ -35,14 +35,7 @@ public class SpokeMarshaller {
             zipOut.setLevel(Deflater.NO_COMPRESSION);
         }
         zipOut.putNextEntry(new ZipEntry("meta"));
-        ObjectNode objectNode = mapper.createObjectNode();
-        if (content.getContentLanguage().isPresent()) {
-            objectNode.put("contentLanguage", content.getContentLanguage().get());
-        }
-        if (content.getContentType().isPresent()) {
-            objectNode.put("contentType", content.getContentType().get());
-        }
-        String meta = objectNode.toString();
+        String meta = getMetaData(content);
         zipOut.write(meta.getBytes());
         zipOut.putNextEntry(new ZipEntry("payload"));
         long bytesCopied = ByteStreams.copy(content.getStream(), zipOut);
@@ -52,6 +45,17 @@ public class SpokeMarshaller {
         content.setSize(bytesCopied);
         zipOut.close();
         return baos.toByteArray();
+    }
+
+    public static String getMetaData(Content content) {
+        ObjectNode objectNode = mapper.createObjectNode();
+        if (content.getContentLanguage().isPresent()) {
+            objectNode.put("contentLanguage", content.getContentLanguage().get());
+        }
+        if (content.getContentType().isPresent()) {
+            objectNode.put("contentType", content.getContentType().get());
+        }
+        return objectNode.toString();
     }
 
     public static Content toContent(byte[] read, ContentKey key) throws IOException {

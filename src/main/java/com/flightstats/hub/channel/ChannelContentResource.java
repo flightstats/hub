@@ -59,7 +59,7 @@ public class ChannelContentResource {
     @Inject
     private TagContentResource tagContentResource;
 
-    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
     @GET
     public Response getDay(@PathParam("channel") String channel,
                            @PathParam("Y") int year,
@@ -69,13 +69,14 @@ public class ChannelContentResource {
                            @QueryParam("trace") @DefaultValue("false") boolean trace,
                            @QueryParam("stable") @DefaultValue("true") boolean stable,
                            @QueryParam("batch") @DefaultValue("false") boolean batch,
-                           @QueryParam("tag") String tag) {
+                           @QueryParam("tag") String tag,
+                           @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag, batch);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag, batch, accept);
     }
 
     @Path("/{hour}")
-    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
     @GET
     public Response getHour(@PathParam("channel") String channel,
                             @PathParam("Y") int year,
@@ -86,13 +87,14 @@ public class ChannelContentResource {
                             @QueryParam("trace") @DefaultValue("false") boolean trace,
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
                             @QueryParam("batch") @DefaultValue("false") boolean batch,
-                            @QueryParam("tag") String tag) {
+                            @QueryParam("tag") String tag,
+                            @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag, batch);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag, batch, accept);
     }
 
     @Path("/{h}/{minute}")
-    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
     @GET
     public Response getMinute(@PathParam("channel") String channel,
                               @PathParam("Y") int year,
@@ -104,13 +106,14 @@ public class ChannelContentResource {
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
-                              @QueryParam("tag") String tag) {
+                              @QueryParam("tag") String tag,
+                              @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag, batch);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag, batch, accept);
     }
 
     @Path("/{h}/{m}/{second}")
-    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
     @GET
     public Response getSecond(@PathParam("channel") String channel,
                               @PathParam("Y") int year,
@@ -123,13 +126,14 @@ public class ChannelContentResource {
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
-                              @QueryParam("tag") String tag) {
+                              @QueryParam("tag") String tag,
+                              @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag, batch);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag, batch, accept);
     }
 
     public Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
-                                         Unit unit, String tag, boolean batch) {
+                                         Unit unit, String tag, boolean batch, String accept) {
         if (tag != null) {
             return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, batch);
         }
@@ -143,7 +147,7 @@ public class ChannelContentResource {
         query.trace(trace);
         Collection<ContentKey> keys = channelService.queryByTime(query);
         if (batch) {
-            return MultiPartBuilder.build(keys, channel, channelService, uriInfo);
+            return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
             ObjectNode root = mapper.createObjectNode();
             ObjectNode links = root.putObject("_links");
@@ -254,7 +258,7 @@ public class ChannelContentResource {
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}/{count}")
     @GET
-    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
     public Response getDirectionCount(@PathParam("channel") String channel,
                                       @PathParam("Y") int year,
                                       @PathParam("M") int month,
@@ -270,7 +274,8 @@ public class ChannelContentResource {
                                       @QueryParam("trace") @DefaultValue("false") boolean trace,
                                       @QueryParam("location") @DefaultValue("ALL") String location,
                                       @QueryParam("batch") @DefaultValue("false") boolean batch,
-                                      @QueryParam("tag") String tag) {
+                                      @QueryParam("tag") String tag,
+                                      @HeaderParam("Accept") String accept) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
@@ -287,7 +292,7 @@ public class ChannelContentResource {
         query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
         if (batch) {
-            return MultiPartBuilder.build(keys, channel, channelService, uriInfo);
+            return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
             return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
         }

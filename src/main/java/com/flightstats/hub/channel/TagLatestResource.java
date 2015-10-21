@@ -65,7 +65,7 @@ public class TagLatestResource {
         Collection<ChannelContentKey> keys = tagService.getKeys(query);
         keys.add(latest.get());
         if (batch) {
-            return MultiPartBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
+            return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
         }
         return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true);
     }

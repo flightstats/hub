@@ -56,20 +56,21 @@ public class ChannelEarliestResource {
 
     @GET
     @Path("/{count}")
-    @Produces({MediaType.APPLICATION_JSON, "multipart/*"})
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
     public Response getEarliestCount(@PathParam("channel") String channel,
                                      @PathParam("count") int count,
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
-                                     @QueryParam("tag") String tag) {
+                                     @QueryParam("tag") String tag,
+                                     @HeaderParam("Accept") String accept) {
         if (tag != null) {
             return tagEarliestResource.getEarliestCount(tag, count, stable, batch, trace);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, trace, channelService);
         Collection<ContentKey> keys = channelService.getKeys(query);
         if (batch) {
-            return MultiPartBuilder.build(keys, channel, channelService, uriInfo);
+            return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
             return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, false);
         }

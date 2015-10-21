@@ -89,6 +89,7 @@ public class AwsContentService implements ContentService {
 
     @Override
     public Optional<Content> getValue(String channelName, ContentKey key) {
+        //todo - gfm - 10/20/15 - this could be smarter about getting the value from the most likely place
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         return getBoth(channelName, key);
     }

@@ -153,7 +153,7 @@ public class TagContentResource {
         query.trace(trace);
         Collection<ChannelContentKey> keys = tagService.queryByTime(query);
         if (batch) {
-            return MultiPartBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
+            return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
         }
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
@@ -299,7 +299,7 @@ public class TagContentResource {
         query.getTraces().add("adjacentCount", query);
         Collection<ChannelContentKey> keys = tagService.getKeys(query);
         if (batch) {
-            return MultiPartBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
+            return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
         }
         return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true);
     }
