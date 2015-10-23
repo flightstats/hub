@@ -16,7 +16,7 @@ public class BatchBuilder {
     public static Response build(Collection<ContentKey> keys, String channel,
                                  ChannelService channelService, UriInfo uriInfo, String accept) {
         if ("application/zip".equalsIgnoreCase(accept)) {
-            return ZipBatchBuilder.build(keys, channel, channelService, uriInfo);
+            return ZipBatchBuilder.build(keys, channel, channelService);
         } else {
             return MultiPartBatchBuilder.build(keys, channel, channelService, uriInfo);
         }

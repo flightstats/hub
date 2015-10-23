@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.zip.Deflater;
@@ -25,19 +25,19 @@ public class ZipBatchBuilder {
     private final static Logger logger = LoggerFactory.getLogger(ZipBatchBuilder.class);
 
     public static Response build(Collection<ContentKey> keys, String channel,
-                                 ChannelService channelService, UriInfo uriInfo) {
+                                 ChannelService channelService) {
         return write((ZipOutputStream output) -> {
             for (ContentKey key : keys) {
-                writeContent(uriInfo, output, key, channel, channelService);
+                writeContent(output, key, channel, channelService);
             }
         });
     }
 
     public static Response buildTag(String tag, Collection<ChannelContentKey> keys,
-                                    ChannelService channelService, UriInfo uriInfo) {
+                                    ChannelService channelService) {
         return write((ZipOutputStream output) -> {
             for (ChannelContentKey key : keys) {
-                writeContent(uriInfo, output, key.getContentKey(), key.getChannel(), channelService);
+                writeContent(output, key.getContentKey(), key.getChannel(), channelService);
             }
         });
     }
@@ -54,7 +54,7 @@ public class ZipBatchBuilder {
         return builder.build();
     }
 
-    private static void writeContent(UriInfo uriInfo, ZipOutputStream output, ContentKey key, String channel,
+    private static void writeContent(ZipOutputStream output, ContentKey key, String channel,
                                      ChannelService channelService) {
         try {
             Request request = Request.builder()
@@ -64,14 +64,8 @@ public class ZipBatchBuilder {
             //todo - gfm - 10/20/15 - change channelService.getValue to support cache only?
             Optional<Content> contentOptional = channelService.getValue(request);
             if (contentOptional.isPresent()) {
-                String keyId = key.toUrl();
                 Content content = contentOptional.get();
-                ZipEntry zipEntry = new ZipEntry(keyId);
-                output.putNextEntry(zipEntry);
-                String metaData = SpokeMarshaller.getMetaData(content);
-                zipEntry.setComment(metaData);
-                long bytesCopied = ByteStreams.copy(content.getStream(), output);
-                zipEntry.setSize(bytesCopied);
+                createZipEntry(output, key, content);
             } else {
                 logger.warn("missing content for zip {} {}", channel, key);
             }
@@ -79,6 +73,17 @@ public class ZipBatchBuilder {
             logger.warn("exception zip batching to " + channel, e);
             throw new RuntimeException(e);
         }
+    }
+
+    public static void createZipEntry(ZipOutputStream output, ContentKey key, Content content) throws IOException {
+        String keyId = key.toUrl();
+        ZipEntry zipEntry = new ZipEntry(keyId);
+        zipEntry.setExtra(SpokeMarshaller.getMetaData(content).getBytes());
+        output.putNextEntry(zipEntry);
+        long bytesCopied = ByteStreams.copy(content.getStream(), output);
+        zipEntry.setSize(bytesCopied);
+        logger.info("setting extra {}", zipEntry.getExtra());
+
     }
 
 
