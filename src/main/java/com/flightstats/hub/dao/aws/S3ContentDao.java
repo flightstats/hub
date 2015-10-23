@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
@@ -47,13 +46,7 @@ public class S3ContentDao implements ContentDao {
     }
 
     public void initialize() {
-        logger.info("checking if bucket exists " + s3BucketName);
-        if (s3Client.doesBucketExist(s3BucketName)) {
-            logger.info("bucket exists " + s3BucketName);
-            return;
-        }
-        logger.error("EXITING! unable to find bucket " + s3BucketName);
-        throw new RuntimeException("unable to find bucket " + s3BucketName);
+        S3Util.initialize(s3BucketName, s3Client);
     }
 
     @Override
@@ -92,7 +85,7 @@ public class S3ContentDao implements ContentDao {
             sender.send("channel." + channelName + ".s3.bytes", content.getData().length);
             s3Client.putObject(request);
             return key;
-        } catch (AmazonClientException e) {
+        } catch (Exception e) {
             logger.warn("unable to write item to S3 " + channelName + " " + key, e);
             throw e;
         }
