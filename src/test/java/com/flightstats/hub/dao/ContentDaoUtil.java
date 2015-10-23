@@ -189,7 +189,7 @@ public class ContentDaoUtil {
         assertTrue(keys.containsAll(found));
     }
 
-    private Content createContent(ContentKey key) {
+    public static Content createContent(ContentKey key) {
         return Content.builder()
                 .withContentKey(key)
                 .withContentLanguage("lang")
