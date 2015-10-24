@@ -9,12 +9,20 @@ import com.flightstats.hub.metrics.NoOpMetricsSender;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TracesImpl;
+import com.flightstats.hub.util.TimeUtil;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.joda.time.DateTime;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -22,6 +30,7 @@ import static org.junit.Assert.assertEquals;
 
 public class S3BatchContentDaoTest {
 
+    private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDaoTest.class);
     private static S3BatchContentDao contentDao;
 
     @BeforeClass
@@ -36,9 +45,21 @@ public class S3BatchContentDaoTest {
     @Test
     public void testBatchWriteRead() throws Exception {
         String channel = "testBatchWriteRead";
+        List<ContentKey> keys = writeBatchMinute(channel, new MinutePath(), 5);
+
+        for (ContentKey key : keys) {
+            Content content = ContentDaoUtil.createContent(key);
+            Content read = contentDao.read(channel, key);
+            assertEquals(content.getContentKey(), read.getContentKey());
+            assertArrayEquals(content.getData(), read.getData());
+            assertEquals(content.getContentLanguage().get(), read.getContentLanguage().get());
+            assertEquals(content.getContentType().get(), read.getContentType().get());
+        }
+    }
+
+    private List<ContentKey> writeBatchMinute(String channel, MinutePath minutePath, int count) throws IOException {
         List<ContentKey> keys = new ArrayList<>();
-        MinutePath minutePath = new MinutePath();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < count; i++) {
             ContentKey contentKey = new ContentKey(minutePath.getTime().plusSeconds(i), "" + i);
             keys.add(contentKey);
         }
@@ -52,14 +73,54 @@ public class S3BatchContentDaoTest {
 
         byte[] bytes = baos.toByteArray();
         contentDao.writeBatch(channel, minutePath, keys, bytes);
-
-        for (ContentKey key : keys) {
-            Content content = ContentDaoUtil.createContent(key);
-            Content read = contentDao.read(channel, key);
-            assertEquals(content.getContentKey(), read.getContentKey());
-            assertArrayEquals(content.getData(), read.getData());
-        }
+        return keys;
     }
+
+    @Test
+    public void testQueryMinute() throws IOException {
+        String channel = "testQueryMinute" + RandomStringUtils.randomAlphanumeric(20);
+        DateTime start = TimeUtil.now().minusMinutes(10);
+        ContentKey key = new ContentKey(start, "start");
+        for (int i = 0; i < 5; i++) {
+            writeBatchMinute(channel, new MinutePath(start.plusMinutes(i)), 2);
+        }
+        query(channel, start, 2, TimeUtil.Unit.MINUTES);
+        query(channel, start.plusMinutes(2), 2, TimeUtil.Unit.MINUTES);
+    }
+
+    //todo query for minute, hour and day
+
+    @Test
+    public void testQueryHour() throws IOException {
+        String channel = "testQueryHour" + RandomStringUtils.randomAlphanumeric(20);
+        DateTime start = TimeUtil.now().withMinuteOfHour(59);
+        ContentKey key = new ContentKey(start, "start");
+        for (int i = 0; i < 12; i++) {
+            writeBatchMinute(channel, new MinutePath(start.plusMinutes(i * 6)), 2);
+        }
+        query(channel, start, 2, TimeUtil.Unit.HOURS);
+        query(channel, start.plusMinutes(2), 20, TimeUtil.Unit.HOURS);
+        query(channel, start.plusMinutes(61), 2, TimeUtil.Unit.HOURS);
+    }
+
+    private void query(String channel, DateTime start, int expected, TimeUtil.Unit unit) {
+        TracesImpl traces = new TracesImpl();
+        SortedSet<ContentKey> found = contentDao.queryByTime(channel, start, unit, traces);
+        traces.log(logger);
+        assertEquals(expected, found.size());
+    }
+
+    @Test
+    public void testMissing() {
+        String channel = "testMissing";
+        MinutePath minutePath = new MinutePath();
+        TracesImpl traces = new TracesImpl();
+        SortedSet<ContentKey> found = contentDao.queryByTime(channel, minutePath.getTime(), TimeUtil.Unit.MINUTES, traces);
+        logger.info("minute {}", found);
+        traces.log(logger);
+        assertEquals(0, found.size());
+    }
+    //todo - gfm - 10/23/15 - test for missing content & index
 
     /*
     //todo - gfm - 10/22/15 -

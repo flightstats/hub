@@ -82,8 +82,6 @@ public class ZipBatchBuilder {
         output.putNextEntry(zipEntry);
         long bytesCopied = ByteStreams.copy(content.getStream(), output);
         zipEntry.setSize(bytesCopied);
-        logger.info("setting extra {}", zipEntry.getExtra());
-
     }
 
 

@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -26,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -110,15 +112,40 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
-        //todo - gfm - 10/22/15 - does this need to filter based on start time & unit?
-
-        //todo - gfm - 10/19/15 - list all the items which match
         SortedSet<ContentKey> keys = new TreeSet<>();
-        DateTime endTime = startTime.plus(unit.getDuration());
-        logger.info("queryByTime start {} end {} unit {}", startTime, endTime, unit);
-        MinutePath startMinute = new MinutePath(startTime);
-
+        DateTime rounded = unit.round(startTime);
+        MinutePath minutePath = new MinutePath(rounded);
+        MinutePath endMinute = new MinutePath(rounded.plus(unit.getDuration()));
+        traces.add("queryByTime ", channelName, rounded, unit);
+        while (minutePath.getTime().isBefore(endMinute.getTime())) {
+            addKeys(channelName, keys, minutePath, traces);
+            minutePath = new MinutePath(minutePath.getTime().plusMinutes(1));
+        }
+        traces.add("found keys", keys);
         return keys;
+    }
+
+    private void addKeys(String channelName, SortedSet<ContentKey> keys, MinutePath minutePath, Traces traces) {
+        try {
+            S3Object object = s3Client.getObject(s3BucketName, getS3BatchIndexKey(channelName, minutePath));
+            byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
+            JsonNode root = mapper.readTree(bytes);
+            JsonNode items = root.get("items");
+            for (JsonNode item : items) {
+                keys.add(ContentKey.fromUrl(item.asText()).get());
+            }
+            traces.add("addKeys ", minutePath, items.size());
+        } catch (AmazonS3Exception e) {
+            if (e.getStatusCode() != 404) {
+                logger.warn("unable to get index " + channelName, minutePath, e);
+                traces.add("issue with getting keys", e);
+            } else {
+                traces.add("no keys ", minutePath);
+            }
+        } catch (IOException e) {
+            logger.warn("unable to get index " + channelName, minutePath, e);
+            traces.add("issue with getting keys", e);
+        }
     }
 
     @Override
@@ -170,8 +197,8 @@ public class S3BatchContentDao implements ContentDao {
             items.add(key.toUrl());
         }
         String index = root.toString();
-        logger.info("index is {} {}", batchIndexKey, index);
-        byte[] bytes = index.getBytes();
+        logger.trace("index is {} {}", batchIndexKey, index);
+        byte[] bytes = index.getBytes(StandardCharsets.UTF_8);
         putObject(batchIndexKey, bytes);
         return bytes.length;
     }

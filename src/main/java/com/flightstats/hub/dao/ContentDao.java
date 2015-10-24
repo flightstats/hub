@@ -33,4 +33,6 @@ public interface ContentDao {
     default void writeBatch(String channel, MinutePath path, List<ContentKey> keys, byte[] bytes) {
         throw new UnsupportedOperationException("writeBatch is not supported");
     }
+
+    //todo - gfm - 10/23/15 - add batch read
 }
