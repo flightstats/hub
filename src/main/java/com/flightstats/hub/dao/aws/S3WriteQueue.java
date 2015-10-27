@@ -7,6 +7,7 @@ import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Predicate;
 import com.google.inject.Inject;
@@ -103,6 +104,7 @@ public class S3WriteQueue {
                     }
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, 1, TimeUnit.MINUTES))
+                .withStopStrategy(StopStrategies.stopAfterAttempt(10))
                 .build();
     }
 }

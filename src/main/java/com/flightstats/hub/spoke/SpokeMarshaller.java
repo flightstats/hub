@@ -8,6 +8,8 @@ import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.io.ByteStreams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -19,6 +21,7 @@ import java.util.zip.ZipOutputStream;
 
 public class SpokeMarshaller {
 
+    private final static Logger logger = LoggerFactory.getLogger(SpokeMarshaller.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 20) * 1024 * 1024;
 
@@ -62,15 +65,19 @@ public class SpokeMarshaller {
         ZipInputStream zipStream = new ZipInputStream(new ByteArrayInputStream(read));
         zipStream.getNextEntry();
         byte[] bytes = ByteStreams.toByteArray(zipStream);
-        JsonNode jsonNode = mapper.readTree(bytes);
         Content.Builder builder = Content.builder().withContentKey(key);
+        setMetaData(new String(bytes), builder);
+        zipStream.getNextEntry();
+        return builder.withStream(zipStream).build();
+    }
+
+    public static void setMetaData(String metaData, Content.Builder builder) throws IOException {
+        JsonNode jsonNode = mapper.readTree(metaData);
         if (jsonNode.has("contentLanguage")) {
             builder.withContentLanguage(jsonNode.get("contentLanguage").asText());
         }
         if (jsonNode.has("contentType")) {
             builder.withContentType(jsonNode.get("contentType").asText());
         }
-        zipStream.getNextEntry();
-        return builder.withStream(zipStream).build();
     }
 }

@@ -1,11 +1,9 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -29,7 +27,7 @@ import java.util.*;
 public class S3ContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3ContentDao.class);
-    private static final int MAX_ITEMS = 1000 * 1000;
+    public static final int MAX_ITEMS = 1000 * 1000;
 
     private final AmazonS3 s3Client;
     private final MetricsSender sender;
@@ -47,13 +45,7 @@ public class S3ContentDao implements ContentDao {
     }
 
     public void initialize() {
-        logger.info("checking if bucket exists " + s3BucketName);
-        if (s3Client.doesBucketExist(s3BucketName)) {
-            logger.info("bucket exists " + s3BucketName);
-            return;
-        }
-        logger.error("EXITING! unable to find bucket " + s3BucketName);
-        throw new RuntimeException("unable to find bucket " + s3BucketName);
+        S3Util.initialize(s3BucketName, s3Client);
     }
 
     @Override
@@ -63,7 +55,7 @@ public class S3ContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channelName, ContentKey limitKey) {
-        callInternalDelete(channelName, limitKey);
+        S3Util.delete(channelName + "/", limitKey, s3BucketName, s3Client);
     }
 
     public ContentKey write(String channelName, Content content) {
@@ -92,7 +84,7 @@ public class S3ContentDao implements ContentDao {
             sender.send("channel." + channelName + ".s3.bytes", content.getData().length);
             s3Client.putObject(request);
             return key;
-        } catch (AmazonClientException e) {
+        } catch (Exception e) {
             logger.warn("unable to write item to S3 " + channelName + " " + key, e);
             throw e;
         }
@@ -189,31 +181,8 @@ public class S3ContentDao implements ContentDao {
         if (query.isNext()) {
             return next(query);
         } else {
-            return previous(query);
+            return S3Util.queryPrevious(query, this);
         }
-    }
-
-    private SortedSet<ContentKey> previous(DirectionQuery query) {
-        DateTime startTime = query.getContentKey().getTime();
-        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
-        int hourCount = 0;
-        DateTime limitTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
-        while (orderedKeys.size() < query.getCount() && hourCount < 6) {
-            SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.HOURS, query.getTraces());
-            queryByTime.addAll(orderedKeys);
-            orderedKeys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), limitTime, query.getCount(), false, query.isStable());
-            startTime = startTime.minusHours(1);
-            hourCount++;
-        }
-
-        while (orderedKeys.size() < query.getCount() && startTime.isAfter(limitTime)) {
-            SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS, query.getTraces());
-            queryByTime.addAll(orderedKeys);
-            orderedKeys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), limitTime, query.getCount(), false, query.isStable());
-            startTime = startTime.minusDays(1);
-        }
-        query.getTraces().add("s3 previous returning", orderedKeys);
-        return orderedKeys;
     }
 
     private SortedSet<ContentKey> next(DirectionQuery query) {
@@ -236,7 +205,7 @@ public class S3ContentDao implements ContentDao {
         new Thread(() -> {
             try {
                 ContentKey limitKey = new ContentKey(TimeUtil.now(), "ZZZZZZ");
-                callInternalDelete(channel, limitKey);
+                S3Util.delete(channel + "/", limitKey, s3BucketName, s3Client);
                 logger.info("completed deletion of " + channel);
             } catch (Exception e) {
                 logger.warn("unable to delete " + channel + " in " + s3BucketName, e);
@@ -244,39 +213,4 @@ public class S3ContentDao implements ContentDao {
         }).start();
     }
 
-    private void callInternalDelete(String channel, ContentKey limitKey) {
-        String channelPath = channel + "/";
-        //noinspection StatementWithEmptyBody
-        while (internalDelete(channel, channelPath, limitKey)) {
-        }
-        internalDelete(channel, channelPath, limitKey);
-    }
-
-    private boolean internalDelete(String channel, String channelPath, ContentKey limitKey) {
-        ListObjectsRequest request = new ListObjectsRequest();
-        request.withBucketName(s3BucketName);
-        request.withPrefix(channelPath);
-        sender.send("channel." + channel + ".s3.requestA", 1);
-        ObjectListing listing = s3Client.listObjects(request);
-        List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
-        for (S3ObjectSummary objectSummary : listing.getObjectSummaries()) {
-            ContentKey contentKey = ContentKey.fromUrl(StringUtils.substringAfter(objectSummary.getKey(), channelPath)).get();
-            if (contentKey.compareTo(limitKey) < 0) {
-                keys.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
-            }
-        }
-        if (keys.isEmpty()) {
-            return false;
-        }
-        DeleteObjectsRequest multiObjectDeleteRequest = new DeleteObjectsRequest(s3BucketName);
-        multiObjectDeleteRequest.setKeys(keys);
-        try {
-            s3Client.deleteObjects(multiObjectDeleteRequest);
-            logger.info("deleting more from " + channelPath + " deleted " + keys.size());
-        } catch (MultiObjectDeleteException e) {
-            logger.info("what happened? " + channelPath, e);
-            return true;
-        }
-        return listing.isTruncated();
-    }
 }

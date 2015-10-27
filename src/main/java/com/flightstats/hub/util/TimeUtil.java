@@ -4,6 +4,7 @@ import com.flightstats.hub.app.HubProperties;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
+import org.joda.time.Seconds;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -124,6 +125,11 @@ public class TimeUtil {
                 return rounded;
             }
             return rounded.withHourOfDay(0);
+        }
+
+        public boolean lessThanOrEqual(Unit unit) {
+            Seconds otherSeconds = unit.getDuration().toStandardSeconds();
+            return getDuration().toStandardSeconds().getSeconds() <= otherSeconds.getSeconds();
         }
     }
 

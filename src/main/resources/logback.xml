@@ -18,35 +18,14 @@
         </encoder>
     </appender>
 
-    <!--    <appender name="HTTP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-            <file>/Users/gmoulliet/log/http.log</file>
-            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-                <fileNamePattern>/Users/gmoulliet/log/http_%d{yyyy-MM-dd-HH}.log.gz</fileNamePattern>
-                <maxHistory>168</maxHistory>
-            </rollingPolicy>
-            <encoder>
-                <pattern>%5p %d{ISO8601} [%t] %c [line %L] - %msg%n</pattern>
-            </encoder>
-        </appender>-->
-
     <root level="info">
         <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
-        <!--<appender-ref ref="HTTP_FILE"/>-->
     </root>
-
-    <!--  <logger name="org.apache.http.wire" level="DEBUG" additivity="false">
-          <appender-ref ref="HTTP_FILE"/>
-      </logger>-->
 
     <logger name="com.sun.jersey.server.wadl.generators" level="WARN"/>
     <logger name="org.apache.zookeeper.server.PrepRequestProcessor" level="WARN"/>
-    <logger name="com.flightstats.hub" level="DEBUG"/>
-    <logger name="com.flightstats.hub.group" level="TRACE"/>
-    <logger name="com.flightstats.hub.spoke" level="TRACE"/>
-    <logger name="com.flightstats.hub.nas" level="TRACE"/>
-    <logger name="com.flightstats.hub.ws" level="TRACE"/>
-    <logger name="com.flightstats.hub.alert" level="TRACE"/>
-    <logger name="com.flightstats.hub.util" level="TRACE"/>
+    <logger name="com.flightstats.hub" level="INFO"/>
+
 
 </configuration>
