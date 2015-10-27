@@ -126,7 +126,6 @@ public class S3BatchContentDaoTest {
 
     @Test
     public void testDirectionQuery() throws Exception {
-        //todo - gfm - 10/27/15 - change list max items to force multiples
         String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         ContentKey key = new ContentKey(start, "start");
@@ -137,8 +136,9 @@ public class S3BatchContentDaoTest {
         queryDirection(channel, new ContentKey(start.plusMinutes(37), "A"), true, 6, 6);
         queryDirection(channel, new ContentKey(start.plusMinutes(73), "A"), true, 0, 0);
 
+        queryDirection(channel, new ContentKey(start.plusMinutes(73), "A"), false, 23, 23);
+        queryDirection(channel, new ContentKey(start.plusMinutes(14), "A"), false, 8, 6);
 
-        //todo - gfm - 10/27/15 - previous
     }
 
     private void queryDirection(String channel, ContentKey contentKey, boolean next, int count, int expected) {
@@ -149,7 +149,7 @@ public class S3BatchContentDaoTest {
                         .contentKey(contentKey)
                         .next(next)
                         .count(count)
-                        .ttlDays(1)
+                        .ttlDays(2)
                         .traces(traces)
                         .build();
 

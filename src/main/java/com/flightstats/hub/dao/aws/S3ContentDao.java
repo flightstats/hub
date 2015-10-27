@@ -4,7 +4,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -182,31 +181,8 @@ public class S3ContentDao implements ContentDao {
         if (query.isNext()) {
             return next(query);
         } else {
-            return previous(query);
+            return S3Util.queryPrevious(query, this);
         }
-    }
-
-    private SortedSet<ContentKey> previous(DirectionQuery query) {
-        DateTime startTime = query.getContentKey().getTime();
-        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
-        int hourCount = 0;
-        DateTime limitTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
-        while (orderedKeys.size() < query.getCount() && hourCount < 6) {
-            SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.HOURS, query.getTraces());
-            queryByTime.addAll(orderedKeys);
-            orderedKeys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), limitTime, query.getCount(), false, query.isStable());
-            startTime = startTime.minusHours(1);
-            hourCount++;
-        }
-
-        while (orderedKeys.size() < query.getCount() && startTime.isAfter(limitTime)) {
-            SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS, query.getTraces());
-            queryByTime.addAll(orderedKeys);
-            orderedKeys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), limitTime, query.getCount(), false, query.isStable());
-            startTime = startTime.minusDays(1);
-        }
-        query.getTraces().add("s3 previous returning", orderedKeys);
-        return orderedKeys;
     }
 
     private SortedSet<ContentKey> next(DirectionQuery query) {

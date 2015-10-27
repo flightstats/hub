@@ -179,26 +179,25 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
+        query.getTraces().add("query", query);
         if (query.isNext()) {
             return handleNext(query);
         } else {
-
+            return S3Util.queryPrevious(query, this);
         }
-
-        return null;
     }
 
     private SortedSet<ContentKey> handleNext(DirectionQuery query) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         DateTime endTime = TimeUtil.time(query.isStable());
-        DateTime startTime = query.getContentKey().getTime().minusMinutes(1);
+        DateTime markerTime = query.getContentKey().getTime().minusMinutes(1);
         int queryItems = Math.min(s3MaxQueryItems, query.getCount());
         do {
             String channel = query.getChannelName();
             ListObjectsRequest request = new ListObjectsRequest()
                     .withBucketName(s3BucketName)
                     .withPrefix(channel + BATCH_INDEX)
-                    .withMarker(channel + BATCH_INDEX + TimeUtil.Unit.MINUTES.format(startTime))
+                    .withMarker(channel + BATCH_INDEX + TimeUtil.Unit.MINUTES.format(markerTime))
                     .withMaxKeys(queryItems);
             SortedSet<MinutePath> paths = listMinutePaths(channel, request, query.getTraces(), false);
 
@@ -210,9 +209,9 @@ public class S3BatchContentDao implements ContentDao {
                     return keys;
                 }
                 addKeys(channel, path, keys, query.getTraces());
-                startTime = path.getTime();
+                markerTime = path.getTime();
             }
-        } while (keys.size() < query.getCount() && startTime.isBefore(endTime));
+        } while (keys.size() < query.getCount() && markerTime.isBefore(endTime));
         return keys;
     }
 
