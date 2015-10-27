@@ -36,7 +36,8 @@ import java.util.zip.ZipInputStream;
 public class S3BatchContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDao.class);
-    private static final String BATCH_INDEX = "/batch/index/";
+    private static final String BATCH_INDEX = "Batch/index/";
+    public static final String BATCH_ITEMS = "Batch/items/";
 
     private final AmazonS3 s3Client;
     private final MetricsSender sender;
@@ -238,8 +239,23 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public void delete(String channelName) {
-        //todo - gfm - 10/19/15 - look at S3ContentDao
+    public void deleteBefore(String channel, ContentKey limitKey) {
+        S3Util.delete(channel + BATCH_ITEMS, limitKey, s3BucketName, s3Client);
+        S3Util.delete(channel + BATCH_INDEX, limitKey, s3BucketName, s3Client);
+    }
+
+    @Override
+    public void delete(String channel) {
+        new Thread(() -> {
+            try {
+                ContentKey limitKey = new ContentKey(TimeUtil.now().plusHours(1), "ZZZZZZ");
+                S3Util.delete(channel + BATCH_ITEMS, limitKey, s3BucketName, s3Client);
+                S3Util.delete(channel + BATCH_INDEX, limitKey, s3BucketName, s3Client);
+                logger.info("completed deletion of " + channel);
+            } catch (Exception e) {
+                logger.warn("unable to delete " + channel + " in " + s3BucketName, e);
+            }
+        }).start();
     }
 
     @Override
@@ -250,11 +266,6 @@ public class S3BatchContentDao implements ContentDao {
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
         throw new UnsupportedOperationException("use query interface");
-    }
-
-    @Override
-    public void deleteBefore(String channelName, ContentKey limitKey) {
-        //todo - gfm - 10/19/15 - look at S3ContentDao
     }
 
     @Override
@@ -302,11 +313,11 @@ public class S3BatchContentDao implements ContentDao {
         s3Client.putObject(request);
     }
 
-    private String getS3BatchItemsKey(String channelName, MinutePath path) {
-        return channelName + "/batch/items/" + path.toUrl();
+    private String getS3BatchItemsKey(String channel, MinutePath path) {
+        return channel + BATCH_ITEMS + path.toUrl();
     }
 
-    private String getS3BatchIndexKey(String channelName, MinutePath path) {
-        return channelName + BATCH_INDEX + path.toUrl();
+    private String getS3BatchIndexKey(String channel, MinutePath path) {
+        return channel + BATCH_INDEX + path.toUrl();
     }
 }

@@ -125,19 +125,24 @@ public class S3BatchContentDaoTest {
     }
 
     @Test
-    public void testDirectionQuery() throws Exception {
+    public void testDirectionQueryAndDelete() throws Exception {
         String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         ContentKey key = new ContentKey(start, "start");
         for (int i = 0; i < 12; i++) {
             writeBatchMinute(channel, new MinutePath(start.plusMinutes(i * 6)), 2);
         }
+
         queryDirection(channel, key, true, 50, 24);
         queryDirection(channel, new ContentKey(start.plusMinutes(37), "A"), true, 6, 6);
         queryDirection(channel, new ContentKey(start.plusMinutes(73), "A"), true, 0, 0);
 
         queryDirection(channel, new ContentKey(start.plusMinutes(73), "A"), false, 23, 23);
         queryDirection(channel, new ContentKey(start.plusMinutes(14), "A"), false, 8, 6);
+
+        contentDao.deleteBefore(channel, new ContentKey(start.plusMinutes(37), "A"));
+        queryDirection(channel, new ContentKey(start.plusMinutes(37), "A"), false, 8, 0);
+        queryDirection(channel, key, true, 50, 10);
 
     }
 
@@ -158,14 +163,4 @@ public class S3BatchContentDaoTest {
         assertEquals(expected, found.size());
     }
 
-    /*
-    //todo - gfm - 10/22/15 -
-
-    @Test
-
-
-    @Test
-    public void testDelete() throws Exception {
-        util.testDeleteMaxItems();
-    }*/
 }

@@ -55,7 +55,7 @@ public class S3ContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channelName, ContentKey limitKey) {
-        callInternalDelete(channelName, limitKey);
+        S3Util.delete(channelName + "/", limitKey, s3BucketName, s3Client);
     }
 
     public ContentKey write(String channelName, Content content) {
@@ -205,7 +205,7 @@ public class S3ContentDao implements ContentDao {
         new Thread(() -> {
             try {
                 ContentKey limitKey = new ContentKey(TimeUtil.now(), "ZZZZZZ");
-                callInternalDelete(channel, limitKey);
+                S3Util.delete(channel + "/", limitKey, s3BucketName, s3Client);
                 logger.info("completed deletion of " + channel);
             } catch (Exception e) {
                 logger.warn("unable to delete " + channel + " in " + s3BucketName, e);
@@ -213,39 +213,4 @@ public class S3ContentDao implements ContentDao {
         }).start();
     }
 
-    private void callInternalDelete(String channel, ContentKey limitKey) {
-        String channelPath = channel + "/";
-        //noinspection StatementWithEmptyBody
-        while (internalDelete(channel, channelPath, limitKey)) {
-        }
-        internalDelete(channel, channelPath, limitKey);
-    }
-
-    private boolean internalDelete(String channel, String channelPath, ContentKey limitKey) {
-        ListObjectsRequest request = new ListObjectsRequest();
-        request.withBucketName(s3BucketName);
-        request.withPrefix(channelPath);
-        sender.send("channel." + channel + ".s3.requestA", 1);
-        ObjectListing listing = s3Client.listObjects(request);
-        List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
-        for (S3ObjectSummary objectSummary : listing.getObjectSummaries()) {
-            ContentKey contentKey = ContentKey.fromUrl(StringUtils.substringAfter(objectSummary.getKey(), channelPath)).get();
-            if (contentKey.compareTo(limitKey) < 0) {
-                keys.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
-            }
-        }
-        if (keys.isEmpty()) {
-            return false;
-        }
-        DeleteObjectsRequest multiObjectDeleteRequest = new DeleteObjectsRequest(s3BucketName);
-        multiObjectDeleteRequest.setKeys(keys);
-        try {
-            s3Client.deleteObjects(multiObjectDeleteRequest);
-            logger.info("deleting more from " + channelPath + " deleted " + keys.size());
-        } catch (MultiObjectDeleteException e) {
-            logger.info("what happened? " + channelPath, e);
-            return true;
-        }
-        return listing.isTruncated();
-    }
 }
