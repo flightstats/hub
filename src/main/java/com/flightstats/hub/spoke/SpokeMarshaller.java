@@ -58,9 +58,7 @@ public class SpokeMarshaller {
         if (content.getContentType().isPresent()) {
             objectNode.put("contentType", content.getContentType().get());
         }
-        String metaData = objectNode.toString();
-        logger.trace("getting meta data {}", metaData);
-        return metaData;
+        return objectNode.toString();
     }
 
     public static Content toContent(byte[] read, ContentKey key) throws IOException {
@@ -74,7 +72,6 @@ public class SpokeMarshaller {
     }
 
     public static void setMetaData(String metaData, Content.Builder builder) throws IOException {
-        logger.trace("setting meta data {}", metaData);
         JsonNode jsonNode = mapper.readTree(metaData);
         if (jsonNode.has("contentLanguage")) {
             builder.withContentLanguage(jsonNode.get("contentLanguage").asText());
