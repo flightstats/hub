@@ -1,10 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -19,6 +16,7 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +27,7 @@ import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -38,6 +37,7 @@ import java.util.zip.ZipInputStream;
 public class S3BatchContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDao.class);
+    private static final String BATCH_INDEX = "/batch/index/";
 
     private final AmazonS3 s3Client;
     private final MetricsSender sender;
@@ -113,13 +113,14 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
+        //todo - gfm - 10/27/15 - this can be optimized for HOUR & DAY queries
         SortedSet<ContentKey> keys = new TreeSet<>();
         DateTime rounded = unit.round(startTime);
         MinutePath minutePath = new MinutePath(rounded);
         MinutePath endMinute = new MinutePath(rounded.plus(unit.getDuration()));
         traces.add("queryByTime ", channelName, rounded, unit, endMinute);
         do {
-            addKeys(channelName, keys, minutePath, traces);
+            addKeys(channelName, minutePath, keys, traces);
             minutePath = new MinutePath(minutePath.getTime().plusMinutes(1));
         } while (minutePath.getTime().isBefore(endMinute.getTime()));
         if (unit.equals(TimeUtil.Unit.SECONDS)) {
@@ -134,9 +135,10 @@ public class S3BatchContentDao implements ContentDao {
         return keys;
     }
 
-    private void addKeys(String channelName, SortedSet<ContentKey> keys, MinutePath minutePath, Traces traces) {
+    private void addKeys(String channel, MinutePath minutePath, SortedSet<ContentKey> keys, Traces traces) {
         try {
-            S3Object object = s3Client.getObject(s3BucketName, getS3BatchIndexKey(channelName, minutePath));
+            sender.send("channel." + channel + ".s3Batch.get", 1);
+            S3Object object = s3Client.getObject(s3BucketName, getS3BatchIndexKey(channel, minutePath));
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             JsonNode root = mapper.readTree(bytes);
             JsonNode items = root.get("items");
@@ -146,21 +148,70 @@ public class S3BatchContentDao implements ContentDao {
             traces.add("addKeys ", minutePath, items.size());
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
-                logger.warn("unable to get index " + channelName, minutePath, e);
+                logger.warn("unable to get index " + channel, minutePath, e);
                 traces.add("issue with getting keys", e);
             } else {
                 traces.add("no keys ", minutePath);
             }
         } catch (IOException e) {
-            logger.warn("unable to get index " + channelName, minutePath, e);
+            logger.warn("unable to get index " + channel, minutePath, e);
             traces.add("issue with getting keys", e);
         }
     }
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        //todo - gfm - 10/19/15 - in S3ContentDao, this is based on queryByTime
+        if (query.isNext()) {
+            return handleNext(query);
+        } else {
+
+        }
+
         return null;
+    }
+
+    private SortedSet<ContentKey> handleNext(DirectionQuery query) {
+        SortedSet<ContentKey> keys = new TreeSet<>();
+        DateTime endTime = TimeUtil.time(query.isStable());
+        DateTime startTime = query.getContentKey().getTime().minusMinutes(1);
+        int queryItems = Math.min(s3MaxQueryItems, query.getCount());
+        do {
+            SortedSet<MinutePath> paths = new TreeSet<>();
+            String channel = query.getChannelName();
+            ListObjectsRequest request = new ListObjectsRequest()
+                    .withBucketName(s3BucketName)
+                    .withPrefix(channel + BATCH_INDEX)
+                    .withMarker(channel + BATCH_INDEX + TimeUtil.Unit.MINUTES.format(startTime))
+                    .withMaxKeys(queryItems);
+            sender.send("channel." + channel + ".s3Batch.list", 1);
+            ObjectListing listing = s3Client.listObjects(request);
+            addIndexes(channel, listing, paths, query.getTraces());
+            logger.info("found paths {}", paths);
+            query.getTraces().add("found paths", paths);
+            if (paths.isEmpty()) {
+                return keys;
+            }
+            for (MinutePath path : paths) {
+                if (keys.size() >= query.getCount()) {
+                    return keys;
+                }
+                addKeys(channel, path, keys, query.getTraces());
+                startTime = path.getTime();
+            }
+        } while (keys.size() < query.getCount() && startTime.isBefore(endTime));
+        return keys;
+    }
+
+    private void addIndexes(String channel, ObjectListing listing, Set<MinutePath> paths, Traces traces) {
+        List<S3ObjectSummary> summaries = listing.getObjectSummaries();
+        for (S3ObjectSummary summary : summaries) {
+            String key = summary.getKey();
+            Optional<MinutePath> pathOptional = MinutePath.fromUrl(StringUtils.substringAfter(key, channel + BATCH_INDEX));
+            if (pathOptional.isPresent()) {
+                MinutePath path = pathOptional.get();
+                paths.add(path);
+            }
+        }
     }
 
     @Override
@@ -233,6 +284,6 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     private String getS3BatchIndexKey(String channelName, MinutePath path) {
-        return channelName + "/batch/index/" + path.toUrl();
+        return channelName + BATCH_INDEX + path.toUrl();
     }
 }

@@ -6,10 +6,7 @@ import com.flightstats.hub.channel.ZipBatchBuilder;
 import com.flightstats.hub.dao.aws.AwsConnectorFactory;
 import com.flightstats.hub.dao.aws.S3BucketName;
 import com.flightstats.hub.metrics.NoOpMetricsSender;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.model.TracesImpl;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
@@ -38,6 +35,7 @@ public class S3BatchContentDaoTest {
         AwsConnectorFactory factory = new AwsConnectorFactory();
         AmazonS3 s3Client = factory.getS3Client();
         S3BucketName bucketName = new S3BucketName("local", "hub-v2");
+        HubProperties.setProperty("s3.maxQueryItems", "5");
         contentDao = new S3BatchContentDao(s3Client, bucketName, new NoOpMetricsSender());
     }
 
@@ -126,13 +124,45 @@ public class S3BatchContentDaoTest {
         assertEquals(0, found.size());
     }
 
+    @Test
+    public void testDirectionQuery() throws Exception {
+        //todo - gfm - 10/27/15 - change list max items to force multiples
+        String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
+        DateTime start = TimeUtil.now().minusHours(2);
+        ContentKey key = new ContentKey(start, "start");
+        for (int i = 0; i < 12; i++) {
+            writeBatchMinute(channel, new MinutePath(start.plusMinutes(i * 6)), 2);
+        }
+        queryDirection(channel, key, true, 50, 24);
+        queryDirection(channel, new ContentKey(start.plusMinutes(37), "A"), true, 6, 6);
+        queryDirection(channel, new ContentKey(start.plusMinutes(73), "A"), true, 0, 0);
+
+
+        //todo - gfm - 10/27/15 - previous
+    }
+
+    private void queryDirection(String channel, ContentKey contentKey, boolean next, int count, int expected) {
+        TracesImpl traces = new TracesImpl();
+        DirectionQuery query =
+                DirectionQuery.builder()
+                        .channelName(channel)
+                        .contentKey(contentKey)
+                        .next(next)
+                        .count(count)
+                        .ttlDays(1)
+                        .traces(traces)
+                        .build();
+
+        SortedSet<ContentKey> found = contentDao.query(query);
+        traces.log(logger);
+        assertEquals(expected, found.size());
+    }
+
     /*
     //todo - gfm - 10/22/15 -
 
     @Test
-    public void testDirectionQuery() throws Exception {
-        util.testDirectionQuery();
-    }
+
 
     @Test
     public void testDelete() throws Exception {
