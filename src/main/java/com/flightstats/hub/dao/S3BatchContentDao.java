@@ -27,7 +27,6 @@ import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -113,16 +112,35 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
-        //todo - gfm - 10/27/15 - this can be optimized for HOUR & DAY queries
+        if (unit.lessThanOrEqual(TimeUtil.Unit.MINUTES)) {
+            return queryMinute(channelName, startTime, unit, traces);
+        } else {
+            return queryHourPlus(channelName, startTime, unit, traces);
+        }
+    }
+
+    private SortedSet<ContentKey> queryHourPlus(String channel, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         DateTime rounded = unit.round(startTime);
-        MinutePath minutePath = new MinutePath(rounded);
-        MinutePath endMinute = new MinutePath(rounded.plus(unit.getDuration()));
-        traces.add("queryByTime ", channelName, rounded, unit, endMinute);
-        do {
-            addKeys(channelName, minutePath, keys, traces);
-            minutePath = new MinutePath(minutePath.getTime().plusMinutes(1));
-        } while (minutePath.getTime().isBefore(endMinute.getTime()));
+        traces.add("queryHourPlus ", channel, rounded, unit);
+        ListObjectsRequest request = new ListObjectsRequest()
+                .withBucketName(s3BucketName)
+                .withPrefix(channel + BATCH_INDEX + unit.format(rounded))
+                .withMarker(channel + BATCH_INDEX + TimeUtil.Unit.MINUTES.format(rounded))
+                .withMaxKeys(s3MaxQueryItems);
+        SortedSet<MinutePath> minutePaths = listMinutePaths(channel, request, traces, true);
+        for (MinutePath minutePath : minutePaths) {
+            addKeys(channel, minutePath, keys, traces);
+        }
+        traces.add("found keys", keys);
+        return keys;
+    }
+
+    private SortedSet<ContentKey> queryMinute(String channel, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
+        SortedSet<ContentKey> keys = new TreeSet<>();
+        DateTime rounded = unit.round(startTime);
+        traces.add("queryMinute ", channel, rounded, unit);
+        addKeys(channel, new MinutePath(rounded), keys, traces);
         if (unit.equals(TimeUtil.Unit.SECONDS)) {
             DateTime start = rounded.minusMillis(1);
             DateTime endTime = rounded.plus(unit.getDuration());
@@ -176,18 +194,14 @@ public class S3BatchContentDao implements ContentDao {
         DateTime startTime = query.getContentKey().getTime().minusMinutes(1);
         int queryItems = Math.min(s3MaxQueryItems, query.getCount());
         do {
-            SortedSet<MinutePath> paths = new TreeSet<>();
             String channel = query.getChannelName();
             ListObjectsRequest request = new ListObjectsRequest()
                     .withBucketName(s3BucketName)
                     .withPrefix(channel + BATCH_INDEX)
                     .withMarker(channel + BATCH_INDEX + TimeUtil.Unit.MINUTES.format(startTime))
                     .withMaxKeys(queryItems);
-            sender.send("channel." + channel + ".s3Batch.list", 1);
-            ObjectListing listing = s3Client.listObjects(request);
-            addIndexes(channel, listing, paths, query.getTraces());
-            logger.info("found paths {}", paths);
-            query.getTraces().add("found paths", paths);
+            SortedSet<MinutePath> paths = listMinutePaths(channel, request, query.getTraces(), false);
+
             if (paths.isEmpty()) {
                 return keys;
             }
@@ -202,7 +216,11 @@ public class S3BatchContentDao implements ContentDao {
         return keys;
     }
 
-    private void addIndexes(String channel, ObjectListing listing, Set<MinutePath> paths, Traces traces) {
+    private SortedSet<MinutePath> listMinutePaths(String channel, ListObjectsRequest request, Traces traces, boolean iterate) {
+        SortedSet<MinutePath> paths = new TreeSet<>();
+        traces.add("listing ", request.getPrefix(), request.getMarker(), iterate);
+        sender.send("channel." + channel + ".s3Batch.list", 1);
+        ObjectListing listing = s3Client.listObjects(request);
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
             String key = summary.getKey();
@@ -212,6 +230,12 @@ public class S3BatchContentDao implements ContentDao {
                 paths.add(path);
             }
         }
+        if (iterate && listing.isTruncated()) {
+            request.withMarker(channel + BATCH_INDEX + TimeUtil.Unit.MINUTES.format(paths.last().getTime()));
+            paths.addAll(listMinutePaths(channel, request, traces, iterate));
+        }
+        traces.add(request.getMarker(), paths);
+        return paths;
     }
 
     @Override
