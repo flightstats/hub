@@ -25,8 +25,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.zip.ZipOutputStream;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class S3BatchContentDaoTest {
 
@@ -62,6 +61,7 @@ public class S3BatchContentDaoTest {
         for (int i = 0; i < count; i++) {
             ContentKey contentKey = new ContentKey(minutePath.getTime().plusSeconds(i), "" + i);
             keys.add(contentKey);
+            logger.info("adding {}", contentKey);
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ZipOutputStream output = new ZipOutputStream(baos);
@@ -86,9 +86,12 @@ public class S3BatchContentDaoTest {
         }
         query(channel, start, 2, TimeUtil.Unit.MINUTES);
         query(channel, start.plusMinutes(2), 2, TimeUtil.Unit.MINUTES);
-    }
 
-    //todo query for minute, hour and day
+        DateTime secondsTime = new MinutePath(start.plusMinutes(1)).getTime();
+        query(channel, secondsTime, 1, TimeUtil.Unit.SECONDS);
+        query(channel, secondsTime.plusSeconds(1), 1, TimeUtil.Unit.SECONDS);
+        query(channel, secondsTime.plusSeconds(2), 0, TimeUtil.Unit.SECONDS);
+    }
 
     @Test
     public void testQueryHour() throws IOException {
@@ -113,6 +116,8 @@ public class S3BatchContentDaoTest {
     @Test
     public void testMissing() {
         String channel = "testMissing";
+        Content content = contentDao.read(channel, new ContentKey());
+        assertNull(content);
         MinutePath minutePath = new MinutePath();
         TracesImpl traces = new TracesImpl();
         SortedSet<ContentKey> found = contentDao.queryByTime(channel, minutePath.getTime(), TimeUtil.Unit.MINUTES, traces);
@@ -120,25 +125,9 @@ public class S3BatchContentDaoTest {
         traces.log(logger);
         assertEquals(0, found.size());
     }
-    //todo - gfm - 10/23/15 - test for missing content & index
 
     /*
     //todo - gfm - 10/22/15 -
-
-    @Test
-    public void testQueryRangeDay() throws Exception {
-        util.testQueryRangeDay();
-    }
-
-    @Test
-    public void testQueryRangeHour() throws Exception {
-        util.testQueryRangeHour();
-    }
-
-    @Test
-    public void testQueryRangeMinute() throws Exception {
-        util.testQueryRangeMinute();
-    }
 
     @Test
     public void testDirectionQuery() throws Exception {

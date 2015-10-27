@@ -31,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -116,10 +117,18 @@ public class S3BatchContentDao implements ContentDao {
         DateTime rounded = unit.round(startTime);
         MinutePath minutePath = new MinutePath(rounded);
         MinutePath endMinute = new MinutePath(rounded.plus(unit.getDuration()));
-        traces.add("queryByTime ", channelName, rounded, unit);
-        while (minutePath.getTime().isBefore(endMinute.getTime())) {
+        traces.add("queryByTime ", channelName, rounded, unit, endMinute);
+        do {
             addKeys(channelName, keys, minutePath, traces);
             minutePath = new MinutePath(minutePath.getTime().plusMinutes(1));
+        } while (minutePath.getTime().isBefore(endMinute.getTime()));
+        if (unit.equals(TimeUtil.Unit.SECONDS)) {
+            DateTime start = rounded.minusMillis(1);
+            DateTime endTime = rounded.plus(unit.getDuration());
+            keys = keys.stream()
+                    .filter(key -> key.getTime().isAfter(start))
+                    .filter(key -> key.getTime().isBefore(endTime))
+                    .collect(Collectors.toCollection(TreeSet::new));
         }
         traces.add("found keys", keys);
         return keys;
