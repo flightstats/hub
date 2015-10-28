@@ -57,6 +57,7 @@ public class AlertConfigs {
     }
 
     public static void upsert(AlertConfig alertConfig) {
+        logger.info("upsert alert {}", alertConfig);
         Map<String, AlertConfig> latest = getLatest();
         latest.put(alertConfig.getName(), alertConfig);
         update(latest);

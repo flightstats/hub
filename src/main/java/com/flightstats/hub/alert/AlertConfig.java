@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 
 @Builder
 @Getter
@@ -44,6 +45,16 @@ public class AlertConfig {
         return alertConfig;
     }
 
+    @JsonIgnore
+    public boolean isValid() {
+        if (StringUtils.isBlank(getSource())
+                || StringUtils.isBlank(getName())
+                || StringUtils.isBlank(getServiceName())
+                || StringUtils.isBlank(getOperator())) {
+            return false;
+        }
+        return true;
+    }
     @JsonIgnore
     public boolean isChannelAlert() {
         return type == AlertType.channel;

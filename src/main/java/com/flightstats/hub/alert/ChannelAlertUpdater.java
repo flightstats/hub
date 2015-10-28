@@ -41,41 +41,46 @@ public class ChannelAlertUpdater implements Callable<AlertStatus> {
 
     @Override
     public AlertStatus call() throws Exception {
-        int historyCount = alertConfig.getTimeWindowMinutes();
-        if (alertConfig.getTimeWindowMinutes() < 120) {
-            checkPeriod(AlertStatus.MINUTE);
-        } else {
-            checkPeriod(AlertStatus.HOUR);
-            historyCount = (int) Math.ceil(alertConfig.getTimeWindowMinutes() / 60.0);
-        }
-        while (alertStatus.getHistory().size() > historyCount) {
-            alertStatus.getHistory().removeFirst();
-        }
-
-        LinkedList<AlertStatusHistory> history = alertStatus.getHistory();
-        if (history.isEmpty()) {
-            AlertStatusHistory alertStatusHistory = getAlertHistory(alertConfig.getHubDomain() +
-                    "channel/" + alertConfig.getSource() + "/time/" + alertStatus.getPeriod());
-            while (history.size() < historyCount) {
-                alertStatusHistory = getAlertHistory(alertStatusHistory.getPrevious());
-                history.addFirst(alertStatusHistory);
+        try {
+            int historyCount = alertConfig.getTimeWindowMinutes();
+            if (alertConfig.getTimeWindowMinutes() < 120) {
+                checkPeriod(AlertStatus.MINUTE);
+            } else {
+                checkPeriod(AlertStatus.HOUR);
+                historyCount = (int) Math.ceil(alertConfig.getTimeWindowMinutes() / 60.0);
             }
-            checkForAlert();
-        } else {
-            AlertStatusHistory alertHistory = getAlertHistory(history.getLast().getHref());
-            while (alertHistory.getNext() != null) {
-                alertHistory = getAlertHistory(alertHistory.getNext());
-                if (alertHistory.getNext() != null) {
-                    history.addLast(alertHistory);
-                    if (history.size() > historyCount) {
-                        history.removeFirst();
+            while (alertStatus.getHistory().size() > historyCount) {
+                alertStatus.getHistory().removeFirst();
+            }
+
+            LinkedList<AlertStatusHistory> history = alertStatus.getHistory();
+            if (history.isEmpty()) {
+                AlertStatusHistory alertStatusHistory = getAlertHistory(alertConfig.getHubDomain() +
+                        "channel/" + alertConfig.getSource() + "/time/" + alertStatus.getPeriod());
+                while (history.size() < historyCount) {
+                    alertStatusHistory = getAlertHistory(alertStatusHistory.getPrevious());
+                    history.addFirst(alertStatusHistory);
+                }
+                checkForAlert();
+            } else {
+                AlertStatusHistory alertHistory = getAlertHistory(history.getLast().getHref());
+                while (alertHistory.getNext() != null) {
+                    alertHistory = getAlertHistory(alertHistory.getNext());
+                    if (alertHistory.getNext() != null) {
+                        history.addLast(alertHistory);
+                        if (history.size() > historyCount) {
+                            history.removeFirst();
+                        }
                     }
                 }
+                checkForAlert();
             }
-            checkForAlert();
-        }
 
-        return alertStatus;
+            return alertStatus;
+        } catch (Exception e) {
+            logger.warn("unable to process " + alertConfig, e);
+            throw e;
+        }
     }
 
     boolean checkForAlert() throws ScriptException {
