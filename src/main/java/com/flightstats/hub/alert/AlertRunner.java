@@ -77,7 +77,9 @@ public class AlertRunner implements Leader {
         List<Future<AlertStatus>> futures = new ArrayList<>();
         for (AlertConfig alertConfig : alertConfigsLatest.values()) {
             AlertStatus alertStatus = existingAlertStatus.get(alertConfig.getName());
-            if (alertConfig.isChannelAlert()) {
+            if (!alertConfig.isValid()) {
+                logger.warn("source is blank {}", alertConfig);
+            } else if (alertConfig.isChannelAlert()) {
                 futures.add(threadPool.submit(new ChannelAlertUpdater(alertConfig, alertStatus)));
             } else {
                 futures.add(threadPool.submit(new GroupAlertUpdater(alertConfig, alertStatus)));
