@@ -41,7 +41,7 @@ public class S3WriterManager {
     @Inject
     public S3WriterManager(ChannelService channelService,
                            @Named(ContentDao.CACHE) ContentDao cacheContentDao,
-                           @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
+                           @Named(ContentDao.SINGLE_LONG_TERM) ContentDao longTermContentDao,
                            S3WriteQueue s3WriteQueue) {
         this.channelService = channelService;
         this.cacheContentDao = cacheContentDao;

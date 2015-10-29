@@ -11,7 +11,7 @@ import java.util.SortedSet;
 public interface ContentDao {
 
     String CACHE = "Cache";
-    String LONG_TERM = "LongTerm";
+    String SINGLE_LONG_TERM = "LongTerm";
     String BATCH_LONG_TERM = "BatchLongTerm";
 
     ContentKey write(String channelName, Content content) throws Exception;
