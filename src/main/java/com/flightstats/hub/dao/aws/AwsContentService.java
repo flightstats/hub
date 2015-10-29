@@ -73,7 +73,7 @@ public class AwsContentService implements ContentService {
         try {
             inFlight.incrementAndGet();
             ContentKey key = spokeContentDao.write(channelName, content);
-            ChannelConfig channel = channelService.getChannelConfig(channelName);
+            ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
             if (channel.isSingle() || channel.isBoth()) {
                 s3SingleWrite(channelName, key);
             }
@@ -107,7 +107,7 @@ public class AwsContentService implements ContentService {
     @Override
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
-        ChannelConfig channel = channelService.getChannelConfig(channelName);
+        ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         DateTime startTime = TimeUtil.now();
         if (channel.isReplicating()) {
             startTime = lastContentPath.get(channelName, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED).getTime();
@@ -172,7 +172,7 @@ public class AwsContentService implements ContentService {
         } else if (query.getLocation().equals(Location.LONG_TERM)) {
             return query(daoQuery, s3SingleContentDao, s3BatchContentDao);
         } else {
-            ChannelConfig channel = channelService.getChannelConfig(query.getChannelName());
+            ChannelConfig channel = channelService.getCachedChannelConfig(query.getChannelName());
             if (channel.isSingle()) {
                 return query(daoQuery, spokeContentDao, s3SingleContentDao);
             } else if (channel.isBatch()) {
