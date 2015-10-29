@@ -5,12 +5,12 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.dao.aws.AwsConnectorFactory;
 import com.flightstats.hub.dao.aws.S3BucketName;
-import com.flightstats.hub.dao.aws.S3ContentDao;
+import com.flightstats.hub.dao.aws.S3SingleContentDao;
 import com.flightstats.hub.metrics.NoOpMetricsSender;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class S3ContentDaoTest {
+public class S3SingleContentDaoTest {
 
     private static ContentDaoUtil util;
 
@@ -20,8 +20,8 @@ public class S3ContentDaoTest {
         AwsConnectorFactory factory = new AwsConnectorFactory();
         AmazonS3 s3Client = factory.getS3Client();
         S3BucketName bucketName = new S3BucketName("local", "hub-v2");
-        S3ContentDao s3ContentDao = new S3ContentDao(s3Client, bucketName, new NoOpMetricsSender());
-        util = new ContentDaoUtil(s3ContentDao);
+        S3SingleContentDao s3SingleContentDao = new S3SingleContentDao(s3Client, bucketName, new NoOpMetricsSender());
+        util = new ContentDaoUtil(s3SingleContentDao);
     }
 
     @Test

@@ -27,10 +27,8 @@ public class ReplicationCallbackResource {
 
     @Inject
     private ChannelService channelService;
-
     @Inject
     private HubUtils hubUtils;
-
     @Inject
     private LastContentPath lastContentPath;
 

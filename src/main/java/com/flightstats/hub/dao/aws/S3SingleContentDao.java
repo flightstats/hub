@@ -24,9 +24,9 @@ import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.util.*;
 
-public class S3ContentDao implements ContentDao {
+public class S3SingleContentDao implements ContentDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(S3ContentDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(S3SingleContentDao.class);
     public static final int MAX_ITEMS = 1000 * 1000;
 
     private final AmazonS3 s3Client;
@@ -36,7 +36,7 @@ public class S3ContentDao implements ContentDao {
     private final String s3BucketName;
 
     @Inject
-    public S3ContentDao(AmazonS3 s3Client, S3BucketName s3BucketName, MetricsSender sender) {
+    public S3SingleContentDao(AmazonS3 s3Client, S3BucketName s3BucketName, MetricsSender sender) {
         this.s3Client = s3Client;
         this.sender = sender;
         this.useEncrypted = HubProperties.getProperty("app.encrypted", false);
