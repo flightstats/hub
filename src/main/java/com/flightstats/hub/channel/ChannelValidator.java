@@ -34,7 +34,14 @@ public class ChannelValidator {
         validateTTL(config);
         validateDescription(config);
         validateTags(config);
+        validateStorage(config);
 
+    }
+
+    private void validateStorage(ChannelConfig config) {
+        if (!config.isValidStorage()) {
+            throw new InvalidRequestException("{\"error\": \"Valid storage values are SINGLE, BATCH and BOTH\"}");
+        }
     }
 
     private void validateTags(ChannelConfig request) {

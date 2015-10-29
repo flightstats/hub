@@ -30,6 +30,11 @@ public class ChannelConfig implements Serializable {
     private final String description;
     private final Set<String> tags = new TreeSet<>();
     private final String replicationSource;
+    private final String storage;
+
+    public static final String SINGLE = "SINGLE";
+    public static final String BATCH = "BATCH";
+    public static final String BOTH = "BOTH";
 
     public ChannelConfig(Builder builder) {
         name = StringUtils.trim(builder.name);
@@ -50,6 +55,11 @@ public class ChannelConfig implements Serializable {
         } else {
             replicationSource = builder.replicationSource;
             tags.add(ReplicatorManager.REPLICATED);
+        }
+        if (StringUtils.isBlank(builder.storage)) {
+            storage = SINGLE;
+        } else {
+            storage = StringUtils.upperCase(builder.storage);
         }
     }
 
@@ -117,9 +127,19 @@ public class ChannelConfig implements Serializable {
         return owner;
     }
 
+    @JsonProperty("storage")
+    public String getStorage() {
+        return storage;
+    }
+
     @JsonIgnore
     public boolean isReplicating() {
         return StringUtils.isNotBlank(replicationSource);
+    }
+
+    @JsonIgnore
+    public boolean isValidStorage() {
+        return storage.equals(SINGLE) || storage.equals(BATCH) || storage.equals(BOTH);
     }
 
     public static class Builder {
@@ -132,6 +152,7 @@ public class ChannelConfig implements Serializable {
         private Set<String> tags = new HashSet<>();
         private String replicationSource = "";
         private long maxItems = 0;
+        private String storage;
 
         public Builder() {
         }
@@ -145,6 +166,7 @@ public class ChannelConfig implements Serializable {
             this.tags.addAll(config.getTags());
             this.replicationSource = config.replicationSource;
             this.owner = config.owner;
+            this.storage = config.storage;
             return this;
         }
 
@@ -171,6 +193,9 @@ public class ChannelConfig implements Serializable {
             }
             if (rootNode.has("replicationSource")) {
                 withReplicationSource(rootNode.get("replicationSource").asText());
+            }
+            if (rootNode.has("storage")) {
+                withStorage(rootNode.get("storage").asText());
             }
             return this;
         }
@@ -224,6 +249,11 @@ public class ChannelConfig implements Serializable {
 
         public Builder withOwner(String owner) {
             this.owner = owner;
+            return this;
+        }
+
+        public Builder withStorage(String storage) {
+            this.storage = storage;
             return this;
         }
     }
