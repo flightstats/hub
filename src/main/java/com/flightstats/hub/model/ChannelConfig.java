@@ -152,6 +152,11 @@ public class ChannelConfig implements Serializable {
         return storage.equals(BATCH);
     }
 
+    @JsonIgnore
+    public boolean isBoth() {
+        return storage.equals(BOTH);
+    }
+
     public static class Builder {
         private static final ObjectMapper mapper = new ObjectMapper();
         private String name;

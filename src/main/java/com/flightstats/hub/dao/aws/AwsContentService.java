@@ -72,16 +72,23 @@ public class AwsContentService implements ContentService {
         try {
             inFlight.incrementAndGet();
             ContentKey key = spokeContentDao.write(channelName, content);
-            if (dropSomeWrites) {
-                if (Math.random() < 0.95) {
-                    s3WriteQueue.add(new ChannelContentKey(channelName, key));
-                }
-            } else {
-                s3WriteQueue.add(new ChannelContentKey(channelName, key));
+            ChannelConfig channel = channelService.getChannelConfig(channelName);
+            if (channel.isSingle() || channel.isBoth()) {
+                s3SingleWrite(channelName, key);
             }
             return key;
         } finally {
             inFlight.decrementAndGet();
+        }
+    }
+
+    private void s3SingleWrite(String channelName, ContentKey key) {
+        if (dropSomeWrites) {
+            if (Math.random() < 0.95) {
+                s3WriteQueue.add(new ChannelContentKey(channelName, key));
+            }
+        } else {
+            s3WriteQueue.add(new ChannelContentKey(channelName, key));
         }
     }
 
