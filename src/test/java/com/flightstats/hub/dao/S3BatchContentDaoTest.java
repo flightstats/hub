@@ -106,8 +106,13 @@ public class S3BatchContentDaoTest {
 
     private void query(String channel, DateTime start, int expected, TimeUtil.Unit unit) {
         TracesImpl traces = new TracesImpl();
-        SortedSet<ContentKey> found = contentDao.queryByTime(channel, start, unit, traces);
-        traces.log(logger);
+        TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
+                .startTime(start)
+                .unit(unit)
+                .traces(traces)
+                .build();
+        SortedSet<ContentKey> found = contentDao.queryByTime(timeQuery);
+        timeQuery.getTraces().log(logger);
         assertEquals(expected, found.size());
     }
 
@@ -116,11 +121,14 @@ public class S3BatchContentDaoTest {
         String channel = "testMissing";
         Content content = contentDao.read(channel, new ContentKey());
         assertNull(content);
-        MinutePath minutePath = new MinutePath();
-        TracesImpl traces = new TracesImpl();
-        SortedSet<ContentKey> found = contentDao.queryByTime(channel, minutePath.getTime(), TimeUtil.Unit.MINUTES, traces);
+        TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
+                .startTime(new MinutePath().getTime())
+                .unit(TimeUtil.Unit.MINUTES)
+                .traces(new TracesImpl())
+                .build();
+        SortedSet<ContentKey> found = contentDao.queryByTime(timeQuery);
         logger.info("minute {}", found);
-        traces.log(logger);
+        timeQuery.getTraces().log(logger);
         assertEquals(0, found.size());
     }
 

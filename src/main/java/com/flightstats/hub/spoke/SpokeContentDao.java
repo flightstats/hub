@@ -96,16 +96,16 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
-        logger.trace("query by time {} {} {}", channelName, startTime, unit);
-        traces.add("spoke query by time", channelName, startTime, unit);
-        String timePath = unit.format(startTime);
+    public SortedSet<ContentKey> queryByTime(TimeQuery query) {
+        logger.trace("query by time {} ", query);
+        query.getTraces().add("spoke query by time", query.getChannelName(), query.getStartTime(), query.getUnit());
+        String timePath = query.getUnit().format(query.getStartTime());
         try {
-            SortedSet<ContentKey> keys = spokeStore.readTimeBucket(channelName, timePath, traces);
-            traces.add("spoke query by time", keys);
+            SortedSet<ContentKey> keys = spokeStore.readTimeBucket(query.getChannelName(), timePath, query.getTraces());
+            query.getTraces().add("spoke query by time", keys);
             return keys;
         } catch (Exception e) {
-            logger.warn("what happened? " + channelName + " " + startTime + " " + unit, e);
+            logger.warn("what happened? " + query.getChannelName() + " " + query.getStartTime() + " " + query.getUnit(), e);
         }
         return new TreeSet<>();
     }
@@ -129,7 +129,7 @@ public class SpokeContentDao implements ContentDao {
     }
 
     private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime, DateTime ttlTime) {
-        SortedSet<ContentKey> queryByTime = queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.HOURS, query.getTraces());
+        SortedSet<ContentKey> queryByTime = queryByTime(query.convert(startTime, TimeUtil.Unit.HOURS));
         queryByTime.addAll(orderedKeys);
         Set<ContentKey> filtered = ContentKeyUtil.filter(queryByTime, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
         orderedKeys.addAll(filtered);

@@ -112,11 +112,11 @@ public class S3BatchContentDao implements ContentDao {
     //todo - gfm - 10/23/15 - add batch read
 
     @Override
-    public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
-        if (unit.lessThanOrEqual(TimeUtil.Unit.MINUTES)) {
-            return queryMinute(channelName, startTime, unit, traces);
+    public SortedSet<ContentKey> queryByTime(TimeQuery query) {
+        if (query.getUnit().lessThanOrEqual(TimeUtil.Unit.MINUTES)) {
+            return queryMinute(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces());
         } else {
-            return queryHourPlus(channelName, startTime, unit, traces);
+            return queryHourPlus(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces());
         }
     }
 

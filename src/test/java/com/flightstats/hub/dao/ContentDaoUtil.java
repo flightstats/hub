@@ -1,9 +1,6 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.TracesImpl;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
@@ -59,7 +56,12 @@ public class ContentDaoUtil {
             Content content = createContent(key);
             contentDao.write(channel, content);
         }
-        Collection<ContentKey> found = contentDao.queryByTime(channel, start, TimeUtil.Unit.DAYS, new TracesImpl());
+        TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
+                .startTime(start)
+                .unit(TimeUtil.Unit.DAYS)
+                .traces(new TracesImpl())
+                .build();
+        Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
         assertEquals(keys.size(), found.size());
         assertTrue(keys.containsAll(found));
     }
@@ -74,7 +76,12 @@ public class ContentDaoUtil {
             Content content = createContent(key);
             contentDao.write(channel, content);
         }
-        Collection<ContentKey> found = contentDao.queryByTime(channel, start, TimeUtil.Unit.HOURS, new TracesImpl());
+        TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
+                .startTime(start)
+                .unit(TimeUtil.Unit.HOURS)
+                .traces(new TracesImpl())
+                .build();
+        Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
         assertEquals(keys.size(), found.size());
         assertTrue(keys.containsAll(found));
     }
@@ -89,7 +96,12 @@ public class ContentDaoUtil {
             Content content = createContent(key);
             contentDao.write(channel, content);
         }
-        Collection<ContentKey> found = contentDao.queryByTime(channel, start, TimeUtil.Unit.MINUTES, new TracesImpl());
+        TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
+                .startTime(start)
+                .unit(TimeUtil.Unit.MINUTES)
+                .traces(new TracesImpl())
+                .build();
+        Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
         assertEquals(keys.size(), found.size());
         assertTrue(keys.containsAll(found));
     }

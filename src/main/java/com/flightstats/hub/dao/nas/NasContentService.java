@@ -93,7 +93,7 @@ public class NasContentService implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(DirectionQuery query) {
+    public Collection<ContentKey> queryDirection(DirectionQuery query) {
         TreeSet<ContentKey> keys = new TreeSet<>();
         TimeUtil.Unit hours = TimeUtil.Unit.HOURS;
         DateTime time = query.getContentKey().getTime();

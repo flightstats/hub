@@ -5,10 +5,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ChannelContentKey;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.Traces;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -31,8 +28,8 @@ public class S3WriterManager {
     private final static Logger logger = LoggerFactory.getLogger(S3WriterManager.class);
 
     private final ChannelService channelService;
-    private final ContentDao cacheContentDao;
-    private final ContentDao longTermContentDao;
+    private final ContentDao spokeContentDao;
+    private final ContentDao s3SingleContentDao;
     private final S3WriteQueue s3WriteQueue;
     private final int offsetMinutes;
     private final ExecutorService queryThreadPool;
@@ -40,12 +37,12 @@ public class S3WriterManager {
 
     @Inject
     public S3WriterManager(ChannelService channelService,
-                           @Named(ContentDao.CACHE) ContentDao cacheContentDao,
-                           @Named(ContentDao.SINGLE_LONG_TERM) ContentDao longTermContentDao,
+                           @Named(ContentDao.CACHE) ContentDao spokeContentDao,
+                           @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
                            S3WriteQueue s3WriteQueue) {
         this.channelService = channelService;
-        this.cacheContentDao = cacheContentDao;
-        this.longTermContentDao = longTermContentDao;
+        this.spokeContentDao = spokeContentDao;
+        this.s3SingleContentDao = s3SingleContentDao;
         this.s3WriteQueue = s3WriteQueue;
         HubServices.register(new S3WriterManagerService(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
 
@@ -69,21 +66,25 @@ public class S3WriterManager {
     SortedSet<ContentKey> itemsInCacheButNotLongTerm(DateTime startTime, String channelName) {
         SortedSet<ContentKey> cacheKeys = new TreeSet<>();
         SortedSet<ContentKey> longTermKeys = new TreeSet<>();
+        TimeQuery timeQuery = TimeQuery.builder()
+                .channelName(channelName)
+                .startTime(startTime)
+                .unit(TimeUtil.Unit.MINUTES)
+                .traces(Traces.NOOP)
+                .build();
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             queryThreadPool.submit(new Runnable() {
                 @Override
                 public void run() {
-                    cacheKeys.addAll(cacheContentDao.queryByTime(channelName, startTime, TimeUtil.Unit.MINUTES,
-                            Traces.NOOP));
+                    cacheKeys.addAll(spokeContentDao.queryByTime(timeQuery));
                     countDownLatch.countDown();
                 }
             });
             queryThreadPool.submit(new Runnable() {
                 @Override
                 public void run() {
-                    longTermKeys.addAll(longTermContentDao.queryByTime(channelName, startTime, TimeUtil.Unit.MINUTES,
-                            Traces.NOOP));
+                    longTermKeys.addAll(s3SingleContentDao.queryByTime(timeQuery));
                     countDownLatch.countDown();
                 }
             });
