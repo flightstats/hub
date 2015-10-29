@@ -112,7 +112,7 @@ public class AwsContentService implements ContentService {
         if (channel.isReplicating()) {
             startTime = lastContentPath.get(channelName, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED).getTime();
         }
-        if (startTime.minusMinutes(ttlMinutes).isAfter(key.getTime())) {
+        if (key.getTime().isAfter(startTime.minusMinutes(ttlMinutes))) {
             Content content = spokeContentDao.read(channelName, key);
             if (content != null) {
                 return Optional.of(content);
