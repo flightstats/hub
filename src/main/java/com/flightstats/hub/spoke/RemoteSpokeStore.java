@@ -230,7 +230,7 @@ public class RemoteSpokeStore {
                         if (e.getCause() != null && e.getCause() instanceof ConnectException) {
                             logger.warn("connection exception " + server);
                         } else {
-                            logger.warn("unable to get content " + path, e);
+                            logger.warn("unable to get content " + path + " from " + server, e);
                         }
                         traces.add("ClientHandlerException", e.getMessage(), server);
                     } catch (Exception e) {
