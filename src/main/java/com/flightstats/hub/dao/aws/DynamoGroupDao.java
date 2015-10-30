@@ -26,7 +26,7 @@ public class DynamoGroupDao implements GroupDao {
     public DynamoGroupDao(AmazonDynamoDBClient dbClient, DynamoUtils dynamoUtils) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
-        HubServices.register(new DynamoGroupDaoInit());
+        HubServices.register(new DynamoGroupDaoInit(), HubServices.TYPE.PRE_START);
     }
 
     private class DynamoGroupDaoInit extends AbstractIdleService {

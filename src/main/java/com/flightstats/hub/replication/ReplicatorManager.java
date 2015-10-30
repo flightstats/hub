@@ -47,7 +47,7 @@ public class ReplicatorManager {
         this.channelService = channelService;
         this.hubUtils = hubUtils;
         this.watchManager = watchManager;
-        HubServices.registerPreStop(new ReplicatorService());
+        HubServices.register(new ReplicatorService(), HubServices.TYPE.PRE_STOP, HubServices.TYPE.FINAL_POST_START);
     }
 
     private class ReplicatorService extends AbstractIdleService {

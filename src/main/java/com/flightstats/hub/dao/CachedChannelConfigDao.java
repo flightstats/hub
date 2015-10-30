@@ -32,7 +32,7 @@ public class CachedChannelConfigDao implements ChannelConfigDao {
         this.delegate = delegate;
         this.watchManager = watchManager;
         this.channelConfigMap = new ConcurrentHashMap<>();
-        HubServices.register(new CachedChannelConfigDaoService());
+        HubServices.register(new CachedChannelConfigDaoService(), HubServices.TYPE.PRE_START);
     }
 
     @Override

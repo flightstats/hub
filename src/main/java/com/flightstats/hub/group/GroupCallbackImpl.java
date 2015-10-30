@@ -37,7 +37,7 @@ public class GroupCallbackImpl implements GroupCallback {
         this.groupService = groupService;
         this.leaderProvider = leaderProvider;
         this.lastContentPath = lastContentPath;
-        HubServices.registerPreStop(new GroupCallbackService());
+        HubServices.register(new GroupCallbackService(), HubServices.TYPE.PRE_STOP, HubServices.TYPE.FINAL_POST_START);
     }
 
     private void start() {

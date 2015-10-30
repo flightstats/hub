@@ -22,7 +22,7 @@ public class NasTtlEnforcer {
     public NasTtlEnforcer(ChannelService channelService, NasContentService nasContentService) {
         this.channelService = channelService;
         this.nasContentService = nasContentService;
-        HubServices.register(new NasTtlEnforcerService());
+        HubServices.register(new NasTtlEnforcerService(), HubServices.TYPE.PRE_START);
     }
 
     public void run() {

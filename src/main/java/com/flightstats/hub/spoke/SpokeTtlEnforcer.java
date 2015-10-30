@@ -33,8 +33,8 @@ public class SpokeTtlEnforcer {
         this.storagePath = HubProperties.getProperty("spoke.path", "/spoke");
         this.ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
         if (HubProperties.getProperty("spoke.enforceTTL", true)) {
-            HubServices.register(new SpokeTtlEnforcerService());
-            HubServices.register(new SpokeTtlEnforcerInitialService());
+            HubServices.register(new SpokeTtlEnforcerService(), HubServices.TYPE.PRE_START);
+            HubServices.register(new SpokeTtlEnforcerInitialService(), HubServices.TYPE.PRE_START);
         }
     }
 

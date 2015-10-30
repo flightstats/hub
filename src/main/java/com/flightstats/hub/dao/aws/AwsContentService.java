@@ -42,7 +42,7 @@ public class AwsContentService implements ContentService {
         this.shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 5);
         this.s3WriteQueue = s3WriteQueue;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("AwsContentService-%d").build());
-        HubServices.registerPreStop(new ContentServiceHook());
+        HubServices.register(new ContentServiceHook(), HubServices.TYPE.PRE_STOP, HubServices.TYPE.PRE_START);
     }
 
     void waitForInFlight() {

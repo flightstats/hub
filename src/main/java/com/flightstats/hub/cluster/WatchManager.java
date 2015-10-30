@@ -27,7 +27,7 @@ public class WatchManager {
     public WatchManager(CuratorFramework curator) {
         this.curator = curator;
         executorService = Executors.newFixedThreadPool(HubProperties.getProperty("watchManager.threads", 10));
-        HubServices.register(new WatchManagerService());
+        HubServices.register(new WatchManagerService(), HubServices.TYPE.FINAL_POST_START);
     }
 
     private class WatchManagerService extends AbstractIdleService {

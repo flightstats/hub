@@ -22,14 +22,6 @@ public class HubServices {
         }
     }
 
-    public static void registerPreStop(Service service) {
-        register(service, TYPE.PRE_STOP, TYPE.PRE_START);
-    }
-
-    public static void register(Service service) {
-        register(service, TYPE.PRE_START);
-    }
-
     public static void register(Service service, TYPE... types) {
         for (TYPE type : types) {
             logger.info("registering " + service.getClass().getName() + " for " + type);

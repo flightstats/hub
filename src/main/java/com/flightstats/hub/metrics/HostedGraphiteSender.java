@@ -32,7 +32,7 @@ public class HostedGraphiteSender implements MetricsSender {
                 + "." + HubProperties.getProperty("app.name", "hub")
                 + "." + HubProperties.getProperty("app.environment", "dev");
         callableSender = new CallableSender();
-        HubServices.register(new HostedGraphiteSenderService());
+        HubServices.register(new HostedGraphiteSenderService(), HubServices.TYPE.PRE_START);
     }
 
     @Override

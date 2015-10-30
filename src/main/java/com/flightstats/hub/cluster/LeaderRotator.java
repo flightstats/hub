@@ -22,7 +22,7 @@ public class LeaderRotator {
     private static final Set<CuratorLeader> leaders = new ConcurrentHashSet<>();
 
     public LeaderRotator() {
-        HubServices.register(new LeaderRotatorService());
+        HubServices.register(new LeaderRotatorService(), HubServices.TYPE.FINAL_POST_START);
     }
 
     public static synchronized void add(CuratorLeader leader) {

@@ -23,7 +23,7 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
     public DynamoChannelConfigDao(AmazonDynamoDBClient dbClient, DynamoUtils dynamoUtils) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
-        HubServices.register(new DynamoChannelConfigurationDaoInit());
+        HubServices.register(new DynamoChannelConfigurationDaoInit(), HubServices.TYPE.PRE_START);
     }
 
     @Override

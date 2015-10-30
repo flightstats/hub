@@ -20,7 +20,7 @@ public class GCRunner {
     public GCRunner(ChannelService channelService) {
         this.gcMinutes = HubProperties.getProperty("hub.gcMinutes", 60);
         if (HubProperties.getProperty("hub.runGC", false)) {
-            HubServices.register(new GCRunnerService());
+            HubServices.register(new GCRunnerService(), HubServices.TYPE.PRE_START);
         }
     }
 
