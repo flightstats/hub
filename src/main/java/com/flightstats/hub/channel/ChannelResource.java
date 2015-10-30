@@ -12,6 +12,7 @@ import com.flightstats.hub.rest.PATCH;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.Sleeper;
 import com.google.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +65,7 @@ public class ChannelResource {
             logger.info("using old channel {} {}", oldConfig, oldConfig.getCreationDate().getTime());
             channelConfig = ChannelConfig.builder()
                     .withChannelConfiguration(oldConfig)
-                    .withUpdateJson(json)
+                    .withUpdateJson(StringUtils.defaultIfBlank(json, "{}"))
                     .build();
         }
         logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
