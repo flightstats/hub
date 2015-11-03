@@ -33,7 +33,7 @@ public class MetricsRunner {
         if (os instanceof UnixOperatingSystemMXBean) {
             long openFiles = ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
             logger.info("open files {}", openFiles);
-            metricsSender.send("internal.openFiles", openFiles);
+            metricsSender.send("openFiles", openFiles);
             newRelic(openFiles);
         } else {
             logger.warn("unable to get open files from {}", os.getClass());
