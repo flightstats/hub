@@ -1,12 +1,10 @@
 package com.flightstats.hub.util;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.replication.Channel;
 import com.flightstats.hub.rest.Headers;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -25,8 +23,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 public class HubUtils {
 
@@ -107,26 +103,6 @@ public class HubUtils {
         }
 
         return Optional.of(getCreationDate(response));
-    }
-
-    public Set<Channel> getChannels(String url) {
-        Set<Channel> channels = new HashSet<>();
-        try {
-            ClientResponse response = followClient.resource(url).get(ClientResponse.class);
-            if (response.getStatus() >= 400) {
-                logger.warn("unable to get channels " + response);
-                return channels;
-            }
-            JsonNode rootNode = mapper.readTree(response.getEntity(String.class));
-            JsonNode channelsNode = rootNode.get("_links").get("channels");
-            for (JsonNode channel : channelsNode) {
-                channels.add(new Channel(channel.get("name").asText(), channel.get("href").asText()));
-            }
-        } catch (Exception e) {
-            logger.warn("unable to get channels " + url + " " + e.getMessage());
-            logger.debug("unable to get channels " + url, e);
-        }
-        return channels;
     }
 
     public Optional<Group> getGroupCallback(String groupName, String sourceChannel) {

@@ -47,7 +47,7 @@ public class HubBindings extends AbstractModule {
         bind(HubUtils.class).asEagerSingleton();
         bind(CuratorLock.class).asEagerSingleton();
         bind(GCRunner.class).asEagerSingleton();
-
+        bind(MetricsRunner.class).asEagerSingleton();
         bind(ChannelValidator.class).asEagerSingleton();
         bind(GroupValidator.class).asEagerSingleton();
         bind(GroupCallback.class).to(GroupCallbackImpl.class).asEagerSingleton();

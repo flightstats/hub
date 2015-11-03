@@ -2,7 +2,6 @@ package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.dao.ChannelService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -17,7 +16,7 @@ public class GCRunner {
     private final int gcMinutes;
 
     @Inject
-    public GCRunner(ChannelService channelService) {
+    public GCRunner() {
         this.gcMinutes = HubProperties.getProperty("hub.gcMinutes", 60);
         if (HubProperties.getProperty("hub.runGC", false)) {
             HubServices.register(new GCRunnerService());
