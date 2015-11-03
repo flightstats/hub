@@ -29,14 +29,21 @@ public class MetricsRunner {
     }
 
     public void run() {
-        OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
-        if (os instanceof UnixOperatingSystemMXBean) {
-            long openFiles = ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
+        long openFiles = getOpenFiles();
+        if (openFiles >= 0) {
             logger.info("open files {}", openFiles);
             metricsSender.send("openFiles", openFiles);
             newRelic(openFiles);
+        }
+    }
+
+    public static long getOpenFiles() {
+        OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
+        if (os instanceof UnixOperatingSystemMXBean) {
+            return ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
         } else {
             logger.warn("unable to get open files from {}", os.getClass());
+            return -1;
         }
     }
 
