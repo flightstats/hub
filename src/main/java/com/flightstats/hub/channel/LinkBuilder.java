@@ -152,4 +152,13 @@ public class LinkBuilder {
         return Response.ok(root).build();
     }
 
+    public static void addLink(String name, String href, ObjectNode node) {
+        ObjectNode links = (ObjectNode) node.get("_links");
+        if (links == null) {
+            links = node.putObject("_links");
+        }
+        ObjectNode self = links.putObject(name);
+        self.put("href", href);
+    }
+
 }
