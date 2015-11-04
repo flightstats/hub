@@ -131,12 +131,12 @@ public class HubUtils {
 
     public void stopGroupCallback(String groupName, String sourceChannel) {
         String groupUrl = getSourceUrl(sourceChannel) + "/group/" + groupName;
-        logger.info("delete {} ", groupUrl);
+        logger.info("stopping {} ", groupUrl);
         ClientResponse response = followClient.resource(groupUrl)
                 .accept(MediaType.APPLICATION_JSON)
                 .type(MediaType.APPLICATION_JSON)
                 .delete(ClientResponse.class);
-        logger.info("stop group response {}", response);
+        logger.debug("stop group response {}", response);
 
     }
 

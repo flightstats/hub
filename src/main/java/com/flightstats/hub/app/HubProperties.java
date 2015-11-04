@@ -18,6 +18,11 @@ public class HubProperties {
     public static String getAppUrl() {
         return StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
     }
+
+    public static String getAppEnv() {
+        return (getProperty("app.name", "hub") + "_" + getProperty("app.environment", "unknown")).replace("-", "_");
+    }
+
     public static void setProperties(Properties properties) {
         logger.info("setting properties {}", properties);
         HubProperties.properties = properties;

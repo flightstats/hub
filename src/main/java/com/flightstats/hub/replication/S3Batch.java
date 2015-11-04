@@ -7,16 +7,14 @@ import com.flightstats.hub.util.HubUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ChannelReplicator {
+public class S3Batch {
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelReplicator.class);
+    private final static Logger logger = LoggerFactory.getLogger(S3Batch.class);
 
     private ChannelConfig channel;
     private HubUtils hubUtils;
-    ;
-    public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
 
-    public ChannelReplicator(ChannelConfig channel, HubUtils hubUtils) {
+    public S3Batch(ChannelConfig channel, HubUtils hubUtils) {
         this.channel = channel;
         this.hubUtils = hubUtils;
     }
@@ -25,19 +23,23 @@ public class ChannelReplicator {
         Group.GroupBuilder builder = Group.builder()
                 .name(getGroupName())
                 .callbackUrl(getCallbackUrl())
-                .channelUrl(channel.getReplicationSource())
+                .channelUrl(getChannelUrl())
                 .heartbeat(true)
-                .batch(Group.SINGLE);
+                .batch(Group.MINUTE);
         Group group = builder.build();
         hubUtils.startGroupCallback(group);
     }
 
+    private String getChannelUrl() {
+        return HubProperties.getAppUrl() + "channel/" + channel.getName();
+    }
+
     private String getCallbackUrl() {
-        return HubProperties.getAppUrl() + "internal/replication/" + channel.getName();
+        return HubProperties.getAppUrl() + "internal/s3Batch/" + channel.getName();
     }
 
     private String getGroupName() {
-        return "Repl_" + HubProperties.getAppEnv() + "_" + channel.getName();
+        return "S3Batch_" + HubProperties.getAppEnv() + "_" + channel.getName();
     }
 
     public ChannelConfig getChannel() {
@@ -45,7 +47,7 @@ public class ChannelReplicator {
     }
 
     public void stop() {
-        hubUtils.stopGroupCallback(getGroupName(), channel.getReplicationSource());
+        hubUtils.stopGroupCallback(getGroupName(), getChannelUrl());
     }
 
 }
