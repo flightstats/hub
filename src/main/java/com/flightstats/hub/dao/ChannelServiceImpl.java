@@ -61,8 +61,10 @@ public class ChannelServiceImpl implements ChannelService {
         } else if (oldConfig != null && oldConfig.isReplicating()) {
             replicatorManager.notifyWatchers();
         }
-        if (newConfig.isSingle() && !oldConfig.isSingle()) {
-            new S3Batch(newConfig, hubUtils).stop();
+        if (newConfig.isSingle()) {
+            if (oldConfig != null && !oldConfig.isSingle()) {
+                new S3Batch(newConfig, hubUtils).stop();
+            }
         } else {
             new S3Batch(newConfig, hubUtils).start();
         }
