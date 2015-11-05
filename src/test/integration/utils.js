@@ -146,7 +146,7 @@ function getGroup(groupName, groupConfig, status) {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(status);
-                if (status < 400) {
+                if (response.statusCode < 400) {
                     var parse = JSON.parse(body);
                     expect(parse._links.self.href).toBe(groupResource);
                     if (typeof groupConfig !== "undefined") {
