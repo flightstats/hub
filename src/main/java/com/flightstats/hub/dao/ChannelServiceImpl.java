@@ -253,10 +253,12 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public boolean delete(String channelName) {
-        //todo - gfm - 11/4/15 -
-        //new S3Batch(newConfig, hubUtils).stop();
         if (!channelConfigDao.channelExists(channelName)) {
             return false;
+        }
+        ChannelConfig channelConfig = getChannelConfig(channelName);
+        if (!channelConfig.isSingle()) {
+            new S3Batch(channelConfig, hubUtils).stop();
         }
         boolean replicating = isReplicating(channelName);
         contentService.delete(channelName);
