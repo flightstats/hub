@@ -31,6 +31,24 @@ describe(testName, function () {
             })
     }, timeout);
 
+    it('loads channel data', function (done) {
+        async.eachLimit(channels, 10,
+            function (channel, callback) {
+                console.log('calling', channel);
+                agent
+                    .get(channel.href)
+                    .set('Accept', 'application/json')
+                    .end(function (res) {
+                        expect(res.error).toBe(false);
+                        channel.storage = res.body.storage;
+                        callback();
+                    })
+            }, function (err) {
+                done(err);
+            });
+
+    }, timeout);
+
     it('cross product of channels and times', function () {
         console.log('now', moment.utc().format(minute_format));
         console.log('startOffset', startOffset);
@@ -41,7 +59,27 @@ describe(testName, function () {
             console.log('checking', formatted);
             channels.forEach(function (channel) {
                 if (!_.startsWith(channel.name, 'test') && !_.startsWith(channel.name, 'verifyMaxItems')) {
-                    channelTimes.push({url: channel.href + formatted});
+                    var rootUrl = channel.href + formatted;
+                    if (channel.storage == 'SINGLE') {
+                        channelTimes.push({
+                            source: rootUrl + '?location=CACHE',
+                            compare: rootUrl + '?location=LONG_TERM_SINGLE'
+                        });
+                    } else if (channel.storage == 'BOTH') {
+                        channelTimes.push({
+                            source: rootUrl + '?location=CACHE',
+                            compare: rootUrl + '?location=LONG_TERM_SINGLE'
+                        });
+                        channelTimes.push({
+                            source: rootUrl + '?location=CACHE',
+                            compare: rootUrl + '?location=LONG_TERM_BATCH'
+                        });
+                    } else if (channel.storage == 'BATCH') {
+                        channelTimes.push({
+                            source: rootUrl + '?location=CACHE',
+                            compare: rootUrl + '?location=LONG_TERM_BATCH'
+                        });
+                    }
                 }
             });
         }
@@ -55,12 +93,12 @@ describe(testName, function () {
                 async.parallel([
                         function (callback) {
                             agent
-                                .get(channelTime.url + '?location=CACHE')
+                                .get(channelTime.source)
                                 .set('Accept', 'application/json')
                                 .end(function (res) {
                                     expect(res.error).toBe(false);
                                     if (!res.body._links) {
-                                        console.log('unable to find cache links', res.status, channelTime.url, res.body);
+                                        console.log('unable to find cache links', res.status, channelTime.source, res.body);
                                         callback(null, []);
                                     } else {
                                         callback(null, res.body._links.uris);
@@ -69,12 +107,12 @@ describe(testName, function () {
                         },
                         function (callback) {
                             agent
-                                .get(channelTime.url + '?location=LONG_TERM')
+                                .get(channelTime.compare)
                                 .set('Accept', 'application/json')
                                 .end(function (res) {
                                     expect(res.error).toBe(false);
                                     if (!res.body._links) {
-                                        console.log('unable to find long term links', res.status, channelTime.url, res.body);
+                                        console.log('unable to find long term links', res.status, channelTime.compare, res.body);
                                         callback(null, []);
                                     } else {
                                         callback(null, res.body._links.uris);
@@ -86,10 +124,10 @@ describe(testName, function () {
                         var expected = results[0].length;
                         var actual = results[1].length;
                         if (expected > actual) {
-                            console.log('failed ' + channelTime.url + ' cache=' + expected + ' s3=' + actual);
+                            console.log('failed ' + channelTime.compare + ' source=' + expected + ' compare=' + actual);
                             expect(actual).toBe(expected);
                         } else {
-                            console.log('completed ' + channelTime.url + ' with ' + expected);
+                            console.log('completed ' + channelTime.compare + ' with ' + expected);
                         }
 
                         callback(err);
