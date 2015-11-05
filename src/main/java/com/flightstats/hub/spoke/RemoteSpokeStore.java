@@ -218,7 +218,7 @@ public class RemoteSpokeStore {
                         traces.add("spoke calling", server, path);
                         ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/time/" + path)
                                 .get(ClientResponse.class);
-                        traces.add("server response", server, response);
+                        traces.add("spoke server response", server, response);
                         if (response.getStatus() == 200) {
                             SortedSet<ContentKey> keySet = new TreeSet<>();
                             String keysString = response.getEntity(String.class);
@@ -258,7 +258,7 @@ public class RemoteSpokeStore {
                         traces.add("spoke calling", server, channel);
                         ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/latest/" + path)
                                 .get(ClientResponse.class);
-                        traces.add("server response", server, response);
+                        traces.add("spoke server response", server, response);
                         if (response.getStatus() == 200) {
                             String key = response.getEntity(String.class);
                             if (StringUtils.isNotEmpty(key)) {

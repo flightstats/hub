@@ -238,8 +238,9 @@ public class ChannelServiceImpl implements ChannelService {
         query = query.withTtlDays(getTtlDays(query.getChannelName()));
         query.getTraces().add(query);
         List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
-        query.getTraces().add("keys", keys);
-        return ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
+        SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
+        query.getTraces().add("direction keys", contentKeys);
+        return contentKeys;
     }
 
     private DateTime getTtlTime(String channelName) {

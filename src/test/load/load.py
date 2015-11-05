@@ -7,9 +7,11 @@ import time
 import threading
 import socket
 import logging
+from datetime import datetime, timedelta
 
 from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
+
 
 
 
@@ -47,7 +49,11 @@ class WebsiteTasks(TaskSet):
         logger.info("payload size " + str(self.payload.__sizeof__()))
         self.channel = "load_test_" + str(self.number)
         self.count = 0
-        payload = {"name": self.channel, "ttlDays": "3", "tags": ["load", "test", "DDT"], "owner": "DDT"}
+        payload = {"name": self.channel,
+                   "ttlDays": "3",
+                   "tags": ["load", "test", "DDT"],
+                   "owner": "DDT",
+                   "storage": "BOTH"}
         self.client.put("/channel/" + self.channel,
                         data=json.dumps(payload),
                         headers={"Content-Type": "application/json"},
@@ -136,16 +142,26 @@ class WebsiteTasks(TaskSet):
     def time_path(self, unit="second"):
         return "/channel/" + self.channel + "/time/" + unit + "?stable=false"
 
-    def next(self, time_unit):
-        path = self.time_path(time_unit)
-        with self.client.get(path, catch_response=True, name="time_" + time_unit) as postResponse:
+    @task(10)
+    def next_single_query(self):
+        self.nextQueries("LONG_TERM_SINGLE")
+
+    @task(10)
+    def next_batch_query(self):
+        self.nextQueries("LONG_TERM_BATCH")
+
+    def nextQueries(self, location):
+        utcnow = datetime.utcnow()
+        self.doNext(location, utcnow + timedelta(minutes=-1))
+        self.doNext(location, utcnow + timedelta(hours=-1))
+        self.doNext(location, utcnow + timedelta(days=-1))
+
+    def doNext(self, location, time):
+        path = "/channel/" + self.channel + time.strftime("/%Y/%m/%d/%H/%M/%S/000") + "/A/next/10?location=" + location
+        with self.client.get(path, catch_response=True, name="next_" + location) as postResponse:
             if postResponse.status_code != 200:
-                postResponse.failure("Got wrong response on get: " + str(postResponse.status_code))
-        links = postResponse.json()
-        uris = links['_links']['uris']
-        if len(uris) > 0:
-            for uri in uris:
-                self.read(uri)
+                postResponse.failure("Got wrong response on next: " + str(postResponse.status_code))
+
 
     def payload_generator(self, chars=string.ascii_uppercase + string.digits):
         size = 3 * 1024

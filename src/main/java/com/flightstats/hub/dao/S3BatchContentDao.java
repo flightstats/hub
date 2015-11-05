@@ -123,7 +123,7 @@ public class S3BatchContentDao implements ContentDao {
     private SortedSet<ContentKey> queryHourPlus(String channel, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         DateTime rounded = unit.round(startTime);
-        traces.add("queryHourPlus ", channel, rounded, unit);
+        traces.add("s3 batch queryHourPlus ", channel, rounded, unit);
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
                 .withPrefix(channel + BATCH_INDEX + unit.format(rounded))
@@ -134,14 +134,14 @@ public class S3BatchContentDao implements ContentDao {
             //todo - gfm - 11/5/15 - this could be in parallel, needs to handle throttling by S3
             addKeys(channel, minutePath, keys, traces);
         }
-        traces.add("queryHourPlus found keys", keys);
+        traces.add("s3 batch queryHourPlus found keys", keys);
         return keys;
     }
 
     private SortedSet<ContentKey> queryMinute(String channel, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         DateTime rounded = unit.round(startTime);
-        traces.add("queryMinute ", channel, rounded, unit);
+        traces.add("s3 batch queryMinute ", channel, rounded, unit);
         addKeys(channel, new MinutePath(rounded), keys, traces);
         if (unit.equals(TimeUtil.Unit.SECONDS)) {
             DateTime start = rounded.minusMillis(1);
@@ -151,7 +151,7 @@ public class S3BatchContentDao implements ContentDao {
                     .filter(key -> key.getTime().isBefore(endTime))
                     .collect(Collectors.toCollection(TreeSet::new));
         }
-        traces.add("queryMinute found keys", keys);
+        traces.add("s3 batch queryMinute found keys", keys);
         return keys;
     }
 
@@ -169,9 +169,9 @@ public class S3BatchContentDao implements ContentDao {
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
                 logger.warn("unable to get index " + channel, minutePath, e);
-                traces.add("issue with getting keys", e);
+                traces.add("s3 batch issue with getting keys", e);
             } else {
-                traces.add("no keys ", minutePath);
+                traces.add("s3 batch no keys ", minutePath);
             }
         } catch (IOException e) {
             logger.warn("unable to get index " + channel, minutePath, e);
