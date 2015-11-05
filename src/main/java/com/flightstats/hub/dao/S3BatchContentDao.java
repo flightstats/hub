@@ -220,7 +220,7 @@ public class S3BatchContentDao implements ContentDao {
 
     private SortedSet<MinutePath> listMinutePaths(String channel, ListObjectsRequest request, Traces traces, boolean iterate) {
         SortedSet<MinutePath> paths = new TreeSet<>();
-        traces.add("listing ", request.getPrefix(), request.getMarker(), iterate);
+        traces.add("s3 batch listing ", request.getPrefix(), request.getMarker(), iterate);
         sender.send("channel." + channel + ".s3Batch.list", 1);
         ObjectListing listing = s3Client.listObjects(request);
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
@@ -236,7 +236,7 @@ public class S3BatchContentDao implements ContentDao {
             request.withMarker(channel + BATCH_INDEX + TimeUtil.Unit.MINUTES.format(paths.last().getTime()));
             paths.addAll(listMinutePaths(channel, request, traces, iterate));
         }
-        traces.add(request.getMarker(), paths);
+        traces.add("s3 batch listMinutePaths ", paths);
         return paths;
     }
 
