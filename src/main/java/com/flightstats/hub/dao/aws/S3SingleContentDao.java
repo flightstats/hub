@@ -5,16 +5,12 @@ import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.MetricsSender;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.Traces;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +20,9 @@ import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.util.*;
 
-public class S3ContentDao implements ContentDao {
+public class S3SingleContentDao implements ContentDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(S3ContentDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(S3SingleContentDao.class);
     public static final int MAX_ITEMS = 1000 * 1000;
 
     private final AmazonS3 s3Client;
@@ -36,7 +32,7 @@ public class S3ContentDao implements ContentDao {
     private final String s3BucketName;
 
     @Inject
-    public S3ContentDao(AmazonS3 s3Client, S3BucketName s3BucketName, MetricsSender sender) {
+    public S3SingleContentDao(AmazonS3 s3Client, S3BucketName s3BucketName, MetricsSender sender) {
         this.s3Client = s3Client;
         this.sender = sender;
         this.useEncrypted = HubProperties.getProperty("app.encrypted", false);
@@ -135,16 +131,16 @@ public class S3ContentDao implements ContentDao {
     }
 
     @Override
-    public SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
-        logger.trace("queryByTime {} {} {}", channelName, startTime, unit);
-        traces.add("s3 query by time", channelName, startTime, unit);
-        String timePath = unit.format(startTime);
+    public SortedSet<ContentKey> queryByTime(TimeQuery query) {
+        logger.trace("queryByTime {} ", query);
+        query.getTraces().add("s3 single query by time", query.getChannelName(), query.getStartTime(), query.getUnit());
+        String timePath = query.getUnit().format(query.getStartTime());
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
-                .withPrefix(channelName + "/" + timePath)
+                .withPrefix(query.getChannelName() + "/" + timePath)
                 .withMaxKeys(s3MaxQueryItems);
-        SortedSet<ContentKey> keys = iterateListObjects(channelName, request, MAX_ITEMS);
-        traces.add("s3 returning ", keys);
+        SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, MAX_ITEMS);
+        query.getTraces().add("s3 single returning ", keys);
         return keys;
     }
 

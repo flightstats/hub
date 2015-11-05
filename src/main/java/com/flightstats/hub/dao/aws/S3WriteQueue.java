@@ -29,16 +29,16 @@ public class S3WriteQueue {
 
     private ExecutorService executorService;
     private BlockingQueue<ChannelContentKey> keys;
-    private ContentDao cacheContentDao;
-    private ContentDao longTermContentDao;
+    private ContentDao spokeContentDao;
+    private ContentDao s3SingleContentDao;
     private AtomicBoolean shutdown = new AtomicBoolean(false);
 
     @Inject
-    public S3WriteQueue(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
-                        @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao)
+    public S3WriteQueue(@Named(ContentDao.CACHE) ContentDao spokeContentDao,
+                        @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao)
             throws InterruptedException {
-        this.cacheContentDao = cacheContentDao;
-        this.longTermContentDao = longTermContentDao;
+        this.spokeContentDao = spokeContentDao;
+        this.s3SingleContentDao = s3SingleContentDao;
 
         keys = new LinkedBlockingQueue<>(HubProperties.getProperty("s3.writeQueueSize", 40000));
         int threads = HubProperties.getProperty("s3.writeQueueThreads", 20);
@@ -75,8 +75,8 @@ public class S3WriteQueue {
         ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
         if (key != null) {
             logger.trace("writing {}", key.getContentKey());
-            Content content = cacheContentDao.read(key.getChannel(), key.getContentKey());
-            longTermContentDao.write(key.getChannel(), content);
+            Content content = spokeContentDao.read(key.getChannel(), key.getContentKey());
+            s3SingleContentDao.write(key.getChannel(), content);
         }
     }
 

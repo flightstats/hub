@@ -1,9 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
-import org.joda.time.DateTime;
 
 import java.util.List;
 import java.util.SortedSet;
@@ -11,14 +9,14 @@ import java.util.SortedSet;
 public interface ContentDao {
 
     String CACHE = "Cache";
-    String LONG_TERM = "LongTerm";
+    String SINGLE_LONG_TERM = "LongTerm";
     String BATCH_LONG_TERM = "BatchLongTerm";
 
     ContentKey write(String channelName, Content content) throws Exception;
 
     Content read(String channelName, ContentKey key);
 
-    SortedSet<ContentKey> queryByTime(String channelName, DateTime startTime, TimeUtil.Unit unit, Traces traces);
+    SortedSet<ContentKey> queryByTime(TimeQuery timQuery);
 
     SortedSet<ContentKey> query(DirectionQuery query);
 

@@ -29,6 +29,7 @@ public class ChannelConfigTest {
         assertEquals("", config.getDescription());
         assertTrue(config.getTags().isEmpty());
         assertEquals("", config.getReplicationSource());
+        assertEquals("SINGLE", config.getStorage());
     }
 
     @Test
@@ -73,5 +74,12 @@ public class ChannelConfigTest {
         ChannelConfig config = ChannelConfig.builder().withReplicationSource(replicationSource).build();
         ChannelConfig copy = ChannelConfig.builder().withChannelConfiguration(config).build();
         assertEquals(replicationSource, copy.getReplicationSource());
+    }
+
+    @Test
+    public void testTypeCopy() {
+        ChannelConfig config = ChannelConfig.builder().withStorage("BOTH").build();
+        ChannelConfig copy = ChannelConfig.builder().withChannelConfiguration(config).build();
+        assertEquals("BOTH", copy.getStorage());
     }
 }

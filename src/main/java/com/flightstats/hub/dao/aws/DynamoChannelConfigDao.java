@@ -51,6 +51,9 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
         if (StringUtils.isNotEmpty(config.getOwner())) {
             item.put("owner", new AttributeValue(config.getOwner()));
         }
+        if (StringUtils.isNotEmpty(config.getStorage())) {
+            item.put("storage", new AttributeValue(config.getStorage()));
+        }
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(getTableName())
                 .withItem(item);
@@ -118,6 +121,9 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
         }
         if (item.containsKey("owner")) {
             builder.withOwner(item.get("owner").getS());
+        }
+        if (item.containsKey("storage")) {
+            builder.withStorage(item.get("storage").getS());
         }
         return builder.build();
     }

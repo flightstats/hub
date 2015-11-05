@@ -105,65 +105,72 @@ describe(testName, function () {
         return {sum: sum, days: days};
     }
 
+    function addData(channel, field, value, data) {
+        if (value.target.indexOf(field.target) > 0) {
+            channel[field.name] = data.sum;
+            channel[field.name + 'Days'] = data.days;
+        }
+    }
+
+    function addIfMissing(channel, fieldName) {
+        if (!channel[fieldName]) {
+            channel[fieldName] = 0;
+            channel[fieldName + 'Days'] = [0, 0, 0, 0, 0, 0, 0];
+        }
+    }
+
     var graphiteData = [];
     var days = 7;
     var start = moment().utc().hours(0).minutes(0).seconds(0).milliseconds(0).subtract(days, 'days').format("X");
+
+    function createField(name, target) {
+        return {name: name, target: target};
+    }
+
     it('gets hosted graphite information ', function (done) {
         var end = moment().utc().hours(0).minutes(0).seconds(0).milliseconds(0).subtract(1, 'seconds').format("X");
         var options = '"1days","sum",alignToFrom=true)';
         async.eachLimit(channelData, 20,
             function (channel, callback) {
-                var field = dataPrefix + '.channel.' + channel.name;
-                var url = graphiteUrl + 'render?format=json' +
-                    '&target=summarize(' + field + '.s3.put:sum,' + options +
-                    '&target=summarize(' + field + '.s3.list:sum,' + options +
-                    '&target=summarize(' + field + '.s3.get:sum,' + options +
-                    '&target=summarize(' + field + '.s3.bytes:sum,' + options +
-                    '&from=' + start + '&until=' + end;
+                fields = [
+                    createField('put', 's3.put'),
+                    createField('putBatch', 's3Batch.put'),
+                    createField('list', 's3.list'),
+                    createField('listBatch', 's3Batch.list'),
+                    createField('get', 's3.get'),
+                    createField('getBatch', 's3Batch.get'),
+                    createField('bytes', 's3.bytes'),
+                    createField('bytesBatch', 's3Batch.bytes')
+                ];
+                var url = graphiteUrl + 'render?format=json';
+                fields.forEach(function (field) {
+                    url += '&target=summarize(' + dataPrefix + '.channel.' + channel.name +
+                        '.' + field.target + ':sum,' + options;
+                })
+                url += '&from=' + start + '&until=' + end;
 
                 console.log('get data ', url);
                 request.get({url: url},
                     function (err, response, body) {
                         expect(err).toBeNull();
-                        expect(response.statusCode).toBe(200);
                         console.log('channel ', channel.name, body);
+                        if (err !== null || response.statusCode !== 200) {
+                            return callback(err);
+                        }
+                        expect(response.statusCode).toBe(200);
                         var parsed = JSON.parse(body);
                         for (var i = 0; i < parsed.length; i++) {
                             var value = parsed[i];
                             var data = processData(value.datapoints);
-                            if (value.target.indexOf('put') > 0) {
-                                channel.put = data.sum;
-                                channel.putDays = data.days;
-                            } else if (value.target.indexOf('list') > 0) {
-                                channel.list = data.sum;
-                                channel.listDays = data.days;
-                            } else if (value.target.indexOf('get') > 0) {
-                                channel.get = data.sum;
-                                channel.getDays = data.days;
-                            } else if (value.target.indexOf('s3.bytes') > 0) {
-                                channel.bytes = data.sum;
-                                channel.bytesDays = data.days;
-                            }
+                            fields.forEach(function (field) {
+                                addData(channel, field, value, data);
+                            })
                         }
-                        if (!channel.put) {
-                            channel.put = 0;
-                            channel.putDays = [0, 0, 0, 0, 0, 0, 0];
-                        }
-                        if (!channel.list) {
-                            channel.list = 0;
-                            channel.listDays = [0, 0, 0, 0, 0, 0, 0];
-                        }
-                        if (!channel.get) {
-                            channel.get = 0;
-                            channel.getDays = [0, 0, 0, 0, 0, 0, 0];
-                        }
-                        if (!channel.bytes) {
-                            channel.bytes = 0;
-                            channel.bytesDays = [0, 0, 0, 0, 0, 0, 0];
-                        }
+                        fields.forEach(function (field) {
+                            addIfMissing(channel, field.name);
+                        })
                         graphiteData.push(channel);
                         callback(err);
-
                     });
 
             }, function (err) {
@@ -186,22 +193,28 @@ describe(testName, function () {
                 event.hub = dataPrefix;
 
                 event.MonthlyS3PutCost = channel.put / days / 1000 * 0.005 * 30;
+                event.MonthlyS3PutBatchCost = channel.putBatch / days / 1000 * 0.005 * 30;
                 event.MonthlyS3ListCost = channel.list / days / 1000 * 0.005 * 30;
+                event.MonthlyS3ListBatchCost = channel.listBatch / days / 1000 * 0.005 * 30;
                 event.MonthlyS3GetCost = channel.get / days / 10000 * 0.004 * 30;
+                event.MonthlyS3GetBatchCost = channel.getBatch / days / 10000 * 0.004 * 30;
                 event.MonthlyBytesCost = channel.bytes / days / 1024 / 1024 / 1024 * 0.03 * channel.earliest;
-                event.ProjectedBytesCost = channel.bytes / days / 1024 / 1024 / 1024 * 0.03 * channel.hub.ttlDays;
-                event.MonthlyTotalCost = event.MonthlyS3PutCost + event.MonthlyS3ListCost + event.MonthlyS3GetCost + event.MonthlyBytesCost;
+                event.MonthlyBytesBatchCost = channel.bytesBatch / days / 1024 / 1024 / 1024 * 0.03 * channel.earliest;
+                event.ProjectedBytesCost = (channel.bytes + channel.bytesBatch) / days / 1024 / 1024 / 1024 * 0.03 * channel.hub.ttlDays;
+                event.MonthlyTotalCost = event.MonthlyS3PutCost + event.MonthlyS3ListCost + event.MonthlyS3GetCost + event.MonthlyBytesCost +
+                    event.MonthlyS3PutBatchCost + event.MonthlyS3ListBatchCost + event.MonthlyS3GetBatchCost + event.MonthlyBytesBatchCost;
                 event.earliestItemDays = channel.earliest;
                 event.tags = channel.hub.tags;
                 event.ttlDays = channel.hub.ttlDays;
                 event.owner = channel.hub.owner;
                 event.days = [];
                 for (var i = 0; i < days; i++) {
+                    console.log('channel', channel);
                     event.days.push({
-                        s3Put: channel.putDays[i],
-                        s3List: channel.listDays[i],
-                        s3Get: channel.getDays[i],
-                        s3Bytes: channel.bytesDays[i],
+                        s3Put: channel.putDays[i] + channel.putBatchDays[i],
+                        s3List: channel.listDays[i] + channel.listBatchDays[i],
+                        s3Get: channel.getDays[i] + channel.getBatchDays[i],
+                        s3Bytes: channel.bytesDays[i] + channel.bytesBatchDays[i],
                     });
                 }
 

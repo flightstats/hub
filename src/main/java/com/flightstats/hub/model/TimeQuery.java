@@ -10,7 +10,7 @@ import org.joda.time.DateTime;
 @Getter
 @ToString
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TimeQuery {
+public class TimeQuery implements Query {
     @Wither
     private final String channelName;
     private final String tagName;

@@ -6,6 +6,8 @@ import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicatorManager;
+import com.flightstats.hub.replication.S3Batch;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -24,16 +26,18 @@ public class ChannelServiceImpl implements ChannelService {
     private final ChannelValidator channelValidator;
     private final ReplicatorManager replicatorManager;
     private MetricsSender sender;
+    private final HubUtils hubUtils;
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigDao channelConfigDao,
                               ChannelValidator channelValidator, ReplicatorManager replicatorManager,
-                              MetricsSender sender) {
+                              MetricsSender sender, HubUtils hubUtils) {
         this.contentService = contentService;
         this.channelConfigDao = channelConfigDao;
         this.channelValidator = channelValidator;
         this.replicatorManager = replicatorManager;
         this.sender = sender;
+        this.hubUtils = hubUtils;
     }
 
     @Override
@@ -47,10 +51,34 @@ public class ChannelServiceImpl implements ChannelService {
         channelValidator.validate(configuration, true);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
         ChannelConfig created = channelConfigDao.createChannel(configuration);
-        if (created.isReplicating()) {
+        notify(created, null);
+        return created;
+    }
+
+    private void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
+        if (newConfig.isReplicating()) {
+            replicatorManager.notifyWatchers();
+        } else if (oldConfig != null && oldConfig.isReplicating()) {
             replicatorManager.notifyWatchers();
         }
-        return created;
+        if (newConfig.isSingle()) {
+            if (oldConfig != null && !oldConfig.isSingle()) {
+                new S3Batch(newConfig, hubUtils).stop();
+            }
+        } else {
+            new S3Batch(newConfig, hubUtils).start();
+        }
+    }
+
+    @Override
+    public ChannelConfig updateChannel(ChannelConfig configuration) {
+        logger.info("updating channel {}", configuration);
+        configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
+        ChannelConfig oldConfig = getChannelConfig(configuration.getName());
+        channelValidator.validate(configuration, false);
+        channelConfigDao.updateChannel(configuration);
+        notify(configuration, oldConfig);
+        return configuration;
     }
 
     @Override
@@ -63,7 +91,6 @@ public class ChannelServiceImpl implements ChannelService {
         long time = System.currentTimeMillis() - start;
         sender.send("channel." + channelName + ".post", time);
         sender.send("channel." + channelName + ".items", 1);
-        //todo - gfm - 8/19/15 - can be removed eventually
         sender.send("channel." + channelName + ".post.bytes", content.getSize());
         sender.send("channel.ALL.post", time);
         return contentKey;
@@ -79,7 +106,6 @@ public class ChannelServiceImpl implements ChannelService {
         long time = System.currentTimeMillis() - start;
         sender.send("channel." + channelName + ".batchPost", time);
         sender.send("channel." + channelName + ".items", batchContent.getItems().size());
-        //todo - gfm - 8/19/15 - next two can be removed eventually
         sender.send("channel." + channelName + ".post", time);
         sender.send("channel." + channelName + ".post.bytes", batchContent.getSize());
         sender.send("channel.ALL.post", time);
@@ -187,21 +213,6 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public ChannelConfig updateChannel(ChannelConfig configuration) {
-        logger.info("updating channel {}", configuration);
-        configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
-        ChannelConfig oldConfig = getChannelConfig(configuration.getName());
-        channelValidator.validate(configuration, false);
-        channelConfigDao.updateChannel(configuration);
-        if (configuration.isReplicating()) {
-            replicatorManager.notifyWatchers();
-        } else if (oldConfig != null && oldConfig.isReplicating()) {
-            replicatorManager.notifyWatchers();
-        }
-        return configuration;
-    }
-
-    @Override
     public Collection<ContentKey> queryByTime(TimeQuery query) {
         if (query == null) {
             return Collections.emptyList();
@@ -226,9 +237,10 @@ public class ChannelServiceImpl implements ChannelService {
         }
         query = query.withTtlDays(getTtlDays(query.getChannelName()));
         query.getTraces().add(query);
-        List<ContentKey> keys = new ArrayList<>(contentService.getKeys(query));
-        query.getTraces().add("keys", keys);
-        return ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
+        List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
+        SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
+        query.getTraces().add("direction keys", contentKeys);
+        return contentKeys;
     }
 
     private DateTime getTtlTime(String channelName) {
@@ -243,6 +255,10 @@ public class ChannelServiceImpl implements ChannelService {
     public boolean delete(String channelName) {
         if (!channelConfigDao.channelExists(channelName)) {
             return false;
+        }
+        ChannelConfig channelConfig = getChannelConfig(channelName);
+        if (!channelConfig.isSingle()) {
+            new S3Batch(channelConfig, hubUtils).stop();
         }
         boolean replicating = isReplicating(channelName);
         contentService.delete(channelName);

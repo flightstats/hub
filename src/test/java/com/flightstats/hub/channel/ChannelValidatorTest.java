@@ -145,4 +145,16 @@ public class ChannelValidatorTest {
     public void testTooLongOwner() throws Exception {
         validator.validate(ChannelConfig.builder().withName("A").withOwner(Strings.repeat("A", 49)).build(), true);
     }
+
+    @Test
+    public void testValidStorage() {
+        validator.validate(ChannelConfig.builder().withName("storage").withStorage(ChannelConfig.SINGLE).build(), true);
+        validator.validate(ChannelConfig.builder().withName("storage").withStorage("batch").build(), true);
+        validator.validate(ChannelConfig.builder().withName("storage").withStorage("BoTh").build(), true);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidStorage() {
+        validator.validate(ChannelConfig.builder().withName("storage").withStorage("stuff").build(), true);
+    }
 }

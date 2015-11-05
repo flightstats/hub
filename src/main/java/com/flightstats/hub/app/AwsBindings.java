@@ -39,8 +39,8 @@ public class AwsBindings extends AbstractModule {
                 .to(SpokeContentDao.class).asEagerSingleton();
 
         bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.LONG_TERM))
-                .to(S3ContentDao.class).asEagerSingleton();
+                .annotatedWith(Names.named(ContentDao.SINGLE_LONG_TERM))
+                .to(S3SingleContentDao.class).asEagerSingleton();
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.BATCH_LONG_TERM))

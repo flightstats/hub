@@ -38,7 +38,7 @@ public class S3Util {
         int hourCount = 0;
         DateTime earliestTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
         while (keys.size() < query.getCount() && hourCount < 3) {
-            SortedSet<ContentKey> queryByTime = dao.queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.HOURS, query.getTraces());
+            SortedSet<ContentKey> queryByTime = dao.queryByTime(query.convert(startTime, TimeUtil.Unit.HOURS));
             queryByTime.addAll(keys);
             keys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), earliestTime, query.getCount(), false, query.isStable());
             startTime = startTime.minusHours(1);
@@ -46,7 +46,7 @@ public class S3Util {
         }
 
         while (keys.size() < query.getCount() && startTime.isAfter(earliestTime)) {
-            SortedSet<ContentKey> queryByTime = dao.queryByTime(query.getChannelName(), startTime, TimeUtil.Unit.DAYS, query.getTraces());
+            SortedSet<ContentKey> queryByTime = dao.queryByTime(query.convert(startTime, TimeUtil.Unit.DAYS));
             queryByTime.addAll(keys);
             keys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), earliestTime, query.getCount(), false, query.isStable());
             startTime = startTime.minusDays(1);

@@ -1,14 +1,16 @@
 package com.flightstats.hub.model;
 
 
+import com.flightstats.hub.util.TimeUtil;
 import lombok.*;
 import lombok.experimental.Wither;
+import org.joda.time.DateTime;
 
 @Builder
 @Getter
 @ToString(exclude = {"traces"})
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class DirectionQuery {
+public class DirectionQuery implements Query {
     @Wither
     private final String channelName;
     private final String tagName;
@@ -40,4 +42,13 @@ public class DirectionQuery {
     public void trace(boolean trace) {
         traces = Traces.getTraces(trace);
     }
+
+    public TimeQuery convert(DateTime startTime, TimeUtil.Unit unit) {
+        return TimeQuery.builder().channelName(getChannelName())
+                .startTime(startTime)
+                .unit(unit)
+                .traces(getTraces())
+                .build();
+    }
+
 }

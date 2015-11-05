@@ -2,46 +2,56 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
-@SuppressWarnings("Convert2Lambda")
 public class AwsContentService implements ContentService {
 
     private final static Logger logger = LoggerFactory.getLogger(AwsContentService.class);
 
-    private final ContentDao cacheContentDao;
-    private final ContentDao longTermContentDao;
-    private final Integer shutdown_wait_seconds;
-    private final AtomicInteger inFlight = new AtomicInteger();
-    private final ExecutorService executorService;
-    private final S3WriteQueue s3WriteQueue;
-    private final boolean dropSomeWrites;
-
     @Inject
-    public AwsContentService(@Named(ContentDao.CACHE) ContentDao cacheContentDao,
-                             @Named(ContentDao.LONG_TERM) ContentDao longTermContentDao,
-                             S3WriteQueue s3WriteQueue) {
-        this.cacheContentDao = cacheContentDao;
-        this.longTermContentDao = longTermContentDao;
-        this.dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
-        this.shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 5);
-        this.s3WriteQueue = s3WriteQueue;
-        executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("AwsContentService-%d").build());
+    @Named(ContentDao.CACHE)
+    private ContentDao spokeContentDao;
+    @Inject
+    @Named(ContentDao.SINGLE_LONG_TERM)
+    private ContentDao s3SingleContentDao;
+    @Inject
+    @Named(ContentDao.BATCH_LONG_TERM)
+    private ContentDao s3BatchContentDao;
+    @Inject
+    private ChannelService channelService;
+    @Inject
+    private LastContentPath lastContentPath;
+    @Inject
+    private S3WriteQueue s3WriteQueue;
+
+    private final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("AwsContentService-%d").build());
+    private final AtomicInteger inFlight = new AtomicInteger();
+    private final Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 5);
+    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
+    private final int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
+
+    public AwsContentService() {
         HubServices.registerPreStop(new ContentServiceHook());
     }
 
@@ -62,17 +72,24 @@ public class AwsContentService implements ContentService {
     public ContentKey insert(String channelName, Content content) throws Exception {
         try {
             inFlight.incrementAndGet();
-            ContentKey key = cacheContentDao.write(channelName, content);
-            if (dropSomeWrites) {
-                if (Math.random() < 0.95) {
-                    s3WriteQueue.add(new ChannelContentKey(channelName, key));
-                }
-            } else {
-                s3WriteQueue.add(new ChannelContentKey(channelName, key));
+            ContentKey key = spokeContentDao.write(channelName, content);
+            ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
+            if (channel.isSingle() || channel.isBoth()) {
+                s3SingleWrite(channelName, key);
             }
             return key;
         } finally {
             inFlight.decrementAndGet();
+        }
+    }
+
+    private void s3SingleWrite(String channelName, ContentKey key) {
+        if (dropSomeWrites) {
+            if (Math.random() < 0.95) {
+                s3WriteQueue.add(new ChannelContentKey(channelName, key));
+            }
+        } else {
+            s3WriteQueue.add(new ChannelContentKey(channelName, key));
         }
     }
 
@@ -89,144 +106,129 @@ public class AwsContentService implements ContentService {
 
     @Override
     public Optional<Content> getValue(String channelName, ContentKey key) {
-        //todo - gfm - 10/20/15 - this could be smarter about getting the value from the most likely place
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
-        return getBoth(channelName, key);
+        ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
+        DateTime startTime = TimeUtil.now();
+        if (channel.isReplicating()) {
+            startTime = lastContentPath.get(channelName, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED).getTime();
+        }
+        if (key.getTime().isAfter(startTime.minusMinutes(ttlMinutes))) {
+            Content content = spokeContentDao.read(channelName, key);
+            if (content != null) {
+                return Optional.of(content);
+            }
+        }
+        Content content = null;
+        if (channel.isSingle()) {
+            content = s3SingleContentDao.read(channelName, key);
+            if (content == null) {
+                content = s3BatchContentDao.read(channelName, key);
+            }
+        } else if (channel.isBatch()) {
+            content = s3BatchContentDao.read(channelName, key);
+            if (content != null) {
+                content = s3SingleContentDao.read(channelName, key);
+            }
+        } else {
+            ConcurrentLinkedQueue<Content> queue = new ConcurrentLinkedQueue<>();
+            try {
+                CountDownLatch latch = new CountDownLatch(2);
+                executorService.submit(readRunner(s3BatchContentDao, channelName, key, queue, latch));
+                executorService.submit(readRunner(s3SingleContentDao, channelName, key, queue, latch));
+                latch.await();
+                content = queue.poll();
+            } catch (InterruptedException e) {
+                throw new RuntimeInterruptedException(e);
+            }
+        }
+        return Optional.fromNullable(content);
     }
 
-    private Optional<Content> getBoth(String channelName, ContentKey key) {
-        ConcurrentLinkedQueue<Content> queue = new ConcurrentLinkedQueue<>();
-        try {
-            CountDownLatch countDownLatch = new CountDownLatch(2);
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    Content content = cacheContentDao.read(channelName, key);
-                    if (content != null) {
-                        queue.add(content);
-                        countDownLatch.countDown();
-                    }
-                    countDownLatch.countDown();
-                }
-            });
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    Content content = longTermContentDao.read(channelName, key);
-                    if (content != null) {
-                        queue.add(content);
-                        countDownLatch.countDown();
-                    }
-                    countDownLatch.countDown();
-                }
-            });
-            countDownLatch.await();
-            return Optional.fromNullable(queue.poll());
-        } catch (InterruptedException e) {
-            throw new RuntimeInterruptedException(e);
-        }
+    private Runnable readRunner(ContentDao contentDao, String channelName, ContentKey key,
+                                Queue<Content> queue, CountDownLatch latch) {
+        return () -> {
+            Content content = contentDao.read(channelName, key);
+            if (content != null) {
+                queue.add(content);
+                latch.countDown();
+            }
+            latch.countDown();
+        };
     }
 
     @Override
     public Collection<ContentKey> queryByTime(TimeQuery query) {
+        return handleQuery(query, contentDao -> contentDao.queryByTime(query));
+    }
+
+    @Override
+    public Collection<ContentKey> queryDirection(DirectionQuery query) {
+        return handleQuery(query, contentDao -> contentDao.query(query));
+    }
+
+    private Collection<ContentKey> handleQuery(Query query, Function<ContentDao, SortedSet<ContentKey>> daoQuery) {
         if (query.getLocation().equals(Location.CACHE)) {
-            return cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces());
+            return query(daoQuery, spokeContentDao);
         } else if (query.getLocation().equals(Location.LONG_TERM)) {
-            return longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces());
+            return query(daoQuery, s3SingleContentDao, s3BatchContentDao);
+        } else if (query.getLocation().equals(Location.LONG_TERM_SINGLE)) {
+            return query(daoQuery, spokeContentDao, s3SingleContentDao);
+        } else if (query.getLocation().equals(Location.LONG_TERM_BATCH)) {
+            return query(daoQuery, spokeContentDao, s3BatchContentDao);
         } else {
-            return queryBothByTime(query);
+            ChannelConfig channel = channelService.getCachedChannelConfig(query.getChannelName());
+            if (channel.isSingle()) {
+                return query(daoQuery, spokeContentDao, s3SingleContentDao);
+            } else if (channel.isBatch()) {
+                return query(daoQuery, spokeContentDao, s3BatchContentDao);
+            } else {
+                return query(daoQuery, spokeContentDao, s3SingleContentDao, s3BatchContentDao);
+            }
         }
     }
 
-    private SortedSet<ContentKey> queryBothByTime(TimeQuery query) {
+    private SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, ContentDao... contentDaos) {
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         try {
-            CountDownLatch countDownLatch = new CountDownLatch(2);
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    orderedKeys.addAll(cacheContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces()));
-                    countDownLatch.countDown();
-                }
-            });
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    orderedKeys.addAll(longTermContentDao.queryByTime(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces()));
-                    countDownLatch.countDown();
-                }
-            });
-            countDownLatch.await(3, TimeUnit.MINUTES);
+            CountDownLatch latch = new CountDownLatch(contentDaos.length);
+            for (ContentDao contentDao : contentDaos) {
+                executorService.submit((Runnable) () -> {
+                    orderedKeys.addAll(daoQuery.apply(contentDao));
+                    latch.countDown();
+                });
+            }
+            latch.await(3, TimeUnit.MINUTES);
             return orderedKeys;
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
-        }
-    }
-
-    @Override
-    public void delete(String channelName) {
-        logger.info("deleting channel " + channelName);
-        cacheContentDao.delete(channelName);
-        longTermContentDao.delete(channelName);
-    }
-
-    @Override
-    public Collection<ContentKey> getKeys(DirectionQuery query) {
-        if (query.getLocation().equals(Location.CACHE)) {
-            return getKeys(query, cacheContentDao, "cache");
-        } else if (query.getLocation().equals(Location.LONG_TERM)) {
-            return getKeys(query, longTermContentDao, "s3");
-        } else {
-            return queryBoth(query);
         }
     }
 
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
-        return cacheContentDao.getLatest(channel, limitKey, traces);
+        return spokeContentDao.getLatest(channel, limitKey, traces);
+    }
+
+    @Override
+    public void delete(String channelName) {
+        logger.info("deleting channel " + channelName);
+        spokeContentDao.delete(channelName);
+        s3SingleContentDao.delete(channelName);
+        s3BatchContentDao.delete(channelName);
     }
 
     @Override
     public void deleteBefore(String name, ContentKey limitKey) {
-        longTermContentDao.deleteBefore(name, limitKey);
-    }
-
-    private Set<ContentKey> queryBoth(DirectionQuery query) {
-        SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
-        try {
-            CountDownLatch countDownLatch = new CountDownLatch(2);
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    orderedKeys.addAll(getKeys(query, cacheContentDao, "cache"));
-                    countDownLatch.countDown();
-                }
-            });
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    orderedKeys.addAll(getKeys(query, longTermContentDao, "s3"));
-                    countDownLatch.countDown();
-                }
-            });
-            countDownLatch.await(3, TimeUnit.MINUTES);
-            return orderedKeys;
-        } catch (InterruptedException e) {
-            throw new RuntimeInterruptedException(e);
-        }
-    }
-
-    private SortedSet<ContentKey> getKeys(DirectionQuery query, ContentDao dao, String name) {
-        SortedSet<ContentKey> keys = dao.query(query);
-        query.getTraces().add(name, keys);
-        return keys;
+        s3SingleContentDao.deleteBefore(name, limitKey);
+        s3BatchContentDao.deleteBefore(name, limitKey);
     }
 
     private class ContentServiceHook extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
-            cacheContentDao.initialize();
-            longTermContentDao.initialize();
+            spokeContentDao.initialize();
+            s3SingleContentDao.initialize();
+            s3BatchContentDao.initialize();
         }
 
         @Override

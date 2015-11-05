@@ -28,5 +28,4 @@ public interface Traces {
         return trace ? new TracesImpl() : Traces.NOOP;
     }
 
-    ;
 }
