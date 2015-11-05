@@ -153,11 +153,11 @@ describe(testName, function () {
                 request.get({url: url},
                     function (err, response, body) {
                         expect(err).toBeNull();
-                        expect(response.statusCode).toBe(200);
-                        if (response.statusCode !== 200) {
+                        console.log('channel ', channel.name, body);
+                        if (err !== null || response.statusCode !== 200) {
                             return callback(err);
                         }
-                        console.log('channel ', channel.name, body);
+                        expect(response.statusCode).toBe(200);
                         var parsed = JSON.parse(body);
                         for (var i = 0; i < parsed.length; i++) {
                             var value = parsed[i];
