@@ -154,6 +154,9 @@ describe(testName, function () {
                     function (err, response, body) {
                         expect(err).toBeNull();
                         expect(response.statusCode).toBe(200);
+                        if (response.statusCode !== 200) {
+                            return callback(err);
+                        }
                         console.log('channel ', channel.name, body);
                         var parsed = JSON.parse(body);
                         for (var i = 0; i < parsed.length; i++) {
@@ -168,7 +171,6 @@ describe(testName, function () {
                         })
                         graphiteData.push(channel);
                         callback(err);
-
                     });
 
             }, function (err) {
