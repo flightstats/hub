@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -165,7 +166,7 @@ public class S3BatchContentDao implements ContentDao {
             for (JsonNode item : items) {
                 keys.add(ContentKey.fromUrl(item.asText()).get());
             }
-            //traces.add("addKeys ", minutePath, items.size());
+            traces.add("addKeys ", minutePath, items.size());
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
                 logger.warn("unable to get index " + channel, minutePath, e);
@@ -181,12 +182,20 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        query.getTraces().add("s3 batch query", query);
-        if (query.isNext()) {
-            return handleNext(query);
-        } else {
-            return S3Util.queryPrevious(query, this);
+        SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
+        try {
+            query.getTraces().add("s3 batch query", query);
+            if (query.isNext()) {
+                contentKeys = handleNext(query);
+            } else {
+                contentKeys = S3Util.queryPrevious(query, this);
+            }
+            query.getTraces().add("s3 batch query", contentKeys);
+        } catch (Exception e) {
+            logger.warn("query exception" + query, e);
+            query.getTraces().add("query exception", e);
         }
+        return contentKeys;
     }
 
     private SortedSet<ContentKey> handleNext(DirectionQuery query) {
@@ -214,7 +223,6 @@ public class S3BatchContentDao implements ContentDao {
                 markerTime = path.getTime();
             }
         } while (keys.size() < query.getCount() && markerTime.isBefore(endTime));
-        query.getTraces().add("s3 batch handleNext", keys);
         return keys;
     }
 
