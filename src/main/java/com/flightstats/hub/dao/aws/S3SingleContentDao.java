@@ -133,14 +133,14 @@ public class S3SingleContentDao implements ContentDao {
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         logger.trace("queryByTime {} ", query);
-        query.getTraces().add("s3 query by time", query.getChannelName(), query.getStartTime(), query.getUnit());
+        query.getTraces().add("s3 single query by time", query.getChannelName(), query.getStartTime(), query.getUnit());
         String timePath = query.getUnit().format(query.getStartTime());
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
                 .withPrefix(query.getChannelName() + "/" + timePath)
                 .withMaxKeys(s3MaxQueryItems);
         SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, MAX_ITEMS);
-        query.getTraces().add("s3 returning ", keys);
+        query.getTraces().add("s3 single returning ", keys);
         return keys;
     }
 

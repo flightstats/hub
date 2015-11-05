@@ -82,6 +82,7 @@ public class MultiPartParser {
     }
 
     private String getBoundary() {
+        //todo - gfm - 11/4/15 - this should handle an ending ';' in the content type
         return StringUtils.removeEnd(
                 StringUtils.removeStart(
                         StringUtils.trim(

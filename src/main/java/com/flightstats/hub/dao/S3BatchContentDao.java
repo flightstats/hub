@@ -131,9 +131,10 @@ public class S3BatchContentDao implements ContentDao {
                 .withMaxKeys(s3MaxQueryItems);
         SortedSet<MinutePath> minutePaths = listMinutePaths(channel, request, traces, true);
         for (MinutePath minutePath : minutePaths) {
+            //todo - gfm - 11/5/15 - this could be in parallel, needs to handle throttling by S3
             addKeys(channel, minutePath, keys, traces);
         }
-        traces.add("found keys", keys);
+        traces.add("queryHourPlus found keys", keys);
         return keys;
     }
 
@@ -150,7 +151,7 @@ public class S3BatchContentDao implements ContentDao {
                     .filter(key -> key.getTime().isBefore(endTime))
                     .collect(Collectors.toCollection(TreeSet::new));
         }
-        traces.add("found keys", keys);
+        traces.add("queryMinute found keys", keys);
         return keys;
     }
 
@@ -164,7 +165,7 @@ public class S3BatchContentDao implements ContentDao {
             for (JsonNode item : items) {
                 keys.add(ContentKey.fromUrl(item.asText()).get());
             }
-            traces.add("addKeys ", minutePath, items.size());
+            //traces.add("addKeys ", minutePath, items.size());
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
                 logger.warn("unable to get index " + channel, minutePath, e);
@@ -180,7 +181,7 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        query.getTraces().add("query", query);
+        query.getTraces().add("s3 batch query", query);
         if (query.isNext()) {
             return handleNext(query);
         } else {
@@ -213,6 +214,7 @@ public class S3BatchContentDao implements ContentDao {
                 markerTime = path.getTime();
             }
         } while (keys.size() < query.getCount() && markerTime.isBefore(endTime));
+        query.getTraces().add("s3 batch handleNext", keys);
         return keys;
     }
 

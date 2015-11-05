@@ -171,6 +171,10 @@ public class AwsContentService implements ContentService {
             return query(daoQuery, spokeContentDao);
         } else if (query.getLocation().equals(Location.LONG_TERM)) {
             return query(daoQuery, s3SingleContentDao, s3BatchContentDao);
+        } else if (query.getLocation().equals(Location.LONG_TERM_SINGLE)) {
+            return query(daoQuery, spokeContentDao, s3SingleContentDao);
+        } else if (query.getLocation().equals(Location.LONG_TERM_BATCH)) {
+            return query(daoQuery, spokeContentDao, s3BatchContentDao);
         } else {
             ChannelConfig channel = channelService.getCachedChannelConfig(query.getChannelName());
             if (channel.isSingle()) {
