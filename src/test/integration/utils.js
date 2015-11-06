@@ -140,6 +140,7 @@ function putGroup(groupName, groupConfig, status) {
 function getGroup(groupName, groupConfig, status) {
     var groupResource = groupUrl + "/" + groupName;
     status = status || 200;
+    sleep(1000);
     it('gets group ' + groupName, function (done) {
         request.get({url : groupResource,
                 headers : {"Content-Type" : "application/json"} },
