@@ -182,7 +182,7 @@ public class FileSpokeStoreTest {
     public void testNextNFilterSeconds() throws IOException {
         String name = "testNextNFilterSeconds";
 
-        DateTime startTime = TimeUtil.now().minusMinutes(10);
+        DateTime startTime = TimeUtil.now().withSecondOfMinute(10).minusMinutes(10);
         ContentKey contentKeyA = new ContentKey(startTime, "A");
         spokeStore.write(name + "/" + contentKeyA.toUrl(), BYTES);
         ContentKey contentKeyB = new ContentKey(startTime.plusSeconds(1), "B");
@@ -197,8 +197,8 @@ public class FileSpokeStoreTest {
         List<String> found = getNextTesting(name, limitKey.toUrl(), 2);
         logger.info("found {}", found);
         assertEquals(3, found.size());
-        assertTrue(contentKeyB.toUrl(), found.contains(contentKeyB.toUrl()));
-        assertTrue(found.contains(contentKeyC.toUrl()));
+        assertTrue(contentKeyB.toUrl(), found.contains(name + "/" + contentKeyB.toUrl()));
+        assertTrue(found.contains(name + "/" + contentKeyC.toUrl()));
     }
 
     @Test
@@ -220,8 +220,8 @@ public class FileSpokeStoreTest {
         List<String> found = getNextTesting(name, limitKey.toUrl(), 2);
         logger.info("found {}", found);
         assertEquals(2, found.size());
-        assertTrue(contentKeyB.toUrl(), found.contains(contentKeyB.toUrl()));
-        assertTrue(found.contains(contentKeyC.toUrl()));
+        assertTrue(contentKeyB.toUrl(), found.contains(name + "/" + contentKeyB.toUrl()));
+        assertTrue(found.contains(name + "/" + contentKeyC.toUrl()));
     }
 
     List<String> getNextTesting(String channel, String startKey, int count) throws IOException {

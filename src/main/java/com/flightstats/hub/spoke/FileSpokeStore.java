@@ -229,11 +229,11 @@ public class FileSpokeStore {
                         ContentKey key = ContentKey.fromUrl(keyFromPath).get();
                         if (key.compareTo(start) > 0) {
                             found++;
-                            writeKey(output, keyFromPath);
+                            writeKey(output, channel + "/" + keyFromPath);
                         }
                     } else {
                         found++;
-                        writeKey(output, keyFromPath);
+                        writeKey(output, channel + "/" + keyFromPath);
                     }
                 }
             }
