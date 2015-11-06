@@ -11,7 +11,10 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Set;
 import java.util.TreeSet;
 
 public class NasContentService implements ContentService {
@@ -98,11 +101,7 @@ public class NasContentService implements ContentService {
         TimeUtil.Unit hours = TimeUtil.Unit.HOURS;
         DateTime time = query.getContentKey().getTime();
         if (query.isNext()) {
-            DateTime endTime = TimeUtil.now().plus(hours.getDuration());
-            while (keys.size() < query.getCount() && time.isBefore(endTime)) {
-                addKeys(query, keys, hours, time);
-                time = time.plus(hours.getDuration());
-            }
+            handleNext(query, keys);
         } else {
             DateTime limitTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
             while (keys.size() < query.getCount() && time.isAfter(limitTime)) {
@@ -111,6 +110,17 @@ public class NasContentService implements ContentService {
             }
         }
         return keys;
+    }
+
+    private void handleNext(DirectionQuery query, Set<ContentKey> keys) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            fileSpokeStore.getNext(query.getChannelName(), query.getContentKey().toUrl(), query.getCount(), baos);
+            String keyString = baos.toString();
+            ContentKeyUtil.convertKeyStrings(keyString, keys);
+        } catch (IOException e) {
+            logger.warn("wah?" + query, e);
+        }
     }
 
     private void addKeys(DirectionQuery query, TreeSet<ContentKey> keys, TimeUtil.Unit hours, DateTime time) {
