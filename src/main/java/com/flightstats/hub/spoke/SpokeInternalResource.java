@@ -140,6 +140,23 @@ public class SpokeInternalResource {
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
 
+    @Path("/next/{channel}/{count}/{startKey:.+}")
+    @GET
+    public Response getNext(@PathParam("channel") String channel, @PathParam("count") int count,
+                            @PathParam("startKey") String startKey) {
+        try {
+            Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
+                BufferedOutputStream output = new BufferedOutputStream(os);
+                spokeStore.getNext(channel, startKey, count, output);
+                output.flush();
+            });
+            return builder.build();
+        } catch (Exception e) {
+            logger.warn("unable to get next " + channel + " " + startKey, e);
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+    }
+
     @Path("/test/{server}")
     @GET
     public Response test(@PathParam("server") String server) {
