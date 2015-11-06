@@ -119,17 +119,26 @@ public class SpokeContentDao implements ContentDao {
         }
         ContentKey startKey = query.getContentKey();
         DateTime startTime = startKey.getTime();
-        while (orderedKeys.size() < query.getCount()
-                && startTime.isAfter(ttlTime.minusHours(1))
-                && startTime.isBefore(TimeUtil.time(query.isStable()).plusHours(1))) {
-            query(query, orderedKeys, startKey, startTime, ttlTime);
-            startTime = query.isNext() ? startTime.plusHours(1) : startTime.minusHours(1);
+        DateTime endTime = TimeUtil.time(query.isStable());
+        if (query.isNext()) {
+            while (orderedKeys.size() < query.getCount()
+                    && startTime.isBefore(endTime.plusMinutes(1))) {
+                query(query, orderedKeys, startKey, startTime, ttlTime, TimeUtil.Unit.MINUTES);
+                startTime = startTime.plusMinutes(1);
+            }
+        } else {
+            while (orderedKeys.size() < query.getCount()
+                    && startTime.isAfter(ttlTime.minusHours(1))
+                    && startTime.isBefore(endTime.plusHours(1))) {
+                query(query, orderedKeys, startKey, startTime, ttlTime, TimeUtil.Unit.HOURS);
+                startTime = startTime.minusHours(1);
+            }
         }
         return orderedKeys;
     }
 
-    private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime, DateTime ttlTime) {
-        SortedSet<ContentKey> queryByTime = queryByTime(query.convert(startTime, TimeUtil.Unit.HOURS));
+    private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime, DateTime ttlTime, TimeUtil.Unit unit) {
+        SortedSet<ContentKey> queryByTime = queryByTime(query.convert(startTime, unit));
         queryByTime.addAll(orderedKeys);
         Set<ContentKey> filtered = ContentKeyUtil.filter(queryByTime, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
         orderedKeys.addAll(filtered);
