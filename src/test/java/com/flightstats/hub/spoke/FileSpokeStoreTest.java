@@ -11,9 +11,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -148,6 +152,83 @@ public class FileSpokeStoreTest {
         found = spokeStore.getLatest(channel, limitKey.toUrl());
         logger.info("found {}", found);
         assertEquals(channel + "/2015/03/17/17/31/59/600/2905220", found);
+    }
+
+    @Test
+    public void testNextN() throws IOException {
+        String name = "testNextN";
+
+        DateTime startTime = TimeUtil.now().minusMinutes(59);
+        DateTime time = startTime;
+        for (int i = 0; i < 30; i++) {
+            time = time.plusMinutes(2);
+            spokeStore.write(name + "/" + new ContentKey(time, "A").toUrl(), BYTES);
+            time = time.plusSeconds(1);
+            spokeStore.write(name + "/" + new ContentKey(time, "B").toUrl(), BYTES);
+            time = time.plusMillis(1);
+            spokeStore.write(name + "/" + new ContentKey(time, "C").toUrl(), BYTES);
+        }
+        ContentKey limitKey = new ContentKey(startTime, "A");
+
+        List<String> found = getNextTesting(name, limitKey.toUrl(), 90);
+        assertEquals(87, found.size());
+
+        limitKey = new ContentKey(startTime.plusMinutes(30), "A");
+        found = getNextTesting(name, limitKey.toUrl(), 45);
+        assertEquals(45, found.size());
+    }
+
+    @Test
+    public void testNextNFilterSeconds() throws IOException {
+        String name = "testNextNFilterSeconds";
+
+        DateTime startTime = TimeUtil.now().withSecondOfMinute(10).minusMinutes(10);
+        ContentKey contentKeyA = new ContentKey(startTime, "A");
+        spokeStore.write(name + "/" + contentKeyA.toUrl(), BYTES);
+        ContentKey contentKeyB = new ContentKey(startTime.plusSeconds(1), "B");
+        spokeStore.write(name + "/" + contentKeyB.toUrl(), BYTES);
+        ContentKey contentKeyC = new ContentKey(startTime.plusSeconds(2), "C");
+        spokeStore.write(name + "/" + contentKeyC.toUrl(), BYTES);
+        ContentKey contentKeyD = new ContentKey(startTime.plusSeconds(3), "D");
+        spokeStore.write(name + "/" + contentKeyD.toUrl(), BYTES);
+
+        ContentKey limitKey = new ContentKey(startTime, "B");
+
+        List<String> found = getNextTesting(name, limitKey.toUrl(), 2);
+        logger.info("found {}", found);
+        assertEquals(3, found.size());
+        assertTrue(contentKeyB.toUrl(), found.contains(name + "/" + contentKeyB.toUrl()));
+        assertTrue(found.contains(name + "/" + contentKeyC.toUrl()));
+    }
+
+    @Test
+    public void testNextNFilterMinutes() throws IOException {
+        String name = "testNextNFilterMinutes";
+
+        DateTime startTime = TimeUtil.now().minusMinutes(10);
+        ContentKey contentKeyA = new ContentKey(startTime, "A");
+        spokeStore.write(name + "/" + contentKeyA.toUrl(), BYTES);
+        ContentKey contentKeyB = new ContentKey(startTime.plusMinutes(1), "B");
+        spokeStore.write(name + "/" + contentKeyB.toUrl(), BYTES);
+        ContentKey contentKeyC = new ContentKey(startTime.plusMinutes(2), "C");
+        spokeStore.write(name + "/" + contentKeyC.toUrl(), BYTES);
+        ContentKey contentKeyD = new ContentKey(startTime.plusMinutes(3), "D");
+        spokeStore.write(name + "/" + contentKeyD.toUrl(), BYTES);
+
+        ContentKey limitKey = new ContentKey(startTime, "B");
+
+        List<String> found = getNextTesting(name, limitKey.toUrl(), 2);
+        logger.info("found {}", found);
+        assertEquals(2, found.size());
+        assertTrue(contentKeyB.toUrl(), found.contains(name + "/" + contentKeyB.toUrl()));
+        assertTrue(found.contains(name + "/" + contentKeyC.toUrl()));
+    }
+
+    List<String> getNextTesting(String channel, String startKey, int count) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        spokeStore.getNext(channel, startKey, count, baos);
+        String[] split = baos.toString().split(",");
+        return Arrays.asList(split);
     }
 
     @Test

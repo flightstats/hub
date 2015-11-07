@@ -206,9 +206,16 @@ public class RemoteSpokeStore {
     }
 
     public SortedSet<ContentKey> readTimeBucket(String channel, String timePath, Traces traces) throws InterruptedException {
+        return getKeys(traces, "/internal/spoke/time/" + channel + "/" + timePath);
+    }
+
+    public SortedSet<ContentKey> getNext(String channel, int count, String startKey, Traces traces) throws InterruptedException {
+        return getKeys(traces, "/internal/spoke/next/" + channel + "/" + count + "/" + startKey);
+    }
+
+    private SortedSet<ContentKey> getKeys(final Traces traces, final String path) throws InterruptedException {
         Collection<String> servers = cluster.getServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
-        String path = channel + "/" + timePath;
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (final String server : servers) {
             executorService.submit(new Runnable() {
@@ -216,7 +223,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         traces.add("spoke calling", server, path);
-                        ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/time/" + path)
+                        ClientResponse response = query_client.resource(HubHost.getScheme() + server + path)
                                 .get(ClientResponse.class);
                         traces.add("spoke server response", server, response);
                         if (response.getStatus() == 200) {
