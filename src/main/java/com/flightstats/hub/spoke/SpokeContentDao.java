@@ -13,6 +13,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -112,24 +113,34 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        SortedSet<ContentKey> orderedKeys = new TreeSet<>();
         DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
         if (query.getContentKey().getTime().isBefore(ttlTime)) {
             query = query.withContentKey(new ContentKey(ttlTime, "0"));
         }
-        ContentKey startKey = query.getContentKey();
-        DateTime startTime = startKey.getTime();
-        while (orderedKeys.size() < query.getCount()
-                && startTime.isAfter(ttlTime.minusHours(1))
-                && startTime.isBefore(TimeUtil.time(query.isStable()).plusHours(1))) {
-            query(query, orderedKeys, startKey, startTime, ttlTime);
-            startTime = query.isNext() ? startTime.plusHours(1) : startTime.minusHours(1);
+        if (query.isNext()) {
+            try {
+                return spokeStore.getNext(query.getChannelName(), query.getCount(), query.getContentKey().toUrl(), query.getTraces());
+            } catch (InterruptedException e) {
+                logger.warn("what happened? " + query, e);
+            }
+        } else {
+            ContentKey startKey = query.getContentKey();
+            DateTime startTime = startKey.getTime();
+            DateTime endTime = TimeUtil.time(query.isStable());
+            SortedSet<ContentKey> orderedKeys = new TreeSet<>();
+            while (orderedKeys.size() < query.getCount()
+                    && startTime.isAfter(ttlTime.minusHours(1))
+                    && startTime.isBefore(endTime.plusHours(1))) {
+                query(query, orderedKeys, startKey, startTime, ttlTime, TimeUtil.Unit.HOURS);
+                startTime = startTime.minusHours(1);
+            }
+            return orderedKeys;
         }
-        return orderedKeys;
+        return Collections.emptySortedSet();
     }
 
-    private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime, DateTime ttlTime) {
-        SortedSet<ContentKey> queryByTime = queryByTime(query.convert(startTime, TimeUtil.Unit.HOURS));
+    private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime, DateTime ttlTime, TimeUtil.Unit unit) {
+        SortedSet<ContentKey> queryByTime = queryByTime(query.convert(startTime, unit));
         queryByTime.addAll(orderedKeys);
         Set<ContentKey> filtered = ContentKeyUtil.filter(queryByTime, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
         orderedKeys.addAll(filtered);

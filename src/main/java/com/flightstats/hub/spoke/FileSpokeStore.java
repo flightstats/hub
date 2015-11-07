@@ -1,6 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
@@ -142,12 +143,16 @@ public class FileSpokeStore {
                 String filePath = aFile.getPath();
                 logger.trace("filePath {}", filePath);
                 String keyFromPath = spokeKeyFromPath(aFile.getAbsolutePath());
-                output.write(keyFromPath.getBytes());
-                output.write(",".getBytes());
+                writeKey(output, keyFromPath);
             }
         } catch (Exception e) {
             logger.info("error with " + path, e);
         }
+    }
+
+    private void writeKey(OutputStream output, String keyFromPath) throws IOException {
+        output.write(keyFromPath.getBytes());
+        output.write(",".getBytes());
     }
 
     @VisibleForTesting
@@ -199,6 +204,42 @@ public class FileSpokeStore {
         }
         count++;
         return recurseLatest(path + "/" + base, limitPath, count, channel);
+    }
+
+    /**
+     * This may return more than the request count, as this does not do any sorting.
+     */
+    public void getNext(String channel, String startKey, int count, OutputStream output) throws IOException {
+        DateTime now = TimeUtil.now();
+        String channelPath = storagePath + channel + "/";
+        logger.trace("next {} {} {}", channel, startKey, now);
+        ContentKey start = ContentKey.fromUrl(startKey).get();
+        int found = 0;
+        MinutePath minutePath = new MinutePath(start.getTime());
+        boolean firstMinute = true;
+        do {
+            String minuteUrl = minutePath.toUrl();
+            String minute = channelPath + minuteUrl;
+            logger.trace("minute {}", minute);
+            String[] items = new File(minute).list();
+            if (items != null) {
+                for (String item : items) {
+                    String keyFromPath = spokeKeyFromPath(minuteUrl + "/" + item);
+                    if (firstMinute) {
+                        ContentKey key = ContentKey.fromUrl(keyFromPath).get();
+                        if (key.compareTo(start) > 0) {
+                            found++;
+                            writeKey(output, channel + "/" + keyFromPath);
+                        }
+                    } else {
+                        found++;
+                        writeKey(output, channel + "/" + keyFromPath);
+                    }
+                }
+            }
+            minutePath = new MinutePath(minutePath.getTime().plusMinutes(1));
+            firstMinute = false;
+        } while (found < count && minutePath.getTime().isBefore(now));
     }
 
     public void enforceTtl(String channel, DateTime dateTime) {
