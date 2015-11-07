@@ -22,7 +22,7 @@ var testName = __filename;
 
 describe(testName, function () {
 
-    var portB = callbackPort + 6;
+    var portB = utils.getPort();
 
     var itemsB = [];
     var postedItem;

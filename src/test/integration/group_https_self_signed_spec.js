@@ -6,7 +6,7 @@ var channelName = utils.randomChannelName();
 var groupName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-var port = callbackPort + 7;
+var port = utils.getPort();
 var callbackUrl = 'https://' + ipAddress + ':' + port + '/';
 var groupConfig = {
     callbackUrl : callbackUrl,

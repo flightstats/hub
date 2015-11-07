@@ -212,7 +212,12 @@ function timeout(millis) {
     });
 }
 
+function getPort() {
+    return callbackPort++;
+}
+
 function startServer(port, callback) {
+    console.log('starting server ' + port);
     var started = false;
     runs(function () {
         server = http.createServer(function (request, response) {
@@ -303,4 +308,6 @@ exports.startServer = startServer;
 exports.startHttpsServer = startHttpsServer;
 exports.closeServer = closeServer;
 exports.getQ = getQ;
+exports.getPort = getPort;
+
 

@@ -8,6 +8,8 @@ import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -20,6 +22,7 @@ import javax.ws.rs.core.UriInfo;
 @Path("/group")
 public class GroupResource {
 
+    private final static Logger logger = LoggerFactory.getLogger(GroupResource.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private final UriInfo uriInfo;
     private final GroupService groupService;
@@ -60,8 +63,10 @@ public class GroupResource {
     public Response getGroup(@PathParam("name") String name) {
         Optional<Group> optionalGroup = groupService.getGroup(name);
         if (!optionalGroup.isPresent()) {
+            logger.info("group not found {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        logger.info("get group {} ", name);
         Group group = optionalGroup.get();
         GroupStatus status = groupService.getGroupStatus(group);
         ObjectNode root = mapper.createObjectNode();
@@ -106,6 +111,7 @@ public class GroupResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsertGroup(@PathParam("name") String name, String body) {
+        logger.info("upsert group {} {}", name, body);
         Group group = Group.fromJson(body, groupService.getGroup(name)).withName(name);
         Optional<Group> upsertGroup = groupService.upsertGroup(group);
         if (upsertGroup.isPresent()) {
@@ -120,6 +126,7 @@ public class GroupResource {
     @EventTimed(name = "group.ALL.delete")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteGroup(@PathParam("name") String name) {
+        logger.info("delete group {}", name);
         groupService.delete(name);
         return Response.status(Response.Status.ACCEPTED).build();
     }
