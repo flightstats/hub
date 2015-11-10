@@ -26,10 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -133,7 +130,7 @@ public class S3BatchContentDao implements ContentDao {
         SortedSet<MinutePath> minutePaths = listMinutePaths(channel, request, traces, true);
         for (MinutePath minutePath : minutePaths) {
             //todo - gfm - 11/5/15 - this could be in parallel, needs to handle throttling by S3
-            addKeys(channel, minutePath, keys, traces);
+            getKeysForMinute(channel, minutePath, keys, traces);
         }
         traces.add("s3 batch queryHourPlus found keys", keys);
         return keys;
@@ -143,7 +140,7 @@ public class S3BatchContentDao implements ContentDao {
         SortedSet<ContentKey> keys = new TreeSet<>();
         DateTime rounded = unit.round(startTime);
         traces.add("s3 batch queryMinute ", channel, rounded, unit);
-        addKeys(channel, new MinutePath(rounded), keys, traces);
+        getKeysForMinute(channel, new MinutePath(rounded), keys, traces);
         if (unit.equals(TimeUtil.Unit.SECONDS)) {
             DateTime start = rounded.minusMillis(1);
             DateTime endTime = rounded.plus(unit.getDuration());
@@ -156,7 +153,7 @@ public class S3BatchContentDao implements ContentDao {
         return keys;
     }
 
-    private void addKeys(String channel, MinutePath minutePath, SortedSet<ContentKey> keys, Traces traces) {
+    private void getKeysForMinute(String channel, MinutePath minutePath, SortedSet<ContentKey> keys, Traces traces) {
         try {
             sender.send("channel." + channel + ".s3Batch.get", 1);
             S3Object object = s3Client.getObject(s3BucketName, getS3BatchIndexKey(channel, minutePath));
@@ -166,7 +163,7 @@ public class S3BatchContentDao implements ContentDao {
             for (JsonNode item : items) {
                 keys.add(ContentKey.fromUrl(item.asText()).get());
             }
-            traces.add("addKeys ", minutePath, items.size());
+            traces.add("getKeysForMinute ", minutePath, items.size());
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
                 logger.warn("unable to get index " + channel, minutePath, e);
@@ -219,7 +216,7 @@ public class S3BatchContentDao implements ContentDao {
                 if (keys.size() >= query.getCount()) {
                     return keys;
                 }
-                addKeys(channel, path, keys, query.getTraces());
+                getKeysForMinute(channel, path, keys, query.getTraces());
                 markerTime = path.getTime();
             }
         } while (keys.size() < query.getCount() && markerTime.isBefore(endTime));
@@ -279,7 +276,7 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public void writeBatch(String channel, MinutePath path, List<ContentKey> keys, byte[] bytes) {
+    public void writeBatch(String channel, MinutePath path, Collection<ContentKey> keys, byte[] bytes) {
         try {
             logger.debug("writing batch {} keys {} bytes {}", path, keys.size(), bytes.length);
             writeBatchItems(channel, path, bytes);
@@ -292,7 +289,7 @@ public class S3BatchContentDao implements ContentDao {
         }
     }
 
-    private long writeBatchIndex(String channel, MinutePath path, List<ContentKey> keys) {
+    private long writeBatchIndex(String channel, MinutePath path, Collection<ContentKey> keys) {
         String batchIndexKey = getS3BatchIndexKey(channel, path);
         ObjectNode root = mapper.createObjectNode();
         root.put("id", path.toUrl());

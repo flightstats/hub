@@ -163,7 +163,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
         response.put("id", url);
         String channelUrl = group.getChannelUrl();
         response.put("url", channelUrl + "/" + url);
-        response.put("batchUrl", channelUrl + "/" + url + "?batch=true");
+        response.put("batchUrl", getBatchUrl(channelUrl, minutePath));
         ArrayNode uris = response.putArray("uris");
         Collection<ContentKey> keys = minutePath.getKeys();
         for (ContentKey key : keys) {
@@ -175,6 +175,10 @@ public class MinuteGroupStrategy implements GroupStrategy {
             response.put("type", "items");
         }
         return response;
+    }
+
+    public static String getBatchUrl(String channelUrl, MinutePath path) {
+        return channelUrl + "/" + path.toUrl() + "?batch=true";
     }
 
     @Override
