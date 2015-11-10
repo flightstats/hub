@@ -15,25 +15,24 @@ var testName = __filename;
  * 1 - create a channel
  * 2 - create a group on that channel with a non-existent endpointA
  * 3 - post item into the channel
- * 4 - delete the group
- * 5 - create the group with the same name and a new endpointB
- * 6 - start a server at the endpointB
- * 7 - post item - should see item at endPointB
+ * 4 - change the group with the same name and a new endpointB
+ * 5 - start a server at the endpointB
+ * 6 - post item - should see items at endPointB
  */
 
 describe(testName, function () {
 
-    var portB = callbackPort + 6;
+    var portB = utils.getPort();
 
     var itemsB = [];
     var postedItem;
     var badConfig = {
         callbackUrl: 'http://localhost:8080/nothing',
-        channelUrl : channelResource
+        channelUrl: channelResource
     };
     var groupConfigB = {
-        callbackUrl : callbackDomain + ':' + portB + '/',
-        channelUrl : channelResource
+        callbackUrl: callbackDomain + ':' + portB + '/',
+        channelUrl: channelResource
     };
 
     utils.createChannel(channelName);
@@ -42,9 +41,7 @@ describe(testName, function () {
 
     utils.addItem(channelResource);
 
-    utils.deleteGroup(groupName);
-
-    utils.putGroup(groupName, groupConfigB);
+    utils.putGroup(groupName, groupConfigB, 200);
 
     it('runs callback server: channel:' + channelName + ' group:' + groupName, function () {
         utils.startServer(portB, function (string) {
@@ -58,14 +55,14 @@ describe(testName, function () {
             });
 
         waitsFor(function () {
-            return itemsB.length == 1;
-        }, 70001);
+            return itemsB.length == 2;
+        }, 20002);
 
     });
 
     utils.closeServer(function () {
-        expect(itemsB.length).toBe(1);
-        expect(JSON.parse(itemsB[0]).uris[0]).toBe(postedItem);
+        expect(itemsB.length).toBe(2);
+        expect(JSON.parse(itemsB[1]).uris[0]).toBe(postedItem);
     });
 });
 

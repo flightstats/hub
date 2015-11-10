@@ -140,7 +140,9 @@ function putGroup(groupName, groupConfig, status) {
 function getGroup(groupName, groupConfig, status) {
     var groupResource = groupUrl + "/" + groupName;
     status = status || 200;
+
     it('gets group ' + groupName, function (done) {
+        sleep(10000);
         request.get({url : groupResource,
                 headers : {"Content-Type" : "application/json"} },
             function (err, response, body) {
@@ -210,7 +212,12 @@ function timeout(millis) {
     });
 }
 
+function getPort() {
+    return callbackPort++;
+}
+
 function startServer(port, callback) {
+    console.log('starting server ' + port);
     var started = false;
     runs(function () {
         server = http.createServer(function (request, response) {
@@ -301,4 +308,6 @@ exports.startServer = startServer;
 exports.startHttpsServer = startHttpsServer;
 exports.closeServer = closeServer;
 exports.getQ = getQ;
+exports.getPort = getPort;
+
 
