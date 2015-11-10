@@ -107,20 +107,31 @@ public class S3WriterManager {
             logger.info("Verifying S3 data at: {}", startTime);
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
-                channelThreadPool.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        String channelName = channel.getName();
-                        SortedSet<ContentKey> keysToAdd = itemsInCacheButNotLongTerm(startTime, channelName);
-                        for (ContentKey key : keysToAdd) {
-                            s3WriteQueue.add(new ChannelContentKey(channelName, key));
-                        }
-                    }
-                });
+                if (channel.isBatch()) {
+                    //todo - gfm - 11/10/15 -
+                } else if (channel.isSingle()) {
+                    submitTask(startTime, channel);
+                } else {
+                    submitTask(startTime, channel);
+                    //todo - gfm - 11/10/15 -
+                }
             }
         } catch (Exception e) {
             logger.error("Error: ", e);
         }
+    }
+
+    private void submitTask(final DateTime startTime, final ChannelConfig channel) {
+        channelThreadPool.submit(new Runnable() {
+            @Override
+            public void run() {
+                String channelName = channel.getName();
+                SortedSet<ContentKey> keysToAdd = itemsInCacheButNotLongTerm(startTime, channelName);
+                for (ContentKey key : keysToAdd) {
+                    s3WriteQueue.add(new ChannelContentKey(channelName, key));
+                }
+            }
+        });
     }
 
     private class S3WriterManagerService extends AbstractScheduledService {

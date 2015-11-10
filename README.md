@@ -30,6 +30,7 @@ The Hub
 * [replication](#replication)
 * [alerts](#alerts)
 * [health check](#health-check)
+* [storage](#storage)
 * [access control](#access-control)
 * [encrypted-hub](#encrypted-hub)
 * [monitoring](#monitoring)
@@ -121,6 +122,10 @@ A channel may have at most 20 tags.
 
 * `replicationSource` is the optional fully qualified path to channel in a another hub.  The data from the other channel
 will be duplicated into this channel.  Please see [replication](#replication) for more details.
+
+* `storage` is the optional specification of how to store long term data.  The default is `SINGLE`.  
+High volume channels can see significant reductions in S3 costs by using `BATCH`.  
+`BOTH` is a way to transition between the two states, and perform comparisons.  More information in [storage](#storage)
 
 `PUT http://hub/channel/stumptown`
 
@@ -966,6 +971,17 @@ On shutdown, the server immediately stops responding to new http connections, so
   "version" : "2014-03-26.126"
 }
 ```
+
+## storage
+
+The Hub has two options to store data:
+* It can use a combination of a local cache and [S3](https://aws.amazon.com/s3/)
+* It can use a single drive shared across the cluster
+ 
+For Hubs which use S3, the channel option `storage` can make a significant difference in costs.
+High volume channels should prefer `BATCH` to reduce costs.
+
+
 
 ## access control
 
