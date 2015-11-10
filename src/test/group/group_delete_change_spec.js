@@ -24,8 +24,8 @@ var testName = __filename;
 
 describe(testName, function () {
 
-    var portA = callbackPort + 4;
-    var portB = callbackPort + 5;
+    var portA = utils.getPort();
+    var portB = utils.getPort();
 
     var callbackItemsA = [];
     var callbackItemsB = [];
