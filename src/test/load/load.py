@@ -22,6 +22,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -53,7 +54,7 @@ class WebsiteTasks(TaskSet):
                    "ttlDays": "3",
                    "tags": ["load", "test", "DDT"],
                    "owner": "DDT",
-                   "storage": "BOTH"}
+                   "storage": "BATCH"}
         self.client.put("/channel/" + self.channel,
                         data=json.dumps(payload),
                         headers={"Content-Type": "application/json"},
@@ -141,10 +142,6 @@ class WebsiteTasks(TaskSet):
 
     def time_path(self, unit="second"):
         return "/channel/" + self.channel + "/time/" + unit + "?stable=false"
-
-    @task(10)
-    def next_single_query(self):
-        self.nextQueries("LONG_TERM_SINGLE")
 
     @task(10)
     def next_batch_query(self):

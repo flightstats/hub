@@ -3,7 +3,7 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.SortedSet;
 
 public interface ContentDao {
@@ -28,7 +28,7 @@ public interface ContentDao {
 
     void deleteBefore(String channelName, ContentKey limitKey);
 
-    default void writeBatch(String channel, MinutePath path, List<ContentKey> keys, byte[] bytes) {
+    default void writeBatch(String channel, MinutePath path, Collection<ContentKey> keys, byte[] bytes) {
         throw new UnsupportedOperationException("writeBatch is not supported");
     }
 
