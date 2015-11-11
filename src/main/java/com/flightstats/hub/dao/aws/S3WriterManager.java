@@ -48,7 +48,8 @@ public class S3WriterManager {
         this.s3SingleContentDao = s3SingleContentDao;
         this.s3BatchContentDao = s3BatchContentDao;
         this.s3WriteQueue = s3WriteQueue;
-        HubServices.register(new S3WriterManagerService(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
+        HubServices.register(new S3WriterManagerSingleService(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
+        HubServices.register(new S3WriterManagerBatchService(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
 
         this.offsetMinutes = serverOffset();
         queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d")
@@ -67,13 +68,14 @@ public class S3WriterManager {
         return offset;
     }
 
-    SortedSet<ContentKey> getMissing(DateTime startTime, String channelName, ContentDao s3ContentDao,
+    SortedSet<ContentKey> getMissing(DateTime startTime, DateTime endTime, String channelName, ContentDao s3ContentDao,
                                      SortedSet<ContentKey> expectedKeys) {
         SortedSet<ContentKey> cacheKeys = new TreeSet<>();
         SortedSet<ContentKey> longTermKeys = new TreeSet<>();
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startTime)
+                .endTime(endTime)
                 .unit(TimeUtil.Unit.MINUTES)
                 .traces(Traces.NOOP)
                 .build();
@@ -101,10 +103,10 @@ public class S3WriterManager {
         }
     }
 
-    private void singleS3Verification(final DateTime startTime, final ChannelConfig channel) {
+    private void singleS3Verification(final DateTime startTime, final ChannelConfig channel, DateTime endTime) {
         channelThreadPool.submit(() -> {
             String channelName = channel.getName();
-            SortedSet<ContentKey> keysToAdd = getMissing(startTime, channelName, s3SingleContentDao, new TreeSet<>());
+            SortedSet<ContentKey> keysToAdd = getMissing(startTime, endTime, channelName, s3SingleContentDao, new TreeSet<>());
             for (ContentKey key : keysToAdd) {
                 s3WriteQueue.add(new ChannelContentKey(channelName, key));
             }
@@ -115,7 +117,7 @@ public class S3WriterManager {
         channelThreadPool.submit(() -> {
             String channelName = channel.getName();
             SortedSet<ContentKey> expectedKeys = new TreeSet<>();
-            SortedSet<ContentKey> keysToAdd = getMissing(startTime, channelName, s3BatchContentDao, expectedKeys);
+            SortedSet<ContentKey> keysToAdd = getMissing(startTime, null, channelName, s3BatchContentDao, expectedKeys);
             if (!keysToAdd.isEmpty()) {
                 MinutePath path = new MinutePath(startTime);
                 logger.info("s3 batch missing {}", path);
@@ -125,18 +127,29 @@ public class S3WriterManager {
         });
     }
 
-    public void run() {
+    public void runSingle() {
         try {
             DateTime startTime = DateTime.now().minusMinutes(offsetMinutes);
-            logger.info("Verifying S3 data at: {}", startTime);
+            DateTime endTime = DateTime.now().minusMinutes(offsetMinutes).plusMinutes(20);
+            logger.info("Verifying Single S3 data at: {}", startTime);
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
-                if (channel.isBatch()) {
-                    batchS3Verification(startTime, channel);
-                } else if (channel.isSingle()) {
-                    singleS3Verification(startTime, channel);
-                } else {
-                    singleS3Verification(startTime, channel);
+                if (channel.isSingle() || channel.isBoth()) {
+                    singleS3Verification(startTime, channel, endTime);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error: ", e);
+        }
+    }
+
+    public void runBatch() {
+        try {
+            DateTime startTime = DateTime.now().minusMinutes(offsetMinutes);
+            logger.info("Verifying Batch S3 data at: {}", startTime);
+            Iterable<ChannelConfig> channels = channelService.getChannels();
+            for (ChannelConfig channel : channels) {
+                if (channel.isBatch() || channel.isBoth()) {
                     batchS3Verification(startTime, channel);
                 }
             }
@@ -145,10 +158,27 @@ public class S3WriterManager {
         }
     }
 
-    private class S3WriterManagerService extends AbstractScheduledService {
+    private class S3WriterManagerSingleService extends AbstractScheduledService {
         @Override
         protected void runOneIteration() throws Exception {
-            run();
+            runSingle();
+        }
+
+        @Override
+        protected Scheduler scheduler() {
+            return Scheduler.newFixedDelaySchedule(0, 15, TimeUnit.MINUTES);
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            s3WriteQueue.close();
+        }
+    }
+
+    private class S3WriterManagerBatchService extends AbstractScheduledService {
+        @Override
+        protected void runOneIteration() throws Exception {
+            runBatch();
         }
 
         @Override

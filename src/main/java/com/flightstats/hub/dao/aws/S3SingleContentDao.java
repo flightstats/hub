@@ -11,6 +11,7 @@ import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,38 +138,48 @@ public class S3SingleContentDao implements ContentDao {
         String timePath = query.getUnit().format(query.getStartTime());
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
-                .withPrefix(query.getChannelName() + "/" + timePath)
                 .withMaxKeys(s3MaxQueryItems);
-        SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, MAX_ITEMS);
+        DateTime endTime = query.getEndTime();
+        if (endTime == null) {
+            request.withPrefix(query.getChannelName() + "/" + timePath);
+            endTime = query.getStartTime().plus(query.getUnit().getDuration());
+        } else {
+            request.withMarker(query.getChannelName() + "/" + timePath);
+        }
+        SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, MAX_ITEMS, endTime);
         query.getTraces().add("s3 single returning ", keys);
         return keys;
     }
 
-    private SortedSet<ContentKey> iterateListObjects(String channelName, ListObjectsRequest request, int maxItems) {
+    private SortedSet<ContentKey> iterateListObjects(String channelName, ListObjectsRequest request,
+                                                     int maxItems, DateTime endTime) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         sender.send("channel." + channelName + ".s3.list", 1);
         ObjectListing listing = s3Client.listObjects(request);
-        String marker = addKeys(channelName, listing, keys);
-        while (listing.isTruncated() && keys.size() < maxItems) {
-            request.withMarker(marker);
+        ContentKey marker = addKeys(channelName, listing, keys, endTime);
+        while (listing.isTruncated() && keys.size() < maxItems && marker.getTime().isBefore(endTime)) {
+            request.withMarker(channelName + "/" + marker.toUrl());
             sender.send("channel." + channelName + ".s3.list", 1);
             listing = s3Client.listObjects(request);
-            marker = addKeys(channelName, listing, keys);
+            marker = addKeys(channelName, listing, keys, endTime);
         }
         return keys;
     }
 
-    private String addKeys(String channelName, ObjectListing listing, Set<ContentKey> keys) {
-        String key = null;
+    private ContentKey addKeys(String channelName, ObjectListing listing, Set<ContentKey> keys, DateTime endTime) {
+        Optional<ContentKey> contentKey = Optional.absent();
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
-            key = summary.getKey();
-            Optional<ContentKey> contentKey = ContentKey.fromUrl(StringUtils.substringAfter(key, channelName + "/"));
+            contentKey = ContentKey.fromUrl(StringUtils.substringAfter(summary.getKey(), channelName + "/"));
             if (contentKey.isPresent()) {
-                keys.add(contentKey.get());
+                if (contentKey.get().getTime().isBefore(endTime)) {
+                    keys.add(contentKey.get());
+                } else {
+                    return contentKey.get();
+                }
             }
         }
-        return key;
+        return contentKey.or(ContentKey.NONE);
     }
 
     @Override
@@ -188,7 +199,7 @@ public class S3SingleContentDao implements ContentDao {
                 .withPrefix(query.getChannelName() + "/")
                 .withMarker(query.getChannelName() + "/" + query.getContentKey().toUrl())
                 .withMaxKeys(query.getCount());
-        SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, query.getCount());
+        SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, query.getCount(), TimeUtil.now());
         query.getTraces().add("s3 next returning", keys);
         return keys;
     }
