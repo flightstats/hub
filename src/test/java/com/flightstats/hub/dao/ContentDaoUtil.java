@@ -106,6 +106,26 @@ public class ContentDaoUtil {
         assertTrue(keys.containsAll(found));
     }
 
+    public void testQuery15Minutes() throws Exception {
+        String channel = "testQuery15Minutes" + RandomStringUtils.randomAlphanumeric(20);
+        List<ContentKey> keys = new ArrayList<>();
+        DateTime start = new DateTime(2014, 11, 14, 14, 0, DateTimeZone.UTC);
+        for (int i = 0; i < 60; i += 6) {
+            ContentKey key = new ContentKey(start.plusMinutes(i), "A" + i);
+            keys.add(key);
+            Content content = createContent(key);
+            contentDao.write(channel, content);
+        }
+        TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
+                .startTime(start)
+                .endTime(start.plusMinutes(19))
+                .unit(TimeUtil.Unit.MINUTES)
+                .traces(new TracesImpl())
+                .build();
+        Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
+        assertEquals(4, found.size());
+    }
+
     public void testDirectionQueryTTL() throws Exception {
         String channel = "testDirectionQueryTTL" + RandomStringUtils.randomAlphanumeric(20);
         List<ContentKey> keys = new ArrayList<>();

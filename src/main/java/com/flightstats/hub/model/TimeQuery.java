@@ -15,6 +15,7 @@ public class TimeQuery implements Query {
     private final String channelName;
     private final String tagName;
     private final DateTime startTime;
+    private final DateTime endTime;
     private final TimeUtil.Unit unit;
     private final Location location;
     private final boolean stable;
