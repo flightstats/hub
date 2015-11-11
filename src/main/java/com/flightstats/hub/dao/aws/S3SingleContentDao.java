@@ -158,7 +158,7 @@ public class S3SingleContentDao implements ContentDao {
         logger.debug("list {} {} {}", channelName, request.getPrefix(), request.getMarker());
         ObjectListing listing = s3Client.listObjects(request);
         ContentKey marker = addKeys(channelName, listing, keys, endTime);
-        while (listing.isTruncated() && keys.size() < maxItems && marker.getTime().isBefore(endTime)) {
+        while (shouldContinue(maxItems, endTime, keys, listing, marker)) {
             request.withMarker(channelName + "/" + marker.toUrl());
             sender.send("channel." + channelName + ".s3.list", 1);
             logger.debug("list {} {}", channelName, request.getMarker());
@@ -166,6 +166,15 @@ public class S3SingleContentDao implements ContentDao {
             marker = addKeys(channelName, listing, keys, endTime);
         }
         return keys;
+    }
+
+    private boolean shouldContinue(int maxItems, DateTime endTime, SortedSet<ContentKey> keys, ObjectListing listing, ContentKey marker) {
+        if (marker == null) {
+            return false;
+        }
+        return listing.isTruncated()
+                && keys.size() < maxItems
+                && marker.getTime().isBefore(endTime);
     }
 
     private ContentKey addKeys(String channelName, ObjectListing listing, Set<ContentKey> keys, DateTime endTime) {
@@ -181,7 +190,7 @@ public class S3SingleContentDao implements ContentDao {
                 }
             }
         }
-        return contentKey.or(ContentKey.NONE);
+        return contentKey.orNull();
     }
 
     @Override

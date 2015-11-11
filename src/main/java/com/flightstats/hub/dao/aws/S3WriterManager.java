@@ -52,6 +52,7 @@ public class S3WriterManager {
         HubServices.register(new S3WriterManagerBatchService(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
 
         this.offsetMinutes = serverOffset();
+        //todo - gfm - 11/11/15 - should this have a limit?
         queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d")
                 .build());
         channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d")
