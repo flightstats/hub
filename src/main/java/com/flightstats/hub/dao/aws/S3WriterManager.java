@@ -83,7 +83,6 @@ public class S3WriterManager {
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             queryThreadPool.submit(() -> {
-                //todo - gfm - 11/11/15 - this also needs to query the range if there is an end-time
                 SortedSet<ContentKey> spokeKeys = spokeContentDao.queryByTime(timeQuery);
                 cacheKeys.addAll(spokeKeys);
                 expectedKeys.addAll(spokeKeys);

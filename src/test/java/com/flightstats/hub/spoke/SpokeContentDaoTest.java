@@ -57,6 +57,11 @@ public class SpokeContentDaoTest {
     }
 
     @Test
+    public void testQuery15Minutes() throws Exception {
+        util.testQuery15Minutes();
+    }
+
+    @Test
     public void testDirectionQuery() throws Exception {
         util.testDirectionQueryTTL();
     }
