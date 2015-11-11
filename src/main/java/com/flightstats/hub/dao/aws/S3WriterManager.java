@@ -82,6 +82,7 @@ public class S3WriterManager {
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             queryThreadPool.submit(() -> {
+                //todo - gfm - 11/11/15 - this also needs to query the range if there is an end-time
                 SortedSet<ContentKey> spokeKeys = spokeContentDao.queryByTime(timeQuery);
                 cacheKeys.addAll(spokeKeys);
                 expectedKeys.addAll(spokeKeys);
@@ -91,6 +92,7 @@ public class S3WriterManager {
                 longTermKeys.addAll(s3ContentDao.queryByTime(timeQuery));
                 countDownLatch.countDown();
             });
+            //todo - gfm - 11/11/15 - we should wait longer if there is an end time
             countDownLatch.await(3, TimeUnit.MINUTES);
             cacheKeys.removeAll(longTermKeys);
             if (cacheKeys.size() > 0) {
