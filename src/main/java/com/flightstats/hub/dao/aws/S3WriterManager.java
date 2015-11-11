@@ -93,8 +93,7 @@ public class S3WriterManager {
                 longTermKeys.addAll(s3ContentDao.queryByTime(timeQuery));
                 countDownLatch.countDown();
             });
-            //todo - gfm - 11/11/15 - we should wait longer if there is an end time
-            countDownLatch.await(3, TimeUnit.MINUTES);
+            countDownLatch.await(15, TimeUnit.MINUTES);
             cacheKeys.removeAll(longTermKeys);
             if (cacheKeys.size() > 0) {
                 logger.info("missing {} items in channel {}", cacheKeys.size(), channelName);

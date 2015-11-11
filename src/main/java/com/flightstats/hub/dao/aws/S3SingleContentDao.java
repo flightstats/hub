@@ -155,13 +155,13 @@ public class S3SingleContentDao implements ContentDao {
                                                      int maxItems, DateTime endTime) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         sender.send("channel." + channelName + ".s3.list", 1);
-        logger.debug("list {} {} {}", channelName, request.getPrefix(), request.getMarker());
+        logger.trace("list {} {} {}", channelName, request.getPrefix(), request.getMarker());
         ObjectListing listing = s3Client.listObjects(request);
         ContentKey marker = addKeys(channelName, listing, keys, endTime);
         while (shouldContinue(maxItems, endTime, keys, listing, marker)) {
             request.withMarker(channelName + "/" + marker.toUrl());
             sender.send("channel." + channelName + ".s3.list", 1);
-            logger.debug("list {} {}", channelName, request.getMarker());
+            logger.trace("list {} {}", channelName, request.getMarker());
             listing = s3Client.listObjects(request);
             marker = addKeys(channelName, listing, keys, endTime);
         }
