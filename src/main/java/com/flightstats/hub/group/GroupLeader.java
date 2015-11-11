@@ -113,13 +113,14 @@ public class GroupLeader implements Leader {
         } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + group.getName());
         } finally {
+            logger.info("stopping last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
             hasLeadership.set(false);
             closeStrategy();
             if (deleteOnExit.get()) {
                 delete();
             }
             stopExecutor();
-            logger.info("stopping last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
+            logger.info("stopped last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
             groupStrategy = null;
             executorService = null;
         }
@@ -218,7 +219,7 @@ public class GroupLeader implements Leader {
         try {
             executorService.shutdown();
             logger.debug("awating termination " + name);
-            executorService.awaitTermination(1, TimeUnit.MINUTES);
+            executorService.awaitTermination(130, TimeUnit.SECONDS);
             logger.debug("stopped Executor " + name);
         } catch (InterruptedException e) {
             logger.warn("unable to stop?" + name, e);
