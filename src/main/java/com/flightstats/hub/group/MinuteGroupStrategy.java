@@ -37,6 +37,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
 
     public MinuteGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
         this.group = group;
+        channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
         this.queue = new ArrayBlockingQueue<>(group.getParallelCalls() * 2);
@@ -62,7 +63,6 @@ public class MinuteGroupStrategy implements GroupStrategy {
 
     @Override
     public void start(Group group, ContentPath startingPath) {
-        channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("minute-group-" + group.getName() + "-%s").build();
         executorService = Executors.newSingleThreadScheduledExecutor(factory);
         int offset = getOffset();
