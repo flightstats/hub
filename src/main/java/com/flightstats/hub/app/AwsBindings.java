@@ -21,18 +21,27 @@ public class AwsBindings extends AbstractModule {
 
     @Override
     protected void configure() {
+        String role = getRole();
+        logger.info("starting server {}  with role {}", HubHost.getLocalName(), role);
+        if ("batch".equals(role)) {
+            configureBatch();
+        } else if ("api".equals(role)) {
+            configureAPI();
+        } else {
+            configureBatch();
+            configureAPI();
+        }
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
-        bind(SpokeTtlEnforcer.class).asEagerSingleton();
+
         bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();
         bind(ChannelConfigDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigDao.DELEGATE))
                 .to(DynamoChannelConfigDao.class);
 
         bind(ContentService.class).to(AwsContentService.class).asEagerSingleton();
-        bind(FileSpokeStore.class).asEagerSingleton();
+
         bind(RemoteSpokeStore.class).asEagerSingleton();
-        bind(CuratorSpokeCluster.class).asEagerSingleton();
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.CACHE))
@@ -48,12 +57,44 @@ public class AwsBindings extends AbstractModule {
 
         bind(DynamoUtils.class).asEagerSingleton();
         bind(GroupDao.class).to(DynamoGroupDao.class).asEagerSingleton();
+
+    }
+
+    private static String getRole() {
+        return HubProperties.getProperty("role." + HubHost.getLocalName(), "all");
+    }
+
+    void configureBatch() {
+        //todo - gfm - 11/12/15 - does this need to run anything?
+        /**
+         * //todo - gfm - 11/12/15 -
+         * hod do we kick off batch iff is a server?
+         * or ...
+         * just has a higher value for curator leader
+         *
+         */
+    }
+
+    void configureAPI() {
+        bind(SpokeTtlEnforcer.class).asEagerSingleton();
+        bind(FileSpokeStore.class).asEagerSingleton();
+        bind(CuratorSpokeCluster.class).asEagerSingleton();
         bind(S3WriterManager.class).asEagerSingleton();
+
     }
 
     public static String packages() {
-        return "com.flightstats.hub";
+        String role = getRole();
+        if ("batch".equals(role)) {
+            return "com.flightstats.hub.app," +
+                    "com.flightstats.hub.health,";
+        } else if ("api".equals(role)) {
+            return "com.flightstats.hub";
+        } else {
+            return "com.flightstats.hub";
+        }
     }
+
 
     @Inject
     @Provides
