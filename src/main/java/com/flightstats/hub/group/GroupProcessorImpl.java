@@ -19,8 +19,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class GroupCallbackImpl implements GroupCallback {
-    private final static Logger logger = LoggerFactory.getLogger(GroupCallbackImpl.class);
+public class GroupProcessorImpl implements GroupProcessor {
+    private final static Logger logger = LoggerFactory.getLogger(GroupProcessorImpl.class);
 
     private static final String WATCHER_PATH = "/groupCallback/watcher";
 
@@ -31,8 +31,8 @@ public class GroupCallbackImpl implements GroupCallback {
     private final Map<String, GroupLeader> activeGroups = new HashMap<>();
 
     @Inject
-    public GroupCallbackImpl(WatchManager watchManager, GroupService groupService,
-                             Provider<GroupLeader> leaderProvider, LastContentPath lastContentPath) {
+    public GroupProcessorImpl(WatchManager watchManager, GroupService groupService,
+                              Provider<GroupLeader> leaderProvider, LastContentPath lastContentPath) {
         this.watchManager = watchManager;
         this.groupService = groupService;
         this.leaderProvider = leaderProvider;

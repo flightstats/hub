@@ -24,6 +24,7 @@ public class AwsBindings extends AbstractModule {
         String role = getRole();
         logger.info("starting server {}  with role {}", HubHost.getLocalName(), role);
         if ("batch".equals(role)) {
+            HubProperties.setProperty("group.keepLeadershipRate", "0.999");
             configureBatch();
         } else if ("api".equals(role)) {
             configureAPI();
@@ -33,31 +34,23 @@ public class AwsBindings extends AbstractModule {
         }
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
-
         bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();
         bind(ChannelConfigDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigDao.DELEGATE))
                 .to(DynamoChannelConfigDao.class);
-
         bind(ContentService.class).to(AwsContentService.class).asEagerSingleton();
-
         bind(RemoteSpokeStore.class).asEagerSingleton();
-
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.CACHE))
                 .to(SpokeContentDao.class).asEagerSingleton();
-
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.SINGLE_LONG_TERM))
                 .to(S3SingleContentDao.class).asEagerSingleton();
-
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.BATCH_LONG_TERM))
                 .to(S3BatchContentDao.class).asEagerSingleton();
-
         bind(DynamoUtils.class).asEagerSingleton();
         bind(GroupDao.class).to(DynamoGroupDao.class).asEagerSingleton();
-
     }
 
     private static String getRole() {
@@ -65,14 +58,7 @@ public class AwsBindings extends AbstractModule {
     }
 
     void configureBatch() {
-        //todo - gfm - 11/12/15 - does this need to run anything?
-        /**
-         * //todo - gfm - 11/12/15 -
-         * hod do we kick off batch iff is a server?
-         * or ...
-         * just has a higher value for curator leader
-         *
-         */
+        //todo - gfm - 11/12/15 - does this need to do anything?
     }
 
     void configureAPI() {

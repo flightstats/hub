@@ -40,6 +40,10 @@ public class HubProperties {
         return Integer.parseInt(properties.getProperty(name, Integer.toString(defaultValue)));
     }
 
+    public static double getProperty(String key, double defaultValue) {
+        return Double.parseDouble(properties.getProperty(key, Double.toString(defaultValue)));
+    }
+
     public static String getProperty(String name, String defaultValue) {
         return properties.getProperty(name, defaultValue);
     }
