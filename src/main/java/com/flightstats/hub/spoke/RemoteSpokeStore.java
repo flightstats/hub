@@ -3,12 +3,10 @@ package com.flightstats.hub.spoke;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.RestClient;
 import com.google.common.base.Optional;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
@@ -48,27 +46,6 @@ public class RemoteSpokeStore {
         this.cluster = cluster;
         this.sender = sender;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
-        HubServices.register(new SpokeHealthHook(), HubServices.TYPE.INITIAL_POST_START);
-    }
-
-    private class SpokeHealthHook extends AbstractIdleService {
-
-        @Override
-        protected void startUp() throws Exception {
-            ClientResponse health = RestClient.defaultClient()
-                    .resource(HubHost.getLocalUriRoot() + "/health")
-                    .get(ClientResponse.class);
-            logger.info("localhost health {}", health);
-            testOne(CuratorSpokeCluster.getLocalServer());
-            if (!testAll()) {
-                logger.warn("unable to cleanly start Spoke");
-                throw new RuntimeException("unable to cleanly start Spoke");
-            }
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-        }
     }
 
     void testOne(Collection<String> server) throws InterruptedException {

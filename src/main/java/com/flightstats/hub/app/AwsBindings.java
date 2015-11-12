@@ -66,7 +66,7 @@ public class AwsBindings extends AbstractModule {
         bind(FileSpokeStore.class).asEagerSingleton();
         bind(CuratorSpokeCluster.class).asEagerSingleton();
         bind(S3WriterManager.class).asEagerSingleton();
-
+        bind(SpokeHealth.class).asEagerSingleton();
     }
 
     public static String packages() {
