@@ -29,6 +29,7 @@ public class QueryGenerator {
             } else if (unit.equals(TimeUtil.Unit.DAYS)) {
                 logger.info("long term query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
             }
+            //todo - gfm - 11/11/15 - can this make use of endTime?
             TimeQuery query = TimeQuery.builder()
                     .channelName(channel)
                     .startTime(lastQueryTime)
