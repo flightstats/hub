@@ -25,12 +25,12 @@ public class AwsBindings extends AbstractModule {
         logger.info("starting server {}  with role {}", HubHost.getLocalName(), role);
         if ("batch".equals(role)) {
             HubProperties.setProperty("group.keepLeadershipRate", "0.999");
-            configureBatch();
-        } else if ("api".equals(role)) {
-            configureAPI();
         } else {
-            configureBatch();
-            configureAPI();
+            bind(SpokeTtlEnforcer.class).asEagerSingleton();
+            bind(FileSpokeStore.class).asEagerSingleton();
+            bind(CuratorSpokeCluster.class).asEagerSingleton();
+            bind(S3WriterManager.class).asEagerSingleton();
+            bind(SpokeHealth.class).asEagerSingleton();
         }
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
@@ -57,25 +57,11 @@ public class AwsBindings extends AbstractModule {
         return HubProperties.getProperty("role." + HubHost.getLocalName(), "all");
     }
 
-    void configureBatch() {
-        //todo - gfm - 11/12/15 - does this need to do anything?
-    }
-
-    void configureAPI() {
-        bind(SpokeTtlEnforcer.class).asEagerSingleton();
-        bind(FileSpokeStore.class).asEagerSingleton();
-        bind(CuratorSpokeCluster.class).asEagerSingleton();
-        bind(S3WriterManager.class).asEagerSingleton();
-        bind(SpokeHealth.class).asEagerSingleton();
-    }
-
     public static String packages() {
         String role = getRole();
         if ("batch".equals(role)) {
             return "com.flightstats.hub.app," +
                     "com.flightstats.hub.health,";
-        } else if ("api".equals(role)) {
-            return "com.flightstats.hub";
         } else {
             return "com.flightstats.hub";
         }
