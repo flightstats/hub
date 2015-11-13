@@ -99,16 +99,29 @@ public class SpokeContentDao implements ContentDao {
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         logger.trace("query by time {} ", query);
-        query.getTraces().add("spoke query by time", query.getChannelName(), query.getStartTime(), query.getUnit());
-        String timePath = query.getUnit().format(query.getStartTime());
+        query.getTraces().add("spoke query by time", query);
+        if (query.getEndTime() == null) {
+            return queryByTimeKeys(query);
+        } else {
+            SortedSet<ContentKey> contentKeys = queryByTimeKeys(query);
+            while (query.getStartTime().isBefore(query.getEndTime())) {
+                query = query.withStartTime(query.getStartTime().plus(query.getUnit().getDuration()));
+                contentKeys.addAll(queryByTimeKeys(query));
+            }
+            return contentKeys;
+        }
+    }
+
+    private SortedSet<ContentKey> queryByTimeKeys(TimeQuery query) {
         try {
+            String timePath = query.getUnit().format(query.getStartTime());
             SortedSet<ContentKey> keys = spokeStore.readTimeBucket(query.getChannelName(), timePath, query.getTraces());
             query.getTraces().add("spoke query by time", keys);
             return keys;
         } catch (Exception e) {
-            logger.warn("what happened? " + query.getChannelName() + " " + query.getStartTime() + " " + query.getUnit(), e);
+            logger.warn("what happened? " + query, e);
         }
-        return new TreeSet<>();
+        return Collections.emptySortedSet();
     }
 
     @Override
