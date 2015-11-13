@@ -28,10 +28,11 @@ public class AwsBindings extends AbstractModule {
         } else {
             bind(SpokeTtlEnforcer.class).asEagerSingleton();
             bind(FileSpokeStore.class).asEagerSingleton();
-            bind(CuratorSpokeCluster.class).asEagerSingleton();
+            bind(SpokeClusterRegister.class).asEagerSingleton();
             bind(S3WriterManager.class).asEagerSingleton();
             bind(SpokeHealth.class).asEagerSingleton();
         }
+        bind(CuratorSpokeCluster.class).asEagerSingleton();
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
         bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();

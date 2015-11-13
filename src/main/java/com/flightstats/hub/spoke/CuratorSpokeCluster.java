@@ -2,8 +2,6 @@ package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubServices;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -11,7 +9,6 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
@@ -33,16 +30,15 @@ public class CuratorSpokeCluster {
         this.curator = curator;
         clusterCache = new PathChildrenCache(curator, CLUSTER_PATH, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
-        clusterCache.getListenable().addListener(new PathChildrenCacheListener() {
-            @Override
-            public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
-                logger.info("event {}", event);
-                if (event.getType().equals(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED)) {
-                    register();
-                }
+    }
+
+    public void addCacheListener() {
+        clusterCache.getListenable().addListener((client, event) -> {
+            logger.info("event {}", event);
+            if (event.getType().equals(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED)) {
+                register();
             }
         });
-        HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
     }
 
     public void register() throws UnknownHostException {
@@ -96,27 +92,16 @@ public class CuratorSpokeCluster {
         return servers;
     }
 
-    void delete() throws Exception {
-        curator.delete().forPath(fullPath);
-        logger.info("deleted host from cluster {} {}", getHost(), fullPath);
-    }
-
-    private class CuratorSpokeClusterHook extends AbstractIdleService {
-        @Override
-        protected void startUp() throws Exception {
-            register();
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
+    void delete() {
+        try {
             logger.info("removing host from cluster {} {}", getHost(), fullPath);
-            try {
-                delete();
-            } catch (KeeperException.NoNodeException e) {
-                logger.info("no node for" + fullPath);
-            } catch (Exception e) {
-                logger.warn("unable to delete " + fullPath, e);
-            }
+            curator.delete().forPath(fullPath);
+            logger.info("deleted host from cluster {} {}", getHost(), fullPath);
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("no node for" + fullPath);
+        } catch (Exception e) {
+            logger.warn("unable to delete " + fullPath, e);
         }
     }
+
 }
