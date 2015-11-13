@@ -52,7 +52,6 @@ public class S3WriterManager {
         HubServices.register(new S3WriterManagerBatchService(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
 
         this.offsetMinutes = serverOffset();
-        //todo - gfm - 11/11/15 - should this have a limit?
         queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d")
                 .build());
         channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d")
@@ -95,8 +94,8 @@ public class S3WriterManager {
             countDownLatch.await(15, TimeUnit.MINUTES);
             cacheKeys.removeAll(longTermKeys);
             if (cacheKeys.size() > 0) {
-                logger.info("missing {} items in channel {}", cacheKeys.size(), channelName);
-                logger.debug("channel {} missing items {}", channelName, cacheKeys);
+                logger.info("missing {} items", cacheKeys.size());
+                logger.debug("missing items {}", cacheKeys);
             }
             return cacheKeys;
         } catch (InterruptedException e) {
@@ -106,6 +105,7 @@ public class S3WriterManager {
 
     private void singleS3Verification(final DateTime startTime, final ChannelConfig channel, DateTime endTime) {
         channelThreadPool.submit(() -> {
+            Thread.currentThread().setName("s3-single-" + channel + "-" + TimeUtil.minutes(startTime));
             String channelName = channel.getName();
             SortedSet<ContentKey> keysToAdd = getMissing(startTime, endTime, channelName, s3SingleContentDao, new TreeSet<>());
             for (ContentKey key : keysToAdd) {
@@ -114,14 +114,21 @@ public class S3WriterManager {
         });
     }
 
+    private String getThreadName(String newName) {
+        String name = Thread.currentThread().getName();
+
+        return name;
+    }
+
     private void batchS3Verification(final DateTime startTime, final ChannelConfig channel) {
         channelThreadPool.submit(() -> {
+            Thread.currentThread().setName("s3-batch-" + channel + "-" + TimeUtil.minutes(startTime));
             String channelName = channel.getName();
             SortedSet<ContentKey> expectedKeys = new TreeSet<>();
             SortedSet<ContentKey> keysToAdd = getMissing(startTime, null, channelName, s3BatchContentDao, expectedKeys);
             if (!keysToAdd.isEmpty()) {
                 MinutePath path = new MinutePath(startTime);
-                logger.info("s3 batch missing {}", path);
+                logger.info("missing {}", path);
                 String batchUrl = MinuteGroupStrategy.getBatchUrl(APP_URL + "/channel/" + channelName, path);
                 S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, path, expectedKeys, batchUrl);
             }
