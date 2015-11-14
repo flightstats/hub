@@ -36,6 +36,7 @@ public class SingleGroupStrategy implements GroupStrategy {
     private BlockingQueue<ContentPath> queue;
     private String channel;
     private QueryGenerator queryGenerator;
+    private ExecutorService executorService;
 
 
     public SingleGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
@@ -103,7 +104,7 @@ public class SingleGroupStrategy implements GroupStrategy {
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         queryGenerator = new QueryGenerator(startingKey.getTime(), channel);
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("single-group-" + group.getName() + "-%s").build();
-        ExecutorService executorService = Executors.newSingleThreadExecutor(factory);
+        executorService = Executors.newSingleThreadExecutor(factory);
         executorService.submit(new Runnable() {
 
             ContentPath lastAdded = startingKey;
@@ -118,7 +119,7 @@ public class SingleGroupStrategy implements GroupStrategy {
                 }
             }
 
-            private void doWork() {
+            private void doWork() throws InterruptedException {
                 while (!shouldExit.get()) {
                     DateTime latestStableInChannel = TimeUtil.stable();
                     if (channelService.isReplicating(channel)) {
@@ -139,22 +140,17 @@ public class SingleGroupStrategy implements GroupStrategy {
                 }
             }
 
-            private void addKeys(Collection<ContentKey> keys) {
+            private void addKeys(Collection<ContentKey> keys) throws InterruptedException {
                 logger.debug("channel {} keys {}", channel, keys);
                 for (ContentKey key : keys) {
                     addKey(key);
                 }
             }
 
-            private void addKey(ContentPath key) {
-                try {
-                    if (key.compareTo(lastAdded) > 0) {
-                        queue.put(key);
-                        lastAdded = key;
-                    }
-                } catch (InterruptedException e) {
-                    logger.info("InterruptedException " + channel + " " + e.getMessage());
-                    throw new RuntimeInterruptedException(e);
+            private void addKey(ContentPath key) throws InterruptedException {
+                if (key.compareTo(lastAdded) > 0) {
+                    queue.put(key);
+                    lastAdded = key;
                 }
             }
 
@@ -165,8 +161,6 @@ public class SingleGroupStrategy implements GroupStrategy {
 
     @Override
     public void close() {
-        if (!shouldExit.get()) {
-            shouldExit.set(true);
-        }
+        GroupStrategy.close(shouldExit, executorService, queue);
     }
 }

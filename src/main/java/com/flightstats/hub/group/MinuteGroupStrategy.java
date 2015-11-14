@@ -83,33 +83,28 @@ public class MinuteGroupStrategy implements GroupStrategy {
                 }
             }
 
-            private void doWork() {
-                try {
-                    DateTime nextTime = lastAdded.getTime().plusMinutes(1);
-                    if (lastAdded instanceof ContentKey) {
-                        nextTime = lastAdded.getTime();
-                    }
-                    DateTime stable = TimeUtil.stable().minusMinutes(1);
-                    if (channelService.isReplicating(channel)) {
-                        ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED);
-                        stable = contentPath.getTime().plusSeconds(1);
-                        logger.debug("replicating {} stable {}", contentPath, stable);
-                    }
-                    logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
-                    while (nextTime.isBefore(stable)) {
-                        Collection<ContentKey> keys = queryKeys(nextTime)
-                                .stream()
-                                .filter(key -> key.compareTo(lastAdded) > 0)
-                                .collect(Collectors.toCollection(ArrayList::new));
-                        MinutePath nextPath = new MinutePath(nextTime, keys);
-                        logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
-                        queue.put(nextPath);
-                        lastAdded = nextPath;
-                        nextTime = lastAdded.getTime().plusMinutes(1);
-                    }
-                } catch (InterruptedException e) {
-                    logger.info("InterruptedException " + channel + " " + e.getMessage());
-                    throw new RuntimeInterruptedException(e);
+            private void doWork() throws InterruptedException {
+                DateTime nextTime = lastAdded.getTime().plusMinutes(1);
+                if (lastAdded instanceof ContentKey) {
+                    nextTime = lastAdded.getTime();
+                }
+                DateTime stable = TimeUtil.stable().minusMinutes(1);
+                if (channelService.isReplicating(channel)) {
+                    ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED);
+                    stable = contentPath.getTime().plusSeconds(1);
+                    logger.debug("replicating {} stable {}", contentPath, stable);
+                }
+                logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
+                while (nextTime.isBefore(stable)) {
+                    Collection<ContentKey> keys = queryKeys(nextTime)
+                            .stream()
+                            .filter(key -> key.compareTo(lastAdded) > 0)
+                            .collect(Collectors.toCollection(ArrayList::new));
+                    MinutePath nextPath = new MinutePath(nextTime, keys);
+                    logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
+                    queue.put(nextPath);
+                    lastAdded = nextPath;
+                    nextTime = lastAdded.getTime().plusMinutes(1);
                 }
             }
 
@@ -188,11 +183,6 @@ public class MinuteGroupStrategy implements GroupStrategy {
 
     @Override
     public void close() throws Exception {
-        if (!shouldExit.get()) {
-            shouldExit.set(true);
-        }
-        if (null != executorService) {
-            executorService.shutdown();
-        }
+        GroupStrategy.close(shouldExit, executorService, queue);
     }
 }
