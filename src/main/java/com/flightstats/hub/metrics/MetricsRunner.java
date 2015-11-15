@@ -2,6 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -51,9 +53,29 @@ public class MetricsRunner {
     public void newRelic(long openFiles) {
         NewRelic.addCustomParameter("openFileCount", openFiles);
         NewRelic.recordResponseTimeMetric("Custom/OpenFileCount", openFiles);
-        if (openFiles >= 2000) {
+        if (openFiles >= 1000) {
             NewRelic.noticeError("too many open files");
+            logger.info(logFilesInfo());
         }
+    }
+
+    public static String logFilesInfo() {
+        String info = "";
+        logger.info("logFilesInfo starting");
+        info += "lsof -b -cjava : \r\n";
+        info += SpokeTtlEnforcer.runCommand(new String[]{"lsof", "-b", "-cjava"}, 60);
+        info += "thread dump \r\n";
+        Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
+        for (Map.Entry<Thread, StackTraceElement[]> entry : allStackTraces.entrySet()) {
+            StackTraceElement[] value = entry.getValue();
+            info += entry.getKey().getName() + " : \r\n";
+            for (int i = 0; i < value.length; i++) {
+                StackTraceElement element = value[i];
+                info += "\t" + element.toString() + "\r\n";
+            }
+        }
+        logger.info("logFilesInfo completed");
+        return info;
     }
 
     private class MetricsRunnerService extends AbstractScheduledService {

@@ -6,6 +6,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -14,7 +15,9 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -65,15 +68,17 @@ public class SpokeTtlEnforcer {
         }
     }
 
-    private void runCommand(String[] command, int waitTime) {
+    public static String runCommand(String[] command, int waitTime) {
+        String output = "";
         try {
             logger.trace("running " + StringUtils.join(" ", command));
             long start = System.currentTimeMillis();
             Process process = new ProcessBuilder(command)
                     .redirectError(ProcessBuilder.Redirect.INHERIT)
-                    .redirectOutput(ProcessBuilder.Redirect.INHERIT)
                     .start();
             boolean waited = process.waitFor(waitTime, TimeUnit.SECONDS);
+            InputStream inputStream = new BufferedInputStream(process.getInputStream());
+            output = new String(ByteStreams.toByteArray(inputStream));
             long time = System.currentTimeMillis() - start;
             if (waited) {
                 logger.trace("waited " + waited + " for " + time);
@@ -81,10 +86,10 @@ public class SpokeTtlEnforcer {
                 logger.info("destroying after " + time + " " + StringUtils.join(" ", command));
                 process.destroyForcibly();
             }
-
         } catch (Exception e) {
             logger.warn("unable to enforce ttl " + StringUtils.join(" ", command), e);
         }
+        return output;
     }
 
     private class SpokeTtlEnforcerService extends AbstractScheduledService {
