@@ -9,6 +9,10 @@ import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
 import com.google.common.base.Optional;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public interface GroupStrategy extends AutoCloseable {
 
     ContentPath getStartingPath();
@@ -39,4 +43,15 @@ public interface GroupStrategy extends AutoCloseable {
         return new SingleGroupStrategy(group, lastContentPath, channelService);
     }
 
+    static void close(AtomicBoolean shouldExit, ExecutorService executorService, BlockingQueue queue) {
+        if (!shouldExit.get()) {
+            shouldExit.set(true);
+        }
+        if (executorService != null) {
+            executorService.shutdownNow();
+        }
+        if (queue != null) {
+            queue.clear();
+        }
+    }
 }
