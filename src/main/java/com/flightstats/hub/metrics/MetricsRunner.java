@@ -62,8 +62,8 @@ public class MetricsRunner {
     public static String logFilesInfo() {
         String info = "";
         logger.info("logFilesInfo starting");
-        info += "lsof -b -p `pgrep -f java` : \r\n";
-        info += SpokeTtlEnforcer.runCommand(new String[]{"lsof", "-b", "-p", "`pgrep -f java`"}, 60);
+        info += "lsof -b -cjava : \r\n";
+        info += SpokeTtlEnforcer.runCommand(new String[]{"lsof", "-b", "-cjava"}, 60);
         info += "thread dump \r\n";
         Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
         for (Map.Entry<Thread, StackTraceElement[]> entry : allStackTraces.entrySet()) {
