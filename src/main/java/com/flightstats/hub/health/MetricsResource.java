@@ -26,5 +26,10 @@ public class MetricsResource {
         return Response.ok(rootNode).build();
     }
 
-
+    @GET
+    @Path("trace")
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response trigger() {
+        return Response.ok(MetricsRunner.logFilesInfo()).build();
+    }
 }
