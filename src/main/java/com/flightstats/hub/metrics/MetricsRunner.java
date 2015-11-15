@@ -53,7 +53,7 @@ public class MetricsRunner {
     public void newRelic(long openFiles) {
         NewRelic.addCustomParameter("openFileCount", openFiles);
         NewRelic.recordResponseTimeMetric("Custom/OpenFileCount", openFiles);
-        if (openFiles >= 2000) {
+        if (openFiles >= 1000) {
             NewRelic.noticeError("too many open files");
             logger.info(logFilesInfo());
         }

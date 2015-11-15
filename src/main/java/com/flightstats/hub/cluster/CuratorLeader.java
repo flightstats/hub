@@ -61,6 +61,7 @@ public class CuratorLeader {
         public void takeLeadership(final CuratorFramework client) throws Exception {
             logger.info("have leadership for " + leaderPath);
             try {
+                Thread.currentThread().setName("curator-leader-" + leaderPath);
                 hasLeadership.set(true);
                 leader.takeLeadership(hasLeadership);
             } catch (RuntimeInterruptedException e) {
@@ -71,6 +72,7 @@ public class CuratorLeader {
                 logger.warn("exception thrown from ElectedLeader " + leaderPath, e);
             } finally {
                 logger.info("lost leadership " + leaderPath);
+                Thread.currentThread().setName("curator-leader-empty");
             }
         }
 
