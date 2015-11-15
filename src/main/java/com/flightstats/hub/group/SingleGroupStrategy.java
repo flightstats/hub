@@ -113,6 +113,9 @@ public class SingleGroupStrategy implements GroupStrategy {
             public void run() {
                 try {
                     doWork();
+                } catch (InterruptedException e) {
+                    error.set(true);
+                    logger.info("InterruptedException with " + channel);
                 } catch (Exception e) {
                     error.set(true);
                     logger.warn("unexpected issue with " + channel, e);
