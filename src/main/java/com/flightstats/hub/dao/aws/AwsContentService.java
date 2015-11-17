@@ -115,20 +115,15 @@ public class AwsContentService implements ContentService {
         if (key.getTime().isAfter(startTime.minusMinutes(ttlMinutes))) {
             Content content = spokeContentDao.read(channelName, key);
             if (content != null) {
+                logger.trace("returning from spoke {} {}", key.toString(), channelName);
                 return Optional.of(content);
             }
         }
         Content content = null;
         if (channel.isSingle()) {
             content = s3SingleContentDao.read(channelName, key);
-            if (content == null) {
-                content = s3BatchContentDao.read(channelName, key);
-            }
         } else if (channel.isBatch()) {
             content = s3BatchContentDao.read(channelName, key);
-            if (content != null) {
-                content = s3SingleContentDao.read(channelName, key);
-            }
         } else {
             ConcurrentLinkedQueue<Content> queue = new ConcurrentLinkedQueue<>();
             try {
