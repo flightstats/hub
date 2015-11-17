@@ -107,8 +107,8 @@ Content-Type is `application/json`
     
 ## create a channel
 
-* `name` _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
-Hyphens are not allowed in channel names. Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
+* `name` _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9`, hyphen `-` and underscore `_`.
+ Surrounding white space is trimmed (e.g. "  foo  " -> "foo" ).
 
 * `owner` is optional and is limited to 48 characters.
 
@@ -667,7 +667,7 @@ The returned items are stable only.
 The Group Callback mechanism is an alternative to WebSockets for consuming events.  This POSTs json uris via HTTP, and
 the Hub server keeps track of the Group's state.
 
-* `name` is used in the url for the callback.  Names are limited to 48 characters and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
+* `name` is used in the url for the callback.  Names are limited to 48 characters and may only contain `a-z`, `A-Z`, `0-9`, hyphen `-` and underscore `_`.
 
 * `callbackUrl` is the fully qualified location to receive callbacks from the server.
 
