@@ -276,16 +276,6 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public void writeBatch(String channel, MinutePath path, Collection<ContentKey> keys, byte[] bytes) {
-        if (dropSomeWrites) {
-            if (Math.random() < 0.95) {
-                internalBatch(channel, path, keys, bytes);
-            }
-        } else {
-            internalBatch(channel, path, keys, bytes);
-        }
-    }
-
-    private void internalBatch(String channel, MinutePath path, Collection<ContentKey> keys, byte[] bytes) {
         try {
             logger.debug("writing batch {} keys {} bytes {}", path, keys.size(), bytes.length);
             writeBatchItems(channel, path, bytes);
