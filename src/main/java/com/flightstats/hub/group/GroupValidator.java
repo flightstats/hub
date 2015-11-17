@@ -1,5 +1,6 @@
 package com.flightstats.hub.group;
 
+import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.ChannelNameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -14,7 +15,7 @@ public class GroupValidator {
         if (StringUtils.isEmpty(name)) {
             throw new InvalidRequestException("{\"error\": \"Group name is required\"}");
         }
-        if (!name.matches("^[a-zA-Z0-9_]+$")) {
+        if (!name.matches(ChannelValidator.VALID_NAME)) {
             throw new InvalidRequestException("{\"error\": \"Group name can only contain characters a-z, A-Z, _ and 0-9\"}");
         }
         if (name.length() > 128) {
