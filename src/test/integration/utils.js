@@ -21,7 +21,7 @@ function runInTestChannelJson(testName, jsonBody, functionToExecute) {
 }
 
 function randomChannelName() {
-    return "test_" + Math.random().toString().replace(".", "_");
+    return "test_" + Math.random().toString().replace(".", "-");
 }
 
 function download(url, completionHandler) {
