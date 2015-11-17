@@ -23,7 +23,7 @@ public class GroupValidatorTest {
     @Test
     public void testName() throws Exception {
         group = group.withDefaults();
-        groupValidator.validate(group.withName("aA9"));
+        groupValidator.validate(group.withName("aA9_-"));
     }
 
     @Test
@@ -44,7 +44,7 @@ public class GroupValidatorTest {
 
     @Test(expected = InvalidRequestException.class)
     public void testNameChars() throws Exception {
-        groupValidator.validate(group.withName("aA9-"));
+        groupValidator.validate(group.withName("aA9:"));
     }
 
     @Test(expected = InvalidRequestException.class)

@@ -9,6 +9,7 @@ import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
 public class ChannelValidator {
+    public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
     private final ChannelService channelService;
 
     @Inject
@@ -99,7 +100,7 @@ public class ChannelValidator {
     }
 
     private void checkForInvalidCharacters(String channelName) throws InvalidRequestException {
-        if (!channelName.matches("^[a-zA-Z0-9_]+$")) {
+        if (!channelName.matches(VALID_NAME)) {
             throw new InvalidRequestException("{\"error\": \"Channel name " + channelName + "must only contain characters a-z, A-Z, and 0-9\"}");
         }
     }

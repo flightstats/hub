@@ -77,7 +77,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
                     if (!shouldExit.get()) {
                         doWork();
                     }
-                } catch (InterruptedException e) {
+                } catch (InterruptedException | RuntimeInterruptedException e) {
                     error.set(true);
                     logger.info("InterruptedException with " + channel);
                 } catch (Exception e) {
