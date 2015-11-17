@@ -1,6 +1,6 @@
 package com.flightstats.hub.group;
 
-public interface GroupCallback {
+public interface GroupProcessor {
 
     void notifyWatchers();
 

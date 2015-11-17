@@ -15,17 +15,17 @@ public class GroupService {
 
     private final GroupDao groupDao;
     private final GroupValidator groupValidator;
-    private final GroupCallback groupCallback;
+    private final GroupProcessor groupProcessor;
     private final LastContentPath lastContentPath;
     private ChannelService channelService;
 
     @Inject
     public GroupService(GroupDao groupDao, GroupValidator groupValidator,
-                        GroupCallback groupCallback, LastContentPath lastContentPath,
+                        GroupProcessor groupProcessor, LastContentPath lastContentPath,
                         ChannelService channelService) {
         this.groupDao = groupDao;
         this.groupValidator = groupValidator;
-        this.groupCallback = groupCallback;
+        this.groupProcessor = groupProcessor;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
     }
@@ -45,7 +45,7 @@ public class GroupService {
         }
         lastContentPath.initialize(group.getName(), group.getStartingKey(), GroupLeader.GROUP_LAST_COMPLETED);
         groupDao.upsertGroup(group);
-        groupCallback.notifyWatchers();
+        groupProcessor.notifyWatchers();
         return existingGroup;
     }
 
@@ -64,14 +64,14 @@ public class GroupService {
         if (lastKey.isPresent()) {
             builder.channelLatest(lastKey.get());
         }
-        groupCallback.getStatus(group, builder);
+        groupProcessor.getStatus(group, builder);
         return builder.build();
     }
 
     public void delete(String name) {
         logger.info("deleting group " + name);
         groupDao.delete(name);
-        groupCallback.delete(name);
+        groupProcessor.delete(name);
     }
 
 }

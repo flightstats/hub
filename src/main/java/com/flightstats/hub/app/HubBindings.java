@@ -5,8 +5,8 @@ import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ChannelServiceImpl;
-import com.flightstats.hub.group.GroupCallback;
-import com.flightstats.hub.group.GroupCallbackImpl;
+import com.flightstats.hub.group.GroupProcessor;
+import com.flightstats.hub.group.GroupProcessorImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.*;
@@ -50,7 +50,7 @@ public class HubBindings extends AbstractModule {
         bind(MetricsRunner.class).asEagerSingleton();
         bind(ChannelValidator.class).asEagerSingleton();
         bind(GroupValidator.class).asEagerSingleton();
-        bind(GroupCallback.class).to(GroupCallbackImpl.class).asEagerSingleton();
+        bind(GroupProcessor.class).to(GroupProcessorImpl.class).asEagerSingleton();
         bind(LastContentPath.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
 

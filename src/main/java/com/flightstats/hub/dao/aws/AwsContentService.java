@@ -176,6 +176,7 @@ public class AwsContentService implements ContentService {
         } else if (query.getLocation().equals(Location.LONG_TERM_BATCH)) {
             return query(daoQuery, spokeContentDao, s3BatchContentDao);
         } else {
+            //todo - gfm - 11/12/15 - this could exclude Spoke for time queries over a specific age
             ChannelConfig channel = channelService.getCachedChannelConfig(query.getChannelName());
             if (channel.isSingle()) {
                 return query(daoQuery, spokeContentDao, s3SingleContentDao);

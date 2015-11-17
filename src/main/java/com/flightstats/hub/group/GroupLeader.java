@@ -2,6 +2,7 @@ package com.flightstats.hub.group;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
@@ -44,6 +45,7 @@ public class GroupLeader implements Leader {
     private final GroupContentPathSet groupInProcess;
     private final GroupError groupError;
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
+    private final double keepLeadershipRate;
 
     private Group group;
     private CuratorLeader curatorLeader;
@@ -67,6 +69,8 @@ public class GroupLeader implements Leader {
         this.lastContentPath = LastContentPath;
         this.groupInProcess = groupInProcess;
         this.groupError = groupError;
+        keepLeadershipRate = HubProperties.getProperty("group.keepLeadershipRate", 0.75);
+        logger.info("keep leadership rate {}", keepLeadershipRate);
     }
 
     public boolean tryLeadership(Group group) {
@@ -124,6 +128,11 @@ public class GroupLeader implements Leader {
             groupStrategy = null;
             executorService = null;
         }
+    }
+
+    @Override
+    public double keepLeadershipRate() {
+        return keepLeadershipRate;
     }
 
     private void sendInProcess(ContentPath lastCompletedPath) throws InterruptedException {
