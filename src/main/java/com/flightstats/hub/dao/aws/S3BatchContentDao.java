@@ -1,4 +1,4 @@
-package com.flightstats.hub.dao;
+package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
@@ -7,8 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.dao.aws.S3BucketName;
-import com.flightstats.hub.dao.aws.S3Util;
+import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.SpokeMarshaller;
@@ -78,6 +77,7 @@ public class S3BatchContentDao implements ContentDao {
 
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
         try {
+            logger.trace("looking for s3 batch {}  {}", channelName, key);
             sender.send("channel." + channelName + ".s3Batch.get", 1);
             MinutePath minutePath = new MinutePath(key.getTime());
             S3Object object = s3Client.getObject(s3BucketName, getS3BatchItemsKey(channelName, minutePath));
