@@ -10,7 +10,6 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.flightstats.hub.app.HubProperties;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,27 +20,20 @@ public class AwsConnectorFactory {
 
     private final static Logger logger = LoggerFactory.getLogger(AwsConnectorFactory.class);
 
-    private final String dynamoEndpoint;
-    private final String s3Endpoint;
-    private final String protocol;
-
-    @Inject
-    public AwsConnectorFactory() {
-        this.dynamoEndpoint = HubProperties.getProperty("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
-        this.s3Endpoint = HubProperties.getProperty("s3.endpoint", "s3-external-1.amazonaws.com");
-        this.protocol = HubProperties.getProperty("aws.protocol", "HTTP");
-        ;
-    }
+    private final String dynamoEndpoint = HubProperties.getProperty("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
+    private final String s3Endpoint = HubProperties.getProperty("s3.endpoint", "s3-external-1.amazonaws.com");
+    private final String protocol = HubProperties.getProperty("aws.protocol", "HTTP");
 
     public AmazonS3 getS3Client() throws IOException {
         AmazonS3Client amazonS3Client = null;
+        ClientConfiguration configuration = getClientConfiguration("s3");
         try {
             InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
             credentialsProvider.getCredentials();
-            amazonS3Client = new AmazonS3Client(credentialsProvider, getClientConfiguration());
+            amazonS3Client = new AmazonS3Client(credentialsProvider, configuration);
         } catch (Exception e) {
             logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
-            amazonS3Client = new AmazonS3Client(getPropertiesCredentials(), getClientConfiguration());
+            amazonS3Client = new AmazonS3Client(getPropertiesCredentials(), configuration);
         }
         amazonS3Client.setEndpoint(s3Endpoint);
         return amazonS3Client;
@@ -50,7 +42,7 @@ public class AwsConnectorFactory {
     public AmazonDynamoDBClient getDynamoClient() throws IOException {
         logger.info("creating for  " + protocol + " " + dynamoEndpoint);
         AmazonDynamoDBClient client = null;
-        ClientConfiguration configuration = getClientConfiguration();
+        ClientConfiguration configuration = getClientConfiguration("dynamo");
         try {
             InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
             credentialsProvider.getCredentials();
@@ -78,9 +70,12 @@ public class AwsConnectorFactory {
         }
     }
 
-    private ClientConfiguration getClientConfiguration() {
+    private ClientConfiguration getClientConfiguration(String name) {
         RetryPolicy retryPolicy = PredefinedRetryPolicies.getDefaultRetryPolicy();
         ClientConfiguration configuration = new ClientConfiguration();
+        int maxConnections = HubProperties.getProperty(name + ".maxConnections", 50);
+        logger.info("{} maxConnections {}", name, maxConnections);
+        configuration.setMaxConnections(maxConnections);
         configuration.withRetryPolicy(retryPolicy);
         configuration.setProtocol(Protocol.valueOf(protocol));
         return configuration;
