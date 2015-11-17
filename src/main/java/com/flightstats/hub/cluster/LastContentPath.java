@@ -30,6 +30,16 @@ public class LastContentPath {
         }
     }
 
+    public ContentPath getOrNull(String name, String basePath) {
+        String path = basePath + name;
+        try {
+            return get(path);
+        } catch (Exception e) {
+            logger.info("unable to get node " + e.getMessage());
+            return null;
+        }
+    }
+
     public ContentPath get(String name, ContentPath defaultPath, String basePath) {
         String path = basePath + name;
         try {
