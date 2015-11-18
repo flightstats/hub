@@ -2,9 +2,11 @@ package com.flightstats.hub.channel;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.Traces;
 import com.flightstats.hub.spoke.SpokeMarshaller;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
@@ -26,7 +28,9 @@ public class ZipBatchBuilder {
 
     public static Response build(Collection<ContentKey> keys, String channel,
                                  ChannelService channelService) {
+        Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
+            ActiveTraces.setLocal(traces);
             for (ContentKey key : keys) {
                 writeContent(output, key, channel, channelService);
             }
@@ -35,7 +39,9 @@ public class ZipBatchBuilder {
 
     public static Response buildTag(String tag, Collection<ChannelContentKey> keys,
                                     ChannelService channelService) {
+        Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
+            ActiveTraces.setLocal(traces);
             for (ChannelContentKey key : keys) {
                 writeContent(output, key.getContentKey(), key.getChannel(), channelService);
             }
