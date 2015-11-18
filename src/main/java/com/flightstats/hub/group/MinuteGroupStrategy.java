@@ -87,7 +87,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
             }
 
             private void doWork() throws InterruptedException {
-                ActiveTraces.start("MinuteGroupStrategy", group);
+                ActiveTraces.start("MinuteGroupStrategy.doWork", group);
                 try {
                     DateTime nextTime = lastAdded.getTime().plusMinutes(1);
                     if (lastAdded instanceof ContentKey) {
@@ -107,7 +107,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
                                 .collect(Collectors.toCollection(ArrayList::new));
                         MinutePath nextPath = new MinutePath(nextTime, keys);
                         logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
-                        ActiveTraces.getLocal().add("minute group", nextPath);
+                        ActiveTraces.getLocal().add("MinuteGroupStrategy.doWork nextPath", nextPath);
                         queue.put(nextPath);
                         lastAdded = nextPath;
                         nextTime = lastAdded.getTime().plusMinutes(1);
