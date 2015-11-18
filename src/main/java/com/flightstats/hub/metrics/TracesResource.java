@@ -12,9 +12,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Path("/internal/trace")
-public class TraceResource {
-    private final static Logger logger = LoggerFactory.getLogger(TraceResource.class);
+@Path("/internal/traces")
+public class TracesResource {
+    private final static Logger logger = LoggerFactory.getLogger(TracesResource.class);
     @Inject
     private ObjectMapper mapper;
 

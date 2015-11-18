@@ -39,6 +39,7 @@ public class ActiveTraces {
             logger.trace("removing {}", traces.getId());
             activeTraces.remove(traces.getId());
             threadLocal.remove();
+            traces.add("completed");
             recent.put(traces);
         }
     }
