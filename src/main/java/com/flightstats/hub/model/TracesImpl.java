@@ -2,16 +2,15 @@ package com.flightstats.hub.model;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.SortedSet;
+import java.util.*;
 
 public class TracesImpl implements Traces {
 
     private long start = System.currentTimeMillis();
+    private final String id = UUID.randomUUID().toString();
     private final List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
 
     @Override
@@ -41,6 +40,11 @@ public class TracesImpl implements Traces {
     @Override
     public long getStart() {
         return start;
+    }
+
+    @Override
+    public String getId() {
+        return id;
     }
 
     @Override
@@ -75,6 +79,8 @@ public class TracesImpl implements Traces {
 
     @Override
     public void output(ObjectNode root) {
+        root.put("id", id);
+        root.put("start", new DateTime(start).toString());
         ArrayNode traceRoot = root.putArray("trace");
         synchronized (traces) {
             for (Trace trace : traces) {

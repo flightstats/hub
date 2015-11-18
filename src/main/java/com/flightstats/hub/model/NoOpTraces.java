@@ -32,6 +32,11 @@ public class NoOpTraces implements Traces {
     }
 
     @Override
+    public String getId() {
+        return "";
+    }
+
+    @Override
     public void logSlow(long millis, Logger logger) {
 
     }

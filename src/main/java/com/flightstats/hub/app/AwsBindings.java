@@ -2,7 +2,10 @@ package com.flightstats.hub.app;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
-import com.flightstats.hub.dao.*;
+import com.flightstats.hub.dao.CachedChannelConfigDao;
+import com.flightstats.hub.dao.ChannelConfigDao;
+import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.group.GroupDao;
 import com.flightstats.hub.spoke.*;
@@ -62,7 +65,7 @@ public class AwsBindings extends AbstractModule {
         String role = getRole();
         if ("batch".equals(role)) {
             return "com.flightstats.hub.app," +
-                    "com.flightstats.hub.health,";
+                    "com.flightstats.hub.health,com.flightstats.hub.metrics,";
         } else {
             return "com.flightstats.hub";
         }

@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import java.util.SortedSet;
 
 public interface Traces {
-    static final Traces NOOP = new NoOpTraces();
+    Traces NOOP = new NoOpTraces();
 
     void add(Trace trace);
 
@@ -17,6 +17,8 @@ public interface Traces {
     void setStart(long start);
 
     long getStart();
+
+    String getId();
 
     void logSlow(long millis, Logger logger);
 
