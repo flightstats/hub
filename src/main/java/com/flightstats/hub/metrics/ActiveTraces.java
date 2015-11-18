@@ -33,12 +33,12 @@ public class ActiveTraces {
     public static void end() {
         Traces traces = threadLocal.get();
         if (null == traces) {
-            logger.warn("no Traces found!");
+            logger.warn("no Traces found!", new Exception());
         } else {
             logger.trace("removing {}", traces.getId());
             activeTraces.remove(traces.getId());
             threadLocal.remove();
-            traces.add("completed");
+            traces.end();
             recent.put(traces);
         }
     }
@@ -50,7 +50,7 @@ public class ActiveTraces {
     public static Traces getLocal() {
         Traces traces = threadLocal.get();
         if (traces == null) {
-            traces = new Traces("missing initial context");
+            traces = new Traces("error: missing initial context");
             StackTraceElement[] elements = new Exception().getStackTrace();
             for (int i = 0; i < elements.length; i++) {
                 traces.add(elements[i].toString());
