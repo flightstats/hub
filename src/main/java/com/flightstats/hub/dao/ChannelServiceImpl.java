@@ -3,6 +3,7 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicatorManager;
@@ -145,11 +146,12 @@ public class ChannelServiceImpl implements ChannelService {
                 .next(false)
                 .stable(stable)
                 .ttlDays(channelConfig.getTtlDays())
-                .traces(traces)
                 .count(1)
                 .build();
         Collection<ContentKey> keys = getKeys(query);
-        query.getTraces().log(logger);
+        if (trace) {
+            ActiveTraces.getLocal().log(logger);
+        }
         if (keys.isEmpty()) {
             return Optional.absent();
         } else {
@@ -236,10 +238,11 @@ public class ChannelServiceImpl implements ChannelService {
             query = query.withContentKey(new ContentKey(ttlTime, "0"));
         }
         query = query.withTtlDays(getTtlDays(query.getChannelName()));
-        query.getTraces().add(query);
+        Traces traces = ActiveTraces.getLocal();
+        traces.add(query);
         List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
         SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
-        query.getTraces().add("direction keys", contentKeys);
+        traces.add("direction keys", contentKeys);
         return contentKeys;
     }
 

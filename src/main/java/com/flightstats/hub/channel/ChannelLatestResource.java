@@ -72,7 +72,6 @@ public class ChannelLatestResource {
                 .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
                 .count(count - 1)
                 .build();
-        query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
         keys.add(latest.get());
         if (batch) {

@@ -181,24 +181,26 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
+        Traces traces = ActiveTraces.getLocal();
         SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
         try {
-            query.getTraces().add("s3 batch query", query);
+            traces.add("s3 batch query", query);
             if (query.isNext()) {
                 contentKeys = handleNext(query);
             } else {
                 contentKeys = S3Util.queryPrevious(query, this);
             }
-            query.getTraces().add("s3 batch query", contentKeys);
+            traces.add("s3 batch query", contentKeys);
         } catch (Exception e) {
             logger.warn("query exception" + query, e);
-            query.getTraces().add("query exception", e);
+            traces.add("query exception", e);
         }
         return contentKeys;
     }
 
     private SortedSet<ContentKey> handleNext(DirectionQuery query) {
         SortedSet<ContentKey> keys = new TreeSet<>();
+        Traces traces = ActiveTraces.getLocal();
         DateTime endTime = TimeUtil.time(query.isStable());
         DateTime markerTime = query.getContentKey().getTime().minusMinutes(1);
         int queryItems = Math.min(s3MaxQueryItems, query.getCount());
@@ -209,7 +211,7 @@ public class S3BatchContentDao implements ContentDao {
                     .withPrefix(channel + BATCH_INDEX)
                     .withMarker(channel + BATCH_INDEX + TimeUtil.Unit.MINUTES.format(markerTime))
                     .withMaxKeys(queryItems);
-            SortedSet<MinutePath> paths = listMinutePaths(channel, request, query.getTraces(), false);
+            SortedSet<MinutePath> paths = listMinutePaths(channel, request, traces, false);
 
             if (paths.isEmpty()) {
                 return keys;
@@ -218,7 +220,7 @@ public class S3BatchContentDao implements ContentDao {
                 if (keys.size() >= query.getCount()) {
                     return keys;
                 }
-                getKeysForMinute(channel, path, keys, query.getTraces());
+                getKeysForMinute(channel, path, keys, traces);
                 markerTime = path.getTime();
             }
         } while (keys.size() < query.getCount() && markerTime.isBefore(endTime));

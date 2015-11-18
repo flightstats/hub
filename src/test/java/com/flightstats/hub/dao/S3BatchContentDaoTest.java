@@ -161,7 +161,6 @@ public class S3BatchContentDaoTest {
                         .next(next)
                         .count(count)
                         .ttlDays(2)
-                        .traces(traces)
                         .build();
 
         SortedSet<ContentKey> found = contentDao.query(query);

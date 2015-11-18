@@ -61,7 +61,6 @@ public class TagLatestResource {
                 .stable(stable)
                 .count(count - 1)
                 .build();
-        query.trace(trace);
         Collection<ChannelContentKey> keys = tagService.getKeys(query);
         keys.add(latest.get());
         if (batch) {

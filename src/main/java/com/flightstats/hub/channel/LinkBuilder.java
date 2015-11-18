@@ -3,6 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.ContentKey;
@@ -116,7 +117,7 @@ public class LinkBuilder {
             URI uri = buildItemUri(key, channelUri);
             ids.add(uri.toString());
         }
-        query.getTraces().output(root);
+        ActiveTraces.getLocal().output(root);
         return Response.ok(root).build();
     }
 
@@ -148,7 +149,8 @@ public class LinkBuilder {
         for (ChannelContentKey key : keys) {
             ids.add(uriInfo.getBaseUri() + key.toUrl() + "?tag=" + tag);
         }
-        query.getTraces().output(root);
+        //todo - gfm - 11/17/15 - fix this
+        //query.getTraces().output(root);
         return Response.ok(root).build();
     }
 

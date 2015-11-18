@@ -69,6 +69,7 @@ public class ChannelEarliestResource {
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, trace, channelService);
         Collection<ContentKey> keys = channelService.getKeys(query);
+        //todo - gfm - 11/17/15 - handle trace
         if (batch) {
             return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
@@ -89,7 +90,6 @@ public class ChannelEarliestResource {
                 .ttlDays(ttlDays)
                 .count(count)
                 .build();
-        query.trace(trace);
         return query;
     }
 

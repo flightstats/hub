@@ -206,14 +206,15 @@ public class S3SingleContentDao implements ContentDao {
     }
 
     private SortedSet<ContentKey> next(DirectionQuery query) {
-        query.getTraces().add("s3 next", query);
+        Traces traces = ActiveTraces.getLocal();
+        traces.add("s3 next", query);
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
                 .withPrefix(query.getChannelName() + "/")
                 .withMarker(query.getChannelName() + "/" + query.getContentKey().toUrl())
                 .withMaxKeys(query.getCount());
         SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, query.getCount(), TimeUtil.now());
-        query.getTraces().add("s3 next returning", keys);
+        traces.add("s3 next returning", keys);
         return keys;
     }
 

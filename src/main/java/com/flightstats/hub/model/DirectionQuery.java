@@ -22,25 +22,12 @@ public class DirectionQuery implements Query {
     private final boolean stable;
     @Wither
     private final long ttlDays;
-    @Setter
-    private Traces traces;
 
     public Location getLocation() {
         if (location == null) {
             return Location.ALL;
         }
         return location;
-    }
-
-    public Traces getTraces() {
-        if (traces == null) {
-            return Traces.NOOP;
-        }
-        return traces;
-    }
-
-    public void trace(boolean trace) {
-        traces = Traces.getTraces(trace);
     }
 
     public TimeQuery convert(DateTime startTime, TimeUtil.Unit unit) {

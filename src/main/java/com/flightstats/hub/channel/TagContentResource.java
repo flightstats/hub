@@ -247,7 +247,6 @@ public class TagContentResource {
                 .next(next)
                 .stable(stable)
                 .count(1).build();
-        query.trace(false);
         Collection<ChannelContentKey> keys = tagService.getKeys(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
@@ -297,8 +296,6 @@ public class TagContentResource {
                 .stable(stable)
                 .location(Location.valueOf(location))
                 .count(count).build();
-        query.trace(trace);
-        query.getTraces().add("adjacentCount", query);
         Collection<ChannelContentKey> keys = tagService.getKeys(query);
         if (batch) {
             return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);

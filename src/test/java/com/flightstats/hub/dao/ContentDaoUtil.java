@@ -1,6 +1,9 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
@@ -226,12 +229,10 @@ public class ContentDaoUtil {
                 .count(count)
                 .next(next)
                 .contentKey(new ContentKey(queryTime, "0"))
-                .traces(new TracesImpl())
                 .ttlDays(10)
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
         logger.info("query {} {}", queryTime, found);
-        query.getTraces().log(logger);
         assertEquals(expected, found.size());
         assertTrue(keys.containsAll(found));
     }
