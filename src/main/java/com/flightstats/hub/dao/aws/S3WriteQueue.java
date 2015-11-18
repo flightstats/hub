@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.github.rholder.retry.Retryer;
@@ -74,9 +75,14 @@ public class S3WriteQueue {
     private void writeContent() throws Exception {
         ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
         if (key != null) {
-            logger.trace("writing {}", key.getContentKey());
-            Content content = spokeContentDao.read(key.getChannel(), key.getContentKey());
-            s3SingleContentDao.write(key.getChannel(), content);
+            ActiveTraces.start("S3WriteQueue.writeContent", key);
+            try {
+                logger.trace("writing {}", key.getContentKey());
+                Content content = spokeContentDao.read(key.getChannel(), key.getContentKey());
+                s3SingleContentDao.write(key.getChannel(), content);
+            } finally {
+                ActiveTraces.end();
+            }
         }
     }
 
