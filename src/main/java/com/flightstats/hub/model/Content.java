@@ -36,7 +36,6 @@ public class Content implements Serializable {
         contentLanguage = builder.contentLanguage;
         contentType = builder.contentType;
         stream = builder.stream;
-        ActiveTraces.getLocal().add(new Trace("Content.start"));
     }
 
     public static Builder builder() {
