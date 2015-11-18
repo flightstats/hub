@@ -138,6 +138,7 @@ public class SingleGroupStrategy implements GroupStrategy {
                             addKey(minutePath);
                         }
                     } else {
+                        ActiveTraces.getLocal().add("sleeping 1 second");
                         Sleeper.sleep(1000);
                     }
                 } finally {
