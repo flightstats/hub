@@ -1,5 +1,6 @@
 package com.flightstats.hub.model;
 
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import lombok.EqualsAndHashCode;
@@ -36,7 +37,7 @@ public class Content implements Serializable {
         contentLanguage = builder.contentLanguage;
         contentType = builder.contentType;
         stream = builder.stream;
-        traces.add(new Trace("Content.start"));
+        ActiveTraces.getLocal().add(new Trace("Content.start"));
     }
 
     public static Builder builder() {
@@ -47,9 +48,9 @@ public class Content implements Serializable {
         if (isNew()) {
             ContentKey key = new ContentKey();
             setContentKey(key);
-            getTraces().setStart(key.getMillis());
+            ActiveTraces.getLocal().setStart(key.getMillis());
         } else {
-            getTraces().setStart(System.currentTimeMillis());
+            ActiveTraces.getLocal().setStart(System.currentTimeMillis());
         }
         return getContentKey().get();
     }
