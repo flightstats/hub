@@ -16,7 +16,7 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
 
     @Override
     public ContainerRequest filter(ContainerRequest request) {
-        ActiveTraces.start(request.getRequestUri());
+        ActiveTraces.start(request.getMethod(), request.getRequestUri());
         return request;
     }
 
