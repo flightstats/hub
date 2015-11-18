@@ -3,7 +3,6 @@ package com.flightstats.hub.metrics;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.model.Traces;
-import com.flightstats.hub.model.TracesImpl;
 import com.flightstats.hub.util.ObjectRing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,7 @@ public class ActiveTraces {
     private static final ThreadLocal<Traces> threadLocal = new ThreadLocal();
 
     public static void start(Object... objects) {
-        start(new TracesImpl(objects));
+        start(new Traces(objects));
     }
 
     public static void start(Traces traces) {
@@ -51,7 +50,7 @@ public class ActiveTraces {
     public static Traces getLocal() {
         Traces traces = threadLocal.get();
         if (traces == null) {
-            traces = new TracesImpl("missing initial context");
+            traces = new Traces("missing initial context");
             StackTraceElement[] elements = new Exception().getStackTrace();
             for (int i = 0; i < elements.length; i++) {
                 traces.add(elements[i].toString());

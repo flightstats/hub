@@ -15,8 +15,6 @@ public class BatchContent {
     private final String contentType;
     private final List<Content> items = new ArrayList<>();
 
-    private Traces traces = new TracesImpl();
-
     private BatchContent(Builder builder) {
         stream = builder.stream;
         contentType = builder.contentType;

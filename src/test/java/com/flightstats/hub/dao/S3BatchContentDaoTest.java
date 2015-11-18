@@ -153,7 +153,6 @@ public class S3BatchContentDaoTest {
     }
 
     private void queryDirection(String channel, ContentKey contentKey, boolean next, int count, int expected) {
-        TracesImpl traces = new TracesImpl();
         DirectionQuery query =
                 DirectionQuery.builder()
                         .channelName(channel)
@@ -164,7 +163,6 @@ public class S3BatchContentDaoTest {
                         .build();
 
         SortedSet<ContentKey> found = contentDao.query(query);
-        traces.log(logger);
         assertEquals(expected, found.size());
     }
 
