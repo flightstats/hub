@@ -27,7 +27,11 @@ public class Traces {
     }
 
     public long getTime() {
-        return end - start;
+        if (end > 0) {
+            return end - start;
+        } else {
+            return System.currentTimeMillis() - start;
+        }
     }
 
     public void add(Trace trace) {
@@ -90,6 +94,7 @@ public class Traces {
     public void output(ObjectNode root) {
         root.put("id", id);
         root.put("start", new DateTime(start).toString());
+        root.put("time", getTime());
         ArrayNode traceRoot = root.putArray("trace");
         synchronized (traces) {
             for (Trace trace : traces) {
