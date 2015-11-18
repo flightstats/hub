@@ -56,16 +56,12 @@ public class SingleGroupStrategy implements GroupStrategy {
         if (null == startingKey) {
             startingKey = new ContentKey();
         }
-        return getLastCompleted(startingKey);
-    }
-
-    private ContentPath getLastCompleted(ContentPath defaultKey) {
-        return lastContentPath.get(group.getName(), defaultKey, GroupLeader.GROUP_LAST_COMPLETED);
+        return lastContentPath.get(group.getName(), startingKey, GroupLeader.GROUP_LAST_COMPLETED);
     }
 
     @Override
     public ContentPath getLastCompleted() {
-        return getLastCompleted(ContentKey.NONE);
+        return lastContentPath.getOrNull(group.getName(), GroupLeader.GROUP_LAST_COMPLETED);
     }
 
     @Override
