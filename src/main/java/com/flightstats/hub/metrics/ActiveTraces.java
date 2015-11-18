@@ -8,6 +8,7 @@ import com.flightstats.hub.util.ObjectRing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -66,9 +67,9 @@ public class ActiveTraces {
         for (Traces trace : ordered) {
             trace.output(active.addObject());
         }
-        Traces[] items = recent.getItems();
+        List<Traces> recentItems = recent.getItems();
         ArrayNode recent = root.putArray("recent");
-        for (Traces trace : items) {
+        for (Traces trace : recentItems) {
             trace.output(recent.addObject());
         }
     }

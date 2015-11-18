@@ -2,6 +2,8 @@ package com.flightstats.hub.util;
 
 import org.junit.Test;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 
 public class ObjectRingTest {
@@ -11,9 +13,9 @@ public class ObjectRingTest {
         for (int i = 0; i < 20; i++) {
             objectRing.put("i=" + i);
         }
-        Object[] items = objectRing.getItems();
-        assertEquals("i=15", items[0]);
-        assertEquals("i=17", items[2]);
-        assertEquals("i=19", items[4]);
+        List<String> items = objectRing.getItems();
+        assertEquals("i=15", items.get(0));
+        assertEquals("i=17", items.get(2));
+        assertEquals("i=19", items.get(4));
     }
 }

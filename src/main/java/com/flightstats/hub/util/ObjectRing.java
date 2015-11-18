@@ -1,5 +1,8 @@
 package com.flightstats.hub.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ObjectRing<T> {
 
     private T[] items;
@@ -17,7 +20,19 @@ public class ObjectRing<T> {
         position++;
     }
 
-    public T[] getItems() {
-        return items;
+    public List<T> getItems() {
+        List<T> list = new ArrayList<>();
+        int start = position;
+        for (int i = start; i < items.length; i++) {
+            if (null != items[i]) {
+                list.add(items[i]);
+            }
+        }
+        for (int i = 0; i < start; i++) {
+            if (null != items[i]) {
+                list.add(items[i]);
+            }
+        }
+        return list;
     }
 }
