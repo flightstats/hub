@@ -110,7 +110,9 @@ public class SingleGroupStrategy implements GroupStrategy {
             public void run() {
                 try {
                     while (!shouldExit.get()) {
-                        doWork();
+                        if (!doWork()) {
+                            Sleeper.sleep(1000);
+                        }
                     }
                 } catch (InterruptedException | RuntimeInterruptedException e) {
                     error.set(true);
@@ -121,7 +123,7 @@ public class SingleGroupStrategy implements GroupStrategy {
                 }
             }
 
-            private void doWork() throws InterruptedException {
+            private boolean doWork() throws InterruptedException {
                 ActiveTraces.start("SingleGroupStrategy", group);
                 try {
                     DateTime latestStableInChannel = TimeUtil.stable();
@@ -137,10 +139,9 @@ public class SingleGroupStrategy implements GroupStrategy {
                             logger.debug("sending heartbeat {}", minutePath);
                             addKey(minutePath);
                         }
-                    } else {
-                        ActiveTraces.getLocal().add("sleeping 1 second");
-                        Sleeper.sleep(1000);
+                        return true;
                     }
+                    return false;
                 } finally {
                     ActiveTraces.end();
                 }

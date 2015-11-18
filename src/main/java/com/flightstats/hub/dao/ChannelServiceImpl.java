@@ -244,7 +244,7 @@ public class ChannelServiceImpl implements ChannelService {
         traces.add(query);
         List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
         SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
-        traces.add("direction keys", contentKeys);
+        traces.add("ChannelServiceImpl.getKeys", contentKeys);
         return contentKeys;
     }
 
