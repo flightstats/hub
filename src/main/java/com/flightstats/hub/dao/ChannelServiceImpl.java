@@ -128,7 +128,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (null == channelConfig) {
             return Optional.absent();
         }
-        Traces traces = Traces.getTraces(trace);
+        Traces traces = ActiveTraces.getLocal();
         ContentKey limitKey = new ContentKey(TimeUtil.time(stable), "ZZZZZZ");
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
@@ -136,7 +136,9 @@ public class ChannelServiceImpl implements ChannelService {
             if (latest.get().getTime().isBefore(ttlTime)) {
                 return Optional.absent();
             }
-            traces.log(logger);
+            if (trace) {
+                traces.log(logger);
+            }
             return latest;
         }
 
@@ -150,7 +152,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .build();
         Collection<ContentKey> keys = getKeys(query);
         if (trace) {
-            ActiveTraces.getLocal().log(logger);
+            traces.log(logger);
         }
         if (keys.isEmpty()) {
             return Optional.absent();

@@ -10,6 +10,7 @@ import java.util.*;
 public class TracesImpl implements Traces {
 
     private long start = System.currentTimeMillis();
+    private long end;
     private final String id = UUID.randomUUID().toString();
     private final List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
 
@@ -18,6 +19,17 @@ public class TracesImpl implements Traces {
 
     public TracesImpl(Object... objects) {
         add(objects);
+    }
+
+    @Override
+    public void end() {
+        end = System.currentTimeMillis();
+        add("cend");
+    }
+
+    @Override
+    public long getTime() {
+        return end - start;
     }
 
     @Override

@@ -62,15 +62,23 @@ public class ActiveTraces {
     }
 
     public static void log(ObjectNode root) {
-        TreeSet<Traces> ordered = new TreeSet<>((t1, t2) -> (int) (t1.getStart() - t2.getStart()));
-        ordered.addAll(activeTraces.values());
+        TreeSet<Traces> orderedActive = new TreeSet<>((t1, t2) -> (int) (t1.getStart() - t2.getStart()));
+        orderedActive.addAll(activeTraces.values());
         ArrayNode active = root.putArray("active");
-        for (Traces trace : ordered) {
+        for (Traces trace : orderedActive) {
             trace.output(active.addObject());
         }
         List<Traces> recentItems = recent.getItems();
+        TreeSet<Traces> orderedRecent = new TreeSet<>((t1, t2) -> {
+            int difference = (int) (t2.getTime() - t1.getTime());
+            if (difference == 0) {
+                difference = t1.getId().compareTo(t2.getId());
+            }
+            return difference;
+        });
+        orderedRecent.addAll(recentItems);
         ArrayNode recent = root.putArray("recent");
-        for (Traces trace : recentItems) {
+        for (Traces trace : orderedRecent) {
             trace.output(recent.addObject());
         }
     }

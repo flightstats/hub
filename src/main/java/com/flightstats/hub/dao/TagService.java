@@ -86,7 +86,7 @@ public class TagService {
 
     public Collection<ChannelContentKey> getEarliest(String tag, int count, boolean stable, boolean trace) {
         Iterable<ChannelConfig> channels = getChannels(tag);
-        Traces traces = Traces.getTraces(trace);
+        Traces traces = ActiveTraces.getLocal();
         traces.add("earliest for tag", tag);
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
