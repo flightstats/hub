@@ -48,7 +48,11 @@ public class ActiveTraces {
     public static Traces getLocal() {
         Traces traces = threadLocal.get();
         if (traces == null) {
-            traces = new TracesImpl("missing initial context", new Exception());
+            traces = new TracesImpl("missing initial context");
+            StackTraceElement[] elements = new Exception().getStackTrace();
+            for (int i = 0; i < elements.length; i++) {
+                traces.add(elements[i].toString());
+            }
             start(traces);
         }
         return traces;
