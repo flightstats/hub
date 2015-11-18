@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.model.Traces;
 import com.flightstats.hub.model.TracesImpl;
+import com.flightstats.hub.util.ObjectRing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,9 +17,8 @@ public class ActiveTraces {
     private final static Logger logger = LoggerFactory.getLogger(ActiveTraces.class);
 
     private static final Map<String, Traces> activeTraces = new ConcurrentHashMap<>();
-    //todo - gfm - 11/17/15 - also track last N traces
-
-    private static ThreadLocal<Traces> threadLocal = new ThreadLocal();
+    private static final ObjectRing<Traces> recent = new ObjectRing(100);
+    private static final ThreadLocal<Traces> threadLocal = new ThreadLocal();
 
     public static void start(Object... objects) {
         start(new TracesImpl(objects));
@@ -38,6 +38,7 @@ public class ActiveTraces {
             logger.trace("removing {}", traces.getId());
             activeTraces.remove(traces.getId());
             threadLocal.remove();
+            recent.put(traces);
         }
     }
 
@@ -61,9 +62,14 @@ public class ActiveTraces {
     public static void log(ObjectNode root) {
         TreeSet<Traces> ordered = new TreeSet<>((t1, t2) -> (int) (t1.getStart() - t2.getStart()));
         ordered.addAll(activeTraces.values());
-        ArrayNode traces = root.putArray("traces");
+        ArrayNode active = root.putArray("active");
         for (Traces trace : ordered) {
-            trace.output(traces.addObject());
+            trace.output(active.addObject());
+        }
+        Traces[] items = recent.getItems();
+        ArrayNode recent = root.putArray("recent");
+        for (Traces trace : items) {
+            trace.output(recent.addObject());
         }
     }
 }

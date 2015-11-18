@@ -27,7 +27,6 @@ public class Content implements Serializable {
     private final InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
-    private Traces traces = new TracesImpl();
     @Setter
     private Long size;
 
