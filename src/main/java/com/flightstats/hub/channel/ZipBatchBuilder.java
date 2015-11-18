@@ -49,7 +49,9 @@ public class ZipBatchBuilder {
     }
 
     private static Response write(final Consumer<ZipOutputStream> consumer) {
+        Traces traces = ActiveTraces.getLocal();
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
+            ActiveTraces.setLocal(traces);
             ZipOutputStream output = new ZipOutputStream(os);
             output.setLevel(Deflater.DEFAULT_COMPRESSION);
             consumer.accept(output);
