@@ -36,7 +36,6 @@ public class QueryGenerator {
                     .unit(unit)
                     .location(location)
                     .build();
-            query.trace(false);
             lastQueryTime = unit.round(lastQueryTime.plus(unit.getDuration()));
             return query;
         } else {

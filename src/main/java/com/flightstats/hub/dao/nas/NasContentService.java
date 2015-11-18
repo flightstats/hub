@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.nas;
 
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.SpokeMarshaller;
@@ -79,10 +80,11 @@ public class NasContentService implements ContentService {
     @Override
     public Collection<ContentKey> queryByTime(TimeQuery query) {
         String path = query.getChannelName() + "/" + query.getUnit().format(query.getStartTime());
-        query.getTraces().add("query by time", path);
+        Traces traces = ActiveTraces.getLocal();
+        traces.add("query by time", path);
         TreeSet<ContentKey> keySet = new TreeSet<>();
         ContentKeyUtil.convertKeyStrings(fileSpokeStore.readKeysInBucket(path), keySet);
-        query.getTraces().add(query.getChannelName(), keySet);
+        traces.add(query.getChannelName(), keySet);
         return keySet;
     }
 

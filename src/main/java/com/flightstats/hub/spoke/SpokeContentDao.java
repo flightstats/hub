@@ -5,6 +5,7 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedWriteException;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -99,7 +100,7 @@ public class SpokeContentDao implements ContentDao {
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         logger.trace("query by time {} ", query);
-        query.getTraces().add("spoke query by time", query);
+        ActiveTraces.getLocal().add("spoke query by time", query);
         if (query.getEndTime() == null) {
             return queryByTimeKeys(query);
         } else {
@@ -115,8 +116,8 @@ public class SpokeContentDao implements ContentDao {
     private SortedSet<ContentKey> queryByTimeKeys(TimeQuery query) {
         try {
             String timePath = query.getUnit().format(query.getStartTime());
-            SortedSet<ContentKey> keys = spokeStore.readTimeBucket(query.getChannelName(), timePath, query.getTraces());
-            query.getTraces().add("spoke query by time", keys);
+            SortedSet<ContentKey> keys = spokeStore.readTimeBucket(query.getChannelName(), timePath);
+            ActiveTraces.getLocal().add("spoke query by time", keys);
             return keys;
         } catch (Exception e) {
             logger.warn("what happened? " + query, e);
@@ -132,7 +133,7 @@ public class SpokeContentDao implements ContentDao {
         }
         if (query.isNext()) {
             try {
-                return spokeStore.getNext(query.getChannelName(), query.getCount(), query.getContentKey().toUrl(), query.getTraces());
+                return spokeStore.getNext(query.getChannelName(), query.getCount(), query.getContentKey().toUrl());
             } catch (InterruptedException e) {
                 logger.warn("what happened? " + query, e);
             }

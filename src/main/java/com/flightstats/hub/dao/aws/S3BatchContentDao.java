@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.SpokeMarshaller;
@@ -111,13 +112,14 @@ public class S3BatchContentDao implements ContentDao {
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         if (query.getUnit().lessThanOrEqual(TimeUtil.Unit.MINUTES)) {
-            return queryMinute(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces());
+            return queryMinute(query.getChannelName(), query.getStartTime(), query.getUnit());
         } else {
-            return queryHourPlus(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getTraces());
+            return queryHourPlus(query.getChannelName(), query.getStartTime(), query.getUnit());
         }
     }
 
-    private SortedSet<ContentKey> queryHourPlus(String channel, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
+    private SortedSet<ContentKey> queryHourPlus(String channel, DateTime startTime, TimeUtil.Unit unit) {
+        Traces traces = ActiveTraces.getLocal();
         SortedSet<ContentKey> keys = new TreeSet<>();
         DateTime rounded = unit.round(startTime);
         traces.add("s3 batch queryHourPlus ", channel, rounded, unit);
@@ -135,7 +137,8 @@ public class S3BatchContentDao implements ContentDao {
         return keys;
     }
 
-    private SortedSet<ContentKey> queryMinute(String channel, DateTime startTime, TimeUtil.Unit unit, Traces traces) {
+    private SortedSet<ContentKey> queryMinute(String channel, DateTime startTime, TimeUtil.Unit unit) {
+        Traces traces = ActiveTraces.getLocal();
         SortedSet<ContentKey> keys = new TreeSet<>();
         DateTime rounded = unit.round(startTime);
         traces.add("s3 batch queryMinute ", channel, rounded, unit);

@@ -13,6 +13,13 @@ public class TracesImpl implements Traces {
     private final String id = UUID.randomUUID().toString();
     private final List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
 
+    public TracesImpl() {
+    }
+
+    public TracesImpl(Object... objects) {
+        add(objects);
+    }
+
     @Override
     public void add(Trace trace) {
         traces.add(trace);

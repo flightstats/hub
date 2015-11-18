@@ -5,7 +5,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -69,6 +73,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
 
             @Override
             public void run() {
+                ActiveTraces.start("minute group", group);
                 try {
                     if (!shouldExit.get()) {
                         doWork();
@@ -79,6 +84,8 @@ public class MinuteGroupStrategy implements GroupStrategy {
                 } catch (Exception e) {
                     error.set(true);
                     logger.warn("unexpected issue with " + channel, e);
+                } finally {
+                    ActiveTraces.end();
                 }
             }
 
@@ -101,6 +108,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
                             .collect(Collectors.toCollection(ArrayList::new));
                     MinutePath nextPath = new MinutePath(nextTime, keys);
                     logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
+                    ActiveTraces.getLocal().add("minute group", nextPath);
                     queue.put(nextPath);
                     lastAdded = nextPath;
                     nextTime = lastAdded.getTime().plusMinutes(1);
@@ -126,7 +134,6 @@ public class MinuteGroupStrategy implements GroupStrategy {
                 .startTime(time)
                 .unit(TimeUtil.Unit.MINUTES)
                 .stable(true)
-                .traces(Traces.NOOP)
                 .build();
         return channelService.queryByTime(timeQuery);
     }

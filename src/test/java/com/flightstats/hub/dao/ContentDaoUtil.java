@@ -59,7 +59,6 @@ public class ContentDaoUtil {
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
                 .unit(TimeUtil.Unit.DAYS)
-                .traces(new TracesImpl())
                 .build();
         Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
         assertEquals(keys.size(), found.size());
@@ -79,7 +78,6 @@ public class ContentDaoUtil {
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
                 .unit(TimeUtil.Unit.HOURS)
-                .traces(new TracesImpl())
                 .build();
         Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
         assertEquals(keys.size(), found.size());
@@ -99,7 +97,6 @@ public class ContentDaoUtil {
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
                 .unit(TimeUtil.Unit.MINUTES)
-                .traces(new TracesImpl())
                 .build();
         Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
         assertEquals(keys.size(), found.size());
@@ -114,7 +111,6 @@ public class ContentDaoUtil {
                 .startTime(start)
                 .endTime(start.plusMinutes(19))
                 .unit(TimeUtil.Unit.MINUTES)
-                .traces(new TracesImpl())
                 .build();
         Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
         assertEquals(0, found.size());
@@ -131,7 +127,6 @@ public class ContentDaoUtil {
                 .startTime(start)
                 .endTime(start.plusMinutes(19))
                 .unit(TimeUtil.Unit.MINUTES)
-                .traces(new TracesImpl())
                 .build();
         found = contentDao.queryByTime(timeQuery);
         assertEquals(4, found.size());
@@ -140,7 +135,6 @@ public class ContentDaoUtil {
                 .startTime(start.plusHours(2))
                 .endTime(start.plusHours(2).plusMinutes(19))
                 .unit(TimeUtil.Unit.MINUTES)
-                .traces(new TracesImpl())
                 .build();
         found = contentDao.queryByTime(timeQuery);
         assertEquals(0, found.size());

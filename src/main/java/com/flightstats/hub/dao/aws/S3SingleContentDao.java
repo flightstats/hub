@@ -4,6 +4,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
@@ -134,7 +135,8 @@ public class S3SingleContentDao implements ContentDao {
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         logger.debug("queryByTime {} ", query);
-        query.getTraces().add("s3 single query by time", query.getChannelName(), query.getStartTime(), query.getUnit());
+        Traces traces = ActiveTraces.getLocal();
+        traces.add("s3 single query by time", query.getChannelName(), query.getStartTime(), query.getUnit());
         String timePath = query.getUnit().format(query.getStartTime());
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
@@ -147,7 +149,7 @@ public class S3SingleContentDao implements ContentDao {
             request.withMarker(query.getChannelName() + "/" + timePath);
         }
         SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, MAX_ITEMS, endTime);
-        query.getTraces().add("s3 single returning ", keys);
+        traces.add("s3 single returning ", keys);
         return keys;
     }
 

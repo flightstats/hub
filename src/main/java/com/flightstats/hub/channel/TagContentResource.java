@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.dao.TagService;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
@@ -150,7 +151,6 @@ public class TagContentResource {
                 .unit(unit)
                 .location(Location.valueOf(location))
                 .build();
-        query.trace(trace);
         Collection<ChannelContentKey> keys = tagService.queryByTime(query);
         if (batch) {
             return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
@@ -171,7 +171,9 @@ public class TagContentResource {
             URI uri = LinkBuilder.buildItemUri(key.getContentKey(), channelUri);
             ids.add(uri.toString() + "?tag=" + tag);
         }
-        query.getTraces().output(root);
+        if (trace) {
+            ActiveTraces.getLocal().output(root);
+        }
         return Response.ok(root).build();
     }
 

@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.RestClient;
@@ -110,7 +111,8 @@ public class RemoteSpokeStore {
     }
 
     public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
-        return write(path, payload, cluster.getServers(), content.getTraces());
+        //todo - gfm - 11/17/15 - make sure Content traces are set correctly
+        return write(path, payload, cluster.getServers(), ActiveTraces.getLocal());
     }
 
     private boolean write(final String path, final byte[] payload, Collection<String> servers, final Traces traces) throws InterruptedException {
@@ -182,15 +184,16 @@ public class RemoteSpokeStore {
         return null;
     }
 
-    public SortedSet<ContentKey> readTimeBucket(String channel, String timePath, Traces traces) throws InterruptedException {
-        return getKeys(traces, "/internal/spoke/time/" + channel + "/" + timePath);
+    public SortedSet<ContentKey> readTimeBucket(String channel, String timePath) throws InterruptedException {
+        return getKeys("/internal/spoke/time/" + channel + "/" + timePath);
     }
 
-    public SortedSet<ContentKey> getNext(String channel, int count, String startKey, Traces traces) throws InterruptedException {
-        return getKeys(traces, "/internal/spoke/next/" + channel + "/" + count + "/" + startKey);
+    public SortedSet<ContentKey> getNext(String channel, int count, String startKey) throws InterruptedException {
+        return getKeys("/internal/spoke/next/" + channel + "/" + count + "/" + startKey);
     }
 
-    private SortedSet<ContentKey> getKeys(final Traces traces, final String path) throws InterruptedException {
+    private SortedSet<ContentKey> getKeys(final String path) throws InterruptedException {
+        Traces traces = ActiveTraces.getLocal();
         Collection<String> servers = cluster.getServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());

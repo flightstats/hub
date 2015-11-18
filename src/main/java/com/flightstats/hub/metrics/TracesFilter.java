@@ -1,7 +1,6 @@
 package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.model.Traces;
-import com.flightstats.hub.model.TracesImpl;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
 import com.sun.jersey.spi.container.ContainerResponse;
@@ -17,24 +16,13 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
 
     @Override
     public ContainerRequest filter(ContainerRequest request) {
-        Traces traces = new TracesImpl();
-        traces.add(request.getRequestUri());
-        threadLocal.set(traces);
-        ActiveTraces.add(traces);
-        logger.trace("setting {}", traces);
+        ActiveTraces.start(request.getRequestUri());
         return request;
     }
 
     @Override
     public ContainerResponse filter(ContainerRequest request, ContainerResponse response) {
-        Traces traces = threadLocal.get();
-        if (null == traces) {
-            logger.warn("no Traces found!");
-        } else {
-            logger.trace("removing {}", traces.getId());
-            ActiveTraces.remove(traces);
-            threadLocal.remove();
-        }
+        ActiveTraces.end();
         return response;
     }
 }

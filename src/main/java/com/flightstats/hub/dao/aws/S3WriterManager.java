@@ -6,6 +6,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.group.MinuteGroupStrategy;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
@@ -77,17 +78,19 @@ public class S3WriterManager {
                 .startTime(startTime)
                 .endTime(endTime)
                 .unit(TimeUtil.Unit.MINUTES)
-                .traces(Traces.NOOP)
                 .build();
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
+            Traces traces = ActiveTraces.getLocal();
             queryThreadPool.submit(() -> {
+                ActiveTraces.setLocal(traces);
                 SortedSet<ContentKey> spokeKeys = spokeContentDao.queryByTime(timeQuery);
                 cacheKeys.addAll(spokeKeys);
                 expectedKeys.addAll(spokeKeys);
                 countDownLatch.countDown();
             });
             queryThreadPool.submit(() -> {
+                ActiveTraces.setLocal(traces);
                 longTermKeys.addAll(s3ContentDao.queryByTime(timeQuery));
                 countDownLatch.countDown();
             });
@@ -105,32 +108,36 @@ public class S3WriterManager {
 
     private void singleS3Verification(final DateTime startTime, final ChannelConfig channel, DateTime endTime) {
         channelThreadPool.submit(() -> {
-            Thread.currentThread().setName("s3-single-" + channel + "-" + TimeUtil.minutes(startTime));
-            String channelName = channel.getName();
-            SortedSet<ContentKey> keysToAdd = getMissing(startTime, endTime, channelName, s3SingleContentDao, new TreeSet<>());
-            for (ContentKey key : keysToAdd) {
-                s3WriteQueue.add(new ChannelContentKey(channelName, key));
+            try {
+                Thread.currentThread().setName("s3-single-" + channel + "-" + TimeUtil.minutes(startTime));
+                ActiveTraces.start("s3-single-verify", channel, startTime);
+                String channelName = channel.getName();
+                SortedSet<ContentKey> keysToAdd = getMissing(startTime, endTime, channelName, s3SingleContentDao, new TreeSet<>());
+                for (ContentKey key : keysToAdd) {
+                    s3WriteQueue.add(new ChannelContentKey(channelName, key));
+                }
+            } finally {
+                ActiveTraces.end();
             }
         });
     }
 
-    private String getThreadName(String newName) {
-        String name = Thread.currentThread().getName();
-
-        return name;
-    }
-
     private void batchS3Verification(final DateTime startTime, final ChannelConfig channel) {
         channelThreadPool.submit(() -> {
-            Thread.currentThread().setName("s3-batch-" + channel + "-" + TimeUtil.minutes(startTime));
-            String channelName = channel.getName();
-            SortedSet<ContentKey> expectedKeys = new TreeSet<>();
-            SortedSet<ContentKey> keysToAdd = getMissing(startTime, null, channelName, s3BatchContentDao, expectedKeys);
-            if (!keysToAdd.isEmpty()) {
-                MinutePath path = new MinutePath(startTime);
-                logger.info("missing {}", path);
-                String batchUrl = MinuteGroupStrategy.getBatchUrl(APP_URL + "/channel/" + channelName, path);
-                S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, path, expectedKeys, batchUrl);
+            try {
+                Thread.currentThread().setName("s3-batch-" + channel + "-" + TimeUtil.minutes(startTime));
+                ActiveTraces.start("s3-batch-verify", channel, startTime);
+                String channelName = channel.getName();
+                SortedSet<ContentKey> expectedKeys = new TreeSet<>();
+                SortedSet<ContentKey> keysToAdd = getMissing(startTime, null, channelName, s3BatchContentDao, expectedKeys);
+                if (!keysToAdd.isEmpty()) {
+                    MinutePath path = new MinutePath(startTime);
+                    logger.info("missing {}", path);
+                    String batchUrl = MinuteGroupStrategy.getBatchUrl(APP_URL + "/channel/" + channelName, path);
+                    S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, path, expectedKeys, batchUrl);
+                }
+            } finally {
+                ActiveTraces.end();
             }
         });
     }
