@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 
 import java.util.concurrent.Callable;
 
-public class MetricsTimer {
+public class MetricsTimer implements MetricsSender {
     private final MetricsSender sender;
 
     @Inject
@@ -19,5 +19,10 @@ public class MetricsTimer {
         } finally {
             sender.send(name, System.currentTimeMillis() - start);
         }
+    }
+
+    @Override
+    public void send(String name, Object value) {
+        sender.send(name, value);
     }
 }
