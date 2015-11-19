@@ -36,7 +36,7 @@ public class CuratorCluster {
 
     public void addCacheListener() {
         clusterCache.getListenable().addListener((client, event) -> {
-            logger.info("event {}", event);
+            logger.info("event {} {}", event, clusterPath);
             if (event.getType().equals(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED)) {
                 register();
             }
@@ -45,12 +45,12 @@ public class CuratorCluster {
 
     public void register() throws UnknownHostException {
         try {
-            logger.info("registering host {}", getHost());
+            logger.info("registering host {} {}", getHost(), clusterPath);
             curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(true), getHost().getBytes());
         } catch (KeeperException.NodeExistsException e) {
-            logger.warn("node already exists {} - not likely in prod", getHost());
+            logger.warn("node already exists {} {} - not likely in prod", getHost(), clusterPath);
         } catch (Exception e) {
-            logger.error("unable to register, should die", getHost(), e);
+            logger.error("unable to register, should die", getHost(), clusterPath, e);
             throw new RuntimeException(e);
         }
     }
