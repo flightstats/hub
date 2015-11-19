@@ -66,7 +66,7 @@ public class TagLatestResource {
         if (batch) {
             return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
         }
-        return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true);
+        return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace);
     }
 
 }

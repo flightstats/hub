@@ -291,11 +291,10 @@ public class ChannelContentResource {
                 .count(count)
                 .build();
         Collection<ContentKey> keys = channelService.getKeys(query);
-        //todo - gfm - 11/17/15 - handle trace
         if (batch) {
             return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
-            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
+            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true, trace);
         }
     }
 

@@ -88,7 +88,8 @@ public class LinkBuilder {
     }
 
     public static Response directionalResponse(String channel, Collection<ContentKey> keys, int count,
-                                               DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo, boolean includePrevious) {
+                                               DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
+                                               boolean includePrevious, boolean trace) {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
@@ -117,12 +118,15 @@ public class LinkBuilder {
             URI uri = buildItemUri(key, channelUri);
             ids.add(uri.toString());
         }
-        ActiveTraces.getLocal().output(root);
+        if (trace) {
+            ActiveTraces.getLocal().output(root);
+        }
         return Response.ok(root).build();
     }
 
     public static Response directionalTagResponse(String tag, Collection<ChannelContentKey> keys, int count,
-                                                  DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo, boolean includePrevious) {
+                                                  DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
+                                                  boolean includePrevious, boolean trace) {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
@@ -149,8 +153,9 @@ public class LinkBuilder {
         for (ChannelContentKey key : keys) {
             ids.add(uriInfo.getBaseUri() + key.toUrl() + "?tag=" + tag);
         }
-        //todo - gfm - 11/17/15 - fix this
-        //query.getTraces().output(root);
+        if (trace) {
+            ActiveTraces.getLocal().output(root);
+        }
         return Response.ok(root).build();
     }
 

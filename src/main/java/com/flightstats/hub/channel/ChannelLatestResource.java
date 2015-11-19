@@ -77,7 +77,7 @@ public class ChannelLatestResource {
         if (batch) {
             return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
-            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
+            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true, trace);
         }
 
     }
