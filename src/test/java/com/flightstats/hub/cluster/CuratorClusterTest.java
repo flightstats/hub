@@ -22,7 +22,7 @@ public class CuratorClusterTest {
 
     @Test
     public void testPath() throws Exception {
-        CuratorCluster cluster = new CuratorCluster(curator, "test");
+        CuratorCluster cluster = new CuratorCluster(curator, "/test");
         Collection<String> servers = cluster.getServers();
         assertNotNull(servers);
         assertEquals(0, servers.size());
