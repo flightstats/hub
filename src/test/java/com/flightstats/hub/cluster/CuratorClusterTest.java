@@ -28,7 +28,7 @@ public class CuratorClusterTest {
         assertEquals(0, servers.size());
 
         cluster.register();
-        Sleeper.sleep(1000);
+        Sleeper.sleep(5000);
 
         servers = cluster.getServers();
         assertNotNull(servers);
