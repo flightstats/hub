@@ -1,4 +1,4 @@
-package com.flightstats.hub.spoke;
+package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
@@ -11,7 +11,7 @@ import java.util.Collection;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class CuratorSpokeClusterTest {
+public class CuratorClusterTest {
 
     private static CuratorFramework curator;
 
@@ -22,7 +22,7 @@ public class CuratorSpokeClusterTest {
 
     @Test
     public void testPath() throws Exception {
-        CuratorSpokeCluster cluster = new CuratorSpokeCluster(curator);
+        CuratorCluster cluster = new CuratorCluster(curator, "test");
         Collection<String> servers = cluster.getServers();
         assertNotNull(servers);
         assertEquals(0, servers.size());

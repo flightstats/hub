@@ -1,4 +1,4 @@
-package com.flightstats.hub.spoke;
+package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
@@ -18,17 +18,19 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 @Singleton
-public class CuratorSpokeCluster {
-    public static final String CLUSTER_PATH = "/SpokeCluster";
-    private final static Logger logger = LoggerFactory.getLogger(CuratorSpokeCluster.class);
+public class CuratorCluster {
+
+    private final static Logger logger = LoggerFactory.getLogger(CuratorCluster.class);
     private final CuratorFramework curator;
+    private final String clusterPath;
     private final PathChildrenCache clusterCache;
     private String fullPath;
 
     @Inject
-    public CuratorSpokeCluster(CuratorFramework curator) throws Exception {
+    public CuratorCluster(CuratorFramework curator, String clusterPath) throws Exception {
         this.curator = curator;
-        clusterCache = new PathChildrenCache(curator, CLUSTER_PATH, true);
+        this.clusterPath = clusterPath;
+        clusterCache = new PathChildrenCache(curator, clusterPath, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     }
 
@@ -55,7 +57,7 @@ public class CuratorSpokeCluster {
 
     private String getFullPath(boolean create) throws UnknownHostException {
         if (create) {
-            fullPath = CLUSTER_PATH + "/" + getHost() + RandomStringUtils.randomAlphanumeric(6);
+            fullPath = clusterPath + "/" + getHost() + RandomStringUtils.randomAlphanumeric(6);
         }
         return fullPath;
     }
@@ -92,7 +94,7 @@ public class CuratorSpokeCluster {
         return servers;
     }
 
-    void delete() {
+    public void delete() {
         try {
             logger.info("removing host from cluster {} {}", getHost(), fullPath);
             curator.delete().forPath(fullPath);

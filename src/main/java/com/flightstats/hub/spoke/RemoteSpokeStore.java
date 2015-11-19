@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
@@ -10,6 +11,7 @@ import com.flightstats.hub.rest.RestClient;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
@@ -37,13 +39,13 @@ public class RemoteSpokeStore {
     private final static Client write_client = RestClient.createClient(1, 2, true);
     private final static Client query_client = RestClient.createClient(5, 2 * 60, true);
 
-    private final CuratorSpokeCluster cluster;
+    private final CuratorCluster cluster;
     private final MetricsSender sender;
     private final ExecutorService executorService;
     private final int stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
 
     @Inject
-    public RemoteSpokeStore(CuratorSpokeCluster cluster, MetricsSender sender) {
+    public RemoteSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster, MetricsSender sender) {
         this.cluster = cluster;
         this.sender = sender;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
@@ -83,7 +85,7 @@ public class RemoteSpokeStore {
 
     public boolean testAll() throws UnknownHostException {
         Collection<String> servers = cluster.getRandomServers();
-        servers.addAll(CuratorSpokeCluster.getLocalServer());
+        servers.addAll(CuratorCluster.getLocalServer());
         logger.info("*********************************************");
         logger.info("testing servers {}", servers);
         logger.info("*********************************************");
