@@ -1,12 +1,14 @@
 package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.model.Traces;
+import com.flightstats.hub.util.Sleeper;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +42,7 @@ public class TracesSortedSetTest {
             traces.setStart(start - i);
             traces.setEnd(start);
             tracesSortedSet.add(traces);
+            Sleeper.sleep((long) (Math.random()));
         }
     }
 
@@ -49,14 +52,14 @@ public class TracesSortedSetTest {
         int count = 1000;
         long start = System.currentTimeMillis();
         TracesSortedSet tracesSortedSet = new TracesSortedSet(maxSize);
-        ExecutorService executorService = Executors.newCachedThreadPool();
         AtomicInteger loops = new AtomicInteger();
         AtomicBoolean exception = new AtomicBoolean();
         AtomicLong ids = new AtomicLong();
-        executorService.submit(() -> {
+        Executors.newSingleThreadExecutor().submit(() -> {
             try {
-                while (!executorService.isShutdown()) {
-                    for (Traces traces : tracesSortedSet) {
+                while (true) {
+                    SortedSet<Traces> copy = tracesSortedSet.getCopy();
+                    for (Traces traces : copy) {
                         ids.addAndGet(traces.getTime());
                     }
                     loops.incrementAndGet();
@@ -67,6 +70,7 @@ public class TracesSortedSetTest {
             }
         });
 
+        ExecutorService executorService = Executors.newCachedThreadPool();
         for (int i = 0; i < 5; i++) {
             executorService.submit(() -> addTraces(count, start, tracesSortedSet));
         }
@@ -74,11 +78,14 @@ public class TracesSortedSetTest {
         executorService.shutdown();
         executorService.awaitTermination(1, TimeUnit.MINUTES);
         logger.info("ids {}", ids);
+        logger.info("loops {}", loops);
+        logger.info("tracesSortedSet {}", tracesSortedSet.size());
         for (Traces traces : tracesSortedSet) {
-            //traces.log(logger);
             assertTrue(traces.getTime() > 970);
         }
-        assertTrue(loops.get() > 100);
+        assertEquals(100, tracesSortedSet.size());
+        assertTrue(loops.get() > 1000);
+        assertTrue(ids.get() > 1000 * 1000);
         assertFalse(exception.get());
 
     }

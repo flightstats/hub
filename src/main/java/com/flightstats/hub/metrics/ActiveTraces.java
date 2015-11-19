@@ -69,7 +69,7 @@ public class ActiveTraces {
         for (Traces trace : orderedActive) {
             trace.output(active.addObject());
         }
-        addItems("slowest", slowest, root);
+        addItems("slowest", slowest.getCopy(), root);
         addItems("recent", recent.getItems(), root);
     }
 

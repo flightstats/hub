@@ -3,6 +3,7 @@ package com.flightstats.hub.metrics;
 import com.flightstats.hub.model.Traces;
 
 import java.util.Comparator;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
@@ -31,6 +32,9 @@ public class TracesSortedSet extends TreeSet<Traces> {
                     remove(smallest);
                     result = super.add(traces);
                     smallestTime = smallest.getTime();
+                    while (size() > maxSize) {
+                        remove(last());
+                    }
                 }
             }
             return result;
@@ -44,6 +48,14 @@ public class TracesSortedSet extends TreeSet<Traces> {
                 return super.add(traces);
             }
         }
+    }
+
+    public SortedSet<Traces> getCopy() {
+        TreeSet<Traces> copy = new TreeSet<>(new DescendingTracesComparator());
+        synchronized (this) {
+            copy.addAll(this);
+        }
+        return copy;
     }
 
     static class DescendingTracesComparator implements Comparator<Traces> {
