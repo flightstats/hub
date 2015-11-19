@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.rest.RestClient;
@@ -68,6 +69,7 @@ public class S3BatchResource {
 
     public static boolean getAndWriteBatch(ContentDao contentDao, String channel, MinutePath path,
                                            Collection<ContentKey> keys, String batchUrl) {
+        ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch", path);
         ClientResponse response = RestClient.defaultClient()
                 .resource(batchUrl + "&location=CACHE")
                 .accept("application/zip")
@@ -76,8 +78,10 @@ public class S3BatchResource {
             logger.warn("unable to get data for {} {}", channel, response);
             return false;
         }
+        ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch got response");
         byte[] bytes = response.getEntity(byte[].class);
         contentDao.writeBatch(channel, path, keys, bytes);
+        ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch completed");
         return true;
     }
 }
