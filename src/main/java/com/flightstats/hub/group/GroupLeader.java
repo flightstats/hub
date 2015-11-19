@@ -156,6 +156,8 @@ public class GroupLeader implements Leader {
             public Object call() throws Exception {
                 groupInProcess.add(group.getName(), contentPath);
                 try {
+                    long delta = System.currentTimeMillis() - contentPath.getTime().getMillis();
+                    metricsTimer.send("group." + group.getName() + ".delta", delta);
                     makeTimedCall(groupStrategy.createResponse(contentPath, mapper));
                     if (increaseLastUpdated(contentPath)) {
                         lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
@@ -189,11 +191,10 @@ public class GroupLeader implements Leader {
 
     private void makeTimedCall(final ObjectNode response) throws Exception {
         metricsTimer.time("group." + group.getName() + ".post",
-                () -> metricsTimer.time("group.ALL.post",
-                        () -> {
-                            makeCall(response);
-                            return null;
-                        }));
+                () -> {
+                    makeCall(response);
+                    return null;
+                });
     }
 
     private void makeCall(final ObjectNode response) throws ExecutionException, RetryException {
