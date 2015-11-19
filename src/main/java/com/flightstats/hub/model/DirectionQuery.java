@@ -8,7 +8,7 @@ import org.joda.time.DateTime;
 
 @Builder
 @Getter
-@ToString(exclude = {"traces"})
+@ToString
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class DirectionQuery implements Query {
     @Wither
