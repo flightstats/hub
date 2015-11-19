@@ -7,7 +7,7 @@ import com.flightstats.hub.util.ObjectRing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,13 +18,14 @@ public class ActiveTraces {
 
     private static final Map<String, Traces> activeTraces = new ConcurrentHashMap<>();
     private static final ObjectRing<Traces> recent = new ObjectRing(100);
+    private static final TracesSortedSet slowest = new TracesSortedSet(100);
     private static final ThreadLocal<Traces> threadLocal = new ThreadLocal();
 
     public static void start(Object... objects) {
         start(new Traces(objects));
     }
 
-    public static void start(Traces traces) {
+    private static void start(Traces traces) {
         activeTraces.put(traces.getId(), traces);
         setLocal(traces);
         logger.trace("setting {}", traces);
@@ -40,6 +41,7 @@ public class ActiveTraces {
             threadLocal.remove();
             traces.end();
             recent.put(traces);
+            slowest.add(traces);
         }
     }
 
@@ -67,16 +69,14 @@ public class ActiveTraces {
         for (Traces trace : orderedActive) {
             trace.output(active.addObject());
         }
-        List<Traces> recentItems = recent.getItems();
-        TreeSet<Traces> orderedRecent = new TreeSet<>((t1, t2) -> {
-            int difference = (int) (t2.getTime() - t1.getTime());
-            if (difference == 0) {
-                difference = t1.getId().compareTo(t2.getId());
-            }
-            return difference;
-        });
+        addItems("slowest", slowest, root);
+        addItems("recent", recent.getItems(), root);
+    }
+
+    private static void addItems(String fieldName, Collection<Traces> recentItems, ObjectNode root) {
+        TreeSet<Traces> orderedRecent = new TreeSet<>(new TracesSortedSet.DescendingTracesComparator());
         orderedRecent.addAll(recentItems);
-        ArrayNode recent = root.putArray("recent");
+        ArrayNode recent = root.putArray(fieldName);
         for (Traces trace : orderedRecent) {
             trace.output(recent.addObject());
         }

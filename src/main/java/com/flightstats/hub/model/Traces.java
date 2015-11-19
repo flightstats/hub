@@ -26,6 +26,10 @@ public class Traces {
         add("end");
     }
 
+    public void setEnd(long end) {
+        this.end = end;
+    }
+
     public long getTime() {
         if (end > 0) {
             return end - start;
