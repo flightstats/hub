@@ -83,6 +83,7 @@ public class S3Util {
         try {
             s3Client.deleteObjects(multiObjectDeleteRequest);
             logger.info("deleting more from " + channelPath + " deleted " + keys.size());
+            ActiveTraces.getLocal().add("S3Util.internalDelete", channelPath, keys.size());
         } catch (MultiObjectDeleteException e) {
             logger.info("what happened? " + channelPath, e);
             return true;

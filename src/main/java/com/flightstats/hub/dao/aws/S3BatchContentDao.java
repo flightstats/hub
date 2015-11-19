@@ -254,21 +254,23 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
-        S3Util.delete(channel + BATCH_ITEMS, limitKey, s3BucketName, s3Client);
-        S3Util.delete(channel + BATCH_INDEX, limitKey, s3BucketName, s3Client);
+        try {
+            S3Util.delete(channel + BATCH_ITEMS, limitKey, s3BucketName, s3Client);
+            S3Util.delete(channel + BATCH_INDEX, limitKey, s3BucketName, s3Client);
+            logger.info("completed deleteBefore of " + channel);
+        } catch (Exception e) {
+            logger.warn("unable to delete " + channel + " in " + s3BucketName, e);
+        }
     }
 
     @Override
     public void delete(String channel) {
+        Traces traces = ActiveTraces.getLocal();
         new Thread(() -> {
-            try {
-                ContentKey limitKey = new ContentKey(TimeUtil.now().plusHours(1), "ZZZZZZ");
-                S3Util.delete(channel + BATCH_ITEMS, limitKey, s3BucketName, s3Client);
-                S3Util.delete(channel + BATCH_INDEX, limitKey, s3BucketName, s3Client);
-                logger.info("completed deletion of " + channel);
-            } catch (Exception e) {
-                logger.warn("unable to delete " + channel + " in " + s3BucketName, e);
-            }
+            ContentKey limitKey = new ContentKey(TimeUtil.now().plusHours(1), "ZZZZZZ");
+            ActiveTraces.start("S3BatchContentDao.delete", traces, limitKey);
+            deleteBefore(channel, limitKey);
+            ActiveTraces.end();
         }).start();
     }
 

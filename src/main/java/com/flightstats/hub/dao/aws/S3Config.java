@@ -128,6 +128,7 @@ public class S3Config {
 
         private void updateTtlDays() {
             logger.info("updateTtlDays");
+            ActiveTraces.start("S3Config.updateTtlDays");
             ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
             for (ChannelConfig config : configurations) {
                 if (config.getTtlDays() > 0) {
@@ -143,6 +144,7 @@ public class S3Config {
             logger.info("updating " + rules.size() + " rules with ttl life cycle ");
             BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
             s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);
+            ActiveTraces.end();
         }
     }
 

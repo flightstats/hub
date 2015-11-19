@@ -51,11 +51,6 @@ public class S3SingleContentDao implements ContentDao {
         throw new UnsupportedOperationException("use query interface");
     }
 
-    @Override
-    public void deleteBefore(String channelName, ContentKey limitKey) {
-        S3Util.delete(channelName + "/", limitKey, s3BucketName, s3Client);
-    }
-
     public ContentKey write(String channelName, Content content) {
         ContentKey key = content.getContentKey().get();
         ActiveTraces.getLocal().add("S3SingleContentDao.write", key);
@@ -232,14 +227,25 @@ public class S3SingleContentDao implements ContentDao {
         return channelName + "/" + key.toUrl();
     }
 
+    @Override
+    public void deleteBefore(String channel, ContentKey limitKey) {
+        try {
+            S3Util.delete(channel + "/", limitKey, s3BucketName, s3Client);
+            logger.info("completed deletion of " + channel);
+        } catch (Exception e) {
+            logger.warn("unable to delete " + channel + " in " + s3BucketName, e);
+        }
+    }
+
     public void delete(String channel) {
+        Traces traces = ActiveTraces.getLocal();
         new Thread(() -> {
             try {
                 ContentKey limitKey = new ContentKey(TimeUtil.now(), "ZZZZZZ");
-                S3Util.delete(channel + "/", limitKey, s3BucketName, s3Client);
-                logger.info("completed deletion of " + channel);
-            } catch (Exception e) {
-                logger.warn("unable to delete " + channel + " in " + s3BucketName, e);
+                ActiveTraces.start("S3SingleContentDao.delete", traces, limitKey);
+                deleteBefore(channel, limitKey);
+            } finally {
+                ActiveTraces.end();
             }
         }).start();
     }
