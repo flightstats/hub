@@ -32,23 +32,23 @@ public class NasContentService implements ContentService {
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
         Traces traces = ActiveTraces.getLocal();
-        traces.add(new Trace("NasContentService.start"));
+        traces.add("NasContentService.insert");
         try {
             byte[] payload = SpokeMarshaller.toBytes(content, false);
-            traces.add(new Trace("NasContentService.marshalled"));
+            traces.add("NasContentService.insert marshalled");
             ContentKey key = content.keyAndStart();
             String path = getPath(channelName, key);
             logger.trace("writing key {} to channel {}", key, channelName);
             if (!fileSpokeStore.write(path, payload)) {
                 logger.warn("failed to  for " + path);
             }
-            traces.add(new Trace("NasContentService.end"));
+            traces.add("NasContentService.insert end", key);
             return key;
         } catch (ContentTooLargeException e) {
             logger.info("content too large for channel " + channelName);
             throw e;
         } catch (Exception e) {
-            traces.add(new Trace("NasContentService", "error", e.getMessage()));
+            traces.add("NasContentService.insert", "error", e.getMessage());
             logger.warn("insertion error " + channelName, e);
             throw e;
         }

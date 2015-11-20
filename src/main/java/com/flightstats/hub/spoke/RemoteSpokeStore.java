@@ -6,7 +6,10 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsSender;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentKeyUtil;
+import com.flightstats.hub.model.Traces;
 import com.flightstats.hub.rest.RestClient;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -126,11 +129,11 @@ public class RemoteSpokeStore {
                 @Override
                 public void run() {
                     String uri = HubHost.getScheme() + server + "/internal/spoke/payload/" + path;
-                    traces.add(new Trace(uri));
+                    traces.add(uri);
                     try {
                         ClientResponse response = write_client.resource(uri).put(ClientResponse.class, payload);
                         long complete = System.currentTimeMillis();
-                        traces.add(new Trace(server, response.getEntity(String.class)));
+                        traces.add(server, response.getEntity(String.class));
                         if (response.getStatus() == 201) {
                             if (reported.compareAndSet(false, true)) {
                                 sender.send("heisenberg", complete - traces.getStart());
@@ -142,7 +145,7 @@ public class RemoteSpokeStore {
                         }
                         response.close();
                     } catch (Exception e) {
-                        traces.add(new Trace(server, e.getMessage()));
+                        traces.add(server, e.getMessage());
                         logger.warn("write failed: " + server + " " + path, e);
                     }
 

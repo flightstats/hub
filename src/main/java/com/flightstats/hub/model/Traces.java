@@ -43,7 +43,7 @@ public class Traces {
     }
 
     public void add(Object... objects) {
-        traces.add(new Trace(objects));
+        traces.add(new SingleTrace(objects));
     }
 
     public void add(String string, SortedSet sortedSet) {
@@ -81,7 +81,6 @@ public class Traces {
 
     private String getOutput(Logger logger) {
         try {
-            traces.add(new Trace("logging"));
             String output = "\n\t";
             synchronized (traces) {
                 for (Trace trace : traces) {

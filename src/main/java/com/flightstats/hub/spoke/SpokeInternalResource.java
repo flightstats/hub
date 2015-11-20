@@ -1,7 +1,7 @@
 package com.flightstats.hub.spoke;
 
 
-import com.flightstats.hub.model.Trace;
+import com.flightstats.hub.model.SingleTrace;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
@@ -51,12 +51,12 @@ public class SpokeInternalResource {
             if (spokeStore.write(path, input)) {
                 return Response
                         .created(uriInfo.getRequestUri())
-                        .entity(new Trace("success", start).toString())
+                        .entity(new SingleTrace("success", start).toString())
                         .build();
             }
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new Trace("failed", start).toString())
+                    .entity(new SingleTrace("failed", start).toString())
                     .build();
         } catch (Exception e) {
             logger.warn("unable to write " + path, e);

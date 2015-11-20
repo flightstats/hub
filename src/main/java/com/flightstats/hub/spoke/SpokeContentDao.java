@@ -44,20 +44,20 @@ public class SpokeContentDao implements ContentDao {
         traces.add("SpokeContentDao.write");
         try {
             byte[] payload = SpokeMarshaller.toBytes(content);
-            traces.add(new Trace("SpokeContentDao.write marshalled"));
+            traces.add("SpokeContentDao.write marshalled");
             ContentKey key = content.keyAndStart();
             String path = getPath(channelName, key);
             logger.trace("writing key {} to channel {}", key, channelName);
             if (!spokeStore.write(path, payload, content)) {
                 throw new FailedWriteException("unable to write to spoke " + path);
             }
-            traces.add(new Trace("SpokeContentDao.write completed", key));
+            traces.add("SpokeContentDao.write completed", key);
             return key;
         } catch (ContentTooLargeException e) {
             logger.info("content too large for channel " + channelName);
             throw e;
         } catch (Exception e) {
-            traces.add(new Trace("SpokeContentDao", "error", e.getMessage()));
+            traces.add("SpokeContentDao", "error", e.getMessage());
             logger.error("unable to write " + channelName, e);
             throw e;
         }
