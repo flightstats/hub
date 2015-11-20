@@ -128,7 +128,7 @@ public class HubBindings extends AbstractModule {
     @Singleton
     @Provides
     public static CuratorCluster buildHubCuratorCluster(CuratorFramework curator) throws Exception {
-        return new CuratorCluster(curator, "/HubCluster");
+        return new CuratorCluster(curator, "/HubCluster", true);
     }
 
     @Singleton

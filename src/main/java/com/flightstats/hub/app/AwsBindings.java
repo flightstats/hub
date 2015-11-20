@@ -77,7 +77,7 @@ public class AwsBindings extends AbstractModule {
     @Singleton
     @Provides
     public static CuratorCluster buildSpokeCuratorCluster(CuratorFramework curator) throws Exception {
-        return new CuratorCluster(curator, "/SpokeCluster");
+        return new CuratorCluster(curator, "/SpokeCluster", false);
     }
 
     @Inject
