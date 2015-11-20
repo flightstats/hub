@@ -99,17 +99,20 @@ public class MinuteGroupStrategy implements GroupStrategy {
                 }
                 logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
                 while (nextTime.isBefore(stable)) {
-                    ActiveTraces.start("MinuteGroupStrategy.doWork", group);
-                    Collection<ContentKey> keys = queryKeys(nextTime)
-                            .stream()
-                            .filter(key -> key.compareTo(lastAdded) > 0)
-                            .collect(Collectors.toCollection(ArrayList::new));
-                    MinutePath nextPath = new MinutePath(nextTime, keys);
-                    logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
-                    ActiveTraces.getLocal().end();
-                    queue.put(nextPath);
-                    lastAdded = nextPath;
-                    nextTime = lastAdded.getTime().plusMinutes(1);
+                    try {
+                        ActiveTraces.start("MinuteGroupStrategy.doWork", group);
+                        Collection<ContentKey> keys = queryKeys(nextTime)
+                                .stream()
+                                .filter(key -> key.compareTo(lastAdded) > 0)
+                                .collect(Collectors.toCollection(ArrayList::new));
+                        MinutePath nextPath = new MinutePath(nextTime, keys);
+                        logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
+                        queue.put(nextPath);
+                        lastAdded = nextPath;
+                        nextTime = lastAdded.getTime().plusMinutes(1);
+                    } finally {
+                        ActiveTraces.getLocal().end();
+                    }
                 }
             }
 
