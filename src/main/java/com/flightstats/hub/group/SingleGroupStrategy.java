@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
@@ -108,7 +109,11 @@ public class SingleGroupStrategy implements GroupStrategy {
             @Override
             public void run() {
                 try {
-                    doWork();
+                    while (!shouldExit.get()) {
+                        if (!doWork()) {
+                            Sleeper.sleep(1000);
+                        }
+                    }
                 } catch (InterruptedException | RuntimeInterruptedException e) {
                     error.set(true);
                     logger.info("InterruptedException with " + channel);
@@ -118,8 +123,9 @@ public class SingleGroupStrategy implements GroupStrategy {
                 }
             }
 
-            private void doWork() throws InterruptedException {
-                while (!shouldExit.get()) {
+            private boolean doWork() throws InterruptedException {
+                ActiveTraces.start("SingleGroupStrategy", group);
+                try {
                     DateTime latestStableInChannel = TimeUtil.stable();
                     if (channelService.isReplicating(channel)) {
                         ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED);
@@ -133,9 +139,11 @@ public class SingleGroupStrategy implements GroupStrategy {
                             logger.debug("sending heartbeat {}", minutePath);
                             addKey(minutePath);
                         }
-                    } else {
-                        Sleeper.sleep(1000);
+                        return true;
                     }
+                    return false;
+                } finally {
+                    ActiveTraces.end();
                 }
             }
 

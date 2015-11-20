@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.channel.ChannelEarliestResource;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -45,10 +46,11 @@ public class TagService {
     public Collection<ChannelContentKey> getKeys(DirectionQuery query) {
         Iterable<ChannelConfig> channels = getChannels(query.getTagName());
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        Traces traces = ActiveTraces.getLocal();
         for (ChannelConfig channel : channels) {
-            query.getTraces().add("query for channel", channel.getName());
+            traces.add("query for channel", channel.getName());
             Collection<ContentKey> contentKeys = channelService.getKeys(query.withChannelName(channel.getName()));
-            query.getTraces().add("query size for channel", channel.getName(), contentKeys.size());
+            traces.add("query size for channel", channel.getName(), contentKeys.size());
             for (ContentKey contentKey : contentKeys) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
             }
@@ -84,20 +86,20 @@ public class TagService {
 
     public Collection<ChannelContentKey> getEarliest(String tag, int count, boolean stable, boolean trace) {
         Iterable<ChannelConfig> channels = getChannels(tag);
-        Traces traces = Traces.getTraces(trace);
-        traces.add("earliest for tag", tag);
+        Traces traces = ActiveTraces.getLocal();
+        traces.add("TagService.getEarliest", tag);
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
             DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getName(), count, stable, trace, channelService);
-            query.setTraces(traces);
-            traces.add("earliest", query);
             Collection<ContentKey> contentKeys = channelService.getKeys(query);
             for (ContentKey contentKey : contentKeys) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
             }
-            traces.add("earliest", orderedKeys);
         }
-        traces.log(logger);
+        if (trace) {
+            traces.log(logger);
+        }
+        traces.add("TagService.getEarliest completed", orderedKeys);
         return orderedKeys;
     }
 

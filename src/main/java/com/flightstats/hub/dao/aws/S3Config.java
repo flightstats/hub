@@ -7,6 +7,7 @@ import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelConfigDao;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
@@ -100,6 +101,7 @@ public class S3Config {
         private void updateMaxItems(ChannelConfig config) {
             String name = config.getName();
             logger.info("updating max items for channel {}", name);
+            ActiveTraces.start("S3Config.updateMaxItems");
             Optional<ContentKey> latest = channelService.getLatest(name, false, false);
             if (latest.isPresent()) {
                 SortedSet<ContentKey> keys = new TreeSet();
@@ -119,12 +121,14 @@ public class S3Config {
                     channelService.deleteBefore(name, limitKey);
                 }
             }
+            ActiveTraces.end();
             logger.info("completed max items for channel {}", name);
 
         }
 
         private void updateTtlDays() {
             logger.info("updateTtlDays");
+            ActiveTraces.start("S3Config.updateTtlDays");
             ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
             for (ChannelConfig config : configurations) {
                 if (config.getTtlDays() > 0) {
@@ -140,6 +144,7 @@ public class S3Config {
             logger.info("updating " + rules.size() + " rules with ttl life cycle ");
             BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
             s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);
+            ActiveTraces.end();
         }
     }
 

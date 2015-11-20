@@ -6,6 +6,7 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -141,7 +142,9 @@ public class AwsContentService implements ContentService {
 
     private Runnable readRunner(ContentDao contentDao, String channelName, ContentKey key,
                                 Queue<Content> queue, CountDownLatch latch) {
+        Traces traces = ActiveTraces.getLocal();
         return () -> {
+            ActiveTraces.setLocal(traces);
             Content content = contentDao.read(channelName, key);
             if (content != null) {
                 queue.add(content);
@@ -187,8 +190,10 @@ public class AwsContentService implements ContentService {
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         try {
             CountDownLatch latch = new CountDownLatch(contentDaos.length);
+            Traces traces = ActiveTraces.getLocal();
             for (ContentDao contentDao : contentDaos) {
                 executorService.submit((Runnable) () -> {
+                    ActiveTraces.setLocal(traces);
                     orderedKeys.addAll(daoQuery.apply(contentDao));
                     latch.countDown();
                 });

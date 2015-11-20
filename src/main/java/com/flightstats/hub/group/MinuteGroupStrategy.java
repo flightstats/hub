@@ -5,7 +5,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -83,27 +87,33 @@ public class MinuteGroupStrategy implements GroupStrategy {
             }
 
             private void doWork() throws InterruptedException {
-                DateTime nextTime = lastAdded.getTime().plusMinutes(1);
-                if (lastAdded instanceof ContentKey) {
-                    nextTime = lastAdded.getTime();
-                }
-                DateTime stable = TimeUtil.stable().minusMinutes(1);
-                if (channelService.isReplicating(channel)) {
-                    ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED);
-                    stable = contentPath.getTime().plusSeconds(1);
-                    logger.debug("replicating {} stable {}", contentPath, stable);
-                }
-                logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
-                while (nextTime.isBefore(stable)) {
-                    Collection<ContentKey> keys = queryKeys(nextTime)
-                            .stream()
-                            .filter(key -> key.compareTo(lastAdded) > 0)
-                            .collect(Collectors.toCollection(ArrayList::new));
-                    MinutePath nextPath = new MinutePath(nextTime, keys);
-                    logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
-                    queue.put(nextPath);
-                    lastAdded = nextPath;
-                    nextTime = lastAdded.getTime().plusMinutes(1);
+                ActiveTraces.start("MinuteGroupStrategy.doWork", group);
+                try {
+                    DateTime nextTime = lastAdded.getTime().plusMinutes(1);
+                    if (lastAdded instanceof ContentKey) {
+                        nextTime = lastAdded.getTime();
+                    }
+                    DateTime stable = TimeUtil.stable().minusMinutes(1);
+                    if (channelService.isReplicating(channel)) {
+                        ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED);
+                        stable = contentPath.getTime().plusSeconds(1);
+                        logger.debug("replicating {} stable {}", contentPath, stable);
+                    }
+                    logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
+                    while (nextTime.isBefore(stable)) {
+                        Collection<ContentKey> keys = queryKeys(nextTime)
+                                .stream()
+                                .filter(key -> key.compareTo(lastAdded) > 0)
+                                .collect(Collectors.toCollection(ArrayList::new));
+                        MinutePath nextPath = new MinutePath(nextTime, keys);
+                        logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
+                        ActiveTraces.getLocal().add("MinuteGroupStrategy.doWork nextPath", nextPath);
+                        queue.put(nextPath);
+                        lastAdded = nextPath;
+                        nextTime = lastAdded.getTime().plusMinutes(1);
+                    }
+                } finally {
+                    ActiveTraces.end();
                 }
             }
 
@@ -126,7 +136,6 @@ public class MinuteGroupStrategy implements GroupStrategy {
                 .startTime(time)
                 .unit(TimeUtil.Unit.MINUTES)
                 .stable(true)
-                .traces(Traces.NOOP)
                 .build();
         return channelService.queryByTime(timeQuery);
     }

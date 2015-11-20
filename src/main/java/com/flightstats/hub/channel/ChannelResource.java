@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
@@ -124,7 +125,7 @@ public class ChannelResource {
             Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
             builder.entity(linkedResult);
             builder.location(payloadUri);
-            content.getTraces().logSlow(1000, logger);
+            ActiveTraces.getLocal().logSlow(1000, logger);
             long time = System.currentTimeMillis() - start;
             int postTimeBuffer = ntpMonitor.getPostTimeBuffer();
             if (time < postTimeBuffer) {

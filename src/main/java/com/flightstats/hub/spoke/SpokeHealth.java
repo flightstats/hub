@@ -2,6 +2,7 @@ package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.rest.RestClient;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -28,7 +29,7 @@ public class SpokeHealth {
                     .resource(HubHost.getLocalUriRoot() + "/health")
                     .get(ClientResponse.class);
             logger.info("localhost health {}", health);
-            remoteSpokeStore.testOne(CuratorSpokeCluster.getLocalServer());
+            remoteSpokeStore.testOne(CuratorCluster.getLocalServer());
             if (!remoteSpokeStore.testAll()) {
                 logger.warn("unable to cleanly start Spoke");
                 throw new RuntimeException("unable to cleanly start Spoke");

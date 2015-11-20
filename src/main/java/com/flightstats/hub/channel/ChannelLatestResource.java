@@ -72,13 +72,12 @@ public class ChannelLatestResource {
                 .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
                 .count(count - 1)
                 .build();
-        query.trace(trace);
         Collection<ContentKey> keys = channelService.getKeys(query);
         keys.add(latest.get());
         if (batch) {
             return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
-            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true);
+            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true, trace);
         }
 
     }

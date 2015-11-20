@@ -72,7 +72,7 @@ public class ChannelEarliestResource {
         if (batch) {
             return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
-            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, false);
+            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, false, trace);
         }
     }
 
@@ -89,7 +89,6 @@ public class ChannelEarliestResource {
                 .ttlDays(ttlDays)
                 .count(count)
                 .build();
-        query.trace(trace);
         return query;
     }
 

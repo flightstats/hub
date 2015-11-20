@@ -4,6 +4,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.DirectionQuery;
@@ -51,7 +52,7 @@ public class S3Util {
             keys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), earliestTime, query.getCount(), false, query.isStable());
             startTime = startTime.minusDays(1);
         }
-        query.getTraces().add("queryPrevious returning", keys);
+        ActiveTraces.getLocal().add("queryPrevious returning", keys);
         return keys;
     }
 
@@ -82,6 +83,7 @@ public class S3Util {
         try {
             s3Client.deleteObjects(multiObjectDeleteRequest);
             logger.info("deleting more from " + channelPath + " deleted " + keys.size());
+            ActiveTraces.getLocal().add("S3Util.internalDelete", channelPath, keys.size());
         } catch (MultiObjectDeleteException e) {
             logger.info("what happened? " + channelPath, e);
             return true;

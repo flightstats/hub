@@ -2,7 +2,11 @@ package com.flightstats.hub.app;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
-import com.flightstats.hub.dao.*;
+import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.dao.CachedChannelConfigDao;
+import com.flightstats.hub.dao.ChannelConfigDao;
+import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.group.GroupDao;
 import com.flightstats.hub.spoke.*;
@@ -10,7 +14,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +38,6 @@ public class AwsBindings extends AbstractModule {
             bind(S3WriterManager.class).asEagerSingleton();
             bind(SpokeHealth.class).asEagerSingleton();
         }
-        bind(CuratorSpokeCluster.class).asEagerSingleton();
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
         bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();
@@ -62,12 +67,18 @@ public class AwsBindings extends AbstractModule {
         String role = getRole();
         if ("batch".equals(role)) {
             return "com.flightstats.hub.app," +
-                    "com.flightstats.hub.health,";
+                    "com.flightstats.hub.health,com.flightstats.hub.metrics,";
         } else {
             return "com.flightstats.hub";
         }
     }
 
+    @Named("SpokeCuratorCluster")
+    @Singleton
+    @Provides
+    public static CuratorCluster buildSpokeCuratorCluster(CuratorFramework curator) throws Exception {
+        return new CuratorCluster(curator, "/SpokeCluster");
+    }
 
     @Inject
     @Provides

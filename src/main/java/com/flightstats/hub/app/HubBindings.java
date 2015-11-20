@@ -13,6 +13,7 @@ import com.flightstats.hub.metrics.*;
 import com.flightstats.hub.replication.ReplicatorManager;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.spoke.GCRunner;
+import com.flightstats.hub.spoke.HubClusterRegister;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.HubUtils;
 import com.google.inject.AbstractModule;
@@ -42,6 +43,7 @@ public class HubBindings extends AbstractModule {
         Names.bindProperties(binder(), HubProperties.getProperties());
         bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
         bind(HubHealthCheck.class).asEagerSingleton();
+        bind(HubClusterRegister.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
         bind(ReplicatorManager.class).asEagerSingleton();
         bind(HubUtils.class).asEagerSingleton();
@@ -120,6 +122,13 @@ public class HubBindings extends AbstractModule {
         client.addFilter(new com.sun.jersey.api.client.filter.GZIPContentEncodingFilter());
         client.setFollowRedirects(followRedirects);
         return client;
+    }
+
+    @Named("HubCuratorCluster")
+    @Singleton
+    @Provides
+    public static CuratorCluster buildHubCuratorCluster(CuratorFramework curator) throws Exception {
+        return new CuratorCluster(curator, "/HubCluster");
     }
 
     @Singleton

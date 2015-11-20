@@ -6,17 +6,17 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
-public class SpokeClusterRegister {
+public class HubClusterRegister {
 
     @Inject
-    @Named("SpokeCuratorCluster")
+    @Named("HubCuratorCluster")
     private CuratorCluster spokeCuratorCluster;
 
-    public SpokeClusterRegister() {
-        HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
+    public HubClusterRegister() {
+        HubServices.register(new CuratorClusterHook(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
     }
 
-    private class CuratorSpokeClusterHook extends AbstractIdleService {
+    private class CuratorClusterHook extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
             spokeCuratorCluster.addCacheListener();

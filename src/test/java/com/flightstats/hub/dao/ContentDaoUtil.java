@@ -1,6 +1,9 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
@@ -59,7 +62,6 @@ public class ContentDaoUtil {
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
                 .unit(TimeUtil.Unit.DAYS)
-                .traces(new TracesImpl())
                 .build();
         Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
         assertEquals(keys.size(), found.size());
@@ -79,7 +81,6 @@ public class ContentDaoUtil {
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
                 .unit(TimeUtil.Unit.HOURS)
-                .traces(new TracesImpl())
                 .build();
         Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
         assertEquals(keys.size(), found.size());
@@ -99,7 +100,6 @@ public class ContentDaoUtil {
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
                 .unit(TimeUtil.Unit.MINUTES)
-                .traces(new TracesImpl())
                 .build();
         Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
         assertEquals(keys.size(), found.size());
@@ -114,7 +114,6 @@ public class ContentDaoUtil {
                 .startTime(start)
                 .endTime(start.plusMinutes(19))
                 .unit(TimeUtil.Unit.MINUTES)
-                .traces(new TracesImpl())
                 .build();
         Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
         assertEquals(0, found.size());
@@ -131,7 +130,6 @@ public class ContentDaoUtil {
                 .startTime(start)
                 .endTime(start.plusMinutes(19))
                 .unit(TimeUtil.Unit.MINUTES)
-                .traces(new TracesImpl())
                 .build();
         found = contentDao.queryByTime(timeQuery);
         assertEquals(4, found.size());
@@ -140,7 +138,6 @@ public class ContentDaoUtil {
                 .startTime(start.plusHours(2))
                 .endTime(start.plusHours(2).plusMinutes(19))
                 .unit(TimeUtil.Unit.MINUTES)
-                .traces(new TracesImpl())
                 .build();
         found = contentDao.queryByTime(timeQuery);
         assertEquals(0, found.size());
@@ -232,12 +229,10 @@ public class ContentDaoUtil {
                 .count(count)
                 .next(next)
                 .contentKey(new ContentKey(queryTime, "0"))
-                .traces(new TracesImpl())
                 .ttlDays(10)
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
         logger.info("query {} {}", queryTime, found);
-        query.getTraces().log(logger);
         assertEquals(expected, found.size());
         assertTrue(keys.containsAll(found));
     }

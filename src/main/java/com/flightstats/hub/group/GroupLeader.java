@@ -7,8 +7,10 @@ import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsTimer;
 import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.Traces;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -140,7 +142,14 @@ public class GroupLeader implements Leader {
         logger.debug("sending in process {} to {}", inProcessSet, group.getName());
         for (ContentPath toSend : inProcessSet) {
             if (toSend.compareTo(lastCompletedPath) < 0) {
-                send(groupStrategy.inProcess(toSend));
+                ActiveTraces.start("GroupLeader inProcess", group);
+                ContentPath contentPath;
+                try {
+                    contentPath = groupStrategy.inProcess(toSend);
+                } finally {
+                    ActiveTraces.end();
+                }
+                send(contentPath);
             } else {
                 groupInProcess.remove(group.getName(), toSend);
             }
@@ -154,6 +163,7 @@ public class GroupLeader implements Leader {
             @Trace(metricName = "GroupCaller", dispatcher = true)
             @Override
             public Object call() throws Exception {
+                ActiveTraces.start("GroupLeader.send", group, contentPath);
                 groupInProcess.add(group.getName(), contentPath);
                 try {
                     long delta = System.currentTimeMillis() - contentPath.getTime().getMillis();
@@ -170,6 +180,7 @@ public class GroupLeader implements Leader {
                     logger.warn("exception sending " + contentPath + " to " + group.getName(), e);
                 } finally {
                     semaphore.release();
+                    ActiveTraces.end();
                 }
                 return null;
             }
@@ -198,17 +209,22 @@ public class GroupLeader implements Leader {
     }
 
     private void makeCall(final ObjectNode response) throws ExecutionException, RetryException {
+        Traces traces = ActiveTraces.getLocal();
         retryer.call(() -> {
+            ActiveTraces.setLocal(traces);
             if (!hasLeadership.get()) {
                 logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), response);
                 return null;
             }
             String postId = UUID.randomUUID().toString();
             logger.debug("calling {} {} {}", group.getCallbackUrl(), response, postId);
-            return client.resource(group.getCallbackUrl())
+            traces.add("GroupLeader.makeCall");
+            ClientResponse clientResponse = client.resource(group.getCallbackUrl())
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .header("post-id", postId)
                     .post(ClientResponse.class, response.toString());
+            traces.add("GroupLeader.makeCall completed", clientResponse);
+            return clientResponse;
         });
     }
 
