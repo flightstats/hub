@@ -1,7 +1,5 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.model.Traces;
-
 import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;

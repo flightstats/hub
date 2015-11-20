@@ -1,6 +1,5 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.model.Traces;
 import com.flightstats.hub.util.Sleeper;
 import org.junit.Test;
 import org.slf4j.Logger;

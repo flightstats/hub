@@ -111,7 +111,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
                         lastAdded = nextPath;
                         nextTime = lastAdded.getTime().plusMinutes(1);
                     } finally {
-                        ActiveTraces.getLocal().end();
+                        ActiveTraces.end();
                     }
                 }
             }

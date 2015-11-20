@@ -1,6 +1,5 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.model.Traces;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
 import com.sun.jersey.spi.container.ContainerResponse;

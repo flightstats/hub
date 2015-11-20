@@ -1,7 +1,9 @@
-package com.flightstats.hub.model;
+package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.model.SingleTrace;
+import com.flightstats.hub.model.Trace;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
@@ -21,7 +23,7 @@ public class Traces {
         add(objects);
     }
 
-    public void end() {
+    void end() {
         end = System.currentTimeMillis();
         add("end");
     }

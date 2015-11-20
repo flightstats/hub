@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.nas;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.SpokeMarshaller;
