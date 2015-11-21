@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 
@@ -80,7 +81,7 @@ public class NasContentService implements ContentService {
     }
 
     @Override
-    public void getValues(String channel, Collection<ContentKey> keys, Function<Content, Void> callback) {
+    public void getValues(String channel, SortedSet<ContentKey> keys, Function<Content, Void> callback) {
         //todo - gfm - 11/20/15 -
     }
 

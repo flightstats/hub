@@ -249,7 +249,7 @@ public class ChannelServiceImpl implements ChannelService {
         return contentKeys;
     }
 
-    public void getValues(String channel, Collection<ContentKey> keys, Function<Content, Void> callback) {
+    public void getValues(String channel, SortedSet<ContentKey> keys, Function<Content, Void> callback) {
         contentService.getValues(channel, keys, callback);
     }
 

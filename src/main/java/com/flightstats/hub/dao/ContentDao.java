@@ -5,6 +5,7 @@ import com.google.common.base.Optional;
 
 import java.util.Collection;
 import java.util.SortedSet;
+import java.util.function.Function;
 
 public interface ContentDao {
 
@@ -32,5 +33,8 @@ public interface ContentDao {
         throw new UnsupportedOperationException("writeBatch is not supported");
     }
 
-    //todo - gfm - 10/23/15 - add batch read
+    default void streamMinute(String channel, MinutePath path, Function<Content, Void> callback) {
+        throw new UnsupportedOperationException("streamMinute is not supported");
+    }
+
 }

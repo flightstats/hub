@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.*;
@@ -43,7 +44,8 @@ public class S3BatchContentDaoTest {
     @Test
     public void testBatchWriteRead() throws Exception {
         String channel = "testBatchWriteRead";
-        List<ContentKey> keys = writeBatchMinute(channel, new MinutePath(), 5);
+        MinutePath minutePath = new MinutePath();
+        List<ContentKey> keys = writeBatchMinute(channel, minutePath, 5);
 
         for (ContentKey key : keys) {
             Content content = ContentDaoUtil.createContent(key);
@@ -53,6 +55,24 @@ public class S3BatchContentDaoTest {
             assertEquals(content.getContentLanguage().get(), read.getContentLanguage().get());
             assertEquals(content.getContentType().get(), read.getContentType().get());
         }
+
+        assertCount(channel, minutePath, 0);
+        keys.remove(2);
+        MinutePath pathAndKeys = new MinutePath(minutePath.getTime(), keys);
+        assertCount(channel, pathAndKeys, 4);
+    }
+
+    private void assertCount(String channel, MinutePath pathAndKeys, int expected) {
+        AtomicInteger count = new AtomicInteger();
+        contentDao.streamMinute(channel, pathAndKeys, content -> {
+                    ContentKey key = content.getContentKey().get();
+                    logger.info("found content {}", key);
+                    count.incrementAndGet();
+                    assertTrue(pathAndKeys.getKeys().contains(key));
+                    return null;
+                }
+        );
+        assertEquals(expected, count.get());
     }
 
     private List<ContentKey> writeBatchMinute(String channel, MinutePath minutePath, int count) throws IOException {
@@ -66,7 +86,7 @@ public class S3BatchContentDaoTest {
         ZipOutputStream output = new ZipOutputStream(baos);
         for (ContentKey key : keys) {
             Content content = ContentDaoUtil.createContent(key);
-            ZipBatchBuilder.createZipEntry(output, key, content);
+            ZipBatchBuilder.createZipEntry(output, content);
         }
         output.close();
 
