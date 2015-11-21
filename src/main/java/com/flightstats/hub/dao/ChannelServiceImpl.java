@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ChannelServiceImpl implements ChannelService {
@@ -249,7 +249,7 @@ public class ChannelServiceImpl implements ChannelService {
         return contentKeys;
     }
 
-    public void getValues(String channel, SortedSet<ContentKey> keys, Function<Content, Void> callback) {
+    public void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
         contentService.getValues(channel, keys, callback);
     }
 

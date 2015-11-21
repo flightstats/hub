@@ -69,7 +69,6 @@ public class S3BatchContentDaoTest {
                     logger.info("found content {}", key);
                     count.incrementAndGet();
                     assertTrue(pathAndKeys.getKeys().contains(key));
-                    return null;
                 }
         );
         assertEquals(expected, count.get());

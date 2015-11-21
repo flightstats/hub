@@ -31,15 +31,7 @@ public class ZipBatchBuilder {
         Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
-            channelService.getValues(channel, keys, content -> {
-                try {
-                    createZipEntry(output, content);
-                } catch (Exception e) {
-                    logger.warn("exception zipping batch for " + content.getContentKey().get(), e);
-                    throw new RuntimeException(e);
-                }
-                return null;
-            });
+            channelService.getValues(channel, keys, content -> createZipEntry(output, content));
         });
     }
 
@@ -70,31 +62,30 @@ public class ZipBatchBuilder {
 
     private static void writeContent(ZipOutputStream output, ContentKey key, String channel,
                                      ChannelService channelService) {
-        try {
-            Request request = Request.builder()
-                    .channel(channel)
-                    .key(key)
-                    .build();
-            Optional<Content> contentOptional = channelService.getValue(request);
-            if (contentOptional.isPresent()) {
-                Content content = contentOptional.get();
-                createZipEntry(output, content);
-            } else {
-                logger.warn("missing content for zip {} {}", channel, key);
-            }
-        } catch (Exception e) {
-            logger.warn("exception zip batching to " + channel, e);
-            throw new RuntimeException(e);
+        Request request = Request.builder()
+                .channel(channel)
+                .key(key)
+                .build();
+        Optional<Content> contentOptional = channelService.getValue(request);
+        if (contentOptional.isPresent()) {
+            createZipEntry(output, contentOptional.get());
+        } else {
+            logger.warn("missing content for zip {} {}", channel, key);
         }
     }
 
-    public static void createZipEntry(ZipOutputStream output, Content content) throws IOException {
-        String keyId = content.getContentKey().get().toUrl();
-        ZipEntry zipEntry = new ZipEntry(keyId);
-        zipEntry.setExtra(SpokeMarshaller.getMetaData(content).getBytes());
-        output.putNextEntry(zipEntry);
-        long bytesCopied = ByteStreams.copy(content.getStream(), output);
-        zipEntry.setSize(bytesCopied);
+    public static void createZipEntry(ZipOutputStream output, Content content) {
+        try {
+            String keyId = content.getContentKey().get().toUrl();
+            ZipEntry zipEntry = new ZipEntry(keyId);
+            zipEntry.setExtra(SpokeMarshaller.getMetaData(content).getBytes());
+            output.putNextEntry(zipEntry);
+            long bytesCopied = ByteStreams.copy(content.getStream(), output);
+            zipEntry.setSize(bytesCopied);
+        } catch (IOException e) {
+            logger.warn("exception zip batching for  " + content.getContentKey().get(), e);
+            throw new RuntimeException(e);
+        }
     }
 
 

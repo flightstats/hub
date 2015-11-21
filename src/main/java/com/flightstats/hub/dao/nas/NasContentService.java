@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 public class NasContentService implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(NasContentService.class);
@@ -81,7 +81,7 @@ public class NasContentService implements ContentService {
     }
 
     @Override
-    public void getValues(String channel, SortedSet<ContentKey> keys, Function<Content, Void> callback) {
+    public void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
         //todo - gfm - 11/20/15 -
     }
 

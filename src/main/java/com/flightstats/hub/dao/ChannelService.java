@@ -5,7 +5,7 @@ import com.google.common.base.Optional;
 
 import java.util.Collection;
 import java.util.SortedSet;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 public interface ChannelService {
 
@@ -43,5 +43,5 @@ public interface ChannelService {
 
     void deleteBefore(String name, ContentKey limitKey);
 
-    void getValues(String channel, SortedSet<ContentKey> keys, Function<Content, Void> callback);
+    void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback);
 }

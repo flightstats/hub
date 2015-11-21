@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class AwsContentService implements ContentService {
@@ -147,7 +148,7 @@ public class AwsContentService implements ContentService {
     }
 
     @Override
-    public void getValues(String channelName, SortedSet<ContentKey> keys, Function<Content, Void> callback) {
+    public void getValues(String channelName, SortedSet<ContentKey> keys, Consumer<Content> callback) {
         SortedSet<MinutePath> minutePaths = ContentKeyUtil.convert(keys);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         DateTime ttlTime = getTtlTime(channelName, channel);
@@ -162,11 +163,11 @@ public class AwsContentService implements ContentService {
         }
     }
 
-    private void getValues(String channelName, Function<Content, Void> callback, MinutePath minutePath) {
+    private void getValues(String channelName, Consumer<Content> callback, MinutePath minutePath) {
         for (ContentKey contentKey : minutePath.getKeys()) {
             Optional<Content> contentOptional = getValue(channelName, contentKey);
             if (contentOptional.isPresent()) {
-                callback.apply(contentOptional.get());
+                callback.accept(contentOptional.get());
             }
         }
     }

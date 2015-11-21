@@ -27,7 +27,7 @@ import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -120,7 +120,7 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public void streamMinute(String channel, MinutePath minutePath, Function<Content, Void> callback) {
+    public void streamMinute(String channel, MinutePath minutePath, Consumer<Content> callback) {
         Map<String, ContentKey> keyMap = new HashMap<>();
         for (ContentKey key : minutePath.getKeys()) {
             keyMap.put(key.toUrl(), key);
@@ -132,7 +132,7 @@ public class S3BatchContentDao implements ContentDao {
                 logger.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
                 ContentKey key = keyMap.get(nextEntry.getName());
                 if (key != null) {
-                    callback.apply(getContent(key, zipStream, nextEntry));
+                    callback.accept(getContent(key, zipStream, nextEntry));
                 }
                 nextEntry = zipStream.getNextEntry();
             }

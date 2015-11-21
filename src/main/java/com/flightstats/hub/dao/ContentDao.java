@@ -5,7 +5,7 @@ import com.google.common.base.Optional;
 
 import java.util.Collection;
 import java.util.SortedSet;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 public interface ContentDao {
 
@@ -33,7 +33,7 @@ public interface ContentDao {
         throw new UnsupportedOperationException("writeBatch is not supported");
     }
 
-    default void streamMinute(String channel, MinutePath path, Function<Content, Void> callback) {
+    default void streamMinute(String channel, MinutePath path, Consumer<Content> callback) {
         throw new UnsupportedOperationException("streamMinute is not supported");
     }
 
