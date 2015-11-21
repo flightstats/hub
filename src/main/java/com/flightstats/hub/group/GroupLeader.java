@@ -39,16 +39,23 @@ public class GroupLeader implements Leader {
 
     private static final Client client = RestClient.createClient(30, 120, true);
     private static final ObjectMapper mapper = new ObjectMapper();
-
-    private final CuratorFramework curator;
-    private final ChannelService channelService;
-    private final GroupService groupService;
-    private final MetricsTimer metricsTimer;
-    private final LastContentPath lastContentPath;
-    private final GroupContentPathSet groupInProcess;
-    private final GroupError groupError;
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
-    private final double keepLeadershipRate;
+    private final double keepLeadershipRate = HubProperties.getProperty("group.keepLeadershipRate", 0.75);
+
+    @Inject
+    private CuratorFramework curator;
+    @Inject
+    private ChannelService channelService;
+    @Inject
+    private GroupService groupService;
+    @Inject
+    private MetricsTimer metricsTimer;
+    @Inject
+    private LastContentPath lastContentPath;
+    @Inject
+    private GroupContentPathSet groupInProcess;
+    @Inject
+    private GroupError groupError;
 
     private Group group;
     private CuratorLeader curatorLeader;
@@ -62,17 +69,7 @@ public class GroupLeader implements Leader {
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference();
 
     @Inject
-    public GroupLeader(CuratorFramework curator, ChannelService channelService,
-                       GroupService groupService, MetricsTimer metricsTimer,
-                       LastContentPath LastContentPath, GroupContentPathSet groupInProcess, GroupError groupError) {
-        this.curator = curator;
-        this.channelService = channelService;
-        this.groupService = groupService;
-        this.metricsTimer = metricsTimer;
-        this.lastContentPath = LastContentPath;
-        this.groupInProcess = groupInProcess;
-        this.groupError = groupError;
-        keepLeadershipRate = HubProperties.getProperty("group.keepLeadershipRate", 0.75);
+    public GroupLeader() {
         logger.info("keep leadership rate {}", keepLeadershipRate);
     }
 
