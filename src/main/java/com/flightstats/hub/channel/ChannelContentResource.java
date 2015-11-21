@@ -30,10 +30,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.flightstats.hub.util.TimeUtil.*;
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -145,7 +142,7 @@ public class ChannelContentResource {
                 .unit(unit)
                 .location(Location.valueOf(location))
                 .build();
-        Collection<ContentKey> keys = channelService.queryByTime(query);
+        SortedSet<ContentKey> keys = channelService.queryByTime(query);
         if (batch) {
             return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
@@ -290,7 +287,7 @@ public class ChannelContentResource {
                 .location(Location.valueOf(location))
                 .count(count)
                 .build();
-        Collection<ContentKey> keys = channelService.getKeys(query);
+        SortedSet<ContentKey> keys = channelService.getKeys(query);
         if (batch) {
             return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {

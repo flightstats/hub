@@ -18,7 +18,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collection;
+import java.util.SortedSet;
 import java.util.function.Consumer;
 
 public class MultiPartBatchBuilder {
@@ -33,7 +33,7 @@ public class MultiPartBatchBuilder {
     private static final byte[] CONTENT_TYPE = "Content-Type: ".getBytes();
     private static final byte[] CONTENT_KEY = "Content-Key: ".getBytes();
 
-    public static Response build(Collection<ContentKey> keys, String channel,
+    public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, UriInfo uriInfo) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
@@ -44,7 +44,7 @@ public class MultiPartBatchBuilder {
         });
     }
 
-    public static Response buildTag(String tag, Collection<ChannelContentKey> keys,
+    public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
                                     ChannelService channelService, UriInfo uriInfo) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {

@@ -16,6 +16,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Collection;
+import java.util.SortedSet;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
@@ -68,7 +69,7 @@ public class ChannelEarliestResource {
             return tagEarliestResource.getEarliestCount(tag, count, stable, batch, trace);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, trace, channelService);
-        Collection<ContentKey> keys = channelService.getKeys(query);
+        SortedSet<ContentKey> keys = channelService.getKeys(query);
         if (batch) {
             return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {

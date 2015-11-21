@@ -31,7 +31,7 @@ public class TagService {
         return channelService.getTags();
     }
 
-    public Collection<ChannelContentKey> queryByTime(TimeQuery timeQuery) {
+    public SortedSet<ChannelContentKey> queryByTime(TimeQuery timeQuery) {
         Iterable<ChannelConfig> channels = getChannels(timeQuery.getTagName());
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
@@ -43,7 +43,7 @@ public class TagService {
         return orderedKeys;
     }
 
-    public Collection<ChannelContentKey> getKeys(DirectionQuery query) {
+    public SortedSet<ChannelContentKey> getKeys(DirectionQuery query) {
         Iterable<ChannelConfig> channels = getChannels(query.getTagName());
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         Traces traces = ActiveTraces.getLocal();
@@ -84,7 +84,7 @@ public class TagService {
         }
     }
 
-    public Collection<ChannelContentKey> getEarliest(String tag, int count, boolean stable, boolean trace) {
+    public SortedSet<ChannelContentKey> getEarliest(String tag, int count, boolean stable, boolean trace) {
         Iterable<ChannelConfig> channels = getChannels(tag);
         Traces traces = ActiveTraces.getLocal();
         traces.add("TagService.getEarliest", tag);

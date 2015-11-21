@@ -12,7 +12,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Collection;
+import java.util.SortedSet;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
@@ -72,7 +72,7 @@ public class ChannelLatestResource {
                 .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
                 .count(count - 1)
                 .build();
-        Collection<ContentKey> keys = channelService.getKeys(query);
+        SortedSet<ContentKey> keys = channelService.getKeys(query);
         keys.add(latest.get());
         if (batch) {
             return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);

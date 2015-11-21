@@ -4,6 +4,7 @@ import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 
 import java.util.Collection;
+import java.util.function.Function;
 
 public interface ContentService {
 
@@ -12,6 +13,8 @@ public interface ContentService {
     Collection<ContentKey> insert(String channelName, BatchContent content) throws Exception;
 
     Optional<Content> getValue(String channelName, ContentKey key);
+
+    void getValues(String channel, Collection<ContentKey> keys, Function<Content, Void> callback);
 
     Collection<ContentKey> queryByTime(TimeQuery timeQuery);
 

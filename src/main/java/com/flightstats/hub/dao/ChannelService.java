@@ -4,6 +4,7 @@ import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 
 import java.util.Collection;
+import java.util.SortedSet;
 
 public interface ChannelService {
 
@@ -29,9 +30,9 @@ public interface ChannelService {
 
     ChannelConfig updateChannel(ChannelConfig configuration);
 
-    Collection<ContentKey> queryByTime(TimeQuery timeQuery);
+    SortedSet<ContentKey> queryByTime(TimeQuery timeQuery);
 
-    Collection<ContentKey> getKeys(DirectionQuery query);
+    SortedSet<ContentKey> getKeys(DirectionQuery query);
 
     boolean delete(String channelName);
 

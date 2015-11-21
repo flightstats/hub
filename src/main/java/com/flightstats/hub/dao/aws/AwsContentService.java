@@ -140,6 +140,11 @@ public class AwsContentService implements ContentService {
         return Optional.fromNullable(content);
     }
 
+    @Override
+    public void getValues(String channel, Collection<ContentKey> keys, Function<Content, Void> callback) {
+        //todo - gfm - 11/20/15 -
+    }
+
     private Runnable readRunner(ContentDao contentDao, String channelName, ContentKey key,
                                 Queue<Content> queue, CountDownLatch latch) {
         Traces traces = ActiveTraces.getLocal();
