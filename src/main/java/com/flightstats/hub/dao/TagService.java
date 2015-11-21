@@ -2,6 +2,7 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.channel.ChannelEarliestResource;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;

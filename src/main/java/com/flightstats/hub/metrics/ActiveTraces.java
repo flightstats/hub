@@ -2,7 +2,6 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.model.Traces;
 import com.flightstats.hub.util.ObjectRing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

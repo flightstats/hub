@@ -9,8 +9,9 @@ import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsTimer;
+import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.Traces;
+import com.flightstats.hub.model.RecurringTrace;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -210,6 +211,9 @@ public class GroupLeader implements Leader {
 
     private void makeCall(final ObjectNode response) throws ExecutionException, RetryException {
         Traces traces = ActiveTraces.getLocal();
+        traces.add("GroupLeader.makeCall start");
+        RecurringTrace recurringTrace = new RecurringTrace("GroupLeader.makeCall start");
+        traces.add(recurringTrace);
         retryer.call(() -> {
             ActiveTraces.setLocal(traces);
             if (!hasLeadership.get()) {
@@ -218,12 +222,11 @@ public class GroupLeader implements Leader {
             }
             String postId = UUID.randomUUID().toString();
             logger.debug("calling {} {} {}", group.getCallbackUrl(), response, postId);
-            traces.add("GroupLeader.makeCall");
             ClientResponse clientResponse = client.resource(group.getCallbackUrl())
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .header("post-id", postId)
                     .post(ClientResponse.class, response.toString());
-            traces.add("GroupLeader.makeCall completed", clientResponse);
+            recurringTrace.update("GroupLeader.makeCall completed", clientResponse);
             return clientResponse;
         });
     }

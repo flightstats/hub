@@ -23,13 +23,15 @@ public class CuratorCluster {
     private final static Logger logger = LoggerFactory.getLogger(CuratorCluster.class);
     private final CuratorFramework curator;
     private final String clusterPath;
+    private final boolean useName;
     private final PathChildrenCache clusterCache;
     private String fullPath;
 
     @Inject
-    public CuratorCluster(CuratorFramework curator, String clusterPath) throws Exception {
+    public CuratorCluster(CuratorFramework curator, String clusterPath, boolean useName) throws Exception {
         this.curator = curator;
         this.clusterPath = clusterPath;
+        this.useName = useName;
         clusterCache = new PathChildrenCache(curator, clusterPath, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     }
@@ -44,26 +46,27 @@ public class CuratorCluster {
     }
 
     public void register() throws UnknownHostException {
+        String host = getHost(useName);
         try {
-            logger.info("registering host {} {}", getHost(), clusterPath);
-            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(true), getHost().getBytes());
+            logger.info("registering host {} {}", host, clusterPath);
+            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(true), host.getBytes());
         } catch (KeeperException.NodeExistsException e) {
-            logger.warn("node already exists {} {} - not likely in prod", getHost(), clusterPath);
+            logger.warn("node already exists {} {} - not likely in prod", host, clusterPath);
         } catch (Exception e) {
-            logger.error("unable to register, should die", getHost(), clusterPath, e);
+            logger.error("unable to register, should die", host, clusterPath, e);
             throw new RuntimeException(e);
         }
     }
 
     private String getFullPath(boolean create) throws UnknownHostException {
         if (create) {
-            fullPath = clusterPath + "/" + getHost() + RandomStringUtils.randomAlphanumeric(6);
+            fullPath = clusterPath + "/" + getHost(useName) + RandomStringUtils.randomAlphanumeric(6);
         }
         return fullPath;
     }
 
-    private static String getHost() throws UnknownHostException {
-        if (HubProperties.getProperty("app.encrypted", false)) {
+    private static String getHost(boolean useName) throws UnknownHostException {
+        if (HubProperties.getProperty("app.encrypted", false) || useName) {
             return HubHost.getLocalNamePort();
         } else {
             return HubHost.getLocalAddressPort();
@@ -72,7 +75,7 @@ public class CuratorCluster {
 
     public static Collection<String> getLocalServer() throws UnknownHostException {
         List<String> server = new ArrayList<>();
-        server.add(getHost());
+        server.add(getHost(false));
         return server;
     }
 
@@ -96,9 +99,9 @@ public class CuratorCluster {
 
     public void delete() {
         try {
-            logger.info("removing host from cluster {} {}", getHost(), fullPath);
+            logger.info("removing host from cluster {} {}", getHost(useName), fullPath);
             curator.delete().forPath(fullPath);
-            logger.info("deleted host from cluster {} {}", getHost(), fullPath);
+            logger.info("deleted host from cluster {} {}", getHost(useName), fullPath);
         } catch (KeeperException.NoNodeException e) {
             logger.info("no node for" + fullPath);
         } catch (Exception e) {
