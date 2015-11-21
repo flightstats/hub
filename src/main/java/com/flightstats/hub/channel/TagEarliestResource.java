@@ -15,6 +15,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.SortedSet;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
@@ -52,7 +53,7 @@ public class TagEarliestResource {
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
                                      @QueryParam("trace") @DefaultValue("false") boolean trace) {
-        Collection<ChannelContentKey> keys = tagService.getEarliest(tag, count, stable, trace);
+        SortedSet<ChannelContentKey> keys = tagService.getEarliest(tag, count, stable, trace);
         if (batch) {
             return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
         }

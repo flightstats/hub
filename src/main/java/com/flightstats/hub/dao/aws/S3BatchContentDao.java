@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -77,33 +78,23 @@ public class S3BatchContentDao implements ContentDao {
         }
     }
 
-    private Content getS3Object(String channelName, ContentKey key) throws IOException {
+    private Content getS3Object(String channel, ContentKey key) throws IOException {
         try {
-            logger.trace("S3BatchContentDao.getS3Object {} {}", channelName, key);
-            ActiveTraces.getLocal().add("S3BatchContentDao.getS3Object starting");
-            sender.send("channel." + channelName + ".s3Batch.get", 1);
+            logger.trace("S3BatchContentDao.getS3Object {} {}", channel, key);
             MinutePath minutePath = new MinutePath(key.getTime());
-            S3Object object = s3Client.getObject(s3BucketName, getS3BatchItemsKey(channelName, minutePath));
-            ZipInputStream zipStream = new ZipInputStream(object.getObjectContent());
+            ZipInputStream zipStream = getZipInputStream(channel, minutePath);
 
             ZipEntry nextEntry = zipStream.getNextEntry();
             while (nextEntry != null) {
                 logger.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
                 if (nextEntry.getName().equals(key.toUrl())) {
-                    Content.Builder builder = Content.builder()
-                            .withContentKey(key);
-                    byte[] bytes = ByteStreams.toByteArray(zipStream);
-                    logger.trace("returning content {} bytes {}", key, bytes.length);
-                    String comment = new String(nextEntry.getExtra());
-                    SpokeMarshaller.setMetaData(comment, builder);
-                    builder.withData(bytes);
-                    return builder.build();
+                    return getContent(key, zipStream, nextEntry);
                 }
                 nextEntry = zipStream.getNextEntry();
             }
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
-                logger.warn("AmazonS3Exception : unable to read " + channelName + " " + key, e);
+                logger.warn("AmazonS3Exception : unable to read " + channel + " " + key, e);
             }
         } finally {
             ActiveTraces.getLocal().add("S3BatchContentDao.getS3Object completed");
@@ -111,7 +102,51 @@ public class S3BatchContentDao implements ContentDao {
         return null;
     }
 
-    //todo - gfm - 10/23/15 - add batch read
+    private Content getContent(ContentKey key, ZipInputStream zipStream, ZipEntry nextEntry) throws IOException {
+        Content.Builder builder = Content.builder()
+                .withContentKey(key);
+        byte[] bytes = ByteStreams.toByteArray(zipStream);
+        logger.trace("returning content {} bytes {}", key, bytes.length);
+        String comment = new String(nextEntry.getExtra());
+        SpokeMarshaller.setMetaData(comment, builder);
+        builder.withData(bytes);
+        return builder.build();
+    }
+
+    private ZipInputStream getZipInputStream(String channel, MinutePath minutePath) {
+        ActiveTraces.getLocal().add("S3BatchContentDao.getZipInputStream");
+        sender.send("channel." + channel + ".s3Batch.get", 1);
+        S3Object object = s3Client.getObject(s3BucketName, getS3BatchItemsKey(channel, minutePath));
+        return new ZipInputStream(object.getObjectContent());
+    }
+
+    @Override
+    public void streamMinute(String channel, MinutePath minutePath, Consumer<Content> callback) {
+        Map<String, ContentKey> keyMap = new HashMap<>();
+        for (ContentKey key : minutePath.getKeys()) {
+            keyMap.put(key.toUrl(), key);
+        }
+        try {
+            ZipInputStream zipStream = getZipInputStream(channel, minutePath);
+            ZipEntry nextEntry = zipStream.getNextEntry();
+            while (nextEntry != null) {
+                logger.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
+                ContentKey key = keyMap.get(nextEntry.getName());
+                if (key != null) {
+                    callback.accept(getContent(key, zipStream, nextEntry));
+                }
+                nextEntry = zipStream.getNextEntry();
+            }
+        } catch (AmazonS3Exception e) {
+            if (e.getStatusCode() != 404) {
+                logger.warn("AmazonS3Exception : unable to read " + channel + " " + minutePath, e);
+            }
+        } catch (IOException e) {
+            logger.warn("unexpected IOException for " + channel + " " + minutePath, e);
+        } finally {
+            ActiveTraces.getLocal().add("S3BatchContentDao.streamMinute completed");
+        }
+    }
 
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {

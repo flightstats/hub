@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ChannelServiceImpl implements ChannelService {
@@ -218,9 +219,9 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> queryByTime(TimeQuery query) {
+    public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         if (query == null) {
-            return Collections.emptyList();
+            return Collections.emptySortedSet();
         }
         DateTime ttlTime = getTtlTime(query.getChannelName());
         DateTime stableTime = TimeUtil.time(query.isStable());
@@ -232,9 +233,9 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> getKeys(DirectionQuery query) {
+    public SortedSet<ContentKey> getKeys(DirectionQuery query) {
         if (query.getCount() <= 0) {
-            return Collections.emptySet();
+            return Collections.emptySortedSet();
         }
         DateTime ttlTime = getTtlTime(query.getChannelName());
         if (query.getContentKey().getTime().isBefore(ttlTime)) {
@@ -247,6 +248,10 @@ public class ChannelServiceImpl implements ChannelService {
         SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
         traces.add("ChannelServiceImpl.getKeys", contentKeys);
         return contentKeys;
+    }
+
+    public void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
+        contentService.getValues(channel, keys, callback);
     }
 
     private DateTime getTtlTime(String channelName) {

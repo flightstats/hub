@@ -1,13 +1,11 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,5 +31,19 @@ public class ContentKeyUtil {
                 .filter(key -> key.getTime().isAfter(ttlTime))
                 .limit(count)
                 .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    public static SortedSet<MinutePath> convert(SortedSet<ContentKey> keys) {
+        Map<DateTime, MinutePath> minutes = new TreeMap<>();
+        for (ContentKey key : keys) {
+            DateTime time = TimeUtil.Unit.MINUTES.round(key.getTime());
+            MinutePath minutePath = minutes.get(time);
+            if (minutePath == null) {
+                minutePath = new MinutePath(time, new TreeSet<>());
+                minutes.put(time, minutePath);
+            }
+            minutePath.getKeys().add(key);
+        }
+        return new TreeSet<>(minutes.values());
     }
 }

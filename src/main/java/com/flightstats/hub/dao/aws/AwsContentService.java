@@ -5,6 +5,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class AwsContentService implements ContentService {
@@ -110,11 +112,8 @@ public class AwsContentService implements ContentService {
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        DateTime startTime = TimeUtil.now();
-        if (channel.isReplicating()) {
-            startTime = lastContentPath.get(channelName, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED).getTime();
-        }
-        if (key.getTime().isAfter(startTime.minusMinutes(ttlMinutes))) {
+        DateTime ttlTime = getTtlTime(channelName, channel);
+        if (key.getTime().isAfter(ttlTime)) {
             Content content = spokeContentDao.read(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
@@ -139,6 +138,39 @@ public class AwsContentService implements ContentService {
             }
         }
         return Optional.fromNullable(content);
+    }
+
+    private DateTime getTtlTime(String channelName, ChannelConfig channel) {
+        DateTime startTime = TimeUtil.now();
+        if (channel.isReplicating()) {
+            startTime = lastContentPath.get(channelName, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED).getTime();
+        }
+        return startTime.minusMinutes(ttlMinutes);
+    }
+
+    @Override
+    public void getValues(String channelName, SortedSet<ContentKey> keys, Consumer<Content> callback) {
+        SortedSet<MinutePath> minutePaths = ContentKeyUtil.convert(keys);
+        ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
+        DateTime ttlTime = getTtlTime(channelName, channel);
+        for (MinutePath minutePath : minutePaths) {
+            if (minutePath.getTime().isAfter(ttlTime)) {
+                getValues(channelName, callback, minutePath);
+            } else if (channel.isBoth() || channel.isBatch()) {
+                s3BatchContentDao.streamMinute(channelName, minutePath, callback);
+            } else {
+                getValues(channelName, callback, minutePath);
+            }
+        }
+    }
+
+    private void getValues(String channelName, Consumer<Content> callback, MinutePath minutePath) {
+        for (ContentKey contentKey : minutePath.getKeys()) {
+            Optional<Content> contentOptional = getValue(channelName, contentKey);
+            if (contentOptional.isPresent()) {
+                callback.accept(contentOptional.get());
+            }
+        }
     }
 
     private Runnable readRunner(ContentDao contentDao, String channelName, ContentKey key,

@@ -12,7 +12,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Collection;
+import java.util.SortedSet;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
@@ -61,7 +61,7 @@ public class TagLatestResource {
                 .stable(stable)
                 .count(count - 1)
                 .build();
-        Collection<ChannelContentKey> keys = tagService.getKeys(query);
+        SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
         keys.add(latest.get());
         if (batch) {
             return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);

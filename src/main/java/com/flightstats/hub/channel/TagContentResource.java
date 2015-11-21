@@ -32,6 +32,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedSet;
 
 import static com.flightstats.hub.util.TimeUtil.Unit;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -151,7 +152,7 @@ public class TagContentResource {
                 .unit(unit)
                 .location(Location.valueOf(location))
                 .build();
-        Collection<ChannelContentKey> keys = tagService.queryByTime(query);
+        SortedSet<ChannelContentKey> keys = tagService.queryByTime(query);
         if (batch) {
             return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
         }
@@ -296,7 +297,7 @@ public class TagContentResource {
                 .stable(stable)
                 .location(Location.valueOf(location))
                 .count(count).build();
-        Collection<ChannelContentKey> keys = tagService.getKeys(query);
+        SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
         if (batch) {
             return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
         }

@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.SortedSet;
 import java.util.function.Consumer;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
@@ -26,18 +26,16 @@ public class ZipBatchBuilder {
 
     private final static Logger logger = LoggerFactory.getLogger(ZipBatchBuilder.class);
 
-    public static Response build(Collection<ContentKey> keys, String channel,
+    public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService) {
         Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
-            for (ContentKey key : keys) {
-                writeContent(output, key, channel, channelService);
-            }
+            channelService.getValues(channel, keys, content -> createZipEntry(output, content));
         });
     }
 
-    public static Response buildTag(String tag, Collection<ChannelContentKey> keys,
+    public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
                                     ChannelService channelService) {
         Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
@@ -64,32 +62,30 @@ public class ZipBatchBuilder {
 
     private static void writeContent(ZipOutputStream output, ContentKey key, String channel,
                                      ChannelService channelService) {
-        try {
-            Request request = Request.builder()
-                    .channel(channel)
-                    .key(key)
-                    .build();
-            //todo - gfm - 10/20/15 - change channelService.getValue to support cache only?
-            Optional<Content> contentOptional = channelService.getValue(request);
-            if (contentOptional.isPresent()) {
-                Content content = contentOptional.get();
-                createZipEntry(output, key, content);
-            } else {
-                logger.warn("missing content for zip {} {}", channel, key);
-            }
-        } catch (Exception e) {
-            logger.warn("exception zip batching to " + channel, e);
-            throw new RuntimeException(e);
+        Request request = Request.builder()
+                .channel(channel)
+                .key(key)
+                .build();
+        Optional<Content> contentOptional = channelService.getValue(request);
+        if (contentOptional.isPresent()) {
+            createZipEntry(output, contentOptional.get());
+        } else {
+            logger.warn("missing content for zip {} {}", channel, key);
         }
     }
 
-    public static void createZipEntry(ZipOutputStream output, ContentKey key, Content content) throws IOException {
-        String keyId = key.toUrl();
-        ZipEntry zipEntry = new ZipEntry(keyId);
-        zipEntry.setExtra(SpokeMarshaller.getMetaData(content).getBytes());
-        output.putNextEntry(zipEntry);
-        long bytesCopied = ByteStreams.copy(content.getStream(), output);
-        zipEntry.setSize(bytesCopied);
+    public static void createZipEntry(ZipOutputStream output, Content content) {
+        try {
+            String keyId = content.getContentKey().get().toUrl();
+            ZipEntry zipEntry = new ZipEntry(keyId);
+            zipEntry.setExtra(SpokeMarshaller.getMetaData(content).getBytes());
+            output.putNextEntry(zipEntry);
+            long bytesCopied = ByteStreams.copy(content.getStream(), output);
+            zipEntry.setSize(bytesCopied);
+        } catch (IOException e) {
+            logger.warn("exception zip batching for  " + content.getContentKey().get(), e);
+            throw new RuntimeException(e);
+        }
     }
 
 

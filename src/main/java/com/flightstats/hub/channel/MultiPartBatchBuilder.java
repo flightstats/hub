@@ -18,7 +18,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collection;
+import java.util.SortedSet;
 import java.util.function.Consumer;
 
 public class MultiPartBatchBuilder {
@@ -33,18 +33,16 @@ public class MultiPartBatchBuilder {
     private static final byte[] CONTENT_TYPE = "Content-Type: ".getBytes();
     private static final byte[] CONTENT_KEY = "Content-Key: ".getBytes();
 
-    public static Response build(Collection<ContentKey> keys, String channel,
+    public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, UriInfo uriInfo) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
-            for (ContentKey key : keys) {
-                writeContent(uriInfo, output, key, channel, channelService);
-            }
+            channelService.getValues(channel, keys, content -> writeContent(uriInfo, output, channel, content));
         });
     }
 
-    public static Response buildTag(String tag, Collection<ChannelContentKey> keys,
+    public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
                                     ChannelService channelService, UriInfo uriInfo) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
@@ -70,30 +68,35 @@ public class MultiPartBatchBuilder {
 
     private static void writeContent(UriInfo uriInfo, BufferedOutputStream output, ContentKey key, String channel,
                                      ChannelService channelService) {
+        Request request = Request.builder()
+                .channel(channel)
+                .key(key)
+                .build();
+        Optional<Content> content = channelService.getValue(request);
+        if (content.isPresent()) {
+            Content item = content.get();
+            writeContent(uriInfo, output, channel, item);
+        }
+    }
+
+    private static void writeContent(UriInfo uriInfo, BufferedOutputStream output, String channel, Content content) {
         try {
-            Request request = Request.builder()
-                    .channel(channel)
-                    .key(key)
-                    .build();
-            Optional<Content> content = channelService.getValue(request);
-            if (content.isPresent()) {
-                URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
-                Content item = content.get();
-                output.write(START_BOUNDARY);
-                if (item.getContentType().isPresent()) {
-                    output.write(CONTENT_TYPE);
-                    output.write(item.getContentType().get().getBytes());
-                    output.write(CRLF);
-                }
-                URI uri = LinkBuilder.buildItemUri(key, channelUri);
-                output.write(CONTENT_KEY);
-                output.write(uri.toString().getBytes());
+            URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
+            output.write(START_BOUNDARY);
+            if (content.getContentType().isPresent()) {
+                output.write(CONTENT_TYPE);
+                output.write(content.getContentType().get().getBytes());
                 output.write(CRLF);
-                output.write(CRLF);
-                ByteStreams.copy(item.getStream(), output);
-                output.write(CRLF);
-                output.flush();
             }
+            URI uri = LinkBuilder.buildItemUri(content.getContentKey().get(), channelUri);
+            output.write(CONTENT_KEY);
+            output.write(uri.toString().getBytes());
+            output.write(CRLF);
+            output.write(CRLF);
+            ByteStreams.copy(content.getStream(), output);
+            output.write(CRLF);
+            output.flush();
+
         } catch (IOException e) {
             logger.warn("io exception batching to " + channel, e);
             throw new RuntimeException(e);
