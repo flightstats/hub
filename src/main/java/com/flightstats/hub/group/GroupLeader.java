@@ -15,6 +15,7 @@ import com.flightstats.hub.model.RecurringTrace;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
+import com.github.rholder.retry.Attempt;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.google.common.base.Optional;
@@ -24,6 +25,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +100,7 @@ public class GroupLeader implements Leader {
         logger.info("taking leadership " + group);
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(group.getParallelCalls());
-        retryer = GroupRetryer.buildRetryer(group.getName(), groupError, hasLeadership);
+        retryer = GroupRetryer.buildRetryer(group, groupError, hasLeadership);
         groupStrategy = GroupStrategy.getStrategy(group, lastContentPath, channelService);
         try {
             ContentPath lastCompletedPath = groupStrategy.getStartingPath();
@@ -167,13 +169,17 @@ public class GroupLeader implements Leader {
                     long delta = System.currentTimeMillis() - contentPath.getTime().getMillis();
                     metricsTimer.send("group." + group.getName() + ".delta", delta);
                     makeTimedCall(groupStrategy.createResponse(contentPath, mapper));
-                    if (increaseLastUpdated(contentPath)) {
-                        lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
-                    }
-                    groupInProcess.remove(group.getName(), contentPath);
+                    completeCall(contentPath);
                     logger.trace("completed {} call to {} ", contentPath, group.getName());
                 } catch (RetryException e) {
-                    logger.info("exception sending {} to {} {} ", contentPath, group.getName(), e.getMessage());
+                    Attempt<?> lastFailedAttempt = e.getLastFailedAttempt();
+                    if (lastFailedAttempt != null && GroupStopStrategy.reachedStopStrategy(lastFailedAttempt, group)) {
+                        logger.info("stopped trying {} to {} {} ", contentPath, group.getName(), lastFailedAttempt);
+                        groupError.add(group.getName(), new DateTime() + " stopped trying " + contentPath);
+                        completeCall(contentPath);
+                    } else {
+                        logger.info("exception sending {} to {} {} ", contentPath, group.getName(), e.getMessage());
+                    }
                 } catch (Exception e) {
                     logger.warn("exception sending " + contentPath + " to " + group.getName(), e);
                 } finally {
@@ -196,6 +202,13 @@ public class GroupLeader implements Leader {
             return existingPath;
         });
         return changed.get();
+    }
+
+    private void completeCall(ContentPath contentPath) {
+        if (increaseLastUpdated(contentPath)) {
+            lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
+        }
+        groupInProcess.remove(group.getName(), contentPath);
     }
 
     private void makeTimedCall(final ObjectNode response) throws Exception {

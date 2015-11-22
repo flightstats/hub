@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.*;
 import lombok.experimental.Wither;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +26,9 @@ public class Group {
     public static final String SINGLE = "SINGLE";
     public static final String MINUTE = "MINUTE";
 
+    public static final String NEVER = "NEVER";
+    public static final String TTL = "TTL";
+
     private final String callbackUrl;
     private final String channelUrl;
     @Wither
@@ -37,8 +41,9 @@ public class Group {
     private final String batch;
     @Wither
     private final boolean heartbeat;
-
     private final boolean paused;
+    @Wither
+    private final String strategy;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -57,7 +62,8 @@ public class Group {
                 || paused != other.paused
                 || !callbackUrl.equals(other.callbackUrl)
                 || !batch.equals(other.batch)
-                || !heartbeat == other.heartbeat;
+                || !heartbeat == other.heartbeat
+                || !strategy.equals(other.strategy);
     }
 
     private static final Gson gson = new GsonBuilder().create();
@@ -77,6 +83,7 @@ public class Group {
                     .name(existing.name)
                     .startingKey(existing.startingKey)
                     .batch(existing.batch)
+                    .strategy(existing.strategy)
                     .heartbeat(existing.heartbeat);
         }
         try {
@@ -113,6 +120,9 @@ public class Group {
             if (root.has("heartbeat")) {
                 builder.heartbeat(root.get("heartbeat").asBoolean());
             }
+            if (root.has("strategy")) {
+                builder.batch(root.get("strategy").asText());
+            }
         } catch (IOException e) {
             logger.warn("unable to parse " + json, e);
             throw new RuntimeException(e);
@@ -141,6 +151,9 @@ public class Group {
         if (getStartingKey() == null) {
             group = group.withStartingKey(GroupStrategy.createContentPath(group));
         }
+        if (strategy == null) {
+            group = group.withStrategy(NEVER);
+        }
         return group;
     }
 
@@ -153,5 +166,13 @@ public class Group {
             return SINGLE;
         }
         return MINUTE;
+    }
+
+    public boolean isNeverStop() {
+        return NEVER.equalsIgnoreCase(getStrategy());
+    }
+
+    public boolean isTTL() {
+        return StringUtils.startsWithIgnoreCase(getStrategy(), TTL);
     }
 }

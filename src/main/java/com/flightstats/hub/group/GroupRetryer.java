@@ -18,11 +18,11 @@ public class GroupRetryer {
 
     private final static Logger logger = LoggerFactory.getLogger(GroupRetryer.class);
 
-    public static Retryer<ClientResponse> buildRetryer(String name, GroupError groupError, AtomicBoolean hasLeadership) {
+    public static Retryer<ClientResponse> buildRetryer(Group group, GroupError groupError, AtomicBoolean hasLeadership) {
         return RetryerBuilder.<ClientResponse>newBuilder()
                 .retryIfException(throwable -> {
                     if (throwable != null) {
-                        groupError.add(name, new DateTime() + " " + throwable.getMessage());
+                        groupError.add(group.getName(), new DateTime() + " " + throwable.getMessage());
                         if (throwable.getClass().isAssignableFrom(ClientHandlerException.class)) {
                             logger.info("got ClientHandlerException trying to call client back " + throwable.getMessage());
                         } else {
@@ -38,7 +38,7 @@ public class GroupRetryer {
                         try {
                             boolean failure = response.getStatus() != 200;
                             if (failure) {
-                                groupError.add(name, new DateTime() + " " + response.toString());
+                                groupError.add(group.getName(), new DateTime() + " " + response.toString());
                                 logger.info("unable to send to " + response);
                             }
                             return failure;
@@ -56,7 +56,7 @@ public class GroupRetryer {
                     }
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, 1, TimeUnit.MINUTES))
-                .withStopStrategy(new GroupStopStrategy(hasLeadership))
+                .withStopStrategy(new GroupStopStrategy(hasLeadership, group))
                 .build();
     }
 }
