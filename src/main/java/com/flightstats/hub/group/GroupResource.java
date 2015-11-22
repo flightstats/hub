@@ -78,11 +78,12 @@ public class GroupResource {
         root.put("paused", group.isPaused());
         root.put("batch", group.getBatch());
         root.put("heartbeat", group.isHeartbeat());
-        if (status.getLastCompleted() == null) {
-            root.put("lastCompletedCallback", "");
-        } else {
-            root.put("lastCompletedCallback", group.getChannelUrl() + "/" + status.getLastCompleted().toUrl());
+        String lastCompleted = "";
+        if (status.getLastCompleted() != null) {
+            lastCompleted = group.getChannelUrl() + "/" + status.getLastCompleted().toUrl();
         }
+        root.put("lastCompletedCallback", lastCompleted);
+        root.put("lastCompleted", lastCompleted);
         if (status.getChannelLatest() == null) {
             root.put("channelLatest", "");
         } else {
