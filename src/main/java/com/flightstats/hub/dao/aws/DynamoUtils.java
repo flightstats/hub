@@ -53,7 +53,8 @@ public class DynamoUtils {
         try {
             TableDescription tableDescription = waitForTableStatus(tableName, TableStatus.ACTIVE);
             ProvisionedThroughputDescription provisionedThroughput = tableDescription.getProvisionedThroughput();
-            if (provisionedThroughput.equals(throughput)) {
+            if (provisionedThroughput.getReadCapacityUnits().equals(throughput.getReadCapacityUnits())
+                    && provisionedThroughput.getWriteCapacityUnits().equals(throughput.getWriteCapacityUnits())) {
                 logger.info("table is already at provisioned throughput {} {}", tableName, throughput);
             } else {
                 logger.info("updating table {} to {}", tableName, throughput);
