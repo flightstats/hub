@@ -49,6 +49,24 @@ public class DynamoUtils {
         }
     }
 
+    public void updateTable(String tableName, ProvisionedThroughput throughput) {
+        try {
+            TableDescription tableDescription = waitForTableStatus(tableName, TableStatus.ACTIVE);
+            ProvisionedThroughputDescription provisionedThroughput = tableDescription.getProvisionedThroughput();
+            if (provisionedThroughput.getReadCapacityUnits().equals(throughput.getReadCapacityUnits())
+                    && provisionedThroughput.getWriteCapacityUnits().equals(throughput.getWriteCapacityUnits())) {
+                logger.info("table is already at provisioned throughput {} {}", tableName, throughput);
+            } else {
+                logger.info("updating table {} to {}", tableName, throughput);
+                dbClient.updateTable(tableName, throughput);
+                waitForTableStatus(tableName, TableStatus.ACTIVE);
+            }
+        } catch (ResourceNotFoundException e) {
+            logger.warn("update presumes the table exists " + tableName, e);
+            throw new RuntimeException("unable to update table " + tableName);
+        }
+    }
+
     public void deleteChannel(String channelName) {
         String tableName = getTableName(channelName);
         try {
@@ -59,14 +77,14 @@ public class DynamoUtils {
         }
     }
 
-    private void waitForTableStatus(String tableName, TableStatus status) {
+    private TableDescription waitForTableStatus(String tableName, TableStatus status) {
         long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(tableCreationWaitMinutes);
         while (System.currentTimeMillis() < endTime) {
             try {
                 TableDescription tableDescription = dbClient.describeTable(tableName).getTable();
                 if (status.equals(TableStatus.fromValue(tableDescription.getTableStatus()))) {
                     logger.info("table " + tableName + " is " + status.toString());
-                    return;
+                    return tableDescription;
                 }
             } catch (AmazonServiceException ase) {
                 logger.info("exception creating table " + tableName + " " + ase.getMessage());
