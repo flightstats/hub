@@ -59,6 +59,8 @@ public class DynamoGroupDao implements GroupDao {
         item.put("paused", new AttributeValue().withBOOL(group.isPaused()));
         item.put("batch", new AttributeValue(group.getBatch()));
         item.put("heartbeat", new AttributeValue().withBOOL(group.isHeartbeat()));
+        item.put("ttlMinutes", new AttributeValue().withN(String.valueOf(group.getTtlMinutes())));
+        item.put("maxWaitMinutes", new AttributeValue().withN(String.valueOf(group.getMaxWaitMinutes())));
         dbClient.putItem(getTableName(), item);
         return group;
     }
@@ -95,6 +97,12 @@ public class DynamoGroupDao implements GroupDao {
         }
         if (item.containsKey("heartbeat")) {
             groupBuilder.heartbeat(item.get("heartbeat").getBOOL());
+        }
+        if (item.containsKey("ttlMinutes")) {
+            groupBuilder.ttlMinutes(Integer.valueOf(item.get("ttlMinutes").getN()));
+        }
+        if (item.containsKey("maxWaitMinutes")) {
+            groupBuilder.maxWaitMinutes(Integer.valueOf(item.get("maxWaitMinutes").getN()));
         }
         return groupBuilder.build().withDefaults();
     }
