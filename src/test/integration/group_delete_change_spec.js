@@ -64,7 +64,7 @@ describe(testName, function () {
 
     utils.addItem(channelResource);
 
-    utils.putGroup(groupName, groupConfigB, testName);
+    utils.putGroup(groupName, groupConfigB, 201, testName);
 
     it('runs callback server', function () {
         utils.startServer(portB, function (string) {
