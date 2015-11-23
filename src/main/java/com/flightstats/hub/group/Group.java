@@ -96,8 +96,8 @@ public class Group {
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
                 }
-            } else if (root.has("lastCompleted")) {
-                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompleted").asText());
+            } else if (root.has("lastCompletedCallback")) {
+                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompletedCallback").asText());
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
                 }
