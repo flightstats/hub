@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelConfigDao;
 import com.flightstats.hub.model.ChannelConfig;
@@ -65,11 +66,14 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
     }
 
     private void createTable() {
+        long readThroughput = HubProperties.getProperty("dynamo.throughput.channel.read", 50);
+        long writeThroughput = HubProperties.getProperty("dynamo.throughput.channel.write", 10);
+        logger.info("creating table {} with read {} and write {}", getTableName(), readThroughput, writeThroughput);
         CreateTableRequest request = new CreateTableRequest()
                 .withTableName(getTableName())
                 .withAttributeDefinitions(new AttributeDefinition("key", ScalarAttributeType.S))
                 .withKeySchema(new KeySchemaElement("key", KeyType.HASH))
-                .withProvisionedThroughput(new ProvisionedThroughput(50L, 10L));
+                .withProvisionedThroughput(new ProvisionedThroughput(readThroughput, writeThroughput));
         dynamoUtils.createTable(request);
     }
 
