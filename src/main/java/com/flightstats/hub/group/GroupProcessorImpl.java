@@ -1,6 +1,5 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
@@ -18,6 +17,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import static com.flightstats.hub.app.HubServices.TYPE;
+import static com.flightstats.hub.app.HubServices.register;
 
 public class GroupProcessorImpl implements GroupProcessor {
     private final static Logger logger = LoggerFactory.getLogger(GroupProcessorImpl.class);
@@ -37,7 +39,7 @@ public class GroupProcessorImpl implements GroupProcessor {
         this.groupService = groupService;
         this.leaderProvider = leaderProvider;
         this.lastContentPath = lastContentPath;
-        HubServices.registerPreStop(new GroupCallbackService());
+        register(new GroupCallbackService(), TYPE.FINAL_POST_START, TYPE.PRE_STOP);
     }
 
     private void start() {
