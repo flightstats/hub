@@ -12,7 +12,7 @@ var groupConfig = {
 
 describe(testName, function () {
 
-    utils.putGroup(groupName, groupConfig);
+    utils.putGroup(groupName, groupConfig, 201, testName);
 
     var groupConfig2 = {
         callbackUrl: 'http://nothing/callback',
@@ -20,7 +20,7 @@ describe(testName, function () {
         batch: 'MINUTE'
     };
 
-    utils.putGroup(groupName, groupConfig2, 200);
+    utils.putGroup(groupName, groupConfig2, 200, testName);
 
     utils.deleteGroup(groupName);
 

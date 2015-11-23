@@ -46,9 +46,11 @@ function configureFrisby(timeout) {
     });
 }
 
-function createChannel(channelName, url) {
+function createChannel(channelName, url, description) {
+    description = description || 'none';
     url = url || channelUrl;
     it("creates channel " + channelName + " at " + url, function (done) {
+        console.log('creating channel ' + channelName + ' for ' + description);
         request.post({url: url,
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({ "name": channelName })},
@@ -112,10 +114,12 @@ function postItemQ(url) {
     return deferred.promise;
 }
 
-function putGroup(groupName, groupConfig, status) {
+function putGroup(groupName, groupConfig, status, description) {
+    description = description || 'none';
     status = status || 201;
     var groupResource = groupUrl + "/" + groupName;
     it('creates group ' + groupName, function (done) {
+        console.log('creating group ' + groupName + ' for ' + description);
         request.put({url : groupResource,
                 headers : {"Content-Type" : "application/json"},
                 body : JSON.stringify(groupConfig)},
@@ -273,10 +277,12 @@ function startHttpsServer(port, callback, done) {
     return server;
 }
 
-function closeServer(callback) {
+function closeServer(callback, description) {
+    description = description || 'none';
     callback = callback || function () {};
     var closed = false;
     runs(function () {
+        console.log('closing server for ', description)
         server.close(function () {
             closed = true;
         });

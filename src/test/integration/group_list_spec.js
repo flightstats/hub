@@ -20,8 +20,8 @@ var groupConfig = {
 describe(testName, function () {
 
     var groupHrefs = [
-        utils.putGroup(groupName1, groupConfig, 201),
-        utils.putGroup(groupName2, groupConfig, 201)
+        utils.putGroup(groupName1, groupConfig, 201, testName),
+        utils.putGroup(groupName2, groupConfig, 201, testName)
     ];
     var foundGroupHrefs = [];
 

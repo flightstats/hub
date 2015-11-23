@@ -26,9 +26,9 @@ describe(testName, function () {
     var callbackItems = [];
     var postedItems = [];
 
-    utils.createChannel(channelName);
+    utils.createChannel(channelName, false, testName);
 
-    utils.putGroup(groupName, groupConfig);
+    utils.putGroup(groupName, groupConfig, 201, testName);
 
     it('runs callback server', function () {
         utils.startServer(port, function (string) {
@@ -58,7 +58,7 @@ describe(testName, function () {
                 expect(parse.uris[0]).toBe(postedItems[i]);
                 expect(parse.name).toBe(groupName);
             }
-        });
+        }, testName);
 
         function postedItem(value, post) {
             postedItems.push(value.body._links.self.href);

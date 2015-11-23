@@ -40,9 +40,9 @@ describe(testName, function () {
         channelUrl : channelResource
     };
 
-    utils.createChannel(channelName);
+    utils.createChannel(channelName, false, testName);
 
-    utils.putGroup(groupName, groupConfigA);
+    utils.putGroup(groupName, groupConfigA, 201, testName);
 
     it('runs callback server', function () {
         utils.startServer(portA, function (string) {
@@ -64,7 +64,7 @@ describe(testName, function () {
 
     utils.addItem(channelResource);
 
-    utils.putGroup(groupName, groupConfigB);
+    utils.putGroup(groupName, groupConfigB, testName);
 
     it('runs callback server', function () {
         utils.startServer(portB, function (string) {
@@ -87,6 +87,6 @@ describe(testName, function () {
         expect(callbackItemsB.length).toBe(1);
         expect(JSON.parse(callbackItemsA[0]).uris[0]).toBe(postedItemsA[0]);
         expect(JSON.parse(callbackItemsB[0]).uris[0]).toBe(postedItemsB[0]);
-    });
+    }, testName);
 });
 

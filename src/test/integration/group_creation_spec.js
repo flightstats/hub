@@ -18,11 +18,11 @@ var groupConfig2 = {
 
 describe(testName, function () {
 
-    utils.putGroup(groupName, groupConfig);
+    utils.putGroup(groupName, groupConfig, 201, testName);
 
     utils.getGroup(groupName, groupConfig2);
 
-    utils.putGroup(groupName, groupConfig2, 200);
+    utils.putGroup(groupName, groupConfig2, 200, testName);
 
     utils.deleteGroup(groupName);
 

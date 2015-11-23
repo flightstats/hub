@@ -50,7 +50,7 @@ describe(testName, function () {
 
     utils.createChannel(channelName);
 
-    utils.putGroup(groupName, groupConfig);
+    utils.putGroup(groupName, groupConfig, 201, testName);
 
     it('runs callback server and posts ' + groupName, function () {
         utils.startServer(port, function (string) {
@@ -72,7 +72,7 @@ describe(testName, function () {
 
     });
 
-    utils.putGroup(groupName, groupConfigPaused, 200);
+    utils.putGroup(groupName, groupConfigPaused, 200, testName);
 
     it('posts items to paused ' + groupName, function () {
 
@@ -92,7 +92,7 @@ describe(testName, function () {
 
     });
 
-    utils.putGroup(groupName, groupConfig, 200);
+    utils.putGroup(groupName, groupConfig, 200, testName);
 
     it('waits for items ' + groupName, function () {
 
@@ -108,7 +108,7 @@ describe(testName, function () {
                 expect(parse.uris[0]).toBe(postedItems[i]);
                 expect(parse.name).toBe(groupName);
             }
-        });
+        }, testName);
 
 
     });

@@ -21,7 +21,7 @@ var callbackUrl = callbackDomain + ':' + port + '/';
  * 5 - verify that the item are returned within delta time, excluding items posted in 2.
  */
 describe(testName, function () {
-    utils.createChannel(channelName);
+    utils.createChannel(channelName, false, testName);
 
     utils.timeout(1000);
     var postedItems = [];
@@ -103,7 +103,7 @@ describe(testName, function () {
                 expect(parse.uris[0]).toBe(postedItems[i]);
                 expect(parse.name).toBe(groupName);
             }
-        });
+        }, testName);
 
     });
 
