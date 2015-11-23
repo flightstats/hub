@@ -55,7 +55,7 @@ public class GroupRetryer {
                         }
                     }
                 })
-                .withWaitStrategy(WaitStrategies.exponentialWait(1000, 1, TimeUnit.MINUTES))
+                .withWaitStrategy(WaitStrategies.exponentialWait(1000, group.getMaxWaitMinutes(), TimeUnit.MINUTES))
                 .withStopStrategy(new GroupStopStrategy(hasLeadership, group))
                 .build();
     }

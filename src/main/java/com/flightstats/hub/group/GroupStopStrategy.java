@@ -7,12 +7,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GroupStopStrategy implements StopStrategy {
+    private static long ttlMillis;
     private final AtomicBoolean hasLeadership;
     private final Group group;
 
     public GroupStopStrategy(AtomicBoolean hasLeadership, Group group) {
         this.hasLeadership = hasLeadership;
         this.group = group;
+        ttlMillis = TimeUnit.MILLISECONDS.convert(group.getTtlMinutes(), TimeUnit.MINUTES);
     }
 
     @Override
@@ -27,9 +29,7 @@ public class GroupStopStrategy implements StopStrategy {
         if (group.isNeverStop()) {
             return false;
         } else if (group.isTTL()) {
-            Integer ttlMinutes = group.getTtlMinutes();
-            long maxDelay = TimeUnit.MILLISECONDS.convert(ttlMinutes, TimeUnit.MINUTES);
-            if (failedAttempt.getDelaySinceFirstAttempt() >= maxDelay) {
+            if (failedAttempt.getDelaySinceFirstAttempt() >= ttlMillis) {
                 return true;
             }
         }

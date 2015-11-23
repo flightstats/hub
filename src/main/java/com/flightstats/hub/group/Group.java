@@ -43,6 +43,8 @@ public class Group {
     private final boolean paused;
     @Wither
     private final Integer ttlMinutes;
+    @Wither
+    private final Integer maxWaitMinutes;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -62,7 +64,8 @@ public class Group {
                 || !callbackUrl.equals(other.callbackUrl)
                 || !batch.equals(other.batch)
                 || !heartbeat == other.heartbeat
-                || !ttlMinutes.equals(other.ttlMinutes);
+                || !ttlMinutes.equals(other.ttlMinutes)
+                || !maxWaitMinutes.equals(other.maxWaitMinutes);
     }
 
     private static final Gson gson = new GsonBuilder().create();
@@ -83,6 +86,7 @@ public class Group {
                     .startingKey(existing.startingKey)
                     .batch(existing.batch)
                     .ttlMinutes(existing.ttlMinutes)
+                    .maxWaitMinutes(existing.maxWaitMinutes)
                     .heartbeat(existing.heartbeat);
         }
         try {
@@ -92,8 +96,8 @@ public class Group {
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
                 }
-            } else if (root.has("lastCompletedCallback")) {
-                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompletedCallback").asText());
+            } else if (root.has("lastCompleted")) {
+                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompleted").asText());
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
                 }
@@ -120,7 +124,10 @@ public class Group {
                 builder.heartbeat(root.get("heartbeat").asBoolean());
             }
             if (root.has("ttlMinutes")) {
-                builder.batch(root.get("ttlMinutes").asText());
+                builder.ttlMinutes(root.get("ttlMinutes").intValue());
+            }
+            if (root.has("maxWaitMinutes")) {
+                builder.maxWaitMinutes(root.get("maxWaitMinutes").intValue());
             }
         } catch (IOException e) {
             logger.warn("unable to parse " + json, e);
@@ -152,6 +159,9 @@ public class Group {
         }
         if (ttlMinutes == null) {
             group = group.withTtlMinutes(0);
+        }
+        if (maxWaitMinutes == null) {
+            group = group.withMaxWaitMinutes(1);
         }
         return group;
     }
