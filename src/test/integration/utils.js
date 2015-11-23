@@ -161,6 +161,12 @@ function getGroup(groupName, groupConfig, status) {
                         expect(parse.transactional).toBe(groupConfig.transactional);
                         expect(parse.name).toBe(groupName);
                         expect(parse.batch).toBe(groupConfig.batch);
+                        if (groupConfig.ttlMinutes) {
+                            expect(parse.ttlMinutes).toBe(groupConfig.ttlMinutes);
+                        }
+                        if (groupConfig.maxWaitMinutes) {
+                            expect(parse.maxWaitMinutes).toBe(groupConfig.maxWaitMinutes);
+                        }
                     }
                 }
                 done();

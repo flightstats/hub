@@ -78,6 +78,8 @@ public class GroupResource {
         root.put("paused", group.isPaused());
         root.put("batch", group.getBatch());
         root.put("heartbeat", group.isHeartbeat());
+        root.put("ttlMinutes", group.getTtlMinutes());
+        root.put("maxWaitMinutes", group.getMaxWaitMinutes());
         String lastCompleted = "";
         if (status.getLastCompleted() != null) {
             lastCompleted = group.getChannelUrl() + "/" + status.getLastCompleted().toUrl();
