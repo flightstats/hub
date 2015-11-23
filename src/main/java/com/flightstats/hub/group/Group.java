@@ -9,7 +9,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.*;
 import lombok.experimental.Wither;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,7 @@ public class Group {
     private final boolean heartbeat;
     private final boolean paused;
     @Wither
-    private final String strategy;
+    private final Integer ttlMinutes;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -63,7 +62,7 @@ public class Group {
                 || !callbackUrl.equals(other.callbackUrl)
                 || !batch.equals(other.batch)
                 || !heartbeat == other.heartbeat
-                || !strategy.equals(other.strategy);
+                || !ttlMinutes.equals(other.ttlMinutes);
     }
 
     private static final Gson gson = new GsonBuilder().create();
@@ -83,7 +82,7 @@ public class Group {
                     .name(existing.name)
                     .startingKey(existing.startingKey)
                     .batch(existing.batch)
-                    .strategy(existing.strategy)
+                    .ttlMinutes(existing.ttlMinutes)
                     .heartbeat(existing.heartbeat);
         }
         try {
@@ -120,8 +119,8 @@ public class Group {
             if (root.has("heartbeat")) {
                 builder.heartbeat(root.get("heartbeat").asBoolean());
             }
-            if (root.has("strategy")) {
-                builder.batch(root.get("strategy").asText());
+            if (root.has("ttlMinutes")) {
+                builder.batch(root.get("ttlMinutes").asText());
             }
         } catch (IOException e) {
             logger.warn("unable to parse " + json, e);
@@ -151,8 +150,8 @@ public class Group {
         if (getStartingKey() == null) {
             group = group.withStartingKey(GroupStrategy.createContentPath(group));
         }
-        if (strategy == null) {
-            group = group.withStrategy(NEVER);
+        if (ttlMinutes == null) {
+            group = group.withTtlMinutes(0);
         }
         return group;
     }
@@ -169,10 +168,10 @@ public class Group {
     }
 
     public boolean isNeverStop() {
-        return NEVER.equalsIgnoreCase(getStrategy());
+        return getTtlMinutes() == 0;
     }
 
     public boolean isTTL() {
-        return StringUtils.startsWithIgnoreCase(getStrategy(), TTL);
+        return getTtlMinutes() > 0;
     }
 }

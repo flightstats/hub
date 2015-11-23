@@ -27,7 +27,8 @@ public class GroupStopStrategy implements StopStrategy {
         if (group.isNeverStop()) {
             return false;
         } else if (group.isTTL()) {
-            long maxDelay = TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+            Integer ttlMinutes = group.getTtlMinutes();
+            long maxDelay = TimeUnit.MILLISECONDS.convert(ttlMinutes, TimeUnit.MINUTES);
             if (failedAttempt.getDelaySinceFirstAttempt() >= maxDelay) {
                 return true;
             }
