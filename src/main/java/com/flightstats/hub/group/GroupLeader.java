@@ -232,11 +232,13 @@ public class GroupLeader implements Leader {
         RecurringTrace recurringTrace = new RecurringTrace("GroupLeader.makeCall start");
         traces.add(recurringTrace);
         retryer.call(() -> {
-            DateTime ttlTime = TimeUtil.now().minusMinutes(group.getTtlMinutes());
-            if (contentPath.getTime().isBefore(ttlTime)) {
-                throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
-            }
             ActiveTraces.setLocal(traces);
+            if (group.getTtlMinutes() > 0) {
+                DateTime ttlTime = TimeUtil.now().minusMinutes(group.getTtlMinutes());
+                if (contentPath.getTime().isBefore(ttlTime)) {
+                    throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
+                }
+            }
             if (!hasLeadership.get()) {
                 logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), contentPath);
                 return null;
