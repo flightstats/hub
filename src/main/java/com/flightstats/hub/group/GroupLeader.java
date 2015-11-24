@@ -180,7 +180,6 @@ public class GroupLeader implements Leader {
                     Throwable cause = e.getCause();
                     if (cause instanceof ItemExpiredException) {
                         logger.info("stopped trying {} to {} {} ", contentPath, group.getName(), cause.getMessage());
-                        groupError.add(group.getName(), cause.getMessage());
                         completeCall(contentPath);
                     }
                 } catch (Exception e) {
