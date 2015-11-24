@@ -25,9 +25,6 @@ public class Group {
     public static final String SINGLE = "SINGLE";
     public static final String MINUTE = "MINUTE";
 
-    public static final String NEVER = "NEVER";
-    public static final String TTL = "TTL";
-
     private final String callbackUrl;
     private final String channelUrl;
     @Wither
