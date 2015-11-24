@@ -16,7 +16,6 @@ import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
-import com.github.rholder.retry.Attempt;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.google.common.base.Optional;
@@ -176,16 +175,13 @@ public class GroupLeader implements Leader {
                     completeCall(contentPath);
                     logger.trace("completed {} call to {} ", contentPath, group.getName());
                 } catch (RetryException e) {
-                    Attempt<?> lastFailedAttempt = e.getLastFailedAttempt();
-                    if (lastFailedAttempt != null && lastFailedAttempt.hasException()) {
-                        Throwable cause = lastFailedAttempt.getExceptionCause();
-                        if (cause instanceof ItemExpiredException) {
-                            logger.info("stopped trying {} to {} {} ", contentPath, group.getName(), cause.getMessage());
-                            groupError.add(group.getName(), cause.getMessage());
-                            completeCall(contentPath);
-                        }
-                    } else {
-                        logger.info("exception sending {} to {} {} ", contentPath, group.getName(), e.getMessage());
+                    logger.info("exception sending {} to {} {} ", contentPath, group.getName(), e.getMessage());
+                } catch (ExecutionException e) {
+                    Throwable cause = e.getCause();
+                    if (cause instanceof ItemExpiredException) {
+                        logger.info("stopped trying {} to {} {} ", contentPath, group.getName(), cause.getMessage());
+                        groupError.add(group.getName(), cause.getMessage());
+                        completeCall(contentPath);
                     }
                 } catch (Exception e) {
                     logger.warn("exception sending " + contentPath + " to " + group.getName(), e);
