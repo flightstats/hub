@@ -15,6 +15,7 @@ import com.flightstats.hub.model.RecurringTrace;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
+import com.flightstats.hub.util.TimeUtil;
 import com.github.rholder.retry.Attempt;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
@@ -30,7 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -168,15 +172,18 @@ public class GroupLeader implements Leader {
                 try {
                     long delta = System.currentTimeMillis() - contentPath.getTime().getMillis();
                     metricsTimer.send("group." + group.getName() + ".delta", delta);
-                    makeTimedCall(groupStrategy.createResponse(contentPath, mapper));
+                    makeTimedCall(contentPath, groupStrategy.createResponse(contentPath, mapper));
                     completeCall(contentPath);
                     logger.trace("completed {} call to {} ", contentPath, group.getName());
                 } catch (RetryException e) {
                     Attempt<?> lastFailedAttempt = e.getLastFailedAttempt();
-                    if (lastFailedAttempt != null && GroupStopStrategy.reachedStopStrategy(lastFailedAttempt, group)) {
-                        logger.info("stopped trying {} to {} {} ", contentPath, group.getName(), lastFailedAttempt);
-                        groupError.add(group.getName(), new DateTime() + " stopped trying " + contentPath);
-                        completeCall(contentPath);
+                    if (lastFailedAttempt != null && lastFailedAttempt.hasException()) {
+                        Throwable cause = lastFailedAttempt.getExceptionCause();
+                        if (cause instanceof ItemExpiredException) {
+                            logger.info("stopped trying {} to {} {} ", contentPath, group.getName(), cause.getMessage());
+                            groupError.add(group.getName(), cause.getMessage());
+                            completeCall(contentPath);
+                        }
                     } else {
                         logger.info("exception sending {} to {} {} ", contentPath, group.getName(), e.getMessage());
                     }
@@ -211,31 +218,33 @@ public class GroupLeader implements Leader {
         groupInProcess.remove(group.getName(), contentPath);
     }
 
-    private void makeTimedCall(final ObjectNode response) throws Exception {
+    private void makeTimedCall(ContentPath contentPath, ObjectNode body) throws Exception {
         metricsTimer.time("group." + group.getName() + ".post",
                 () -> {
-                    makeCall(response);
+                    makeCall(contentPath, body);
                     return null;
                 });
     }
 
-    private void makeCall(final ObjectNode response) throws ExecutionException, RetryException {
+    private void makeCall(ContentPath contentPath, ObjectNode body) throws ExecutionException, RetryException {
         Traces traces = ActiveTraces.getLocal();
         traces.add("GroupLeader.makeCall start");
         RecurringTrace recurringTrace = new RecurringTrace("GroupLeader.makeCall start");
         traces.add(recurringTrace);
         retryer.call(() -> {
+            DateTime ttlTime = TimeUtil.now().minusMinutes(group.getTtlMinutes());
+            if (contentPath.getTime().isBefore(ttlTime)) {
+                throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
+            }
             ActiveTraces.setLocal(traces);
             if (!hasLeadership.get()) {
-                logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), response);
+                logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), contentPath);
                 return null;
             }
-            String postId = UUID.randomUUID().toString();
-            logger.debug("calling {} {} {}", group.getCallbackUrl(), response, postId);
+            logger.debug("calling {} {} {}", group.getCallbackUrl(), contentPath);
             ClientResponse clientResponse = client.resource(group.getCallbackUrl())
                     .type(MediaType.APPLICATION_JSON_TYPE)
-                    .header("post-id", postId)
-                    .post(ClientResponse.class, response.toString());
+                    .post(ClientResponse.class, body.toString());
             recurringTrace.update("GroupLeader.makeCall completed", clientResponse);
             return clientResponse;
         });

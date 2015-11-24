@@ -28,6 +28,9 @@ public class GroupRetryer {
                         } else {
                             logger.info("got throwable trying to call client back ", throwable);
                         }
+                        if (throwable instanceof ItemExpiredException) {
+                            return false;
+                        }
                     }
                     return throwable != null;
                 })
@@ -56,7 +59,7 @@ public class GroupRetryer {
                     }
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, group.getMaxWaitMinutes(), TimeUnit.MINUTES))
-                .withStopStrategy(new GroupStopStrategy(hasLeadership, group))
+                .withStopStrategy(new GroupStopStrategy(hasLeadership))
                 .build();
     }
 }
