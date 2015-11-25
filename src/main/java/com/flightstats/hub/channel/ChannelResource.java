@@ -151,8 +151,18 @@ public class ChannelResource {
     public Response insertBatch(@PathParam("channel") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,
                                 final InputStream data) throws Exception {
+        return insertBulk(channelName, contentType, data);
+    }
+
+    @POST
+    @Consumes("multipart/*")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/bulk")
+    public Response insertBulk(@PathParam("channel") final String channelName,
+                               @HeaderParam("Content-Type") final String contentType,
+                               final InputStream data) throws Exception {
         try {
-            BatchContent content = BatchContent.builder()
+            BulkContent content = BulkContent.builder()
                     .withContentType(contentType)
                     .withStream(data)
                     .build();

@@ -2,7 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.ContentTooLargeException;
-import com.flightstats.hub.model.BatchContent;
+import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.ByteRing;
@@ -20,7 +20,7 @@ public class MultiPartParser {
     private final static Logger logger = LoggerFactory.getLogger(MultiPartParser.class);
 
     private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 20) * 1024 * 1024;
-    private BatchContent content;
+    private BulkContent content;
     private BufferedInputStream stream;
     private final DecimalFormat format = new DecimalFormat("000000");
     private final ContentKey masterKey;
@@ -28,7 +28,7 @@ public class MultiPartParser {
     private final ByteArrayOutputStream baos;
     public static final byte[] CRLF = "\r\n".getBytes();
 
-    public MultiPartParser(BatchContent content) {
+    public MultiPartParser(BulkContent content) {
         this.content = content;
         masterKey = new ContentKey();
         builder = Content.builder();

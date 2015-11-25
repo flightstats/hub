@@ -8,14 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-public class BatchContent {
+public class BulkContent {
 
     private final boolean isNew = true;
     private final InputStream stream;
     private final String contentType;
     private final List<Content> items = new ArrayList<>();
 
-    private BatchContent(Builder builder) {
+    private BulkContent(Builder builder) {
         stream = builder.stream;
         contentType = builder.contentType;
     }
@@ -51,8 +51,8 @@ public class BatchContent {
             return this;
         }
 
-        public BatchContent build() {
-            return new BatchContent(this);
+        public BulkContent build() {
+            return new BulkContent(this);
         }
 
     }
