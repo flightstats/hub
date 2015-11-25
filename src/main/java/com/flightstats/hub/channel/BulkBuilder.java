@@ -9,16 +9,16 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.SortedSet;
 
-public class BatchBuilder {
+public class BulkBuilder {
 
-    private final static Logger logger = LoggerFactory.getLogger(BatchBuilder.class);
+    private final static Logger logger = LoggerFactory.getLogger(BulkBuilder.class);
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, UriInfo uriInfo, String accept) {
         if ("application/zip".equalsIgnoreCase(accept)) {
-            return ZipBatchBuilder.build(keys, channel, channelService);
+            return ZipBulkBuilder.build(keys, channel, channelService);
         } else {
-            return MultiPartBatchBuilder.build(keys, channel, channelService, uriInfo);
+            return MultiPartBulkBuilder.build(keys, channel, channelService, uriInfo);
         }
     }
 

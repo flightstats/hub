@@ -63,15 +63,16 @@ public class ChannelEarliestResource {
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
+                                     @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                      @QueryParam("tag") String tag,
                                      @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            return tagEarliestResource.getEarliestCount(tag, count, stable, batch, trace);
+            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, trace, channelService);
         SortedSet<ContentKey> keys = channelService.getKeys(query);
-        if (batch) {
-            return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
+        if (bulk || batch) {
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
             return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, false, trace);
         }

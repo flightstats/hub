@@ -49,6 +49,7 @@ public class TagLatestResource {
                                    @PathParam("count") int count,
                                    @QueryParam("stable") @DefaultValue("true") boolean stable,
                                    @QueryParam("batch") @DefaultValue("false") boolean batch,
+                                   @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                    @QueryParam("trace") @DefaultValue("false") boolean trace) {
         Optional<ChannelContentKey> latest = tagService.getLatest(tag, stable, trace);
         if (!latest.isPresent()) {
@@ -63,8 +64,8 @@ public class TagLatestResource {
                 .build();
         SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
         keys.add(latest.get());
-        if (batch) {
-            return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
+        if (bulk || batch) {
+            return MultiPartBulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
         }
         return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace);
     }

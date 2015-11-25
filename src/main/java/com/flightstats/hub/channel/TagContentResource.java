@@ -87,9 +87,10 @@ public class TagContentResource {
                            @QueryParam("location") @DefaultValue("ALL") String location,
                            @QueryParam("trace") @DefaultValue("false") boolean trace,
                            @QueryParam("batch") @DefaultValue("false") boolean batch,
+                           @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS, batch);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS, bulk || batch);
     }
 
     @Path("/{Y}/{M}/{D}/{hour}")
@@ -103,9 +104,10 @@ public class TagContentResource {
                             @QueryParam("location") @DefaultValue("ALL") String location,
                             @QueryParam("trace") @DefaultValue("false") boolean trace,
                             @QueryParam("batch") @DefaultValue("false") boolean batch,
+                            @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                             @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS, batch);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS, bulk || batch);
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{minute}")
@@ -120,9 +122,10 @@ public class TagContentResource {
                               @QueryParam("location") @DefaultValue("ALL") String location,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
+                              @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                               @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES, batch);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES, bulk || batch);
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{second}")
@@ -138,9 +141,10 @@ public class TagContentResource {
                               @QueryParam("location") @DefaultValue("ALL") String location,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
+                              @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                               @QueryParam("stable") @DefaultValue("true") boolean stable) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS, batch);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS, bulk || batch);
     }
 
     public Response getTimeQueryResponse(String tag, DateTime startTime, String location, boolean trace, boolean stable,
@@ -154,7 +158,7 @@ public class TagContentResource {
                 .build();
         SortedSet<ChannelContentKey> keys = tagService.queryByTime(query);
         if (batch) {
-            return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
+            return MultiPartBulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
         }
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
@@ -283,9 +287,10 @@ public class TagContentResource {
                                       @QueryParam("stable") @DefaultValue("true") boolean stable,
                                       @QueryParam("trace") @DefaultValue("false") boolean trace,
                                       @QueryParam("batch") @DefaultValue("false") boolean batch,
+                                      @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                       @QueryParam("location") @DefaultValue("ALL") String location) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, batch);
+        return adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch);
     }
 
     public Response adjacentCount(String tag, int count, boolean stable, boolean trace, String location,
@@ -299,7 +304,7 @@ public class TagContentResource {
                 .count(count).build();
         SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
         if (batch) {
-            return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
+            return MultiPartBulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
         }
         return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace);
     }

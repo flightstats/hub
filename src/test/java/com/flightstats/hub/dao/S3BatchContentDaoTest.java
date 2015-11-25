@@ -2,7 +2,7 @@ package com.flightstats.hub.dao;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.channel.ZipBatchBuilder;
+import com.flightstats.hub.channel.ZipBulkBuilder;
 import com.flightstats.hub.dao.aws.AwsConnectorFactory;
 import com.flightstats.hub.dao.aws.S3BatchContentDao;
 import com.flightstats.hub.dao.aws.S3BucketName;
@@ -85,7 +85,7 @@ public class S3BatchContentDaoTest {
         ZipOutputStream output = new ZipOutputStream(baos);
         for (ContentKey key : keys) {
             Content content = ContentDaoUtil.createContent(key);
-            ZipBatchBuilder.createZipEntry(output, content);
+            ZipBulkBuilder.createZipEntry(output, content);
         }
         output.close();
 
