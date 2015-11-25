@@ -130,7 +130,7 @@ function putGroup(groupName, groupConfig, status, description) {
                     expect(response.headers.location).toBe(groupResource);
                 }
                 if (typeof groupConfig !== "undefined" && status < 400) {
-                    var parse = utils.parseJson(response, testName);
+                    var parse = utils.parseJson(response, description);
                     expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
                     expect(parse.channelUrl).toBe(groupConfig.channelUrl);
                     expect(parse.name).toBe(groupName);
