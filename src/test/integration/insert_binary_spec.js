@@ -21,7 +21,7 @@ utils.runInTestChannel(testName, channelName, function () {
             buf = new Buffer(imgdata, 'binary');
             request.post({url : thisChannelResource, headers : {"Content-Type" : "image/jpeg"}, body : buf}, function (err, response, body) {
                 error = err;
-                resultObj = JSON.parse(body);
+                resultObj = utils.parseJson(response, testName);
                 returnedHref = resultObj['_links']['channel']['href'];
                 var valueUrl = resultObj['_links']['self']['href'];
                 utils.download(valueUrl, function (data) {

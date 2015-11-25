@@ -31,7 +31,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
-                var parse = JSON.parse(body);
+                var parse = utils.parseJson(response, testName);
                 verifyOptionals(parse);
                 done();
             });
@@ -46,7 +46,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
-                var parse = JSON.parse(body);
+                var parse = utils.parseJson(response, testName);
                 verifyOptionals(parse);
                 done();
             });
@@ -59,7 +59,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
-                var parse = JSON.parse(body);
+                var parse = utils.parseJson(response, testName);
                 verifyOptionals(parse);
                 done();
             });

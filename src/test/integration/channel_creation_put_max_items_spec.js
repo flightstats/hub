@@ -21,7 +21,7 @@ describe(testName, function () {
     };
 
     utils.putChannel(channelName, function (response, body) {
-        var parse = JSON.parse(body);
+        var parse = utils.parseJson(response, testName);
         returnedBody = parse;
         expect(parse._links.self.href).toEqual(channelResource);
         expect(parse.ttlDays).toEqual(120);
@@ -35,7 +35,7 @@ describe(testName, function () {
     };
 
     utils.putChannel(channelName, function (response, body) {
-        var parse = JSON.parse(body);
+        var parse = utils.parseJson(response, testName);
         expect(parse._links.self.href).toEqual(channelResource);
         expect(parse.ttlDays).toEqual(0);
         expect(parse.maxItems).toEqual(100);

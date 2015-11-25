@@ -76,7 +76,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parse = JSON.parse(body);
+                var parse = utils.parseJson(response, testName);
                 expect(parse._links.self.href).toBe(groupResource);
                 if (typeof groupConfig !== "undefined") {
                     expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);

@@ -63,7 +63,7 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
                 expect(response.headers.location).toBe(groupResource);
-                var parse = JSON.parse(body);
+                var parse = utils.parseJson(response, testName);
                 expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
                 expect(parse.channelUrl).toBe(groupConfig.channelUrl);
                 expect(parse.name).toBe(groupName);

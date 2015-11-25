@@ -43,7 +43,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
-                body = JSON.parse(body);
+                body = utils.parseJson(response, testName);
                 console.log('response', body);
                 verifyBody(body);
                 selfLink = body._links.self.href;
@@ -57,7 +57,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                body = JSON.parse(body);
+                body = utils.parseJson(response, testName);
                 verifyBody(body);
                 expect(body._links.self.href).toBe(selfLink);
                 done();
@@ -69,7 +69,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                body = JSON.parse(body);
+                body = utils.parseJson(response, testName);
                 var alerts = body['_links']['alerts'];
                 expect(alerts.length).toBeGreaterThan(0);
                 var found = false;

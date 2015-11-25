@@ -130,7 +130,7 @@ function putGroup(groupName, groupConfig, status, description) {
                     expect(response.headers.location).toBe(groupResource);
                 }
                 if (typeof groupConfig !== "undefined" && status < 400) {
-                    var parse = JSON.parse(body);
+                    var parse = utils.parseJson(response, testName);
                     expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
                     expect(parse.channelUrl).toBe(groupConfig.channelUrl);
                     expect(parse.name).toBe(groupName);
@@ -153,7 +153,7 @@ function getGroup(groupName, groupConfig, status) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(status);
                 if (response.statusCode < 400) {
-                    var parse = JSON.parse(body);
+                    var parse = utils.parseJson(response, testName);
                     expect(parse._links.self.href).toBe(groupResource);
                     if (typeof groupConfig !== "undefined") {
                         expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
@@ -301,6 +301,15 @@ function closeServer(callback, description) {
     }, 13000);
 }
 
+function parseJson(response, description) {
+    try {
+        return JSON.parse(response.body);
+    } catch (e) {
+        console.log("unable to parse json", response.statusCode, response.body, response.req.path, description, e);
+        return {};
+    }
+}
+
 exports.runInTestChannel = runInTestChannel;
 exports.download = download;
 exports.randomChannelName = randomChannelName;
@@ -321,5 +330,5 @@ exports.startHttpsServer = startHttpsServer;
 exports.closeServer = closeServer;
 exports.getQ = getQ;
 exports.getPort = getPort;
-
+exports.parseJson = parseJson;
 
