@@ -14,6 +14,7 @@ public class TimeUtil {
     private static final DateTimeFormatter minutesFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm").withZoneUTC();
     private static final DateTimeFormatter hoursFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH").withZoneUTC();
     private static final DateTimeFormatter daysFormatter = DateTimeFormat.forPattern("yyyy/MM/dd").withZoneUTC();
+    private static final DateTimeFormatter monthsFormatter = DateTimeFormat.forPattern("yyyy/MM").withZoneUTC();
 
     static {
         stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
@@ -61,6 +62,10 @@ public class TimeUtil {
         return dateTime.toString(daysFormatter);
     }
 
+    public static String months(DateTime dateTime) {
+        return dateTime.toString(monthsFormatter);
+    }
+
     static DateTime getBirthDay() {
         String property = HubProperties.getProperty("app.birthDay", "2015/01/01");
         return daysFormatter.parseDateTime(property);
@@ -83,7 +88,9 @@ public class TimeUtil {
         SECONDS(secondsFormatter, Duration.standardSeconds(1), "second"),
         MINUTES(minutesFormatter, Duration.standardMinutes(1), "minute"),
         HOURS(hoursFormatter, Duration.standardHours(1), "hour"),
-        DAYS(daysFormatter, Duration.standardDays(1), "day");
+        DAYS(daysFormatter, Duration.standardDays(1), "day"),
+        MONTH(monthsFormatter, Duration.standardDays(1), "month"),
+        MONTHS(monthsFormatter, Duration.standardDays(28), "months");
 
         private DateTimeFormatter formatter;
         private Duration duration;

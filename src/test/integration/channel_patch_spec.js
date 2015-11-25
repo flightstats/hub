@@ -28,7 +28,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
-                var parse = JSON.parse(body);
+                var parse = utils.parseJson(response, testName);
                 verifyOptionals(parse);
                 done();
             });
@@ -39,7 +39,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parse = JSON.parse(body);
+                var parse = utils.parseJson(response, testName);
                 verifyOptionals(parse);
                 done();
             });
@@ -52,7 +52,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parse = JSON.parse(body);
+                var parse = utils.parseJson(response, testName);
                 expect(parse.ttlDays).toBe(2);
                 expect(parse.description).toBe('next');
                 expect(parse.replicationSource).toBe('http://hub/channel/nada');
@@ -68,7 +68,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parse = JSON.parse(body);
+                var parse = utils.parseJson(response, testName);
                 expect(parse.ttlDays).toBe(2);
                 expect(parse.description).toBe('next');
                 expect(parse.replicationSource).toBe('http://hub/channel/nada');

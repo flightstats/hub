@@ -690,6 +690,10 @@ delete the callback first.
 * `heartbeat` is optional and defaults to false for `SINGLE`. `MINUTE` batches always have a heartbeat.
    A heartbeat is a callback which identifies the end of a minute period.  It may have an empty `uris` array.
    It will include an `id` field which identifies the ending minute.
+   
+* `maxWaitMinutes` is optional and defaults to 1.  maxWaitMinutes is the maximum amount of time between retry attempts to the callbackUrl.
+
+* `ttlMinutes` is optional and defaults to 0.  If ttlMinutes is greater than 0, the hub will not attempt to send an item which is older than the ttl.
 
 To get a list of existing group callbacks:
 
@@ -707,7 +711,9 @@ To create a new group callback:
   "startItem" : "http://hub/channel/stumptown/2015/02/06/22/28/43/239/s03ub2",
   "paused" : false,
   "batch" : "SINGLE",
-  "heartbeat" : false
+  "heartbeat" : false,
+  "maxWaitMinutes" : 1,
+  "ttlMinutes" : 0
 }
 ```
 

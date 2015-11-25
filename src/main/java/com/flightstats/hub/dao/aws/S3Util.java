@@ -36,23 +36,32 @@ public class S3Util {
     public static SortedSet<ContentKey> queryPrevious(DirectionQuery query, ContentDao dao) {
         DateTime startTime = query.getContentKey().getTime();
         SortedSet<ContentKey> keys = new TreeSet<>();
-        int hourCount = 0;
+        int count = 0;
         DateTime earliestTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
-        while (keys.size() < query.getCount() && hourCount < 3) {
-            SortedSet<ContentKey> queryByTime = dao.queryByTime(query.convert(startTime, TimeUtil.Unit.HOURS));
-            queryByTime.addAll(keys);
-            keys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), earliestTime, query.getCount(), false, query.isStable());
-            startTime = startTime.minusHours(1);
-            hourCount++;
+        while (keys.size() < query.getCount() && startTime.isAfter(earliestTime)) {
+            TimeUtil.Unit unit = TimeUtil.Unit.HOURS;
+            if (count >= 2) {
+                unit = TimeUtil.Unit.DAYS;
+            }
+            if (count == 4) {
+                unit = TimeUtil.Unit.MONTH;
+            }
+            if (count > 4) {
+                unit = TimeUtil.Unit.MONTHS;
+            }
+            keys = getContentKeys(query, dao.queryByTime(query.convert(startTime, unit)), keys, earliestTime);
+            startTime = startTime.minus(unit.getDuration());
+            count++;
         }
 
-        while (keys.size() < query.getCount() && startTime.isAfter(earliestTime)) {
-            SortedSet<ContentKey> queryByTime = dao.queryByTime(query.convert(startTime, TimeUtil.Unit.DAYS));
-            queryByTime.addAll(keys);
-            keys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), earliestTime, query.getCount(), false, query.isStable());
-            startTime = startTime.minusDays(1);
-        }
         ActiveTraces.getLocal().add("queryPrevious returning", keys);
+        return keys;
+    }
+
+    private static SortedSet<ContentKey> getContentKeys(DirectionQuery query, SortedSet<ContentKey> contentKeys, SortedSet<ContentKey> keys, DateTime earliestTime) {
+        SortedSet<ContentKey> queryByTime = contentKeys;
+        queryByTime.addAll(keys);
+        keys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), earliestTime, query.getCount(), false, query.isStable());
         return keys;
     }
 

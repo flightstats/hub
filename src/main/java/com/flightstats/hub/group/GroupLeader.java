@@ -15,6 +15,7 @@ import com.flightstats.hub.model.RecurringTrace;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
+import com.flightstats.hub.util.TimeUtil;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.google.common.base.Optional;
@@ -24,11 +25,15 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,16 +44,23 @@ public class GroupLeader implements Leader {
 
     private static final Client client = RestClient.createClient(30, 120, true);
     private static final ObjectMapper mapper = new ObjectMapper();
-
-    private final CuratorFramework curator;
-    private final ChannelService channelService;
-    private final GroupService groupService;
-    private final MetricsTimer metricsTimer;
-    private final LastContentPath lastContentPath;
-    private final GroupContentPathSet groupInProcess;
-    private final GroupError groupError;
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
-    private final double keepLeadershipRate;
+    private final double keepLeadershipRate = HubProperties.getProperty("group.keepLeadershipRate", 0.75);
+
+    @Inject
+    private CuratorFramework curator;
+    @Inject
+    private ChannelService channelService;
+    @Inject
+    private GroupService groupService;
+    @Inject
+    private MetricsTimer metricsTimer;
+    @Inject
+    private LastContentPath lastContentPath;
+    @Inject
+    private GroupContentPathSet groupInProcess;
+    @Inject
+    private GroupError groupError;
 
     private Group group;
     private CuratorLeader curatorLeader;
@@ -62,17 +74,7 @@ public class GroupLeader implements Leader {
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference();
 
     @Inject
-    public GroupLeader(CuratorFramework curator, ChannelService channelService,
-                       GroupService groupService, MetricsTimer metricsTimer,
-                       LastContentPath LastContentPath, GroupContentPathSet groupInProcess, GroupError groupError) {
-        this.curator = curator;
-        this.channelService = channelService;
-        this.groupService = groupService;
-        this.metricsTimer = metricsTimer;
-        this.lastContentPath = LastContentPath;
-        this.groupInProcess = groupInProcess;
-        this.groupError = groupError;
-        keepLeadershipRate = HubProperties.getProperty("group.keepLeadershipRate", 0.75);
+    public GroupLeader() {
         logger.info("keep leadership rate {}", keepLeadershipRate);
     }
 
@@ -101,7 +103,7 @@ public class GroupLeader implements Leader {
         logger.info("taking leadership " + group);
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(group.getParallelCalls());
-        retryer = GroupRetryer.buildRetryer(group.getName(), groupError, hasLeadership);
+        retryer = GroupRetryer.buildRetryer(group, groupError, hasLeadership);
         groupStrategy = GroupStrategy.getStrategy(group, lastContentPath, channelService);
         try {
             ContentPath lastCompletedPath = groupStrategy.getStartingPath();
@@ -169,14 +171,17 @@ public class GroupLeader implements Leader {
                 try {
                     long delta = System.currentTimeMillis() - contentPath.getTime().getMillis();
                     metricsTimer.send("group." + group.getName() + ".delta", delta);
-                    makeTimedCall(groupStrategy.createResponse(contentPath, mapper));
-                    if (increaseLastUpdated(contentPath)) {
-                        lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
-                    }
-                    groupInProcess.remove(group.getName(), contentPath);
+                    makeTimedCall(contentPath, groupStrategy.createResponse(contentPath, mapper));
+                    completeCall(contentPath);
                     logger.trace("completed {} call to {} ", contentPath, group.getName());
                 } catch (RetryException e) {
                     logger.info("exception sending {} to {} {} ", contentPath, group.getName(), e.getMessage());
+                } catch (ExecutionException e) {
+                    Throwable cause = e.getCause();
+                    if (cause instanceof ItemExpiredException) {
+                        logger.info("stopped trying {} to {} {} ", contentPath, group.getName(), cause.getMessage());
+                        completeCall(contentPath);
+                    }
                 } catch (Exception e) {
                     logger.warn("exception sending " + contentPath + " to " + group.getName(), e);
                 } finally {
@@ -201,31 +206,42 @@ public class GroupLeader implements Leader {
         return changed.get();
     }
 
-    private void makeTimedCall(final ObjectNode response) throws Exception {
+    private void completeCall(ContentPath contentPath) {
+        if (increaseLastUpdated(contentPath)) {
+            lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
+        }
+        groupInProcess.remove(group.getName(), contentPath);
+    }
+
+    private void makeTimedCall(ContentPath contentPath, ObjectNode body) throws Exception {
         metricsTimer.time("group." + group.getName() + ".post",
                 () -> {
-                    makeCall(response);
+                    makeCall(contentPath, body);
                     return null;
                 });
     }
 
-    private void makeCall(final ObjectNode response) throws ExecutionException, RetryException {
+    private void makeCall(ContentPath contentPath, ObjectNode body) throws ExecutionException, RetryException {
         Traces traces = ActiveTraces.getLocal();
         traces.add("GroupLeader.makeCall start");
         RecurringTrace recurringTrace = new RecurringTrace("GroupLeader.makeCall start");
         traces.add(recurringTrace);
         retryer.call(() -> {
             ActiveTraces.setLocal(traces);
+            if (group.getTtlMinutes() > 0) {
+                DateTime ttlTime = TimeUtil.now().minusMinutes(group.getTtlMinutes());
+                if (contentPath.getTime().isBefore(ttlTime)) {
+                    throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
+                }
+            }
             if (!hasLeadership.get()) {
-                logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), response);
+                logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), contentPath);
                 return null;
             }
-            String postId = UUID.randomUUID().toString();
-            logger.debug("calling {} {} {}", group.getCallbackUrl(), response, postId);
+            logger.debug("calling {} {} {}", group.getCallbackUrl(), contentPath);
             ClientResponse clientResponse = client.resource(group.getCallbackUrl())
                     .type(MediaType.APPLICATION_JSON_TYPE)
-                    .header("post-id", postId)
-                    .post(ClientResponse.class, response.toString());
+                    .post(ClientResponse.class, body.toString());
             recurringTrace.update("GroupLeader.makeCall completed", clientResponse);
             return clientResponse;
         });

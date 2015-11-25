@@ -45,7 +45,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                body = JSON.parse(body);
+                body = utils.parseJson(response, testName);
                 console.log(body);
                 uris = body._links.uris;
                 expect(uris.length).toBe(3);
@@ -70,7 +70,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                body = JSON.parse(body);
+                body = utils.parseJson(response, testName);
                 parsedLinks = parse(response.headers.link);
                 var item = linkStripParams(uris[index]);
                 expect(parsedLinks.previous.url).toContain(item + '/previous?tag=' + tag)
@@ -119,7 +119,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parsed = JSON.parse(response.body);
+                var parsed = utils.parseJson(response, testName);
                 expect(parsed._links.uris.length).toBe(3);
                 uris.forEach(function (uri, index) {
                     expect(parsed._links.uris[index]).toBe(uri);
@@ -145,7 +145,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parsed = JSON.parse(response.body);
+                var parsed = utils.parseJson(response, testName);
                 expect(parsed._links.uris.length).toBe(2);
                 parsed._links.uris.forEach(function (uri, index) {
                     console.log('found ', uri);
@@ -162,7 +162,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parsed = JSON.parse(response.body);
+                var parsed = utils.parseJson(response, testName);
                 expect(parsed._links.uris.length).toBe(2);
                 parsed._links.uris.forEach(function (uri, index) {
                     console.log('found ', uri);
@@ -179,7 +179,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parsed = JSON.parse(response.body);
+                var parsed = utils.parseJson(response, testName);
                 expect(parsed._links.uris.length).toBe(2);
                 parsed._links.uris.forEach(function (uri, index) {
                     console.log('found ', uri);
@@ -195,7 +195,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parsed = JSON.parse(response.body);
+                var parsed = utils.parseJson(response, testName);
                 expect(parsed._links.uris.length).toBe(2);
                 parsed._links.uris.forEach(function (uri, index) {
                     console.log('found ', uri);
@@ -222,7 +222,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parsed = JSON.parse(response.body);
+                var parsed = utils.parseJson(response, testName);
                 expect(parsed._links.uris.length).toBe(3);
                 parsed._links.uris.forEach(function (uri, index) {
                     console.log('found ', uri);
@@ -249,7 +249,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parsed = JSON.parse(response.body);
+                var parsed = utils.parseJson(response, testName);
                 expect(parsed._links.uris.length).toBe(3);
                 parsed._links.uris.forEach(function (uri, index) {
                     console.log('found ', uri);
@@ -265,7 +265,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parsed = JSON.parse(response.body);
+                var parsed = utils.parseJson(response, testName);
                 console.log('parsed', parsed);
                 expect(parsed._links.uris.length).toBe(3);
                 parsed._links.uris.forEach(function (uri, index) {

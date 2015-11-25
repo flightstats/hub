@@ -14,6 +14,9 @@ public class GroupStopStrategy implements StopStrategy {
 
     @Override
     public boolean shouldStop(Attempt failedAttempt) {
-        return !hasLeadership.get();
+        if (!hasLeadership.get()) {
+            return true;
+        }
+        return false;
     }
 }

@@ -37,8 +37,11 @@ public class Group {
     private final String batch;
     @Wither
     private final boolean heartbeat;
-
     private final boolean paused;
+    @Wither
+    private final Integer ttlMinutes;
+    @Wither
+    private final Integer maxWaitMinutes;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -57,7 +60,9 @@ public class Group {
                 || paused != other.paused
                 || !callbackUrl.equals(other.callbackUrl)
                 || !batch.equals(other.batch)
-                || !heartbeat == other.heartbeat;
+                || !heartbeat == other.heartbeat
+                || !ttlMinutes.equals(other.ttlMinutes)
+                || !maxWaitMinutes.equals(other.maxWaitMinutes);
     }
 
     private static final Gson gson = new GsonBuilder().create();
@@ -77,6 +82,8 @@ public class Group {
                     .name(existing.name)
                     .startingKey(existing.startingKey)
                     .batch(existing.batch)
+                    .ttlMinutes(existing.ttlMinutes)
+                    .maxWaitMinutes(existing.maxWaitMinutes)
                     .heartbeat(existing.heartbeat);
         }
         try {
@@ -113,6 +120,12 @@ public class Group {
             if (root.has("heartbeat")) {
                 builder.heartbeat(root.get("heartbeat").asBoolean());
             }
+            if (root.has("ttlMinutes")) {
+                builder.ttlMinutes(root.get("ttlMinutes").intValue());
+            }
+            if (root.has("maxWaitMinutes")) {
+                builder.maxWaitMinutes(root.get("maxWaitMinutes").intValue());
+            }
         } catch (IOException e) {
             logger.warn("unable to parse " + json, e);
             throw new RuntimeException(e);
@@ -141,6 +154,12 @@ public class Group {
         if (getStartingKey() == null) {
             group = group.withStartingKey(GroupStrategy.createContentPath(group));
         }
+        if (ttlMinutes == null) {
+            group = group.withTtlMinutes(0);
+        }
+        if (maxWaitMinutes == null) {
+            group = group.withMaxWaitMinutes(1);
+        }
         return group;
     }
 
@@ -153,5 +172,13 @@ public class Group {
             return SINGLE;
         }
         return MINUTE;
+    }
+
+    public boolean isNeverStop() {
+        return getTtlMinutes() == 0;
+    }
+
+    public boolean isTTL() {
+        return getTtlMinutes() > 0;
     }
 }

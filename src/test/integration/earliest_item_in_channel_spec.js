@@ -54,7 +54,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parsed = JSON.parse(response.body);
+                var parsed = utils.parseJson(response, testName);
                 expect(parsed._links.uris.length).toBe(2);
                 expect(parsed._links.uris[0]).toBe(posted);
                 expect(parsed._links.next).toBeDefined();

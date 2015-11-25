@@ -12,7 +12,7 @@ utils.runInTestChannel(testName, channelName, function () {
     // Note: We have to use request directly here, because Frisby insists on having a content-type specified.
     request.post({url : thisChannelResource, body : messageText}, function (error, response, body) {
         expect(error).toBeNull();
-        resultObj = JSON.parse(body);
+        resultObj = utils.parseJson(response, testName);
         expect(resultObj['_links']['channel']['href']).toBe(thisChannelResource);
         var valueUrl = resultObj['_links']['self']['href'];
         frisby.create(testName + ': Fetching data and checking content-type header.')

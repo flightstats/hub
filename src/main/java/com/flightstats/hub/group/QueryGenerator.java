@@ -44,6 +44,7 @@ public class QueryGenerator {
     }
 
     private TimeUtil.Unit getStepUnit(DateTime latestStableInChannel) {
+        //todo - gfm - 11/23/15 - add Months step?
         if (lastQueryTime.isBefore(latestStableInChannel.minusDays(2))) {
             return TimeUtil.Unit.DAYS;
         } else if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {

@@ -32,7 +32,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
-                var parse = JSON.parse(response.body);
+                var parse = utils.parseJson(response, testName);
                 console.log(response.body);
                 expect(parse._links.uris.length).toBe(2);
                 items = parse._links.uris;

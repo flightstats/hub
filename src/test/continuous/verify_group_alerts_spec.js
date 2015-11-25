@@ -35,7 +35,7 @@ describe(testName, function () {
     utils.putGroup('verifyGroupAlert', {
         callbackUrl: 'http://none',
         channelUrl: hubUrlBase + '/channel/load_test_1'
-    }, 200);
+    }, 200, testName);
 
     it('4 - create a new rule for group , named verifyGroupAlert-{time}', function (done) {
         var name = 'verifyGroupAlert' + moment().format('YYYY-MM-DD-HH-mm-ss');

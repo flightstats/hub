@@ -28,9 +28,9 @@ describe(testName, function () {
     var callbackItems = [];
     var postedItems = [];
 
-    utils.createChannel(channelName);
+    utils.createChannel(channelName, false, testName);
 
-    utils.putGroup(groupName, groupConfig);
+    utils.putGroup(groupName, groupConfig, 201, testName);
 
     it('waits', function (done) {
         setTimeout(function () {
@@ -58,7 +58,7 @@ describe(testName, function () {
 
     utils.addItem(channelResource);
 
-    utils.putGroup(groupName, groupConfig);
+    utils.putGroup(groupName, groupConfig, 201, testName);
 
     it('waits', function (done) {
         setTimeout(function () {
@@ -82,6 +82,6 @@ describe(testName, function () {
         expect(callbackItems.length).toBe(2);
         expect(JSON.parse(callbackItems[0]).uris[0]).toBe(postedItems[0]);
         expect(JSON.parse(callbackItems[1]).uris[0]).toBe(postedItems[1]);
-    });
+    }, testName);
 });
 

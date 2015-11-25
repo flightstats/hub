@@ -20,8 +20,8 @@ var groupConfig = {
 describe(testName, function () {
 
     var groupHrefs = [
-        utils.putGroup(groupName1, groupConfig, 201),
-        utils.putGroup(groupName2, groupConfig, 201)
+        utils.putGroup(groupName1, groupConfig, 201, testName),
+        utils.putGroup(groupName2, groupConfig, 201, testName)
     ];
     var foundGroupHrefs = [];
 
@@ -31,7 +31,7 @@ describe(testName, function () {
                 function (err, response, body) {
                     expect(err).toBeNull();
                     expect(response.statusCode).toBe(200);
-                    var parse = JSON.parse(body);
+                    var parse = utils.parseJson(response, testName);
                     expect(parse._links.self.href).toBe(groupUrl);
                     var groups = parse._links.groups;
                     groups.forEach(function (item) {
