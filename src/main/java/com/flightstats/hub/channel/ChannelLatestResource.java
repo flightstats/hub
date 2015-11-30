@@ -59,7 +59,7 @@ public class ChannelLatestResource {
                                    @QueryParam("tag") String tag,
                                    @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace);
+            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, accept);
         }
         Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
         if (!latest.isPresent()) {

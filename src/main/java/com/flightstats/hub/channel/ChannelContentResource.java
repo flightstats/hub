@@ -137,7 +137,7 @@ public class ChannelContentResource {
     public Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
                                          Unit unit, String tag, boolean bulk, String accept) {
         if (tag != null) {
-            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk);
+            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept);
         }
         TimeQuery query = TimeQuery.builder()
                 .channelName(channel)
@@ -282,7 +282,7 @@ public class ChannelContentResource {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch);
+            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
