@@ -54,6 +54,7 @@ public class LinkBuilder {
         linked.withLink("latest", URI.create(channelUri + "/latest"))
                 .withLink("earliest", URI.create(channelUri + "/earliest"))
                 .withLink("batch", URI.create(channelUri + "/batch"))
+                .withLink("bulk", URI.create(channelUri + "/bulk"))
                 .withLink("ws", buildWsLinkFor(channelUri))
                 .withLink("time", URI.create(channelUri + "/time"))
                 .withLink("status", URI.create(channelUri + "/status"));

@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.model.BatchContent;
+import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -29,19 +29,19 @@ public class MultiPartParserTest {
                 "--frontier--";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
-        BatchContent batchContent = BatchContent.builder()
+        BulkContent bulkContent = BulkContent.builder()
                 .withStream(inputStream)
                 .withContentType("multipart/mixed; boundary=frontier")
                 .build();
-        MultiPartParser parser = new MultiPartParser(batchContent);
+        MultiPartParser parser = new MultiPartParser(bulkContent);
         parser.parse();
-        Content item = batchContent.getItems().get(0);
+        Content item = bulkContent.getItems().get(0);
         assertEquals("This is the body of the message.", new String(item.getData()));
         assertEquals("text/plain", item.getContentType().get());
         DateTime time = new DateTime().plusMillis(1);
         assertTrue(item.getContentKey().get().getTime().isBefore(time));
         assertTrue(StringUtils.endsWith(item.getContentKey().get().getHash(), "000000"));
-        item = batchContent.getItems().get(1);
+        item = bulkContent.getItems().get(1);
         assertEquals("PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5PgogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbWVzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==", new String(item.getData()));
         assertEquals("application/octet-stream", item.getContentType().get());
         assertTrue(item.getContentKey().get().getTime().isBefore(time));
@@ -56,13 +56,13 @@ public class MultiPartParserTest {
                 "--boundary--";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
-        BatchContent batchContent = BatchContent.builder()
+        BulkContent bulkContent = BulkContent.builder()
                 .withStream(inputStream)
                 .withContentType("multipart/mixed; boundary=boundary")
                 .build();
-        MultiPartParser parser = new MultiPartParser(batchContent);
+        MultiPartParser parser = new MultiPartParser(bulkContent);
         parser.parse();
-        Content item = batchContent.getItems().get(0);
+        Content item = bulkContent.getItems().get(0);
         assertEquals("There is some message here.", new String(item.getData()));
         assertEquals("text/plain", item.getContentType().get());
     }
@@ -77,13 +77,13 @@ public class MultiPartParserTest {
                 "--boundary--";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
-        BatchContent batchContent = BatchContent.builder()
+        BulkContent bulkContent = BulkContent.builder()
                 .withStream(inputStream)
                 .withContentType("multipart/mixed; boundary=\"boundary\"")
                 .build();
-        MultiPartParser parser = new MultiPartParser(batchContent);
+        MultiPartParser parser = new MultiPartParser(bulkContent);
         parser.parse();
-        Content item = batchContent.getItems().get(0);
+        Content item = bulkContent.getItems().get(0);
         assertEquals("meow.", new String(item.getData()));
         assertEquals("application/ocelot-stream", item.getContentType().get());
     }
@@ -98,13 +98,13 @@ public class MultiPartParserTest {
                 "--boundary--";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
-        BatchContent batchContent = BatchContent.builder()
+        BulkContent bulkContent = BulkContent.builder()
                 .withStream(inputStream)
                 .withContentType("multipart/mixed; boundary=boundary")
                 .build();
-        MultiPartParser parser = new MultiPartParser(batchContent);
+        MultiPartParser parser = new MultiPartParser(bulkContent);
         parser.parse();
-        Content item = batchContent.getItems().get(0);
+        Content item = bulkContent.getItems().get(0);
         assertEquals("\r\nThere is some message here.\r\n", new String(item.getData()));
         assertEquals("text/plain", item.getContentType().get());
     }

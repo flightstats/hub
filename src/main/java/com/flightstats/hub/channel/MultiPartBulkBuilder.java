@@ -21,9 +21,9 @@ import java.net.URI;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 
-public class MultiPartBatchBuilder {
+public class MultiPartBulkBuilder {
 
-    private final static Logger logger = LoggerFactory.getLogger(MultiPartBatchBuilder.class);
+    private final static Logger logger = LoggerFactory.getLogger(MultiPartBulkBuilder.class);
 
     private static final byte[] CRLF = "\r\n".getBytes();
     private static final String BOUNDARY = "||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||";

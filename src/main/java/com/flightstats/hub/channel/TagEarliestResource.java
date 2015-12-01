@@ -52,10 +52,12 @@ public class TagEarliestResource {
                                      @PathParam("count") int count,
                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
-                                     @QueryParam("trace") @DefaultValue("false") boolean trace) {
+                                     @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                                     @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                     @HeaderParam("Accept") String accept) {
         SortedSet<ChannelContentKey> keys = tagService.getEarliest(tag, count, stable, trace);
-        if (batch) {
-            return MultiPartBatchBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo);
+        if (bulk || batch) {
+            return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");

@@ -12,12 +12,12 @@ The Hub
 * [update a channel](#update-a-channel)
 * [fetch channel metadata](#fetch-channel-metadata)
 * [insert content into channel](#insert-content-into-channel)
-* [batch insert content into channel](#batch-insert-content-into-channel)
+* [bulk insert content into channel](#bulk-insert-content-into-channel)
 * [fetch content from channel](#fetch-content-from-channel)
 * [latest channel item](#latest-channel-item)
 * [earliest channel item](#earliest-channel-item)
 * [next and previous links](#next-and-previous-links)
-* [fetch batch content from channel](#fetch-batch-content-from-channel)
+* [fetch bulk content from channel](#fetch-bulk-content-from-channel)
 * [channel status](#channel-status)
 * [channel limits](#channel-limits)
 * [tag interface](#tag-interface)
@@ -153,6 +153,9 @@ On success:  `HTTP/1.1 201 OK`
         "earliest": {
             "href": "http://hub/channel/stumptown/earliest"
         },
+        "bulk": {
+             "href": "http://hub/channel/stumptown/bulk"
+        },
         "ws": {
             "href": "ws://hub/channel/stumptown/ws"
         },
@@ -238,14 +241,12 @@ Here's how you could do this with curl:
 curl -i -X POST --header "Content-type: text/plain" --data 'your content here' http://hub/channel/stumptown
 ```
 
-## batch insert content into channel
+## bulk insert content into channel
 
-**batch operations are in alpha**
+You can also insert items in bulk into the hub, and each item will receive a unique ordered uri.
 
-You can also insert a batch of items into the hub, and each item will recieve a unique ordered uri.
-
-Currently, [MIME](https://tools.ietf.org/html/rfc2045) is the only way to batch multiple items.
-To insert a batch, issue a POST on the channel's `batch` URI and specify the appropriate "multipart" Content-Type.
+Currently, [MIME](https://tools.ietf.org/html/rfc2045) is the only way to insert bulk items.
+Issue a POST on the channel's `bulk` URI and specify the appropriate "multipart" Content-Type.
 
 Notes on MIME:
 * All lines must be terminated by [CRLF](https://tools.ietf.org/html/rfc2045#section-2.1)
@@ -254,7 +255,7 @@ Notes on MIME:
 * binary payloads are not currently supported
 
 ```
-POST http://hub/channel/stumptown/batch
+POST http://hub/channel/stumptown/bulk
 Content-Type: multipart/mixed; boundary=abcdefg
 Accept: application/json
 
@@ -376,19 +377,19 @@ On success: `HTTP/1.1 200 OK`
 }
 ```
 
-## fetch batch content from channel
-
-**batch operations are in alpha**
+## fetch bulk content from channel
 
 Any query operation (including next, previous, earliest, latest, and times) supports the addition of the
-query parameter `?batch=true`.  Using the batch parameter will result in the content of the query items being streamed
+query parameter `?bulk=true`.  Using the bulk parameter will result in the content of the query items being streamed
 as [MIME](https://tools.ietf.org/html/rfc2045) to the client.
 
-The hub will generate a random 70 character boundary, and follows the same MIME rules as [batch insert content into channel](#batch-insert-content-into-channel)
+*NOTE* `bulk` was previously named `batch`.  `batch` is deprecated. 
+
+The hub will generate a random 70 character boundary, and follows the same MIME rules as [bulk insert content into channel](#bulk-insert-content-into-channel)
 
 Using the previous example:
           
-`GET http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/3?batch=true`
+`GET http://hub/channel/stumptown/2014/12/23/23/14/50/514/xIXX5L/previous/3?bulk=true`
 
 On success: `HTTP/1.1 200 OK`
 
@@ -765,7 +766,7 @@ An example MINUTE payload:
   "type" : "items",
   "id" : "2014/01/13/10/42",
   "url" : "http://hub/channel/stumptown/2014/01/13/10/42",
-  "batchUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?batch=true",
+  "bulkUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?bulk=true",
   "uris" : [ 
     "http://hub/channel/stumptown/2014/01/13/10/42/05/436/abcdef",
     "http://hub/channel/stumptown/2014/01/13/10/42/31/759/s03ub2"
@@ -782,7 +783,7 @@ An example MINUTE heartbeat :
   "type" : "heartbeat",
   "id" : "2014/01/13/10/42",
   "url" : "http://hub/channel/stumptown/2014/01/13/10/42",
-  "batchUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?batch=true",
+  "bulkUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?bulk=true",
   "uris" : [ ]
 }
 ```

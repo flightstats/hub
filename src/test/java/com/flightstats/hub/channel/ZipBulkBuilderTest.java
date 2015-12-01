@@ -17,9 +17,9 @@ import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.assertEquals;
 
-public class ZipBatchBuilderTest {
+public class ZipBulkBuilderTest {
 
-    private final static Logger logger = LoggerFactory.getLogger(ZipBatchBuilderTest.class);
+    private final static Logger logger = LoggerFactory.getLogger(ZipBulkBuilderTest.class);
 
     @Test
     public void testCycle() throws IOException {
@@ -27,7 +27,7 @@ public class ZipBatchBuilderTest {
         ZipOutputStream output = new ZipOutputStream(baos);
         ContentKey key = new ContentKey();
         Content content = ContentDaoUtil.createContent(key);
-        ZipBatchBuilder.createZipEntry(output, content);
+        ZipBulkBuilder.createZipEntry(output, content);
         output.close();
         byte[] bytes = baos.toByteArray();
         logger.info("wrote bytes {}", bytes.length);

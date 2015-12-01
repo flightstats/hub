@@ -10,12 +10,11 @@ utils.configureFrisby();
 /**
  * create a channel
  * post two items
- * stream both items back with batch
+ * stream both items back with bulk
  */
 describe(testName, function () {
 
-    utils.putChannel(channelName, function () {
-    }, {"name": channelName, "ttlDays": 1});
+    utils.putChannel(channelName, false, {"name": channelName, "ttlDays": 1});
 
     utils.addItem(channelResource, 201);
 

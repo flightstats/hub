@@ -22,9 +22,9 @@ import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class ZipBatchBuilder {
+public class ZipBulkBuilder {
 
-    private final static Logger logger = LoggerFactory.getLogger(ZipBatchBuilder.class);
+    private final static Logger logger = LoggerFactory.getLogger(ZipBulkBuilder.class);
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService) {

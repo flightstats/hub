@@ -55,10 +55,11 @@ public class ChannelLatestResource {
                                    @QueryParam("stable") @DefaultValue("true") boolean stable,
                                    @QueryParam("trace") @DefaultValue("false") boolean trace,
                                    @QueryParam("batch") @DefaultValue("false") boolean batch,
+                                   @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                    @QueryParam("tag") String tag,
                                    @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            return tagLatestResource.getLatestCount(tag, count, stable, batch, trace);
+            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, accept);
         }
         Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
         if (!latest.isPresent()) {
@@ -74,8 +75,8 @@ public class ChannelLatestResource {
                 .build();
         SortedSet<ContentKey> keys = channelService.getKeys(query);
         keys.add(latest.get());
-        if (batch) {
-            return BatchBuilder.build(keys, channel, channelService, uriInfo, accept);
+        if (bulk || batch) {
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
             return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true, trace);
         }
