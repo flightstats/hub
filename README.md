@@ -243,7 +243,7 @@ curl -i -X POST --header "Content-type: text/plain" --data 'your content here' h
 
 ## bulk insert content into channel
 
-You can also insert items in bulk into the hub, and each item will recieve a unique ordered uri.
+You can also insert items in bulk into the hub, and each item will receive a unique ordered uri.
 
 Currently, [MIME](https://tools.ietf.org/html/rfc2045) is the only way to insert bulk items.
 Issue a POST on the channel's `bulk` URI and specify the appropriate "multipart" Content-Type.
