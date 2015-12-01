@@ -111,9 +111,8 @@ public class S3SingleContentDao implements ContentDao {
     }
 
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
-        try {
+        try (S3Object object = s3Client.getObject(s3BucketName, getS3ContentKey(channelName, key))) {
             sender.send("channel." + channelName + ".s3.get", 1);
-            S3Object object = s3Client.getObject(s3BucketName, getS3ContentKey(channelName, key));
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();

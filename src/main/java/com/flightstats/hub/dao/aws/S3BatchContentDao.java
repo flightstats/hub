@@ -125,8 +125,7 @@ public class S3BatchContentDao implements ContentDao {
         for (ContentKey key : minutePath.getKeys()) {
             keyMap.put(key.toUrl(), key);
         }
-        try {
-            ZipInputStream zipStream = getZipInputStream(channel, minutePath);
+        try (ZipInputStream zipStream = getZipInputStream(channel, minutePath)) {
             ZipEntry nextEntry = zipStream.getNextEntry();
             while (nextEntry != null) {
                 logger.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
@@ -193,9 +192,8 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     private void getKeysForMinute(String channel, MinutePath minutePath, SortedSet<ContentKey> keys, Traces traces) {
-        try {
+        try (S3Object object = s3Client.getObject(s3BucketName, getS3BatchIndexKey(channel, minutePath))) {
             sender.send("channel." + channel + ".s3Batch.get", 1);
-            S3Object object = s3Client.getObject(s3BucketName, getS3BatchIndexKey(channel, minutePath));
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             JsonNode root = mapper.readTree(bytes);
             JsonNode items = root.get("items");
