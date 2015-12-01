@@ -43,7 +43,6 @@ public class S3BatchContentDao implements ContentDao {
     private final MetricsSender sender;
     private final boolean useEncrypted = HubProperties.getProperty("app.encrypted", false);
     private final int s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
-    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private final String s3BucketName;
 
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -323,7 +322,7 @@ public class S3BatchContentDao implements ContentDao {
     public void writeBatch(String channel, MinutePath path, Collection<ContentKey> keys, byte[] bytes) {
         ActiveTraces.getLocal().add("S3BatchContentDao.writeBatch", channel, path);
         try {
-            logger.debug("writing batch {} keys {} bytes {}", path, keys.size(), bytes.length);
+            logger.debug("writing {} batch {} keys {} bytes {}", channel, path, keys.size(), bytes.length);
             writeBatchItems(channel, path, bytes);
             long size = writeBatchIndex(channel, path, keys);
             sender.send("channel." + channel + ".s3Batch.put", 2);

@@ -88,10 +88,8 @@ public class AwsContentService implements ContentService {
     }
 
     private void s3SingleWrite(String channelName, ContentKey key) {
-        if (dropSomeWrites) {
-            if (Math.random() < 0.95) {
-                s3WriteQueue.add(new ChannelContentKey(channelName, key));
-            }
+        if (dropSomeWrites && Math.random() > 0.95) {
+            //do nothing
         } else {
             s3WriteQueue.add(new ChannelContentKey(channelName, key));
         }

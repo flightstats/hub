@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.aws;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -28,6 +29,7 @@ public class S3BatchResource {
     private final static Logger logger = LoggerFactory.getLogger(S3BatchResource.class);
 
     private static final ObjectMapper mapper = new ObjectMapper();
+    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
 
     @Inject
     @Named(ContentDao.BATCH_LONG_TERM)
@@ -56,7 +58,9 @@ public class S3BatchResource {
             String id = node.get("id").asText();
             MinutePath path = MinutePath.fromUrl(id).get();
             String batchUrl = node.get("batchUrl").asText();
-            if (!getAndWriteBatch(s3BatchContentDao, channel, path, keys, batchUrl)) {
+            if (dropSomeWrites && Math.random() > 0.95) {
+                logger.debug("dropping {} {}", channel, data);
+            } else if (!getAndWriteBatch(s3BatchContentDao, channel, path, keys, batchUrl)) {
                 return Response.status(400).build();
             }
             return Response.ok().build();
