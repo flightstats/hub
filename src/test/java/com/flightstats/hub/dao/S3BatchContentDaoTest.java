@@ -6,6 +6,7 @@ import com.flightstats.hub.channel.ZipBulkBuilder;
 import com.flightstats.hub.dao.aws.AwsConnectorFactory;
 import com.flightstats.hub.dao.aws.S3BatchContentDao;
 import com.flightstats.hub.dao.aws.S3BucketName;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.NoOpMetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
@@ -114,23 +115,27 @@ public class S3BatchContentDaoTest {
     @Test
     public void testQueryHour() throws IOException {
         String channel = "testQueryHour" + RandomStringUtils.randomAlphanumeric(20);
-        DateTime start = TimeUtil.now().withMinuteOfHour(59);
+        DateTime start = TimeUtil.now().withMinuteOfHour(54);
         ContentKey key = new ContentKey(start, "start");
         for (int i = 0; i < 12; i++) {
             writeBatchMinute(channel, new MinutePath(start.plusMinutes(i * 6)), 2);
         }
         query(channel, start, 2, TimeUtil.Unit.HOURS);
-        query(channel, start.plusMinutes(2), 20, TimeUtil.Unit.HOURS);
-        query(channel, start.plusMinutes(61), 2, TimeUtil.Unit.HOURS);
+        query(channel, start.plusMinutes(6), 20, TimeUtil.Unit.HOURS);
+        query(channel, start.plusMinutes(66), 2, TimeUtil.Unit.HOURS);
     }
 
     private void query(String channel, DateTime start, int expected, TimeUtil.Unit unit) {
+        ActiveTraces.start("S3BatchContentDaoTest", channel, start, expected, unit);
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
                 .unit(unit)
                 .build();
         SortedSet<ContentKey> found = contentDao.queryByTime(timeQuery);
+        logger.info("found {}", found);
+        ActiveTraces.getLocal().log(logger);
         assertEquals(expected, found.size());
+        ActiveTraces.end();
     }
 
     @Test

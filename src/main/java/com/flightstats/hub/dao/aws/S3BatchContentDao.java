@@ -165,7 +165,6 @@ public class S3BatchContentDao implements ContentDao {
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
                 .withPrefix(channel + BATCH_INDEX + unit.format(rounded))
-                .withMarker(channel + BATCH_INDEX + TimeUtil.Unit.MINUTES.format(rounded))
                 .withMaxKeys(s3MaxQueryItems);
         SortedSet<MinutePath> minutePaths = listMinutePaths(channel, request, traces, true);
         for (MinutePath minutePath : minutePaths) {
