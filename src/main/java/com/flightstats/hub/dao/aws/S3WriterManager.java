@@ -194,7 +194,7 @@ public class S3WriterManager {
     private class S3WriterManagerBatchService extends AbstractScheduledService {
         @Override
         protected void runOneIteration() throws Exception {
-            runBatch();
+            //runBatch();
         }
 
         @Override
