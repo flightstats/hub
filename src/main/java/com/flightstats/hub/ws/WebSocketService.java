@@ -60,7 +60,7 @@ public class WebSocketService {
     }
 
     private String getCallbackUrl(String id) throws UnknownHostException {
-        return HubHost.getLocalUriRoot() + "/internal/ws/" + id;
+        return HubHost.getLocalHttpIpUri() + "/internal/ws/" + id;
     }
 
     private String setId(Session session, String channel) {
