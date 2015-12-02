@@ -78,11 +78,9 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     private Content getS3Object(String channel, ContentKey key) throws IOException {
-        try {
-            logger.trace("S3BatchContentDao.getS3Object {} {}", channel, key);
-            MinutePath minutePath = new MinutePath(key.getTime());
-            ZipInputStream zipStream = getZipInputStream(channel, minutePath);
-
+        logger.trace("S3BatchContentDao.getS3Object {} {}", channel, key);
+        MinutePath minutePath = new MinutePath(key.getTime());
+        try (ZipInputStream zipStream = getZipInputStream(channel, minutePath)) {
             ZipEntry nextEntry = zipStream.getNextEntry();
             while (nextEntry != null) {
                 logger.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
