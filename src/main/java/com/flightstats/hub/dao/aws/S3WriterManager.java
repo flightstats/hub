@@ -111,7 +111,7 @@ public class S3WriterManager {
         channelThreadPool.submit(() -> {
             try {
                 Thread.currentThread().setName("s3-single-" + channel + "-" + TimeUtil.minutes(startTime));
-                ActiveTraces.start("s3-single-verify", channel, startTime);
+                ActiveTraces.start("S3WriterManager.singleS3Verification", channel, startTime);
                 String channelName = channel.getName();
                 SortedSet<ContentKey> keysToAdd = getMissing(startTime, endTime, channelName, s3SingleContentDao, new TreeSet<>());
                 for (ContentKey key : keysToAdd) {
@@ -127,13 +127,13 @@ public class S3WriterManager {
         channelThreadPool.submit(() -> {
             try {
                 Thread.currentThread().setName("s3-batch-" + channel + "-" + TimeUtil.minutes(startTime));
-                ActiveTraces.start("s3-batch-verify", channel, startTime);
+                ActiveTraces.start("S3WriterManager.batchS3Verification", channel, startTime);
                 String channelName = channel.getName();
                 SortedSet<ContentKey> expectedKeys = new TreeSet<>();
                 SortedSet<ContentKey> keysToAdd = getMissing(startTime, null, channelName, s3BatchContentDao, expectedKeys);
                 if (!keysToAdd.isEmpty()) {
                     MinutePath path = new MinutePath(startTime);
-                    logger.info("missing {}", path);
+                    logger.info("batchS3Verification {} missing {}", channelName, path);
                     String batchUrl = MinuteGroupStrategy.getBulkUrl(APP_URL + "/channel/" + channelName, path, "batch");
                     S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, path, expectedKeys, batchUrl);
                 }
