@@ -305,7 +305,7 @@ function parseJson(response, description) {
     try {
         return JSON.parse(response.body);
     } catch (e) {
-        console.log("unable to parse json", response.statusCode, response.body, response.req.path, description, e);
+        console.log("unable to parse json", response.statusCode, response.req.path, response.req.method, description, e);
         return {};
     }
 }
