@@ -18,22 +18,26 @@ describe(testName, function () {
 
     function verifyLinks(body, url, time, params) {
         params = params || '';
-        expect(body._links.self.href).toBe(url + params);
-        expect(body._links.second.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH/mm/ss') + params);
-        expect(body._links.second.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}/{second}{?stable}');
-        expect(body._links.second.redirect).toBe(url + '/second' + params);
+        if (body._links) {
+            expect(body._links.self.href).toBe(url + params);
+            expect(body._links.second.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH/mm/ss') + params);
+            expect(body._links.second.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}/{second}{?stable}');
+            expect(body._links.second.redirect).toBe(url + '/second' + params);
 
-        expect(body._links.minute.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH/mm') + params);
-        expect(body._links.minute.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}{?stable}');
-        expect(body._links.minute.redirect).toBe(url + '/minute' + params);
+            expect(body._links.minute.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH/mm') + params);
+            expect(body._links.minute.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}{?stable}');
+            expect(body._links.minute.redirect).toBe(url + '/minute' + params);
 
-        expect(body._links.hour.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH') + params);
-        expect(body._links.hour.template).toBe(url + '/{year}/{month}/{day}/{hour}{?stable}');
-        expect(body._links.hour.redirect).toBe(url + '/hour' + params);
+            expect(body._links.hour.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH') + params);
+            expect(body._links.hour.template).toBe(url + '/{year}/{month}/{day}/{hour}{?stable}');
+            expect(body._links.hour.redirect).toBe(url + '/hour' + params);
 
-        expect(body._links.day.href).toBe(channelResource + time.format('/YYYY/MM/DD') + params);
-        expect(body._links.day.template).toBe(url + '/{year}/{month}/{day}{?stable}');
-        expect(body._links.day.redirect).toBe(url + '/day' + params);
+            expect(body._links.day.href).toBe(channelResource + time.format('/YYYY/MM/DD') + params);
+            expect(body._links.day.template).toBe(url + '/{year}/{month}/{day}{?stable}');
+            expect(body._links.day.redirect).toBe(url + '/day' + params);
+        } else {
+            expect(body._links).toBe(true);
+        }
     }
 
     it('gets stable time links', function (done) {

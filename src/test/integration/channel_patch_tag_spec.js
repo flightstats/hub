@@ -45,6 +45,15 @@ describe(testName, function () {
             });
     });
 
+    function verifyPatched(parse) {
+        if (parse.tags) {
+            expect(parse.tags).toContain('one');
+            expect(parse.tags).toContain('three');
+            expect(parse.tags).not.toContain('two');
+        }
+        verifyOptionals(parse);
+    }
+
     it("patches channel " + channelResource, function (done) {
         request.patch({url : channelResource,
                 headers : {"Content-Type" : "application/json"},
@@ -53,10 +62,7 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parse = utils.parseJson(response, testName);
-                expect(parse.tags).toContain('one');
-                expect(parse.tags).toContain('three');
-                expect(parse.tags).not.toContain('two');
-                verifyOptionals(parse);
+                verifyPatched(parse);
                 done();
             });
     });
@@ -67,10 +73,7 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parse = utils.parseJson(response, testName);
-                expect(parse.tags).toContain('one');
-                expect(parse.tags).toContain('three');
-                expect(parse.tags).not.toContain('two');
-                verifyOptionals(parse);
+                verifyPatched(parse);
                 done();
             });
     });

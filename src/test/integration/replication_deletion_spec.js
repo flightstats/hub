@@ -29,7 +29,7 @@ describe(testName, function () {
 
                 expect(response.headers['content-type']).toBe('application/json');
                 expect(response.statusCode).toBe(403);
-                expect(body).toBe('{"message":"channel can not be modified while replicating"}');
+                expect(body).toBe(channelName + ' cannot modified while replicating');
                 done();
             });
     });

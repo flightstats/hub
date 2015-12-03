@@ -8,9 +8,9 @@ import javax.ws.rs.ext.Provider;
 
 @Provider
 @Singleton
-public class ForbiddenRequestExceptionMapper extends AbstractExceptionMapper<ForbiddenRequestException> {
+public class FailedWriteExceptionMapper extends AbstractExceptionMapper<FailedWriteException> {
 
     protected Response.Status getResponseCode() {
-        return Response.Status.FORBIDDEN;
+        return Response.Status.INTERNAL_SERVER_ERROR;
     }
 }

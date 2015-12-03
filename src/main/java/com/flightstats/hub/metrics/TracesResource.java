@@ -31,7 +31,7 @@ public class TracesResource {
         ObjectNode root = mapper.createObjectNode();
 
         String tracesPath = "/internal/traces";
-        root.put("server", HubHost.getLocalUriRoot() + tracesPath);
+        root.put("server", HubHost.getLocalHttpNameUri() + tracesPath);
         ArrayNode servers = root.putArray("servers");
         for (String spokeServer : hubCuratorCluster.getServers()) {
             servers.add(HubHost.getScheme() + spokeServer + tracesPath);

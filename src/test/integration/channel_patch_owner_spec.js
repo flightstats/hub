@@ -24,7 +24,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
-                var parse = utils.parseJson(response, testName);
+                var parse = utils.parseJson(response, testName + '_A');
                 verifyOptionals(parse);
                 done();
             });
@@ -35,7 +35,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parse = utils.parseJson(response, testName);
+                var parse = utils.parseJson(response, testName + '_B');
                 verifyOptionals(parse);
                 done();
             });
@@ -50,7 +50,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parse = utils.parseJson(response, testName);
+                var parse = utils.parseJson(response, testName + '_C');
                 expect(parse.description).toBe("stuff");
                 done();
             });
@@ -61,7 +61,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parse = utils.parseJson(response, testName);
+                var parse = utils.parseJson(response, testName + '_D');
                 expect(parse.description).toBe("stuff");
                 done();
             });

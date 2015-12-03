@@ -22,7 +22,11 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                expect(body._links.uris.length).toBe(0);
+                if (body._links) {
+                    expect(body._links.uris.length).toBe(0);
+                } else {
+                    expect(body).toBe(true);
+                }
                 done();
             })
     });

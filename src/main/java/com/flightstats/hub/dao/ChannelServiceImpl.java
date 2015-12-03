@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
@@ -10,6 +11,7 @@ import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicatorManager;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -30,6 +32,7 @@ public class ChannelServiceImpl implements ChannelService {
     private final ReplicatorManager replicatorManager;
     private MetricsSender sender;
     private final HubUtils hubUtils;
+    private final int CHANNEL_SLEEP = HubProperties.getProperty("hub.channel.sleep", 0);
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigDao channelConfigDao,
@@ -50,12 +53,21 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfig createChannel(ChannelConfig configuration) {
+        long start = System.currentTimeMillis();
         logger.info("create channel {}", configuration);
         channelValidator.validate(configuration, true);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
         ChannelConfig created = channelConfigDao.createChannel(configuration);
+        sleep(start);
         notify(created, null);
         return created;
+    }
+
+    private void sleep(long start) {
+        long time = System.currentTimeMillis() - start;
+        if (time < CHANNEL_SLEEP) {
+            Sleeper.sleep(CHANNEL_SLEEP - time);
+        }
     }
 
     private void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
@@ -75,11 +87,13 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfig updateChannel(ChannelConfig configuration) {
+        long start = System.currentTimeMillis();
         logger.info("updating channel {}", configuration);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
         ChannelConfig oldConfig = getChannelConfig(configuration.getName());
         channelValidator.validate(configuration, false);
         channelConfigDao.updateChannel(configuration);
+        sleep(start);
         notify(configuration, oldConfig);
         return configuration;
     }
@@ -267,6 +281,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (!channelConfigDao.channelExists(channelName)) {
             return false;
         }
+        long start = System.currentTimeMillis();
         ChannelConfig channelConfig = getChannelConfig(channelName);
         if (!channelConfig.isSingle()) {
             new S3Batch(channelConfig, hubUtils).stop();
@@ -277,6 +292,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (replicating) {
             replicatorManager.notifyWatchers();
         }
+        sleep(start);
         return true;
     }
 }
