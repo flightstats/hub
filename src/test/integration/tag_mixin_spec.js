@@ -76,10 +76,8 @@ describe(testName, function () {
                 body = utils.parseJson(response, testName);
                 parsedLinks = parse(response.headers.link);
                 var item = linkStripParams(uris[index]);
-                if (parsedLinks.previous) {
+                if (parsedLinks) {
                     expect(parsedLinks.previous.url).toContain(item + '/previous?tag=' + tag)
-                }
-                if (parsedLinks.next) {
                     expect(parsedLinks.next.url).toContain(item + '/next?tag=' + tag)
                 }
                 done();
