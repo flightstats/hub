@@ -10,6 +10,7 @@ import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicatorManager;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -50,12 +51,21 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfig createChannel(ChannelConfig configuration) {
+        long start = System.currentTimeMillis();
         logger.info("create channel {}", configuration);
         channelValidator.validate(configuration, true);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
         ChannelConfig created = channelConfigDao.createChannel(configuration);
+        sleep(start);
         notify(created, null);
         return created;
+    }
+
+    private void sleep(long start) {
+        long time = System.currentTimeMillis() - start;
+        if (time < 100) {
+            Sleeper.sleep(100 - time);
+        }
     }
 
     private void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
@@ -75,11 +85,13 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfig updateChannel(ChannelConfig configuration) {
+        long start = System.currentTimeMillis();
         logger.info("updating channel {}", configuration);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
         ChannelConfig oldConfig = getChannelConfig(configuration.getName());
         channelValidator.validate(configuration, false);
         channelConfigDao.updateChannel(configuration);
+        sleep(start);
         notify(configuration, oldConfig);
         return configuration;
     }
