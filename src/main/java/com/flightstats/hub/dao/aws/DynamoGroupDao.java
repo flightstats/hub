@@ -111,7 +111,7 @@ public class DynamoGroupDao implements GroupDao {
     public Iterable<Group> getGroups() {
         List<Group> configurations = new ArrayList<>();
 
-        ScanResult result = dbClient.scan(new ScanRequest(getTableName()));
+        ScanResult result = dbClient.scan(new ScanRequest(getTableName()).withConsistentRead(true));
         mapItems(configurations, result);
 
         while (result.getLastEvaluatedKey() != null) {
