@@ -281,6 +281,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (!channelConfigDao.channelExists(channelName)) {
             return false;
         }
+        long start = System.currentTimeMillis();
         ChannelConfig channelConfig = getChannelConfig(channelName);
         if (!channelConfig.isSingle()) {
             new S3Batch(channelConfig, hubUtils).stop();
@@ -291,6 +292,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (replicating) {
             replicatorManager.notifyWatchers();
         }
+        sleep(start);
         return true;
     }
 }
