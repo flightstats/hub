@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
@@ -31,6 +32,7 @@ public class ChannelServiceImpl implements ChannelService {
     private final ReplicatorManager replicatorManager;
     private MetricsSender sender;
     private final HubUtils hubUtils;
+    private final int CHANNEL_SLEEP = HubProperties.getProperty("hub.channel.sleep", 0);
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigDao channelConfigDao,
@@ -63,8 +65,8 @@ public class ChannelServiceImpl implements ChannelService {
 
     private void sleep(long start) {
         long time = System.currentTimeMillis() - start;
-        if (time < 100) {
-            Sleeper.sleep(100 - time);
+        if (time < CHANNEL_SLEEP) {
+            Sleeper.sleep(CHANNEL_SLEEP - time);
         }
     }
 
