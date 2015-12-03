@@ -61,7 +61,7 @@ describe(testName, function () {
                     expect(parsed._links.next).toBeDefined();
                     expect(parsed._links.previous).not.toBeDefined();
                 } else {
-                    expect(parsed._links).toBe(true);
+                    fail("expected parsed._links to exist" + parsed._links);
                 }
                 done();
             });
