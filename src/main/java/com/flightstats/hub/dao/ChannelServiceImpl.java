@@ -280,7 +280,6 @@ public class ChannelServiceImpl implements ChannelService {
         if (replicating) {
             replicatorManager.notifyWatchers();
         }
-        sleep(start);
         return true;
     }
 }
