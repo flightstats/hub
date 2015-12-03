@@ -49,9 +49,11 @@ describe(testName, function () {
                 if (body._links) {
                     uris = body._links.uris;
                     expect(uris.length).toBe(3);
-                    expect(uris[0]).toContain(channelA);
-                    expect(uris[1]).toContain(channelB);
-                    expect(uris[2]).toContain(channelA);
+                    if (uris.length == 3) {
+                        expect(uris[0]).toContain(channelA);
+                        expect(uris[1]).toContain(channelB);
+                        expect(uris[2]).toContain(channelA);
+                    }
                 }
                 done();
             });

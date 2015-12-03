@@ -16,6 +16,7 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
 
     @Override
     public ContainerRequest filter(ContainerRequest request) {
+        logger.trace("incoming {} {}", request.getMethod(), request.getRequestUri());
         Thread thread = Thread.currentThread();
         thread.setName(thread.getName() + "|" + request.getRequestUri());
         ActiveTraces.start(request.getMethod(), request.getRequestUri());
@@ -24,6 +25,7 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
 
     @Override
     public ContainerResponse filter(ContainerRequest request, ContainerResponse response) {
+        logger.trace("response {} {} {}", request.getMethod(), request.getRequestUri(), response.getStatus());
         Thread thread = Thread.currentThread();
         thread.setName(StringUtils.substringBefore(thread.getName(), "|"));
         if (!ActiveTraces.end()) {
