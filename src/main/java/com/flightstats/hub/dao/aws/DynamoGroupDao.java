@@ -70,7 +70,7 @@ public class DynamoGroupDao implements GroupDao {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("name", new AttributeValue(name));
         try {
-            GetItemResult result = dbClient.getItem(getTableName(), keyMap);
+            GetItemResult result = dbClient.getItem(getTableName(), keyMap, true);
             if (result.getItem() == null) {
                 return Optional.absent();
             }
@@ -111,7 +111,7 @@ public class DynamoGroupDao implements GroupDao {
     public Iterable<Group> getGroups() {
         List<Group> configurations = new ArrayList<>();
 
-        ScanResult result = dbClient.scan(new ScanRequest(getTableName()));
+        ScanResult result = dbClient.scan(new ScanRequest(getTableName()).withConsistentRead(true));
         mapItems(configurations, result);
 
         while (result.getLastEvaluatedKey() != null) {

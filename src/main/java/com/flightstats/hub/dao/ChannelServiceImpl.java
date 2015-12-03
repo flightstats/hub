@@ -50,6 +50,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfig createChannel(ChannelConfig configuration) {
+        long start = System.currentTimeMillis();
         logger.info("create channel {}", configuration);
         channelValidator.validate(configuration, true);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
@@ -75,6 +76,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfig updateChannel(ChannelConfig configuration) {
+        long start = System.currentTimeMillis();
         logger.info("updating channel {}", configuration);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
         ChannelConfig oldConfig = getChannelConfig(configuration.getName());
@@ -267,6 +269,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (!channelConfigDao.channelExists(channelName)) {
             return false;
         }
+        long start = System.currentTimeMillis();
         ChannelConfig channelConfig = getChannelConfig(channelName);
         if (!channelConfig.isSingle()) {
             new S3Batch(channelConfig, hubUtils).stop();

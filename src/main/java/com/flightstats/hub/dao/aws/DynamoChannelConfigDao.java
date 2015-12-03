@@ -17,13 +17,13 @@ import java.util.*;
 public class DynamoChannelConfigDao implements ChannelConfigDao {
     private final static Logger logger = LoggerFactory.getLogger(DynamoChannelConfigDao.class);
 
-    private final AmazonDynamoDBClient dbClient;
-    private final DynamoUtils dynamoUtils;
+    @Inject
+    private AmazonDynamoDBClient dbClient;
+    @Inject
+    private DynamoUtils dynamoUtils;
 
     @Inject
-    public DynamoChannelConfigDao(AmazonDynamoDBClient dbClient, DynamoUtils dynamoUtils) {
-        this.dbClient = dbClient;
-        this.dynamoUtils = dynamoUtils;
+    public DynamoChannelConfigDao() {
         HubServices.register(new DynamoChannelConfigurationDaoInit());
     }
 
@@ -93,7 +93,10 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
     public ChannelConfig getChannelConfig(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("key", new AttributeValue().withS(name));
-        GetItemRequest getItemRequest = new GetItemRequest().withTableName(getTableName()).withKey(keyMap);
+        GetItemRequest getItemRequest = new GetItemRequest()
+                .withConsistentRead(true)
+                .withTableName(getTableName())
+                .withKey(keyMap);
         try {
             GetItemResult result = dbClient.getItem(getItemRequest);
             if (result.getItem() == null) {
@@ -138,6 +141,7 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
     public Iterable<ChannelConfig> getChannels() {
         List<ChannelConfig> configurations = new ArrayList<>();
         ScanRequest scanRequest = new ScanRequest()
+                .withConsistentRead(true)
                 .withTableName(getTableName());
 
         ScanResult result = dbClient.scan(scanRequest);

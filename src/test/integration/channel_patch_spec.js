@@ -28,7 +28,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
-                var parse = utils.parseJson(response, testName);
+                var parse = utils.parseJson(response, testName + '_A');
                 verifyOptionals(parse);
                 done();
             });
@@ -39,11 +39,22 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parse = utils.parseJson(response, testName);
+                var parse = utils.parseJson(response, testName + '_B');
                 verifyOptionals(parse);
                 done();
             });
     });
+
+    function verifyPatched(parse) {
+        expect(parse.ttlDays).toBe(2);
+        expect(parse.description).toBe('next');
+        expect(parse.replicationSource).toBe('http://hub/channel/nada');
+        if (parse.tags) {
+            expect(parse.tags).toContain('foo');
+            expect(parse.tags).toContain('bar');
+            expect(parse.tags).toContain('tagz');
+        }
+    }
 
     it("patches channel " + channelResource, function (done) {
         request.patch({url : channelResource,
@@ -52,13 +63,8 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parse = utils.parseJson(response, testName);
-                expect(parse.ttlDays).toBe(2);
-                expect(parse.description).toBe('next');
-                expect(parse.replicationSource).toBe('http://hub/channel/nada');
-                expect(parse.tags).toContain('foo');
-                expect(parse.tags).toContain('bar');
-                expect(parse.tags).toContain('tagz');
+                var parse = utils.parseJson(response, testName + '_C');
+                verifyPatched(parse);
                 done();
             });
     });
@@ -68,13 +74,8 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                var parse = utils.parseJson(response, testName);
-                expect(parse.ttlDays).toBe(2);
-                expect(parse.description).toBe('next');
-                expect(parse.replicationSource).toBe('http://hub/channel/nada');
-                expect(parse.tags).toContain('foo');
-                expect(parse.tags).toContain('bar');
-                expect(parse.tags).toContain('tagz');
+                var parse = utils.parseJson(response, testName + '_D');
+                verifyPatched(parse);
                 done();
             });
     });

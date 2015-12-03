@@ -55,8 +55,10 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                expect(parsed._links.uris.length).toBe(2);
-                expect(parsed._links.uris[1]).toBe(posted);
+                if (parsed._links) {
+                    expect(parsed._links.uris.length).toBe(2);
+                    expect(parsed._links.uris[1]).toBe(posted);
+                }
                 done();
             });
     });

@@ -2,7 +2,6 @@ package com.flightstats.hub.spoke;
 
 
 import com.flightstats.hub.model.SingleTrace;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -47,8 +46,12 @@ public class SpokeInternalResource {
     @PUT
     public Response putPayload(@PathParam("path") String path, InputStream input) {
         try {
-            DateTime start = TimeUtil.now();
+            long start = System.currentTimeMillis();
             if (spokeStore.write(path, input)) {
+                long end = System.currentTimeMillis();
+                if ((end - start) > 4000) {
+                    logger.info("slow write response {} {}", path, new DateTime(start));
+                }
                 return Response
                         .created(uriInfo.getRequestUri())
                         .entity(new SingleTrace("success", start).toString())

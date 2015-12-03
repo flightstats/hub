@@ -46,8 +46,10 @@ public class ChannelResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelMetadata(@PathParam("channel") String channelName) {
+        logger.debug("get channel {}", channelName);
         ChannelConfig config = channelService.getChannelConfig(channelName);
         if (config == null) {
+            logger.info("unable to get channel " + channelName);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         URI channelUri = LinkBuilder.buildChannelUri(config, uriInfo);
@@ -61,6 +63,7 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
+        logger.debug("put channel {} {}", channelName, json);
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName);
         ChannelConfig channelConfig = ChannelConfig.fromJsonName(json, channelName);
         if (oldConfig != null) {
@@ -82,8 +85,10 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMetadata(@PathParam("channel") String channelName, String json) throws Exception {
+        logger.debug("patch channel {} {}", channelName, json);
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName);
         if (oldConfig == null) {
+            logger.info("unable to patch channel " + channelName);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 

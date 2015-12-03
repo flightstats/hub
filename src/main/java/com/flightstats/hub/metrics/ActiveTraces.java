@@ -30,10 +30,11 @@ public class ActiveTraces {
         logger.trace("setting {}", traces);
     }
 
-    public static void end() {
+    public static boolean end() {
         Traces traces = threadLocal.get();
         if (null == traces) {
-            logger.warn("no Traces found!", new Exception());
+            logger.debug("no Traces found!", new Exception());
+            return false;
         } else {
             logger.trace("removing {}", traces.getId());
             activeTraces.remove(traces.getId());
@@ -41,6 +42,7 @@ public class ActiveTraces {
             traces.end();
             recent.put(traces);
             slowest.add(traces);
+            return true;
         }
     }
 
