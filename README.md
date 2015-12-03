@@ -381,7 +381,8 @@ On success: `HTTP/1.1 200 OK`
 
 Any query operation (including next, previous, earliest, latest, and times) supports the addition of the
 query parameter `?bulk=true`.  Using the bulk parameter will result in the content of the query items being streamed
-as [MIME](https://tools.ietf.org/html/rfc2045) to the client.
+as [MIME](https://tools.ietf.org/html/rfc2045) or as a zip file to the client.
+To get a zip file, specify the content-type as `application/zip`.
 
 *NOTE* `bulk` was previously named `batch`.  `batch` is deprecated. 
 
