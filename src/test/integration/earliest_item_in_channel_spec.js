@@ -55,10 +55,13 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                expect(parsed._links.uris.length).toBe(2);
-                expect(parsed._links.uris[0]).toBe(posted);
-                expect(parsed._links.next).toBeDefined();
-                expect(parsed._links.previous).not.toBeDefined();
+                expect(parsed._links).toBe(true);
+                if (parsed._links) {
+                    expect(parsed._links.uris.length).toBe(2);
+                    expect(parsed._links.uris[0]).toBe(posted);
+                    expect(parsed._links.next).toBeDefined();
+                    expect(parsed._links.previous).not.toBeDefined();
+                }
                 done();
             });
     });
