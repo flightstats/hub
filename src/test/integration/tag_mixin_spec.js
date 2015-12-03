@@ -53,6 +53,8 @@ describe(testName, function () {
                         expect(uris[0]).toContain(channelA);
                         expect(uris[1]).toContain(channelB);
                         expect(uris[2]).toContain(channelA);
+                    } else {
+                        expect(uris).toBe(true);
                     }
                 }
                 done();
@@ -79,6 +81,8 @@ describe(testName, function () {
                 if (parsedLinks) {
                     expect(parsedLinks.previous.url).toContain(item + '/previous?tag=' + tag)
                     expect(parsedLinks.next.url).toContain(item + '/next?tag=' + tag)
+                } else {
+                    expect(parsedLinks).toBe(true);
                 }
                 done();
             });
@@ -124,10 +128,14 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                expect(parsed._links.uris.length).toBe(3);
-                uris.forEach(function (uri, index) {
-                    expect(parsed._links.uris[index]).toBe(uri);
-                });
+                if (parsed._links) {
+                    expect(parsed._links.uris.length).toBe(3);
+                    uris.forEach(function (uri, index) {
+                        expect(parsed._links.uris[index]).toBe(uri);
+                    });
+                } else {
+                    expect(parsed._links).toBe(true);
+                }
 
                 done();
             });
@@ -150,11 +158,15 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                expect(parsed._links.uris.length).toBe(2);
-                parsed._links.uris.forEach(function (uri, index) {
-                    console.log('found ', uri);
-                    expect(uri).toBe(uris[index + 1]);
-                });
+                if (parsed._links && parsed._links.uris.length == 2) {
+                    expect(parsed._links.uris.length).toBe(2);
+                    parsed._links.uris.forEach(function (uri, index) {
+                        console.log('found ', uri);
+                        expect(uri).toBe(uris[index + 1]);
+                    });
+                } else {
+                    expect(parsed._links).toBe(true);
+                }
                 done();
             });
     }, 60011);
@@ -167,11 +179,16 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                expect(parsed._links.uris.length).toBe(2);
-                parsed._links.uris.forEach(function (uri, index) {
-                    console.log('found ', uri);
-                    expect(uri).toBe(uris[index]);
-                });
+                if (parsed._links && parsed._links.uris.length == 2) {
+                    expect(parsed._links.uris.length).toBe(2);
+                    parsed._links.uris.forEach(function (uri, index) {
+                        console.log('found ', uri);
+                        expect(uri).toBe(uris[index]);
+                    });
+                } else {
+                    expect(parsed._links).toBe(true);
+                }
+
                 done();
             });
     }, 60012);
@@ -184,11 +201,15 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                expect(parsed._links.uris.length).toBe(2);
-                parsed._links.uris.forEach(function (uri, index) {
-                    console.log('found ', uri);
-                    expect(uri).toBe(uris[index + 1]);
-                });
+                if (parsed._links && parsed._links.uris.length == 2) {
+                    expect(parsed._links.uris.length).toBe(2);
+                    parsed._links.uris.forEach(function (uri, index) {
+                        console.log('found ', uri);
+                        expect(uri).toBe(uris[index + 1]);
+                    });
+                } else {
+                    expect(parsed._links).toBe(true);
+                }
                 done();
             });
     }, 60013);
@@ -200,11 +221,16 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                expect(parsed._links.uris.length).toBe(2);
-                parsed._links.uris.forEach(function (uri, index) {
-                    console.log('found ', uri);
-                    expect(uri).toBe(uris[index]);
-                });
+                if (parsed._links && parsed._links.uris.length == 2) {
+                    expect(parsed._links.uris.length).toBe(2);
+                    parsed._links.uris.forEach(function (uri, index) {
+                        console.log('found ', uri);
+                        expect(uri).toBe(uris[index]);
+                    });
+                } else {
+                    expect(parsed._links).toBe(true);
+                }
+
                 done();
             });
     }, 60014);
@@ -227,11 +253,15 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                expect(parsed._links.uris.length).toBe(3);
-                parsed._links.uris.forEach(function (uri, index) {
-                    console.log('found ', uri);
-                    expect(uri).toBe(uris[index]);
-                });
+                if (parsed._links && parsed._links.uris.length == 3) {
+                    expect(parsed._links.uris.length).toBe(3);
+                    parsed._links.uris.forEach(function (uri, index) {
+                        console.log('found ', uri);
+                        expect(uri).toBe(uris[index]);
+                    });
+                } else {
+                    expect(parsed._links).toBe(true);
+                }
                 done();
             });
     }, 60016);
@@ -254,11 +284,15 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                expect(parsed._links.uris.length).toBe(3);
-                parsed._links.uris.forEach(function (uri, index) {
-                    console.log('found ', uri);
-                    expect(uri).toBe(uris[index]);
-                });
+                if (parsed._links && parsed._links.uris.length == 3) {
+                    expect(parsed._links.uris.length).toBe(3);
+                    parsed._links.uris.forEach(function (uri, index) {
+                        console.log('found ', uri);
+                        expect(uri).toBe(uris[index]);
+                    });
+                } else {
+                    expect(parsed._links).toBe(true);
+                }
                 done();
             });
     }, 60018);
@@ -271,11 +305,15 @@ describe(testName, function () {
                 expect(response.statusCode).toBe(200);
                 var parsed = utils.parseJson(response, testName);
                 console.log('parsed', parsed);
-                expect(parsed._links.uris.length).toBe(3);
-                parsed._links.uris.forEach(function (uri, index) {
-                    console.log('found ', uri);
-                    expect(uri).toBe(uris[index]);
-                });
+                if (parsed._links && parsed._links.uris.length == 3) {
+                    expect(parsed._links.uris.length).toBe(3);
+                    parsed._links.uris.forEach(function (uri, index) {
+                        console.log('found ', uri);
+                        expect(uri).toBe(uris[index]);
+                    });
+                } else {
+                    expect(parsed._links).toBe(true);
+                }
                 done();
             });
     }, 60019);
