@@ -141,6 +141,7 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
     public Iterable<ChannelConfig> getChannels() {
         List<ChannelConfig> configurations = new ArrayList<>();
         ScanRequest scanRequest = new ScanRequest()
+                .withConsistentRead(true)
                 .withTableName(getTableName());
 
         ScanResult result = dbClient.scan(scanRequest);
