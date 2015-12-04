@@ -11,6 +11,7 @@ var timeout = 5 * 60 * 1000;
 var minute_format = '/YYYY/MM/DD/HH/mm';
 var startOffset = process.env.startOffset || 48;
 var endOffset = process.env.endOffset || 59;
+var testPercent = process.env.testPercent || 50;
 
 /**
  * This should load all the channels in the hub.
@@ -49,6 +50,13 @@ describe(testName, function () {
 
     }, timeout);
 
+    function add(rootUrl, type) {
+        channelTimes.push({
+            source: rootUrl + '?location=CACHE',
+            compare: rootUrl + '?location=LONG_TERM_' + type
+        });
+    }
+
     it('cross product of channels and times', function () {
         console.log('now', moment.utc().format(minute_format));
         console.log('startOffset', startOffset);
@@ -58,27 +66,17 @@ describe(testName, function () {
             var formatted = start.format(minute_format);
             console.log('checking', formatted);
             channels.forEach(function (channel) {
-                if (!_.startsWith(channel.name, 'test') && !_.startsWith(channel.name, 'verifyMaxItems')) {
+                if (_.startsWith(channel.name, 'test')
+                    || _.startsWith(channel.name, 'verifyMaxItems')
+                    || Math.random() * 100 > testPercent) {
+                    //do nothing
+                } else {
                     var rootUrl = channel.href + formatted;
-                    if (channel.storage == 'SINGLE') {
-                        channelTimes.push({
-                            source: rootUrl + '?location=CACHE',
-                            compare: rootUrl + '?location=LONG_TERM_SINGLE'
-                        });
-                    } else if (channel.storage == 'BOTH') {
-                        channelTimes.push({
-                            source: rootUrl + '?location=CACHE',
-                            compare: rootUrl + '?location=LONG_TERM_SINGLE'
-                        });
-                        channelTimes.push({
-                            source: rootUrl + '?location=CACHE',
-                            compare: rootUrl + '?location=LONG_TERM_BATCH'
-                        });
-                    } else if (channel.storage == 'BATCH') {
-                        channelTimes.push({
-                            source: rootUrl + '?location=CACHE',
-                            compare: rootUrl + '?location=LONG_TERM_BATCH'
-                        });
+                    if (channel.storage == 'BOTH') {
+                        add(rootUrl, 'SINGLE');
+                        add(rootUrl, 'BATCH');
+                    } else {
+                        add(rootUrl, channel.storage);
                     }
                 }
             });
@@ -87,7 +85,7 @@ describe(testName, function () {
 
 
     it('compares query results', function (done) {
-        async.eachLimit(channelTimes, 10,
+        async.eachLimit(channelTimes, 5,
             function (channelTime, callback) {
                 console.log('calling', channelTime);
                 async.parallel([
