@@ -66,7 +66,7 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
     }
 
     private void createTable() {
-        long readThroughput = HubProperties.getProperty("dynamo.throughput.channel.read", 50);
+        long readThroughput = HubProperties.getProperty("dynamo.throughput.channel.read", 100);
         long writeThroughput = HubProperties.getProperty("dynamo.throughput.channel.write", 10);
         logger.info("creating table {} with read {} and write {}", getTableName(), readThroughput, writeThroughput);
         ProvisionedThroughput throughput = new ProvisionedThroughput(readThroughput, writeThroughput);
