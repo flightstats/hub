@@ -83,7 +83,7 @@ public class TracesSortedSetTest {
             assertTrue(traces.getTime() > 970);
         }
         assertEquals(100, tracesSortedSet.size());
-        assertTrue(loops.get() > 1000);
+        assertTrue(loops.get() > 100);
         assertTrue(ids.get() > 1000 * 1000);
         assertFalse(exception.get());
 
