@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.nas;
 
 import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
@@ -15,10 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class NasContentService implements ContentService {
@@ -58,9 +56,14 @@ public class NasContentService implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> insert(String channelName, BulkContent content) throws Exception {
-        //todo - gfm - 8/14/15 -
-        return null;
+    public Collection<ContentKey> insert(String channelName, BulkContent bulkContent) throws Exception {
+        Collection<ContentKey> keys = new ArrayList<>();
+        MultiPartParser multiPartParser = new MultiPartParser(bulkContent);
+        multiPartParser.parse();
+        for (Content content : bulkContent.getItems()) {
+            keys.add(insert(channelName, content));
+        }
+        return keys;
     }
 
     private String getPath(String channelName, ContentKey key) {

@@ -12,7 +12,7 @@ public interface ContentService {
 
     ContentKey insert(String channelName, Content content) throws Exception;
 
-    Collection<ContentKey> insert(String channelName, BulkContent content) throws Exception;
+    Collection<ContentKey> insert(String channelName, BulkContent bulkContent) throws Exception;
 
     Optional<Content> getValue(String channelName, ContentKey key);
 
