@@ -134,7 +134,8 @@ public class S3WriterManager {
                 if (!keysToAdd.isEmpty()) {
                     MinutePath path = new MinutePath(startTime);
                     logger.info("batchS3Verification {} missing {}", channelName, path);
-                    String batchUrl = MinuteGroupStrategy.getBulkUrl(APP_URL + "/channel/" + channelName, path, "batch");
+                    String batchUrl = MinuteGroupStrategy.getBulkUrl(APP_URL + "channel/" + channelName, path, "batch");
+                    logger.info("batchS3Verification batchUrl {}", batchUrl);
                     S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, path, expectedKeys, batchUrl);
                 }
             } finally {
