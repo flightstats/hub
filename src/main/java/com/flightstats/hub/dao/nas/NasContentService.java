@@ -86,7 +86,12 @@ public class NasContentService implements ContentService {
 
     @Override
     public void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        //todo - gfm - 11/20/15 -
+        for (ContentKey key : keys) {
+            Optional<Content> contentOptional = getValue(channel, key);
+            if (contentOptional.isPresent()) {
+                callback.accept(contentOptional.get());
+            }
+        }
     }
 
     @Override
