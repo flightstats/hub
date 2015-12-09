@@ -112,8 +112,8 @@ Content-Type is `application/json`
 
 * `owner` is optional and is limited to 48 characters.
 
-* `ttlDays` and `maxItems` are optional, and only one can be specified at a time. If neither is specified, a default value of 120 ttlDays is used.
-Please see [channel limits](#channel-limits) for more details.
+* `ttlDays` and `maxItems` are optional, and only one can have a value greater than zero at a time. If neither is specified, a default value of 120 ttlDays is used.
+Please see [channel limits](#channel-limits) for more details.  To change a channel to ttlDays or maxItems, set the other value explicitly to zero. 
 
 * `description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
 
@@ -461,7 +461,7 @@ For eaxmple, if you quickly insert 1,000 items into a channel with maxItems = 50
 
 If you change a channel from ttlDays to maxItems, it will also take up to 12 hours for the limit to be enforced.
 
-## tag interface
+## cha interface
 
 Tags are used to logically group channels.  To retrieve all of the tags in the Hub:
 

@@ -57,6 +57,7 @@ public class AwsBindings extends AbstractModule {
                 .to(S3BatchContentDao.class).asEagerSingleton();
         bind(DynamoUtils.class).asEagerSingleton();
         bind(GroupDao.class).to(DynamoGroupDao.class).asEagerSingleton();
+        bind(S3BatchManager.class).asEagerSingleton();
     }
 
     private static String getRole() {

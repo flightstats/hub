@@ -229,7 +229,7 @@ public class ContentDaoUtil {
                 .count(count)
                 .next(next)
                 .contentKey(new ContentKey(queryTime, "0"))
-                .ttlDays(10)
+                .ttlDays(120)
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
         logger.info("query {} {}", queryTime, found);
