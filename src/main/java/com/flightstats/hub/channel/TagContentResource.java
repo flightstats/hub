@@ -11,6 +11,7 @@ import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
 import com.flightstats.hub.rest.Linked;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
@@ -18,8 +19,6 @@ import com.google.inject.Inject;
 import com.sun.jersey.api.Responses;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,8 +41,6 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 public class TagContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(TagContentResource.class);
-
-    private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
     @Inject
     private ObjectMapper mapper;
@@ -224,7 +221,7 @@ public class TagContentResource {
 
         builder.type(actualContentType)
                 .header(Headers.CREATION_DATE,
-                        dateTimeFormatter.print(new DateTime(key.getMillis())));
+                        HubUtils.FORMATTER.print(new DateTime(key.getMillis())));
 
         LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");

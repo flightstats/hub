@@ -77,7 +77,7 @@ To explore the Resources available in the Hub, go to http://hub/
 
 **Note**
 For the purposes of this document, the Hub is at http://hub/.
-On your local machine it is at: http://localhost:9080/
+On your local machine it is at: http://localhost:8080/
 
 ## list channels
 
@@ -181,7 +181,7 @@ curl -i -X PUT http://hub/channel/stumptown
 
 or
 
-curl -i -X PUT --header "Content-type: application/json"  --data '{ "description" : "stumpy", "ttlDays" : 1 }' http://localhost:9080/channel/stumptown
+curl -i -X PUT --header "Content-type: application/json"  --data '{ "description" : "stumpy", "ttlDays" : 1 }' http://localhost:8080/channel/stumptown
 ```
 
 ## update a channel
@@ -599,7 +599,7 @@ To see time format options, issue a GET request on the `time` link returned from
 
 Call a named uri, and the Hub will issue a 303 redirect for the current time with the specified resolution.
 
-`HEAD http://localhost:9080/channel/stumptown/time/second`
+`HEAD http://localhost:8080/channel/stumptown/time/second`
 
 On success:  `HTTP/1.1 303 See Other`
 `Location: http://hub/channel/stumptown/2014/01/13/10/42/31

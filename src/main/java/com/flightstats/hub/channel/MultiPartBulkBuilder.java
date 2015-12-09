@@ -7,6 +7,7 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ public class MultiPartBulkBuilder {
     private static final String MULTIPART = "multipart/mixed; boundary=" + BOUNDARY;
     private static final byte[] CONTENT_TYPE = "Content-Type: ".getBytes();
     private static final byte[] CONTENT_KEY = "Content-Key: ".getBytes();
+    private static final byte[] CREATION_DATE = "Creation-Date: ".getBytes();
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, UriInfo uriInfo) {
@@ -91,6 +93,9 @@ public class MultiPartBulkBuilder {
             URI uri = LinkBuilder.buildItemUri(content.getContentKey().get(), channelUri);
             output.write(CONTENT_KEY);
             output.write(uri.toString().getBytes());
+            output.write(CRLF);
+            output.write(CREATION_DATE);
+            output.write(HubUtils.FORMATTER.print(content.getContentKey().get().getMillis()).getBytes());
             output.write(CRLF);
             output.write(CRLF);
             ByteStreams.copy(content.getStream(), output);
