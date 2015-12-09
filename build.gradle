@@ -28,6 +28,10 @@ buildDir = 'build'
 
 mainClassName = "com.flightstats.hub.app.SingleHubMain"
 
+task nasTest(type: Test) {
+    exclude 'com/flightstats/hub/dao/aws/**'
+}
+
 configurations {
     all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
     all*.exclude(group: 'org.slf4j', module: 'slf4j-simple')
