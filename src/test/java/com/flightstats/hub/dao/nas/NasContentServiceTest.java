@@ -1,7 +1,6 @@
-package com.flightstats.hub.dao;
+package com.flightstats.hub.dao.nas;
 
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.dao.nas.NasContentService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
