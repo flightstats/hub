@@ -10,6 +10,7 @@ import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
@@ -19,8 +20,6 @@ import com.sun.jersey.core.header.MediaTypes;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,8 +40,6 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 public class ChannelContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
-
-    private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
 
     @Inject
     private ObjectMapper mapper;
@@ -212,7 +209,7 @@ public class ChannelContentResource {
 
         builder.type(actualContentType)
                 .header(Headers.CREATION_DATE,
-                        dateTimeFormatter.print(new DateTime(key.getMillis())));
+                        HubUtils.FORMATTER.print(new DateTime(key.getMillis())));
 
         LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");

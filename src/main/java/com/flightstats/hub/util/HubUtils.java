@@ -28,7 +28,7 @@ public class HubUtils {
 
     public static final int NOT_FOUND = -1;
     private final static Logger logger = LoggerFactory.getLogger(HubUtils.class);
-    private static final DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateTime().withZoneUTC();
+    public static final DateTimeFormatter FORMATTER = ISODateTimeFormat.dateTime().withZoneUTC();
     private static ObjectMapper mapper = new ObjectMapper();
     private final Client noRedirectsClient;
     private final Client followClient;
@@ -153,7 +153,7 @@ public class HubUtils {
 
     private DateTime getCreationDate(ClientResponse response) {
         String creationDate = response.getHeaders().getFirst(Headers.CREATION_DATE);
-        return dateTimeFormatter.parseDateTime(creationDate);
+        return FORMATTER.parseDateTime(creationDate);
     }
 
 }
