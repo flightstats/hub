@@ -30,6 +30,7 @@ mainClassName = "com.flightstats.hub.app.SingleHubMain"
 
 task nasTest(type: Test) {
     exclude 'com/flightstats/hub/dao/aws/**'
+    exclude 'com/flightstats/hub/spoke/**'
 }
 
 configurations {
