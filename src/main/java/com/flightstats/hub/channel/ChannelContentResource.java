@@ -144,20 +144,26 @@ public class ChannelContentResource {
                 .location(Location.valueOf(location))
                 .build();
         SortedSet<ContentKey> keys = channelService.queryByTime(query);
+        String baseUri = uriInfo.getBaseUri() + "channel/" + channel + "/";
+        DateTime current = stable ? stable() : now();
+        DateTime next = startTime.plus(unit.getDuration());
+        DateTime previous = startTime.minus(unit.getDuration());
         if (bulk) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
+                if (next.isBefore(current)) {
+                    builder.header("Link", "<" + baseUri + unit.format(next) + "?bulk=true&stable=" + stable + ">;rel=\"" + "next" + "\"");
+                }
+                builder.header("Link", "<" + baseUri + unit.format(previous) + "?bulk=true&stable=" + stable + ">;rel=\"" + "previous" + "\"");
+            });
         } else {
             ObjectNode root = mapper.createObjectNode();
             ObjectNode links = root.putObject("_links");
             ObjectNode self = links.putObject("self");
             self.put("href", uriInfo.getRequestUri().toString());
-            DateTime current = stable ? stable() : now();
-            DateTime next = startTime.plus(unit.getDuration());
-            DateTime previous = startTime.minus(unit.getDuration());
             if (next.isBefore(current)) {
-                links.putObject("next").put("href", uriInfo.getBaseUri() + "channel/" + channel + "/" + unit.format(next) + "?stable=" + stable);
+                links.putObject("next").put("href", baseUri + unit.format(next) + "?stable=" + stable);
             }
-            links.putObject("previous").put("href", uriInfo.getBaseUri() + "channel/" + channel + "/" + unit.format(previous) + "?stable=" + stable);
+            links.putObject("previous").put("href", baseUri + unit.format(previous) + "?stable=" + stable);
             ArrayNode ids = links.putArray("uris");
             URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
             for (ContentKey key : keys) {

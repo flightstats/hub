@@ -72,12 +72,22 @@ describe(testName, function () {
         return deferred.promise;
     }
 
+    function standardVerify(response) {
+        for (var i = 0; i < items.length; i++) {
+            expect(response.body.indexOf(items[i]) > 0).toBe(true);
+        }
+    }
+
+    function timeVerify(response) {
+        standardVerify(response);
+        var linkHeader = response.headers['link'];
+        expect(linkHeader).toBeDefined();
+        expect(linkHeader).toContain('?bulk=true');
+        expect(linkHeader).toContain('previous');
+    }
+
     function getAll(url, done, verifyFunction) {
-        verifyFunction = verifyFunction || function (response) {
-                for (var i = 0; i < items.length; i++) {
-                    expect(response.body.indexOf(items[i]) > 0).toBe(true);
-                }
-            }
+        verifyFunction = verifyFunction || standardVerify;
         var verifyZip = function () {
         };
         url = url + '?stable=false';
@@ -109,19 +119,19 @@ describe(testName, function () {
     });
 
     it("gets day items ", function (done) {
-        getAll(sliceFromEnd(26), done);
+        getAll(sliceFromEnd(26), done, timeVerify);
     });
 
     it("gets hour items ", function (done) {
-        getAll(sliceFromEnd(23), done);
+        getAll(sliceFromEnd(23), done, timeVerify);
     });
 
     it("gets minute items ", function (done) {
-        getAll(sliceFromEnd(20), done);
+        getAll(sliceFromEnd(20), done, timeVerify);
     });
 
     it("gets second items ", function (done) {
-        getAll(sliceFromEnd(17), done);
+        getAll(sliceFromEnd(17), done, timeVerify);
     });
 
     it("gets next items ", function (done) {
