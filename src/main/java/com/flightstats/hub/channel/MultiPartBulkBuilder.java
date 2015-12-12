@@ -46,15 +46,15 @@ public class MultiPartBulkBuilder {
     }
 
     public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                                    ChannelService channelService, UriInfo uriInfo) {
+                                    ChannelService channelService, UriInfo uriInfo,
+                                    Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
             for (ChannelContentKey key : keys) {
                 writeContent(uriInfo, output, key.getContentKey(), key.getChannel(), channelService);
             }
-        }, (builder) -> {
-        });
+        }, headerBuilder);
     }
 
     private static Response write(Consumer<BufferedOutputStream> consumer,

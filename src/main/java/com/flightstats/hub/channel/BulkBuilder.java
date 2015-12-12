@@ -25,7 +25,7 @@ public class BulkBuilder {
                                  ChannelService channelService, UriInfo uriInfo, String accept,
                                  Consumer<Response.ResponseBuilder> headerBuilder) {
         if ("application/zip".equalsIgnoreCase(accept)) {
-            return ZipBulkBuilder.build(keys, channel, channelService);
+            return ZipBulkBuilder.build(keys, channel, channelService, headerBuilder);
         } else {
             return MultiPartBulkBuilder.build(keys, channel, channelService, uriInfo, headerBuilder);
         }
@@ -33,10 +33,17 @@ public class BulkBuilder {
 
     public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
                                     ChannelService channelService, UriInfo uriInfo, String accept) {
+        return buildTag(tag, keys, channelService, uriInfo, accept, (builder) -> {
+        });
+    }
+
+    public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
+                                    ChannelService channelService, UriInfo uriInfo, String accept,
+                                    Consumer<Response.ResponseBuilder> headerBuilder) {
         if ("application/zip".equalsIgnoreCase(accept)) {
-            return ZipBulkBuilder.buildTag(tag, keys, channelService);
+            return ZipBulkBuilder.buildTag(tag, keys, channelService, headerBuilder);
         } else {
-            return MultiPartBulkBuilder.buildTag(tag, keys, channelService, uriInfo);
+            return MultiPartBulkBuilder.buildTag(tag, keys, channelService, uriInfo, headerBuilder);
         }
     }
 

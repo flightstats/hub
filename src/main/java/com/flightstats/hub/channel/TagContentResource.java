@@ -158,19 +158,26 @@ public class TagContentResource {
                 .location(Location.valueOf(location))
                 .build();
         SortedSet<ChannelContentKey> keys = tagService.queryByTime(query);
+        DateTime current = TimeUtil.time(stable);
+        DateTime next = startTime.plus(unit.getDuration());
+        DateTime previous = startTime.minus(unit.getDuration());
+        String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
         if (bulk) {
-            return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
+            return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept, (builder) -> {
+                if (next.isBefore(current)) {
+                    builder.header("Link", "<" + baseUri + unit.format(next) + "?bulk=true&stable=" + stable + ">;rel=\"" + "next" + "\"");
+                }
+                builder.header("Link", "<" + baseUri + unit.format(previous) + "?bulk=true&stable=" + stable + ">;rel=\"" + "previous" + "\"");
+            });
         }
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
-        DateTime next = startTime.plus(unit.getDuration());
-        DateTime previous = startTime.minus(unit.getDuration());
-        if (next.isBefore(TimeUtil.time(stable))) {
-            links.putObject("next").put("href", uriInfo.getBaseUri() + "tag/" + tag + "/" + unit.format(next) + "?stable=" + stable);
+        if (next.isBefore(current)) {
+            links.putObject("next").put("href", baseUri + unit.format(next) + "?stable=" + stable);
         }
-        links.putObject("previous").put("href", uriInfo.getBaseUri() + "tag/" + tag + "/" + unit.format(previous) + "?stable=" + stable);
+        links.putObject("previous").put("href", baseUri + unit.format(previous) + "?stable=" + stable);
         ArrayNode ids = links.putArray("uris");
         for (ChannelContentKey key : keys) {
             URI channelUri = LinkBuilder.buildChannelUri(key.getChannel(), uriInfo);
@@ -306,7 +313,13 @@ public class TagContentResource {
                 .count(count).build();
         SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
         if (bulk) {
-            return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
+            return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept, (builder) -> {
+                String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
+                if (!keys.isEmpty()) {
+                    builder.header("Link", "<" + baseUri + keys.first().getContentKey().toUrl() + "/previous/" + count + "?bulk=true>;rel=\"" + "previous" + "\"");
+                    builder.header("Link", "<" + baseUri + keys.last().getContentKey().toUrl() + "/next/" + count + "?bulk=true>;rel=\"" + "next" + "\"");
+                }
+            });
         }
         return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace);
     }

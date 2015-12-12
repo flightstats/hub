@@ -27,26 +27,27 @@ public class ZipBulkBuilder {
     private final static Logger logger = LoggerFactory.getLogger(ZipBulkBuilder.class);
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
-                                 ChannelService channelService) {
+                                 ChannelService channelService, Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
             channelService.getValues(channel, keys, content -> createZipEntry(output, content));
-        });
+        }, headerBuilder);
     }
 
     public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                                    ChannelService channelService) {
+                                    ChannelService channelService, Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
             for (ChannelContentKey key : keys) {
                 writeContent(output, key.getContentKey(), key.getChannel(), channelService);
             }
-        });
+        }, headerBuilder);
     }
 
-    private static Response write(final Consumer<ZipOutputStream> consumer) {
+    private static Response write(final Consumer<ZipOutputStream> consumer,
+                                  Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
             ActiveTraces.setLocal(traces);
@@ -57,6 +58,7 @@ public class ZipBulkBuilder {
             output.close();
         });
         builder.type("application/zip");
+        headerBuilder.accept(builder);
         return builder.build();
     }
 
