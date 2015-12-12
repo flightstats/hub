@@ -131,8 +131,8 @@ describe(testName, function () {
             }
             var linkHeader = response.headers['link'];
             expect(linkHeader).toBeDefined();
-            expect(linkHeader).toContain(items[1] + '/previous/10');
-            expect(linkHeader).toContain(items[3] + '/next/10');
+            expect(linkHeader).toContain(items[1] + '/previous/10?bulk=true');
+            expect(linkHeader).toContain(items[3] + '/next/10?bulk=true');
         });
     });
 
@@ -143,8 +143,8 @@ describe(testName, function () {
             }
             var linkHeader = response.headers['link'];
             expect(linkHeader).toBeDefined();
-            expect(linkHeader).toContain(items[0] + '/previous/10');
-            expect(linkHeader).toContain(items[2] + '/next/10');
+            expect(linkHeader).toContain(items[0] + '/previous/10?bulk=true');
+            expect(linkHeader).toContain(items[2] + '/next/10?bulk=true');
         });
     });
 

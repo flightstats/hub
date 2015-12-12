@@ -294,8 +294,8 @@ public class ChannelContentResource {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
                 if (!keys.isEmpty()) {
                     String baseUri = uriInfo.getBaseUri() + "channel/" + channel + "/";
-                    builder.header("Link", "<" + baseUri + keys.first().toUrl() + "/previous/" + count + ">;rel=\"" + "previous" + "\"");
-                    builder.header("Link", "<" + baseUri + keys.last().toUrl() + "/next/" + count + ">;rel=\"" + "next" + "\"");
+                    builder.header("Link", "<" + baseUri + keys.first().toUrl() + "/previous/" + count + "?bulk=true>;rel=\"" + "previous" + "\"");
+                    builder.header("Link", "<" + baseUri + keys.last().toUrl() + "/next/" + count + "?bulk=true>;rel=\"" + "next" + "\"");
                 }
             });
         } else {
