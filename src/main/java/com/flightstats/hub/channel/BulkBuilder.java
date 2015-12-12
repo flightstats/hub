@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.SortedSet;
+import java.util.function.Consumer;
 
 public class BulkBuilder {
 
@@ -16,10 +17,17 @@ public class BulkBuilder {
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, UriInfo uriInfo, String accept) {
+        return build(keys, channel, channelService, uriInfo, accept, (builder) -> {
+        });
+    }
+
+    public static Response build(SortedSet<ContentKey> keys, String channel,
+                                 ChannelService channelService, UriInfo uriInfo, String accept,
+                                 Consumer<Response.ResponseBuilder> headerBuilder) {
         if ("application/zip".equalsIgnoreCase(accept)) {
             return ZipBulkBuilder.build(keys, channel, channelService);
         } else {
-            return MultiPartBulkBuilder.build(keys, channel, channelService, uriInfo);
+            return MultiPartBulkBuilder.build(keys, channel, channelService, uriInfo, headerBuilder);
         }
     }
 

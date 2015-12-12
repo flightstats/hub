@@ -66,16 +66,16 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                verifyFunction(body);
+                verifyFunction(response);
                 deferred.resolve({response: response, body: body});
             });
         return deferred.promise;
     }
 
     function getAll(url, done, verifyFunction) {
-        verifyFunction = verifyFunction || function (body) {
+        verifyFunction = verifyFunction || function (response) {
                 for (var i = 0; i < items.length; i++) {
-                    expect(body.indexOf(items[i]) > 0).toBe(true);
+                    expect(response.body.indexOf(items[i]) > 0).toBe(true);
                 }
             }
         var verifyZip = function () {
@@ -125,18 +125,26 @@ describe(testName, function () {
     });
 
     it("gets next items ", function (done) {
-        getAll(items[0] + '/next/10', done, function (body) {
+        getAll(items[0] + '/next/10', done, function (response) {
             for (var i = 1; i < items.length; i++) {
-                expect(body.indexOf(items[i]) > 0).toBe(true);
+                expect(response.body.indexOf(items[i]) > 0).toBe(true);
             }
+            var linkHeader = response.headers['link'];
+            expect(linkHeader).toBeDefined();
+            expect(linkHeader).toContain(items[1] + '/previous/10');
+            expect(linkHeader).toContain(items[3] + '/next/10');
         });
     });
 
     it("gets previous items ", function (done) {
-        getAll(items[3] + '/previous/10', done, function (body) {
+        getAll(items[3] + '/previous/10', done, function (response) {
             for (var i = 0; i < items.length - 1; i++) {
-                expect(body.indexOf(items[i]) > 0).toBe(true);
+                expect(response.body.indexOf(items[i]) > 0).toBe(true);
             }
+            var linkHeader = response.headers['link'];
+            expect(linkHeader).toBeDefined();
+            expect(linkHeader).toContain(items[0] + '/previous/10');
+            expect(linkHeader).toContain(items[2] + '/next/10');
         });
     });
 

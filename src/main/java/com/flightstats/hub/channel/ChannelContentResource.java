@@ -291,7 +291,13 @@ public class ChannelContentResource {
                 .build();
         SortedSet<ContentKey> keys = channelService.getKeys(query);
         if (bulk || batch) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
+                if (!keys.isEmpty()) {
+                    String baseUri = uriInfo.getBaseUri() + "channel/" + channel + "/";
+                    builder.header("Link", "<" + baseUri + keys.first().toUrl() + "/previous/" + count + ">;rel=\"" + "previous" + "\"");
+                    builder.header("Link", "<" + baseUri + keys.last().toUrl() + "/next/" + count + ">;rel=\"" + "next" + "\"");
+                }
+            });
         } else {
             return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true, trace);
         }
