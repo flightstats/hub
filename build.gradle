@@ -13,7 +13,7 @@ repositories {
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
-project.ext.jenkinsBuildNumber = "$System.env.VERSION"
+project.ext.jenkinsBuildNumber = "$System.env.VERSION_NUMBER"
 project.ext.jenkinsJobName = "hub-ucs"
 
 group = 'com.flightstats'
