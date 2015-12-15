@@ -56,17 +56,17 @@ describe(testName, function () {
             });
     });
 
-    function getQ(url, verifyFunction, accept) {
+    function getQ(url, param, verifyFunction, accept) {
         var deferred = Q.defer();
         request.get({
-                url: url,
+                url: url + param,
                 followRedirect: true,
                 headers: {Accept: accept}
             },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                verifyFunction(response);
+                verifyFunction(response, param);
                 deferred.resolve({response: response, body: body});
             });
         return deferred.promise;
@@ -78,11 +78,11 @@ describe(testName, function () {
         }
     }
 
-    function timeVerify(response) {
+    function timeVerify(response, param) {
         standardVerify(response);
         var linkHeader = response.headers['link'];
         expect(linkHeader).toBeDefined();
-        expect(linkHeader).toContain('?bulk=true');
+        expect(linkHeader).toContain('?stable=false' + param);
         expect(linkHeader).toContain('previous');
     }
 
@@ -91,15 +91,15 @@ describe(testName, function () {
         var verifyZip = function () {
         };
         url = url + '?stable=false';
-        getQ(url + '&bulk=true', verifyFunction, "multipart/mixed")
+        getQ(url, '&bulk=true', verifyFunction, "multipart/mixed")
             .then(function (value) {
-                return getQ(url + '&batch=true', verifyFunction, "multipart/mixed");
+                return getQ(url, '&batch=true', verifyFunction, "multipart/mixed");
             })
             .then(function (value) {
-                return getQ(url + '&bulk=true', verifyZip, "application/zip");
+                return getQ(url, '&bulk=true', verifyZip, "application/zip");
             })
             .then(function (value) {
-                return getQ(url + '&batch=true', verifyZip, "application/zip");
+                return getQ(url, '&batch=true', verifyZip, "application/zip");
             })
             .then(function (value) {
                 done();
@@ -133,28 +133,27 @@ describe(testName, function () {
     it("gets second items ", function (done) {
         getAll(sliceFromEnd(17), done, timeVerify);
     });
-
     it("gets next items ", function (done) {
-        getAll(items[0] + '/next/10', done, function (response) {
+        getAll(items[0] + '/next/10', done, function (response, param) {
             for (var i = 1; i < items.length; i++) {
                 expect(response.body.indexOf(items[i]) > 0).toBe(true);
             }
             var linkHeader = response.headers['link'];
             expect(linkHeader).toBeDefined();
-            expect(linkHeader).toContain(items[1] + '/previous/10?bulk=true');
-            expect(linkHeader).toContain(items[3] + '/next/10?bulk=true');
+            expect(linkHeader).toContain(items[1] + '/previous/10?stable=false' + param);
+            expect(linkHeader).toContain(items[3] + '/next/10?stable=false' + param);
         });
     });
 
     it("gets previous items ", function (done) {
-        getAll(items[3] + '/previous/10', done, function (response) {
+        getAll(items[3] + '/previous/10', done, function (response, param) {
             for (var i = 0; i < items.length - 1; i++) {
                 expect(response.body.indexOf(items[i]) > 0).toBe(true);
             }
             var linkHeader = response.headers['link'];
             expect(linkHeader).toBeDefined();
-            expect(linkHeader).toContain(items[0] + '/previous/10?bulk=true');
-            expect(linkHeader).toContain(items[2] + '/next/10?bulk=true');
+            expect(linkHeader).toContain(items[0] + '/previous/10?stable=false' + param);
+            expect(linkHeader).toContain(items[2] + '/next/10?stable=false' + param);
         });
     });
 
