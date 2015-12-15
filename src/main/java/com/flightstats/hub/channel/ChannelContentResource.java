@@ -133,6 +133,7 @@ public class ChannelContentResource {
 
     public Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
                                          Unit unit, String tag, boolean bulk, String accept) {
+        //todo - gfm - 12/15/15 - merge this with TagContentResource.getTimeQueryResponse
         if (tag != null) {
             return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept);
         }
@@ -144,20 +145,27 @@ public class ChannelContentResource {
                 .location(Location.valueOf(location))
                 .build();
         SortedSet<ContentKey> keys = channelService.queryByTime(query);
+        DateTime current = stable ? stable() : now();
+        DateTime next = startTime.plus(unit.getDuration());
+        DateTime previous = startTime.minus(unit.getDuration());
         if (bulk) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
+                if (next.isBefore(current)) {
+                    builder.header("Link", "<" + TimeLinkUtil.getUri(channel, uriInfo, unit, next) +
+                            ">;rel=\"" + "next" + "\"");
+                }
+                builder.header("Link", "<" + TimeLinkUtil.getUri(channel, uriInfo, unit, previous) +
+                        ">;rel=\"" + "previous" + "\"");
+            });
         } else {
             ObjectNode root = mapper.createObjectNode();
             ObjectNode links = root.putObject("_links");
             ObjectNode self = links.putObject("self");
             self.put("href", uriInfo.getRequestUri().toString());
-            DateTime current = stable ? stable() : now();
-            DateTime next = startTime.plus(unit.getDuration());
-            DateTime previous = startTime.minus(unit.getDuration());
             if (next.isBefore(current)) {
-                links.putObject("next").put("href", uriInfo.getBaseUri() + "channel/" + channel + "/" + unit.format(next) + "?stable=" + stable);
+                links.putObject("next").put("href", TimeLinkUtil.getUri(channel, uriInfo, unit, next).toString());
             }
-            links.putObject("previous").put("href", uriInfo.getBaseUri() + "channel/" + channel + "/" + unit.format(previous) + "?stable=" + stable);
+            links.putObject("previous").put("href", TimeLinkUtil.getUri(channel, uriInfo, unit, previous).toString());
             ArrayNode ids = links.putArray("uris");
             URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
             for (ContentKey key : keys) {
@@ -291,12 +299,18 @@ public class ChannelContentResource {
                 .build();
         SortedSet<ContentKey> keys = channelService.getKeys(query);
         if (bulk || batch) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
+                if (!keys.isEmpty()) {
+                    builder.header("Link", "<" + LinkBuilder.getDirection("previous", channel, uriInfo, keys.first(), count) +
+                            ">;rel=\"" + "previous" + "\"");
+                    builder.header("Link", "<" + LinkBuilder.getDirection("next", channel, uriInfo, keys.last(), count) +
+                            ">;rel=\"" + "next" + "\"");
+                }
+            });
         } else {
             return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true, trace);
         }
     }
-
 
     public static MediaType getContentType(Content content) {
         Optional<String> contentType = content.getContentType();

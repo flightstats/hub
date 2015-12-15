@@ -36,26 +36,29 @@ public class MultiPartBulkBuilder {
     private static final byte[] CREATION_DATE = "Creation-Date: ".getBytes();
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
-                                 ChannelService channelService, UriInfo uriInfo) {
+                                 ChannelService channelService, UriInfo uriInfo,
+                                 Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
             channelService.getValues(channel, keys, content -> writeContent(uriInfo, output, channel, content));
-        });
+        }, headerBuilder);
     }
 
     public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                                    ChannelService channelService, UriInfo uriInfo) {
+                                    ChannelService channelService, UriInfo uriInfo,
+                                    Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
             for (ChannelContentKey key : keys) {
                 writeContent(uriInfo, output, key.getContentKey(), key.getChannel(), channelService);
             }
-        });
+        }, headerBuilder);
     }
 
-    private static Response write(final Consumer<BufferedOutputStream> consumer) {
+    private static Response write(Consumer<BufferedOutputStream> consumer,
+                                  Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
             ActiveTraces.setLocal(traces);
@@ -65,6 +68,7 @@ public class MultiPartBulkBuilder {
             output.flush();
         });
         builder.type(MULTIPART);
+        headerBuilder.accept(builder);
         return builder.build();
     }
 
