@@ -150,6 +150,7 @@ public class TagContentResource {
 
     public Response getTimeQueryResponse(String tag, DateTime startTime, String location, boolean trace, boolean stable,
                                          Unit unit, boolean bulk, String accept) {
+        //todo - gfm - 12/15/15 - merge this with ChannelContentResource.getTimeQueryResponse
         TimeQuery query = TimeQuery.builder()
                 .tagName(tag)
                 .startTime(startTime)
