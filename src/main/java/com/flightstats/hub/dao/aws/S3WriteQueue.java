@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
@@ -60,10 +61,11 @@ public class S3WriteQueue {
 
     private void write() throws InterruptedException {
         try {
+            ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
             retryer.call(new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
-                    writeContent();
+                    writeContent(key);
                     return null;
                 }
             });
@@ -72,13 +74,15 @@ public class S3WriteQueue {
         }
     }
 
-    private void writeContent() throws Exception {
-        ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
+    private void writeContent(ChannelContentKey key) throws Exception {
         if (key != null) {
             ActiveTraces.start("S3WriteQueue.writeContent", key);
             try {
                 logger.trace("writing {}", key.getContentKey());
                 Content content = spokeContentDao.read(key.getChannel(), key.getContentKey());
+                if (content.getData() == null) {
+                    throw new FailedReadException("unable to read " + key.toString());
+                }
                 s3SingleContentDao.write(key.getChannel(), content);
             } finally {
                 ActiveTraces.end();
@@ -104,13 +108,13 @@ public class S3WriteQueue {
                     @Override
                     public boolean apply(@Nullable Throwable throwable) {
                         if (throwable != null) {
-                            logger.warn("unable to send to S3 " + throwable.getMessage());
+                            logger.warn("unable to write to S3 " + throwable.getMessage());
                         }
                         return throwable != null;
                     }
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, 1, TimeUnit.MINUTES))
-                .withStopStrategy(StopStrategies.stopAfterAttempt(10))
+                .withStopStrategy(StopStrategies.stopAfterAttempt(3))
                 .build();
     }
 }
