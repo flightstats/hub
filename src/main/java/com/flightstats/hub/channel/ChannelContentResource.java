@@ -24,7 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.*;
 
@@ -147,12 +150,12 @@ public class ChannelContentResource {
         DateTime previous = startTime.minus(unit.getDuration());
         if (bulk) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
-                URI previousUri = uriBuilder(channel).path(unit.format(previous)).queryParam("bulk", true).build();
-                URI nextUri = uriBuilder(channel).path(unit.format(next)).queryParam("bulk", true).build();
                 if (next.isBefore(current)) {
-                    builder.header("Link", "<" + nextUri + ">;rel=\"" + "next" + "\"");
+                    builder.header("Link", "<" + TimeLinkUtil.getUri(channel, uriInfo, unit, next) +
+                            ">;rel=\"" + "next" + "\"");
                 }
-                builder.header("Link", "<" + previousUri + ">;rel=\"" + "previous" + "\"");
+                builder.header("Link", "<" + TimeLinkUtil.getUri(channel, uriInfo, unit, previous) +
+                        ">;rel=\"" + "previous" + "\"");
             });
         } else {
             ObjectNode root = mapper.createObjectNode();
@@ -160,11 +163,9 @@ public class ChannelContentResource {
             ObjectNode self = links.putObject("self");
             self.put("href", uriInfo.getRequestUri().toString());
             if (next.isBefore(current)) {
-                URI nextUri = uriBuilder(channel).path(unit.format(next)).build();
-                links.putObject("next").put("href", nextUri.toString());
+                links.putObject("next").put("href", TimeLinkUtil.getUri(channel, uriInfo, unit, next).toString());
             }
-            URI previousUri = uriBuilder(channel).path(unit.format(previous)).build();
-            links.putObject("previous").put("href", previousUri.toString());
+            links.putObject("previous").put("href", TimeLinkUtil.getUri(channel, uriInfo, unit, previous).toString());
             ArrayNode ids = links.putArray("uris");
             URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
             for (ContentKey key : keys) {
@@ -300,30 +301,15 @@ public class ChannelContentResource {
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
                 if (!keys.isEmpty()) {
-                    URI previousUri = uriBuilder(channel)
-                            .path(keys.first().toUrl())
-                            .path("previous").path("" + count)
-                            .queryParam("bulk", true)
-                            .build();
-
-                    URI nextUri = uriBuilder(channel)
-                            .path(keys.last().toUrl())
-                            .path("next").path("" + count)
-                            .queryParam("bulk", true)
-                            .build();
-
-                    builder.header("Link", "<" + previousUri + ">;rel=\"" + "previous" + "\"");
-                    builder.header("Link", "<" + nextUri + ">;rel=\"" + "next" + "\"");
+                    builder.header("Link", "<" + LinkBuilder.getDirection("previous", channel, uriInfo, keys.first(), count) +
+                            ">;rel=\"" + "previous" + "\"");
+                    builder.header("Link", "<" + LinkBuilder.getDirection("next", channel, uriInfo, keys.last(), count) +
+                            ">;rel=\"" + "next" + "\"");
                 }
             });
         } else {
             return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true, trace);
         }
-    }
-
-    private UriBuilder uriBuilder(String channel) {
-        return uriInfo.getBaseUriBuilder()
-                .path("channel").path(channel);
     }
 
     public static MediaType getContentType(Content content) {

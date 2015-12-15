@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.*;
+import java.net.URI;
 import java.util.List;
 
 import static com.flightstats.hub.util.TimeUtil.*;
@@ -88,13 +89,21 @@ public class TimeLinkUtil {
         uriBuilder.path(segments.get(0).getPath())
                 .path(segments.get(1).getPath())
                 .path(timePath);
+        addQueryParams(uriInfo, uriBuilder);
+        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
+        builder.location(uriBuilder.build());
+        return builder.build();
+    }
+
+    public static void addQueryParams(UriInfo uriInfo, UriBuilder uriBuilder) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         for (String param : queryParameters.keySet()) {
             List<String> strings = queryParameters.get(param);
             uriBuilder.queryParam(param, strings.toArray(new String[strings.size()]));
         }
-        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
-        builder.location(uriBuilder.build());
-        return builder.build();
+    }
+
+    public static URI getUri(String channel, UriInfo uriInfo, Unit unit, DateTime time) {
+        return LinkBuilder.uriBuilder(channel, uriInfo).path(unit.format(time)).build();
     }
 }
