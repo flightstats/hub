@@ -24,10 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.net.URI;
 import java.util.*;
 
@@ -144,16 +141,17 @@ public class ChannelContentResource {
                 .location(Location.valueOf(location))
                 .build();
         SortedSet<ContentKey> keys = channelService.queryByTime(query);
-        String baseUri = uriInfo.getBaseUri() + "channel/" + channel + "/";
         DateTime current = stable ? stable() : now();
         DateTime next = startTime.plus(unit.getDuration());
         DateTime previous = startTime.minus(unit.getDuration());
         if (bulk) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
+                URI previousUri = uriBuilder(channel).path(unit.format(previous)).queryParam("bulk", true).build();
+                URI nextUri = uriBuilder(channel).path(unit.format(next)).queryParam("bulk", true).build();
                 if (next.isBefore(current)) {
-                    builder.header("Link", "<" + baseUri + unit.format(next) + "?bulk=true&stable=" + stable + ">;rel=\"" + "next" + "\"");
+                    builder.header("Link", "<" + nextUri + ">;rel=\"" + "next" + "\"");
                 }
-                builder.header("Link", "<" + baseUri + unit.format(previous) + "?bulk=true&stable=" + stable + ">;rel=\"" + "previous" + "\"");
+                builder.header("Link", "<" + previousUri + ">;rel=\"" + "previous" + "\"");
             });
         } else {
             ObjectNode root = mapper.createObjectNode();
@@ -161,9 +159,11 @@ public class ChannelContentResource {
             ObjectNode self = links.putObject("self");
             self.put("href", uriInfo.getRequestUri().toString());
             if (next.isBefore(current)) {
-                links.putObject("next").put("href", baseUri + unit.format(next) + "?stable=" + stable);
+                URI nextUri = uriBuilder(channel).path(unit.format(next)).build();
+                links.putObject("next").put("href", nextUri.toString());
             }
-            links.putObject("previous").put("href", baseUri + unit.format(previous) + "?stable=" + stable);
+            URI previousUri = uriBuilder(channel).path(unit.format(previous)).build();
+            links.putObject("previous").put("href", previousUri.toString());
             ArrayNode ids = links.putArray("uris");
             URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
             for (ContentKey key : keys) {
@@ -299,9 +299,20 @@ public class ChannelContentResource {
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
                 if (!keys.isEmpty()) {
-                    String baseUri = uriInfo.getBaseUri() + "channel/" + channel + "/";
-                    builder.header("Link", "<" + baseUri + keys.first().toUrl() + "/previous/" + count + "?bulk=true>;rel=\"" + "previous" + "\"");
-                    builder.header("Link", "<" + baseUri + keys.last().toUrl() + "/next/" + count + "?bulk=true>;rel=\"" + "next" + "\"");
+                    URI previousUri = uriBuilder(channel)
+                            .path(keys.first().toUrl())
+                            .path("previous").path("" + count)
+                            .queryParam("bulk", true)
+                            .build();
+
+                    URI nextUri = uriBuilder(channel)
+                            .path(keys.last().toUrl())
+                            .path("next").path("" + count)
+                            .queryParam("bulk", true)
+                            .build();
+
+                    builder.header("Link", "<" + previousUri + ">;rel=\"" + "previous" + "\"");
+                    builder.header("Link", "<" + nextUri + ">;rel=\"" + "next" + "\"");
                 }
             });
         } else {
@@ -309,6 +320,10 @@ public class ChannelContentResource {
         }
     }
 
+    private UriBuilder uriBuilder(String channel) {
+        return uriInfo.getBaseUriBuilder()
+                .path("channel").path(channel);
+    }
 
     public static MediaType getContentType(Content content) {
         Optional<String> contentType = content.getContentType();
