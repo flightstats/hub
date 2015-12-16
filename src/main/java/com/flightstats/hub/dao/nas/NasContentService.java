@@ -27,7 +27,7 @@ public class NasContentService implements ContentService {
     private final FileSpokeStore fileSpokeStore;
 
     public NasContentService() {
-        String contentPath = NasUtil.getStoragePath() + "content/";
+        String contentPath = NasUtil.getContentPath();
         logger.info("using {}", contentPath);
         fileSpokeStore = new FileSpokeStore(contentPath);
     }
