@@ -24,7 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -124,15 +127,9 @@ public class AwsContentService implements ContentService {
         } else if (channel.isBatch()) {
             content = s3BatchContentDao.read(channelName, key);
         } else {
-            ConcurrentLinkedQueue<Content> queue = new ConcurrentLinkedQueue<>();
-            try {
-                CountDownLatch latch = new CountDownLatch(2);
-                executorService.submit(readRunner(s3BatchContentDao, channelName, key, queue, latch));
-                executorService.submit(readRunner(s3SingleContentDao, channelName, key, queue, latch));
-                latch.await();
-                content = queue.poll();
-            } catch (InterruptedException e) {
-                throw new RuntimeInterruptedException(e);
+            content = s3SingleContentDao.read(channelName, key);
+            if (content == null) {
+                content = s3BatchContentDao.read(channelName, key);
             }
         }
         return Optional.fromNullable(content);
