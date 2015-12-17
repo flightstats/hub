@@ -51,7 +51,7 @@ describe(testName, function () {
                 expect(value.body._links.uris.length).toBe(2);
                 expect(value.body._links.uris[0]).toBe(items[1]);
                 expect(value.body._links.uris[1]).toBe(items[2]);
-                expect(value.body._links.next.href).toBe(items[2] + '/next/2');
+                expect(value.body._links.next.href).toBe(items[2] + '/next/2?stable=false');
                 done();
             })
     });

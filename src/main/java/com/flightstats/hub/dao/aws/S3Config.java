@@ -66,11 +66,11 @@ public class S3Config {
 
         @Override
         protected Scheduler scheduler() {
-            long delayMinutes = TimeUnit.HOURS.toMinutes(12);
             Random random = new Random();
-            long offsetMinutes = random.nextInt((int) (delayMinutes));
-            logger.info("scheduling S3Config with offsetMinutes=" + offsetMinutes);
-            return Scheduler.newFixedDelaySchedule(offsetMinutes, delayMinutes, TimeUnit.MINUTES);
+            long minutes = TimeUnit.HOURS.toMinutes(6);
+            long delayMinutes = minutes + (long) random.nextInt((int) minutes);
+            logger.info("scheduling S3Config with delay " + delayMinutes);
+            return Scheduler.newFixedDelaySchedule(0, delayMinutes, TimeUnit.MINUTES);
         }
 
     }
@@ -132,13 +132,12 @@ public class S3Config {
             ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
             for (ChannelConfig config : configurations) {
                 if (config.getTtlDays() > 0) {
-                    String namePrefix = config.getName() + "/";
-                    BucketLifecycleConfiguration.Rule configRule = new BucketLifecycleConfiguration.Rule()
-                            .withPrefix(namePrefix)
-                            .withId(config.getName())
-                            .withExpirationInDays((int) config.getTtlDays())
-                            .withStatus(BucketLifecycleConfiguration.ENABLED);
-                    rules.add(configRule);
+                    if (config.isSingle() || config.isBoth()) {
+                        rules.add(addRule(config, ""));
+                    }
+                    if (config.isBatch() || config.isBoth()) {
+                        rules.add(addRule(config, "Batch"));
+                    }
                 }
             }
             logger.info("updating " + rules.size() + " rules with ttl life cycle ");
@@ -146,6 +145,16 @@ public class S3Config {
             s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);
             ActiveTraces.end();
         }
+    }
+
+    private BucketLifecycleConfiguration.Rule addRule(ChannelConfig config, String postfix) {
+        String id = config.getName() + postfix;
+        BucketLifecycleConfiguration.Rule configRule = new BucketLifecycleConfiguration.Rule()
+                .withPrefix(id + "/")
+                .withId(id)
+                .withExpirationInDays((int) config.getTtlDays())
+                .withStatus(BucketLifecycleConfiguration.ENABLED);
+        return configRule;
     }
 
 }

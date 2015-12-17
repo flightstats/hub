@@ -56,40 +56,50 @@ describe(testName, function () {
             });
     });
 
-    function getQ(url, verifyFunction, accept) {
+    function getQ(url, param, verifyFunction, accept) {
         var deferred = Q.defer();
         request.get({
-                url: url,
+                url: url + param,
                 followRedirect: true,
                 headers: {Accept: accept}
             },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                verifyFunction(body);
+                verifyFunction(response, param);
                 deferred.resolve({response: response, body: body});
             });
         return deferred.promise;
     }
 
+    function standardVerify(response) {
+        for (var i = 0; i < items.length; i++) {
+            expect(response.body.indexOf(items[i]) > 0).toBe(true);
+        }
+    }
+
+    function timeVerify(response, param) {
+        standardVerify(response);
+        var linkHeader = response.headers['link'];
+        expect(linkHeader).toBeDefined();
+        expect(linkHeader).toContain('?stable=false' + param);
+        expect(linkHeader).toContain('previous');
+    }
+
     function getAll(url, done, verifyFunction) {
-        verifyFunction = verifyFunction || function (body) {
-                for (var i = 0; i < items.length; i++) {
-                    expect(body.indexOf(items[i]) > 0).toBe(true);
-                }
-            }
+        verifyFunction = verifyFunction || standardVerify;
         var verifyZip = function () {
         };
         url = url + '?stable=false';
-        getQ(url + '&bulk=true', verifyFunction, "multipart/mixed")
+        getQ(url, '&bulk=true', verifyFunction, "multipart/mixed")
             .then(function (value) {
-                return getQ(url + '&batch=true', verifyFunction, "multipart/mixed");
+                return getQ(url, '&batch=true', verifyFunction, "multipart/mixed");
             })
             .then(function (value) {
-                return getQ(url + '&bulk=true', verifyZip, "application/zip");
+                return getQ(url, '&bulk=true', verifyZip, "application/zip");
             })
             .then(function (value) {
-                return getQ(url + '&batch=true', verifyZip, "application/zip");
+                return getQ(url, '&batch=true', verifyZip, "application/zip");
             })
             .then(function (value) {
                 done();
@@ -109,34 +119,41 @@ describe(testName, function () {
     });
 
     it("gets day items ", function (done) {
-        getAll(sliceFromEnd(26), done);
+        getAll(sliceFromEnd(26), done, timeVerify);
     });
 
     it("gets hour items ", function (done) {
-        getAll(sliceFromEnd(23), done);
+        getAll(sliceFromEnd(23), done, timeVerify);
     });
 
     it("gets minute items ", function (done) {
-        getAll(sliceFromEnd(20), done);
+        getAll(sliceFromEnd(20), done, timeVerify);
     });
 
     it("gets second items ", function (done) {
-        getAll(sliceFromEnd(17), done);
+        getAll(sliceFromEnd(17), done, timeVerify);
     });
-
     it("gets next items ", function (done) {
-        getAll(items[0] + '/next/10', done, function (body) {
+        getAll(items[0] + '/next/10', done, function (response, param) {
             for (var i = 1; i < items.length; i++) {
-                expect(body.indexOf(items[i]) > 0).toBe(true);
+                expect(response.body.indexOf(items[i]) > 0).toBe(true);
             }
+            var linkHeader = response.headers['link'];
+            expect(linkHeader).toBeDefined();
+            expect(linkHeader).toContain(items[1] + '/previous/10?stable=false' + param);
+            expect(linkHeader).toContain(items[3] + '/next/10?stable=false' + param);
         });
     });
 
     it("gets previous items ", function (done) {
-        getAll(items[3] + '/previous/10', done, function (body) {
+        getAll(items[3] + '/previous/10', done, function (response, param) {
             for (var i = 0; i < items.length - 1; i++) {
-                expect(body.indexOf(items[i]) > 0).toBe(true);
+                expect(response.body.indexOf(items[i]) > 0).toBe(true);
             }
+            var linkHeader = response.headers['link'];
+            expect(linkHeader).toBeDefined();
+            expect(linkHeader).toContain(items[0] + '/previous/10?stable=false' + param);
+            expect(linkHeader).toContain(items[2] + '/next/10?stable=false' + param);
         });
     });
 

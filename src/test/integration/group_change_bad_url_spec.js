@@ -40,8 +40,6 @@ describe(testName, function () {
 
     utils.putGroup(groupName, badConfig, 201, testName);
 
-    utils.addItem(channelResource);
-
     utils.deleteGroup(groupName);
 
     utils.putGroup(groupName, groupConfigB, 201, testName);

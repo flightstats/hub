@@ -24,7 +24,7 @@ describe(testName, function () {
             .then(function (value) {
                 expect(value.body._links.uris.length).toBe(0);
                 expect(value.body._links.previous).not.toBeUndefined();
-                expect(value.body._links.previous.href).toBe(item_href + '/previous/10');
+                expect(value.body._links.previous.href).toBe(item_href + '/previous/10?stable=false');
                 done();
             })
     });

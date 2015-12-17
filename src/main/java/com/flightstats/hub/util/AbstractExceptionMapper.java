@@ -1,5 +1,6 @@
 package com.flightstats.hub.util;
 
+import com.flightstats.hub.metrics.ActiveTraces;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +18,7 @@ public abstract class AbstractExceptionMapper<T extends Throwable> implements Ex
         logger.trace("exception", exception);
         Response.ResponseBuilder builder = Response.status(this.getResponseCode());
         builder.entity(exception.getMessage());
+        ActiveTraces.end();
         return builder.build();
     }
 
