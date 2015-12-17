@@ -21,12 +21,11 @@ import java.util.function.Consumer;
 public class NasTtlEnforcer {
     private final static Logger logger = LoggerFactory.getLogger(NasTtlEnforcer.class);
     @Inject
-    private final ChannelService channelService;
+    private ChannelService channelService;
     private final String contentPath = NasUtil.getContentPath();
 
     @Inject
-    public NasTtlEnforcer(ChannelService channelService) {
-        this.channelService = channelService;
+    public NasTtlEnforcer() {
         HubServices.register(new NasTtlEnforcerService());
     }
 
@@ -41,6 +40,7 @@ public class NasTtlEnforcer {
     private class NasTtlEnforcerService extends AbstractScheduledService {
         @Override
         protected void runOneIteration() throws Exception {
+            logger.info("running");
             TtlEnforcer.enforce(contentPath, channelService, handleCleanup());
         }
 
