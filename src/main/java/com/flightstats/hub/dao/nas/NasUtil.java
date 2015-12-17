@@ -21,6 +21,10 @@ public class NasUtil {
         return StringUtils.appendIfMissing(HubProperties.getProperty("storage.path", "/nas"), "/");
     }
 
+    public static String getContentPath() {
+        return NasUtil.getStoragePath() + "content/";
+    }
+
     public static void writeJson(String json, String name, String path) {
         try {
             byte[] bytes = json.getBytes();
