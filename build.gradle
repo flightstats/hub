@@ -14,7 +14,7 @@ sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
 project.ext.jenkinsBuildNumber = "$System.env.VERSION_NUMBER"
-project.ext.jenkinsJobName = "hub-ucs"
+project.ext.jenkinsJobName = "hub-v2"
 
 group = 'com.flightstats'
 
@@ -82,13 +82,16 @@ dependencies {
 }
 
 
-
 distTar {
     compression = Compression.GZIP
 }
 
 applicationDistribution.from('README.md') {
     into "doc"
+}
+
+applicationDistribution.from('config/triforce') {
+    into "triforce"
 }
 
 applicationDistribution.from('config/conf') {
