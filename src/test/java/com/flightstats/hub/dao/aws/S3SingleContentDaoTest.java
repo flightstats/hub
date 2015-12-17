@@ -1,11 +1,8 @@
-package com.flightstats.hub.dao.s3;
+package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDaoUtil;
-import com.flightstats.hub.dao.aws.AwsConnectorFactory;
-import com.flightstats.hub.dao.aws.S3BucketName;
-import com.flightstats.hub.dao.aws.S3SingleContentDao;
 import com.flightstats.hub.metrics.NoOpMetricsSender;
 import org.junit.BeforeClass;
 import org.junit.Test;

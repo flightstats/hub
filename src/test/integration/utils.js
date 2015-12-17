@@ -21,7 +21,7 @@ function runInTestChannelJson(testName, jsonBody, functionToExecute) {
 }
 
 function randomChannelName() {
-    return "test_" + Math.random().toString().replace(".", "-");
+    return "test_" + Math.random().toString().replace(".", "_");
 }
 
 function download(url, completionHandler) {
@@ -66,13 +66,18 @@ function createChannel(channelName, url, description) {
 function putChannel(channelName, verify, body) {
     verify = verify || function () {};
     body = body || {"name" : channelName};
+
     it("puts channel " + channelName + " at " + channelUrl, function (done) {
-        request.put({url: channelUrl + '/' + channelName,
+        var url = channelUrl + '/' + channelName;
+        console.log("putting channel at " + url);
+        request.put({
+                url: url,
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(body)},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
+                console.log("respinse " + body)
                 verify(response, body);
                 done();
             });

@@ -12,7 +12,7 @@ public interface ContentService {
 
     ContentKey insert(String channelName, Content content) throws Exception;
 
-    Collection<ContentKey> insert(String channelName, BulkContent content) throws Exception;
+    Collection<ContentKey> insert(String channelName, BulkContent bulkContent) throws Exception;
 
     Optional<Content> getValue(String channelName, ContentKey key);
 
@@ -27,4 +27,8 @@ public interface ContentService {
     Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces);
 
     void deleteBefore(String name, ContentKey limitKey);
+
+    default void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
+        //do nothing
+    }
 }
