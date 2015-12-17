@@ -31,7 +31,7 @@ public class NasTtlEnforcer {
 
     private Consumer<ChannelConfig> handleCleanup() {
         return channel -> {
-            String channelPath = contentPath + "/" + channel.getName();
+            String channelPath = contentPath + channel.getName();
             DateTime ttlDateTime = TimeUtil.stable().minusDays((int) channel.getTtlDays() + 1);
             FileUtil.runCommand(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.days(ttlDateTime)}, 60);
         };
