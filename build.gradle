@@ -28,6 +28,11 @@ buildDir = 'build'
 
 mainClassName = "com.flightstats.hub.app.SingleHubMain"
 
+task nasTest(type: Test) {
+    exclude 'com/flightstats/hub/dao/aws/**'
+    exclude 'com/flightstats/hub/spoke/**'
+}
+
 configurations {
     all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
     all*.exclude(group: 'org.slf4j', module: 'slf4j-simple')
@@ -89,3 +94,14 @@ applicationDistribution.from('config/triforce') {
     into "triforce"
 }
 
+applicationDistribution.from('config/conf') {
+    into "conf"
+}
+
+applicationDistribution.from('config/bin') {
+    into "bin"
+}
+
+applicationDistribution.from('config/templates/newrelic.yml') {
+    into "lib"
+}

@@ -8,8 +8,6 @@ import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicatorManager;
-import com.flightstats.hub.replication.S3Batch;
-import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -29,18 +27,16 @@ public class ChannelServiceImpl implements ChannelService {
     private final ChannelValidator channelValidator;
     private final ReplicatorManager replicatorManager;
     private MetricsSender sender;
-    private final HubUtils hubUtils;
 
     @Inject
     public ChannelServiceImpl(ContentService contentService, ChannelConfigDao channelConfigDao,
                               ChannelValidator channelValidator, ReplicatorManager replicatorManager,
-                              MetricsSender sender, HubUtils hubUtils) {
+                              MetricsSender sender) {
         this.contentService = contentService;
         this.channelConfigDao = channelConfigDao;
         this.channelValidator = channelValidator;
         this.replicatorManager = replicatorManager;
         this.sender = sender;
-        this.hubUtils = hubUtils;
     }
 
     @Override
@@ -65,13 +61,7 @@ public class ChannelServiceImpl implements ChannelService {
         } else if (oldConfig != null && oldConfig.isReplicating()) {
             replicatorManager.notifyWatchers();
         }
-        if (newConfig.isSingle()) {
-            if (oldConfig != null && !oldConfig.isSingle()) {
-                new S3Batch(newConfig, hubUtils).stop();
-            }
-        } else {
-            new S3Batch(newConfig, hubUtils).start();
-        }
+        contentService.notify(newConfig, oldConfig);
     }
 
     @Override
@@ -270,10 +260,6 @@ public class ChannelServiceImpl implements ChannelService {
             return false;
         }
         long start = System.currentTimeMillis();
-        ChannelConfig channelConfig = getChannelConfig(channelName);
-        if (!channelConfig.isSingle()) {
-            new S3Batch(channelConfig, hubUtils).stop();
-        }
         boolean replicating = isReplicating(channelName);
         contentService.delete(channelName);
         channelConfigDao.delete(channelName);

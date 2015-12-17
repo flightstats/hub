@@ -40,6 +40,7 @@ public class CuratorClusterTest {
         assertEquals(1, servers.size());
         logger.info("got expected 1");
         cluster.delete();
+        Sleeper.sleep(5000);
         servers = cluster.getServers();
         assertNotNull(servers);
         assertEquals(0, servers.size());

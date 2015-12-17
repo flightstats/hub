@@ -11,6 +11,8 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ChannelReplicator;
+import com.flightstats.hub.replication.S3Batch;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -51,6 +53,8 @@ public class AwsContentService implements ContentService {
     private LastContentPath lastContentPath;
     @Inject
     private S3WriteQueue s3WriteQueue;
+    @Inject
+    private HubUtils hubUtils;
 
     private final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("AwsContentService-%d").build());
     private final AtomicInteger inFlight = new AtomicInteger();
@@ -244,12 +248,27 @@ public class AwsContentService implements ContentService {
         spokeContentDao.delete(channelName);
         s3SingleContentDao.delete(channelName);
         s3BatchContentDao.delete(channelName);
+        ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
+        if (!channel.isSingle()) {
+            new S3Batch(channel, hubUtils).stop();
+        }
     }
 
     @Override
     public void deleteBefore(String name, ContentKey limitKey) {
         s3SingleContentDao.deleteBefore(name, limitKey);
         s3BatchContentDao.deleteBefore(name, limitKey);
+    }
+
+    @Override
+    public void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
+        if (newConfig.isSingle()) {
+            if (oldConfig != null && !oldConfig.isSingle()) {
+                new S3Batch(newConfig, hubUtils).stop();
+            }
+        } else {
+            new S3Batch(newConfig, hubUtils).start();
+        }
     }
 
     private class ContentServiceHook extends AbstractIdleService {
