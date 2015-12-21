@@ -190,13 +190,19 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     private void getKeysForMinute(String channel, MinutePath minutePath, SortedSet<ContentKey> keys, Traces traces) {
+        getKeysForMinute(channel, minutePath, traces, item -> {
+            keys.add(ContentKey.fromUrl(item.asText()).get());
+        });
+    }
+
+    private void getKeysForMinute(String channel, MinutePath minutePath, Traces traces, Consumer<JsonNode> itemNodeConsumer) {
         try (S3Object object = s3Client.getObject(s3BucketName, getS3BatchIndexKey(channel, minutePath))) {
             sender.send("channel." + channel + ".s3Batch.get", 1);
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             JsonNode root = mapper.readTree(bytes);
             JsonNode items = root.get("items");
             for (JsonNode item : items) {
-                keys.add(ContentKey.fromUrl(item.asText()).get());
+                itemNodeConsumer.accept(item);
             }
             traces.add("S3BatchContentDao.getKeysForMinute ", minutePath, items.size());
         } catch (AmazonS3Exception e) {
@@ -250,10 +256,13 @@ public class S3BatchContentDao implements ContentDao {
                 return keys;
             }
             for (MinutePath path : paths) {
-                if (keys.size() >= query.getCount()) {
-                    return keys;
-                }
-                getKeysForMinute(channel, path, keys, traces);
+                getKeysForMinute(channel, path, traces, item -> {
+                    ContentKey contentKey = ContentKey.fromUrl(item.asText()).get();
+                    if (contentKey.compareTo(query.getContentKey()) > 0
+                            && keys.size() < query.getCount()) {
+                        keys.add(contentKey);
+                    }
+                });
                 markerTime = path.getTime();
             }
         } while (keys.size() < query.getCount() && markerTime.isBefore(endTime));
