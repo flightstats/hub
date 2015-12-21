@@ -156,7 +156,7 @@ public class S3BatchContentDaoTest {
     public void testDirectionQueryAndDelete() throws Exception {
         String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
-        ContentKey key = new ContentKey(start, "start");
+        ContentKey key = new ContentKey(new MinutePath(start).getTime(), "-");
         for (int i = 0; i < 12; i++) {
             writeBatchMinute(channel, new MinutePath(start.plusMinutes(i * 6)), 2);
         }
@@ -174,7 +174,8 @@ public class S3BatchContentDaoTest {
 
     }
 
-    private void queryDirection(String channel, ContentKey contentKey, boolean next, int count, int expected) {
+    private SortedSet<ContentKey> queryDirection(String channel, ContentKey contentKey, boolean next, int count, int expected) {
+
         DirectionQuery query =
                 DirectionQuery.builder()
                         .channelName(channel)
@@ -184,8 +185,27 @@ public class S3BatchContentDaoTest {
                         .ttlDays(2)
                         .build();
 
+        ActiveTraces.start(query);
+        logger.info("running query {}", query);
         SortedSet<ContentKey> found = contentDao.query(query);
+        ActiveTraces.getLocal().log(logger);
+        ActiveTraces.end();
         assertEquals(expected, found.size());
+        return found;
+    }
+
+    @Test
+    public void testDirectionQueryBug() throws Exception {
+        String channel = "testDirectionQueryBug" + RandomStringUtils.randomAlphanumeric(20);
+        DateTime start = TimeUtil.now().minusHours(2);
+        MinutePath startItem = new MinutePath(start);
+        writeBatchMinute(channel, startItem, 20);
+        writeBatchMinute(channel, new MinutePath(start.plusMinutes(1)), 20);
+
+        ContentKey key = new ContentKey(startItem.getTime(), "-1");
+        queryDirection(channel, key, true, 50, 40);
+        queryDirection(channel, new ContentKey(key.getTime().plusSeconds(18), "-2"), true, 10, 10);
+        queryDirection(channel, new ContentKey(key.getTime().plusSeconds(18), "-2"), true, 30, 22);
     }
 
 }
