@@ -168,7 +168,7 @@ class WebsiteTasks(TaskSet):
     def verify_callback(self, obj, name="group"):
         obj[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
-        max = 1000
+        max = 2000
         if obj[self.channel]["batch"] == "MINUTE":
             max = 20000
         if items > max:
