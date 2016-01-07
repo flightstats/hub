@@ -1,6 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -13,9 +12,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -56,17 +53,12 @@ public class HubNewMain {
     }
 
     public static HubJettyServer startServer() throws IOException {
-        URI baseUri = UriBuilder.fromUri("http://localhost/")
-                .port(HubProperties.getProperty("http.bind_port", 8080)).build();
         ResourceConfig resourceConfig = new ResourceConfig();
-
-        ObjectMapper mapper = HubBindings.objectMapper();
-        resourceConfig.register(new ObjectMapperResolver(mapper));
+        resourceConfig.register(new ObjectMapperResolver(HubBindings.objectMapper()));
         resourceConfig.register(JacksonJsonProvider.class);
         resourceConfig.registerClasses(EncodingFilter.class, GZipEncoder.class, DeflateEncoder.class);
 
         List<Module> modules = new ArrayList<>();
-
         modules.add(new HubBindings());
         String hubType = HubProperties.getProperty("hub.type", "aws");
         logger.info("starting with hub.type {}", hubType);
