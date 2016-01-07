@@ -3,6 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -15,18 +16,13 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
-import com.sun.jersey.api.Responses;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
@@ -42,16 +38,12 @@ public class TagContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(TagContentResource.class);
 
-    @Inject
-    private ObjectMapper mapper;
-    @Inject
+    @Context
     private UriInfo uriInfo;
-    @Inject
-    private TagService tagService;
-    @Inject
-    private LinkBuilder linkBuilder;
-    @Inject
-    private MetricsSender sender;
+
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private TagService tagService = HubProvider.getInstance(TagService.class);
+    private MetricsSender sender = HubProvider.getInstance(MetricsSender.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -223,7 +215,7 @@ public class TagContentResource {
         MediaType actualContentType = ChannelContentResource.getContentType(content);
 
         if (ChannelContentResource.contentTypeIsNotCompatible(accept, actualContentType)) {
-            return Responses.notAcceptable().build();
+            return Response.status(Response.Status.NOT_ACCEPTABLE).build();
         }
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
 

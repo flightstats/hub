@@ -3,8 +3,8 @@ package com.flightstats.hub.cluster;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.google.common.primitives.Longs;
-import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.data.Stat;
@@ -26,16 +26,11 @@ import java.util.List;
 public class ZookeeperResource {
     private static final Logger logger = LoggerFactory.getLogger(ZookeeperResource.class);
 
-    private final CuratorFramework curator;
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
 
     @Context
     UriInfo uriInfo;
-
-    @Inject
-    public ZookeeperResource(CuratorFramework curator) {
-        this.curator = curator;
-    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

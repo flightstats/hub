@@ -1,10 +1,10 @@
 package com.flightstats.hub.app;
 
-import com.sun.jersey.spi.container.ContainerRequest;
-import com.sun.jersey.spi.container.ContainerRequestFilter;
-
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.net.URI;
 
 /**
@@ -13,16 +13,15 @@ import java.net.URI;
  * slashes everywhere
  */
 public class RemoveSlashFilter implements ContainerRequestFilter {
-    public ContainerRequest filter(ContainerRequest request) {
 
-        final String uri = request.getRequestUri().getRawPath();
+    @Override
+    public void filter(ContainerRequestContext request) throws IOException {
+        final String uri = request.getUriInfo().getRequestUri().getRawPath();
 
         if (uri.endsWith("/") && uri.length() > 1) {
             URI unslashed = URI.create(uri.substring(0, uri.length() - 1));
             Response response = Response.temporaryRedirect(unslashed).build();
             throw new WebApplicationException(response);
         }
-
-        return request;
     }
 }

@@ -1,6 +1,7 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
@@ -8,6 +9,7 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -20,14 +22,13 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel: .*}/latest")
 public class ChannelLatestResource {
 
-    @Inject
+    @Context
     private UriInfo uriInfo;
     @Inject
-    private ChannelService channelService;
-    @Inject
-    private ObjectMapper mapper;
-    @Inject
     private TagLatestResource tagLatestResource;
+
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @GET
     public Response getLatest(@PathParam("channel") String channel,

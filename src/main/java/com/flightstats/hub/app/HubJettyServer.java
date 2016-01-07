@@ -3,22 +3,21 @@ package com.flightstats.hub.app;
 import com.flightstats.hub.ws.ChannelWSEndpoint;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import com.google.inject.servlet.GuiceFilter;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
+import org.glassfish.jersey.jetty.JettyHttpContainer;
+import org.glassfish.jersey.server.ContainerFactory;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.DispatcherType;
 import javax.websocket.server.ServerContainer;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.EnumSet;
-import java.util.EventListener;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -26,16 +25,12 @@ public class HubJettyServer {
 
     private final static Logger logger = LoggerFactory.getLogger(HubJettyServer.class);
 
-    private final EventListener guice;
     private Server server;
 
-    public HubJettyServer(EventListener guice) {
-        this.guice = guice;
-    }
-
-    public void start() {
+    public void start(ResourceConfig config) {
         checkState(server == null, "Server has already been started");
         try {
+
             server = new Server();
             HttpConfiguration httpConfig = new HttpConfiguration();
             SslContextFactory sslContextFactory = getSslContextFactory();
@@ -54,8 +49,8 @@ public class HubJettyServer {
             ServerContainer wsContainer = WebSocketServerContainerInitializer.configureContext(context);
             wsContainer.addEndpoint(ChannelWSEndpoint.class);
 
-            context.addEventListener(guice);
-            context.addFilter(GuiceFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+            JettyHttpContainer container = ContainerFactory.createContainer(JettyHttpContainer.class, config);
+            server.setHandler(container);
 
             server.start();
         } catch (Exception e) {

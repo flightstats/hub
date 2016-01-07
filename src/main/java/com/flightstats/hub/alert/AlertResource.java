@@ -2,17 +2,18 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.channel.LinkBuilder;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
 import org.joda.time.Minutes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -25,10 +26,11 @@ import java.util.Map;
 public class AlertResource {
 
     private final static Logger logger = LoggerFactory.getLogger(AlertResource.class);
-    @Inject
-    private ObjectMapper mapper;
-    @Inject
+
+    @Context
     private UriInfo uriInfo;
+
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

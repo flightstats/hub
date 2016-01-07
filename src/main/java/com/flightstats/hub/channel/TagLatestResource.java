@@ -1,13 +1,14 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -20,12 +21,11 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/tag/{tag: .*}/latest")
 public class TagLatestResource {
 
-    @Inject
+    @Context
     private UriInfo uriInfo;
-    @Inject
-    private TagService tagService;
-    @Inject
-    private ObjectMapper mapper;
+
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private TagService tagService = HubProvider.getInstance(TagService.class);
 
     @GET
     public Response getLatest(@PathParam("tag") String tag,

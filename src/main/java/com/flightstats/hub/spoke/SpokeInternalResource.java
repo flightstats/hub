@@ -1,13 +1,14 @@
 package com.flightstats.hub.spoke;
 
 
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.SingleTrace;
-import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
@@ -19,12 +20,12 @@ import java.util.Arrays;
 public class SpokeInternalResource {
 
     private final static Logger logger = LoggerFactory.getLogger(SpokeInternalResource.class);
-    @Inject
-    private FileSpokeStore spokeStore;
-    @Inject
-    private RemoteSpokeStore remoteSpokeStore;
-    @Inject
+
+    @Context
     private UriInfo uriInfo;
+
+    private FileSpokeStore spokeStore = HubProvider.getInstance(FileSpokeStore.class);
+    private RemoteSpokeStore remoteSpokeStore = HubProvider.getInstance(RemoteSpokeStore.class);
 
     @Path("/payload/{path:.+}")
     @GET

@@ -2,6 +2,7 @@ package com.flightstats.hub.health;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.MetricsRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +17,7 @@ import javax.ws.rs.core.Response;
 public class MetricsResource {
     private final static Logger logger = LoggerFactory.getLogger(MetricsResource.class);
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

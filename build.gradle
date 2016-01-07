@@ -36,22 +36,26 @@ task nasTest(type: Test) {
 configurations {
     all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
     all*.exclude(group: 'org.slf4j', module: 'slf4j-simple')
+    all*.exclude(group: 'javax.ws.rs', module: 'jsr311-api')
     all*.exclude(module: 'log4j')
     integrationTests
 }
 
 dependencies {
 
-    compile 'org.eclipse.jetty.aggregate:jetty-all:9.3.5.v20151012'
-    compile 'com.sun.jersey:jersey-bundle:1.19'
-    compile 'com.sun.jersey.contribs:jersey-guice:1.19'
+    compile 'org.eclipse.jetty.aggregate:jetty-all:9.2.14.v20151106'
+
+    compile 'com.sun.jersey:jersey-client:1.19'
+    compile 'com.sun.jersey:jersey-core:1.19'
+
+    compile 'org.glassfish.jersey.containers:jersey-container-jetty-http:2.22.1'
+
     compile 'com.fasterxml.jackson.core:jackson-core:2.6.0'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.0'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.0'
     compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.6.0'
     compile 'com.fasterxml.jackson.datatype:jackson-datatype-guava:2.6.0'
-    compile 'javax.servlet:javax.servlet-api:3.1.0'
-    compile 'javax.ws.rs:jsr311-api:1.1.1'
+
     compile 'com.google.inject:guice:4.0'
     compile 'com.google.inject.extensions:guice-servlet:4.0'
     compile 'com.google.guava:guava:18.0'

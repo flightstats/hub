@@ -1,11 +1,11 @@
 package com.flightstats.hub.channel;
 
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.rest.Headers;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,13 +24,8 @@ import java.io.InputStream;
 @Path("/provider")
 public class ProviderResource {
     private final static Logger logger = LoggerFactory.getLogger(ProviderResource.class);
-    private final ChannelService channelService;
 
-    @Inject
-    public ProviderResource(ChannelService channelService) {
-        this.channelService = channelService;
-
-    }
+    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @POST
     @Produces(MediaType.TEXT_PLAIN)

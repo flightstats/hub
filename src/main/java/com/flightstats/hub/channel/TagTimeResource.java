@@ -1,11 +1,12 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.Inject;
+import com.flightstats.hub.app.HubProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -14,13 +15,11 @@ import javax.ws.rs.core.UriInfo;
 public class TagTimeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(TagTimeResource.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
-    private final UriInfo uriInfo;
 
-    @Inject
-    public TagTimeResource(UriInfo uriInfo) {
-        this.uriInfo = uriInfo;
-    }
+    @Context
+    private UriInfo uriInfo;
+
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

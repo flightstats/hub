@@ -141,8 +141,10 @@ public class S3Config {
                 }
             }
             logger.info("updating " + rules.size() + " rules with ttl life cycle ");
-            BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
-            s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);
+            if (!rules.isEmpty()) {
+                BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
+                s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);
+            }
             ActiveTraces.end();
         }
     }

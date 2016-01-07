@@ -38,6 +38,7 @@ public class HubMain {
             }
         });
         latch.await();
+        //todo - gfm - 1/7/16 - are the following two lines in the correct order?
         server.halt();
         HubServices.stopAll();
         logger.info("Server shutdown complete.  Exiting application.");
@@ -46,9 +47,9 @@ public class HubMain {
     public static HubJettyServer startServer() throws IOException {
         GuiceContext.HubGuiceServlet guice = GuiceContext.construct();
         injector = guice.getInjector();
-        HubJettyServer server = new HubJettyServer(guice);
+        HubJettyServer server = new HubJettyServer();
         HubServices.start(HubServices.TYPE.PRE_START);
-        server.start();
+        //server.start();
         logger.info("Jetty server has been started.");
         HubServices.start(HubServices.TYPE.INITIAL_POST_START);
         logger.info("completed initial post start");

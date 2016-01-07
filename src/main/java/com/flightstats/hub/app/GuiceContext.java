@@ -4,32 +4,25 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.flightstats.hub.metrics.TracesFilter;
 import com.flightstats.hub.rest.HalLinks;
 import com.flightstats.hub.rest.HalLinksSerializer;
 import com.flightstats.hub.rest.Rfc3339DateSerializer;
-import com.google.inject.*;
-import com.google.inject.name.Names;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.servlet.GuiceServletContextListener;
-import com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.guice.JerseyServletModule;
-import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.ext.ContextResolver;
-import java.util.*;
-
-import static com.sun.jersey.api.core.PackagesResourceConfig.*;
+import java.util.Date;
 
 public class GuiceContext {
     private final static Logger logger = LoggerFactory.getLogger(GuiceContext.class);
     public static ObjectMapper mapper = objectMapper();
 
     public static HubGuiceServlet construct() {
-        Map<String, String> jerseyProps = new HashMap<>();
+        //todo - gfm - 1/6/16 -
+        /*Map<String, String> jerseyProps = new HashMap<>();
         jerseyProps.put(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName() +
                 ";" + HubServerFilter.class.getName() + ";" + TracesFilter.class.getName());
         jerseyProps.put(JSONConfiguration.FEATURE_POJO_MAPPING, "true");
@@ -45,7 +38,7 @@ public class GuiceContext {
                 bind(ObjectMapper.class).toInstance(mapper);
                 bind(ObjectMapperResolver.class).toInstance(new ObjectMapperResolver(mapper));
                 bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
-                serve("/*").with(GuiceContainer.class, jerseyProps);
+                serve("*//*").with(GuiceContainer.class, jerseyProps);
             }
         });
 
@@ -64,8 +57,9 @@ public class GuiceContext {
                 break;
             default:
                 throw new RuntimeException("unsupported hub.type " + hubType);
-        }
-        return new HubGuiceServlet(modules.toArray(new Module[modules.size()]));
+        }*/
+        //return new HubGuiceServlet(modules.toArray(new Module[modules.size()]));
+        return new HubGuiceServlet();
     }
 
     public static class HubGuiceServlet extends GuiceServletContextListener {
@@ -85,22 +79,7 @@ public class GuiceContext {
         }
     }
 
-    @javax.ws.rs.ext.Provider
-    @Singleton
-    static class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
-        private final ObjectMapper objectMapper;
-
-        public ObjectMapperResolver(ObjectMapper objectMapper) {
-            this.objectMapper = objectMapper;
-        }
-
-        @Override
-        public ObjectMapper getContext(Class<?> type) {
-            return objectMapper;
-        }
-    }
-
-    private static ObjectMapper objectMapper() {
+    public static ObjectMapper objectMapper() {
         SimpleModule module = new SimpleModule();
         module.addSerializer(HalLinks.class, new HalLinksSerializer());
         module.addSerializer(Date.class, new Rfc3339DateSerializer());

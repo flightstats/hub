@@ -3,15 +3,16 @@ package com.flightstats.hub.health;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubMain;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubVersion;
 import com.flightstats.hub.channel.LinkBuilder;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -20,17 +21,12 @@ import javax.ws.rs.core.UriInfo;
 public class HealthResource {
     private final static Logger logger = LoggerFactory.getLogger(HealthResource.class);
 
-    private static final ObjectMapper mapper = new ObjectMapper();
-    private static String version;
-
-    @Inject
-    HubHealthCheck healthCheck;
-
-    @Inject
-    HubVersion hubVersion;
-
-    @Inject
+    @Context
     private UriInfo uriInfo;
+
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
+    private HubVersion hubVersion = HubProvider.getInstance(HubVersion.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

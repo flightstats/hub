@@ -3,13 +3,13 @@ package com.flightstats.hub.replication;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,14 +23,10 @@ public class ReplicationCallbackResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ReplicationCallbackResource.class);
 
-    private static final ObjectMapper mapper = new ObjectMapper();
-
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private HubUtils hubUtils;
-    @Inject
-    private LastContentPath lastContentPath;
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
+    private LastContentPath lastContentPath = HubProvider.getInstance(LastContentPath.class);
 
     @POST
     public Response putPayload(@PathParam("channel") String channel, String data) {
