@@ -4,6 +4,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.net.URI;
 
@@ -12,6 +13,7 @@ import java.net.URI;
  * This is useful for supporting consistent uri's and to avoid checking for the
  * slashes everywhere
  */
+@Provider
 public class RemoveSlashFilter implements ContainerRequestFilter {
 
     @Override

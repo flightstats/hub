@@ -5,7 +5,10 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import org.glassfish.jersey.message.DeflateEncoder;
+import org.glassfish.jersey.message.GZipEncoder;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.server.filter.EncodingFilter;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,10 +59,11 @@ public class HubNewMain {
         URI baseUri = UriBuilder.fromUri("http://localhost/")
                 .port(HubProperties.getProperty("http.bind_port", 8080)).build();
         ResourceConfig resourceConfig = new ResourceConfig();
-        resourceConfig.packages(AwsBindings.packages());
-        ObjectMapper mapper = GuiceContext.objectMapper();
+
+        ObjectMapper mapper = HubBindings.objectMapper();
         resourceConfig.register(new ObjectMapperResolver(mapper));
         resourceConfig.register(JacksonJsonProvider.class);
+        resourceConfig.registerClasses(EncodingFilter.class, GZipEncoder.class, DeflateEncoder.class);
 
         List<Module> modules = new ArrayList<>();
 
@@ -69,14 +73,12 @@ public class HubNewMain {
         switch (hubType) {
             case "aws":
                 modules.add(new AwsBindings());
-                //todo - gfm - 1/7/16 -
-                //jerseyProps.put(PROPERTY_PACKAGES, AwsBindings.packages());
+                resourceConfig.packages(AwsBindings.packages());
                 break;
             case "nas":
             case "test":
                 modules.add(new NasBindings());
-                //todo - gfm - 1/7/16 -
-                //jerseyProps.put(PROPERTY_PACKAGES, NasBindings.packages());
+                resourceConfig.packages(NasBindings.packages());
                 break;
             default:
                 throw new RuntimeException("unsupported hub.type " + hubType);
@@ -87,11 +89,9 @@ public class HubNewMain {
         HubJettyServer server = new HubJettyServer();
         server.start(resourceConfig);
         logger.info("Hub server has been started.");
-        //todo - gfm - 1/7/16 -
-        //HubServices.start(HubServices.TYPE.INITIAL_POST_START);
+        HubServices.start(HubServices.TYPE.INITIAL_POST_START);
         logger.info("completed initial post start");
-        //todo - gfm - 1/7/16 -
-        //HubServices.start(HubServices.TYPE.FINAL_POST_START);
+        HubServices.start(HubServices.TYPE.FINAL_POST_START);
         return server;
     }
 

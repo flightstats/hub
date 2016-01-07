@@ -23,40 +23,11 @@ public class GuiceContext {
     public static HubGuiceServlet construct() {
         //todo - gfm - 1/6/16 -
         /*Map<String, String> jerseyProps = new HashMap<>();
-        jerseyProps.put(PROPERTY_CONTAINER_RESPONSE_FILTERS, GZIPContentEncodingFilter.class.getName() +
-                ";" + HubServerFilter.class.getName() + ";" + TracesFilter.class.getName());
-        jerseyProps.put(JSONConfiguration.FEATURE_POJO_MAPPING, "true");
+
+
         jerseyProps.put(FEATURE_CANONICALIZE_URI_PATH, "true");
-        jerseyProps.put(PROPERTY_CONTAINER_REQUEST_FILTERS, GZIPContentEncodingFilter.class.getName() +
-                ";" + RemoveSlashFilter.class.getName() + ";" + TracesFilter.class.getName());
 
-        List<Module> modules = new ArrayList<>();
-        modules.add(new JerseyServletModule() {
-            @Override
-            protected void configureServlets() {
-                Names.bindProperties(binder(), HubProperties.getProperties());
-                bind(ObjectMapper.class).toInstance(mapper);
-                bind(ObjectMapperResolver.class).toInstance(new ObjectMapperResolver(mapper));
-                bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
-                serve("*//*").with(GuiceContainer.class, jerseyProps);
-            }
-        });
 
-        modules.add(new HubBindings());
-        String hubType = HubProperties.getProperty("hub.type", "aws");
-        logger.info("starting with hub.type {}", hubType);
-        switch (hubType) {
-            case "aws":
-                modules.add(new AwsBindings());
-                jerseyProps.put(PROPERTY_PACKAGES, AwsBindings.packages());
-                break;
-            case "nas":
-            case "test":
-                modules.add(new NasBindings());
-                jerseyProps.put(PROPERTY_PACKAGES, NasBindings.packages());
-                break;
-            default:
-                throw new RuntimeException("unsupported hub.type " + hubType);
         }*/
         //return new HubGuiceServlet(modules.toArray(new Module[modules.size()]));
         return new HubGuiceServlet();
