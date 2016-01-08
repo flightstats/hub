@@ -13,7 +13,10 @@ import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
+import com.sun.jersey.core.header.MediaTypes;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -22,8 +25,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
-import java.util.Collection;
-import java.util.SortedSet;
+import java.util.*;
 
 import static com.flightstats.hub.util.TimeUtil.*;
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -310,8 +312,7 @@ public class ChannelContentResource {
     }
 
     static boolean contentTypeIsNotCompatible(String acceptHeader, final MediaType actualContentType) {
-        //todo - gfm - 1/6/16 - provider_insert_and_fetch_spec.js
-        /*List<MediaType> acceptableContentTypes;
+        List<MediaType> acceptableContentTypes;
         if (StringUtils.isBlank(acceptHeader)) {
             acceptableContentTypes = MediaTypes.GENERAL_MEDIA_TYPE_LIST;
         } else {
@@ -322,17 +323,15 @@ public class ChannelContentResource {
             }
         }
 
-        return !Iterables.any(acceptableContentTypes, input -> input.isCompatible(actualContentType));*/
-        return false;
+        return !Iterables.any(acceptableContentTypes, input -> input.isCompatible(actualContentType));
     }
 
-    /*private static List<MediaType> getMediaTypes(String type) {
+    private static List<MediaType> getMediaTypes(String type) {
         try {
             return MediaTypes.createMediaTypes(new String[]{type});
         } catch (Exception e) {
             return Collections.emptyList();
         }
-    }*/
-
+    }
 
 }
