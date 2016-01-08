@@ -45,13 +45,15 @@ public class HubJettyServer {
 
             server.setConnectors(new Connector[]{serverConnector});
 
-            ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
-            ServerContainer wsContainer = WebSocketServerContainerInitializer.configureContext(context);
+            HttpAndWSHandler handler = new HttpAndWSHandler();
+            handler.addHttpHandler(ContainerFactory.createContainer(JettyHttpContainer.class, config));
+
+            ServletContextHandler wsContext = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
+            ServerContainer wsContainer = WebSocketServerContainerInitializer.configureContext(wsContext);
             wsContainer.addEndpoint(ChannelWSEndpoint.class);
+            handler.addWSHandler(wsContext);
 
-            JettyHttpContainer container = ContainerFactory.createContainer(JettyHttpContainer.class, config);
-            server.setHandler(container);
-
+            server.setHandler(handler);
             server.start();
         } catch (Exception e) {
             logger.error("Exception in JettyServer: " + e.getMessage(), e);

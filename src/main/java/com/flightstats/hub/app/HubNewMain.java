@@ -2,7 +2,6 @@ package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
@@ -24,7 +23,6 @@ public class HubNewMain {
 
     private static final Logger logger = LoggerFactory.getLogger(HubNewMain.class);
     private static final DateTime startTime = new DateTime();
-    private static Injector injector;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -75,8 +73,7 @@ public class HubNewMain {
             default:
                 throw new RuntimeException("unsupported hub.type " + hubType);
         }
-        injector = Guice.createInjector(modules);
-        HubProvider.setInjector(injector);
+        HubProvider.setInjector(Guice.createInjector(modules));
         HubServices.start(HubServices.TYPE.PRE_START);
         HubJettyServer server = new HubJettyServer();
         server.start(resourceConfig);
@@ -101,10 +98,6 @@ public class HubNewMain {
         logger.warn("**********************************************************");
         logger.warn("*** " + message);
         logger.warn("**********************************************************");
-    }
-
-    public static Injector getInjector() {
-        return injector;
     }
 
     public static DateTime getStartTime() {
