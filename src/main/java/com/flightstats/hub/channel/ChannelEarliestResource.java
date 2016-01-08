@@ -6,7 +6,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +29,8 @@ public class ChannelEarliestResource {
 
     @Context
     private UriInfo uriInfo;
-    @Inject
-    private TagEarliestResource tagEarliestResource;
 
+    private TagEarliestResource tagEarliestResource = HubProvider.getInstance(TagEarliestResource.class);
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
@@ -42,7 +40,7 @@ public class ChannelEarliestResource {
                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
                                 @QueryParam("tag") String tag) {
         if (tag != null) {
-            return tagEarliestResource.getEarliest(tag, stable, trace);
+            return tagEarliestResource.getEarliest(tag, stable, trace, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, 1, stable, trace, channelService);
         Collection<ContentKey> keys = channelService.getKeys(query);
@@ -68,7 +66,7 @@ public class ChannelEarliestResource {
                                      @QueryParam("tag") String tag,
                                      @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, accept);
+            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, accept, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, trace, channelService);
         SortedSet<ContentKey> keys = channelService.getKeys(query);

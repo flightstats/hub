@@ -14,7 +14,6 @@ import com.flightstats.hub.rest.Headers;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -38,9 +37,8 @@ public class ChannelContentResource {
 
     @Context
     private UriInfo uriInfo;
-    @Inject
-    private TagContentResource tagContentResource;
 
+    private TagContentResource tagContentResource = HubProvider.getInstance(TagContentResource.class);
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private MetricsSender sender = HubProvider.getInstance(MetricsSender.class);
@@ -126,7 +124,7 @@ public class ChannelContentResource {
                                          Unit unit, String tag, boolean bulk, String accept) {
         //todo - gfm - 12/15/15 - merge this with TagContentResource.getTimeQueryResponse
         if (tag != null) {
-            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept);
+            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo);
         }
         TimeQuery query = TimeQuery.builder()
                 .channelName(channel)
@@ -234,7 +232,7 @@ public class ChannelContentResource {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacent(tag, contentKey, stable, next);
+            return tagContentResource.adjacent(tag, contentKey, stable, next, uriInfo);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -278,7 +276,7 @@ public class ChannelContentResource {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept);
+            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -312,7 +310,7 @@ public class ChannelContentResource {
     }
 
     static boolean contentTypeIsNotCompatible(String acceptHeader, final MediaType actualContentType) {
-        //todo - gfm - 1/6/16 -
+        //todo - gfm - 1/6/16 - provider_insert_and_fetch_spec.js
         /*List<MediaType> acceptableContentTypes;
         if (StringUtils.isBlank(acceptHeader)) {
             acceptableContentTypes = MediaTypes.GENERAL_MEDIA_TYPE_LIST;

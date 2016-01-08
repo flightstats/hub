@@ -21,16 +21,13 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/tag/{tag: .*}/latest")
 public class TagLatestResource {
 
-    @Context
-    private UriInfo uriInfo;
-
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private TagService tagService = HubProvider.getInstance(TagService.class);
 
     @GET
     public Response getLatest(@PathParam("tag") String tag,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
-                              @QueryParam("trace") @DefaultValue("false") boolean trace) {
+                              @QueryParam("trace") @DefaultValue("false") boolean trace, @Context UriInfo uriInfo) {
         Optional<ChannelContentKey> latest = tagService.getLatest(tag, stable, trace);
         if (latest.isPresent()) {
             URI uri = uriInfo.getBaseUriBuilder()
@@ -51,7 +48,7 @@ public class TagLatestResource {
                                    @QueryParam("batch") @DefaultValue("false") boolean batch,
                                    @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                    @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                   @HeaderParam("Accept") String accept) {
+                                   @HeaderParam("Accept") String accept, @Context UriInfo uriInfo) {
         Optional<ChannelContentKey> latest = tagService.getLatest(tag, stable, trace);
         if (!latest.isPresent()) {
             return Response.status(NOT_FOUND).build();
