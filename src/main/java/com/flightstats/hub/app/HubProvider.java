@@ -18,7 +18,9 @@ public class HubProvider {
 
     public static <T> T getInstance(Class<T> type, String name) {
         return injector.getInstance(Key.get(type, Names.named(name)));
-
     }
 
+    public static Injector getInjector() {
+        return injector;
+    }
 }

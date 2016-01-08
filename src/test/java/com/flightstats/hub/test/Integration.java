@@ -3,6 +3,7 @@ package com.flightstats.hub.test;
 import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.google.inject.Injector;
 import org.apache.curator.RetryPolicy;
@@ -42,7 +43,7 @@ public class Integration {
         HubProperties.setProperty("hub.type", "aws");
         HubProperties.setProperty("spoke.ttlMinutes", "240");
         HubMain.startServer();
-        injector = HubMain.getInjector();
+        injector = HubProvider.getInjector();
         return injector;
     }
 

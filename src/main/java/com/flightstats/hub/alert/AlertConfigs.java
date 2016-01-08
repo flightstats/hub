@@ -3,7 +3,7 @@ package com.flightstats.hub.alert;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.GuiceContext;
+import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.ClientResponse;
@@ -20,7 +20,7 @@ public class AlertConfigs {
 
     private final static Logger logger = LoggerFactory.getLogger(AlertConfigs.class);
 
-    private final static ObjectMapper mapper = GuiceContext.mapper;
+    private final static ObjectMapper mapper = HubBindings.objectMapper();
 
     private static String getAlertConfigName() {
         return HubProperties.getProperty("alert.channel.config", "zomboAlertsConfig");

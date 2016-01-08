@@ -1,11 +1,19 @@
 package com.flightstats.hub.app;
 
-import com.google.inject.Injector;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.google.inject.Guice;
+import com.google.inject.Module;
+import org.glassfish.jersey.message.DeflateEncoder;
+import org.glassfish.jersey.message.GZipEncoder;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.server.filter.EncodingFilter;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -15,7 +23,6 @@ public class HubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(HubMain.class);
     private static final DateTime startTime = new DateTime();
-    private static Injector injector;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -25,7 +32,7 @@ public class HubMain {
         start();
     }
 
-    static void start() throws IOException, InterruptedException {
+    static void start() throws Exception {
         startZookeeperIfSingle();
 
         HubJettyServer server = startServer();
@@ -38,19 +45,39 @@ public class HubMain {
             }
         });
         latch.await();
-        //todo - gfm - 1/7/16 - are the following two lines in the correct order?
-        server.halt();
         HubServices.stopAll();
+        server.halt();
         logger.info("Server shutdown complete.  Exiting application.");
     }
 
     public static HubJettyServer startServer() throws IOException {
-        GuiceContext.HubGuiceServlet guice = GuiceContext.construct();
-        injector = guice.getInjector();
-        HubJettyServer server = new HubJettyServer();
+        ResourceConfig resourceConfig = new ResourceConfig();
+        resourceConfig.register(new ObjectMapperResolver(HubBindings.objectMapper()));
+        resourceConfig.register(JacksonJsonProvider.class);
+        resourceConfig.registerClasses(EncodingFilter.class, GZipEncoder.class, DeflateEncoder.class);
+
+        List<Module> modules = new ArrayList<>();
+        modules.add(new HubBindings());
+        String hubType = HubProperties.getProperty("hub.type", "aws");
+        logger.info("starting with hub.type {}", hubType);
+        switch (hubType) {
+            case "aws":
+                modules.add(new AwsBindings());
+                resourceConfig.packages(AwsBindings.packages());
+                break;
+            case "nas":
+            case "test":
+                modules.add(new NasBindings());
+                resourceConfig.packages(NasBindings.packages());
+                break;
+            default:
+                throw new RuntimeException("unsupported hub.type " + hubType);
+        }
+        HubProvider.setInjector(Guice.createInjector(modules));
         HubServices.start(HubServices.TYPE.PRE_START);
-        //server.start();
-        logger.info("Jetty server has been started.");
+        HubJettyServer server = new HubJettyServer();
+        server.start(resourceConfig);
+        logger.info("Hub server has been started.");
         HubServices.start(HubServices.TYPE.INITIAL_POST_START);
         logger.info("completed initial post start");
         HubServices.start(HubServices.TYPE.FINAL_POST_START);
@@ -71,10 +98,6 @@ public class HubMain {
         logger.warn("**********************************************************");
         logger.warn("*** " + message);
         logger.warn("**********************************************************");
-    }
-
-    public static Injector getInjector() {
-        return injector;
     }
 
     public static DateTime getStartTime() {
