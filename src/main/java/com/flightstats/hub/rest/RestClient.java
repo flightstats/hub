@@ -3,6 +3,7 @@ package com.flightstats.hub.rest;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,9 +56,8 @@ public class RestClient {
             HttpsURLConnection.setDefaultSSLSocketFactory(ctx.getSocketFactory());
 
             ClientConfig config = new DefaultClientConfig();
-            //todo - gfm - 1/6/16 -
-            /*config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES,
-                    new HTTPSProperties((hostname, session) -> true, ctx));*/
+            config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES,
+                    new HTTPSProperties((hostname, session) -> true, ctx));
             Client client = Client.create(config);
             client.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(connectTimeout));
             client.setReadTimeout((int) TimeUnit.SECONDS.toMillis(readTimeout));

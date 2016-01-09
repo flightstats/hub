@@ -12,7 +12,6 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.net.URI;
 
-//todo - gfm - 1/7/16 - make sure TracesFilter's path is included in all application types
 @Provider
 public class TracesFilter implements ContainerRequestFilter, ContainerResponseFilter {
 

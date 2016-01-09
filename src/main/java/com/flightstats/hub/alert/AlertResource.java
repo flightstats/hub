@@ -77,7 +77,6 @@ public class AlertResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response putAlert(@PathParam("name") String name, String body) {
         AlertConfig alertConfig = AlertConfig.fromJson(name, body);
-        //todo - gfm - 6/10/15 - validation?
         AlertConfigs.upsert(alertConfig);
         return getResponse(alertConfig, 201);
     }

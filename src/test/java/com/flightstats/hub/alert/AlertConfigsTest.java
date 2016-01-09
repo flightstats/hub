@@ -62,7 +62,6 @@ public class AlertConfigsTest {
         assertTrue(greaterThanEqualName.isChannelAlert());
         assertEquals("greaterThanEqual", greaterThanEqualName.getSource());
 
-        //todo - gfm - 6/15/15 - source
         assertTrue(greaterThanName.isChannelAlert());
         assertFalse(latest.get("groupAlert1").isChannelAlert());
     }
