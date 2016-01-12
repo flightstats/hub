@@ -1,5 +1,6 @@
-package com.flightstats.hub.metrics;
+package com.flightstats.hub.app;
 
+import com.flightstats.hub.metrics.ActiveTraces;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
         Thread thread = Thread.currentThread();
         thread.setName(StringUtils.substringBefore(thread.getName(), "|"));
         if (!ActiveTraces.end()) {
-            logger.warn("unable to end trace for {}", requestUri);
+            logger.debug("unable to end trace for {}", requestUri);
         }
     }
 
