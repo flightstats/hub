@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -13,12 +14,12 @@ import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.Sleeper;
-import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -34,14 +35,13 @@ import static com.flightstats.hub.rest.Linked.linked;
 @Path("/channel/{channel}")
 public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
-    @Inject
-    private ChannelService channelService;
-    @Inject
+
+    @Context
     private UriInfo uriInfo;
-    @Inject
-    private NTPMonitor ntpMonitor;
-    @Inject
-    private ObjectMapper mapper;
+
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private NTPMonitor ntpMonitor = HubProvider.getInstance(NTPMonitor.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

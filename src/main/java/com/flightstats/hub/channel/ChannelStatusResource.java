@@ -2,15 +2,16 @@ package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -18,14 +19,13 @@ import javax.ws.rs.core.UriInfo;
 @Path("/channel/{channel: .*}/status")
 public class ChannelStatusResource {
 
-    @Inject
+    @Context
     private UriInfo uriInfo;
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private HubUtils hubUtils;
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
+
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

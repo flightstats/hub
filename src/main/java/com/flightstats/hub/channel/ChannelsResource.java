@@ -1,5 +1,6 @@
 package com.flightstats.hub.channel;
 
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -9,8 +10,8 @@ import com.flightstats.hub.rest.Linked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -24,14 +25,10 @@ public class ChannelsResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelsResource.class);
 
-    private final ChannelService channelService;
-    private final UriInfo uriInfo;
+    @Context
+    private UriInfo uriInfo;
 
-    @Inject
-    public ChannelsResource(ChannelService channelService, UriInfo uriInfo) {
-        this.channelService = channelService;
-        this.uriInfo = uriInfo;
-    }
+    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @GET
     @EventTimed(name = "channels.get")

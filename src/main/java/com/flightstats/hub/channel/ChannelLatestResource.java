@@ -1,13 +1,14 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -20,14 +21,12 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel: .*}/latest")
 public class ChannelLatestResource {
 
-    @Inject
+    @Context
     private UriInfo uriInfo;
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private ObjectMapper mapper;
-    @Inject
-    private TagLatestResource tagLatestResource;
+
+    private TagLatestResource tagLatestResource = HubProvider.getInstance(TagLatestResource.class);
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @GET
     public Response getLatest(@PathParam("channel") String channel,
@@ -35,7 +34,7 @@ public class ChannelLatestResource {
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("tag") String tag) {
         if (tag != null) {
-            return tagLatestResource.getLatest(tag, stable, trace);
+            return tagLatestResource.getLatest(tag, stable, trace, uriInfo);
         }
         Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
         if (latest.isPresent()) {
@@ -59,7 +58,7 @@ public class ChannelLatestResource {
                                    @QueryParam("tag") String tag,
                                    @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, accept);
+            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, accept, uriInfo);
         }
         Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
         if (!latest.isPresent()) {

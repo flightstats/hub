@@ -27,6 +27,7 @@
     <logger name="org.apache.zookeeper.server.PrepRequestProcessor" level="WARN"/>
     <logger name="com.flightstats.hub" level="INFO"/>
     <logger name="com.flightstats.hub.dao.aws" level="DEBUG"/>
+    <logger name="com.flightstats.hub.app" level="TRACE"/>
 
 
 </configuration>

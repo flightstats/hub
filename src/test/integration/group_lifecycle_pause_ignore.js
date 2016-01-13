@@ -20,7 +20,6 @@ var groupConfigPaused = {
     paused: true
 };
 /**
- * //todo - gfm - 10/12/15 - this needs to be looked at.  fails sporadically.
  *
  * This should:
  *

@@ -3,6 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -14,8 +15,6 @@ import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
-import com.sun.jersey.api.Responses;
 import com.sun.jersey.core.header.MediaTypes;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -24,10 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.net.URI;
 import java.util.*;
 
@@ -41,18 +37,13 @@ public class ChannelContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
 
-    @Inject
-    private ObjectMapper mapper;
-    @Inject
+    @Context
     private UriInfo uriInfo;
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private LinkBuilder linkBuilder;
-    @Inject
-    private MetricsSender sender;
-    @Inject
-    private TagContentResource tagContentResource;
+
+    private TagContentResource tagContentResource = HubProvider.getInstance(TagContentResource.class);
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private MetricsSender sender = HubProvider.getInstance(MetricsSender.class);
 
     @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
     @GET
@@ -135,7 +126,7 @@ public class ChannelContentResource {
                                          Unit unit, String tag, boolean bulk, String accept) {
         //todo - gfm - 12/15/15 - merge this with TagContentResource.getTimeQueryResponse
         if (tag != null) {
-            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept);
+            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo);
         }
         TimeQuery query = TimeQuery.builder()
                 .channelName(channel)
@@ -211,7 +202,7 @@ public class ChannelContentResource {
         MediaType actualContentType = getContentType(content);
 
         if (contentTypeIsNotCompatible(accept, actualContentType)) {
-            return Responses.notAcceptable().build();
+            return Response.status(Response.Status.NOT_ACCEPTABLE).build();
         }
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
 
@@ -243,7 +234,7 @@ public class ChannelContentResource {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacent(tag, contentKey, stable, next);
+            return tagContentResource.adjacent(tag, contentKey, stable, next, uriInfo);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -287,7 +278,7 @@ public class ChannelContentResource {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept);
+            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -342,6 +333,5 @@ public class ChannelContentResource {
             return Collections.emptyList();
         }
     }
-
 
 }

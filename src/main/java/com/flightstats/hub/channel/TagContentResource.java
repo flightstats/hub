@@ -3,6 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -15,18 +16,13 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
-import com.sun.jersey.api.Responses;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
@@ -42,16 +38,12 @@ public class TagContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(TagContentResource.class);
 
-    @Inject
-    private ObjectMapper mapper;
-    @Inject
+    @Context
     private UriInfo uriInfo;
-    @Inject
-    private TagService tagService;
-    @Inject
-    private LinkBuilder linkBuilder;
-    @Inject
-    private MetricsSender sender;
+
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private TagService tagService = HubProvider.getInstance(TagService.class);
+    private MetricsSender sender = HubProvider.getInstance(MetricsSender.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -88,7 +80,7 @@ public class TagContentResource {
                            @QueryParam("stable") @DefaultValue("true") boolean stable,
                            @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS, bulk || batch, accept);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS, bulk || batch, accept, uriInfo);
     }
 
     @Path("/{Y}/{M}/{D}/{hour}")
@@ -106,7 +98,7 @@ public class TagContentResource {
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
                             @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS, bulk || batch, accept);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS, bulk || batch, accept, uriInfo);
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{minute}")
@@ -125,7 +117,7 @@ public class TagContentResource {
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES, bulk || batch, accept);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES, bulk || batch, accept, uriInfo);
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{second}")
@@ -145,11 +137,11 @@ public class TagContentResource {
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS, bulk || batch, accept);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS, bulk || batch, accept, uriInfo);
     }
 
     public Response getTimeQueryResponse(String tag, DateTime startTime, String location, boolean trace, boolean stable,
-                                         Unit unit, boolean bulk, String accept) {
+                                         Unit unit, boolean bulk, String accept, UriInfo uriInfo) {
         //todo - gfm - 12/15/15 - merge this with ChannelContentResource.getTimeQueryResponse
         TimeQuery query = TimeQuery.builder()
                 .tagName(tag)
@@ -223,7 +215,7 @@ public class TagContentResource {
         MediaType actualContentType = ChannelContentResource.getContentType(content);
 
         if (ChannelContentResource.contentTypeIsNotCompatible(accept, actualContentType)) {
-            return Responses.notAcceptable().build();
+            return Response.status(Response.Status.NOT_ACCEPTABLE).build();
         }
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
 
@@ -251,10 +243,10 @@ public class TagContentResource {
                                  @PathParam("direction") String direction,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacent(tag, contentKey, stable, direction.startsWith("n"));
+        return adjacent(tag, contentKey, stable, direction.startsWith("n"), uriInfo);
     }
 
-    public Response adjacent(String tag, ContentKey contentKey, boolean stable, boolean next) {
+    public Response adjacent(String tag, ContentKey contentKey, boolean stable, boolean next, UriInfo uriInfo) {
         DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
                 .contentKey(contentKey)
@@ -300,11 +292,11 @@ public class TagContentResource {
                                       @QueryParam("location") @DefaultValue("ALL") String location,
                                       @HeaderParam("Accept") String accept) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch, accept);
+        return adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch, accept, uriInfo);
     }
 
     public Response adjacentCount(String tag, int count, boolean stable, boolean trace, String location,
-                                  boolean next, ContentKey contentKey, boolean bulk, String accept) {
+                                  boolean next, ContentKey contentKey, boolean bulk, String accept, UriInfo uriInfo) {
         DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
                 .contentKey(contentKey)

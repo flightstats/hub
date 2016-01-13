@@ -14,7 +14,9 @@ public class HubMethodTimingAdapterProvider
 
     @Inject
     public HubMethodTimingAdapterProvider(MetricsSender graphiteSender) {
-        adapter = new HubInstrumentedResourceMethodDispatchAdapter(graphiteSender);
+        //todo - gfm - 1/6/16 -
+        //adapter = new HubInstrumentedResourceMethodDispatchAdapter(graphiteSender);
+        adapter = new HubInstrumentedResourceMethodDispatchAdapter();
     }
 
     @Override

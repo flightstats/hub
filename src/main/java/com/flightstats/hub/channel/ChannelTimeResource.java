@@ -1,13 +1,13 @@
 package com.flightstats.hub.channel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -16,16 +16,11 @@ import javax.ws.rs.core.UriInfo;
 public class ChannelTimeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
-    private final UriInfo uriInfo;
 
-    @Inject
-    private ChannelService channelService;
+    @Context
+    private UriInfo uriInfo;
 
-    @Inject
-    public ChannelTimeResource(UriInfo uriInfo) {
-        this.uriInfo = uriInfo;
-    }
+    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

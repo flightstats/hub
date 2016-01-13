@@ -1,5 +1,9 @@
 package com.flightstats.hub.app;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flightstats.hub.alert.AlertRunner;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.*;
@@ -11,7 +15,10 @@ import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.*;
 import com.flightstats.hub.replication.ReplicatorManager;
+import com.flightstats.hub.rest.HalLinks;
+import com.flightstats.hub.rest.HalLinksSerializer;
 import com.flightstats.hub.rest.RetryClientFilter;
+import com.flightstats.hub.rest.Rfc3339DateSerializer;
 import com.flightstats.hub.spoke.GCRunner;
 import com.flightstats.hub.spoke.HubClusterRegister;
 import com.flightstats.hub.time.NTPMonitor;
@@ -33,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.WebSocketContainer;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class HubBindings extends AbstractModule {
@@ -137,6 +145,19 @@ public class HubBindings extends AbstractModule {
         ClientContainer container = new ClientContainer();
         container.start();
         return container;
+    }
+
+    @Singleton
+    @Provides
+    public static ObjectMapper objectMapper() {
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(HalLinks.class, new HalLinksSerializer());
+        module.addSerializer(Date.class, new Rfc3339DateSerializer());
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(module);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        return mapper;
     }
 
 }

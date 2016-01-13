@@ -1,16 +1,17 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -26,14 +27,12 @@ public class ChannelEarliestResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelEarliestResource.class);
 
-    @Inject
+    @Context
     private UriInfo uriInfo;
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private ObjectMapper mapper;
-    @Inject
-    private TagEarliestResource tagEarliestResource;
+
+    private TagEarliestResource tagEarliestResource = HubProvider.getInstance(TagEarliestResource.class);
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @GET
     public Response getEarliest(@PathParam("channel") String channel,
@@ -41,7 +40,7 @@ public class ChannelEarliestResource {
                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
                                 @QueryParam("tag") String tag) {
         if (tag != null) {
-            return tagEarliestResource.getEarliest(tag, stable, trace);
+            return tagEarliestResource.getEarliest(tag, stable, trace, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, 1, stable, trace, channelService);
         Collection<ContentKey> keys = channelService.getKeys(query);
@@ -67,7 +66,7 @@ public class ChannelEarliestResource {
                                      @QueryParam("tag") String tag,
                                      @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, accept);
+            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, accept, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, trace, channelService);
         SortedSet<ContentKey> keys = channelService.getKeys(query);

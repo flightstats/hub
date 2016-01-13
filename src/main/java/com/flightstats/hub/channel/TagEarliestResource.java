@@ -3,11 +3,12 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.model.ChannelContentKey;
-import com.google.inject.Inject;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -23,17 +24,13 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/tag/{tag: .*}/earliest")
 public class TagEarliestResource {
 
-    @Inject
-    private UriInfo uriInfo;
-    @Inject
-    private TagService tagService;
-    @Inject
-    private ObjectMapper mapper;
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private TagService tagService = HubProvider.getInstance(TagService.class);
 
     @GET
     public Response getEarliest(@PathParam("tag") String tag,
                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                @QueryParam("trace") @DefaultValue("false") boolean trace) {
+                                @QueryParam("trace") @DefaultValue("false") boolean trace, @Context UriInfo uriInfo) {
         Collection<ChannelContentKey> contentKeys = tagService.getEarliest(tag, 1, stable, trace);
         if (!contentKeys.isEmpty()) {
             URI uri = uriInfo.getBaseUriBuilder()
@@ -54,7 +51,8 @@ public class TagEarliestResource {
                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
                                      @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                     @HeaderParam("Accept") String accept) {
+                                     @HeaderParam("Accept") String accept,
+                                     @Context UriInfo uriInfo) {
         SortedSet<ChannelContentKey> keys = tagService.getEarliest(tag, count, stable, trace);
         if (bulk || batch) {
             return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);

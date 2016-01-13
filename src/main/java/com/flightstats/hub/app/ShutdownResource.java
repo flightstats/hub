@@ -2,7 +2,6 @@ package com.flightstats.hub.app;
 
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.util.Sleeper;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +18,7 @@ public class ShutdownResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ShutdownResource.class);
 
-    @Inject
-    HubHealthCheck healthCheck;
+    private HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
 
     @POST
     public Response shutdown() {

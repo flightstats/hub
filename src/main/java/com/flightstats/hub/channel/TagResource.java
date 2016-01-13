@@ -1,12 +1,13 @@
 package com.flightstats.hub.channel;
 
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.rest.Linked;
 
-import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -20,14 +21,10 @@ import java.util.Map;
 @Path("/tag")
 public class TagResource {
 
-    private final ChannelService channelService;
-    private final UriInfo uriInfo;
+    @Context
+    private UriInfo uriInfo;
 
-    @Inject
-    public TagResource(ChannelService channelService, UriInfo uriInfo) {
-        this.channelService = channelService;
-        this.uriInfo = uriInfo;
-    }
+    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

@@ -25,8 +25,10 @@ public class SpokeHealth {
 
         @Override
         protected void startUp() throws Exception {
+            String url = HubHost.getScheme() + "localhost:" + HubHost.getLocalPort() + "/health";
+            logger.info("testing {}", url);
             ClientResponse health = RestClient.defaultClient()
-                    .resource(HubHost.getLocalHttpIpUri() + "/health")
+                    .resource(url)
                     .get(ClientResponse.class);
             logger.info("localhost health {}", health);
             remoteSpokeStore.testOne(CuratorCluster.getLocalServer());

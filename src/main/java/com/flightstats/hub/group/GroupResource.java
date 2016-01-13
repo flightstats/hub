@@ -3,15 +3,16 @@ package com.flightstats.hub.group;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -23,15 +24,12 @@ import javax.ws.rs.core.UriInfo;
 public class GroupResource {
 
     private final static Logger logger = LoggerFactory.getLogger(GroupResource.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
-    private final UriInfo uriInfo;
-    private final GroupService groupService;
 
-    @Inject
-    public GroupResource(UriInfo uriInfo, GroupService groupService) {
-        this.uriInfo = uriInfo;
-        this.groupService = groupService;
-    }
+    @Context
+    private UriInfo uriInfo;
+
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final GroupService groupService = HubProvider.getInstance(GroupService.class);
 
     @GET
     @EventTimed(name = "groups.get")

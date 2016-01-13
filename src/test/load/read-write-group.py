@@ -18,6 +18,7 @@ from flask import request, jsonify
 
 
 
+
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
 # nohup locust -f read-write-group.py -H http://hub &
@@ -115,9 +116,14 @@ class WebsiteTasks(TaskSet):
                                     on_error=self.on_error)
         thread.start_new_thread(ws.run_forever, ())
 
+    @staticmethod
+    def removeHostChannel(href):
+        return href.split("/channel/", 1)[1]
+
     def on_message(self, ws, message):
         logger.debug("ws %s", message)
-        WebsiteTasks.verify_ordered(self.channel, message, websockets, "websocket")
+        shortHref = WebsiteTasks.removeHostChannel(message)
+        WebsiteTasks.verify_ordered(self.channel, shortHref, websockets, "websocket")
 
     def on_close(self, ws):
         logger.info("closing ws %s", self.channel)
@@ -154,12 +160,12 @@ class WebsiteTasks(TaskSet):
 
         return href
 
-
     def append_href(self, href, obj):
+        shortHref = WebsiteTasks.removeHostChannel(href)
         try:
             obj[self.channel]["lock"].acquire()
-            obj[self.channel]["data"].append(href)
-            logger.debug('wrote %s', href)
+            obj[self.channel]["data"].append(shortHref)
+            logger.debug('wrote %s', shortHref)
         finally:
             obj[self.channel]["lock"].release()
 
@@ -344,11 +350,12 @@ class WebsiteTasks(TaskSet):
                     logger.info("incoming uri before locust tests started " + str(incoming_uri))
                     return "ok"
                 try:
+                    shortHref = WebsiteTasks.removeHostChannel(incoming_uri)
                     groupCallbacks[channel]["lock"].acquire()
                     if groupCallbacks[channel]["parallel"] == 1:
-                        WebsiteTasks.verify_ordered(channel, incoming_uri, groupCallbacks, "group")
+                        WebsiteTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")
                     else:
-                        WebsiteTasks.verify_parallel(channel, incoming_uri)
+                        WebsiteTasks.verify_parallel(channel, shortHref)
                 finally:
                     groupCallbacks[channel]["lock"].release()
             if incoming_json['type'] == "heartbeat":

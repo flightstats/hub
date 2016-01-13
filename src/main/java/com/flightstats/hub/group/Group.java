@@ -181,4 +181,11 @@ public class Group {
     public boolean isTTL() {
         return getTtlMinutes() > 0;
     }
+
+    public Integer getTtlMinutes() {
+        if (ttlMinutes == null) {
+            return new Integer(0);
+        }
+        return ttlMinutes;
+    }
 }
