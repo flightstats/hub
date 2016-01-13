@@ -13,11 +13,13 @@ public class BulkContent {
     private final boolean isNew = true;
     private final InputStream stream;
     private final String contentType;
+    private final String channel;
     private final List<Content> items = new ArrayList<>();
 
     private BulkContent(Builder builder) {
         stream = builder.stream;
         contentType = builder.contentType;
+        channel = builder.channel;
     }
 
     public long getSize() {
@@ -34,6 +36,7 @@ public class BulkContent {
 
     public static class Builder {
         private String contentType;
+        private String channel;
         private InputStream stream;
 
         public Builder withContentType(String contentType) {
@@ -48,6 +51,11 @@ public class BulkContent {
 
         public Builder withData(byte[] data) {
             this.stream = new ByteArrayInputStream(data);
+            return this;
+        }
+
+        public Builder withChannel(String channel) {
+            this.channel = channel;
             return this;
         }
 

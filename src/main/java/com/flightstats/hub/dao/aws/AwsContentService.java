@@ -103,12 +103,12 @@ public class AwsContentService implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> insert(String channelName, BulkContent bulkContent) throws Exception {
+    public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
         Collection<ContentKey> keys = new ArrayList<>();
         MultiPartParser multiPartParser = new MultiPartParser(bulkContent);
         multiPartParser.parse();
         for (Content content : bulkContent.getItems()) {
-            keys.add(insert(channelName, content));
+            keys.add(insert(bulkContent.getChannel(), content));
         }
         return keys;
     }
