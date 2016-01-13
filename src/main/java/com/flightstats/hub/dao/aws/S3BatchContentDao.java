@@ -263,6 +263,9 @@ public class S3BatchContentDao implements ContentDao {
                         keys.add(contentKey);
                     }
                 });
+                if (keys.size() >= query.getCount()) {
+                    break;
+                }
                 markerTime = path.getTime();
             }
         } while (keys.size() < query.getCount() && markerTime.isBefore(endTime));
