@@ -1,7 +1,6 @@
 package com.flightstats.hub.app;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.inject.Singleton;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -14,9 +13,8 @@ import java.net.URI;
 
 @Provider
 @PreMatching
+@Singleton
 public class PortFilter implements ContainerRequestFilter {
-
-    private final static Logger logger = LoggerFactory.getLogger(PortFilter.class);
 
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
@@ -25,7 +23,6 @@ public class PortFilter implements ContainerRequestFilter {
             URI baseUri = UriBuilder.fromUri(uriInfo.getBaseUri()).port(-1).build();
             URI requestUri = UriBuilder.fromUri(uriInfo.getRequestUri()).port(-1).build();
             request.setRequestUri(baseUri, requestUri);
-            logger.trace("ignoring default port with {} and {}", baseUri, requestUri);
         }
     }
 }
