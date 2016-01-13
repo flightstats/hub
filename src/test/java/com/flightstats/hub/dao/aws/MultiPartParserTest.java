@@ -30,8 +30,8 @@ public class MultiPartParserTest {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
         BulkContent bulkContent = BulkContent.builder()
-                .withStream(inputStream)
-                .withContentType("multipart/mixed; boundary=frontier")
+                .stream(inputStream)
+                .contentType("multipart/mixed; boundary=frontier")
                 .build();
         MultiPartParser parser = new MultiPartParser(bulkContent);
         parser.parse();
@@ -57,8 +57,8 @@ public class MultiPartParserTest {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
         BulkContent bulkContent = BulkContent.builder()
-                .withStream(inputStream)
-                .withContentType("multipart/mixed; boundary=boundary")
+                .stream(inputStream)
+                .contentType("multipart/mixed; boundary=boundary")
                 .build();
         MultiPartParser parser = new MultiPartParser(bulkContent);
         parser.parse();
@@ -78,8 +78,8 @@ public class MultiPartParserTest {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
         BulkContent bulkContent = BulkContent.builder()
-                .withStream(inputStream)
-                .withContentType("multipart/mixed; boundary=\"boundary\"")
+                .stream(inputStream)
+                .contentType("multipart/mixed; boundary=\"boundary\"")
                 .build();
         MultiPartParser parser = new MultiPartParser(bulkContent);
         parser.parse();
@@ -99,8 +99,8 @@ public class MultiPartParserTest {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
         BulkContent bulkContent = BulkContent.builder()
-                .withStream(inputStream)
-                .withContentType("multipart/mixed; boundary=boundary")
+                .stream(inputStream)
+                .contentType("multipart/mixed; boundary=boundary")
                 .build();
         MultiPartParser parser = new MultiPartParser(bulkContent);
         parser.parse();
