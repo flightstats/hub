@@ -25,4 +25,12 @@ public class ChannelContentKeyTest {
         assertEquals(A1, orderedKeys.first());
         assertEquals(A2, orderedKeys.last());
     }
+
+    @Test
+    public void testCycle() {
+        ContentKey contentKey = new ContentKey();
+        ChannelContentKey channelContentKey = new ChannelContentKey("name", contentKey);
+        ChannelContentKey cycled = channelContentKey.fromUrl(channelContentKey.toUrl());
+        assertEquals(channelContentKey, cycled);
+    }
 }

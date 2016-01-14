@@ -174,10 +174,12 @@ public class Group {
         return MINUTE;
     }
 
+    @JsonIgnore
     public boolean isNeverStop() {
         return getTtlMinutes() == 0;
     }
 
+    @JsonIgnore
     public boolean isTTL() {
         return getTtlMinutes() > 0;
     }

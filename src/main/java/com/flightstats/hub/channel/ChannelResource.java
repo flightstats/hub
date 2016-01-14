@@ -11,9 +11,12 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
+import com.flightstats.hub.stream.StreamService;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.Sleeper;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.media.sse.EventOutput;
+import org.glassfish.jersey.media.sse.SseFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +44,7 @@ public class ChannelResource {
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private NTPMonitor ntpMonitor = HubProvider.getInstance(NTPMonitor.class);
+    private StreamService streamService = HubProvider.getInstance(StreamService.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -188,6 +192,20 @@ public class ChannelResource {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {
             logger.warn("unable to POST to " + channelName, e);
+            throw e;
+        }
+    }
+
+    @GET
+    @Path("/stream")
+    @Produces(SseFeature.SERVER_SENT_EVENTS)
+    public EventOutput getStream(@PathParam("channel") String channelName) throws Exception {
+        try {
+            EventOutput eventOutput = new EventOutput();
+            streamService.register(channelName, eventOutput);
+            return eventOutput;
+        } catch (Exception e) {
+            logger.warn("unable to stream to " + channelName, e);
             throw e;
         }
     }

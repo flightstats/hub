@@ -29,14 +29,15 @@ public class NasBindings extends AbstractModule {
     }
 
     public static String packages() {
-        return "com.flightstats.hub.channel," +
-                "com.flightstats.hub.health," +
-                "com.flightstats.hub.exception," +
-                "com.flightstats.hub.replication," +
+        return "com.flightstats.hub.alert," +
                 "com.flightstats.hub.app," +
+                "com.flightstats.hub.channel," +
+                "com.flightstats.hub.exception," +
                 "com.flightstats.hub.group," +
-                "com.flightstats.hub.alert," +
+                "com.flightstats.hub.health," +
                 "com.flightstats.hub.metrics," +
+                "com.flightstats.hub.replication," +
+                "com.flightstats.hub.stream," +
                 "com.flightstats.hub.ws";
     }
 
