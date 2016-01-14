@@ -18,6 +18,7 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.util.SortedSet;
 import java.util.function.Consumer;
@@ -41,7 +42,8 @@ public class MultiPartBulkBuilder {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
-            channelService.getValues(channel, keys, content -> writeContent(uriInfo, output, channel, content));
+            channelService.getValues(channel, keys, content -> writeContent(content, output,
+                    LinkBuilder.buildChannelUri(channel, uriInfo), channel));
         }, headerBuilder);
     }
 
@@ -81,14 +83,18 @@ public class MultiPartBulkBuilder {
         Optional<Content> content = channelService.getValue(request);
         if (content.isPresent()) {
             Content item = content.get();
-            writeContent(uriInfo, output, channel, item);
+            writeContent(item, output, LinkBuilder.buildChannelUri(channel, uriInfo), channel);
         }
     }
 
-    private static void writeContent(UriInfo uriInfo, BufferedOutputStream output, String channel, Content content) {
+    private static void writeContent(Content content, OutputStream output, URI channelUri, String name) {
+        writeContent(content, output, channelUri, name, true, false);
+    }
+
+    public static void writeContent(Content content, OutputStream output, URI channelUri, String name,
+                                    boolean startBoundary, boolean endBoundary) {
         try {
-            URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
-            output.write(START_BOUNDARY);
+            if (startBoundary) output.write(START_BOUNDARY);
             if (content.getContentType().isPresent()) {
                 output.write(CONTENT_TYPE);
                 output.write(content.getContentType().get().getBytes());
@@ -104,10 +110,11 @@ public class MultiPartBulkBuilder {
             output.write(CRLF);
             ByteStreams.copy(content.getStream(), output);
             output.write(CRLF);
+            if (endBoundary) output.write(START_BOUNDARY);
             output.flush();
 
         } catch (IOException e) {
-            logger.warn("io exception batching to " + channel, e);
+            logger.warn("io exception batching to " + name, e);
             throw new RuntimeException(e);
         }
     }

@@ -20,7 +20,7 @@ describe(testName, function () {
 
     utils.createChannel(channelName, false, testName);
 
-    it('calls stream and waits for items', function (done) {
+    /*it('calls stream and waits for items', function (done) {
 
         request.get({
                 url: channelResource + '/stream',
@@ -49,7 +49,7 @@ describe(testName, function () {
         }, 20 * 1000);
 
 
-    });
+     });*/
 
 
 });

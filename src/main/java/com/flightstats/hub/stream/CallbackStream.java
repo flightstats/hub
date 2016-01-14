@@ -6,17 +6,15 @@ import com.flightstats.hub.group.Group;
 import com.flightstats.hub.util.HubUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.glassfish.jersey.media.sse.EventOutput;
 
 public class CallbackStream {
-    private String channel;
-    private EventOutput eventOutput;
+
+    private ContentOutput contentOutput;
     private HubUtils hubUtils;
     private final String random = RandomStringUtils.randomAlphanumeric(6);
 
-    public CallbackStream(String channel, EventOutput eventOutput, HubUtils hubUtils) {
-        this.channel = channel;
-        this.eventOutput = eventOutput;
+    public CallbackStream(ContentOutput contentOutput, HubUtils hubUtils) {
+        this.contentOutput = contentOutput;
         this.hubUtils = hubUtils;
     }
 
@@ -31,24 +29,24 @@ public class CallbackStream {
         hubUtils.startGroupCallback(group);
     }
 
-    public EventOutput getEventOutput() {
-        return eventOutput;
+    public ContentOutput getContentOutput() {
+        return contentOutput;
     }
 
     private String getChannelUrl() {
-        return HubProperties.getAppUrl() + "channel/" + channel;
+        return HubProperties.getAppUrl() + "channel/" + contentOutput.getChannel();
     }
 
     private String getCallbackUrl() {
-        return HubHost.getLocalHttpIpUri() + "internal/stream/" + getGroupName();
+        return HubHost.getLocalHttpIpUri() + "/internal/stream/" + getGroupName();
     }
 
     public String getGroupName() {
-        return "Stream_" + HubProperties.getAppEnv() + "_" + channel + "_" + random;
+        return "Stream_" + HubProperties.getAppEnv() + "_" + contentOutput.getChannel() + "_" + random;
     }
 
     public void stop() {
-        IOUtils.closeQuietly(eventOutput);
+        IOUtils.closeQuietly(contentOutput);
         hubUtils.stopGroupCallback(getGroupName(), getChannelUrl());
     }
 

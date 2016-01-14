@@ -7,11 +7,10 @@ import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.glassfish.jersey.media.sse.EventOutput;
-import org.glassfish.jersey.media.sse.OutboundEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class StreamService {
 
     private final static Logger logger = LoggerFactory.getLogger(StreamService.class);
+    public static final MediaType MULTIPART_STREAM = new MediaType("multipart", "stream");
 
     @Inject
     private ContentService contentService;
@@ -44,10 +44,7 @@ public class StreamService {
                 logger.info("unable to find id {}", id);
                 unregister(id);
             } else {
-                OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
-                //todo - gfm - 1/14/16 - add encoding
-                eventBuilder.data(byte[].class, content.getData());
-                callbackStream.getEventOutput().write(eventBuilder.build());
+                callbackStream.getContentOutput().write(content);
                 logger.trace("sent {} content {}", id, content.getContentKey());
             }
         } catch (Exception e) {
@@ -56,8 +53,8 @@ public class StreamService {
         }
     }
 
-    public void register(String channel, EventOutput eventOutput) {
-        CallbackStream callbackStream = new CallbackStream(channel, eventOutput, hubUtils);
+    public void register(ContentOutput contentOutput) {
+        CallbackStream callbackStream = new CallbackStream(contentOutput, hubUtils);
         logger.info("registering stream {}", callbackStream.getGroupName());
         outputStreamMap.put(callbackStream.getGroupName(), callbackStream);
         callbackStream.start();
