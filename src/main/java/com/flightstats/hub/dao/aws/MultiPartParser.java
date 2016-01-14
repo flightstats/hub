@@ -19,7 +19,7 @@ import java.text.DecimalFormat;
 public class MultiPartParser {
     private final static Logger logger = LoggerFactory.getLogger(MultiPartParser.class);
 
-    private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 20) * 1024 * 1024;
+    private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 20) * 1024 * 1024 * 3;
     private BulkContent content;
     private BufferedInputStream stream;
     private final DecimalFormat format = new DecimalFormat("000000");
@@ -48,6 +48,7 @@ public class MultiPartParser {
         while (read != -1) {
             count++;
             if (count > maxBytes) {
+                logger.warn("multipart max payload exceeded {}", maxBytes, content.getChannel());
                 throw new ContentTooLargeException("max payload size is " + maxBytes + " bytes");
             }
             baos.write((byte) read);

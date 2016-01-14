@@ -169,10 +169,11 @@ public class ChannelResource {
                                final InputStream data) throws Exception {
         try {
             BulkContent content = BulkContent.builder()
-                    .withContentType(contentType)
-                    .withStream(data)
+                    .contentType(contentType)
+                    .stream(data)
+                    .channel(channelName)
                     .build();
-            Collection<ContentKey> keys = channelService.insert(channelName, content);
+            Collection<ContentKey> keys = channelService.insert(content);
             logger.trace("posted {}", keys);
             ObjectNode root = mapper.createObjectNode();
             ObjectNode links = root.putObject("_links");
