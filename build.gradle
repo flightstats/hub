@@ -73,8 +73,9 @@ dependencies {
     compile 'net.logstash.logback:logstash-logback-encoder:4.5.1'
 
     compile 'com.amazonaws:aws-java-sdk:1.10.46'
-    compile 'org.apache.curator:curator-recipes:3.0.0'
-    testCompile 'org.apache.curator:curator-test:3.0.0'
+    compile 'org.apache.curator:curator-recipes:2.9.1'
+    testCompile 'org.apache.curator:curator-test:2.9.1'
+    testCompile 'org.testng:testng:6.9.10'
 
     compile 'org.apache.commons:commons-lang3:3.4'
     compile 'commons-io:commons-io:2.4'
