@@ -1,5 +1,6 @@
 package com.flightstats.hub.stream;
 
+import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.util.HubUtils;
@@ -39,7 +40,7 @@ public class CallbackStream {
     }
 
     private String getCallbackUrl() {
-        return HubProperties.getAppUrl() + "internal/stream/" + getGroupName();
+        return HubHost.getLocalHttpIpUri() + "internal/stream/" + getGroupName();
     }
 
     public String getGroupName() {

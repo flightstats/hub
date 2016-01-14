@@ -31,10 +31,11 @@ public class InternalStreamResource {
             for (JsonNode uri : uris) {
                 streamService.getAndSendData(uri.asText(), id);
             }
+            return Response.ok().build();
         } catch (IOException e) {
             logger.warn("unable to send to " + id + " data" + data, e);
+            return Response.serverError().build();
         }
-        return Response.ok().build();
     }
 
 
