@@ -23,7 +23,7 @@ public class CallbackStream {
                 .name(getGroupName())
                 .callbackUrl(getCallbackUrl())
                 .channelUrl(getChannelUrl())
-                .heartbeat(false)
+                .heartbeat(true)
                 .batch(Group.SINGLE);
         Group group = builder.build();
         hubUtils.startGroupCallback(group);

@@ -37,6 +37,20 @@ public class StreamService {
         }
     }
 
+    public void checkHealth(String id) {
+        logger.trace("check health {}", id);
+        CallbackStream callbackStream = outputStreamMap.get(id);
+        if (callbackStream == null) {
+            logger.info("unable to find stream in map {}", id);
+            unregister(id);
+        } else {
+            if (callbackStream.getContentOutput().isClosed()) {
+                logger.info("stream is closed {}", id);
+                unregister(id);
+            }
+        }
+    }
+
     private void sendData(String id, Content content) {
         try {
             CallbackStream callbackStream = outputStreamMap.get(id);

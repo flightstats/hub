@@ -18,7 +18,6 @@ public class InternalStreamResource {
 
     private final static Logger logger = LoggerFactory.getLogger(InternalStreamResource.class);
 
-
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private StreamService streamService = HubProvider.getInstance(StreamService.class);
 
@@ -27,9 +26,13 @@ public class InternalStreamResource {
         logger.trace("incoming {} {}", id, data);
         try {
             JsonNode node = mapper.readTree(data);
-            ArrayNode uris = (ArrayNode) node.get("uris");
-            for (JsonNode uri : uris) {
-                streamService.getAndSendData(uri.asText(), id);
+            if (node.get("type").asText().equals("heartbeat")) {
+                streamService.checkHealth(id);
+            } else {
+                ArrayNode uris = (ArrayNode) node.get("uris");
+                for (JsonNode uri : uris) {
+                    streamService.getAndSendData(uri.asText(), id);
+                }
             }
             return Response.ok().build();
         } catch (IOException e) {
