@@ -1,35 +1,50 @@
 package com.flightstats.hub.stream;
 
+import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.channel.LinkBuilder;
 import com.flightstats.hub.model.Content;
-import org.glassfish.jersey.server.ChunkedOutput;
+import org.apache.commons.io.IOUtils;
+import org.glassfish.jersey.media.sse.EventOutput;
+import org.glassfish.jersey.media.sse.OutboundEvent;
 
+import javax.ws.rs.core.UriBuilder;
+import java.io.Closeable;
 import java.io.IOException;
+import java.net.URI;
 
-public class ContentOutput extends ChunkedOutput<StreamContent> {
+public class ContentOutput implements Closeable {
 
-    private boolean first = true;
-    private String channel;
+    private static final URI APP_URL = UriBuilder.fromPath(HubProperties.getAppUrl()).build();
 
-    public ContentOutput(String channel) {
+    private final String channel;
+    private final EventOutput eventOutput;
+    private final URI channelUri;
+
+    public ContentOutput(String channel, EventOutput eventOutput) {
         this.channel = channel;
+        this.eventOutput = eventOutput;
+        channelUri = UriBuilder.fromUri(APP_URL).path("channel/" + channel).build();
     }
 
-    @Override
-    public void write(StreamContent streamContent) throws IOException {
-        if (streamContent.isFirst()) {
-            first = false;
-        }
-        super.write(streamContent);
+    public void writeHeartbeat() throws IOException {
+        eventOutput.write(new OutboundEvent.Builder().comment("").build());
     }
 
     public void write(Content content) throws IOException {
-        write(StreamContent.builder()
-                .first(first)
-                .content(content)
-                .channel(channel).build());
+        URI uri = LinkBuilder.buildItemUri(content.getContentKey().get(), channelUri);
+        OutboundEvent.Builder builder = new OutboundEvent.Builder().id(uri.toString());
+        if (content.getContentType().isPresent()) {
+            builder.name(content.getContentType().get());
+        }
+        eventOutput.write(builder.data(byte[].class, content.getData()).build());
     }
 
     public String getChannel() {
         return channel;
+    }
+
+    @Override
+    public void close() throws IOException {
+        IOUtils.closeQuietly(eventOutput);
     }
 }

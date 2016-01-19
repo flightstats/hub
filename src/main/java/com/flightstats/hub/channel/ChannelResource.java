@@ -16,6 +16,7 @@ import com.flightstats.hub.stream.StreamService;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.Sleeper;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,10 +200,10 @@ public class ChannelResource {
     @GET
     @Path("/stream")
     @Produces(SseFeature.SERVER_SENT_EVENTS)
-    public ContentOutput getStream(@PathParam("channel") String channel) throws Exception {
+    public EventOutput getStream(@PathParam("channel") String channel) throws Exception {
         try {
-            ContentOutput eventOutput = new ContentOutput(channel);
-            streamService.register(eventOutput);
+            EventOutput eventOutput = new EventOutput();
+            streamService.register(new ContentOutput(channel, eventOutput));
             return eventOutput;
         } catch (Exception e) {
             logger.warn("unable to stream to " + channel, e);

@@ -26,7 +26,7 @@
     <logger name="com.sun.jersey.server.wadl.generators" level="WARN"/>
     <logger name="org.apache.zookeeper.server.PrepRequestProcessor" level="WARN"/>
     <logger name="com.flightstats.hub" level="INFO"/>
-    <logger name="com.flightstats.hub.stream" level="DEBUG"/>
+    <logger name="com.flightstats.hub.stream" level="TRACE"/>
     <logger name="com.flightstats.hub.dao.aws" level="DEBUG"/>
     <logger name="com.flightstats.hub.app" level="TRACE"/>
 
