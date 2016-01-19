@@ -21,7 +21,6 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -201,9 +200,9 @@ public class ChannelResource {
     @GET
     @Path("/stream")
     @Produces(SseFeature.SERVER_SENT_EVENTS)
-    public EventOutput getStream(@PathParam("channel") String channel, @Context HttpServletRequest request) throws Exception {
+    public EventOutput getStream(@PathParam("channel") String channel) throws Exception {
         try {
-            logger.info("starting stream on {} for client {}", channel, request.getRemoteAddr());
+            logger.info("starting stream on {} for client", channel);
             EventOutput eventOutput = new EventOutput();
             streamService.register(new ContentOutput(channel, eventOutput));
             return eventOutput;
