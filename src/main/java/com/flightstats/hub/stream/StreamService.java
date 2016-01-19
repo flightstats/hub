@@ -2,6 +2,7 @@ package com.flightstats.hub.stream;
 
 import com.diffplug.common.base.Errors;
 import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.HubUtils;
@@ -12,7 +13,6 @@ import org.eclipse.jetty.io.EofException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.MediaType;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -21,12 +21,14 @@ import java.util.function.Consumer;
 public class StreamService {
 
     private final static Logger logger = LoggerFactory.getLogger(StreamService.class);
-    public static final MediaType MULTIPART_STREAM = new MediaType("multipart", "stream");
 
     @Inject
     private ContentService contentService;
     @Inject
     private HubUtils hubUtils;
+    @Inject
+    private GroupService groupService;
+
     private Map<String, CallbackStream> outputStreamMap = new ConcurrentHashMap<>();
 
     public void getAndSendData(String uri, String id) {
@@ -86,6 +88,8 @@ public class StreamService {
         CallbackStream remove = outputStreamMap.remove(id);
         if (null != remove) {
             remove.stop();
+        } else {
+            groupService.delete(id);
         }
     }
 
