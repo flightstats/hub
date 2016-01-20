@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
 import com.google.common.base.Optional;
@@ -32,7 +31,6 @@ public class GroupResource {
     private final GroupService groupService = HubProvider.getInstance(GroupService.class);
 
     @GET
-    @EventTimed(name = "groups.get")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroups() {
         ObjectNode root = mapper.createObjectNode();
@@ -56,7 +54,6 @@ public class GroupResource {
 
     @Path("/{name}")
     @GET
-    @EventTimed(name = "group.ALL.get")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroup(@PathParam("name") String name) {
         Optional<Group> optionalGroup = groupService.getGroup(name);
@@ -108,7 +105,6 @@ public class GroupResource {
 
     @Path("/{name}")
     @PUT
-    @EventTimed(name = "group.ALL.put")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsertGroup(@PathParam("name") String name, String body) {
@@ -124,7 +120,6 @@ public class GroupResource {
 
     @Path("/{name}")
     @DELETE
-    @EventTimed(name = "group.ALL.delete")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteGroup(@PathParam("name") String name) {
         logger.info("delete group {}", name);

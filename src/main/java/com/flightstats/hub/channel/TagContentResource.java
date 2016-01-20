@@ -7,7 +7,6 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
@@ -185,7 +184,6 @@ public class TagContentResource {
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}")
     @GET
-    @EventTimed(name = "channel.ALL.get")
     public Response getValue(@PathParam("tag") String tag,
                              @PathParam("Y") int year,
                              @PathParam("M") int month,

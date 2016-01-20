@@ -8,7 +8,6 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
@@ -59,7 +58,6 @@ public class ChannelResource {
     }
 
     @PUT
-    @EventTimed(name = "channels.put")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {

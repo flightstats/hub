@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.metrics.EventTimed;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
@@ -29,7 +28,6 @@ public class ChannelStatusResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @EventTimed(name = "channel.ALL.status.get")
     public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("trace") @DefaultValue("false") boolean trace) {
