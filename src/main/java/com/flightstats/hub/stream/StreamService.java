@@ -5,7 +5,6 @@ import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -24,8 +23,6 @@ public class StreamService {
 
     @Inject
     private ContentService contentService;
-    @Inject
-    private HubUtils hubUtils;
     @Inject
     private GroupService groupService;
 
@@ -77,7 +74,7 @@ public class StreamService {
     }
 
     public void register(ContentOutput contentOutput) {
-        CallbackStream callbackStream = new CallbackStream(contentOutput, hubUtils);
+        CallbackStream callbackStream = new CallbackStream(contentOutput);
         logger.info("registering stream {}", callbackStream.getGroupName());
         outputStreamMap.put(callbackStream.getGroupName(), callbackStream);
         callbackStream.start();

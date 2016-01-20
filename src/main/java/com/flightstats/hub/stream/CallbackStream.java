@@ -2,20 +2,20 @@ package com.flightstats.hub.stream;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.group.Group;
-import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.group.GroupService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
 public class CallbackStream {
 
     private ContentOutput contentOutput;
-    private HubUtils hubUtils;
+    private final GroupService groupService = HubProvider.getInstance(GroupService.class);
     private final String random = RandomStringUtils.randomAlphanumeric(6);
 
-    public CallbackStream(ContentOutput contentOutput, HubUtils hubUtils) {
+    public CallbackStream(ContentOutput contentOutput) {
         this.contentOutput = contentOutput;
-        this.hubUtils = hubUtils;
     }
 
     public void start() {
@@ -24,9 +24,10 @@ public class CallbackStream {
                 .callbackUrl(getCallbackUrl())
                 .channelUrl(getChannelUrl())
                 .heartbeat(true)
+                .startingKey(contentOutput.getContentKey())
                 .batch(Group.SINGLE);
         Group group = builder.build();
-        hubUtils.startGroupCallback(group);
+        groupService.upsertGroup(group);
     }
 
     public ContentOutput getContentOutput() {
@@ -47,7 +48,7 @@ public class CallbackStream {
 
     public void stop() {
         IOUtils.closeQuietly(contentOutput);
-        hubUtils.stopGroupCallback(getGroupName(), getChannelUrl());
+        groupService.delete(getGroupName());
     }
 
 }
