@@ -6,6 +6,7 @@ import com.google.inject.Module;
 import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.server.filter.EncodingFilter;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ public class HubMain {
         ResourceConfig resourceConfig = new ResourceConfig();
         resourceConfig.register(new ObjectMapperResolver(HubBindings.objectMapper()));
         resourceConfig.register(JacksonJsonProvider.class);
-        resourceConfig.registerClasses(GZipEncoder.class, DeflateEncoder.class);
+        resourceConfig.registerClasses(EncodingFilter.class, StreamEncodingFilter.class, GZipEncoder.class, DeflateEncoder.class);
 
         List<Module> modules = new ArrayList<>();
         modules.add(new HubBindings());
