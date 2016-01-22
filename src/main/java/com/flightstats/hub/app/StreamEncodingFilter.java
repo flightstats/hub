@@ -48,10 +48,17 @@ public final class StreamEncodingFilter implements ContainerResponseFilter {
                         innerEncoding.add(token);
                     }
                 }
-                allowedEncoding.add(Joiner.on(",").join(innerEncoding));
+                String joined = Joiner.on(",").join(innerEncoding);
+                if (StringUtils.isNotBlank(joined)) {
+                    allowedEncoding.add(joined);
+                }
             }
             logger.debug("removing from events {} ", allowedEncoding);
-            request.getHeaders().put(HttpHeaders.ACCEPT_ENCODING, allowedEncoding);
+            if (allowedEncoding.isEmpty()) {
+                request.getHeaders().remove(HttpHeaders.ACCEPT_ENCODING);
+            } else {
+                request.getHeaders().put(HttpHeaders.ACCEPT_ENCODING, allowedEncoding);
+            }
         }
     }
 
