@@ -24,10 +24,6 @@ public class ContentOutput implements Closeable {
     private final ContentKey contentKey;
     private final URI channelUri;
 
-    public ContentOutput(String channel, EventOutput eventOutput) {
-        this(channel, eventOutput, new ContentKey());
-    }
-
     public ContentOutput(String channel, EventOutput eventOutput, ContentKey contentKey) {
         this.channel = channel;
         this.eventOutput = eventOutput;

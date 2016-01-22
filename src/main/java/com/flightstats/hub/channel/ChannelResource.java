@@ -15,6 +15,7 @@ import com.flightstats.hub.stream.ContentOutput;
 import com.flightstats.hub.stream.StreamService;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.Sleeper;
+import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
@@ -203,8 +204,15 @@ public class ChannelResource {
     public EventOutput getStream(@PathParam("channel") String channel) throws Exception {
         try {
             logger.info("starting stream on {} for client", channel);
+            ContentKey contentKey = new ContentKey();
             EventOutput eventOutput = new EventOutput();
-            streamService.register(new ContentOutput(channel, eventOutput));
+            if (channelService.isReplicating(channel)) {
+                Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
+                if (latest.isPresent()) {
+                    contentKey = latest.get();
+                }
+            }
+            streamService.register(new ContentOutput(channel, eventOutput, contentKey));
             return eventOutput;
         } catch (Exception e) {
             logger.warn("unable to stream to " + channel, e);
