@@ -1,4 +1,4 @@
-package com.flightstats.hub.stream;
+package com.flightstats.hub.events;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
@@ -39,11 +39,11 @@ public class CallbackStream {
     }
 
     private String getCallbackUrl() {
-        return HubHost.getLocalHttpIpUri() + "/internal/stream/" + getGroupName();
+        return HubHost.getLocalHttpIpUri() + "/internal/events/" + getGroupName();
     }
 
     public String getGroupName() {
-        return "Stream_" + HubProperties.getAppEnv() + "_" + contentOutput.getChannel() + "_" + random;
+        return "Events_" + HubProperties.getAppEnv() + "_" + contentOutput.getChannel() + "_" + random;
     }
 
     public void stop() {

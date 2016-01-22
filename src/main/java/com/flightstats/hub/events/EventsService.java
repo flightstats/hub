@@ -1,4 +1,4 @@
-package com.flightstats.hub.stream;
+package com.flightstats.hub.events;
 
 import com.diffplug.common.base.Errors;
 import com.flightstats.hub.dao.ContentService;
@@ -17,9 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 @Singleton
-public class StreamService {
+public class EventsService {
 
-    private final static Logger logger = LoggerFactory.getLogger(StreamService.class);
+    private final static Logger logger = LoggerFactory.getLogger(EventsService.class);
 
     @Inject
     private ContentService contentService;
@@ -75,13 +75,13 @@ public class StreamService {
 
     public void register(ContentOutput contentOutput) {
         CallbackStream callbackStream = new CallbackStream(contentOutput);
-        logger.info("registering stream {}", callbackStream.getGroupName());
+        logger.info("registering events {}", callbackStream.getGroupName());
         outputStreamMap.put(callbackStream.getGroupName(), callbackStream);
         callbackStream.start();
     }
 
     public void unregister(String id) {
-        logger.info("unregistering stream {}", id);
+        logger.info("unregistering events {}", id);
         CallbackStream remove = outputStreamMap.remove(id);
         if (null != remove) {
             remove.stop();

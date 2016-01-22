@@ -1,4 +1,4 @@
-package com.flightstats.hub.stream;
+package com.flightstats.hub.events;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,13 +13,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-@Path("/internal/stream/{id}")
+@Path("/internal/events/{id}")
 public class InternalStreamResource {
 
     private final static Logger logger = LoggerFactory.getLogger(InternalStreamResource.class);
 
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private StreamService streamService = HubProvider.getInstance(StreamService.class);
+    private EventsService eventsService = HubProvider.getInstance(EventsService.class);
 
     @POST
     public Response putPayload(@PathParam("id") String id, String data) {
@@ -27,11 +27,11 @@ public class InternalStreamResource {
         try {
             JsonNode node = mapper.readTree(data);
             if (node.get("type").asText().equals("heartbeat")) {
-                streamService.checkHealth(id);
+                eventsService.checkHealth(id);
             } else {
                 ArrayNode uris = (ArrayNode) node.get("uris");
                 for (JsonNode uri : uris) {
-                    streamService.getAndSendData(uri.asText(), id);
+                    eventsService.getAndSendData(uri.asText(), id);
                 }
             }
             return Response.ok().build();

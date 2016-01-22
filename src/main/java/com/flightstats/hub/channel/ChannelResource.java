@@ -6,13 +6,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.events.ContentOutput;
+import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
-import com.flightstats.hub.stream.ContentOutput;
-import com.flightstats.hub.stream.StreamService;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.base.Optional;
@@ -46,7 +46,7 @@ public class ChannelResource {
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private NTPMonitor ntpMonitor = HubProvider.getInstance(NTPMonitor.class);
-    private StreamService streamService = HubProvider.getInstance(StreamService.class);
+    private EventsService eventsService = HubProvider.getInstance(EventsService.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -199,11 +199,11 @@ public class ChannelResource {
     }
 
     @GET
-    @Path("/stream")
+    @Path("/events")
     @Produces(SseFeature.SERVER_SENT_EVENTS)
     public EventOutput getStream(@PathParam("channel") String channel) throws Exception {
         try {
-            logger.info("starting stream on {} for client", channel);
+            logger.info("starting events at {} for client", channel);
             ContentKey contentKey = new ContentKey();
             EventOutput eventOutput = new EventOutput();
             if (channelService.isReplicating(channel)) {
@@ -212,10 +212,10 @@ public class ChannelResource {
                     contentKey = latest.get();
                 }
             }
-            streamService.register(new ContentOutput(channel, eventOutput, contentKey));
+            eventsService.register(new ContentOutput(channel, eventOutput, contentKey));
             return eventOutput;
         } catch (Exception e) {
-            logger.warn("unable to stream to " + channel, e);
+            logger.warn("unable to events to " + channel, e);
             throw e;
         }
     }

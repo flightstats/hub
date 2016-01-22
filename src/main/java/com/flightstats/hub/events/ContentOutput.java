@@ -1,4 +1,4 @@
-package com.flightstats.hub.stream;
+package com.flightstats.hub.events;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.LinkBuilder;
