@@ -54,9 +54,9 @@ public class LinkBuilder {
         Linked.Builder<ChannelConfig> linked = linked(config).withLink("self", channelUri);
         linked.withLink("latest", URI.create(channelUri + "/latest"))
                 .withLink("earliest", URI.create(channelUri + "/earliest"))
-                .withLink("batch", URI.create(channelUri + "/batch"))
                 .withLink("bulk", URI.create(channelUri + "/bulk"))
                 .withLink("ws", buildWsLinkFor(channelUri))
+                .withLink("events", URI.create(channelUri + "/events"))
                 .withLink("time", URI.create(channelUri + "/time"))
                 .withLink("status", URI.create(channelUri + "/status"));
         return linked.build();

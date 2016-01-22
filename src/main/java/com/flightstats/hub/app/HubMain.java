@@ -54,7 +54,7 @@ public class HubMain {
         ResourceConfig resourceConfig = new ResourceConfig();
         resourceConfig.register(new ObjectMapperResolver(HubBindings.objectMapper()));
         resourceConfig.register(JacksonJsonProvider.class);
-        resourceConfig.registerClasses(EncodingFilter.class, GZipEncoder.class, DeflateEncoder.class);
+        resourceConfig.registerClasses(EncodingFilter.class, StreamEncodingFilter.class, GZipEncoder.class, DeflateEncoder.class);
 
         List<Module> modules = new ArrayList<>();
         modules.add(new HubBindings());

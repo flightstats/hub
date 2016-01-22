@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.events.ContentOutput;
+import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
@@ -16,6 +18,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import com.sun.jersey.core.header.MediaTypes;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.media.sse.EventOutput;
+import org.glassfish.jersey.media.sse.SseFeature;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -43,6 +47,7 @@ public class ChannelContentResource {
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private MetricsSender sender = HubProvider.getInstance(MetricsSender.class);
+    private EventsService eventsService = HubProvider.getInstance(EventsService.class);
 
     @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
     @GET
@@ -250,6 +255,30 @@ public class ChannelContentResource {
         URI uri = URI.create(channelUri + "/" + foundKey.toUrl());
         builder.location(uri);
         return builder.build();
+    }
+
+    @GET
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/events")
+    @Produces(SseFeature.SERVER_SENT_EVENTS)
+    public EventOutput getEvents(@PathParam("channel") String channel,
+                                 @PathParam("Y") int year,
+                                 @PathParam("M") int month,
+                                 @PathParam("D") int day,
+                                 @PathParam("h") int hour,
+                                 @PathParam("m") int minute,
+                                 @PathParam("s") int second,
+                                 @PathParam("ms") int millis,
+                                 @PathParam("hash") String hash) {
+        ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        try {
+            logger.info("starting events at {} for client from {}", channel, contentKey);
+            EventOutput eventOutput = new EventOutput();
+            eventsService.register(new ContentOutput(channel, eventOutput, contentKey));
+            return eventOutput;
+        } catch (Exception e) {
+            logger.warn("unable to get events for " + channel, e);
+            throw e;
+        }
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}/{count}")

@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.events.ContentOutput;
+import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
@@ -13,7 +15,10 @@ import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.Sleeper;
+import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.media.sse.EventOutput;
+import org.glassfish.jersey.media.sse.SseFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +46,7 @@ public class ChannelResource {
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private NTPMonitor ntpMonitor = HubProvider.getInstance(NTPMonitor.class);
+    private EventsService eventsService = HubProvider.getInstance(EventsService.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -188,6 +194,28 @@ public class ChannelResource {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {
             logger.warn("unable to POST to " + channelName, e);
+            throw e;
+        }
+    }
+
+    @GET
+    @Path("/events")
+    @Produces(SseFeature.SERVER_SENT_EVENTS)
+    public EventOutput getStream(@PathParam("channel") String channel) throws Exception {
+        try {
+            logger.info("starting events at {} for client", channel);
+            ContentKey contentKey = new ContentKey();
+            EventOutput eventOutput = new EventOutput();
+            if (channelService.isReplicating(channel)) {
+                Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
+                if (latest.isPresent()) {
+                    contentKey = latest.get();
+                }
+            }
+            eventsService.register(new ContentOutput(channel, eventOutput, contentKey));
+            return eventOutput;
+        } catch (Exception e) {
+            logger.warn("unable to events to " + channel, e);
             throw e;
         }
     }

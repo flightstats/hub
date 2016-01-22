@@ -50,6 +50,7 @@ dependencies {
 
     compile 'org.glassfish.jersey.containers:jersey-container-jetty-http:2.22.1'
     compile 'org.glassfish.jersey.core:jersey-common:2.22.1'
+    compile 'org.glassfish.jersey.media:jersey-media-sse:2.22.1'
 
     compile 'com.sun.jersey:jersey-client:1.19'
     compile 'com.sun.jersey:jersey-core:1.19'
@@ -63,6 +64,7 @@ dependencies {
     compile 'com.google.inject:guice:4.0'
     compile 'com.google.inject.extensions:guice-servlet:4.0'
     compile 'com.google.guava:guava:19.0'
+    compile 'com.diffplug.durian:durian:3.3.0'
     compile 'joda-time:joda-time:2.9.1'
 
     compile 'ch.qos.logback:logback-core:1.1.3'

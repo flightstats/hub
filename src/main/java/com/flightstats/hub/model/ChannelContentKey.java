@@ -2,6 +2,7 @@ package com.flightstats.hub.model;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 
 @EqualsAndHashCode
 @Getter
@@ -26,6 +27,12 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
 
     public String toUrl() {
         return "channel/" + channel + "/" + contentKey.toUrl();
+    }
+
+    public static ChannelContentKey fromUrl(String url) {
+        String after = StringUtils.substringAfter(url, "channel/");
+        String[] split = StringUtils.split(after, "/", 2);
+        return new ChannelContentKey(split[0], ContentKey.fromUrl(split[1]).get());
     }
 
     @Override
