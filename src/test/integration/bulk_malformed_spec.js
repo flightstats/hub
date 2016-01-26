@@ -17,22 +17,24 @@ describe(testName, function () {
 
     utils.putChannel(channelName, false, {"name": channelName, "ttlDays": 1, "tags": ["bulk"]});
 
-    var end_boundary = '--abcdefg--';
+    post_malheur('--abcdefg--');
 
-    var items = [];
+    post_malheur('--abcdefg\r\n' + '--abcdefg--');
 
-    it("posts malformed item to " + channelResource, function (done) {
-        request.post({
-                url: channelResource + '/bulk',
-                headers: {'Content-Type': "multipart/mixed; boundary=abcdefg"},
-                body: end_boundary
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(400);
-                console.log(response.body);
-                done();
-            });
-    });
+    function post_malheur(payload) {
+        it("posts malformed item to " + channelResource, function (done) {
+            request.post({
+                    url: channelResource + '/bulk',
+                    headers: {'Content-Type': "multipart/mixed; boundary=abcdefg"},
+                    body: payload
+                },
+                function (err, response, body) {
+                    expect(err).toBeNull();
+                    expect(response.statusCode).toBe(400);
+                    console.log(response.body);
+                    done();
+                });
+        });
+    }
 
 });
