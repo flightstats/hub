@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -76,9 +77,12 @@ public class MultiPartParser {
                 }
             } else if (byteRing.compare(endBoundary)) {
                 addItem(endBoundary);
-                return;
+                break;
             }
             read = stream.read();
+        }
+        if (content.getItems().isEmpty()) {
+            throw new InvalidRequestException("multipart has no items");
         }
     }
 
@@ -92,13 +96,14 @@ public class MultiPartParser {
     }
 
     private void addItem(byte[] boundary) {
-        //todo - gfm - 8/19/15 - this could be more efficient
         byte[] bytes = baos.toByteArray();
         byte[] data = ArrayUtils.subarray(bytes, 0, bytes.length - boundary.length - CRLF.length);
-        builder.withData(data);
-        builder.withContentKey(new ContentKey(masterKey.getTime(),
-                masterKey.getHash() + format.format(content.getItems().size())));
-        content.getItems().add(builder.build());
+        if (data.length > 0) {
+            builder.withData(data);
+            builder.withContentKey(new ContentKey(masterKey.getTime(),
+                    masterKey.getHash() + format.format(content.getItems().size())));
+            content.getItems().add(builder.build());
+        }
         builder = Content.builder();
         baos.reset();
     }

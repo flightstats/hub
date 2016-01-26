@@ -193,7 +193,7 @@ public class ChannelResource {
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {
-            logger.warn("unable to POST to " + channelName, e);
+            logger.warn("unable to bulk POST to " + channelName, e);
             throw e;
         }
     }

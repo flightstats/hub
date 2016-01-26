@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
 import org.apache.commons.lang3.StringUtils;
@@ -107,6 +108,19 @@ public class MultiPartParserTest {
         Content item = bulkContent.getItems().get(0);
         assertEquals("\r\nThere is some message here.\r\n", new String(item.getData()));
         assertEquals("text/plain", item.getContentType().get());
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testMalformed() throws IOException {
+        String data = "--boundary--";
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
+        BulkContent bulkContent = BulkContent.builder()
+                .stream(inputStream)
+                .contentType("multipart/mixed; boundary=boundary")
+                .build();
+        MultiPartParser parser = new MultiPartParser(bulkContent);
+        parser.parse();
     }
 
 }
