@@ -6,6 +6,7 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 
@@ -14,6 +15,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.SortedSet;
 
 @Path("/channel/{channel: .*}/status")
 public class ChannelStatusResource {
@@ -41,14 +43,17 @@ public class ChannelStatusResource {
         String baseUri = uriInfo.getRequestUri().toString();
         self.put("href", baseUri);
 
-        Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
-        ObjectNode latestNode = links.putObject("latest");
-        if (latest.isPresent()) {
-            latestNode.put("href", uriInfo.getBaseUri() + "channel/" + channel + "/" + latest.get().toUrl());
+
+        addLink("latest", channelService.getLatest(channel, stable, trace), channel, links);
+
+        DirectionQuery directionQuery = ChannelEarliestResource.getDirectionQuery(channel, 1, stable, trace, channelService);
+        SortedSet<ContentKey> earliest = channelService.getKeys(directionQuery);
+        if (earliest.isEmpty()) {
+            addLink("earliest", Optional.absent(), channel, links);
         } else {
-            latestNode.put("href", uriInfo.getBaseUri() + "channel/" + channel + "/latest");
-            latestNode.put("message", "channel is empty");
+            addLink("earliest", Optional.of(earliest.first()), channel, links);
         }
+
         if (channelService.isReplicating(channel)) {
             ChannelConfig config = channelService.getCachedChannelConfig(channel);
             ObjectNode replicationSourceLatest = links.putObject("replicationSourceLatest");
@@ -62,6 +67,16 @@ public class ChannelStatusResource {
         }
 
         return Response.ok(root).build();
+    }
+
+    private void addLink(String name, Optional<ContentKey> contentKey, String channel, ObjectNode links) {
+        ObjectNode latestNode = links.putObject(name);
+        if (contentKey.isPresent()) {
+            latestNode.put("href", uriInfo.getBaseUri() + "channel/" + channel + "/" + contentKey.get().toUrl());
+        } else {
+            latestNode.put("href", uriInfo.getBaseUri() + "channel/" + channel + "/" + name);
+            latestNode.put("message", "channel is empty");
+        }
     }
 
 }
