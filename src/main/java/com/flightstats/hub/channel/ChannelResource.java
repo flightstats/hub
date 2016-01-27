@@ -50,9 +50,10 @@ public class ChannelResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getChannelMetadata(@PathParam("channel") String channelName) {
+    public Response getChannelMetadata(@PathParam("channel") String channelName,
+                                       @QueryParam("cached") @DefaultValue("true") boolean cached) {
         logger.debug("get channel {}", channelName);
-        ChannelConfig config = channelService.getChannelConfig(channelName);
+        ChannelConfig config = channelService.getChannelConfig(channelName, cached);
         if (config == null) {
             logger.info("unable to get channel " + channelName);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -68,7 +69,7 @@ public class ChannelResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
         logger.debug("put channel {} {}", channelName, json);
-        ChannelConfig oldConfig = channelService.getChannelConfig(channelName);
+        ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false);
         ChannelConfig channelConfig = ChannelConfig.fromJsonName(json, channelName);
         if (oldConfig != null) {
             logger.info("using old channel {} {}", oldConfig, oldConfig.getCreationDate().getTime());
@@ -78,7 +79,7 @@ public class ChannelResource {
                     .build();
         }
         logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
-        channelConfig = channelService.updateChannel(channelConfig);
+        channelConfig = channelService.updateChannel(channelConfig, oldConfig);
         URI channelUri = LinkBuilder.buildChannelUri(channelConfig, uriInfo);
         return Response.created(channelUri).entity(
                 LinkBuilder.buildChannelLinks(channelConfig, channelUri))
@@ -90,7 +91,7 @@ public class ChannelResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMetadata(@PathParam("channel") String channelName, String json) throws Exception {
         logger.debug("patch channel {} {}", channelName, json);
-        ChannelConfig oldConfig = channelService.getChannelConfig(channelName);
+        ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false);
         if (oldConfig == null) {
             logger.info("unable to patch channel " + channelName);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -101,7 +102,7 @@ public class ChannelResource {
                 .withUpdateJson(json)
                 .build();
 
-        newConfig = channelService.updateChannel(newConfig);
+        newConfig = channelService.updateChannel(newConfig, oldConfig);
 
         URI channelUri = LinkBuilder.buildChannelUri(newConfig, uriInfo);
         Linked<ChannelConfig> linked = LinkBuilder.buildChannelLinks(newConfig, channelUri);

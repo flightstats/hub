@@ -65,11 +65,10 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public ChannelConfig updateChannel(ChannelConfig configuration) {
+    public ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig) {
         long start = System.currentTimeMillis();
         logger.info("updating channel {}", configuration);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
-        ChannelConfig oldConfig = getChannelConfig(configuration.getName());
         channelValidator.validate(configuration, false);
         channelConfigDao.updateChannel(configuration);
         notify(configuration, oldConfig);
@@ -119,7 +118,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace) {
-        ChannelConfig channelConfig = getChannelConfig(channel);
+        ChannelConfig channelConfig = getCachedChannelConfig(channel);
         if (null == channelConfig) {
             return Optional.absent();
         }
@@ -171,7 +170,10 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public ChannelConfig getChannelConfig(String channelName) {
+    public ChannelConfig getChannelConfig(String channelName, boolean allowChannelCache) {
+        if (allowChannelCache) {
+            return getCachedChannelConfig(channelName);
+        }
         return channelConfigDao.getChannelConfig(channelName);
     }
 

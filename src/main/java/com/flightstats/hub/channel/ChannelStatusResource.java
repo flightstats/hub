@@ -33,7 +33,7 @@ public class ChannelStatusResource {
     public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("trace") @DefaultValue("false") boolean trace) {
-        ChannelConfig channelConfig = channelService.getChannelConfig(channel);
+        ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
         if (null == channelConfig) {
             return Response.status(404).build();
         }
@@ -55,13 +55,12 @@ public class ChannelStatusResource {
         }
 
         if (channelService.isReplicating(channel)) {
-            ChannelConfig config = channelService.getCachedChannelConfig(channel);
             ObjectNode replicationSourceLatest = links.putObject("replicationSourceLatest");
-            Optional<String> sourceLatest = hubUtils.getLatest(config.getReplicationSource());
+            Optional<String> sourceLatest = hubUtils.getLatest(channelConfig.getReplicationSource());
             if (sourceLatest.isPresent()) {
                 replicationSourceLatest.put("href", sourceLatest.get());
             } else {
-                replicationSourceLatest.put("href", config.getReplicationSource() + "/latest");
+                replicationSourceLatest.put("href", channelConfig.getReplicationSource() + "/latest");
                 replicationSourceLatest.put("message", "channel is empty");
             }
         }
