@@ -157,6 +157,31 @@ public class ChannelConfig implements Serializable {
         return storage.equals(BOTH);
     }
 
+    public boolean hasChanged(ChannelConfig otherConfig) {
+        if (!StringUtils.equals(getOwner(), otherConfig.getOwner())) {
+            return true;
+        }
+        if (!StringUtils.equals(getDescription(), otherConfig.getDescription())) {
+            return true;
+        }
+        if (!StringUtils.equals(getReplicationSource(), otherConfig.getReplicationSource())) {
+            return true;
+        }
+        if (!StringUtils.equals(getStorage(), otherConfig.getStorage())) {
+            return true;
+        }
+        if (getTtlDays() != otherConfig.getTtlDays()) {
+            return true;
+        }
+        if (getMaxItems() != otherConfig.getMaxItems()) {
+            return true;
+        }
+        if (!getTags().equals(otherConfig.getTags())) {
+            return true;
+        }
+        return false;
+    }
+
     public static class Builder {
         private static final ObjectMapper mapper = new ObjectMapper();
         private String name;

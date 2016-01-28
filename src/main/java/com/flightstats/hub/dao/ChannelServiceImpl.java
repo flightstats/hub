@@ -66,12 +66,16 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig) {
-        long start = System.currentTimeMillis();
-        logger.info("updating channel {}", configuration);
-        configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
-        channelValidator.validate(configuration, false);
-        channelConfigDao.updateChannel(configuration);
-        notify(configuration, oldConfig);
+        if (configuration.hasChanged(oldConfig)) {
+            long start = System.currentTimeMillis();
+            logger.info("updating channel {} from {}", configuration, oldConfig);
+            configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
+            channelValidator.validate(configuration, false);
+            channelConfigDao.updateChannel(configuration);
+            notify(configuration, oldConfig);
+        } else {
+            logger.info("update with no changes {}", configuration);
+        }
         return configuration;
     }
 
