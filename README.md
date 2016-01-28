@@ -23,7 +23,9 @@ The Hub
 * [tag interface](#tag-interface)
 * [tag unions](#tag-unions)
 * [time interface](#time-interface)
-* [subscribe to events](#subscribe-to-events)
+* [notifications](#notifications)
+* [websocket](#websocket)
+* [events](#events)
 * [group callback](#group-callback)
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
@@ -642,9 +644,19 @@ You can also access the urls via convenience methods:
 
 The output format is the same regardless of time resolution
 
-## subscribe to events
+## notifications
 
-Clients may "subscribe" to single channel events by listening on a channel's websocket.  
+The Hub supports multiple ways of receiving notifications for new items in a channel.
+ 
+A [websocket](#websocket) returns the id of each new item.  A websocket is connected to a single server, and loses state on disconnect.
+
+[events](#events) use http to return the id and payload of new items.  Events are connected to a single server, and *will* support reconecting on disconnect.
+
+[group callback](#group-callback) returns single or batch ids to an application's http endpoint.   Provides more flexibility than events or websockets.
+
+## websocket
+
+Clients may "subscribe" to single channel's items by listening on a websocket.  
 In the channel metadata there is a `ws` link, and a websocket aware client may connect to this URL.
 
 Clients should be aware that websockets are a "best effort" service, and are not stateful.  If the ws connection is lost,
@@ -664,10 +676,36 @@ http://hub/channel/stumptown/2014/01/13/10/42/31/642/{hash3}
 
 The returned items are stable only.
 
+## events
+
+Clients connecting to an event endpoint will recieve the id, content type and payload of each new item in the channel.
+The [Server Sent Events](#https://www.w3.org/TR/eventsource/) standard defines the http interface and format. 
+The format is designed for UTF-8 payloads.
+
+Calling `http://hub/channel/stumptown/events` will return every new item in chronological order.
+ 
+```
+
+event: application/json
+id: http://hub/channel/stumptown/2014/01/13/10/42/31/149/QWERTY
+data: {"order": 474689, "item": "latte"}
+
+event: application/json
+id: http://hub/channel/stumptown/2014/01/13/10/42/31/201/ASDFGH
+data: {"order": 474690, "item": "americano"}
+
+event: application/json
+id: http://hub/channel/stumptown/2014/01/13/10/42/31/251/ZXCVBN
+data: {"order": 474691, "item": "drip"}
+
+...etc...
+```
+
+Events can also be started from an item `http://hub/channel/stumptown/2014/01/13/10/42/31/149/QWERTY/events`
+
 ## group callback
 
-The Group Callback mechanism is an alternative to WebSockets for consuming events.  This POSTs json uris via HTTP, and
-the Hub server keeps track of the Group's state.
+A Group Callback is registered for a client's http endpoint and that endpoint recieves Http POSTs of json uris, and the Hub server keeps track of the Group's state.
 
 * `name` is used in the url for the callback.  Names are limited to 48 characters and may only contain `a-z`, `A-Z`, `0-9`, hyphen `-` and underscore `_`.
 
