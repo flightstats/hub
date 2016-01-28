@@ -66,7 +66,7 @@ public class GroupService {
             if (lastKey.isPresent()) {
                 builder.channelLatest(lastKey.get());
             }
-        } catch (NoSuchChannelException e) {`
+        } catch (NoSuchChannelException e) {
             logger.info("no channel found for " + channel);
         }
         groupProcessor.getStatus(group, builder);
