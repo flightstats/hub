@@ -14,7 +14,7 @@ public abstract class AbstractExceptionMapper<T extends Throwable> implements Ex
     }
 
     public Response toResponse(T exception) {
-        logger.info(exception.getMessage());
+        logger.info("{} {}", exception.getMessage(), exception.getClass());
         logger.trace("exception", exception);
         Response.ResponseBuilder builder = Response.status(this.getResponseCode());
         builder.entity(exception.getMessage());

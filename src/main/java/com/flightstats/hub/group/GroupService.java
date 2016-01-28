@@ -3,6 +3,7 @@ package com.flightstats.hub.group;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
+import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.common.base.Optional;
@@ -60,9 +61,13 @@ public class GroupService {
     public GroupStatus getGroupStatus(Group group) {
         GroupStatus.GroupStatusBuilder builder = GroupStatus.builder().group(group);
         String channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
-        Optional<ContentKey> lastKey = channelService.getLatest(channel, true, false);
-        if (lastKey.isPresent()) {
-            builder.channelLatest(lastKey.get());
+        try {
+            Optional<ContentKey> lastKey = channelService.getLatest(channel, true, false);
+            if (lastKey.isPresent()) {
+                builder.channelLatest(lastKey.get());
+            }
+        } catch (NoSuchChannelException e) {`
+            logger.info("no channel found for " + channel);
         }
         groupProcessor.getStatus(group, builder);
         return builder.build();
