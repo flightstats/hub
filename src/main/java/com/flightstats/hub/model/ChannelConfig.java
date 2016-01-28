@@ -158,6 +158,9 @@ public class ChannelConfig implements Serializable {
     }
 
     public boolean hasChanged(ChannelConfig otherConfig) {
+        if (otherConfig == null) {
+            return true;
+        }
         if (!StringUtils.equals(getOwner(), otherConfig.getOwner())) {
             return true;
         }
