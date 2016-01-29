@@ -1,12 +1,12 @@
 package com.flightstats.hub.model;
 
+import com.google.common.collect.Sets;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ChannelConfigTest {
 
@@ -14,8 +14,9 @@ public class ChannelConfigTest {
     public void testDefaults() throws Exception {
         ChannelConfig config = ChannelConfig.builder().withName("defaults").build();
         assertDefaults(config);
-        ChannelConfig copy = ChannelConfig.builder().withChannelConfiguration(config).build();
+        ChannelConfig copy = getBuilder(config).build();
         assertDefaults(copy);
+        assertFalse(config.hasChanged(copy));
     }
 
     @Test
@@ -41,8 +42,9 @@ public class ChannelConfigTest {
     @Test
     public void testDescriptionCopy() throws Exception {
         ChannelConfig config = ChannelConfig.builder().withDescription("some copy").build();
-        ChannelConfig copy = ChannelConfig.builder().withChannelConfiguration(config).build();
+        ChannelConfig copy = getBuilder(config).build();
         assertEquals("some copy", copy.getDescription());
+        assertFalse(config.hasChanged(copy));
     }
 
     @Test
@@ -57,8 +59,9 @@ public class ChannelConfigTest {
     public void testTagsCopy() throws Exception {
         List<String> tags = Arrays.asList("one", "two", "three", "4 four");
         ChannelConfig config = ChannelConfig.builder().withTags(tags).build();
-        ChannelConfig copy = ChannelConfig.builder().withChannelConfiguration(config).build();
+        ChannelConfig copy = getBuilder(config).build();
         assertTrue(copy.getTags().containsAll(config.getTags()));
+        assertFalse(config.hasChanged(copy));
     }
 
     @Test
@@ -72,14 +75,48 @@ public class ChannelConfigTest {
     public void testReplicationSourceCopy() throws Exception {
         String replicationSource = "http://hub/channel/blah";
         ChannelConfig config = ChannelConfig.builder().withReplicationSource(replicationSource).build();
-        ChannelConfig copy = ChannelConfig.builder().withChannelConfiguration(config).build();
+        ChannelConfig copy = getBuilder(config).build();
         assertEquals(replicationSource, copy.getReplicationSource());
+        assertFalse(config.hasChanged(copy));
     }
 
     @Test
     public void testTypeCopy() {
         ChannelConfig config = ChannelConfig.builder().withStorage("BOTH").build();
-        ChannelConfig copy = ChannelConfig.builder().withChannelConfiguration(config).build();
+        ChannelConfig copy = getBuilder(config).build();
         assertEquals("BOTH", copy.getStorage());
+        assertFalse(config.hasChanged(copy));
+    }
+
+    @Test
+    public void testHasChanged() {
+        ChannelConfig defaults = ChannelConfig.builder().withName("defaults").build();
+        assertFalse(defaults.hasChanged(defaults));
+        ChannelConfig hasCheez = ChannelConfig.builder().withName("hasCheez").build();
+        assertFalse(defaults.hasChanged(hasCheez));
+        ChannelConfig repl = getBuilder(hasCheez).withReplicationSource("R").build();
+        assertTrue(repl.hasChanged(defaults));
+
+        ChannelConfig desc = getBuilder(hasCheez).withDescription("D").build();
+        assertTrue(desc.hasChanged(defaults));
+
+        ChannelConfig max = getBuilder(hasCheez).withMaxItems(1).build();
+        assertTrue(max.hasChanged(defaults));
+
+        ChannelConfig owner = getBuilder(hasCheez).withOwner("O").build();
+        assertTrue(owner.hasChanged(defaults));
+
+        ChannelConfig storage = getBuilder(hasCheez).withStorage("S").build();
+        assertTrue(storage.hasChanged(defaults));
+
+        ChannelConfig ttl = getBuilder(hasCheez).withTtlDays(5).build();
+        assertTrue(ttl.hasChanged(defaults));
+
+        ChannelConfig tags = getBuilder(hasCheez).withTags(Sets.newHashSet("one", "two")).build();
+        assertTrue(tags.hasChanged(defaults));
+    }
+
+    private ChannelConfig.Builder getBuilder(ChannelConfig config) {
+        return ChannelConfig.builder().withChannelConfiguration(config);
     }
 }

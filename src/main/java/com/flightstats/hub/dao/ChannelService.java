@@ -19,7 +19,7 @@ public interface ChannelService {
 
     Optional<Content> getValue(Request request);
 
-    ChannelConfig getChannelConfig(String channelName);
+    ChannelConfig getChannelConfig(String channelName, boolean allowChannelCache);
 
     ChannelConfig getCachedChannelConfig(String channelName);
 
@@ -29,7 +29,7 @@ public interface ChannelService {
 
     Iterable<String> getTags();
 
-    ChannelConfig updateChannel(ChannelConfig configuration);
+    ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig);
 
     SortedSet<ContentKey> queryByTime(TimeQuery timeQuery);
 
