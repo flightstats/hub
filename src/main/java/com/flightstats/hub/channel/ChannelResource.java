@@ -201,17 +201,20 @@ public class ChannelResource {
     @GET
     @Path("/events")
     @Produces(SseFeature.SERVER_SENT_EVENTS)
-    public EventOutput getStream(@PathParam("channel") String channel) throws Exception {
+    public EventOutput getEvents(@PathParam("channel") String channel, @HeaderParam("Last-Event-ID") String lastEventId) throws Exception {
         try {
-            logger.info("starting events at {} for client", channel);
+            logger.info("starting events for {} at {}", channel, lastEventId);
             ContentKey contentKey = new ContentKey();
-            EventOutput eventOutput = new EventOutput();
-            if (channelService.isReplicating(channel)) {
+            Optional<ContentKey> keyOptional = ContentKey.fromFullUrl(lastEventId);
+            if (keyOptional.isPresent()) {
+                contentKey = keyOptional.get();
+            } else if (channelService.isReplicating(channel)) {
                 Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
                 if (latest.isPresent()) {
                     contentKey = latest.get();
                 }
             }
+            EventOutput eventOutput = new EventOutput();
             eventsService.register(new ContentOutput(channel, eventOutput, contentKey));
             return eventOutput;
         } catch (Exception e) {
