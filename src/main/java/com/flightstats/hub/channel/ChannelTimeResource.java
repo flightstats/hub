@@ -2,7 +2,6 @@ package com.flightstats.hub.channel;
 
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ChannelConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +24,7 @@ public class ChannelTimeResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDefault(@PathParam("channel") String channel) {
-        ChannelConfig channelConfig = channelService.getChannelConfig(channel);
-        if (null == channelConfig) {
+        if (!channelService.channelExists(channel)) {
             return Response.status(404).build();
         }
         return TimeLinkUtil.getDefault(uriInfo);

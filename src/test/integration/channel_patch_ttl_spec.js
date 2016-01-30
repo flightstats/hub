@@ -33,7 +33,7 @@ describe(testName, function () {
     });
 
     it("verifies channel exists " + channelResource, function (done) {
-        request.get({url : channelResource },
+        request.get({url: channelResource + '?cached=false'},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -59,7 +59,7 @@ describe(testName, function () {
     });
 
     it("verifies channel exists with correct ttl " + channelResource, function (done) {
-        request.get({url : channelResource },
+        request.get({url: channelResource + '?cached=false'},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
