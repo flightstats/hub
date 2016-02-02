@@ -183,14 +183,22 @@ public class ChannelResource {
             ObjectNode root = mapper.createObjectNode();
             ObjectNode links = root.putObject("_links");
             ObjectNode self = links.putObject("self");
-            self.put("href", uriInfo.getRequestUri().toString());
-            ArrayNode uris = links.putArray("uris");
-            URI channelUri = LinkBuilder.buildChannelUri(channelName, uriInfo);
-            for (ContentKey key : keys) {
-                URI uri = LinkBuilder.buildItemUri(key, channelUri);
-                uris.add(uri.toString());
+            if (keys.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            } else {
+                ContentKey first = keys.iterator().next();
+                ContentKey trimmedKey = new ContentKey(first.getTime(), first.getHash().substring(0, 6)
+                        + "/next/" + keys.size() + "?stable=false");
+                URI payloadUri = LinkBuilder.buildItemUri(trimmedKey, LinkBuilder.buildChannelUri(channelName, uriInfo));
+                self.put("href", payloadUri.toString());
+                ArrayNode uris = links.putArray("uris");
+                URI channelUri = LinkBuilder.buildChannelUri(channelName, uriInfo);
+                for (ContentKey key : keys) {
+                    URI uri = LinkBuilder.buildItemUri(key, channelUri);
+                    uris.add(uri.toString());
+                }
+                return Response.created(payloadUri).entity(root).build();
             }
-            return Response.status(Response.Status.CREATED).entity(root).build();
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {

@@ -38,6 +38,7 @@ describe(testName, function () {
         '--abcdefg--'
 
     var items = [];
+    var location = '';
 
     it("batches items to " + channelResource, function (done) {
         request.post({
@@ -48,10 +49,23 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
+                location = response.headers.location;
+                expect(response.headers.location).toBeDefined();
                 var parse = utils.parseJson(response, testName);
                 console.log(response.body);
                 expect(parse._links.uris.length).toBe(4);
                 items = parse._links.uris;
+                done();
+            });
+    });
+
+    it("verifies location " + channelResource, function (done) {
+        request.get({url: location, json: true},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                console.log(body);
+                expect(body._links.uris.length).toBe(4);
                 done();
             });
     });
@@ -156,5 +170,4 @@ describe(testName, function () {
             expect(linkHeader).toContain(items[2] + '/next/10?stable=false' + param);
         });
     });
-
 });
