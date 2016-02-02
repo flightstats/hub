@@ -37,8 +37,10 @@ describe(testName, function () {
         }, false);
 
 
-        utils.postItemQ(channelResource)
+        utils.sleepQ(1000)
             .then(function (value) {
+                return utils.postItemQ(channelResource);
+            }).then(function (value) {
                 return postedItem(value, true);
             }).then(function (value) {
                 return postedItem(value, true);
@@ -60,7 +62,7 @@ describe(testName, function () {
             }
         }
 
-    }, 1000);
+    }, 10 * 1000);
 
     it('verifies events', function () {
         for (i = 0; i < postedItems.length; i++) {
