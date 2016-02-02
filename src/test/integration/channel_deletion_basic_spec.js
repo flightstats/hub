@@ -20,7 +20,7 @@ describe(testName, function () {
     }, 65000);
 
     it("gets deleted channel " + channelName, function (done) {
-        request.get({url: channelResource},
+        request.get({url: channelResource + '?cached=false'},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(404);
