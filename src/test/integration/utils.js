@@ -219,6 +219,14 @@ function sleep(millis) {
     }, millis + 1000);
 }
 
+function sleepQ(millis) {
+    var deferred = Q.defer();
+    setTimeout(function () {
+        deferred.resolve('slept');
+    }, millis);
+    return deferred.promise;
+}
+
 function timeout(millis) {
     it('waits for ' + millis, function (done) {
         setTimeout(function () {
@@ -324,6 +332,7 @@ exports.createChannel = createChannel;
 exports.putChannel = putChannel;
 exports.addItem = addItem;
 exports.sleep = sleep;
+exports.sleepQ = sleepQ;
 exports.timeout = timeout;
 exports.putGroup = putGroup;
 exports.getGroup = getGroup;
