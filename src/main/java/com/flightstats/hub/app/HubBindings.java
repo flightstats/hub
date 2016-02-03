@@ -20,7 +20,6 @@ import com.flightstats.hub.rest.HalLinksSerializer;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.rest.Rfc3339DateSerializer;
 import com.flightstats.hub.spoke.GCRunner;
-import com.flightstats.hub.spoke.HubClusterRegister;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.HubUtils;
 import com.google.inject.AbstractModule;
@@ -50,7 +49,6 @@ public class HubBindings extends AbstractModule {
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
 
-        bind(HubClusterRegister.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
         bind(ReplicatorManager.class).asEagerSingleton();
         bind(HubUtils.class).asEagerSingleton();
