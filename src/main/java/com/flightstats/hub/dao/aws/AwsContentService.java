@@ -60,7 +60,7 @@ public class AwsContentService implements ContentService {
     private final AtomicInteger inFlight = new AtomicInteger();
     private final Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 5);
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
-    private final int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
+    private final int spokeTtlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
 
     public AwsContentService() {
         HubServices.registerPreStop(new ContentServiceHook());
@@ -117,7 +117,7 @@ public class AwsContentService implements ContentService {
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        DateTime ttlTime = getTtlTime(channelName, channel);
+        DateTime ttlTime = getCacheTtlTime(channelName, channel);
         if (key.getTime().isAfter(ttlTime)) {
             Content content = spokeContentDao.read(channelName, key);
             if (content != null) {
@@ -139,24 +139,26 @@ public class AwsContentService implements ContentService {
         return Optional.fromNullable(content);
     }
 
-    private DateTime getTtlTime(String channelName, ChannelConfig channel) {
+    private DateTime getCacheTtlTime(String channelName, ChannelConfig channel) {
         DateTime startTime = TimeUtil.now();
         if (channel.isReplicating()) {
             startTime = lastContentPath.get(channelName, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED).getTime();
         }
-        return startTime.minusMinutes(ttlMinutes);
+        return startTime.minusMinutes(spokeTtlMinutes);
     }
 
     @Override
     public void getValues(String channelName, SortedSet<ContentKey> keys, Consumer<Content> callback) {
         SortedSet<MinutePath> minutePaths = ContentKeyUtil.convert(keys);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        DateTime ttlTime = getTtlTime(channelName, channel);
+        DateTime cacheTtlTime = getCacheTtlTime(channelName, channel);
         for (MinutePath minutePath : minutePaths) {
-            if (minutePath.getTime().isAfter(ttlTime)) {
+            if (minutePath.getTime().isAfter(cacheTtlTime)) {
                 getValues(channelName, callback, minutePath);
             } else if (channel.isBoth() || channel.isBatch()) {
-                s3BatchContentDao.streamMinute(channelName, minutePath, callback);
+                if (!s3BatchContentDao.streamMinute(channelName, minutePath, callback)) {
+                    getValues(channelName, callback, minutePath);
+                }
             } else {
                 getValues(channelName, callback, minutePath);
             }

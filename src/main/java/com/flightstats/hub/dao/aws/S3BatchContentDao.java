@@ -118,8 +118,9 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public void streamMinute(String channel, MinutePath minutePath, Consumer<Content> callback) {
+    public boolean streamMinute(String channel, MinutePath minutePath, Consumer<Content> callback) {
         Map<String, ContentKey> keyMap = new HashMap<>();
+        boolean found = false;
         for (ContentKey key : minutePath.getKeys()) {
             keyMap.put(key.toUrl(), key);
         }
@@ -130,6 +131,7 @@ public class S3BatchContentDao implements ContentDao {
                 ContentKey key = keyMap.get(nextEntry.getName());
                 if (key != null) {
                     callback.accept(getContent(key, zipStream, nextEntry));
+                    found = true;
                 }
                 nextEntry = zipStream.getNextEntry();
             }
@@ -142,6 +144,7 @@ public class S3BatchContentDao implements ContentDao {
         } finally {
             ActiveTraces.getLocal().add("S3BatchContentDao.streamMinute completed");
         }
+        return found;
     }
 
     @Override
