@@ -153,14 +153,13 @@ public class AwsContentService implements ContentService {
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         DateTime cacheTtlTime = getCacheTtlTime(channelName, channel);
         for (MinutePath minutePath : minutePaths) {
-            if (minutePath.getTime().isAfter(cacheTtlTime)) {
+            if (minutePath.getTime().isAfter(cacheTtlTime)
+                    || channel.isSingle()) {
                 getValues(channelName, callback, minutePath);
-            } else if (channel.isBoth() || channel.isBatch()) {
+            } else {
                 if (!s3BatchContentDao.streamMinute(channelName, minutePath, callback)) {
                     getValues(channelName, callback, minutePath);
                 }
-            } else {
-                getValues(channelName, callback, minutePath);
             }
         }
     }

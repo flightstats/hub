@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flightstats.hub.alert.AlertRunner;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.*;
-import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.ChannelServiceImpl;
 import com.flightstats.hub.group.GroupProcessor;
 import com.flightstats.hub.group.GroupProcessorImpl;
 import com.flightstats.hub.group.GroupValidator;
@@ -23,7 +21,6 @@ import com.flightstats.hub.rest.HalLinksSerializer;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.rest.Rfc3339DateSerializer;
 import com.flightstats.hub.spoke.GCRunner;
-import com.flightstats.hub.spoke.HubClusterRegister;
 import com.flightstats.hub.time.NTPMonitor;
 import com.flightstats.hub.util.HubUtils;
 import com.google.inject.AbstractModule;
@@ -52,7 +49,7 @@ public class HubBindings extends AbstractModule {
     @Override
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
-        bind(ChannelService.class).to(ChannelServiceImpl.class).asEagerSingleton();
+
         bind(HubHealthCheck.class).asEagerSingleton();
         bind(HubClusterRegister.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();

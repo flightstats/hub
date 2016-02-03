@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
@@ -117,6 +118,9 @@ public class SingleGroupStrategy implements GroupStrategy {
                 } catch (InterruptedException | RuntimeInterruptedException e) {
                     error.set(true);
                     logger.info("InterruptedException with " + channel);
+                } catch (NoSuchChannelException e) {
+                    error.set(true);
+                    logger.debug("NoSuchChannelException for " + channel);
                 } catch (Exception e) {
                     error.set(true);
                     logger.warn("unexpected issue with " + channel, e);

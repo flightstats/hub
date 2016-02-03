@@ -1,4 +1,4 @@
-package com.flightstats.hub.app;
+package com.flightstats.hub.filter;
 
 import com.flightstats.hub.metrics.ActiveTraces;
 import org.apache.commons.lang3.StringUtils;
