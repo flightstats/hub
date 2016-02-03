@@ -1,6 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.flightstats.hub.filter.StreamEncodingFilter;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import org.glassfish.jersey.message.DeflateEncoder;

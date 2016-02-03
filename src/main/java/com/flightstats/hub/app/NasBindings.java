@@ -33,6 +33,7 @@ public class NasBindings extends AbstractModule {
                 "com.flightstats.hub.app," +
                 "com.flightstats.hub.channel," +
                 "com.flightstats.hub.exception," +
+                "com.flightstats.hub.filter," +
                 "com.flightstats.hub.group," +
                 "com.flightstats.hub.health," +
                 "com.flightstats.hub.metrics," +

@@ -1,4 +1,4 @@
-package com.flightstats.hub.events;
+package com.flightstats.hub.filter;
 
 import com.google.common.base.Joiner;
 import org.apache.commons.lang3.StringUtils;
@@ -21,9 +21,9 @@ import java.util.List;
  * This exists to prevent gzip & deflate encodings for event-streams.
  */
 @PreMatching
-public final class EventsEncodingFilter implements ContainerResponseFilter {
+public final class StreamEncodingFilter implements ContainerResponseFilter {
 
-    private final static Logger logger = LoggerFactory.getLogger(EventsEncodingFilter.class);
+    private final static Logger logger = LoggerFactory.getLogger(StreamEncodingFilter.class);
 
     private List<String> removedEncodings = Arrays.asList(GzipFilter.GZIP, GzipFilter.DEFLATE);
 
@@ -48,10 +48,17 @@ public final class EventsEncodingFilter implements ContainerResponseFilter {
                         innerEncoding.add(token);
                     }
                 }
-                allowedEncoding.add(Joiner.on(",").join(innerEncoding));
+                String joined = Joiner.on(",").join(innerEncoding);
+                if (StringUtils.isNotBlank(joined)) {
+                    allowedEncoding.add(joined);
+                }
             }
             logger.debug("removing from events {} ", allowedEncoding);
-            request.getHeaders().put(HttpHeaders.ACCEPT_ENCODING, allowedEncoding);
+            if (allowedEncoding.isEmpty()) {
+                request.getHeaders().remove(HttpHeaders.ACCEPT_ENCODING);
+            } else {
+                request.getHeaders().put(HttpHeaders.ACCEPT_ENCODING, allowedEncoding);
+            }
         }
     }
 

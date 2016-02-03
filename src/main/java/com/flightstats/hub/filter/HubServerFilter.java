@@ -1,4 +1,7 @@
-package com.flightstats.hub.app;
+package com.flightstats.hub.filter;
+
+import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.HubVersion;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;

@@ -1,4 +1,4 @@
-package com.flightstats.hub.app;
+package com.flightstats.hub.filter;
 
 import com.google.inject.Singleton;
 

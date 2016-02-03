@@ -1,4 +1,4 @@
-package com.flightstats.hub.app;
+package com.flightstats.hub.filter;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
