@@ -17,7 +17,9 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import lombok.AllArgsConstructor;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,31 +32,30 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Singleton
 public class S3Verifier {
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     public static final String APP_URL = HubProperties.getAppUrl();
 
-    private final ChannelService channelService;
-    private final ContentDao spokeContentDao;
-    private final ContentDao s3SingleContentDao;
-    private final ContentDao s3BatchContentDao;
-    private final S3WriteQueue s3WriteQueue;
+    @Inject
+    private ChannelService channelService;
+    @Inject
+    @Named(ContentDao.CACHE)
+    private ContentDao spokeContentDao;
+    @Inject
+    @Named(ContentDao.SINGLE_LONG_TERM)
+    private ContentDao s3SingleContentDao;
+    @Inject
+    @Named(ContentDao.BATCH_LONG_TERM)
+    private ContentDao s3BatchContentDao;
+    @Inject
+    private S3WriteQueue s3WriteQueue;
     private final int offsetMinutes;
     private final ExecutorService queryThreadPool;
     private final ExecutorService channelThreadPool;
     private final double keepLeadershipRate = HubProperties.getProperty("s3Verifier.keepLeadershipRate", 0.75);
 
-    @Inject
-    public S3Verifier(ChannelService channelService,
-                      @Named(ContentDao.CACHE) ContentDao spokeContentDao,
-                      @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
-                      @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
-                      S3WriteQueue s3WriteQueue) {
-        this.channelService = channelService;
-        this.spokeContentDao = spokeContentDao;
-        this.s3SingleContentDao = s3SingleContentDao;
-        this.s3BatchContentDao = s3BatchContentDao;
-        this.s3WriteQueue = s3WriteQueue;
+    public S3Verifier() {
 
         registerService(new S3VerifierService("/S3VerifierSingleService", 15, this::runSingle));
         registerService(new S3VerifierService("/S3VerifierBatchService", 1, this::runBatch));
@@ -185,17 +186,12 @@ public class S3Verifier {
         }
     }
 
+    @AllArgsConstructor
     private class S3VerifierService extends AbstractIdleService implements Leader {
 
-        String leaderPath;
+        private String leaderPath;
         private int minutes;
         private Runnable runnable;
-
-        public S3VerifierService(String leaderPath, int minutes, Runnable runnable) {
-            this.leaderPath = leaderPath;
-            this.minutes = minutes;
-            this.runnable = runnable;
-        }
 
         @Override
         protected void startUp() throws Exception {
