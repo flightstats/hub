@@ -81,7 +81,7 @@ public class GroupLeader implements Leader {
     public boolean tryLeadership(Group group) {
         logger.debug("starting group: " + group);
         this.group = group;
-        curatorLeader = new CuratorLeader(getLeaderPath(), this, curator);
+        curatorLeader = new CuratorLeader(getLeaderPath(), this);
         if (!group.isPaused()) {
             curatorLeader.start();
         } else {

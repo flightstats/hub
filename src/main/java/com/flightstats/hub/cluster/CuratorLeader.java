@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import org.apache.curator.framework.CuratorFramework;
@@ -21,16 +22,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CuratorLeader {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorLeader.class);
-    private final CuratorFramework curator;
+    private final CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
     private String leaderPath;
     private Leader leader;
     private LeaderSelector leaderSelector;
     private AtomicBoolean hasLeadership = new AtomicBoolean(false);
 
-    public CuratorLeader(String leaderPath, Leader leader, CuratorFramework curator) {
+    public CuratorLeader(String leaderPath, Leader leader) {
         this.leaderPath = leaderPath;
         this.leader = leader;
-        this.curator = curator;
     }
 
     /**

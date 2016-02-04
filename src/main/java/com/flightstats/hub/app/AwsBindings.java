@@ -31,11 +31,11 @@ public class AwsBindings extends AbstractModule {
         logger.info("starting server {}  with role {}", HubHost.getLocalName(), role);
         if ("batch".equals(role)) {
             HubProperties.setProperty("group.keepLeadershipRate", "0.999");
+            HubProperties.setProperty("s3Verifier.keepLeadershipRate", "0.999");
         } else {
             bind(SpokeTtlEnforcer.class).asEagerSingleton();
             bind(FileSpokeStore.class).asEagerSingleton();
             bind(SpokeClusterRegister.class).asEagerSingleton();
-            bind(S3WriterManager.class).asEagerSingleton();
             bind(SpokeHealth.class).asEagerSingleton();
         }
         bind(AwsConnectorFactory.class).asEagerSingleton();
@@ -58,6 +58,7 @@ public class AwsBindings extends AbstractModule {
         bind(DynamoUtils.class).asEagerSingleton();
         bind(GroupDao.class).to(DynamoGroupDao.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
+        bind(S3Verifier.class).asEagerSingleton();
     }
 
     private static String getRole() {

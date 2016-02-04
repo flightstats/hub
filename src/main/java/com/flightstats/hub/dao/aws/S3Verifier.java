@@ -3,6 +3,8 @@ package com.flightstats.hub.dao.aws;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.cluster.CuratorLeader;
+import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.group.MinuteGroupStrategy;
@@ -10,8 +12,9 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
+import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -25,9 +28,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class S3WriterManager {
-    private final static Logger logger = LoggerFactory.getLogger(S3WriterManager.class);
+public class S3Verifier {
+    private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     public static final String APP_URL = HubProperties.getAppUrl();
 
     private final ChannelService channelService;
@@ -38,26 +42,32 @@ public class S3WriterManager {
     private final int offsetMinutes;
     private final ExecutorService queryThreadPool;
     private final ExecutorService channelThreadPool;
+    private final double keepLeadershipRate = HubProperties.getProperty("s3Verifier.keepLeadershipRate", 0.75);
 
     @Inject
-    public S3WriterManager(ChannelService channelService,
-                           @Named(ContentDao.CACHE) ContentDao spokeContentDao,
-                           @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
-                           @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
-                           S3WriteQueue s3WriteQueue) {
+    public S3Verifier(ChannelService channelService,
+                      @Named(ContentDao.CACHE) ContentDao spokeContentDao,
+                      @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
+                      @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
+                      S3WriteQueue s3WriteQueue) {
         this.channelService = channelService;
         this.spokeContentDao = spokeContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
         this.s3BatchContentDao = s3BatchContentDao;
         this.s3WriteQueue = s3WriteQueue;
-        HubServices.register(new S3WriterManagerSingleService(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
-        HubServices.register(new S3WriterManagerBatchService(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
+
+        registerService(new S3VerifierService("/S3VerifierSingleService/", 15, this::runSingle));
+        registerService(new S3VerifierService("/S3VerifierBatchService/", 1, this::runBatch));
 
         this.offsetMinutes = serverOffset();
-        queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d")
-                .build());
-        channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d")
-                .build());
+        queryThreadPool = Executors.newCachedThreadPool(
+                new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
+        channelThreadPool = Executors.newFixedThreadPool(10,
+                new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
+    }
+
+    private void registerService(S3VerifierService service) {
+        HubServices.register(service, HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
     }
 
     static int serverOffset() {
@@ -175,37 +185,43 @@ public class S3WriterManager {
         }
     }
 
-    private class S3WriterManagerSingleService extends AbstractScheduledService {
-        @Override
-        protected void runOneIteration() throws Exception {
-            runSingle();
+    private class S3VerifierService extends AbstractIdleService implements Leader {
+
+        String leaderPath;
+        private int minutes;
+        private Runnable runnable;
+
+        public S3VerifierService(String leaderPath, int minutes, Runnable runnable) {
+            this.leaderPath = leaderPath;
+            this.minutes = minutes;
+            this.runnable = runnable;
         }
 
         @Override
-        protected Scheduler scheduler() {
-            return Scheduler.newFixedDelaySchedule(0, 15, TimeUnit.MINUTES);
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-            s3WriteQueue.close();
-        }
-    }
-
-    private class S3WriterManagerBatchService extends AbstractScheduledService {
-        @Override
-        protected void runOneIteration() throws Exception {
-            runBatch();
-        }
-
-        @Override
-        protected Scheduler scheduler() {
-            return Scheduler.newFixedDelaySchedule(0, 1, TimeUnit.MINUTES);
+        protected void startUp() throws Exception {
+            CuratorLeader curatorLeader = new CuratorLeader(leaderPath, this);
+            curatorLeader.start();
         }
 
         @Override
         protected void shutDown() throws Exception {
             s3WriteQueue.close();
+        }
+
+        @Override
+        public double keepLeadershipRate() {
+            return keepLeadershipRate;
+        }
+
+        @Override
+        public void takeLeadership(AtomicBoolean hasLeadership) {
+            while (hasLeadership.get()) {
+                long start = System.currentTimeMillis();
+                runnable.run();
+                long sleep = TimeUnit.MINUTES.toMillis(minutes) - (System.currentTimeMillis() - start);
+                Sleeper.sleep(Math.max(0, sleep));
+            }
+
         }
     }
 }
