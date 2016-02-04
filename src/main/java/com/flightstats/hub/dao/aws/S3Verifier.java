@@ -56,8 +56,8 @@ public class S3Verifier {
         this.s3BatchContentDao = s3BatchContentDao;
         this.s3WriteQueue = s3WriteQueue;
 
-        registerService(new S3VerifierService("/S3VerifierSingleService/", 15, this::runSingle));
-        registerService(new S3VerifierService("/S3VerifierBatchService/", 1, this::runBatch));
+        registerService(new S3VerifierService("/S3VerifierSingleService", 15, this::runSingle));
+        registerService(new S3VerifierService("/S3VerifierBatchService", 1, this::runBatch));
 
         this.offsetMinutes = serverOffset();
         queryThreadPool = Executors.newCachedThreadPool(

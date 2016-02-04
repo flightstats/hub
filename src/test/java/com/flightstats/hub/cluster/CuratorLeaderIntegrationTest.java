@@ -24,7 +24,7 @@ public class CuratorLeaderIntegrationTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        curator = Integration.startZooKeeper();
+        Integration.startAwsHub();
     }
 
     @Test
