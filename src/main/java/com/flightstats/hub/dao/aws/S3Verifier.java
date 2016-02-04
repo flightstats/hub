@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
@@ -50,17 +49,16 @@ public class S3Verifier {
     private ContentDao s3BatchContentDao;
     @Inject
     private S3WriteQueue s3WriteQueue;
-    private final int offsetMinutes;
+    private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
+    private final double keepLeadershipRate = HubProperties.getProperty("s3Verifier.keepLeadershipRate", 0.75);
     private final ExecutorService queryThreadPool;
     private final ExecutorService channelThreadPool;
-    private final double keepLeadershipRate = HubProperties.getProperty("s3Verifier.keepLeadershipRate", 0.75);
 
     public S3Verifier() {
 
-        registerService(new S3VerifierService("/S3VerifierSingleService", 15, this::runSingle));
+        registerService(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle));
         registerService(new S3VerifierService("/S3VerifierBatchService", 1, this::runBatch));
 
-        this.offsetMinutes = serverOffset();
         queryThreadPool = Executors.newCachedThreadPool(
                 new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
         channelThreadPool = Executors.newFixedThreadPool(10,
@@ -69,16 +67,6 @@ public class S3Verifier {
 
     private void registerService(S3VerifierService service) {
         HubServices.register(service, HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
-    }
-
-    static int serverOffset() {
-        String host = HubHost.getLocalName();
-        int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
-        int shiftMinutes = 5;
-        int randomOffset = shiftMinutes + (int) (Math.random() * (ttlMinutes - shiftMinutes * 3));
-        int offset = HubProperties.getProperty("s3.verifyOffset." + host, randomOffset);
-        logger.info("{} offset is -{} minutes", host, offset);
-        return offset;
     }
 
     SortedSet<ContentKey> getMissing(DateTime startTime, DateTime endTime, String channelName, ContentDao s3ContentDao,
@@ -157,8 +145,8 @@ public class S3Verifier {
 
     public void runSingle() {
         try {
-            DateTime startTime = DateTime.now().minusMinutes(offsetMinutes);
-            DateTime endTime = DateTime.now().minusMinutes(offsetMinutes).plusMinutes(20);
+            DateTime endTime = DateTime.now();
+            DateTime startTime = endTime.minusMinutes(offsetMinutes).minusMinutes(1);
             logger.info("Verifying Single S3 data at: {}", startTime);
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
