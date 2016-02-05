@@ -24,7 +24,7 @@ public class CuratorLeaderIntegrationTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        curator = Integration.startZooKeeper();
+        Integration.startAwsHub();
     }
 
     @Test
@@ -32,7 +32,7 @@ public class CuratorLeaderIntegrationTest {
         count = new AtomicInteger();
         countDownLatch = new CountDownLatch(1);
         CuratorLeader curatorLeader = new CuratorLeader("/CuratorLeaderIntegrationTest/testElection",
-                new MockLeader(), curator);
+                new MockLeader());
 
         curatorLeader.start();
         assertTrue(countDownLatch.await(5000, TimeUnit.MILLISECONDS));
@@ -45,9 +45,9 @@ public class CuratorLeaderIntegrationTest {
         count = new AtomicInteger();
         countDownLatch = new CountDownLatch(3);
         String leaderPath = "/CuratorLeaderIntegrationTest/testMultipleLeaders";
-        CuratorLeader curatorLeader1 = new CuratorLeader(leaderPath, new MockLeader(), curator);
-        CuratorLeader curatorLeader2 = new CuratorLeader(leaderPath, new MockLeader(), curator);
-        CuratorLeader curatorLeader3 = new CuratorLeader(leaderPath, new MockLeader(), curator);
+        CuratorLeader curatorLeader1 = new CuratorLeader(leaderPath, new MockLeader());
+        CuratorLeader curatorLeader2 = new CuratorLeader(leaderPath, new MockLeader());
+        CuratorLeader curatorLeader3 = new CuratorLeader(leaderPath, new MockLeader());
 
         curatorLeader1.start();
         curatorLeader2.start();
@@ -67,7 +67,7 @@ public class CuratorLeaderIntegrationTest {
         count = new AtomicInteger();
         countDownLatch = new CountDownLatch(5);
 
-        CuratorLeader curatorLeader = new CuratorLeader("/CuratorLeaderIntegrationTest/testMultipleStarts", new MockLeader(), curator);
+        CuratorLeader curatorLeader = new CuratorLeader("/CuratorLeaderIntegrationTest/testMultipleStarts", new MockLeader());
         for (int i = 0; i < 5; i++) {
             curatorLeader.start();
         }
@@ -82,7 +82,7 @@ public class CuratorLeaderIntegrationTest {
         count = new AtomicInteger();
         countDownLatch = new CountDownLatch(1);
         CountDownLatch startLatch = new CountDownLatch(1);
-        CuratorLeader curatorLeader = new CuratorLeader("/testClose", new CloseLeader(startLatch), curator);
+        CuratorLeader curatorLeader = new CuratorLeader("/testClose", new CloseLeader(startLatch));
 
         curatorLeader.start();
         assertTrue(startLatch.await(2000, TimeUnit.MILLISECONDS));

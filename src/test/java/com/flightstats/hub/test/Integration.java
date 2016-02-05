@@ -23,6 +23,7 @@ public class Integration {
     }
 
     public static synchronized CuratorFramework startZooKeeper() throws Exception {
+        HubProperties.loadProperties("useDefault");
         if (testingServer == null) {
             logger.info("starting zookeeper");
             testingServer = new TestingServer(2181);
@@ -39,7 +40,6 @@ public class Integration {
             return injector;
         }
         startZooKeeper();
-        HubProperties.loadProperties("useDefault");
         HubProperties.setProperty("hub.type", "aws");
         HubProperties.setProperty("spoke.ttlMinutes", "240");
         HubMain.startServer();
