@@ -11,7 +11,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,12 +32,10 @@ public class AlertRunner implements Leader {
     private final int sleepPeriod;
     private final String hubAppUrl;
     private final ExecutorService threadPool;
-    private CuratorFramework curator;
     private CuratorLeader leader;
 
     @Inject
-    public AlertRunner(CuratorFramework curator) {
-        this.curator = curator;
+    public AlertRunner() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("AlertRunner-%d").build();
         threadPool = Executors.newFixedThreadPool(20, threadFactory);
         hubAppUrl = StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
@@ -136,7 +133,7 @@ public class AlertRunner implements Leader {
     }
 
     private void start() {
-        leader = new CuratorLeader("/AlertRunner", this, curator);
+        leader = new CuratorLeader("/AlertRunner", this);
         leader.start();
     }
 }

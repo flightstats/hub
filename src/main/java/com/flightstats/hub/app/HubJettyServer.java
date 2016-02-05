@@ -40,7 +40,7 @@ public class HubJettyServer {
             ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
             ServerConnector serverConnector = new ServerConnector(server, sslContextFactory, connectionFactory);
             serverConnector.setHost(HubProperties.getProperty("http.bind_ip", "0.0.0.0"));
-            serverConnector.setPort(HubProperties.getProperty("http.bind_port", 8080));
+            serverConnector.setPort(HubHost.getLocalPort());
             serverConnector.setIdleTimeout(HubProperties.getProperty("http.idle_timeout", 30 * 1000));
 
             server.setConnectors(new Connector[]{serverConnector});
