@@ -71,7 +71,9 @@ public class AwsConnectorFactory {
     }
 
     private ClientConfiguration getClientConfiguration(String name) {
-        RetryPolicy retryPolicy = PredefinedRetryPolicies.getDefaultRetryPolicy();
+        RetryPolicy retryPolicy = new RetryPolicy(PredefinedRetryPolicies.DEFAULT_RETRY_CONDITION,
+                PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY,
+                6, true);
         ClientConfiguration configuration = new ClientConfiguration();
         int maxConnections = HubProperties.getProperty(name + ".maxConnections", 50);
         logger.info("{} maxConnections {}", name, maxConnections);
