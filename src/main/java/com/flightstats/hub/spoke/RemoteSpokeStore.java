@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
-import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.SortedSet;
@@ -52,67 +51,6 @@ public class RemoteSpokeStore {
         this.cluster = cluster;
         this.sender = sender;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
-    }
-
-    void testOne(Collection<String> server) throws InterruptedException {
-        String path = "Internal-Spoke-Health-Hook/";
-        Traces traces = new Traces();
-        int calls = 100;
-        ExecutorService threadPool = Executors.newFixedThreadPool(10);
-        CountDownLatch quorumLatch = new CountDownLatch(calls);
-        for (int i = 0; i < calls; i++) {
-            threadPool.submit(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        ContentKey key = new ContentKey();
-                        if (write(path + key.toUrl(), key.toUrl().getBytes(), server, traces)) {
-                            quorumLatch.countDown();
-                        } else {
-                            traces.log(logger);
-                        }
-                    } catch (Exception e) {
-                        logger.warn("unexpected exception " + server, e);
-                    }
-                }
-            });
-        }
-        if (quorumLatch.await(5, TimeUnit.SECONDS)) {
-            threadPool.shutdown();
-            logger.info("completed warmup calls to Spoke {}", server);
-        } else {
-            threadPool.shutdown();
-            throw new RuntimeException("unable to properly connect to Spoke " + server);
-        }
-    }
-
-    public boolean testAll() throws UnknownHostException {
-        Collection<String> servers = cluster.getRandomServers();
-        servers.addAll(CuratorCluster.getLocalServer());
-        logger.info("*********************************************");
-        logger.info("testing servers {}", servers);
-        logger.info("*********************************************");
-        String path = HubHost.getLocalAddressPort();
-        for (String server : servers) {
-            try {
-                logger.info("calling server {} path {}", server, path);
-                ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/test/" + path)
-                        .get(ClientResponse.class);
-                if (response.getStatus() == 200) {
-                    logger.info("success calling {}", response);
-                } else if (response.getStatus() == 404) {
-                    logger.info("test not yet implemented {}", response);
-                } else {
-                    logger.info("failed response {}", response);
-                    return false;
-                }
-            } catch (Exception e) {
-                logger.warn("unable to test " + path + " with " + server, e);
-                return false;
-            }
-        }
-        logger.info("all startup tests succeeded  " + path);
-        return true;
     }
 
     public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
