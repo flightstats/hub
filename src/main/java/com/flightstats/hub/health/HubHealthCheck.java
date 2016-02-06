@@ -13,7 +13,7 @@ public class HubHealthCheck {
     private final AtomicBoolean startup = new AtomicBoolean(true);
 
     public HubHealthCheck() {
-        HubServices.register(new HealthService(), HubServices.TYPE.FINAL_POST_START);
+        HubServices.register(new HealthService(), HubServices.TYPE.INITIAL_POST_START);
     }
 
     private class HealthService extends AbstractIdleService {

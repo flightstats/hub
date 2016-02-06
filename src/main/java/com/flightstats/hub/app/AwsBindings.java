@@ -36,7 +36,6 @@ public class AwsBindings extends AbstractModule {
             bind(SpokeTtlEnforcer.class).asEagerSingleton();
             bind(FileSpokeStore.class).asEagerSingleton();
             bind(SpokeClusterRegister.class).asEagerSingleton();
-            bind(SpokeHealth.class).asEagerSingleton();
         }
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();

@@ -1,6 +1,5 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Singleton;
 import org.eclipse.jetty.util.ConcurrentHashSet;
@@ -9,6 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static com.flightstats.hub.app.HubServices.TYPE;
+import static com.flightstats.hub.app.HubServices.register;
 
 /**
  * Curator's LeaderSelector uses a fair algorithm, which means that the oldest lock always wins.
@@ -22,7 +24,7 @@ public class LeaderRotator {
     private static final Set<CuratorLeader> leaders = new ConcurrentHashSet<>();
 
     public LeaderRotator() {
-        HubServices.register(new LeaderRotatorService());
+        register(new LeaderRotatorService(), TYPE.PRE_STOP, TYPE.FINAL_POST_START);
     }
 
     public static synchronized void add(CuratorLeader leader) {
