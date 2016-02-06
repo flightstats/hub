@@ -1,7 +1,7 @@
 package com.flightstats.hub.health;
 
+import com.flightstats.hub.app.FinalCheck;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.spoke.RemoteSpokeStore;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -15,7 +15,7 @@ public class HubHealthCheck {
     private final static Logger logger = LoggerFactory.getLogger(HubHealthCheck.class);
 
     @Inject
-    private RemoteSpokeStore remoteSpokeStore;
+    private FinalCheck finalCheck;
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
     private final AtomicBoolean startup = new AtomicBoolean(true);
@@ -28,9 +28,9 @@ public class HubHealthCheck {
 
         @Override
         protected void startUp() throws Exception {
-            if (!remoteSpokeStore.testAll()) {
-                logger.warn("unable to cleanly start Spoke!");
-                throw new RuntimeException("unable to cleanly start Spoke");
+            if (!finalCheck.check()) {
+                logger.warn("unable to cleanly start!");
+                throw new RuntimeException("unable to cleanly start");
             }
             startup.set(false);
         }

@@ -87,9 +87,6 @@ public class RemoteSpokeStore {
     }
 
     public boolean testAll() throws UnknownHostException {
-        if (!HubProperties.getProperty("hub.type", "aws").equals("aws")) {
-            return true;
-        }
         Collection<String> servers = cluster.getRandomServers();
         servers.addAll(CuratorCluster.getLocalServer());
         logger.info("*********************************************");
@@ -104,9 +101,9 @@ public class RemoteSpokeStore {
                 if (response.getStatus() == 200) {
                     logger.info("success calling {}", response);
                 } else if (response.getStatus() == 404) {
-                    logger.info("test not yet implemented {}", response);
+                    logger.warn("test not yet implemented {}", response);
                 } else {
-                    logger.info("failed response {}", response);
+                    logger.warn("failed response {}", response);
                     return false;
                 }
             } catch (Exception e) {

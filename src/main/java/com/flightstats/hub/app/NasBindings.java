@@ -26,6 +26,7 @@ public class NasBindings extends AbstractModule {
         bind(ContentService.class).to(NasContentService.class).asEagerSingleton();
         bind(GroupDao.class).to(NasGroupDao.class).asEagerSingleton();
         bind(NasTtlEnforcer.class).asEagerSingleton();
+        bind(FinalCheck.class).to(PassFinalCheck.class).asEagerSingleton();
     }
 
     public static String packages() {

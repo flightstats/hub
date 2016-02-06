@@ -32,10 +32,12 @@ public class AwsBindings extends AbstractModule {
         if ("batch".equals(role)) {
             HubProperties.setProperty("group.keepLeadershipRate", "0.999");
             HubProperties.setProperty("s3Verifier.keepLeadershipRate", "0.999");
+            bind(FinalCheck.class).to(PassFinalCheck.class).asEagerSingleton();
         } else {
             bind(SpokeTtlEnforcer.class).asEagerSingleton();
             bind(FileSpokeStore.class).asEagerSingleton();
             bind(SpokeClusterRegister.class).asEagerSingleton();
+            bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         }
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
