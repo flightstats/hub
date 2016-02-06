@@ -87,6 +87,9 @@ public class RemoteSpokeStore {
     }
 
     public boolean testAll() throws UnknownHostException {
+        if (!HubProperties.getProperty("hub.type", "aws").equals("aws")) {
+            return true;
+        }
         Collection<String> servers = cluster.getRandomServers();
         servers.addAll(CuratorCluster.getLocalServer());
         logger.info("*********************************************");
