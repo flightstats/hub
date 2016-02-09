@@ -1,6 +1,5 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.ChannelService;
@@ -19,6 +18,9 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.flightstats.hub.app.HubServices.TYPE;
+import static com.flightstats.hub.app.HubServices.register;
 
 /**
  * Replication is moving from one Hub into another Hub
@@ -47,7 +49,7 @@ public class ReplicatorManager {
         this.channelService = channelService;
         this.hubUtils = hubUtils;
         this.watchManager = watchManager;
-        HubServices.registerPreStop(new ReplicatorService());
+        register(new ReplicatorService(), TYPE.FINAL_POST_START, TYPE.PRE_STOP);
     }
 
     private class ReplicatorService extends AbstractIdleService {

@@ -1,25 +1,37 @@
 package com.flightstats.hub.health;
 
+import com.flightstats.hub.app.FinalCheck;
 import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
 public class HubHealthCheck {
+    private final static Logger logger = LoggerFactory.getLogger(HubHealthCheck.class);
+
+    @Inject
+    private FinalCheck finalCheck;
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
     private final AtomicBoolean startup = new AtomicBoolean(true);
 
     public HubHealthCheck() {
-        HubServices.register(new HealthService(), HubServices.TYPE.FINAL_POST_START);
+        HubServices.register(new HealthService(), HubServices.TYPE.INITIAL_POST_START);
     }
 
     private class HealthService extends AbstractIdleService {
 
         @Override
         protected void startUp() throws Exception {
+            if (!finalCheck.check()) {
+                logger.warn("unable to cleanly start!");
+                throw new RuntimeException("unable to cleanly start");
+            }
             startup.set(false);
         }
 

@@ -57,8 +57,8 @@ public class RemoteSpokeStore {
     void testOne(Collection<String> server) throws InterruptedException {
         String path = "Internal-Spoke-Health-Hook/";
         Traces traces = new Traces();
-        int calls = 100;
-        ExecutorService threadPool = Executors.newFixedThreadPool(10);
+        int calls = 10;
+        ExecutorService threadPool = Executors.newFixedThreadPool(2);
         CountDownLatch quorumLatch = new CountDownLatch(calls);
         for (int i = 0; i < calls; i++) {
             threadPool.submit(new Runnable() {
@@ -101,9 +101,9 @@ public class RemoteSpokeStore {
                 if (response.getStatus() == 200) {
                     logger.info("success calling {}", response);
                 } else if (response.getStatus() == 404) {
-                    logger.info("test not yet implemented {}", response);
+                    logger.warn("test not yet implemented {}", response);
                 } else {
-                    logger.info("failed response {}", response);
+                    logger.warn("failed response {}", response);
                     return false;
                 }
             } catch (Exception e) {
