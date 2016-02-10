@@ -2,6 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.util.ObjectRing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ public class ActiveTraces {
     private static final ObjectRing<Traces> recent = new ObjectRing(100);
     private static final TracesSortedSet slowest = new TracesSortedSet(100);
     private static final ThreadLocal<Traces> threadLocal = new ThreadLocal();
+    private static int logSlowTraces = HubProperties.getProperty("logSlowTracesSeconds", 10) * 1000;
 
     public static void start(Object... objects) {
         start(new Traces(objects));
@@ -33,13 +35,14 @@ public class ActiveTraces {
     public static boolean end() {
         Traces traces = threadLocal.get();
         if (null == traces) {
-            logger.debug("no Traces found!", new Exception());
+            logger.trace("no Traces found");
             return false;
         } else {
             logger.trace("removing {}", traces.getId());
             activeTraces.remove(traces.getId());
             threadLocal.remove();
             traces.end();
+            traces.logSlow(logSlowTraces, logger);
             recent.put(traces);
             slowest.add(traces);
             return true;
