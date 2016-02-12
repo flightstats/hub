@@ -85,7 +85,7 @@ public class NTPMonitor {
             double primary = parsePrimary(lines);
             timeAdjuster.setOffset((int) primary);
             primaryOffset = Math.abs(primary);
-            sender.send("primaryTimeDelta", primary);
+            sender.send("primaryTimeDelta", primaryOffset);
             newRelic(delta);
         } catch (Exception e) {
             logger.info("unable to exec", e);
