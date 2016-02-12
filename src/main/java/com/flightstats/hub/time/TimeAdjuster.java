@@ -32,8 +32,7 @@ public class TimeAdjuster {
     }
 
     @VisibleForTesting
-    void setOffset(int serverNtpOffset, long millis) {
-        int newOffset = -serverNtpOffset;
+    void setOffset(int newOffset, long millis) {
         if (newOffset == offset) {
             return;
         }
