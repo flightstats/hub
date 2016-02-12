@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -22,14 +23,17 @@ public class NTPMonitor {
 
     private final static Logger logger = LoggerFactory.getLogger(NTPMonitor.class);
 
-    private final MetricsSender sender;
+    @Inject
+    private MetricsSender sender;
+    @Inject
+    private TimeAdjuster timeAdjuster;
+
     private final int minPostTimeMillis;
     private final int maxPostTimeMillis;
     private double delta;
+    private double primaryOffset;
 
-    @Inject
-    public NTPMonitor(MetricsSender sender) {
-        this.sender = sender;
+    public NTPMonitor() {
         HubServices.register(new TimeMonitorService(), HubServices.TYPE.PRE_START);
         minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
         maxPostTimeMillis = HubProperties.getProperty("app.maxPostTimeMillis", 1000);
@@ -52,12 +56,14 @@ public class NTPMonitor {
     }
 
     static double parsePrimary(List<String> lines) {
+        //todo - gfm - 2/12/16 - this may want to verify the number of servers found
+        List<Double> servers = new ArrayList<>();
         for (String line : lines) {
-            if (line.startsWith("*")) {
-                return parseLine(line);
+            if (line.startsWith("*") || line.startsWith("+")) {
+                servers.add(parseLine(line));
             }
         }
-        return 0;
+        return servers.stream().mapToDouble(d -> d).average().getAsDouble();
     }
 
     private static double parseLine(String line) {
@@ -72,7 +78,10 @@ public class NTPMonitor {
             List<String> lines = IOUtils.readLines(process.getInputStream());
             delta = parseClusterRange(lines);
             sender.send("clusterTimeDelta", delta);
-            sender.send("primaryTimeDelta", parsePrimary(lines));
+            double primary = parsePrimary(lines);
+            timeAdjuster.setOffset((int) primary);
+            primaryOffset = Math.abs(primary);
+            sender.send("primaryTimeDelta", primary);
             newRelic(delta);
         } catch (Exception e) {
             logger.info("unable to exec", e);
@@ -80,7 +89,7 @@ public class NTPMonitor {
     }
 
     public int getPostTimeBuffer() {
-        return Math.min(maxPostTimeMillis, (int) (minPostTimeMillis + delta * 2));
+        return Math.min(maxPostTimeMillis, (int) (minPostTimeMillis + primaryOffset));
     }
 
     public void newRelic(double delta) {

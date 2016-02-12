@@ -10,6 +10,7 @@ import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.group.GroupDao;
 import com.flightstats.hub.spoke.*;
+import com.flightstats.hub.time.TimeAdjuster;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -60,6 +61,7 @@ public class AwsBindings extends AbstractModule {
         bind(GroupDao.class).to(DynamoGroupDao.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
+        bind(TimeAdjuster.class).asEagerSingleton();
     }
 
     private static String getRole() {

@@ -37,7 +37,7 @@ public class NasContentService implements ContentService {
         try {
             byte[] payload = SpokeMarshaller.toBytes(content, false);
             traces.add("NasContentService.insert marshalled");
-            ContentKey key = content.keyAndStart();
+            ContentKey key = content.keyAndStart(TimeUtil.now());
             String path = getPath(channelName, key);
             logger.trace("writing key {} to channel {}", key, channelName);
             if (!fileSpokeStore.write(path, payload)) {
