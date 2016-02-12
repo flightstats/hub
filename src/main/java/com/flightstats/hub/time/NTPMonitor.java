@@ -59,8 +59,12 @@ public class NTPMonitor {
         //todo - gfm - 2/12/16 - this may want to verify the number of servers found
         List<Double> servers = new ArrayList<>();
         for (String line : lines) {
-            if (line.startsWith("*") || line.startsWith("+")) {
-                servers.add(parseLine(line));
+            if (line.contains("hub")) {
+                //ignore
+            } else if (line.startsWith("*") || line.startsWith("+")) {
+                double primary = parseLine(line);
+                logger.info("primary {}", primary);
+                servers.add(primary);
             }
         }
         return servers.stream().mapToDouble(d -> d).average().getAsDouble();
