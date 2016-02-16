@@ -25,8 +25,6 @@ public class NTPMonitor {
 
     @Inject
     private MetricsSender sender;
-    @Inject
-    private TimeAdjuster timeAdjuster;
 
     private final int minPostTimeMillis;
     private final int maxPostTimeMillis;
@@ -83,9 +81,9 @@ public class NTPMonitor {
             delta = parseClusterRange(lines);
             sender.send("clusterTimeDelta", delta);
             double primary = parsePrimary(lines);
-            timeAdjuster.setOffset((int) primary);
             primaryOffset = Math.abs(primary);
             sender.send("primaryTimeDelta", primaryOffset);
+            logger.info("ntp cluster {} primary {}", delta, primary);
             newRelic(delta);
         } catch (Exception e) {
             logger.info("unable to exec", e);
