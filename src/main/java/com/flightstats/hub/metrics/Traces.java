@@ -71,14 +71,12 @@ public class Traces {
     public void logSlow(long millis, Logger logger) {
         long processingTime = System.currentTimeMillis() - start;
         if (processingTime >= millis) {
-            String output = getOutput(logger);
-            logger.info("slow processing of {} millis. trace: {}", processingTime, output);
+            logger.info("slow processing of {} millis. trace: {}", processingTime, getOutput(logger));
         }
     }
 
     public void log(Logger logger) {
-        String output = getOutput(logger);
-        logger.info("trace: {}", output);
+        logger.info("trace: {}", getOutput(logger));
     }
 
     private String getOutput(Logger logger) {
