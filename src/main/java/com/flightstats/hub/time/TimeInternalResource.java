@@ -37,7 +37,7 @@ public class TimeInternalResource {
     @Path("/millis")
     public Response getMillis() {
         if (timeService.isExternal()) {
-            return Response.status(Response.Status.SERVICE_UNAVAILABLE).build();
+            return Response.status(521).build();
         }
         return Response.ok(TimeUtil.now().getMillis()).build();
     }
