@@ -70,7 +70,9 @@ public class AwsBindings extends AbstractModule {
         String role = getRole();
         if ("batch".equals(role)) {
             return "com.flightstats.hub.app," +
-                    "com.flightstats.hub.health,com.flightstats.hub.metrics,";
+                    "com.flightstats.hub.health," +
+                    "com.flightstats.hub.metrics," +
+                    "com.flightstats.hub.time,";
         } else {
             return "com.flightstats.hub";
         }

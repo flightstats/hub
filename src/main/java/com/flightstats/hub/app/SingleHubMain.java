@@ -30,7 +30,9 @@ public class SingleHubMain {
         setProperty("alert.run", "false");
         setProperty("app.url", "http://localhost:8080/");
         setProperty("http.bind_port", "8080");
-        setProperty("storage.path", Files.createTempDir().getAbsolutePath());
+        String tempPath = Files.createTempDir().getAbsolutePath();
+        setProperty("storage.path", tempPath);
+        setProperty("app.externalFile", tempPath + "/externalTime");
 
         HubMain.start();
     }

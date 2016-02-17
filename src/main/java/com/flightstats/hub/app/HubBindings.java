@@ -22,6 +22,7 @@ import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.rest.Rfc3339DateSerializer;
 import com.flightstats.hub.spoke.GCRunner;
 import com.flightstats.hub.time.NTPMonitor;
+import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -72,6 +73,7 @@ public class HubBindings extends AbstractModule {
         bind(NTPMonitor.class).asEagerSingleton();
         bind(LeaderRotator.class).asEagerSingleton();
         bind(AlertRunner.class).asEagerSingleton();
+        bind(TimeService.class).asEagerSingleton();
     }
 
     @Singleton
