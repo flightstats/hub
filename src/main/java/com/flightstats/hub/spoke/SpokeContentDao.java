@@ -11,6 +11,7 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -35,6 +36,8 @@ public class SpokeContentDao implements ContentDao {
 
     @Inject
     private RemoteSpokeStore spokeStore;
+    @Inject
+    private TimeService timeService;
 
     private final int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
 
@@ -45,8 +48,7 @@ public class SpokeContentDao implements ContentDao {
         try {
             byte[] payload = SpokeMarshaller.toBytes(content);
             traces.add("SpokeContentDao.write marshalled");
-            //todo - gfm - 2/16/16 - what do we do here?
-            ContentKey key = content.keyAndStart(TimeUtil.now());
+            ContentKey key = content.keyAndStart(timeService.getNow());
             String path = getPath(channelName, key);
             logger.trace("writing key {} to channel {}", key, channelName);
             if (!spokeStore.write(path, payload, content)) {
