@@ -71,7 +71,7 @@ public class TimeService {
                 response = client.resource(HubHost.getScheme() + server + "/internal/time/millis")
                         .get(ClientResponse.class);
                 if (response.getStatus() == 200) {
-                    Long millis = Long.getLong(response.getEntity(String.class));
+                    Long millis = Long.parseLong(response.getEntity(String.class));
                     logger.trace("using remote time {} from {}", millis, server);
                     return new DateTime(millis, DateTimeZone.UTC);
                 }
