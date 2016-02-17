@@ -49,10 +49,22 @@ public class TimeInternalResource {
         return Response.ok().build();
     }
 
+    @GET
+    @Path("/external")
+    public Response getExternal() {
+        return Response.ok(timeService.getRemoteNow().getMillis()).build();
+    }
+
     @PUT
     @Path("/internal")
     public Response ok() {
         timeService.setExternal(false);
         return Response.ok().build();
+    }
+
+    @GET
+    @Path("/internal")
+    public Response getInternal() {
+        return Response.ok(TimeUtil.now().getMillis()).build();
     }
 }

@@ -56,13 +56,22 @@ public class TimeService {
         if (!isExternal) {
             return TimeUtil.now();
         }
+        DateTime millis = getRemoteNow();
+        if (millis != null) {
+            return millis;
+        }
+        logger.warn("unable to get external time, using local!");
+        return TimeUtil.now();
+    }
+
+    public DateTime getRemoteNow() {
         for (String server : cluster.getRandomRemoteServers()) {
             ClientResponse response = null;
             try {
                 response = client.resource(HubHost.getScheme() + server + "/internal/time/millis")
                         .get(ClientResponse.class);
                 if (response.getStatus() == 200) {
-                    Long millis = response.getEntity(Long.class);
+                    Long millis = Long.getLong(response.getEntity(String.class));
                     logger.trace("using remote time {} from {}", millis, server);
                     return new DateTime(millis, DateTimeZone.UTC);
                 }
@@ -78,8 +87,7 @@ public class TimeService {
                 RemoteSpokeStore.close(response);
             }
         }
-        logger.warn("unable to get external time, using local!");
-        return TimeUtil.now();
+        return null;
     }
 
     private void deleteFile() {
