@@ -11,16 +11,15 @@ import java.util.stream.Stream;
 
 public class ContentKeyUtil {
 
-    //todo - gfm - 10/7/15 - could be switched to ContentPath - not sure it's needed
     public static SortedSet<ContentKey> filter(Collection<ContentKey> keys, ContentKey limitKey,
                                          DateTime ttlTime, int count, boolean next, boolean stable) {
         Stream<ContentKey> stream = keys.stream();
         if (next) {
-            DateTime stableTime = TimeUtil.time(stable);
-            stream = stream
-                    .filter(key -> key.compareTo(limitKey) > 0)
-                    .filter(key -> key.getTime().isBefore(stableTime));
-
+            stream = stream.filter(key -> key.compareTo(limitKey) > 0);
+            if (stable) {
+                DateTime stableTime = TimeUtil.stable();
+                stream = stream.filter(key -> key.getTime().isBefore(stableTime));
+            }
         } else {
             Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
             contentKeys.addAll(keys);
