@@ -13,7 +13,7 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
-import com.flightstats.hub.time.NTPMonitor;
+import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +45,7 @@ public class ChannelResource {
 
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private NTPMonitor ntpMonitor = HubProvider.getInstance(NTPMonitor.class);
+    private NtpMonitor ntpMonitor = HubProvider.getInstance(NtpMonitor.class);
     private EventsService eventsService = HubProvider.getInstance(EventsService.class);
 
     @GET
