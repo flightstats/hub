@@ -32,7 +32,7 @@ public class SingleHubMain {
         setProperty("http.bind_port", "8080");
         String tempPath = Files.createTempDir().getAbsolutePath();
         setProperty("storage.path", tempPath);
-        setProperty("app.externalFile", tempPath + "/externalTime");
+        setProperty("app.remoteTimeFile", tempPath + "/remoteTime");
 
         HubMain.start();
     }

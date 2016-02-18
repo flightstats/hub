@@ -25,46 +25,46 @@ public class TimeInternalResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@Context UriInfo uriInfo) {
         ObjectNode root = mapper.createObjectNode();
-        root.put("external", timeService.isExternal());
+        root.put("remote", timeService.isRemote());
         Linked.Builder<?> builder = Linked.linked(root);
         builder.withLink("millis", uriInfo.getRequestUri() + "/millis");
-        builder.withLink("external", uriInfo.getRequestUri() + "/external");
-        builder.withLink("internal", uriInfo.getRequestUri() + "/internal");
+        builder.withLink("remote", uriInfo.getRequestUri() + "/remote");
+        builder.withLink("local", uriInfo.getRequestUri() + "/local");
         return Response.ok(builder.build()).build();
     }
 
     @GET
     @Path("/millis")
     public Response getMillis() {
-        if (timeService.isExternal()) {
+        if (timeService.isRemote()) {
             return Response.status(521).build();
         }
         return Response.ok(TimeUtil.now().getMillis()).build();
     }
 
     @PUT
-    @Path("/external")
-    public Response external() {
-        timeService.setExternal(true);
+    @Path("/remote")
+    public Response remote() {
+        timeService.setRemote(true);
         return Response.ok().build();
     }
 
     @GET
-    @Path("/external")
-    public Response getExternal() {
+    @Path("/remote")
+    public Response getRemote() {
         return Response.ok(timeService.getRemoteNow().getMillis()).build();
     }
 
     @PUT
-    @Path("/internal")
+    @Path("/local")
     public Response ok() {
-        timeService.setExternal(false);
+        timeService.setRemote(false);
         return Response.ok().build();
     }
 
     @GET
-    @Path("/internal")
-    public Response getInternal() {
+    @Path("/local")
+    public Response getLocal() {
         return Response.ok(TimeUtil.now().getMillis()).build();
     }
 }

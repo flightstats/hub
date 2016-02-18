@@ -29,23 +29,23 @@ public class TimeService {
 
     private final static Logger logger = LoggerFactory.getLogger(TimeService.class);
 
-    private final String externalFile = HubProperties.getProperty("app.externalFile", "/home/hub/externalTime");
+    private final String remoteFile = HubProperties.getProperty("app.remoteTimeFile", "/home/hub/remoteTime");
     private final static Client client = RestClient.createClient(1, 5, true);
 
     @Inject
     @Named("HubCuratorCluster")
     private CuratorCluster cluster;
 
-    private boolean isExternal = false;
+    private boolean isRemote = false;
 
     public TimeService() {
         HubServices.register(new TimeServiceRegister());
     }
 
-    public void setExternal(boolean external) {
-        isExternal = external;
-        logger.info("external {}", external);
-        if (isExternal) {
+    public void setRemote(boolean remote) {
+        isRemote = remote;
+        logger.info("remote {}", remote);
+        if (isRemote) {
             createFile();
         } else {
             deleteFile();
@@ -53,7 +53,7 @@ public class TimeService {
     }
 
     public DateTime getNow() {
-        if (!isExternal) {
+        if (!isRemote) {
             return TimeUtil.now();
         }
         DateTime millis = getRemoteNow();
@@ -91,35 +91,35 @@ public class TimeService {
     }
 
     private void deleteFile() {
-        File file = new File(externalFile);
+        File file = new File(remoteFile);
         if (file.exists()) {
             file.delete();
         }
-        logger.info("deleted file " + externalFile);
+        logger.info("deleted file " + remoteFile);
     }
 
     private void createFile() {
         try {
-            File file = new File(externalFile);
+            File file = new File(remoteFile);
             FileUtils.write(file, "true");
-            logger.info("wrote file " + externalFile);
+            logger.info("wrote file " + remoteFile);
         } catch (IOException e) {
             logger.warn("unable to write file", e);
-            throw new RuntimeException("unable to write externalFile " + externalFile);
+            throw new RuntimeException("unable to write remoteFile " + remoteFile);
         }
     }
 
-    public boolean isExternal() {
-        return isExternal;
+    public boolean isRemote() {
+        return isRemote;
     }
 
     private class TimeServiceRegister extends AbstractIdleService {
 
         @Override
         protected void startUp() throws Exception {
-            File file = new File(externalFile);
-            isExternal = file.exists();
-            logger.info("calibrating state {} for {}", isExternal, externalFile);
+            File file = new File(remoteFile);
+            isRemote = file.exists();
+            logger.info("calibrating state {} for {}", isRemote, remoteFile);
         }
 
         @Override
