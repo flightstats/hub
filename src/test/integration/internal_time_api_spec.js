@@ -28,7 +28,7 @@ describe(testName, function () {
     });
 
     it('gets internal time', function (done) {
-        request.get({url: links.internal.href, json: true},
+        request.get({url: links.local.href, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
@@ -38,7 +38,7 @@ describe(testName, function () {
     });
 
     it('gets external time', function (done) {
-        request.get({url: links.external.href, json: true},
+        request.get({url: links.remote.href, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
