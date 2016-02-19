@@ -1,9 +1,8 @@
-package com.flightstats.hub.health;
+package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.metrics.MetricsRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -10,6 +10,7 @@ import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
@@ -210,6 +211,7 @@ public class ChannelResource {
     @GET
     @Path("/events")
     @Produces(SseFeature.SERVER_SENT_EVENTS)
+    @NewRelicIgnoreTransaction
     public EventOutput getEvents(@PathParam("channel") String channel, @HeaderParam("Last-Event-ID") String lastEventId) throws Exception {
         try {
             logger.info("starting events for {} at {}", channel, lastEventId);
