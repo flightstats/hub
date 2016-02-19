@@ -10,6 +10,7 @@ import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsSender;
+import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
 import com.flightstats.hub.util.HubUtils;
@@ -260,6 +261,7 @@ public class ChannelContentResource {
     @GET
     @Path("/{h}/{m}/{s}/{ms}/{hash}/events")
     @Produces(SseFeature.SERVER_SENT_EVENTS)
+    @NewRelicIgnoreTransaction
     public EventOutput getEvents(@PathParam("channel") String channel,
                                  @PathParam("Y") int year,
                                  @PathParam("M") int month,
