@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class NtpMonitor {
+public class NtpHateMonitor {
 
-    private final static Logger logger = LoggerFactory.getLogger(NtpMonitor.class);
+    private final static Logger logger = LoggerFactory.getLogger(NtpHateMonitor.class);
 
     @Inject
     private MetricsSender sender;
@@ -31,7 +31,7 @@ public class NtpMonitor {
     private double delta;
     private double primaryOffset;
 
-    public NtpMonitor() {
+    public NtpHateMonitor() {
         HubServices.register(new TimeMonitorService(), HubServices.TYPE.PRE_START);
         minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
         maxPostTimeMillis = HubProperties.getProperty("app.maxPostTimeMillis", 1000);
