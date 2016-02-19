@@ -160,7 +160,7 @@ public class RemoteSpokeStore {
         return quorumLatch.getCount() != quorum;
     }
 
-    private void close(ClientResponse response) {
+    public static void close(ClientResponse response) {
         if (response != null) {
             try {
                 response.close();

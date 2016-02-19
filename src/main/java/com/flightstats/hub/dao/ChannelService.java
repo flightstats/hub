@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 public class ChannelService {
@@ -117,7 +118,12 @@ public class ChannelService {
             return Optional.absent();
         }
         Traces traces = ActiveTraces.getLocal();
-        ContentKey limitKey = new ContentKey(TimeUtil.time(stable), "ZZZZZZ");
+        DateTime time = TimeUtil.stable();
+        if (!stable) {
+            //if not stable, we don't want to miss any results.
+            time = TimeUtil.now().plusMinutes(1);
+        }
+        ContentKey limitKey = new ContentKey(time, "ZZZZZZ");
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
             DateTime ttlTime = getTtlTime(channel);
@@ -205,12 +211,13 @@ public class ChannelService {
             return Collections.emptySortedSet();
         }
         DateTime ttlTime = getTtlTime(query.getChannelName());
-        DateTime stableTime = TimeUtil.time(query.isStable());
-        return contentService.queryByTime(query)
-                .stream()
-                .filter(key -> key.getTime().isBefore(stableTime))
-                .filter(key -> key.getTime().isAfter(ttlTime))
-                .collect(Collectors.toCollection(TreeSet::new));
+        Stream<ContentKey> stream = contentService.queryByTime(query).stream()
+                .filter(key -> key.getTime().isAfter(ttlTime));
+        if (query.isStable()) {
+            DateTime stableTime = TimeUtil.stable();
+            stream = stream.filter(key -> key.getTime().isBefore(stableTime));
+        }
+        return stream.collect(Collectors.toCollection(TreeSet::new));
     }
 
     public SortedSet<ContentKey> getKeys(DirectionQuery query) {

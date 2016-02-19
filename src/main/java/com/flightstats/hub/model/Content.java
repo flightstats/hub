@@ -6,6 +6,7 @@ import com.google.common.io.ByteStreams;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,9 +43,9 @@ public class Content implements Serializable {
         return new Builder();
     }
 
-    public ContentKey keyAndStart() {
+    public ContentKey keyAndStart(DateTime effectiveNow) {
         if (isNew()) {
-            ContentKey key = new ContentKey();
+            ContentKey key = new ContentKey(effectiveNow);
             setContentKey(key);
             ActiveTraces.getLocal().setStart(key.getMillis());
         } else {

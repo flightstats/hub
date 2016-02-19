@@ -8,7 +8,6 @@ import com.google.common.collect.Multimaps;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -43,8 +42,7 @@ public class Linked<T> {
 
     public static class Builder<T> {
         private final List<HalLink> links = new ArrayList<>();
-        private final Multimap<String, HalLink> multiLinks = Multimaps.newListMultimap(new HashMap<String, Collection<HalLink>>(),
-                () -> new ArrayList<>());
+        private final Multimap<String, HalLink> multiLinks = Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
         private final T object;
 
         public Builder(T object) {

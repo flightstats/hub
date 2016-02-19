@@ -1,23 +1,18 @@
 # locust.py
 
 import json
-import string
-import random
-import time
-import threading
-import socket
-import thread
 import logging
+import random
+import socket
+import string
+import threading
 
 import httplib2
+import thread
+import time
 import websocket
-from locust import HttpLocust, TaskSet, task, events, web
 from flask import request, jsonify
-
-
-
-
-
+from locust import HttpLocust, TaskSet, task, events, web
 
 # Usage:
 # locust -f read-write-group.py -H http://localhost:9080
@@ -191,12 +186,12 @@ class WebsiteTasks(TaskSet):
     def write_read(self):
         self.read(self.write())
 
-    @task(10)
+    @task(100)
     def sequential(self):
         start_time = time.time()
         posted_items = []
         query_items = []
-        items = 10
+        items = 20
         for x in range(0, items):
             posted_items.append(self.write())
         initial = (self.client.get(self.time_path("minute"), name="time_minute")).json()

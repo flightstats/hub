@@ -21,7 +21,8 @@ import com.flightstats.hub.rest.HalLinksSerializer;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.rest.Rfc3339DateSerializer;
 import com.flightstats.hub.spoke.GCRunner;
-import com.flightstats.hub.time.NTPMonitor;
+import com.flightstats.hub.time.NtpMonitor;
+import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -69,9 +70,10 @@ public class HubBindings extends AbstractModule {
         } else {
             bind(MetricsSender.class).to(NoOpMetricsSender.class).asEagerSingleton();
         }
-        bind(NTPMonitor.class).asEagerSingleton();
+        bind(NtpMonitor.class).asEagerSingleton();
         bind(LeaderRotator.class).asEagerSingleton();
         bind(AlertRunner.class).asEagerSingleton();
+        bind(TimeService.class).asEagerSingleton();
     }
 
     @Singleton

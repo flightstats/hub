@@ -65,7 +65,7 @@ public class CuratorCluster {
         return fullPath;
     }
 
-    private static String getHost(boolean useName) throws UnknownHostException {
+    private static String getHost(boolean useName) {
         if (HubProperties.getProperty("app.encrypted", false) || useName) {
             return HubHost.getLocalNamePort();
         } else {
@@ -79,7 +79,7 @@ public class CuratorCluster {
         return server;
     }
 
-    public Collection<String> getServers() {
+    public Set<String> getServers() {
         Set<String> servers = new HashSet<>();
         List<ChildData> currentData = clusterCache.getCurrentData();
         for (ChildData childData : currentData) {
@@ -91,9 +91,15 @@ public class CuratorCluster {
         return servers;
     }
 
-    public Collection<String> getRandomServers() {
+    public List<String> getRandomServers() {
         List<String> servers = new ArrayList<>(getServers());
         Collections.shuffle(servers);
+        return servers;
+    }
+
+    public List<String> getRandomRemoteServers() {
+        List<String> servers = getRandomServers();
+        servers.remove(getHost(useName));
         return servers;
     }
 
