@@ -3,7 +3,12 @@ package com.flightstats.hub.group;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -13,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.SortedSet;
 
 @Builder
 @Getter
@@ -89,7 +95,13 @@ public class Group {
         try {
             JsonNode root = mapper.readTree(json);
             if (root.has("startItem")) {
-                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("startItem").asText());
+                Optional<ContentPath> keyOptional = Optional.absent();
+                String startItem = root.get("startItem").asText();
+                if (startItem.equalsIgnoreCase("previous")) {
+                    keyOptional = getPrevious(keyOptional, root.get("channelUrl").asText());
+                } else {
+                    keyOptional = ContentPath.fromFullUrl(startItem);
+                }
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
                 }
@@ -131,6 +143,30 @@ public class Group {
             throw new RuntimeException(e);
         }
         return builder.build();
+    }
+
+    private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {
+        ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+        String channel = ChannelNameUtils.extractFromChannelUrl(channelUrl);
+        Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
+        logger.info("latest {}", latest);
+        if (latest.isPresent()) {
+            DirectionQuery query = DirectionQuery.builder()
+                    .channelName(channel)
+                    .contentKey(latest.get())
+                    .next(false)
+                    .count(1)
+                    .build();
+            SortedSet<ContentKey> keys = channelService.getKeys(query);
+            logger.info("keys {}", keys);
+            if (keys.isEmpty()) {
+                keyOptional = Optional.of(new ContentKey(latest.get().getTime().minusMillis(1), "A"));
+            } else {
+                keyOptional = Optional.of(keys.first());
+            }
+        }
+        logger.info("returning previous {}", keyOptional);
+        return keyOptional;
     }
 
     public static Group fromJson(String json) {

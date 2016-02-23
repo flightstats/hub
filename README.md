@@ -731,8 +731,10 @@ A Group Callback is registered for a client's http endpoint and that endpoint re
 If parallelCalls is higher than one, callback ordering is not guaranteed.
 parallelCalls can be modified with a call to PUT 
 
-* `startItem` is the optional fully qualified item location where the callback should start from.  The startItem will not be sent.
-startItem is *only* used when creating a group callback.  If you want to change the pointer of a callback, you will need to
+* `startItem` is the optional location where the callback should start from.
+  If startItem is a fully qualified item, that next item after it will be sent via the callback.
+  If startItem is 'previous', the previous stable item on the channel will be sent as the first callback item.
+  startItem is *only* used when creating a group callback.  If you want to change the pointer of a callback, you will need to
 delete the callback first.
 
 * `paused` is optional and defaults to false.   When true, this will pause a group callback.
