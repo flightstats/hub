@@ -149,7 +149,6 @@ public class Group {
         ChannelService channelService = HubProvider.getInstance(ChannelService.class);
         String channel = ChannelNameUtils.extractFromChannelUrl(channelUrl);
         Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
-        logger.info("latest {}", latest);
         if (latest.isPresent()) {
             DirectionQuery query = DirectionQuery.builder()
                     .channelName(channel)
@@ -158,14 +157,12 @@ public class Group {
                     .count(1)
                     .build();
             SortedSet<ContentKey> keys = channelService.getKeys(query);
-            logger.info("keys {}", keys);
             if (keys.isEmpty()) {
                 keyOptional = Optional.of(new ContentKey(latest.get().getTime().minusMillis(1), "A"));
             } else {
                 keyOptional = Optional.of(keys.first());
             }
         }
-        logger.info("returning previous {}", keyOptional);
         return keyOptional;
     }
 
