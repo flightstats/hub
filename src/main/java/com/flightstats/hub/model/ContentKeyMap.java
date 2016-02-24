@@ -59,15 +59,19 @@ public class ContentKeyMap {
     private class ContentKeyMapService extends AbstractScheduledService {
         @Override
         protected void runOneIteration() throws Exception {
-            TreeSet<ContentKeyMapStack> treeSet = new TreeSet<>(new StackComparator());
-            treeSet.addAll(map.values());
-            String output = "";
-            ArrayList<ContentKeyMapStack> list = new ArrayList(treeSet);
-            for (int i = 0; i < 100; i++) {
-                ContentKeyMapStack item = list.get(i);
-                output += item.name + " " + item.count + " " + new DateTime(item.start) + "\r\n";
+            try {
+                TreeSet<ContentKeyMapStack> treeSet = new TreeSet<>(new StackComparator());
+                treeSet.addAll(map.values());
+                String output = "";
+                ArrayList<ContentKeyMapStack> list = new ArrayList(treeSet);
+                for (int i = 0; i < 100; i++) {
+                    ContentKeyMapStack item = list.get(i);
+                    output += item.name + " " + item.count + " " + new DateTime(item.start) + "\r\n";
+                }
+                logger.info("top 100: \r\n" + output);
+            } catch (Exception e) {
+                logger.warn("unable to output ", e);
             }
-            logger.info("top 100: \r\n" + output);
         }
 
         @Override
