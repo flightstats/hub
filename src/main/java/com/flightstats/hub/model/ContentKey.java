@@ -32,6 +32,7 @@ public class ContentKey implements ContentPath {
     public ContentKey(DateTime time, String hash) {
         this.time = time;
         this.hash = hash;
+        ContentKeyMap.register();
     }
 
     public ContentKey(int year, int month, int day, int hour, int minute, int second, int millis, String hash) {
