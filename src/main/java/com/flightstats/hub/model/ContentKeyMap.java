@@ -64,7 +64,8 @@ public class ContentKeyMap {
                 treeSet.addAll(map.values());
                 String output = "";
                 ArrayList<ContentKeyMapStack> list = new ArrayList(treeSet);
-                for (int i = 0; i < 100; i++) {
+                int items = Math.min(100, list.size());
+                for (int i = 0; i < items; i++) {
                     ContentKeyMapStack item = list.get(i);
                     output += item.name + " " + item.count + " " + new DateTime(item.start) + "\r\n";
                 }
