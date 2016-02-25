@@ -1,20 +1,15 @@
 package com.flightstats.hub.alert;
 
-import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.model.ContentKey;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Map;
-
-import static com.flightstats.hub.test.SparkUtil.*;
-import static org.junit.Assert.*;
 
 
 public class AlertStatusesTest {
 
-    @Before
+    @Test
+    public void testNothing() {
+        //todo - gfm - 2/25/16 - what should this be doing?
+    }
+/*    @Before
     public void setUp() throws Exception {
         HubProperties.setProperty("app.url", "http://localhost:4567/");
     }
@@ -66,5 +61,5 @@ public class AlertStatusesTest {
         });
 
         assertFalse(AlertStatuses.getLatestKey().isPresent());
-    }
+    }*/
 }
