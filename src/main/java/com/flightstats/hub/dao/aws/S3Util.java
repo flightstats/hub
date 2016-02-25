@@ -40,7 +40,7 @@ public class S3Util {
         DateTime earliestTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
         while (keys.size() < query.getCount() && startTime.isAfter(earliestTime)) {
             TimeUtil.Unit unit = TimeUtil.Unit.HOURS;
-            if (count >= 2) {
+            /*if (count >= 2) {
                 unit = TimeUtil.Unit.DAYS;
             }
             if (count == 7) {
@@ -48,7 +48,7 @@ public class S3Util {
             }
             if (count > 7) {
                 unit = TimeUtil.Unit.MONTHS;
-            }
+            }*/
             keys = getContentKeys(query, dao.queryByTime(query.convert(startTime, unit)), keys, earliestTime);
             startTime = startTime.minus(unit.getDuration());
             count++;
