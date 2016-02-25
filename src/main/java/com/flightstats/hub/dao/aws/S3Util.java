@@ -11,6 +11,7 @@ import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,23 +35,22 @@ public class S3Util {
     }
 
     public static SortedSet<ContentKey> queryPrevious(DirectionQuery query, ContentDao dao) {
-        DateTime startTime = query.getContentKey().getTime();
+        DateTime endTime = query.getContentKey().getTime();
+        DateTime queryTime = endTime;
         SortedSet<ContentKey> keys = new TreeSet<>();
         int count = 0;
         DateTime earliestTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
-        while (keys.size() < query.getCount() && startTime.isAfter(earliestTime)) {
+        while (keys.size() < query.getCount() && queryTime.isAfter(earliestTime)) {
             TimeUtil.Unit unit = TimeUtil.Unit.HOURS;
-            /*if (count >= 2) {
+            Duration duration = new Duration(queryTime, endTime);
+            if (duration.getStandardDays() >= 7) {
                 unit = TimeUtil.Unit.DAYS;
             }
-            if (count == 7) {
-                unit = TimeUtil.Unit.MONTH;
-            }
-            if (count > 7) {
+            if (duration.getStandardDays() >= 31) {
                 unit = TimeUtil.Unit.MONTHS;
-            }*/
-            keys = getContentKeys(query, dao.queryByTime(query.convert(startTime, unit)), keys, earliestTime);
-            startTime = startTime.minus(unit.getDuration());
+            }
+            keys = getContentKeys(query, dao.queryByTime(query.convert(queryTime, unit)), keys, earliestTime);
+            queryTime = queryTime.minus(unit.getDuration());
             count++;
         }
 
