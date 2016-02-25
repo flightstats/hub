@@ -46,6 +46,9 @@ public class S3Util {
             if (duration.getStandardDays() >= 7) {
                 unit = TimeUtil.Unit.DAYS;
             }
+            if (duration.getStandardDays() == 30) {
+                unit = TimeUtil.Unit.MONTH;
+            }
             if (duration.getStandardDays() >= 31) {
                 unit = TimeUtil.Unit.MONTHS;
             }
