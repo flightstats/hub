@@ -8,13 +8,18 @@ import java.util.TreeSet;
 public class ContentKeySet extends TreeSet<ContentKey> {
 
     private final int maxSize;
+    private final ContentKey limitKey;
 
-    public ContentKeySet(int maxSize) {
+    public ContentKeySet(int maxSize, ContentKey contentKey) {
         this.maxSize = maxSize;
+        this.limitKey = contentKey;
     }
 
     @Override
     public boolean add(ContentKey contentKey) {
+        if (contentKey.compareTo(limitKey) > 0) {
+            return false;
+        }
         boolean add = super.add(contentKey);
         if (size() > maxSize) {
             remove(oldest());

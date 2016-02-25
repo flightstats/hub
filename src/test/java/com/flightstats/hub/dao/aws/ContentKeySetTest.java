@@ -12,9 +12,12 @@ public class ContentKeySetTest {
 
     @Test
     public void testLimit() {
-        ContentKeySet contentKeys = new ContentKeySet(5);
+        long millis = System.currentTimeMillis();
+        final DateTime endTime = new DateTime(millis + 8);
+        ContentKeySet contentKeys = new ContentKeySet(5, new ContentKey(endTime, "1"));
+
         for (int i = 0; i < 10; i++) {
-            contentKeys.add(new ContentKey(new DateTime(System.currentTimeMillis() + i), "" + i));
+            contentKeys.add(new ContentKey(new DateTime(millis + i), "" + i));
         }
         for (ContentKey contentKey : contentKeys) {
             System.out.println(contentKey);
@@ -22,7 +25,7 @@ public class ContentKeySetTest {
         assertEquals(5, contentKeys.size());
         ArrayList<ContentKey> list = new ArrayList(contentKeys);
         for (int i = 0; i < 5; i++) {
-            assertEquals("" + (i + 5), list.get(i).getHash());
+            assertEquals("" + (i + 3), list.get(i).getHash());
         }
     }
 

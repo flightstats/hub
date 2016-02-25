@@ -21,6 +21,7 @@ public class TimeQuery implements Query {
     private final Location location;
     private final boolean stable;
     private final int count;
+    private final ContentKey limitKey;
 
     public Location getLocation() {
         if (location == null) {
@@ -29,4 +30,10 @@ public class TimeQuery implements Query {
         return location;
     }
 
+    public DateTime getEndTime() {
+        if (endTime == null && limitKey != null) {
+            return limitKey.getTime();
+        }
+        return endTime;
+    }
 }
