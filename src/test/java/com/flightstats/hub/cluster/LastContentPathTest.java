@@ -1,6 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
@@ -11,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class LastContentPathTest {
 
@@ -51,6 +53,15 @@ public class LastContentPathTest {
         lastContentPath.delete(name, BASE_PATH);
         ContentKey contentKey = new ContentKey();
         assertEquals(contentKey, lastContentPath.get(name, contentKey, BASE_PATH));
+    }
+
+    @Test
+    public void testCreateNull() throws Exception {
+        String name = "testCreateNull";
+        DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
+        ContentKey key1 = new ContentKey(start, "B");
+        ContentPath contentPath = lastContentPath.get(name, null, BASE_PATH);
+        assertNull(contentPath);
     }
 
     @Test

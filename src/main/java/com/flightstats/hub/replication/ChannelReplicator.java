@@ -13,7 +13,7 @@ public class ChannelReplicator {
 
     private ChannelConfig channel;
     private HubUtils hubUtils;
-    ;
+
     public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
 
     public ChannelReplicator(ChannelConfig channel, HubUtils hubUtils) {

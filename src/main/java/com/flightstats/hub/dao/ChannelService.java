@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.channel.ChannelValidator;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -35,6 +36,10 @@ public class ChannelService {
     private ReplicatorManager replicatorManager;
     @Inject
     private MetricsSender sender;
+    @Inject
+    private LastContentPath lastContentPath;
+
+    public static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
 
     public boolean channelExists(String channelName) {
         return channelConfigDao.channelExists(channelName);
@@ -126,7 +131,7 @@ public class ChannelService {
         ContentKey limitKey = new ContentKey(time, "ZZZZZZ");
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
-            //todo - gfm - 2/24/16 - clear the cache if found in Spoke
+            lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
             DateTime ttlTime = getTtlTime(channel);
             if (latest.get().getTime().isBefore(ttlTime)) {
                 return Optional.absent();
@@ -136,7 +141,10 @@ public class ChannelService {
             }
             return latest;
         }
-        //todo - gfm - 2/24/16 - if not in spoke, check the cache
+        ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
+        if (latestCache != null) {
+            return Optional.of((ContentKey) latestCache);
+        }
 
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -153,8 +161,9 @@ public class ChannelService {
         if (keys.isEmpty()) {
             return Optional.absent();
         } else {
-            //todo - gfm - 2/24/16 - update the cache with Read-Update-Write
-            return Optional.of(keys.iterator().next());
+            ContentKey latestKey = keys.iterator().next();
+            lastContentPath.updateIncrease(latestKey, channel, CHANNEL_LATEST_UPDATED);
+            return Optional.of(latestKey);
         }
     }
 
