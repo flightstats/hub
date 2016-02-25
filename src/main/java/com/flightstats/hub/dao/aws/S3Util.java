@@ -43,10 +43,10 @@ public class S3Util {
             if (count >= 2) {
                 unit = TimeUtil.Unit.DAYS;
             }
-            if (count == 4) {
+            if (count == 7) {
                 unit = TimeUtil.Unit.MONTH;
             }
-            if (count > 4) {
+            if (count > 7) {
                 unit = TimeUtil.Unit.MONTHS;
             }
             keys = getContentKeys(query, dao.queryByTime(query.convert(startTime, unit)), keys, earliestTime);

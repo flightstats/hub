@@ -20,6 +20,7 @@ public class TimeQuery implements Query {
     private final TimeUtil.Unit unit;
     private final Location location;
     private final boolean stable;
+    private final int count;
 
     public Location getLocation() {
         if (location == null) {

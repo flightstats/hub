@@ -126,6 +126,7 @@ public class ChannelService {
         ContentKey limitKey = new ContentKey(time, "ZZZZZZ");
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
+            //todo - gfm - 2/24/16 - clear the cache if found in Spoke
             DateTime ttlTime = getTtlTime(channel);
             if (latest.get().getTime().isBefore(ttlTime)) {
                 return Optional.absent();
@@ -135,6 +136,7 @@ public class ChannelService {
             }
             return latest;
         }
+        //todo - gfm - 2/24/16 - if not in spoke, check the cache
 
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -151,6 +153,7 @@ public class ChannelService {
         if (keys.isEmpty()) {
             return Optional.absent();
         } else {
+            //todo - gfm - 2/24/16 - update the cache with Read-Update-Write
             return Optional.of(keys.iterator().next());
         }
     }
@@ -231,7 +234,9 @@ public class ChannelService {
         query = query.withTtlDays(getTtlDays(query.getChannelName()));
         Traces traces = ActiveTraces.getLocal();
         traces.add(query);
+        //todo - gfm - 2/24/16 - returns all of the keys found
         List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
+        //todo - gfm - 2/24/16 - filter down to one for latest
         SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
         traces.add("ChannelServiceImpl.getKeys", contentKeys);
         return contentKeys;

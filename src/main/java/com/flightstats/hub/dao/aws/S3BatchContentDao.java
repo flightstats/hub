@@ -152,13 +152,16 @@ public class S3BatchContentDao implements ContentDao {
         if (query.getUnit().lessThanOrEqual(TimeUtil.Unit.MINUTES)) {
             return queryMinute(query.getChannelName(), query.getStartTime(), query.getUnit());
         } else {
-            return queryHourPlus(query.getChannelName(), query.getStartTime(), query.getUnit());
+            return queryHourPlus(query.getChannelName(), query.getStartTime(), query.getUnit(), query.getCount());
         }
     }
 
-    private SortedSet<ContentKey> queryHourPlus(String channel, DateTime startTime, TimeUtil.Unit unit) {
+    private SortedSet<ContentKey> queryHourPlus(String channel, DateTime startTime, TimeUtil.Unit unit, int count) {
         Traces traces = ActiveTraces.getLocal();
         SortedSet<ContentKey> keys = new TreeSet<>();
+        if (count > 0) {
+            keys = new ContentKeySet(count);
+        }
         DateTime rounded = unit.round(startTime);
         traces.add("S3BatchContentDao.queryHourPlus starting ", channel, rounded, unit);
         ListObjectsRequest request = new ListObjectsRequest()
