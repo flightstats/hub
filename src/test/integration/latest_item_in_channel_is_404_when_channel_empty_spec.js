@@ -1,15 +1,27 @@
 require('./integration_config.js');
 
+var request = require('request');
+var http = require('http');
+var Q = require('q');
+var moment = require('moment');
 var channelName = utils.randomChannelName();
+var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 
-utils.configureFrisby();
+describe(testName, function () {
+    utils.putChannel(channelName, function () {
+    }, {"name": channelName, ttlDays: 1});
 
-utils.runInTestChannel(testName, channelName, function (channelResponse) {
-    var latestLink = channelResponse['_links']['latest']['href'];
-    frisby.create(testName + ':Test latest item is 404 when channel is empty')
-        .get(latestLink)
-        .expectStatus(404)
-        .toss();
+    it('gets latest ' + testName, function (done) {
+        request.get({
+                url: channelResource + '/latest?stable=false'
+            },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(404);
+                done();
+            });
+    }, 2 * 60001);
+
 });
 
