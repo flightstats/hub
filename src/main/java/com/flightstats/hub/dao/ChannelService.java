@@ -143,6 +143,9 @@ public class ChannelService {
         }
         ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
         if (latestCache != null) {
+            if (latestCache.equals(ContentKey.NONE)) {
+                return Optional.absent();
+            }
             return Optional.of((ContentKey) latestCache);
         }
 
@@ -159,6 +162,7 @@ public class ChannelService {
             traces.log(logger);
         }
         if (keys.isEmpty()) {
+            lastContentPath.updateIncrease(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             return Optional.absent();
         } else {
             ContentKey latestKey = keys.iterator().next();
