@@ -41,6 +41,7 @@ public class S3Util {
         int count = 0;
         DateTime earliestTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
         while (keys.size() < query.getCount() && queryTime.isAfter(earliestTime)) {
+            //todo - gfm - 2/26/16 - this could be more sophisticated
             TimeUtil.Unit unit = TimeUtil.Unit.HOURS;
             Duration duration = new Duration(queryTime, endTime);
             if (duration.getStandardDays() >= 7) {
