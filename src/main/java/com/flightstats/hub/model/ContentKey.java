@@ -1,5 +1,6 @@
 package com.flightstats.hub.model;
 
+import com.flightstats.hub.metrics.ContentKeyMap;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import lombok.EqualsAndHashCode;
