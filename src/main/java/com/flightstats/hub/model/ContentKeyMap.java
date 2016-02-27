@@ -4,12 +4,14 @@ import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Singleton;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -37,14 +39,15 @@ public class ContentKeyMap {
     }
 
     @EqualsAndHashCode(of = {"count", "name"})
-    private static class ContentKeyMapStack {
+    @Getter
+    public static class ContentKeyMapStack {
         String name;
         long start = System.currentTimeMillis();
         StackTraceElement[] stacktrace;
         long count;
     }
 
-    private class StackComparator implements Comparator<ContentKeyMapStack> {
+    private static class StackComparator implements Comparator<ContentKeyMapStack> {
 
         @Override
         public int compare(ContentKeyMapStack o1, ContentKeyMapStack o2) {
@@ -56,17 +59,20 @@ public class ContentKeyMap {
         HubServices.register(new ContentKeyMapService());
     }
 
+    public static List<ContentKeyMapStack> getTopItems(int max) {
+        TreeSet<ContentKeyMapStack> treeSet = new TreeSet<>(new StackComparator());
+        treeSet.addAll(map.values());
+        ArrayList<ContentKeyMapStack> list = new ArrayList(treeSet);
+        int items = Math.min(max, list.size());
+        return list.subList(0, items);
+    }
+
     private class ContentKeyMapService extends AbstractScheduledService {
         @Override
         protected void runOneIteration() throws Exception {
             try {
-                TreeSet<ContentKeyMapStack> treeSet = new TreeSet<>(new StackComparator());
-                treeSet.addAll(map.values());
                 String output = "";
-                ArrayList<ContentKeyMapStack> list = new ArrayList(treeSet);
-                int items = Math.min(100, list.size());
-                for (int i = 0; i < items; i++) {
-                    ContentKeyMapStack item = list.get(i);
+                for (ContentKeyMapStack item : getTopItems(100)) {
                     output += item.name + " " + item.count + " " + new DateTime(item.start) + "\r\n";
                 }
                 logger.info("top 100: \r\n" + output);
