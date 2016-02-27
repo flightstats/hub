@@ -32,22 +32,24 @@ public class ContentKeysResource {
     private void addItems(ObjectNode root, String name, List<ContentKeyMapStack> items) {
         ArrayNode mostKeys = root.putArray(name);
         for (ContentKeyMapStack item : items) {
-            ObjectNode itemNode = mostKeys.addObject();
-            itemNode.put("name", item.getName());
-            itemNode.put("count", item.getCount());
-            itemNode.put("start", new DateTime(item.getStart()).toString());
-            itemNode.put("end", new DateTime(item.getEnd()).toString());
-            ArrayNode stacktrace = itemNode.putArray("stacktrace");
-            StackTraceElement[] elements = item.getStacktrace();
-            for (int i = 2; i < elements.length; i++) {
-                StackTraceElement element = elements[i];
-                String line = element.toString();
-                if (line.startsWith("java.util.concurrent.Executors$RunnableAdapter")
-                        || line.startsWith("org.glassfish.jersey.message.internal.StreamingOutputProvider")) {
-                    stacktrace.add("...");
-                    break;
-                } else {
-                    stacktrace.add(line);
+            if (item.getCount() > 1000) {
+                ObjectNode itemNode = mostKeys.addObject();
+                itemNode.put("name", item.getName());
+                itemNode.put("count", item.getCount());
+                itemNode.put("start", new DateTime(item.getStart()).toString());
+                itemNode.put("end", new DateTime(item.getEnd()).toString());
+                ArrayNode stacktrace = itemNode.putArray("stacktrace");
+                StackTraceElement[] elements = item.getStacktrace();
+                for (int i = 2; i < elements.length; i++) {
+                    StackTraceElement element = elements[i];
+                    String line = element.toString();
+                    if (line.startsWith("java.util.concurrent.Executors$RunnableAdapter")
+                            || line.startsWith("org.glassfish.jersey.message.internal.StreamingOutputProvider")) {
+                        stacktrace.add("...");
+                        break;
+                    } else {
+                        stacktrace.add(line);
+                    }
                 }
             }
 
