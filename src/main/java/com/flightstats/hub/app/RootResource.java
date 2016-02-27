@@ -24,6 +24,7 @@ public class RootResource {
         links.withLink("tag", uriInfo.getRequestUri() + "tag");
         links.withLink("alert", uriInfo.getRequestUri() + "alert");
         links.withLink("health", uriInfo.getRequestUri() + "health");
+        links.withLink("internal", uriInfo.getRequestUri() + "internal");
         return Response.ok(links.build()).build();
     }
 
