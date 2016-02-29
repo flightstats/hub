@@ -35,6 +35,7 @@ The Hub
 * [storage](#storage)
 * [access control](#access-control)
 * [encrypted-hub](#encrypted-hub)
+* [internal api](#internal-api)
 * [monitoring](#monitoring)
 * [development](#development)
 * [deployments](#deployments)
@@ -937,10 +938,10 @@ On success:  `HTTP/1.1 201 OK`
     "threshold": 0
     "_links": {
         "self": {
-            "href": "http://hub-v2.svc.prod/alert/stumptownAlert"
+            "href": "http://hub/alert/stumptownAlert"
         },
         "status": {
-            "href": "http://hub-v2.svc.prod/alert/stumptownAlert/status"
+            "href": "http://hub/alert/stumptownAlert/status"
         }
     }
 }
@@ -950,7 +951,7 @@ On success:  `HTTP/1.1 201 OK`
 
 Following the status link from _links.status.href shows the channel history for the current state of the alert
 
-`GET http://hub-v2.svc.prod/alert/stumptownAlert/status`
+`GET http://hub/alert/stumptownAlert/status`
 
 ```json
 {
@@ -960,29 +961,29 @@ Following the status link from _links.status.href shows the channel history for 
     "type": "channel",
     "history": [
     {
-        "href": "http://hub-v2.svc.prod/channel/stumptown/2015/06/17/19/21?stable=true",
+        "href": "http://hub/channel/stumptown/2015/06/17/19/21?stable=true",
         "items": 0
     },
     {
-        "href": "http://hub-v2.svc.prod/channel/stumptown/2015/06/17/19/22?stable=true",
+        "href": "http://hub/channel/stumptown/2015/06/17/19/22?stable=true",
         "items": 0
     },
     {
-        "href": "http://hub-v2.svc.prod/channel/stumptown/2015/06/17/19/23?stable=true",
+        "href": "http://hub/channel/stumptown/2015/06/17/19/23?stable=true",
         "items": 0
     },
     {
-        "href": "http://hub-v2.svc.prod/channel/stumptown/2015/06/17/19/24?stable=true",
+        "href": "http://hub/channel/stumptown/2015/06/17/19/24?stable=true",
         "items": 0
     },
     {
-        "href": "http://hub-v2.svc.prod/channel/stumptown/2015/06/17/19/25?stable=true",
+        "href": "http://hub/channel/stumptown/2015/06/17/19/25?stable=true",
         "items": 0
     }
     ],
     "_links": {
         "self": {
-            "href": "http://hub-v2.svc.prod/alert/stumptownAlert/status"
+            "href": "http://hub/alert/stumptownAlert/status"
         }
     }
 }
@@ -992,7 +993,7 @@ Following the status link from _links.status.href shows the channel history for 
 
 Following the status link from _links.status.href shows the latest item in a channel, and the last completed callback for that group.
 
-`GET http://hub-v2.svc.prod/alert/stumptownGroup/status`
+`GET http://hub/alert/stumptownGroup/status`
 
 ```
 {
@@ -1001,17 +1002,17 @@ Following the status link from _links.status.href shows the latest item in a cha
     "type": "group",
     "history": [
         {
-        "href": "http://hub-v2.svc.prod/channel/stumptown/2015/06/17/18/34/38/306/UqCNR4",
+        "href": "http://hub/channel/stumptown/2015/06/17/18/34/38/306/UqCNR4",
         "name": "channelLatest"
         },
         {
-        "href": "http://hub-v2.svc.prod/channel/stumptown/2015/06/17/18/34/38/306/UqCNR4",
+        "href": "http://hub/channel/stumptown/2015/06/17/18/34/38/306/UqCNR4",
         "name": "lastCompletedCallback"
         }
     ],
     "_links": {
         "self": {
-            "href": "http://hub-v2.svc.prod/alert/stumptownGroup/status"
+            "href": "http://hub/alert/stumptownGroup/status"
         }
     }
 }
@@ -1061,6 +1062,15 @@ EH also has some additional features to the normal Hub:
 * All access to channel items (reads and writes) require authentication and are access controlled
 
 Channel inserts can be audited by a GET or HEAD to each channel item.  The creator of the record is returned in a `User` header.
+
+## internal api
+
+The hub uses a number of endpoints not intended for use by clients.
+All of these are under http://hub/internal
+Some of these are useful for debugging, such as :
+* Read only view into zookeeper values - http://hub/internal/zookeeper
+* Traces of calls into the hub, including active, slowest and recent - http://hub/internal/traces
+
 
 ## development
 
