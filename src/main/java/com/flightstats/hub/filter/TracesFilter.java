@@ -9,9 +9,11 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Set;
 
 @Provider
 public class TracesFilter implements ContainerRequestFilter, ContainerResponseFilter {
@@ -35,6 +37,10 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
         logger.trace("incoming {} {}", request.getMethod(), requestUri);
         Thread thread = Thread.currentThread();
         thread.setName(thread.getName() + "|" + requestUri);
+        MultivaluedMap<String, String> headers = request.getHeaders();
+        Set<String> keySet = headers.keySet();
+        logger.info("incoming header keys {}", keySet);
+
         ActiveTraces.start(request.getMethod(), requestUri);
     }
 }
