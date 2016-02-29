@@ -42,10 +42,10 @@ public class HubVersion {
             }
         } catch (NullPointerException e) {
             logger.info("unable to get version, presume local");
-            version = "v2-local";
+            version = "local";
         } catch (Exception e) {
             logger.info("unable to get version ", e);
-            version = "v2";
+            version = "hub";
         }
         return version;
     }

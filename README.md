@@ -1076,7 +1076,7 @@ Some of these are useful for debugging, such as :
 
 The Hub is a work in progress.  If you'd like to contribute, let us know.
 
-[Install locally](https://github.com/flightstats/hubv2/wiki/Install-hub-locally)
+[Install locally](https://github.com/flightstats/hub/wiki/Install-hub-locally)
 
 General Rules for Development:
 * Only pull from master

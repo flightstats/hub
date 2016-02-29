@@ -21,7 +21,7 @@ public class SingleHubMain {
     public static void main(String[] args) throws Exception {
         System.out.println("starting up single Hub");
         HubProperties.setProperty("hub.type", "test");
-        HubProperties.setProperty("app.name", "hub-v2");
+        HubProperties.setProperty("app.name", "hub");
         HubProperties.setProperty("app.environment", "single");
 
         setProperty("zookeeper.connection", "localhost:2181");
