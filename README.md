@@ -1066,7 +1066,7 @@ Channel inserts can be audited by a GET or HEAD to each channel item.  The creat
 
 The Hub is a work in progress.  If you'd like to contribute, let us know.
 
-[Install locally](https://github.com/flightstats/hubv2/wiki/Install-hub-locally)
+[Install locally](https://github.com/flightstats/hub/wiki/Install-hub-locally)
 
 General Rules for Development:
 * Only pull from master
