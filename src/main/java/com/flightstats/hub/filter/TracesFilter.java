@@ -13,7 +13,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Set;
+import java.util.List;
 
 @Provider
 public class TracesFilter implements ContainerRequestFilter, ContainerResponseFilter {
@@ -38,9 +38,10 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
         Thread thread = Thread.currentThread();
         thread.setName(thread.getName() + "|" + requestUri);
         MultivaluedMap<String, String> headers = request.getHeaders();
-        Set<String> keySet = headers.keySet();
-        logger.info("incoming header keys {}", keySet);
-
+        List<String> forwarded = headers.get("X-Forwarded-For");
+        if (null != forwarded) {
+            logger.info("incoming forwarded {}", forwarded);
+        }
         ActiveTraces.start(request.getMethod(), requestUri);
     }
 }
