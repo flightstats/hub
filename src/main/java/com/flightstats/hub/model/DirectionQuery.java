@@ -34,6 +34,8 @@ public class DirectionQuery implements Query {
         return TimeQuery.builder().channelName(getChannelName())
                 .startTime(startTime)
                 .unit(unit)
+                .limitKey(contentKey)
+                .count(count)
                 .build();
     }
 

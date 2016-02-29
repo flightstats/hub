@@ -18,7 +18,7 @@ public class ActiveTraces {
 
     private static final Map<String, Traces> activeTraces = new ConcurrentHashMap<>();
     private static final ObjectRing<Traces> recent = new ObjectRing(100);
-    private static final TracesSortedSet slowest = new TracesSortedSet(100);
+    private static final TopSortedSet<Traces> slowest = new TopSortedSet<>(100, Traces::getTime, new DescendingTracesComparator());
     private static final ThreadLocal<Traces> threadLocal = new ThreadLocal();
     private static int logSlowTraces = HubProperties.getProperty("logSlowTracesSeconds", 10) * 1000;
 
@@ -78,7 +78,7 @@ public class ActiveTraces {
     }
 
     private static void addItems(String fieldName, Collection<Traces> recentItems, ObjectNode root) {
-        TreeSet<Traces> orderedRecent = new TreeSet<>(new TracesSortedSet.DescendingTracesComparator());
+        TreeSet<Traces> orderedRecent = new TreeSet<>(new DescendingTracesComparator());
         orderedRecent.addAll(recentItems);
         ArrayNode recent = root.putArray(fieldName);
         for (Traces trace : orderedRecent) {

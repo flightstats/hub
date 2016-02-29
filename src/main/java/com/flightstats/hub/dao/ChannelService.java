@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.channel.ChannelValidator;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -35,6 +36,10 @@ public class ChannelService {
     private ReplicatorManager replicatorManager;
     @Inject
     private MetricsSender sender;
+    @Inject
+    private LastContentPath lastContentPath;
+
+    public static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
 
     public boolean channelExists(String channelName) {
         return channelConfigDao.channelExists(channelName);
@@ -126,6 +131,7 @@ public class ChannelService {
         ContentKey limitKey = new ContentKey(time, "ZZZZZZ");
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
+            lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
             DateTime ttlTime = getTtlTime(channel);
             if (latest.get().getTime().isBefore(ttlTime)) {
                 return Optional.absent();
@@ -134,6 +140,13 @@ public class ChannelService {
                 traces.log(logger);
             }
             return latest;
+        }
+        ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
+        if (latestCache != null) {
+            if (latestCache.equals(ContentKey.NONE)) {
+                return Optional.absent();
+            }
+            return Optional.of((ContentKey) latestCache);
         }
 
         DirectionQuery query = DirectionQuery.builder()
@@ -149,9 +162,12 @@ public class ChannelService {
             traces.log(logger);
         }
         if (keys.isEmpty()) {
+            lastContentPath.updateIncrease(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             return Optional.absent();
         } else {
-            return Optional.of(keys.iterator().next());
+            ContentKey latestKey = keys.iterator().next();
+            lastContentPath.updateIncrease(latestKey, channel, CHANNEL_LATEST_UPDATED);
+            return Optional.of(latestKey);
         }
     }
 
@@ -231,7 +247,9 @@ public class ChannelService {
         query = query.withTtlDays(getTtlDays(query.getChannelName()));
         Traces traces = ActiveTraces.getLocal();
         traces.add(query);
+        //todo - gfm - 2/24/16 - returns all of the keys found
         List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
+        //todo - gfm - 2/24/16 - filter down to one for latest
         SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
         traces.add("ChannelServiceImpl.getKeys", contentKeys);
         return contentKeys;

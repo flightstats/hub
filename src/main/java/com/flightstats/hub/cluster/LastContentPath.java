@@ -45,9 +45,13 @@ public class LastContentPath {
         try {
             return get(path);
         } catch (KeeperException.NoNodeException e) {
-            logger.warn("missing value for {}", name);
-            initialize(name, defaultPath, basePath);
-            return get(name, defaultPath, basePath);
+            if (defaultPath == null) {
+                return null;
+            } else {
+                logger.warn("missing value for {} {}", name, basePath);
+                initialize(name, defaultPath, basePath);
+                return get(name, defaultPath, basePath);
+            }
         } catch (Exception e) {
             logger.warn("unable to get node " + e.getMessage());
             return defaultPath;
@@ -97,6 +101,8 @@ public class LastContentPath {
         String path = basePath + name;
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
+        } catch (KeeperException.NoNodeException e) {
+            logger.debug("no node for {}", path);
         } catch (Exception e) {
             logger.warn("unable to delete {} {}", path, e.getMessage());
         }

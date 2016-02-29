@@ -19,21 +19,24 @@ import javax.ws.rs.core.Response;
 public class TracesResource {
     private final static Logger logger = LoggerFactory.getLogger(TracesResource.class);
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private CuratorCluster hubCuratorCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private static final CuratorCluster hubCuratorCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response getTraces() {
-        ObjectNode root = mapper.createObjectNode();
-
-        String tracesPath = "/internal/traces";
-        root.put("server", HubHost.getLocalHttpNameUri() + tracesPath);
-        ArrayNode servers = root.putArray("servers");
-        for (String spokeServer : hubCuratorCluster.getServers()) {
-            servers.add(HubHost.getScheme() + spokeServer + tracesPath);
-        }
+        ObjectNode root = serverAndServers("/internal/traces");
         ActiveTraces.log(root);
         return Response.ok(root).build();
+    }
+
+    public static ObjectNode serverAndServers(String path) {
+        ObjectNode root = mapper.createObjectNode();
+        root.put("server", HubHost.getLocalHttpNameUri() + path);
+        ArrayNode servers = root.putArray("servers");
+        for (String spokeServer : hubCuratorCluster.getServers()) {
+            servers.add(HubHost.getScheme() + spokeServer + path);
+        }
+        return root;
     }
 }

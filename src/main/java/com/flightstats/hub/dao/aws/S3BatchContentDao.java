@@ -152,18 +152,23 @@ public class S3BatchContentDao implements ContentDao {
         if (query.getUnit().lessThanOrEqual(TimeUtil.Unit.MINUTES)) {
             return queryMinute(query.getChannelName(), query.getStartTime(), query.getUnit());
         } else {
-            return queryHourPlus(query.getChannelName(), query.getStartTime(), query.getUnit());
+            return queryHourPlus(query);
         }
     }
 
-    private SortedSet<ContentKey> queryHourPlus(String channel, DateTime startTime, TimeUtil.Unit unit) {
+    private SortedSet<ContentKey> queryHourPlus(TimeQuery query) {
         Traces traces = ActiveTraces.getLocal();
         SortedSet<ContentKey> keys = new TreeSet<>();
-        DateTime rounded = unit.round(startTime);
-        traces.add("S3BatchContentDao.queryHourPlus starting ", channel, rounded, unit);
+        if (query.getCount() > 0) {
+            keys = new ContentKeySet(query.getCount(), query.getLimitKey());
+        }
+
+        DateTime rounded = query.getUnit().round(query.getStartTime());
+        String channel = query.getChannelName();
+        traces.add("S3BatchContentDao.queryHourPlus starting ", channel, rounded, query.getUnit());
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
-                .withPrefix(channel + BATCH_INDEX + unit.format(rounded))
+                .withPrefix(channel + BATCH_INDEX + query.getUnit().format(rounded))
                 .withMaxKeys(s3MaxQueryItems);
         SortedSet<MinutePath> minutePaths = listMinutePaths(channel, request, traces, true);
         for (MinutePath minutePath : minutePaths) {

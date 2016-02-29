@@ -50,7 +50,7 @@ describe(testName, function () {
                 expect(value.body._links.previous.href).toBe(items[0] + '/previous/2?stable=false');
                 done();
             })
-    }, 15001);
+    }, 2 * 60001);
 
     function getItem(url, status) {
         status = status || 200;

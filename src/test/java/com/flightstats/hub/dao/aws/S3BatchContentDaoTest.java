@@ -160,7 +160,6 @@ public class S3BatchContentDaoTest {
         for (int i = 0; i < 12; i++) {
             writeBatchMinute(channel, new MinutePath(start.plusMinutes(i * 6)), 2);
         }
-
         queryDirection(channel, key, true, 50, 24);
         queryDirection(channel, new ContentKey(start.plusMinutes(37), "A"), true, 6, 6);
         queryDirection(channel, new ContentKey(start.plusMinutes(73), "A"), true, 0, 0);

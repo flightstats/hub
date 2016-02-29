@@ -8,7 +8,8 @@ var channelB = utils.randomChannelName();
 var tag = Math.random().toString().replace(".", "");
 var testName = __filename;
 var channelBody = {
-    tags: [tag, "test"]
+    tags: [tag, "test"],
+    ttlDays: 1
 };
 
 /**
@@ -59,7 +60,7 @@ describe(testName, function () {
                 }
                 done();
             });
-    }, 60001);
+    }, 2 * 60001);
 
     var parsedLinks;
 

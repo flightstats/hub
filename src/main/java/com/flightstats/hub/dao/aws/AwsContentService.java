@@ -224,8 +224,10 @@ public class AwsContentService implements ContentService {
         try {
             CountDownLatch latch = new CountDownLatch(contentDaos.length);
             Traces traces = ActiveTraces.getLocal();
+            String threadName = Thread.currentThread().getName();
             for (ContentDao contentDao : contentDaos) {
                 executorService.submit((Runnable) () -> {
+                    Thread.currentThread().setName(contentDao.getClass().getSimpleName() + "|" + threadName);
                     ActiveTraces.setLocal(traces);
                     orderedKeys.addAll(daoQuery.apply(contentDao));
                     latch.countDown();

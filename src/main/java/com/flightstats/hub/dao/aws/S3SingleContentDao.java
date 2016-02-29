@@ -152,15 +152,18 @@ public class S3SingleContentDao implements ContentDao {
         } else {
             request.withMarker(query.getChannelName() + "/" + timePath);
         }
-        SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, MAX_ITEMS, endTime);
+        SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, MAX_ITEMS, endTime, query.getCount(), query.getLimitKey());
         traces.add("S3SingleContentDao.queryByTime completed", keys);
         return keys;
     }
 
     private SortedSet<ContentKey> iterateListObjects(String channelName, ListObjectsRequest request,
-                                                     int maxItems, DateTime endTime) {
+                                                     int maxItems, DateTime endTime, int count, ContentKey limitKey) {
         Traces traces = ActiveTraces.getLocal();
         SortedSet<ContentKey> keys = new TreeSet<>();
+        if (count > 0 && limitKey != null) {
+            keys = new ContentKeySet(count, limitKey);
+        }
         sender.send("channel." + channelName + ".s3.list", 1);
         logger.trace("list {} {} {}", channelName, request.getPrefix(), request.getMarker());
         traces.add("S3SingleContentDao.iterateListObjects prefix:", request.getPrefix(), request.getMarker());
@@ -223,7 +226,7 @@ public class S3SingleContentDao implements ContentDao {
                 .withPrefix(query.getChannelName() + "/")
                 .withMarker(query.getChannelName() + "/" + query.getContentKey().toUrl())
                 .withMaxKeys(query.getCount());
-        return iterateListObjects(query.getChannelName(), request, query.getCount(), TimeUtil.now());
+        return iterateListObjects(query.getChannelName(), request, query.getCount(), TimeUtil.now(), query.getCount(), null);
     }
 
     private String getS3ContentKey(String channelName, ContentKey key) {

@@ -21,7 +21,6 @@ public class InternalResource {
 
         links.withLink("zookeeper", uriInfo.getRequestUri() + "/zookeeper");
         links.withLink("traces", uriInfo.getRequestUri() + "/traces");
-        links.withLink("time", uriInfo.getRequestUri() + "/time");
 
         return Response.ok(links.build()).build();
     }

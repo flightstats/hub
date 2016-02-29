@@ -11,7 +11,7 @@ var testName = __filename;
 
 describe(testName, function () {
     utils.putChannel(channelName, function () {
-    }, {"name": channelName, ttlDays: 10000});
+    }, {"name": channelName, ttlDays: 1});
 
     function time(text) {
         console.log(moment().format('h:mm:ss.SSS'), text);
@@ -64,7 +64,7 @@ describe(testName, function () {
                 expect(value.body._links.previous.href).toBe(items[0] + '/previous/2?stable=false');
                 done();
             })
-    }, 60001);
+    }, 2 * 60001);
 
     function getItem(url, status) {
         status = status || 200;
