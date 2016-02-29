@@ -1,6 +1,5 @@
 package com.flightstats.hub.model;
 
-import com.flightstats.hub.metrics.ContentKeyMap;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import lombok.EqualsAndHashCode;
@@ -33,7 +32,6 @@ public class ContentKey implements ContentPath {
     public ContentKey(DateTime time, String hash) {
         this.time = time;
         this.hash = hash;
-        ContentKeyMap.register();
     }
 
     public static ContentKey lastKey(DateTime time) {

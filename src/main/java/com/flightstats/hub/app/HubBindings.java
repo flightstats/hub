@@ -11,7 +11,10 @@ import com.flightstats.hub.group.GroupProcessor;
 import com.flightstats.hub.group.GroupProcessorImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.health.HubHealthCheck;
-import com.flightstats.hub.metrics.*;
+import com.flightstats.hub.metrics.HostedGraphiteSender;
+import com.flightstats.hub.metrics.MetricsRunner;
+import com.flightstats.hub.metrics.MetricsSender;
+import com.flightstats.hub.metrics.NoOpMetricsSender;
 import com.flightstats.hub.replication.ReplicatorManager;
 import com.flightstats.hub.rest.HalLinks;
 import com.flightstats.hub.rest.HalLinksSerializer;
@@ -71,7 +74,6 @@ public class HubBindings extends AbstractModule {
         bind(LeaderRotator.class).asEagerSingleton();
         bind(AlertRunner.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
-        bind(ContentKeyMap.class).asEagerSingleton();
     }
 
     @Singleton
