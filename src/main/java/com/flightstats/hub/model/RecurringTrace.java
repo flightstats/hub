@@ -29,4 +29,9 @@ public class RecurringTrace implements Trace {
                 " until " + new DateTime(latestTime) +
                 " " + Arrays.toString(objects);
     }
+
+    @Override
+    public String context() {
+        return Arrays.toString(objects);
+    }
 }

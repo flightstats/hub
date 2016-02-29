@@ -18,4 +18,9 @@ public class SingleTrace implements Trace {
     public String toString() {
         return new DateTime(time) + " " + Arrays.toString(objects);
     }
+
+    @Override
+    public String context() {
+        return Arrays.toString(objects);
+    }
 }

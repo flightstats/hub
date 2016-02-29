@@ -16,9 +16,6 @@ public class Traces {
     private final String id = UUID.randomUUID().toString();
     private final List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
 
-    public Traces() {
-    }
-
     public Traces(Object... objects) {
         add(objects);
     }
@@ -95,8 +92,9 @@ public class Traces {
     }
 
     public void output(ObjectNode root) {
+        root.put("first", traces.get(0).context());
         root.put("id", id);
-        root.put("start", new DateTime(start).toString());
+        root.put("start", new DateTime(this.start).toString());
         root.put("millis", getTime());
         ArrayNode traceRoot = root.putArray("trace");
         synchronized (traces) {

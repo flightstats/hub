@@ -9,11 +9,9 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 
 @Provider
 public class TracesFilter implements ContainerRequestFilter, ContainerResponseFilter {
@@ -37,11 +35,6 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
         logger.trace("incoming {} {}", request.getMethod(), requestUri);
         Thread thread = Thread.currentThread();
         thread.setName(thread.getName() + "|" + requestUri);
-        MultivaluedMap<String, String> headers = request.getHeaders();
-        List<String> forwarded = headers.get("X-Forwarded-For");
-        if (null != forwarded) {
-            logger.info("incoming forwarded {}", forwarded);
-        }
-        ActiveTraces.start(request.getMethod(), requestUri);
+        ActiveTraces.start(request.getMethod(), requestUri, request.getHeaders().getFirst("X-Forwarded-For"));
     }
 }
