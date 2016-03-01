@@ -253,9 +253,7 @@ public class ChannelService {
         query = query.withTtlDays(getTtlDays(query.getChannelName()));
         Traces traces = ActiveTraces.getLocal();
         traces.add(query);
-        //todo - gfm - 2/24/16 - returns all of the keys found
         List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
-        //todo - gfm - 2/24/16 - filter down to one for latest
         SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
         traces.add("ChannelServiceImpl.getKeys", contentKeys);
         return contentKeys;
