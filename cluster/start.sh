@@ -49,9 +49,9 @@ JAVA_OPTS_FILE=${APP_STATE}/javaopts-${ID}
 cat > ${JAVA_OPTS_FILE} <<JAVA_OPTS
  -d64
  -server
- -Xmx{{ max_heap }}
- -Xms{{ min_heap }}
- -XX:NewSize={{ min_new }}
+ -Xmx2g
+ -Xms1g
+ -XX:NewSize=100m
  -XX:+UseG1GC
  -XX:MaxGCPauseMillis=100
  -agentlib:jdwp=transport=dt_socket,address=3333,server=y,suspend=n
@@ -61,7 +61,7 @@ cat > ${JAVA_OPTS_FILE} <<JAVA_OPTS
  -Dcom.sun.management.jmxremote.ssl=false
  -Dcom.sun.management.jmxremote.authenticate=false
  -Dlogback.configurationFile=${APP_HOME}/conf/logback.xml
- -Dnewrelic.environment={{ environment }}
+
 
  -XX:+PrintGCDetails
  -XX:+PrintTenuringDistribution
@@ -76,9 +76,7 @@ JAVA_OPTS="$(cat ${JAVA_OPTS_FILE})"
 
 MAIN_CLASS="com.flightstats.hub.app.HubMain"
 
-JAVA_AGENT="-javaagent:$(ls ${APP_HOME}lib/newrelic-agent*.jar)"
-
-CLI="java -cp $(ls ${APP_HOME}lib/hub-*):${APP_HOME}lib/* ${JAVA_AGENT} ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties"
+CLI="java -cp $(ls ${APP_HOME}lib/hub-*):${APP_HOME}lib/* ${JAVA_OPTS} ${MAIN_CLASS} ${APP_HOME}/conf/hub.properties"
 
 set -f
 echo "Running : ${CLI}"
