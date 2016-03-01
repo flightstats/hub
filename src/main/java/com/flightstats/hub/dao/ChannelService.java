@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.exception.ForbiddenRequestException;
@@ -38,6 +39,8 @@ public class ChannelService {
     private MetricsSender sender;
     @Inject
     private LastContentPath lastContentPath;
+
+    private static final int DIR_COUNT_LIMIT = HubProperties.getProperty("app.directionCountLimit", 10000);
 
     public static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
 
@@ -239,6 +242,9 @@ public class ChannelService {
     public SortedSet<ContentKey> getKeys(DirectionQuery query) {
         if (query.getCount() <= 0) {
             return Collections.emptySortedSet();
+        }
+        if (query.getCount() > DIR_COUNT_LIMIT) {
+            query = query.withCount(DIR_COUNT_LIMIT);
         }
         DateTime ttlTime = getTtlTime(query.getChannelName());
         if (query.getContentKey().getTime().isBefore(ttlTime)) {
