@@ -35,6 +35,6 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
         logger.trace("incoming {} {}", request.getMethod(), requestUri);
         Thread thread = Thread.currentThread();
         thread.setName(thread.getName() + "|" + requestUri);
-        ActiveTraces.start(request.getMethod(), requestUri);
+        ActiveTraces.start(requestUri, request.getMethod(), request.getHeaders().getFirst("X-Forwarded-For"));
     }
 }

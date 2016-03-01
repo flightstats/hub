@@ -56,7 +56,7 @@ public class RemoteSpokeStore {
 
     void testOne(Collection<String> server) throws InterruptedException {
         String path = "Internal-Spoke-Health-Hook/";
-        Traces traces = new Traces();
+        Traces traces = new Traces(path);
         int calls = 10;
         ExecutorService threadPool = Executors.newFixedThreadPool(2);
         CountDownLatch quorumLatch = new CountDownLatch(calls);
