@@ -11,6 +11,7 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -99,31 +100,37 @@ public class S3Config {
         }
 
         private void updateMaxItems(ChannelConfig config) {
-            String name = config.getName();
-            logger.info("updating max items for channel {}", name);
+            logger.info("updating max items for channel {}", config.getName());
             ActiveTraces.start("S3Config.updateMaxItems");
-            Optional<ContentKey> latest = channelService.getLatest(name, false, false);
-            if (latest.isPresent()) {
-                SortedSet<ContentKey> keys = new TreeSet();
-                keys.add(latest.get());
-                DirectionQuery query = DirectionQuery.builder()
-                        .channelName(name)
-                        .contentKey(latest.get())
-                        .next(false)
-                        .stable(false)
-                        .ttlDays(0)
-                        .count((int) (config.getMaxItems() - 1))
-                        .build();
-                keys.addAll(channelService.getKeys(query));
-                if (keys.size() == config.getMaxItems()) {
-                    ContentKey limitKey = keys.first();
-                    logger.info("deleting keys before {}", limitKey);
-                    channelService.deleteBefore(name, limitKey);
+            Optional<ContentKey> optional = channelService.getLatest(config.getName(), false, false);
+            if (optional.isPresent()) {
+                ContentKey latest = optional.get();
+                if (latest.getTime().isAfter(TimeUtil.now().minusDays(1))) {
+                    updateMaxItems(config, latest);
                 }
             }
             ActiveTraces.end();
-            logger.info("completed max items for channel {}", name);
+            logger.info("completed max items for channel {}", config.getName());
 
+        }
+
+        private void updateMaxItems(ChannelConfig config, ContentKey latest) {
+            SortedSet<ContentKey> keys = new TreeSet();
+            keys.add(latest);
+            DirectionQuery query = DirectionQuery.builder()
+                    .channelName(config.getName())
+                    .contentKey(latest)
+                    .next(false)
+                    .stable(false)
+                    .ttlDays(0)
+                    .count((int) (config.getMaxItems() - 1))
+                    .build();
+            keys.addAll(channelService.getKeys(query));
+            if (keys.size() == config.getMaxItems()) {
+                ContentKey limitKey = keys.first();
+                logger.info("deleting keys before {}", limitKey);
+                channelService.deleteBefore(config.getName(), limitKey);
+            }
         }
 
         private void updateTtlDays() {
@@ -132,12 +139,8 @@ public class S3Config {
             ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
             for (ChannelConfig config : configurations) {
                 if (config.getTtlDays() > 0) {
-                    if (config.isSingle() || config.isBoth()) {
-                        rules.add(addRule(config, ""));
-                    }
-                    if (config.isBatch() || config.isBoth()) {
-                        rules.add(addRule(config, "Batch"));
-                    }
+                    rules.add(addRule(config, ""));
+                    rules.add(addRule(config, "Batch"));
                 }
             }
             logger.info("updating " + rules.size() + " rules with ttl life cycle ");
