@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.exception.ForbiddenRequestException;
@@ -38,6 +39,8 @@ public class ChannelService {
     private MetricsSender sender;
     @Inject
     private LastContentPath lastContentPath;
+
+    private static final int DIR_COUNT_LIMIT = HubProperties.getProperty("app.directionCountLimit", 10000);
 
     public static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
 
@@ -240,6 +243,9 @@ public class ChannelService {
         if (query.getCount() <= 0) {
             return Collections.emptySortedSet();
         }
+        if (query.getCount() > DIR_COUNT_LIMIT) {
+            query = query.withCount(DIR_COUNT_LIMIT);
+        }
         DateTime ttlTime = getTtlTime(query.getChannelName());
         if (query.getContentKey().getTime().isBefore(ttlTime)) {
             query = query.withContentKey(new ContentKey(ttlTime, "0"));
@@ -247,9 +253,7 @@ public class ChannelService {
         query = query.withTtlDays(getTtlDays(query.getChannelName()));
         Traces traces = ActiveTraces.getLocal();
         traces.add(query);
-        //todo - gfm - 2/24/16 - returns all of the keys found
         List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
-        //todo - gfm - 2/24/16 - filter down to one for latest
         SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
         traces.add("ChannelServiceImpl.getKeys", contentKeys);
         return contentKeys;
