@@ -16,6 +16,7 @@ public class DirectionQuery implements Query {
     private final String tagName;
     @Wither
     private ContentKey contentKey;
+    @Wither
     private final int count;
     private final boolean next;
     private final Location location;
