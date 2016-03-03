@@ -37,7 +37,7 @@ public class ReplicationCallbackResource {
             Optional<Content> content = Optional.absent();
             for (JsonNode uri : uris) {
                 if (!getAndInsert(channel, uri)) {
-                    getAndInsert(channel, uri);
+                    Response.status(400).build();
                 }
             }
             if (node.has("id")) {
