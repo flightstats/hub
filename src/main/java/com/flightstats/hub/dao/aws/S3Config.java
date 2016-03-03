@@ -101,7 +101,7 @@ public class S3Config {
 
         private void updateMaxItems(ChannelConfig config) {
             logger.info("updating max items for channel {}", config.getName());
-            ActiveTraces.start("S3Config.updateMaxItems");
+            ActiveTraces.start("S3Config.updateMaxItems", config.getName());
             Optional<ContentKey> optional = channelService.getLatest(config.getName(), false, false);
             if (optional.isPresent()) {
                 ContentKey latest = optional.get();
@@ -139,8 +139,12 @@ public class S3Config {
             ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
             for (ChannelConfig config : configurations) {
                 if (config.getTtlDays() > 0) {
-                    rules.add(addRule(config, ""));
-                    rules.add(addRule(config, "Batch"));
+                    if (config.isSingle() || config.isBoth()) {
+                        rules.add(addRule(config, ""));
+                    }
+                    if (config.isBatch() || config.isBoth()) {
+                        rules.add(addRule(config, "Batch"));
+                    }
                 }
             }
             logger.info("updating " + rules.size() + " rules with ttl life cycle ");
