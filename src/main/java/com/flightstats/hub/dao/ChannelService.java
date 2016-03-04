@@ -174,6 +174,7 @@ public class ChannelService {
         } else {
             ContentKey latestKey = keys.iterator().next();
             logger.info("updating cache with latestKey {} {}", channel, latestKey);
+            traces.log(logger);
             lastContentPath.updateIncrease(latestKey, channel, CHANNEL_LATEST_UPDATED);
             return Optional.of(latestKey);
         }
