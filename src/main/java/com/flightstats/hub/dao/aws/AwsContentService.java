@@ -56,6 +56,8 @@ public class AwsContentService implements ContentService {
     @Inject
     private HubUtils hubUtils;
 
+    private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
+
     private final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("AwsContentService-%d").build());
     private final AtomicInteger inFlight = new AtomicInteger();
     private final Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 5);
@@ -241,8 +243,46 @@ public class AwsContentService implements ContentService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
-        return spokeContentDao.getLatest(channel, limitKey, traces);
+    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable) {
+        DateTime ttlTime = getCacheTtlTime(channel, channelService.getCachedChannelConfig(channel));
+        Optional<ContentKey> latest = spokeContentDao.getLatest(channel, limitKey, traces);
+        if (latest.isPresent()) {
+            logger.info("found latest {} {}", channel, latest);
+            lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
+            return latest;
+        }
+        ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
+        if (latestCache != null) {
+            logger.info("found cached {} {}", channel, latestCache);
+            if (latestCache.equals(ContentKey.NONE)) {
+                return Optional.absent();
+            }
+            return Optional.of((ContentKey) latestCache);
+        }
+
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channel)
+                .contentKey(limitKey)
+                .next(false)
+                .stable(stable)
+                .count(1)
+                .build();
+        Collection<ContentKey> keys = channelService.getKeys(query);
+        if (keys.isEmpty()) {
+            logger.info("updating channel empty {}", channel);
+            lastContentPath.updateIncrease(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
+            return Optional.absent();
+        } else {
+            ContentKey latestKey = keys.iterator().next();
+            if (latestKey.getTime().isAfter(ttlTime)) {
+                logger.info("latestKey within spoke window {} {}", channel, latestKey);
+                lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
+            } else {
+                logger.info("updating cache with latestKey {} {}", channel, latestKey);
+                lastContentPath.updateIncrease(latestKey, channel, CHANNEL_LATEST_UPDATED);
+            }
+            return Optional.of(latestKey);
+        }
     }
 
     @Override

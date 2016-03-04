@@ -149,7 +149,7 @@ public class NasContentService implements ContentService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
+    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable) {
         return ContentKeyUtil.convertKey(fileSpokeStore.getLatest(channel, limitKey.toUrl()));
     }
 
