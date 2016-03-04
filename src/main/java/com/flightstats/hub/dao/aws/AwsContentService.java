@@ -18,6 +18,7 @@ import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -65,7 +66,8 @@ public class AwsContentService implements ContentService {
     private final int spokeTtlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
 
     public AwsContentService() {
-        HubServices.registerPreStop(new ContentServiceHook());
+        HubServices.registerPreStop(new AwsContentServiceInit());
+        HubServices.register(new ChannelLatestUpdatedService());
     }
 
     void waitForInFlight() {
@@ -269,16 +271,16 @@ public class AwsContentService implements ContentService {
                 .build();
         Collection<ContentKey> keys = channelService.getKeys(query);
         if (keys.isEmpty()) {
-            logger.info("updating channel empty {}", channel);
+            logger.debug("updating channel empty {}", channel);
             lastContentPath.updateIncrease(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             return Optional.absent();
         } else {
             ContentKey latestKey = keys.iterator().next();
             if (latestKey.getTime().isAfter(ttlTime)) {
-                logger.info("latestKey within spoke window {} {}", channel, latestKey);
+                logger.debug("latestKey within spoke window {} {}", channel, latestKey);
                 lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
             } else {
-                logger.info("updating cache with latestKey {} {}", channel, latestKey);
+                logger.debug("updating cache with latestKey {} {}", channel, latestKey);
                 lastContentPath.updateIncrease(latestKey, channel, CHANNEL_LATEST_UPDATED);
             }
             return Optional.of(latestKey);
@@ -314,7 +316,7 @@ public class AwsContentService implements ContentService {
         }
     }
 
-    private class ContentServiceHook extends AbstractIdleService {
+    private class AwsContentServiceInit extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
             spokeContentDao.initialize();
@@ -328,5 +330,31 @@ public class AwsContentService implements ContentService {
         }
     }
 
+    private class ChannelLatestUpdatedService extends AbstractScheduledService {
+
+        @Override
+        protected synchronized void runOneIteration() throws Exception {
+            logger.debug("running...");
+            List<String> names = lastContentPath.getNames(CHANNEL_LATEST_UPDATED);
+            for (String name : names) {
+                try {
+                    DateTime time = TimeUtil.stable().plusMinutes(1);
+                    Traces traces = new Traces(name, time);
+                    Optional<ContentKey> latest = getLatest(name, ContentKey.lastKey(time), traces, false);
+                    logger.debug("latest updated {} {}", name, latest);
+                    traces.log(logger);
+                } catch (Exception e) {
+                    logger.warn("unexpected ChannelLatestUpdatedService issue " + name, e);
+                }
+            }
+
+        }
+
+        @Override
+        protected Scheduler scheduler() {
+            return Scheduler.newFixedDelaySchedule(0, 59, TimeUnit.MINUTES);
+        }
+
+    }
 
 }

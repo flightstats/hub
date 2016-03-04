@@ -10,6 +10,9 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.List;
+
 public class LastContentPath {
     private final static Logger logger = LoggerFactory.getLogger(LastContentPath.class);
 
@@ -105,6 +108,15 @@ public class LastContentPath {
             logger.info("no node for {}", path);
         } catch (Exception e) {
             logger.warn("unable to delete {} {}", path, e.getMessage());
+        }
+    }
+
+    public List<String> getNames(String basePath) {
+        try {
+            return curator.getChildren().forPath(basePath);
+        } catch (Exception e) {
+            logger.warn("unexpected exception " + basePath, e);
+            return Collections.emptyList();
         }
     }
 
