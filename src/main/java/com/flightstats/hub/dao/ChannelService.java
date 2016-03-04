@@ -134,7 +134,9 @@ public class ChannelService {
         ContentKey limitKey = new ContentKey(time, "ZZZZZZ");
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
+            logger.info("found latest {} {}", channel, latest);
             lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
+            logger.info("deleted zk value {}", channel);
             DateTime ttlTime = getTtlTime(channel);
             if (latest.get().getTime().isBefore(ttlTime)) {
                 return Optional.absent();
@@ -146,6 +148,7 @@ public class ChannelService {
         }
         ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
         if (latestCache != null) {
+            logger.info("found cached {} {}", channel, latestCache);
             if (latestCache.equals(ContentKey.NONE)) {
                 return Optional.absent();
             }
@@ -165,10 +168,12 @@ public class ChannelService {
             traces.log(logger);
         }
         if (keys.isEmpty()) {
+            logger.info("update channel empty {}", channel);
             lastContentPath.updateIncrease(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             return Optional.absent();
         } else {
             ContentKey latestKey = keys.iterator().next();
+            logger.info("updating cache with latestKey {} {}", channel, latestKey);
             lastContentPath.updateIncrease(latestKey, channel, CHANNEL_LATEST_UPDATED);
             return Optional.of(latestKey);
         }

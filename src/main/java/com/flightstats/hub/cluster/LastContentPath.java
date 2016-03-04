@@ -102,7 +102,7 @@ public class LastContentPath {
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (KeeperException.NoNodeException e) {
-            logger.debug("no node for {}", path);
+            logger.info("no node for {}", path);
         } catch (Exception e) {
             logger.warn("unable to delete {} {}", path, e.getMessage());
         }
