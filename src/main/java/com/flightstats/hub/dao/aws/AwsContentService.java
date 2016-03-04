@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -335,7 +336,7 @@ public class AwsContentService implements ContentService {
         @Override
         protected synchronized void runOneIteration() throws Exception {
             logger.debug("running...");
-            List<String> names = lastContentPath.getNames(CHANNEL_LATEST_UPDATED);
+            List<String> names = lastContentPath.getNames(StringUtils.removeEnd(CHANNEL_LATEST_UPDATED, "/"));
             for (String name : names) {
                 try {
                     DateTime time = TimeUtil.stable().plusMinutes(1);
