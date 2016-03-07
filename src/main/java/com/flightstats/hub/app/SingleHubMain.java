@@ -33,6 +33,7 @@ public class SingleHubMain {
         String tempPath = Files.createTempDir().getAbsolutePath();
         setProperty("storage.path", tempPath);
         setProperty("app.remoteTimeFile", tempPath + "/remoteTime");
+        setProperty("hub.allow.channel.deletion", "true");
 
         HubMain.start();
     }
