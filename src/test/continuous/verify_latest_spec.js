@@ -60,7 +60,7 @@ describe(testName, function () {
                                 stats: res.body.stats,
                                 zkChannel: zkChannel
                             };
-                            console.log('name', name, zkChannel);
+                            console.log('zk value', name, values[name].zkKey);
                         }
                         callback();
                     });
