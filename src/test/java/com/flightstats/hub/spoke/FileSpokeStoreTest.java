@@ -251,6 +251,35 @@ public class FileSpokeStoreTest {
         enforceVerify("testEnforceTtlHour", new DateTime(2015, 2, 1, 12, 45, 1, 2, DateTimeZone.UTC));
     }
 
+    @Test
+    public void testLatestBug() {
+        DateTime now = TimeUtil.now();
+        DateTime afterTheHour = now.withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(1);
+        DateTime beforeTheHour = now.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
+        assertTrue(spokeStore.write("testLatestBug/" + new ContentKey(afterTheHour, "0").toUrl(), BYTES));
+        String beforeKey = new ContentKey(beforeTheHour, "0").toUrl();
+        assertTrue(spokeStore.write("testLatestBug/" + beforeKey, BYTES));
+        DateTime limitTime = afterTheHour.withMillisOfSecond(0);
+        String read = spokeStore.getLatest("testLatestBug", ContentKey.lastKey(limitTime).toUrl());
+        assertNotNull(read);
+        assertEquals("testLatestBug/" + beforeKey, read);
+    }
+
+    @Test
+    public void testLatestBugBeforeTtl() {
+        DateTime now = TimeUtil.now();
+        DateTime afterTheHour = now.withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(1);
+        DateTime beforeTheHour = now.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
+        DateTime beforeTheTtl = now.minusHours(2).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
+        assertTrue(spokeStore.write("testLatestBug/" + new ContentKey(afterTheHour, "0").toUrl(), BYTES));
+        assertTrue(spokeStore.write("testLatestBug/" + new ContentKey(beforeTheTtl, "0").toUrl(), BYTES));
+        String beforeKey = new ContentKey(beforeTheHour, "0").toUrl();
+        assertTrue(spokeStore.write("testLatestBug/" + beforeKey, BYTES));
+        DateTime limitTime = beforeTheHour.minusMinutes(1);
+        String read = spokeStore.getLatest("testLatestBug", ContentKey.lastKey(limitTime).toUrl());
+        assertNull(read);
+    }
+
     private void enforceVerify(String channel, DateTime startTime) {
         DateTime time = startTime;
         String startQuery = TimeUtil.hours(time);
