@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentKeyUtil;
 import com.flightstats.hub.util.TimeUtil;
@@ -26,6 +27,7 @@ public class FileSpokeStoreTest {
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStoreTest.class);
     private String tempDir;
     private FileSpokeStore spokeStore;
+    private static final int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
 
     @Before
     public void setUp() throws Exception {
@@ -270,7 +272,7 @@ public class FileSpokeStoreTest {
         DateTime now = TimeUtil.now();
         DateTime afterTheHour = now.withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(1);
         DateTime beforeTheHour = now.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
-        DateTime beforeTheTtl = now.minusHours(2).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
+        DateTime beforeTheTtl = now.minusMinutes(ttlMinutes).minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
         assertTrue(spokeStore.write("testLatestBug/" + new ContentKey(afterTheHour, "0").toUrl(), BYTES));
         assertTrue(spokeStore.write("testLatestBug/" + new ContentKey(beforeTheTtl, "0").toUrl(), BYTES));
         String beforeKey = new ContentKey(beforeTheHour, "0").toUrl();
