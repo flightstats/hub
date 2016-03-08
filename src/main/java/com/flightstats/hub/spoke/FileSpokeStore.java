@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
@@ -26,6 +27,7 @@ public class FileSpokeStore {
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);
 
     private final String storagePath;
+    private static final int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
 
     @Inject
     public FileSpokeStore(@Named("spoke.path") String storagePath) {
@@ -169,11 +171,18 @@ public class FileSpokeStore {
         split = new String[]{split[0], split[1], split[2], split[3], split[4], split[5] + split[6] + split[7]};
         String last = recurseLatest(channel, split, 0, channel);
         if (last == null) {
-            return null;
+            DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
+            DateTime limitTime = TimeUtil.millis(StringUtils.substringBeforeLast(limitPath, "/") + "/");
+            DateTime previous = limitTime.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
+            if (previous.isBefore(ttlTime)) {
+                return null;
+            }
+            return getLatest(channel, ContentKey.lastKey(previous).toUrl());
+        } else {
+            String latest = spokeKeyFromPath(last);
+            logger.trace("returning latest {} for limit {}", latest, limitPath);
+            return latest;
         }
-        String latest = spokeKeyFromPath(last);
-        logger.trace("returning latest {} for limit {}", latest, limitPath);
-        return latest;
     }
 
     private String recurseLatest(String path, String[] limitPath, int count, String channel) {
