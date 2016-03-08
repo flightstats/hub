@@ -174,6 +174,7 @@ public class FileSpokeStore {
             DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
             DateTime limitTime = TimeUtil.millis(StringUtils.substringBeforeLast(limitPath, "/") + "/");
             DateTime previous = limitTime.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
+            logger.trace("previous {} ttltime {}", previous, ttlTime);
             if (previous.isBefore(ttlTime)) {
                 return null;
             }
