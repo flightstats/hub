@@ -166,6 +166,7 @@ public class FileSpokeStore {
     }
 
     public String getLatest(String channel, String limitPath) {
+        logger.trace("ttlTime = {}", ttlMinutes);
         logger.trace("latest {} {}", channel, limitPath);
         String[] split = StringUtils.split(limitPath, "/");
         split = new String[]{split[0], split[1], split[2], split[3], split[4], split[5] + split[6] + split[7]};

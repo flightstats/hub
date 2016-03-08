@@ -266,12 +266,12 @@ public class FileSpokeStoreTest {
         DateTime afterTheHour = now.withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(1);
         DateTime beforeTheHour = now.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
         DateTime beforeTheTtl = now.minusMinutes(ttlMinutes).minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
-        assertTrue(spokeStore.write("testLatestBug/" + new ContentKey(afterTheHour, "0").toUrl(), BYTES));
-        assertTrue(spokeStore.write("testLatestBug/" + new ContentKey(beforeTheTtl, "0").toUrl(), BYTES));
+        assertTrue(spokeStore.write("testLatestBugBeforeTtl/" + new ContentKey(afterTheHour, "0").toUrl(), BYTES));
+        assertTrue(spokeStore.write("testLatestBugBeforeTtl/" + new ContentKey(beforeTheTtl, "0").toUrl(), BYTES));
         String beforeKey = new ContentKey(beforeTheHour, "0").toUrl();
-        assertTrue(spokeStore.write("testLatestBug/" + beforeKey, BYTES));
+        assertTrue(spokeStore.write("testLatestBugBeforeTtl/" + beforeKey, BYTES));
         DateTime limitTime = beforeTheHour.minusMinutes(1);
-        String read = spokeStore.getLatest("testLatestBug", ContentKey.lastKey(limitTime).toUrl());
+        String read = spokeStore.getLatest("testLatestBugBeforeTtl", ContentKey.lastKey(limitTime).toUrl());
         assertNull(read);
     }
 
