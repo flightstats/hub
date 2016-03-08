@@ -176,8 +176,10 @@ public class FileSpokeStore {
             DateTime previous = limitTime.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
             logger.trace("previous {} ttltime {}", previous, ttlTime);
             if (previous.isBefore(ttlTime)) {
+                logger.trace("Previous is before ttlTime returning null");
                 return null;
             }
+            logger.trace("Previous is after ttlTime getting latest for previous {}", ContentKey.lastKey(previous).toUrl());
             return getLatest(channel, ContentKey.lastKey(previous).toUrl());
         } else {
             String latest = spokeKeyFromPath(last);
@@ -187,6 +189,7 @@ public class FileSpokeStore {
     }
 
     private String recurseLatest(String path, String[] limitPath, int count, String channel) {
+        logger.trace("recurseLatest path {}, limitPath {}, count {}, channel {}", path, limitPath, count, channel);
         String base = " ";
         String pathname = storagePath + path;
         String[] items = new File(pathname).list();
