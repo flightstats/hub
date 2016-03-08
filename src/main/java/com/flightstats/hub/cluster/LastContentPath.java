@@ -87,6 +87,19 @@ public class LastContentPath {
         }
     }
 
+    public void update(ContentPath nextPath, String name, String basePath) {
+        String path = basePath + name;
+        try {
+            LastUpdated existing = getLastUpdated(path);
+            setValue(path, nextPath, existing);
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("values does not exist, creating {}", path);
+            initialize(name, nextPath, basePath);
+        } catch (Exception e) {
+            logger.warn("unable to set " + path + " lastUpdated to " + nextPath, e);
+        }
+    }
+
     private boolean setValue(String path, ContentPath nextPath, LastUpdated existing) throws Exception {
         try {
             curator.setData().withVersion(existing.version).forPath(path, nextPath.toBytes());

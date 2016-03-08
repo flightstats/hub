@@ -282,7 +282,7 @@ public class AwsContentService implements ContentService {
                 lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
             } else {
                 logger.debug("updating cache with latestKey {} {}", channel, latestKey);
-                lastContentPath.updateIncrease(latestKey, channel, CHANNEL_LATEST_UPDATED);
+                lastContentPath.update(latestKey, channel, CHANNEL_LATEST_UPDATED);
             }
             return Optional.of(latestKey);
         }
