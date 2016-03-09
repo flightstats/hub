@@ -46,7 +46,7 @@ public class ReplicationCallbackResource {
                 ClientResponse response = hubUtils.getResponse(contentUrl);
                 if (CLIENT_ERROR.equals(response.getStatusInfo().getFamily())) {
                     logger.info("first client error {}", response);
-                    Sleeper.sleep(1000);
+                    Sleeper.sleep(5000);
                     response = hubUtils.getResponse(contentUrl);
                     if (!SUCCESSFUL.equals(response.getStatusInfo().getFamily())) {
                         logger.warn("second client error {}", response);
