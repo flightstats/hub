@@ -294,11 +294,26 @@ public class FileSpokeStoreTest {
         assertEquals("testLatestBugStable/" + afterKey, read);
     }
 
-    private void write(String url) {
-        ContentKey key = ContentKey.fromFullUrl(url).get();
-        assertTrue(spokeStore.write("testLatestWeirdBug/" + key.toUrl(), BYTES));
-    }
+    @Test
+    public void testLatestMore() {
+        DateTime now = TimeUtil.now();
+        DateTime time = now;
+        logger.info("ttlMinutes {} ", ttlMinutes);
+        DateTime ttlTime = time.minusMinutes(ttlMinutes);
+        while (time.isAfter(ttlTime)) {
+            spokeStore.write("testLatestMore/" + new ContentKey(time, "A").toUrl(), BYTES);
+            spokeStore.write("testLatestMore/" + new ContentKey(time, "B").toUrl(), BYTES);
+            time = time.minusMinutes(1);
+        }
 
+        time = now;
+        while (time.isAfter(ttlTime)) {
+            String read = spokeStore.getLatest("testLatestMore", ContentKey.lastKey(time).toUrl());
+            assertNotNull(read);
+            assertEquals("testLatestMore/" + new ContentKey(time, "B").toUrl(), read);
+            time = time.minusMinutes(1);
+        }
+    }
 
     private void enforceVerify(String channel, DateTime startTime) {
         DateTime time = startTime;
