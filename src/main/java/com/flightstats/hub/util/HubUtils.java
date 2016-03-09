@@ -3,8 +3,6 @@ package com.flightstats.hub.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.rest.Headers;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -79,22 +77,6 @@ public class HubUtils {
         return Optional.of(configuration);
     }
 
-    public Optional<Content> getContent(String contentUrl) {
-        ClientResponse response = getResponse(contentUrl);
-        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            logger.info("unable to get content " + response);
-            return Optional.absent();
-        }
-        Content content = Content.builder()
-                .withContentKey(ContentKey.fromFullUrl(contentUrl).get())
-                .withContentType(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
-                .withContentLanguage(response.getHeaders().getFirst(Headers.LANGUAGE))
-                .withData(response.getEntity(byte[].class))
-                .build();
-
-        return Optional.of(content);
-    }
-
     public Optional<DateTime> getCreationDate(String channelUrl, long sequence) {
         ClientResponse response = getResponse(appendSlash(channelUrl) + sequence);
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
@@ -144,7 +126,7 @@ public class HubUtils {
         return StringUtils.substringBefore(sourceChannel, "/channel/");
     }
 
-    private ClientResponse getResponse(String url) {
+    public ClientResponse getResponse(String url) {
         return followClient.resource(url)
                 .accept(MediaType.WILDCARD_TYPE)
                 .header(HttpHeaders.ACCEPT_ENCODING, "gzip")
