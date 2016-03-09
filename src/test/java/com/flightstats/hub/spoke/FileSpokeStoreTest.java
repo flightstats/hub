@@ -267,6 +267,53 @@ public class FileSpokeStoreTest {
         assertEquals("testLatestBug/" + beforeKey, read);
     }
 
+    @Test
+    public void testLatestBugStable() {
+        /**
+         * add one item before the latest hour
+         * add one item after the latest hour
+         * add one item after the limit key
+         */
+        DateTime now = TimeUtil.now();
+
+        DateTime beforeTheHour = now.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
+        String beforeKey = new ContentKey(beforeTheHour, "A").toUrl();
+        assertTrue(spokeStore.write("testLatestBugStable/" + beforeKey, BYTES));
+
+        DateTime afterTheHour = now.withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(1);
+        String afterKey = new ContentKey(afterTheHour, "A").toUrl();
+        assertTrue(spokeStore.write("testLatestBugStable/" + afterKey, BYTES));
+
+        String nowKey = new ContentKey(now, "0").toUrl();
+        assertTrue(spokeStore.write("testLatestBugStable/" + nowKey, BYTES));
+
+        DateTime limitTime = now.minusSeconds(5);
+
+        String read = spokeStore.getLatest("testLatestBugStable", ContentKey.lastKey(limitTime).toUrl());
+        assertNotNull(read);
+        assertEquals("testLatestBugStable/" + afterKey, read);
+    }
+
+    @Test
+    public void testLatestMore() {
+        DateTime now = TimeUtil.now();
+        DateTime time = now;
+        logger.info("ttlMinutes {} ", ttlMinutes);
+        DateTime ttlTime = time.minusMinutes(ttlMinutes);
+        while (time.isAfter(ttlTime)) {
+            spokeStore.write("testLatestMore/" + new ContentKey(time, "A").toUrl(), BYTES);
+            spokeStore.write("testLatestMore/" + new ContentKey(time, "B").toUrl(), BYTES);
+            time = time.minusMinutes(1);
+        }
+
+        time = now;
+        while (time.isAfter(ttlTime)) {
+            String read = spokeStore.getLatest("testLatestMore", ContentKey.lastKey(time).toUrl());
+            assertNotNull(read);
+            assertEquals("testLatestMore/" + new ContentKey(time, "B").toUrl(), read);
+            time = time.minusMinutes(1);
+        }
+    }
 
     private void enforceVerify(String channel, DateTime startTime) {
         DateTime time = startTime;
