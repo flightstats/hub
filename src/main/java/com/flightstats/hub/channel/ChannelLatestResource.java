@@ -36,7 +36,7 @@ public class ChannelLatestResource {
         if (tag != null) {
             return tagLatestResource.getLatest(tag, stable, trace, uriInfo);
         }
-        Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
+        Optional<ContentKey> latest = channelService.getLatest(channel, stable, true);
         if (latest.isPresent()) {
             return Response.status(SEE_OTHER)
                     .location(URI.create(uriInfo.getBaseUri() + "channel/" + channel + "/" + latest.get().toUrl()))
@@ -60,7 +60,7 @@ public class ChannelLatestResource {
         if (tag != null) {
             return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, accept, uriInfo);
         }
-        Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
+        Optional<ContentKey> latest = channelService.getLatest(channel, stable, true);
         if (!latest.isPresent()) {
             return Response.status(NOT_FOUND).build();
         }
