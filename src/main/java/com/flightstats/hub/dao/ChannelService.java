@@ -2,7 +2,6 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
-import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -37,12 +36,8 @@ public class ChannelService {
     private ReplicatorManager replicatorManager;
     @Inject
     private MetricsSender sender;
-    @Inject
-    private LastContentPath lastContentPath;
 
     private static final int DIR_COUNT_LIMIT = HubProperties.getProperty("app.directionCountLimit", 10000);
-
-    public static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
 
     public boolean channelExists(String channelName) {
         return channelConfigDao.channelExists(channelName);
@@ -131,47 +126,19 @@ public class ChannelService {
             //if not stable, we don't want to miss any results.
             time = TimeUtil.now().plusMinutes(1);
         }
-        ContentKey limitKey = new ContentKey(time, "ZZZZZZ");
-        Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces);
+        ContentKey limitKey = ContentKey.lastKey(time);
+
+        Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces, stable);
         if (latest.isPresent()) {
-            lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
             DateTime ttlTime = getTtlTime(channel);
             if (latest.get().getTime().isBefore(ttlTime)) {
                 return Optional.absent();
             }
-            if (trace) {
-                traces.log(logger);
-            }
-            return latest;
         }
-        ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
-        if (latestCache != null) {
-            if (latestCache.equals(ContentKey.NONE)) {
-                return Optional.absent();
-            }
-            return Optional.of((ContentKey) latestCache);
-        }
-
-        DirectionQuery query = DirectionQuery.builder()
-                .channelName(channel)
-                .contentKey(limitKey)
-                .next(false)
-                .stable(stable)
-                .ttlDays(channelConfig.getTtlDays())
-                .count(1)
-                .build();
-        Collection<ContentKey> keys = getKeys(query);
         if (trace) {
             traces.log(logger);
         }
-        if (keys.isEmpty()) {
-            lastContentPath.updateIncrease(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
-            return Optional.absent();
-        } else {
-            ContentKey latestKey = keys.iterator().next();
-            lastContentPath.updateIncrease(latestKey, channel, CHANNEL_LATEST_UPDATED);
-            return Optional.of(latestKey);
-        }
+        return latest;
     }
 
     public void deleteBefore(String name, ContentKey limitKey) {

@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
@@ -26,6 +27,7 @@ public class FileSpokeStore {
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);
 
     private final String storagePath;
+    private static final int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
 
     @Inject
     public FileSpokeStore(@Named("spoke.path") String storagePath) {
@@ -164,19 +166,31 @@ public class FileSpokeStore {
     }
 
     public String getLatest(String channel, String limitPath) {
+        logger.trace("ttlTime = {}", ttlMinutes);
         logger.trace("latest {} {}", channel, limitPath);
         String[] split = StringUtils.split(limitPath, "/");
         split = new String[]{split[0], split[1], split[2], split[3], split[4], split[5] + split[6] + split[7]};
         String last = recurseLatest(channel, split, 0, channel);
         if (last == null) {
-            return null;
+            DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
+            DateTime limitTime = TimeUtil.millis(StringUtils.substringBeforeLast(limitPath, "/") + "/");
+            DateTime previous = limitTime.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
+            logger.trace("previous {} ttltime {}", previous, ttlTime);
+            if (previous.isBefore(ttlTime)) {
+                logger.trace("Previous is before ttlTime returning null");
+                return null;
+            }
+            logger.trace("Previous is after ttlTime getting latest for previous {}", ContentKey.lastKey(previous).toUrl());
+            return getLatest(channel, ContentKey.lastKey(previous).toUrl());
+        } else {
+            String latest = spokeKeyFromPath(last);
+            logger.trace("returning latest {} for limit {}", latest, limitPath);
+            return latest;
         }
-        String latest = spokeKeyFromPath(last);
-        logger.trace("returning latest {} for limit {}", latest, limitPath);
-        return latest;
     }
 
     private String recurseLatest(String path, String[] limitPath, int count, String channel) {
+        logger.trace("recurseLatest path {}, limitPath {}, count {}, channel {}", path, limitPath, count, channel);
         String base = " ";
         String pathname = storagePath + path;
         String[] items = new File(pathname).list();

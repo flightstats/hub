@@ -24,7 +24,7 @@ public interface ContentService {
 
     Collection<ContentKey> queryDirection(DirectionQuery query);
 
-    Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces);
+    Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable);
 
     void deleteBefore(String name, ContentKey limitKey);
 

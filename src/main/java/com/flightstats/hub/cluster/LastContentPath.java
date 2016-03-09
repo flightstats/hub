@@ -10,6 +10,9 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.List;
+
 public class LastContentPath {
     private final static Logger logger = LoggerFactory.getLogger(LastContentPath.class);
 
@@ -84,6 +87,19 @@ public class LastContentPath {
         }
     }
 
+    public void update(ContentPath nextPath, String name, String basePath) {
+        String path = basePath + name;
+        try {
+            LastUpdated existing = getLastUpdated(path);
+            setValue(path, nextPath, existing);
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("values does not exist, creating {}", path);
+            initialize(name, nextPath, basePath);
+        } catch (Exception e) {
+            logger.warn("unable to set " + path + " lastUpdated to " + nextPath, e);
+        }
+    }
+
     private boolean setValue(String path, ContentPath nextPath, LastUpdated existing) throws Exception {
         try {
             curator.setData().withVersion(existing.version).forPath(path, nextPath.toBytes());
@@ -102,9 +118,18 @@ public class LastContentPath {
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (KeeperException.NoNodeException e) {
-            logger.debug("no node for {}", path);
+            logger.info("no node for {}", path);
         } catch (Exception e) {
             logger.warn("unable to delete {} {}", path, e.getMessage());
+        }
+    }
+
+    public List<String> getNames(String basePath) {
+        try {
+            return curator.getChildren().forPath(basePath);
+        } catch (Exception e) {
+            logger.warn("unexpected exception " + basePath, e);
+            return Collections.emptyList();
         }
     }
 
