@@ -112,7 +112,3 @@ applicationDistribution.from('config/conf') {
 applicationDistribution.from('config/bin') {
     into "bin"
 }
-
-applicationDistribution.from('config/templates/newrelic.yml') {
-    into "lib"
-}
