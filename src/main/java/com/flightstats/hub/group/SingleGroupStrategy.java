@@ -90,11 +90,10 @@ public class SingleGroupStrategy implements GroupStrategy {
         if (error.get()) {
             logger.error("unable to determine next");
         }
-
         try {
             return Optional.fromNullable(queue.poll(10, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
-            throw new RuntimeInterruptedException(e);
+            logger.error(e.getMessage());
         }
     }
 
