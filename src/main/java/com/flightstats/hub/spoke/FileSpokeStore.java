@@ -168,56 +168,36 @@ public class FileSpokeStore {
     public String getLatest(String channel, String limitPath) {
         logger.trace("ttlTime = {}", ttlMinutes);
         logger.trace("latest {} {}", channel, limitPath);
-        String[] split = StringUtils.split(limitPath, "/");
-        split = new String[]{split[0], split[1], split[2], split[3], split[4], split[5] + split[6] + split[7]};
-        String last = recurseLatest(channel, split, 0, channel);
-        if (last == null) {
-            DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
-            DateTime limitTime = TimeUtil.millis(StringUtils.substringBeforeLast(limitPath, "/") + "/");
-            DateTime previous = limitTime.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
-            logger.trace("previous {} ttltime {}", previous, ttlTime);
-            if (previous.isBefore(ttlTime)) {
-                logger.trace("Previous is before ttlTime returning null");
-                return null;
-            }
-            logger.trace("Previous is after ttlTime getting latest for previous {}", ContentKey.lastKey(previous).toUrl());
-            return getLatest(channel, ContentKey.lastKey(previous).toUrl());
-        } else {
-            String latest = spokeKeyFromPath(last);
-            logger.trace("returning latest {} for limit {}", latest, limitPath);
-            return latest;
-        }
+        ContentKey limitKey = ContentKey.fromUrl(limitPath).get();
+        return getLatest(channel, limitPath, limitKey.getTime());
     }
 
-    private String recurseLatest(String path, String[] limitPath, int count, String channel) {
-        logger.trace("recurseLatest path {}, limitPath {}, count {}, channel {}", path, limitPath, count, channel);
-        String base = " ";
-        String pathname = storagePath + path;
-        String[] items = new File(pathname).list();
-        if (items == null) {
-            logger.trace("path not found {}", pathname);
-            return null;
-        }
-        String limitCompare = channel + "/";
-        for (int i = 0; i <= count; i++) {
-            limitCompare += limitPath[i] + "/";
-        }
-        for (String item : items) {
-            if (item.compareTo(base) > 0) {
-                if ((path + "/" + item).compareTo(limitCompare) <= 0) {
-                    base = item;
+    private String getLatest(String channel, String limitPath, DateTime hourToSearch) {
+        logger.trace("latest {} {} {}", channel, limitPath, hourToSearch);
+        String hoursPath = TimeUtil.hours(hourToSearch);
+        String fullHoursPath = storagePath + channel + "/" + hoursPath;
+        String[] minutes = new File(fullHoursPath).list();
+        Arrays.sort(minutes);
+        logger.trace("looking at {} {}", fullHoursPath, minutes);
+        for (int i = minutes.length - 1; i >= 0; i--) {
+            String minute = minutes[i];
+            String[] fileNames = new File(fullHoursPath + "/" + minute).list();
+            Arrays.sort(fileNames);
+            for (int j = fileNames.length - 1; j >= 0; j--) {
+                String spokeKeyFromPath = spokeKeyFromPath(hoursPath + "/" + minute + "/" + fileNames[j]);
+                logger.trace("looking at file {} ", spokeKeyFromPath);
+                if (spokeKeyFromPath.compareTo(limitPath) < 0) {
+                    return channel + "/" + spokeKeyFromPath;
                 }
             }
         }
-        if (base.equals(" ")) {
+        DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
+        DateTime previous = hourToSearch.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
+        if (previous.isBefore(ttlTime)) {
+            logger.debug("no latest found for {} {} ", channel, limitPath);
             return null;
         }
-        logger.trace("count {} base {} path {}", count, base, path);
-        if (count == 5) {
-            return path + "/" + base;
-        }
-        count++;
-        return recurseLatest(path + "/" + base, limitPath, count, channel);
+        return getLatest(channel, limitPath, previous);
     }
 
     /**
