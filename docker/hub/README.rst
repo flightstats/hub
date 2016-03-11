@@ -22,7 +22,7 @@ Hub in Docker
 
 To supply the credentials and a small amount of custom config you will need to:
 
-#. Move the contents of conf/ (hub.properties, aws.credentials, and an *optional* logback.xml) into a **local docker volume named hub_conf**. This means having superuser access on your docker host, which may be a virtual machine if you are using OS X or Windows. It is commonly in ``/var/lib/docker/volumes``, and you will want to move these files into ``/var/lib/docker/volumes/hub_conf/_data/``
+#. Move the contents of conf/ (hub.properties, aws.credentials, and an *optional* logback.xml) into a **local docker volume named hub_conf**. This means having superuser access on your docker host, which may be a virtual machine if you are using OS X or Windows (use ``docker-machine ssh``). It is commonly in ``/var/lib/docker/volumes``, and you will want to move these files into ``/var/lib/docker/volumes/hub_conf/_data/``
 
 #. Include your own AWS credentials in ``aws.credentials`` for an AWS IAM user described below, as well as in the file itself.
 
