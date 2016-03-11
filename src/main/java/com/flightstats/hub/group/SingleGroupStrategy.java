@@ -78,7 +78,7 @@ public class SingleGroupStrategy implements GroupStrategy {
             response.put("id", contentPath.toUrl());
             response.put("type", "heartbeat");
         }
-        return response;
+        return response; 
     }
 
     @Override
@@ -93,7 +93,7 @@ public class SingleGroupStrategy implements GroupStrategy {
         try {
             return Optional.fromNullable(queue.poll(10, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
-            logger.error(e.getMessage());
+            throw new RuntimeInterruptedException(e);
         }
     }
 
