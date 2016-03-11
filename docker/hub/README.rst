@@ -30,6 +30,9 @@ To supply the credentials and a small amount of custom config you will need to:
 
 #. Type ``docker-compose up`` and the pieces should fall into place. Heads up: There are a lot of logs generated from these 7 containers! *requires docker-compose 1.6 or higher*
 
+**NOTE!! EVEN IF SPECIFYING "LOCAL" OPERATION, CREDENTIALS AND CORRESPONDING BUCKETS ARE STILL REQUIRED.**
+
+This means that if s3.environment is "local," you will want permission to a hub-docker-local s3 bucket and dynamo table.
 
 This is the kind of IAM user you want::
 
