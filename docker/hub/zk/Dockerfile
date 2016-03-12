@@ -1,5 +1,4 @@
 FROM gliderlabs/alpine:3.3
-MAINTAINER Flightstats IT Ninjas <it@flightstats.com>
 
 RUN apk-install openjdk7-jre wget bash
 
