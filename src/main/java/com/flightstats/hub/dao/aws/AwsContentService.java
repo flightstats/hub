@@ -256,7 +256,10 @@ public class AwsContentService implements ContentService {
         }
         ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
         if (latestCache != null) {
-            //todo - gfm - 3/7/16 - if latest is older than the Channel's TTL, set to none.
+            if(latestCache.getTime().isBefore(ttlTime)){
+                lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
+                // todo - bc 3/14 - do we need to return value here?
+            }
             logger.info("found cached {} {}", channel, latestCache);
             if (latestCache.equals(ContentKey.NONE)) {
                 return Optional.absent();
