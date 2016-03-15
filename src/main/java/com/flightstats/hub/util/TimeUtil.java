@@ -71,7 +71,7 @@ public class TimeUtil {
         return daysFormatter.parseDateTime(property);
     }
 
-    public static DateTime getEarliestTime(int ttlDays) {
+    public static DateTime getChannelEarliestTime(long ttlDays) {
         DateTime birthDay = TimeUtil.getBirthDay();
         if (ttlDays == 0) {
             return birthDay;

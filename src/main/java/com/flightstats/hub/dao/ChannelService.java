@@ -231,7 +231,7 @@ public class ChannelService {
     }
 
     private DateTime getTtlTime(String channelName) {
-        return TimeUtil.getEarliestTime(getTtlDays(channelName));
+        return TimeUtil.getChannelEarliestTime(getTtlDays(channelName));
     }
 
     private int getTtlDays(String channelName) {

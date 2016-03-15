@@ -247,7 +247,8 @@ public class AwsContentService implements ContentService {
 
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable) {
-        DateTime ttlTime = getCacheTtlTime(channel, channelService.getCachedChannelConfig(channel));
+        ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
+        DateTime ttlTime = getCacheTtlTime(channel, channelConfig);
         Optional<ContentKey> latest = spokeContentDao.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
             logger.info("found latest {} {}", channel, latest);
@@ -256,12 +257,13 @@ public class AwsContentService implements ContentService {
         }
         ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
         if (latestCache != null) {
-            if(latestCache.getTime().isBefore(ttlTime)){
-                lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
-                // todo - bc 3/14 - do we need to return value here?
-            }
             logger.info("found cached {} {}", channel, latestCache);
             if (latestCache.equals(ContentKey.NONE)) {
+                return Optional.absent();
+            }
+            DateTime channelEarliestTime = TimeUtil.getChannelEarliestTime(channelConfig.getTtlDays());
+            if (latestCache.getTime().isBefore(channelEarliestTime)) {
+                lastContentPath.updateIncrease(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
                 return Optional.absent();
             }
             return Optional.of((ContentKey) latestCache);

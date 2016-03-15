@@ -28,7 +28,7 @@ public class TimeUtilTest {
     @Test
     public void testEarliestTime1Day() {
         DateTime now = TimeUtil.now();
-        DateTime earliestTime = TimeUtil.getEarliestTime(1);
+        DateTime earliestTime = TimeUtil.getChannelEarliestTime(1);
         assertEquals((double) now.minusDays(1).getMillis(),
                 (double) earliestTime.getMillis(), (double) 500);
     }
@@ -36,7 +36,7 @@ public class TimeUtilTest {
     @Test
     public void testEarliestTime100Years() {
         DateTime birthDay = TimeUtil.getBirthDay();
-        DateTime earliestTime = TimeUtil.getEarliestTime(100 * 365);
+        DateTime earliestTime = TimeUtil.getChannelEarliestTime(100 * 365);
         assertEquals((double) birthDay.getMillis(),
                 (double) earliestTime.getMillis(), (double) 500);
     }
