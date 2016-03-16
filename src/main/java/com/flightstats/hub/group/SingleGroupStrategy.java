@@ -153,6 +153,9 @@ public class SingleGroupStrategy implements GroupStrategy {
 
             private void addKeys(Collection<ContentKey> keys) throws InterruptedException {
                 logger.debug("channel {} keys {}", channel, keys);
+                if (logger.isTraceEnabled()) {
+                    ActiveTraces.getLocal().log(logger);
+                }
                 for (ContentKey key : keys) {
                     addKey(key);
                 }
