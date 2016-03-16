@@ -299,6 +299,7 @@ public class AwsContentService implements ContentService {
         spokeContentDao.delete(channelName);
         s3SingleContentDao.delete(channelName);
         s3BatchContentDao.delete(channelName);
+        lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (!channel.isSingle()) {
             new S3Batch(channel, hubUtils).stop();
