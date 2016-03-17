@@ -177,6 +177,9 @@ public class FileSpokeStore {
         String hoursPath = TimeUtil.hours(hourToSearch);
         String fullHoursPath = storagePath + channel + "/" + hoursPath;
         String[] minutes = new File(fullHoursPath).list();
+        if (minutes == null) {
+            minutes = new String[0];
+        }
         Arrays.sort(minutes);
         logger.trace("looking at {} {}", fullHoursPath, minutes);
         for (int i = minutes.length - 1; i >= 0; i--) {
