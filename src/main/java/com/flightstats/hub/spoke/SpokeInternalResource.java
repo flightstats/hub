@@ -137,7 +137,7 @@ public class SpokeInternalResource {
             }
             return Response.ok(read).build();
         } catch (NullPointerException e) {
-            logger.debug("NPE - unable to get latest " + channel + " " + path);
+            logger.info("NPE - unable to get latest " + channel + " " + path, e);
         } catch (Exception e) {
             logger.warn("unable to get latest " + channel + " " + path, e);
         }
