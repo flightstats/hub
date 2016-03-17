@@ -268,6 +268,22 @@ public class FileSpokeStoreTest {
     }
 
     @Test
+    public void testLatestCycle() {
+        DateTime now = TimeUtil.now();
+        String latest = spokeStore.getLatest("testLatestCycle", ContentKey.lastKey(now).toUrl());
+        assertNull(latest);
+        String key = new ContentKey(now, "0").toUrl();
+        assertTrue(spokeStore.write("testLatestCycle/" + key, BYTES));
+
+        latest = spokeStore.getLatest("testLatestCycle", key);
+        assertNull(latest);
+
+        latest = spokeStore.getLatest("testLatestCycle", ContentKey.lastKey(now.plusMinutes(1)).toUrl());
+        assertNotNull(latest);
+        assertEquals("testLatestCycle/" + key, latest);
+    }
+
+    @Test
     public void testLatestBugStable() {
         /**
          * add one item before the latest hour
