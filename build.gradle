@@ -90,6 +90,8 @@ dependencies {
     testCompile 'com.sparkjava:spark-core:2.3'
     testCompile 'junit:junit:4.+'
     testCompile "org.mockito:mockito-all:1.+"
+
+    compile 'com.indeed:java-dogstatsd-client:2.0.13'
 }
 
 
