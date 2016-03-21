@@ -247,7 +247,8 @@ public class AwsContentService implements ContentService {
 
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable) {
-        DateTime ttlTime = getCacheTtlTime(channel, channelService.getCachedChannelConfig(channel));
+        final ChannelConfig cachedChannelConfig = channelService.getCachedChannelConfig(channel);
+        DateTime cacheTtlTime = getCacheTtlTime(channel, cachedChannelConfig);
         Optional<ContentKey> latest = spokeContentDao.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
             logger.info("found latest {} {}", channel, latest);
@@ -256,7 +257,10 @@ public class AwsContentService implements ContentService {
         }
         ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
         if (latestCache != null) {
-            //todo - gfm - 3/7/16 - if latest is older than the Channel's TTL, set to none.
+            DateTime channelTtlTime = TimeUtil.getEarliestTime((int) cachedChannelConfig.getTtlDays());
+            if(latestCache.getTime().isBefore(channelTtlTime)){
+                lastContentPath.update(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
+            }
             logger.info("found cached {} {}", channel, latestCache);
             if (latestCache.equals(ContentKey.NONE)) {
                 return Optional.absent();
@@ -278,7 +282,7 @@ public class AwsContentService implements ContentService {
             return Optional.absent();
         } else {
             ContentKey latestKey = keys.iterator().next();
-            if (latestKey.getTime().isAfter(ttlTime)) {
+            if (latestKey.getTime().isAfter(cacheTtlTime)) {
                 logger.debug("latestKey within spoke window {} {}", channel, latestKey);
                 lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
             } else {
@@ -295,6 +299,7 @@ public class AwsContentService implements ContentService {
         spokeContentDao.delete(channelName);
         s3SingleContentDao.delete(channelName);
         s3BatchContentDao.delete(channelName);
+        lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (!channel.isSingle()) {
             new S3Batch(channel, hubUtils).stop();

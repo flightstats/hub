@@ -31,7 +31,7 @@ describe(testName, function () {
     var channelLastUpdated = hubUrlBase + '/internal/zookeeper/ChannelLatestUpdated';
 
     var zkChannels;
-    it('1 - loads channels ', function (done) {
+    it('1 - loads channels from ZooKeeper cache', function (done) {
         console.log('channelLastUpdated', channelLastUpdated);
         agent
             .get(channelLastUpdated)
@@ -45,7 +45,7 @@ describe(testName, function () {
     }, MINUTE);
 
     var values = {};
-    it('2 - reads values', function (done) {
+    it('2 - reads values from ZooKeeper cache', function (done) {
         async.eachLimit(zkChannels, 10,
             function (zkChannel, callback) {
                 console.log('get channel', zkChannel);
@@ -106,8 +106,14 @@ describe(testName, function () {
                     expect(item['empty']).toBe(true);
                     callback();
                 } else if (item['empty']) {
-                    expect(item.zkKey).toBe(NONE);
-                    callback();
+                    agent.get(item.zkChannel)
+                        .set('Accept', 'application/json')
+                        .end(function (res) {
+                            expect(res.error).toBe(false);
+                            console.log('comparing to NONE ', name, res.body.data.string)
+                            expect(res.body.data.string).toBe(NONE);
+                            callback();
+                        });
                 } else {
                     expect(item.latestKey).toBeDefined();
                     if (item.latestKey !== item.zkKey) {
