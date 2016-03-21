@@ -24,7 +24,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
         URI requestUri = request.getUriInfo().getRequestUri();
         String path = requestUri.getPath();
-        //statsd.incrementCounter(path);
+//        statsd.incrementCounter(path);
     }
 
     @Override
