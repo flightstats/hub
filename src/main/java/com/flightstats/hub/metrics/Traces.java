@@ -20,7 +20,7 @@ public class Traces {
         add(objects);
     }
 
-    void end() {
+    public void end() {
         end = System.currentTimeMillis();
         add("end");
     }
@@ -44,6 +44,11 @@ public class Traces {
     public void add(Object... objects) {
         traces.add(new SingleTrace(objects));
     }
+
+    public ListIterator<Trace> getTracesListIterator() {
+        return traces.listIterator();
+    }
+
 
     public void add(String string, SortedSet sortedSet) {
         if (sortedSet.isEmpty()) {
