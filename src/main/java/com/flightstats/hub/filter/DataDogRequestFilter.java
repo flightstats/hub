@@ -26,6 +26,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
 
     private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
 
+    private static final String CHANNEL = "{channel}";
     private static final String YEAR = "{year}";
     private static final String MONTH = "{month}";
     private static final String DAY = "{day}";
@@ -63,7 +64,6 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
 
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
-        URI requestUri = request.getUriInfo().getRequestUri();
         String method = request.getMethod();
         String servicePath = constructDeclaredPath(request);
         Traces aTraces = new Traces(method);
@@ -95,7 +95,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                     sbuff.append(element);
                     break;
                 case 1:
-                    sbuff.append("/{channel}");
+                    sbuff.append(CHANNEL);
                     break;
                 case 2: // year
                     if (element.equals(REQUEST_LATEST) || element.equals(REQUEST_EARLIEST)
