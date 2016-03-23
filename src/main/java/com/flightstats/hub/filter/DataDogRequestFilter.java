@@ -78,13 +78,12 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
      * @param request
      * @return
      */
-    private String constructDeclaredPath(ContainerRequestContext request) {
+    protected String constructDeclaredPath(ContainerRequestContext request) {
         URI uri = request.getUriInfo().getRequestUri();
         String method = request.getMethod();
         String path = uri.getPath();
 
         logger.debug("Constructing template path from {} with method {}.", path, method);
-
         StringBuffer sbuff = new StringBuffer();
         StringTokenizer stringTokenizer = new StringTokenizer(path, "/", false);
         int position = 0;
