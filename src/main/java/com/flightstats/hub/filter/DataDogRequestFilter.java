@@ -13,6 +13,7 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ListIterator;
+import java.util.StringTokenizer;
 
 /**
  * Filter class to handle intercepting requests and respones from the Hub and pipe statistics to
@@ -21,8 +22,22 @@ import java.util.ListIterator;
 @Provider
 public class DataDogRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
-    private final static StatsDClient statsd = new NonBlockingStatsDClient(null, "localhost", 8125, new String[]{"tag:value"});
+    private static final String YEAR = "{year}";
+    private static final String MONTH = "{month}";
+    private static final String DAY = "{day}";
+    private static final String HOUR = "{hour}";
+    private static final String MINUTE = "{minute}";
+    private static final String SECOND = "{second}";
 
+    private static final String REQUEST_LATEST = "latest";
+    private static final String REQUEST_EARLIEST = "earliest";
+    private static final String REQUEST_BULK = "bulk";
+    private static final String REQUEST_WS = "ws";
+    private static final String REQUEST_EVENTS = "events";
+    private static final String REQUEST_TIME = "time";
+    private static final String REQUEST_STATUS = "status";
+
+    private final static StatsDClient statsd = new NonBlockingStatsDClient(null, "localhost", 8125, new String[]{"tag:value"});
     private static final ThreadLocal<Traces> threadLocal = new ThreadLocal();
 
     @Override
@@ -31,27 +46,78 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         if (object != null) {
             Traces traces = (Traces) object;
             traces.end();
-
             ListIterator<Trace> tracesListIt = traces.getTracesListIterator();
-
-            StringBuffer sbuff = new StringBuffer();
-            // should really only be one item, however this could lead to aggregation
             while (tracesListIt.hasNext()) {
                 Trace aTrace = tracesListIt.next();
-                sbuff.append(aTrace.context());
+                statsd.recordExecutionTime(aTrace.context(), traces.getTime());
             }
-
-            statsd.recordExecutionTime(sbuff.toString(), traces.getTime());
         }
     }
 
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
         URI requestUri = request.getUriInfo().getRequestUri();
-        String path = requestUri.getPath();
+        String method = request.getMethod();
+        String servicePath = constructDeclaredPath(request);
+        Traces aTraces = new Traces(method);
+        aTraces.add(servicePath);
+        threadLocal.set(aTraces);
+    }
+
+    /**
+     * Desconstructs the request path and reconstructs it as a template path down to the second
+     * as well as append the method to the end.
+     *
+     * @param request
+     * @return
+     */
+    private String constructDeclaredPath(ContainerRequestContext request) {
+        URI uri = request.getUriInfo().getRequestUri();
         String method = request.getMethod();
 
-        Traces aTraces = new Traces(method);
-        threadLocal.set(aTraces);
+        StringBuffer sbuff = new StringBuffer();
+        StringTokenizer stringTokenizer = new StringTokenizer(uri.getPath(), "/", false);
+        int position = 0;
+        while (stringTokenizer.hasMoreElements()) {
+            String element = (String) stringTokenizer.nextElement();
+            switch (position) {
+                case 0:
+                    sbuff.append(element);
+                    break;
+                case 1:
+                    sbuff.append("/{channel}");
+                    break;
+                case 2: // year
+                    if (element.equals(REQUEST_LATEST) || element.equals(REQUEST_EARLIEST)
+                            || element.equals(REQUEST_BULK) || element.equals(REQUEST_WS)
+                            || element.equals(REQUEST_EVENTS) || element.equals(REQUEST_TIME)
+                            || element.equals(REQUEST_STATUS)) {
+                        sbuff.append("/").append(element);
+                        break;
+                    }
+                    sbuff.append("/").append(YEAR);
+                    break;
+                case 3: // Month
+                    sbuff.append("/").append(MONTH);
+                    break;
+                case 4: // day
+                    sbuff.append("/").append(DAY);
+                    break;
+                case 5: // hour
+                    sbuff.append("/").append(HOUR);
+                    break;
+                case 6: // minute
+                    sbuff.append("/").append(MINUTE);
+                    break;
+                case 7: // second
+                    sbuff.append("/").append(SECOND);
+                    break;
+            }
+
+            position++;
+        }
+
+        sbuff.append(" ").append(method);
+        return sbuff.toString();
     }
 }
