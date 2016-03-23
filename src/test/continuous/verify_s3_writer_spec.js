@@ -27,7 +27,13 @@ describe(testName, function () {
             .set('Accept', 'application/json')
             .end(function (res) {
                 expect(res.error).toBe(false);
-                channels = res.body._links.channels;
+                var allChannels = res.body._links.channels;
+                allChannels.forEach(function (channel) {
+                    console.log('channel', channel);
+                    if (channel.name.substring(0, 4) !== 'test') {
+                        channels.push(channel);
+                    }
+                })
                 done();
             })
     }, timeout);
