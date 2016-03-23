@@ -4,6 +4,8 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Trace;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -21,6 +23,8 @@ import java.util.StringTokenizer;
  */
 @Provider
 public class DataDogRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
+
+    private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
 
     private static final String YEAR = "{year}";
     private static final String MONTH = "{month}";
@@ -49,7 +53,10 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             ListIterator<Trace> tracesListIt = traces.getTracesListIterator();
             while (tracesListIt.hasNext()) {
                 Trace aTrace = tracesListIt.next();
-                statsd.recordExecutionTime(aTrace.context(), traces.getTime());
+                String context = aTrace.context();
+                long time = traces.getTime();
+                statsd.recordExecutionTime(context, time);
+                logger.debug("Sending executionTime to DataDog for {} with time of {}.", context, time);
             }
         }
     }
@@ -74,9 +81,12 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     private String constructDeclaredPath(ContainerRequestContext request) {
         URI uri = request.getUriInfo().getRequestUri();
         String method = request.getMethod();
+        String path = uri.getPath();
+
+        logger.debug("Constructing template path from {} with method {}.", path, method);
 
         StringBuffer sbuff = new StringBuffer();
-        StringTokenizer stringTokenizer = new StringTokenizer(uri.getPath(), "/", false);
+        StringTokenizer stringTokenizer = new StringTokenizer(path, "/", false);
         int position = 0;
         while (stringTokenizer.hasMoreElements()) {
             String element = (String) stringTokenizer.nextElement();
@@ -118,6 +128,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         }
 
         sbuff.append(" ").append(method);
+        logger.debug("Generated template path: {}", sbuff.toString());
         return sbuff.toString();
     }
 }
