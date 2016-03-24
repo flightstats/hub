@@ -33,6 +33,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     private static final String HOUR = "{hour}";
     private static final String MINUTE = "{minute}";
     private static final String SECOND = "{second}";
+    private static final String MILISECONDS = "{miliseconds}";
 
     private static final String REQUEST_LATEST = "latest";
     private static final String REQUEST_EARLIEST = "earliest";
@@ -78,56 +79,63 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
      * @param request
      * @return
      */
-    protected String constructDeclaredPath(ContainerRequestContext request) {
+    private String constructDeclaredPath(ContainerRequestContext request) {
         URI uri = request.getUriInfo().getRequestUri();
         String method = request.getMethod();
         String path = uri.getPath();
+        return constructDeclaredpath(path, method);
+    }
 
+    protected String constructDeclaredpath(String path, String method) {
         logger.debug("Constructing template path from {} with method {}.", path, method);
         StringBuffer sbuff = new StringBuffer();
         StringTokenizer stringTokenizer = new StringTokenizer(path, "/", false);
         int position = 0;
         while (stringTokenizer.hasMoreElements()) {
             String element = (String) stringTokenizer.nextElement();
-            switch (position) {
-                case 0:
-                    sbuff.append(element);
-                    break;
-                case 1:
-                    sbuff.append(CHANNEL);
-                    break;
-                case 2: // year
-                    if (element.equals(REQUEST_LATEST) || element.equals(REQUEST_EARLIEST)
-                            || element.equals(REQUEST_BULK) || element.equals(REQUEST_WS)
-                            || element.equals(REQUEST_EVENTS) || element.equals(REQUEST_TIME)
-                            || element.equals(REQUEST_STATUS)) {
-                        sbuff.append("/").append(element);
+            if (element.equals(REQUEST_LATEST) || element.equals(REQUEST_EARLIEST)
+                    || element.equals(REQUEST_BULK) || element.equals(REQUEST_WS)
+                    || element.equals(REQUEST_EVENTS) || element.equals(REQUEST_TIME)
+                    || element.equals(REQUEST_STATUS)) {
+
+                sbuff.append("/").append(element);
+            } else {
+                switch (position) {
+                    case 0:
+                        sbuff.append(element);
                         break;
-                    }
-                    sbuff.append("/").append(YEAR);
-                    break;
-                case 3: // Month
-                    sbuff.append("/").append(MONTH);
-                    break;
-                case 4: // day
-                    sbuff.append("/").append(DAY);
-                    break;
-                case 5: // hour
-                    sbuff.append("/").append(HOUR);
-                    break;
-                case 6: // minute
-                    sbuff.append("/").append(MINUTE);
-                    break;
-                case 7: // second
-                    sbuff.append("/").append(SECOND);
-                    break;
+                    case 1:
+                        sbuff.append("/").append(CHANNEL);
+                        break;
+                    case 2: // year
+                        sbuff.append("/").append(YEAR);
+                        break;
+                    case 3: // Month
+                        sbuff.append("/").append(MONTH);
+                        break;
+                    case 4: // day
+                        sbuff.append("/").append(DAY);
+                        break;
+                    case 5: // hour
+                        sbuff.append("/").append(HOUR);
+                        break;
+                    case 6: // minute
+                        sbuff.append("/").append(MINUTE);
+                        break;
+                    case 7: // second
+                        sbuff.append("/").append(SECOND);
+                        break;
+                    case 8: // miliseconds
+                        sbuff.append("/").append(MILISECONDS);
+                        break;
+                }
             }
 
             position++;
         }
 
-        sbuff.append(" ").append(method);
         logger.debug("Generated template path: {}", sbuff.toString());
         return sbuff.toString();
     }
+
 }
