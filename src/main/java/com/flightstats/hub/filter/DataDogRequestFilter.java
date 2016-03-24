@@ -56,7 +56,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 Trace aTrace = tracesListIt.next();
                 String context = aTrace.context();
                 long time = traces.getTime();
-                statsd.recordExecutionTime(context, time);
+                statsd.recordExecutionTime(request.getMethod(), time, context);
                 logger.debug("Sending executionTime to DataDog for {} with time of {}.", context, time);
             }
         }
