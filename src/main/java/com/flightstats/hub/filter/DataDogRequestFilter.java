@@ -26,14 +26,14 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
 
     private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
 
-    private static final String CHANNEL = "{channel}";
-    private static final String YEAR = "{year}";
-    private static final String MONTH = "{month}";
-    private static final String DAY = "{day}";
-    private static final String HOUR = "{hour}";
-    private static final String MINUTE = "{minute}";
-    private static final String SECOND = "{second}";
-    private static final String MILISECONDS = "{miliseconds}";
+    private static final String CHANNEL = "channel";
+    private static final String YEAR = "year";
+    private static final String MONTH = "month";
+    private static final String DAY = "day";
+    private static final String HOUR = "hour";
+    private static final String MINUTE = "minute";
+    private static final String SECOND = "second";
+    private static final String MILISECONDS = "miliseconds";
 
     private static final String REQUEST_LATEST = "latest";
     private static final String REQUEST_EARLIEST = "earliest";
