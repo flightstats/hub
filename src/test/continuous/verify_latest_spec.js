@@ -103,6 +103,9 @@ describe(testName, function () {
                 console.log('get latest ', name);
 
                 if (item.zkKey === NONE) {
+                    if (!item['empty']) {
+                        console.log('failed: expected empty', name, item);
+                    }
                     expect(item['empty']).toBe(true);
                     callback();
                 } else if (item['empty']) {
