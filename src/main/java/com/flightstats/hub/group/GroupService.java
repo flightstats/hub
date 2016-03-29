@@ -32,8 +32,8 @@ public class GroupService {
     }
 
     public Optional<Group> upsertGroup(Group group) {
-        logger.info("upsert group " + group);
         group = group.withDefaults();
+        logger.info("upsert group with defaults " + group);
         groupValidator.validate(group);
         Optional<Group> existingGroup = getGroup(group.getName());
         if (existingGroup.isPresent()) {
