@@ -15,7 +15,6 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ListIterator;
-import java.util.StringTokenizer;
 
 /**
  * Filter class to handle intercepting requests and respones from the Hub and pipe statistics to
@@ -87,23 +86,31 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         return constructDeclaredpath(path, method);
     }
 
+    /**
+     * Desconstructs path into a templated path with marker indicators for date time periods, i.e. year,
+     * month, day, hour, etc.
+     * <p>
+     * Encountered query key words are included in the templated path.
+     *
+     * @param path
+     * @param method
+     * @return
+     */
     protected String constructDeclaredpath(String path, String method) {
         logger.debug("Constructing template path from {} with method {}.", path, method);
         StringBuffer sbuff = new StringBuffer();
-        StringTokenizer stringTokenizer = new StringTokenizer(path, "/", false);
-        int position = 0;
-        while (stringTokenizer.hasMoreElements()) {
-            String element = (String) stringTokenizer.nextElement();
-            if (element.equals(REQUEST_LATEST) || element.equals(REQUEST_EARLIEST)
-                    || element.equals(REQUEST_BULK) || element.equals(REQUEST_WS)
-                    || element.equals(REQUEST_EVENTS) || element.equals(REQUEST_TIME)
-                    || element.equals(REQUEST_STATUS)) {
+        String[] splits = path.split("\\/");
+        for (int i = 0; i < splits.length; i++) {
+            if (splits[i].equals(REQUEST_LATEST) || splits[i].equals(REQUEST_EARLIEST)
+                    || splits[i].equals(REQUEST_BULK) || splits[i].equals(REQUEST_WS)
+                    || splits[i].equals(REQUEST_EVENTS) || splits[i].equals(REQUEST_TIME)
+                    || splits[i].equals(REQUEST_STATUS)) {
 
-                sbuff.append("/").append(element);
+                sbuff.append("/").append(splits[i]);
             } else {
-                switch (position) {
+                switch (i) {
                     case 0:
-                        sbuff.append(element);
+                        sbuff.append(splits[i]);
                         break;
                     case 1:
                         sbuff.append("/").append(CHANNEL);
@@ -131,8 +138,6 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                         break;
                 }
             }
-
-            position++;
         }
 
         logger.debug("Generated template path: {}", sbuff.toString());
