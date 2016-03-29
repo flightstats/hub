@@ -40,7 +40,7 @@ describe(testName, function () {
 
     utils.sleep(2000);
 
-    utils.putGroup(groupName, groupConfigB, 201, testName);
+    utils.putGroup(groupName, groupConfigB, 200, testName);
 
     it('runs callback server: channel:' + channelName + ' group:' + groupName, function () {
         utils.startServer(portB, function (string) {
