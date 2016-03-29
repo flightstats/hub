@@ -14,13 +14,11 @@ var testName = __filename;
  *
  * 1 - create a channel
  * 2 - create a group on that channel with a non-existent endpointA
- * 3 - post item into the channel
- * 4 - delete the group
- * 5 - create the group with the same name and a new endpointB
- * 6 - start a server at the endpointB
- * 7 - post item - should see item at endPointB
+ * 3 - re-create the group with the same name and a new endpointB
+ * 4 - post item into the channel
+ * 5 - start a server at the endpointB
+ * 6 - post item - should see item at endPointB
  */
-
 describe(testName, function () {
 
     var portB = utils.getPort();
@@ -40,7 +38,7 @@ describe(testName, function () {
 
     utils.putGroup(groupName, badConfig, 201, testName);
 
-    utils.deleteGroup(groupName);
+    utils.sleep(2000);
 
     utils.putGroup(groupName, groupConfigB, 201, testName);
 
