@@ -1,5 +1,6 @@
 package com.flightstats.hub.filter;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Trace;
 import com.timgroup.statsd.NonBlockingStatsDClient;
@@ -42,34 +43,44 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     private static final String REQUEST_TIME = "time";
     private static final String REQUEST_STATUS = "status";
 
+    public static final String HUB_DATADOG_METRICS_FLAG = "data_dog.enable";
+
     private final static StatsDClient statsd = new NonBlockingStatsDClient(null, "localhost", 8125, new String[]{"tag:value"});
     private static final ThreadLocal<Traces> threadLocal = new ThreadLocal();
+    private final boolean isDataDogActive;
+
+    public DataDogRequestFilter() {
+        isDataDogActive = HubProperties.getProperty(HUB_DATADOG_METRICS_FLAG, false);
+    }
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
-        Object object = threadLocal.get();
-        if (object != null) {
-            Traces traces = (Traces) object;
-            traces.end();
-            ListIterator<Trace> tracesListIt = traces.getTracesListIterator();
-            while (tracesListIt.hasNext()) {
-                Trace aTrace = tracesListIt.next();
-                String context = aTrace.context();
-                long time = traces.getTime();
-                statsd.recordExecutionTime(request.getMethod(), time, new String[]{"endpoint:" + context});
-                statsd.recordExecutionTime("hubRequest", time, new String[]{"endpoint:" + context});
-                logger.debug("Sending executionTime to DataDog for {} with time of {}.", context, time);
+        if (isDataDogActive) {
+            Object object = threadLocal.get();
+            if (object != null) {
+                Traces traces = (Traces) object;
+                traces.end();
+                ListIterator<Trace> tracesListIt = traces.getTracesListIterator();
+                while (tracesListIt.hasNext()) {
+                    Trace aTrace = tracesListIt.next();
+                    String context = aTrace.context();
+                    long time = traces.getTime();
+                    statsd.recordExecutionTime("hubRequest", time, new String[]{"endpoint:" + context});
+                    logger.debug("Sending executionTime to DataDog for {} with time of {}.", context, time);
+                }
             }
         }
     }
 
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
-        String method = request.getMethod();
-        String servicePath = constructDeclaredPath(request);
-        Traces aTraces = new Traces(method);
-        aTraces.add(servicePath);
-        threadLocal.set(aTraces);
+        if (isDataDogActive) {
+            String method = request.getMethod();
+            String servicePath = constructDeclaredPath(request);
+            Traces aTraces = new Traces(method);
+            aTraces.add(servicePath);
+            threadLocal.set(aTraces);
+        }
     }
 
     /**

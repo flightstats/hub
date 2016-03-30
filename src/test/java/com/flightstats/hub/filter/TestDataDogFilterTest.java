@@ -1,5 +1,6 @@
 package com.flightstats.hub.filter;
 
+import com.flightstats.hub.app.HubProperties;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ public class TestDataDogFilterTest {
 
     @Test
     public void testChannelTemplateLatestPaths() {
+        HubProperties.setProperty(DataDogRequestFilter.HUB_DATADOG_METRICS_FLAG, "true");
         DataDogRequestFilter filter = new DataDogRequestFilter();
         String method = "GET";
         List<String[]> testsExpects = new ArrayList<>();
@@ -29,6 +31,7 @@ public class TestDataDogFilterTest {
 
     @Test
     public void testChanelWildcards() {
+        HubProperties.setProperty(DataDogRequestFilter.HUB_DATADOG_METRICS_FLAG, "true");
         DataDogRequestFilter filter = new DataDogRequestFilter();
         String method = "GET";
         List<String[]> testsExpects = new ArrayList<>();
@@ -39,5 +42,9 @@ public class TestDataDogFilterTest {
         testsExpects.add(new String[]{"channel/test/2016/03/24/14", "channel/channel/year/month/day/hour"});
         testsExpects.add(new String[]{"channel/test/2016/03/24/14/31", "channel/channel/year/month/day/hour/minute"});
         testsExpects.add(new String[]{"channel/test/2016/03/24/14/31/25", "channel/channel/year/month/day/hour/minute/second"});
+
+        for (String[] test : testsExpects) {
+            assertTrue(filter.constructDeclaredpath(test[0], method).equals(test[1]));
+        }
     }
 }
