@@ -152,7 +152,7 @@ class WebsiteTasks(TaskSet):
 
     def doNext(self, time):
         path = "/channel/" + self.channel + time.strftime("/%Y/%m/%d/%H/%M/%S/000") + "/A/next/10"
-        with self.client.get(path, catch_response=True, name="next_" + location) as postResponse:
+        with self.client.get(path, catch_response=True, name="next") as postResponse:
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on next: " + str(postResponse.status_code))
 
@@ -163,9 +163,9 @@ class WebsiteTasks(TaskSet):
     def verify_callback(self, obj, name="group"):
         obj[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
-        max = 2000
+        max = 20000
         if obj[self.channel]["batch"] == "MINUTE":
-            max = 20000
+            max = 50000
         if items > max:
             events.request_failure.fire(request_type=name, name="length", response_time=1,
                                         exception=-1)
@@ -209,8 +209,8 @@ class WebsiteTasks(TaskSet):
 
 class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
-    min_wait = 1
-    max_wait = 3
+    min_wait = 300
+    max_wait = 700
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
