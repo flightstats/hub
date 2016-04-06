@@ -66,7 +66,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         ContentKey key = new ContentKey();
-                        if (write(path + key.toUrl(), key.toUrl().getBytes(), server, traces)) {
+                        if (write(path + key.toUrl(), key.toUrl().getBytes(), server, traces, "payload")) {
                             quorumLatch.countDown();
                         } else {
                             traces.log(logger);
@@ -115,11 +115,11 @@ public class RemoteSpokeStore {
         return true;
     }
 
-    public boolean write(String path, byte[] payload, Content content) throws InterruptedException {
-        return write(path, payload, cluster.getServers(), ActiveTraces.getLocal());
+    public boolean write(String path, byte[] payload, String spokeApi) throws InterruptedException {
+        return write(path, payload, cluster.getServers(), ActiveTraces.getLocal(), spokeApi);
     }
 
-    private boolean write(final String path, final byte[] payload, Collection<String> servers, final Traces traces) throws InterruptedException {
+    private boolean write(final String path, final byte[] payload, Collection<String> servers, final Traces traces, final String spokeApi) throws InterruptedException {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
         AtomicBoolean reported = new AtomicBoolean();
@@ -128,7 +128,7 @@ public class RemoteSpokeStore {
                 @Override
                 public void run() {
                     setThread(path);
-                    String uri = HubHost.getScheme() + server + "/internal/spoke/payload/" + path;
+                    String uri = HubHost.getScheme() + server + "/internal/spoke/" + spokeApi + "/" + path;
                     traces.add(uri);
                     ClientResponse response = null;
                     try {

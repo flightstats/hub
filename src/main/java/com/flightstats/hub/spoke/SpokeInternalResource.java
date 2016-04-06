@@ -2,7 +2,9 @@ package com.flightstats.hub.spoke;
 
 
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SingleTrace;
+import com.google.common.io.ByteStreams;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +15,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.util.Arrays;
 
 @Path("/internal/spoke")
@@ -61,6 +65,40 @@ public class SpokeInternalResource {
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new SingleTrace("failed", start).toString())
+                    .build();
+        } catch (Exception e) {
+            logger.warn("unable to write " + path, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @Path("/bulk/{path:.+}")
+    @PUT
+    public Response putBulk(@PathParam("path") String path, InputStream input) {
+        try {
+            long start = System.currentTimeMillis();
+            ObjectInputStream stream = new ObjectInputStream(input);
+            int items = stream.readInt();
+            for (int i = 0; i < items; i++) {
+                int size = stream.readInt();
+                byte[] data = new byte[size];
+                ByteStreams.readFully(stream, data);
+                String itemPath = path + ContentKey.bulkHash(i);
+                if (!spokeStore.write(itemPath, new ByteArrayInputStream(data))) {
+                    logger.warn("what happened?!?! {}", path);
+                    return Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new SingleTrace("failed", start).toString())
+                            .build();
+                }
+            }
+            long end = System.currentTimeMillis();
+            if ((end - start) > 4000) {
+                logger.info("slow bulk write response {} {}", path, new DateTime(start));
+            }
+            return Response
+                    .created(uriInfo.getRequestUri())
+                    .entity(new SingleTrace("success", start).toString())
                     .build();
         } catch (Exception e) {
             logger.warn("unable to write " + path, e);

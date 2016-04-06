@@ -16,6 +16,10 @@ public interface ContentDao {
 
     ContentKey write(String channelName, Content content) throws Exception;
 
+    default SortedSet<ContentKey> write(BulkContent bulkContent) throws Exception {
+        throw new UnsupportedOperationException("bulk writes are not supported");
+    }
+
     Content read(String channelName, ContentKey key);
 
     SortedSet<ContentKey> queryByTime(TimeQuery timQuery);

@@ -7,6 +7,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
@@ -109,13 +110,35 @@ public class AwsContentService implements ContentService {
 
     @Override
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
-        Collection<ContentKey> keys = new ArrayList<>();
         MultiPartParser multiPartParser = new MultiPartParser(bulkContent);
         multiPartParser.parse();
-        for (Content content : bulkContent.getItems()) {
-            keys.add(insert(bulkContent.getChannel(), content));
+        try {
+            return newBulkWrite(bulkContent);
+        } catch (FailedWriteException e) {
+            logger.info("failed bulk write, fall back");
+            Collection<ContentKey> keys = new ArrayList<>();
+            for (Content content : bulkContent.getItems()) {
+                keys.add(insert(bulkContent.getChannel(), content));
+            }
+            return keys;
         }
-        return keys;
+    }
+
+    private Collection<ContentKey> newBulkWrite(BulkContent bulkContent) throws Exception {
+        String channelName = bulkContent.getChannel();
+        try {
+            inFlight.incrementAndGet();
+            SortedSet<ContentKey> keys = spokeContentDao.write(bulkContent);
+            ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
+            if (channel.isSingle() || channel.isBoth()) {
+                for (ContentKey key : keys) {
+                    s3SingleWrite(channelName, key);
+                }
+            }
+            return keys;
+        } finally {
+            inFlight.decrementAndGet();
+        }
     }
 
     @Override

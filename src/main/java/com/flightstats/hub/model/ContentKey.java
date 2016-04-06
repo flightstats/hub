@@ -13,6 +13,8 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DecimalFormat;
+
 @EqualsAndHashCode
 @Getter
 public class ContentKey implements ContentPath {
@@ -20,6 +22,8 @@ public class ContentKey implements ContentPath {
     private final static Logger logger = LoggerFactory.getLogger(ContentKey.class);
     private final DateTime time;
     private final String hash;
+
+    private static final DecimalFormat format = new DecimalFormat("000000");
 
     public ContentKey() {
         this(TimeUtil.now());
@@ -123,5 +127,9 @@ public class ContentKey implements ContentPath {
     public ContentKey fromZk(String value) {
         String[] split = value.split(":");
         return new ContentKey(new DateTime(Long.parseLong(split[0]), DateTimeZone.UTC), split[1]);
+    }
+
+    public synchronized static String bulkHash(int number) {
+        return format.format(number);
     }
 }
