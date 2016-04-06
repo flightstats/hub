@@ -102,10 +102,7 @@ describe(testName, function () {
             function (item, name, callback) {
                 console.log('get latest ', name);
 
-                if (item.zkKey === NONE) {
-                    expect(item['empty']).toBe(true);
-                    callback();
-                } else if (item['empty']) {
+                if (item['empty']) {
                     agent.get(item.zkChannel)
                         .set('Accept', 'application/json')
                         .end(function (res) {
