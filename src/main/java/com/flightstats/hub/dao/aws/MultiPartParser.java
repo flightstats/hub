@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.text.DecimalFormat;
 
 public class MultiPartParser {
     private final static Logger logger = LoggerFactory.getLogger(MultiPartParser.class);
@@ -23,7 +22,6 @@ public class MultiPartParser {
     private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 20) * 1024 * 1024 * 3;
     private BulkContent content;
     private BufferedInputStream stream;
-    private final DecimalFormat format = new DecimalFormat("000000");
     private final ContentKey masterKey;
     private Content.Builder builder;
     private final ByteArrayOutputStream baos;
@@ -32,6 +30,7 @@ public class MultiPartParser {
     public MultiPartParser(BulkContent content) {
         this.content = content;
         masterKey = new ContentKey();
+        content.setMasterKey(masterKey);
         builder = Content.builder();
         stream = new BufferedInputStream(content.getStream());
         baos = new ByteArrayOutputStream();
@@ -101,11 +100,14 @@ public class MultiPartParser {
         if (data.length > 0) {
             builder.withData(data);
             builder.withContentKey(new ContentKey(masterKey.getTime(),
-                    masterKey.getHash() + format.format(content.getItems().size())));
+                    masterKey.getHash() + ContentKey.bulkHash(content.getItems().size())));
             content.getItems().add(builder.build());
         }
         builder = Content.builder();
         baos.reset();
     }
 
+    public ContentKey getMasterKey() {
+        return masterKey;
+    }
 }
