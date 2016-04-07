@@ -209,8 +209,8 @@ class WebsiteTasks(TaskSet):
 
 class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
-    min_wait = 300
-    max_wait = 700
+    min_wait = 600
+    max_wait = 1000
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
