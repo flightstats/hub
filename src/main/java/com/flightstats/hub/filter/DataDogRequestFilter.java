@@ -116,6 +116,8 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                     logger.debug("Sending executionTime to DataDog for {} with time of {}.", context, time);
                 }
             }
+        } else {
+            logger.debug("DataDog logging disabled.");
         }
     }
 
