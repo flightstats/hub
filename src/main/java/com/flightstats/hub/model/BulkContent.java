@@ -16,6 +16,11 @@ public class BulkContent {
     private final String contentType;
     private final String channel;
     private final List<Content> items = new ArrayList<>();
+    private ContentKey masterKey;
+
+    public void setMasterKey(ContentKey masterKey) {
+        this.masterKey = masterKey;
+    }
 
     public long getSize() {
         long bytes = 0;
