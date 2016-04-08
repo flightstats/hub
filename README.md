@@ -464,7 +464,7 @@ For eaxmple, if you quickly insert 1,000 items into a channel with maxItems = 50
 
 If you change a channel from ttlDays to maxItems, it will also take up to 12 hours for the limit to be enforced.
 
-## cha interface
+## tag interface
 
 Tags are used to logically group channels.  To retrieve all of the tags in the Hub:
 
