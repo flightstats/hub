@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -17,6 +14,7 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,21 +24,23 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class MinuteGroupStrategy implements GroupStrategy {
+public class TimedGroupStrategy implements GroupStrategy {
 
-    private final static Logger logger = LoggerFactory.getLogger(MinuteGroupStrategy.class);
+    private final static Logger logger = LoggerFactory.getLogger(TimedGroupStrategy.class);
 
     private final Group group;
+    private final TimedGroup timedGroup;
     private final LastContentPath lastContentPath;
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private AtomicBoolean error = new AtomicBoolean(false);
-    private BlockingQueue<MinutePath> queue;
+    private BlockingQueue<ContentPath> queue;
     private String channel;
     private ScheduledExecutorService executorService;
 
-    public MinuteGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
+    public TimedGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
         this.group = group;
+        this.timedGroup = TimedGroup.getTimedGroup(group);
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
@@ -51,7 +51,7 @@ public class MinuteGroupStrategy implements GroupStrategy {
     public ContentPath getStartingPath() {
         ContentPath startingKey = group.getStartingKey();
         if (null == startingKey) {
-            startingKey = new MinutePath();
+            startingKey = GroupStrategy.createContentPath(group);
         }
         return lastContentPath.get(group.getName(), startingKey, GroupLeader.GROUP_LAST_COMPLETED);
     }
@@ -63,10 +63,9 @@ public class MinuteGroupStrategy implements GroupStrategy {
 
     @Override
     public void start(Group group, ContentPath startingPath) {
-        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("minute-group-" + group.getName() + "-%s").build();
+        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat(group.getBatch() + "-group-" + group.getName() + "-%s").build();
         executorService = Executors.newSingleThreadScheduledExecutor(factory);
-        int offset = getOffset();
-        logger.info("starting {} with offset {}", group, offset);
+        logger.info("starting {} with offset {}", group, timedGroup.getOffsetSeconds());
         executorService.scheduleAtFixedRate(new Runnable() {
 
             ContentPath lastAdded = startingPath;
@@ -87,54 +86,47 @@ public class MinuteGroupStrategy implements GroupStrategy {
             }
 
             private void doWork() throws InterruptedException {
-                DateTime nextTime = lastAdded.getTime().plusMinutes(1);
+                Duration duration = timedGroup.getUnit().getDuration();
+                DateTime nextTime = lastAdded.getTime().plus(duration);
                 if (lastAdded instanceof ContentKey) {
                     nextTime = lastAdded.getTime();
                 }
-                DateTime stable = TimeUtil.stable().minusMinutes(1);
+                DateTime stable = TimeUtil.stable().minus(duration);
                 if (channelService.isReplicating(channel)) {
-                    ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED);
+                    ContentPath contentPath = lastContentPath.get(channel, timedGroup.getNone(), ChannelReplicator.REPLICATED_LAST_UPDATED);
                     stable = contentPath.getTime().plusSeconds(1);
                     logger.debug("replicating {} stable {}", contentPath, stable);
                 }
                 logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
                 while (nextTime.isBefore(stable)) {
                     try {
-                        ActiveTraces.start("MinuteGroupStrategy.doWork", group);
+                        ActiveTraces.start("TimedGroupStrategy.doWork", group);
                         Collection<ContentKey> keys = queryKeys(nextTime)
                                 .stream()
                                 .filter(key -> key.compareTo(lastAdded) > 0)
                                 .collect(Collectors.toCollection(ArrayList::new));
-                        MinutePath nextPath = new MinutePath(nextTime, keys);
-                        logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
+
+                        ContentPath nextPath = timedGroup.newTime(nextTime, keys);
+                        logger.trace("results {} {} {}", channel, nextPath, ((Keys) nextPath).getKeys());
                         queue.put(nextPath);
                         lastAdded = nextPath;
-                        nextTime = lastAdded.getTime().plusMinutes(1);
+                        nextTime = lastAdded.getTime().plus(duration);
                     } finally {
                         ActiveTraces.end();
                     }
                 }
             }
 
-        }, getOffset(), 60, TimeUnit.SECONDS);
-    }
-
-    private int getOffset() {
-        int secondOfMinute = new DateTime().getSecondOfMinute();
-        if (secondOfMinute < 6) {
-            return 6 - secondOfMinute;
-        } else if (secondOfMinute > 6) {
-            return 66 - secondOfMinute;
-        }
-        return 0;
+        }, timedGroup.getOffsetSeconds(), timedGroup.getPeriodSeconds(), TimeUnit.SECONDS);
     }
 
     private Collection<ContentKey> queryKeys(DateTime time) {
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channel)
                 .startTime(time)
-                .unit(TimeUtil.Unit.MINUTES)
+                .unit(timedGroup.getUnit())
                 .stable(true)
+                .location(Location.CACHE)
                 .build();
         return channelService.queryByTime(timeQuery);
     }
@@ -152,23 +144,17 @@ public class MinuteGroupStrategy implements GroupStrategy {
     }
 
     @Override
-    public ContentPath createContentPath() {
-        return MinutePath.NONE;
-    }
-
-    @Override
     public ObjectNode createResponse(ContentPath contentPath, ObjectMapper mapper) {
-        MinutePath minutePath = (MinutePath) contentPath;
         ObjectNode response = mapper.createObjectNode();
         response.put("name", group.getName());
         String url = contentPath.toUrl();
         response.put("id", url);
         String channelUrl = group.getChannelUrl();
         response.put("url", channelUrl + "/" + url);
-        response.put("batchUrl", getBulkUrl(channelUrl, minutePath, "batch"));
-        response.put("bulkUrl", getBulkUrl(channelUrl, minutePath, "bulk"));
+        response.put("batchUrl", getBulkUrl(channelUrl, contentPath, "batch"));
+        response.put("bulkUrl", getBulkUrl(channelUrl, contentPath, "bulk"));
         ArrayNode uris = response.putArray("uris");
-        Collection<ContentKey> keys = minutePath.getKeys();
+        Collection<ContentKey> keys = ((Keys) contentPath).getKeys();
         for (ContentKey key : keys) {
             uris.add(channelUrl + "/" + key.toUrl());
         }
@@ -180,13 +166,13 @@ public class MinuteGroupStrategy implements GroupStrategy {
         return response;
     }
 
-    public static String getBulkUrl(String channelUrl, MinutePath path, String parameter) {
+    public static String getBulkUrl(String channelUrl, ContentPath path, String parameter) {
         return channelUrl + "/" + path.toUrl() + "?" + parameter + "=true";
     }
 
     @Override
     public ContentPath inProcess(ContentPath contentPath) {
-        return new MinutePath(contentPath.getTime(), queryKeys(contentPath.getTime()));
+        return timedGroup.newTime(contentPath.getTime(), queryKeys(contentPath.getTime()));
     }
 
     @Override

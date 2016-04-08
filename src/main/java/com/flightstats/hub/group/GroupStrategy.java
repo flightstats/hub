@@ -7,6 +7,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.SecondPath;
 import com.google.common.base.Optional;
 
 import java.util.concurrent.BlockingQueue;
@@ -23,13 +24,14 @@ public interface GroupStrategy extends AutoCloseable {
 
     Optional<ContentPath> next();
 
-    ContentPath createContentPath();
-
     ObjectNode createResponse(ContentPath contentPath, ObjectMapper mapper);
 
     ContentPath inProcess(ContentPath contentPath);
 
     static ContentPath createContentPath(Group group) {
+        if (group.isSecond()) {
+            return new SecondPath();
+        }
         if (group.isMinute()) {
             return new MinutePath();
         }
@@ -37,8 +39,8 @@ public interface GroupStrategy extends AutoCloseable {
     }
 
     static GroupStrategy getStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
-        if (group.isMinute()) {
-            return new MinuteGroupStrategy(group, lastContentPath, channelService);
+        if (group.isMinute() || group.isSecond()) {
+            return new TimedGroupStrategy(group, lastContentPath, channelService);
         }
         return new SingleGroupStrategy(group, lastContentPath, channelService);
     }

@@ -66,6 +66,7 @@ public class S3BatchResource {
         return Response.status(400).build();
     }
 
+    //todo - gfm - 4/8/16 - this looks re-useful
     public static boolean getAndWriteBatch(ContentDao contentDao, String channel, MinutePath path,
                                            Collection<ContentKey> keys, String batchUrl) {
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch", path);

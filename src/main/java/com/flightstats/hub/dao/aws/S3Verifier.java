@@ -6,7 +6,7 @@ import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.group.MinuteGroupStrategy;
+import com.flightstats.hub.group.TimedGroupStrategy;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
@@ -133,7 +133,7 @@ public class S3Verifier {
                 if (!keysToAdd.isEmpty()) {
                     MinutePath path = new MinutePath(startTime);
                     logger.info("batchS3Verification {} missing {}", channelName, path);
-                    String batchUrl = MinuteGroupStrategy.getBulkUrl(APP_URL + "channel/" + channelName, path, "batch");
+                    String batchUrl = TimedGroupStrategy.getBulkUrl(APP_URL + "channel/" + channelName, path, "batch");
                     logger.info("batchS3Verification batchUrl {}", batchUrl);
                     S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, path, expectedKeys, batchUrl);
                 }
