@@ -9,7 +9,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestDataDogFilterTest {
+public class DataDogFilterTest {
 
     @BeforeClass
     public static void setupClass() {
