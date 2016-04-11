@@ -113,11 +113,11 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                     String context = aTrace.context();
                     long time = traces.getTime();
                     statsd.recordExecutionTime("hubRequest", time, new String[]{"endpoint:" + context});
-                    logger.debug("Sending executionTime to DataDog for {} with time of {}.", context, time);
+//                    logger.debug("Sending executionTime to DataDog for {} with time of {}.", context, time);
                 }
             }
         } else {
-            logger.debug("DataDog logging disabled.");
+//            logger.debug("DataDog logging disabled.");
         }
     }
 
@@ -157,7 +157,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
      * @return
      */
     protected String constructDeclaredpath(String path, String method) {
-        logger.debug("Constructing template path from {} with method {}.", path, method);
+        //logger.debug("Constructing template path from {} with method {}.", path, method);
 
         StringBuilder sbuff = new StringBuilder();
         String[] splits = path.split("\\/");
@@ -169,7 +169,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             handlePath(sbuff, splits);
         }
 
-        logger.debug("Generated template path: {}", sbuff.toString());
+        //logger.debug("Generated template path: {}", sbuff.toString());
         return sbuff.toString();
     }
 
