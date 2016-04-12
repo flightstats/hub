@@ -3,6 +3,7 @@ package com.flightstats.hub.filter;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Trace;
+import com.timgroup.statsd.Event;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
 import org.slf4j.Logger;
@@ -115,6 +116,13 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                     statsd.recordExecutionTime("hubRequest", time, new String[]{"endpoint:" + context});
 //                    logger.debug("Sending executionTime to DataDog for {} with time of {}.", context, time);
                 }
+
+                // report any errors
+                int returnCode = response.getStatus();
+                if (returnCode != 200 && returnCode != 404) {
+                    Event event = Event.builder().withDate(System.currentTimeMillis()).withAlertType(Event.AlertType.ERROR).build();
+                    statsd.recordEvent(event);
+                }
             }
         } else {
 //            logger.debug("DataDog logging disabled.");
@@ -126,8 +134,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         if (isDataDogActive) {
             String method = request.getMethod();
             String servicePath = constructDeclaredPath(request);
-            Traces aTraces = new Traces(method);
-            aTraces.add(servicePath);
+            Traces aTraces = new Traces(method, servicePath);
             threadLocal.set(aTraces);
         }
     }
@@ -161,14 +168,15 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
 
         StringBuilder sbuff = new StringBuilder();
         String[] splits = path.split("\\/");
-        QueryKey key = QueryKey.getQueryKeys().get(splits[0]);
+        if (splits != null && splits.length > 0) {
+            QueryKey key = QueryKey.getQueryKeys().get(splits[0]);
 
-        if (key == QueryKey.internal) {
-            handleInternalPath(sbuff, splits);
-        } else {
-            handlePath(sbuff, splits);
+            if (key == QueryKey.internal) {
+                handleInternalPath(sbuff, splits);
+            } else {
+                handlePath(sbuff, splits);
+            }
         }
-
         //logger.debug("Generated template path: {}", sbuff.toString());
         return sbuff.toString();
     }
