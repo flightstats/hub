@@ -3,7 +3,6 @@ package com.flightstats.hub.filter;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Trace;
-import com.timgroup.statsd.Event;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
 import org.slf4j.Logger;
@@ -114,18 +113,18 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                     String context = aTrace.context();
                     long time = traces.getTime();
                     statsd.recordExecutionTime("hubRequest", time, new String[]{"endpoint:" + context});
-//                    logger.debug("Sending executionTime to DataDog for {} with time of {}.", context, time);
+                    logger.debug("Sending executionTime to DataDog for {} with time of {}.", context, time);
                 }
 
                 // report any errors
-                int returnCode = response.getStatus();
-                if (returnCode != 200 && returnCode != 404) {
-                    Event event = Event.builder().withDate(System.currentTimeMillis()).withAlertType(Event.AlertType.ERROR).build();
-                    statsd.recordEvent(event);
-                }
+//                int returnCode = response.getStatus();
+//                if (returnCode != 200 && returnCode != 404) {
+//                    Event event = Event.builder().withDate(System.currentTimeMillis()).withAlertType(Event.AlertType.ERROR).build();
+//                    statsd.recordEvent(event);
+//                }
             }
         } else {
-//            logger.debug("DataDog logging disabled.");
+            logger.debug("DataDog logging disabled.");
         }
     }
 
@@ -177,7 +176,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 handlePath(sbuff, splits);
             }
         }
-        //logger.debug("Generated template path: {}", sbuff.toString());
+        logger.debug("Generated template path: {}", sbuff.toString());
         return sbuff.toString();
     }
 
