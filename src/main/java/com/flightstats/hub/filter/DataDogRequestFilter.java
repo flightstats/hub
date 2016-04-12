@@ -117,11 +117,10 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 }
 
                 // report any errors
-//                int returnCode = response.getStatus();
-//                if (returnCode != 200 && returnCode != 404) {
-//                    Event event = Event.builder().withDate(System.currentTimeMillis()).withAlertType(Event.AlertType.ERROR).build();
-//                    statsd.recordEvent(event);
-//                }
+                int returnCode = response.getStatus();
+                if (returnCode > 400 && returnCode != 404) {
+                    statsd.recordExecutionTime("hubErrors", System.currentTimeMillis(), new String[]{"errorCode:" + returnCode});
+                }
             }
         } else {
             logger.debug("DataDog logging disabled.");
@@ -180,6 +179,12 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         return sbuff.toString();
     }
 
+    /**
+     * Handles generic URI paths.
+     *
+     * @param sbuff
+     * @param path
+     */
     private void handlePath(StringBuilder sbuff, String[] path) {
         QueryType queryType = null;
         if (path.length > 1) {
@@ -212,6 +217,12 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         }
     }
 
+    /**
+     * Specifially handles paths begining with /internal
+     *
+     * @param sbuff
+     * @param path
+     */
     private void handleInternalPath(StringBuilder sbuff, String[] path) {
         QueryType queryType = QueryType.unkown;
         for (int i = 0; i < path.length; i++) {
