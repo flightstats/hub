@@ -101,10 +101,6 @@ applicationDistribution.from('README.md') {
     into "doc"
 }
 
-applicationDistribution.from('config/triforce') {
-    into "triforce"
-}
-
 applicationDistribution.from('config/conf') {
     into "conf"
 }
