@@ -23,10 +23,10 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
         URI requestUri = request.getUriInfo().getRequestUri();
         logger.trace("response {} {} {}", request.getMethod(), requestUri, response.getStatus());
         Thread thread = Thread.currentThread();
-        thread.setName(StringUtils.substringBefore(thread.getName(), "|"));
         if (!ActiveTraces.end()) {
             logger.debug("unable to end trace for {}", requestUri);
         }
+        thread.setName(StringUtils.substringBefore(thread.getName(), "|"));
     }
 
     @Override
@@ -34,7 +34,7 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
         URI requestUri = request.getUriInfo().getRequestUri();
         logger.trace("incoming {} {}", request.getMethod(), requestUri);
         Thread thread = Thread.currentThread();
-        thread.setName(thread.getName() + "|" + requestUri);
+        thread.setName(thread.getName() + "|" + request.getMethod() + "|" + requestUri);
         ActiveTraces.start(requestUri, request.getMethod(), request.getHeaders().getFirst("X-Forwarded-For"));
     }
 }
