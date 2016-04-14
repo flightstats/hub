@@ -34,7 +34,7 @@ public class TimedGroupStrategy implements GroupStrategy {
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private AtomicBoolean error = new AtomicBoolean(false);
-    private BlockingQueue<ContentPath> queue;
+    private BlockingQueue<ContentPathKeys> queue;
     private String channel;
     private ScheduledExecutorService executorService;
 
@@ -106,8 +106,8 @@ public class TimedGroupStrategy implements GroupStrategy {
                                 .filter(key -> key.compareTo(lastAdded) > 0)
                                 .collect(Collectors.toCollection(ArrayList::new));
 
-                        ContentPath nextPath = timedGroup.newTime(nextTime, keys);
-                        logger.trace("results {} {} {}", channel, nextPath, ((Keys) nextPath).getKeys());
+                        ContentPathKeys nextPath = timedGroup.newTime(nextTime, keys);
+                        logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
                         queue.put(nextPath);
                         lastAdded = nextPath;
                         nextTime = lastAdded.getTime().plus(duration);
@@ -154,7 +154,7 @@ public class TimedGroupStrategy implements GroupStrategy {
         response.put("batchUrl", getBulkUrl(channelUrl, contentPath, "batch"));
         response.put("bulkUrl", getBulkUrl(channelUrl, contentPath, "bulk"));
         ArrayNode uris = response.putArray("uris");
-        Collection<ContentKey> keys = ((Keys) contentPath).getKeys();
+        Collection<ContentKey> keys = ((ContentPathKeys) contentPath).getKeys();
         for (ContentKey key : keys) {
             uris.add(channelUrl + "/" + key.toUrl());
         }

@@ -2,6 +2,7 @@ package com.flightstats.hub.group;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.ContentPathKeys;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
@@ -34,7 +35,7 @@ public class MinuteTimedGroup implements TimedGroup {
     }
 
     @Override
-    public ContentPath newTime(DateTime pathTime, Collection<ContentKey> keys) {
+    public ContentPathKeys newTime(DateTime pathTime, Collection<ContentKey> keys) {
         return new MinutePath(pathTime, keys);
     }
 

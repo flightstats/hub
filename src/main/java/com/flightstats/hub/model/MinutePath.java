@@ -19,7 +19,7 @@ import java.util.Collections;
  */
 @Getter
 @EqualsAndHashCode(of = "time")
-public class MinutePath implements ContentPath, Keys {
+public class MinutePath implements ContentPathKeys {
     private final static Logger logger = LoggerFactory.getLogger(MinutePath.class);
 
     public static final MinutePath NONE = new MinutePath(new DateTime(1, DateTimeZone.UTC));

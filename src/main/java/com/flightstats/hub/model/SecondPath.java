@@ -19,7 +19,7 @@ import java.util.Collections;
  */
 @Getter
 @EqualsAndHashCode(of = "time")
-public class SecondPath implements ContentPath, Keys {
+public class SecondPath implements ContentPathKeys {
     private final static Logger logger = LoggerFactory.getLogger(SecondPath.class);
 
     public static final SecondPath NONE = new SecondPath(new DateTime(1, DateTimeZone.UTC));

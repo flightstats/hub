@@ -2,6 +2,7 @@ package com.flightstats.hub.group;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.ContentPathKeys;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 
@@ -15,7 +16,7 @@ public interface TimedGroup {
 
     TimeUtil.Unit getUnit();
 
-    ContentPath newTime(DateTime pathTime, Collection<ContentKey> keys);
+    ContentPathKeys newTime(DateTime pathTime, Collection<ContentKey> keys);
 
     ContentPath getNone();
 
@@ -27,6 +28,6 @@ public interface TimedGroup {
             return MinuteTimedGroup.GROUP;
         }
 
-        return null;
+        throw new UnsupportedOperationException("invalid incoming group " + group);
     }
 }

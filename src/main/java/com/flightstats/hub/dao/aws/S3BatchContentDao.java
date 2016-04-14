@@ -110,7 +110,7 @@ public class S3BatchContentDao implements ContentDao {
         return builder.build();
     }
 
-    private ZipInputStream getZipInputStream(String channel, MinutePath minutePath) {
+    private ZipInputStream getZipInputStream(String channel, ContentPathKeys minutePath) {
         ActiveTraces.getLocal().add("S3BatchContentDao.getZipInputStream");
         sender.send("channel." + channel + ".s3Batch.get", 1);
         S3Object object = s3Client.getObject(s3BucketName, getS3BatchItemsKey(channel, minutePath));
@@ -118,7 +118,7 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public boolean streamMinute(String channel, MinutePath minutePath, Consumer<Content> callback) {
+    public boolean streamMinute(String channel, ContentPathKeys minutePath, Consumer<Content> callback) {
         Map<String, ContentKey> keyMap = new HashMap<>();
         boolean found = false;
         for (ContentKey key : minutePath.getKeys()) {
@@ -335,7 +335,7 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public void writeBatch(String channel, MinutePath path, Collection<ContentKey> keys, byte[] bytes) {
+    public void writeBatch(String channel, ContentPath path, Collection<ContentKey> keys, byte[] bytes) {
         ActiveTraces.getLocal().add("S3BatchContentDao.writeBatch", channel, path);
         try {
             logger.debug("writing {} batch {} keys {} bytes {}", channel, path, keys.size(), bytes.length);
@@ -351,7 +351,7 @@ public class S3BatchContentDao implements ContentDao {
         }
     }
 
-    private long writeBatchIndex(String channel, MinutePath path, Collection<ContentKey> keys) {
+    private long writeBatchIndex(String channel, ContentPath path, Collection<ContentKey> keys) {
         String batchIndexKey = getS3BatchIndexKey(channel, path);
         ObjectNode root = mapper.createObjectNode();
         root.put("id", path.toUrl());
@@ -366,7 +366,7 @@ public class S3BatchContentDao implements ContentDao {
         return bytes.length;
     }
 
-    private void writeBatchItems(String channel, MinutePath path, byte[] bytes) {
+    private void writeBatchItems(String channel, ContentPath path, byte[] bytes) {
         String batchItemsKey = getS3BatchItemsKey(channel, path);
         putObject(batchItemsKey, bytes);
     }
@@ -382,11 +382,11 @@ public class S3BatchContentDao implements ContentDao {
         s3Client.putObject(request);
     }
 
-    private String getS3BatchItemsKey(String channel, MinutePath path) {
+    private String getS3BatchItemsKey(String channel, ContentPath path) {
         return channel + BATCH_ITEMS + path.toUrl();
     }
 
-    private String getS3BatchIndexKey(String channel, MinutePath path) {
+    private String getS3BatchIndexKey(String channel, ContentPath path) {
         return channel + BATCH_INDEX + path.toUrl();
     }
 }

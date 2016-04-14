@@ -34,11 +34,11 @@ public interface ContentDao {
 
     void deleteBefore(String channelName, ContentKey limitKey);
 
-    default void writeBatch(String channel, MinutePath path, Collection<ContentKey> keys, byte[] bytes) {
+    default void writeBatch(String channel, ContentPath path, Collection<ContentKey> keys, byte[] bytes) {
         throw new UnsupportedOperationException("writeBatch is not supported");
     }
 
-    default boolean streamMinute(String channel, MinutePath path, Consumer<Content> callback) {
+    default boolean streamMinute(String channel, ContentPathKeys path, Consumer<Content> callback) {
         throw new UnsupportedOperationException("streamMinute is not supported");
     }
 
