@@ -78,7 +78,7 @@ public class Traces {
 
     private String getOutput(Logger logger) {
         try {
-            String output = "\n\t";
+            String output = "";
             synchronized (traces) {
                 for (Trace trace : traces) {
                     output += trace.toString() + "\n\t";
