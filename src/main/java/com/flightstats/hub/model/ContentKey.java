@@ -132,4 +132,8 @@ public class ContentKey implements ContentPath {
     public synchronized static String bulkHash(int number) {
         return format.format(number);
     }
+
+    public static ContentKey bulkKey(ContentKey master, int index) {
+        return new ContentKey(master.getTime(), master.getHash() + ContentKey.bulkHash(index));
+    }
 }
