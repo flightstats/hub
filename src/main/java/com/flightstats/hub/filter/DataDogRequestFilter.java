@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Filter class to handle intercepting requests and respones from the Hub and pipe statistics to
@@ -24,25 +25,22 @@ import java.util.HashMap;
 @Provider
 public class DataDogRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
+    private static Map<String, QueryType> queryTypes = null;
+    private static Map<String, QueryKey> queryKeys = null;
+
+    static {
+        queryTypes = new HashMap<>();
+        Arrays.stream(QueryType.values()).forEach(queryType -> queryTypes.put(queryType.toString(), queryType));
+
+        queryKeys = new HashMap<>();
+        Arrays.stream(QueryKey.values()).forEach(queryKey -> queryKeys.put(queryKey.toString(), queryKey));
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
 
     private enum QueryType {
         channel, tag, zookeeper, s3Batch, replication,
         events, time, spoke, unkown, group;
-
-        private static HashMap<String, QueryType> queryTypes = null;
-
-        public static HashMap<String, QueryType> getQueryTypes() {
-            if (queryTypes == null) {
-                queryTypes = new HashMap<>();
-                QueryType[] types = QueryType.values();
-                for (QueryType type : types) {
-                    queryTypes.put(type.toString(), type);
-                }
-            }
-
-            return queryTypes;
-        }
     }
 
     private enum QueryKey {
@@ -50,19 +48,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         zookeeper, s3Batch, traces, replication, spoke, payload, next, millis, remote, local, ws, group, health, metrics,
         trace, previous;
 
-        private static HashMap<String, QueryKey> queryKeys = null;
         private static HashMap<String, QueryKey> optionalCountKeys = null;
-
-        public static HashMap<String, QueryKey> getQueryKeys() {
-            if (queryKeys == null) {
-                queryKeys = new HashMap<>();
-                QueryKey[] keyValues = QueryKey.values();
-                for (QueryKey aKey : keyValues) {
-                    queryKeys.put(aKey.toString(), aKey);
-                }
-            }
-            return queryKeys;
-        }
 
         public static HashMap<String, QueryKey> getOptionalCountKeys() {
             if (optionalCountKeys == null) {
@@ -157,7 +143,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         StringBuilder sbuff = new StringBuilder();
         String[] splits = path.split("\\/");
         if (splits != null && splits.length > 0) {
-            QueryKey key = QueryKey.getQueryKeys().get(splits[0]);
+            QueryKey key = queryKeys.get(splits[0]);
 
             if (key == QueryKey.internal) {
                 handleInternalPath(sbuff, splits);
@@ -178,7 +164,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     private void handlePath(StringBuilder sbuff, String[] path) {
         QueryType queryType = null;
         if (path.length > 1) {
-            queryType = QueryType.getQueryTypes().get(path[0]);
+            queryType = queryTypes.get(path[0]);
         }
 
         for (int i = 0; i < path.length; i++) {
@@ -222,7 +208,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                     sbuff.append("/").append(path[i]);
                 }
             } else if (i == 1) {
-                QueryType aType = QueryType.getQueryTypes().get(path[i]);
+                QueryType aType = queryTypes.get(path[i]);
                 if (aType != null) {
                     queryType = aType;
                 }
@@ -269,7 +255,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 sbuff.append("/").append(path[i]);
             }
 
-            QueryKey type = QueryKey.getQueryKeys().get(path[i]);
+            QueryKey type = queryKeys.get(path[i]);
             if (type != null) {
                 switch (type) {
                     case payload:
@@ -345,7 +331,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     }
 
     private boolean isReservedWord(String aWord) {
-        return QueryKey.getQueryKeys().get(aWord) != null;
+        return queryKeys.get(aWord) != null;
     }
 
     private boolean isOptionalParamWord(String aWord) {
