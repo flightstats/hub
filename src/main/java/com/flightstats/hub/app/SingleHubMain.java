@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import com.flightstats.hub.filter.DataDogRequestFilter;
 import com.google.common.io.Files;
 import com.google.inject.Injector;
 import org.joda.time.DateTime;
@@ -34,6 +35,8 @@ public class SingleHubMain {
         setProperty("storage.path", tempPath);
         setProperty("app.remoteTimeFile", tempPath + "/remoteTime");
         setProperty("hub.allow.channel.deletion", "true");
+
+        setProperty(DataDogRequestFilter.HUB_DATADOG_METRICS_FLAG, "true");
 
         HubMain.start();
     }
