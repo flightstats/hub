@@ -20,19 +20,16 @@ public class MultiPartParser {
     private final static Logger logger = LoggerFactory.getLogger(MultiPartParser.class);
 
     private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 20) * 1024 * 1024 * 3;
-    private BulkContent content;
+    private BulkContent bulkContent;
     private BufferedInputStream stream;
-    private final ContentKey masterKey;
     private Content.Builder builder;
     private final ByteArrayOutputStream baos;
     public static final byte[] CRLF = "\r\n".getBytes();
 
-    public MultiPartParser(BulkContent content) {
-        this.content = content;
-        masterKey = new ContentKey();
-        content.setMasterKey(masterKey);
+    public MultiPartParser(BulkContent bulkContent) {
+        this.bulkContent = bulkContent;
         builder = Content.builder();
-        stream = new BufferedInputStream(content.getStream());
+        stream = new BufferedInputStream(bulkContent.getStream());
         baos = new ByteArrayOutputStream();
     }
 
@@ -48,7 +45,7 @@ public class MultiPartParser {
         while (read != -1) {
             count++;
             if (count > maxBytes) {
-                logger.warn("multipart max payload exceeded {}", maxBytes, content.getChannel());
+                logger.warn("multipart max payload exceeded {}", maxBytes, bulkContent.getChannel());
                 throw new ContentTooLargeException("max payload size is " + maxBytes + " bytes");
             }
             baos.write((byte) read);
@@ -80,8 +77,14 @@ public class MultiPartParser {
             }
             read = stream.read();
         }
-        if (content.getItems().isEmpty()) {
+        if (bulkContent.getItems().isEmpty()) {
             throw new InvalidRequestException("multipart has no items");
+        } else {
+            ContentKey masterKey = new ContentKey();
+            bulkContent.setMasterKey(masterKey);
+            for (int i = 0; i < bulkContent.getItems().size(); i++) {
+                bulkContent.getItems().get(i).setContentKey(ContentKey.bulkKey(masterKey, i));
+            }
         }
     }
 
@@ -90,7 +93,7 @@ public class MultiPartParser {
         return StringUtils.removeEnd(
                 StringUtils.removeStart(
                         StringUtils.trim(
-                                StringUtils.substringAfter(content.getContentType(), "boundary=")), "\""), "\"");
+                                StringUtils.substringAfter(bulkContent.getContentType(), "boundary=")), "\""), "\"");
 
     }
 
@@ -99,15 +102,11 @@ public class MultiPartParser {
         byte[] data = ArrayUtils.subarray(bytes, 0, bytes.length - boundary.length - CRLF.length);
         if (data.length > 0) {
             builder.withData(data);
-            builder.withContentKey(new ContentKey(masterKey.getTime(),
-                    masterKey.getHash() + ContentKey.bulkHash(content.getItems().size())));
-            content.getItems().add(builder.build());
+            bulkContent.getItems().add(builder.build());
         }
         builder = Content.builder();
         baos.reset();
     }
 
-    public ContentKey getMasterKey() {
-        return masterKey;
-    }
+
 }
