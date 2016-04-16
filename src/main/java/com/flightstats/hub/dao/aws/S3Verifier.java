@@ -97,8 +97,7 @@ public class S3Verifier {
             countDownLatch.await(15, TimeUnit.MINUTES);
             cacheKeys.removeAll(longTermKeys);
             if (cacheKeys.size() > 0) {
-                logger.info("missing {} items", cacheKeys.size());
-                logger.debug("missing items {}", cacheKeys);
+                logger.info("missing items {}", cacheKeys);
             }
             return cacheKeys;
         } catch (InterruptedException e) {
