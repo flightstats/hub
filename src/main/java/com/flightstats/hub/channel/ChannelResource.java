@@ -226,7 +226,7 @@ public class ChannelResource {
                 }
             }
             EventOutput eventOutput = new EventOutput();
-            eventsService.register(new ContentOutput(channel, eventOutput, contentKey));
+            eventsService.register(new ContentOutput(channel, eventOutput, contentKey, uriInfo.getBaseUri()));
             return eventOutput;
         } catch (Exception e) {
             logger.warn("unable to events to " + channel, e);
