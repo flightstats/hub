@@ -280,7 +280,7 @@ public class ChannelContentResource {
         try {
             logger.info("starting events at {} for client from {}", channel, contentKey);
             EventOutput eventOutput = new EventOutput();
-            eventsService.register(new ContentOutput(channel, eventOutput, contentKey));
+            eventsService.register(new ContentOutput(channel, eventOutput, contentKey, uriInfo.getBaseUri()));
             return eventOutput;
         } catch (Exception e) {
             logger.warn("unable to get events for " + channel, e);

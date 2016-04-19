@@ -1,6 +1,5 @@
 package com.flightstats.hub.events;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.LinkBuilder;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -17,18 +16,16 @@ import java.net.URI;
 @Getter
 public class ContentOutput implements Closeable {
 
-    private static final URI APP_URL = UriBuilder.fromPath(HubProperties.getAppUrl()).build();
-
     private final String channel;
     private final EventOutput eventOutput;
     private final ContentKey contentKey;
     private final URI channelUri;
 
-    public ContentOutput(String channel, EventOutput eventOutput, ContentKey contentKey) {
+    public ContentOutput(String channel, EventOutput eventOutput, ContentKey contentKey, URI baseUri) {
         this.channel = channel;
         this.eventOutput = eventOutput;
         this.contentKey = contentKey;
-        channelUri = UriBuilder.fromUri(APP_URL).path("channel/" + channel).build();
+        channelUri = UriBuilder.fromUri(baseUri).path("channel/" + channel).build();
     }
 
     public void writeHeartbeat() throws IOException {
