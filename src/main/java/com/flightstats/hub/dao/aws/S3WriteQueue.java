@@ -7,6 +7,7 @@ import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.util.Sleeper;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
@@ -20,39 +21,35 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("Convert2Lambda")
 @Singleton
 public class S3WriteQueue {
 
     private final static Logger logger = LoggerFactory.getLogger(S3WriteQueue.class);
-    private final Retryer<Void> retryer;
 
-    private ExecutorService executorService;
-    private BlockingQueue<ChannelContentKey> keys;
+    private static final int THREADS = HubProperties.getProperty("s3.writeQueueThreads", 20);
+    private Retryer<Void> retryer = buildRetryer();
+    private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(HubProperties.getProperty("s3.writeQueueSize", 40000));
+    private ExecutorService executorService = Executors.newFixedThreadPool(THREADS);
+    @Inject
+    @Named(ContentDao.CACHE)
     private ContentDao spokeContentDao;
+    @Inject
+    @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
-    private AtomicBoolean shutdown = new AtomicBoolean(false);
+
 
     @Inject
-    public S3WriteQueue(@Named(ContentDao.CACHE) ContentDao spokeContentDao,
-                        @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao)
-            throws InterruptedException {
-        this.spokeContentDao = spokeContentDao;
-        this.s3SingleContentDao = s3SingleContentDao;
-
-        keys = new LinkedBlockingQueue<>(HubProperties.getProperty("s3.writeQueueSize", 40000));
-        int threads = HubProperties.getProperty("s3.writeQueueThreads", 20);
-        executorService = Executors.newFixedThreadPool(threads);
-        retryer = buildRetryer();
-        for (int i = 0; i < threads; i++) {
-            executorService.submit(new Callable<Object>() {
-                @Override
-                public Object call() throws Exception {
-                    while (!shutdown.get()) {
+    public S3WriteQueue() throws InterruptedException {
+        for (int i = 0; i < THREADS; i++) {
+            executorService.submit(() -> {
+                try {
+                    while (true) {
                         write();
                     }
+                } catch (Exception e) {
+                    logger.warn("exited thread", e);
                     return null;
                 }
             });
@@ -93,12 +90,21 @@ public class S3WriteQueue {
     public void add(ChannelContentKey key) {
         boolean value = keys.offer(key);
         if (!value) {
-            logger.info("Add to queue failed - out of queue space. key= {}", key);
+            logger.warn("Add to queue failed - out of queue space. key= {}", key);
         }
     }
 
     public void close() {
-        shutdown.set(true);
+        int count = 0;
+        while (keys.size() > 0) {
+            count++;
+            logger.info("waiting for keys {}", keys.size());
+            if (count >= 60) {
+                logger.warn("waited too long for keys {}", keys.size());
+                return;
+            }
+            Sleeper.sleepQuietly(1000);
+        }
         executorService.shutdown();
     }
 

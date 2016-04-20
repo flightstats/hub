@@ -3,8 +3,6 @@ utils = require('./utils.js');
 ip = require('ip');
 
 hubDomain = process.env.hubDomain;
-replicationDomain = process.env.replicationDomain;
-replicationV2Domain = process.env.replicationV2Domain;
 runEncrypted = process.env.runEncrypted || false;
 integrationTestPath = process.env.integrationTestPath || 'src/test/integration/';
 callbackPort = 8888;
@@ -30,8 +28,6 @@ callbackDomain = 'http://' + ipAddress;
 stableOffset = 5;
 
 console.log("hubDomain " + hubDomain);
-console.log("replicationDomain " + replicationDomain);
-console.log("replicationV2Domain " + replicationV2Domain);
 console.log("runEncrypted " + runEncrypted);
 console.log("callbackDomain " + callbackDomain);
 
