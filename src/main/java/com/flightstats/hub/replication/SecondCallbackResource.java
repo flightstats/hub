@@ -35,7 +35,7 @@ public class SecondCallbackResource {
                                             String batchUrl) throws Exception {
         ActiveTraces.getLocal().add("getAndWriteBatch", path);
         logger.trace("path {} {}", path, batchUrl);
-        ClientResponse response = RestClient.defaultClient()
+        ClientResponse response = RestClient.gzipClient()
                 .resource(batchUrl + "&location=CACHE")
                 .accept("multipart/mixed")
                 .get(ClientResponse.class);
