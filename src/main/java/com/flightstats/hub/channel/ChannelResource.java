@@ -175,6 +175,7 @@ public class ChannelResource {
                                final InputStream data) throws Exception {
         try {
             BulkContent content = BulkContent.builder()
+                    .isNew(true)
                     .contentType(contentType)
                     .stream(data)
                     .channel(channelName)

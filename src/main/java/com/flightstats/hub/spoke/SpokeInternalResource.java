@@ -2,7 +2,6 @@ package com.flightstats.hub.spoke;
 
 
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SingleTrace;
 import com.google.common.io.ByteStreams;
 import org.joda.time.DateTime;
@@ -14,10 +13,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.util.Arrays;
 
 @Path("/internal/spoke")
@@ -28,8 +24,8 @@ public class SpokeInternalResource {
     @Context
     private UriInfo uriInfo;
 
-    private FileSpokeStore spokeStore = HubProvider.getInstance(FileSpokeStore.class);
-    private RemoteSpokeStore remoteSpokeStore = HubProvider.getInstance(RemoteSpokeStore.class);
+    private static final FileSpokeStore spokeStore = HubProvider.getInstance(FileSpokeStore.class);
+    private static final RemoteSpokeStore remoteSpokeStore = HubProvider.getInstance(RemoteSpokeStore.class);
 
     @Path("/payload/{path:.+}")
     @GET
@@ -72,20 +68,19 @@ public class SpokeInternalResource {
         }
     }
 
-    @Path("/bulk/{path:.+}")
+    @Path("/bulkKey/{channel}")
     @PUT
-    public Response putBulk(@PathParam("path") String path, InputStream input) {
+    public Response putBulk(@PathParam("channel") String channel, InputStream input) {
         try {
             long start = System.currentTimeMillis();
             ObjectInputStream stream = new ObjectInputStream(input);
             int items = stream.readInt();
             for (int i = 0; i < items; i++) {
-                int size = stream.readInt();
-                byte[] data = new byte[size];
-                ByteStreams.readFully(stream, data);
-                String itemPath = path + ContentKey.bulkHash(i);
+                String keyPath = new String(readByesFully(stream));
+                byte[] data = readByesFully(stream);
+                String itemPath = channel + "/" + keyPath;
                 if (!spokeStore.write(itemPath, new ByteArrayInputStream(data))) {
-                    logger.warn("what happened?!?! {}", path);
+                    logger.warn("what happened?!?! {}", channel);
                     return Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new SingleTrace("failed", start).toString())
@@ -94,16 +89,23 @@ public class SpokeInternalResource {
             }
             long end = System.currentTimeMillis();
             if ((end - start) > 4000) {
-                logger.info("slow bulk write response {} {}", path, new DateTime(start));
+                logger.info("slow bulk write response {} {}", channel, new DateTime(start));
             }
             return Response
                     .created(uriInfo.getRequestUri())
                     .entity(new SingleTrace("success", start).toString())
                     .build();
         } catch (Exception e) {
-            logger.warn("unable to write " + path, e);
+            logger.warn("unable to write " + channel, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private byte[] readByesFully(ObjectInputStream stream) throws IOException {
+        int size = stream.readInt();
+        byte[] data = new byte[size];
+        ByteStreams.readFully(stream, data);
+        return data;
     }
 
     private Response getResponse(String path) {

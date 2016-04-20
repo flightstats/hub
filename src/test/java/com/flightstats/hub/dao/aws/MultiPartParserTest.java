@@ -33,6 +33,7 @@ public class MultiPartParserTest {
         BulkContent bulkContent = BulkContent.builder()
                 .stream(inputStream)
                 .contentType("multipart/mixed; boundary=frontier")
+                .isNew(true)
                 .build();
         MultiPartParser parser = new MultiPartParser(bulkContent);
         parser.parse();
@@ -47,6 +48,40 @@ public class MultiPartParserTest {
         assertEquals("application/octet-stream", item.getContentType().get());
         assertTrue(item.getContentKey().get().getTime().isBefore(time));
         assertTrue(StringUtils.endsWith(item.getContentKey().get().getHash(), "000001"));
+    }
+
+    @Test
+    public void testSimpleWithKeys() throws IOException {
+        String data = "This is a message with multiple parts in MIME format.\r\n" +
+                "--frontier\r\n" +
+                "Content-Type: text/plain\r\n" +
+                "Content-Key: http://hub/channel/stumptown/2016/04/20/11/41/00/000/a\r\n" +
+                " \r\n" +
+                "This is the body of the message.\r\n" +
+                "--frontier\r\n" +
+                "Content-Type: application/octet-stream\r\n" +
+                "Content-Transfer-Encoding: base64\r\n" +
+                "Content-Key: http://hub/channel/stumptown/2016/04/20/11/42/00/000/b\r\n" +
+                "\r\n" +
+                "PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5PgogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbWVzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==\r\n" +
+                "--frontier--";
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
+        BulkContent bulkContent = BulkContent.builder()
+                .stream(inputStream)
+                .contentType("multipart/mixed; boundary=frontier")
+                .build();
+        MultiPartParser parser = new MultiPartParser(bulkContent);
+        parser.parse();
+        Content item = bulkContent.getItems().get(0);
+        assertEquals("2016/04/20/11/41/00/000/a", item.getContentKey().get().toUrl());
+        assertEquals("This is the body of the message.", new String(item.getData()));
+        assertEquals("text/plain", item.getContentType().get());
+
+        item = bulkContent.getItems().get(1);
+        assertEquals("PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5PgogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbWVzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==", new String(item.getData()));
+        assertEquals("application/octet-stream", item.getContentType().get());
+        assertEquals("2016/04/20/11/42/00/000/b", item.getContentKey().get().toUrl());
     }
 
     @Test
