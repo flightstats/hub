@@ -42,7 +42,7 @@ public class GroupLeader implements Leader {
     private final static Logger logger = LoggerFactory.getLogger(GroupLeader.class);
     public static final String GROUP_LAST_COMPLETED = "/GroupLastCompleted/";
 
-    private static final Client client = RestClient.createClient(60, 120, true);
+    private static final Client client = RestClient.createClient(60, 120, true, false);
     private static final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
     private final double keepLeadershipRate = HubProperties.getProperty("group.keepLeadershipRate", 0.75);
