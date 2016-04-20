@@ -100,7 +100,7 @@ public class HubUtils {
         return Optional.absent();
     }
 
-    public void startGroupCallback(Group group) {
+    public ClientResponse startGroupCallback(Group group) {
         String groupUrl = getSourceUrl(group.getChannelUrl()) + "/group/" + group.getName();
         String json = group.toJson();
         logger.info("starting {} with {}", groupUrl, json);
@@ -109,6 +109,7 @@ public class HubUtils {
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, json);
         logger.info("start group response {}", response);
+        return response;
     }
 
     public void stopGroupCallback(String groupName, String sourceChannel) {
