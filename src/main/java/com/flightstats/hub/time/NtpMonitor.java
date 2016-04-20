@@ -26,40 +26,39 @@ public class NtpMonitor {
     @Inject
     private MetricsSender sender;
 
-    private final int minPostTimeMillis;
-    private final int maxPostTimeMillis;
+    private final int minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
+    private final int maxPostTimeMillis = HubProperties.getProperty("app.maxPostTimeMillis", 1000);
     private double delta;
     private double primaryOffset;
 
     public NtpMonitor() {
-        HubServices.register(new TimeMonitorService(), HubServices.TYPE.PRE_START);
-        minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
-        maxPostTimeMillis = HubProperties.getProperty("app.maxPostTimeMillis", 1000);
+        if (HubProperties.getProperty("app.runNtpMonitor", true)) {
+            HubServices.register(new TimeMonitorService(), HubServices.TYPE.PRE_START);
+        } else {
+            logger.info("not running NtpMonitor");
+        }
     }
 
     static double parseClusterRange(List<String> lines) {
         double maxPositive = 0;
         double maxNegative = 0;
-        for (String line : lines) {
-            if (line.contains("hub")) {
-                double offset = parseLine(line);
-                if (offset > 0) {
-                    maxPositive = Math.max(maxPositive, offset);
-                } else {
-                    maxNegative = Math.max(maxNegative, Math.abs(offset));
-                }
+        for (int i = 4; i < lines.size(); i++) {
+            String line = lines.get(i);
+            double offset = parseLine(line);
+            if (offset > 0) {
+                maxPositive = Math.max(maxPositive, offset);
+            } else {
+                maxNegative = Math.max(maxNegative, Math.abs(offset));
             }
         }
         return maxNegative + maxPositive;
     }
 
     static double parsePrimary(List<String> lines) {
-        //todo - gfm - 2/12/16 - this may want to verify the number of servers found
         List<Double> servers = new ArrayList<>();
-        for (String line : lines) {
-            if (line.contains("hub")) {
-                //ignore
-            } else if (line.startsWith("*") || line.startsWith("+")) {
+        for (int i = 2; i <= Math.min(3, lines.size() - 1); i++) {
+            String line = lines.get(i);
+            if (line.startsWith("*") || line.startsWith("+")) {
                 double primary = parseLine(line);
                 logger.info("primary {}", primary);
                 servers.add(primary);

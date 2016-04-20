@@ -35,6 +35,7 @@ public class SingleHubMain {
         setProperty("storage.path", tempPath);
         setProperty("app.remoteTimeFile", tempPath + "/remoteTime");
         setProperty("hub.allow.channel.deletion", "true");
+        setProperty("app.runNtpMonitor", "false");
 
         setProperty(DataDogRequestFilter.HUB_DATADOG_METRICS_FLAG, "true");
 
