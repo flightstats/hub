@@ -76,4 +76,20 @@ public class NtpMonitorTest {
         assertEquals(-1.080, NtpMonitor.parsePrimary(Arrays.asList(output)), 0.001);
     }
 
+    @Test
+    public void testIps() {
+
+        String[] output = {
+                "     remote           refid      st t when poll reach   delay   offset  jitter",
+                "==============================================================================",
+                "-nexus9k-1.util. 10.1.11.101      3 u   39   64  377    0.332    0.171   0.490",
+                "*nexus9k-2.util. 10.1.11.100      3 u   23   64  377    0.331    0.013   0.553",
+                " hub-ucs.pdx.    .STEP.          16 u    -   64    0    0.000    0.000   0.000",
+                "+10.10.1.54      10.1.11.4        4 u   41   64  377    0.167    0.230   0.572",
+                "+10.10.1.59      10.1.11.4        4 u   56   64  376    0.211    0.237   0.463"
+        };
+        assertEquals(0.237, NtpMonitor.parseClusterRange(Arrays.asList(output)), 0.001);
+        assertEquals(0.013, NtpMonitor.parsePrimary(Arrays.asList(output)), 0.001);
+    }
+
 }
