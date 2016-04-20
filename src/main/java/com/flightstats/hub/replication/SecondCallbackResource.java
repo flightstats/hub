@@ -22,7 +22,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
-@Path("/internal/replication/{channel}")
+@Path("/internal/repls/{channel}")
 public class SecondCallbackResource {
 
     private final static Logger logger = LoggerFactory.getLogger(SecondCallbackResource.class);
