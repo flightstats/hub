@@ -82,7 +82,7 @@ public class MinutePath implements ContentPathKeys {
         try {
             return Optional.of(new MinutePath(TimeUtil.minutes(key)));
         } catch (Exception e) {
-            logger.info("unable to parse " + key + " " + e.getMessage());
+            logger.trace("unable to parse {} {}", key, e.getMessage());
             return Optional.absent();
         }
     }

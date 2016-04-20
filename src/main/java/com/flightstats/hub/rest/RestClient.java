@@ -3,6 +3,7 @@ package com.flightstats.hub.rest;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.api.client.filter.GZIPContentEncodingFilter;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +63,7 @@ public class RestClient {
             client.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(connectTimeout));
             client.setReadTimeout((int) TimeUnit.SECONDS.toMillis(readTimeout));
             client.setFollowRedirects(followRedirects);
+            client.addFilter(new GZIPContentEncodingFilter());
             return client;
         } catch (Exception e) {
             logger.warn("can't create client ", e);

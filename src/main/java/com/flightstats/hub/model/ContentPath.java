@@ -32,7 +32,6 @@ public interface ContentPath extends Comparable<ContentPath> {
         }
     }
 
-    //todo - gfm - 10/5/15 - rename
     static Optional<ContentPath> fromUrl(String url) {
         Optional<ContentKey> keyOptional = ContentKey.fromUrl(url);
         if (keyOptional.isPresent()) {
@@ -41,6 +40,10 @@ public interface ContentPath extends Comparable<ContentPath> {
         Optional<MinutePath> pathOptional = MinutePath.fromUrl(url);
         if (pathOptional.isPresent()) {
             return Optional.of(pathOptional.get());
+        }
+        Optional<SecondPath> secondPathOptional = SecondPath.fromUrl(url);
+        if (secondPathOptional.isPresent()) {
+            return Optional.of(secondPathOptional.get());
         }
         return Optional.absent();
     }

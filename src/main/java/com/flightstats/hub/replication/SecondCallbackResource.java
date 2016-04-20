@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 @Path("/internal/repls/{channel}")
@@ -35,11 +34,12 @@ public class SecondCallbackResource {
     private static boolean getAndWriteBatch(String channel, ContentPath path,
                                             String batchUrl) throws Exception {
         ActiveTraces.getLocal().add("getAndWriteBatch", path);
+        logger.trace("path {} {}", path, batchUrl);
         ClientResponse response = RestClient.defaultClient()
                 .resource(batchUrl + "&location=CACHE")
                 .accept("multipart/mixed")
-                .header(HttpHeaders.ACCEPT_ENCODING, "gzip")
                 .get(ClientResponse.class);
+        logger.trace("response.getStatus() {}", response.getStatus());
         if (response.getStatus() != 200) {
             logger.warn("unable to get data for {} {}", channel, response);
             return false;

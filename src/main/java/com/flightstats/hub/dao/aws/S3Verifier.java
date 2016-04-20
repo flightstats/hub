@@ -51,18 +51,14 @@ public class S3Verifier {
     private S3WriteQueue s3WriteQueue;
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final double keepLeadershipRate = HubProperties.getProperty("s3Verifier.keepLeadershipRate", 0.75);
-    private final ExecutorService queryThreadPool;
-    private final ExecutorService channelThreadPool;
+    private final ExecutorService queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
+    private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
 
     public S3Verifier() {
-
-        registerService(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle));
-        registerService(new S3VerifierService("/S3VerifierBatchService", 1, this::runBatch));
-
-        queryThreadPool = Executors.newCachedThreadPool(
-                new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
-        channelThreadPool = Executors.newFixedThreadPool(10,
-                new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
+        if (HubProperties.getProperty("s3Verifier.run", true)) {
+            registerService(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle));
+            registerService(new S3VerifierService("/S3VerifierBatchService", 1, this::runBatch));
+        }
     }
 
     private void registerService(S3VerifierService service) {

@@ -145,8 +145,7 @@ public class AwsContentService implements ContentService {
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        DateTime ttlTime = getCacheTtlTime(channelName, channel);
-        if (key.getTime().isAfter(ttlTime)) {
+        if (key.getTime().isAfter(getCacheTtlTime(channelName, channel))) {
             Content content = spokeContentDao.read(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
