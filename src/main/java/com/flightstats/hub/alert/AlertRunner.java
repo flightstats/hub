@@ -43,7 +43,7 @@ public class AlertRunner implements Leader {
 
         if (HubProperties.getProperty("alert.run", true)) {
             logger.info("starting with url {} {} ", hubAppUrl, sleepPeriod);
-            HubServices.register(new AlertRunnerService(), HubServices.TYPE.FINAL_POST_START);
+            HubServices.register(new AlertRunnerService(), HubServices.TYPE.AFTER_HEALTHY_START);
 
         } else {
             logger.warn("AlertRunner not running");

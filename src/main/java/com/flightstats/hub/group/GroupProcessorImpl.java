@@ -39,7 +39,7 @@ public class GroupProcessorImpl implements GroupProcessor {
         this.groupService = groupService;
         this.leaderProvider = leaderProvider;
         this.lastContentPath = lastContentPath;
-        register(new GroupCallbackService(), TYPE.FINAL_POST_START, TYPE.PRE_STOP);
+        register(new GroupCallbackService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
     }
 
     private void start() {

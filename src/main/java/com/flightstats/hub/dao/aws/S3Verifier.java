@@ -62,7 +62,7 @@ public class S3Verifier {
     }
 
     private void registerService(S3VerifierService service) {
-        HubServices.register(service, HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
+        HubServices.register(service, HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
     }
 
     SortedSet<ContentKey> getMissing(DateTime startTime, DateTime endTime, String channelName, ContentDao s3ContentDao,

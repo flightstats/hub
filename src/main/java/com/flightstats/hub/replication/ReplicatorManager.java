@@ -49,7 +49,7 @@ public class ReplicatorManager {
         this.channelService = channelService;
         this.hubUtils = hubUtils;
         this.watchManager = watchManager;
-        register(new ReplicatorService(), TYPE.FINAL_POST_START, TYPE.PRE_STOP);
+        register(new ReplicatorService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
     }
 
     private class ReplicatorService extends AbstractIdleService {

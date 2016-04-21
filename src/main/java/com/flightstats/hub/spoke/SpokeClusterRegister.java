@@ -13,7 +13,7 @@ public class SpokeClusterRegister {
     private CuratorCluster spokeCuratorCluster;
 
     public SpokeClusterRegister() {
-        HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
+        HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
     }
 
     private class CuratorSpokeClusterHook extends AbstractIdleService {

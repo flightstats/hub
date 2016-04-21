@@ -24,7 +24,7 @@ public class LeaderRotator {
     private static final Set<CuratorLeader> leaders = new ConcurrentHashSet<>();
 
     public LeaderRotator() {
-        register(new LeaderRotatorService(), TYPE.PRE_STOP, TYPE.FINAL_POST_START);
+        register(new LeaderRotatorService(), TYPE.PRE_STOP, TYPE.AFTER_HEALTHY_START);
     }
 
     public static synchronized void add(CuratorLeader leader) {

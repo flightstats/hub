@@ -29,7 +29,7 @@ public class S3BatchManager {
 
     @Inject
     public S3BatchManager() {
-        HubServices.register(new S3BatchManagerService(), HubServices.TYPE.FINAL_POST_START);
+        HubServices.register(new S3BatchManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
     private class S3BatchManagerService extends AbstractIdleService {
