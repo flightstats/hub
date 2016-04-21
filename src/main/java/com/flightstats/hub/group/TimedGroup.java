@@ -30,4 +30,6 @@ public interface TimedGroup {
 
         throw new UnsupportedOperationException("invalid incoming group " + group);
     }
+
+    DateTime getReplicatingStable(ContentPath contentPath);
 }

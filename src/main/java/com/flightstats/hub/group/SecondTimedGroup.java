@@ -37,4 +37,9 @@ public class SecondTimedGroup implements TimedGroup {
     public ContentPath getNone() {
         return SecondPath.NONE;
     }
+
+    @Override
+    public DateTime getReplicatingStable(ContentPath contentPath) {
+        return contentPath.getTime();
+    }
 }

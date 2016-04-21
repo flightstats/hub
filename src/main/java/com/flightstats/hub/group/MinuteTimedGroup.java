@@ -43,4 +43,9 @@ public class MinuteTimedGroup implements TimedGroup {
     public ContentPath getNone() {
         return MinutePath.NONE;
     }
+
+    @Override
+    public DateTime getReplicatingStable(ContentPath contentPath) {
+        return new MinutePath(contentPath.getTime()).getTime();
+    }
 }
