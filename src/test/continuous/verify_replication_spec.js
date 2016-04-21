@@ -109,7 +109,7 @@ describe(testName, function () {
                                     console.log('source', uris);
                                     console.log('destin', channels[channel]);
                                 }
-                                expect(uris.length).toBe(channels[channel].length);
+                                expect(channels[channel].length).toBe(uris.length);
                                 callback(res.error);
                             });
                     });
