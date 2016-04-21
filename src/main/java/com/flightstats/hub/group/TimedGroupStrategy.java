@@ -94,11 +94,11 @@ public class TimedGroupStrategy implements GroupStrategy {
                 DateTime stable = TimeUtil.stable().minus(duration);
                 if (channelService.isReplicating(channel)) {
                     ContentPath contentPath = lastContentPath.get(channel, timedGroup.getNone(), ChannelReplicator.REPLICATED_LAST_UPDATED);
-                    stable = contentPath.getTime().plusSeconds(1);
+                    stable = contentPath.getTime();
                     logger.debug("replicating {} stable {}", contentPath, stable);
                 }
                 logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
-                while (nextTime.isBefore(stable)) {
+                while (nextTime.isBefore(stable) || nextTime.isEqual(stable)) {
                     try {
                         ActiveTraces.start("TimedGroupStrategy.doWork", group);
                         Collection<ContentKey> keys = queryKeys(nextTime)
