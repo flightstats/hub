@@ -53,6 +53,7 @@ describe(testName, function () {
     });
 
     it('gets alert ' + selfLink, function (done) {
+        console.log('selfLink ', selfLink);
         request.get({url: selfLink},
             function (err, response, body) {
                 expect(err).toBeNull();

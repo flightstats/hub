@@ -47,9 +47,7 @@ public class SpokeMarshaller {
         }
         content.setSize(bytesCopied);
         zipOut.close();
-        byte[] bytes = baos.toByteArray();
-        logger.trace("marshd {} bytes for {}", bytes.length, content.getContentKey().get());
-        return bytes;
+        return baos.toByteArray();
     }
 
     public static String getMetaData(Content content) {
