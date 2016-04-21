@@ -47,7 +47,8 @@ public class FileSpokeStore {
         logger.trace("writing {}", file);
         file.getParentFile().mkdirs();
         try (FileOutputStream output = new FileOutputStream(file)) {
-            ByteStreams.copy(input, output);
+            long copy = ByteStreams.copy(input, output);
+            logger.trace("copied {} {}", file, copy);
             return true;
         } catch (IOException e) {
             logger.info("unable to write to " + path, e);

@@ -74,4 +74,9 @@ public class SpokeContentDaoTest {
     public void testEarliest() throws Exception {
         util.testEarliest();
     }
+
+    @Test
+    public void testBulkWrite() throws Exception {
+        util.testBulkWrite();
+    }
 }

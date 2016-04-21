@@ -15,6 +15,8 @@ import static org.junit.Assert.assertTrue;
 
 public class MultiPartParserTest {
 
+    public static final String BINARY_ITEM = "PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5PgogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbWVzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==";
+
     @Test
     public void testSimple() throws IOException {
         String data = "This is a message with multiple parts in MIME format.\r\n" +
@@ -26,7 +28,7 @@ public class MultiPartParserTest {
                 "Content-Type: application/octet-stream\r\n" +
                 "Content-Transfer-Encoding: base64\r\n" +
                 "\r\n" +
-                "PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5PgogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbWVzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==\r\n" +
+                BINARY_ITEM + "\r\n" +
                 "--frontier--";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
@@ -44,7 +46,7 @@ public class MultiPartParserTest {
         assertTrue(item.getContentKey().get().getTime().isBefore(time));
         assertTrue(StringUtils.endsWith(item.getContentKey().get().getHash(), "000000"));
         item = bulkContent.getItems().get(1);
-        assertEquals("PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5PgogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbWVzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==", new String(item.getData()));
+        assertEquals(BINARY_ITEM, new String(item.getData()));
         assertEquals("application/octet-stream", item.getContentType().get());
         assertTrue(item.getContentKey().get().getTime().isBefore(time));
         assertTrue(StringUtils.endsWith(item.getContentKey().get().getHash(), "000001"));
@@ -63,7 +65,7 @@ public class MultiPartParserTest {
                 "Content-Transfer-Encoding: base64\r\n" +
                 "Content-Key: http://hub/channel/stumptown/2016/04/20/11/42/00/000/b\r\n" +
                 "\r\n" +
-                "PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5PgogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbWVzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==\r\n" +
+                BINARY_ITEM + "\r\n" +
                 "--frontier--";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
@@ -79,7 +81,7 @@ public class MultiPartParserTest {
         assertEquals("text/plain", item.getContentType().get());
 
         item = bulkContent.getItems().get(1);
-        assertEquals("PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5PgogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbWVzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==", new String(item.getData()));
+        assertEquals(BINARY_ITEM, new String(item.getData()));
         assertEquals("application/octet-stream", item.getContentType().get());
         assertEquals("2016/04/20/11/42/00/000/b", item.getContentKey().get().toUrl());
     }
