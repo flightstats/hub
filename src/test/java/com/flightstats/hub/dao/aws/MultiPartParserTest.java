@@ -58,12 +58,14 @@ public class MultiPartParserTest {
                 "--frontier\r\n" +
                 "Content-Type: text/plain\r\n" +
                 "Content-Key: http://hub/channel/stumptown/2016/04/20/11/41/00/000/a\r\n" +
+                "Creation-Date: 2016-04-21T05:05:05.842Z\r\n" +
                 " \r\n" +
                 "This is the body of the message.\r\n" +
                 "--frontier\r\n" +
                 "Content-Type: application/octet-stream\r\n" +
                 "Content-Transfer-Encoding: base64\r\n" +
                 "Content-Key: http://hub/channel/stumptown/2016/04/20/11/42/00/000/b\r\n" +
+                "Creation-Date: 2016-04-21T05:05:05.842Z\r\n" +
                 "\r\n" +
                 BINARY_ITEM + "\r\n" +
                 "--frontier--";
@@ -75,6 +77,7 @@ public class MultiPartParserTest {
                 .build();
         MultiPartParser parser = new MultiPartParser(bulkContent);
         parser.parse();
+        assertEquals(2, bulkContent.getItems().size());
         Content item = bulkContent.getItems().get(0);
         assertEquals("2016/04/20/11/41/00/000/a", item.getContentKey().get().toUrl());
         assertEquals("This is the body of the message.", new String(item.getData()));

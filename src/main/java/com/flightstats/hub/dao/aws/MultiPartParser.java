@@ -76,7 +76,9 @@ public class MultiPartParser {
             } else if (header && byteRing.compare(CRLF)) {
                 String headerLine = StringUtils.strip(baos.toString());
                 baos.reset();
-                if (StringUtils.startsWithIgnoreCase(headerLine, "content")) {
+                if (StringUtils.isEmpty(headerLine)) {
+                    header = false;
+                } else {
                     if (StringUtils.startsWithIgnoreCase(headerLine, "content-type:")) {
                         String type = StringUtils.trim(StringUtils.removeStartIgnoreCase(headerLine, "content-type:"));
                         builder.withContentType(type);
@@ -84,8 +86,6 @@ public class MultiPartParser {
                         String key = StringUtils.trim(StringUtils.removeStartIgnoreCase(headerLine, "content-key:"));
                         builder.withContentKey(ContentKey.fromFullUrl(key).get());
                     }
-                } else {
-                    header = false;
                 }
             } else if (byteRing.compare(endBoundary)) {
                 addItem(endBoundary);
