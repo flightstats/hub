@@ -174,7 +174,7 @@ public class Group {
     /**
      * Returns a Group with all optional values set to the default.
      */
-    public Group withDefaults() {
+    public Group withDefaults(boolean createKey) {
         Group group = this;
         if (parallelCalls == null) {
             group = group.withParallelCalls(1);
@@ -185,7 +185,7 @@ public class Group {
         if (group.isMinute() || group.isSecond()) {
             group = group.withHeartbeat(true);
         }
-        if (getStartingKey() == null) {
+        if (createKey && getStartingKey() == null) {
             group = group.withStartingKey(GroupStrategy.createContentPath(group));
         }
         if (ttlMinutes == null) {

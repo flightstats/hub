@@ -22,13 +22,13 @@ public class GroupValidatorTest {
 
     @Test
     public void testName() throws Exception {
-        group = group.withDefaults();
+        group = group.withDefaults(true);
         groupValidator.validate(group.withName("aA9_-"));
     }
 
     @Test
     public void testNameLarge() throws Exception {
-        group = group.withDefaults();
+        group = group.withDefaults(true);
         groupValidator.validate(group.withName(Strings.repeat("B", 128)));
     }
 

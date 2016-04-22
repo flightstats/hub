@@ -72,7 +72,7 @@ public class GroupTest {
     public void testWithDefaults() {
         assertNull(group.getParallelCalls());
         assertNull(group.getBatch());
-        group = group.withDefaults();
+        group = group.withDefaults(true);
         assertEquals(1L, (long) group.getParallelCalls());
         assertEquals("SINGLE", group.getBatch());
     }

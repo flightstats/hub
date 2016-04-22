@@ -36,7 +36,7 @@ public class GroupService {
 
     public Optional<Group> upsertGroup(Group group) {
         ContentPath requestKey = group.getStartingKey();
-        group = group.withDefaults();
+        group = group.withDefaults(true);
         logger.info("upsert group with defaults " + group);
         groupValidator.validate(group);
         String name = group.getName();

@@ -104,7 +104,7 @@ public class DynamoGroupDao implements GroupDao {
         if (item.containsKey("maxWaitMinutes")) {
             groupBuilder.maxWaitMinutes(Integer.valueOf(item.get("maxWaitMinutes").getN()));
         }
-        return groupBuilder.build().withDefaults();
+        return groupBuilder.build().withDefaults(false);
     }
 
     @Override
