@@ -1,9 +1,6 @@
 package com.flightstats.hub.group;
 
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.ContentPathKeys;
-import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 
@@ -46,6 +43,14 @@ public class MinuteTimedGroup implements TimedGroup {
 
     @Override
     public DateTime getReplicatingStable(ContentPath contentPath) {
-        return new MinutePath(contentPath.getTime()).getTime();
+        if (contentPath instanceof SecondPath) {
+            SecondPath secondPath = (SecondPath) contentPath;
+            if (secondPath.getTime().getSecondOfMinute() < 59) {
+                return getUnit().round(contentPath.getTime().minusMinutes(1));
+            }
+        } else if (contentPath instanceof ContentKey) {
+            return getUnit().round(contentPath.getTime().minusMinutes(1));
+        }
+        return getUnit().round(contentPath.getTime());
     }
 }
