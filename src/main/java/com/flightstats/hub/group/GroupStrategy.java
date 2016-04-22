@@ -7,6 +7,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 
 import java.util.concurrent.BlockingQueue;
@@ -33,7 +34,7 @@ public interface GroupStrategy extends AutoCloseable {
         if (group.isMinute()) {
             return new MinutePath();
         }
-        return new ContentKey();
+        return new ContentKey(TimeUtil.now(), "initial");
     }
 
     static GroupStrategy getStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
