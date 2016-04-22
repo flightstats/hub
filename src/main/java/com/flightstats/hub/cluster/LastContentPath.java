@@ -28,8 +28,9 @@ public class LastContentPath {
             curator.create().creatingParentsIfNeeded().forPath(basePath + name, defaultPath.toBytes());
         } catch (KeeperException.NodeExistsException ignore) {
             //this will typically happen, except the first time
+            logger.trace("initialize exists {} {} {}", name, defaultPath, basePath);
         } catch (Exception e) {
-            logger.warn("unable to create node", e);
+            logger.warn("unable to create node " + name + " " + basePath, e);
         }
     }
 
@@ -38,7 +39,8 @@ public class LastContentPath {
         try {
             return get(path);
         } catch (Exception e) {
-            logger.info("unable to get node " + e.getMessage());
+            logger.info("unable to get node {} {} {} ", name, basePath, e.getMessage());
+            logger.trace("unable to get node  " + path, e);
             return null;
         }
     }
@@ -56,7 +58,7 @@ public class LastContentPath {
                 return get(name, defaultPath, basePath);
             }
         } catch (Exception e) {
-            logger.warn("unable to get node " + e.getMessage());
+            logger.info("unable to get node {} {} {} ", name, basePath, e.getMessage());
             return defaultPath;
         }
     }
@@ -114,6 +116,7 @@ public class LastContentPath {
     }
 
     public void delete(String name, String basePath) {
+        logger.info("delete {} {}", name, basePath);
         String path = basePath + name;
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);

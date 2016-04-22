@@ -162,10 +162,13 @@ public class GroupLeader implements Leader {
     private void send(ContentPath contentPath) throws InterruptedException {
         semaphore.acquire();
         logger.trace("sending {} to {}", contentPath, group.getName());
+        String parentName = Thread.currentThread().getName();
         executorService.submit(new Callable<Object>() {
             @Trace(metricName = "GroupCaller", dispatcher = true)
             @Override
             public Object call() throws Exception {
+                String workerName = Thread.currentThread().getName();
+                Thread.currentThread().setName(workerName + "|" + parentName);
                 ActiveTraces.start("GroupLeader.send", group, contentPath);
                 groupInProcess.add(group.getName(), contentPath);
                 try {
@@ -187,6 +190,7 @@ public class GroupLeader implements Leader {
                 } finally {
                     semaphore.release();
                     ActiveTraces.end();
+                    Thread.currentThread().setName(workerName);
                 }
                 return null;
             }
