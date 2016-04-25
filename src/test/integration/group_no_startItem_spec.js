@@ -5,55 +5,52 @@ var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var gUrl = groupUrl + "/" + channelName;
 var testName = __filename;
-utils.configureFrisby();
+var groupConfig = {
+    callbackUrl: 'http://nothing/callback',
+    channelUrl: 'http://nothing/channel/' + channelName,
+    batch: 'SINGLE',
+    parallelCalls: 1,
+    paused: false
+}
 
 describe(testName, function () {
+    utils.createChannel(channelName, channelUrl, testName);
+    utils.putGroup(channelName, groupConfig, 201, testName);
 
-    it("creates channel: " + channelName + " with group no initialTime.", function (done) {
-        request.put({
-                url: channelUrl + '/' + channelName,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    maxItems: 1,
-                    ttlDays: 1
-                })
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(400);
-                done();
-            });
-
-        request.put({
-            url: gUrl,
-            headers: {"Content-type": "application/json"},
-            body: JSON.stringify({
-                    callbackUrl: "http://fakey/bakey",
-                    channelUrl: channelResource,
-                    parallelCalls: 1,
-                    paused: false,
-                    batch: "SINGLE",
-                    heartbeat: false,
-                    maxWaitMinutes: 1,
-                    ttlMinutes: 0
-                },
-                function (err, response, body) {
-                    expect(err).toBe('');
-                    //expect(response.statusCode).toBe(201);
-                    done();
-                })
-        });
-
-        console.log("Pulling the callback: " + gUrl);
+    it('gets group ' + channelName, function (done) {
+        utils.sleep(10000);
         request.get({
                 url: gUrl,
                 headers: {"Content-Type": "application/json"}
             },
             function (err, response, body) {
-                console.log("crap");
-                console.log("response: " + response);
-                console.log("body: " + body);
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+
+                if (response.statusCode < 400) {
+                    var parse = utils.parseJson(response, channelName);
+                    expect(parse._links.self.href).toBe(gUrl);
+                    if (typeof groupConfig !== "undefined") {
+                        console.log("lastCompletedCallback: " + groupConfig.lastCompletedCallback);
+                        var lastComp = JSON.parse(response.body).lastCompletedCallback;
+                        console.log("lastComp: " + lastComp);
+                        expect(lastComp.indexOf("initial") > -1, true);
+                        expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
+                        expect(parse.channelUrl).toBe(groupConfig.channelUrl);
+                        expect(parse.transactional).toBe(groupConfig.transactional);
+                        expect(parse.name).toBe(channelName);
+                        expect(parse.batch).toBe(groupConfig.batch);
+                        if (groupConfig.ttlMinutes) {
+                            expect(parse.ttlMinutes).toBe(groupConfig.ttlMinutes);
+                        }
+                        if (groupConfig.maxWaitMinutes) {
+                            expect(parse.maxWaitMinutes).toBe(groupConfig.maxWaitMinutes);
+                        }
+                    }
+                }
+                done();
             });
     });
 
 });
+
