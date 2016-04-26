@@ -6,6 +6,7 @@ import random
 import socket
 import string
 import threading
+
 import time
 from datetime import datetime, timedelta
 from flask import request, jsonify
@@ -92,14 +93,13 @@ class WebsiteTasks(TaskSet):
 
     def write(self):
         bulk = ""
-        for x in range(0, 250):
+        for x in range(0, 50):
             bulk += "--abcdefg\r\n"
             bulk += "Content-Type: application/json\r\n\r\n"
             bulk += '{"name":"' + self.payload + '", "count": ' + str(self.count) + '}\r\n'
             self.count += 1
         bulk += "--abcdefg--\r\n"
 
-        # Create bulk payloads with random distribution of 250 items - multipart
         with self.client.post("/channel/" + self.channel + "/bulk", data=bulk,
                               headers={"Content-Type": "multipart/mixed; boundary=abcdefg"}, catch_response=True,
                               name="post_bulk") as postResponse:
