@@ -34,6 +34,19 @@ public class MultiPartParser {
     }
 
     public void parse() throws IOException {
+        parseItems();
+        if (bulkContent.getItems().isEmpty()) {
+            throw new InvalidRequestException("multipart has no items");
+        } else if (bulkContent.isNew()) {
+            ContentKey masterKey = new ContentKey();
+            bulkContent.setMasterKey(masterKey);
+            for (int i = 0; i < bulkContent.getItems().size(); i++) {
+                bulkContent.getItems().get(i).setContentKey(ContentKey.bulkKey(masterKey, i));
+            }
+        }
+    }
+
+    private void parseItems() throws IOException {
         String boundary = "--" + getBoundary();
         byte[] startBoundary = (boundary + "\r\n").getBytes();
         byte[] endBoundary = (boundary + "--").getBytes();
@@ -63,28 +76,22 @@ public class MultiPartParser {
             } else if (header && byteRing.compare(CRLF)) {
                 String headerLine = StringUtils.strip(baos.toString());
                 baos.reset();
-                if (StringUtils.startsWithIgnoreCase(headerLine, "content")) {
+                if (StringUtils.isEmpty(headerLine)) {
+                    header = false;
+                } else {
                     if (StringUtils.startsWithIgnoreCase(headerLine, "content-type:")) {
                         String type = StringUtils.trim(StringUtils.removeStartIgnoreCase(headerLine, "content-type:"));
                         builder.withContentType(type);
+                    } else if (StringUtils.startsWithIgnoreCase(headerLine, "content-key:")) {
+                        String key = StringUtils.trim(StringUtils.removeStartIgnoreCase(headerLine, "content-key:"));
+                        builder.withContentKey(ContentKey.fromFullUrl(key).get());
                     }
-                } else {
-                    header = false;
                 }
             } else if (byteRing.compare(endBoundary)) {
                 addItem(endBoundary);
                 break;
             }
             read = stream.read();
-        }
-        if (bulkContent.getItems().isEmpty()) {
-            throw new InvalidRequestException("multipart has no items");
-        } else {
-            ContentKey masterKey = new ContentKey();
-            bulkContent.setMasterKey(masterKey);
-            for (int i = 0; i < bulkContent.getItems().size(); i++) {
-                bulkContent.getItems().get(i).setContentKey(ContentKey.bulkKey(masterKey, i));
-            }
         }
     }
 

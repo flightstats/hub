@@ -3,6 +3,7 @@ package com.flightstats.hub.rest;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.api.client.filter.GZIPContentEncodingFilter;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +21,9 @@ import java.util.concurrent.TimeUnit;
 public class RestClient {
 
     private final static Logger logger = LoggerFactory.getLogger(RestClient.class);
-    private final static Client client = RestClient.createClient(15, 60, true);
-    private final static Client noRedirect = RestClient.createClient(15, 60, false);
+    private final static Client client = RestClient.createClient(15, 60, true, false);
+    private final static Client gzipClient = RestClient.createClient(15, 60, true, true);
+    private final static Client noRedirect = RestClient.createClient(15, 60, false, false);
 
     public static Client defaultClient() {
         return client;
@@ -31,7 +33,11 @@ public class RestClient {
         return noRedirect;
     }
 
-    public static Client createClient(int connectTimeout, int readTimeout, boolean followRedirects) {
+    public static Client gzipClient() {
+        return gzipClient;
+    }
+
+    public static Client createClient(int connectTimeout, int readTimeout, boolean followRedirects, boolean gzip) {
         try {
             TrustManager[] certs = new TrustManager[]{
                     new X509TrustManager() {
@@ -62,6 +68,9 @@ public class RestClient {
             client.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(connectTimeout));
             client.setReadTimeout((int) TimeUnit.SECONDS.toMillis(readTimeout));
             client.setFollowRedirects(followRedirects);
+            if (gzip) {
+                client.addFilter(new GZIPContentEncodingFilter());
+            }
             return client;
         } catch (Exception e) {
             logger.warn("can't create client ", e);

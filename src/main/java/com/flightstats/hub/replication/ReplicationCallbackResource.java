@@ -26,6 +26,7 @@ import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.Response.Status.Family.*;
 
 @Path("/internal/replication/{channel}")
+//todo - gfm - 4/20/16 - this can be deleted after replication is switched to seconds
 public class ReplicationCallbackResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ReplicationCallbackResource.class);

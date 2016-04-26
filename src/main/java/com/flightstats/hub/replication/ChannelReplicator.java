@@ -4,6 +4,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
+import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,18 +23,24 @@ public class ChannelReplicator {
     }
 
     public void start() {
-        Group.GroupBuilder builder = Group.builder()
-                .name(getGroupName())
-                .callbackUrl(getCallbackUrl())
-                .channelUrl(channel.getReplicationSource())
-                .heartbeat(true)
-                .batch(Group.SINGLE);
-        Group group = builder.build();
-        hubUtils.startGroupCallback(group);
+        ClientResponse response = getClientResponse("repls", Group.SECOND);
+        if (response.getStatus() >= 400) {
+            response = getClientResponse("replication", Group.SINGLE);
+        }
     }
 
-    private String getCallbackUrl() {
-        return HubProperties.getAppUrl() + "internal/replication/" + channel.getName();
+    private ClientResponse getClientResponse(String apiPath, String batch) {
+        Group.GroupBuilder builder = Group.builder()
+                .name(getGroupName())
+                .callbackUrl(getCallbackUrl(apiPath))
+                .channelUrl(channel.getReplicationSource())
+                .heartbeat(true)
+                .batch(batch);
+        return hubUtils.startGroupCallback(builder.build());
+    }
+
+    private String getCallbackUrl(String apiPath) {
+        return HubProperties.getAppUrl() + "internal/" + apiPath + "/" + channel.getName();
     }
 
     private String getGroupName() {

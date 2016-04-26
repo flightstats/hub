@@ -76,16 +76,19 @@ public class SpokeContentDao implements ContentDao {
             logger.debug("writing {} items to master {}", items.size(), bulkContent.getMasterKey());
             for (Content content : items) {
                 byte[] payload = SpokeMarshaller.toBytes(content);
+                String itemKey = content.getContentKey().get().toUrl();
+                stream.writeInt(itemKey.length());
+                stream.write(itemKey.getBytes());
                 stream.writeInt(payload.length);
                 stream.write(payload);
                 keys.add(content.getContentKey().get());
             }
             stream.flush();
             traces.add("SpokeContentDao.writeBulk marshalled");
-            String path = getPath(channelName, bulkContent.getMasterKey());
+
             logger.trace("writing items {} to channel {}", items.size(), channelName);
-            if (!spokeStore.write(path, baos.toByteArray(), "bulk")) {
-                throw new FailedWriteException("unable to write bulk to spoke " + path);
+            if (!spokeStore.write(channelName, baos.toByteArray(), "bulkKey")) {
+                throw new FailedWriteException("unable to write bulk to spoke " + channelName);
             }
             traces.add("SpokeContentDao.writeBulk completed", keys);
             return keys;

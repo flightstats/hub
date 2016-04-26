@@ -4,9 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.channel.TimeLinkUtil;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +67,7 @@ public class GroupResource {
         logger.info("get group {} ", name);
         Group group = optionalGroup.get();
         GroupStatus status = groupService.getGroupStatus(group);
+        DateTime stable = TimeUtil.stable();
         ObjectNode root = mapper.createObjectNode();
         addSelfLink(root);
         root.put("name", group.getName());
@@ -86,6 +90,7 @@ public class GroupResource {
         } else {
             root.put("channelLatest", group.getChannelUrl() + "/" + status.getChannelLatest().toUrl());
         }
+        TimeLinkUtil.addTime(root, stable, "stableTime");
         ArrayNode inFlight = root.putArray("inFlight");
         for (ContentPath contentPath : status.getInFlight()) {
             inFlight.add(group.getChannelUrl() + "/" + contentPath.toUrl());

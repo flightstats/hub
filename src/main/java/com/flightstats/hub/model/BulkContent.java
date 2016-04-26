@@ -11,7 +11,7 @@ import java.util.List;
 @Builder
 public class BulkContent {
 
-    private final boolean isNew = true;
+    private final boolean isNew;
     private final InputStream stream;
     private final String contentType;
     private final String channel;

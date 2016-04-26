@@ -24,13 +24,13 @@ import static com.flightstats.hub.app.HubServices.register;
 
 /**
  * Replication is moving from one Hub into another Hub
- * in Replication, we will presume we are moving forward in time, starting with configurable item age.
+ * in Replication, we will presume we are moving forward in time
  * <p>
  * Secnario:
  * Producers are inserting Items into a Hub channel
- * The Hub is setup to Replicate a channel from a Hub
- * Replication starts at nearly the oldest Item, and gradually progresses forward to the current item
- * Replication stays up to date, with some minimal amount of lag
+ * HubA is setup to Replicate a channel from HubB
+ * Replication starts at the item after now, and then stays up to date, with some minimal amount of lag.
+ * Lag is a minimum of 'app.stable_seconds'.
  */
 public class ReplicatorManager {
     public static final String REPLICATED = "replicated";
@@ -49,7 +49,7 @@ public class ReplicatorManager {
         this.channelService = channelService;
         this.hubUtils = hubUtils;
         this.watchManager = watchManager;
-        register(new ReplicatorService(), TYPE.FINAL_POST_START, TYPE.PRE_STOP);
+        register(new ReplicatorService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
     }
 
     private class ReplicatorService extends AbstractIdleService {

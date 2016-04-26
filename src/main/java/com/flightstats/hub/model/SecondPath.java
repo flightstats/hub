@@ -14,30 +14,30 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * A MinutePath represents the end of a minute period.
- * So any ContentKeys contained within that minute come before the MinutePath.
+ * A SecondPath represents the end of a second period.
+ * So any ContentKeys contained within that second come before the SecondPath.
  */
 @Getter
 @EqualsAndHashCode(of = "time")
-public class MinutePath implements ContentPathKeys {
-    private final static Logger logger = LoggerFactory.getLogger(MinutePath.class);
+public class SecondPath implements ContentPathKeys {
+    private final static Logger logger = LoggerFactory.getLogger(SecondPath.class);
 
-    public static final MinutePath NONE = new MinutePath(new DateTime(1, DateTimeZone.UTC));
+    public static final SecondPath NONE = new SecondPath(new DateTime(1, DateTimeZone.UTC));
 
     private final DateTime time;
     private final Collection<ContentKey> keys;
 
-    public MinutePath(DateTime time, Collection<ContentKey> keys) {
-        this.time = TimeUtil.Unit.MINUTES.round(time);
+    public SecondPath(DateTime time, Collection<ContentKey> keys) {
+        this.time = TimeUtil.Unit.SECONDS.round(time);
         this.keys = keys;
     }
 
-    public MinutePath(DateTime time) {
+    public SecondPath(DateTime time) {
         this(time, Collections.emptyList());
     }
 
-    public MinutePath() {
-        this(TimeUtil.now().minusMinutes(1));
+    public SecondPath() {
+        this(TimeUtil.now().minusSeconds(1));
     }
 
     @Override
@@ -47,7 +47,7 @@ public class MinutePath implements ContentPathKeys {
 
     @Override
     public String toUrl() {
-        return TimeUtil.minutes(time);
+        return TimeUtil.seconds(time);
     }
 
     @Override
@@ -56,16 +56,16 @@ public class MinutePath implements ContentPathKeys {
     }
 
     @Override
-    public MinutePath fromZk(String value) {
-        return new MinutePath(new DateTime(Long.parseLong(value), DateTimeZone.UTC));
+    public SecondPath fromZk(String value) {
+        return new SecondPath(new DateTime(Long.parseLong(value), DateTimeZone.UTC));
     }
 
     @Override
     public int compareTo(ContentPath other) {
-        if (other instanceof MinutePath) {
+        if (other instanceof SecondPath || other instanceof MinutePath) {
             return time.compareTo(other.getTime());
         } else {
-            DateTime endTime = getTime().plusMinutes(1);
+            DateTime endTime = getTime().plusSeconds(1);
             int diff = endTime.compareTo(other.getTime());
             if (diff == 0) {
                 return -1;
@@ -74,15 +74,15 @@ public class MinutePath implements ContentPathKeys {
         }
     }
 
-    public static MinutePath fromBytes(byte[] bytes) {
+    public static SecondPath fromBytes(byte[] bytes) {
         return fromUrl(new String(bytes, Charsets.UTF_8)).get();
     }
 
-    public static Optional<MinutePath> fromUrl(String key) {
+    public static Optional<SecondPath> fromUrl(String key) {
         try {
-            return Optional.of(new MinutePath(TimeUtil.minutes(key)));
+            return Optional.of(new SecondPath(TimeUtil.seconds(key)));
         } catch (Exception e) {
-            logger.trace("unable to parse {} {}", key, e.getMessage());
+            logger.info("unable to parse " + key + " " + e.getMessage());
             return Optional.absent();
         }
     }

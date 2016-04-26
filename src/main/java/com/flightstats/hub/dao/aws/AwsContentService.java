@@ -145,8 +145,7 @@ public class AwsContentService implements ContentService {
     public Optional<Content> getValue(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        DateTime ttlTime = getCacheTtlTime(channelName, channel);
-        if (key.getTime().isAfter(ttlTime)) {
+        if (key.getTime().isAfter(getCacheTtlTime(channelName, channel))) {
             Content content = spokeContentDao.read(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
@@ -177,6 +176,7 @@ public class AwsContentService implements ContentService {
 
     @Override
     public void getValues(String channelName, SortedSet<ContentKey> keys, Consumer<Content> callback) {
+        //todo - gfm - 4/14/16 - this may come in as seconds...
         SortedSet<MinutePath> minutePaths = ContentKeyUtil.convert(keys);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         DateTime cacheTtlTime = getCacheTtlTime(channelName, channel);
@@ -192,8 +192,8 @@ public class AwsContentService implements ContentService {
         }
     }
 
-    private void getValues(String channelName, Consumer<Content> callback, MinutePath minutePath) {
-        for (ContentKey contentKey : minutePath.getKeys()) {
+    private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys) {
+        for (ContentKey contentKey : contentPathKeys.getKeys()) {
             Optional<Content> contentOptional = getValue(channelName, contentKey);
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());

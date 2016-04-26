@@ -6,7 +6,7 @@ import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.group.MinuteGroupStrategy;
+import com.flightstats.hub.group.TimedGroupStrategy;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
@@ -51,22 +51,18 @@ public class S3Verifier {
     private S3WriteQueue s3WriteQueue;
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final double keepLeadershipRate = HubProperties.getProperty("s3Verifier.keepLeadershipRate", 0.75);
-    private final ExecutorService queryThreadPool;
-    private final ExecutorService channelThreadPool;
+    private final ExecutorService queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
+    private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
 
     public S3Verifier() {
-
-        registerService(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle));
-        registerService(new S3VerifierService("/S3VerifierBatchService", 1, this::runBatch));
-
-        queryThreadPool = Executors.newCachedThreadPool(
-                new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
-        channelThreadPool = Executors.newFixedThreadPool(10,
-                new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
+        if (HubProperties.getProperty("s3Verifier.run", true)) {
+            registerService(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle));
+            registerService(new S3VerifierService("/S3VerifierBatchService", 1, this::runBatch));
+        }
     }
 
     private void registerService(S3VerifierService service) {
-        HubServices.register(service, HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
+        HubServices.register(service, HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
     }
 
     SortedSet<ContentKey> getMissing(DateTime startTime, DateTime endTime, String channelName, ContentDao s3ContentDao,
@@ -132,7 +128,7 @@ public class S3Verifier {
                 if (!keysToAdd.isEmpty()) {
                     MinutePath path = new MinutePath(startTime);
                     logger.info("batchS3Verification {} missing {}", channelName, path);
-                    String batchUrl = MinuteGroupStrategy.getBulkUrl(APP_URL + "channel/" + channelName, path, "batch");
+                    String batchUrl = TimedGroupStrategy.getBulkUrl(APP_URL + "channel/" + channelName, path, "batch");
                     logger.info("batchS3Verification batchUrl {}", batchUrl);
                     S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, path, expectedKeys, batchUrl);
                 }

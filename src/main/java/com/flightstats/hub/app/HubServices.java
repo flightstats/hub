@@ -82,8 +82,8 @@ public class HubServices {
 
     public enum TYPE {
         PRE_START,
-        INITIAL_POST_START,
-        FINAL_POST_START,
+        SET_HEALTHY,
+        AFTER_HEALTHY_START,
         PRE_STOP,
         STOP
     }

@@ -38,6 +38,10 @@ public class TimeUtil {
         return dateTime.toString(secondsFormatter);
     }
 
+    public static DateTime seconds(String string) {
+        return secondsFormatter.parseDateTime(string);
+    }
+
     public static String millis(DateTime dateTime) {
         return dateTime.toString(millisFormatter);
     }

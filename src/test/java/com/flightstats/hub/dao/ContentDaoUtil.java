@@ -1,9 +1,6 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
@@ -14,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.SortedSet;
 
 import static org.junit.Assert.*;
 
@@ -250,11 +248,42 @@ public class ContentDaoUtil {
         return createContent(new ContentKey());
     }
 
-    private void compare(Content content, Content read, byte[] data) {
+    private void compare(Content content, Content read, byte[] expected) {
         assertEquals(content.getContentKey().get(), read.getContentKey().get());
         assertEquals(content.getContentLanguage(), read.getContentLanguage());
         assertEquals(content.getContentType(), read.getContentType());
-        assertArrayEquals(data, read.getData());
+        assertArrayEquals(expected, read.getData());
         assertEquals(content, read);
+    }
+
+    public void testBulkWrite() throws Exception {
+        String channel = "testBulkWrite";
+        BulkContent bulkContent = BulkContent.builder()
+                .channel(channel)
+                .isNew(false)
+                .build();
+
+        DateTime time = new DateTime();
+        for (int i = 0; i < 10; i++) {
+            time = time.plusMillis(1);
+            ContentKey key = new ContentKey(time);
+            Content content = Content.builder()
+                    .withContentKey(key)
+                    .withContentType("text/plain")
+                    .withData((key.toUrl()).getBytes())
+                    .build();
+            bulkContent.getItems().add(content);
+        }
+        SortedSet<ContentKey> contentKeys = contentDao.write(bulkContent);
+        assertEquals(10, contentKeys.size());
+
+        List<Content> items = bulkContent.getItems();
+        for (Content item : items) {
+            ContentKey contentKey = item.getContentKey().get();
+            Content found = contentDao.read(channel, contentKey);
+            compare(item, found, contentKey.toUrl().getBytes());
+
+        }
+
     }
 }

@@ -30,6 +30,7 @@ public class Group {
 
     public static final String SINGLE = "SINGLE";
     public static final String MINUTE = "MINUTE";
+    public static final String SECOND = "SECOND";
 
     private final String callbackUrl;
     private final String channelUrl;
@@ -173,7 +174,7 @@ public class Group {
     /**
      * Returns a Group with all optional values set to the default.
      */
-    public Group withDefaults() {
+    public Group withDefaults(boolean createKey) {
         Group group = this;
         if (parallelCalls == null) {
             group = group.withParallelCalls(1);
@@ -181,10 +182,10 @@ public class Group {
         if (batch == null) {
             group = group.withBatch("SINGLE");
         }
-        if (group.isMinute()) {
+        if (group.isMinute() || group.isSecond()) {
             group = group.withHeartbeat(true);
         }
-        if (getStartingKey() == null) {
+        if (createKey && getStartingKey() == null) {
             group = group.withStartingKey(GroupStrategy.createContentPath(group));
         }
         if (ttlMinutes == null) {
@@ -198,6 +199,10 @@ public class Group {
 
     public boolean isMinute() {
         return MINUTE.equalsIgnoreCase(getBatch());
+    }
+
+    public boolean isSecond() {
+        return SECOND.equalsIgnoreCase(getBatch());
     }
 
     public static String getBatchType(boolean single) {

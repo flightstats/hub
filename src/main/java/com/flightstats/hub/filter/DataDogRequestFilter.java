@@ -151,7 +151,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 handlePath(sbuff, splits);
             }
         }
-        logger.debug("Generated template path: {}", sbuff.toString());
+        logger.trace("Generated template path: {}", sbuff);
         return sbuff.toString();
     }
 

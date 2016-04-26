@@ -741,8 +741,9 @@ delete the callback first.
 * `paused` is optional and defaults to false.   When true, this will pause a group callback.
 
 * `batch` is optional and defaults to `SINGLE`, which will return each item by itself.
-  Setting the value to `MINUTE` will return each minute's worth of data in the channel.  MINUTE callbacks will return an empty 
-  array of uris if there are no items.  
+  Setting the value to `SECOND` will return each second's worth of data in the channel.
+  Setting the value to `MINUTE` will return each minute's worth of data in the channel.
+  SECOND and MINUTE callbacks will return an empty array of uris if there are no items.
 
 * `heartbeat` is optional and defaults to false for `SINGLE`. `MINUTE` batches always have a heartbeat.
    A heartbeat is a callback which identifies the end of a minute period.  It may have an empty `uris` array.

@@ -61,7 +61,7 @@ public class TimeLinkUtil {
         node.put("redirect", uriInfo.getAbsolutePath() + "/" + name + stable);
     }
 
-    private static void addTime(ObjectNode root, DateTime time, String name) {
+    public static void addTime(ObjectNode root, DateTime time, String name) {
         ObjectNode nowNode = root.putObject(name);
         nowNode.put("iso8601", ISODateTimeFormat.dateTime().print(time));
         nowNode.put("millis", time.getMillis());

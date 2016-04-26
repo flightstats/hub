@@ -14,7 +14,7 @@ public class HubClusterRegister {
     private CuratorCluster hubCuratorCluster;
 
     public HubClusterRegister() {
-        HubServices.register(new CuratorClusterHook(), HubServices.TYPE.FINAL_POST_START, HubServices.TYPE.PRE_STOP);
+        HubServices.register(new CuratorClusterHook(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
     }
 
     private class CuratorClusterHook extends AbstractIdleService {

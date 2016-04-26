@@ -30,7 +30,7 @@ public class TimeService {
     private final static Logger logger = LoggerFactory.getLogger(TimeService.class);
 
     private final String remoteFile = HubProperties.getProperty("app.remoteTimeFile", "/home/hub/remoteTime");
-    private final static Client client = RestClient.createClient(1, 5, true);
+    private final static Client client = RestClient.createClient(1, 5, true, false);
 
     @Inject
     @Named("HubCuratorCluster")
