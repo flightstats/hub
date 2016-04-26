@@ -35,7 +35,7 @@ public interface GroupStrategy extends AutoCloseable {
         if (group.isMinute()) {
             return new MinutePath();
         }
-        return new ContentKey();
+        return new ContentKey(TimeUtil.now(), "initial");
     }
 
     static GroupStrategy getStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
