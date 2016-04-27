@@ -80,6 +80,7 @@ public class AwsConnectorFactory {
         configuration.setMaxConnections(maxConnections);
         configuration.withRetryPolicy(retryPolicy);
         configuration.setProtocol(Protocol.valueOf(protocol));
+        configuration.withConnectionTimeout(HubProperties.getProperty(name + ".connectionTimeout", 20 * 1000));
         return configuration;
     }
 
