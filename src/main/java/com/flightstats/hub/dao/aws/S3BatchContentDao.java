@@ -22,6 +22,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -114,7 +115,7 @@ public class S3BatchContentDao implements ContentDao {
         ActiveTraces.getLocal().add("S3BatchContentDao.getZipInputStream");
         sender.send("channel." + channel + ".s3Batch.get", 1);
         S3Object object = s3Client.getObject(s3BucketName, getS3BatchItemsKey(channel, minutePath));
-        return new ZipInputStream(object.getObjectContent());
+        return new ZipInputStream(new BufferedInputStream(object.getObjectContent()));
     }
 
     @Override
