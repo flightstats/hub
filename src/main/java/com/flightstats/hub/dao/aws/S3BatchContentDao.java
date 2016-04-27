@@ -26,6 +26,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -64,8 +65,8 @@ public class S3BatchContentDao implements ContentDao {
     public Content read(String channelName, ContentKey key) {
         try {
             return getS3Object(channelName, key);
-        } catch (SocketTimeoutException e) {
-            logger.warn("SocketTimeoutException : unable to read " + channelName + " " + key);
+        } catch (SocketTimeoutException | SocketException e) {
+            logger.warn("Socket Exception : unable to read " + channelName + " " + key + " " + e.getMessage() + " " + e.getClass());
             try {
                 return getS3Object(channelName, key);
             } catch (Exception e2) {
