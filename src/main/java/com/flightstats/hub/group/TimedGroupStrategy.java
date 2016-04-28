@@ -94,8 +94,11 @@ public class TimedGroupStrategy implements GroupStrategy {
                 DateTime stable = TimeUtil.stable().minus(duration);
                 if (channelService.isReplicating(channel)) {
                     ContentPath contentPath = lastContentPath.get(channel, timedGroup.getNone(), ChannelReplicator.REPLICATED_LAST_UPDATED);
-                    stable = timedGroup.getReplicatingStable(contentPath);
-                    //todo - gfm - 4/21/16 - it would be nice if this slept for a bit if it's close to the end of a minute
+                    DateTime replicatedStable = timedGroup.getReplicatingStable(contentPath);
+                    if (replicatedStable.isBefore(stable)) {
+                        logger.trace("replicated fuuutuuure {} {}", stable, replicatedStable);
+                        stable = replicatedStable;
+                    }
                     logger.debug("replicating {} stable {}", contentPath, stable);
                 }
                 logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
