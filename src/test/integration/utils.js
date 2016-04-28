@@ -205,6 +205,12 @@ function getQ(url, status, stable) {
     return deferred.promise;
 }
 
+function itSleeps(millis) {
+    it('sleeps', function () {
+        sleep(millis);
+    })
+}
+
 function sleep(millis) {
     runs(function() {
         flag = false;
@@ -332,6 +338,7 @@ exports.createChannel = createChannel;
 exports.putChannel = putChannel;
 exports.addItem = addItem;
 exports.sleep = sleep;
+exports.itSleeps = itSleeps;
 exports.sleepQ = sleepQ;
 exports.timeout = timeout;
 exports.putGroup = putGroup;
