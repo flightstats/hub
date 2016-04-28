@@ -62,8 +62,8 @@ describe(testName, function () {
 
     utils.deleteGroup(groupName);
 
-    utils.addItem(channelResource);
-
+    utils.itSleeps(5000);
+    
     utils.putGroup(groupName, groupConfigB, 201, testName);
 
     it('runs callback server', function () {
