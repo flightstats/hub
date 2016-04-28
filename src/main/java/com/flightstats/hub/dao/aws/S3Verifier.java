@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
-public class S3Verifier extends S3VerifierHandler {
+public class S3Verifier {
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     public static final String APP_URL = HubProperties.getAppUrl();
 
@@ -60,7 +60,7 @@ public class S3Verifier extends S3VerifierHandler {
 
     public S3Verifier() {
         if (HubProperties.getProperty("s3Verifier.run", true)) {
-            registerService(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, () -> runSingle(this)));
+            registerService(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle));
             registerService(new S3VerifierService("/S3VerifierBatchService", 1, this::runBatch));
         }
     }
@@ -115,6 +115,7 @@ public class S3Verifier extends S3VerifierHandler {
                 for (ContentKey key : keysToAdd) {
                     s3WriteQueue.add(new ChannelContentKey(channelName, key));
                 }
+                HubProvider.getInstance(LastContentPath.class).updateIncrease(new MinutePath(DateTime.now()), channel.getName(), CHANNEL_LATEST_VERIFIED);
             } finally {
                 ActiveTraces.end();
             }
@@ -142,7 +143,7 @@ public class S3Verifier extends S3VerifierHandler {
         });
     }
 
-    public void runSingle(S3VerifierHandler handler) {
+    public void runSingle() {
         try {
             LastContentPath lastContentPath = HubProvider.getInstance(LastContentPath.class);
 
@@ -154,8 +155,7 @@ public class S3Verifier extends S3VerifierHandler {
             for (ChannelConfig channel : channels) {
                 if (channel.isSingle() || channel.isBoth()) {
                     ContentPath contentPath = lastContentPath.get(channel.getName(), defaultPath, CHANNEL_LATEST_VERIFIED);
-                    handler.singleS3Verification(contentPath.getTime(), channel, endTime);
-                    lastContentPath.get(channel.getName(), new MinutePath(DateTime.now()), CHANNEL_LATEST_VERIFIED);
+                    singleS3Verification(contentPath.getTime(), channel, endTime);
                 }
             }
         } catch (Exception e) {
