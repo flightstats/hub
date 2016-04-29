@@ -36,4 +36,8 @@ public class TimeQuery implements Query {
         }
         return endTime;
     }
+
+    public boolean outsideOfCache(DateTime cacheTime) {
+        return startTime.isBefore(cacheTime);
+    }
 }

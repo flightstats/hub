@@ -31,6 +31,14 @@ public class DirectionQuery implements Query {
         return location;
     }
 
+    @Override
+    public boolean outsideOfCache(DateTime cacheTime) {
+        if (next) {
+            return contentKey.getTime().isBefore(cacheTime);
+        }
+        return true;
+    }
+
     public TimeQuery convert(DateTime startTime, TimeUtil.Unit unit) {
         return TimeQuery.builder().channelName(getChannelName())
                 .startTime(startTime)

@@ -19,6 +19,10 @@ public class HubProperties {
         return StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
     }
 
+    public static int getSpokeTtl() {
+        return getProperty("spoke.ttlMinutes", 60);
+    }
+
     public static String getAppEnv() {
         return (getProperty("app.name", "hub") + "_" + getProperty("app.environment", "unknown")).replace("-", "_");
     }

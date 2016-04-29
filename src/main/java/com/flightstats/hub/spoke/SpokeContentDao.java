@@ -35,7 +35,7 @@ public class SpokeContentDao implements ContentDao {
     @Inject
     private TimeService timeService;
 
-    private final int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
+    private final int ttlMinutes = HubProperties.getSpokeTtl();
 
     @Override
     public ContentKey write(String channelName, Content content) throws Exception {
