@@ -115,7 +115,7 @@ public class S3Verifier {
                 for (ContentKey key : keysToAdd) {
                     s3WriteQueue.add(new ChannelContentKey(channelName, key));
                 }
-                HubProvider.getInstance(LastContentPath.class).updateIncrease(new MinutePath(DateTime.now()), channel.getName(), CHANNEL_LATEST_VERIFIED);
+                HubProvider.getInstance(LastContentPath.class).updateIncrease(new MinutePath(endTime), channel.getName(), CHANNEL_LATEST_VERIFIED);
             } finally {
                 ActiveTraces.end();
             }
@@ -147,7 +147,7 @@ public class S3Verifier {
         try {
             LastContentPath lastContentPath = HubProvider.getInstance(LastContentPath.class);
 
-            DateTime endTime = DateTime.now();
+            DateTime endTime = TimeUtil.stable().minusMinutes(1);
             DateTime startTime = endTime.minusMinutes(offsetMinutes).minusMinutes(1);
             MinutePath defaultPath = new MinutePath(startTime);
             logger.info("Verifying Single S3 data at: {}", startTime);
