@@ -10,8 +10,7 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class MultiPartParserTest {
 
@@ -161,6 +160,30 @@ public class MultiPartParserTest {
                 .build();
         MultiPartParser parser = new MultiPartParser(bulkContent);
         parser.parse();
+    }
+
+    @Test
+    public void testEmptyBytePayload() throws IOException {
+
+        String data = "--boundary\r\n" +
+                "Content-Type: text/plain\r\n" +
+                "Content-Key: http://hub/channel/provider/2016/04/28/23/10/19/893/3ISEM6\r\n" +
+                "Creation-Date: 2016-04-28T23:10:19.893Z\r\n" +
+                "\r\n" +
+                "\r\n" +
+                "--boundary--";
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
+        BulkContent bulkContent = BulkContent.builder()
+                .stream(inputStream)
+                .contentType("multipart/mixed; boundary=boundary")
+                .build();
+
+        MultiPartParser parser = new MultiPartParser(bulkContent);
+        parser.parse();
+        Content item = bulkContent.getItems().get(0);
+        assertArrayEquals(new byte[0], item.getData());
+        assertEquals("text/plain", item.getContentType().get());
+
     }
 
 }

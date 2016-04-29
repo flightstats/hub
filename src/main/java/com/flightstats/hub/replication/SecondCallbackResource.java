@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ContentPath;
@@ -36,7 +37,7 @@ public class SecondCallbackResource {
         ActiveTraces.getLocal().add("getAndWriteBatch", path);
         logger.trace("path {} {}", path, batchUrl);
         ClientResponse response = RestClient.gzipClient()
-                .resource(batchUrl + "&location=CACHE")
+                .resource(batchUrl)
                 .accept("multipart/mixed")
                 .get(ClientResponse.class);
         logger.trace("response.getStatus() {}", response.getStatus());
@@ -52,7 +53,12 @@ public class SecondCallbackResource {
                 .channel(channel)
                 .isNew(false)
                 .build();
-        channelService.insert(bulkContent);
+        try {
+            channelService.insert(bulkContent);
+        } catch (InvalidRequestException e) {
+            ActiveTraces.getLocal().add("invalid request");
+            logger.warn("invalid request for " + channel + " " + path, e);
+        }
         ActiveTraces.getLocal().add("getAndWriteBatch completed");
         return true;
     }

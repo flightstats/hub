@@ -1,14 +1,13 @@
 # locust.py
 
+import httplib2
 import json
 import logging
 import random
 import socket
 import string
-import threading
-
-import httplib2
 import thread
+import threading
 import time
 import websocket
 from flask import request, jsonify
@@ -135,7 +134,11 @@ class WebsiteTasks(TaskSet):
 
     def write(self):
         payload = {"name": self.payload, "count": self.count}
-        with self.client.post("/channel/" + self.channel, data=json.dumps(payload),
+        postData = json.dumps(payload)
+        if random.random() >= 0.99:
+            postData = None
+
+        with self.client.post("/channel/" + self.channel, data=postData,
                               headers={"Content-Type": "application/json"}, catch_response=True,
                               name="post_payload") as postResponse:
             if postResponse.status_code != 201:
