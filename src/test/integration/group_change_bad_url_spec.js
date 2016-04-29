@@ -38,7 +38,7 @@ describe(testName, function () {
 
     utils.putGroup(groupName, badConfig, 201, testName);
 
-    utils.sleep(2000);
+    utils.itSleeps(2000);
 
     utils.putGroup(groupName, groupConfigB, 200, testName);
 

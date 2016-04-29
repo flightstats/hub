@@ -91,7 +91,7 @@ public class Content implements Serializable {
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private Optional<String> contentLanguage = Optional.absent();
-        private Optional<ContentKey> contentKey = Optional.absent();
+        public Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
 
         public Builder withContentType(String contentType) {
