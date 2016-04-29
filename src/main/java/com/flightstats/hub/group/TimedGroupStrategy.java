@@ -125,6 +125,7 @@ public class TimedGroupStrategy implements GroupStrategy {
     }
 
     private Collection<ContentKey> queryKeys(DateTime time) {
+        //todo - gfm - 4/28/16 - if we are outside the cache time period, this should look in S3
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channel)
                 .startTime(time)
