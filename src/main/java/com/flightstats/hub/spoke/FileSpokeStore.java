@@ -27,7 +27,7 @@ public class FileSpokeStore {
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);
 
     private final String storagePath;
-    private static final int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
+    private static final int ttlMinutes = HubProperties.getSpokeTtl();
 
     @Inject
     public FileSpokeStore(@Named("spoke.path") String storagePath) {

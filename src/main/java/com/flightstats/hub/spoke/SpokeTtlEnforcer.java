@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 public class SpokeTtlEnforcer {
     private final static Logger logger = LoggerFactory.getLogger(SpokeTtlEnforcer.class);
     private final String storagePath = HubProperties.getProperty("spoke.path", "/spoke");
-    private final int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
+    private final int ttlMinutes = HubProperties.getSpokeTtl() + 1;
     @Inject
     private ChannelService channelService;
 
