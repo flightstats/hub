@@ -6,7 +6,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.ContentPathKeys;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -125,13 +128,11 @@ public class TimedGroupStrategy implements GroupStrategy {
     }
 
     private Collection<ContentKey> queryKeys(DateTime time) {
-        //todo - gfm - 4/28/16 - if we are outside the cache time period, this should look in S3
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channel)
                 .startTime(time)
                 .unit(timedGroup.getUnit())
                 .stable(true)
-                .location(Location.CACHE)
                 .build();
         return channelService.queryByTime(timeQuery);
     }
