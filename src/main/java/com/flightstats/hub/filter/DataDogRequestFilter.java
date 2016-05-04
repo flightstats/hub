@@ -39,8 +39,8 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
 
     private enum QueryType {
-        channel, tag, zookeeper, s3Batch, replication,
-        events, time, spoke, unkown, group;
+        channel, tag, zookeeper, s3Batch, repls,
+        events, time, spoke, unknown, group;
     }
 
     private enum QueryKey {
@@ -92,7 +92,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 long time = System.currentTimeMillis() - trace.getTime();
                 String context = trace.context();
 
-                statsd.recordExecutionTime("hubRequest", time, new String[]{"endpoint:" + context});
+                statsd.recordExecutionTime("hub.request", time, new String[]{"endpoint:" + context});
                 logger.trace("Sending executionTime to DataDog for {} with time of {}.", context, time);
 
                 Object[] traceObjs = trace.getObjects();
@@ -104,11 +104,9 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 // report any errors
                 int returnCode = response.getStatus();
                 if (returnCode > 400 && returnCode != 404) {
-                    statsd.recordExecutionTime("hubErrors", System.currentTimeMillis(), new String[]{"errorCode:" + returnCode});
+                    statsd.incrementCounter("hub.errors", new String[]{"errorCode:" + returnCode});
                 }
             }
-        } else {
-            logger.debug("DataDog logging disabled.");
         }
     }
 
@@ -157,7 +155,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 handlePath(sbuff, splits);
             }
         }
-        logger.trace("Generated template path: {}", sbuff);
+        logger.trace("Generated template path: {} for: {}", sbuff, path);
         return sbuff.toString();
     }
 
@@ -206,7 +204,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
      * @param path
      */
     private void handleInternalPath(StringBuilder sbuff, String[] path) {
-        QueryType queryType = QueryType.unkown;
+        QueryType queryType = QueryType.unknown;
         for (int i = 0; i < path.length; i++) {
 
             if (i == 0) {
@@ -227,7 +225,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                     case s3Batch:
                         sbuff.append("/").append(CHANNEL);
                         break;
-                    case replication:
+                    case repls:
                         sbuff.append("/").append(CHANNEL);
                         break;
                     case events:

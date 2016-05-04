@@ -183,6 +183,7 @@ public class DataDogFilterTest {
         String method = "GET";
         List<String[]> testsExpects = new ArrayList<>();
         testsExpects.add(new String[]{"internal/events/123", "/internal/events/id"});
+        testsExpects.add(new String[]{"internal/events/Events_hub_ucs_dev_test_0_9590464073698968_K6FWuH", "/internal/events/id"});
 
         for (String[] test : testsExpects) {
             assertEquals(test[1], filter.constructDeclaredpath(test[0], method));

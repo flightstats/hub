@@ -16,6 +16,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,13 +28,13 @@ public class AwsBindings extends AbstractModule {
 
     @Override
     protected void configure() {
-        String role = getRole();
-        logger.info("starting server {}  with role {}", HubHost.getLocalName(), role);
-        if ("batch".equals(role)) {
+        if (isBatch()) {
+            logger.info("starting server {} as batch", HubHost.getLocalName());
             HubProperties.setProperty("group.keepLeadershipRate", "0.999");
             HubProperties.setProperty("s3Verifier.keepLeadershipRate", "0.999");
             bind(FinalCheck.class).to(PassFinalCheck.class).asEagerSingleton();
         } else {
+            logger.info("starting server {} as normal", HubHost.getLocalName());
             bind(SpokeTtlEnforcer.class).asEagerSingleton();
             bind(FileSpokeStore.class).asEagerSingleton();
             bind(SpokeClusterRegister.class).asEagerSingleton();
@@ -62,13 +63,13 @@ public class AwsBindings extends AbstractModule {
         bind(S3Verifier.class).asEagerSingleton();
     }
 
-    private static String getRole() {
-        return HubProperties.getProperty("role." + HubHost.getLocalName(), "all");
+    private static boolean isBatch() {
+        String role = HubProperties.getProperty("role." + HubHost.getLocalName(), "all");
+        return "batch".equals(role) || StringUtils.contains(HubHost.getLocalName(), "batch");
     }
 
     public static String packages() {
-        String role = getRole();
-        if ("batch".equals(role)) {
+        if (isBatch()) {
             return "com.flightstats.hub.app," +
                     "com.flightstats.hub.health," +
                     "com.flightstats.hub.metrics," +
