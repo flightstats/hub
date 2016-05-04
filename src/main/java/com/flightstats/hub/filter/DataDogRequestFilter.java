@@ -46,7 +46,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     private enum QueryKey {
         channel, earliest, latest, batch, bulk, events, status, time, second, minute, hour, day, provider, tag, internal,
         zookeeper, s3Batch, traces, replication, spoke, payload, next, millis, remote, local, ws, group, health, metrics,
-        trace, previous;
+        trace, previous, bulkKey;
 
         private static HashMap<String, QueryKey> optionalCountKeys = null;
 
@@ -97,7 +97,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
 
                 Object[] traceObjs = trace.getObjects();
                 if (traceObjs != null && traceObjs.length == 2) {
-                    statsd.recordExecutionTime("hubUrl", time, new String[]{"endpoint:" + traceObjs[1]});
+                    statsd.recordExecutionTime("hub.url", time, new String[]{"endpoint:" + traceObjs[1]});
                     logger.trace("Sending executionTime to DataDog for {} with time of {}.", traceObjs[1], time);
                 }
 
@@ -143,9 +143,8 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
      */
     protected String constructDeclaredpath(String path, String method) {
         //logger.debug("Constructing template path from {} with method {}.", path, method);
-
         StringBuilder sbuff = new StringBuilder();
-        String[] splits = path.split("\\/");
+        String[] splits = path.startsWith("/") ? path.substring(1).split("\\/") : path.split("\\/");
         if (splits != null && splits.length > 0) {
             QueryKey key = queryKeys.get(splits[0]);
 
@@ -274,6 +273,8 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                     case latest:
                         sbuff.append("/").append(CHANNEL).append("/").append(COUNT).append("key");
                         break;
+                    case bulkKey:
+                        sbuff.append("/").append(CHANNEL);
                 }
             }
         }
