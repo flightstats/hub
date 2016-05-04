@@ -1,8 +1,10 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
@@ -54,6 +56,8 @@ public class S3Verifier {
     private final ExecutorService queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
     private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
 
+    public static final String CHANNEL_LATEST_VERIFIED = "/ChannelLatestVerified/";
+
     public S3Verifier() {
         if (HubProperties.getProperty("s3Verifier.run", true)) {
             registerService(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle));
@@ -101,7 +105,7 @@ public class S3Verifier {
         }
     }
 
-    private void singleS3Verification(final DateTime startTime, final ChannelConfig channel, DateTime endTime) {
+    void singleS3Verification(final DateTime startTime, final ChannelConfig channel, DateTime endTime) {
         channelThreadPool.submit(() -> {
             try {
                 Thread.currentThread().setName("s3-single-" + channel + "-" + TimeUtil.minutes(startTime));
@@ -111,6 +115,7 @@ public class S3Verifier {
                 for (ContentKey key : keysToAdd) {
                     s3WriteQueue.add(new ChannelContentKey(channelName, key));
                 }
+                HubProvider.getInstance(LastContentPath.class).updateIncrease(new MinutePath(endTime), channel.getName(), CHANNEL_LATEST_VERIFIED);
             } finally {
                 ActiveTraces.end();
             }
@@ -140,13 +145,17 @@ public class S3Verifier {
 
     public void runSingle() {
         try {
-            DateTime endTime = DateTime.now();
+            LastContentPath lastContentPath = HubProvider.getInstance(LastContentPath.class);
+
+            DateTime endTime = TimeUtil.stable().minusMinutes(1);
             DateTime startTime = endTime.minusMinutes(offsetMinutes).minusMinutes(1);
+            MinutePath defaultPath = new MinutePath(startTime);
             logger.info("Verifying Single S3 data at: {}", startTime);
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
                 if (channel.isSingle() || channel.isBoth()) {
-                    singleS3Verification(startTime, channel, endTime);
+                    ContentPath contentPath = lastContentPath.get(channel.getName(), defaultPath, CHANNEL_LATEST_VERIFIED);
+                    singleS3Verification(contentPath.getTime(), channel, endTime);
                 }
             }
         } catch (Exception e) {
