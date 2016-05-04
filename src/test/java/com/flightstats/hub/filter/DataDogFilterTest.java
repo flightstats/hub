@@ -137,13 +137,13 @@ public class DataDogFilterTest {
         DataDogRequestFilter filter = new DataDogRequestFilter();
         String method = "GET";
         List<String[]> testsExpects = new ArrayList<>();
-        testsExpects.add(new String[]{"internal/spoke/time/test/2016", "/internal/spoke/time/channel/Y"});
+        testsExpects.add(new String[]{"/internal/spoke/time/test/2016", "/internal/spoke/time/channel/Y"});
         testsExpects.add(new String[]{"internal/spoke/time/test/2016/03", "/internal/spoke/time/channel/Y/M"});
-        testsExpects.add(new String[]{"internal/spoke/time/test/2016/03/21", "/internal/spoke/time/channel/Y/M/D"});
+        testsExpects.add(new String[]{"/internal/spoke/time/test/2016/03/21", "/internal/spoke/time/channel/Y/M/D"});
         testsExpects.add(new String[]{"internal/spoke/time/test/2016/03/21/12", "/internal/spoke/time/channel/Y/M/D/h"});
-        testsExpects.add(new String[]{"internal/spoke/time/test/2016/03/21/12/31", "/internal/spoke/time/channel/Y/M/D/h/m"});
+        testsExpects.add(new String[]{"/internal/spoke/time/test/2016/03/21/12/31", "/internal/spoke/time/channel/Y/M/D/h/m"});
         testsExpects.add(new String[]{"internal/spoke/time/test/2016/03/21/12/31/15", "/internal/spoke/time/channel/Y/M/D/h/m/s"});
-        testsExpects.add(new String[]{"internal/spoke/time/test/2016/03/21/12/31/15/500", "/internal/spoke/time/channel/Y/M/D/h/m/s/ms"});
+        testsExpects.add(new String[]{"/internal/spoke/time/test/2016/03/21/12/31/15/500", "/internal/spoke/time/channel/Y/M/D/h/m/s/ms"});
 
         for (String[] test : testsExpects) {
             assertEquals(test[1], filter.constructDeclaredpath(test[0], method));
@@ -175,7 +175,9 @@ public class DataDogFilterTest {
         String method = "GET";
         List<String[]> testsExpects = new ArrayList<>();
         testsExpects.add(new String[]{"internal/zookeeper/", "/internal/zookeeper"});
+        testsExpects.add(new String[]{"/internal/zookeeper/", "/internal/zookeeper"});
         testsExpects.add(new String[]{"internal/zookeeper/somepath", "/internal/zookeeper/path"});
+        testsExpects.add(new String[]{"/internal/zookeeper/somepath", "/internal/zookeeper/path"});
 
         for (String[] test : testsExpects) {
             assertEquals(test[1], filter.constructDeclaredpath(test[0], method));
@@ -188,7 +190,11 @@ public class DataDogFilterTest {
         String method = "GET";
         List<String[]> testsExpects = new ArrayList<>();
         testsExpects.add(new String[]{"internal/s3Batch/", "/internal/s3Batch"});
+        testsExpects.add(new String[]{"/internal/s3Batch/", "/internal/s3Batch"});
         testsExpects.add(new String[]{"internal/s3Batch/someChannel", "/internal/s3Batch/C"});
+        testsExpects.add(new String[]{"/internal/s3Batch/someChannel", "/internal/s3Batch/C"});
+        testsExpects.add(new String[]{"/internal/s3Batch/from_dev_replicated", "/internal/s3Batch/C"});
+        testsExpects.add(new String[]{"internal/s3Batch/load_test_3", "/internal/s3Batch/C"});
 
         for (String[] test : testsExpects) {
             assertEquals(test[1], filter.constructDeclaredpath(test[0], method));
@@ -219,6 +225,11 @@ public class DataDogFilterTest {
         testsExpects.add(new String[]{"internal/time/remote", "/internal/time/remote"});
         testsExpects.add(new String[]{"internal/time/local", "/internal/time/local"});
 
+        testsExpects.add(new String[]{"/internal/time/", "/internal/time"});
+        testsExpects.add(new String[]{"/internal/time/millis", "/internal/time/millis"});
+        testsExpects.add(new String[]{"/internal/time/remote", "/internal/time/remote"});
+        testsExpects.add(new String[]{"/internal/time/local", "/internal/time/local"});
+
         for (String[] test : testsExpects) {
             assertEquals(test[1], filter.constructDeclaredpath(test[0], method));
         }
@@ -230,6 +241,7 @@ public class DataDogFilterTest {
         String method = "GET";
         List<String[]> testsExpects = new ArrayList<>();
         testsExpects.add(new String[]{"internal/ws/someId", "/internal/ws"});
+        testsExpects.add(new String[]{"/internal/ws/someId", "/internal/ws"});
 
         for (String[] test : testsExpects) {
             assertEquals(test[1], filter.constructDeclaredpath(test[0], method));
@@ -245,6 +257,10 @@ public class DataDogFilterTest {
         testsExpects.add(new String[]{"health/metrics", "/health/metrics"});
         testsExpects.add(new String[]{"health/metrics/trace", "/health/metrics/trace"});
 
+        testsExpects.add(new String[]{"/health/", "/health"});
+        testsExpects.add(new String[]{"/health/metrics", "/health/metrics"});
+        testsExpects.add(new String[]{"/health/metrics/trace", "/health/metrics/trace"});
+
         for (String[] test : testsExpects) {
             assertEquals(test[1], filter.constructDeclaredpath(test[0], method));
         }
@@ -256,6 +272,7 @@ public class DataDogFilterTest {
         String method = "GET";
         List<String[]> testsExpects = new ArrayList<>();
         testsExpects.add(new String[]{"provider", "/provider"});
+        testsExpects.add(new String[]{"/provider", "/provider"});
 
         for (String[] test : testsExpects) {
             assertEquals(test[1], filter.constructDeclaredpath(test[0], method));
@@ -269,6 +286,9 @@ public class DataDogFilterTest {
         List<String[]> testsExpects = new ArrayList<>();
         testsExpects.add(new String[]{"group", "/group"});
         testsExpects.add(new String[]{"group/testName", "/group/name"});
+        testsExpects.add(new String[]{"group/Repl_hub_v2_dev_destination", "/group/name"});
+        testsExpects.add(new String[]{"/group", "/group"});
+        testsExpects.add(new String[]{"/group/testName", "/group/name"});
         testsExpects.add(new String[]{"/group/Repl_hub_v2_dev_destination", "/group/name"});
 
         for (String[] test : testsExpects) {
