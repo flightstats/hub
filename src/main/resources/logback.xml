@@ -29,6 +29,7 @@
 
     <logger name="com.flightstats.hub.spoke" level="TRACE"/>
     <logger name="com.flightstats.hub.filter.TracesFilter" level="TRACE"/>
+    <logger name="com.flightstats.hub.filter.DataDogRequestFilter" level="TRACE"/>
 
 
 </configuration>

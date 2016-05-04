@@ -98,7 +98,13 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 Object[] traceObjs = trace.getObjects();
                 if (traceObjs != null && traceObjs.length == 2) {
                     statsd.recordExecutionTime("hub.url", time, new String[]{"endpoint:" + traceObjs[1]});
-                    logger.trace("Sending executionTime to DataDog for {} with time of {}.", traceObjs[1], time);
+                    logger.trace("Sending hub.url executionTime to DataDog for {} with time of {}.", traceObjs[1], time);
+                } else {
+                    if (traceObjs == null) {
+                        logger.trace("Unable to send hub.url execution time, traceObjs == null");
+                    }
+
+                    logger.trace("Unable to send hub.url execution time, traceObjs.length = {}", traceObjs.length);
                 }
 
                 // report any errors
