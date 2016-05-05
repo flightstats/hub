@@ -19,7 +19,8 @@ public class ChannelNameUtils {
     }
 
     public static String extractFromChannelUrl(String fullUrl) {
-        return StringUtils.substringAfter(fullUrl, "/channel/");
+        String after = StringUtils.substringAfter(fullUrl, "/channel/");
+        return StringUtils.removeEnd(after, "/");
     }
 
     public static boolean isValidChannelUrl(String url) {
