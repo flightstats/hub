@@ -58,12 +58,14 @@ public class Group {
     }
 
     public boolean allowedToChange(Group other) {
-        return channelUrl.equals(other.channelUrl)
+        return ChannelNameUtils.extractFromChannelUrl(channelUrl)
+                .equals(ChannelNameUtils.extractFromChannelUrl(other.channelUrl))
                 && name.equals(other.name);
     }
 
     public boolean isChanged(Group other) {
-        return parallelCalls != other.parallelCalls
+        return !channelUrl.equals(other)
+                || parallelCalls != other.parallelCalls
                 || paused != other.paused
                 || !callbackUrl.equals(other.callbackUrl)
                 || !batch.equals(other.batch)

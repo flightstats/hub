@@ -1,5 +1,7 @@
 package com.flightstats.hub.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -13,12 +15,11 @@ public class ChannelNameUtils {
     }
 
     public static String extractFromChannelUrl(URI uri) {
-        String path = uri.getPath();
-        return path.replaceAll("/channel/(\\w+)(/?)", "$1");
+        return extractFromChannelUrl(uri.getPath());
     }
 
     public static String extractFromChannelUrl(String fullUrl) {
-        return extractFromChannelUrl(URI.create(fullUrl));
+        return StringUtils.substringAfter(fullUrl, "/channel/");
     }
 
     public static boolean isValidChannelUrl(String url) {
