@@ -77,5 +77,19 @@ public class GroupTest {
         assertEquals("SINGLE", group.getBatch());
     }
 
+    @Test
+    public void testAllowedToChange() {
+        Group hubA = Group.builder().name("name")
+                .channelUrl("http://hubA/channel/name")
+                .callbackUrl("url").build().withDefaults(false);
+        Group hubB = Group.builder().name("name")
+                .channelUrl("http://hubB/channel/name")
+                .callbackUrl("url").build().withDefaults(false);
+        ;
+
+        assertTrue(hubA.allowedToChange(hubB));
+
+        assertTrue(hubA.isChanged(hubB));
+    }
 
 }

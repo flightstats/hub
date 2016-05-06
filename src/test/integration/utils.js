@@ -150,8 +150,9 @@ function getGroup(groupName, groupConfig, status) {
     var groupResource = groupUrl + "/" + groupName;
     status = status || 200;
 
+    itSleeps(1000);
+
     it('gets group ' + groupName, function (done) {
-        sleep(10000);
         request.get({url : groupResource,
                 headers : {"Content-Type" : "application/json"} },
             function (err, response, body) {

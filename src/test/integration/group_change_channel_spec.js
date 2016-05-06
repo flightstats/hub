@@ -18,7 +18,14 @@ describe(testName, function () {
         channelUrl : 'http://different/channel/notHere'
     };
 
-    utils.putGroup(groupName, groupConfig2, 409, testName);
+    utils.putGroup(groupName, groupConfig2, 200, testName);
+
+    var groupConfig3 = {
+        callbackUrl: 'http://nothing/callback2',
+        channelUrl: 'http://different/channel/not_Here'
+    };
+
+    utils.putGroup(groupName, groupConfig3, 409, testName);
 
     utils.deleteGroup(groupName);
 
