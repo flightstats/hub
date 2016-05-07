@@ -64,8 +64,7 @@ public class Group {
     }
 
     public boolean isChanged(Group other) {
-        return !channelUrl.equals(other)
-                || parallelCalls != other.parallelCalls
+        return parallelCalls != other.parallelCalls
                 || paused != other.paused
                 || !callbackUrl.equals(other.callbackUrl)
                 || !batch.equals(other.batch)
