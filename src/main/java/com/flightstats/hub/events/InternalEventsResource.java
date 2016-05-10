@@ -14,9 +14,9 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 
 @Path("/internal/events/{id}")
-public class InternalStreamResource {
+public class InternalEventsResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(InternalStreamResource.class);
+    private final static Logger logger = LoggerFactory.getLogger(InternalEventsResource.class);
 
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private EventsService eventsService = HubProvider.getInstance(EventsService.class);
