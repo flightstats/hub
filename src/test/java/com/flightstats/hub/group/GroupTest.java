@@ -85,11 +85,28 @@ public class GroupTest {
         Group hubB = Group.builder().name("name")
                 .channelUrl("http://hubB/channel/name")
                 .callbackUrl("url").build().withDefaults(false);
-        ;
 
         assertTrue(hubA.allowedToChange(hubB));
 
-        assertTrue(hubA.isChanged(hubB));
+        assertFalse(hubA.isChanged(hubB));
+
     }
+
+    @Test
+    public void testNotChanged() {
+        Group hubA = Group.builder().name("name")
+                .channelUrl("http://hubA/channel/name")
+                .callbackUrl("url").build().withDefaults(false);
+
+        Group hubC = Group.builder().name("name")
+                .channelUrl("http://hubC/channel/nameC")
+                .callbackUrl("url").build().withDefaults(false);
+
+        assertFalse(hubA.allowedToChange(hubC));
+
+        assertFalse(hubA.isChanged(hubC));
+
+    }
+
 
 }
