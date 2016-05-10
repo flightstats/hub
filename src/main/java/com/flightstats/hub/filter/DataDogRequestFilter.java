@@ -39,14 +39,14 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
 
     private enum QueryType {
-        channel, tag, zookeeper, s3Batch, replication,
-        events, time, spoke, unkown, group;
+        channel, tag, zookeeper, s3Batch, repls,
+        events, time, spoke, unknown, group;
     }
 
     private enum QueryKey {
         channel, earliest, latest, batch, bulk, events, status, time, second, minute, hour, day, provider, tag, internal,
         zookeeper, s3Batch, traces, replication, spoke, payload, next, millis, remote, local, ws, group, health, metrics,
-        trace, previous;
+        trace, previous, bulkKey;
 
         private static HashMap<String, QueryKey> optionalCountKeys = null;
 
@@ -92,17 +92,21 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 long time = System.currentTimeMillis() - trace.getTime();
                 String context = trace.context();
 
-                statsd.recordExecutionTime("hubRequest", time, new String[]{"endpoint:" + context});
+                statsd.recordExecutionTime("hub.request", time, new String[]{"endpoint:" + context});
                 logger.trace("Sending executionTime to DataDog for {} with time of {}.", context, time);
+
+                Object[] traceObjs = trace.getObjects();
+                if (traceObjs != null && traceObjs.length == 2) {
+                    statsd.recordExecutionTime("hub.url", time, new String[]{"endpoint:" + traceObjs[1]});
+                    logger.trace("Sending hub.url executionTime to DataDog for {} with time of {}.", traceObjs[1], time);
+                }
 
                 // report any errors
                 int returnCode = response.getStatus();
                 if (returnCode > 400 && returnCode != 404) {
-                    statsd.recordExecutionTime("hubErrors", System.currentTimeMillis(), new String[]{"errorCode:" + returnCode});
+                    statsd.incrementCounter("hub.errors", new String[]{"errorCode:" + returnCode});
                 }
             }
-        } else {
-            logger.debug("DataDog logging disabled.");
         }
     }
 
@@ -139,9 +143,8 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
      */
     protected String constructDeclaredpath(String path, String method) {
         //logger.debug("Constructing template path from {} with method {}.", path, method);
-
         StringBuilder sbuff = new StringBuilder();
-        String[] splits = path.split("\\/");
+        String[] splits = path.startsWith("/") ? path.substring(1).split("\\/") : path.split("\\/");
         if (splits != null && splits.length > 0) {
             QueryKey key = queryKeys.get(splits[0]);
 
@@ -151,7 +154,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 handlePath(sbuff, splits);
             }
         }
-        logger.trace("Generated template path: {}", sbuff);
+        logger.trace("Generated template path: {} for: {}", sbuff, path);
         return sbuff.toString();
     }
 
@@ -200,7 +203,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
      * @param path
      */
     private void handleInternalPath(StringBuilder sbuff, String[] path) {
-        QueryType queryType = QueryType.unkown;
+        QueryType queryType = QueryType.unknown;
         for (int i = 0; i < path.length; i++) {
 
             if (i == 0) {
@@ -221,7 +224,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                     case s3Batch:
                         sbuff.append("/").append(CHANNEL);
                         break;
-                    case replication:
+                    case repls:
                         sbuff.append("/").append(CHANNEL);
                         break;
                     case events:
@@ -270,6 +273,8 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                     case latest:
                         sbuff.append("/").append(CHANNEL).append("/").append(COUNT).append("key");
                         break;
+                    case bulkKey:
+                        sbuff.append("/").append(CHANNEL);
                 }
             }
         }
