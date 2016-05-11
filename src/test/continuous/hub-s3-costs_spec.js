@@ -233,7 +233,7 @@ describe(testName, function () {
         agent
             .put(hubChannel)
             .accept('json')
-            .send({"ttlDays": "30"})
+            .send({"ttlDays": "120"})
             .end(function (err, res) {
                 expect(err).toBe(null);
                 done();
