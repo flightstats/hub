@@ -53,7 +53,7 @@ public class S3BatchResource {
             String id = node.get("id").asText();
             MinutePath path = MinutePath.fromUrl(id).get();
             String batchUrl = node.get("batchUrl").asText();
-            if (dropSomeWrites && Math.random() > 0.95) {
+            if (dropSomeWrites && Math.random() > 0.50) {
                 logger.debug("dropping {} {}", channel, data);
             } else if (!getAndWriteBatch(s3BatchContentDao, channel, path, keys, batchUrl)) {
                 return Response.status(400).build();

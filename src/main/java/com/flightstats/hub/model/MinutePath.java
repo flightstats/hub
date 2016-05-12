@@ -91,4 +91,8 @@ public class MinutePath implements ContentPathKeys {
     public String toString() {
         return toUrl();
     }
+
+    public MinutePath addMinute() {
+        return new MinutePath(time.plusMinutes(1));
+    }
 }

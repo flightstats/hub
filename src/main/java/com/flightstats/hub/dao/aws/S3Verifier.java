@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.aws;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
@@ -10,6 +11,7 @@ import com.flightstats.hub.group.TimedGroupStrategy;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -34,7 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Singleton
 public class S3Verifier {
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
-    public static final String APP_URL = HubProperties.getAppUrl();
+    private static final String APP_URL = HubProperties.getAppUrl();
+    static final String LAST_BATCH_VERIFIED = "/S3VerifierBatchLastVerified";
 
     @Inject
     private ChannelService channelService;
@@ -49,6 +52,9 @@ public class S3Verifier {
     private ContentDao s3BatchContentDao;
     @Inject
     private S3WriteQueue s3WriteQueue;
+    @Inject
+    LastContentPath lastContentPath;
+
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final double keepLeadershipRate = HubProperties.getProperty("s3Verifier.keepLeadershipRate", 0.75);
     private final ExecutorService queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
@@ -66,7 +72,7 @@ public class S3Verifier {
     }
 
     SortedSet<ContentKey> getMissing(DateTime startTime, DateTime endTime, String channelName, ContentDao s3ContentDao,
-                                     SortedSet<ContentKey> expectedKeys) {
+                                     SortedSet<ContentKey> foundCacheKeys) {
         SortedSet<ContentKey> cacheKeys = new TreeSet<>();
         SortedSet<ContentKey> longTermKeys = new TreeSet<>();
         TimeQuery timeQuery = TimeQuery.builder()
@@ -82,7 +88,7 @@ public class S3Verifier {
                 ActiveTraces.setLocal(traces);
                 SortedSet<ContentKey> spokeKeys = spokeContentDao.queryByTime(timeQuery);
                 cacheKeys.addAll(spokeKeys);
-                expectedKeys.addAll(spokeKeys);
+                foundCacheKeys.addAll(spokeKeys);
                 countDownLatch.countDown();
             });
             queryThreadPool.submit(() -> {
@@ -93,7 +99,7 @@ public class S3Verifier {
             countDownLatch.await(15, TimeUnit.MINUTES);
             cacheKeys.removeAll(longTermKeys);
             if (cacheKeys.size() > 0) {
-                logger.info("missing items {}", cacheKeys);
+                logger.info("missing items {} {}", channelName, cacheKeys);
             }
             return cacheKeys;
         } catch (InterruptedException e) {
@@ -117,21 +123,31 @@ public class S3Verifier {
         });
     }
 
-    private void batchS3Verification(final DateTime startTime, final ChannelConfig channel) {
+    private void batchS3Verification(VerifierRange verifierRange) {
         channelThreadPool.submit(() -> {
             try {
-                Thread.currentThread().setName("s3-batch-" + channel + "-" + TimeUtil.minutes(startTime));
-                ActiveTraces.start("S3WriterManager.batchS3Verification", channel, startTime);
+                ChannelConfig channel = verifierRange.channel;
+                MinutePath currentPath = verifierRange.lastUpdated;
+                MinutePath endPath = verifierRange.endPath;
+
+                Thread.currentThread().setName("s3-batch-" + channel + "-" + currentPath.toUrl());
+                ActiveTraces.start("S3WriterManager.batchS3Verification", channel, currentPath, endPath);
                 String channelName = channel.getName();
-                SortedSet<ContentKey> expectedKeys = new TreeSet<>();
-                SortedSet<ContentKey> keysToAdd = getMissing(startTime, null, channelName, s3BatchContentDao, expectedKeys);
-                if (!keysToAdd.isEmpty()) {
-                    MinutePath path = new MinutePath(startTime);
-                    logger.info("batchS3Verification {} missing {}", channelName, path);
-                    String batchUrl = TimedGroupStrategy.getBulkUrl(APP_URL + "channel/" + channelName, path, "batch");
-                    logger.info("batchS3Verification batchUrl {}", batchUrl);
-                    S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, path, expectedKeys, batchUrl);
+                while ((currentPath.compareTo(endPath) <= 0)) {
+                    SortedSet<ContentKey> cacheKeys = new TreeSet<>();
+                    ActiveTraces.getLocal().add("S3WriterManager.path", channel, currentPath);
+                    SortedSet<ContentKey> keysToAdd = getMissing(currentPath.getTime(), null, channelName, s3BatchContentDao, cacheKeys);
+                    if (!keysToAdd.isEmpty()) {
+                        logger.info("batchS3Verification {} missing {}", channelName, currentPath);
+                        String batchUrl = TimedGroupStrategy.getBulkUrl(APP_URL + "channel/" + channelName, currentPath, "batch");
+                        logger.debug("batchS3Verification batchUrl {}", batchUrl);
+                        S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, currentPath, cacheKeys, batchUrl);
+                    }
+                    lastContentPath.get(channel.getName(), currentPath, LAST_BATCH_VERIFIED);
+                    ActiveTraces.getLocal().add("S3WriterManager.updated", channel, currentPath);
+                    currentPath = currentPath.addMinute();
                 }
+
             } finally {
                 ActiveTraces.end();
             }
@@ -156,17 +172,44 @@ public class S3Verifier {
 
     public void runBatch() {
         try {
-            DateTime startTime = DateTime.now().minusMinutes(offsetMinutes);
-            logger.info("Verifying Batch S3 data at: {}", startTime);
+            DateTime now = TimeUtil.now();
+            logger.info("Verifying Batch S3 data from: {}", now);
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
                 if (channel.isBatch() || channel.isBoth()) {
-                    batchS3Verification(startTime, channel);
+                    batchS3Verification(getVerifierRange(now, channel));
                 }
             }
         } catch (Exception e) {
             logger.error("Error: ", e);
         }
+    }
+
+    VerifierRange getVerifierRange(DateTime now, ChannelConfig channel) {
+        VerifierRange verifierRange = new VerifierRange();
+        MinutePath spokeTtlTime = getSpokeTtlPath(now);
+        verifierRange.endPath = new MinutePath(now.minusMinutes(offsetMinutes));
+        if (channel.isReplicating()) {
+            ContentPath contentPath = lastContentPath.get(channel.getName(), new MinutePath(now), ChannelReplicator.REPLICATED_LAST_UPDATED);
+            verifierRange.endPath = new MinutePath(contentPath.getTime().minusMinutes(offsetMinutes));
+        }
+        verifierRange.lastUpdated = (MinutePath) lastContentPath.get(channel.getName(), verifierRange.endPath, LAST_BATCH_VERIFIED);
+        if (verifierRange.lastUpdated.compareTo(spokeTtlTime) < 0) {
+            verifierRange.lastUpdated = spokeTtlTime;
+        } else if (verifierRange.lastUpdated.compareTo(verifierRange.endPath) < 0) {
+            verifierRange.lastUpdated = verifierRange.lastUpdated.addMinute();
+        }
+        return verifierRange;
+    }
+
+    class VerifierRange {
+        MinutePath lastUpdated;
+        MinutePath endPath;
+        ChannelConfig channel;
+    }
+
+    private MinutePath getSpokeTtlPath(DateTime now) {
+        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtl() - 2));
     }
 
     @AllArgsConstructor
