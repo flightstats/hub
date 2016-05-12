@@ -56,7 +56,7 @@ public class S3VerifierTest {
         ChannelConfig channel = ChannelConfig.builder().withName("testBatchNormalLagging").build();
         S3Verifier.VerifierRange verifierRange = s3Verifier.getVerifierRange(now, channel);
         assertEquals(offsetPath, verifierRange.endPath);
-        lastVerified.addMinute();
+        lastVerified = lastVerified.addMinute();
         assertEquals(lastVerified, verifierRange.lastUpdated);
     }
 
