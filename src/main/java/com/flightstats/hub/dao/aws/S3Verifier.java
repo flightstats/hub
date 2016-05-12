@@ -38,8 +38,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class S3Verifier {
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     private static final String APP_URL = HubProperties.getAppUrl();
-    static final String LAST_BATCH_VERIFIED = "/S3VerifierBatchLastVerified";
-    static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified";
+    static final String LAST_BATCH_VERIFIED = "/S3VerifierBatchLastVerified/";
+    static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
 
     @Inject
     private ChannelService channelService;
