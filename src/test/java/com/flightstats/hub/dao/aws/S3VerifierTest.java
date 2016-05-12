@@ -90,10 +90,10 @@ public class S3VerifierTest {
     }
 
     @Test
-    public void testBatchReplicationLaggingBehindSpoke() {
+    public void testBatchReplicationBehindSpoke() {
         MinutePath endPath = new MinutePath(now.minusMinutes(120));
-        lastContentPath.initialize("testBatchReplicationLaggingBehindSpoke", endPath, ChannelReplicator.REPLICATED_LAST_UPDATED);
-        ChannelConfig channel = getReplicatedChannel("testBatchReplicationLaggingBehindSpoke");
+        lastContentPath.initialize("testBatchReplicationBehindSpoke", endPath, ChannelReplicator.REPLICATED_LAST_UPDATED);
+        ChannelConfig channel = getReplicatedChannel("testBatchReplicationBehindSpoke");
         S3Verifier.VerifierRange verifierRange = s3Verifier.getVerifierRange(now, channel);
         MinutePath expected = new MinutePath(endPath.getTime().minusMinutes(15));
         assertEquals(expected, verifierRange.endPath);
@@ -101,12 +101,12 @@ public class S3VerifierTest {
     }
 
     @Test
-    public void testBatchReplicationLaggingBehindSpokeRedux() {
+    public void testBatchReplBehindSpokeLagging() {
         MinutePath endPath = new MinutePath(now.minusMinutes(120));
-        lastContentPath.initialize("testBatchReplicationLaggingBehindSpokeRedux", endPath, ChannelReplicator.REPLICATED_LAST_UPDATED);
+        lastContentPath.initialize("testBatchReplBehindSpokeLagging", endPath, ChannelReplicator.REPLICATED_LAST_UPDATED);
         MinutePath lastPath = new MinutePath(now.minusMinutes(140));
-        lastContentPath.initialize("testBatchReplicationLaggingBehindSpokeRedux", lastPath, S3Verifier.LAST_BATCH_VERIFIED);
-        ChannelConfig channel = getReplicatedChannel("testBatchReplicationLaggingBehindSpokeRedux");
+        lastContentPath.initialize("testBatchReplBehindSpokeLagging", lastPath, S3Verifier.LAST_BATCH_VERIFIED);
+        ChannelConfig channel = getReplicatedChannel("testBatchReplBehindSpokeLagging");
         S3Verifier.VerifierRange verifierRange = s3Verifier.getVerifierRange(now, channel);
         MinutePath expected = new MinutePath(endPath.getTime().minusMinutes(15));
         assertEquals(expected, verifierRange.endPath);
