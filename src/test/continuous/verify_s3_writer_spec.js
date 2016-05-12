@@ -31,10 +31,6 @@ describe(testName, function () {
                 allChannels.forEach(function (channel) {
                     console.log('channel', channel);
                     if (channel.name.substring(0, 4) !== 'test') {
-                        //todo - gfm - 5/12/16 -
-                        //channels.push(channel);
-                    }
-                    if (channel.name.substring(0, 11) === 'load_test_1') {
                         channels.push(channel);
                     }
                 })

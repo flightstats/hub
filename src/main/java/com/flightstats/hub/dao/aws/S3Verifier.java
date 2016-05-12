@@ -154,6 +154,8 @@ public class S3Verifier {
                     currentPath = currentPath.addMinute();
                 }
 
+            } catch (Exception e) {
+                logger.error("S3Verifier.batchS3Verification Error: ", e);
             } finally {
                 ActiveTraces.end();
             }
@@ -176,7 +178,7 @@ public class S3Verifier {
     }
 
     VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channel) {
-        VerifierRange range = new VerifierRange();
+        VerifierRange range = new VerifierRange(channel);
         MinutePath spokeTtlTime = getSpokeTtlPath(now);
         if (channel.isReplicating()) {
             ContentPath contentPath = lastContentPath.get(channel.getName(), new MinutePath(now), ChannelReplicator.REPLICATED_LAST_UPDATED);
@@ -208,7 +210,7 @@ public class S3Verifier {
     }
 
     VerifierRange getBatchVerifierRange(DateTime now, ChannelConfig channel) {
-        VerifierRange range = new VerifierRange();
+        VerifierRange range = new VerifierRange(channel);
         MinutePath spokeTtlTime = getSpokeTtlPath(now);
         if (channel.isReplicating()) {
             ContentPath contentPath = lastContentPath.get(channel.getName(), new MinutePath(now), ChannelReplicator.REPLICATED_LAST_UPDATED);
@@ -226,6 +228,11 @@ public class S3Verifier {
 
     @ToString
     class VerifierRange {
+
+        public VerifierRange(ChannelConfig channel) {
+            this.channel = channel;
+        }
+
         MinutePath startPath;
         MinutePath endPath;
         ChannelConfig channel;
