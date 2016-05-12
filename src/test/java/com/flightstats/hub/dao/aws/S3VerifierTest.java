@@ -42,6 +42,7 @@ public class S3VerifierTest {
         ChannelConfig channel = ChannelConfig.builder().withName("testSingleNormalDefault").build();
         S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("testSingleNormalDefault {}", range);
+        assertEquals(channel, range.channel);
         assertEquals(new MinutePath(now.minusMinutes(1)), range.endPath);
         assertEquals(new MinutePath(offsetTime.minusMinutes(1)), range.startPath);
         assertEquals(range.endPath, new MinutePath(range.startPath.getTime().plusMinutes(offsetMinutes)));
@@ -107,6 +108,7 @@ public class S3VerifierTest {
         ChannelConfig channel = ChannelConfig.builder().withName("testBatchNormalDefault").build();
         S3Verifier.VerifierRange range = s3Verifier.getBatchVerifierRange(now, channel);
         logger.info("testBatchNormalDefault {}", range);
+        assertEquals(channel, range.channel);
         assertEquals(offsetPath, range.endPath);
         assertEquals(offsetPath, range.startPath);
     }
