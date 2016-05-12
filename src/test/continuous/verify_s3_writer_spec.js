@@ -9,9 +9,9 @@ console.log(hubUrl);
 
 var timeout = 5 * 60 * 1000;
 var minute_format = '/YYYY/MM/DD/HH/mm';
-var startOffset = process.env.startOffset || 48;
-var endOffset = process.env.endOffset || 59;
-var testPercent = process.env.testPercent || 50;
+var startOffset = parseInt(process.env.startOffset) || 19;
+var endOffset = parseInt(process.env.endOffset) || 30;
+var testPercent = parseInt(process.env.testPercent) || 50;
 
 /**
  * This should load all the channels in the hub.
@@ -31,6 +31,10 @@ describe(testName, function () {
                 allChannels.forEach(function (channel) {
                     console.log('channel', channel);
                     if (channel.name.substring(0, 4) !== 'test') {
+                        //todo - gfm - 5/12/16 -
+                        //channels.push(channel);
+                    }
+                    if (channel.name.substring(0, 11) === 'load_test_1') {
                         channels.push(channel);
                     }
                 })
@@ -63,6 +67,9 @@ describe(testName, function () {
         });
     }
 
+//    jasmine-node --forceexit --captureExceptions --config hubUrl hub.iad.dev.flightstats.io --config startOffset 48 verify_s3_writer_spec.js
+//    jasmine-node --forceexit --captureExceptions --config hubUrl hub.iad.dev.flightstats.io verify_s3_writer_spec.js
+
     it('cross product of channels and times', function () {
         console.log('now', moment.utc().format(minute_format));
         console.log('startOffset', startOffset);
@@ -70,7 +77,7 @@ describe(testName, function () {
         for (var i = startOffset; i <= endOffset; i++) {
             var start = moment.utc().subtract(i, 'minutes');
             var formatted = start.format(minute_format);
-            console.log('checking', formatted);
+            console.log('checking', formatted, i);
             channels.forEach(function (channel) {
                 if (_.startsWith(channel.name, 'test')
                     || _.startsWith(channel.name, 'verifyMaxItems')
