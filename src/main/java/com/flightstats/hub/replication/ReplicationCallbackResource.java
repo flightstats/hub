@@ -6,13 +6,13 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.rest.Headers;
+import com.flightstats.hub.exception.InvalidRequestException;
+import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.SecondPath;
+import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
-import com.flightstats.hub.util.Sleeper;
-import com.google.common.base.Optional;
 import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,63 +20,70 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
-import static javax.ws.rs.core.Response.Status.Family.*;
-
-@Path("/internal/replication/{channel}")
-//todo - gfm - 4/20/16 - this can be deleted after replication is switched to seconds
+@Path("/internal/repls/{channel}")
 public class ReplicationCallbackResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ReplicationCallbackResource.class);
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
-    private LastContentPath lastContentPath = HubProvider.getInstance(LastContentPath.class);
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private static final ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
+    private static final LastContentPath lastContentPath = HubProvider.getInstance(LastContentPath.class);
+
+    private static boolean getAndWriteBatch(String channel, ContentPath path,
+                                            String batchUrl) throws Exception {
+        ActiveTraces.getLocal().add("getAndWriteBatch", path);
+        logger.trace("path {} {}", path, batchUrl);
+        ClientResponse response = RestClient.gzipClient()
+                .resource(batchUrl)
+                .accept("multipart/mixed")
+                .get(ClientResponse.class);
+        logger.trace("response.getStatus() {}", response.getStatus());
+        if (response.getStatus() != 200) {
+            logger.warn("unable to get data for {} {}", channel, response);
+            return false;
+        }
+        ActiveTraces.getLocal().add("getAndWriteBatch got response", response.getStatus());
+
+        BulkContent bulkContent = BulkContent.builder()
+                .stream(response.getEntityInputStream())
+                .contentType(response.getHeaders().getFirst("Content-Type"))
+                .channel(channel)
+                .isNew(false)
+                .build();
+        try {
+            channelService.insert(bulkContent);
+        } catch (InvalidRequestException e) {
+            ActiveTraces.getLocal().add("invalid request");
+            logger.warn("invalid request for " + channel + " " + path, e);
+        }
+        ActiveTraces.getLocal().add("getAndWriteBatch completed");
+        return true;
+    }
 
     @POST
     public Response putPayload(@PathParam("channel") String channel, String data) {
         logger.trace("incoming {} {}", channel, data);
         try {
+            logger.debug("processing {} {}", channel, data);
             JsonNode node = mapper.readTree(data);
-            ArrayNode uris = (ArrayNode) node.get("uris");
-            for (JsonNode uri : uris) {
-                String contentUrl = uri.asText();
-                ClientResponse response = hubUtils.getResponse(contentUrl);
-                if (CLIENT_ERROR.equals(response.getStatusInfo().getFamily())) {
-                    logger.info("first client error {}", response);
-                    Sleeper.sleep(5000);
-                    response = hubUtils.getResponse(contentUrl);
-                    if (!SUCCESSFUL.equals(response.getStatusInfo().getFamily())) {
-                        logger.warn("second client error {}", response);
-                        return Response.ok().build();
-                    }
-                } else if (SERVER_ERROR.equals(response.getStatusInfo().getFamily())) {
-                    logger.warn("server error {}", response);
+            SecondPath path = SecondPath.fromUrl(node.get("id").asText()).get();
+
+            if (((ArrayNode) node.get("uris")).size() > 0) {
+                if (!getAndWriteBatch(channel, path, node.get("batchUrl").asText())) {
                     return Response.status(500).build();
                 }
-                Content content = Content.builder()
-                        .withContentKey(ContentKey.fromFullUrl(contentUrl).get())
-                        .withContentType(response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
-                        .withContentLanguage(response.getHeaders().getFirst(Headers.LANGUAGE))
-                        .withData(response.getEntity(byte[].class))
-                        .build();
-                channelService.insert(channel, content);
             }
-            if (node.has("id")) {
-                String id = node.get("id").asText();
-                logger.trace("repl id {} for {}", id, channel);
-                Optional<MinutePath> pathOptional = MinutePath.fromUrl(id);
-                if (pathOptional.isPresent()) {
-                    lastContentPath.updateIncrease(pathOptional.get(), channel, ChannelReplicator.REPLICATED_LAST_UPDATED);
-                }
-            }
+            lastContentPath.updateIncrease(path, channel, ChannelReplicator.REPLICATED_LAST_UPDATED);
+            return Response.ok().build();
+
         } catch (Exception e) {
-            logger.warn("unable to parse " + data, e);
+            logger.warn("unable to handle " + channel + " " + data, e);
         }
-        return Response.ok().build();
+        return Response.status(500).build();
     }
+
 
 }

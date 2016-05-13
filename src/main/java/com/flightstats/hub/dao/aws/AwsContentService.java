@@ -101,7 +101,7 @@ public class AwsContentService implements ContentService {
     }
 
     private void s3SingleWrite(String channelName, ContentKey key) {
-        if (dropSomeWrites && Math.random() > 0.95) {
+        if (dropSomeWrites && Math.random() > 0.5) {
             logger.debug("dropping {} {}", channelName, key);
         } else {
             s3WriteQueue.add(new ChannelContentKey(channelName, key));
@@ -330,6 +330,8 @@ public class AwsContentService implements ContentService {
         s3SingleContentDao.delete(channelName);
         s3BatchContentDao.delete(channelName);
         lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
+        lastContentPath.delete(channelName, S3Verifier.LAST_BATCH_VERIFIED);
+        lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (!channel.isSingle()) {
             new S3Batch(channel, hubUtils).stop();

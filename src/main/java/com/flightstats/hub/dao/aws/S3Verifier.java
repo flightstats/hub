@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.aws;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
@@ -10,6 +11,7 @@ import com.flightstats.hub.group.TimedGroupStrategy;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.replication.ChannelReplicator;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -19,6 +21,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.AllArgsConstructor;
+import lombok.ToString;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +37,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Singleton
 public class S3Verifier {
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
-    public static final String APP_URL = HubProperties.getAppUrl();
+    private static final String APP_URL = HubProperties.getAppUrl();
+    static final String LAST_BATCH_VERIFIED = "/S3VerifierBatchLastVerified/";
+    static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
 
     @Inject
     private ChannelService channelService;
@@ -49,6 +54,9 @@ public class S3Verifier {
     private ContentDao s3BatchContentDao;
     @Inject
     private S3WriteQueue s3WriteQueue;
+    @Inject
+    LastContentPath lastContentPath;
+
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final double keepLeadershipRate = HubProperties.getProperty("s3Verifier.keepLeadershipRate", 0.75);
     private final ExecutorService queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
@@ -65,16 +73,18 @@ public class S3Verifier {
         HubServices.register(service, HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
     }
 
-    SortedSet<ContentKey> getMissing(DateTime startTime, DateTime endTime, String channelName, ContentDao s3ContentDao,
-                                     SortedSet<ContentKey> expectedKeys) {
+    SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
+                                     SortedSet<ContentKey> foundCacheKeys) {
         SortedSet<ContentKey> cacheKeys = new TreeSet<>();
         SortedSet<ContentKey> longTermKeys = new TreeSet<>();
-        TimeQuery timeQuery = TimeQuery.builder()
+        TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
-                .startTime(startTime)
-                .endTime(endTime)
-                .unit(TimeUtil.Unit.MINUTES)
-                .build();
+                .startTime(startPath.getTime())
+                .unit(TimeUtil.Unit.MINUTES);
+        if (endPath != null) {
+            builder.endTime(endPath.getTime());
+        }
+        TimeQuery timeQuery = builder.build();
         try {
             CountDownLatch countDownLatch = new CountDownLatch(2);
             Traces traces = ActiveTraces.getLocal();
@@ -82,7 +92,7 @@ public class S3Verifier {
                 ActiveTraces.setLocal(traces);
                 SortedSet<ContentKey> spokeKeys = spokeContentDao.queryByTime(timeQuery);
                 cacheKeys.addAll(spokeKeys);
-                expectedKeys.addAll(spokeKeys);
+                foundCacheKeys.addAll(spokeKeys);
                 countDownLatch.countDown();
             });
             queryThreadPool.submit(() -> {
@@ -93,7 +103,7 @@ public class S3Verifier {
             countDownLatch.await(15, TimeUnit.MINUTES);
             cacheKeys.removeAll(longTermKeys);
             if (cacheKeys.size() > 0) {
-                logger.info("missing items {}", cacheKeys);
+                logger.info("missing items {} {}", channelName, cacheKeys);
             }
             return cacheKeys;
         } catch (InterruptedException e) {
@@ -101,37 +111,51 @@ public class S3Verifier {
         }
     }
 
-    private void singleS3Verification(final DateTime startTime, final ChannelConfig channel, DateTime endTime) {
-        channelThreadPool.submit(() -> {
-            try {
-                Thread.currentThread().setName("s3-single-" + channel + "-" + TimeUtil.minutes(startTime));
-                ActiveTraces.start("S3WriterManager.singleS3Verification", channel, startTime);
-                String channelName = channel.getName();
-                SortedSet<ContentKey> keysToAdd = getMissing(startTime, endTime, channelName, s3SingleContentDao, new TreeSet<>());
-                for (ContentKey key : keysToAdd) {
-                    s3WriteQueue.add(new ChannelContentKey(channelName, key));
+    private void singleS3Verification(VerifierRange range) {
+        submit(range, "single", () -> {
+            String channelName = range.channel.getName();
+            SortedSet<ContentKey> keysToAdd = getMissing(range.startPath, range.endPath, channelName, s3SingleContentDao, new TreeSet<>());
+            for (ContentKey key : keysToAdd) {
+                logger.trace("found missing {} {}", channelName, key);
+                s3WriteQueue.add(new ChannelContentKey(channelName, key));
+            }
+            logger.debug("singleS3Verification.completed {}", range);
+            lastContentPath.updateIncrease(range.endPath, range.channel.getName(), LAST_SINGLE_VERIFIED);
+        });
+    }
+
+    private void batchS3Verification(VerifierRange range) {
+        submit(range, "single", () -> {
+            MinutePath currentPath = range.startPath;
+            String channelName = range.channel.getName();
+            while ((currentPath.compareTo(range.endPath) <= 0)) {
+                logger.debug("batch minute {}", currentPath, channelName);
+                SortedSet<ContentKey> cacheKeys = new TreeSet<>();
+                ActiveTraces.getLocal().add("S3Verifier.path", channelName, currentPath);
+                SortedSet<ContentKey> keysToAdd = getMissing(currentPath, null, channelName, s3BatchContentDao, cacheKeys);
+                if (!keysToAdd.isEmpty()) {
+                    logger.info("batchS3Verification {} missing {}", channelName, currentPath);
+                    String batchUrl = TimedGroupStrategy.getBulkUrl(APP_URL + "channel/" + channelName, currentPath, "batch");
+                    S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, currentPath, cacheKeys, batchUrl);
                 }
-            } finally {
-                ActiveTraces.end();
+                lastContentPath.updateIncrease(currentPath, range.channel.getName(), LAST_BATCH_VERIFIED);
+                ActiveTraces.getLocal().add("S3Verifier.updated", currentPath);
+                currentPath = currentPath.addMinute();
             }
         });
     }
 
-    private void batchS3Verification(final DateTime startTime, final ChannelConfig channel) {
+    private void submit(VerifierRange range, String typeName, Runnable runnable) {
         channelThreadPool.submit(() -> {
             try {
-                Thread.currentThread().setName("s3-batch-" + channel + "-" + TimeUtil.minutes(startTime));
-                ActiveTraces.start("S3WriterManager.batchS3Verification", channel, startTime);
-                String channelName = channel.getName();
-                SortedSet<ContentKey> expectedKeys = new TreeSet<>();
-                SortedSet<ContentKey> keysToAdd = getMissing(startTime, null, channelName, s3BatchContentDao, expectedKeys);
-                if (!keysToAdd.isEmpty()) {
-                    MinutePath path = new MinutePath(startTime);
-                    logger.info("batchS3Verification {} missing {}", channelName, path);
-                    String batchUrl = TimedGroupStrategy.getBulkUrl(APP_URL + "channel/" + channelName, path, "batch");
-                    logger.info("batchS3Verification batchUrl {}", batchUrl);
-                    S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, path, expectedKeys, batchUrl);
-                }
+                MinutePath currentPath = range.startPath;
+                String channelName = range.channel.getName();
+                Thread.currentThread().setName("s3-" + typeName + "-" + channelName + "-" + currentPath.toUrl());
+                ActiveTraces.start("S3Verifier", typeName, range);
+                logger.debug("S3Verification {}", typeName, range);
+                runnable.run();
+            } catch (Exception e) {
+                logger.error("S3Verifier Error" + typeName + ": ", e);
             } finally {
                 ActiveTraces.end();
             }
@@ -140,13 +164,12 @@ public class S3Verifier {
 
     public void runSingle() {
         try {
-            DateTime endTime = DateTime.now();
-            DateTime startTime = endTime.minusMinutes(offsetMinutes).minusMinutes(1);
-            logger.info("Verifying Single S3 data at: {}", startTime);
+            DateTime now = TimeUtil.now();
+            logger.info("Verifying Single S3 data at: {}", now);
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
                 if (channel.isSingle() || channel.isBoth()) {
-                    singleS3Verification(startTime, channel, endTime);
+                    singleS3Verification(getSingleVerifierRange(now, channel));
                 }
             }
         } catch (Exception e) {
@@ -154,19 +177,69 @@ public class S3Verifier {
         }
     }
 
+    VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channel) {
+        VerifierRange range = new VerifierRange(channel);
+        MinutePath spokeTtlTime = getSpokeTtlPath(now);
+        if (channel.isReplicating()) {
+            ContentPath contentPath = lastContentPath.get(channel.getName(), new MinutePath(now), ChannelReplicator.REPLICATED_LAST_UPDATED);
+            now = contentPath.getTime();
+        }
+        DateTime start = now.minusMinutes(1);
+        range.endPath = new MinutePath(start);
+        MinutePath defaultStart = new MinutePath(start.minusMinutes(offsetMinutes));
+        range.startPath = (MinutePath) lastContentPath.get(channel.getName(), defaultStart, LAST_SINGLE_VERIFIED);
+        if (!channel.isReplicating() && range.startPath.compareTo(spokeTtlTime) < 0) {
+            range.startPath = spokeTtlTime;
+        }
+        return range;
+    }
+
     public void runBatch() {
         try {
-            DateTime startTime = DateTime.now().minusMinutes(offsetMinutes);
-            logger.info("Verifying Batch S3 data at: {}", startTime);
+            DateTime now = TimeUtil.now();
+            logger.info("Verifying Batch S3 data from: {}", now);
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
                 if (channel.isBatch() || channel.isBoth()) {
-                    batchS3Verification(startTime, channel);
+                    batchS3Verification(getBatchVerifierRange(now, channel));
                 }
             }
         } catch (Exception e) {
             logger.error("Error: ", e);
         }
+    }
+
+    VerifierRange getBatchVerifierRange(DateTime now, ChannelConfig channel) {
+        VerifierRange range = new VerifierRange(channel);
+        MinutePath spokeTtlTime = getSpokeTtlPath(now);
+        if (channel.isReplicating()) {
+            ContentPath contentPath = lastContentPath.get(channel.getName(), new MinutePath(now), ChannelReplicator.REPLICATED_LAST_UPDATED);
+            now = contentPath.getTime();
+        }
+        range.endPath = new MinutePath(now.minusMinutes(offsetMinutes));
+        range.startPath = (MinutePath) lastContentPath.get(channel.getName(), range.endPath, LAST_BATCH_VERIFIED);
+        if (!channel.isReplicating() && range.startPath.compareTo(spokeTtlTime) < 0) {
+            range.startPath = spokeTtlTime;
+        } else if (range.startPath.compareTo(range.endPath) < 0) {
+            range.startPath = range.startPath.addMinute();
+        }
+        return range;
+    }
+
+    @ToString
+    class VerifierRange {
+
+        public VerifierRange(ChannelConfig channel) {
+            this.channel = channel;
+        }
+
+        MinutePath startPath;
+        MinutePath endPath;
+        ChannelConfig channel;
+    }
+
+    private MinutePath getSpokeTtlPath(DateTime now) {
+        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtl() - 2));
     }
 
     @AllArgsConstructor
