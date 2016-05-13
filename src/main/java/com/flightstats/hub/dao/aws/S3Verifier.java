@@ -112,50 +112,50 @@ public class S3Verifier {
     }
 
     private void singleS3Verification(VerifierRange range) {
-        channelThreadPool.submit(() -> {
-            try {
-                Thread.currentThread().setName("s3-single-" + range.channel + "-" + range.startPath.toUrl());
-                ActiveTraces.start("S3Verifier.singleS3Verification", range);
-                String channelName = range.channel.getName();
-                logger.debug("singleS3Verification {}", range);
-                SortedSet<ContentKey> keysToAdd = getMissing(range.startPath, range.endPath, channelName, s3SingleContentDao, new TreeSet<>());
-                for (ContentKey key : keysToAdd) {
-                    logger.trace("found missing {} {}", channelName, key);
-                    s3WriteQueue.add(new ChannelContentKey(channelName, key));
-                }
-                logger.debug("singleS3Verification.completed {}", range);
-                lastContentPath.updateIncrease(range.endPath, range.channel.getName(), LAST_SINGLE_VERIFIED);
-            } finally {
-                ActiveTraces.end();
+        submit(range, "single", () -> {
+            String channelName = range.channel.getName();
+            SortedSet<ContentKey> keysToAdd = getMissing(range.startPath, range.endPath, channelName, s3SingleContentDao, new TreeSet<>());
+            for (ContentKey key : keysToAdd) {
+                logger.trace("found missing {} {}", channelName, key);
+                s3WriteQueue.add(new ChannelContentKey(channelName, key));
             }
+            logger.debug("singleS3Verification.completed {}", range);
+            lastContentPath.updateIncrease(range.endPath, range.channel.getName(), LAST_SINGLE_VERIFIED);
         });
     }
 
     private void batchS3Verification(VerifierRange range) {
+        submit(range, "single", () -> {
+            MinutePath currentPath = range.startPath;
+            String channelName = range.channel.getName();
+            while ((currentPath.compareTo(range.endPath) <= 0)) {
+                logger.debug("batch minute {}", currentPath, channelName);
+                SortedSet<ContentKey> cacheKeys = new TreeSet<>();
+                ActiveTraces.getLocal().add("S3Verifier.path", channelName, currentPath);
+                SortedSet<ContentKey> keysToAdd = getMissing(currentPath, null, channelName, s3BatchContentDao, cacheKeys);
+                if (!keysToAdd.isEmpty()) {
+                    logger.info("batchS3Verification {} missing {}", channelName, currentPath);
+                    String batchUrl = TimedGroupStrategy.getBulkUrl(APP_URL + "channel/" + channelName, currentPath, "batch");
+                    S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, currentPath, cacheKeys, batchUrl);
+                }
+                lastContentPath.updateIncrease(currentPath, range.channel.getName(), LAST_BATCH_VERIFIED);
+                ActiveTraces.getLocal().add("S3Verifier.updated", currentPath);
+                currentPath = currentPath.addMinute();
+            }
+        });
+    }
+
+    private void submit(VerifierRange range, String typeName, Runnable runnable) {
         channelThreadPool.submit(() -> {
             try {
                 MinutePath currentPath = range.startPath;
                 String channelName = range.channel.getName();
-                Thread.currentThread().setName("s3-batch-" + channelName + "-" + currentPath.toUrl());
-                ActiveTraces.start("S3Verifier.batchS3Verification", range);
-                logger.debug("batchS3Verification {}", range);
-                while ((currentPath.compareTo(range.endPath) <= 0)) {
-                    logger.debug("batch minute {}", currentPath, channelName);
-                    SortedSet<ContentKey> cacheKeys = new TreeSet<>();
-                    ActiveTraces.getLocal().add("S3Verifier.path", channelName, currentPath);
-                    SortedSet<ContentKey> keysToAdd = getMissing(currentPath, null, channelName, s3BatchContentDao, cacheKeys);
-                    if (!keysToAdd.isEmpty()) {
-                        logger.info("batchS3Verification {} missing {}", channelName, currentPath);
-                        String batchUrl = TimedGroupStrategy.getBulkUrl(APP_URL + "channel/" + channelName, currentPath, "batch");
-                        S3BatchResource.getAndWriteBatch(s3BatchContentDao, channelName, currentPath, cacheKeys, batchUrl);
-                    }
-                    lastContentPath.updateIncrease(currentPath, range.channel.getName(), LAST_BATCH_VERIFIED);
-                    ActiveTraces.getLocal().add("S3Verifier.updated", currentPath);
-                    currentPath = currentPath.addMinute();
-                }
-
+                Thread.currentThread().setName("s3-" + typeName + "-" + channelName + "-" + currentPath.toUrl());
+                ActiveTraces.start("S3Verifier", typeName, range);
+                logger.debug("S3Verification {}", typeName, range);
+                runnable.run();
             } catch (Exception e) {
-                logger.error("S3Verifier.batchS3Verification Error: ", e);
+                logger.error("S3Verifier Error" + typeName + ": ", e);
             } finally {
                 ActiveTraces.end();
             }
