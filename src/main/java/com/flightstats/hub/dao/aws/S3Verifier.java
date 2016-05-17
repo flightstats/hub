@@ -7,6 +7,8 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.QueryResult;
+import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.group.TimedGroupStrategy;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
@@ -75,7 +77,7 @@ public class S3Verifier {
 
     SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
                                      SortedSet<ContentKey> foundCacheKeys) {
-        SortedSet<ContentKey> cacheKeys = new TreeSet<>();
+        QueryResult queryResult = new QueryResult(1);
         SortedSet<ContentKey> longTermKeys = new TreeSet<>();
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
@@ -86,29 +88,36 @@ public class S3Verifier {
         }
         TimeQuery timeQuery = builder.build();
         try {
-            CountDownLatch countDownLatch = new CountDownLatch(2);
-            Traces traces = ActiveTraces.getLocal();
-            queryThreadPool.submit(() -> {
-                ActiveTraces.setLocal(traces);
+            CountDownLatch latch = new CountDownLatch(2);
+            runInQueryPool(ActiveTraces.getLocal(), latch, () -> {
                 SortedSet<ContentKey> spokeKeys = spokeContentDao.queryByTime(timeQuery);
-                cacheKeys.addAll(spokeKeys);
                 foundCacheKeys.addAll(spokeKeys);
-                countDownLatch.countDown();
+                queryResult.addKeys(spokeKeys);
             });
-            queryThreadPool.submit(() -> {
-                ActiveTraces.setLocal(traces);
-                longTermKeys.addAll(s3ContentDao.queryByTime(timeQuery));
-                countDownLatch.countDown();
-            });
-            countDownLatch.await(15, TimeUnit.MINUTES);
-            cacheKeys.removeAll(longTermKeys);
-            if (cacheKeys.size() > 0) {
-                logger.info("missing items {} {}", channelName, cacheKeys);
+            runInQueryPool(ActiveTraces.getLocal(), latch, () -> longTermKeys.addAll(s3ContentDao.queryByTime(timeQuery)));
+            latch.await(1, TimeUnit.MINUTES);
+            queryResult.getContentKeys().removeAll(longTermKeys);
+            if (queryResult.getContentKeys().size() > 0) {
+                logger.info("missing items {} {}", channelName, queryResult.getContentKeys());
             }
-            return cacheKeys;
+            if (queryResult.hadSuccess()) {
+                return queryResult.getContentKeys();
+            }
+            throw new FailedQueryException("unable to query spoke");
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
+    }
+
+    private void runInQueryPool(Traces traces, CountDownLatch countDownLatch, Runnable runnable) {
+        queryThreadPool.submit(() -> {
+            ActiveTraces.setLocal(traces);
+            try {
+                runnable.run();
+            } finally {
+                countDownLatch.countDown();
+            }
+        });
     }
 
     private void singleS3Verification(VerifierRange range) {
