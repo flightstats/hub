@@ -125,7 +125,7 @@ public class S3Verifier {
     }
 
     private void batchS3Verification(VerifierRange range) {
-        submit(range, "single", () -> {
+        submit(range, "batch", () -> {
             MinutePath currentPath = range.startPath;
             String channelName = range.channel.getName();
             while ((currentPath.compareTo(range.endPath) <= 0)) {
