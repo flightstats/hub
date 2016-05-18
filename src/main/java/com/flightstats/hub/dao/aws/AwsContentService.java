@@ -346,6 +346,9 @@ public class AwsContentService implements ContentService {
 
     @Override
     public void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
+        if (oldConfig == null) {
+            lastContentPath.updateIncrease(ContentKey.NONE, newConfig.getName(), CHANNEL_LATEST_UPDATED);
+        }
         if (newConfig.isSingle()) {
             if (oldConfig != null && !oldConfig.isSingle()) {
                 new S3Batch(newConfig, hubUtils).stop();
