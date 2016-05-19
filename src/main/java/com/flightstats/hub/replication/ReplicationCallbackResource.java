@@ -33,16 +33,25 @@ public class ReplicationCallbackResource {
 
     private static boolean getAndWriteBatch(String channel, ContentPath path,
                                             String batchUrl, int expectedItems) throws Exception {
-        BulkContent bulkContent = doWork(channel, path, batchUrl);
+        BulkContent bulkContent = getBulkContent(channel, path, batchUrl);
         if (bulkContent == null) {
             logger.warn("unable to get a result {} {} {}", channel, path, expectedItems);
-            bulkContent = doWork(channel, path, batchUrl);
+            bulkContent = getBulkContent(channel, path, batchUrl);
         } else if (bulkContent.getItems().size() < expectedItems) {
             logger.warn("incorrect number of items {} {} {} {}", channel, path, expectedItems, bulkContent.getItems().size());
-            doWork(channel, path, batchUrl);
+            getBulkContent(channel, path, batchUrl);
         }
         ActiveTraces.getLocal().add("getAndWriteBatch completed");
         return bulkContent != null;
+    }
+
+    private static BulkContent getBulkContent(String channel, ContentPath path, String batchUrl) {
+        try {
+            return doWork(channel, path, batchUrl);
+        } catch (Exception e) {
+            logger.warn("unexpected " + channel + " " + path, e);
+        }
+        return null;
     }
 
     private static BulkContent doWork(String channel, ContentPath path,
