@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ContentPath;
@@ -33,7 +32,21 @@ public class ReplicationCallbackResource {
     private static final LastContentPath lastContentPath = HubProvider.getInstance(LastContentPath.class);
 
     private static boolean getAndWriteBatch(String channel, ContentPath path,
-                                            String batchUrl) throws Exception {
+                                            String batchUrl, int expectedItems) throws Exception {
+        BulkContent bulkContent = doWork(channel, path, batchUrl);
+        if (bulkContent == null) {
+            logger.warn("unable to get a result {} {} {}", channel, path, expectedItems);
+            bulkContent = doWork(channel, path, batchUrl);
+        } else if (bulkContent.getItems().size() < expectedItems) {
+            logger.warn("incorrect number of items {} {} {} {}", channel, path, expectedItems, bulkContent.getItems().size());
+            doWork(channel, path, batchUrl);
+        }
+        ActiveTraces.getLocal().add("getAndWriteBatch completed");
+        return bulkContent != null;
+    }
+
+    private static BulkContent doWork(String channel, ContentPath path,
+                                      String batchUrl) throws Exception {
         ActiveTraces.getLocal().add("getAndWriteBatch", path);
         logger.trace("path {} {}", path, batchUrl);
         ClientResponse response = RestClient.gzipClient()
@@ -43,7 +56,7 @@ public class ReplicationCallbackResource {
         logger.trace("response.getStatus() {}", response.getStatus());
         if (response.getStatus() != 200) {
             logger.warn("unable to get data for {} {}", channel, response);
-            return false;
+            return null;
         }
         ActiveTraces.getLocal().add("getAndWriteBatch got response", response.getStatus());
 
@@ -53,14 +66,8 @@ public class ReplicationCallbackResource {
                 .channel(channel)
                 .isNew(false)
                 .build();
-        try {
-            channelService.insert(bulkContent);
-        } catch (InvalidRequestException e) {
-            ActiveTraces.getLocal().add("invalid request");
-            logger.warn("invalid request for " + channel + " " + path, e);
-        }
-        ActiveTraces.getLocal().add("getAndWriteBatch completed");
-        return true;
+        channelService.insert(bulkContent);
+        return bulkContent;
     }
 
     @POST
@@ -71,8 +78,9 @@ public class ReplicationCallbackResource {
             JsonNode node = mapper.readTree(data);
             SecondPath path = SecondPath.fromUrl(node.get("id").asText()).get();
 
-            if (((ArrayNode) node.get("uris")).size() > 0) {
-                if (!getAndWriteBatch(channel, path, node.get("batchUrl").asText())) {
+            int expectedItems = ((ArrayNode) node.get("uris")).size();
+            if (expectedItems > 0) {
+                if (!getAndWriteBatch(channel, path, node.get("batchUrl").asText(), expectedItems)) {
                     return Response.status(500).build();
                 }
             }
