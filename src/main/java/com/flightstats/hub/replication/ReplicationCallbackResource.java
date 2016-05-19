@@ -31,6 +31,28 @@ public class ReplicationCallbackResource {
     private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
     private static final LastContentPath lastContentPath = HubProvider.getInstance(LastContentPath.class);
 
+    @POST
+    public Response putPayload(@PathParam("channel") String channel, String data) {
+        logger.trace("incoming {} {}", channel, data);
+        try {
+            logger.debug("processing {} {}", channel, data);
+            JsonNode node = mapper.readTree(data);
+            SecondPath path = SecondPath.fromUrl(node.get("id").asText()).get();
+            int expectedItems = ((ArrayNode) node.get("uris")).size();
+            if (expectedItems > 0) {
+                if (!getAndWriteBatch(channel, path, node.get("batchUrl").asText(), expectedItems)) {
+                    return Response.status(500).build();
+                }
+            }
+            lastContentPath.updateIncrease(path, channel, ChannelReplicator.REPLICATED_LAST_UPDATED);
+            return Response.ok().build();
+
+        } catch (Exception e) {
+            logger.warn("unable to handle " + channel + " " + data, e);
+        }
+        return Response.status(500).build();
+    }
+
     private static boolean getAndWriteBatch(String channel, ContentPath path,
                                             String batchUrl, int expectedItems) throws Exception {
         BulkContent bulkContent = getBulkContent(channel, path, batchUrl);
@@ -78,29 +100,5 @@ public class ReplicationCallbackResource {
         channelService.insert(bulkContent);
         return bulkContent;
     }
-
-    @POST
-    public Response putPayload(@PathParam("channel") String channel, String data) {
-        logger.trace("incoming {} {}", channel, data);
-        try {
-            logger.debug("processing {} {}", channel, data);
-            JsonNode node = mapper.readTree(data);
-            SecondPath path = SecondPath.fromUrl(node.get("id").asText()).get();
-
-            int expectedItems = ((ArrayNode) node.get("uris")).size();
-            if (expectedItems > 0) {
-                if (!getAndWriteBatch(channel, path, node.get("batchUrl").asText(), expectedItems)) {
-                    return Response.status(500).build();
-                }
-            }
-            lastContentPath.updateIncrease(path, channel, ChannelReplicator.REPLICATED_LAST_UPDATED);
-            return Response.ok().build();
-
-        } catch (Exception e) {
-            logger.warn("unable to handle " + channel + " " + data, e);
-        }
-        return Response.status(500).build();
-    }
-
 
 }
