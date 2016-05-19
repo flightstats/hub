@@ -3,7 +3,9 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
+import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
@@ -162,9 +164,21 @@ public class SpokeContentDao implements ContentDao {
     private SortedSet<ContentKey> queryByTimeKeys(TimeQuery query) {
         try {
             String timePath = query.getUnit().format(query.getStartTime());
-            SortedSet<ContentKey> keys = spokeStore.readTimeBucket(query.getChannelName(), timePath);
-            ActiveTraces.getLocal().add("spoke query by time", keys);
-            return keys;
+            QueryResult queryResult = spokeStore.readTimeBucket(query.getChannelName(), timePath);
+            ActiveTraces.getLocal().add("spoke query result", queryResult);
+            if (!queryResult.hadSuccess()) {
+                QueryResult retryResult = spokeStore.readTimeBucket(query.getChannelName(), timePath);
+                ActiveTraces.getLocal().add("spoke query retryResult", retryResult);
+                if (!retryResult.hadSuccess()) {
+                    ActiveTraces.getLocal().log(logger);
+                    throw new FailedQueryException("unable to execute time query " + query + " " + queryResult);
+                }
+                queryResult.getContentKeys().addAll(retryResult.getContentKeys());
+            }
+            ActiveTraces.getLocal().add("spoke query by time", queryResult.getContentKeys());
+            return queryResult.getContentKeys();
+        } catch (FailedQueryException rethrow) {
+            throw rethrow;
         } catch (Exception e) {
             logger.warn("what happened? " + query, e);
         }
