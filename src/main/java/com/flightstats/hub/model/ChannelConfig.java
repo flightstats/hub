@@ -31,6 +31,7 @@ public class ChannelConfig implements Serializable {
     private final Set<String> tags = new TreeSet<>();
     private final String replicationSource;
     private final String storage;
+    private final GlobalConfig global;
 
     public static final String SINGLE = "SINGLE";
     public static final String BATCH = "BATCH";
@@ -61,6 +62,7 @@ public class ChannelConfig implements Serializable {
         } else {
             storage = StringUtils.upperCase(builder.storage);
         }
+        global = builder.global;
     }
 
     public static ChannelConfig fromJson(String json) {
@@ -132,6 +134,12 @@ public class ChannelConfig implements Serializable {
         return storage;
     }
 
+    //todo - gfm - 5/18/16 - change to @JsonProperty("global")
+    @JsonIgnore
+    public GlobalConfig getGlobal() {
+        return global;
+    }
+
     @JsonIgnore
     public boolean isReplicating() {
         return StringUtils.isNotBlank(replicationSource);
@@ -196,6 +204,7 @@ public class ChannelConfig implements Serializable {
         private String replicationSource = "";
         private long maxItems = 0;
         private String storage;
+        private GlobalConfig global;
 
         public Builder() {
         }
@@ -210,6 +219,7 @@ public class ChannelConfig implements Serializable {
             this.replicationSource = config.replicationSource;
             this.owner = config.owner;
             this.storage = config.storage;
+            this.global = config.global;
             return this;
         }
 
@@ -239,6 +249,22 @@ public class ChannelConfig implements Serializable {
             }
             if (rootNode.has("storage")) {
                 withStorage(rootNode.get("storage").asText());
+            }
+            if (rootNode.has("global")) {
+                if (global == null) {
+                    global = new GlobalConfig();
+                }
+                JsonNode global = rootNode.get("global");
+                if (global.has("master")) {
+                    this.global.setMaster(global.get("master").asText());
+                }
+                if (global.has("satellites")) {
+                    this.global.getSatellites().clear();
+                    JsonNode satellites = global.get("satellites");
+                    for (JsonNode satNode : satellites) {
+                        this.global.getSatellites().add(satNode.asText());
+                    }
+                }
             }
             return this;
         }
@@ -297,6 +323,11 @@ public class ChannelConfig implements Serializable {
 
         public Builder withStorage(String storage) {
             this.storage = storage;
+            return this;
+        }
+
+        public Builder withGlobal(GlobalConfig global) {
+            this.global = global;
             return this;
         }
     }
