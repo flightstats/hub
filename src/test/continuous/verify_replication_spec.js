@@ -2,6 +2,7 @@ var agent = require('superagent');
 var request = require('request');
 var async = require('async');
 var moment = require('moment');
+var _ = require('lodash');
 var testName = __filename;
 var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl;
@@ -106,8 +107,7 @@ describe(testName, function () {
                                 uris = res.body._links.uris.concat(uris);
                                 if (uris.length !== channels[channel].length) {
                                     console.log('unequal lengths ', channel, uris.length, channels[channel].length);
-                                    console.log('source', uris);
-                                    console.log('destin', channels[channel]);
+                                    logDifference(uris, channels[channel]);
                                 }
                                 expect(channels[channel].length).toBe(uris.length);
                                 callback(res.error);
@@ -118,13 +118,31 @@ describe(testName, function () {
             });
     }, MINUTE);
 
+    function logDifference(source, destination) {
+        if (source.length == 0 || destination.length == 0) {
+            console.log('source ', source);
+            console.log('destination', destination);
+            return;
+        }
+        var sourceItems = mapContentKey(source, source[0].split('/')[4]);
+        var destinationItems = mapContentKey(destination, destination[0].split('/')[4]);
+        console.log('missing from source:', _.difference(sourceItems, destinationItems));
+        console.log('missing from destination:', _.difference(destinationItems, sourceItems));
+    }
+
+    function mapContentKey(uris, channel) {
+        return _.map(uris, function (value) {
+            return getContentKey(value, channel);
+        });
+    }
+
     function getContentKey(uri, channel) {
         return uri.substring(uri.lastIndexOf(channel) + channel.length);
     }
 
     var itemsToVerify = [];
 
-    it('select some replicated items for content ', function (done) {
+    it('select some random items for content verification ', function (done) {
         for (var channel in channels) {
             console.log('working on', channel);
             channels[channel].forEach(function (uri) {
