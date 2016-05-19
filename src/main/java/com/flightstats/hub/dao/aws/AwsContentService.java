@@ -3,10 +3,9 @@ package com.flightstats.hub.dao.aws;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.ContentKeyUtil;
-import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
@@ -255,21 +254,29 @@ public class AwsContentService implements ContentService {
     }
 
     private SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
-        SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         try {
+            QueryResult queryResult = new QueryResult(contentDaos.size());
             CountDownLatch latch = new CountDownLatch(contentDaos.size());
             Traces traces = ActiveTraces.getLocal();
             String threadName = Thread.currentThread().getName();
             for (ContentDao contentDao : contentDaos) {
-                executorService.submit((Runnable) () -> {
+                executorService.submit(() -> {
                     Thread.currentThread().setName(contentDao.getClass().getSimpleName() + "|" + threadName);
                     ActiveTraces.setLocal(traces);
-                    orderedKeys.addAll(daoQuery.apply(contentDao));
-                    latch.countDown();
+                    try {
+                        queryResult.addKeys(daoQuery.apply(contentDao));
+                    } finally {
+                        latch.countDown();
+                    }
                 });
             }
             latch.await(118, TimeUnit.SECONDS);
-            return orderedKeys;
+            if (queryResult.hadSuccess()) {
+                return queryResult.getContentKeys();
+            } else {
+                traces.add("unable to complete query ", queryResult);
+                throw new FailedQueryException("unable to complete query " + queryResult + " " + threadName);
+            }
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }

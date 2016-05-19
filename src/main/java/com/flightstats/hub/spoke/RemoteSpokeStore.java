@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.Traces;
@@ -40,7 +41,7 @@ public class RemoteSpokeStore {
     private final static Logger logger = LoggerFactory.getLogger(RemoteSpokeStore.class);
 
     private final static Client write_client = RestClient.createClient(1, 5, true, false);
-    private final static Client query_client = RestClient.createClient(5, 2 * 60, true, true);
+    private final static Client query_client = RestClient.createClient(5, 15, true, true);
 
     private final CuratorCluster cluster;
     private final MetricsSender sender;
@@ -217,19 +218,19 @@ public class RemoteSpokeStore {
         return null;
     }
 
-    public SortedSet<ContentKey> readTimeBucket(String channel, String timePath) throws InterruptedException {
+    public QueryResult readTimeBucket(String channel, String timePath) throws InterruptedException {
         return getKeys("/internal/spoke/time/" + channel + "/" + timePath);
     }
 
     public SortedSet<ContentKey> getNext(String channel, int count, String startKey) throws InterruptedException {
-        return getKeys("/internal/spoke/next/" + channel + "/" + count + "/" + startKey);
+        return getKeys("/internal/spoke/next/" + channel + "/" + count + "/" + startKey).getContentKeys();
     }
 
-    private SortedSet<ContentKey> getKeys(final String path) throws InterruptedException {
+    private QueryResult getKeys(final String path) throws InterruptedException {
         Traces traces = ActiveTraces.getLocal();
         Collection<String> servers = cluster.getServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
-        SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        QueryResult queryResult = new QueryResult(servers.size());
         for (final String server : servers) {
             executorService.submit(new Runnable() {
                 @Override
@@ -238,15 +239,14 @@ public class RemoteSpokeStore {
                     try {
                         setThread(path);
                         traces.add("spoke calling", server, path);
-                        response = query_client.resource(HubHost.getScheme() + server + path)
-                                .get(ClientResponse.class);
+                        response = query_client.resource(HubHost.getScheme() + server + path).get(ClientResponse.class);
                         traces.add("spoke server response", server, response);
                         if (response.getStatus() == 200) {
                             SortedSet<ContentKey> keySet = new TreeSet<>();
                             String keysString = response.getEntity(String.class);
                             ContentKeyUtil.convertKeyStrings(keysString, keySet);
                             traces.add(server, keySet);
-                            orderedKeys.addAll(keySet);
+                            queryResult.addKeys(keySet);
                         }
                     } catch (ClientHandlerException e) {
                         if (e.getCause() != null && e.getCause() instanceof ConnectException) {
@@ -267,7 +267,7 @@ public class RemoteSpokeStore {
             });
         }
         countDownLatch.await(20, TimeUnit.SECONDS);
-        return orderedKeys;
+        return queryResult;
     }
 
     public Optional<ContentKey> getLatest(String channel, String path, Traces traces) throws InterruptedException {

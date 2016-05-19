@@ -14,11 +14,12 @@ public abstract class AbstractExceptionMapper<T extends Throwable> implements Ex
     }
 
     public Response toResponse(T exception) {
-        logger.info("{} {}", exception.getMessage(), exception.getClass());
+        ActiveTraces.getLocal().add(exception);
+        ActiveTraces.getLocal().log(logger);
         logger.trace("exception", exception);
+        ActiveTraces.end();
         Response.ResponseBuilder builder = Response.status(this.getResponseCode());
         builder.entity(exception.getMessage());
-        ActiveTraces.end();
         return builder.build();
     }
 
