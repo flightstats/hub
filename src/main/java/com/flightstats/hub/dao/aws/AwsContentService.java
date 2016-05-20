@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class AwsContentService implements ContentService {
 
@@ -91,7 +92,14 @@ public class AwsContentService implements ContentService {
             ContentKey key = spokeContentDao.write(channelName, content);
             ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
             if (channel.isSingle() || channel.isBoth()) {
-                s3SingleWrite(channelName, key);
+                //todo - gfm - 5/20/16 - is this the right place for this work?
+                Supplier<Void> local = () -> {
+                    s3SingleWrite(channelName, key);
+                    return null;
+                };
+                Supplier<Void> satellite = () -> null;
+                GlobalChannelService.handleGlobal(channel, local, satellite, local);
+
             }
             return key;
         } finally {

@@ -3,10 +3,7 @@ package com.flightstats.hub.app;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.cluster.CuratorCluster;
-import com.flightstats.hub.dao.CachedChannelConfigDao;
-import com.flightstats.hub.dao.ChannelConfigDao;
-import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.group.GroupDao;
 import com.flightstats.hub.spoke.*;
@@ -42,6 +39,7 @@ public class AwsBindings extends AbstractModule {
         }
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
+        bind(ChannelService.class).to(GlobalChannelService.class).asEagerSingleton();
         bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();
         bind(ChannelConfigDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigDao.DELEGATE))

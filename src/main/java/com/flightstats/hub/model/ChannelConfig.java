@@ -141,6 +141,21 @@ public class ChannelConfig implements Serializable {
     }
 
     @JsonIgnore
+    public boolean isGlobal() {
+        return global != null;
+    }
+
+    @JsonIgnore
+    public boolean isGlobalMaster() {
+        return isGlobal() && global.isMaster();
+    }
+
+    @JsonIgnore
+    public boolean isGlobalSatellite() {
+        return isGlobal() && !global.isMaster();
+    }
+
+    @JsonIgnore
     public boolean isReplicating() {
         return StringUtils.isNotBlank(replicationSource);
     }
