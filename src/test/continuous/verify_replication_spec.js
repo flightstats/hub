@@ -162,10 +162,14 @@ describe(testName, function () {
         function getItem(uri, callback) {
             request(uri, function (error, response, body) {
                 expect(error).toBe(null);
-                if (response.statusCode !== 200) {
-                    console.log('wrong status ', uri, response.statusCode);
+                if (error) {
+                    console.log('got error ', uri, error);
+                } else {
+                    if (response.statusCode !== 200) {
+                        console.log('wrong status ', uri, response.statusCode);
+                    }
+                    expect(response.statusCode).toBe(200);
                 }
-                expect(response.statusCode).toBe(200);
                 callback(null, body);
             });
         }
