@@ -39,7 +39,7 @@ public class GroupRetryer {
                     public boolean apply(@Nullable ClientResponse response) {
                         if (response == null) return true;
                         try {
-                            boolean failure = response.getStatus() != 200;
+                            boolean failure = response.getStatus() >= 400;
                             if (failure) {
                                 groupError.add(group.getName(), new DateTime() + " " + response.toString());
                                 logger.info("unable to send to " + response);
