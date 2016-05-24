@@ -791,7 +791,7 @@ DELETE will return a 202, and it may take up to a minute to properly stop a grou
 #### Behavior
 
 The application listening at `callbackUrl` will get a payload POSTed to it for every new item in the channel, starting after `startItem` or at the time the group is created.
-A 200 client response is considered successful.  Any other response is considered an error, and will cause the server to retry.   Redirects are allowed.                                        
+A 2XX-level client response is considered successful.  Any other response is considered an error, and will cause the server to retry.   Redirects are allowed.
 Retries will use an exponential backoff up to one minute, and the server will continue to retry at one minute intervals indefinitely.
 
 An example SINGLE payload:
