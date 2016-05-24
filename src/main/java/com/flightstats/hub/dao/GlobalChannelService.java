@@ -28,7 +28,7 @@ public class GlobalChannelService implements ChannelService {
     @Override
     public ChannelConfig createChannel(ChannelConfig channel) {
         if (channel.isGlobal()) {
-            //todo - gfm - 5/19/16 - call global master with PUT /internal/global/{channel}
+            //todo - gfm - 5/19/16 - call global master with PUT /internal/global/master/{channel}
             return null;
         } else {
             return channelService.createChannel(channel);
@@ -38,7 +38,7 @@ public class GlobalChannelService implements ChannelService {
     @Override
     public ChannelConfig updateChannel(ChannelConfig channel, ChannelConfig oldConfig) {
         if (channel.isGlobal()) {
-            //todo - gfm - 5/19/16 - call global master with PUT /internal/global/{channel}
+            //todo - gfm - 5/19/16 - call global master with PUT /internal/global/master/{channel}
             return null;
         } else {
             return channelService.updateChannel(channel, oldConfig);

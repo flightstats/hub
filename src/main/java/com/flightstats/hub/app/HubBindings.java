@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flightstats.hub.alert.AlertRunner;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.*;
+import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.LocalChannelService;
 import com.flightstats.hub.group.GroupProcessor;
 import com.flightstats.hub.group.GroupProcessorImpl;
 import com.flightstats.hub.group.GroupValidator;
@@ -51,6 +53,8 @@ public class HubBindings extends AbstractModule {
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
 
+        //todo - gfm - 5/24/16 - update for global
+        bind(ChannelService.class).to(LocalChannelService.class).asEagerSingleton();
         bind(HubHealthCheck.class).asEagerSingleton();
         bind(HubClusterRegister.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();

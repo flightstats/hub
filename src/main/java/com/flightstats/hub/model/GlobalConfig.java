@@ -22,4 +22,8 @@ public class GlobalConfig {
     @Setter
     private boolean isMaster = false;
 
+    public boolean isMaster() {
+        return isMaster;
+    }
+
 }

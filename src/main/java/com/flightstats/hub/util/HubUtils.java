@@ -20,7 +20,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.Date;
 
 public class HubUtils {
 
@@ -71,7 +70,6 @@ public class HubUtils {
         ChannelConfig configuration = ChannelConfig.builder()
                 .withChannelConfiguration(ChannelConfig.fromJson(json))
                 .withName(ChannelNameUtils.extractFromChannelUrl(channelUrl))
-                .withCreationDate(new Date())
                 .build();
         logger.debug("found config " + configuration);
         return Optional.of(configuration);
