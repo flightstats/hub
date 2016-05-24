@@ -79,7 +79,35 @@ public class HubProperties {
     }
 
     private static Properties getProperties(String name, boolean required) {
-        return loadProperties(HubMain.class.getResource(name), required);
+        URL resource = HubMain.class.getResource(name);
+        if (resource != null) {
+            return loadProperties(resource, required);
+        } else {
+            HubMain.warn("unable to load files, using baked in defaults");
+            Properties properties = new Properties();
+            properties.put("hub.type", "aws");
+            properties.put("app.name", "hub-v2");
+            properties.put("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
+            properties.put("app.environment", "local");
+            properties.put("s3.environment", "local");
+            properties.put("s3.endpoint", "s3-external-1.amazonaws.com");
+            properties.put("s3.writeQueueSize", "2000");
+            properties.put("dynamo.table_creation_wait_minutes", "10");
+            properties.put("app.lib_path", "");
+            properties.put("app.shutdown_wait_seconds", "10");
+            properties.put("app.shutdown_delay_seconds", "2");
+            properties.put("app.url", "http://localhost:9080/");
+            properties.put("spoke.path", "/tmp/spoke/test");
+            properties.put("spoke.ttlMinutes", "10");
+            properties.put("http.bind_port", "9080");
+            properties.put("hosted_graphite.enable", "false");
+            properties.put("zookeeper.connection", "localhost:2181");
+            properties.put("runSingleZookeeperInternally", "singleNode");
+            properties.put("hub.allow.channel.deletion", "true");
+            properties.put("data_dog.enable", "false");
+            properties.put("s3Verifier.run", "false");
+            return properties;
+        }
     }
 
     private static Properties loadProperties(URL url, boolean required) {
