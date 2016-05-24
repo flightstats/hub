@@ -144,7 +144,7 @@ describe(testName, function () {
                 done(err);
             });
 
-    }, timeout);
+    }, 2 * timeout);
 
 
 });
