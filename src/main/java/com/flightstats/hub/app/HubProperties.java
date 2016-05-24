@@ -106,6 +106,7 @@ public class HubProperties {
             properties.put("hub.allow.channel.deletion", "true");
             properties.put("data_dog.enable", "false");
             properties.put("s3Verifier.run", "false");
+            properties.put("aws.credentials", "config/credentials/hub_test_credentials.properties");
             return properties;
         }
     }
