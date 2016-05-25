@@ -8,7 +8,7 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.ReplicatorManager;
+import com.flightstats.hub.replication.ReplicationGlobalManager;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 @Singleton
 public class LocalChannelService implements ChannelService {
     private final static Logger logger = LoggerFactory.getLogger(LocalChannelService.class);
-
+    private static final int DIR_COUNT_LIMIT = HubProperties.getProperty("app.directionCountLimit", 10000);
     @Inject
     private ContentService contentService;
     @Inject
@@ -33,11 +33,9 @@ public class LocalChannelService implements ChannelService {
     @Inject
     private ChannelValidator channelValidator;
     @Inject
-    private ReplicatorManager replicatorManager;
+    private ReplicationGlobalManager replicationGlobalManager;
     @Inject
     private MetricsSender sender;
-
-    private static final int DIR_COUNT_LIMIT = HubProperties.getProperty("app.directionCountLimit", 10000);
 
     @Override
     public boolean channelExists(String channelName) {
@@ -55,10 +53,12 @@ public class LocalChannelService implements ChannelService {
     }
 
     private void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
-        if (newConfig.isReplicating()) {
-            replicatorManager.notifyWatchers();
-        } else if (oldConfig != null && oldConfig.isReplicating()) {
-            replicatorManager.notifyWatchers();
+        if (newConfig.isReplicating() || newConfig.isGlobalMaster()) {
+            replicationGlobalManager.notifyWatchers();
+        } else if (oldConfig != null) {
+            if (oldConfig.isReplicating() || oldConfig.isGlobalMaster()) {
+                replicationGlobalManager.notifyWatchers();
+            }
         }
         contentService.notify(newConfig, oldConfig);
     }
@@ -259,12 +259,11 @@ public class LocalChannelService implements ChannelService {
         if (!channelConfigDao.channelExists(channelName)) {
             return false;
         }
-        long start = System.currentTimeMillis();
         boolean replicating = isReplicating(channelName);
         contentService.delete(channelName);
         channelConfigDao.delete(channelName);
         if (replicating) {
-            replicatorManager.notifyWatchers();
+            replicationGlobalManager.notifyWatchers();
         }
         return true;
     }

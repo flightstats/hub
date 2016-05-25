@@ -20,6 +20,18 @@ public class GlobalChannelService implements ChannelService {
 
     private ChannelService channelService = HubProvider.getInstance(LocalChannelService.class);
 
+    public static <X> X handleGlobal(ChannelConfig channel, Supplier<X> local, Supplier<X> satellite, Supplier<X> master) {
+        if (channel.isGlobal()) {
+            if (channel.isGlobalMaster()) {
+                return master.get();
+            } else {
+                return satellite.get();
+            }
+        } else {
+            return local.get();
+        }
+    }
+
     @Override
     public boolean channelExists(String channelName) {
         return false;
@@ -77,24 +89,8 @@ public class GlobalChannelService implements ChannelService {
         return handleGlobal(getCachedChannelConfig(channelName), local, satellite, master);
     }
 
-    public static <X> X handleGlobal(ChannelConfig channel, Supplier<X> local, Supplier<X> satellite, Supplier<X> master) {
-        if (channel.isGlobal()) {
-            if (channel.isGlobalMaster()) {
-                return master.get();
-            } else {
-                return satellite.get();
-            }
-        } else {
-            return local.get();
-        }
-    }
-
     @Override
     public boolean isReplicating(String channelName) {
-        ChannelConfig channel = getCachedChannelConfig(channelName);
-        if (channel.isGlobal()) {
-            return channel.isGlobalSatellite();
-        }
         return channelService.isReplicating(channelName);
     }
 

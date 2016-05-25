@@ -32,7 +32,11 @@ public class InternalGlobalResource {
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false);
         ChannelConfig newConfig = ChannelConfig.fromJsonName(json, channelName);
         if (oldConfig != null) {
-            logger.info("using old channel {} {}", oldConfig, oldConfig.getCreationDate().getTime());
+            if (oldConfig.isGlobalSatellite()) {
+                logger.warn("attempt to change master cluster location {} {}", oldConfig, newConfig);
+                return Response.status(400).entity("The Master cluster location is not allowed to change.").build();
+            }
+            logger.info("using existing channel {} {}", oldConfig, newConfig);
             newConfig = ChannelConfig.builder()
                     .withChannelConfiguration(oldConfig)
                     .withUpdateJson(StringUtils.defaultIfBlank(json, "{}"))
@@ -45,10 +49,7 @@ public class InternalGlobalResource {
                 LinkBuilder.buildChannelLinks(newConfig, channelUri))
                 .build();
 
-
         /*
-        //todo - gfm - 5/20/16 - do not allow the master url to change - 400
-
         //todo - gfm - 5/20/16 -
         call /internal/global/satellite/{channel}
         this can be async, does not need to succeed for the creation request to complete
@@ -56,7 +57,6 @@ public class InternalGlobalResource {
 
         //todo - gfm - 5/20/16 - can this use the normal replication endpoint?
         for creation, make sure we start replication at the creation time of the channel
-
         */
 
     }

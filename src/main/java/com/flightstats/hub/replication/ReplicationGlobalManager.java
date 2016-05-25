@@ -24,18 +24,26 @@ import static com.flightstats.hub.app.HubServices.register;
 
 /**
  * Replication is moving from one Hub into another Hub
- * in Replication, we will presume we are moving forward in time
+ * We will presume we are moving forward in time.
+ * There are two flavors of replication:
+ * A - setting replicationSource on a Channel, where replicationSource is the fully qualified channel name.
+ * B - using a global channel with satellites.
  * <p>
- * Secnario:
+ * Secnario A:
  * Producers are inserting Items into a Hub channel
  * HubA is setup to Replicate a channel from HubB
  * Replication starts at the item after now, and then stays up to date, with some minimal amount of lag.
  * Lag is a minimum of 'app.stable_seconds'.
+ * <p>
+ * Scenario B:
+ * Producers are inserting Items into a Global Hub channel
+ * The Global Master manages the replication to the Satellites.
  */
-public class ReplicatorManager {
+public class ReplicationGlobalManager {
     public static final String REPLICATED = "replicated";
+    public static final String GLOBAL = "global";
     private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
-    private final static Logger logger = LoggerFactory.getLogger(ReplicatorManager.class);
+    private final static Logger logger = LoggerFactory.getLogger(ReplicationGlobalManager.class);
 
     private final ChannelService channelService;
     private final HubUtils hubUtils;
@@ -45,30 +53,16 @@ public class ReplicatorManager {
     private ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Inject
-    public ReplicatorManager(ChannelService channelService, HubUtils hubUtils, WatchManager watchManager) {
+    public ReplicationGlobalManager(ChannelService channelService, HubUtils hubUtils, WatchManager watchManager) {
         this.channelService = channelService;
         this.hubUtils = hubUtils;
         this.watchManager = watchManager;
         register(new ReplicatorService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
     }
 
-    private class ReplicatorService extends AbstractIdleService {
-
-        @Override
-        protected void startUp() throws Exception {
-            startReplicator();
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-            stopped.set(true);
-        }
-
-    }
-
-    public void startReplicator() {
+    private void startReplicator() {
         logger.info("starting");
-        ReplicatorManager replicator = this;
+        ReplicationGlobalManager replicator = this;
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
@@ -134,6 +128,20 @@ public class ReplicatorManager {
 
     public void notifyWatchers() {
         watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
+    }
+
+    private class ReplicatorService extends AbstractIdleService {
+
+        @Override
+        protected void startUp() throws Exception {
+            startReplicator();
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            stopped.set(true);
+        }
+
     }
 
 }
