@@ -4,6 +4,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.GlobalConfig;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -36,7 +37,36 @@ public class ChannelValidator {
         validateDescription(config);
         validateTags(config);
         validateStorage(config);
+        validateGlobal(config);
 
+    }
+
+    private void validateGlobal(ChannelConfig config) {
+        if (config.isGlobal()) {
+            GlobalConfig global = config.getGlobal();
+            String master = global.getMaster();
+            if (master == null) {
+                throw new InvalidRequestException("{\"error\": \"A Master must exist\"}");
+            }
+            if (global.getSatellites().isEmpty()) {
+                throw new InvalidRequestException("{\"error\": \"At least one Satellite must exist\"}");
+            }
+            if (global.getSatellites().contains(master)) {
+                throw new InvalidRequestException("{\"error\": \"A Master can not also be a Satellite\"}");
+            }
+            if (!startsWithHttp(master)) {
+                throw new InvalidRequestException("{\"error\": \"A Master must start with http or https\"}");
+            }
+            for (String satellite : global.getSatellites()) {
+                if (!startsWithHttp(satellite)) {
+                    throw new InvalidRequestException("{\"error\": \"Satellites must start with http or https\"}");
+                }
+            }
+        }
+    }
+
+    private boolean startsWithHttp(String master) {
+        return master.startsWith("http://") || master.startsWith("https://");
     }
 
     private void validateStorage(ChannelConfig config) {
@@ -79,7 +109,7 @@ public class ChannelValidator {
 
     private void validateNameWasGiven(Optional<String> channelName) throws InvalidRequestException {
         if ((channelName == null) || !channelName.isPresent()) {
-            throw new InvalidRequestException("{\"error\": \"Channel name wasn't given\"}");
+            throw new InvalidRequestException("{\"error\": \"A channel has no name\"}");
         }
     }
 
