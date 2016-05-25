@@ -46,7 +46,6 @@ public class LocalChannelService implements ChannelService {
 
     @Override
     public ChannelConfig createChannel(ChannelConfig configuration) {
-        long start = System.currentTimeMillis();
         logger.info("create channel {}", configuration);
         channelValidator.validate(configuration, true);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
@@ -67,7 +66,6 @@ public class LocalChannelService implements ChannelService {
     @Override
     public ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig) {
         if (configuration.hasChanged(oldConfig)) {
-            long start = System.currentTimeMillis();
             logger.info("updating channel {} from {}", configuration, oldConfig);
             configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
             channelValidator.validate(configuration, false);
