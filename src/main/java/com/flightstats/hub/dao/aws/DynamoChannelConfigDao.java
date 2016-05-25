@@ -144,7 +144,7 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
         if (item.containsKey("master")) {
             GlobalConfig global = new GlobalConfig();
             global.setMaster(item.get("master").getS());
-            global.getSatellites().addAll(item.get("satellites").getSS());
+            global.addSatellites(item.get("satellites").getSS());
             global.setIsMaster(item.get("isMaster").getBOOL());
             builder.withGlobal(global);
         }

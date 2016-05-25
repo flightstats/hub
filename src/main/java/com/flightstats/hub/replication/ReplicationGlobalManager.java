@@ -7,6 +7,7 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ import static com.flightstats.hub.app.HubServices.register;
  * Producers are inserting Items into a Global Hub channel
  * The Global Master manages the replication to the Satellites.
  */
+@Singleton
 public class ReplicationGlobalManager {
     public static final String REPLICATED = "replicated";
     public static final String GLOBAL = "global";
@@ -49,6 +51,7 @@ public class ReplicationGlobalManager {
     private final HubUtils hubUtils;
     private final WatchManager watchManager;
     private final Map<String, ChannelReplicator> replicatorMap = new HashMap<>();
+    private final Map<String, GlobalReplicator> globalMasterMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -57,16 +60,16 @@ public class ReplicationGlobalManager {
         this.channelService = channelService;
         this.hubUtils = hubUtils;
         this.watchManager = watchManager;
-        register(new ReplicatorService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
+        register(new ReplicationGlobalService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
     }
 
-    private void startReplicator() {
+    private void startManager() {
         logger.info("starting");
-        ReplicationGlobalManager replicator = this;
+        ReplicationGlobalManager manager = this;
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
-                executor.submit(replicator::replicateChannels);
+                executor.submit(manager::replicateAndGlobal);
             }
 
             @Override
@@ -75,14 +78,34 @@ public class ReplicationGlobalManager {
             }
         });
 
-        executor.submit(replicator::replicateChannels);
+        executor.submit(manager::replicateAndGlobal);
     }
 
-    private synchronized void replicateChannels() {
+    private void replicateAndGlobal() {
         if (stopped.get()) {
             logger.info("replication stopped");
             return;
         }
+        globalChannels();
+        replicateChannels();
+    }
+
+    private synchronized void globalChannels() {
+        logger.info("global channels");
+        Iterable<ChannelConfig> globalChannels = channelService.getChannels(GLOBAL);
+        for (ChannelConfig channel : globalChannels) {
+            if (channel.isGlobalMaster()) {
+                //todo - gfm - 5/25/16 - modify globalMasterMap
+                //todo - gfm - 5/25/16 - create satellite channels
+                //todo - gfm - 5/25/16 - set up replication to satellites
+                //todo - gfm - 5/25/16 - stop any removed satellites
+            }
+        }
+        //todo - gfm - 5/25/16 - stop any global channels that aren't found
+
+    }
+
+    private synchronized void replicateChannels() {
         logger.info("replicating channels");
         Set<String> replicators = new HashSet<>();
         Iterable<ChannelConfig> replicatedChannels = channelService.getChannels(REPLICATED);
@@ -130,11 +153,11 @@ public class ReplicationGlobalManager {
         watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
     }
 
-    private class ReplicatorService extends AbstractIdleService {
+    private class ReplicationGlobalService extends AbstractIdleService {
 
         @Override
         protected void startUp() throws Exception {
-            startReplicator();
+            startManager();
         }
 
         @Override

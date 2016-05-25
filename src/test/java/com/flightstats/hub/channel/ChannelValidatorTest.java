@@ -164,7 +164,7 @@ public class ChannelValidatorTest {
     public void testGlobal() {
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setMaster("http://master");
-        globalConfig.getSatellites().add("http://satellite");
+        globalConfig.addSatellite("http://satellite");
         validator.validate(ChannelConfig.builder()
                 .withName("global")
                 .withGlobal(globalConfig).build(), true);
@@ -182,7 +182,7 @@ public class ChannelValidatorTest {
     @Test(expected = InvalidRequestException.class)
     public void testNoMaster() {
         GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.getSatellites().add("http://master");
+        globalConfig.addSatellite("http://master");
         validator.validate(ChannelConfig.builder()
                 .withName("global")
                 .withGlobal(globalConfig).build(), true);
@@ -192,7 +192,7 @@ public class ChannelValidatorTest {
     public void testSatelliteSame() {
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setMaster("http://master");
-        globalConfig.getSatellites().add("http://master");
+        globalConfig.addSatellite("http://master/");
         validator.validate(ChannelConfig.builder()
                 .withName("global")
                 .withGlobal(globalConfig).build(), true);
@@ -202,7 +202,7 @@ public class ChannelValidatorTest {
     public void testMasterUrl() throws MalformedURLException {
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setMaster("http:/master");
-        globalConfig.getSatellites().add("http://satellite");
+        globalConfig.addSatellite("http://satellite");
         validator.validate(ChannelConfig.builder()
                 .withName("global")
                 .withGlobal(globalConfig).build(), true);
@@ -212,8 +212,8 @@ public class ChannelValidatorTest {
     public void testSatelliteUrl() throws MalformedURLException {
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setMaster("http:/master");
-        globalConfig.getSatellites().add("http://satellite");
-        globalConfig.getSatellites().add("ftp://satellite2");
+        globalConfig.addSatellite("http://satellite");
+        globalConfig.addSatellite("ftp://satellite2");
         validator.validate(ChannelConfig.builder()
                 .withName("global")
                 .withGlobal(globalConfig).build(), true);

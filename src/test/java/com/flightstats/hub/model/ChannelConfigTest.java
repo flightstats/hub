@@ -122,7 +122,7 @@ public class ChannelConfigTest {
     public void testGlobalCopy() throws IOException {
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setMaster("master");
-        globalConfig.getSatellites().addAll(Arrays.asList("sat1", "sat2"));
+        globalConfig.addSatellites(Arrays.asList("sat1", "sat2"));
         ChannelConfig config = ChannelConfig.builder().withGlobal(globalConfig).build();
         ChannelConfig copy = getBuilder(config).build();
         assertEquals(globalConfig, copy.getGlobal());
@@ -133,7 +133,7 @@ public class ChannelConfigTest {
 
         GlobalConfig changedGlobal = new GlobalConfig();
         changedGlobal.setMaster("sat1");
-        changedGlobal.getSatellites().addAll(Arrays.asList("master", "sat2", "sat3"));
+        changedGlobal.addSatellites(Arrays.asList("master", "sat2", "sat3"));
         ChannelConfig changedChannel = ChannelConfig.builder().withGlobal(changedGlobal).build();
 
         ChannelConfig updated = ChannelConfig.builder()

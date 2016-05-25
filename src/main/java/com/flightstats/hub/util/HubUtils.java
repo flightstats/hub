@@ -4,6 +4,7 @@ import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Singleton
 public class HubUtils {
 
     public static final int NOT_FOUND = -1;

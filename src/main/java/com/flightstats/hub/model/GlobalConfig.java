@@ -3,9 +3,10 @@ package com.flightstats.hub.model;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -14,7 +15,6 @@ import java.util.TreeSet;
 @Getter
 public class GlobalConfig {
 
-    @Setter
     private String master;
     private Set<String> satellites = new TreeSet<>();
 
@@ -29,10 +29,20 @@ public class GlobalConfig {
             global.getSatellites().clear();
             JsonNode satellites = globalNode.get("satellites");
             for (JsonNode satNode : satellites) {
-                global.getSatellites().add(satNode.asText());
+                global.addSatellite(satNode.asText());
             }
         }
         return global;
+    }
+
+    public void addSatellite(String satellite) {
+        satellites.add(StringUtils.appendIfMissing(satellite, "/"));
+    }
+
+    public void addSatellites(Collection<String> satellites) {
+        for (String satellite : satellites) {
+            addSatellite(satellite);
+        }
     }
 
     public void setIsMaster(boolean isMaster) {
@@ -41,5 +51,9 @@ public class GlobalConfig {
 
     public boolean isMaster() {
         return isMaster;
+    }
+
+    public void setMaster(String master) {
+        this.master = StringUtils.appendIfMissing(master, "/");
     }
 }

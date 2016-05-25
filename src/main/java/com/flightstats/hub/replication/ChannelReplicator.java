@@ -19,15 +19,15 @@ public class ChannelReplicator {
     public void start() {
         Group.GroupBuilder builder = Group.builder()
                 .name(getGroupName())
-                .callbackUrl(getCallbackUrl("repls"))
+                .callbackUrl(getCallbackUrl())
                 .channelUrl(channel.getReplicationSource())
                 .heartbeat(true)
                 .batch(Group.SECOND);
         hubUtils.startGroupCallback(builder.build());
     }
 
-    private String getCallbackUrl(String apiPath) {
-        return HubProperties.getAppUrl() + "internal/" + apiPath + "/" + channel.getName();
+    private String getCallbackUrl() {
+        return HubProperties.getAppUrl() + "internal/repls/" + channel.getName();
     }
 
     private String getGroupName() {
