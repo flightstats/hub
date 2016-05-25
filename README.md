@@ -30,6 +30,7 @@ The Hub
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
 * [replication](#replication)
+* [global channels](#global-channels)
 * [alerts](#alerts)
 * [health check](#health-check)
 * [storage](#storage)
@@ -882,6 +883,10 @@ To stop replication, either delete the destination channel, or PUT the destinati
 Modifications to configuration takes effect immediately.
 
 Replication destination channels do not allow inserts.
+
+## global channels
+
+todo - compare global channels to replicated channels
 
 ## alerts
 
