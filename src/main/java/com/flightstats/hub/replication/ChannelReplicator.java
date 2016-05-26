@@ -6,9 +6,8 @@ import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 
-public class ChannelReplicator implements Replicator {
+class ChannelReplicator implements Replicator {
 
-    public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
     private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
 
     private ChannelConfig channel;

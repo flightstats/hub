@@ -41,8 +41,6 @@ import static com.flightstats.hub.app.HubServices.register;
  */
 @Singleton
 public class ReplicationGlobalManager {
-    public static final String REPLICATED = "replicated";
-    public static final String GLOBAL = "global";
     private final static Logger logger = LoggerFactory.getLogger(ReplicationGlobalManager.class);
     private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
 
@@ -88,7 +86,7 @@ public class ReplicationGlobalManager {
     private synchronized void replicateGlobal() {
         logger.info("replicating global channels");
         Set<String> replicators = new HashSet<>();
-        Iterable<ChannelConfig> globalChannels = channelService.getChannels(GLOBAL);
+        Iterable<ChannelConfig> globalChannels = channelService.getChannels(Replicator.GLOBAL);
         for (ChannelConfig channel : globalChannels) {
             if (channel.isGlobalMaster()) {
                 try {
@@ -115,7 +113,7 @@ public class ReplicationGlobalManager {
     private synchronized void replicateChannels() {
         logger.info("replicating channels");
         Set<String> replicators = new HashSet<>();
-        Iterable<ChannelConfig> replicatedChannels = channelService.getChannels(REPLICATED);
+        Iterable<ChannelConfig> replicatedChannels = channelService.getChannels(Replicator.REPLICATED);
         for (ChannelConfig channel : replicatedChannels) {
             logger.info("replicating channel {}", channel.getName());
             try {

@@ -10,7 +10,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.ContentPathKeys;
 import com.flightstats.hub.model.TimeQuery;
-import com.flightstats.hub.replication.ChannelReplicator;
+import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
@@ -48,6 +48,10 @@ public class TimedGroupStrategy implements GroupStrategy {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
         this.queue = new ArrayBlockingQueue<>(group.getParallelCalls() * 2);
+    }
+
+    public static String getBulkUrl(String channelUrl, ContentPath path, String parameter) {
+        return channelUrl + "/" + path.toUrl() + "?" + parameter + "=true";
     }
 
     @Override
@@ -96,7 +100,7 @@ public class TimedGroupStrategy implements GroupStrategy {
                 }
                 DateTime stable = TimeUtil.stable().minus(duration);
                 if (channelService.isReplicating(channel)) {
-                    ContentPath contentPath = lastContentPath.get(channel, timedGroup.getNone(), ChannelReplicator.REPLICATED_LAST_UPDATED);
+                    ContentPath contentPath = lastContentPath.get(channel, timedGroup.getNone(), Replicator.REPLICATED_LAST_UPDATED);
                     DateTime replicatedStable = timedGroup.getReplicatingStable(contentPath);
                     if (replicatedStable.isBefore(stable)) {
                         logger.trace("replicated fuuutuuure {} {}", stable, replicatedStable);
@@ -170,10 +174,6 @@ public class TimedGroupStrategy implements GroupStrategy {
             response.put("type", "items");
         }
         return response;
-    }
-
-    public static String getBulkUrl(String channelUrl, ContentPath path, String parameter) {
-        return channelUrl + "/" + path.toUrl() + "?" + parameter + "=true";
     }
 
     @Override

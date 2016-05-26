@@ -11,7 +11,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.model.TimeQuery;
-import com.flightstats.hub.replication.ChannelReplicator;
+import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -132,7 +132,7 @@ public class SingleGroupStrategy implements GroupStrategy {
                 try {
                     DateTime latestStableInChannel = TimeUtil.stable();
                     if (channelService.isReplicating(channel)) {
-                        ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED);
+                        ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, Replicator.REPLICATED_LAST_UPDATED);
                         latestStableInChannel = contentPath.getTime();
                     }
                     TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);

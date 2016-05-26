@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.exception.InvalidRequestException;
-import com.flightstats.hub.replication.ReplicationGlobalManager;
+import com.flightstats.hub.replication.Replicator;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.EqualsAndHashCode;
@@ -51,10 +51,10 @@ public class ChannelConfig implements Serializable {
         tags.addAll(builder.tags);
         if (StringUtils.isBlank(builder.replicationSource)) {
             replicationSource = "";
-            tags.remove(ReplicationGlobalManager.REPLICATED);
+            tags.remove(Replicator.REPLICATED);
         } else {
             replicationSource = builder.replicationSource;
-            tags.add(ReplicationGlobalManager.REPLICATED);
+            tags.add(Replicator.REPLICATED);
         }
         if (StringUtils.isBlank(builder.storage)) {
             storage = SINGLE;
@@ -63,9 +63,9 @@ public class ChannelConfig implements Serializable {
         }
         global = builder.global;
         if (isGlobal()) {
-            tags.add(ReplicationGlobalManager.GLOBAL);
+            tags.add(Replicator.GLOBAL);
         } else {
-            tags.remove(ReplicationGlobalManager.GLOBAL);
+            tags.remove(Replicator.GLOBAL);
         }
     }
 

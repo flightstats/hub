@@ -4,7 +4,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.replication.ChannelReplicator;
+import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.curator.framework.CuratorFramework;
@@ -71,7 +71,7 @@ public class S3VerifierTest {
     @Test
     public void testSingleReplicated() {
         MinutePath lastReplicated = new MinutePath(now.minusMinutes(30));
-        lastContentPath.initialize("testSingleReplicated", lastReplicated, ChannelReplicator.REPLICATED_LAST_UPDATED);
+        lastContentPath.initialize("testSingleReplicated", lastReplicated, Replicator.REPLICATED_LAST_UPDATED);
         ChannelConfig channel = getReplicatedChannel("testSingleReplicated");
         S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("testSingleReplicated {}", range);
@@ -93,7 +93,7 @@ public class S3VerifierTest {
     @Test
     public void testSingleReplicationLagging() {
         MinutePath lastReplicated = new MinutePath(now.minusMinutes(90));
-        lastContentPath.initialize("testSingleReplicationLagging", lastReplicated, ChannelReplicator.REPLICATED_LAST_UPDATED);
+        lastContentPath.initialize("testSingleReplicationLagging", lastReplicated, Replicator.REPLICATED_LAST_UPDATED);
         MinutePath lastVerified = new MinutePath(now.minusMinutes(100));
         lastContentPath.initialize("testSingleReplicationLagging", lastVerified, S3Verifier.LAST_SINGLE_VERIFIED);
         ChannelConfig channel = getReplicatedChannel("testSingleReplicationLagging");
@@ -157,7 +157,7 @@ public class S3VerifierTest {
     @Test
     public void testBatchReplicationLagging() {
         MinutePath endPath = new MinutePath(now.minusMinutes(10));
-        lastContentPath.initialize("testBatchReplicationLagging", endPath, ChannelReplicator.REPLICATED_LAST_UPDATED);
+        lastContentPath.initialize("testBatchReplicationLagging", endPath, Replicator.REPLICATED_LAST_UPDATED);
         ChannelConfig channel = getReplicatedChannel("testBatchReplicationLagging");
         S3Verifier.VerifierRange range = s3Verifier.getBatchVerifierRange(now, channel);
         logger.info("testBatchReplicationLagging {}", range);
@@ -169,7 +169,7 @@ public class S3VerifierTest {
     @Test
     public void testBatchReplicationBehindSpoke() {
         MinutePath endPath = new MinutePath(now.minusMinutes(120));
-        lastContentPath.initialize("testBatchReplicationBehindSpoke", endPath, ChannelReplicator.REPLICATED_LAST_UPDATED);
+        lastContentPath.initialize("testBatchReplicationBehindSpoke", endPath, Replicator.REPLICATED_LAST_UPDATED);
         ChannelConfig channel = getReplicatedChannel("testBatchReplicationBehindSpoke");
         S3Verifier.VerifierRange range = s3Verifier.getBatchVerifierRange(now, channel);
         logger.info("testBatchReplicationBehindSpoke {}", range);
@@ -181,7 +181,7 @@ public class S3VerifierTest {
     @Test
     public void testBatchReplBehindSpokeLagging() {
         MinutePath endPath = new MinutePath(now.minusMinutes(120));
-        lastContentPath.initialize("testBatchReplBehindSpokeLagging", endPath, ChannelReplicator.REPLICATED_LAST_UPDATED);
+        lastContentPath.initialize("testBatchReplBehindSpokeLagging", endPath, Replicator.REPLICATED_LAST_UPDATED);
         MinutePath lastPath = new MinutePath(now.minusMinutes(140));
         lastContentPath.initialize("testBatchReplBehindSpokeLagging", lastPath, S3Verifier.LAST_BATCH_VERIFIED);
         ChannelConfig channel = getReplicatedChannel("testBatchReplBehindSpokeLagging");
