@@ -1,19 +1,20 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 
-public class ChannelReplicator {
+public class ChannelReplicator implements Replicator {
 
     public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
-    private ChannelConfig channel;
-    private HubUtils hubUtils;
+    private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
 
-    ChannelReplicator(ChannelConfig channel, HubUtils hubUtils) {
+    private ChannelConfig channel;
+
+    ChannelReplicator(ChannelConfig channel) {
         this.channel = channel;
-        this.hubUtils = hubUtils;
     }
 
     public void start() {

@@ -13,7 +13,6 @@ import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
-import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
@@ -49,6 +48,37 @@ public class ChannelContentResource {
     private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private MetricsSender sender = HubProvider.getInstance(MetricsSender.class);
     private EventsService eventsService = HubProvider.getInstance(EventsService.class);
+
+    public static MediaType getContentType(Content content) {
+        Optional<String> contentType = content.getContentType();
+        if (contentType.isPresent() && !isNullOrEmpty(contentType.get())) {
+            return MediaType.valueOf(contentType.get());
+        }
+        return MediaType.APPLICATION_OCTET_STREAM_TYPE;
+    }
+
+    static boolean contentTypeIsNotCompatible(String acceptHeader, final MediaType actualContentType) {
+        List<MediaType> acceptableContentTypes;
+        if (StringUtils.isBlank(acceptHeader)) {
+            acceptableContentTypes = MediaTypes.GENERAL_MEDIA_TYPE_LIST;
+        } else {
+            acceptableContentTypes = new ArrayList<>();
+            String[] types = acceptHeader.split(",");
+            for (String type : types) {
+                acceptableContentTypes.addAll(getMediaTypes(type));
+            }
+        }
+
+        return !Iterables.any(acceptableContentTypes, input -> input.isCompatible(actualContentType));
+    }
+
+    private static List<MediaType> getMediaTypes(String type) {
+        try {
+            return MediaTypes.createMediaTypes(new String[]{type});
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
 
     @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
     @GET
@@ -211,8 +241,7 @@ public class ChannelContentResource {
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
 
         builder.type(actualContentType)
-                .header(Headers.CREATION_DATE,
-                        HubUtils.FORMATTER.print(new DateTime(key.getMillis())));
+                .header(Headers.CREATION_DATE, FORMATTER.print(new DateTime(key.getMillis())));
 
         LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
@@ -334,37 +363,6 @@ public class ChannelContentResource {
             });
         } else {
             return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true, trace);
-        }
-    }
-
-    public static MediaType getContentType(Content content) {
-        Optional<String> contentType = content.getContentType();
-        if (contentType.isPresent() && !isNullOrEmpty(contentType.get())) {
-            return MediaType.valueOf(contentType.get());
-        }
-        return MediaType.APPLICATION_OCTET_STREAM_TYPE;
-    }
-
-    static boolean contentTypeIsNotCompatible(String acceptHeader, final MediaType actualContentType) {
-        List<MediaType> acceptableContentTypes;
-        if (StringUtils.isBlank(acceptHeader)) {
-            acceptableContentTypes = MediaTypes.GENERAL_MEDIA_TYPE_LIST;
-        } else {
-            acceptableContentTypes = new ArrayList<>();
-            String[] types = acceptHeader.split(",");
-            for (String type : types) {
-                acceptableContentTypes.addAll(getMediaTypes(type));
-            }
-        }
-
-        return !Iterables.any(acceptableContentTypes, input -> input.isCompatible(actualContentType));
-    }
-
-    private static List<MediaType> getMediaTypes(String type) {
-        try {
-            return MediaTypes.createMediaTypes(new String[]{type});
-        } catch (Exception e) {
-            return Collections.emptyList();
         }
     }
 

@@ -1,12 +1,11 @@
 package com.flightstats.hub.replication;
 
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.util.HubUtils;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
@@ -44,22 +43,18 @@ import static com.flightstats.hub.app.HubServices.register;
 public class ReplicationGlobalManager {
     public static final String REPLICATED = "replicated";
     public static final String GLOBAL = "global";
-    private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
     private final static Logger logger = LoggerFactory.getLogger(ReplicationGlobalManager.class);
+    private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
 
-    private final ChannelService channelService;
-    private final HubUtils hubUtils;
-    private final WatchManager watchManager;
-    private final Map<String, ChannelReplicator> replicatorMap = new HashMap<>();
-    private final Map<String, GlobalReplicator> globalMasterMap = new HashMap<>();
+    private final ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final WatchManager watchManager = HubProvider.getInstance(WatchManager.class);
+
+    private final Map<String, Replicator> channelReplicatorMap = new HashMap<>();
+    private final Map<String, Replicator> globalReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
-    private ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    @Inject
-    public ReplicationGlobalManager(ChannelService channelService, HubUtils hubUtils, WatchManager watchManager) {
-        this.channelService = channelService;
-        this.hubUtils = hubUtils;
-        this.watchManager = watchManager;
+    public ReplicationGlobalManager() {
         register(new ReplicationGlobalService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
     }
 
@@ -86,23 +81,35 @@ public class ReplicationGlobalManager {
             logger.info("replication stopped");
             return;
         }
-        globalChannels();
+        replicateGlobal();
         replicateChannels();
     }
 
-    private synchronized void globalChannels() {
-        logger.info("global channels");
+    private synchronized void replicateGlobal() {
+        logger.info("replicating global channels");
+        Set<String> replicators = new HashSet<>();
         Iterable<ChannelConfig> globalChannels = channelService.getChannels(GLOBAL);
         for (ChannelConfig channel : globalChannels) {
             if (channel.isGlobalMaster()) {
-                //todo - gfm - 5/25/16 - modify globalMasterMap
-                //todo - gfm - 5/25/16 - create satellite channels
-                //todo - gfm - 5/25/16 - set up replication to satellites
-                //todo - gfm - 5/25/16 - stop any removed satellites
+                try {
+                    processGlobal(replicators, channel);
+                } catch (Exception e) {
+                    logger.warn("unable to do global replication" + channel, e);
+                }
             }
         }
-        //todo - gfm - 5/25/16 - stop any global channels that aren't found
+        stopAndRemove(replicators, globalReplicatorMap);
+    }
 
+    private void processGlobal(Set<String> replicators, ChannelConfig channel) {
+        for (String satellite : channel.getGlobal().getSatellites()) {
+            GlobalReplicator replicator = new GlobalReplicator(channel, satellite);
+            replicators.add(replicator.getKey());
+            if (!globalReplicatorMap.containsKey(replicator.getKey())) {
+                replicator.start();
+                globalReplicatorMap.put(replicator.getKey(), replicator);
+            }
+        }
     }
 
     private synchronized void replicateChannels() {
@@ -112,41 +119,45 @@ public class ReplicationGlobalManager {
         for (ChannelConfig channel : replicatedChannels) {
             logger.info("replicating channel {}", channel.getName());
             try {
-                replicators.add(channel.getName());
-                if (replicatorMap.containsKey(channel.getName())) {
-                    ChannelReplicator replicator = replicatorMap.get(channel.getName());
-                    if (!replicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
-                        logger.info("changing replication source from {} to {}",
-                                replicator.getChannel().getReplicationSource(), channel.getReplicationSource());
-                        replicator.stop();
-                        startReplication(channel);
-                    }
-                } else {
-                    startReplication(channel);
-                }
+                processChannel(replicators, channel);
             } catch (Exception e) {
                 logger.warn("error trying to replicate " + channel, e);
             }
         }
+        stopAndRemove(replicators, channelReplicatorMap);
+    }
+
+    private void processChannel(Set<String> replicators, ChannelConfig channel) {
+        replicators.add(channel.getName());
+        if (channelReplicatorMap.containsKey(channel.getName())) {
+            ChannelReplicator replicator = (ChannelReplicator) channelReplicatorMap.get(channel.getName());
+            if (!replicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
+                logger.info("changing replication source from {} to {}",
+                        replicator.getChannel().getReplicationSource(), channel.getReplicationSource());
+                replicator.stop();
+                startReplication(channel);
+            }
+        } else {
+            startReplication(channel);
+        }
+    }
+
+    private void stopAndRemove(Set<String> replicators, Map<String, Replicator> replicatorMap) {
         Set<String> toStop = new HashSet<>(replicatorMap.keySet());
         toStop.removeAll(replicators);
         logger.info("stopping replicators {}", toStop);
         for (String nameToStop : toStop) {
             logger.info("stopping {}", nameToStop);
-            ChannelReplicator replicator = replicatorMap.remove(nameToStop);
+            Replicator replicator = replicatorMap.remove(nameToStop);
             replicator.stop();
         }
     }
 
     private void startReplication(ChannelConfig channel) {
         logger.debug("starting replication of " + channel);
-        try {
-            ChannelReplicator channelReplicator = new ChannelReplicator(channel, hubUtils);
-            channelReplicator.start();
-            replicatorMap.put(channel.getName(), channelReplicator);
-        } catch (Exception e) {
-            logger.warn("unable to start replication " + channel, e);
-        }
+        ChannelReplicator channelReplicator = new ChannelReplicator(channel);
+        channelReplicator.start();
+        channelReplicatorMap.put(channel.getName(), channelReplicator);
     }
 
     public void notifyWatchers() {

@@ -11,7 +11,6 @@ import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
 import com.flightstats.hub.rest.Linked;
-import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
@@ -218,8 +217,7 @@ public class TagContentResource {
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
 
         builder.type(actualContentType)
-                .header(Headers.CREATION_DATE,
-                        HubUtils.FORMATTER.print(new DateTime(key.getMillis())));
+                .header(Headers.CREATION_DATE, TimeUtil.FORMATTER.print(new DateTime(key.getMillis())));
 
         LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");

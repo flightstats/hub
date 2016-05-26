@@ -3,6 +3,7 @@ package com.flightstats.hub.dao;
 import com.diffplug.common.base.Errors;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Singleton;
 
@@ -18,6 +19,7 @@ import java.util.function.Supplier;
 @Singleton
 public class GlobalChannelService implements ChannelService {
 
+    private HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
     private ChannelService channelService = HubProvider.getInstance(LocalChannelService.class);
 
     public static <X> X handleGlobal(ChannelConfig channel, Supplier<X> local, Supplier<X> satellite, Supplier<X> master) {
@@ -39,22 +41,25 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public ChannelConfig createChannel(ChannelConfig channel) {
-        if (channel.isGlobal()) {
-            //todo - gfm - 5/19/16 - call global master with PUT /internal/global/master/{channel}
-            return null;
-        } else {
-            return channelService.createChannel(channel);
-        }
+        Supplier<ChannelConfig> local = () -> channelService.createChannel(channel);
+        Supplier<ChannelConfig> global = createGlobalMaster(channel);
+        return handleGlobal(channel, local, global, global);
     }
 
     @Override
     public ChannelConfig updateChannel(ChannelConfig channel, ChannelConfig oldConfig) {
-        if (channel.isGlobal()) {
-            //todo - gfm - 5/19/16 - call global master with PUT /internal/global/master/{channel}
+        Supplier<ChannelConfig> local = () -> channelService.updateChannel(channel, oldConfig);
+        Supplier<ChannelConfig> global = createGlobalMaster(channel);
+        return handleGlobal(channel, local, global, global);
+    }
+
+    private Supplier<ChannelConfig> createGlobalMaster(ChannelConfig channel) {
+        return () -> {
+            if (hubUtils.putChannel(channel.getGlobal().getMaster() + "internal/global/master/" + channel.getName(), channel)) {
+                return channel;
+            }
             return null;
-        } else {
-            return channelService.updateChannel(channel, oldConfig);
-        }
+        };
     }
 
     @Override

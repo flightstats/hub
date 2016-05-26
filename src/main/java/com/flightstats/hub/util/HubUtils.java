@@ -9,8 +9,6 @@ import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +18,6 @@ import javax.ws.rs.core.Response;
 @Singleton
 public class HubUtils {
 
-    public static final int NOT_FOUND = -1;
-    public static final DateTimeFormatter FORMATTER = ISODateTimeFormat.dateTime().withZoneUTC();
     private final static Logger logger = LoggerFactory.getLogger(HubUtils.class);
     private final Client noRedirectsClient;
     private final Client followClient;
@@ -79,6 +75,7 @@ public class HubUtils {
     }
 
     public boolean putChannel(String url, ChannelConfig channelConfig) {
+        logger.debug("putting {} {}", url, channelConfig);
         ClientResponse response = followClient.resource(url)
                 .accept(MediaType.APPLICATION_JSON)
                 .type(MediaType.APPLICATION_JSON)

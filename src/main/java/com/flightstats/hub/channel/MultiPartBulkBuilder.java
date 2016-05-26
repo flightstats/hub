@@ -7,7 +7,7 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
@@ -105,7 +105,7 @@ public class MultiPartBulkBuilder {
             output.write(uri.toString().getBytes());
             output.write(CRLF);
             output.write(CREATION_DATE);
-            output.write(HubUtils.FORMATTER.print(content.getContentKey().get().getMillis()).getBytes());
+            output.write(TimeUtil.FORMATTER.print(content.getContentKey().get().getMillis()).getBytes());
             output.write(CRLF);
             output.write(CRLF);
             ByteStreams.copy(content.getStream(), output);

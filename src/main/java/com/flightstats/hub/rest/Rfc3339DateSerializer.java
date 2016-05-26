@@ -3,7 +3,7 @@ package com.flightstats.hub.rest;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
@@ -13,6 +13,6 @@ public class Rfc3339DateSerializer extends JsonSerializer<Date> {
 
     @Override
     public void serialize(Date value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
-        jgen.writeString(HubUtils.FORMATTER.print(new DateTime(value)));
+        jgen.writeString(TimeUtil.FORMATTER.print(new DateTime(value)));
     }
 }

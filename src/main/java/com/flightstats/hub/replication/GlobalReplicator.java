@@ -1,17 +1,18 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 
-class GlobalReplicator {
+class GlobalReplicator implements Replicator {
 
     private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
     private static final GroupService groupService = HubProvider.getInstance(GroupService.class);
+
     private final String satellite;
-    private ChannelConfig channel;
+    private final ChannelConfig channel;
 
     GlobalReplicator(ChannelConfig channel, String satellite) {
         this.channel = channel;
@@ -19,24 +20,20 @@ class GlobalReplicator {
     }
 
     public void start() {
-        //todo - gfm - 5/25/16 - create channel
-        //todo - gfm - 5/25/16 - start local Group using GroupService
-        /*Group.GroupBuilder builder = Group.builder()
+        String channelName = channel.getName();
+        hubUtils.putChannel(satellite + "internal/global/satellite/" + channelName, channel);
+        Group group = Group.builder()
                 .name(getGroupName())
-                .callbackUrl(getCallbackUrl("repls"))
-                .channelUrl(channel.getReplicationSource())
+                .callbackUrl(satellite + "internal/repls/" + channelName)
+                .channelUrl(channel.getGlobal().getMaster() + "channel/" + channelName)
                 .heartbeat(true)
-                .batch(Group.SECOND);
-        hubUtils.startGroupCallback(builder.build());*/
-    }
-
-    private String getCallbackUrl(String apiPath) {
-        return HubProperties.getAppUrl() + "internal/repls/" + channel.getName();
+                .batch(Group.SECOND)
+                .build();
+        groupService.upsertGroup(group);
     }
 
     private String getGroupName() {
-        //todo - gfm - 5/25/16 - change this
-        return "GLOBAL_" + HubProperties.getAppEnv() + "_" + channel.getName();
+        return "Global_" + getKey();
     }
 
     public ChannelConfig getChannel() {
@@ -44,9 +41,11 @@ class GlobalReplicator {
     }
 
     public void stop() {
-        //todo - gfm - 5/25/16 - stop
+        groupService.delete(getGroupName());
     }
 
-    //todo - gfm - 5/25/16 - master-satellite-channel
+    public String getKey() {
+        return satellite + "_" + channel.getName();
+    }
 
 }

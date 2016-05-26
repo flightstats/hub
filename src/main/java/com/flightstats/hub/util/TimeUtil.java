@@ -7,20 +7,22 @@ import org.joda.time.Duration;
 import org.joda.time.Seconds;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 public class TimeUtil {
+    public static final DateTimeFormatter FORMATTER = ISODateTimeFormat.dateTime().withZoneUTC();
+
     private static final DateTimeFormatter millisFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm/ss/SSS/").withZoneUTC();
     private static final DateTimeFormatter secondsFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm/ss").withZoneUTC();
     private static final DateTimeFormatter minutesFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm").withZoneUTC();
     private static final DateTimeFormatter hoursFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH").withZoneUTC();
     private static final DateTimeFormatter daysFormatter = DateTimeFormat.forPattern("yyyy/MM/dd").withZoneUTC();
     private static final DateTimeFormatter monthsFormatter = DateTimeFormat.forPattern("yyyy/MM").withZoneUTC();
+    private static final int stableSeconds;
 
     static {
         stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
     }
-
-    private static final int stableSeconds;
 
     public static DateTime now() {
         return new DateTime(DateTimeZone.UTC);
