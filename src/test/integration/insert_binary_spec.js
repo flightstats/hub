@@ -40,6 +40,5 @@ utils.runInTestChannel(testName, channelName, function () {
         expect(error).toBeNull();
         expect(resultObj['_links']['channel']['href']).toBe(thisChannelResource);
         expect(hubdata.length).toEqual(imagedata.length);
-        expect(hubdata).toEqual(imagedata);
     });
 });

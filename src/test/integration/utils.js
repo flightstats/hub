@@ -243,7 +243,9 @@ function timeout(millis) {
 }
 
 function getPort() {
-    return callbackPort++;
+    var port = callbackPort++;
+    console.log('using port', port)
+    return port;
 }
 
 function startServer(port, callback) {
