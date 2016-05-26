@@ -5,10 +5,8 @@ ip = require('ip');
 hubDomain = process.env.hubDomain;
 runEncrypted = process.env.runEncrypted || false;
 integrationTestPath = process.env.integrationTestPath || 'src/test/integration/';
-callbackPort = 8888;
-if (runEncrypted) {
-    callbackPort = 8899;
-}
+callbackPort = runEncrypted = process.env.callbackPort || 8888;
+
 //this does not report the correct ip address when connected via the vpn
 //override ipAddress in integration_config_local.js
 ipAddress = ip.address();
