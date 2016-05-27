@@ -39,15 +39,13 @@ public class S3BatchContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDao.class);
     private static final String BATCH_INDEX = "Batch/index/";
-    public static final String BATCH_ITEMS = "Batch/items/";
-
+    private static final String BATCH_ITEMS = "Batch/items/";
+    private static final ObjectMapper mapper = new ObjectMapper();
     private final AmazonS3 s3Client;
     private final MetricsSender sender;
     private final boolean useEncrypted = HubProperties.getProperty("app.encrypted", false);
     private final int s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
     private final String s3BucketName;
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public S3BatchContentDao(AmazonS3 s3Client, S3BucketName s3BucketName, MetricsSender sender) {

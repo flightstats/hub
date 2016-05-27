@@ -5,10 +5,10 @@ import com.github.rholder.retry.StopStrategy;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class GroupStopStrategy implements StopStrategy {
+class GroupStopStrategy implements StopStrategy {
     private final AtomicBoolean hasLeadership;
 
-    public GroupStopStrategy(AtomicBoolean hasLeadership) {
+    GroupStopStrategy(AtomicBoolean hasLeadership) {
         this.hasLeadership = hasLeadership;
     }
 

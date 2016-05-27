@@ -73,8 +73,8 @@ public class S3Verifier {
         HubServices.register(service, HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
     }
 
-    SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
-                                     SortedSet<ContentKey> foundCacheKeys) {
+    private SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
+                                             SortedSet<ContentKey> foundCacheKeys) {
         QueryResult queryResult = new QueryResult(1);
         SortedSet<ContentKey> longTermKeys = new TreeSet<>();
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
@@ -169,7 +169,7 @@ public class S3Verifier {
         });
     }
 
-    public void runSingle() {
+    private void runSingle() {
         try {
             DateTime now = TimeUtil.now();
             logger.info("Verifying Single S3 data at: {}", now);
@@ -201,7 +201,7 @@ public class S3Verifier {
         return range;
     }
 
-    public void runBatch() {
+    private void runBatch() {
         try {
             DateTime now = TimeUtil.now();
             logger.info("Verifying Batch S3 data from: {}", now);

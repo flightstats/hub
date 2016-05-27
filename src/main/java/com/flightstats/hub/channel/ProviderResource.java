@@ -21,6 +21,7 @@ import java.io.InputStream;
  * This is a convenience interface for external data Providers.
  * It supports automatic channel creation and does not return links they can not access.
  */
+@SuppressWarnings("WeakerAccess")
 @Path("/provider")
 public class ProviderResource {
     private final static Logger logger = LoggerFactory.getLogger(ProviderResource.class);

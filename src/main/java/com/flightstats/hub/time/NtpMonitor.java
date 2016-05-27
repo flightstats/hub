@@ -22,12 +22,10 @@ import java.util.concurrent.TimeUnit;
 public class NtpMonitor {
 
     private final static Logger logger = LoggerFactory.getLogger(NtpMonitor.class);
-
-    @Inject
-    private MetricsSender sender;
-
     private final int minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
     private final int maxPostTimeMillis = HubProperties.getProperty("app.maxPostTimeMillis", 1000);
+    @Inject
+    private MetricsSender sender;
     private double delta;
     private double primaryOffset;
 
@@ -73,7 +71,7 @@ public class NtpMonitor {
     }
 
     @Trace(metricName = "NtpMonitor", dispatcher = true)
-    public void run() {
+    private void run() {
         try {
             Process process = new ProcessBuilder("ntpq", "-p").start();
             List<String> lines = IOUtils.readLines(process.getInputStream());
@@ -93,7 +91,7 @@ public class NtpMonitor {
         return Math.min(maxPostTimeMillis, (int) (minPostTimeMillis + primaryOffset));
     }
 
-    public void newRelic(double delta) {
+    private void newRelic(double delta) {
         NewRelic.addCustomParameter("clusterTimeDelta", delta);
         NewRelic.recordResponseTimeMetric("Custom/ClusterTimeDeltaResponse", (long) delta);
         if (delta >= 5.0) {

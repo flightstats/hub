@@ -11,10 +11,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ZooKeeperState {
     private final static Logger logger = LoggerFactory.getLogger(ZooKeeperState.class);
-
-    private ConnectionState connectionState = ConnectionState.SUSPENDED;
     private final ConnectionStateListener connectionStateListener;
     private final AtomicBoolean stopWorking = new AtomicBoolean(false);
+    private ConnectionState connectionState = ConnectionState.SUSPENDED;
 
     @Inject
     public ZooKeeperState() {
@@ -34,7 +33,7 @@ public class ZooKeeperState {
         return connectionStateListener;
     }
 
-    public boolean isHealthy() {
+    private boolean isHealthy() {
         switch (connectionState) {
             case CONNECTED:
             case RECONNECTED:
@@ -43,7 +42,7 @@ public class ZooKeeperState {
         return false;
     }
 
-    public boolean shouldStopWorking() {
+    boolean shouldStopWorking() {
         return stopWorking.get();
     }
 }

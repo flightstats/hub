@@ -39,6 +39,11 @@ public class ChannelAlertUpdater implements Callable<AlertStatus> {
         alertStatus.setType(AlertConfig.AlertType.channel.name());
     }
 
+    private static ScriptEngine createJsEngine() {
+        ScriptEngineManager engineManager = new ScriptEngineManager();
+        return engineManager.getEngineByName("nashorn");
+    }
+
     @Override
     public AlertStatus call() throws Exception {
         try {
@@ -83,7 +88,7 @@ public class ChannelAlertUpdater implements Callable<AlertStatus> {
         }
     }
 
-    boolean checkForAlert() throws ScriptException {
+    private boolean checkForAlert() throws ScriptException {
         int count = alertStatus.getHistory().stream()
                 .mapToInt(AlertStatusHistory::getItems)
                 .sum();
@@ -121,10 +126,5 @@ public class ChannelAlertUpdater implements Callable<AlertStatus> {
         }
 
         return builder.build();
-    }
-
-    private static ScriptEngine createJsEngine() {
-        ScriptEngineManager engineManager = new ScriptEngineManager();
-        return engineManager.getEngineByName("nashorn");
     }
 }

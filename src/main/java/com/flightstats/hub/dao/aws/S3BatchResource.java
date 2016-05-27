@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@SuppressWarnings("WeakerAccess")
 @Path("/internal/s3Batch/{channel}")
 public class S3BatchResource {
     private final static Logger logger = LoggerFactory.getLogger(S3BatchResource.class);
@@ -32,6 +33,24 @@ public class S3BatchResource {
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private ContentDao s3BatchContentDao = HubProvider.getInstance(ContentDao.class, ContentDao.BATCH_LONG_TERM);
     private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+
+    public static boolean getAndWriteBatch(ContentDao contentDao, String channel, MinutePath path,
+                                           Collection<ContentKey> keys, String batchUrl) {
+        ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch", path);
+        ClientResponse response = RestClient.defaultClient()
+                .resource(batchUrl + "&location=CACHE")
+                .accept("application/zip")
+                .get(ClientResponse.class);
+        if (response.getStatus() != 200) {
+            logger.warn("unable to get data for {} {}", channel, response);
+            return false;
+        }
+        ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch got response");
+        byte[] bytes = response.getEntity(byte[].class);
+        contentDao.writeBatch(channel, path, keys, bytes);
+        ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch completed");
+        return true;
+    }
 
     /**
      * This gets called back for channels to support S3 batching.
@@ -64,23 +83,5 @@ public class S3BatchResource {
             logger.warn("unable to handle " + channel + " " + data, e);
         }
         return Response.status(400).build();
-    }
-
-    public static boolean getAndWriteBatch(ContentDao contentDao, String channel, MinutePath path,
-                                           Collection<ContentKey> keys, String batchUrl) {
-        ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch", path);
-        ClientResponse response = RestClient.defaultClient()
-                .resource(batchUrl + "&location=CACHE")
-                .accept("application/zip")
-                .get(ClientResponse.class);
-        if (response.getStatus() != 200) {
-            logger.warn("unable to get data for {} {}", channel, response);
-            return false;
-        }
-        ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch got response");
-        byte[] bytes = response.getEntity(byte[].class);
-        contentDao.writeBatch(channel, path, keys, bytes);
-        ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch completed");
-        return true;
     }
 }

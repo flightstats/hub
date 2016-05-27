@@ -17,10 +17,16 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class WebSocketService {
+class WebSocketService {
 
     private final static Logger logger = LoggerFactory.getLogger(WebSocketService.class);
     private static WebSocketService instance;
+    private final GroupService groupService;
+    private final Map<String, Session> sessionMap = new HashMap<>();
+
+    private WebSocketService() {
+        groupService = HubProvider.getInstance(GroupService.class);
+    }
 
     public static synchronized WebSocketService getInstance() {
         if (null == instance) {
@@ -29,14 +35,7 @@ public class WebSocketService {
         return instance;
     }
 
-    private final GroupService groupService;
-    private final Map<String, Session> sessionMap = new HashMap<>();
-
-    public WebSocketService() {
-        groupService = HubProvider.getInstance(GroupService.class);
-    }
-
-    public void createCallback(Session session, String channel) throws UnknownHostException {
+    void createCallback(Session session, String channel) throws UnknownHostException {
         ContentKey contentKey = new ContentKey();
         String id = setId(session, channel);
         URI uri = session.getRequestURI();
@@ -95,7 +94,7 @@ public class WebSocketService {
         close(getId(session));
     }
 
-    public void close(String id) {
+    private void close(String id) {
         try {
             logger.info("deleting ws group {}", id);
             groupService.delete(id);

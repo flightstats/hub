@@ -11,7 +11,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 
-public class BulkBuilder {
+class BulkBuilder {
 
     private final static Logger logger = LoggerFactory.getLogger(BulkBuilder.class);
 
@@ -31,15 +31,15 @@ public class BulkBuilder {
         }
     }
 
-    public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                                    ChannelService channelService, UriInfo uriInfo, String accept) {
+    static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
+                             ChannelService channelService, UriInfo uriInfo, String accept) {
         return buildTag(tag, keys, channelService, uriInfo, accept, (builder) -> {
         });
     }
 
-    public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                                    ChannelService channelService, UriInfo uriInfo, String accept,
-                                    Consumer<Response.ResponseBuilder> headerBuilder) {
+    static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
+                             ChannelService channelService, UriInfo uriInfo, String accept,
+                             Consumer<Response.ResponseBuilder> headerBuilder) {
         if ("application/zip".equalsIgnoreCase(accept)) {
             return ZipBulkBuilder.buildTag(tag, keys, channelService, headerBuilder);
         } else {

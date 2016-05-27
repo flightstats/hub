@@ -11,19 +11,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class HttpAndWSHandler extends HandlerCollection {
+class HttpAndWSHandler extends HandlerCollection {
 
     private final static Logger logger = LoggerFactory.getLogger(HttpAndWSHandler.class);
 
     private Handler httpHandler;
     private Handler wsHandler;
 
-    public void addHttpHandler(Handler httpHandler) {
+    void addHttpHandler(Handler httpHandler) {
         this.httpHandler = httpHandler;
         addHandler(httpHandler);
     }
 
-    public void addWSHandler(Handler wsHandler) {
+    void addWSHandler(Handler wsHandler) {
         this.wsHandler = wsHandler;
         addHandler(wsHandler);
     }

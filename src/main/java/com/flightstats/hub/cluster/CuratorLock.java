@@ -58,7 +58,7 @@ public class CuratorLock {
     /**
      * All users should handle this
      */
-    public boolean shouldStopWorking() {
+    private boolean shouldStopWorking() {
         return zooKeeperState.shouldStopWorking();
     }
 

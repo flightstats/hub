@@ -16,16 +16,15 @@ import javax.ws.rs.core.UriInfo;
 import java.io.*;
 import java.util.Arrays;
 
+@SuppressWarnings("WeakerAccess")
 @Path("/internal/spoke")
 public class SpokeInternalResource {
 
     private final static Logger logger = LoggerFactory.getLogger(SpokeInternalResource.class);
-
-    @Context
-    private UriInfo uriInfo;
-
     private static final FileSpokeStore spokeStore = HubProvider.getInstance(FileSpokeStore.class);
     private static final RemoteSpokeStore remoteSpokeStore = HubProvider.getInstance(RemoteSpokeStore.class);
+    @Context
+    private UriInfo uriInfo;
 
     @Path("/payload/{path:.+}")
     @GET

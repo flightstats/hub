@@ -157,8 +157,8 @@ public class ChannelContentResource {
         return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag, bulk || batch, accept);
     }
 
-    public Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
-                                         Unit unit, String tag, boolean bulk, String accept) {
+    private Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
+                                          Unit unit, String tag, boolean bulk, String accept) {
         //todo - gfm - 12/15/15 - merge this with TagContentResource.getTimeQueryResponse
         if (tag != null) {
             return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo);

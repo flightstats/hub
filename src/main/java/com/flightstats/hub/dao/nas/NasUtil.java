@@ -13,11 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class NasUtil {
+class NasUtil {
 
     private final static Logger logger = LoggerFactory.getLogger(NasUtil.class);
 
-    public static String getStoragePath() {
+    static String getStoragePath() {
         return StringUtils.appendIfMissing(HubProperties.getProperty("storage.path", "/nas"), "/");
     }
 
@@ -25,7 +25,7 @@ public class NasUtil {
         return NasUtil.getStoragePath() + "content/";
     }
 
-    public static void writeJson(String json, String name, String path) {
+    static void writeJson(String json, String name, String path) {
         try {
             byte[] bytes = json.getBytes();
             FileUtils.writeByteArrayToFile(new File(path + name), bytes);
@@ -34,7 +34,7 @@ public class NasUtil {
         }
     }
 
-    public static <T> T readJson(String path, String name, Function<String, T> fromJson) {
+    static <T> T readJson(String path, String name, Function<String, T> fromJson) {
         return read(new File(path + name), fromJson);
     }
 
@@ -50,7 +50,7 @@ public class NasUtil {
         return null;
     }
 
-    public static <T> Iterable<T> getIterable(String path, Function<String, T> fromJson) {
+    static <T> Iterable<T> getIterable(String path, Function<String, T> fromJson) {
         List<T> list = new ArrayList<>();
         File[] files = new File(path).listFiles();
         if (files == null) {

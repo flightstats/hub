@@ -23,7 +23,7 @@ import java.net.URI;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 
-public class MultiPartBulkBuilder {
+class MultiPartBulkBuilder {
 
     private final static Logger logger = LoggerFactory.getLogger(MultiPartBulkBuilder.class);
 
@@ -47,9 +47,9 @@ public class MultiPartBulkBuilder {
         }, headerBuilder);
     }
 
-    public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                                    ChannelService channelService, UriInfo uriInfo,
-                                    Consumer<Response.ResponseBuilder> headerBuilder) {
+    static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
+                             ChannelService channelService, UriInfo uriInfo,
+                             Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
@@ -91,8 +91,8 @@ public class MultiPartBulkBuilder {
         writeContent(content, output, channelUri, name, true, false);
     }
 
-    public static void writeContent(Content content, OutputStream output, URI channelUri, String name,
-                                    boolean startBoundary, boolean endBoundary) {
+    private static void writeContent(Content content, OutputStream output, URI channelUri, String name,
+                                     boolean startBoundary, boolean endBoundary) {
         try {
             if (startBoundary) output.write(START_BOUNDARY);
             if (content.getContentType().isPresent()) {

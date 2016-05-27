@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 
-public class AlertSender {
+class AlertSender {
 
     private final static Logger logger = LoggerFactory.getLogger(AlertSender.class);
     private static final ObjectMapper mapper = new ObjectMapper();

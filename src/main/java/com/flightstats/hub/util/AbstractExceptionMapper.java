@@ -10,7 +10,7 @@ import javax.ws.rs.ext.ExceptionMapper;
 public abstract class AbstractExceptionMapper<T extends Throwable> implements ExceptionMapper<T> {
     private static final Logger logger = LoggerFactory.getLogger(AbstractExceptionMapper.class);
 
-    public AbstractExceptionMapper() {
+    protected AbstractExceptionMapper() {
     }
 
     public Response toResponse(T exception) {

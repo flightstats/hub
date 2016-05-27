@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
  * The primary value to set here the system property 'storage.path', which is where all the local data files
  * are stored.
  */
-public class SingleHubMain {
+class SingleHubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(SingleHubMain.class);
     private static final DateTime startTime = new DateTime();

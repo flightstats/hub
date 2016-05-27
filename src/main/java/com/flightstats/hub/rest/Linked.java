@@ -16,9 +16,17 @@ public class Linked<T> {
     private final HalLinks halLinks;
     private final T object;
 
-    protected Linked(HalLinks halLinks, T object) {
+    private Linked(HalLinks halLinks, T object) {
         this.halLinks = halLinks;
         this.object = object;
+    }
+
+    public static <T> Builder<T> linked(T object) {
+        return new Builder<>(object);
+    }
+
+    public static Builder<?> justLinks() {
+        return linked(null);
     }
 
     @JsonProperty("_links")
@@ -32,12 +40,12 @@ public class Linked<T> {
         return object;
     }
 
-    public static <T> Builder<T> linked(T object) {
-        return new Builder<>(object);
-    }
-
-    public static Builder<?> justLinks() {
-        return linked(null);
+    public void writeJson(ObjectNode node) {
+        ObjectNode links = node.putObject("_links");
+        for (HalLink link : halLinks.getLinks()) {
+            ObjectNode linkNode = links.putObject(link.getName());
+            linkNode.put("href", link.getUri().toString());
+        }
     }
 
     public static class Builder<T> {
@@ -66,14 +74,6 @@ public class Linked<T> {
 
         public Linked<T> build() {
             return new Linked<>(new HalLinks(links, multiLinks), object);
-        }
-    }
-
-    public void writeJson(ObjectNode node) {
-        ObjectNode links = node.putObject("_links");
-        for (HalLink link : halLinks.getLinks()) {
-            ObjectNode linkNode = links.putObject(link.getName());
-            linkNode.put("href", link.getUri().toString());
         }
     }
 }

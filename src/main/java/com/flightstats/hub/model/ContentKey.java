@@ -20,10 +20,9 @@ import java.text.DecimalFormat;
 public class ContentKey implements ContentPath {
     public static final ContentKey NONE = new ContentKey(new DateTime(1, DateTimeZone.UTC), "none");
     private final static Logger logger = LoggerFactory.getLogger(ContentKey.class);
+    private static final DecimalFormat format = new DecimalFormat("000000");
     private final DateTime time;
     private final String hash;
-
-    private static final DecimalFormat format = new DecimalFormat("000000");
 
     public ContentKey() {
         this(TimeUtil.now());
@@ -38,12 +37,12 @@ public class ContentKey implements ContentPath {
         this.hash = hash;
     }
 
-    public static ContentKey lastKey(DateTime time) {
-        return new ContentKey(time, "~ZZZZZZZZZZZZZZZZ");
-    }
-
     public ContentKey(int year, int month, int day, int hour, int minute, int second, int millis, String hash) {
         this(new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC), hash);
+    }
+
+    public static ContentKey lastKey(DateTime time) {
+        return new ContentKey(time, "~ZZZZZZZZZZZZZZZZ");
     }
 
     public static Optional<ContentKey> fromFullUrl(String url) {
@@ -77,6 +76,14 @@ public class ContentKey implements ContentPath {
 
     public static ContentKey fromBytes(byte[] bytes) {
         return fromUrl(new String(bytes, Charsets.UTF_8)).get();
+    }
+
+    private synchronized static String bulkHash(int number) {
+        return format.format(number);
+    }
+
+    public static ContentKey bulkKey(ContentKey master, int index) {
+        return new ContentKey(master.getTime(), master.getHash() + ContentKey.bulkHash(index));
     }
 
     public String toUrl() {
@@ -137,13 +144,5 @@ public class ContentKey implements ContentPath {
     public ContentKey fromZk(String value) {
         String[] split = value.split(":");
         return new ContentKey(new DateTime(Long.parseLong(split[0]), DateTimeZone.UTC), split[1]);
-    }
-
-    public synchronized static String bulkHash(int number) {
-        return format.format(number);
-    }
-
-    public static ContentKey bulkKey(ContentKey master, int index) {
-        return new ContentKey(master.getTime(), master.getHash() + ContentKey.bulkHash(index));
     }
 }

@@ -12,6 +12,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@SuppressWarnings("WeakerAccess")
 @Path("/health/metrics")
 public class MetricsResource {
     private final static Logger logger = LoggerFactory.getLogger(MetricsResource.class);

@@ -27,13 +27,13 @@ public class HubProperties {
         return (getProperty("app.name", "hub") + "_" + getProperty("app.environment", "unknown")).replace("-", "_");
     }
 
-    public static void setProperties(Properties properties) {
-        logger.info("setting properties {}", properties);
-        HubProperties.properties = properties;
-    }
-
     public static Properties getProperties() {
         return properties;
+    }
+
+    private static void setProperties(Properties properties) {
+        logger.info("setting properties {}", properties);
+        HubProperties.properties = properties;
     }
 
     public static boolean getProperty(String name, boolean defaultValue) {

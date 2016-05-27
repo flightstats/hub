@@ -14,11 +14,11 @@ import javax.annotation.Nullable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class GroupRetryer {
+class GroupRetryer {
 
     private final static Logger logger = LoggerFactory.getLogger(GroupRetryer.class);
 
-    public static Retryer<ClientResponse> buildRetryer(Group group, GroupError groupError, AtomicBoolean hasLeadership) {
+    static Retryer<ClientResponse> buildRetryer(Group group, GroupError groupError, AtomicBoolean hasLeadership) {
         return RetryerBuilder.<ClientResponse>newBuilder()
                 .retryIfException(throwable -> {
                     if (throwable != null) {

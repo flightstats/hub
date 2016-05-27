@@ -5,12 +5,12 @@ import com.flightstats.hub.model.ContentKey;
 import java.util.Collection;
 import java.util.TreeSet;
 
-public class ContentKeySet extends TreeSet<ContentKey> {
+class ContentKeySet extends TreeSet<ContentKey> {
 
     private final int maxSize;
     private final ContentKey limitKey;
 
-    public ContentKeySet(int maxSize, ContentKey contentKey) {
+    ContentKeySet(int maxSize, ContentKey contentKey) {
         this.maxSize = maxSize;
         this.limitKey = contentKey;
     }
@@ -35,7 +35,7 @@ public class ContentKeySet extends TreeSet<ContentKey> {
         return true;
     }
 
-    public ContentKey oldest() {
+    private ContentKey oldest() {
         return first();
     }
 }

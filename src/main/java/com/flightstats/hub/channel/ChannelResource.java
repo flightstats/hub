@@ -37,6 +37,7 @@ import static com.flightstats.hub.rest.Linked.linked;
 /**
  * This resource represents a single channel in the Hub.
  */
+@SuppressWarnings("WeakerAccess")
 @Path("/channel/{channel}")
 public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
@@ -170,9 +171,9 @@ public class ChannelResource {
     @Consumes("multipart/*")
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/bulk")
-    public Response insertBulk(@PathParam("channel") final String channelName,
-                               @HeaderParam("Content-Type") final String contentType,
-                               final InputStream data) throws Exception {
+    private Response insertBulk(@PathParam("channel") final String channelName,
+                                @HeaderParam("Content-Type") final String contentType,
+                                final InputStream data) throws Exception {
         try {
             BulkContent content = BulkContent.builder()
                     .isNew(true)

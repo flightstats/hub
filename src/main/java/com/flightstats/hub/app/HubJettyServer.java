@@ -27,6 +27,12 @@ public class HubJettyServer {
 
     private Server server;
 
+    private static String getKeyStorePath() throws UnknownHostException {
+        String path = HubProperties.getProperty("app.keyStorePath", "/etc/ssl/") + HubHost.getLocalName() + ".jks";
+        logger.info("using key store path: {}", path);
+        return path;
+    }
+
     public void start(ResourceConfig config) {
         checkState(server == null, "Server has already been started");
         try {
@@ -75,13 +81,7 @@ public class HubJettyServer {
         return sslContextFactory;
     }
 
-    static String getKeyStorePath() throws UnknownHostException {
-        String path = HubProperties.getProperty("app.keyStorePath", "/etc/ssl/") + HubHost.getLocalName() + ".jks";
-        logger.info("using key store path: {}", path);
-        return path;
-    }
-
-    public void halt() {
+    void halt() {
         try {
             if (server != null) {
                 server.stop();

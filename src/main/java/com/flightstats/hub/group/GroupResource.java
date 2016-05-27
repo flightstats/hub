@@ -22,16 +22,15 @@ import javax.ws.rs.core.UriInfo;
 /**
  * GroupResource represents all of the interactions for Group Management.
  */
+@SuppressWarnings("WeakerAccess")
 @Path("/group")
 public class GroupResource {
 
     private final static Logger logger = LoggerFactory.getLogger(GroupResource.class);
-
+    private final GroupService groupService = HubProvider.getInstance(GroupService.class);
     @Context
     private UriInfo uriInfo;
-
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final GroupService groupService = HubProvider.getInstance(GroupService.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

@@ -9,6 +9,7 @@ import javax.ws.rs.ext.Provider;
 /**
  * Traps all errors including service level erros for reporting and trapping.
  */
+@SuppressWarnings("WeakerAccess")
 @Provider
 public class GeneralExceptionMapper implements ExceptionMapper<Exception> {
 

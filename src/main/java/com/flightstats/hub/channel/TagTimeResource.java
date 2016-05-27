@@ -11,6 +11,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+@SuppressWarnings("WeakerAccess")
 @Path("/tag/{tag: .*}/time")
 public class TagTimeResource {
 

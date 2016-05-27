@@ -21,7 +21,7 @@ import java.util.TimeZone;
 /**
  * Copied from Gson.  Would be nice to be able to specify the date format.
  */
-public final class HubDateTypeAdapter extends TypeAdapter<Date> {
+final class HubDateTypeAdapter extends TypeAdapter<Date> {
     public static final TypeAdapterFactory FACTORY = new TypeAdapterFactory() {
         @SuppressWarnings("unchecked") // we use a runtime check to make sure the 'T's equal
         public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {

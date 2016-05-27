@@ -18,6 +18,7 @@ import java.util.Map;
 /**
  * This resource represents operations on tags.
  */
+@SuppressWarnings("WeakerAccess")
 @Path("/tag")
 public class TagResource {
 

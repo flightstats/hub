@@ -20,6 +20,7 @@ import java.util.List;
 /**
  * This exists to prevent gzip & deflate encodings for event-streams.
  */
+@SuppressWarnings("WeakerAccess")
 @PreMatching
 public final class EventsEncodingFilter implements ContainerResponseFilter {
 

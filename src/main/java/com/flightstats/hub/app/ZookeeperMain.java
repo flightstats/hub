@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-public class ZookeeperMain {
+class ZookeeperMain {
     private final static Logger logger = LoggerFactory.getLogger(ZookeeperMain.class);
 
     public static void main(String[] args) throws IOException, QuorumPeerConfig.ConfigException {

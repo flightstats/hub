@@ -31,6 +31,7 @@ import static com.flightstats.hub.util.TimeUtil.Unit;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
+@SuppressWarnings("WeakerAccess")
 @Path("/tag/{tag}")
 public class TagContentResource {
 

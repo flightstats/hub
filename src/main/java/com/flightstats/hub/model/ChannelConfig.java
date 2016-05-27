@@ -21,8 +21,8 @@ import java.util.*;
 public class ChannelConfig implements Serializable {
 
     public static final String SINGLE = "SINGLE";
-    public static final String BATCH = "BATCH";
-    public static final String BOTH = "BOTH";
+    private static final String BATCH = "BATCH";
+    private static final String BOTH = "BOTH";
     private static final long serialVersionUID = 1L;
     private static final Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new HubDateTypeAdapter()).create();
     private final String name;
@@ -36,7 +36,7 @@ public class ChannelConfig implements Serializable {
     private final String storage;
     private final GlobalConfig global;
 
-    public ChannelConfig(Builder builder) {
+    private ChannelConfig(Builder builder) {
         name = StringUtils.trim(builder.name);
         owner = StringUtils.trim(builder.owner);
         creationDate = builder.creationDate;

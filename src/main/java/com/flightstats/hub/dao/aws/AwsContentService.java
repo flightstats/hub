@@ -69,7 +69,7 @@ public class AwsContentService implements ContentService {
         HubServices.register(new ChannelLatestUpdatedService());
     }
 
-    void waitForInFlight() {
+    private void waitForInFlight() {
         logger.info("waiting for in-flight to complete " + inFlight.get());
         long start = System.currentTimeMillis();
         while (inFlight.get() > 0) {

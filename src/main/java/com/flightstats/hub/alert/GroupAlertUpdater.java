@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
 
-public class GroupAlertUpdater implements Callable<AlertStatus> {
+class GroupAlertUpdater implements Callable<AlertStatus> {
 
     private final static Logger logger = LoggerFactory.getLogger(GroupAlertUpdater.class);
 
@@ -24,7 +24,7 @@ public class GroupAlertUpdater implements Callable<AlertStatus> {
     private final AlertConfig alertConfig;
     private final AlertStatus alertStatus;
 
-    public GroupAlertUpdater(AlertConfig alertConfig, AlertStatus alertStatus) {
+    GroupAlertUpdater(AlertConfig alertConfig, AlertStatus alertStatus) {
         this.alertConfig = alertConfig;
         if (alertStatus == null) {
             alertStatus = AlertStatus.builder()

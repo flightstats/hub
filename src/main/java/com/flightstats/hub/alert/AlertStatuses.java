@@ -14,7 +14,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AlertStatuses {
+class AlertStatuses {
 
     private final static Logger logger = LoggerFactory.getLogger(AlertStatuses.class);
     private final static ObjectMapper mapper = new ObjectMapper();

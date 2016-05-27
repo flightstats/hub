@@ -136,14 +136,14 @@ public class LastContentPath {
         }
     }
 
-    LastUpdated getLastUpdated(String path) throws Exception {
+    private LastUpdated getLastUpdated(String path) throws Exception {
         Stat stat = new Stat();
         byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
         Optional<ContentPath> pathOptional = ContentPath.fromUrl(new String(bytes, Charsets.UTF_8));
         return new LastUpdated(pathOptional.get(), stat.getVersion());
     }
 
-    class LastUpdated {
+    private class LastUpdated {
         ContentPath key;
         int version;
 

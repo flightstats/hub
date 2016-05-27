@@ -11,6 +11,7 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.net.URI;
 
+@SuppressWarnings("WeakerAccess")
 @Provider
 @PreMatching
 @Singleton

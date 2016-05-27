@@ -23,18 +23,18 @@ import static com.flightstats.hub.rest.Linked.linked;
 
 public class LinkBuilder {
 
-    public static URI buildWsLinkFor(URI channelUri) {
+    private static URI buildWsLinkFor(URI channelUri) {
         String requestUri = channelUri.toString().replaceFirst("^http", "ws");
         return URI.create(requestUri + "/ws");
     }
 
-    public static void addOptionalHeader(String headerName, Optional<String> headerValue, Response.ResponseBuilder builder) {
+    static void addOptionalHeader(String headerName, Optional<String> headerValue, Response.ResponseBuilder builder) {
         if (headerValue.isPresent()) {
             builder.header(headerName, headerValue.get());
         }
     }
 
-    public static URI buildChannelUri(ChannelConfig channelConfig, UriInfo uriInfo) {
+    static URI buildChannelUri(ChannelConfig channelConfig, UriInfo uriInfo) {
         return buildChannelUri(channelConfig.getName(), uriInfo);
     }
 
@@ -46,11 +46,11 @@ public class LinkBuilder {
         return buildItemUri(key.toUrl(), channelUri);
     }
 
-    public static URI buildItemUri(String key, URI channelUri) {
+    private static URI buildItemUri(String key, URI channelUri) {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
-    public static Linked<ChannelConfig> buildChannelLinks(ChannelConfig config, URI channelUri) {
+    static Linked<ChannelConfig> buildChannelLinks(ChannelConfig config, URI channelUri) {
         Linked.Builder<ChannelConfig> linked = linked(config).withLink("self", channelUri);
         linked.withLink("latest", URI.create(channelUri + "/latest"))
                 .withLink("earliest", URI.create(channelUri + "/earliest"))
@@ -71,7 +71,7 @@ public class LinkBuilder {
         return buildLinks(uriInfo, mappedUris, "channels");
     }
 
-    public static Linked<?> buildLinks(UriInfo uriInfo, Map<String, URI> nameToUriMap, String name) {
+    static Linked<?> buildLinks(UriInfo uriInfo, Map<String, URI> nameToUriMap, String name) {
         return buildLinks(nameToUriMap, name, builder -> {
             builder.withLink("self", uriInfo.getRequestUri());
         });
@@ -89,23 +89,23 @@ public class LinkBuilder {
         return responseBuilder.build();
     }
 
-    public static UriBuilder uriBuilder(String channel, UriInfo uriInfo) {
+    static UriBuilder uriBuilder(String channel, UriInfo uriInfo) {
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder()
                 .path("channel").path(channel);
         TimeLinkUtil.addQueryParams(uriInfo, uriBuilder);
         return uriBuilder;
     }
 
-    public static URI getDirection(String name, String channel, UriInfo uriInfo, ContentKey key, int count) {
+    static URI getDirection(String name, String channel, UriInfo uriInfo, ContentKey key, int count) {
         return LinkBuilder.uriBuilder(channel, uriInfo)
                 .path(key.toUrl())
                 .path(name).path("" + count)
                 .build();
     }
 
-    public static Response directionalResponse(String channel, Collection<ContentKey> keys, int count,
-                                               DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
-                                               boolean includePrevious, boolean trace) {
+    static Response directionalResponse(String channel, Collection<ContentKey> keys, int count,
+                                        DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
+                                        boolean includePrevious, boolean trace) {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
@@ -141,9 +141,9 @@ public class LinkBuilder {
         return Response.ok(root).build();
     }
 
-    public static Response directionalTagResponse(String tag, Collection<ChannelContentKey> keys, int count,
-                                                  DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
-                                                  boolean includePrevious, boolean trace) {
+    static Response directionalTagResponse(String tag, Collection<ChannelContentKey> keys, int count,
+                                           DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
+                                           boolean includePrevious, boolean trace) {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
