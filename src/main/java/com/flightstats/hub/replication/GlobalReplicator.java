@@ -24,7 +24,8 @@ class GlobalReplicator implements Replicator {
         hubUtils.putChannel(satellite + "internal/global/satellite/" + channelName, channel);
         Group group = Group.builder()
                 .name(getGroupName())
-                .callbackUrl(satellite + "internal/repls/" + channelName)
+                //todo - gfm - 5/26/16 - use a different endpoint
+                .callbackUrl(satellite + "internal/global/repl/" + channelName)
                 .channelUrl(channel.getGlobal().getMaster() + "channel/" + channelName)
                 .heartbeat(true)
                 .batch(Group.SECOND)

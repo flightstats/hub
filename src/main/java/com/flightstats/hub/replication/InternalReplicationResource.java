@@ -18,6 +18,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 
 @Path("/internal/repls/{channel}")
 public class InternalReplicationResource {
@@ -78,10 +79,8 @@ public class InternalReplicationResource {
 
     @POST
     public Response putPayload(@PathParam("channel") String channel, String data) {
-        logger.trace("incoming {} {}", channel, data);
         try {
-            logger.debug("processing {} {}", channel, data);
-            JsonNode node = mapper.readTree(data);
+            JsonNode node = readData(channel, data);
             SecondPath path = SecondPath.fromUrl(node.get("id").asText()).get();
             int expectedItems = node.get("uris").size();
             if (expectedItems > 0) {
@@ -97,5 +96,11 @@ public class InternalReplicationResource {
         }
         return Response.status(500).build();
     }
+
+    JsonNode readData(String channel, String data) throws IOException {
+        logger.debug("reading {} {}", channel, data);
+        return mapper.readTree(data);
+    }
+
 
 }

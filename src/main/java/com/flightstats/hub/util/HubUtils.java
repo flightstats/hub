@@ -84,4 +84,18 @@ public class HubUtils {
         return response.getStatus() < 400;
     }
 
+    public ChannelConfig getChannel(String url) {
+        logger.debug("getting {} {}", url);
+        ClientResponse response = followClient.resource(url)
+                .accept(MediaType.APPLICATION_JSON)
+                .type(MediaType.APPLICATION_JSON)
+                .get(ClientResponse.class);
+        logger.debug("get channel response {} {}", response);
+        if (response.getStatus() >= 400) {
+            return null;
+        } else {
+            return ChannelConfig.fromJson(response.getEntity(String.class));
+        }
+    }
+
 }
