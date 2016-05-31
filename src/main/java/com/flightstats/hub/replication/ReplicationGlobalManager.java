@@ -1,11 +1,11 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
@@ -44,15 +44,18 @@ public class ReplicationGlobalManager {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationGlobalManager.class);
     private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
 
-    private final ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private final WatchManager watchManager = HubProvider.getInstance(WatchManager.class);
+    private ChannelService channelService;
+    private WatchManager watchManager;
 
     private final Map<String, Replicator> channelReplicatorMap = new HashMap<>();
     private final Map<String, Replicator> globalReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    public ReplicationGlobalManager() {
+    @Inject
+    public ReplicationGlobalManager(ChannelService channelService, WatchManager watchManager) {
+        this.channelService = channelService;
+        this.watchManager = watchManager;
         register(new ReplicationGlobalService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
     }
 

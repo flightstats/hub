@@ -1,10 +1,10 @@
 package com.flightstats.hub.dao;
 
 import com.diffplug.common.base.Errors;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.Collection;
@@ -19,8 +19,14 @@ import java.util.function.Supplier;
 @Singleton
 public class GlobalChannelService implements ChannelService {
 
-    private HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
-    private ChannelService channelService = HubProvider.getInstance(LocalChannelService.class);
+    private HubUtils hubUtils;
+    private LocalChannelService localChannelService;
+
+    @Inject
+    public GlobalChannelService(LocalChannelService localChannelService, HubUtils hubUtils) {
+        this.localChannelService = localChannelService;
+        this.hubUtils = hubUtils;
+    }
 
     public static <X> X handleGlobal(ChannelConfig channel, Supplier<X> local, Supplier<X> satellite, Supplier<X> master) {
         if (channel.isGlobal()) {
@@ -41,14 +47,14 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public ChannelConfig createChannel(ChannelConfig channel) {
-        Supplier<ChannelConfig> local = () -> channelService.createChannel(channel);
+        Supplier<ChannelConfig> local = () -> localChannelService.createChannel(channel);
         Supplier<ChannelConfig> global = createGlobalMaster(channel);
         return handleGlobal(channel, local, global, global);
     }
 
     @Override
     public ChannelConfig updateChannel(ChannelConfig channel, ChannelConfig oldConfig) {
-        Supplier<ChannelConfig> local = () -> channelService.updateChannel(channel, oldConfig);
+        Supplier<ChannelConfig> local = () -> localChannelService.updateChannel(channel, oldConfig);
         Supplier<ChannelConfig> global = createGlobalMaster(channel);
         return handleGlobal(channel, local, global, global);
     }
@@ -65,7 +71,7 @@ public class GlobalChannelService implements ChannelService {
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
         Supplier<ContentKey> local = Errors.rethrow().wrap(() -> {
-            return channelService.insert(channelName, content);
+            return localChannelService.insert(channelName, content);
         });
         Supplier<ContentKey> satellite = () -> {
             //todo - gfm - 5/19/16 - call global master with POST /channel/{channel}/
@@ -77,7 +83,7 @@ public class GlobalChannelService implements ChannelService {
     @Override
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
         Supplier<Collection<ContentKey>> local = Errors.rethrow().wrap(() -> {
-            return channelService.insert(bulkContent);
+            return localChannelService.insert(bulkContent);
         });
         Supplier<Collection<ContentKey>> satellite = () -> {
             //todo - gfm - 5/19/16 - call global master with POST /channel/{channel}/bulk
@@ -96,12 +102,12 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public boolean isReplicating(String channelName) {
-        return channelService.isReplicating(channelName);
+        return localChannelService.isReplicating(channelName);
     }
 
     @Override
     public Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace) {
-        Supplier<Optional<ContentKey>> local = () -> channelService.getLatest(channelName, stable, trace);
+        Supplier<Optional<ContentKey>> local = () -> localChannelService.getLatest(channelName, stable, trace);
         Supplier<Optional<ContentKey>> satellite = () -> {
             //todo - gfm - 5/20/16 - call Spoke directly
             //todo - gfm - 5/19/16 - if we don't find a latest in spoke, try master
@@ -115,7 +121,7 @@ public class GlobalChannelService implements ChannelService {
     @Override
     public void deleteBefore(String name, ContentKey limitKey) {
         Supplier<Void> local = () -> {
-            channelService.deleteBefore(name, limitKey);
+            localChannelService.deleteBefore(name, limitKey);
             return null;
         };
         Supplier<Void> satellite = () -> {
@@ -127,7 +133,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public Optional<Content> getValue(Request request) {
-        Supplier<Optional<Content>> local = () -> channelService.getValue(request);
+        Supplier<Optional<Content>> local = () -> localChannelService.getValue(request);
         Supplier<Optional<Content>> satellite = () -> {
             //todo - gfm - 5/20/16 - call Spoke directly
             //todo - gfm - 5/19/16 - if we don't find a Value in spoke, try master
@@ -139,12 +145,12 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public Iterable<String> getTags() {
-        return channelService.getTags();
+        return localChannelService.getTags();
     }
 
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
-        Supplier<SortedSet<ContentKey>> local = () -> channelService.queryByTime(query);
+        Supplier<SortedSet<ContentKey>> local = () -> localChannelService.queryByTime(query);
         Supplier<SortedSet<ContentKey>> satellite = () -> {
             //todo - gfm - 5/19/16 - if the time is entirely within Spoke, answer the question locally
             //todo - gfm - 5/19/16 - otherwise merge the values from the local Spoke and the Master
@@ -156,7 +162,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public SortedSet<ContentKey> getKeys(DirectionQuery query) {
-        Supplier<SortedSet<ContentKey>> local = () -> channelService.getKeys(query);
+        Supplier<SortedSet<ContentKey>> local = () -> localChannelService.getKeys(query);
         ;
         Supplier<SortedSet<ContentKey>> satellite = () -> {
             //todo - gfm - 5/19/16 - if the time is entirely within Spoke, answer the question locally
@@ -174,7 +180,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public boolean delete(String channelName) {
-        Supplier<Boolean> local = () -> channelService.delete(channelName);
+        Supplier<Boolean> local = () -> localChannelService.delete(channelName);
         Supplier<Boolean> satellite = () -> {
             //todo - gfm - 5/19/16 - call global master with ... DELETE /channel/{channel}
             return null;
@@ -185,22 +191,22 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public ChannelConfig getChannelConfig(String channelName, boolean allowChannelCache) {
-        return channelService.getChannelConfig(channelName, allowChannelCache);
+        return localChannelService.getChannelConfig(channelName, allowChannelCache);
     }
 
     @Override
     public ChannelConfig getCachedChannelConfig(String channelName) {
-        return channelService.getCachedChannelConfig(channelName);
+        return localChannelService.getCachedChannelConfig(channelName);
     }
 
     @Override
     public Iterable<ChannelConfig> getChannels() {
-        return channelService.getChannels();
+        return localChannelService.getChannels();
     }
 
     @Override
     public Iterable<ChannelConfig> getChannels(String tag) {
-        return channelService.getChannels(tag);
+        return localChannelService.getChannels(tag);
     }
 
 }
