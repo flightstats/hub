@@ -171,9 +171,9 @@ public class ChannelResource {
     @Consumes("multipart/*")
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/bulk")
-    private Response insertBulk(@PathParam("channel") final String channelName,
-                                @HeaderParam("Content-Type") final String contentType,
-                                final InputStream data) throws Exception {
+    public Response insertBulk(@PathParam("channel") final String channelName,
+                               @HeaderParam("Content-Type") final String contentType,
+                               final InputStream data) throws Exception {
         try {
             BulkContent content = BulkContent.builder()
                     .isNew(true)
