@@ -52,6 +52,7 @@ public class ContentKey implements ContentPath {
             return fromUrl(substring).get();
         } catch (Exception e) {
             logger.info("unable to parse " + url + " " + e.getMessage());
+            //todo - gfm - 6/1/16 - do something better with this.
             return null;
         }
     }

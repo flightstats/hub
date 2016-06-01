@@ -95,8 +95,10 @@ public class GlobalChannelService implements ChannelService {
             return localChannelService.insert(bulkContent);
         });
         Supplier<Collection<ContentKey>> satellite = () -> {
-            //todo - gfm - 5/19/16 - call global master with POST /channel/{channel}/bulk
-            return null;
+            String channelName = bulkContent.getChannel();
+            ChannelConfig config = localChannelService.getCachedChannelConfig(channelName);
+            String url = config.getGlobal().getMaster() + "/channel/" + channelName + "/bulk";
+            return hubUtils.insert(url, bulkContent);
         };
         return handleGlobal(bulkContent.getChannel(), local, satellite);
     }
