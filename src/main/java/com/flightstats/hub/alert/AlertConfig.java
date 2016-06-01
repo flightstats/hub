@@ -49,8 +49,10 @@ public class AlertConfig {
     public boolean isValid() {
         if (StringUtils.isBlank(getSource())
                 || StringUtils.isBlank(getName())
-                || StringUtils.isBlank(getServiceName())
-                || StringUtils.isBlank(getOperator())) {
+                || StringUtils.isBlank(getServiceName())) {
+            return false;
+        }
+        if (isChannelAlert() && StringUtils.isBlank(getOperator())) {
             return false;
         }
         return true;

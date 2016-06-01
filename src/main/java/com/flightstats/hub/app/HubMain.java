@@ -35,7 +35,6 @@ public class HubMain {
 
     static void start() throws Exception {
         startZookeeperIfSingle();
-
         HubJettyServer server = startServer();
 
         final CountDownLatch latch = new CountDownLatch(1);
