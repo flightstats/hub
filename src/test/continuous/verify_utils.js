@@ -80,6 +80,9 @@ function verifyEscalationAlerts(existingRules) {
                     found++;
                 }
             });
+            if (found === 0) {
+                console.log('no alert found for rule', rule.name);
+            }
             expect(found).toBe(1);
         })
 
