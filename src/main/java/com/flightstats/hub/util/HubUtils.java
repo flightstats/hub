@@ -2,17 +2,21 @@ package com.flightstats.hub.util;
 
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 @Singleton
@@ -95,6 +99,38 @@ public class HubUtils {
             return null;
         } else {
             return ChannelConfig.fromJson(response.getEntity(String.class));
+        }
+    }
+
+    public ContentKey insert(String url, Content content) {
+        logger.info("posting data", url);
+        WebResource.Builder resource = followClient.resource(url).getRequestBuilder();
+        if (content.getContentType().isPresent()) {
+            resource = resource.type(content.getContentType().get());
+        }
+        ClientResponse response = resource.post(ClientResponse.class, content.getData());
+        logger.trace("got repsonse {}", response);
+        if (response.getStatus() == 201) {
+            return ContentKey.fromFullUrl(response.getLocation().toString()).get();
+        } else {
+            return null;
+        }
+    }
+
+    public Content get(String url, ContentKey contentKey) {
+        ClientResponse response = followClient.resource(url + "/" + contentKey.toUrl()).get(ClientResponse.class);
+        if (response.getStatus() == 200) {
+            Content.Builder builder = Content.builder()
+                    .withStream(response.getEntityInputStream())
+                    .withContentKey(contentKey);
+            MultivaluedMap<String, String> headers = response.getHeaders();
+            if (headers.containsKey("Content-Type")) {
+                builder.withContentType(headers.getFirst("Content-Type"));
+            }
+            return builder.build();
+        } else {
+            logger.info("unable to get {} {} {}", url, contentKey, response);
+            return null;
         }
     }
 

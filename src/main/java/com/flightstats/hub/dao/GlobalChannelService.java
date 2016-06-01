@@ -40,6 +40,14 @@ public class GlobalChannelService implements ChannelService {
         }
     }
 
+    private <X> X handleGlobal(String channelName, Supplier<X> local, Supplier<X> satellite) {
+        return handleGlobal(channelName, local, satellite, local);
+    }
+
+    private <X> X handleGlobal(String channelName, Supplier<X> local, Supplier<X> satellite, Supplier<X> master) {
+        return handleGlobal(getCachedChannelConfig(channelName), local, satellite, master);
+    }
+
     @Override
     public boolean channelExists(String channelName) {
         return false;
@@ -74,8 +82,9 @@ public class GlobalChannelService implements ChannelService {
             return localChannelService.insert(channelName, content);
         });
         Supplier<ContentKey> satellite = () -> {
-            //todo - gfm - 5/19/16 - call global master with POST /channel/{channel}/
-            return null;
+            ChannelConfig config = localChannelService.getCachedChannelConfig(channelName);
+            String url = config.getGlobal().getMaster() + "/channel/" + channelName;
+            return hubUtils.insert(url, content);
         };
         return handleGlobal(channelName, local, satellite);
     }
@@ -90,14 +99,6 @@ public class GlobalChannelService implements ChannelService {
             return null;
         };
         return handleGlobal(bulkContent.getChannel(), local, satellite);
-    }
-
-    private <X> X handleGlobal(String channelName, Supplier<X> local, Supplier<X> satellite) {
-        return handleGlobal(channelName, local, satellite, local);
-    }
-
-    private <X> X handleGlobal(String channelName, Supplier<X> local, Supplier<X> satellite, Supplier<X> master) {
-        return handleGlobal(getCachedChannelConfig(channelName), local, satellite, master);
     }
 
     @Override
