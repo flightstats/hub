@@ -31,7 +31,7 @@ public class AlertResource {
     @Context
     private UriInfo uriInfo;
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

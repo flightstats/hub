@@ -302,9 +302,9 @@ public class ChannelContentResource {
                                  @PathParam("hash") String hash,
                                  @HeaderParam("Last-Event-ID") String lastEventId) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        Optional<ContentKey> keyOptional = ContentKey.fromFullUrl(lastEventId);
-        if (keyOptional.isPresent()) {
-            contentKey = keyOptional.get();
+        ContentKey parsedKey = ContentKey.fromFullUrl(lastEventId);
+        if (parsedKey != null) {
+            contentKey = parsedKey;
         }
         try {
             logger.info("starting events at {} for client from {}", channel, contentKey);

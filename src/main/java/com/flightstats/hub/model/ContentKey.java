@@ -45,14 +45,14 @@ public class ContentKey implements ContentPath {
         return new ContentKey(time, "~ZZZZZZZZZZZZZZZZ");
     }
 
-    public static Optional<ContentKey> fromFullUrl(String url) {
+    public static ContentKey fromFullUrl(String url) {
         try {
             String substring = StringUtils.substringAfter(url, "/channel/");
             substring = StringUtils.substringAfter(substring, "/");
-            return fromUrl(substring);
+            return fromUrl(substring).get();
         } catch (Exception e) {
             logger.info("unable to parse " + url + " " + e.getMessage());
-            return Optional.absent();
+            return null;
         }
     }
 

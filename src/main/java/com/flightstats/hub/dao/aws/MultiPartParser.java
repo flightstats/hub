@@ -84,7 +84,7 @@ public class MultiPartParser {
                         builder.withContentType(type);
                     } else if (StringUtils.startsWithIgnoreCase(headerLine, "content-key:")) {
                         String key = StringUtils.trim(StringUtils.removeStartIgnoreCase(headerLine, "content-key:"));
-                        builder.withContentKey(ContentKey.fromFullUrl(key).get());
+                        builder.withContentKey(ContentKey.fromFullUrl(key));
                     }
                 }
             } else if (byteRing.compare(endBoundary)) {

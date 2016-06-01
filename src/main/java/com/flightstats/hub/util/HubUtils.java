@@ -1,10 +1,14 @@
 package com.flightstats.hub.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.group.Group;
+import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.base.Optional;
+import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -18,11 +22,17 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Singleton
 public class HubUtils {
 
     private final static Logger logger = LoggerFactory.getLogger(HubUtils.class);
+    private final ObjectMapper mapper = new ObjectMapper();
     private final Client noRedirectsClient;
     private final Client followClient;
 
@@ -103,7 +113,6 @@ public class HubUtils {
     }
 
     public ContentKey insert(String url, Content content) {
-        logger.info("posting data", url);
         WebResource.Builder resource = followClient.resource(url).getRequestBuilder();
         if (content.getContentType().isPresent()) {
             resource = resource.type(content.getContentType().get());
@@ -111,7 +120,7 @@ public class HubUtils {
         ClientResponse response = resource.post(ClientResponse.class, content.getData());
         logger.trace("got repsonse {}", response);
         if (response.getStatus() == 201) {
-            return ContentKey.fromFullUrl(response.getLocation().toString()).get();
+            return ContentKey.fromFullUrl(response.getLocation().toString());
         } else {
             return null;
         }
@@ -132,6 +141,28 @@ public class HubUtils {
             logger.info("unable to get {} {} {}", url, contentKey, response);
             return null;
         }
+    }
+
+    public Collection<ContentKey> insert(String url, BulkContent content) {
+        try {
+            ClientResponse response = followClient.resource(url)
+                    .type(content.getContentType())
+                    .post(ClientResponse.class, ByteStreams.toByteArray(content.getStream()));
+            logger.trace("got response {}", response);
+            if (response.getStatus() == 201) {
+                Set<ContentKey> keys = new TreeSet<>();
+                String entity = response.getEntity(String.class);
+                JsonNode rootNode = mapper.readTree(entity);
+                JsonNode uris = rootNode.get("_links").get("uris");
+                for (JsonNode uri : uris) {
+                    keys.add(ContentKey.fromFullUrl(uri.asText()));
+                }
+                return keys;
+            }
+        } catch (IOException e) {
+            logger.warn("unable to insert bulk " + url, e);
+        }
+        return Collections.emptyList();
     }
 
 }

@@ -2,6 +2,7 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupStatus;
 import com.flightstats.hub.model.ContentKey;
@@ -20,7 +21,7 @@ class GroupState {
     private final static Logger logger = LoggerFactory.getLogger(GroupState.class);
 
     private final static Client client = RestClient.defaultClient();
-    private final static ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     static GroupStatus getGroupStatus(AlertConfig alertConfig) {
         String url = alertConfig.getHubDomain() + "group/" + alertConfig.getSource();
@@ -45,10 +46,7 @@ class GroupState {
 
         GroupStatus.GroupStatusBuilder builder = GroupStatus.builder();
 
-        Optional<ContentKey> latestKey = ContentKey.fromFullUrl(jsonNode.get("channelLatest").asText());
-        if (latestKey.isPresent()) {
-            builder.channelLatest(latestKey.get());
-        }
+        builder.channelLatest(ContentKey.fromFullUrl(jsonNode.get("channelLatest").asText()));
         Optional<ContentPath> lastCompletedCallback = ContentPath.fromFullUrl(jsonNode.get("lastCompletedCallback").asText());
         if (lastCompletedCallback.isPresent()) {
             builder.lastCompleted(lastCompletedCallback.get());

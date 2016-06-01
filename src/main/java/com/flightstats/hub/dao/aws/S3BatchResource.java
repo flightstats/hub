@@ -66,7 +66,7 @@ public class S3BatchResource {
             }
             List<ContentKey> keys = new ArrayList<>();
             for (JsonNode uri : uris) {
-                keys.add(ContentKey.fromFullUrl(uri.asText()).get());
+                keys.add(ContentKey.fromFullUrl(uri.asText()));
             }
 
             String id = node.get("id").asText();
