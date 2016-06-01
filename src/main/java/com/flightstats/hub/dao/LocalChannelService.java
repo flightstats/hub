@@ -127,12 +127,7 @@ public class LocalChannelService implements ChannelService {
             return Optional.absent();
         }
         Traces traces = ActiveTraces.getLocal();
-        DateTime time = TimeUtil.stable();
-        if (!stable) {
-            //if not stable, we don't want to miss any results.
-            time = TimeUtil.now().plusMinutes(1);
-        }
-        ContentKey limitKey = ContentKey.lastKey(time);
+        ContentKey limitKey = getLatestLimit(stable);
 
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces, stable);
         if (latest.isPresent()) {
@@ -145,6 +140,15 @@ public class LocalChannelService implements ChannelService {
             traces.log(logger);
         }
         return latest;
+    }
+
+    static ContentKey getLatestLimit(boolean stable) {
+        DateTime time = TimeUtil.stable();
+        if (!stable) {
+            //if not stable, we don't want to miss any results.
+            time = TimeUtil.now().plusMinutes(1);
+        }
+        return ContentKey.lastKey(time);
     }
 
     @Override

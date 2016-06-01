@@ -1,11 +1,13 @@
 package com.flightstats.hub.dao;
 
 import com.diffplug.common.base.Errors;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 
 import java.util.Collection;
 import java.util.SortedSet;
@@ -21,6 +23,9 @@ public class GlobalChannelService implements ChannelService {
 
     private HubUtils hubUtils;
     private LocalChannelService localChannelService;
+    @Inject
+    @Named(ContentDao.CACHE)
+    private ContentDao spokeContentDao;
 
     @Inject
     public GlobalChannelService(LocalChannelService localChannelService, HubUtils hubUtils) {
@@ -112,11 +117,18 @@ public class GlobalChannelService implements ChannelService {
     public Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace) {
         Supplier<Optional<ContentKey>> local = () -> localChannelService.getLatest(channelName, stable, trace);
         Supplier<Optional<ContentKey>> satellite = () -> {
-            //todo - gfm - 5/20/16 - call Spoke directly
-            //todo - gfm - 5/19/16 - if we don't find a latest in spoke, try master
-
-            //todo - gfm - 5/19/16 - call global master with GET /channel/{channel}/latest
-            return null;
+            ContentKey limitKey = LocalChannelService.getLatestLimit(stable);
+            Optional<ContentKey> latest = spokeContentDao.getLatest(channelName, limitKey, ActiveTraces.getLocal());
+            if (latest.isPresent()) {
+                return latest;
+            }
+            ChannelConfig config = localChannelService.getCachedChannelConfig(channelName);
+            String url = config.getGlobal().getMaster() + "/channel/" + channelName;
+            Optional<String> fullKey = hubUtils.getLatest(url);
+            if (fullKey.isPresent()) {
+                return Optional.fromNullable(ContentKey.fromFullUrl(fullKey.get()));
+            }
+            return Optional.absent();
         };
         return handleGlobal(channelName, local, satellite);
     }
