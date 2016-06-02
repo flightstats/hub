@@ -49,7 +49,6 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             addTag(tags, "method", request.getMethod());
             addTag(tags, "endpoint", getRequestTemplate(request));
             long time = System.currentTimeMillis() - threadStartTime.get();
-
             statsd.time("hub.request", time, (String[]) tags.toArray());
 
             // report any errors
