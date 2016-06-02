@@ -73,7 +73,8 @@ public class AwsBindings extends AbstractModule {
             return "com.flightstats.hub.app," +
                     "com.flightstats.hub.health," +
                     "com.flightstats.hub.metrics," +
-                    "com.flightstats.hub.time,";
+                    "com.flightstats.hub.time," +
+                    "com.flightstats.hub.filter,";
         } else {
             return "com.flightstats.hub";
         }
