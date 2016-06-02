@@ -1,27 +1,22 @@
 package com.flightstats.hub.filter;
 
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.model.SingleTrace;
-import com.sun.tools.javac.util.*;
+import com.flightstats.hub.util.ChannelNameUtils;
 import com.timgroup.statsd.NonBlockingStatsDClient;
-import com.timgroup.statsd.StatsDClient; // https://github.com/DataDog/java-dogstatsd-client
+import com.timgroup.statsd.StatsDClient;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
-import org.glassfish.jersey.uri.PathTemplate;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.flightstats.hub.util.ChannelNameUtils;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
-import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
