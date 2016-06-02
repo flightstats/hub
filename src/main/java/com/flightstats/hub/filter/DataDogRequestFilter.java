@@ -82,5 +82,4 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 .map(UriTemplate::getTemplate)
                 .collect(Collectors.joining(""));
     }
-
 }
