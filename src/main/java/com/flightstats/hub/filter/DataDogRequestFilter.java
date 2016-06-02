@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Filter class to handle intercepting requests and respones from the Hub and pipe statistics to
+ * Filter class to handle intercepting requests and responses from the Hub and pipe statistics to
  * DogStatsD (DataDog) agent running on the server.
  */
 @Provider
