@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ChannelNameUtils {
 
@@ -21,6 +23,12 @@ public class ChannelNameUtils {
     public static String extractFromChannelUrl(String fullUrl) {
         String after = StringUtils.substringAfter(fullUrl, "/channel/");
         return StringUtils.removeEnd(after, "/");
+    }
+
+    public static String parseChannelName(String path) {
+        Pattern pattern = Pattern.compile("/channel/([^\\/]*)/?.*$");
+        Matcher m = pattern.matcher(path);
+        return m.find() ? m.group(1) : null;
     }
 
     public static boolean isValidChannelUrl(String url) {

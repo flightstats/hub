@@ -86,12 +86,11 @@ dependencies {
     compile 'com.newrelic.agent.java:newrelic-agent:3.24.1'
     compile 'com.newrelic.agent.java:newrelic-api:3.24.1'
     compile 'org.projectlombok:lombok:1.16.6'
+    compile 'com.datadoghq:java-dogstatsd-client:2.1.1'
 
     testCompile 'com.sparkjava:spark-core:2.3'
     testCompile 'junit:junit:4.+'
     testCompile "org.mockito:mockito-all:1.+"
-
-    compile 'com.indeed:java-dogstatsd-client:2.0.13'
 }
 
 
