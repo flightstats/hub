@@ -43,16 +43,19 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
         if (isDataDogActive) {
-            List<String> tags = new ArrayList<>();
-            String channelName = ChannelNameUtils.parseChannelName(request.getUriInfo().getRequestUri().getPath());
-            if(channelName != null) addTag(tags, "channel", channelName);
-            addTag(tags, "method", request.getMethod());
-            String template = getRequestTemplate(request);
-            addTag(tags, "endpoint", template);
-            long time = System.currentTimeMillis() - threadStartTime.get();
-            statsd.time("hub.request", time, tags.toArray(new String[tags.size()]));
-            logger.trace("DataDog hub.request {}, time: {}, tags: ", template, time, String.join(",", tags));
-
+            try {
+                List<String> tags = new ArrayList<>();
+                String channelName = ChannelNameUtils.parseChannelName(request.getUriInfo().getRequestUri().getPath());
+                if (channelName != null) addTag(tags, "channel", channelName);
+                addTag(tags, "method", request.getMethod());
+                String template = getRequestTemplate(request);
+                addTag(tags, "endpoint", template);
+                long time = System.currentTimeMillis() - threadStartTime.get();
+                statsd.recordExecutionTime("hub.request", time, tags.toArray(new String[tags.size()]));
+                logger.trace("DataDog hub.request {}, time: {}, tags: ", template, time, String.join(",", tags));
+            } catch (Exception e) {
+                logger.error("DataDog request error: {}", e.getMessage());
+            }
             // report any errors
             int returnCode = response.getStatus();
             if (returnCode > 400 && returnCode != 404) {
