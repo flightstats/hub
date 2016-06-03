@@ -63,13 +63,13 @@ function createChannel(channelName, url, description) {
 
 }
 
-function putChannel(channelName, verify, body) {
+function putChannel(channelName, verify, body, description) {
     verify = verify || function () {};
     body = body || {"name" : channelName};
-
+    description = description || 'none';
     it("puts channel " + channelName + " at " + channelUrl, function (done) {
         var url = channelUrl + '/' + channelName;
-        console.log("putting channel at " + url);
+        console.log('creating channel ' + channelName + ' for ' + description);
         request.put({
                 url: url,
                 headers: {"Content-Type": "application/json"},
