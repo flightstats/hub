@@ -167,30 +167,22 @@ public class GlobalChannelService implements ChannelService {
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         Supplier<SortedSet<ContentKey>> local = () -> localChannelService.queryByTime(query);
-        Supplier<SortedSet<ContentKey>> satellite = () -> {
-            //todo - gfm - 6/3/16 - this could be multi-threaded
-            SortedSet<ContentKey> contentKeys = spokeContentDao.queryByTime(query);
-            if (query.outsideOfCache(getSpokeCacheTime(query))) {
-                contentKeys.addAll(hubUtils.query(getMasterChannelUrl(query.getChannelName()), query));
-            }
-            return contentKeys;
-        };
+        Supplier<SortedSet<ContentKey>> satellite = () -> query(query, spokeContentDao.queryByTime(query));
         return handleGlobal(query.getChannelName(), local, satellite);
     }
 
     @Override
     public SortedSet<ContentKey> getKeys(DirectionQuery query) {
-        //todo - gfm - 6/3/16 - this could be merged with queryByTime
         Supplier<SortedSet<ContentKey>> local = () -> localChannelService.getKeys(query);
-        Supplier<SortedSet<ContentKey>> satellite = () -> {
-            //todo - gfm - 6/3/16 - this could be multi-threaded
-            SortedSet<ContentKey> contentKeys = spokeContentDao.query(query);
-            if (query.outsideOfCache(getSpokeCacheTime(query))) {
-                contentKeys.addAll(hubUtils.query(getMasterChannelUrl(query.getChannelName()), query));
-            }
-            return contentKeys;
-        };
+        Supplier<SortedSet<ContentKey>> satellite = () -> query(query, spokeContentDao.query(query));
         return handleGlobal(query.getChannelName(), local, satellite);
+    }
+
+    private SortedSet<ContentKey> query(Query query, SortedSet<ContentKey> contentKeys) {
+        if (query.outsideOfCache(getSpokeCacheTime(query))) {
+            contentKeys.addAll(hubUtils.query(getMasterChannelUrl(query.getChannelName()), query));
+        }
+        return contentKeys;
     }
 
     private DateTime getSpokeCacheTime(Query query) {
