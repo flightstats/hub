@@ -20,8 +20,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * The GlobalChannelService is a pass through for non-global channels
- * For Global channels, it can take different paths ...
+ * The GlobalChannelService is a pass through for standard channels
+ * For Global channels, it can take different paths depending on whether this cluster is the Master or a Satellite.
  */
 @Singleton
 public class GlobalChannelService implements ChannelService {
@@ -33,7 +33,6 @@ public class GlobalChannelService implements ChannelService {
     private ContentDao spokeContentDao;
     private static final LastContentPath lastReplicated = HubProvider.getInstance(LastContentPath.class);
 
-    //todo - gfm - 6/2/16 - figure out where this should live
     private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
 
     @Inject
@@ -42,7 +41,7 @@ public class GlobalChannelService implements ChannelService {
         this.hubUtils = hubUtils;
     }
 
-    public static <X> X handleGlobal(ChannelConfig channel, Supplier<X> local, Supplier<X> satellite, Supplier<X> master) {
+    public static <X> X handleGlobal(ChannelConfig channel, Supplier<X> standard, Supplier<X> satellite, Supplier<X> master) {
         if (channel.isGlobal()) {
             if (channel.isGlobalMaster()) {
                 return master.get();
@@ -50,16 +49,16 @@ public class GlobalChannelService implements ChannelService {
                 return satellite.get();
             }
         } else {
-            return local.get();
+            return standard.get();
         }
     }
 
-    private <X> X handleGlobal(String channelName, Supplier<X> local, Supplier<X> satellite) {
-        return handleGlobal(channelName, local, satellite, local);
+    private <X> X standardAndGlobal(ChannelConfig channel, Supplier<X> standard, Supplier<X> global) {
+        return handleGlobal(channel, standard, global, global);
     }
 
-    private <X> X handleGlobal(String channelName, Supplier<X> local, Supplier<X> satellite, Supplier<X> master) {
-        return handleGlobal(getCachedChannelConfig(channelName), local, satellite, master);
+    private <X> X primaryAndSatellite(String channelName, Supplier<X> primary, Supplier<X> satellite) {
+        return handleGlobal(getCachedChannelConfig(channelName), primary, satellite, primary);
     }
 
     @Override
@@ -69,16 +68,16 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public ChannelConfig createChannel(ChannelConfig channel) {
-        Supplier<ChannelConfig> local = () -> localChannelService.createChannel(channel);
-        Supplier<ChannelConfig> global = createGlobalMaster(channel);
-        return handleGlobal(channel, local, global, global);
+        return standardAndGlobal(channel,
+                () -> localChannelService.createChannel(channel),
+                createGlobalMaster(channel));
     }
 
     @Override
     public ChannelConfig updateChannel(ChannelConfig channel, ChannelConfig oldConfig) {
-        Supplier<ChannelConfig> local = () -> localChannelService.updateChannel(channel, oldConfig);
-        Supplier<ChannelConfig> global = createGlobalMaster(channel);
-        return handleGlobal(channel, local, global, global);
+        return standardAndGlobal(channel,
+                () -> localChannelService.updateChannel(channel, oldConfig),
+                createGlobalMaster(channel));
     }
 
     private Supplier<ChannelConfig> createGlobalMaster(ChannelConfig channel) {
@@ -92,20 +91,20 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
-        Supplier<ContentKey> local = Errors.rethrow().wrap(() -> {
-            return localChannelService.insert(channelName, content);
-        });
-        Supplier<ContentKey> satellite = () -> hubUtils.insert(getMasterChannelUrl(channelName), content);
-        return handleGlobal(channelName, local, satellite);
+        return primaryAndSatellite(channelName,
+                Errors.rethrow().wrap(() -> {
+                    return localChannelService.insert(channelName, content);
+                }),
+                () -> hubUtils.insert(getMasterChannelUrl(channelName), content));
     }
 
     @Override
     public Collection<ContentKey> insert(BulkContent bulk) throws Exception {
-        Supplier<Collection<ContentKey>> local = Errors.rethrow().wrap(() -> {
-            return localChannelService.insert(bulk);
-        });
-        Supplier<Collection<ContentKey>> satellite = () -> hubUtils.insert(getMasterChannelUrl(bulk.getChannel()), bulk);
-        return handleGlobal(bulk.getChannel(), local, satellite);
+        return primaryAndSatellite(bulk.getChannel(),
+                Errors.rethrow().wrap(() -> {
+                    return localChannelService.insert(bulk);
+                }),
+                () -> hubUtils.insert(getMasterChannelUrl(bulk.getChannel()), bulk));
     }
 
     @Override
@@ -115,48 +114,48 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace) {
-        Supplier<Optional<ContentKey>> local = () -> localChannelService.getLatest(channelName, stable, trace);
-        Supplier<Optional<ContentKey>> satellite = () -> {
-            ContentKey limitKey = LocalChannelService.getLatestLimit(stable);
-            Optional<ContentKey> latest = spokeContentDao.getLatest(channelName, limitKey, ActiveTraces.getLocal());
-            if (latest.isPresent()) {
-                return latest;
-            }
-            Optional<String> fullKey = hubUtils.getLatest(getMasterChannelUrl(channelName));
-            if (fullKey.isPresent()) {
-                return Optional.fromNullable(ContentKey.fromFullUrl(fullKey.get()));
-            }
-            return Optional.absent();
-        };
-        return handleGlobal(channelName, local, satellite);
+        return primaryAndSatellite(channelName,
+                () -> localChannelService.getLatest(channelName, stable, trace),
+                () -> {
+                    ContentKey limitKey = LocalChannelService.getLatestLimit(stable);
+                    Optional<ContentKey> latest = spokeContentDao.getLatest(channelName, limitKey, ActiveTraces.getLocal());
+                    if (latest.isPresent()) {
+                        return latest;
+                    }
+                    Optional<String> fullKey = hubUtils.getLatest(getMasterChannelUrl(channelName));
+                    ContentKey contentKey = null;
+                    if (fullKey.isPresent()) {
+                        contentKey = ContentKey.fromFullUrl(fullKey.get());
+                    }
+                    return Optional.fromNullable(contentKey);
+                });
     }
 
     private String getMasterChannelUrl(String channelName) {
-        ChannelConfig config = localChannelService.getCachedChannelConfig(channelName);
-        return config.getGlobal().getMaster() + "/channel/" + channelName;
+        return localChannelService.getCachedChannelConfig(channelName).getGlobal().getMaster() + "/channel/" + channelName;
     }
 
     @Override
     public void deleteBefore(String name, ContentKey limitKey) {
-        Supplier<Void> local = () -> {
-            localChannelService.deleteBefore(name, limitKey);
-            return null;
-        };
-        Supplier<Void> satellite = () -> null;
-        handleGlobal(name, local, satellite);
+        primaryAndSatellite(name,
+                () -> {
+                    localChannelService.deleteBefore(name, limitKey);
+                    return null;
+                },
+                (Supplier<Void>) () -> null);
     }
 
     @Override
     public Optional<Content> getValue(Request request) {
-        Supplier<Optional<Content>> local = () -> localChannelService.getValue(request);
-        Supplier<Optional<Content>> satellite = () -> {
-            Content read = spokeContentDao.read(request.getChannel(), request.getKey());
-            if (read != null) {
-                return Optional.of(read);
-            }
-            return Optional.fromNullable(hubUtils.get(getMasterChannelUrl(request.getChannel()), request.getKey()));
-        };
-        return handleGlobal(request.getChannel(), local, satellite);
+        return primaryAndSatellite(request.getChannel(),
+                () -> localChannelService.getValue(request),
+                () -> {
+                    Content read = spokeContentDao.read(request.getChannel(), request.getKey());
+                    if (read != null) {
+                        return Optional.of(read);
+                    }
+                    return Optional.fromNullable(hubUtils.get(getMasterChannelUrl(request.getChannel()), request.getKey()));
+                });
     }
 
     @Override
@@ -166,16 +165,16 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
-        Supplier<SortedSet<ContentKey>> local = () -> localChannelService.queryByTime(query);
-        Supplier<SortedSet<ContentKey>> satellite = () -> query(query, spokeContentDao.queryByTime(query));
-        return handleGlobal(query.getChannelName(), local, satellite);
+        return primaryAndSatellite(query.getChannelName(),
+                () -> localChannelService.queryByTime(query),
+                () -> query(query, spokeContentDao.queryByTime(query)));
     }
 
     @Override
     public SortedSet<ContentKey> getKeys(DirectionQuery query) {
-        Supplier<SortedSet<ContentKey>> local = () -> localChannelService.getKeys(query);
-        Supplier<SortedSet<ContentKey>> satellite = () -> query(query, spokeContentDao.query(query));
-        return handleGlobal(query.getChannelName(), local, satellite);
+        return primaryAndSatellite(query.getChannelName(),
+                () -> localChannelService.getKeys(query),
+                () -> query(query, spokeContentDao.query(query)));
     }
 
     private SortedSet<ContentKey> query(Query query, SortedSet<ContentKey> contentKeys) {
@@ -198,9 +197,9 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public boolean delete(String channelName) {
-        Supplier<Boolean> local = () -> localChannelService.delete(channelName);
-        Supplier<Boolean> satellite = () -> hubUtils.delete(getMasterChannelUrl(channelName));
-        return handleGlobal(channelName, local, satellite);
+        return primaryAndSatellite(channelName,
+                () -> localChannelService.delete(channelName),
+                () -> hubUtils.delete(getMasterChannelUrl(channelName)));
     }
 
     @Override
