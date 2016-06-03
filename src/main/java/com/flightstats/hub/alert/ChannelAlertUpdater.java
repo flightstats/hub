@@ -2,7 +2,6 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -21,7 +20,7 @@ class ChannelAlertUpdater implements Callable<AlertStatus> {
     private final static Logger logger = LoggerFactory.getLogger(ChannelAlertUpdater.class);
     private static final ScriptEngine jsEngine = createJsEngine();
     private static final Client client = RestClient.defaultClient();
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private final AlertConfig alertConfig;
     private final AlertStatus alertStatus;

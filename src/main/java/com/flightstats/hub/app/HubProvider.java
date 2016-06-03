@@ -8,7 +8,7 @@ public class HubProvider {
 
     private static Injector injector;
 
-    public static void setInjector(Injector injector) {
+    static void setInjector(Injector injector) {
         HubProvider.injector = injector;
     }
 

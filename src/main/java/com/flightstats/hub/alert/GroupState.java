@@ -2,7 +2,6 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupStatus;
 import com.flightstats.hub.model.ContentKey;
@@ -21,7 +20,7 @@ class GroupState {
     private final static Logger logger = LoggerFactory.getLogger(GroupState.class);
 
     private final static Client client = RestClient.defaultClient();
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static ObjectMapper mapper = new ObjectMapper();
 
     static GroupStatus getGroupStatus(AlertConfig alertConfig) {
         String url = alertConfig.getHubDomain() + "group/" + alertConfig.getSource();

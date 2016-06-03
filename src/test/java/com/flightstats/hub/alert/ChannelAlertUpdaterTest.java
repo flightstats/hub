@@ -22,7 +22,7 @@ public class ChannelAlertUpdaterTest {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelAlertUpdaterTest.class);
     private final static ObjectMapper mapper = new ObjectMapper();
-    public static final String HUB_DOMAIN = "http://localhost:4567/";
+    private static final String HUB_DOMAIN = "http://localhost:4567/";
     private static final List<String> alerts = new ArrayList<>();
 
     @AfterClass
