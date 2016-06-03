@@ -1,13 +1,18 @@
 package com.flightstats.hub.dao;
 
 import com.diffplug.common.base.Errors;
+import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import org.joda.time.DateTime;
 
 import java.util.Collection;
 import java.util.SortedSet;
@@ -26,6 +31,10 @@ public class GlobalChannelService implements ChannelService {
     @Inject
     @Named(ContentDao.CACHE)
     private ContentDao spokeContentDao;
+    private static final LastContentPath lastReplicated = HubProvider.getInstance(LastContentPath.class);
+
+    //todo - gfm - 6/2/16 - figure out where this should live
+    private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
 
     @Inject
     public GlobalChannelService(LocalChannelService localChannelService, HubUtils hubUtils) {
@@ -91,17 +100,12 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
+    public Collection<ContentKey> insert(BulkContent bulk) throws Exception {
         Supplier<Collection<ContentKey>> local = Errors.rethrow().wrap(() -> {
-            return localChannelService.insert(bulkContent);
+            return localChannelService.insert(bulk);
         });
-        Supplier<Collection<ContentKey>> satellite = () -> {
-            String channelName = bulkContent.getChannel();
-            ChannelConfig config = localChannelService.getCachedChannelConfig(channelName);
-            String url = config.getGlobal().getMaster() + "/channel/" + channelName + "/bulk";
-            return hubUtils.insert(url, bulkContent);
-        };
-        return handleGlobal(bulkContent.getChannel(), local, satellite);
+        Supplier<Collection<ContentKey>> satellite = () -> hubUtils.insert(getMasterChannelUrl(bulk.getChannel()), bulk);
+        return handleGlobal(bulk.getChannel(), local, satellite);
     }
 
     @Override
@@ -164,25 +168,35 @@ public class GlobalChannelService implements ChannelService {
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         Supplier<SortedSet<ContentKey>> local = () -> localChannelService.queryByTime(query);
         Supplier<SortedSet<ContentKey>> satellite = () -> {
-            //todo - gfm - 5/19/16 - if the time is entirely within Spoke, answer the question locally
-            //todo - gfm - 5/19/16 - otherwise merge the values from the local Spoke and the Master
-            //todo - gfm - 5/19/16 - call global master with ... GET /channel/{channel}/{time}
-            return null;
+            //todo - gfm - 6/3/16 - this could be multi-threaded
+            SortedSet<ContentKey> contentKeys = spokeContentDao.queryByTime(query);
+            if (query.outsideOfCache(getSpokeCacheTime(query))) {
+                contentKeys.addAll(hubUtils.query(getMasterChannelUrl(query.getChannelName()), query));
+            }
+            return contentKeys;
         };
         return handleGlobal(query.getChannelName(), local, satellite);
     }
 
     @Override
     public SortedSet<ContentKey> getKeys(DirectionQuery query) {
+        //todo - gfm - 6/3/16 - this could be merged with queryByTime
         Supplier<SortedSet<ContentKey>> local = () -> localChannelService.getKeys(query);
-        ;
         Supplier<SortedSet<ContentKey>> satellite = () -> {
-            //todo - gfm - 5/19/16 - if the time is entirely within Spoke, answer the question locally
-            //todo - gfm - 5/19/16 - otherwise merge the values from the local Spoke and the Master
-            //todo - gfm - 5/19/16 - call global master with ... GET /channel/{channel}/{key}/{n|p}
-            return null;
+            //todo - gfm - 6/3/16 - this could be multi-threaded
+            SortedSet<ContentKey> contentKeys = spokeContentDao.query(query);
+            if (query.outsideOfCache(getSpokeCacheTime(query))) {
+                contentKeys.addAll(hubUtils.query(getMasterChannelUrl(query.getChannelName()), query));
+            }
+            return contentKeys;
         };
         return handleGlobal(query.getChannelName(), local, satellite);
+    }
+
+    private DateTime getSpokeCacheTime(Query query) {
+        DateTime startTime = lastReplicated.get(query.getChannelName(), MinutePath.NONE, Replicator.REPLICATED_LAST_UPDATED).getTime();
+        startTime.minusMinutes(spokeTtlMinutes);
+        return startTime;
     }
 
     @Override

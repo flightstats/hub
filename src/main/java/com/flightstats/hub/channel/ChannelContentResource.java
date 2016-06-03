@@ -14,7 +14,6 @@ import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
 import com.google.common.base.Optional;
-import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import com.sun.jersey.core.header.MediaTypes;
 import org.apache.commons.lang3.StringUtils;
@@ -68,8 +67,7 @@ public class ChannelContentResource {
                 acceptableContentTypes.addAll(getMediaTypes(type));
             }
         }
-
-        return !Iterables.any(acceptableContentTypes, input -> input.isCompatible(actualContentType));
+        return !acceptableContentTypes.stream().anyMatch(input -> input.isCompatible(actualContentType));
     }
 
     private static List<MediaType> getMediaTypes(String type) {

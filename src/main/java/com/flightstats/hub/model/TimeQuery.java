@@ -40,4 +40,8 @@ public class TimeQuery implements Query {
     public boolean outsideOfCache(DateTime cacheTime) {
         return startTime.isBefore(cacheTime);
     }
+
+    public String getUrlPath() {
+        return "/" + getUnit().format(getStartTime()) + "?stable=" + stable;
+    }
 }

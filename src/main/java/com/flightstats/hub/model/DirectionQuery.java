@@ -33,10 +33,13 @@ public class DirectionQuery implements Query {
 
     @Override
     public boolean outsideOfCache(DateTime cacheTime) {
-        if (next) {
-            return contentKey.getTime().isBefore(cacheTime);
-        }
-        return true;
+        return !next || contentKey.getTime().isBefore(cacheTime);
+    }
+
+    @Override
+    public String getUrlPath() {
+        String direction = next ? "/next/" : "/previous/";
+        return "/" + contentKey.toUrl() + direction + count + "?stable=" + stable;
     }
 
     public TimeQuery convert(DateTime startTime, TimeUtil.Unit unit) {
