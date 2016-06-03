@@ -3,7 +3,6 @@ package com.flightstats.hub.alert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.rest.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +12,7 @@ import javax.ws.rs.core.MediaType;
 class AlertSender {
 
     private final static Logger logger = LoggerFactory.getLogger(AlertSender.class);
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final String alertChannelEscalate = HubProperties.getProperty("alert.channel.escalate", "escalationAlerts");
 
     public static void create(String hubAppUrl) {
