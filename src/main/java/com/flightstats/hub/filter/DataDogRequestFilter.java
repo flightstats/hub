@@ -47,9 +47,11 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             String channelName = ChannelNameUtils.parseChannelName(request.getUriInfo().getRequestUri().getPath());
             if(channelName != null) addTag(tags, "channel", channelName);
             addTag(tags, "method", request.getMethod());
-            addTag(tags, "endpoint", getRequestTemplate(request));
+            String template = getRequestTemplate(request);
+            addTag(tags, "endpoint", template);
             long time = System.currentTimeMillis() - threadStartTime.get();
             statsd.time("hub.request", time, tags.toArray(new String[tags.size()]));
+            logger.trace("DataDog hub.request {}, time: {}, tags: ", template, time, String.join(",", tags));
 
             // report any errors
             int returnCode = response.getStatus();
