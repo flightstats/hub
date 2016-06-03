@@ -20,7 +20,6 @@ describe(testName, function () {
         params = params || '';
         if (body._links) {
             expect(body._links.self.href).toBe(url + params);
-            expect(body._links.second.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH/mm/ss') + params);
             expect(body._links.second.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}/{second}{?stable}');
             expect(body._links.second.redirect).toBe(url + '/second' + params);
 

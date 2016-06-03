@@ -179,8 +179,22 @@ public class HubUtils {
                 return parseContentKeys(response);
             }
         } catch (IOException e) {
-            logger.warn("unable to insert bulk " + channelUrl, e);
+            logger.warn("unable to query" + channelUrl + " " + query, e);
         }
         return Collections.emptyList();
+    }
+
+    public boolean delete(String channelUrl) {
+        try {
+            logger.info("deleting {}", channelUrl);
+            ClientResponse response = followClient.resource(channelUrl).delete(ClientResponse.class);
+            logger.trace("got response {}", response);
+            if (response.getStatus() == 202) {
+                return true;
+            }
+        } catch (Exception e) {
+            logger.warn("unable to delete " + channelUrl, e);
+        }
+        return false;
     }
 }

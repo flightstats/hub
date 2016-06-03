@@ -199,13 +199,9 @@ public class GlobalChannelService implements ChannelService {
     @Override
     public boolean delete(String channelName) {
         Supplier<Boolean> local = () -> localChannelService.delete(channelName);
-        Supplier<Boolean> satellite = () -> {
-            //todo - gfm - 5/19/16 - call global master with ... DELETE /channel/{channel}
-            return null;
-        };
+        Supplier<Boolean> satellite = () -> hubUtils.delete(getMasterChannelUrl(channelName));
         return handleGlobal(channelName, local, satellite);
     }
-
 
     @Override
     public ChannelConfig getChannelConfig(String channelName, boolean allowChannelCache) {
