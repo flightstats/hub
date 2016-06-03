@@ -147,7 +147,7 @@ public class SpokeContentDao implements ContentDao {
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         logger.trace("query by time {} ", query);
         ActiveTraces.getLocal().add("SpokeContentDao.queryByTime", query);
-        SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
+        SortedSet<ContentKey> contentKeys;
         if (query.getEndTime() == null) {
             contentKeys = queryByTimeKeys(query);
         } else {
