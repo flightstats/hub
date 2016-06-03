@@ -192,7 +192,16 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        //todo - gfm - 5/19/16 - what does this do again?
+        primaryAndSatellite(channel,
+                () -> {
+                    localChannelService.getValues(channel, keys, callback);
+                    return null;
+                },
+                () -> {
+                    //todo - gfm - 6/3/16 - if this is outside of the spoke TTL window, call the master.
+                    localChannelService.getValues(channel, keys, callback);
+                    return null;
+                });
     }
 
     @Override
