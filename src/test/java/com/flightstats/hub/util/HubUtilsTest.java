@@ -1,8 +1,9 @@
 package com.flightstats.hub.util;
 
-import com.flightstats.hub.app.HubBindings;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.*;
-import org.junit.Before;
+import com.flightstats.hub.test.Integration;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,24 +20,24 @@ public class HubUtilsTest {
     private final static Logger logger = LoggerFactory.getLogger(HubUtilsTest.class);
 
     private static final String HUT_TEST = "hut_test";
-    private HubUtils hubUtils;
-    private String hubUrl;
-    private String channelUrl;
+    private static HubUtils hubUtils;
+    private static String hubUrl;
+    private static String channelUrl;
 
-   /* @Before
-    public void setUp() throws Exception {
+    @BeforeClass
+    public static void setUpClass() throws Exception {
         Integration.startAwsHub();
         hubUtils = HubProvider.getInstance(HubUtils.class);
         hubUrl = "http://localhost:9080/";
         channelUrl = create();
-    }*/
+    }
 
-    @Before
-    public void setUp() throws Exception {
+    /*@BeforeClass
+    public static void setUpClass() throws Exception {
         hubUrl = "http://hub.iad.dev.flightstats.io/";
         hubUtils = new HubUtils(null, HubBindings.buildJerseyClient());
         channelUrl = create();
-    }
+    }*/
 
     @Test
     public void testCreateInsert() {
@@ -66,7 +67,7 @@ public class HubUtilsTest {
         return hubUtils.insert(channelUrl, content);
     }
 
-    private String create() {
+    private static String create() {
         ChannelConfig hut_test = ChannelConfig.builder().withName(HUT_TEST).build();
         String channelUrl = hubUrl + "channel/" + HUT_TEST;
         hubUtils.putChannel(channelUrl, hut_test);

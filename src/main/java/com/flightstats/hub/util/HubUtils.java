@@ -85,9 +85,9 @@ public class HubUtils {
         return StringUtils.substringBefore(sourceChannel, "/channel/");
     }
 
-    public boolean putChannel(String url, ChannelConfig channelConfig) {
-        logger.debug("putting {} {}", url, channelConfig);
-        ClientResponse response = followClient.resource(url)
+    public boolean putChannel(String channelUrl, ChannelConfig channelConfig) {
+        logger.debug("putting {} {}", channelUrl, channelConfig);
+        ClientResponse response = followClient.resource(channelUrl)
                 .accept(MediaType.APPLICATION_JSON)
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, channelConfig.toJson());
@@ -95,9 +95,9 @@ public class HubUtils {
         return response.getStatus() < 400;
     }
 
-    public ChannelConfig getChannel(String url) {
-        logger.debug("getting {} {}", url);
-        ClientResponse response = followClient.resource(url)
+    public ChannelConfig getChannel(String channelUrl) {
+        logger.debug("getting {} {}", channelUrl);
+        ClientResponse response = followClient.resource(channelUrl)
                 .accept(MediaType.APPLICATION_JSON)
                 .type(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
@@ -109,8 +109,8 @@ public class HubUtils {
         }
     }
 
-    public ContentKey insert(String url, Content content) {
-        WebResource.Builder resource = followClient.resource(url).getRequestBuilder();
+    public ContentKey insert(String channelUrl, Content content) {
+        WebResource.Builder resource = followClient.resource(channelUrl).getRequestBuilder();
         if (content.getContentType().isPresent()) {
             resource = resource.type(content.getContentType().get());
         }
