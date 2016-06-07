@@ -4,10 +4,14 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ChannelNameUtils {
 
     public static final String WEBSOCKET_URL_REGEX = "^/channel/(\\w+)/ws$";
+    private static final Pattern channelNamePattern = Pattern.compile("/channel/([^\\/]*)/?.*$");
+    ;
 
     public String extractFromWS(URI requestURI) {
         String path = requestURI.getPath();
@@ -21,6 +25,11 @@ public class ChannelNameUtils {
     public static String extractFromChannelUrl(String fullUrl) {
         String after = StringUtils.substringAfter(fullUrl, "/channel/");
         return StringUtils.removeEnd(after, "/");
+    }
+
+    public static String parseChannelName(String path) {
+        Matcher m = channelNamePattern.matcher(path);
+        return m.find() ? m.group(1) : null;
     }
 
     public static boolean isValidChannelUrl(String url) {
