@@ -39,6 +39,7 @@ configurations {
     all*.exclude(group: 'javax.ws.rs', module: 'jsr311-api')
     //prevent transitive dependencies from overriding org.eclipse.jetty.aggregate
     all*.exclude(group: 'org.eclipse.jetty')
+    all*.exclude(group: 'org.eclipse.jetty.websocket')
     all*.exclude(module: 'log4j')
     integrationTests
 }
@@ -87,9 +88,7 @@ dependencies {
     compile 'com.newrelic.agent.java:newrelic-api:3.24.1'
     compile 'org.projectlombok:lombok:1.16.6'
 
-    testCompile('com.sparkjava:spark-core:2.3') {
-        transitive = false
-    }
+    testCompile 'com.sparkjava:spark-core:2.3'
     testCompile 'junit:junit:4.+'
     testCompile "org.mockito:mockito-all:1.+"
 
