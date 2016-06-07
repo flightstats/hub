@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 public class ChannelNameUtils {
 
     public static final String WEBSOCKET_URL_REGEX = "^/channel/(\\w+)/ws$";
+    private static final Pattern channelNamePattern = Pattern.compile("/channel/([^\\/]*)/?.*$");
+    ;
 
     public String extractFromWS(URI requestURI) {
         String path = requestURI.getPath();
@@ -26,8 +28,7 @@ public class ChannelNameUtils {
     }
 
     public static String parseChannelName(String path) {
-        Pattern pattern = Pattern.compile("/channel/([^\\/]*)/?.*$");
-        Matcher m = pattern.matcher(path);
+        Matcher m = channelNamePattern.matcher(path);
         return m.find() ? m.group(1) : null;
     }
 
