@@ -57,4 +57,12 @@ public class ChannelNameUtilsTest {
         assertFalse(ChannelNameUtils.isValidChannelUrl("not a url"));
 
     }
+
+    @Test
+    public void testParseChannelName(){
+        assertEquals("mickey", ChannelNameUtils.parseChannelName("http://stuff:8080/channel/mickey/morestuff/"));
+        assertEquals("mic_key", ChannelNameUtils.parseChannelName("http://stuff:8080/channel/mic_key/morestuff/"));
+        assertEquals("mic-key", ChannelNameUtils.parseChannelName("http://stuff:8080/channel/mic-key/morestuff/"));
+        assertEquals("mickey", ChannelNameUtils.parseChannelName("http://stuff:8080/channel/mickey/"));
+    }
 }
