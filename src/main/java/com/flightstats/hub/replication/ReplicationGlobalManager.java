@@ -82,8 +82,10 @@ public class ReplicationGlobalManager {
             logger.info("replication stopped");
             return;
         }
+        logger.info("starting checks for replication and global");
         replicateGlobal();
         replicateChannels();
+        logger.info("completed checks for replication and global");
     }
 
     private synchronized void replicateGlobal() {
@@ -92,7 +94,6 @@ public class ReplicationGlobalManager {
         logger.info("replicating global channels {}", globalChannels);
         for (ChannelConfig channel : globalChannels) {
             logger.info("replicating global channel {}", channel);
-            //todo - gfm - 6/8/16 - why is this false?
             if (channel.isGlobalMaster()) {
                 try {
                     processGlobal(replicators, channel);
@@ -102,6 +103,7 @@ public class ReplicationGlobalManager {
             }
         }
         stopAndRemove(replicators, globalReplicatorMap);
+        logger.info("completed global");
     }
 
     private void processGlobal(Set<String> replicators, ChannelConfig channel) {
@@ -117,9 +119,9 @@ public class ReplicationGlobalManager {
     }
 
     private synchronized void replicateChannels() {
-        logger.info("replicating channels");
         Set<String> replicators = new HashSet<>();
         Iterable<ChannelConfig> replicatedChannels = channelService.getChannels(Replicator.REPLICATED);
+        logger.info("replicating channels {}", replicatedChannels);
         for (ChannelConfig channel : replicatedChannels) {
             logger.info("replicating channel {}", channel.getName());
             try {
