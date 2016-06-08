@@ -89,10 +89,10 @@ function getChannel(channelName, verify, description, hubUrl) {
     description = description || 'none';
     hubUrl = hubUrl || hubUrlBase;
     it("gets channel " + channelName, function (done) {
-        channelUrl = hubUrl + '/channel/' + channelName;
-        console.log('get channel ' + channelUrl + ' for ' + description);
+        var url = hubUrl + '/channel/' + channelName;
+        console.log('get channel ' + url + ' for ' + description);
         request.get({
-                url: channelUrl,
+                url: url,
                 headers: {"Content-Type": "application/json"}
             },
             function (err, response, body) {
