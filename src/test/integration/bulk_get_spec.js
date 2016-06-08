@@ -124,9 +124,11 @@ describe(testName, function () {
         return items[0].slice(0, items[0].length - chars);
     }
 
+    var timeout = 60 * 1000 * 3;
+
     it("gets latest bulk ", function (done) {
         getAll(channelResource + '/latest/10', done);
-    });
+    }, timeout);
 
     it("gets earliest items ", function (done) {
         getAll(channelResource + '/earliest/10', done);
@@ -158,7 +160,7 @@ describe(testName, function () {
             expect(linkHeader).toContain(items[3] + '/next/10?stable=false' + param);
         });
     });
-
+    
     it("gets previous items ", function (done) {
         getAll(items[3] + '/previous/10', done, function (response, param) {
             for (var i = 0; i < items.length - 1; i++) {
@@ -169,5 +171,5 @@ describe(testName, function () {
             expect(linkHeader).toContain(items[0] + '/previous/10?stable=false' + param);
             expect(linkHeader).toContain(items[2] + '/next/10?stable=false' + param);
         });
-    });
+    }, timeout);
 });
