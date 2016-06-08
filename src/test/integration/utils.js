@@ -85,8 +85,7 @@ function putChannel(channelName, verify, body, description) {
 }
 
 function getChannel(channelName, verify, description, hubUrl) {
-    verify = verify || function () {
-        };
+    verify = verify || function () { };
     description = description || 'none';
     hubUrl = hubUrl || hubUrlBase;
     it("gets channel " + channelName, function (done) {
@@ -168,12 +167,25 @@ function putGroup(groupName, groupConfig, status, description) {
     return groupResource;
 }
 
-function getGroup(groupName, groupConfig, status) {
+function getGroup(groupName, groupConfig, status, verify) {
     var groupResource = groupUrl + "/" + groupName;
     status = status || 200;
-
-    itSleeps(1000);
-
+    verify = verify || function (parse) {
+            if (typeof groupConfig !== "undefined") {
+                expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
+                expect(parse.channelUrl).toBe(groupConfig.channelUrl);
+                expect(parse.transactional).toBe(groupConfig.transactional);
+                expect(parse.name).toBe(groupName);
+                expect(parse.batch).toBe(groupConfig.batch);
+                if (groupConfig.ttlMinutes) {
+                    expect(parse.ttlMinutes).toBe(groupConfig.ttlMinutes);
+                }
+                if (groupConfig.maxWaitMinutes) {
+                    expect(parse.maxWaitMinutes).toBe(groupConfig.maxWaitMinutes);
+                }
+            }
+        };
+    itSleeps(500);
     it('gets group ' + groupName, function (done) {
         request.get({url : groupResource,
                 headers : {"Content-Type" : "application/json"} },
@@ -183,19 +195,7 @@ function getGroup(groupName, groupConfig, status) {
                 if (response.statusCode < 400) {
                     var parse = utils.parseJson(response, groupName);
                     expect(parse._links.self.href).toBe(groupResource);
-                    if (typeof groupConfig !== "undefined") {
-                        expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
-                        expect(parse.channelUrl).toBe(groupConfig.channelUrl);
-                        expect(parse.transactional).toBe(groupConfig.transactional);
-                        expect(parse.name).toBe(groupName);
-                        expect(parse.batch).toBe(groupConfig.batch);
-                        if (groupConfig.ttlMinutes) {
-                            expect(parse.ttlMinutes).toBe(groupConfig.ttlMinutes);
-                        }
-                        if (groupConfig.maxWaitMinutes) {
-                            expect(parse.maxWaitMinutes).toBe(groupConfig.maxWaitMinutes);
-                        }
-                    }
+                    verify(parse);
                 }
                 done();
             });

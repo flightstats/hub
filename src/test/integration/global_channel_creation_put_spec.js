@@ -1,6 +1,7 @@
 require('./integration_config.js');
 
 var request = require('request');
+var _ = require('lodash');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
@@ -46,7 +47,8 @@ describe(testName, function () {
 
     utils.getChannel(channelName, verify, testName, satelliteUrl);
 
-    //todo - gfm - 6/8/16 - verify that group exists
-
+    var globalGroup = 'Global_' + satelliteDomain.replace (/\./g, "_") + '_' + channelName;
+    console.log('look at global group', globalGroup);
+    utils.getGroup(globalGroup, {}, 200, function () {});
 
 });
