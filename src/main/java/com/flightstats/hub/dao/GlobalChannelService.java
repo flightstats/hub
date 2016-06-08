@@ -2,7 +2,6 @@ package com.flightstats.hub.dao;
 
 import com.diffplug.common.base.Errors;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
@@ -26,20 +25,17 @@ import java.util.function.Supplier;
 @Singleton
 public class GlobalChannelService implements ChannelService {
 
+    @Inject
     private HubUtils hubUtils;
+    @Inject
     private LocalChannelService localChannelService;
     @Inject
     @Named(ContentDao.CACHE)
     private ContentDao spokeContentDao;
-    private static final LastContentPath lastReplicated = HubProvider.getInstance(LastContentPath.class);
+    @Inject
+    private LastContentPath lastReplicated;
 
     private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
-
-    @Inject
-    public GlobalChannelService(LocalChannelService localChannelService, HubUtils hubUtils) {
-        this.localChannelService = localChannelService;
-        this.hubUtils = hubUtils;
-    }
 
     public static <X> X handleGlobal(ChannelConfig channel, Supplier<X> standard, Supplier<X> satellite, Supplier<X> master) {
         if (channel.isGlobal()) {

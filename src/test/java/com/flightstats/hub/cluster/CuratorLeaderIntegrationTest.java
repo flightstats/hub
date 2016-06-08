@@ -2,7 +2,6 @@ package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
-import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -18,7 +17,6 @@ import static org.junit.Assert.assertTrue;
 
 public class CuratorLeaderIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(CuratorLeaderIntegrationTest.class);
-    private static CuratorFramework curator;
     private AtomicInteger count;
     private CountDownLatch countDownLatch;
 
