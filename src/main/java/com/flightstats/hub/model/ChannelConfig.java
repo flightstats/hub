@@ -61,7 +61,11 @@ public class ChannelConfig implements Serializable {
         } else {
             storage = StringUtils.upperCase(builder.storage);
         }
-        global = builder.global;
+        if (builder.global != null) {
+            global = builder.global.cleanup();
+        } else {
+            global = null;
+        }
         if (isGlobal()) {
             tags.add(Replicator.GLOBAL);
         } else {

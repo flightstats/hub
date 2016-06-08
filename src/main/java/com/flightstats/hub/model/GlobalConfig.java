@@ -40,9 +40,7 @@ public class GlobalConfig {
     }
 
     public void addSatellites(Collection<String> satellites) {
-        for (String satellite : satellites) {
-            addSatellite(satellite);
-        }
+        satellites.forEach(this::addSatellite);
     }
 
     public void setIsMaster(boolean isMaster) {
@@ -55,5 +53,12 @@ public class GlobalConfig {
 
     public void setMaster(String master) {
         this.master = StringUtils.appendIfMissing(master, "/");
+    }
+
+    GlobalConfig cleanup() {
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.setMaster(master);
+        globalConfig.addSatellites(satellites);
+        return globalConfig;
     }
 }
