@@ -16,7 +16,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/global/repl/{channel}")
 public class InternalGlobalReplResource {
 

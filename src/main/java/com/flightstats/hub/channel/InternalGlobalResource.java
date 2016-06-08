@@ -16,7 +16,6 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/global")
 public class InternalGlobalResource {
 
