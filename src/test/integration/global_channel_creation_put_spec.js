@@ -45,10 +45,12 @@ describe(testName, function () {
 
     utils.sleep(50);
 
+    /*
+     //todo - gfm - 6/8/16 - disabling this for now
     utils.getChannel(channelName, verify, testName, satelliteUrl);
 
     var globalGroup = 'Global_' + satelliteDomain.replace (/\./g, "_") + '_' + channelName;
     console.log('look at global group', globalGroup);
-    utils.getGroup(globalGroup, {}, 200, function () {});
+    utils.getGroup(globalGroup, {}, 200, function () {});*/
 
 });
