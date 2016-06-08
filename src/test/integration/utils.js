@@ -84,6 +84,28 @@ function putChannel(channelName, verify, body, description) {
     });
 }
 
+function getChannel(channelName, verify, description, hubUrl) {
+    verify = verify || function () {
+        };
+    description = description || 'none';
+    hubUrl = hubUrl || hubUrlBase;
+    it("gets channel " + channelName, function (done) {
+        channelUrl = hubUrl + '/channel/' + channelName;
+        console.log('get channel ' + channelUrl + ' for ' + description);
+        request.get({
+                url: channelUrl,
+                headers: {"Content-Type": "application/json"}
+            },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                console.log("get response " + body)
+                verify(response, body, hubUrl);
+                done();
+            });
+    });
+}
+
 function addItem(url, responseCode) {
     it("adds item to " + url, function (done) {
         postItem(url, responseCode, done);
@@ -339,6 +361,7 @@ exports.configureFrisby = configureFrisby;
 exports.runInTestChannelJson = runInTestChannelJson;
 exports.createChannel = createChannel;
 exports.putChannel = putChannel;
+exports.getChannel = getChannel;
 exports.addItem = addItem;
 exports.sleep = sleep;
 exports.itSleeps = itSleeps;
