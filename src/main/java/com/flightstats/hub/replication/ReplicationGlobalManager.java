@@ -87,10 +87,12 @@ public class ReplicationGlobalManager {
     }
 
     private synchronized void replicateGlobal() {
-        logger.info("replicating global channels");
         Set<String> replicators = new HashSet<>();
         Iterable<ChannelConfig> globalChannels = channelService.getChannels(Replicator.GLOBAL);
+        logger.info("replicating global channels {}", globalChannels);
         for (ChannelConfig channel : globalChannels) {
+            logger.info("replicating global channel {}", channel);
+            //todo - gfm - 6/8/16 - why is this false?
             if (channel.isGlobalMaster()) {
                 try {
                     processGlobal(replicators, channel);
@@ -104,6 +106,7 @@ public class ReplicationGlobalManager {
 
     private void processGlobal(Set<String> replicators, ChannelConfig channel) {
         for (String satellite : channel.getGlobal().getSatellites()) {
+            logger.info("creating satellite {} {}", satellite, channel.getName());
             GlobalReplicator replicator = new GlobalReplicator(channel, satellite);
             replicators.add(replicator.getKey());
             if (!globalReplicatorMap.containsKey(replicator.getKey())) {

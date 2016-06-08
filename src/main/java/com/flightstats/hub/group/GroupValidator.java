@@ -10,7 +10,7 @@ import java.net.URISyntaxException;
 
 public class GroupValidator {
 
-    public void validate(Group group) {
+    void validate(Group group) {
         String name = group.getName();
         if (StringUtils.isEmpty(name)) {
             throw new InvalidRequestException("{\"error\": \"Group name is required\"}");
@@ -33,7 +33,8 @@ public class GroupValidator {
             throw new InvalidRequestException("{\"error\": \"Invalid channelUrl\"}");
         }
         group = group.withBatch(StringUtils.upperCase(group.getBatch()));
-        if (Group.MINUTE.equals(group.getBatch()) || Group.SECOND.equals(group.getBatch())
+        if (Group.MINUTE.equals(group.getBatch())
+                || Group.SECOND.equals(group.getBatch())
                 || Group.SINGLE.equals(group.getBatch())) {
             return;
         } else {

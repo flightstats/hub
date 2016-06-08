@@ -5,6 +5,7 @@ import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
+import org.apache.commons.lang3.StringUtils;
 
 class GlobalReplicator implements Replicator {
 
@@ -44,8 +45,9 @@ class GlobalReplicator implements Replicator {
         groupService.delete(getGroupName());
     }
 
-    public String getKey() {
-        return satellite + "_" + channel.getName();
+    String getKey() {
+        String domain = StringUtils.removeEnd(StringUtils.substringAfter(satellite, "://"), "/");
+        return StringUtils.replace(domain, ".", "_") + "_" + channel.getName();
     }
 
 }

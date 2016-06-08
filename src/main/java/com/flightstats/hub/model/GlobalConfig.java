@@ -59,6 +59,7 @@ public class GlobalConfig {
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setMaster(master);
         globalConfig.addSatellites(satellites);
+        globalConfig.setIsMaster(isMaster);
         return globalConfig;
     }
 }
