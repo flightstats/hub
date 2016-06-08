@@ -19,7 +19,7 @@ import java.io.IOException;
 public class MultiPartParser {
     private final static Logger logger = LoggerFactory.getLogger(MultiPartParser.class);
 
-    private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 20) * 1024 * 1024 * 3;
+    private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 40) * 1024 * 1024 * 3;
     private BulkContent bulkContent;
     private BufferedInputStream stream;
     private Content.Builder builder;
