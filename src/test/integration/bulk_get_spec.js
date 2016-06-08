@@ -124,9 +124,11 @@ describe(testName, function () {
         return items[0].slice(0, items[0].length - chars);
     }
 
+    var timeout = 60 * 1000 * 3;
+
     it("gets latest bulk " + channelName, function (done) {
         getAll(channelResource + '/latest/10', done);
-    });
+    }, timeout);
 
     it("gets earliest items " + channelName, function (done) {
         getAll(channelResource + '/earliest/10', done);
@@ -169,5 +171,5 @@ describe(testName, function () {
             expect(linkHeader).toContain(items[0] + '/previous/10?stable=false' + param);
             expect(linkHeader).toContain(items[2] + '/next/10?stable=false' + param);
         });
-    });
+    }, timeout);
 });
