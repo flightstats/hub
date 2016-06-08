@@ -138,8 +138,7 @@ public class ChannelConfig implements Serializable {
         return storage;
     }
 
-    //todo - gfm - 5/18/16 - change to @JsonProperty("global")
-    @JsonIgnore
+    @JsonProperty("global")
     public GlobalConfig getGlobal() {
         return global;
     }
