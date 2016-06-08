@@ -59,7 +59,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public boolean channelExists(String channelName) {
-        return false;
+        return localChannelService.channelExists(channelName);
     }
 
     @Override
