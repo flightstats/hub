@@ -83,6 +83,7 @@ public class ReplicationGlobalManager {
             return;
         }
         logger.info("starting checks for replication and global");
+        //todo - gfm - 6/8/16 - starting channels & groups should probably be async.
         replicateGlobal();
         replicateChannels();
         logger.info("completed checks for replication and global");

@@ -128,7 +128,7 @@ public class GlobalChannelService implements ChannelService {
     }
 
     private String getMasterChannelUrl(String channelName) {
-        return localChannelService.getCachedChannelConfig(channelName).getGlobal().getMaster() + "/channel/" + channelName;
+        return localChannelService.getCachedChannelConfig(channelName).getGlobal().getMaster() + "channel/" + channelName;
     }
 
     @Override
@@ -202,9 +202,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public boolean delete(String channelName) {
-        return primaryAndSatellite(channelName,
-                () -> localChannelService.delete(channelName),
-                () -> hubUtils.delete(getMasterChannelUrl(channelName)));
+        return localChannelService.delete(channelName);
     }
 
     @Override
