@@ -3,6 +3,7 @@ package com.flightstats.hub.group;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -31,6 +32,7 @@ public class TimedGroupStrategy implements GroupStrategy {
 
     private final static Logger logger = LoggerFactory.getLogger(TimedGroupStrategy.class);
 
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final Group group;
     private final TimedGroup timedGroup;
     private final LastContentPath lastContentPath;
@@ -41,7 +43,7 @@ public class TimedGroupStrategy implements GroupStrategy {
     private String channel;
     private ScheduledExecutorService executorService;
 
-    public TimedGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
+    TimedGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
         this.group = group;
         this.timedGroup = TimedGroup.getTimedGroup(group);
         channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
@@ -154,7 +156,7 @@ public class TimedGroupStrategy implements GroupStrategy {
     }
 
     @Override
-    public ObjectNode createResponse(ContentPath contentPath, ObjectMapper mapper) {
+    public ObjectNode createResponse(ContentPath contentPath) {
         ObjectNode response = mapper.createObjectNode();
         response.put("name", group.getName());
         String url = contentPath.toUrl();

@@ -1,6 +1,5 @@
 package com.flightstats.hub.group;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
@@ -15,7 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public interface GroupStrategy extends AutoCloseable {
+interface GroupStrategy extends AutoCloseable {
 
     ContentPath getStartingPath();
 
@@ -25,7 +24,7 @@ public interface GroupStrategy extends AutoCloseable {
 
     Optional<ContentPath> next();
 
-    ObjectNode createResponse(ContentPath contentPath, ObjectMapper mapper);
+    ObjectNode createResponse(ContentPath contentPath);
 
     ContentPath inProcess(ContentPath contentPath);
 

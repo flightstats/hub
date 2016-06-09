@@ -3,6 +3,7 @@ package com.flightstats.hub.group;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.NoSuchChannelException;
@@ -26,10 +27,10 @@ import java.util.Collection;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class SingleGroupStrategy implements GroupStrategy {
+class SingleGroupStrategy implements GroupStrategy {
 
     private final static Logger logger = LoggerFactory.getLogger(SingleGroupStrategy.class);
-
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final Group group;
     private final LastContentPath lastContentPath;
     private final ChannelService channelService;
@@ -41,15 +42,11 @@ public class SingleGroupStrategy implements GroupStrategy {
     private ExecutorService executorService;
 
 
-    public SingleGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
+    SingleGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
         this.group = group;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
         this.queue = new ArrayBlockingQueue<>(group.getParallelCalls() * 2);
-    }
-
-    public ContentPath createContentPath() {
-        return ContentKey.NONE;
     }
 
     @Override
@@ -67,11 +64,11 @@ public class SingleGroupStrategy implements GroupStrategy {
     }
 
     @Override
-    public ObjectNode createResponse(ContentPath contentPath, ObjectMapper mapper) {
+    public ObjectNode createResponse(ContentPath contentPath) {
         ObjectNode response = mapper.createObjectNode();
         response.put("name", group.getName());
-        ArrayNode uris = response.putArray("uris");
         if (contentPath instanceof ContentKey) {
+            ArrayNode uris = response.putArray("uris");
             uris.add(group.getChannelUrl() + "/" + contentPath.toUrl());
             response.put("type", "item");
         } else {

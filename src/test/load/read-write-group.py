@@ -13,9 +13,18 @@ import websocket
 from flask import request, jsonify
 from locust import HttpLocust, TaskSet, task, events, web
 
+# This test uses the http://locust.io/ framework.
+#
+# It performs a combination of verification and load testing.
+# Each channel (aka user) will perform all of the methods defined by @task(N)
+# where N is the relative weighting for frequency.
+#
+#
 # Usage:
-# locust -f read-write-group.py -H http://localhost:9080
-# nohup locust -f read-write-group.py -H http://hub &
+#   locust -f read-write-group.py -H http://hub
+# or in the background with:
+#   nohup locust -f read-write-group.py -H http://hub &
+# After starting the process, go to http://locust:8089/
 
 logger = logging.getLogger('hub-locust')
 logger.setLevel(logging.INFO)

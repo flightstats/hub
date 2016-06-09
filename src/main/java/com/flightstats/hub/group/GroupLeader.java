@@ -1,6 +1,5 @@
 package com.flightstats.hub.group;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorLeader;
@@ -40,12 +39,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class GroupLeader implements Leader {
     private final static Logger logger = LoggerFactory.getLogger(GroupLeader.class);
-    public static final String GROUP_LAST_COMPLETED = "/GroupLastCompleted/";
+    static final String GROUP_LAST_COMPLETED = "/GroupLastCompleted/";
 
     private static final Client client = RestClient.createClient(60, 120, true, false);
-    private static final ObjectMapper mapper = new ObjectMapper();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
     private final double keepLeadershipRate = HubProperties.getProperty("group.keepLeadershipRate", 0.75);
+    private final String appDomain = HubProperties.getAppDomain();
 
     @Inject
     private CuratorFramework curator;
@@ -69,16 +68,15 @@ public class GroupLeader implements Leader {
     private AtomicBoolean hasLeadership;
     private Retryer<ClientResponse> retryer;
 
-    private boolean exited = false;
     private GroupStrategy groupStrategy;
-    private AtomicReference<ContentPath> lastUpdated = new AtomicReference();
+    private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
 
     @Inject
     public GroupLeader() {
         logger.info("keep leadership rate {}", keepLeadershipRate);
     }
 
-    public boolean tryLeadership(Group group) {
+    boolean tryLeadership(Group group) {
         logger.debug("starting group: " + group);
         this.group = group;
         curatorLeader = new CuratorLeader(getLeaderPath(), this);
@@ -174,7 +172,7 @@ public class GroupLeader implements Leader {
                 try {
                     long delta = System.currentTimeMillis() - contentPath.getTime().getMillis();
                     metricsTimer.send("group." + group.getName() + ".delta", delta);
-                    makeTimedCall(contentPath, groupStrategy.createResponse(contentPath, mapper));
+                    makeTimedCall(contentPath, groupStrategy.createResponse(contentPath));
                     completeCall(contentPath);
                     logger.trace("completed {} call to {} ", contentPath, group.getName());
                 } catch (RetryException e) {
@@ -245,13 +243,14 @@ public class GroupLeader implements Leader {
             logger.debug("calling {} {} {}", group.getCallbackUrl(), contentPath);
             ClientResponse clientResponse = client.resource(group.getCallbackUrl())
                     .type(MediaType.APPLICATION_JSON_TYPE)
+                    .header("X-Forwarded-Host", appDomain)
                     .post(ClientResponse.class, body.toString());
             recurringTrace.update("GroupLeader.makeCall completed", clientResponse);
             return clientResponse;
         });
     }
 
-    public void exit(boolean delete) {
+    void exit(boolean delete) {
         String name = group.getName();
         logger.info("exiting group " + name + " deleting " + delete);
         deleteOnExit.set(delete);
@@ -297,7 +296,7 @@ public class GroupLeader implements Leader {
         logger.info("deleted " + group.getName());
     }
 
-    public boolean deleteIfReady() {
+    boolean deleteIfReady() {
         if (isReadyToDelete()) {
             deleteAnyway();
             return true;
@@ -347,7 +346,7 @@ public class GroupLeader implements Leader {
         return groupError.get(group.getName());
     }
 
-    public List<ContentPath> getInFlight(Group group) {
+    List<ContentPath> getInFlight(Group group) {
         return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(this.group.getName(), GroupStrategy.createContentPath(group))));
     }
 

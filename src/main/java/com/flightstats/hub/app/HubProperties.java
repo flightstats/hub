@@ -19,6 +19,10 @@ public class HubProperties {
         return StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
     }
 
+    public static String getAppDomain() {
+        return StringUtils.substringAfter(HubProperties.getProperty("app.url", ""), "://");
+    }
+
     public static int getSpokeTtl() {
         return getProperty("spoke.ttlMinutes", 60);
     }
@@ -27,7 +31,7 @@ public class HubProperties {
         return (getProperty("app.name", "hub") + "_" + getProperty("app.environment", "unknown")).replace("-", "_");
     }
 
-    public static Properties getProperties() {
+    static Properties getProperties() {
         return properties;
     }
 
