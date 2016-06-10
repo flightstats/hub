@@ -74,13 +74,13 @@ public class AwsConnectorFactory {
         RetryPolicy retryPolicy = new RetryPolicy(PredefinedRetryPolicies.DEFAULT_RETRY_CONDITION,
                 PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY,
                 6, true);
-        ClientConfiguration configuration = new ClientConfiguration();
-        int maxConnections = HubProperties.getProperty(name + ".maxConnections", 50);
-        logger.info("{} maxConnections {}", name, maxConnections);
-        configuration.setMaxConnections(maxConnections);
-        configuration.withRetryPolicy(retryPolicy);
-        configuration.setProtocol(Protocol.valueOf(protocol));
-        configuration.withConnectionTimeout(HubProperties.getProperty(name + ".connectionTimeout", 20 * 1000));
+        ClientConfiguration configuration = new ClientConfiguration()
+                .withMaxConnections(HubProperties.getProperty(name + ".maxConnections", 50))
+                .withRetryPolicy(retryPolicy)
+                .withProtocol(Protocol.valueOf(protocol))
+                .withConnectionTimeout(HubProperties.getProperty(name + ".connectionTimeout", 10 * 1000))
+                .withSocketTimeout(HubProperties.getProperty(name + ".socketTimeout", 30 * 1000));
+        logger.info("using config {} {}", name, configuration);
         return configuration;
     }
 
