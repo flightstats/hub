@@ -20,7 +20,7 @@ public class HubProperties {
     }
 
     public static String getAppDomain() {
-        return StringUtils.substringAfter(HubProperties.getProperty("app.url", ""), "://");
+        return StringUtils.removeEnd(StringUtils.substringAfter(HubProperties.getProperty("app.url", ""), "://"), "/");
     }
 
     public static int getSpokeTtl() {
