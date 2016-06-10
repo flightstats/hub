@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.LocalChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ContentPath;
@@ -26,7 +26,7 @@ public class InternalReplicationResource {
     private final static Logger logger = LoggerFactory.getLogger(InternalReplicationResource.class);
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private static final ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private static final LocalChannelService localChannelService = HubProvider.getInstance(LocalChannelService.class);
     private static final LastContentPath lastReplicated = HubProvider.getInstance(LastContentPath.class);
 
     private static boolean getAndWriteBatch(String channel, ContentPath path,
@@ -73,7 +73,7 @@ public class InternalReplicationResource {
                 .channel(channel)
                 .isNew(false)
                 .build();
-        channelService.insert(bulkContent);
+        localChannelService.insert(bulkContent);
         return bulkContent;
     }
 
