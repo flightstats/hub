@@ -350,21 +350,22 @@ class WebsiteTasks(TaskSet):
     def callback(channel):
         if request.method == 'POST':
             incoming_json = request.get_json()
-            for incoming_uri in incoming_json['uris']:
-                if "_replicated" in incoming_uri:
-                    incoming_uri = incoming_uri.replace("_replicated", "")
-                if channel not in groupCallbacks:
-                    logger.info("incoming uri before locust tests started " + str(incoming_uri))
-                    return "ok"
-                try:
-                    shortHref = WebsiteTasks.removeHostChannel(incoming_uri)
-                    groupCallbacks[channel]["lock"].acquire()
-                    if groupCallbacks[channel]["parallel"] == 1:
-                        WebsiteTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")
-                    else:
-                        WebsiteTasks.verify_parallel(channel, shortHref)
-                finally:
-                    groupCallbacks[channel]["lock"].release()
+            if incoming_json['type'] == "item":
+                for incoming_uri in incoming_json['uris']:
+                    if "_replicated" in incoming_uri:
+                        incoming_uri = incoming_uri.replace("_replicated", "")
+                    if channel not in groupCallbacks:
+                        logger.info("incoming uri before locust tests started " + str(incoming_uri))
+                        return "ok"
+                    try:
+                        shortHref = WebsiteTasks.removeHostChannel(incoming_uri)
+                        groupCallbacks[channel]["lock"].acquire()
+                        if groupCallbacks[channel]["parallel"] == 1:
+                            WebsiteTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")
+                        else:
+                            WebsiteTasks.verify_parallel(channel, shortHref)
+                    finally:
+                        groupCallbacks[channel]["lock"].release()
             if incoming_json['type'] == "heartbeat":
                 logger.info("heartbeat " + str(incoming_json))
                 # make sure the heart beat is before the first data item
