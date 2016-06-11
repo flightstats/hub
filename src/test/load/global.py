@@ -317,10 +317,9 @@ class WebsiteTasks(TaskSet):
     def callback(channel):
         if request.method == "POST":
             incoming_json = request.get_json()
-            if incoming_json['type'] == "item":
+            # logger.info("incoming_json " + str(incoming_json))
+            if "item" in incoming_json['type']:
                 for incoming_uri in incoming_json["uris"]:
-                    if "_replicated" in incoming_uri:
-                        incoming_uri = incoming_uri.replace("_replicated", "")
                     if channel not in groupCallbacks:
                         logger.info("incoming uri before locust tests started " + str(incoming_uri))
                         return "ok"
