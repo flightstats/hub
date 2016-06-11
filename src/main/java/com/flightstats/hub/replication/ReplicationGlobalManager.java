@@ -84,7 +84,6 @@ public class ReplicationGlobalManager {
             return;
         }
         logger.info("starting checks for replication and global");
-        //todo - gfm - 6/8/16 - starting channels & groups should probably be async.
         replicateGlobal();
         replicateChannels();
         logger.info("completed checks for replication and global");
@@ -104,7 +103,7 @@ public class ReplicationGlobalManager {
                 }
             }
         }
-        stopAndRemove(replicators, globalReplicatorMap);
+        executorPool.submit(() -> stopAndRemove(replicators, globalReplicatorMap));
         logger.info("completed global");
     }
 
@@ -141,7 +140,8 @@ public class ReplicationGlobalManager {
                 logger.warn("error trying to replicate " + channel, e);
             }
         }
-        stopAndRemove(replicators, channelReplicatorMap);
+        executorPool.submit(() -> stopAndRemove(replicators, channelReplicatorMap));
+
     }
 
     private void processChannel(Set<String> replicators, ChannelConfig channel) {
@@ -164,6 +164,7 @@ public class ReplicationGlobalManager {
         toStop.removeAll(replicators);
         logger.info("stopping replicators {}", toStop);
         for (String nameToStop : toStop) {
+
             logger.info("stopping {}", nameToStop);
             Replicator replicator = replicatorMap.remove(nameToStop);
             replicator.stop();
