@@ -51,6 +51,7 @@ public class ReplicationGlobalManager {
     private final Map<String, Replicator> globalReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executorPool = Executors.newFixedThreadPool(20);
 
     @Inject
     public ReplicationGlobalManager(ChannelService channelService, WatchManager watchManager) {
@@ -111,10 +112,19 @@ public class ReplicationGlobalManager {
         for (String satellite : channel.getGlobal().getSatellites()) {
             logger.info("creating satellite {} {}", satellite, channel.getName());
             GlobalReplicator replicator = new GlobalReplicator(channel, satellite);
-            replicators.add(replicator.getKey());
-            if (!globalReplicatorMap.containsKey(replicator.getKey())) {
-                replicator.start();
-                globalReplicatorMap.put(replicator.getKey(), replicator);
+            String replicatorKey = replicator.getKey();
+            replicators.add(replicatorKey);
+            if (!globalReplicatorMap.containsKey(replicatorKey)) {
+                executorPool.submit(() -> {
+                    try {
+                        globalReplicatorMap.put(replicatorKey, replicator);
+                        replicator.start();
+                    } catch (Exception e) {
+                        globalReplicatorMap.remove(replicatorKey);
+                        logger.warn("unexpected global issue " + replicatorKey + " " + channel, e);
+                    }
+                });
+
             }
         }
     }
@@ -161,10 +171,17 @@ public class ReplicationGlobalManager {
     }
 
     private void startReplication(ChannelConfig channel) {
-        logger.debug("starting replication of " + channel);
-        ChannelReplicator channelReplicator = new ChannelReplicator(channel);
-        channelReplicator.start();
-        channelReplicatorMap.put(channel.getName(), channelReplicator);
+        executorPool.submit(() -> {
+            try {
+                logger.debug("starting replication of " + channel);
+                ChannelReplicator channelReplicator = new ChannelReplicator(channel);
+                channelReplicatorMap.put(channel.getName(), channelReplicator);
+                channelReplicator.start();
+            } catch (Exception e) {
+                channelReplicatorMap.remove(channel.getName());
+                logger.warn("unexpected replication issue " + channel, e);
+            }
+        });
     }
 
     public void notifyWatchers() {
