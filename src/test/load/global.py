@@ -2,6 +2,7 @@
 
 import json
 import logging
+import socket
 import random
 import string
 import threading
@@ -168,12 +169,12 @@ class WebsiteTasks(TaskSet):
             posted_items.append(self.write())
         self.complete_replication()
         initial = (self.client.get(self.time_path("minute"), name="time_minute")).json()
-        logger.info("found initial " + ", ".join(initial['_links']['uris']))
+        # logger.info("found initial " + ", ".join(initial['_links']['uris']))
         if len(initial['_links']['uris']) < items:
             previous = (self.client.get(initial['_links']['previous']['href'], name="time_minute")).json()
             query_items.extend(previous['_links']['uris'])
         query_items.extend(initial['_links']['uris'])
-        logger.info("found query_items " + ", ".join(query_items))
+        # logger.info("found query_items " + ", ".join(query_items))
         query_slice = query_items[-items:]
         total_time = int((time.time() - start_time) * 1000)
         if cmp(query_slice, posted_items) == 0:
@@ -358,8 +359,8 @@ class WebsiteUser(HttpLocust):
     def __init__(self):
         super(WebsiteUser, self).__init__()
         groupConfig['host'] = self.host
-        groupConfig['ip'] = '10.1.13.245'
-        # groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
+        # groupConfig['ip'] = '10.1.13.245'
+        groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
         logger.info('groupConfig %s', groupConfig)
         # todo look at using --logfile from https://github.com/locustio/locust/blob/master/locust/main.py#L169
         print groupConfig
