@@ -21,9 +21,9 @@ import globalConfig
 #
 #
 # Usage:
-#   locust -f read-write-group.py -H http://hub
+#   locust -f global.py -H http://hub
 # or in the background with:
-#   nohup locust -f read-write-group.py -H http://hub &
+#   nohup locust -f global.py -H http://hub &
 #
 # After starting the process, go to http://locust:8089/
 

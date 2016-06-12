@@ -19,17 +19,18 @@ from locust import HttpLocust, TaskSet, task, events, web
 # Each channel (aka user) will perform all of the methods defined by @task(N)
 # where N is the relative weighting for frequency.
 #
+# The tests in 'verifier.py' focus on the verification of correct behavior of
+# websockets, group callbacks, and that items are always increasing.
 #
 # Usage:
-#   locust -f read-write-group.py -H http://hub
+#   locust -f verifier.py -H http://hub
 # or in the background with:
-#   nohup locust -f read-write-group.py -H http://hub &
+#   nohup locust -f verifier.py -H http://hub &
 # After starting the process, go to http://locust:8089/
 
 logger = logging.getLogger('hub-locust')
 logger.setLevel(logging.INFO)
-# fh = logging.FileHandler('./locust.log')
-fh = logging.FileHandler('/home/ubuntu/locust.log')
+fh = logging.FileHandler('./locust.log')
 fh.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
@@ -48,7 +49,7 @@ class WebsiteTasks(TaskSet):
         self.number = WebsiteTasks.channelNum
         self.payload = self.payload_generator()
         logger.info("payload size " + str(self.payload.__sizeof__()))
-        self.channel = "load_test_" + str(self.number)
+        self.channel = "verifier_test_" + str(self.number)
         self.count = 0
         payload = {"name": self.channel, "ttlDays": "3", "tags": ["load", "test", "DDT"], "owner": "DDT"}
         self.client.put("/channel/" + self.channel,
@@ -391,8 +392,6 @@ class WebsiteUser(HttpLocust):
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
-        # groupConfig['host'] = 'http://localhost:8080'
-        # groupConfig['ip'] = '127.0.0.1'
         groupConfig['host'] = self.host
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
         logger.info('groupConfig %s', groupConfig)

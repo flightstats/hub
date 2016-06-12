@@ -6,25 +6,31 @@ import random
 import socket
 import string
 import threading
-
 import time
 from datetime import datetime, timedelta
 from flask import request, jsonify
 from locust import HttpLocust, TaskSet, task, events, web
 
-# Usage:
-# locust -f read-write-group.py -H http://localhost:9080
-# nohup locust -f batch-bulk.py -H http://hub &
+# This test uses the http://locust.io/ framework.
 #
-# Post Bulk into Batch
-# Read Bulk from Batch
-# Query next & previous
-
+# It performs a combination of verification and load testing.
+# Each channel (aka user) will perform all of the methods defined by @task(N)
+# where N is the relative weighting for frequency.
+#
+# The tests in 'single.py' focus on creating high volume and verification of correct behavior of
+# group callbacks, and that items are always increasing.
+#
+#
+# Usage:
+#   locust -f single.py -H http://hub
+# or in the background with:
+#   nohup locust -f single.py -H http://hub &
+#
+# After starting the process, go to http://locust:8089/
 
 logger = logging.getLogger('hub-locust')
 logger.setLevel(logging.INFO)
-# fh = logging.FileHandler('./locust.log')
-fh = logging.FileHandler('/home/ubuntu/locust.log')
+fh = logging.FileHandler('./locust.log')
 fh.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
@@ -42,7 +48,7 @@ class WebsiteTasks(TaskSet):
         self.number = WebsiteTasks.channelNum
         self.payload = self.payload_generator()
         logger.info("payload size " + str(self.payload.__sizeof__()))
-        self.channel = "load_test_" + str(self.number)
+        self.channel = "single_test_" + str(self.number)
         self.count = 0
         payload = {"name": self.channel,
                    "ttlDays": "3",
@@ -92,32 +98,24 @@ class WebsiteTasks(TaskSet):
         return json.loads(c)
 
     def write(self):
-        bulk = ""
-        for x in range(0, 50):
-            bulk += "--abcdefg\r\n"
-            bulk += "Content-Type: application/json\r\n\r\n"
-            bulk += '{"name":"' + self.payload + '", "count": ' + str(self.count) + '}\r\n'
-            self.count += 1
-        bulk += "--abcdefg--\r\n"
-
-        with self.client.post("/channel/" + self.channel + "/bulk", data=bulk,
-                              headers={"Content-Type": "multipart/mixed; boundary=abcdefg"}, catch_response=True,
-                              name="post_bulk") as postResponse:
+        payload = {"name": self.payload, "count": self.count}
+        with self.client.post("/channel/" + self.channel, data=json.dumps(payload),
+                              headers={"Content-Type": "application/json"}, catch_response=True,
+                              name="post_payload") as postResponse:
             if postResponse.status_code != 201:
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
 
         links = postResponse.json()
+        self.count += 1
+        href = links['_links']['self']['href']
+        self.append_href(href, groupCallbacks)
+        return href
 
-        # todo use the correct links & multiples
-        uris = links['_links']['uris']
-        self.append_href(uris, groupCallbacks)
-        return uris
-
-    def append_href(self, uris, obj):
+    def append_href(self, href, obj):
         try:
             obj[self.channel]["lock"].acquire()
-            obj[self.channel]["data"].extend(uris)
-            logger.debug('wrote %s', uris)
+            obj[self.channel]["data"].append(href)
+            logger.debug('wrote %s', href)
         finally:
             obj[self.channel]["lock"].release()
 
@@ -128,9 +126,11 @@ class WebsiteTasks(TaskSet):
 
     @task(10000)
     def write_read(self):
-        # todo
-        # self.read(self.write())
-        self.write()
+        self.read(self.write())
+
+    @task(10)
+    def hour_query(self):
+        self.client.get(self.time_path("hour"), name="time_hour")
 
     @task(10)
     def minute_query(self):
@@ -145,16 +145,20 @@ class WebsiteTasks(TaskSet):
 
     @task(10)
     def next_batch_query(self):
-        utcnow = datetime.utcnow()
-        self.doNext(utcnow + timedelta(minutes=-1))
-        self.doNext(utcnow + timedelta(hours=-1))
-        self.doNext(utcnow + timedelta(days=-1))
+        self.nextQueries("LONG_TERM_BATCH")
 
-    def doNext(self, time):
-        path = "/channel/" + self.channel + time.strftime("/%Y/%m/%d/%H/%M/%S/000") + "/A/next/10"
-        with self.client.get(path, catch_response=True, name="next") as postResponse:
+    def nextQueries(self, location):
+        utcnow = datetime.utcnow()
+        self.doNext(location, utcnow + timedelta(minutes=-1))
+        self.doNext(location, utcnow + timedelta(hours=-1))
+        self.doNext(location, utcnow + timedelta(days=-1))
+
+    def doNext(self, location, time):
+        path = "/channel/" + self.channel + time.strftime("/%Y/%m/%d/%H/%M/%S/000") + "/A/next/10?location=" + location
+        with self.client.get(path, catch_response=True, name="next_" + location) as postResponse:
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on next: " + str(postResponse.status_code))
+
 
     def payload_generator(self, chars=string.ascii_uppercase + string.digits):
         size = 3 * 1024
@@ -163,9 +167,9 @@ class WebsiteTasks(TaskSet):
     def verify_callback(self, obj, name="group"):
         obj[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
-        max = 20000
+        max = 2000
         if obj[self.channel]["batch"] == "MINUTE":
-            max = 50000
+            max = 20000
         if items > max:
             events.request_failure.fire(request_type=name, name="length", response_time=1,
                                         exception=-1)
@@ -209,13 +213,11 @@ class WebsiteTasks(TaskSet):
 
 class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
-    min_wait = 600
-    max_wait = 1000
+    min_wait = 1
+    max_wait = 3
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
-        # groupConfig['host'] = 'http://localhost:8080'
-        # groupConfig['ip'] = '127.0.0.1'
         groupConfig['host'] = self.host
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
         logger.info('groupConfig %s', groupConfig)
