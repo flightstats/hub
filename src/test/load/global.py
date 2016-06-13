@@ -19,11 +19,20 @@ import globalConfig
 # Each channel (aka user) will perform all of the methods defined by @task(N)
 # where N is the relative weighting for frequency.
 #
+# The tests in 'global.py' focus on the verification of correct behavior of
+# global channels, and requires two separate hub clusters.
+#
+# Define globalConfig.py, which shuld contain :
+# globalConfig = {
+#     "master": "http://hub.master.dev/",
+#     "satellites": ["http://hub.satellite.dev/"]
+# }:
+# Set up a load balanced endpoint "http://hub.dev" which can go to either hub cluster
 #
 # Usage:
-#   locust -f global.py -H http://hub
+#   locust -f global.py -H http://hub.dev
 # or in the background with:
-#   nohup locust -f global.py -H http://hub &
+#   nohup locust -f global.py -H http://hub.dev &
 #
 # After starting the process, go to http://locust:8089/
 
@@ -358,7 +367,6 @@ class WebsiteUser(HttpLocust):
     def __init__(self):
         super(WebsiteUser, self).__init__()
         groupConfig['host'] = self.host
-        # groupConfig['ip'] = '10.1.13.245'
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
         logger.info('groupConfig %s', groupConfig)
         # todo look at using --logfile from https://github.com/locustio/locust/blob/master/locust/main.py#L169
