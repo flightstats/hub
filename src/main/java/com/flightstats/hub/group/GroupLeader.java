@@ -243,7 +243,6 @@ public class GroupLeader implements Leader {
             logger.debug("calling {} {} {}", group.getCallbackUrl(), contentPath);
             ClientResponse clientResponse = client.resource(group.getCallbackUrl())
                     .type(MediaType.APPLICATION_JSON_TYPE)
-                    .header("X-Forwarded-Host", appDomain)
                     .post(ClientResponse.class, body.toString());
             recurringTrace.update("GroupLeader.makeCall completed", clientResponse);
             return clientResponse;
