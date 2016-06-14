@@ -114,7 +114,6 @@ class WebsiteTasks(TaskSet):
 
         links = postResponse.json()
 
-        # todo use the correct links & multiples
         uris = links['_links']['uris']
         self.append_href(uris, groupCallbacks)
         return uris
